@@ -26,6 +26,11 @@
 
 package org.polyfrost.oneconfig.api.platform.v1;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.nio.ByteBuffer;
+
 public interface GLPlatform {
 
     /**
@@ -36,6 +41,33 @@ public interface GLPlatform {
      */
     long getFunctionAddress(String addr);
 
-    void updateGameRenderStateAlongsideNanoVG();
+    /**
+     * Return the memory address of the given buffer.
+     * @implNote delegates to the {@code MemoryUtil.memAddress(ByteBuffer)} method.
+     */
+    long memAddress(ByteBuffer buf);
+
+    /**
+     * This method will try and run glVertexAttribIPointer on the current OpenGL context.
+     * <br> If the context is OpenGL3+, it will run the core API method.
+     * <br> If not, it will run the method using the EXT_gpu_shader4 extension.
+     * <br> If this is missing, this will blow up.
+     *
+     * @implNote This method exists solely to fix the issue that in LWJGL2, the extension has a different class name
+     * to that in LWJGL3. thanks, guys.
+     */
+    void glVertexAttribIPointer(int index, int size, int type, int stride, long pointer);
+
+    void syncOpenGLContext();
+
+    /**
+     * Return the result of glGetInteger(GL_VIEWPORT).
+     * If in is supplied, it will be set to the result and returned. If not, a new array will be created.
+     */
+    int @NotNull [] glViewport(int @Nullable [] in);
+
+    default int @NotNull [] glViewport() {
+        return glViewport(null);
+    }
 
 }

@@ -25,6 +25,7 @@
  */
 
 @file:JvmName("OneConfigUI")
+@file:Suppress("FunctionName")
 
 package org.polyfrost.oneconfig.internal.ui
 
@@ -55,6 +56,7 @@ import org.polyfrost.polyui.data.Cursor
 import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.event.State
 import org.polyfrost.polyui.operations.Move
 import org.polyfrost.polyui.operations.Recolor
 import org.polyfrost.polyui.unit.Align
@@ -131,6 +133,32 @@ object OneConfigUI {
                 ui[1].accept(Event.Lifetime.Removed)
             }
             if (!OmniLoader.isDevelopment) builder.pauses()
+
+            val searchState = State("").listen { text: String ->
+                if (text.length > 2) {
+                    if(current?.name != "oneconfig.search") {
+                        val search = Group(children = ConfigVisualizer.INSTANCE.getMatching(text).toTypedArray(), visibleSize = Vec2(1130f, 635f)).named("oneconfig.search")
+                        if (search.children.isNullOrEmpty()) search.addChild(searchNoneFound, recalculate = false)
+                        openPage(search, SetAnimation.Fade)
+                    } else {
+                        val search = current as Group
+                        search.children?.clear()
+                        ConfigVisualizer.INSTANCE.getMatching(text).fastEach {
+                            search.addChild(it, recalculate = false)
+                        }
+                        if (search.children.isNullOrEmpty()) search.addChild(searchNoneFound, recalculate = false)
+                        // search.at = search.screenAt
+                        search.recalculate(false)
+                        search.resetScroll()
+                        search.visibleSize = Vec2(1130f, 635f).rescaleToPolyUIInstance(search.polyUI)
+                        search.clipChildren()
+                    }
+                } else {
+                    openPage(ModsPage(collectTrees()), SetAnimation.Fade)
+                }
+
+                false
+            }
 
             val (polyUI, win) = builder.makeAndOpenWithRef(
                 Block(
@@ -210,31 +238,8 @@ object OneConfigUI {
                                     TextInput(
                                         placeholder = "oneconfig.search.placeholder",
                                         visibleSize = Vec2(210f, 12f),
-                                    ).onChange { text: String ->
-                                        if (text.length > 2) {
-                                            if(current?.name != "oneconfig.search") {
-                                                val search = Group(children = ConfigVisualizer.INSTANCE.getMatching(text).toTypedArray(), visibleSize = Vec2(1130f, 635f)).named("oneconfig.search")
-                                                if (search.children.isNullOrEmpty()) search.addChild(searchNoneFound, recalculate = false)
-                                                openPage(search, SetAnimation.Fade)
-                                            } else {
-                                                val search = current as Group
-                                                search.children?.clear()
-                                                ConfigVisualizer.INSTANCE.getMatching(text).fastEach {
-                                                    search.addChild(it, recalculate = false)
-                                                }
-                                                if (search.children.isNullOrEmpty()) search.addChild(searchNoneFound, recalculate = false)
-                                                // search.at = search.screenAt
-                                                search.recalculate(false)
-                                                search.resetScroll()
-                                                search.visibleSize = Vec2(1130f, 635f).rescaleToPolyUIInstance(polyUI)
-                                                search.clipChildren()
-                                            }
-                                        } else {
-                                            openPage(ModsPage(collectTrees()), SetAnimation.Fade)
-                                        }
-
-                                        false
-                                    },
+                                        text = searchState,
+                                    ),
                                     size = Vec2(256f, 32f),
                                     alignment = Align(pad = Vec2(10f, 8f)),
                                 ).withBorder(1f) { page.border5 }.named("SearchField").onRightClick {
@@ -293,9 +298,11 @@ object OneConfigUI {
             prevArrow?.disable(false)
         }
         current = page
-        val translated = ui.polyUI.translator.translate(page.name)
-        val title = ui[1][0][0][2] as Text
-        title._text = translated
+        // todo expose _theText or do this in a better way
+//        val translated = ui.polyUI.translator.translate(page.name)
+//        val title = ui[1][0][0][2] as Text
+//        @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UnstableApiUsage")
+//        title._theText = translated
         val prev = ui[1][1]
         ui[1].set(prev, page, animation)
     }

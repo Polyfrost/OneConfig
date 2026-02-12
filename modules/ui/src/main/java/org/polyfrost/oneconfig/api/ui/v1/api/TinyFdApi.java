@@ -53,11 +53,17 @@ public interface TinyFdApi {
     /**
      * Open a save file selection prompt.
      * Same as {@link #openFileSelector(String, String, String[], String)} but says save instead of open.
+     * <p>
+     * On Linux, TinyFD "allows shell metacharacters in titles, messages, and other input data," meaning that it is vulnerable to command injection.
+     * **Treat all user input as untrusted and sanitize it before passing it to TinyFD.**
      */
     Path openSaveSelector(@Nullable String title, @Nullable String defaultFilePath, String[] filterPatterns, @Nullable String filterDescription);
 
     /**
      * Open a file selection prompt.
+     * <p>
+     * On Linux, TinyFD "allows shell metacharacters in titles, messages, and other input data," meaning that it is vulnerable to command injection.
+     * **Treat all user input as untrusted and sanitize it before passing it to TinyFD.**
      *
      * @param title             the title of the prompt
      * @param defaultFilePath   the path to the default file to select
@@ -71,17 +77,26 @@ public interface TinyFdApi {
     /**
      * Open a multi file selection prompt.
      * Same as {@link #openFileSelector(String, String, String[], String)} but allows the user to select multiple files.
+     * <p>
+     * On Linux, TinyFD "allows shell metacharacters in titles, messages, and other input data," meaning that it is vulnerable to command injection.
+     * **Treat all user input as untrusted and sanitize it before passing it to TinyFD.**
      */
     Path[] openMultiFileSelector(@Nullable String title, @Nullable String defaultFilePath, String[] filterPatterns, @Nullable String filterDescription);
 
     /**
      * Open a folder selection prompt.
      * Same as {@link #openFileSelector(String, String, String[], String)} but allows the user to select a folder.
+     * <p>
+     * On Linux, TinyFD "allows shell metacharacters in titles, messages, and other input data," meaning that it is vulnerable to command injection.
+     * **Treat all user input as untrusted and sanitize it before passing it to TinyFD.**
      */
     Path openFolderSelector(@Nullable String title, @Nullable String defaultFolderPath);
 
     /**
      * Shows a message box.
+     * <p>
+     * On Linux, TinyFD "allows shell metacharacters in titles, messages, and other input data," meaning that it is vulnerable to command injection.
+     * **Treat all user input as untrusted and sanitize it before passing it to TinyFD.**
      *
      * @param message      the message. may contain \n and \t
      * @param dialog       the type of message box to show. <br>One of: {@link #OK_DIALOG}, {@link #OK_CANCEL_DIALOG}, {@link #YES_NO_DIALOG}, {@link #YES_NO_CANCEL_DIALOG}
@@ -93,6 +108,9 @@ public interface TinyFdApi {
 
     /**
      * Shows a notification.
+     * <p>
+     * On Linux, TinyFD "allows shell metacharacters in titles, messages, and other input data," meaning that it is vulnerable to command injection.
+     * **Treat all user input as untrusted and sanitize it before passing it to TinyFD.**
      *
      * @param icon the icon to use. One of: {@link #QUESTION_ICON}, {@link #ERROR_ICON}, {@link #WARNING_ICON}, {@link #INFO_ICON}
      * @return 0 if the user clicked the "ok" button, 1 for "cancel"

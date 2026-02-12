@@ -53,7 +53,10 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/Compatib
 
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/GLPlatform {
 	public abstract fun getFunctionAddress (Ljava/lang/String;)J
-	public abstract fun updateGameRenderStateAlongsideNanoVG ()V
+	public fun glViewport ()[I
+	public abstract fun glViewport ([I)[I
+	public abstract fun memAddress (Ljava/nio/ByteBuffer;)J
+	public abstract fun syncOpenGLContext ()V
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/I18nPlatform {
@@ -79,7 +82,6 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/ScreenPl
 	public fun display (Ljava/lang/Object;)V
 	public abstract fun display (Ljava/lang/Object;I)V
 	public fun pixelRatio ()F
-	public abstract fun renderLegacyHuds (Ldev/deftu/omnicore/api/client/render/OmniRenderingContext;)V
 	public abstract fun viewportHeight ()I
 	public abstract fun viewportWidth ()I
 	public abstract fun windowHeight ()I

@@ -47,11 +47,18 @@ public class MCWindow extends Window {
     //$$ private final long handle;
     //#endif
 
+    private final float[] viewport = new float[4];
+
     public MCWindow(Minecraft mc) {
         super(Platform.screen().viewportWidth(), Platform.screen().viewportHeight(), Platform.screen().pixelRatio());
         //#if MC>=11300
         //$$ this.handle = mc.getWindow().getWindow();
         //#endif
+    }
+
+    @Override
+    public float[] getViewport() {
+        return viewport;
     }
 
     @Override

@@ -94,8 +94,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/LegacyHud : org/polyfro
 	public static synthetic fun createLegacy-Op45VSw$default (Lorg/polyfrost/oneconfig/api/hud/v1/LegacyHud;[Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/unit/Align;JZILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/hud/v1/LegacyHud$LegacyHudComponent;
 	public abstract fun getHeight ()F
 	public abstract fun getWidth ()F
-	public fun render (Lorg/polyfrost/polyui/renderer/Renderer;Lorg/polyfrost/polyui/component/Drawable;)V
-	public abstract fun renderLegacy (Ldev/deftu/omnicore/api/client/render/OmniRenderingContext;FFFF)V
+	public abstract fun renderLegacy (Lorg/polyfrost/polyui/renderer/Renderer;Ldev/deftu/omnicore/api/client/render/OmniRenderingContext;FFFFLorg/polyfrost/polyui/component/Drawable;)V
 	public abstract fun setHeight (F)V
 	public abstract fun setWidth (F)V
 }
@@ -106,7 +105,6 @@ public class org/polyfrost/oneconfig/api/hud/v1/LegacyHud$LegacyHudComponent : o
 	public fun getHeight ()F
 	public fun getWidth ()F
 	protected fun render ()V
-	public final fun renderLegacy (Ldev/deftu/omnicore/api/client/render/OmniRenderingContext;)V
 	public fun setHeight (F)V
 	public fun setWidth (F)V
 }

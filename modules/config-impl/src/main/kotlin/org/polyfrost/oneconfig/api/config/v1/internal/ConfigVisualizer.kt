@@ -38,6 +38,7 @@ import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.event.State
 import org.polyfrost.polyui.operations.Resize
 import org.polyfrost.polyui.operations.Rotate
 import org.polyfrost.polyui.unit.*
@@ -261,43 +262,42 @@ open class ConfigVisualizer {
                 wrapForAccordion(vis.visualize(node), node.title ?: return@map null, node.description).addHideHandler(node).addResetMenu(root, node).linkTo(node)
             }
 
-        var open = true
+        var open = State(true)
         val e: Property<*>? = tree.getProp("enabled")
         val toWrap: Drawable
         var enabled: Property<Boolean>? = null
         var contentHeight = -1f
         // asm: signature as it prevents re-wrapping of function
         val openInsn: Drawable.(Any?) -> Unit = {
-            open = !open
             val arrow = if (enabled != null) this[1][1] else this[1]
             val anim = Animations.Default.create(0.6.seconds)
-            Rotate(arrow, if (!open) PI else 0.0, false, anim).add()
+            Rotate(arrow, if (!open.value) PI else 0.0, false, anim).add()
             val content = parent[1]
             if (contentHeight == -1f) contentHeight = content.height
-            Resize(parent, width = 0f, height = if (open) -contentHeight else contentHeight, add = true, animation = anim).add()
-            Resize(content, width = 0f, height = if (open) -contentHeight else contentHeight, add = true, animation = anim).add()
+            Resize(parent, width = 0f, height = if (open.value) -contentHeight else contentHeight, add = true, animation = anim).add()
+            Resize(content, width = 0f, height = if (open.value) -contentHeight else contentHeight, add = true, animation = anim).add()
             // won't ever open properly unless it renders at least once (tee hee) :)
-            if (!open) {
+            if (!open.value) {
                 content.height = 1f
                 content.renders = true
             }
         }
 
         if (e != null && e.type == Boolean::class.java && e.getVisualizer() == null) {
-            open = e.getAs()
+            open.value = e.getAs()
             toWrap = Group(
                 Switch(
                     lateralStretch = 2f,
                     size = 21f,
                     state = open
-                ).onToggle {
-                    enabled?.setAs(it)
-                    if (open != it) (parent.parent as Drawable).openInsn(null)
+                ).onChange(open) {
+                    enabled?.set(it)
+                    if (open.value != it) (parent.parent as Drawable).openInsn(null)
                 },
                 Image("polyui/chevron-down.svg").also { it.rotation = PI }
             )
             // lmao
-            open = !open
+            //open.value = !open.value
             @Suppress("UNCHECKED_CAST") // reason: #already-type-checked
             enabled = e as Property<Boolean>
         } else {

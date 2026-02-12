@@ -2,6 +2,7 @@
 
 import dev.deftu.gradle.utils.GameSide
 import dev.deftu.gradle.utils.includeOrShade
+import dev.deftu.gradle.utils.version.MinecraftDropVersion
 import dev.deftu.gradle.utils.version.MinecraftReleaseVersion
 import org.polyfrost.gradle.provideFabricApiDependency
 import org.polyfrost.gradle.provideIncludedDependencies
@@ -39,9 +40,15 @@ repositories {
 
 dependencies {
     if (mcData.version.preprocessorKey >= 11300 || mcData.isFabric) {
-        val mcVersion = mcData.version as MinecraftReleaseVersion
+        val mcVersion = mcData.version
+        val tripleVersion = when (mcVersion) {
+            is MinecraftDropVersion -> Triple(mcVersion.year, mcVersion.drop, mcVersion.patch)
+            is MinecraftReleaseVersion -> Triple(mcVersion.major, mcVersion.minor, mcVersion.patch)
+            else -> error("no")
+        }
+
         provideIncludedDependencies(
-            Triple(mcVersion.major, mcVersion.minor, mcVersion.patch),
+            tripleVersion,
             mcData.loader.friendlyString
         ).forEach {
             includeOrShade(compileOnly(it.dep)!!)
@@ -54,9 +61,9 @@ dependencies {
         }
         includeOrShade(compileOnly(project(":minecraft:$mcData")) { isTransitive = false })
         if (mcData.isFabric) {
-            provideFabricApiDependency(Triple(mcVersion.major, mcVersion.minor, mcVersion.patch)).forEach {
+            provideFabricApiDependency(tripleVersion).forEach {
                 @Suppress("USELESS_CAST")
-                includeOrShade(modCompileOnly(if (it.dep is String) it.dep as String else "${(it.dep as ExternalModuleDependency).group}:${(it.dep as ExternalModuleDependency).name}:${(it.dep as ExternalModuleDependency).version}") {
+                includeOrShade(maybeModCompileOnly(if (it.dep is String) it.dep as String else "${(it.dep as ExternalModuleDependency).group}:${(it.dep as ExternalModuleDependency).name}:${(it.dep as ExternalModuleDependency).version}") {
                     isTransitive = false
                 })
             }

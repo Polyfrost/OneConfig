@@ -12,19 +12,27 @@ public interface StbApi {
 
     void image_write_png(String filename, int w, int h, int comp, ByteBuffer data, int strideInBytes);
 
-    long createFontInfo();
+    StbFontInfo font_CreateFontInfo();
 
-    long createPackRange();
+    long font_CreatePackRange();
 
-    long createPackedCharArray(int capacity);
+    long font_CreatePackedCharArray(int capacity);
 
-    long createPackContext();
+    long font_CreatePackContext();
 
-    boolean initFont(long info, ByteBuffer data);
+    boolean font_InitFont(StbFontInfo info, ByteBuffer data);
 
-    float font_ScaleForMappingEmToPixels(long info, float pixels);
+    int font_FindGlyphIndex(StbFontInfo info, int codepoint);
 
-    void font_GetFontVMetrics(long info, int[] ascent, int[] descent, int[] lineGap);
+    float font_ScaleForMappingEmToPixels(StbFontInfo info, float pixels);
+
+    void font_GetFontVMetrics(StbFontInfo info, int[] ascent, int[] descent, int[] lineGap);
+
+    void font_GetGlyphHMetrics(StbFontInfo info, int glyphIndex, int[] advanceWidth, int[] leftSideBearing);
+
+    ByteBuffer font_GetGlyphBitmap(StbFontInfo info, float scaleX, float scaleY, int glyphIndex, int[] w, int[] h, int[] x_off, int[] y_off);
+
+    ByteBuffer font_GetGlyphSDF(StbFontInfo info, float scale, int glyphIndex, int padding, byte onEdgeValue, float pixelDistScale, int[] w, int[] h, int[] x_off, int[] y_off);
 
     boolean font_PackBegin(long packCtx, ByteBuffer pixels, int width, int height, int strideInBytes, int padding, long allocCtx);
 
@@ -39,8 +47,6 @@ public interface StbApi {
     void font_RangeSetNumChars(long range, int numCharsInRange);
 
     void font_RangeSetChardata(long range, long packedCharArray);
-
-    void free(long struct);
 
     long font_GetPackedGlyph(long packedCharArray, int index);
 
@@ -57,5 +63,10 @@ public interface StbApi {
     float glyph_xoff(long glyph);
 
     float glyph_yoff(long glyph);
+
+    interface StbFontInfo {
+        long address();
+        void free();
+    }
 
 }

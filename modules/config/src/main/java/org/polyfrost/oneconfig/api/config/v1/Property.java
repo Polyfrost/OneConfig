@@ -179,6 +179,13 @@ public abstract class Property<T> extends Node implements Serializable {
         return this;
     }
 
+    public final boolean removeCallback(@NotNull Predicate<T> callback) {
+        if (callbacks != null) {
+            return callbacks.remove(callback);
+        }
+        return false;
+    }
+
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
     public void overwrite(Node with, boolean preserveMissingOptions, boolean skipOverwritten, @Nullable Tree root) {
@@ -218,9 +225,9 @@ public abstract class Property<T> extends Node implements Serializable {
      * <br>
      * The value (and callbacks) are only set/called if the value is different from the previous value (using {@link Objects#equals(Object)}).
      */
-    public final void set(@Nullable T value) {
-        if (Objects.equals(this.get(), value)) return;
-        setReferential(value);
+    public final boolean set(@Nullable T value) {
+        if (Objects.equals(this.get(), value)) return false;
+        return setReferential(value);
     }
 
     /**
@@ -229,7 +236,7 @@ public abstract class Property<T> extends Node implements Serializable {
      * Unlike {@link #set(Object)}, <b>this will always set the value</b>, regardless of if it is the same as the previous value.
      * Use this method with caution.
      */
-    public void setReferential(@Nullable T value) {
+    public boolean setReferential(@Nullable T value) {
         if (callbacks != null) {
             T prev = get();
             set0(value);
@@ -238,13 +245,14 @@ public abstract class Property<T> extends Node implements Serializable {
                     if (p.test(value)) {
                         LOGGER.info("property {} set cancelled by {}", this.getID(), p);
                         set0(prev);
-                        return;
+                        return true;
                     }
                 } catch (Throwable t) {
                     LOGGER.error("failed to call cancellable callback {} on property {}", p, this.getID(), t);
                 }
             }
         } else set0(value);
+        return false;
     }
 
     protected abstract void set0(@Nullable T value);
@@ -274,8 +282,8 @@ public abstract class Property<T> extends Node implements Serializable {
      * This method is unsafe, and will throw a {@link ClassCastException} if the value is not of the correct type.
      */
     @SuppressWarnings("unchecked")
-    public final <V> void setAs(V value) {
-        set((T) WrappingUtils.richCast(value, type));
+    public final <V> boolean setAs(V value) {
+        return set((T) WrappingUtils.richCast(value, type));
     }
 
     /**
@@ -285,8 +293,8 @@ public abstract class Property<T> extends Node implements Serializable {
      * Use this method with caution.
      */
     @SuppressWarnings("unchecked")
-    public final <V> void setAsReferential(V value) {
-        setReferential((T) WrappingUtils.richCast(value, type));
+    public final <V> boolean setAsReferential(V value) {
+        return setReferential((T) WrappingUtils.richCast(value, type));
     }
 
     /**
@@ -454,7 +462,8 @@ public abstract class Property<T> extends Node implements Serializable {
 
         @Override
         @Deprecated
-        public void setReferential(@Nullable Void value) {
+        public boolean setReferential(@Nullable Void value) {
+            return false;
         }
 
         @Override

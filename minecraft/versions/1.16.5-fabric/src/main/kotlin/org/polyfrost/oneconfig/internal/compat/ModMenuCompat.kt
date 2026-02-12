@@ -1,6 +1,6 @@
 package org.polyfrost.oneconfig.internal.compat
 
-//#if FABRIC
+//#if FABRIC && MC < 26.1
 import com.terraformersmc.modmenu.ModMenu
 import com.terraformersmc.modmenu.util.mod.Mod
 import dev.deftu.omnicore.api.client.screen.currentScreen

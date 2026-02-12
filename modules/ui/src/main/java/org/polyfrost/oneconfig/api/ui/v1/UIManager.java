@@ -47,17 +47,19 @@ import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.event.v1.EventDelay;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.HudRenderEvent;
-import org.polyfrost.oneconfig.api.event.v1.events.RenderEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.ResizeEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.WorldEvent;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
+import org.polyfrost.oneconfig.api.ui.v1.api.RendererExt;
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.Settings;
 import org.polyfrost.polyui.component.Component;
 import org.polyfrost.polyui.component.Drawable;
+import org.polyfrost.polyui.data.Font;
 import org.polyfrost.polyui.renderer.Renderer;
 import org.polyfrost.polyui.renderer.Window;
+import org.polyfrost.polyui.unit.Vec2;
 
 import java.util.ServiceLoader;
 import java.util.function.Consumer;
@@ -65,6 +67,7 @@ import java.util.function.Consumer;
 /**
  * Abstraction over the LWJGL3 implementation and loading.
  */
+@SuppressWarnings("DeprecatedIsStillUsed")
 public interface UIManager {
     UIManager INSTANCE = ServiceLoader.load(
             UIManager.class,
@@ -75,6 +78,12 @@ public interface UIManager {
      * Return the renderer instance. This interface specifies operations for rendering UI components. See PolyUI for more information.
      */
     Renderer getRenderer();
+
+    /**
+     * Return the renderer extension instance. This interface specifies additional (debug) operations for the renderer.
+     */
+    @Nullable
+    RendererExt getRendererExt();
 
     /**
      * Return the TinyFD implementation instance. This interface specifies operations for opening native
@@ -108,6 +117,25 @@ public interface UIManager {
     OmniRenderPipeline getRenderPipeline();
 
     /**
+     * Return the current rendering context of the default UI instance.
+     * This method is internal as, well, you shouldn't have any reason to use it.
+     * <br>
+     * In fact, if you are using it, please let us know on the GitHub issues page.
+     */
+    @ApiStatus.Internal
+    OmniRenderingContext getRenderingContext();
+
+    /**
+     * <h1>don't use this method!!</h1>
+     * <br>if you do, I don't like you. you will probably break like, everything.
+     */
+    @Deprecated
+    @ApiStatus.Internal
+    void __setRenderingContext(OmniRenderingContext renderingContext);
+
+    Font getMCFont();
+
+    /**
      * <h1>don't use this method!!</h1>
      */
     @ApiStatus.Internal
@@ -132,8 +160,8 @@ public interface UIManager {
                 framebuffer.clearDepthStencil(1.0, 0);
                 framebuffer.usingToRender((matrixStack, w, h) -> {
                     ctx.pose().runReplacingGlobalState(() -> {
+                        __setRenderingContext(ctx);
                         polyUI.render();
-                        Platform.screen().renderLegacyHuds(ctx);
                     });
 
                     return Unit.INSTANCE;
@@ -157,14 +185,18 @@ public interface UIManager {
                 });
             };
 
-            EventManager.register(RenderEvent.Post.class, event -> {
-                renderer.accept(event.ctx);
-            });
+            // todo temporary reversion: on RenderEvent it just renders nothing (see #592, #579)
+            EventManager.register(HudRenderEvent.class, event -> renderer.accept(event.ctx));
 
             EventManager.register(ResizeEvent.class, event -> {
                 float ratio = Platform.screen().pixelRatio();
                 polyUI.resize(event.newWidth, event.newHeight, false);
-                framebuffer.resize((int) (polyUI.getMaster().getWidth() * ratio), (int) (polyUI.getMaster().getHeight() * ratio));
+
+                long size = polyUI.getSize();
+                int polyUiWidth = (int) Vec2.getX(size);
+                int polyUiHeight = (int) Vec2.getY(size);
+                System.out.println("Resizing to: " + polyUiWidth + "x" + polyUiHeight + " with ratio " + ratio);
+                framebuffer.resize((int) (polyUiWidth * ratio), (int) (polyUiHeight * ratio));
                 polyUI.getWindow().setPixelRatio(ratio);
             });
 

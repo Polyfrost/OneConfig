@@ -4,6 +4,7 @@ import org.lwjgl.stb.*
 import org.lwjgl.stb.STBImage.*
 import org.lwjgl.stb.STBTruetype.*
 import org.lwjgl.system.MemoryUtil
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.api.StbApi
 import java.nio.ByteBuffer
 
@@ -27,26 +28,40 @@ class StbImpl : StbApi {
         STBImageWrite.stbi_write_png(filename, w, h, comp, data, strideInBytes)
     }
 
-    override fun createFontInfo() = STBTTFontinfo.malloc().address()
+    override fun font_CreateFontInfo(): StbApi.StbFontInfo = FontInfo(STBTTFontinfo.malloc())
 
-    override fun createPackRange() = STBTTPackRange.malloc().address()
+    override fun font_CreatePackRange() = STBTTPackRange.malloc().address()
 
-    override fun createPackedCharArray(capacity: Int) = STBTTPackedchar.malloc(capacity).address()
+    override fun font_CreatePackedCharArray(capacity: Int) = STBTTPackedchar.malloc(capacity).address()
 
-    override fun createPackContext() = STBTTPackContext.malloc().address()
+    override fun font_CreatePackContext() = STBTTPackContext.malloc().address()
 
-    override fun initFont(info: Long, data: ByteBuffer) = nstbtt_InitFont(info, MemoryUtil.memAddress(data), 0) != 0
+    override fun font_InitFont(info: StbApi.StbFontInfo, data: ByteBuffer) = nstbtt_InitFont(info.address(), Platform.gl().memAddress(data), 0) != 0
 
-    override fun font_ScaleForMappingEmToPixels(info: Long, pixels: Float) =
-        nstbtt_ScaleForMappingEmToPixels(info, pixels)
+    override fun font_FindGlyphIndex(info: StbApi.StbFontInfo, codepoint: Int) = nstbtt_FindGlyphIndex(info.address(), codepoint)
+
+    override fun font_ScaleForMappingEmToPixels(info: StbApi.StbFontInfo, pixels: Float) =
+        nstbtt_ScaleForMappingEmToPixels(info.address(), pixels)
 
     override fun font_GetFontVMetrics(
-        info: Long,
+        info: StbApi.StbFontInfo,
         ascent: IntArray,
         descent: IntArray,
         lineGap: IntArray
     ) {
-        nstbtt_GetFontVMetrics(info, ascent, descent, lineGap)
+        nstbtt_GetFontVMetrics(info.address(), ascent, descent, lineGap)
+    }
+
+    override fun font_GetGlyphHMetrics(info: StbApi.StbFontInfo, glyphIndex: Int, advanceWidth: IntArray?, leftSideBearing: IntArray?) {
+        nstbtt_GetGlyphHMetrics(info.address(), glyphIndex, advanceWidth, leftSideBearing)
+    }
+
+    override fun font_GetGlyphBitmap(info: StbApi.StbFontInfo, scaleX: Float, scaleY: Float, glyphIndex: Int, w: IntArray?, h: IntArray?, x_off: IntArray?, y_off: IntArray?): ByteBuffer? {
+        return stbtt_GetGlyphBitmap((info as FontInfo).struct, scaleX, scaleY, glyphIndex, w, h, x_off, y_off)
+    }
+
+    override fun font_GetGlyphSDF(info: StbApi.StbFontInfo, scale: Float, glyphIndex: Int, padding: Int, onEdgeValue: Byte, pixelDistScale: Float, w: IntArray?, h: IntArray?, x_off: IntArray?, y_off: IntArray?): ByteBuffer? {
+        return stbtt_GetGlyphSDF((info as FontInfo).struct, scale, glyphIndex, padding, onEdgeValue, pixelDistScale, w, h, x_off, y_off)
     }
 
     override fun font_PackBegin(
@@ -59,7 +74,7 @@ class StbImpl : StbApi {
         allocCtx: Long
     ) = nstbtt_PackBegin(
         packCtx,
-        MemoryUtil.memAddress(pixels),
+        Platform.gl().memAddress(pixels),
         width,
         height,
         strideInBytes,
@@ -77,7 +92,7 @@ class StbImpl : StbApi {
         packedCharArray: Long
     ) = nstbtt_PackFontRange(
         packCtx,
-        MemoryUtil.memAddress(fontData),
+        Platform.gl().memAddress(fontData),
         fontIndex,
         fontSize,
         firstUnicodeCodepointInRange,
@@ -108,10 +123,6 @@ class StbImpl : StbApi {
         MemoryUtil.memPutAddress(range + STBTTPackRange.CHARDATA_FOR_RANGE, packedCharArray)
     }
 
-    override fun free(struct: Long) {
-        MemoryUtil.nmemFree(struct)
-    }
-
     override fun font_GetPackedGlyph(packedCharArray: Long, index: Int) = packedCharArray + index * STBTTPackedchar.SIZEOF
 
     override fun glyph_x0(glyph: Long) = STBTTPackedchar.nx0(glyph)
@@ -127,4 +138,9 @@ class StbImpl : StbApi {
     override fun glyph_xoff(glyph: Long) = STBTTPackedchar.nxoff(glyph)
 
     override fun glyph_yoff(glyph: Long) = STBTTPackedchar.nyoff(glyph)
+
+    private class FontInfo(val struct: STBTTFontinfo) : StbApi.StbFontInfo {
+        override fun address() = struct.address()
+        override fun free() = struct.free()
+    }
 }

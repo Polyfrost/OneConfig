@@ -1,10 +1,7 @@
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
-import org.lwjgl.nanovg.NSVGImage
-import org.lwjgl.nanovg.NanoSVG.nsvgCreateRasterizer
-import org.lwjgl.nanovg.NanoSVG.nsvgDelete
-import org.lwjgl.nanovg.NanoSVG.nsvgParse
-import org.lwjgl.nanovg.NanoSVG.nsvgRasterize
+import org.lwjgl.nanovg.NanoSVG.*
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.api.NanoSvgApi
 import java.nio.ByteBuffer
 
@@ -17,7 +14,7 @@ class NanoSvgImpl : NanoSvgApi {
     }
 
     override fun delete(address: Long) {
-        nsvgDelete(NSVGImage.create(address))
+        nnsvgDelete(address)
     }
 
     override fun rasterize(
@@ -30,7 +27,7 @@ class NanoSvgImpl : NanoSvgApi {
         h: Int,
         stride: Int
     ) {
-        nsvgRasterize(handle, NSVGImage.create(address), x, y, scale, data, w, h, stride)
+        nnsvgRasterize(handle, address, x, y, scale, Platform.gl().memAddress(data), w, h, stride)
     }
 
     private var handle: Long = -1L

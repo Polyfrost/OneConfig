@@ -23,8 +23,8 @@ pluginManagement {
     }
 
     plugins {
-        kotlin("jvm") version("2.2.10")
-        id("dev.deftu.gradle.multiversion-root") version("2.69.0") // Update in libs.versions.toml too!!!
+        kotlin("jvm") version("2.3.0")
+        id("dev.deftu.gradle.multiversion-root") version("2.73.0") // Update in libs.versions.toml too!!!
     }
 }
 
@@ -113,11 +113,17 @@ listOf(
 
     "1.21.11-neoforge",
     "1.21.11-fabric",
+
+    "26.1-fabric"
 ).forEach { version ->
     val proj = ":minecraft:$version"
     include(proj)
     project(proj).apply {
-        projectDir = file("minecraft/versions/$version")
+        projectDir = file("minecraft/versions/$version").also {
+            if (!it.exists() && !it.mkdirs()) {
+                throw IllegalStateException("Could not create project directory: ${it.absolutePath}")
+            }
+        }
         buildFileName = "../../build.gradle.kts"
     }
     val bootstrapProj = ":bootstrap:bootstrap-$version"
@@ -131,10 +137,15 @@ listOf(
             "1.21.8-fabric",
             "1.21.10-fabric",
             "1.21.11-fabric",
+//            "26.1-fabric"
         ).contains(version)) {
         include(bootstrapProj)
         project(bootstrapProj).apply {
-            projectDir = file("bootstrap/versions/$version")
+            projectDir = file("bootstrap/versions/$version").also {
+                if (!it.exists() && !it.mkdirs()) {
+                    throw IllegalStateException("Could not create project directory: ${it.absolutePath}")
+                }
+            }
             buildFileName = "../../build.gradle.kts"
         }
     }
