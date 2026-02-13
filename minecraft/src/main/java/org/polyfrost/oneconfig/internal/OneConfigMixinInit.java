@@ -83,6 +83,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
         //#if FORGE
         mixins.add("events.Mixin_ChatReceiveEvent_Forge");
+        mixins.add("events.Mixin_ScreenOpenEvent_Forge");
         //#if MC < 1.13
         mixins.add("compat.Mixin_LegacyOneConfigCarryover");
         mixins.add("compat.Mixin_OverwriteLegacyCommand");
@@ -92,8 +93,11 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("hidpi.Mixin_FixLoadingScreenHiDPI");
         //#endif
         //#else
+        //#if MC < 1.21.2
         //$$ mixins.add("fabric.Mixin_LoadShaderInvoker_Fabric");
+        //#endif
         //$$ mixins.add("fabric.Mixin_ChatReceiveEvent_Fabric");
+        //$$ mixins.add("events.Mixin_ScreenOpenEvent_Fabric");
         //#endif
 
         //#if MC >= 1.16

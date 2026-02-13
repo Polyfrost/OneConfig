@@ -71,12 +71,12 @@ public final class BlurHandler {
 
     private BlurHandler() {
         EventHandler.ofRemoving(ScreenOpenEvent.class, e -> reloadBlur(e.getScreen())).register();
+        //#if MC <= 1.21.5
         EventManager.register(TickEvent.End.class, () -> {
             if (su == null) return;
-            //#if MC <= 1.21.5
             su.set(animation.update(50_000_000L)); // TODO: Find GlUniform.set alternative. Blur isnt cinfigured to work anyways with 1.21.5 anyways
-            //#endif
         });
+        //#endif
     }
 
     public static void init() {
@@ -195,7 +195,7 @@ public final class BlurHandler {
 
     private ShaderGroup getShaderGroup() {
         //#if MC >= 1.21.2
-        //$$ if (true) return null;
+        //$$ return null;
         //#endif
         return Minecraft.getMinecraft()
                 //#if MC >= 1.21.2
