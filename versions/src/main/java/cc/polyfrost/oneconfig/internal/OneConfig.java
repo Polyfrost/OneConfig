@@ -36,6 +36,7 @@ import cc.polyfrost.oneconfig.internal.config.compatibility.forge.ForgeCompat;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
+import cc.polyfrost.oneconfig.internal.hacks.ByeSkyClientHack;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
@@ -172,6 +173,7 @@ public class OneConfig {
         HypixelUtils.INSTANCE.initialize();
         EventManager.INSTANCE.register(KeyBindHandler.INSTANCE);
         ConfigCore.sortMods();
+        ByeSkyClientHack.INSTANCE.initialize();
 
         initialized = true;
     }
