@@ -415,7 +415,7 @@ publishing {
     repositories {
         maven {
             name = "releases"
-            url = uri("https://repo.polyfrost.cc/releases")
+            url = uri("https://repo.polyfrost.org/releases")
             credentials(PasswordCredentials::class)
             authentication {
                 create<BasicAuthentication>("basic")
@@ -423,7 +423,7 @@ publishing {
         }
         maven {
             name = "snapshots"
-            url = uri("https://repo.polyfrost.cc/snapshots")
+            url = uri("https://repo.polyfrost.org/snapshots")
             credentials(PasswordCredentials::class)
             authentication {
                 create<BasicAuthentication>("basic")
@@ -431,7 +431,7 @@ publishing {
         }
         maven {
             name = "private"
-            url = uri("https://repo.polyfrost.cc/private")
+            url = uri("https://repo.polyfrost.org/private")
             credentials(PasswordCredentials::class)
             authentication {
                 create<BasicAuthentication>("basic")
