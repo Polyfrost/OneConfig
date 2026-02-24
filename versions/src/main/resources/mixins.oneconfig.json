@@ -12,13 +12,11 @@
     "EntityPlayerSPMixin",
     "EntityRendererMixin",
     "GuiIngameForgeMixin",
-    "GuiMainMenuMixin",
     "MinecraftMixin",
     "NetworkManagerMixin",
     "OptifineConfigMixin",
     "RedactionNameHighlightMixin",
     "ShaderGroupAccessor",
-    "SkyClientMainMenuMixin",
     "SkyClientUpdaterMixin",
     "VigilantMixin",
     "WorldClientMixin"
