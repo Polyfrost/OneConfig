@@ -30,13 +30,19 @@ import cc.polyfrost.oneconfig.internal.hacks.ByeSkyClientHack;
 import net.minecraft.client.gui.GuiMainMenu;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Pseudo
 @Mixin(targets = "co.skyclient.scc.gui.SkyClientMainMenu")
 public class SkyClientMainMenuMixin extends GuiMainMenu {
 
-    @Override
-    public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-        ByeSkyClientHack.INSTANCE.overwriteGui(mouseX, mouseY, partialTicks);
+    @Inject(method = "drawScreen", at = @At("HEAD"), cancellable = true)
+    private void onDrawScreen(int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
+        if (ByeSkyClientHack.INSTANCE.isSkyClient()) {
+            ci.cancel();
+            ByeSkyClientHack.INSTANCE.overwriteGui(mouseX, mouseY, partialTicks);
+        }
     }
 }
