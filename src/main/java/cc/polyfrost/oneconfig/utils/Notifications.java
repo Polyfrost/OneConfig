@@ -42,7 +42,6 @@ import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.asset.Icon;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -254,8 +253,6 @@ public final class Notifications {
 
     private Animation dummyAnimation;
     private static final Icon DEFAULT_ICON = new Icon(SVGs.ONECONFIG_HEAD_DARK);
-    private static final File crashPatchSkyClientFile = new File("./OneConfig/CrashPatch/SKYCLIENT");
-    private static final File oldCrashPatchSkyClientFile = new File("./W-OVERFLOW/CrashPatch/SKYCLIENT");
 
     @Subscribe
     private void onTickEvent(TickEvent event) {
@@ -264,8 +261,7 @@ public final class Notifications {
                 Preferences.firstLaunch = false;
                 Preferences.getInstance().save();
                 dummyAnimation = new EaseInOutQuad(4000, 0, 1, false);
-                boolean isSkyClient = isSkyClient();
-                String message = isSkyClient ? "SkyClient now includes OneConfig, the next-gen config library for Minecraft. You can now simply press '" + Preferences.oneConfigKeyBind.getDisplay() + "' to configure all your mods!" : "Press '" + Preferences.oneConfigKeyBind.getDisplay() + "' to open OneConfig, the next-gen config library for Minecraft.";
+                String message = "Press '" + Preferences.oneConfigKeyBind.getDisplay() + "' to open OneConfig, the next-gen config library for Minecraft.";
                 send("Welcome to OneConfig!", message, DEFAULT_ICON, -1f, () -> {
                     if (Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui || Preferences.oneconfigOpened) {
                         Preferences.oneconfigOpened = true;
@@ -277,11 +273,5 @@ public final class Notifications {
                 }, () -> GuiUtils.displayScreen(OneConfigGui.create()));
             }
         }
-    }
-
-    private boolean isSkyClient() {
-        if (crashPatchSkyClientFile.exists()) return true;
-        if (oldCrashPatchSkyClientFile.exists()) return true;
-        return Platform.getLoaderPlatform().getLoadedMods().stream().anyMatch(mod -> mod != null && StringUtils.contains(mod.id, "skyclient") || StringUtils.contains(mod.id, "skyblockclient") || StringUtils.equals(mod.id, "scc"));
     }
 }
