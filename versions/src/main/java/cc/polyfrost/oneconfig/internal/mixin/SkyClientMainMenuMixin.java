@@ -38,7 +38,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(targets = "co.skyclient.scc.gui.SkyClientMainMenu")
 public class SkyClientMainMenuMixin extends GuiMainMenu {
 
-    @Inject(method = "drawScreen", at = @At("HEAD"), cancellable = true)
+    @Inject(method = {"drawScreen", "func_73863_a"}, at = @At("HEAD"), cancellable = true)
     private void onDrawScreen(int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
         if (ByeSkyClientHack.INSTANCE.isSkyClient()) {
             ci.cancel();
