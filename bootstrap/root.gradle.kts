@@ -1,3 +1,5 @@
+import com.replaymod.gradle.preprocess.ProjectGraphNode
+import com.replaymod.gradle.preprocess.RootPreprocessExtension
 import dev.deftu.gradle.utils.ModData
 import dev.deftu.gradle.utils.ProjectData
 
@@ -8,6 +10,22 @@ plugins {
 subprojects {
     val projectData = ProjectData.from(rootProject)
     ModData.populateFrom(project, projectData)
+
+    // Force evaluation of the previous project in the preprocess chain before this project configures.
+    // Prevents "Resolution was attempted without an exclusive lock" when using configure-on-demand + parallel,
+    // since preprocessCode needs to resolve the linked project's compileClasspath.
+    (parent?.extensions?.findByType(RootPreprocessExtension::class.java))?.rootNode?.let { rootNode ->
+        val nodes = mutableListOf<ProjectGraphNode>()
+        fun recurse(node: ProjectGraphNode) {
+            nodes.add(node)
+            for ((child) in node.links) recurse(child)
+        }
+        recurse(rootNode)
+        val prevByProject = (1 until nodes.size).associate { nodes[it].project to nodes[it - 1].project }
+        prevByProject[project.name]?.let { prevProject ->
+            evaluationDependsOn(":bootstrap:$prevProject")
+        }
+    }
 }
 
 preprocess {
