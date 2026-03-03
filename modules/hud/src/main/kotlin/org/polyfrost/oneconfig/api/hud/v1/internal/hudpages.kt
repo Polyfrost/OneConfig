@@ -97,7 +97,7 @@ fun HudsPage(huds: Collection<Hud<*>>): Drawable {
             Group(
                 children = huds.mapNotNull {
                     if (it.hidden) return@mapNotNull null
-                    val preview = it.buildNew()
+                    val preview = HudFactory.buildForPickerScreen(it)
                     val obj = Block(
                         preview,
                         alignment = alignC,
@@ -147,13 +147,13 @@ fun HudSettingsPage(hud: Hud<*>): Drawable {
             state = state
         ).onInit { color = polyUI.colors.component.bgDeselected }.onChange(state) { index: Int ->
             if (index == 0) {
-                parent[1] = HudVisualizer.get(hud.tree)
+                parent[1] = HudConfigVisualizer.get(hud.tree)
             } else {
                 parent[1] = makeHudDesigner(hud)
             }
             false
         },
-        HudVisualizer.get(hud.tree),
+        HudConfigVisualizer.get(hud.tree),
         alignment = Align(wrap = Align.Wrap.NEVER, mode = Align.Mode.Vertical, line = Align.Line.Start),
     ).namedId("HudSettingsPage")
 }
@@ -448,11 +448,11 @@ fun Drawable.titled(title: String, pad: Vec2 = Vec2(2f, 7f)): Drawable {
     )
 }
 
-inline fun <reified T> repeat(n: Int, block: (Int) -> T): Array<T> {
+private inline fun <reified T> repeat(n: Int, block: (Int) -> T): Array<T> {
     return Array(n) { block(it) }
 }
 
-fun <E> MutableList<E>.set(a: E, b: E, c: E): MutableList<E> {
+private fun <E> MutableList<E>.set(a: E, b: E, c: E): MutableList<E> {
     this.clear()
     this.add(a)
     this.add(b)
@@ -460,7 +460,7 @@ fun <E> MutableList<E>.set(a: E, b: E, c: E): MutableList<E> {
     return this
 }
 
-fun indexToAlign(index: Int, old: Align): Align {
+private fun indexToAlign(index: Int, old: Align): Align {
     val main = when (index) {
         0, 3, 6 -> Align.Content.Start
         1, 4, 7 -> Align.Content.Center
@@ -474,7 +474,7 @@ fun indexToAlign(index: Int, old: Align): Align {
     return Align(main = main, cross = cross, mode = old.mode, padBetween = old.padBetween, wrap = old.wrap)
 }
 
-fun alignToIndex(align: Align): Int {
+private fun alignToIndex(align: Align): Int {
     val row = when (align.cross) {
         Align.Content.Center -> 3
         Align.Content.End -> 6

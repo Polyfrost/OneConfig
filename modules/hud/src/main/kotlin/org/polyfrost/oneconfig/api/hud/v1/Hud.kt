@@ -35,26 +35,15 @@ import org.polyfrost.oneconfig.api.config.v1.Properties.simple
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.annotations.Keybind
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
-import org.polyfrost.oneconfig.api.config.v1.getProp
-import org.polyfrost.oneconfig.api.event.v1.events.HudEvent
-import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent
-import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler
 import org.polyfrost.oneconfig.api.hud.v1.HudManager.LOGGER
-import org.polyfrost.oneconfig.api.ui.v1.keybind.OCKeybindHelper
+import org.polyfrost.oneconfig.api.hud.v1.internal.HudConfigVisualizer
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.impl.Block
-import org.polyfrost.polyui.component.impl.Text
 import org.polyfrost.polyui.input.PolyBind
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.fastAll
-import org.polyfrost.polyui.utils.fastEachIndexed
-import java.util.function.Consumer
-import kotlin.experimental.and
-import kotlin.experimental.or
-import kotlin.io.path.exists
-import kotlin.random.Random
 
 /**
  * HUD (Heads Up Display) is a component that is rendered on top of the screen. They are used for displaying information to the user, such as the time, or the player's health.
@@ -111,20 +100,20 @@ abstract class Hud<T : Drawable>(id: String, title: String, val category: Catego
     fun make(with: Tree? = null): Hud<T> {
         if (tree != null) throw IllegalArgumentException("HUD is already made, it cannot be made again")
         val out = if (multipleInstancesAllowed()) clone() else this
-        val id = with?.id ?: genRid()
+        val id = with?.id ?: HudConfigVisualizer.makeIDForHudTree(this)
         val tree = ConfigManager.collect(out, id)
         out.apply {
             tree.title = title
             tree.addMetadata("category", category)
             tree.addMetadata("hidden", true)
-            val hud = get()
-            hud.rawRescalePosition = true
-            tree["x"] = ktProperty(hud::x)
-            tree["y"] = ktProperty(hud::y)
-            inspect(hud, tree)
+            val hudComponent = get()
+            hudComponent.rawRescalePosition = true
+            tree["x"] = ktProperty(hudComponent::x)
+            tree["y"] = ktProperty(hudComponent::y)
+            HudConfigVisualizer.addHudConfigEntries(hudComponent, tree)
             addToSerialized(tree)
             tree["hudClass"] = simple(value = out::class.java.name)
-            addHideHandlers(tree)
+            HudConfigVisualizer.addDefaultCallbacks(out, tree)
             addCallbacks(tree)
             if (with == null) LOGGER.info("generated new HUD config for $title -> ${tree.id}")
             ConfigManager.active().register(tree)
@@ -138,92 +127,6 @@ abstract class Hud<T : Drawable>(id: String, title: String, val category: Catego
      * This method is called during config tree initialization. it is
      */
     protected open fun addCallbacks(tree: Tree) {
-        // initial
-        tree.getProp<Boolean>("staticWidth")?.addCallback {
-            bgUseSetSize = it
-            false
-        }
-    }
-
-    @Suppress("UnstableApiUsage")
-    private var bgUseSetSize: Boolean
-        get() = (getBackground()?.createdWithSetSize ?: false)
-        set(value) {
-            getBackground()?.let {
-                if (value) it.layoutFlags = it.layoutFlags or 0b00000010
-                else it.layoutFlags = it.layoutFlags and 0b11111101.toByte()
-            }
-        }
-
-    private fun addHideHandlers(tree: Tree) {
-        val hideHandler = Consumer<HudEvent> { (opened): HudEvent ->
-            hidden = opened
-        }
-        val hideF3Handler = EventHandler.of(HudEvent.Debug::class.java, hideHandler)
-        val hideTabHandler = EventHandler.of(HudEvent.Tab::class.java, hideHandler)
-        val hideScreenHandler = EventHandler.of(ScreenOpenEvent::class.java) { (screen): ScreenOpenEvent ->
-            hidden = screen != null
-            // asm: don't hide when we open the hud editor
-            // because otherwise you couldn't edit it (which sucks)
-            if (HudManager.isEditing) hidden = false
-        }
-        tree.getProp<Boolean>("showInF3")?.addCallback {
-            if (!it) hideF3Handler.register()
-            else hideF3Handler?.unregister()
-            false
-        }
-        tree.getProp<Boolean>("showInTab")?.addCallback {
-            if (!it) hideTabHandler.register()
-            else hideTabHandler?.unregister()
-            false
-        }
-        tree.getProp<Boolean>("showInScreens")?.addCallback {
-            if (!it) hideScreenHandler.register()
-            else hideScreenHandler?.unregister()
-            false
-        }
-
-        showKey = OCKeybindHelper.builder().does { hidden = !it }.register()
-        toggleKey = OCKeybindHelper.builder().does { if (it) hidden = !hidden }.register()
-    }
-
-    private fun inspect(cmp: Component, tree: Tree) {
-        if (cmp is Drawable) {
-            tree["color"] = ktProperty(cmp::_color)
-        }
-        when (cmp) {
-            is Block -> {
-                tree["boarderColor"] = ktProperty(cmp::borderColor)
-                tree["boarderWidth"] = ktProperty(cmp::borderWidth)
-            }
-
-            is Text -> {
-                tree["font"] = ktProperty(cmp::_font)
-                tree["fontSize"] = ktProperty(cmp::uFontSize)
-            }
-        }
-        cmp.children?.fastEachIndexed { i, it ->
-            val child = Tree.tree("$i")
-            inspect(it, child)
-            tree.put(child)
-        }
-    }
-
-    private fun genRid(): String {
-        val folder = ConfigManager.active().folder
-        val init = "huds/${id}"
-        if (!folder.resolve(init).exists()) return init
-        var p = "huds/${Random.Default.nextInt(0, 100)}-${id}"
-        var i = 0
-        while (folder.resolve(p).exists()) {
-            p = "huds/${Random.Default.nextInt(0, 999)}-${id}"
-            when (i++) {
-                100 -> LOGGER.warn("they all say that it gets better")
-                500 -> LOGGER.warn("yeah they all say that it gets better;; it gets better the more you grow")
-                999 -> throw IllegalStateException("... but what if i dont?")
-            }
-        }
-        return p
     }
 
     /**
@@ -286,22 +189,7 @@ abstract class Hud<T : Drawable>(id: String, title: String, val category: Catego
      *
      * this method will be called once, and once only.
      */
-    @MustBeInvokedByOverriders
     open fun setup() {
-        if (isReal) {
-            // asm: add all the background properties to the tree as well (we have to do it here because in make, the background is not be created yet)
-            val cmp = getBackground() ?: get()
-            tree["alignment"] = ktProperty(cmp::alignment)
-            tree["alpha"] = ktProperty(cmp::alpha)
-            tree["scaleX"] = ktProperty(cmp::scaleX)
-            tree["scaleY"] = ktProperty(cmp::scaleY)
-            tree["rotation"] = ktProperty(cmp::rotation)
-            tree["skewX"] = ktProperty(cmp::skewX)
-            tree["skewY"] = ktProperty(cmp::skewY)
-            tree["padding"] = ktProperty(cmp::padding)
-
-            if (cmp is Block) tree["radii"] = ktProperty(cmp::radii)
-        }
     }
 
     /**
@@ -378,7 +266,7 @@ abstract class Hud<T : Drawable>(id: String, title: String, val category: Catego
     @JvmName("minimumSize")
     open fun minimumSize(): Vec2 = Vec2.ZERO
 
-    open fun remove() {  }
+    open fun remove() {}
 
     /**
      * This method will create a new instance of the HUD. It is key to the functionality of the HUD system.

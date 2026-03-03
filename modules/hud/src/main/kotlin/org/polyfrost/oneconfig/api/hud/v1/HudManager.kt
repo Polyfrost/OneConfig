@@ -35,6 +35,11 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.eventHandler
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent
+import org.polyfrost.oneconfig.api.hud.v1.HudManager.getHudsOfType
+import org.polyfrost.oneconfig.api.hud.v1.HudManager.getProvider
+import org.polyfrost.oneconfig.api.hud.v1.HudManager.removeHud
+import org.polyfrost.oneconfig.api.hud.v1.HudManager.toggleAllHuds
+import org.polyfrost.oneconfig.api.hud.v1.HudManager.unregister
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.api.hud.v1.internal.*
 import org.polyfrost.oneconfig.api.platform.v1.Platform
@@ -66,23 +71,7 @@ import kotlin.io.path.writeText
 object HudManager {
     internal val LOGGER = LogManager.getLogger("OneConfig/HUD")
     private val hudProviders = HashMap<Class<out Hud<*>>, Hud<*>>()
-    private val snapLineColor = rgba(170, 170, 170, 0.8f)
-
     private var init = false
-
-    /**
-     * the vertical line x position used for snapping.
-     * Do not set this value.
-     */
-    @ApiStatus.Internal
-    var slinex = -1f
-
-    /**
-     * the horizontal line y position used for snapping.
-     * Do not set this value.
-     */
-    @ApiStatus.Internal
-    var sliney = -1f
 
     /**
      * Whether the HUD editor panel is currently open, i.e. collapsed or expanded.
@@ -262,7 +251,7 @@ object HudManager {
                 used.add(cls)
                 val hud = h.make(data)
                 activeInstances.add(hud)
-                val bg = hud.build()
+                val bg = HudFactory.build(hud)
                 polyUI.master.addChild(bg, recalculate = false)
                 val x = data.getProp("x")?.getAs<Number?>()?.toFloat() ?: 0f
                 val y = data.getProp("y")?.getAs<Number?>()?.toFloat() ?: 0f
@@ -294,7 +283,7 @@ object HudManager {
             val default = h.defaultPosition()
             if (!default.isPositive) return@forEach
             val hud = h.make()
-            val theHud = hud.build()
+            val theHud = HudFactory.build(hud)
             theHud.x = default.x
             theHud.y = default.y
             activeInstances.add(hud)
@@ -310,7 +299,7 @@ object HudManager {
             if (useGuiScale) setAllHudsScaleFactor(OmniResolution.scaleFactor.toFloat())
             // in the case the screen crashes or doesn't exit cleanly, we force it to close here
             // as otherwise it can end up being stuck open. seems to be confined to modern only. see #505.
-            if(screen == null && isEditing) editorClose()
+            if (screen == null && isEditing) editorClose()
         }
 
         LOGGER.info("HUD load took {}ms", (System.nanoTime() - now) / 1_000_000.0)
@@ -352,7 +341,7 @@ object HudManager {
     private fun editorClose() {
         toggleHudPicker()
         polyUI.unfocus()
-        removeMenu()
+        HudScreenOverlay.closeMenu()
         ConfigManager.active().saveAll()
     }
 
@@ -362,7 +351,7 @@ object HudManager {
     @ApiStatus.Internal
     fun toggle() {
         panelOpen = !panelOpen
-        removeMenu()
+        HudScreenOverlay.closeMenu()
         val pg = panel
         if (!panelOpen) {
             Move(pg, polyUI.size.x - 32f, pg.y, false, Animations.Default.create(0.2.seconds)).add()
@@ -450,19 +439,10 @@ object HudManager {
                 hudsPage,
                 size = Vec2(500f, 1048f),
                 alignment = Align(line = Align.Line.Start, pad = Vec2(0f, 16f)),
-            ).setPalette { page.bg }.withBorder().apply {
-                addOperation {
-                    if (polyUI.mouseDown) {
-                        if (slinex != -1f) polyUI.renderer.line(slinex, 0f, slinex, polyUI.size.y, snapLineColor, 1f)
-                        if (sliney != -1f) polyUI.renderer.line(0f, sliney, polyUI.size.x, sliney, snapLineColor, 1f)
-                    } else {
-                        slinex = -1f
-                        sliney = -1f
-                    }
-                }
-            },
+            ).setPalette { page.bg }.withBorder(),
             size = Vec2(0f, 1080f)
         ).also {
+            HudScreenOverlay.addSnapLinesRenderer(it)
             it.rawRescalePosition = true
             it.rawRescaleSize = true
         }
