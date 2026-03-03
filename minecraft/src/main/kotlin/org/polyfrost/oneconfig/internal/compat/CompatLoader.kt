@@ -9,6 +9,7 @@ import org.polyfrost.oneconfig.internal.ui.OneConfigUI
 import java.net.URI
 
 object CompatLoader {
+    private val forcedModId = ThreadLocal<String?>()
 
     private var bypassDelay = false
 
@@ -25,11 +26,18 @@ object CompatLoader {
         "org.polyfrost.oneconfig",
         "java.lang",
         "net.fabric",
-        "net.azureaaron.dandelion",
+        "net.azureaaron.dandelion.deps.moulconfig",
+        "net.azureaaron.dandelion_bp.deps.moulconfig",
+        "net.azureaaron.dandelion_bp.impl.moulconfig",
+        "moe.nea.firmament.deps.moulconfig",
         "kotlin"
     )
 
     fun findFirstMod(): ModInfo? {
+        forcedModId.get()?.let { forcedId ->
+            val forcedMod = OmniLoader.mods.firstOrNull { it.id == forcedId }
+            if (forcedMod != null) return forcedMod
+        }
         Thread.currentThread().stackTrace.firstOrNull {
             illegalPaths.none { path -> it.className.startsWith(path) }
         }?.let { element ->
@@ -45,8 +53,26 @@ object CompatLoader {
     }
 
     fun markFirstModAsSkip() {
-        findFirstMod()?.let { nativeLoadedConfigs.add(it.id)}
+        val mod = findFirstMod()
+        if (mod == null) return
+        nativeLoadedConfigs.add(mod.id)
     }
+
+    fun withForcedModId(modId: String?, block: () -> Unit) {
+        if (modId == null) {
+            block()
+            return
+        }
+        val prev = forcedModId.get()
+        forcedModId.set(modId)
+        try {
+            block()
+        } finally {
+            forcedModId.set(prev)
+        }
+    }
+
+    fun hasMod(id: String): Boolean = OmniLoader.mods.any { it.id == id }
 
     val extraCompatConfigs get() = OneConfigUI.extraConfigTrees
 

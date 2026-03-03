@@ -222,6 +222,7 @@ open class ConfigVisualizer {
 
         val list = options.getOrPut(category) { LinkedHashMap(4) }.getOrPut(subcategory) { ArrayList(8) }
         if (node is Property<*>) {
+            node.addDirtyTracking(root)
             val vis = node.getVisualizer() ?: return
             list.add(wrap(vis.visualize(node), node.title, node.description, icon).addHideHandler(node).addResetMenu(root, node).linkTo(node))
         } else {
@@ -233,6 +234,16 @@ open class ConfigVisualizer {
             }
 
             list.add(makeAccordion(root, node, title, node.description, icon).linkTo(node))
+        }
+    }
+
+    private fun Property<*>.addDirtyTracking(root: Tree) {
+        // A property can be visualized multiple times (e.g. no-cache trees), so avoid stacking duplicate callbacks.
+        if (getMetadata<Boolean>("oneconfig:dirty_tracking") == true) return
+        addMetadata("oneconfig:dirty_tracking", true)
+        addCallback {
+            root.addMetadata("oneconfig:dirty", true)
+            false
         }
     }
 

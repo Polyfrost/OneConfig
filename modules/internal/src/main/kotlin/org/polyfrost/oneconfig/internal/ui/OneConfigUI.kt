@@ -128,7 +128,10 @@ object OneConfigUI {
             builder.translatorDelegate("assets/oneconfig")
             builder.onClose { _ ->
                 for (t in ConfigManager.active().trees()) {
-                    ConfigManager.active().save(t)
+                    if (t.getMetadata<Boolean>("oneconfig:dirty") == true) {
+                        ConfigManager.active().save(t)
+                        t.addMetadata("oneconfig:dirty", false)
+                    }
                 }
                 ui[1].accept(Event.Lifetime.Removed)
             }

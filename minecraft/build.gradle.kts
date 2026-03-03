@@ -159,6 +159,22 @@ val skyhanniRelocatedConfiguration: Configuration by configurations.creating {
     attributes { attribute(skyhanniRelocated, true) }
 }
 
+val firmamentRelocated = registerRelocationAttribute("relocate-firmament-moulconfig") {
+    relocate("io.github.notenoughupdates.moulconfig", "moe.nea.firmament.deps.moulconfig")
+}
+
+val firmamentRelocatedConfiguration: Configuration by configurations.creating {
+    attributes { attribute(firmamentRelocated, true) }
+}
+
+val dandelionBpRelocated = registerRelocationAttribute("relocate-dandelion-bp-moulconfig") {
+    relocate("io.github.notenoughupdates.moulconfig", "net.azureaaron.dandelion_bp.deps.moulconfig")
+}
+
+val dandelionBpRelocatedConfiguration: Configuration by configurations.creating {
+    attributes { attribute(dandelionBpRelocated, true) }
+}
+
 dependencies {
     data class CompatDependency(
         val all: String? = null,
@@ -191,6 +207,10 @@ dependencies {
     compileOnlyCompat("org.notenoughupdates.moulconfig:common:3.11.0")
     skyhanniRelocatedConfiguration("org.notenoughupdates.moulconfig:common:3.11.0")
     compileOnly(prebundle(skyhanniRelocatedConfiguration))
+    firmamentRelocatedConfiguration("org.notenoughupdates.moulconfig:common:3.11.0")
+    compileOnly(prebundle(firmamentRelocatedConfiguration))
+    dandelionBpRelocatedConfiguration("org.notenoughupdates.moulconfig:common:3.11.0")
+    compileOnly(prebundle(dandelionBpRelocatedConfiguration))
 
     fun rconfig(mcVersion: String, modVersion: String, mcVersionOverride: String = mcVersion) =
         mcVersion to CompatDependency("com.teamresourceful.resourcefulconfig:resourcefulconfig-common-$mcVersionOverride:$modVersion")

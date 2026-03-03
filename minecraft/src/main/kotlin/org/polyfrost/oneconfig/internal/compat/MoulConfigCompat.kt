@@ -30,7 +30,10 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.internal.DynamicPolyImage
 import org.polyfrost.oneconfig.internal.utils.MoulConfigGuiOptionEditorDropdownAccessor
 import org.polyfrost.polyui.color.PolyColor
+import org.polyfrost.polyui.color.argb
+import org.polyfrost.polyui.color.asMutable
 import java.lang.reflect.Type
+import java.awt.Color
 import java.util.*
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.milliseconds
@@ -40,14 +43,68 @@ import org.polyfrost.oneconfig.relocator.annotations.MoulConfig as Moulconfig
 
 @Moulconfig
 data object MoulConfigCompat {
-
     @JvmStatic
     fun parseMoulconfig(processor: MoulConfigProcessor<*>, config: MoulConfig) {
         runCatching {
+            val categories = processor.allCategories.values
+            val tree = parseConfigTree(config, categories)
+            ConfigManager.active().register(tree)
             CompatLoader.markFirstModAsSkip()
-            ConfigManager.active().register(parseConfigTree(config, processor.allCategories.values))
         }.onFailure {
             println("Failed to load moulconfig compat for $this due to $it")
+        }
+    }
+
+    @JvmStatic
+    fun parseMoulconfigFromEditor(categories: Collection<ProcessedCategory>, config: MoulConfig) {
+        val mod = CompatLoader.findFirstMod()
+        if (mod != null && CompatLoader.nativeLoadedConfigs.contains(mod.id)) {
+            return
+        }
+        runCatching {
+            val tree = parseConfigTree(config, categories)
+            ConfigManager.active().register(tree)
+            CompatLoader.markFirstModAsSkip()
+        }.onFailure {
+            println("Failed to load moulconfig compat for $this due to $it")
+        }
+    }
+
+    @JvmStatic
+    fun parseMoulconfigFromUnknownEditor(categories: Collection<*>, config: Any?) {
+        if (config == null) return
+        val configClass = config::class.java.name
+        val (candidates, forcedModIds) = when {
+            configClass.startsWith("moe.nea.firmament.deps.moulconfig.") ->
+                listOf("MoulConfigCompat_firmament") to listOf("firmament")
+            configClass.startsWith("moe.nea.firmament.compat.moulconfig.") ->
+                listOf("MoulConfigCompat_firmament") to listOf("firmament")
+            configClass.startsWith("net.azureaaron.dandelion_bp.deps.moulconfig.") ->
+                listOf("MoulConfigCompat_dandelion_bp", "MoulConfigCompat_dandelion") to listOf("skyblocker", "dandelion-bp")
+            configClass.startsWith("net.azureaaron.dandelion_bp.impl.moulconfig.") ->
+                listOf("MoulConfigCompat_dandelion_bp", "MoulConfigCompat_dandelion") to listOf("skyblocker", "dandelion-bp")
+            configClass.startsWith("net.azureaaron.dandelion.deps.moulconfig.") ->
+                listOf("MoulConfigCompat_dandelion") to listOf("skyblocker", "dandelion-bp")
+            configClass.startsWith("at.hannibal2.skyhanni.deps.moulconfig.") ->
+                listOf("MoulConfigCompat_skyhanni") to listOf("skyhanni")
+            else -> emptyList<String>() to emptyList()
+        }
+        if (candidates.isEmpty()) return
+        val forcedModId = forcedModIds.firstOrNull { CompatLoader.hasMod(it) }
+
+        val basePackage = MoulConfigCompat::class.java.`package`.name
+        for (candidate in candidates) {
+            val fqcn = "$basePackage.$candidate"
+            runCatching {
+                val compatClass = Class.forName(fqcn)
+                val method = compatClass.methods.firstOrNull {
+                    it.name == "parseMoulconfigFromEditor" && it.parameterCount == 2
+                } ?: error("parseMoulconfigFromEditor not found on $fqcn")
+                CompatLoader.withForcedModId(forcedModId) {
+                    method.invoke(null, categories, config)
+                }
+                return
+            }
         }
     }
 
@@ -57,7 +114,7 @@ data object MoulConfigCompat {
         this.id = mod?.id ?: config.toString()
         this.saveFunction = Runnable { config.saveNow() }
         this.noCache = true
-        this.title = mod?.name ?: ""
+        this.title = mod?.name?.takeIf { it.isNotBlank() } ?: config::class.java.simpleName.takeIf { it.isNotBlank() } ?: "MoulConfig"
         mod?.let {
             val path = it.getIconResourcePath(Int.MAX_VALUE) ?: return@let
             val stream = it.getIconResource(Int.MAX_VALUE) ?: return@let
@@ -76,33 +133,52 @@ data object MoulConfigCompat {
         root: Tree,
         parentResolver: (String?) -> Tree,
     ): Tree {
-        val tree = Tree.tree()
-        val parent = parentResolver(category.parentCategoryId)
-        tree.id = UUID.randomUUID().toString()
-        tree.title = category.displayName
-        tree.category = parent.takeUnless { it === root }?.category ?: category.displayName
-        tree.subcategory = category.displayName
+        val displayName = resolveDisplayName(category)
+        val referenceParent = parentResolver(category.parentCategoryId)
+        val categoryName = referenceParent.takeUnless { it === root }?.category ?: displayName
 
-        val map = mutableMapOf<Int?, Tree>()
+        val accordionMap = mutableMapOf<Int, Tree>()
 
-        category.options.forEach { category ->
-            val (id, node) = parseOption(config, category) { parent -> map[parent] ?: tree } ?: return@forEach
-            map[id] = node
+        category.options.forEach { option ->
+            parseOption(config, option, categoryName, displayName, root, accordionMap)
         }
 
-        parent.put(tree)
-        return tree
+        return Tree.tree().apply {
+            id = UUID.randomUUID().toString()
+            this.category = categoryName
+        }
     }
 
-    fun parseOption(config: MoulConfig, children: ProcessedOption, parentResolver: (Int?) -> Tree): (Pair<Int, Tree>)? {
+    fun parseOption(
+        config: MoulConfig,
+        children: ProcessedOption,
+        categoryName: String,
+        subcategoryName: String,
+        root: Tree,
+        accordionMap: MutableMap<Int, Tree>,
+    ) {
         val property = MoulPropertyBuilder(children)
 
         val editor = children.editor
 
-        // moulconfig uses a few deprecated things internally, to fully support it we need to carry those over.
         @Suppress("DEPRECATION")
         val visualizer: Class<out Visualizer> = when (editor) {
-            is GuiOptionEditorAccordion -> return children.accordionId to Tree.tree()
+            is GuiOptionEditorAccordion -> {
+                val accordionTree = Tree.tree()
+                accordionTree.id = UUID.randomUUID().toString()
+                accordionTree.title = property.name?.takeIf { it.isNotBlank() } ?: "Section"
+                accordionTree.category = categoryName
+                accordionTree.subcategory = subcategoryName
+
+                val parentTarget = if (children.accordionId >= 0) {
+                    accordionMap[children.accordionId] ?: root
+                } else {
+                    root
+                }
+                parentTarget.put(accordionTree)
+                accordionMap[editor.accordionId] = accordionTree
+                return
+            }
             is GuiOptionEditorBoolean -> SwitchVisualizer::class.java
             is GuiOptionEditorButton -> {
                 property.metadata["runnable"] = Runnable { editor.onClick() }
@@ -118,22 +194,35 @@ data object MoulConfigCompat {
                     }
 
                     colour?.let {
-                        PolyColor.Chroma(
-                            it.hue,
-                            it.saturation,
-                            it.brightness,
-                            it.alpha / 255f,
-                            it.timeForFullRotationInMillis.milliseconds.inWholeNanoseconds
-                        )
+                        if (it.timeForFullRotationInMillis > 0) {
+                            val safeCycleMillis = it.timeForFullRotationInMillis.coerceAtLeast(1)
+                            PolyColor.Chroma(
+                                it.hue,
+                                it.saturation,
+                                it.brightness,
+                                it.alpha / 255f,
+                                safeCycleMillis.milliseconds.inWholeNanoseconds
+                            )
+                        } else {
+                            val rgb = Color.HSBtoRGB(it.hue, it.saturation, it.brightness)
+                            argb((it.alpha shl 24) or (rgb and 0x00FFFFFF)).asMutable()
+                        }
                     } ?: PolyColor.WHITE
                 }
                 property.setter = setter@{
                     val color = it as? PolyColor ?: return@setter
+                    val speedMillis = (color as? PolyColor.Chroma)
+                        ?.speedNanos
+                        ?.nanoseconds
+                        ?.inWholeMilliseconds
+                        ?.coerceAtLeast(1)
+                        ?.toInt()
+                        ?: 0
                     val colour = ChromaColour(
                         color.hue,
                         color.saturation,
                         color.brightness,
-                        (color as? PolyColor.Chroma)?.speedNanos?.nanoseconds?.inWholeMilliseconds?.toInt() ?: 1000,
+                        speedMillis,
                         (color.alpha * 255).toInt().coerceIn(0..255)
                     )
 
@@ -197,25 +286,53 @@ data object MoulConfigCompat {
                         isAny(type, Short::class) -> children.set(numberValue.toShort())
                         isAny(type, Long::class) -> children.set(numberValue.toLong())
                         isAny(type, Double::class) -> children.set(numberValue.toDouble())
-                        else -> null // do nothing/unknown number format?
+                        else -> null
                     }
                 }
 
                 SliderVisualizer::class.java
             }
 
-            is GuiOptionEditorInfoText -> return null
+            is GuiOptionEditorInfoText -> return
             is GuiOptionEditorText -> TextVisualizer::class.java
-            is GuiOptionEditorDraggableList -> return null
+            is GuiOptionEditorDraggableList -> return
             else -> {
                 println("Skipping ${children.path} - ${editor::class.java}")
-                return null // editor type either unsupported or unknown
+                return
             }
         }
 
         property.metadata["visualizer"] = visualizer
-        parentResolver(null).put(property.build())
-        return null
+        val built = property.build()
+        built.category = categoryName
+        built.subcategory = subcategoryName
+
+        val parentTarget = if (children.accordionId >= 0) {
+            accordionMap[children.accordionId] ?: root
+        } else {
+            root
+        }
+        parentTarget.put(built)
+    }
+
+    private fun resolveDisplayName(category: ProcessedCategory): String {
+        val raw = runCatching {
+            category::class.java.getMethod("getDisplayName").invoke(category)
+        }.getOrNull()
+        return resolveText(raw) ?: category.identifier
+    }
+
+    private fun resolveText(value: Any?): String? {
+        if (value == null) return null
+        if (value is String) return value
+        val fromGetText = runCatching {
+            value::class.java.getMethod("getText").invoke(value)
+        }.getOrNull()
+        return when (fromGetText) {
+            null -> value.toString()
+            is String -> fromGetText
+            else -> fromGetText.toString()
+        }
     }
 
 }

@@ -27,7 +27,7 @@ object ModMenuCompat {
     fun postLoad() = CompatLoader.requireTranslations(1000, true) {
         mods.filterNot { CompatLoader.nativeLoadedConfigs.contains(it.id) }
             .forEach { mod ->
-                val modMenuTree = Tree.tree()
+                val modMenuTree = Tree.tree(mod.id)
 
                 modMenuTree.title = mod.name
                 modMenuTree.description = "(Mod Menu Compat)"

@@ -9,6 +9,8 @@ internal object Locations {
             "io.github.notenoughupdates.moulconfig",
             TargetLocation("skyhanni", "at.hannibal2.skyhanni.deps.moulconfig", Exact("1.8.9"), Newer("1.21.4")),
             TargetLocation("dandelion", "net.azureaaron.dandelion.deps.moulconfig", Newer("1.21.5")),
+            TargetLocation("dandelion_bp", "net.azureaaron.dandelion_bp.deps.moulconfig", Newer("1.21.5")),
+            TargetLocation("firmament", "moe.nea.firmament.deps.moulconfig", Newer("1.21.5")),
         )
     )
 

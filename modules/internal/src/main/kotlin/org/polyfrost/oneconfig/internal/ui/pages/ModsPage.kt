@@ -50,7 +50,18 @@ internal fun ModsPage(trees: Map<TreeSource, Set<Tree>>): Drawable {
             treeSet.mapNotNull { tree ->
                 if (tree.getMetadata<Any?>("hidden") != null) return@mapNotNull null
                 if (tree.title == null || tree.id == null) {
-                    LOGGER.warn("Tree ${tree.id} has no title, it will be skipped.")
+                    val metadataKeys = tree.metadata?.keys?.joinToString(", ", prefix = "[", postfix = "]") ?: "[]"
+                    val treeSnapshot = runCatching { tree.toString() }.getOrElse { "<toString failed: ${it::class.simpleName}>" }
+                    LOGGER.warn(
+                        "Skipping tree with missing info (source={}, id={}, title={}, metadataKeys={}, childCount={}, type={}, snapshot={})",
+                        source,
+                        tree.id ?: "<null>",
+                        tree.title ?: "<null>",
+                        metadataKeys,
+                        tree.map.size,
+                        tree::class.java.name,
+                        treeSnapshot,
+                    )
                     return@mapNotNull null
                 }
                 ModCard(source, tree).events {
