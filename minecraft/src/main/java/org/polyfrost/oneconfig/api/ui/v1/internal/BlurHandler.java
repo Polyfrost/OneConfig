@@ -196,12 +196,13 @@ public final class BlurHandler {
     private ShaderGroup getShaderGroup() {
         //#if MC >= 1.21.2
         //$$ return null;
-        //#endif
+        //#else
         return Minecraft.getMinecraft()
                 //#if MC >= 1.21.2
                 //$$ .getShaderManager().getPostChain(this.blurShader, LevelTargetBundle.MAIN_TARGETS);
                 //#else
                 .entityRenderer.getShaderGroup();
                 //#endif
+        //#endif
     }
 }
