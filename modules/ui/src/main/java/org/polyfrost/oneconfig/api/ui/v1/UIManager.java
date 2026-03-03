@@ -195,7 +195,6 @@ public interface UIManager {
                 long size = polyUI.getSize();
                 int polyUiWidth = (int) Vec2.getX(size);
                 int polyUiHeight = (int) Vec2.getY(size);
-                System.out.println("Resizing to: " + polyUiWidth + "x" + polyUiHeight + " with ratio " + ratio);
                 framebuffer.resize((int) (polyUiWidth * ratio), (int) (polyUiHeight * ratio));
                 polyUI.getWindow().setPixelRatio(ratio);
             });

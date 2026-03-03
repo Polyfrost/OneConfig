@@ -34,7 +34,8 @@ import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
 
 public class ScreenPlatformImpl implements ScreenPlatform {
     //#if MC > 1.13
-    //$$ private final float[] pixelScaleFactor = new float[1];
+    //$$ private final int[] fbWidth = new int[1];
+    //$$ private final int[] winWidth = new int[1];
     //#endif
 
     @Override
@@ -73,18 +74,21 @@ public class ScreenPlatformImpl implements ScreenPlatform {
         //#endif
     }
 
-    // todo: https://github.com/Polyfrost/OneConfig/issues/478
-    // this override was removed to avoid the system receiving incorrect/inaccurate pixel ratio values
-    // while the window was being resized (as it was calculated based on viewport / window size)
-    // so we use the (well what was assumed to be correct) values provided by GLFW on modern versions.
-    // however, this is not actually correct as shown by issue #478 (above), so we will remove this override for now.
-    // this may have been fixed in GLFW v3.4; but Minecraft is not using that version yet. see https://github.com/glfw/glfw/pull/2457.
+    // On macOS, glfwGetWindowContentScale == framebufferSize / windowSize (e.g. 2.0 on Retina).
+    // On Windows, they differ: framebuffer == window (ratio 1.0), but contentScale reflects DPI (e.g. 1.5).
+    // Using contentScale as pixelRatio on Windows caused the UI to be rendered at the wrong size (#478).
+    // Fix: compute the actual framebuffer-to-window ratio directly from GLFW, which is correct on all platforms.
+    // See also: https://github.com/glfw/glfw/pull/2457
     @Override
     public float pixelRatio() {
-        // asm: considerably more reliable than just doing viewport / window
         //#if MC > 1.13
-        //$$ org.lwjgl.glfw.GLFW.glfwGetWindowContentScale(Minecraft.getInstance().getWindow().getWindow(), pixelScaleFactor, null);
-        //$$ return pixelScaleFactor[0];
+        //$$ long handle = Minecraft.getInstance().getWindow().getWindow();
+        //$$ org.lwjgl.glfw.GLFW.glfwGetFramebufferSize(handle, fbWidth, null);
+        //$$ org.lwjgl.glfw.GLFW.glfwGetWindowSize(handle, winWidth, null);
+        //$$ if (winWidth[0] > 0) {
+        //$$     return (float) fbWidth[0] / winWidth[0];
+        //$$ }
+        //$$ return 1.0f;
         //#else
         return org.lwjgl.opengl.Display.getPixelScaleFactor();
         //#endif

@@ -53,6 +53,7 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/Compatib
 
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/GLPlatform {
 	public abstract fun getFunctionAddress (Ljava/lang/String;)J
+	public abstract fun glVertexAttribIPointer (IIIIJ)V
 	public fun glViewport ()[I
 	public abstract fun glViewport ([I)[I
 	public abstract fun memAddress (Ljava/nio/ByteBuffer;)J
@@ -81,7 +82,9 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/ScreenPl
 	public abstract fun current ()Ljava/lang/Object;
 	public fun display (Ljava/lang/Object;)V
 	public abstract fun display (Ljava/lang/Object;I)V
+	public fun mcToScreenScale ()F
 	public fun pixelRatio ()F
+	public fun screenToMcScale ()F
 	public abstract fun viewportHeight ()I
 	public abstract fun viewportWidth ()I
 	public abstract fun windowHeight ()I

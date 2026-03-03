@@ -286,9 +286,9 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
 
         try {
             float ratio = Platform.screen().pixelRatio();
-            // framebuffer should you know probably be the correct larger size because.. well yeah of course it does
-            // didn't anyone think of that?
-            polyUI.resize(initialWidth * sx, initialHeight * sy, force);
+            float newW = initialWidth * sx;
+            float newH = initialHeight * sy;
+            polyUI.resize(newW, newH, force);
             polyUI.getWindow().setPixelRatio(ratio);
         } catch (Exception e) {
             death(e);

@@ -127,17 +127,17 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/RendererEx
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/StbApi {
-	public abstract fun font_CreateFontInfo ()J
+	public abstract fun font_CreateFontInfo ()Lorg/polyfrost/oneconfig/api/ui/v1/api/StbApi$StbFontInfo;
 	public abstract fun font_CreatePackContext ()J
 	public abstract fun font_CreatePackRange ()J
 	public abstract fun font_CreatePackedCharArray (I)J
-	public abstract fun font_FindGlyphIndex (JI)I
-	public abstract fun font_GetFontVMetrics (J[I[I[I)V
-	public abstract fun font_GetGlyphBitmap (JFFI[I[I[I[I)J
-	public abstract fun font_GetGlyphHMetrics (JI[I[I)V
-	public abstract fun font_GetGlyphSDF (JFIIBF[I[I[I[I)J
+	public abstract fun font_FindGlyphIndex (Lorg/polyfrost/oneconfig/api/ui/v1/api/StbApi$StbFontInfo;I)I
+	public abstract fun font_GetFontVMetrics (Lorg/polyfrost/oneconfig/api/ui/v1/api/StbApi$StbFontInfo;[I[I[I)V
+	public abstract fun font_GetGlyphBitmap (Lorg/polyfrost/oneconfig/api/ui/v1/api/StbApi$StbFontInfo;FFI[I[I[I[I)Ljava/nio/ByteBuffer;
+	public abstract fun font_GetGlyphHMetrics (Lorg/polyfrost/oneconfig/api/ui/v1/api/StbApi$StbFontInfo;I[I[I)V
+	public abstract fun font_GetGlyphSDF (Lorg/polyfrost/oneconfig/api/ui/v1/api/StbApi$StbFontInfo;FIIBF[I[I[I[I)Ljava/nio/ByteBuffer;
 	public abstract fun font_GetPackedGlyph (JI)J
-	public abstract fun font_InitFont (JLjava/nio/ByteBuffer;)Z
+	public abstract fun font_InitFont (Lorg/polyfrost/oneconfig/api/ui/v1/api/StbApi$StbFontInfo;Ljava/nio/ByteBuffer;)Z
 	public abstract fun font_PackBegin (JLjava/nio/ByteBuffer;IIIIJ)Z
 	public abstract fun font_PackEnd (J)V
 	public abstract fun font_PackFontRange (JLjava/nio/ByteBuffer;IFIIJ)Z
@@ -145,8 +145,7 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/StbApi {
 	public abstract fun font_RangeSetFirstUnicodeCodepointInRange (JI)V
 	public abstract fun font_RangeSetFontSize (JF)V
 	public abstract fun font_RangeSetNumChars (JI)V
-	public abstract fun font_ScaleForMappingEmToPixels (JF)F
-	public abstract fun free (J)V
+	public abstract fun font_ScaleForMappingEmToPixels (Lorg/polyfrost/oneconfig/api/ui/v1/api/StbApi$StbFontInfo;F)F
 	public abstract fun glyph_x0 (J)S
 	public abstract fun glyph_x1 (J)S
 	public abstract fun glyph_xadvance (J)F
@@ -158,6 +157,11 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/StbApi {
 	public abstract fun image_free (Ljava/nio/ByteBuffer;)V
 	public abstract fun image_load_from_memory (Ljava/nio/ByteBuffer;[I[I[II)Ljava/nio/ByteBuffer;
 	public abstract fun image_write_png (Ljava/lang/String;IIILjava/nio/ByteBuffer;I)V
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/StbApi$StbFontInfo {
+	public abstract fun address ()J
+	public abstract fun free ()V
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/TinyFdApi {
