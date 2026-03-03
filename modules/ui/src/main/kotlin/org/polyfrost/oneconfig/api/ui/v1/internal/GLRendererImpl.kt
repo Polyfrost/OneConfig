@@ -37,7 +37,7 @@ import kotlin.math.*
 private val LOGGER = LogManager.getLogger("PolyUI/GLRenderer")
 
 private const val MAX_UI_DEPTH = 16
-private const val ATLAS_SIZE = 2048
+private const val ATLAS_SIZE = 4096
 private const val ATLAS_SVG_UPSCALE_FACTOR = 2f
 private const val STRIDE = 4 + 4 + 1 + 1 + 4 + 1 + 4 // bounds, radii, color0, color1, UV, thick, clip
 private const val MAX_BATCH = 2048
@@ -431,7 +431,9 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         }
 
         val prevTex = glGetInteger(GL_TEXTURE_BINDING_2D)
-        atlas = GLAtlasManager(ATLAS_SIZE, ATLAS_SIZE)
+        val maxTexSize = glGetInteger(GL_MAX_TEXTURE_SIZE)
+        val atlasSize = ATLAS_SIZE.coerceAtMost(maxTexSize)
+        atlas = GLAtlasManager(atlasSize, atlasSize)
         glBindTexture(GL_TEXTURE_2D, prevTex)
         glBindBuffer(GL_ARRAY_BUFFER, prevBuf)
     }
@@ -879,15 +881,15 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         if (image.initialized) return
         val w = IntArray(1)
         val h = IntArray(1)
-        val d = initImage(image, w, h)
+        val (d, shouldFreeWithStb) = initImage(image, w, h)
 
         // Store UV rect for this image
         image.uv = atlas.insert(w[0], h[0], d)
-        if (image.type == PolyImage.Type.Raster) stb.image_free(d)
+        if (shouldFreeWithStb) stb.image_free(d)
         image.reportInit()
     }
 
-    private fun initImage(image: PolyImage, w: IntArray, h: IntArray): ByteBuffer {
+    private fun initImage(image: PolyImage, w: IntArray, h: IntArray): Pair<ByteBuffer, Boolean> {
         if (image.type == PolyImage.Type.Vector) {
             val svg = nsvg.parse(image.load().toDirectByteBufferNT())
                 ?: throw IllegalStateException("Could not parse SVG image ${image.resourcePath}")
@@ -897,13 +899,24 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             val dst = BufferUtils.createByteBuffer(w[0] * h[0] * 4)
             nsvg.rasterize(svg.address, 0f, 0f, ATLAS_SVG_UPSCALE_FACTOR, dst, w[0], h[0], w[0] * 4)
             nsvg.delete(svg.address)
-            return dst
+            return dst to false
         } else {
             val data = image.load().toDirectByteBuffer()
-            val d = stb.image_load_from_memory(data, w, h, IntArray(1), 4)
-                ?: throw IllegalStateException("Failed to load image ${image.resourcePath}: ${stb.image_failure_reason()}")
+            val d = try {
+                stb.image_load_from_memory(data, w, h, IntArray(1), 4)
+            } catch (t: Throwable) {
+                LOGGER.warn("Failed to decode image ${image.resourcePath}: ${t.message}")
+                null
+            }
+            if (d == null) {
+                val reason = stb.image_failure_reason() ?: "unknown reason"
+                LOGGER.warn("Using 1x1 transparent fallback for ${image.resourcePath} ($reason)")
+                w[0] = 1
+                h[0] = 1
+                return BufferUtils.createByteBuffer(4) to false
+            }
             if (!image.size.isPositive) PolyImage.setImageSize(image, Vec2(w[0].toFloat(), h[0].toFloat()))
-            return d
+            return d to true
         }
     }
 
@@ -920,17 +933,19 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
     private var i = 0
     override fun dumpAtlas() {
-        val buf = BufferUtils.createByteBuffer(ATLAS_SIZE * ATLAS_SIZE * 4)
+        val w = atlas.atlasWidth
+        val h = atlas.atlasHeight
+        val buf = BufferUtils.createByteBuffer(w * h * 4)
         atlas.bind()
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf)
         glBindTexture(GL_TEXTURE_2D, 0)
         stb.image_write_png(
             "debug_atlas$i.png",
-            ATLAS_SIZE,
-            ATLAS_SIZE,
+            w,
+            h,
             4,
             buf,
-            ATLAS_SIZE * 4
+            w * 4
         )
         i++
     }
