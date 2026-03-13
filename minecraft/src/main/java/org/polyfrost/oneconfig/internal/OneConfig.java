@@ -58,6 +58,9 @@ import org.polyfrost.oneconfig.api.ui.v1.api.RendererExt;
 import org.polyfrost.oneconfig.api.ui.v1.internal.BlurHandler;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OCKeybindHelper;
 import org.polyfrost.oneconfig.internal.ui.OneConfigUI;
+import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
+import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
+import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen;
 import org.polyfrost.oneconfig.test.TestMod_Test;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.component.Drawable;
@@ -79,19 +82,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * The main class of OneConfig.
  */
 //#if FORGE-LIKE
-//#if MC <= 1.12.2
-@net.minecraftforge.fml.common.Mod(modid = "oneconfigv1")
-//#else
 //#if NEOFORGE
 //$$ @net.neoforged.fml.common.Mod("oneconfigv1")
 //#else
 //$$ @net.minecraftforge.fml.common.Mod("oneconfigv1")
 //#endif
 //#endif
-//#endif
 public class OneConfig
         //#if FABRIC
-        //$$ implements net.fabricmc.api.ClientModInitializer
+        implements net.fabricmc.api.ClientModInitializer
         //#endif
 {
     public static final OneConfig INSTANCE = new OneConfig();
@@ -100,20 +99,20 @@ public class OneConfig
 
     //#if FORGE-LIKE
     //#if MC <= 1.12.2
-    @net.minecraftforge.fml.common.Mod.EventHandler
-    private void onInit(net.minecraftforge.fml.common.event.FMLPostInitializationEvent ev) {
-        init();
-    }
+    //$$@net.minecraftforge.fml.common.Mod.EventHandler
+    //$$private void onInit(net.minecraftforge.fml.common.event.FMLPostInitializationEvent ev) {
+    //$$    init();
+    //$$}
     //#else
     //$$ static {
     //$$     INSTANCE.init();
     //$$ }
     //#endif
     //#else
-    //$$ @Override
-    //$$ public void onInitializeClient() {
-    //$$     init();
-    //$$ }
+    @Override
+    public void onInitializeClient() {
+        init();
+    }
     //#endif
 
 
@@ -131,13 +130,13 @@ public class OneConfig
         //$$ RenderDoc.init();
         //#endif
 
-        if (Boolean.getBoolean("oneconfig.test")) {
+//        if (Boolean.getBoolean("oneconfig.test")) {
             try {
                 TestMod_Test.initialize();
             } catch (Throwable e) {
                 e.printStackTrace();
             }
-        }
+//        }
         
         long t1 = System.nanoTime();
         ModInfo self = OmniLoader.findModOrNull("oneconfig");
@@ -146,7 +145,7 @@ public class OneConfig
         BlurHandler.init();
 
         preloadCopycat();
-        preloadPolyUI();
+//        preloadPolyUI(); f poly ui !
 
         new OneConfigConfig();
         registerCommands();
@@ -179,7 +178,7 @@ public class OneConfig
         // //$$ }
         // //#endif
 
-        Command<OmniClientCommandSource> executor = (ctx) -> ctx.getSource().openScreen(OneConfigUI.INSTANCE.create());
+        Command<OmniClientCommandSource> executor = (ctx) -> ctx.getSource().openScreen(new OneConfigUIScreen());
 
         LiteralCommandNode<OmniClientCommandSource> node = OmniClientCommands.literal("oneconfig")
                 .executes(executor)
@@ -238,7 +237,7 @@ public class OneConfig
                 }
 
                 try {
-                    Platform.screen().display(OneConfigUI.INSTANCE.create());
+                    Platform.screen().display(new OneConfigUIScreen());
                 } catch (Throwable t) {
                     OmniClientChat.displayChatMessage(Text.literal("Failed to open OneConfig UI: " + t.getMessage() + ". Please report this!").setStyle(MCTextStyle.color(TextColors.RED)));
                     // propagate for proper error handling
@@ -253,19 +252,22 @@ public class OneConfig
 
     private static void registerEventHandlers() {
         EventManager.register(InitializationEvent.class, e -> HudManager.INSTANCE.initialize());
-        EventManager.register(InitializationEvent.class, e -> ConfigManager.initialize());
-        //#if MC < 1.13
-        // this is cringe but is better than the alternative of checking every frame in a mixin (that's how vanilla does it lol)
-        AtomicBoolean active = new AtomicBoolean(false);
-        EventManager.register(TickEvent.End.class, e -> {
-            boolean current = org.lwjgl.opengl.Display.isActive();
-            if (current != active.get()) {
-                active.set(current);
-                if (current) EventManager.INSTANCE.post(WindowFocusEvent.Gained.INSTANCE);
-                else EventManager.INSTANCE.post(WindowFocusEvent.Lost.INSTANCE);
-            }
+        EventManager.register(InitializationEvent.class, e -> {
+            ConfigManager.initialize();
+            ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
         });
-        //#endif
+//        //#if MC < 1.13
+//        // this is cringe but is better than the alternative of checking every frame in a mixin (that's how vanilla does it lol)
+//        AtomicBoolean active = new AtomicBoolean(false);
+//        EventManager.register(TickEvent.End.class, e -> {
+//            boolean current = org.lwjgl.opengl.Display.isActive();
+//            if (current != active.get()) {
+//                active.set(current);
+//                if (current) EventManager.INSTANCE.post(WindowFocusEvent.Gained.INSTANCE);
+//                else EventManager.INSTANCE.post(WindowFocusEvent.Lost.INSTANCE);
+//            }
+//        });
+//        //#endif
     }
 
     /**
@@ -282,7 +284,7 @@ public class OneConfig
             // OneConfig PolyUI renderer
             // todo: fix for fabric loaders as fails due to running too early
             //#if FORGE
-            UIManager.INSTANCE.getRenderer();
+            //$$ UIManager.INSTANCE.getRenderer();
             //#endif
         } catch (Exception e) {
             throw new IllegalStateException("Failed to preload necessary PolyUI classes", e);

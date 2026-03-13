@@ -11,11 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Minecraft.class)
 public class Mixin_InitializationEvent {
 
-    //#if MC >= 1.13
-    //$$ @Inject(method = "<init>", at = @At("RETURN"))
-    //#else
-    @Inject(method = "startGame", at = @At("RETURN"))
-    //#endif
+    @Inject(method = "<init>", at = @At("RETURN"))
     private void completedInit(CallbackInfo ci) {
         EventManager.INSTANCE.post(InitializationEvent.INSTANCE);
     }

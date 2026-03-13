@@ -26,6 +26,8 @@ subprojects {
         maven("https://repo.polyfrost.org/releases")
         maven("https://repo.polyfrost.org/snapshots")
         maven("https://maven.deftu.dev/releases")
+
+        google()
     }
 
     dependencies {
@@ -98,7 +100,7 @@ subprojects {
         }
 
         toolchain {
-            languageVersion.set(JavaLanguageVersion.of(8))
+            languageVersion.set(JavaLanguageVersion.of(11))
         }
     }
 

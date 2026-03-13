@@ -107,12 +107,12 @@ public class UIManagerImpl implements UIManager {
         //$$     Platform.loader().addToClasspath(path);
         //$$ }
         //#else
-        Lwjgl3Manager.initialize(getClass().getClassLoader(), lwjglModules);
+        //$$ Lwjgl3Manager.initialize(getClass().getClassLoader(), lwjglModules);
 
-        IsolatedClassLoader classLoader = Lwjgl3Manager.getClassLoader();
+        //$$ IsolatedClassLoader classLoader = Lwjgl3Manager.getClassLoader();
 
-        classLoader.addLoadingException("kotlin.");
-        classLoader.addLoadingException("org.polyfrost.oneconfig.api.ui.v1.api.");
+        //$$ classLoader.addLoadingException("kotlin.");
+        //$$ classLoader.addLoadingException("org.polyfrost.oneconfig.api.ui.v1.api.");
         //#endif
 
         try {
@@ -120,14 +120,14 @@ public class UIManagerImpl implements UIManager {
 
             //#if MC >= 1.16.5
 //            //$$ nanoVg = new NanoVgImpl(isGl3);
-            //$$ nanoSvg = new NanoSvgImpl();
-            //$$ stb = new StbImpl();
-            //$$ tinyFD = new TinyFdImpl();
+            nanoSvg = new NanoSvgImpl();
+            stb = new StbImpl();
+            tinyFD = new TinyFdImpl();
             //#else
 //            nanoVg = Lwjgl3Manager.getIsolated(NanoVgApi.class, LWJGL_IMPL_PACKAGE + "NanoVgImpl", isGl3);
-            nanoSvg = Lwjgl3Manager.getIsolated(NanoSvgApi.class, LWJGL_IMPL_PACKAGE + "NanoSvgImpl");
-            stb = Lwjgl3Manager.getIsolated(StbApi.class, LWJGL_IMPL_PACKAGE + "StbImpl");
-            tinyFD = Lwjgl3Manager.getIsolated(TinyFdApi.class, LWJGL_IMPL_PACKAGE + "TinyFdImpl");
+            //$$nanoSvg = Lwjgl3Manager.getIsolated(NanoSvgApi.class, LWJGL_IMPL_PACKAGE + "NanoSvgImpl");
+            //$$stb = Lwjgl3Manager.getIsolated(StbApi.class, LWJGL_IMPL_PACKAGE + "StbImpl");
+            //$$tinyFD = Lwjgl3Manager.getIsolated(TinyFdApi.class, LWJGL_IMPL_PACKAGE + "TinyFdImpl");
             //#endif
 
 //            renderer = new NVGRendererImpl(isGl3, nanoVg, nanoSvg, stb);
@@ -159,7 +159,7 @@ public class UIManagerImpl implements UIManager {
 
     @Override
     public Window createWindow() {
-        return new MCWindow(Minecraft.getMinecraft());
+        return new MCWindow(Minecraft.getInstance());
     }
 
     @Override

@@ -1,4 +1,0 @@
-net.minecraft.network.packet.s2c.play.GameMessageS2CPacket net.minecraft.network.packet.s2c.play.GameMessageS2CPacket
-net.minecraft.network.packet.s2c.play.GameMessageS2CPacket comp_763() getMessage()
-
-org.joml.Matrix4f net.minecraft.util.math.Matrix4f

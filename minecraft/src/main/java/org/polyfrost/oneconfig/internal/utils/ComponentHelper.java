@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.utils;
 
-import net.minecraft.util.ChatStyle;
-import net.minecraft.util.IChatComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 
 import java.util.List;
 
@@ -12,7 +12,7 @@ public class ComponentHelper {
     /**
      * Returns a prettified string representation of the given component's toString output.
      */
-    public static String prettyPrint(IChatComponent component) {
+    public static String prettyPrint(Component component) {
         if (component == null) {
             return "null";
         }
@@ -22,7 +22,7 @@ public class ComponentHelper {
         return sb.toString();
     }
 
-    private static void prettyPrintHelper(IChatComponent component, StringBuilder sb, int indent) {
+    private static void prettyPrintHelper(Component component, StringBuilder sb, int indent) {
         String indentation = indent(indent);
         sb.append(indentation).append(component.getClass().getSimpleName()).append(" {\n");
 
@@ -35,13 +35,13 @@ public class ComponentHelper {
         //$$
         //$$ String text = textBuilder.toString();
         //#else
-        String text = component.getUnformattedTextForChat();
+        String text = component.getString();
         //#endif
         if (!text.isEmpty()) {
             sb.append(indentation).append(baselineIndent).append("text: ").append('"').append(text).append('"').append("\n");
         }
 
-        ChatStyle style = component.getChatStyle();
+        Style style = component.getStyle();
         if (style != null) {
             sb.append(indentation)
                     .append(baselineIndent)
@@ -54,7 +54,7 @@ public class ComponentHelper {
                     //#if MC >= 1.16.5
                     //$$ .append(style.getColor() != null ? style.getColor().serialize() : "null")
                     //#else
-                    .append(style.getColor() != null ? style.getColor().getFriendlyName() : "null")
+                    .append(style.getColor() != null ? style.getColor().formatValue() : "null")
                     //#endif
                     .append("\n");
 
@@ -62,35 +62,35 @@ public class ComponentHelper {
                     .append(baselineIndent)
                     .append(baselineIndent)
                     .append("bold: ")
-                    .append(style.getBold())
+                    .append(style.isBold())
                     .append("\n");
 
             sb.append(indentation)
                     .append(baselineIndent)
                     .append(baselineIndent)
                     .append("italic: ")
-                    .append(style.getItalic())
+                    .append(style.isItalic())
                     .append("\n");
 
             sb.append(indentation)
                     .append(baselineIndent)
                     .append(baselineIndent)
                     .append("underlined: ")
-                    .append(style.getUnderlined())
+                    .append(style.isUnderlined())
                     .append("\n");
 
             sb.append(indentation)
                     .append(baselineIndent)
                     .append(baselineIndent)
                     .append("strikethrough: ")
-                    .append(style.getStrikethrough())
+                    .append(style.isStrikethrough())
                     .append("\n");
 
             sb.append(indentation)
                     .append(baselineIndent)
                     .append(baselineIndent)
                     .append("obfuscated: ")
-                    .append(style.getObfuscated())
+                    .append(style.isObfuscated())
                     .append("\n");
 
             sb.append(indentation)
@@ -99,13 +99,13 @@ public class ComponentHelper {
                     .append("\n");
         }
 
-        List<IChatComponent> siblings = component.getSiblings();
+        List<Component> siblings = component.getSiblings();
         if (!siblings.isEmpty()) {
             sb.append(indentation)
                     .append(baselineIndent)
                     .append("siblings: [\n");
 
-            for (IChatComponent sibling : siblings) {
+            for (Component sibling : siblings) {
                 prettyPrintHelper(sibling, sb, indent + 8);
             }
 

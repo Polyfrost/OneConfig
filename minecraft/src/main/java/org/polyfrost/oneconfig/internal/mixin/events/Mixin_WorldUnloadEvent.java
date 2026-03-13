@@ -27,35 +27,29 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.client.gui.screens.ReceivingLevelScreen;
+import net.minecraft.client.multiplayer.ClientLevel;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.WorldEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Minecraft.class)
 public class Mixin_WorldUnloadEvent {
 
-    @Shadow public WorldClient theWorld;
+    @Shadow public ClientLevel level;
 
     @Inject(
-            //#if MC < 1.13
-            method = "loadWorld(Lnet/minecraft/client/multiplayer/WorldClient;Ljava/lang/String;)V"
-            //#else
-            //$$ method = "setLevel"
-            //#endif
+            method = "setLevel"
             , at = @At("HEAD"))
-    private void onWorldUnloadCallback(WorldClient world,
-                                       //#if MC < 1.16 || MC >= 1.20 && MC < 1.21.9
-                                       @Coerce Object ignored,
-                                       //#endif
+    private void onWorldUnloadCallback(ClientLevel world,
+                                       ReceivingLevelScreen.Reason reason,
                                        CallbackInfo ci) {
-        if (this.theWorld != null) {
-            EventManager.INSTANCE.post(new WorldEvent.Unload(this.theWorld));
+        if (this.level != null) {
+            EventManager.INSTANCE.post(new WorldEvent.Unload(this.level));
         }
     }
 

@@ -81,7 +81,7 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
         this.close = onClose;
         //#if MC <= 1.12.2
         // todo temp fix
-        this.mc = Minecraft.getMinecraft();
+        //$$ this.mc = Minecraft.getMinecraft();
         //#endif
     }
 
@@ -245,11 +245,11 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
 
         float mx, my;
         //#if MC >= 1.13
-        //$$ mx = (float) Minecraft.getInstance().mouseHandler.xpos();
-        //$$ my = (float) Minecraft.getInstance().mouseHandler.ypos();
+         mx = (float) Minecraft.getInstance().mouseHandler.xpos();
+         my = (float) Minecraft.getInstance().mouseHandler.ypos();
         //#else
-        mx = org.lwjgl.input.Mouse.getX();
-        my = (Platform.screen().windowHeight() - org.lwjgl.input.Mouse.getY() - 1);
+        //$$ mx = org.lwjgl.input.Mouse.getX();
+        //$$ my = (Platform.screen().windowHeight() - org.lwjgl.input.Mouse.getY() - 1);
         //#endif
 
         try {

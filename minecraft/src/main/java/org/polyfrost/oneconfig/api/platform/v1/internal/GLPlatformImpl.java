@@ -42,9 +42,9 @@ import static org.lwjgl.opengl.GL11.*;
 public class GLPlatformImpl implements GLPlatform {
     //@formatter:off
     //#if MC <= 1.12.2
-    private static final java.util.function.Function<String, Long> getProcAddress =
-            MHUtils.getFunctionHandle(org.lwjgl.opengl.GLContext.class, "getFunctionAddress", long.class, String.class)
-                    .logIfErr().getOrElse(v -> 0L);
+    //$$private static final java.util.function.Function<String, Long> getProcAddress =
+    //$$        MHUtils.getFunctionHandle(org.lwjgl.opengl.GLContext.class, "getFunctionAddress", long.class, String.class)
+    //$$                .logIfErr().getOrElse(v -> 0L);
     //#endif
 
     private final IntBuffer VIEWPORT = BufferUtils.createIntBuffer(
@@ -58,9 +58,9 @@ public class GLPlatformImpl implements GLPlatform {
     @Override
     public long getFunctionAddress(String addr) {
         //#if MC <= 1.12.2
-        return getProcAddress.apply(addr);
+        //$$ return getProcAddress.apply(addr);
         //#else
-        //$$ return org.lwjgl.glfw.GLFW.glfwGetProcAddress(addr);
+        return org.lwjgl.glfw.GLFW.glfwGetProcAddress(addr);
         //#endif
     }
     //@formatter:on
@@ -69,18 +69,18 @@ public class GLPlatformImpl implements GLPlatform {
     @Override
     public long memAddress(ByteBuffer buf) {
         //#if MC <= 1.12.2
-        return org.lwjgl.MemoryUtil.getAddress(buf);
+        //$$ return org.lwjgl.MemoryUtil.getAddress(buf);
         //#else
-        //$$ return org.lwjgl.system.MemoryUtil.memAddress(buf);
+        return org.lwjgl.system.MemoryUtil.memAddress(buf);
         //#endif
     }
 
     @Override
     public void glVertexAttribIPointer(int index, int size, int type, int stride, long pointer) {
         //#if MC <= 1.12.2
-        org.lwjgl.opengl.EXTGpuShader4.glVertexAttribIPointerEXT(index, size, type, stride, pointer);
+        //$$ org.lwjgl.opengl.EXTGpuShader4.glVertexAttribIPointerEXT(index, size, type, stride, pointer);
         //#else
-        //$$ org.lwjgl.opengl.GL30.glVertexAttribIPointer(index, size, type, stride, pointer);
+        org.lwjgl.opengl.GL30.glVertexAttribIPointer(index, size, type, stride, pointer);
         //#endif
     }
 
@@ -106,7 +106,7 @@ public class GLPlatformImpl implements GLPlatform {
         //#if MC >= 1.13
         //$$ glGetIntegerv(GL_VIEWPORT, VIEWPORT);
         //#else
-        glGetInteger(GL_VIEWPORT, VIEWPORT);
+        //$$ glGetInteger(GL_VIEWPORT, VIEWPORT);
         //#endif
         int[] out = in != null ? in : new int[4];
         VIEWPORT.get(out, 0, 4);

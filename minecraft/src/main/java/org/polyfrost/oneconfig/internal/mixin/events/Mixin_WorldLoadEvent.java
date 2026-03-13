@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.internal.mixin.events;
 
-import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.client.multiplayer.ClientLevel;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.WorldEvent;
 import org.spongepowered.asm.mixin.Mixin;
@@ -34,7 +34,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(WorldClient.class)
+@Mixin(ClientLevel.class)
 public abstract class Mixin_WorldLoadEvent {
 
     @Inject(method = "<init>", at = @At("RETURN"))

@@ -30,31 +30,58 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import dev.deftu.omnicore.api.client.commands.OmniClientCommandSource
 import dev.deftu.omnicore.api.client.commands.OmniClientCommands
 import dev.deftu.omnicore.api.client.commands.command
-import net.minecraft.client.gui.GuiScreen
+import net.minecraft.client.gui.screens.Screen
 import org.polyfrost.oneconfig.api.commands.v1.CommandManager
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.Tree
-import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-import org.polyfrost.oneconfig.internal.ui.OneConfigUI
+import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
+import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
+import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 
-fun GuiScreen.openScreen(ticks: Int = 1) = Platform.screen().display(this, ticks)
+fun Screen.openScreen(ticks: Int = 1) = Platform.screen().display(this, ticks)
 
-fun Tree.createScreen() = OneConfigUI.create(ConfigVisualizer.INSTANCE.get(this))
+fun Tree.createScreen(): Screen {
+    val treeId = id
+    if (treeId != null) {
+        ConfigRegistry.registerTree(this, ConfigSource.OC)
+        return OneConfigUIScreen(treeId, null, this)
+    }
+    return OneConfigUIScreen()
+}
 
-fun Tree.createScreen(initialCategory: String) = OneConfigUI.create(ConfigVisualizer.INSTANCE.get(this, initialCategory))
+fun Tree.createScreen(initialCategory: String): Screen {
+    val treeId = id
+    if (treeId != null) {
+        ConfigRegistry.registerTree(this, ConfigSource.OC)
+        return OneConfigUIScreen(treeId, initialCategory, this)
+    }
+    return OneConfigUIScreen()
+}
 
 fun Tree.openUI() = Platform.screen().display(createScreen())
 
 fun Tree.openUI(initialCategory: String) = Platform.screen().display(createScreen(initialCategory))
 
-fun Config.createScreen() = this.tree.createScreen()
+fun Config.createScreen(): Screen {
+    val tree = tree ?: run {
+        preload()
+        this.tree
+    }
+    return tree?.createScreen() ?: OneConfigUIScreen()
+}
 
-fun Config.createScreen(initialCategory: String) = this.tree.createScreen(initialCategory)
+fun Config.createScreen(initialCategory: String): Screen {
+    val tree = tree ?: run {
+        preload()
+        this.tree
+    }
+    return tree?.createScreen(initialCategory) ?: OneConfigUIScreen()
+}
 
-fun Config.openUI() = this.tree.openUI()
+fun Config.openUI() = Platform.screen().display(createScreen())
 
-fun Config.openUI(initialCategory: String) = this.tree.openUI(initialCategory)
+fun Config.openUI(initialCategory: String) = Platform.screen().display(createScreen(initialCategory))
 
 fun Config.addDefaultCommand(command: String = this.title.lowercase()): LiteralArgumentBuilder<OmniClientCommandSource> {
     return OmniClientCommands.literal(command).executes { ctx ->

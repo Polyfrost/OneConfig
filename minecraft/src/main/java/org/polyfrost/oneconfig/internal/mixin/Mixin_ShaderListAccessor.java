@@ -24,19 +24,21 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.internal.mixin;
-
-import net.minecraft.client.shader.Shader;
-import net.minecraft.client.shader.ShaderGroup;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.gen.Accessor;
-
-import java.util.List;
-
-@Mixin(ShaderGroup.class)
-public interface Mixin_ShaderListAccessor {
-
-    @Accessor("listShaders")
-    List<Shader> getListShaders();
-
-}
+//#if MC <= 1.12.2
+//$ package org.polyfrost.oneconfig.internal.mixin;
+//$
+//$ import net.minecraft.client.shader.Shader;
+//$ import net.minecraft.client.shader.ShaderGroup;
+//$ import org.spongepowered.asm.mixin.Mixin;
+//$ import org.spongepowered.asm.mixin.gen.Accessor;
+//$
+//$ import java.util.List;
+//$
+//$ @Mixin(ShaderGroup.class)
+//$ public interface Mixin_ShaderListAccessor {
+//$
+//$     @Accessor("listShaders")
+//$     List<Shader> getListShaders();
+//$
+//$ }
+//#endif

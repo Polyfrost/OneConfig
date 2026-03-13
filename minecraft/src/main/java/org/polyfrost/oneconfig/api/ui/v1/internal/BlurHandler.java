@@ -28,10 +28,14 @@ package org.polyfrost.oneconfig.api.ui.v1.internal;
 
 import dev.deftu.omnicore.api.OmniResourceLocation;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.shader.Shader;
-import net.minecraft.client.shader.ShaderGroup;
-import net.minecraft.client.shader.ShaderUniform;
-import net.minecraft.util.ResourceLocation;
+//#if MC <= 1.12.2
+//$ import net.minecraft.client.shader.Shader;
+//$ import net.minecraft.client.shader.ShaderGroup;
+//$ import net.minecraft.client.shader.ShaderUniform;
+//$ import net.minecraft.util.ResourceLocation;
+//#else
+import net.minecraft.resources.ResourceLocation;
+//#endif
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
@@ -39,10 +43,14 @@ import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 import org.polyfrost.oneconfig.api.ui.v1.screen.BlurScreen;
-import org.polyfrost.oneconfig.internal.mixin.Mixin_ShaderListAccessor;
+//#if MC <= 1.12.2
+//$ import org.polyfrost.oneconfig.internal.mixin.Mixin_ShaderListAccessor;
+//#endif
 import org.polyfrost.polyui.animate.Animation;
 
-import java.util.List;
+//#if MC <= 1.12.2
+//$ import java.util.List;
+//#endif
 
 //#if MC >= 1.21.2
 //$$ import net.minecraft.client.renderer.LevelTargetBundle;
@@ -67,14 +75,18 @@ public final class BlurHandler {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Blur");
     private final ResourceLocation blurShader = OmniResourceLocation.createOrThrow("shaders/post/fade_in_blur.json");
     private final Animation animation = Animation.Type.Default.create(2_000_000_000, 0f, 5f);
-    private ShaderUniform su;
+    //#if MC <= 1.12.2
+    //$ private ShaderUniform su;
+    //#endif
 
     private BlurHandler() {
         EventHandler.ofRemoving(ScreenOpenEvent.class, e -> reloadBlur(e.getScreen())).register();
         //#if MC <= 1.21.5
         EventManager.register(TickEvent.End.class, () -> {
-            if (su == null) return;
-            su.set(animation.update(50_000_000L)); // TODO: Find GlUniform.set alternative. Blur isnt cinfigured to work anyways with 1.21.5 anyways
+            //#if MC <= 1.12.2
+            //$ if (su == null) return;
+            //$ su.set(animation.update(50_000_000L)); // TODO: Find GlUniform.set alternative. Blur isnt cinfigured to work anyways with 1.21.5 anyways
+            //#endif
         });
         //#endif
     }
@@ -84,7 +96,11 @@ public final class BlurHandler {
     }
 
     public static boolean isBlurring() {
-        return INSTANCE.su != null;
+        //#if MC <= 1.12.2
+        //$ return INSTANCE.su != null;
+        //#else
+        return false;
+        //#endif
     }
 
     /**
@@ -93,94 +109,97 @@ public final class BlurHandler {
      * is being used, we actually have the blur setting enabled
      */
     private boolean reloadBlur(Object gui) {
-        //#if MC >= 1.21.2
-        //$$ return false; // TODO: Fix shader usage in 1.21.5+
+        //#if MC >= 1.21.1
+        return false; // TODO: Fix shader usage in 1.21.1+
         //#else
-
-        // Don't do anything if no world is loaded
-        if (Minecraft.getMinecraft().theWorld == null) {
-            return false;
-        }
-        if (gui == null) {
-            tryStop();
-            return false;
-        }
-
-        // If a shader is not already active and the UI is
-        // a one of ours, we should load our own blur!
-        if (gui instanceof BlurScreen && ((BlurScreen) gui).hasBackgroundBlur()) {
-            if (!isShaderActive()) {
-                //#if MC >= 1.21.4
-                //$$ if (true) return false;
-                //#endif
-
-                //#if FABRIC
-                //#if MC >= 1.16.5
-                //$$ Mixin_LoadShaderInvoker_Fabric accessor = (Mixin_LoadShaderInvoker_Fabric) Minecraft.getInstance().gameRenderer;
-                //#else
-                //$$ Mixin_LoadShaderInvoker_Fabric accessor = (Mixin_LoadShaderInvoker_Fabric) Minecraft.getMinecraft().entityRenderer;
-                //#endif
-                //$$ accessor.invokeLoadShader(this.blurShader);
-                //#else
-                //#if MC >= 1.21.2
-                //$$ Minecraft.getInstance().gameRenderer.setPostEffect(this.blurShader);
-                //#else
-                Minecraft.getMinecraft().entityRenderer.loadShader(this.blurShader);
-                //#endif
-                //#endif
-
-                try {
-                    ShaderGroup group = getShaderGroup();
-                    if (group == null) return false;
-                    List<Shader> shaders = ((Mixin_ShaderListAccessor) group).getListShaders();
-                    if (shaders == null) return false;
-
-                    // Iterate through the list of shaders.
-                    for (Shader shader : shaders) {
-                        net.minecraft.client.shader.ShaderManager sm = shader.getShaderManager();
-                        ShaderUniform su = sm.getShaderUniform("Progress");
-                        if (su == null) continue;
-                        this.su = su;
-                        animation.reset();
-                        return false;
-                    }
-                    if (su == null) {
-                        LOGGER.error("Failed to get ShaderUniform for blur on GUI {}. It has been disabled. Please report this!", gui.getClass().getName());
-                        return true;
-                    }
-                } catch (Exception ex) {
-                    LOGGER.error("An error occurred while updating OneConfig's blur. It has been disabled. Please report this!", ex);
-                    return true;
-                }
-            } else {
-                tryStop();
-            }
-        }
-
-        return false;
+        //$ // Don't do anything if no world is loaded
+        //$ if (Minecraft.getMinecraft().theWorld == null) {
+        //$     return false;
+        //$ }
+        //$ if (gui == null) {
+        //$     tryStop();
+        //$     return false;
+        //$ }
+        //$
+        //$ // If a shader is not already active and the UI is
+        //$ // a one of ours, we should load our own blur!
+        //$ if (gui instanceof BlurScreen && ((BlurScreen) gui).hasBackgroundBlur()) {
+        //$     if (!isShaderActive()) {
+        //#if MC >= 1.21.4
+        //$$         if (true) return false;
+        //#endif
+        //$
+        //#if FABRIC
+        //#if MC >= 1.16.5
+        //$$         Mixin_LoadShaderInvoker_Fabric accessor = (Mixin_LoadShaderInvoker_Fabric) Minecraft.getInstance().gameRenderer;
+        //#else
+        //$$         Mixin_LoadShaderInvoker_Fabric accessor = (Mixin_LoadShaderInvoker_Fabric) Minecraft.getMinecraft().entityRenderer;
+        //#endif
+        //$$         accessor.invokeLoadShader(this.blurShader);
+        //#else
+        //#if MC >= 1.21.2
+        //$$         Minecraft.getInstance().gameRenderer.setPostEffect(this.blurShader);
+        //#else
+        //$         Minecraft.getMinecraft().entityRenderer.loadShader(this.blurShader);
+        //#endif
+        //#endif
+        //$
+        //$         try {
+        //$             ShaderGroup group = getShaderGroup();
+        //$             if (group == null) return false;
+        //$             List<Shader> shaders = ((Mixin_ShaderListAccessor) group).getListShaders();
+        //$             if (shaders == null) return false;
+        //$
+        //$             // Iterate through the list of shaders.
+        //$             for (Shader shader : shaders) {
+        //$                 net.minecraft.client.shader.ShaderManager sm = shader.getShaderManager();
+        //$                 ShaderUniform su = sm.getShaderUniform("Progress");
+        //$                 if (su == null) continue;
+        //$                 this.su = su;
+        //$                 animation.reset();
+        //$                 return false;
+        //$             }
+        //$             if (su == null) {
+        //$                 LOGGER.error("Failed to get ShaderUniform for blur on GUI {}. It has been disabled. Please report this!", gui.getClass().getName());
+        //$                 return true;
+        //$             }
+        //$         } catch (Exception ex) {
+        //$             LOGGER.error("An error occurred while updating OneConfig's blur. It has been disabled. Please report this!", ex);
+        //$             return true;
+        //$         }
+        //$     } else {
+        //$         tryStop();
+        //$     }
+        //$ }
+        //$
+        //$ return false;
         //#endif
     }
 
     private void tryStop() {
-        ShaderGroup sg = getShaderGroup();
-        if (sg == null) return;
-        String name =
-                //#if MC >= 1.21.2
-                //$$ Minecraft.getInstance().gameRenderer.currentPostEffect().toString();
-                //#else
-                sg.getShaderGroupName();
-                //#endif
-
-        // Only stop our specific blur ;)
-        if (!name.endsWith("fade_in_blur.json")) {
-            return;
-        }
-
-        su = null;
-        //#if MC >= 1.21.2
-        //$$ Minecraft.getInstance().gameRenderer.clearPostEffect();
+        //#if MC >= 1.21.1
+        // no-op: shader API not available in 1.21.1+
         //#else
-        Minecraft.getMinecraft().entityRenderer.stopUseShader();
+        //$ ShaderGroup sg = getShaderGroup();
+        //$ if (sg == null) return;
+        //$ String name =
+        //#if MC >= 1.21.2
+        //$$         Minecraft.getInstance().gameRenderer.currentPostEffect().toString();
+        //#else
+        //$         sg.getShaderGroupName();
+        //#endif
+        //$
+        //$ // Only stop our specific blur ;)
+        //$ if (!name.endsWith("fade_in_blur.json")) {
+        //$     return;
+        //$ }
+        //$
+        //$ su = null;
+        //#if MC >= 1.21.2
+        //$$         Minecraft.getInstance().gameRenderer.clearPostEffect();
+        //#else
+        //$ Minecraft.getMinecraft().entityRenderer.stopUseShader();
+        //#endif
         //#endif
     }
 
@@ -188,21 +207,21 @@ public final class BlurHandler {
     public boolean isShaderActive() {
         return getShaderGroup() != null
                 //#if MC<=11202
-                && net.minecraft.client.renderer.OpenGlHelper.shadersSupported
+                //$ && net.minecraft.client.renderer.OpenGlHelper.shadersSupported
                 //#endif
                 ;
     }
 
-    private ShaderGroup getShaderGroup() {
-        //#if MC >= 1.21.2
-        //$$ return null;
+    private Object getShaderGroup() {
+        //#if MC >= 1.21.1
+        return null;
         //#else
-        return Minecraft.getMinecraft()
-                //#if MC >= 1.21.2
-                //$$ .getShaderManager().getPostChain(this.blurShader, LevelTargetBundle.MAIN_TARGETS);
-                //#else
-                .entityRenderer.getShaderGroup();
-                //#endif
+        //$ return Minecraft.getMinecraft()
+        //#if MC >= 1.21.2
+        //$$ .getShaderManager().getPostChain(this.blurShader, LevelTargetBundle.MAIN_TARGETS);
+        //#else
+        //$         .entityRenderer.getShaderGroup();
+        //#endif
         //#endif
     }
 }

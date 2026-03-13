@@ -84,15 +84,15 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //#endif
 
         //#if FORGE
-        mixins.add("events.Mixin_ChatReceiveEvent_Forge");
-        mixins.add("events.Mixin_ScreenOpenEvent_Forge");
+        //$$ mixins.add("events.Mixin_ChatReceiveEvent_Forge");
+        //$$ mixins.add("events.Mixin_ScreenOpenEvent_Forge");
         //#if MC < 1.13
-        mixins.add("compat.Mixin_LegacyOneConfigCarryover");
-        mixins.add("compat.Mixin_OverwriteLegacyCommand");
-        mixins.add("compat.Mixin_OverwriteLegacyKeyBind");
-        mixins.add("fixes.Mixin_ASMModParser_IgnoreForgeJava9Spam");
-        mixins.add("fixes.Mixin_JarDiscoverer_IgnoreForgeJava9Spam");
-        mixins.add("hidpi.Mixin_FixLoadingScreenHiDPI");
+        //$$ mixins.add("compat.Mixin_LegacyOneConfigCarryover");
+        //$$ mixins.add("compat.Mixin_OverwriteLegacyCommand");
+        //$$ mixins.add("compat.Mixin_OverwriteLegacyKeyBind");
+        //$$ mixins.add("fixes.Mixin_ASMModParser_IgnoreForgeJava9Spam");
+        //$$ mixins.add("fixes.Mixin_JarDiscoverer_IgnoreForgeJava9Spam");
+        //$$ mixins.add("hidpi.Mixin_FixLoadingScreenHiDPI");
         //#endif
         //#else
         //#if MC < 1.21.2
@@ -111,16 +111,20 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //$$ mixins.add("events.Mixin_ChatSendEvent");
         //#endif
         //#else
-        mixins.add("events.Mixin_KeyInputEvent_Screen");
-        mixins.add("events.Mixin_MouseInputEvent_Screen");
-        mixins.add("hidpi.Mixin_EnableHiDPI");
-        mixins.add("hidpi.Mixin_FixDisplaySizeHiDPI");
-        mixins.add("hidpi.Mixin_FixMousePositionHiDPI_Screen");
-        mixins.add("hidpi.Mixin_FixMousePositionHiDPI");
+        //$$ mixins.add("events.Mixin_KeyInputEvent_Screen");
+        //$$ mixins.add("events.Mixin_MouseInputEvent_Screen");
+        //$$ mixins.add("hidpi.Mixin_EnableHiDPI");
+        //$$ mixins.add("hidpi.Mixin_FixDisplaySizeHiDPI");
+        //$$ mixins.add("hidpi.Mixin_FixMousePositionHiDPI_Screen");
+        //$$ mixins.add("hidpi.Mixin_FixMousePositionHiDPI");
         //#if MC <= 1.8.9
-        mixins.add("Mixin_SoundHandlerAccessor");
+        //$$ mixins.add("Mixin_SoundHandlerAccessor");
         //#endif
         //#endif
+
+        mixins.add("skia.Mixin_InitSkia");
+        mixins.add("skia.Mixin_SkiaFrame");
+        mixins.add("skia.Mixin_FixComposeRaceCondition");
 
         {
             Logger logger = LogManager.getLogger(OneConfigMixinInit.class);

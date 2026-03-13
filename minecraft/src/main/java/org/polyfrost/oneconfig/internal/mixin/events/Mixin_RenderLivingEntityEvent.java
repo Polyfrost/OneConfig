@@ -2,8 +2,10 @@ package org.polyfrost.oneconfig.internal.mixin.events;
 
 import dev.deftu.omnicore.api.client.OmniClient;
 import dev.deftu.omnicore.api.client.OmniClientProfiler;
-import net.minecraft.client.renderer.entity.RendererLivingEntity;
-import net.minecraft.entity.EntityLivingBase;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.world.entity.LivingEntity;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.RenderLivingEvent;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,14 +23,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 //$$ import net.minecraft.client.Minecraft;
 //#endif
 
-//#if MC >= 1.16.5
-//$$ import com.mojang.blaze3d.vertex.PoseStack;
-//$$ import net.minecraft.client.renderer.MultiBufferSource;
-//#endif
-
-@Mixin(RendererLivingEntity.class)
+@Mixin(LivingEntityRenderer.class)
 public class Mixin_RenderLivingEntityEvent<
-        T extends EntityLivingBase
+        T extends LivingEntity
         //#if MC >= 1.21.2
         //$$ , S extends LivingEntityRenderState
         //#endif
@@ -38,10 +35,8 @@ public class Mixin_RenderLivingEntityEvent<
             //$$ method = "submit(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/CameraRenderState;)V",
             //#elseif MC >= 1.21.2
             //$$ method = "render(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
-            //#elseif MC >= 1.16.5
-            //$$ method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
             //#else
-            method = "doRender(Lnet/minecraft/entity/EntityLivingBase;DDDFF)V",
+            method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
             //#endif
             at = @At("HEAD"),
             cancellable = true
@@ -52,11 +47,6 @@ public class Mixin_RenderLivingEntityEvent<
             //#else
             T entity,
             //#endif
-            //#if MC <= 1.12.2
-            double x,
-            double y,
-            double z,
-            //#endif
             //#if MC <= 1.21.1
             float entityYaw,
             float partialTicks,
@@ -65,10 +55,10 @@ public class Mixin_RenderLivingEntityEvent<
             //$$ PoseStack matrixStack,
             //$$ SubmitNodeCollector renderQueue,
             //$$ CameraRenderState cameraState,
-            //#elseif MC >= 1.16.5
-            //$$ PoseStack matrixStack,
-            //$$ MultiBufferSource buffer,
-            //$$ int packedLight,
+            //#else
+            PoseStack matrixStack,
+            MultiBufferSource buffer,
+            int packedLight,
             //#endif
             CallbackInfo ci
     ) {
@@ -78,10 +68,10 @@ public class Mixin_RenderLivingEntityEvent<
             //$$ double y = entity.y;
             //$$ double z = entity.z;
             //$$ float partialTicks = Minecraft.getInstance().getFrameTimeNs();
-            //#elseif MC >= 1.16.5
-            //$$ double x = entity.getX();
-            //$$ double y = entity.getY();
-            //$$ double z = entity.getZ();
+            //#else
+            double x = entity.getX();
+            double y = entity.getY();
+            double z = entity.getZ();
             //#endif
             RenderLivingEvent event = new RenderLivingEvent.Pre(entity, partialTicks, x, y, z);
             EventManager.INSTANCE.post(event);
@@ -96,10 +86,8 @@ public class Mixin_RenderLivingEntityEvent<
             //$$ method = "submit(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/CameraRenderState;)V",
             //#elseif MC >= 1.21.2
             //$$ method = "render(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
-            //#elseif MC >= 1.16.5
-            //$$ method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
             //#else
-            method = "doRender(Lnet/minecraft/entity/EntityLivingBase;DDDFF)V",
+            method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
             //#endif
             at = @At("TAIL")
     )
@@ -109,11 +97,6 @@ public class Mixin_RenderLivingEntityEvent<
             //#else
             T entity,
             //#endif
-            //#if MC <= 1.12.2
-            double x,
-            double y,
-            double z,
-            //#endif
             //#if MC <= 1.21.1
             float entityYaw,
             float partialTicks,
@@ -122,10 +105,10 @@ public class Mixin_RenderLivingEntityEvent<
             //$$ PoseStack matrixStack,
             //$$ SubmitNodeCollector renderQueue,
             //$$ CameraRenderState cameraState,
-            //#elseif MC >= 1.16.5
-            //$$ PoseStack matrixStack,
-            //$$ MultiBufferSource buffer,
-            //$$ int packedLight,
+            //#else
+            PoseStack matrixStack,
+            MultiBufferSource buffer,
+            int packedLight,
             //#endif
             CallbackInfo ci
     ) {
@@ -135,10 +118,10 @@ public class Mixin_RenderLivingEntityEvent<
             //$$ double y = entity.y;
             //$$ double z = entity.z;
             //$$ float partialTicks = Minecraft.getInstance().getFrameTimeNs();
-            //#elseif MC >= 1.16.5
-            //$$ double x = entity.getX();
-            //$$ double y = entity.getY();
-            //$$ double z = entity.getZ();
+            //#else
+            double x = entity.getX();
+            double y = entity.getY();
+            double z = entity.getZ();
             //#endif
             RenderLivingEvent event = new RenderLivingEvent.Post(entity, partialTicks, x, y, z);
             EventManager.INSTANCE.post(event);

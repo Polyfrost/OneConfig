@@ -32,41 +32,41 @@ import org.polyfrost.oneconfig.api.platform.v1.LoaderPlatform;
 import java.nio.file.Path;
 
 //#if FABRIC
-//$$ import net.fabricmc.loader.impl.launch.FabricLauncherBase;
+import net.fabricmc.loader.impl.launch.FabricLauncherBase;
 //#else
 //#if MC >= 1.15.2
-//$$ // TODO
+//$ // TODO
 //#else
-import net.minecraft.launchwrapper.Launch;
+//$ import net.minecraft.launchwrapper.Launch;
 //#endif
 //#endif
 
 public class LoaderPlatformImpl implements LoaderPlatform {
     @Override
     //#if FABRIC
-    //$$ @SuppressWarnings("deprecation")
+    @SuppressWarnings("deprecation")
     //#endif
     public void addToClasspath(@NotNull Path path) {
         //#if FORGE-LIKE
         //#if MC > 1.12.2
-        //$$ throw new UnsupportedOperationException("TODO"); // hiiii init!!!
+        //$ throw new UnsupportedOperationException("TODO"); // hiiii init!!!
         //#else
-        try {
-            Launch.classLoader.addURL(path.toUri().toURL());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        //$ try {
+        //$     Launch.classLoader.addURL(path.toUri().toURL());
+        //$ } catch (Exception e) {
+        //$     throw new RuntimeException(e);
+        //$ }
         //#endif
         //#else
-        //$$ try {
-        //$$     FabricLauncherBase.getLauncher().addToClassPath(path);
-        //$$ } catch (Exception e) {
-        //$$     try {
-        //$$         net.fabricmc.loader.launch.common.FabricLauncherBase.getLauncher().propose(path.toUri().toURL());
-        //$$     } catch (Exception e2) {
-        //$$         throw new RuntimeException(e2);
-        //$$     }
-        //$$ }
+        try {
+            FabricLauncherBase.getLauncher().addToClassPath(path);
+        } catch (Exception e) {
+            try {
+                net.fabricmc.loader.launch.common.FabricLauncherBase.getLauncher().propose(path.toUri().toURL());
+            } catch (Exception e2) {
+                throw new RuntimeException(e2);
+            }
+        }
         //#endif
     }
 

@@ -25,57 +25,57 @@
  */
 
 //#if MC<=11202 && FORGE
-package org.polyfrost.oneconfig.utils.v1.forge;
-
-import net.minecraftforge.fml.common.FMLModContainer;
-import net.minecraftforge.fml.common.ILanguageAdapter;
-import net.minecraftforge.fml.common.ModContainer;
-import net.minecraftforge.fml.relauncher.Side;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-
-/**
- * An adapter for FML to allow for the use of Kotlin objects as a mod class.
- * This is not required if you use a Kotlin class, only if you use a Kotlin object.
- * <br>
- * Adapted from Crimson under LGPL 3.0
- * <a href="https://github.com/Deftu-Archive/Crimson/blob/main/LICENSE">(click here)</a>
- */
-public class KotlinLanguageAdapter implements ILanguageAdapter {
-
-    public static final String ADAPTER = "org.polyfrost.oneconfig.utils.v1.forge.KotlinLanguageAdapter";
-
-    private static Object getObjectInstance(Class<?> objectClass) {
-        try {
-            Object instance = kotlin.jvm.JvmClassMappingKt.getKotlinClass(objectClass).getObjectInstance();
-            return instance == null ? objectClass.getDeclaredConstructor().newInstance() : instance;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to get object instance", e);
-        }
-    }
-
-    @Override
-    public boolean supportsStatics() {
-        return false;
-    }
-
-    @Override
-    public Object getNewInstance(FMLModContainer container, Class<?> objectClass, ClassLoader classLoader, Method factoryMarkedAnnotation) {
-        return getObjectInstance(objectClass);
-    }
-
-    @Override
-    public void setProxy(Field target, Class<?> proxyTarget, Object proxy) {
-        try {
-            target.set(getObjectInstance(proxyTarget), proxy);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to set proxy", e);
-        }
-    }
-
-    @Override
-    public void setInternalProxies(ModContainer mod, Side side, ClassLoader loader) {
-    }
-}
+//$ package org.polyfrost.oneconfig.utils.v1.forge;
+//$
+//$ import net.minecraftforge.fml.common.FMLModContainer;
+//$ import net.minecraftforge.fml.common.ILanguageAdapter;
+//$ import net.minecraftforge.fml.common.ModContainer;
+//$ import net.minecraftforge.fml.relauncher.Side;
+//$
+//$ import java.lang.reflect.Field;
+//$ import java.lang.reflect.Method;
+//$
+//$ /**
+//$  * An adapter for FML to allow for the use of Kotlin objects as a mod class.
+//$  * This is not required if you use a Kotlin class, only if you use a Kotlin object.
+//$  * <br>
+//$  * Adapted from Crimson under LGPL 3.0
+//$  * <a href="https://github.com/Deftu-Archive/Crimson/blob/main/LICENSE">(click here)</a>
+//$  */
+//$ public class KotlinLanguageAdapter implements ILanguageAdapter {
+//$
+//$     public static final String ADAPTER = "org.polyfrost.oneconfig.utils.v1.forge.KotlinLanguageAdapter";
+//$
+//$     private static Object getObjectInstance(Class<?> objectClass) {
+//$         try {
+//$             Object instance = kotlin.jvm.JvmClassMappingKt.getKotlinClass(objectClass).getObjectInstance();
+//$             return instance == null ? objectClass.getDeclaredConstructor().newInstance() : instance;
+//$         } catch (Exception e) {
+//$             throw new RuntimeException("Failed to get object instance", e);
+//$         }
+//$     }
+//$
+//$     @Override
+//$     public boolean supportsStatics() {
+//$         return false;
+//$     }
+//$
+//$     @Override
+//$     public Object getNewInstance(FMLModContainer container, Class<?> objectClass, ClassLoader classLoader, Method factoryMarkedAnnotation) {
+//$         return getObjectInstance(objectClass);
+//$     }
+//$
+//$     @Override
+//$     public void setProxy(Field target, Class<?> proxyTarget, Object proxy) {
+//$         try {
+//$             target.set(getObjectInstance(proxyTarget), proxy);
+//$         } catch (Exception e) {
+//$             throw new RuntimeException("Failed to set proxy", e);
+//$         }
+//$     }
+//$
+//$     @Override
+//$     public void setInternalProxies(ModContainer mod, Side side, ClassLoader loader) {
+//$     }
+//$ }
 //#endif

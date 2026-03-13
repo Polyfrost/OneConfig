@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Minecraft.class)
 public class Mixin_ShutdownEvent {
 
-    @Inject(method = "shutdownMinecraftApplet", at = @At("HEAD"))
+    @Inject(method = "stop", at = @At("HEAD"))
     private void shutdownCallback(CallbackInfo ci) {
         EventManager.INSTANCE.post(ShutdownEvent.INSTANCE);
     }

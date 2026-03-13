@@ -24,9 +24,26 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
+plugins {
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.compose)
+}
+
 dependencies {
     api(project(":modules:hud"))
     api(project(":modules:events"))
     api(project(":modules:commands"))
+    api(compose.desktop.currentOs)
+    api(libs.jetbrains.compose.navigation)
+    api(libs.jetbrains.lifecycle)
+    api(libs.jetbrains.viewmodel)
+
+    implementation(libs.commonmark)
+
     compileOnly("dev.deftu:omnicore-1.8.9-forge:${libs.versions.omnicore.get()}")
+}
+
+kotlin {
+    jvmToolchain(11)
 }

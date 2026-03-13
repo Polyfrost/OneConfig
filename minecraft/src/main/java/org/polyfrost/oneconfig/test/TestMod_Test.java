@@ -29,13 +29,19 @@ package org.polyfrost.oneconfig.test;
 import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
+import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
+import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
 
 public final class TestMod_Test {
     public static void initialize() {
         EventManager.register(InitializationEvent.class, () -> {
             System.err.println("TestMod::init");
             CommandManager.register(new TestCommand_Test());
-            TestConfig_Test.getInstance(); // lazy load
+            TestConfig_Test config = TestConfig_Test.getInstance();
+            if (config.getTree() == null) {
+                config.preload();
+            }
+            ConfigRegistry.INSTANCE.registerTree(config.getTree(), ConfigSource.OC);
         });
     }
 }

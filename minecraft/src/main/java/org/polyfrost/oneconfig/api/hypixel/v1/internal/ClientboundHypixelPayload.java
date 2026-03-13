@@ -6,8 +6,13 @@ import net.hypixel.modapi.HypixelModAPI;
 import net.hypixel.modapi.error.ErrorReason;
 import net.hypixel.modapi.packet.ClientboundHypixelPacket;
 import net.hypixel.modapi.serializer.PacketSerializer;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.ResourceLocation;
+//#if MC >= 1.16.5
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+//#else
+//$ import net.minecraft.network.PacketBuffer;
+//$ import net.minecraft.util.ResourceLocation;
+//#endif
 import org.jetbrains.annotations.NotNull;
 
 public class ClientboundHypixelPayload implements PacketPayload {
@@ -15,7 +20,11 @@ public class ClientboundHypixelPayload implements PacketPayload {
     private final ClientboundHypixelPacket packet;
     private final ErrorReason errorReason;
 
-    private ClientboundHypixelPayload(ResourceLocation id, PacketBuffer data) {
+    //#if MC >= 1.16.5
+    private ClientboundHypixelPayload(ResourceLocation id, FriendlyByteBuf data) {
+    //#else
+    //$ private ClientboundHypixelPayload(ResourceLocation id, PacketBuffer data) {
+    //#endif
         this.id = id;
 
         PacketSerializer serializer = new PacketSerializer(data);
@@ -47,9 +56,17 @@ public class ClientboundHypixelPayload implements PacketPayload {
         return errorReason;
     }
 
-    public static StreamCodec<ClientboundHypixelPayload, PacketBuffer> createCodec(ResourceLocation id) {
+    //#if MC >= 1.16.5
+    public static StreamCodec<ClientboundHypixelPayload, FriendlyByteBuf> createCodec(ResourceLocation id) {
         return StreamCodec.ofMember((buf, payload) -> {
             throw new UnsupportedOperationException("Cannot write ClientboundHypixelPayload");
         }, buf -> new ClientboundHypixelPayload(id, buf));
     }
+    //#else
+    //$ public static StreamCodec<ClientboundHypixelPayload, PacketBuffer> createCodec(ResourceLocation id) {
+    //$     return StreamCodec.ofMember((buf, payload) -> {
+    //$         throw new UnsupportedOperationException("Cannot write ClientboundHypixelPayload");
+    //$     }, buf -> new ClientboundHypixelPayload(id, buf));
+    //$ }
+    //#endif
 }

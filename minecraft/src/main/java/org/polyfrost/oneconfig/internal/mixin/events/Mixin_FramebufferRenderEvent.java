@@ -11,12 +11,25 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Minecraft.class)
 public class Mixin_FramebufferRenderEvent {
 
-    @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/shader/Framebuffer;framebufferRender(II)V"))
+    @Inject(method = "runTick", at = @At(value = "INVOKE",
+            //#if MC >= 1.21.4
+            //$$ target = "Lcom/mojang/blaze3d/platform/Window;updateDisplay(Lcom/mojang/blaze3d/TracyFrameCapture;)V"
+            //#else
+            target = "Lcom/mojang/blaze3d/platform/Window;updateDisplay()V"
+            //#endif
+    ))
     private void preFramebufferRenderCallback(CallbackInfo ci) {
         EventManager.INSTANCE.post(FramebufferRenderEvent.Start.INSTANCE);
     }
 
-    @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/shader/Framebuffer;framebufferRender(II)V", shift = At.Shift.AFTER))
+    @Inject(method = "runTick", at = @At(value = "INVOKE",
+            //#if MC >= 1.21.4
+            //$$ target = "Lcom/mojang/blaze3d/platform/Window;updateDisplay(Lcom/mojang/blaze3d/TracyFrameCapture;)V",
+            //#else
+            target = "Lcom/mojang/blaze3d/platform/Window;updateDisplay()V",
+            //#endif
+            shift = At.Shift.AFTER
+    ))
     private void postFramebufferRenderCallback(CallbackInfo ci) {
         EventManager.INSTANCE.post(FramebufferRenderEvent.End.INSTANCE);
     }

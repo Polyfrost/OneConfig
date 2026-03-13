@@ -12,10 +12,6 @@ subprojects {
 
 preprocess {
     strictExtraMappings.set(true)
-    val forge10809 = createNode("bootstrap-1.8.9-forge", 1_08_09, "srg")
-    val forge11202 = createNode("bootstrap-1.12.2-forge", 1_12_02, "srg")
-    val forge11605 = createNode("bootstrap-1.16.5-forge", 1_16_05, "srg")
-    val fabric11605 = createNode("bootstrap-1.16.5-fabric", 1_16_05, "yarn")
     val fabric12101 = createNode("bootstrap-1.21.1-fabric", 1_21_01, "yarn")
     val fabric12104 = createNode("bootstrap-1.21.4-fabric", 1_21_04, "yarn")
     val fabric12105 = createNode("bootstrap-1.21.5-fabric", 1_21_05, "yarn")
@@ -24,10 +20,6 @@ preprocess {
     val fabric12111 = createNode("bootstrap-1.21.11-fabric", 1_21_11, "yarn")
     val fabric261 = createNode("bootstrap-26.1-fabric", 26_01_00, "yarn")
 
-    forge11202.link(forge10809)
-    forge11605.link(forge11202)
-    fabric11605.link(forge11605)
-    fabric12101.link(fabric11605)
     fabric12104.link(fabric12101)
     fabric12105.link(fabric12104)
     fabric12108.link(fabric12105)

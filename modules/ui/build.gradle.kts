@@ -24,11 +24,19 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
+plugins {
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.compose)
+}
+
 dependencies {
     api(libs.polyui)
-    compileOnly(libs.bundles.lwjgl)
-    testImplementation(libs.lwjgl.tinyfd)
+    api(compose.desktop.currentOs)
     api(project(":modules:events"))
+
+    compileOnly(libs.bundles.lwjgl)
     compileOnly("dev.deftu:omnicore-1.16.5-forge:${libs.versions.omnicore.get()}")
     compileOnly("dev.deftu:textile-1.16.5-forge:${libs.versions.textile.get()}")
+
+    testImplementation(libs.lwjgl.tinyfd)
 }

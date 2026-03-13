@@ -23,6 +23,8 @@ import java.lang.Boolean as JBoolean
 plugins {
     java
     alias(libs.plugins.kotlin)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.compose)
     alias(libs.plugins.google.ksp)
     id(libs.plugins.dgt.multiversion.platform.get().pluginId)
     id(libs.plugins.dgt.base.get().pluginId)
@@ -99,6 +101,7 @@ repositories {
     maven("https://maven.bawnorton.com/releases") {
         content { includeGroup("com.github.bawnorton.mixinsquared") }
     }
+    google()
 }
 
 if (mcData.isLegacyForge) { // Quick substitution for relaunch in dev env, so that mixinextras works properly (yay!)
@@ -216,16 +219,6 @@ dependencies {
         mcVersion to CompatDependency("com.teamresourceful.resourcefulconfig:resourcefulconfig-common-$mcVersionOverride:$modVersion")
 
     val rconfig = mapOf(
-        rconfig("1.19.2", "1.0.20"),
-        rconfig("1.19.3", "1.1.4"),
-        rconfig("1.19.4", "1.2.0"),
-        rconfig("1.20.0", "2.1.0", "1.20"),
-        rconfig("1.20.1", "2.1.3"),
-        rconfig("1.20.2", "2.2.3"),
-        rconfig("1.20.4", "2.4.8"),
-        rconfig("1.20.5", "2.5.2"),
-        rconfig("1.20.6", "2.5.2", "1.20.5"),
-        rconfig("1.21.0", "3.0.11", "1.21"),
         rconfig("1.21.1", "3.0.11", "1.21"),
         rconfig("1.21.2", "3.0.11", "1.21"),
         rconfig("1.21.3", "3.3.4"),
@@ -256,19 +249,6 @@ dependencies {
     )
 
     val yacl = mapOf(
-        yacl("1.19.0", "1.7.1", withoutLoader = true),
-        yacl("1.19.1", "1.7.1", withoutLoader = true),
-       "1.19.2" to CompatDependency("maven.modrinth:1eAoo2KR:gJ6ZmZ4Z", "maven.modrinth:1eAoo2KR:Jf2pciI1"),
-        yacl("1.19.3", "2.2.0", withoutLoader = true),
-        "1.19.4" to CompatDependency("maven.modrinth:1eAoo2KR:gJ6ZmZ4Z", "maven.modrinth:1eAoo2KR:Jf2pciI1"),
-        yacl("1.20.0", "3.6.6", "1.20.1"),
-        yacl("1.20.1", "3.6.6", "1.20.1"),
-        yacl("1.20.2", "3.2.1"),
-        yacl("1.20.3", "3.3.2"),
-        yacl("1.20.4", "3.6.6", "1.20.4", noForge = true),
-        yacl("1.20.5", "3.6.6", "1.20.6"),
-        yacl("1.20.6", "3.6.6", "1.20.6"),
-        yacl("1.21.0", "3.7.1", "1.21.1"),
         yacl("1.21.1", "3.7.1"),
         yacl("1.21.2", "3.7.1", "1.21.3"),
         yacl("1.21.3", "3.7.1"),
@@ -286,15 +266,6 @@ dependencies {
     fun modMenu(mcVersion: String, version: String) = mcVersion to CompatDependency(fabric = "com.terraformersmc:modmenu:$version")
 
     val modMenu = mapOf(
-        modMenu("1.16.5", "1.16.23"),
-        modMenu("1.17.1", "2.0.16"),
-        modMenu("1.18.2", "3.2.5"),
-        modMenu("1.18.2", "3.2.5"),
-        modMenu("1.19.2", "4.1.2"),
-        modMenu("1.19.4", "6.3.1"),
-        modMenu("1.20.1", "7.2.2"),
-        modMenu("1.20.4", "9.2.0"),
-        modMenu("1.20.6", "10.0.0"),
         modMenu("1.21.1", "11.0.3"),
         modMenu("1.21.2", "12.0.0"),
         modMenu("1.21.3", "12.0.0"),
@@ -308,6 +279,11 @@ dependencies {
     )
     compileOnlyCompat(modMenu[mcVersionString])
 
+    implementation(compose.desktop.currentOs)
+    implementation(libs.jetbrains.compose.navigation)
+    implementation(libs.jetbrains.lifecycle)
+    implementation(libs.jetbrains.viewmodel)
+    implementation(libs.commonmark)
 
     provideIncludedDependencies(
         tripleVersion,

@@ -27,50 +27,54 @@
 package org.polyfrost.oneconfig.api.platform.v1.internal;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
+//#if MC >= 1.13
+import net.minecraft.client.gui.screens.Screen;
+//#else
+//$ import net.minecraft.client.gui.GuiScreen;
+//#endif
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.event.v1.EventDelay;
 import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
 
 public class ScreenPlatformImpl implements ScreenPlatform {
     //#if MC > 1.13
-    //$$ private final int[] fbWidth = new int[1];
-    //$$ private final int[] winWidth = new int[1];
+    private final int[] fbWidth = new int[1];
+    private final int[] winWidth = new int[1];
     //#endif
 
     @Override
     public int viewportWidth() {
         //#if MC>=11502
-        //$$ return Minecraft.getInstance().getWindow().getWidth();
+        return Minecraft.getInstance().getWindow().getWidth();
         //#else
-        return Minecraft.getMinecraft().displayWidth;
+        //$ return Minecraft.getMinecraft().displayWidth;
         //#endif
     }
 
     @Override
     public int viewportHeight() {
         //#if MC>=11502
-        //$$ return Minecraft.getInstance().getWindow().getHeight();
+        return Minecraft.getInstance().getWindow().getHeight();
         //#else
-        return Minecraft.getMinecraft().displayHeight;
+        //$ return Minecraft.getMinecraft().displayHeight;
         //#endif
     }
 
     @Override
     public int windowWidth() {
         //#if MC>=11502
-        //$$ return Minecraft.getInstance().getWindow().getScreenWidth();
+        return Minecraft.getInstance().getWindow().getScreenWidth();
         //#else
-        return (int) (Minecraft.getMinecraft().displayWidth / org.lwjgl.opengl.Display.getPixelScaleFactor());
+        //$ return (int) (Minecraft.getMinecraft().displayWidth / org.lwjgl.opengl.Display.getPixelScaleFactor());
         //#endif
     }
 
     @Override
     public int windowHeight() {
         //#if MC>=11502
-        //$$ return Minecraft.getInstance().getWindow().getScreenHeight();
+        return Minecraft.getInstance().getWindow().getScreenHeight();
         //#else
-        return (int) (Minecraft.getMinecraft().displayHeight / org.lwjgl.opengl.Display.getPixelScaleFactor());
+        //$ return (int) (Minecraft.getMinecraft().displayHeight / org.lwjgl.opengl.Display.getPixelScaleFactor());
         //#endif
     }
 
@@ -82,28 +86,37 @@ public class ScreenPlatformImpl implements ScreenPlatform {
     @Override
     public float pixelRatio() {
         //#if MC > 1.13
-        //$$ long handle = Minecraft.getInstance().getWindow().getWindow();
-        //$$ org.lwjgl.glfw.GLFW.glfwGetFramebufferSize(handle, fbWidth, null);
-        //$$ org.lwjgl.glfw.GLFW.glfwGetWindowSize(handle, winWidth, null);
-        //$$ if (winWidth[0] > 0) {
-        //$$     return (float) fbWidth[0] / winWidth[0];
-        //$$ }
-        //$$ return 1.0f;
+        long handle = Minecraft.getInstance().getWindow().getWindow();
+        org.lwjgl.glfw.GLFW.glfwGetFramebufferSize(handle, fbWidth, null);
+        org.lwjgl.glfw.GLFW.glfwGetWindowSize(handle, winWidth, null);
+        if (winWidth[0] > 0) {
+            return (float) fbWidth[0] / winWidth[0];
+        }
+        return 1.0f;
         //#else
-        return org.lwjgl.opengl.Display.getPixelScaleFactor();
+        //$ return org.lwjgl.opengl.Display.getPixelScaleFactor();
         //#endif
     }
 
     @Override
     public void display(@Nullable Object screen, int ticks) {
-        if (ticks < 1) Minecraft.getMinecraft().displayGuiScreen((GuiScreen) screen);
-        else EventDelay.tick(ticks, () -> Minecraft.getMinecraft().displayGuiScreen((GuiScreen) screen));
+        //#if MC >= 1.13
+        if (ticks < 1) Minecraft.getInstance().setScreen((Screen) screen);
+        else EventDelay.tick(ticks, () -> Minecraft.getInstance().setScreen((Screen) screen));
+        //#else
+        //$ if (ticks < 1) Minecraft.getMinecraft().displayGuiScreen((GuiScreen) screen);
+        //$ else EventDelay.tick(ticks, () -> Minecraft.getMinecraft().displayGuiScreen((GuiScreen) screen));
+        //#endif
     }
 
     @Override
     @SuppressWarnings("unchecked" /*, reason = "reduces friction between versions" */)
     public <T> @Nullable T current() {
-        return (T) Minecraft.getMinecraft().currentScreen;
+        //#if MC >= 1.13
+        return (T) Minecraft.getInstance().screen;
+        //#else
+        //$ return (T) Minecraft.getMinecraft().currentScreen;
+        //#endif
     }
 
 }

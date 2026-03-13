@@ -33,4 +33,4 @@ import net.minecraft.client.Minecraft
  */
 @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 @kotlin.internal.InlineOnly
-inline val mc: Minecraft get() = Minecraft.getMinecraft()
+inline val mc: Minecraft get() = Minecraft.getInstance()
