@@ -21,10 +21,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import org.polyfrost.oneconfig.internal.ui.components.Header
@@ -47,6 +53,14 @@ fun Shell(
         }.sizeIn(
             1391.dp, 700.dp, 1391.dp, 700.dp
         ).clip(LocalTheme.current.backgroundShape)
+            .dropShadow(LocalTheme.current.backgroundShape, Shadow(
+                50.dp,
+                SolidColor(Color.Black),
+                4.dp,
+                DpOffset(0.dp, 13.dp),
+                .42f,
+                BlendMode.SrcOver
+            ))
             .border(1.dp, LocalTheme.current.borderColor, LocalTheme.current.backgroundShape)
             .drawBehind {
                 backdrop(windowOffset)
