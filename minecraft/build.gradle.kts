@@ -12,6 +12,7 @@ import dev.deftu.gradle.utils.version.MinecraftVersions
 import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import gg.essential.gradle.util.prebundle
 import org.gradle.kotlin.dsl.invoke
+import org.jetbrains.kotlin.gradle.internal.builtins.StandardNames.FqNames.target
 import org.polyfrost.gradle.provideFabricApiDependency
 import org.polyfrost.gradle.provideIncludedDependencies
 import java.text.SimpleDateFormat
@@ -24,7 +25,6 @@ plugins {
     java
     alias(libs.plugins.kotlin)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.compose)
     alias(libs.plugins.google.ksp)
     id(libs.plugins.dgt.multiversion.platform.get().pluginId)
     id(libs.plugins.dgt.base.get().pluginId)
@@ -101,6 +101,7 @@ repositories {
     maven("https://maven.bawnorton.com/releases") {
         content { includeGroup("com.github.bawnorton.mixinsquared") }
     }
+    maven("https://redirector.kotlinlang.org/maven/compose-dev")
     google()
 }
 
@@ -177,7 +178,6 @@ val dandelionBpRelocated = registerRelocationAttribute("relocate-dandelion-bp-mo
 val dandelionBpRelocatedConfiguration: Configuration by configurations.creating {
     attributes { attribute(dandelionBpRelocated, true) }
 }
-
 dependencies {
     data class CompatDependency(
         val all: String? = null,
@@ -279,7 +279,17 @@ dependencies {
     )
     compileOnlyCompat(modMenu[mcVersionString])
 
-    implementation(compose.desktop.currentOs)
+    implementation(libs.jetbrains.compose.foundation)
+    implementation(libs.jetbrains.compose.material)
+    implementation(libs.jetbrains.compose.runtime)
+    implementation(libs.jetbrains.compose.ui)
+    implementation(libs.jetbrains.compose.ui.tooling.preview)
+    implementation(libs.jetbrains.compose.ui.util)
+    implementation(libs.jetbrains.skiko.awt)
+    implementation(libs.jetbrains.skiko.awt.runtime.windows.x64)
+    implementation(libs.jetbrains.skiko.awt.runtime.linux.x64)
+    implementation(libs.jetbrains.skiko.awt.runtime.macos.x64)
+    implementation(libs.jetbrains.skiko.awt.runtime.macos.arm64)
     implementation(libs.jetbrains.compose.navigation)
     implementation(libs.jetbrains.lifecycle)
     implementation(libs.jetbrains.viewmodel)

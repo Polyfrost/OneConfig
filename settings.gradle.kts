@@ -69,7 +69,8 @@ listOf(
     "dependencies",
     "dependencies:legacy",
     "utils",
-    "relocator"
+    "relocator",
+    "poly-compose",
 ).forEach { module ->
     include(":modules:$module")
 }

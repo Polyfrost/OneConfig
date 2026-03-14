@@ -27,17 +27,22 @@
 plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.compose)
 }
 
 dependencies {
     api(project(":modules:hud"))
     api(project(":modules:events"))
     api(project(":modules:commands"))
-    api(compose.desktop.currentOs)
+    api(libs.jetbrains.compose.foundation)
+    api(libs.jetbrains.compose.material)
+    api(libs.jetbrains.compose.runtime)
+    api(libs.jetbrains.compose.ui)
+    api(libs.jetbrains.compose.ui.tooling.preview)
+    api(libs.jetbrains.compose.ui.util)
     api(libs.jetbrains.compose.navigation)
     api(libs.jetbrains.lifecycle)
     api(libs.jetbrains.viewmodel)
+    api(project(":modules:poly-compose"))
 
     implementation(libs.commonmark)
 

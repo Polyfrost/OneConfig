@@ -5,7 +5,6 @@ import dev.deftu.omnicore.api.loader.OmniLoader
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.Event
 import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
-import org.polyfrost.oneconfig.internal.ui.OneConfigUI
 import java.net.URI
 
 object CompatLoader {
@@ -73,8 +72,6 @@ object CompatLoader {
     }
 
     fun hasMod(id: String): Boolean = OmniLoader.mods.any { it.id == id }
-
-    val extraCompatConfigs get() = OneConfigUI.extraConfigTrees
 
     private val list: MutableList<Pair<Int, () -> Unit>> = mutableListOf()
 

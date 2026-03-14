@@ -34,6 +34,7 @@ import dev.deftu.omnicore.api.client.OmniClient;
 import dev.deftu.omnicore.api.client.chat.OmniClientChat;
 import dev.deftu.omnicore.api.client.commands.OmniClientCommandSource;
 import dev.deftu.omnicore.api.client.commands.OmniClientCommands;
+import dev.deftu.omnicore.api.client.input.OmniKeys;
 import dev.deftu.omnicore.api.client.screen.OmniScreens;
 import dev.deftu.omnicore.api.loader.ModInfo;
 import dev.deftu.omnicore.api.loader.OmniLoader;
@@ -41,31 +42,26 @@ import dev.deftu.omnicore.internal.client.commands.ClientCommandInternals;
 import dev.deftu.textile.Text;
 import dev.deftu.textile.minecraft.MCTextStyle;
 import dev.deftu.textile.minecraft.TextColors;
-import kotlin.Unit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.polyfrost.compose.render.RenderContext;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
-import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
+import org.polyfrost.oneconfig.api.event.v1.events.HudRenderEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.WindowFocusEvent;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.api.hypixel.v1.HypixelUtils;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
-import org.polyfrost.oneconfig.api.ui.v1.UIManager;
-import org.polyfrost.oneconfig.api.ui.v1.api.RendererExt;
 import org.polyfrost.oneconfig.api.ui.v1.internal.BlurHandler;
-import org.polyfrost.oneconfig.api.ui.v1.keybind.OCKeybindHelper;
-import org.polyfrost.oneconfig.internal.ui.OneConfigUI;
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindHelper;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
+import org.polyfrost.oneconfig.internal.ui.compose.McFontService;
+import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen;
 import org.polyfrost.oneconfig.test.TestMod_Test;
-import org.polyfrost.polyui.PolyUI;
-import org.polyfrost.polyui.component.Drawable;
-import org.polyfrost.polyui.input.KeyModifiers;
-import org.polyfrost.polyui.input.Translator;
 
 //#if MC > 1.16
 //$$ import com.mojang.brigadier.arguments.ArgumentType;
@@ -143,9 +139,9 @@ public class OneConfig
         String v = self == null ? "LOCAL" : self.getVersion();
         LOGGER.info("Loading OneConfig v{}", v);
         BlurHandler.init();
+        McFontService.INSTANCE.init();
 
         preloadCopycat();
-//        preloadPolyUI(); f poly ui !
 
         new OneConfigConfig();
         registerCommands();
@@ -184,74 +180,45 @@ public class OneConfig
                 .executes(executor)
                 .then(OmniClientCommands.literal("delete")
                         .executes((ctx) -> {
-                            OneConfigUI.INSTANCE.invalidateCache();
-                            ConfigVisualizer.INSTANCE.clearCache();
                             return ctx.getSource().replyChat("Deleted OneConfig UI. Please make a report if you were having issues!");
                         })
                 )
                 .then(OmniClientCommands.literal("hud")
-                        .executes((ctx) -> ctx.getSource().openScreen(HudManager.INSTANCE.getWithEditor()))
+                        .executes((ctx) -> { HudManager.INSTANCE.toggleEditor(); return Command.SINGLE_SUCCESS; })
                 )
                 .then(OmniClientCommands.literal("locraw")
                         .executes((ctx) -> ctx.getSource().replyChat(HypixelUtils.getLocation().toString()))
-                )
-                .then(OmniClientCommands.literal("debug")
-                        .executes((ctx) -> {
-                            OneConfigUI.INSTANCE.create();
-                            OneConfigUI.INSTANCE.toggleDebug();
-                            return ctx.getSource().replyChat("OK");
-                        })
-                ).then(OmniClientCommands.literal("pixelRatio").then(OmniClientCommands.argument("ratio", FloatArgumentType.floatArg(0.1f, 10f)))
-                        .executes((ctx) -> {
-                            UIManager.INSTANCE.getDefaultInstance().getWindow().setPixelRatio(ctx.getArgument("ratio", float.class));
-                            return ctx.getSource().replyChat("OK");
-                        })
-                )
-                .then(OmniClientCommands.literal("dumpAtlas")
-                        .executes((ctx) -> {
-                            RendererExt ext = UIManager.INSTANCE.getRendererExt();
-                            if (ext == null) {
-                                return ctx.getSource().replyChat("RendererExt is not available on this platform.");
-                            }
-                            ext.dumpAtlas();
-                            return ctx.getSource().replyChat("OK");
-                        })
                 ).build();
         OmniClientCommands.register(node);
         OmniClientCommands.register(OmniClientCommands.literal("ocfg").executes(executor).redirect(node));
     }
 
     private static void registerKeybinds() {
-        OCKeybindHelper builder = OCKeybindHelper.builder();
-        builder.inScreens();
-        builder.mods(KeyModifiers.RSHIFT).does((s) -> {
-            if (s) {
-                // asm: in non-dev prevent the UI from opening in the main menu
-                if (OmniClient.getWorld() == null && !OmniLoader.isDevelopment()) {
-                    return Unit.INSTANCE;
-                }
-
-                // also prevent opening in chat
-                if (OmniScreens.isInChatScreen()) {
-                    return Unit.INSTANCE;
-                }
-
+        KeybindHelper.builder()
+            .inScreens()
+            .key(OmniKeys.KEY_RIGHT_SHIFT)
+            .action(() -> {
+                if (OmniClient.getWorld() == null && !OmniLoader.isDevelopment()) return;
+                if (OmniScreens.isInChatScreen()) return;
                 try {
                     Platform.screen().display(new OneConfigUIScreen());
                 } catch (Throwable t) {
                     OmniClientChat.displayChatMessage(Text.literal("Failed to open OneConfig UI: " + t.getMessage() + ". Please report this!").setStyle(MCTextStyle.color(TextColors.RED)));
-                    // propagate for proper error handling
                     throw t;
                 }
-            }
-            return Unit.INSTANCE;
-        });
-
-        builder.register();
+            })
+            .register();
     }
 
     private static void registerEventHandlers() {
         EventManager.register(InitializationEvent.class, e -> HudManager.INSTANCE.initialize());
+        EventManager.register(HudRenderEvent.class, e -> {
+            if (!SkiaCtx.INSTANCE.isReady()) return;
+            SkiaCtx.INSTANCE.queueDraw((Runnable) () -> {
+                var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
+                HudManager.INSTANCE.render(ctx, OmniClient.getWindow().getScreenWidth(), OmniClient.getWindow().getScreenHeight());
+            });
+        });
         EventManager.register(InitializationEvent.class, e -> {
             ConfigManager.initialize();
             ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
@@ -268,29 +235,6 @@ public class OneConfig
 //            }
 //        });
 //        //#endif
-    }
-
-    /**
-     * Ensure that key PolyUI classes are loaded to prevent lag-spikes when loading PolyUI for the first time.
-     */
-    private static void preloadPolyUI() {
-        long t1 = System.nanoTime();
-        try {
-            // PolyUI
-            Class.forName(PolyUI.class.getName());
-            Class.forName(Drawable.class.getName());
-            Class.forName(Translator.class.getName());
-
-            // OneConfig PolyUI renderer
-            // todo: fix for fabric loaders as fails due to running too early
-            //#if FORGE
-            //$$ UIManager.INSTANCE.getRenderer();
-            //#endif
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to preload necessary PolyUI classes", e);
-        }
-
-        LOGGER.info("  -> PolyUI preload took {}ms", (System.nanoTime() - t1) / 1_000_000.0);
     }
 
     private static void preloadCopycat() {

@@ -36,6 +36,8 @@ repositories {
     maven("https://maven.bawnorton.com/releases") {
         content { includeGroup("com.github.bawnorton.mixinsquared") }
     }
+    maven("https://redirector.kotlinlang.org/maven/compose-dev")
+    google()
 }
 
 dependencies {

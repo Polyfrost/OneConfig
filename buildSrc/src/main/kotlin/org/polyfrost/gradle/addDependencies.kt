@@ -228,9 +228,19 @@ fun Project.provideIncludedDependencies(version: Triple<Int, Int, Int>?, loader:
         deps.add("$lwjglBase-nanovg:$lwjglVersion")
     }
 
-    deps.add(libs.findLibrary("polyui").get().get())
     deps.add(libs.findLibrary("hypixel-modapi").get().get())
     deps.add(libs.findLibrary("hypixel-data").get().get())
+    deps.add(libs.findLibrary("jetbrains-compose-foundation").get().get())
+    deps.add(libs.findLibrary("jetbrains-compose-material").get().get())
+    deps.add(libs.findLibrary("jetbrains-compose-runtime").get().get())
+    deps.add(libs.findLibrary("jetbrains-compose-ui").get().get())
+    deps.add(libs.findLibrary("jetbrains-compose-ui-tooling-preview").get().get())
+    deps.add(libs.findLibrary("jetbrains-compose-ui-util").get().get())
+    deps.add(libs.findLibrary("jetbrains-skiko-awt").get().get())
+    deps.add(libs.findLibrary("jetbrains-skiko-awt-runtime-windows-x64").get().get())
+    deps.add(libs.findLibrary("jetbrains-skiko-awt-runtime-linux-x64").get().get())
+    deps.add(libs.findLibrary("jetbrains-skiko-awt-runtime-macos-x64").get().get())
+    deps.add(libs.findLibrary("jetbrains-skiko-awt-runtime-macos-arm64").get().get())
     if (loader == "fabric") {
         deps.add(libs.findLibrary("fabric-language-kotlin").get().get())
     } else if (version != null && version.second > 12) { // forge / neoforge
@@ -248,6 +258,10 @@ fun Project.provideIncludedDependencies(version: Triple<Int, Int, Int>?, loader:
     }
     deps.add(libs.findLibrary("mixin-extras").get().get())
     deps.add(libs.findLibrary("mixin-squared").get().get())
+    deps.add(libs.findLibrary("jetbrains-compose-navigation").get().get())
+    deps.add(libs.findLibrary("jetbrains-lifecycle").get().get())
+    deps.add(libs.findLibrary("jetbrains-viewmodel").get().get())
+    deps.add(libs.findLibrary("commonmark").get().get())
     val actualDeps = mutableListOf<OCDependency>()
     for (dep in deps) {
         actualDeps.add(OCDependency(dep))

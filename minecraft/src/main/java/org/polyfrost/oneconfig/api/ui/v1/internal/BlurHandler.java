@@ -46,7 +46,6 @@ import org.polyfrost.oneconfig.api.ui.v1.screen.BlurScreen;
 //#if MC <= 1.12.2
 //$ import org.polyfrost.oneconfig.internal.mixin.Mixin_ShaderListAccessor;
 //#endif
-import org.polyfrost.polyui.animate.Animation;
 
 //#if MC <= 1.12.2
 //$ import java.util.List;
@@ -74,7 +73,6 @@ public final class BlurHandler {
     public static final BlurHandler INSTANCE = new BlurHandler();
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Blur");
     private final ResourceLocation blurShader = OmniResourceLocation.createOrThrow("shaders/post/fade_in_blur.json");
-    private final Animation animation = Animation.Type.Default.create(2_000_000_000, 0f, 5f);
     //#if MC <= 1.12.2
     //$ private ShaderUniform su;
     //#endif

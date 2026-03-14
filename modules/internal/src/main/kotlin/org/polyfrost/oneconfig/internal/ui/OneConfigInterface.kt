@@ -28,7 +28,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.UIBranding
 import org.polyfrost.oneconfig.internal.ui.themes.UITheme
 import org.polyfrost.oneconfig.internal.ui.themes.UITypography
 
-private val Theme = UITheme(
+val Theme = UITheme(
     Color(0xF211171C),
     Color(0xB3151C22),
     Color(0xB2232D32),

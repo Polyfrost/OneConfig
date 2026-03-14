@@ -29,11 +29,13 @@ package org.polyfrost.oneconfig.test;
 import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
+import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
 
 public final class TestMod_Test {
     public static void initialize() {
+        HudManager.register(new TestHud_Test());
         EventManager.register(InitializationEvent.class, () -> {
             System.err.println("TestMod::init");
             CommandManager.register(new TestCommand_Test());

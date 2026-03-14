@@ -15,10 +15,7 @@ import dev.deftu.omnicore.api.client.getIconResourcePath
 import dev.deftu.omnicore.api.loader.ModInfo
 import org.polyfrost.oneconfig.api.config.v1.*
 import org.polyfrost.oneconfig.api.config.v1.dsl.*
-import org.polyfrost.oneconfig.internal.DynamicPolyImage
-import org.polyfrost.polyui.color.PolyColor
-import org.polyfrost.polyui.color.argb
-import org.polyfrost.polyui.color.asMutable
+import org.polyfrost.oneconfig.internal.DynamicImage
 import java.util.UUID
 import kotlin.reflect.KClass
 
@@ -45,7 +42,7 @@ internal object RConfigCompat {
             mod?.let {
                 val path = it.getIconResourcePath(Int.MAX_VALUE) ?: return@let
                 val stream = it.getIconResource(Int.MAX_VALUE) ?: return@let
-                tree.icon = DynamicPolyImage(path, stream)
+                tree.icon = DynamicImage(path, stream)
             }
         }
 
@@ -121,15 +118,9 @@ internal object RConfigCompat {
 
                 if (entry.options().hasOption(Option.COLOR)) {
                     builder.setter = setter@{ color ->
-                        val polyColor = color as? PolyColor ?: return@setter
-
-                        entry.int = polyColor.argb
+                        entry.int = (color as? Int) ?: return@setter
                     }
-
-                    builder.getter = {
-                        argb(entry.int).asMutable()
-                    }
-
+                    builder.getter = { entry.int }
                     Visualizer.ColorVisualizer::class
                 } else if (entry.options().hasOption(Option.SLIDER)) {
                     Visualizer.SliderVisualizer::class

@@ -7,7 +7,6 @@ kotlinx-coroutines = "1.10.2"
 kotlinx-atomicfu = "0.29.0"
 fabric-language-kotlin = "1.13.8+kotlin.2.3.0"
 google-ksp = "2.2.10-2.0.2"
-polyui = "2.1.7"
 annotations = "24.1.0"
 hypixel-modapi = "1.0.1"
 hypixel-data = "0.2.0" # Dep of hypixel-modapi
@@ -45,6 +44,7 @@ log4j-api = "2.0-beta9" # used because this is the version that 1.8.9 supports, 
 # Compose
 compose = "1.10.2"
 compose-navigation = "2.9.1"
+skiko = "0.9.37.4"
 
 lifecycle = "2.11.0-alpha01"
 viewmodel = "2.10.0-beta01"
@@ -72,8 +72,6 @@ copycat-image-awt = { module = "dev.deftu:copycat-image-awt", version.ref = "cop
 
 hypixel-modapi = { module = "net.hypixel:mod-api", version.ref = "hypixel-modapi" }
 hypixel-data = { module = "net.hypixel:hypixel-data", version.ref = "hypixel-data" }
-
-polyui = { module = "org.polyfrost:polyui", version.ref = "polyui" }
 
 annotations = { module = "org.jetbrains:annotations", version.ref = "annotations" }
 
@@ -104,10 +102,20 @@ kotlinx-coroutines-jdk8 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-j
 kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu-jvm", version.ref = "kotlinx-atomicfu" }
 fabric-language-kotlin = { module = "net.fabricmc:fabric-language-kotlin", version.ref = "fabric-language-kotlin" }
 
-# The rest of the Compose libraries are provided by the plugin
+jetbrains-compose-foundation = { module = "org.jetbrains.compose.foundation:foundation-desktop", version.ref = "compose" }
+jetbrains-compose-material = { module = "org.jetbrains.compose.material:material-desktop", version.ref = "compose" }
+jetbrains-compose-runtime = { module = "org.jetbrains.compose.runtime:runtime-desktop", version.ref = "compose" }
+jetbrains-compose-ui = { module = "org.jetbrains.compose.ui:ui-desktop", version.ref = "compose" }
+jetbrains-compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview-desktop", version.ref = "compose" }
+jetbrains-compose-ui-util = { module = "org.jetbrains.compose.ui:ui-util-desktop", version.ref = "compose" }
 jetbrains-compose-navigation = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "compose-navigation" }
 jetbrains-lifecycle = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 jetbrains-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "viewmodel" }
+jetbrains-skiko-awt = { module = "org.jetbrains.skiko:skiko-awt", version.ref = "skiko" }
+jetbrains-skiko-awt-runtime-windows-x64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-windows-x64", version.ref = "skiko" }
+jetbrains-skiko-awt-runtime-linux-x64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-linux-x64", version.ref = "skiko" }
+jetbrains-skiko-awt-runtime-macos-x64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-macos-x64", version.ref = "skiko" }
+jetbrains-skiko-awt-runtime-macos-arm64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-macos-arm64", version.ref = "skiko" }
 
 commonmark = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
 
@@ -140,5 +148,3 @@ licenser = { id = "dev.yumi.gradle.licenser", version.ref = "licenser" }
 jetbrains-idea-ext = { id = "org.jetbrains.gradle.plugin.idea-ext", version.ref = "jetbrains-idea-ext" }
 
 google-ksp = { id = "com.google.devtools.ksp", version.ref = "google-ksp" }
-
-compose = { id = "org.jetbrains.compose", version.ref = "compose" }

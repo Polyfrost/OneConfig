@@ -26,44 +26,22 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
+import androidx.compose.runtime.Composable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
+import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.runtime.PolyComposeRuntime
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties.ktProperty
 import org.polyfrost.oneconfig.api.config.v1.Properties.simple
 import org.polyfrost.oneconfig.api.config.v1.Tree
-import org.polyfrost.oneconfig.api.config.v1.annotations.Keybind
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
 import org.polyfrost.oneconfig.api.hud.v1.HudManager.LOGGER
-import org.polyfrost.oneconfig.api.hud.v1.internal.HudConfigVisualizer
-import org.polyfrost.polyui.color.PolyColor
-import org.polyfrost.polyui.component.Component
-import org.polyfrost.polyui.component.Drawable
-import org.polyfrost.polyui.component.impl.Block
-import org.polyfrost.polyui.input.PolyBind
-import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.utils.fastAll
 
-/**
- * HUD (Heads Up Display) is a component that is rendered on top of the screen. They are used for displaying information to the user, such as the time, or the player's health.
- *
- * - You need to register your HUD with [HudManager.register] in order for it to be available to the user.
- * - **Your HUD's size and positioning, if you are manually specifying it, needs to be designed for a `1920x1080` screen**.
- * - The instance you pass to [HudManager.register] is the instance that is used for the HUD picker screen. When a HUD is added to the screen, a new instance is created using [clone].
- * - HUD config files are stored in `{profile}/huds/{rnd}-`[id], e.g. `huds/42-my_hud.toml`.
- * - For a hud instance, the following methods are called (in order) [create], and then [periodically][updateFrequency] [update] if required.
- * - Try not to do really long operations in [update]. The method is called on the render thread and so may cause lag. If you need to do a long operation, consider using an asynchronous task.
- * - The parent of your HUD is a [Block] which is controlled by the user. **You do not need to include a background in your HUD.**
- * - HUDs which are wider than 450px may have issues when displayed on the HUD picker screen, and HUDs this large are not recommended anyway as they may be very distracting.
- *
- * In this system, multiple of the same HUD can exist at once. In order for this to work correctly, there are a few rules:
- * - **Do not run any code inside an `init {}` block**. [clone] does not run constructors.
- * - For fields that are mutable references to other objects, you must set them yourself in [clone] in order for each HUD to be independent of each other.
- * - The easiest way to ensure that your HUD works when placed multiple times is to just not use `static` fields, so you don't abuse them.
- */
-@Suppress("EqualsOrHashCode", "PROPERTY_HIDES_JAVA_FIELD", "UnstableApiUsage")
-abstract class Hud<T : Drawable>(id: String, title: String, val category: Category) : Cloneable, Config(id, null, title, null) {
+@Suppress("EqualsOrHashCode", "UnstableApiUsage")
+abstract class Hud(id: String, title: String, val category: Category) : Cloneable, Config(id, null, title, null) {
+
     @Switch(title = "Static Width")
     var staticWidth = false
 
@@ -76,249 +54,92 @@ abstract class Hud<T : Drawable>(id: String, title: String, val category: Catego
     @Switch(title = "Show in GUIs")
     var showInScreens = true
 
-    @Keybind(title = "Toggle HUD Key")
-    var toggleKey: PolyBind? = null
+    var toggleKey: Int = -1
+    var showKey: Int = -1
 
-    @Keybind(title = "Show HUD Key")
-    var showKey: PolyBind? = null
+    var x: Float = 0f
+    var y: Float = 0f
+    var hidden: Boolean = false
 
-    // we don't need to use this as we initialize in our own way.
     override fun addToInitQueue() {}
 
-    /**
-     * @return `true` if this property is a real HUD on the screen, and not the example instance.
-     */
     val isReal get() = tree != null
 
-    /**
-     * clone, build the HUD drawable, build the tree for it, add any [custom information][addToSerialized],
-     * write in data from [with], register the tree, and return the cloned hud instance.
-     *
-     * **note:** while this method is public, it is entirely internal API and invoking it yourself is probably a bad idea, right?
-     */
+    @Transient
+    internal var _runtime: PolyComposeRuntime? = null
+
+    val runtime: PolyComposeRuntime
+        get() = _runtime ?: PolyComposeRuntime().also {
+            _runtime = it
+            it.setContent { Content() }
+        }
+
+    @Composable
+    abstract fun Content()
+
     @ApiStatus.Internal
-    fun make(with: Tree? = null): Hud<T> {
+    fun make(with: Tree? = null): Hud {
         if (tree != null) throw IllegalArgumentException("HUD is already made, it cannot be made again")
         val out = if (multipleInstancesAllowed()) clone() else this
-        val id = with?.id ?: HudConfigVisualizer.makeIDForHudTree(this)
-        val tree = ConfigManager.collect(out, id)
+        val treeId = with?.id ?: "huds/${(1000..9999).random()}-$id"
+        val tree = ConfigManager.collect(out, treeId)
         out.apply {
             tree.title = title
             tree.addMetadata("category", category)
             tree.addMetadata("hidden", true)
-            val hudComponent = get()
-            hudComponent.rawRescalePosition = true
-            tree["x"] = ktProperty(hudComponent::x)
-            tree["y"] = ktProperty(hudComponent::y)
-            HudConfigVisualizer.addHudConfigEntries(hudComponent, tree)
+            tree["x"] = ktProperty(out::x)
+            tree["y"] = ktProperty(out::y)
+            tree["toggleKey"] = ktProperty(out::toggleKey)
+            tree["showKey"] = ktProperty(out::showKey)
             addToSerialized(tree)
             tree["hudClass"] = simple(value = out::class.java.name)
-            HudConfigVisualizer.addDefaultCallbacks(out, tree)
             addCallbacks(tree)
             if (with == null) LOGGER.info("generated new HUD config for $title -> ${tree.id}")
             ConfigManager.active().register(tree)
-            if (showKey?.isBound == true) hidden = true
+            if (showKey != -1) hidden = true
             this.tree = tree
         }
         return out
     }
 
-    /**
-     * This method is called during config tree initialization. it is
-     */
-    protected open fun addCallbacks(tree: Tree) {
-    }
-
-    /**
-     * Override this method to specify completely custom options that should be added to the serialized representation of this HUD.
-     */
+    protected open fun addCallbacks(tree: Tree) {}
     protected open fun addToSerialized(tree: Tree) {}
 
-    @Transient
-    private var it: T? = null
-
-    /**
-     * Return the instance of your HUD element, made by calling [create].
-     * @see get
-     */
-    inline val hud: T
-        get() = get()
-
-    /**
-     * Hidden flag for this HUD.
-     *
-     * If `true`, the HUD will not be rendered, and, if this is in a HUD group, it will resize accordingly.
-     */
-    var hidden: Boolean
-        get() = it?.renders == false
-        set(new) {
-            if (!isReal) return
-            val value = !new
-            // useless null-safety checks, but I don't want to risk dumb errors
-            val it = it ?: return
-            //if (value == it.renders) return
-            it.renders = value
-            it.layoutIgnored = !value
-
-            val bg = getBackground() ?: return
-            val siblings = bg.children ?: return
-
-            if (siblings.size == 1) {
-                bg.renders = value
-            } else if (!value && siblings.fastAll { !it.renders }) {
-                bg.renders = false
-            }
-            bg.recalculate(false)
-        }
-
-    /**
-     * Return the instance of your HUD element, made by calling [create].
-     * @see hud
-     */
-    fun get() = it ?: create().also { this.it = it }
-
-    fun getBackground() = if (hasBackground()) it?._parent as? Block else null
-
-    /**
-     * Create a new instance of your HUD. This should be the complete unit of your hud, **excluding** a background.
-     */
-    protected abstract fun create(): T
-
-    /**
-     * initialize your HUD element.
-     *
-     * this method will be called once, and once only.
-     */
-    open fun setup() {
-    }
-
-    /**
-     * shorthand for [adding a callback][addCallback] on the given property that just calls [updateAndRecalculate].
-     */
     protected fun updateWhenChanged(optionName: String) {
         if (isReal) addCallback(optionName, this::updateAndRecalculate)
-        else LOGGER.warn("attempted to add callback to {}'s option '{}', but it is not real. no action has been taken.", title, optionName)
+        else LOGGER.warn("attempted to add callback to {}'s option '{}', but it is not real.", title, optionName)
     }
 
     protected fun updateAndRecalculate() {
-        if (it == null) {
-            LOGGER.warn("attempted to updateAndRecalculate on {} but it doesn't exist yet (method called to early, or have you checked isReal?) - it will be ignored. if you need this to run, call get() first.", id)
-            return
-        }
-        if (update()) getBackground()?.recalculate(false)
+        update()
     }
 
-    /**
-     * Update your HUD element.
-     * Get the instance of your HUD element by calling [get] or [hud].
-     * @see updateFrequency
-     * @return if you have performed an operation that has changed the size of your HUD element, return `true`
-     *         so the system will automatically resize the drawable.
-     */
+    open fun setup() {}
     abstract fun update(): Boolean
-
-    /**
-     * Return, in *nanoseconds*, how often the [update] method should be called.
-     * Note that small values may be slightly inaccurate. See [PolyUI.every][org.polyfrost.polyui.PolyUI.every] documentation for more information.
-     *
-     * PolyUI bundles time units for you, such as `0.8.seconds` or `50.milliseconds`.
-     *
-     * Any negative number means [update] will never be called. A value of `0` means that [update] will be called every frame. This is not recommended.
-     *
-     * This method is called once when the HUD is added to the screen.
-     */
     open fun updateFrequency(): Long = -1L
-
-    /**
-     * specify a position for this HUD to be placed at.
-     *
-     * **this position, as will all HUD methods, should be for a position on a `1920x1080` screen.**
-     */
-    @Suppress("INAPPLICABLE_JVM_NAME")
-    @JvmName("defaultPosition")
-    open fun defaultPosition(): Vec2 = Vec2.ZERO
-
-    /**
-     * Return `true` if this HUD should have a background by default.
-     */
-    open fun hasBackground() = true
-
-    /**
-     * Set a custom default background color for this HUD.
-     *
-     * A value of `null` (default) means that the standard component background color will be used.
-     *
-     * To remove the background, use [PolyColor.TRANSPARENT].
-     */
+    open fun defaultPosition(): Pair<Float, Float> = 0f to 0f
+    open fun hasBackground(): Boolean = true
     open fun backgroundColor(): PolyColor? = null
-
-    /**
-     * This function will disable the ability for it to be duplicated.
-     *
-     * Only one instance is ever created, [isReal] will always return `true`, constructors can be used, and [clone] will never be called.
-     */
-    open fun multipleInstancesAllowed() = true
-
-    /**
-     * Specify a minimum size for this HUD.
-     */
-    @Suppress("INAPPLICABLE_JVM_NAME")
-    @JvmName("minimumSize")
-    open fun minimumSize(): Vec2 = Vec2.ZERO
-
+    open fun multipleInstancesAllowed(): Boolean = true
+    open fun minimumSize(): Pair<Float, Float> = 0f to 0f
     open fun remove() {}
 
-    /**
-     * This method will create a new instance of the HUD. It is key to the functionality of the HUD system.
-     *
-     * When a HUD is registered, the instance that was passed is the instance that is used for the HUD picker screen.
-     *
-     * Whenever a HUD is added to the screen, this method is called to create a new instance of the HUD, therefore making them
-     * independent of each other.
-     *
-     * This method is not final as you may need to set some field values manually. This is because the default JVM implementation of
-     * [java.lang.Object.clone] performs a **shallow copy** of the object, meaning that any fields that are references to other objects
-     * will be copied to the new instance, but the references will be the same. Primitives or immutable values are therefore safe.
-     * **Constructors are also not called**. DON'T perform any logic in the constructor of your HUD.
-     *
-     * Calling this method yourself is not a good idea.
-     */
     @MustBeInvokedByOverriders
-    @Suppress("unchecked_cast")
-    override fun clone(): Hud<T> = (super.clone() as Hud<T>).apply {
-        it = null
-        showKey = null
-        toggleKey = null
+    @Suppress("UNCHECKED_CAST")
+    override fun clone(): Hud = (super.clone() as Hud).apply {
+        _runtime = null
+        showKey = -1
+        toggleKey = -1
     }
 
-    final override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other is Component) {
-            return other == get()
-        }
-        return false
-    }
-
-    /**
-     * A category for the HUD, used for sorting in the UI.
-     * <br>
-     * IDs start at 1, as 0 is reserved for the default category ("All"). They are also subject to change at any time.
-     * </br>
-     */
     class Category(val name: String, val id: Byte) {
         companion object {
-            @JvmStatic
-            val COMBAT = Category("oneconfig.combat", 1)
-
-            @JvmStatic
-            val INFO = Category("oneconfig.info", 2)
-
-            @JvmStatic
-            val PLAYER = Category("oneconfig.player", 3)
+            @JvmStatic val COMBAT = Category("oneconfig.combat", 1)
+            @JvmStatic val INFO = Category("oneconfig.info", 2)
+            @JvmStatic val PLAYER = Category("oneconfig.player", 3)
         }
 
         override fun toString() = name
-
         override fun hashCode() = id.toInt()
     }
 }

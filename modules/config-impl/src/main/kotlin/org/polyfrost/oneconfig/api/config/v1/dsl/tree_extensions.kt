@@ -4,7 +4,6 @@ import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
-import org.polyfrost.polyui.data.PolyImage
 
 @Suppress("UNCHECKED_CAST")
 var Property<*>.visualizer: Class<out Visualizer>?
@@ -23,8 +22,8 @@ var Node.index: Int?
     get() = metadata?.get("index") as? Int
     set(value) = addMetadata("index", value)
 
-var Node.icon: PolyImage?
-    get() = metadata?.get("icon") as? PolyImage
+var Node.icon: String?
+    get() = metadata?.get("icon") as? String // path to the image
     set(value) = addMetadata("icon", value)
 
 var Tree.saveFunction: Runnable?

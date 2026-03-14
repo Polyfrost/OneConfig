@@ -21,6 +21,8 @@ object SkiaCtx {
 
     private val client get() = Minecraft.getInstance()
 
+    val isReady get() = this::surface.isInitialized && this::directContext.isInitialized
+
     private val queuedDraws = CopyOnWriteArrayList<() -> Unit>()
     private val gl = StoredGLState(330)
 
@@ -40,6 +42,14 @@ object SkiaCtx {
         queuedDraws.add {
             beginFrame()
             block()
+            endFrame()
+        }
+    }
+
+    fun queueDraw(block: Runnable) {
+        queuedDraws.add {
+            beginFrame()
+            block.run()
             endFrame()
         }
     }

@@ -36,17 +36,12 @@ public final class Platform {
     }
 
     private static LoaderPlatform loaderPlatform;
-    private static GLPlatform glPlatform;
     private static ScreenPlatform screenPlatform;
     private static I18nPlatform i18nPlatform;
     private static CompatibilityPlatform compatibilityPlatform;
 
     public static LoaderPlatform loader() {
         return loaderPlatform == null ? loaderPlatform = load(LoaderPlatform.class) : loaderPlatform;
-    }
-
-    public static GLPlatform gl() {
-        return glPlatform == null ? glPlatform = load(GLPlatform.class) : glPlatform;
     }
 
     public static ScreenPlatform screen() {

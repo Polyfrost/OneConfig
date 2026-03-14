@@ -128,9 +128,9 @@ fun DropdownOption(data: DropdownOptionData) {
                     Box(
                         modifier = Modifier
                             .width(300.dp)
-                            .background(theme.componentBackground, theme.sideBarNavigationEntryShape)
-                            .border(1.dp, theme.borderColor, theme.sideBarNavigationEntryShape)
                             .clip(theme.sideBarNavigationEntryShape)
+                            .background(theme.modCardBackground, theme.sideBarNavigationEntryShape)
+                            .border(1.dp, theme.borderColor, theme.sideBarNavigationEntryShape)
                     ) {
                         Column(
                             modifier = Modifier
@@ -145,7 +145,7 @@ fun DropdownOption(data: DropdownOptionData) {
 
                                 val backgroundColor by animateColorAsState(
                                     if (selected) Accent
-                                    else if (isHovered) theme.componentBackground.copy(1f)
+                                    else if (isHovered) theme.componentBackground
                                     else theme.componentBackground.copy(0f)
                                 )
 
@@ -165,7 +165,7 @@ fun DropdownOption(data: DropdownOptionData) {
                                         }
                                         .hoverable(optionSource)
                                         .pointerHoverIcon(PointerIcon.Hand)
-                                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                                        .padding(horizontal = 12.dp, vertical = 8.dp)
                                 ) {
                                     Text(option, color = theme.textColor, fontSize = 13.sp)
                                 }

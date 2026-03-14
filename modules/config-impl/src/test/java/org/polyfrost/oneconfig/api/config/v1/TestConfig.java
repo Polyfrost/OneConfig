@@ -36,9 +36,6 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.RadioButton;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text;
-import org.polyfrost.polyui.color.PolyColor;
-import org.polyfrost.polyui.unit.Align;
-import org.polyfrost.polyui.color.ColorUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -105,14 +102,14 @@ public class TestConfig extends Config {
     public static boolean c4ow = false;
     @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
     public static boolean c5ow = false;
-    @RadioButton(title = "radio", description = "send help")
-    public static Align.Content radio = Align.Content.SpaceBetween;
+    @RadioButton(title = "radio", description = "send help", options = {"Option A", "Option B", "Option C"})
+    public static int radio = 0;
     @Switch(title = "t")
     public boolean added = false;
     @Dropdown(title = "d")
     public List<Integer> intList = Arrays.asList(32, 54, 2);
     @Color(title = "color", category = "bob")
-    PolyColor color = ColorUtils.rgba(255, 0, 100, 1f);
+    int color = 0xFFFF0064;
 
     public TestConfig() {
         super("test_mod.json", "Test Mod", Category.QOL);
@@ -136,8 +133,8 @@ public class TestConfig extends Config {
         @DependsOn("cow2")
         public static boolean cbow = false;
 
-        @RadioButton(title = "radio when me when me when me:", description = "send help")
-        public static Align.Line radio2 = Align.Line.End;
+        @RadioButton(title = "radio when me when me when me:", description = "send help", options = {"Option A", "Option B", "Option C"})
+        public static int radio2 = 0;
 
         @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
         public static boolean cbo2w = false;

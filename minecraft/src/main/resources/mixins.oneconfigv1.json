@@ -8,7 +8,6 @@
     },
     "verbose": true,
     "client": [
-        "Mixin_ShaderListAccessor",
         "compat.Mixin_DisableOptiFineFastRenderForBlur",
         "compat.Mixin_VigilanceCarryover",
         "events.Mixin_ChatSendEvent",

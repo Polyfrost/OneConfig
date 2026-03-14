@@ -27,17 +27,12 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.icon
 import org.polyfrost.oneconfig.api.config.v1.dsl.noCache
 import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
-import org.polyfrost.oneconfig.internal.DynamicPolyImage
+import org.polyfrost.oneconfig.internal.DynamicImage
 import org.polyfrost.oneconfig.internal.utils.MoulConfigGuiOptionEditorDropdownAccessor
-import org.polyfrost.polyui.color.PolyColor
-import org.polyfrost.polyui.color.argb
-import org.polyfrost.polyui.color.asMutable
 import java.lang.reflect.Type
 import java.awt.Color
 import java.util.*
 import kotlin.reflect.KClass
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.nanoseconds
 import io.github.notenoughupdates.moulconfig.Config as MoulConfig
 import org.polyfrost.oneconfig.relocator.annotations.MoulConfig as Moulconfig
 
@@ -118,7 +113,7 @@ data object MoulConfigCompat {
         mod?.let {
             val path = it.getIconResourcePath(Int.MAX_VALUE) ?: return@let
             val stream = it.getIconResource(Int.MAX_VALUE) ?: return@let
-            this.icon = DynamicPolyImage(path, stream)
+//            this.icon = DynamicImage(path, stream) todo
         }
 
         children.forEach {
@@ -192,40 +187,16 @@ data object MoulConfigCompat {
                         ChromaColour::class.java -> children.get() as ChromaColour
                         else -> null
                     }
-
                     colour?.let {
-                        if (it.timeForFullRotationInMillis > 0) {
-                            val safeCycleMillis = it.timeForFullRotationInMillis.coerceAtLeast(1)
-                            PolyColor.Chroma(
-                                it.hue,
-                                it.saturation,
-                                it.brightness,
-                                it.alpha / 255f,
-                                safeCycleMillis.milliseconds.inWholeNanoseconds
-                            )
-                        } else {
-                            val rgb = Color.HSBtoRGB(it.hue, it.saturation, it.brightness)
-                            argb((it.alpha shl 24) or (rgb and 0x00FFFFFF)).asMutable()
-                        }
-                    } ?: PolyColor.WHITE
+                        val rgb = Color.HSBtoRGB(it.hue, it.saturation, it.brightness)
+                        (it.alpha shl 24) or (rgb and 0x00FFFFFF)
+                    } ?: 0xFFFFFFFF.toInt()
                 }
                 property.setter = setter@{
-                    val color = it as? PolyColor ?: return@setter
-                    val speedMillis = (color as? PolyColor.Chroma)
-                        ?.speedNanos
-                        ?.nanoseconds
-                        ?.inWholeMilliseconds
-                        ?.coerceAtLeast(1)
-                        ?.toInt()
-                        ?: 0
-                    val colour = ChromaColour(
-                        color.hue,
-                        color.saturation,
-                        color.brightness,
-                        speedMillis,
-                        (color.alpha * 255).toInt().coerceIn(0..255)
-                    )
-
+                    val argb = it as? Int ?: return@setter
+                    val awtColor = Color(argb, true)
+                    val hsb = Color.RGBtoHSB(awtColor.red, awtColor.green, awtColor.blue, null)
+                    val colour = ChromaColour(hsb[0], hsb[1], hsb[2], 0, awtColor.alpha)
                     when (children.type) {
                         String::class.java -> children.set(colour.toLegacyString())
                         ChromaColour::class.java -> children.set(colour)

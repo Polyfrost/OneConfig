@@ -26,12 +26,15 @@
 
 plugins {
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.compose)
 }
 
 dependencies {
-    api(libs.polyui)
-    api(compose.desktop.currentOs)
+    api(libs.jetbrains.compose.foundation)
+    api(libs.jetbrains.compose.material)
+    api(libs.jetbrains.compose.runtime)
+    api(libs.jetbrains.compose.ui)
+    api(libs.jetbrains.compose.ui.tooling.preview)
+    api(libs.jetbrains.compose.ui.util)
     api(project(":modules:events"))
 
     compileOnly(libs.bundles.lwjgl)

@@ -1,11 +1,11 @@
 package org.polyfrost.oneconfig.api.config.v1.dsl
 
 import org.jetbrains.annotations.ApiStatus
+import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
-import org.polyfrost.polyui.color.PolyColor
-import org.polyfrost.polyui.input.PolyBind
+import kotlin.jvm.java
 
 /**
  * Experimental DSL for creating config trees.
@@ -92,13 +92,13 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
         tree.put(prop.property)
         return prop
     }
-
-    fun keybind(default: PolyBind): Prop<PolyBind> {
-        val prop = Prop(default, PolyBind::class.java)
-        prop["visualizer"] = Visualizer.KeybindVisualizer::class.java
-        tree.put(prop.property)
-        return prop
-    }
+//      TODO: migrate
+//    fun keybind(default: PolyBind): Prop<PolyBind> {
+//        val prop = Prop(default, PolyBind::class.java)
+//        prop["visualizer"] = Visualizer.KeybindVisualizer::class.java
+//        tree.put(prop.property)
+//        return prop
+//    }
 
     fun dropdown(defaultIndex: Int, vararg options: String): Prop<Int> {
         val prop = Prop(defaultIndex, Int::class.java)

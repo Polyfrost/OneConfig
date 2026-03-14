@@ -31,7 +31,6 @@ import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
-import org.polyfrost.polyui.data.PolyImage;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -98,7 +97,7 @@ public abstract class Config {
         if ((tree = makeTree()) != null) {
             tree.setTitle(title);
             if (iconPath != null) {
-                tree.addMetadata("icon", PolyImage.of(iconPath));
+                tree.addMetadata("icon", iconPath);
                 tree.addMetadata("icon_path", iconPath);
             }
 

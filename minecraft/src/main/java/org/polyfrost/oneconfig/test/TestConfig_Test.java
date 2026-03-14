@@ -28,18 +28,11 @@ package org.polyfrost.oneconfig.test;
 
 import dev.deftu.omnicore.api.client.chat.OmniClientChat;
 import dev.deftu.omnicore.api.client.input.OmniKeys;
-import kotlin.Unit;
 import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.annotations.*;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
-import org.polyfrost.oneconfig.api.ui.v1.Notifications;
-import org.polyfrost.oneconfig.api.ui.v1.keybind.OCKeybindHelper;
-import org.polyfrost.polyui.color.ColorUtils;
-import org.polyfrost.polyui.color.PolyColor;
-import org.polyfrost.polyui.input.KeyModifiers;
-import org.polyfrost.polyui.input.PolyBind;
-import org.polyfrost.polyui.unit.Align;
-
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindHelper;
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
 import java.util.function.Consumer;
 
 @SuppressWarnings("unused")
@@ -57,7 +50,7 @@ public class TestConfig_Test extends Config {
     public static int number = 50;
 
     @Keybind(title = "keybinding", description = "please send help")
-    PolyBind bind0 = OCKeybindHelper.builder().keys(OmniKeys.KEY_P).mods(KeyModifiers.PRIMARY).does((Consumer<Boolean>) (it) -> OmniClientChat.displayChatMessage(it ? "pressed keybind" : "released keybind")).register();
+    OneConfigKeybind bind0 = KeybindHelper.builder().key(OmniKeys.KEY_P).ctrl().action((Consumer<Boolean>) (it) -> OmniClientChat.displayChatMessage(it ? "pressed keybind" : "released keybind")).register();
     @Slider(title = "Slide", min = 10f, max = 110f, icon = "assets/oneconfig/ico/paintbrush.svg", description = "I do sliding", category = "bob")
     public static float p = 50f;
     @Text(title = "Text")
@@ -86,21 +79,18 @@ public class TestConfig_Test extends Config {
     public static boolean c4ow = false;
     @Switch(title = "Cow 5", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
     public static boolean c5ow = false;
-    @RadioButton(title = "radio", description = "send help")
-    public static Align.Content radio = Align.Content.Center;
+    @RadioButton(title = "radio", description = "send help", options = {"Option A", "Option B", "Option C"})
+    public static int radio = 0;
     @Switch(title = "t")
     public boolean added = false;
     @Color(title = "color", category = "bob")
-    PolyColor color = ColorUtils.rgba(255, 0, 100, 1f);
+    int color = 0xFFFF0064;
 
     @Slider(title = "we slide", description = "so real", min = 10f, max = 70f)
     public float slide = 40f;
 
     @Keybind(title = "keybind")
-    private final PolyBind bind = OCKeybindHelper.builder().mods(KeyModifiers.PRIMARY).keys(OmniKeys.KEY_G.getCode()).does((a) -> {
-        Notifications.enqueue(Notifications.Type.Info, "state: " + a);
-        return Unit.INSTANCE;
-    }).register();
+    private final OneConfigKeybind bind = KeybindHelper.builder().ctrl().key(OmniKeys.KEY_G).action((Runnable) () -> {}).register();
 
     public TestConfig_Test() {
         super("test_mod.json", "Test Mod", Category.QOL);
@@ -133,8 +123,8 @@ public class TestConfig_Test extends Config {
         @DependsOn("cow2")
         public static boolean cbow = false;
 
-        @RadioButton(title = "radio when me when me when me:", description = "send help")
-        public static Align.Line radio2 = Align.Line.Start;
+        @RadioButton(title = "radio when me when me when me:", description = "send help", options = {"Option A", "Option B", "Option C"})
+        public static int radio2 = 0;
 
         @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
         public static boolean cbo2w = false;
