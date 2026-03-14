@@ -129,7 +129,7 @@ fun DropdownOption(data: DropdownOptionData) {
                         modifier = Modifier
                             .width(300.dp)
                             .clip(theme.sideBarNavigationEntryShape)
-                            .background(theme.modCardBackground, theme.sideBarNavigationEntryShape)
+                            .background(theme.componentBackground, theme.sideBarNavigationEntryShape)
                             .border(1.dp, theme.borderColor, theme.sideBarNavigationEntryShape)
                     ) {
                         Column(
@@ -145,8 +145,8 @@ fun DropdownOption(data: DropdownOptionData) {
 
                                 val backgroundColor by animateColorAsState(
                                     if (selected) Accent
-                                    else if (isHovered) theme.componentBackground
-                                    else theme.componentBackground.copy(0f)
+                                    else if (isHovered) theme.modCardBackground
+                                    else theme.modCardBackground.copy(0f)
                                 )
 
                                 Box(
