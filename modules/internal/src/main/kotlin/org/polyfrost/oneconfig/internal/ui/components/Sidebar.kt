@@ -43,7 +43,8 @@ fun Sidebar() {
     Column(
         modifier = Modifier.fillMaxHeight()
             .width(264.dp)
-            .background(LocalTheme.current.sidebarBackground),
+            .background(LocalTheme.current.sidebarBackground)
+            .rightBorder(LocalTheme.current.borderColor, 1f),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Navigation()
@@ -176,7 +177,8 @@ private fun NavigationEntry(icon: String, title: String, route: Any? = null, isS
 @Composable
 private fun Account() {
     Box(
-        modifier = Modifier.size(263.dp, 73.dp),
+        modifier = Modifier.size(263.dp, 73.dp)
+            .topBorder(LocalTheme.current.borderColor, 1f),
         contentAlignment = Alignment.Center
     ) {
         Row(

@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import org.polyfrost.oneconfig.internal.ui.themes.Accent
 
 @Composable
 fun Icon(iconName: String, color: Color = Color.White, modifier: Modifier = Modifier) {
@@ -43,19 +44,19 @@ fun IconWithIndicator(iconName: String, color: Color = Color.White, modifier: Mo
         ) {
             Box(
                 Modifier
-                    .size(6.dp)
-                    .blur(4.dp)
+                    .size(8.dp)
                     .background(
-                        Color(0xFF1878F1),
+                        Accent,
                         shape = CircleShape
                     )
+                    .blur(7.dp)
             )
 
             Box(
                 Modifier
                     .size(6.dp)
                     .background(
-                        Color(0xFF1878F1),
+                        Accent,
                         shape = CircleShape
                     )
             )
