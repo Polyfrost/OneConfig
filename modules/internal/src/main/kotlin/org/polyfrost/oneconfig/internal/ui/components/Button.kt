@@ -34,3 +34,26 @@ fun IconButton(
         color = iconColor, modifier = Modifier.onClick(interactionSource, onClick).then(modifier)
     )
 }
+
+@Composable
+fun SelectableIconButton(
+    iconName: String,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    foreground: Color = LocalTheme.current.textColorSecondary,
+    hoveredForeground: Color = LocalTheme.current.textColor,
+    onClick: () -> Unit,
+) {
+    val interactionSource = rememberInteractionSource()
+
+    val isHovered by interactionSource.collectIsHoveredAsState()
+
+    val iconColor by animateColorAsState(
+        if (isHovered || selected) hoveredForeground else foreground
+    )
+
+    Icon(
+        iconName,
+        color = iconColor, modifier = Modifier.onClick(interactionSource, onClick).then(modifier)
+    )
+}

@@ -43,6 +43,7 @@ dependencies {
     api(libs.jetbrains.lifecycle)
     api(libs.jetbrains.viewmodel)
     api(project(":modules:poly-compose"))
+    implementation(libs.jetbrains.skiko.awt.runtime.windows.x64)
 
     implementation(libs.commonmark)
 
