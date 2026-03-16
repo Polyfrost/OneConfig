@@ -35,7 +35,6 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
 
 public final class TestMod_Test {
     public static void initialize() {
-        HudManager.register(new TestHud_Test());
         EventManager.register(InitializationEvent.class, () -> {
             System.err.println("TestMod::init");
             CommandManager.register(new TestCommand_Test());
