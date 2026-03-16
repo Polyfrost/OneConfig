@@ -52,6 +52,8 @@ import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.WindowFocusEvent;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
+import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent;
+import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
 import org.polyfrost.oneconfig.api.hypixel.v1.HypixelUtils;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.internal.BlurHandler;
@@ -219,9 +221,19 @@ public class OneConfig
                 HudManager.INSTANCE.render(ctx, OmniClient.getWindow().getScreenWidth(), OmniClient.getWindow().getScreenHeight());
             });
         });
+        EventManager.register(HudEditorToggleEvent.class, e -> {
+            if (e.open) {
+                Platform.screen().display(new HudEditorUIScreen(), 0);
+            } else {
+                if (Platform.screen().current() instanceof HudEditorUIScreen) {
+                    Platform.screen().display(null, 0);
+                }
+            }
+        });
         EventManager.register(InitializationEvent.class, e -> {
             ConfigManager.initialize();
             ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
+            org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar.register();
         });
 //        //#if MC < 1.13
 //        // this is cringe but is better than the alternative of checking every frame in a mixin (that's how vanilla does it lol)

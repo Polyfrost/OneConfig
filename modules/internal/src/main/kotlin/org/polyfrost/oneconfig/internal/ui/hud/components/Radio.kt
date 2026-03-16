@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -47,7 +48,11 @@ inline fun <reified E> Radio(
                         it.icon,
                         selected = value == it,
                         modifier = Modifier.size(18.dp),
-                        onClick = { onChange(it as E) }
+                        onClick = {
+                            Snapshot.withMutableSnapshot {
+                                onChange(it)
+                            }
+                        }
                     )
                 }
             }

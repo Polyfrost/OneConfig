@@ -23,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -105,7 +106,12 @@ inline fun <reified E : Enum<E>> Dropdown(
                         DropdownItem(
                             it,
                             it == value,
-                            { onValueChange(it); expanded = false },
+                            {
+                                Snapshot.withMutableSnapshot {
+                                    onValueChange(it)
+                                }
+                                expanded = false
+                            },
                             width
                         )
                     }

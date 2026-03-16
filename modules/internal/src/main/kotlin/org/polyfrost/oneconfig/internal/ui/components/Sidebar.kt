@@ -30,11 +30,14 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
+import dev.deftu.omnicore.api.client.screen.OmniScreen
 import org.polyfrost.oneconfig.internal.ui.navigation.NavigationGroups
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.api.hud.v1.HudManager
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import java.util.Locale
 import java.util.Locale.getDefault
 
@@ -87,7 +90,9 @@ private fun NavigationEntries() {
             NavigationEntry(
                 "hud",
                 "Edit HUD",
-            ) { /* todo: open hud editor */ }
+            ) {
+                HudManager.toggleEditor()
+            }
             NavigationEntry(
                 "search",
                 "Global Search",

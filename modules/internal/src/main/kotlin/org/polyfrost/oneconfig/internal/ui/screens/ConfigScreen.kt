@@ -188,7 +188,7 @@ private fun isAccordionToggle(prop: Property<*>): Boolean {
 }
 
 private fun isRenderableProperty(prop: Property<*>): Boolean {
-    return prop.getMetadata<Any?>("visualizer") != null || optionDataFrom(prop) != null
+    return (prop.getMetadata<Any?>("visualizer") != null || optionDataFrom(prop) != null) && prop.canDisplay()
 }
 
 private fun nodeGroup(node: Node, key: String, default: String): String {
@@ -403,3 +403,87 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false) {
         Option(prop)
     }
 }
+
+@Composable
+fun HudConfigScreen(tree: Tree, initialCategory: String? = null) {
+    val filteredTree = remember(tree) {
+        tree
+    }
+    val categories = remember(filteredTree) { buildHudCategories(filteredTree) }
+    var selectedCategory by remember(filteredTree, initialCategory) {
+        mutableStateOf(
+            categories.firstOrNull { it.name.equals(initialCategory, ignoreCase = true) }
+                ?: categories.firstOrNull()
+        )
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
+        if (categories.size > 1) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                categories.forEach { category ->
+                    Chip(
+                        label = category.name,
+                        selected = selectedCategory == category,
+                        onClick = { selectedCategory = category }
+                    )
+                }
+            }
+        }
+
+        val entries = remember(selectedCategory) {
+            selectedCategory?.let(::flattenEntries).orEmpty()
+        }
+
+        if (entries.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No settings available.", color = LocalTheme.current.textColorSecondary)
+            }
+            return@Column
+        }
+
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(entries) { entry ->
+                when (entry) {
+                    is ConfigListEntry.SubcategoryHeader -> SubcategoryHeader(entry.title)
+                    is ConfigListEntry.Item -> when (val node = entry.node) {
+                        is SettingNode.Leaf -> SettingRow(node.prop)
+                        is SettingNode.Accordion -> AccordionRow(node)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun isHudInternal(node: Node): Boolean {
+    return node.getMetadata<Any?>("hudInternal") != null
+}
+
+private fun buildHudCategories(tree: Tree): List<CategoryGroup> {
+    val grouped = LinkedHashMap<String, LinkedHashMap<String, MutableList<SettingNode>>>()
+    tree.map.values.forEach { node ->
+        // skip hudInternal nodes
+        if (isHudInternal(node)) return@forEach
+
+        val category = nodeGroup(node, "category", ConfigVisualizer.DEFAULT_CATEGORY)
+        val subcategory = nodeGroup(node, "subcategory", ConfigVisualizer.DEFAULT_SUBCATEGORY)
+        val bucket = grouped.getOrPut(category) { LinkedHashMap() }.getOrPut(subcategory) { ArrayList() }
+
+        when (node) {
+            is Property<*> -> {
+                if (isRenderableProperty(node)) {
+                    bucket += SettingNode.Leaf(node)
+                }
+            }
+            is Tree -> buildAccordionNode(node)?.let(bucket::add)
+        }
+    }
+
+    return grouped.mapNotNull { (category, subcategories) ->
+        val groups = subcategories.mapNotNull { (subcategory, nodes) ->
+            if (nodes.isEmpty()) null else SubcategoryGroup(subcategory, nodes.toList())
+        }
+        if (groups.isEmpty()) null else CategoryGroup(category, groups)
+    }
+}
+

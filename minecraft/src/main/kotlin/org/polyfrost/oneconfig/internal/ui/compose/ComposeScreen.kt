@@ -250,7 +250,7 @@ abstract class ComposeScreen(
         return (contentScale / pixelRatio).coerceAtLeast(1f)
     }
 
-    private fun pointerPosition(): Offset {
+    protected fun pointerPosition(): Offset {
         val mouse = client.mouseHandler
         return Offset(mouse.xpos().toFloat(), mouse.ypos().toFloat())
     }

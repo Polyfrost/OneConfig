@@ -12,6 +12,7 @@ import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -85,7 +86,11 @@ fun AlignmentPicker(
                     activeColor = activeColor,
                     inactiveColor = inactiveColor,
                     onHover = { hov -> hoveredCell = if (hov) Pair(col, row) else null },
-                    onClick = { onChange(cellAlign) }
+                    onClick = {
+                        Snapshot.withMutableSnapshot {
+                            onChange(cellAlign)
+                        }
+                    }
                 )
             }
         }
@@ -139,7 +144,10 @@ private fun AlignmentCell(
             .size(cellSize)
             .onPointerEvent(PointerEventType.Enter) { onHover(true) }
             .onPointerEvent(PointerEventType.Exit)  { onHover(false) }
-            .onPointerEvent(PointerEventType.Press) { onClick() }
+            .onPointerEvent(PointerEventType.Press) { event ->
+                event.changes.forEach { it.consume() }
+                onClick()
+            }
     ) {
         if (animatedAlpha.value > 0f) {
             Box(

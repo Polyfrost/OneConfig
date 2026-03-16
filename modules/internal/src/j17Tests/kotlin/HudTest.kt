@@ -1,19 +1,22 @@
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.singleWindowApplication
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignStudio
-import org.polyfrost.oneconfig.internal.ui.Theme
-import org.polyfrost.oneconfig.internal.ui.shell.Lifecycle
-import org.polyfrost.oneconfig.internal.ui.shell.OCViewModelStoreOwner
-import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 fun main() {
     singleWindowApplication(
@@ -26,12 +29,5 @@ fun main() {
             contentDescription = "Background Image",
             contentScale = ContentScale.FillBounds
         )
-        CompositionLocalProvider(
-            LocalTheme provides Theme,
-            LocalLifecycleOwner provides Lifecycle,
-            LocalViewModelStoreOwner provides OCViewModelStoreOwner,
-        ) {
-            HudDesignStudio()
-        }
     }
 }

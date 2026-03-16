@@ -31,7 +31,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import org.jetbrains.annotations.ApiStatus
+import org.polyfrost.compose.composables.PolyBox
+import org.polyfrost.compose.composables.PolyCanvas
 import org.polyfrost.compose.composables.PolyMcText
+import org.polyfrost.compose.composables.PolyModifier
+import org.polyfrost.compose.composables.align
+import org.polyfrost.compose.composables.padding
+import org.polyfrost.compose.composables.size
+import org.polyfrost.compose.layout.PolyAlign
+import org.polyfrost.compose.layout.PolyInsets
+import org.polyfrost.compose.layout.PolySize
+import org.polyfrost.compose.render.FontManager
+import org.polyfrost.compose.render.PolyColor
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text as TextAnnotation
@@ -51,7 +62,74 @@ abstract class TextHud(
 
     @Composable
     override fun Content() {
-        PolyMcText(text = displayText)
+        // Apply caseType transform
+        val text = when (caseType) {
+            1 -> displayText.uppercase()
+            2 -> displayText.lowercase()
+            else -> displayText
+        }
+
+        val contentAlign = alignment
+
+        if (font == Font.Poppins) {
+            val fontName = when {
+                textBold && textItalic -> "poppins-bold-italic"
+                textBold -> "poppins-bold"
+                textItalic -> "poppins-italic"
+                else -> "poppins"
+            }
+            val fontSize = 8f * textScale
+            val skiaFont = FontManager.getFont(fontSize, fontName)
+            val textWidth = skiaFont.measureTextWidth(text)
+            val textHeight = skiaFont.metrics.let { it.descent - it.ascent }
+            val padInsets = PolyInsets(padLeft, padTop, padRight, padBottom)
+
+            if (staticWidth) {
+                PolyBox(modifier = PolyModifier.size(staticW, staticH).padding(padInsets)) {
+                    PolyCanvas(modifier = PolyModifier.size(textWidth, textHeight)
+                        .align(contentAlign)) { x, y, _, _ ->
+                        text(text, x, y - skiaFont.metrics.ascent, PolyColor.WHITE, skiaFont)
+                    }
+                }
+            } else {
+                PolyBox(modifier = PolyModifier.padding(padInsets)) {
+                    PolyCanvas(modifier = PolyModifier.size(textWidth, textHeight)) { x, y, _, _ ->
+                        text(text, x, y - skiaFont.metrics.ascent, PolyColor.WHITE, skiaFont)
+                    }
+                }
+            }
+        } else {
+            val formatted = buildString {
+                if (textBold) append("§l")
+                if (textItalic) append("§o")
+                append(text)
+                if (textBold || textItalic) append("§r")
+            }
+
+            if (staticWidth) {
+                PolyBox(
+                    modifier = PolyModifier
+                        .size(staticW, staticH)
+                        .padding(PolyInsets(padLeft, padTop, padRight, padBottom))
+                ) {
+                    PolyMcText(
+                        text = formatted,
+                        scale = textScale,
+                        modifier = PolyModifier.align(contentAlign)
+                    )
+                }
+            } else {
+                PolyBox(
+                    modifier = PolyModifier
+                        .padding(PolyInsets(padLeft, padTop, padRight, padBottom))
+                ) {
+                    PolyMcText(
+                        text = formatted,
+                        scale = textScale,
+                    )
+                }
+            }
+        }
     }
 
     override fun update(): Boolean {

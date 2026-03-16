@@ -139,13 +139,14 @@ fun ModCard(mod: ConfigData) {
                 onDrawBehind { drawRect(gradient) }
             }
         )
+        val gradient = Brush.verticalGradient(
+            0f to Accent.copy(0f),
+            0.4f to Accent.copy(0.2f),
+            1f to Accent.copy(0.4f),
+        )
+
         Box(
             Modifier.align(Alignment.BottomCenter).height(50.dp).fillMaxWidth().drawWithCache {
-                val gradient = Brush.verticalGradient(
-                    0f to Accent.copy(0f),
-                    0.4f to Accent.copy(0.2f),
-                    1f to Accent.copy(0.4f),
-                )
                 onDrawBehind { drawRect(gradient, size = Size(size.width, 50f)) }
             }
         )

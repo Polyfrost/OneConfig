@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
@@ -53,7 +54,9 @@ fun NumberSpinner(
         val v = raw.toFloatOrNull() ?: return
         val clamped = v.coerceIn(min, max)
         text = formatSpinnerValue(clamped)
-        onValueChange(clamped)
+        Snapshot.withMutableSnapshot {
+            onValueChange(clamped)
+        }
     }
 
     Row(
@@ -145,7 +148,9 @@ fun NumberSpinner(
         val v = raw.toFloatOrNull() ?: return
         val clamped = v.coerceIn(min, max)
         text = formatSpinnerValue(clamped)
-        onValueChange(clamped)
+        Snapshot.withMutableSnapshot {
+            onValueChange(clamped)
+        }
     }
 
     Column(
@@ -243,7 +248,9 @@ fun NumberSpinnerWithIcon(
         val v = raw.toFloatOrNull() ?: return
         val clamped = v.coerceIn(min, max)
         text = formatSpinnerValue(clamped)
-        onValueChange(clamped)
+        Snapshot.withMutableSnapshot {
+            onValueChange(clamped)
+        }
     }
 
     Row(

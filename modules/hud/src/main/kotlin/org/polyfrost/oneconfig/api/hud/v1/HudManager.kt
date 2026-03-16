@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
+import androidx.compose.runtime.snapshots.Snapshot
 import dev.deftu.omnicore.api.client.render.OmniResolution
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
@@ -47,7 +48,7 @@ object HudManager {
     var isEditing = false
         private set
 
-    var useGuiScale = true
+    var useGuiScale = false
 
     private val lastUpdates = HashMap<Hud, Long>()
 
@@ -61,7 +62,6 @@ object HudManager {
         register(object : TextHud.DateTime("Time:", "HH:mm:ss") {
             override fun defaultPosition() = 10f to 80f
         })
-        register(TextHud.Simple("", "Text Hud", ""))
     }
 
     @JvmStatic
@@ -71,9 +71,17 @@ object HudManager {
     }
 
     @JvmStatic
+    fun register(hud: Hud, configId: String) {
+        hud.configId = configId
+        register(hud)
+    }
+
+    @JvmStatic
     fun register(vararg huds: Hud) {
         for (hud in huds) register(hud)
     }
+
+    fun providers(): Collection<Hud> = hudProviders.values
 
     fun <T : Hud> unregister(hud: T, removeActiveInstances: Boolean = false, delete: Boolean = false): ArrayList<T>? {
         hudProviders.remove(hud::class.java)
@@ -128,7 +136,6 @@ object HudManager {
 
     @ApiStatus.Internal
     fun render(ctx: RenderContext, screenWidth: Float, screenHeight: Float) {
-        val now = System.nanoTime()
         val scale = if (useGuiScale) OmniResolution.scaleFactor.toFloat() else 1f
 
         ctx.save()
@@ -137,19 +144,17 @@ object HudManager {
         for (hud in activeInstances) {
             if (hud.hidden) continue
 
-            val freq = hud.updateFrequency()
-            if (freq >= 0L) {
-                val last = lastUpdates.getOrDefault(hud, 0L)
-                if (freq == 0L || now - last >= freq) {
-                    hud.update()
-                    lastUpdates[hud] = now
-                }
+            hud.update()
+            val rt = hud.runtime
+            rt.frame(screenWidth, screenHeight)
+            val root = rt.root
+            Snapshot.withMutableSnapshot {
+                hud.renderedW = root.width
+                hud.renderedH = root.height
             }
-
-            hud.runtime.frame(screenWidth, screenHeight)
             ctx.save()
             ctx.translate(hud.x, hud.y)
-            hud.runtime.root.render(ctx)
+            root.render(ctx)
             ctx.restore()
         }
 
@@ -180,7 +185,7 @@ object HudManager {
                     ?: throw IllegalArgumentException("hud tree ${data.id} is missing class name")
                 val cls = Class.forName(clsName, true, loader) as? Class<Hud>
                     ?: throw IllegalArgumentException("$clsName is not a subclass of Hud")
-                val h = hudProviders.getOrPut(cls) { MHUtils.instantiate(cls, true).getOrThrow() }
+                val h = hudProviders[cls] ?: MHUtils.instantiate(cls, true).getOrThrow()
                 used.add(cls)
                 val hud = h.make(data)
                 hud.x = data.getProp("x")?.getAs<Number?>()?.toFloat() ?: 0f
@@ -218,8 +223,8 @@ object HudManager {
                 val scale = OmniResolution.scaleFactor.toFloat()
                 for (hud in activeInstances) {
                     if (hud !is LegacyHud) {
-                        hud.x = (hud.x / scale).coerceAtLeast(0f)
-                        hud.y = (hud.y / scale).coerceAtLeast(0f)
+                        hud.x = (hud.x).coerceAtLeast(0f)
+                        hud.y = (hud.y).coerceAtLeast(0f)
                     }
                 }
             }

@@ -59,15 +59,3 @@ fun BooleanOption(data: BooleanOptionData) {
         BooleanOptionData.Style.Checkbox -> CheckboxControl(checked) { checked = it; data.boolProp.set(it) }
     }
 }
-
-@Composable
-fun ColorOption(data: ColorOptionData) {
-    // TODO: color picker
-    Text("Color", color = LocalTheme.current.textColorSecondary, fontSize = 14.sp)
-}
-
-@Composable
-fun KeybindOption(data: KeybindOptionData) {
-    // TODO: keybind recorder
-    Text(data.prop.get()?.toString() ?: "None", color = LocalTheme.current.textColorSecondary, fontSize = 14.sp)
-}
