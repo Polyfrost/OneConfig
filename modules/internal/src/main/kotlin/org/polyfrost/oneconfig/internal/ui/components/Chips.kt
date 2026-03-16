@@ -28,6 +28,9 @@ fun Chip(
     val backgroundColor by animateColorAsState(
         if (selected) Accent else LocalTheme.current.chipBackground
     )
+    val textColor by animateColorAsState(
+        if (selected) LocalTheme.current.accentTextColor else LocalTheme.current.textColor
+    )
 
     Row(
         modifier = Modifier
@@ -43,8 +46,8 @@ fun Chip(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            icon?.let { Icon(it) }
-            Text(label, fontSize = 14.sp, color = LocalTheme.current.textColor)
+            icon?.let { Icon(it, color = textColor) }
+            Text(label, fontSize = 14.sp, color = textColor)
         }
     }
 }

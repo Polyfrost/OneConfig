@@ -37,6 +37,7 @@ import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
@@ -66,7 +67,7 @@ import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.layout.FlexibleLayout
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Designer
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Settings
-import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.Accent
 
 enum class StudioCategory(val title: String, val icon: String) {
     Designer("Designer", "paintbrush"),
@@ -288,7 +289,7 @@ private fun DesignStudioPanel(
                     IconButton("left-arrow") { onBack() }
                     SearchBar()
                 }
-                Text("HUD Design Studio", color = LocalTheme.current.textColor, fontSize = 24.sp)
+                Text("HUD Design Studio", color = Color.White, fontSize = 24.sp)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     StudioCategory.entries.forEach {
                         Chip(it.title, it == activeCategory, it.icon) { onCategoryChange(it) }
@@ -326,17 +327,19 @@ private fun HudLibraryPanel(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("HUDs", color = LocalTheme.current.textColor, fontSize = 18.sp)
+            Text("HUDs", color = Color.White, fontSize = 18.sp)
             LibrarySearchBar(searchText, onSearchChange)
         }
         Column(
             modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()),
         ) {
             FlexibleLayout(
-                horizontalSpacing = 16.dp,
-                verticalSpacing = 16.dp
+                horizontalSpacing = 10.dp,
+                verticalSpacing = 10.dp
             ) {
                 filteredProviders.forEach { hud ->
                     HudPreviewCard(hud)
@@ -384,24 +387,32 @@ private fun HudPreviewCard(hud: Hud) {
     val density = LocalDensity.current.density
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
-    val scale by animateFloatAsState(
-        if (isHovered) 1.05f else 1f
+    val backgroundColor by animateColorAsState(
+        if (isHovered) Accent else panelBackground
     )
 
     LaunchedEffect(hud) {
         hud.update()
-        previewRuntime.frame(2000f, 2000f)
-        naturalW = previewRuntime.root.width
-        naturalH = previewRuntime.root.height
+        if (hud.staticWidth) {
+            previewRuntime.frame(hud.staticW, hud.staticH)
+            naturalW = hud.staticW
+            naturalH = hud.staticH
+        } else {
+            previewRuntime.frame(2000f, 2000f)
+            naturalW = previewRuntime.root.width
+            naturalH = previewRuntime.root.height
+        }
     }
 
     if (naturalW > 0f && naturalH > 0f) {
-        val w = (naturalW * PREVIEW_SCALE / density).dp
-        val h = (naturalH * PREVIEW_SCALE / density).dp
+        val cardPadding = 12.dp
+        val w = (naturalW * PREVIEW_SCALE / density).dp + cardPadding * 2
+        val h = (naturalH * PREVIEW_SCALE / density).dp + cardPadding * 2
         Canvas(
             modifier = Modifier
                 .size(w, h)
-                .scale(scale)
+                .background(backgroundColor, RoundedCornerShape(8.dp))
+                .border(1.dp, panelBorder, RoundedCornerShape(8.dp))
                 .onClick(interactionSource) {
                     try {
                         val instance = hud.make()
@@ -414,6 +425,7 @@ private fun HudPreviewCard(hud: Hud) {
                         }
                     } catch (_: Throwable) {}
                 }
+                .padding(cardPadding)
         ) {
             drawIntoCanvas { canvas ->
                 val root = previewRuntime.root
@@ -464,7 +476,6 @@ fun SearchBar() {
         interactionSource = interactionSource,
         textStyle = TextStyle(
             color = iconColor, fontSize = 12.sp,
-            fontFamily = LocalTheme.current.typography.family
         ),
         cursorBrush = SolidColor(iconColor),
     ) { innerTextField ->
@@ -502,7 +513,6 @@ private fun LibrarySearchBar(value: String, onValueChange: (String) -> Unit) {
         interactionSource = interactionSource,
         textStyle = TextStyle(
             color = iconColor, fontSize = 12.sp,
-            fontFamily = LocalTheme.current.typography.family
         ),
         cursorBrush = SolidColor(iconColor)
     ) { innerTextField ->

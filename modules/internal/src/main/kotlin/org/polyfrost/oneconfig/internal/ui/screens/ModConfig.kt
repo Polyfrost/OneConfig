@@ -18,7 +18,7 @@ fun ModConfig(id: String, initialCategory: String? = null) {
 
     DisposableEffect(id) {
         ShellState.title = config?.title
-        onDispose { ShellState.title = null }
+        onDispose {  }
     }
 
     when {

@@ -40,8 +40,8 @@ import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
-private val RadioShape = RoundedCornerShape(8.dp)
-private val RadioItemShape = RoundedCornerShape(6.dp)
+private val RadioShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
+private val RadioItemShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
 
 @Composable
 fun RadioButtonOption(data: RadioButtonOptionData) {

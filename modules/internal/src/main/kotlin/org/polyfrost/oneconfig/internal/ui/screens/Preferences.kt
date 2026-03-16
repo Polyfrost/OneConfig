@@ -19,7 +19,7 @@ fun Preferences() {
 
     DisposableEffect(Unit) {
         ShellState.title = "Preferences"
-        onDispose { ShellState.title = null }
+        onDispose {  }
     }
 
     if (tree == null) {

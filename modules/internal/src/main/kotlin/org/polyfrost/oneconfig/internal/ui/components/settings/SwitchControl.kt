@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -47,9 +46,9 @@ fun SwitchControl(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
         Box(
             modifier = Modifier
                 .size(42.dp, 21.dp)
-                .clip(CircleShape)
+                .clip(LocalTheme.current.circleShape)
                 .background(trackColor)
-                .border(1.dp, borderColor, CircleShape)
+                .border(1.dp, borderColor, LocalTheme.current.circleShape)
                 .onClick(interactionSource) { onCheckedChange(!checked) }
                 .pointerHoverIcon(PointerIcon.Hand),
         ) {
@@ -58,7 +57,7 @@ fun SwitchControl(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
                     .align(Alignment.CenterStart)
                     .offset(x = thumbOffset)
                     .size(15.dp)
-                    .background(Color.White, CircleShape),
+                    .background(LocalTheme.current.controlThumbColor, LocalTheme.current.circleShape),
             )
         }
     }

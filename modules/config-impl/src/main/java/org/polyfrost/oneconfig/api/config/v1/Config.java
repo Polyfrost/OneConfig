@@ -43,8 +43,6 @@ import java.util.function.Supplier;
 public abstract class Config {
     protected Tree tree;
 
-    @Include
-    public boolean enabled = true;
     public final String id, title, iconPath;
     public final Category category;
 

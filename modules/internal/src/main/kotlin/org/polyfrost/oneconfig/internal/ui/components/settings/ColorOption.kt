@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -16,7 +17,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
@@ -34,6 +34,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -45,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.settings.ColorOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
@@ -55,7 +57,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import kotlin.math.roundToInt
 
-private val PickerShape = RoundedCornerShape(12.dp)
+private val PickerShape @Composable get() = LocalTheme.current.popupShape
 
 private fun colorToHsb(color: Color): FloatArray {
     val r = color.red
@@ -121,6 +123,8 @@ private fun hexToColor(hex: String): Color? {
     } catch (_: Exception) { null }
 }
 
+// TODO: make this design accurate
+
 @Composable
 fun ColorOption(data: ColorOptionData) {
     val theme = LocalTheme.current
@@ -137,6 +141,9 @@ fun ColorOption(data: ColorOptionData) {
         }
     }
     var currentColor by remember(data.prop) { mutableStateOf(initialColor) }
+    val textColor by animateColorAsState(
+        if (currentColor.luminance() > 0.6f) Color.White else Color.Black
+    )
 
     val borderColor by animateColorAsState(
         if (isHovered || expanded) theme.textColor.copy(0.3f) else theme.borderColor
@@ -147,14 +154,14 @@ fun ColorOption(data: ColorOptionData) {
             modifier = Modifier
                 .onClick(interactionSource) { expanded = !expanded }
                 .pointerHoverIcon(PointerIcon.Hand)
-                .background(currentColor, RoundedCornerShape(8.dp))
-                .border(1.dp, borderColor, RoundedCornerShape(8.dp))
+                .background(currentColor, LocalTheme.current.sideBarNavigationEntryShape)
+                .border(1.dp, borderColor, LocalTheme.current.sideBarNavigationEntryShape)
                 .padding(horizontal = 12.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Icon("paintbrush", color = theme.textColor, modifier = Modifier.size(14.dp))
-            Text("#${colorToHex(currentColor)}", color = theme.textColor, fontSize = 13.sp)
+            Icon("paintbrush", color = textColor, modifier = Modifier.size(14.dp))
+            Text("#${colorToHex(currentColor)}", color = textColor, fontSize = 13.sp)
         }
 
         if (expanded) {
@@ -172,7 +179,9 @@ fun ColorOption(data: ColorOptionData) {
                         when {
                             data.prop.type == Int::class.java || data.prop.type == Int::class.javaPrimitiveType ->
                                 (data.prop as Property<Any>).set(color.toArgb())
-                            else ->
+                            data.prop.type == PolyColor::class.java ->
+                                (data.prop as Property<Any>).set(PolyColor(color.toArgb()))
+                            else  ->
                                 (data.prop as Property<Any>).set(color)
                         }
                     },
@@ -205,8 +214,8 @@ fun ColorPickerPopup(
     Column(
         modifier = Modifier
             .width(280.dp)
-            .background(Color(17, 23, 28).copy(0.97f), PickerShape)
-            .border(1.dp, Color.White.copy(0.10f), PickerShape)
+            .background(theme.popupBackground, PickerShape)
+            .border(1.dp, theme.borderColor, PickerShape)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
@@ -230,7 +239,7 @@ fun ColorPickerPopup(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(160.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(LocalTheme.current.sideBarNavigationEntryShape)
                 .onSizeChanged { sbPaneSize = Size(it.width.toFloat(), it.height.toFloat()) }
                 .drawWithCache {
                     val hueColor = hsbToColor(hue, 1f, 1f)
@@ -276,8 +285,8 @@ fun ColorPickerPopup(
                         )
                     }
                     .size(14.dp)
-                    .border(2.dp, Color.White, CircleShape)
-                    .background(currentColor, CircleShape)
+                    .border(2.dp, Color.White, LocalTheme.current.circleShape)
+                    .background(currentColor, LocalTheme.current.circleShape)
             )
         }
 
@@ -286,7 +295,7 @@ fun ColorPickerPopup(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(16.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(LocalTheme.current.sideBarNavigationEntryShape)
                 .drawWithCache {
                     val hueGradient = Brush.horizontalGradient(
                         listOf(
@@ -329,9 +338,9 @@ fun ColorPickerPopup(
                 modifier = Modifier
                     .offset { IntOffset(((hue / 360f) * hueBarWidth - 5.dp.toPx()).roundToInt().coerceAtLeast(0), 0) }
                     .size(10.dp, 10.dp)
-                    .clip(CircleShape)
+                    .clip(LocalTheme.current.circleShape)
                     .background(Color.White)
-                    .border(1.dp, Color.White.copy(0.5f), RoundedCornerShape(3.dp))
+                    .border(1.dp, Color.White.copy(0.5f), LocalTheme.current.checkBoxShape)
             )
         }
 
@@ -341,7 +350,7 @@ fun ColorPickerPopup(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(16.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(LocalTheme.current.sideBarNavigationEntryShape)
                 .drawWithCache {
                     val opaqueColor = hsbToColor(hue, saturation, brightness, 1f)
                     val alphaGradient = Brush.horizontalGradient(
@@ -396,9 +405,9 @@ fun ColorPickerPopup(
                 modifier = Modifier
                     .offset { IntOffset(((alpha) * alphaBarWidth - 5.dp.toPx()).roundToInt().coerceAtLeast(0), 0) }
                     .size(10.dp, 10.dp)
-                    .clip(CircleShape)
+                    .clip(LocalTheme.current.circleShape)
                     .background(Color.White)
-                    .border(1.dp, Color.White.copy(0.5f), RoundedCornerShape(3.dp))
+                    .border(1.dp, Color.White.copy(0.5f), LocalTheme.current.checkBoxShape)
             )
         }
 
@@ -410,9 +419,9 @@ fun ColorPickerPopup(
             Box(
                 modifier = Modifier
                     .size(32.dp)
-                    .clip(RoundedCornerShape(6.dp))
+                    .clip(LocalTheme.current.sideBarNavigationEntryShape)
                     .background(currentColor)
-                    .border(1.dp, theme.borderColor, RoundedCornerShape(6.dp))
+                    .border(1.dp, theme.borderColor, LocalTheme.current.sideBarNavigationEntryShape)
             )
 
             BasicTextField(
@@ -438,8 +447,8 @@ fun ColorPickerPopup(
                 cursorBrush = SolidColor(theme.textColor),
                 modifier = Modifier
                     .weight(1f)
-                    .background(theme.componentBackground, RoundedCornerShape(6.dp))
-                    .border(1.dp, theme.borderColor, RoundedCornerShape(6.dp))
+                    .background(theme.componentBackground, LocalTheme.current.sideBarNavigationEntryShape)
+                    .border(1.dp, theme.borderColor, LocalTheme.current.sideBarNavigationEntryShape)
                     .padding(horizontal = 10.dp, vertical = 7.dp),
                 decorationBox = { innerTextField ->
                     Row(

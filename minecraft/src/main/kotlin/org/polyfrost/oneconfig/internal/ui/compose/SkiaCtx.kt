@@ -66,6 +66,7 @@ object SkiaCtx {
             return
         }
 
+        if (!this::directContext.isInitialized) return
         init()
         if (this::surface.isInitialized && surface.width == width && surface.height == height) {
             return

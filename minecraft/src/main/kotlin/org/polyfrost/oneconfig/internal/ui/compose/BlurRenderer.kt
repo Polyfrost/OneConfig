@@ -1,20 +1,10 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
 import com.mojang.blaze3d.pipeline.RenderTarget
+import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.Minecraft
-import org.jetbrains.skia.BackendRenderTarget
-import org.jetbrains.skia.BlendMode
-import org.jetbrains.skia.Canvas
-import org.jetbrains.skia.ColorSpace
-import org.jetbrains.skia.ContentChangeMode
-import org.jetbrains.skia.FilterTileMode
-import org.jetbrains.skia.FramebufferFormat
-import org.jetbrains.skia.ImageFilter
-import org.jetbrains.skia.Paint
-import org.jetbrains.skia.Rect
-import org.jetbrains.skia.Surface
-import org.jetbrains.skia.SurfaceColorFormat
-import org.jetbrains.skia.SurfaceOrigin
+import org.jetbrains.skia.*
+
 
 object BlurRenderer {
     private val client get() = Minecraft.getInstance()
@@ -49,7 +39,12 @@ object BlurRenderer {
     }
 
     private fun resolveSurface(target: RenderTarget, width: Int, height: Int): Surface? {
+        //#if MC >= 1.21.5
+        //$$ val frameBufferId = getFboId(target) // praying ts works 🙏🙏
+        //#else
         val frameBufferId = target.frameBufferId
+        //#endif
+
         if (width <= 0 || height <= 0 || frameBufferId <= 0) {
             return null
         }
@@ -95,6 +90,22 @@ object BlurRenderer {
         cachedHeight = height
         return surface
     }
+
+    //#if MC >= 1.21.5
+    /**
+     * Credits: lowercasebtw
+     * Taken from: https://discord.com/channels/507304429255393322/807617488313516032/1452333789778018314 (The Fabric Project)
+     */
+    //$$ fun getFboId(frameBuffer: RenderTarget): Int {
+    //$$    val device = RenderSystem.getDevice()
+    //$$   if (device !is com.mojang.blaze3d.opengl.GlDevice) {
+    //$$       return -1
+    //$$   } else {
+    //$$       val texture = (frameBuffer.getColorTexture() as com.mojang.blaze3d.opengl.GlTexture?) ?: error("well, someone messed up!")
+    //$$       return texture.getFbo((device as com.mojang.blaze3d.opengl.GlDevice).directStateAccess(), frameBuffer.getDepthTexture())
+    //$$   }
+    //$$ }
+    //#endif
 
     private fun paintFor(radius: Float): Paint = paints.getOrPut(radius) {
         Paint().also { paint ->

@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.mixin.events;
 import dev.deftu.omnicore.api.client.screen.OmniScreens;
 import net.minecraft.client.MouseHandler;
 import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.server.packs.resources.PreparableReloadListener;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.MouseInputEvent;
 import org.spongepowered.asm.mixin.Mixin;

@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,7 +22,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
@@ -87,14 +85,14 @@ fun SliderOption(data: SliderOptionData) {
                 Modifier
                     .fillMaxWidth().height(5.dp)
                     .align(Alignment.CenterStart)
-                    .clip(RoundedCornerShape(2.dp))
+                    .clip(LocalTheme.current.checkBoxShape)
                     .background(theme.chipBackground)
             )
             Box(
                 Modifier
                     .fillMaxWidth(fraction).height(5.dp)
                     .align(Alignment.CenterStart)
-                    .clip(RoundedCornerShape(2.dp))
+                    .clip(LocalTheme.current.checkBoxShape)
                     .background(Accent)
             )
             Box(
@@ -103,13 +101,13 @@ fun SliderOption(data: SliderOptionData) {
                     .offset { IntOffset(((fraction * (trackWidthPx - thumbDp.toPx()))).toInt(), 0) }
                     .size(thumbDp)
 //                    .onClick(interactionSource){}
-                    .background(Color.White, CircleShape)
+                    .background(theme.controlThumbColor, LocalTheme.current.circleShape)
             ) {
 //                Box(
 //                    Modifier
 //                        .align(Alignment.Center)
 //                        .size(innerThumbDp)
-//                        .background(Accent, CircleShape)
+//                        .background(Accent, LocalTheme.current.circleShape)
 //                )
             }
         }

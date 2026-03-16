@@ -157,7 +157,8 @@ private fun NavigationEntry(icon: String, title: String, route: Any? = null, isS
         else Accent.copy(0f)
     )
     val textAndIconColor by animateColorAsState(
-        if (isHovered || isSelected) LocalTheme.current.textColor
+        if (isSelected) LocalTheme.current.accentTextColor
+        else if (isHovered) LocalTheme.current.textColor
         else LocalTheme.current.textColor.copy(0.8f)
     )
     val borderColor by animateColorAsState(

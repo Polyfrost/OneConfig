@@ -173,14 +173,29 @@ object SkiaFontRenderer : PreparableReloadListener {
         return (a shl 24) or (r shl 16) or (g shl 8) or b
     }
 
+    //#if MC < 1.21.10
     override fun reload(
         preparationBarrier: PreparableReloadListener.PreparationBarrier?,
         resourceManager: ResourceManager?,
+        //#if MC < 1.21.4
         profilerFiller: ProfilerFiller?,
         profilerFiller2: ProfilerFiller?,
+        //#endif
         executor: Executor?,
         executor2: Executor?
     ): CompletableFuture<Void?> {
+    //#else
+    //$$ override fun reload(
+    //$$    sharedState: PreparableReloadListener.SharedState,
+    //$$    executor: Executor,
+    //$$    preparationBarrier: PreparableReloadListener.PreparationBarrier,
+    //$$    executor2: Executor
+    //$$ ): CompletableFuture<Void> {
+    //#endif
+        //#if MC >= 1.21.10
+        //$$ val resourceManager = sharedState.resourceManager()
+        //#endif
+
         data class Prepared(val img: Image, val cw: Int, val ch: Int, val widths: FloatArray) {
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
@@ -231,7 +246,12 @@ object SkiaFontRenderer : PreparableReloadListener {
             bitmap.close()
             Prepared(img, cw, ch, widths)
         }, executor).thenCompose { prepared ->
+            //#if MC >= 1.21.10
+            //$$ @Suppress("UNCHECKED_CAST")
+            //$$ preparationBarrier.wait(prepared as Any) as CompletableFuture<Prepared?>
+            //#else
             preparationBarrier!!.wait(prepared)
+            //#endif
         }.thenAcceptAsync({ prepared ->
             atlas?.close()
             colorFilterCache.clear()

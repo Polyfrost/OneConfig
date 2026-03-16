@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -101,7 +102,7 @@ fun ModCard(mod: ConfigData) {
     val theme = LocalTheme.current
 
     Box(
-        modifier = Modifier.size(256.dp, 140.dp)
+        modifier = Modifier.fillMaxWidth().height(140.dp)
             .background(theme.modCardBackground, theme.modCardShape)
             .border(
                 1.dp, Brush.verticalGradient(
@@ -118,45 +119,47 @@ fun ModCard(mod: ConfigData) {
             .pointerHoverIcon(PointerIcon.Hand)
     ) {
         Box(
-            modifier = Modifier.size(256.dp, 104.dp),
+            modifier = Modifier.fillMaxWidth().height(88.dp),
             contentAlignment = Alignment.Center
         ) {
             Icon(mod.icon, color = theme.textColor, modifier = Modifier.size(48.dp))
         }
 
-        val vignetteColor = theme.textColor
-        Box(
-            Modifier.fillMaxSize().drawWithCache {
-                val gradient = Brush.radialGradient(
-                    colors = listOf(
-                        vignetteColor.copy(alpha = 0f),
-                        vignetteColor.copy(alpha = 0.04f),
-                        vignetteColor.copy(alpha = 0.08f)
-                    ),
-                    center = size.center,
-                    radius = size.minDimension * 0.9f
-                )
-                onDrawBehind { drawRect(gradient) }
-            }
-        )
-        val gradient = Brush.verticalGradient(
-            0f to Accent.copy(0f),
-            0.4f to Accent.copy(0.2f),
-            1f to Accent.copy(0.4f),
-        )
+        if (LocalTheme.current.shadowEnabled) {
+            val vignetteColor = theme.textColor
+            Box(
+                Modifier.fillMaxSize().drawWithCache {
+                    val gradient = Brush.radialGradient(
+                        colors = listOf(
+                            vignetteColor.copy(alpha = 0f),
+                            vignetteColor.copy(alpha = 0.04f),
+                            vignetteColor.copy(alpha = 0.08f)
+                        ),
+                        center = size.center,
+                        radius = size.minDimension * 0.9f
+                    )
+                    onDrawBehind { drawRect(gradient) }
+                }
+            )
+            val gradient = Brush.verticalGradient(
+                0f to Accent.copy(0f),
+                0.4f to Accent.copy(0.2f),
+                1f to Accent.copy(0.4f),
+            )
 
-        Box(
-            Modifier.align(Alignment.BottomCenter).height(50.dp).fillMaxWidth().drawWithCache {
-                onDrawBehind { drawRect(gradient, size = Size(size.width, 50f)) }
-            }
-        )
+            Box(
+                Modifier.align(Alignment.BottomCenter).height(50.dp).fillMaxWidth().drawWithCache {
+                    onDrawBehind { drawRect(gradient, size = Size(size.width, 50f)) }
+                }
+            )
+        }
         Box(
             modifier = Modifier.fillMaxWidth().height(36.dp)
                 .background(Accent)
                 .align(Alignment.BottomCenter),
             contentAlignment = Alignment.Center
         ) {
-            Text(mod.title, color = theme.textColor, fontSize = 16.sp)
+            Text(mod.title, color = LocalTheme.current.accentTextColor, fontSize = 16.sp)
         }
     }
 }

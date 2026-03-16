@@ -40,7 +40,7 @@ import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
-private val KeybindShape = RoundedCornerShape(8.dp)
+private val KeybindShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
 
 private fun keyCodeToName(keyCode: Int): String {
     if (keyCode == -1) return "None"

@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -162,8 +161,8 @@ fun ProfileCard(profile: ProfileData) {
                 Box(
                     modifier = Modifier
                         .size(64.dp)
-                        .border(5.dp, theme.textColor, CircleShape)
-                        .clip(CircleShape)
+                        .border(5.dp, theme.textColor, LocalTheme.current.circleShape)
+                        .clip(LocalTheme.current.circleShape)
                 )
             }
             Spacer(Modifier.height(24.dp))

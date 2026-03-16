@@ -5,12 +5,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
@@ -20,8 +18,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
-
-private val ButtonShape = RoundedCornerShape(6.dp)
+import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
 fun ButtonOption(data: ButtonOptionData) {
@@ -32,11 +29,11 @@ fun ButtonOption(data: ButtonOptionData) {
     Box(
         modifier = Modifier
             .pointerHoverIcon(PointerIcon.Hand)
-            .background(bgColor, ButtonShape)
+            .background(bgColor, LocalTheme.current.buttonShape)
             .onClick(interactionSource) { data.runnable?.run() }
             .padding(horizontal = 16.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(data.buttonText ?: "Click", color = Color.White, fontSize = 13.sp)
+        Text(data.buttonText ?: "Click", color = LocalTheme.current.accentTextColor, fontSize = 13.sp)
     }
 }

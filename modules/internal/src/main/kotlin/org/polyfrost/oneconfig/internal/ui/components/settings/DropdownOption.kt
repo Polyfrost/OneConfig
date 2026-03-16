@@ -47,7 +47,7 @@ import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
-private val DropdownShape = RoundedCornerShape(6.dp)
+private val DropdownShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
 
 @Composable
 fun DropdownOption(data: DropdownOptionData) {

@@ -65,17 +65,6 @@ import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen;
 import org.polyfrost.oneconfig.test.TestMod_Test;
 
-//#if MC > 1.16
-//$$ import com.mojang.brigadier.arguments.ArgumentType;
-//$$ import net.minecraft.commands.synchronization.EmptyArgumentSerializer;
-//$$ import net.minecraft.commands.synchronization.ArgumentSerializer;
-//$$ // import org.polyfrost.oneconfig.internal.mixin.command.Mixin_ModernArgumentTypeEntryAccessor;
-//$$ import org.polyfrost.oneconfig.internal.mixin.command.Mixin_ModernArgumentTypesAccessor;
-//$$ import java.util.Map;
-//#endif
-
-import java.util.concurrent.atomic.AtomicBoolean;
-
 /**
  * The main class of OneConfig.
  */
@@ -125,7 +114,7 @@ public class OneConfig
         // (Windows) -Drenderdoc.path="C:\Program Files\RenderDoc\renderdoc.dll" (or wherever you installed RenderDoc)
         // (Linux)   Ensure that librenderdoc.so is available in your LD_PRELOAD
         //#if MC >= 1.19.2
-        //$$ RenderDoc.init();
+        //$$ // RenderDoc.init();
         //#endif
 
 //        if (Boolean.getBoolean("oneconfig.test")) {
@@ -157,25 +146,6 @@ public class OneConfig
     @SuppressWarnings({"unchecked", "rawtypes", "UnstableApiUsage"})
     private static void registerCommands() {
         ClientCommandInternals.initialize();
-        // //#if MC > 1.16
-        // //#if MC > 1.19
-        // // todo still broken on 1.20+
-        // //$$ net.minecraft.commands.CommandBuildContext cmdCtx = new net.minecraft.commands.CommandBuildContext(net.minecraft.core.RegistryAccess.BUILTIN.get());
-        // //#endif
-        // //$$ for (Map.Entry<Class<?>, Object> entry : Mixin_ModernArgumentTypesAccessor.getArgumentTypes().entrySet()) {
-        // //$$     ArgumentSerializer serializer = ((Mixin_ModernArgumentTypeEntryAccessor) entry.getValue()).getSerializer();
-        // //$$     if (serializer instanceof EmptyArgumentSerializer<?>) {
-        // //$$         CommandManager.INSTANCE.registerArgumentType(
-        // //$$                 (Class) entry.getKey(),
-        // //$$                 ((EmptyArgumentSerializer<ArgumentType<?>>) serializer).deserializeFromNetwork(null)
-        // //$$                                //#if MC > 1.19
-        // //$$                                //$$ .instantiate(cmdCtx)
-        // //$$                                //#endif
-        // //$$         );
-        // //$$     }
-        // //$$ }
-        // //#endif
-
         Command<OmniClientCommandSource> executor = (ctx) -> ctx.getSource().openScreen(new OneConfigUIScreen());
 
         LiteralCommandNode<OmniClientCommandSource> node = OmniClientCommands.literal("oneconfig")

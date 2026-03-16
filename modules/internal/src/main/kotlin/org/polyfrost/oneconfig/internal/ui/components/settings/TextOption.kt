@@ -62,8 +62,8 @@ fun TextOption(data: TextOptionData) {
         cursorBrush = SolidColor(theme.textColor),
         modifier = Modifier
             .width(300.dp)
-            .background(theme.modCardBackground, RoundedCornerShape(8.dp))
-            .border(1.dp, theme.borderColor, RoundedCornerShape(8.dp))
+            .background(theme.modCardBackground, LocalTheme.current.sideBarNavigationEntryShape)
+            .border(1.dp, theme.borderColor, LocalTheme.current.sideBarNavigationEntryShape)
             .padding(horizontal = 12.dp, vertical = 7.dp),
         decorationBox = { innerTextField ->
             Row(

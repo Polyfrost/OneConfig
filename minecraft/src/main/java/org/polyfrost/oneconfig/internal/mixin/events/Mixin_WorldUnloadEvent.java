@@ -27,7 +27,6 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.ReceivingLevelScreen;
 import net.minecraft.client.multiplayer.ClientLevel;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.WorldEvent;
@@ -45,9 +44,7 @@ public class Mixin_WorldUnloadEvent {
     @Inject(
             method = "setLevel"
             , at = @At("HEAD"))
-    private void onWorldUnloadCallback(ClientLevel world,
-                                       ReceivingLevelScreen.Reason reason,
-                                       CallbackInfo ci) {
+    private void onWorldUnloadCallback(CallbackInfo ci) {
         if (this.level != null) {
             EventManager.INSTANCE.post(new WorldEvent.Unload(this.level));
         }

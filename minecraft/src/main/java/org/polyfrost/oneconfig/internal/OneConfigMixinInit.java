@@ -104,7 +104,6 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
         //#if MC >= 1.16
         //$$ mixins.add("events.Mixin_ModernWindowFocusEvent");
-        //$$ mixins.add("command.Mixin_ModernArgumentTypesAccessor");
         //$$ // mixins.add("command.Mixin_ModernArgumentTypeEntryAccessor");
         //#if MC < 1.19
         //$$ mixins.add("fixes.Mixin_LazyDataFixerUpper");
@@ -124,6 +123,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
         mixins.add("skia.Mixin_InitSkia");
         mixins.add("skia.Mixin_SkiaFrame");
+        mixins.add("skia.Mixin_InitSkiaFontRenderer");
         mixins.add("skia.Mixin_FixComposeRaceCondition");
 
         {

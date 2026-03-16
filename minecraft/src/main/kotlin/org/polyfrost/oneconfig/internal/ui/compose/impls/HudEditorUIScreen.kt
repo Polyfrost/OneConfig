@@ -7,12 +7,13 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
-import org.polyfrost.oneconfig.internal.ui.Theme
+import org.polyfrost.oneconfig.internal.ui.PolyGlassDark
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignStudio
 import org.polyfrost.oneconfig.internal.ui.shell.Lifecycle
 import org.polyfrost.oneconfig.internal.ui.shell.OCViewModelStoreOwner
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.Theme
 
 @OptIn(InternalComposeUiApi::class)
 class HudEditorUIScreen : ComposeScreen() {
@@ -28,7 +29,7 @@ class HudEditorUIScreen : ComposeScreen() {
 
         Box(Modifier.fillMaxSize()) {
             CompositionLocalProvider(
-                LocalTheme provides Theme,
+                LocalTheme provides PolyGlassDark,
                 LocalLifecycleOwner provides Lifecycle,
                 LocalViewModelStoreOwner provides OCViewModelStoreOwner
             ) {
@@ -37,4 +38,3 @@ class HudEditorUIScreen : ComposeScreen() {
         }
     }
 }
-
