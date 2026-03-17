@@ -24,6 +24,7 @@ import org.polyfrost.oneconfig.internal.ui.shell.Lifecycle
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.OCViewModelStoreOwner
 import org.polyfrost.oneconfig.internal.ui.shell.Shell
+import org.polyfrost.oneconfig.internal.ui.api.settings.BuiltinVisualizers
 import org.polyfrost.oneconfig.internal.ui.themes.Theme
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
 import org.polyfrost.oneconfig.internal.ui.themes.UIBranding

@@ -8,6 +8,7 @@ import org.polyfrost.oneconfig.internal.ui.MinecraftDark
 import org.polyfrost.oneconfig.internal.ui.MinecraftLight
 import org.polyfrost.oneconfig.internal.ui.PolyGlassDark
 import org.polyfrost.oneconfig.internal.ui.PolyGlassLight
+import org.polyfrost.oneconfig.internal.ui.api.settings.BuiltinVisualizers
 
 object ThemeRegistry {
     internal val registry = mutableStateListOf<UITheme>()
@@ -20,6 +21,8 @@ object ThemeRegistry {
         register(MinecraftLight)
 
         activate(PolyGlassDark)
+
+        BuiltinVisualizers.register()
     }
 
     fun init() {}

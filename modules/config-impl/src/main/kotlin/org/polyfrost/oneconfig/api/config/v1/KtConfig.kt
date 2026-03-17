@@ -57,27 +57,27 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
      * create a new delegate for the given property.
      */
     @JvmSynthetic
-    protected inline fun <reified T> property(def: T? = null, name: String? = null, description: String? = null, category: String? = null, subcategory: String? = null, visualizer: Class<out Visualizer>) =
+    protected inline fun <reified T> property(def: T? = null, name: String? = null, description: String? = null, category: String? = null, subcategory: String? = null, visualizer: Visualizer) =
         Provider(def, name, description, category, subcategory, T::class.java, visualizer)
 
     @JvmSynthetic
     protected fun switch(def: Boolean = false, name: String? = null, description: String? = null, category: String? = null, subcategory: String? = null) =
-        Provider(def, name, description, category, subcategory, Boolean::class.java, Visualizer.SwitchVisualizer::class.java)
+        Provider(def, name, description, category, subcategory, Boolean::class.java, Visualizer.SwitchVisualizer())
 
     @JvmSynthetic
     protected fun color(def: PolyColor = PolyColor.rgba(0, 0, 0, 255), name: String? = null, description: String? = null, category: String? = null, subcategory: String? = null) =
-        Provider(def, name, description, category, subcategory, PolyColor::class.java, Visualizer.ColorVisualizer::class.java)
+        Provider(def, name, description, category, subcategory, PolyColor::class.java, Visualizer.ColorVisualizer())
 
     @JvmSynthetic
     protected fun slider(min: Float = 0f, max: Float = 0f, def: Float = 0f, name: String? = null, description: String? = null, category: String? = null, subcategory: String? = null) =
-        Provider(def, name, description, category, subcategory, Float::class.java, Visualizer.SliderVisualizer::class.java) {
+        Provider(def, name, description, category, subcategory, Float::class.java, Visualizer.SliderVisualizer()) {
             addMetadata("min", min)
             addMetadata("max", max)
         }
 
     @JvmSynthetic
     protected fun text(def: String = "", name: String? = null, description: String? = null, category: String? = null, subcategory: String? = null) =
-        Provider(def, name, description, category, subcategory, String::class.java, Visualizer.TextVisualizer::class.java)
+        Provider(def, name, description, category, subcategory, String::class.java, Visualizer.TextVisualizer())
 // TODO: binds, why is this part of polyui in the first place?
 //    @JvmSynthetic
 //    protected fun keybind(def: PolyBind? = null, name: String? = null, description: String? = null, category: String? = null, subcategory: String? = null) =
@@ -85,13 +85,13 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
 
     @JvmSynthetic
     protected fun radiobutton(options: Array<String>, def: Int = 0, name: String? = null, description: String? = null, category: String? = null, subcategory: String? = null) =
-        Provider(def, name, description, category, subcategory, Int::class.java, Visualizer.RadioVisualizer::class.java) {
+        Provider(def, name, description, category, subcategory, Int::class.java, Visualizer.RadioVisualizer()) {
             addMetadata("options", options)
         }
 
     @JvmSynthetic
     protected fun dropdown(options: Array<String>, def: Int = 0, name: String? = null, description: String? = null, category: String? = null, subcategory: String? = null) =
-        Provider(def, name, description, category, subcategory, Int::class.java, Visualizer.DropdownVisualizer::class.java) {
+        Provider(def, name, description, category, subcategory, Int::class.java, Visualizer.DropdownVisualizer()) {
             addMetadata("options", options)
         }
 
@@ -118,7 +118,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         private val category: String?,
         private val subcategory: String?,
         private val type: Class<T>,
-        private val visualizer: Class<out Visualizer>,
+        private val visualizer: Visualizer,
         private val extra: (Property<T>.() -> Unit)? = null
     ) : PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, T>> {
         override operator fun provideDelegate(thisRef: KtConfig, property: KProperty<*>): ReadWriteProperty<KtConfig, T> {

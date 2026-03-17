@@ -32,63 +32,63 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
 
     fun switch(default: Boolean): Prop<Boolean> {
         val prop = Prop(default, Boolean::class.java)
-        prop["visualizer"] = Visualizer.SwitchVisualizer::class.java
+        prop["visualizer"] = Visualizer.SwitchVisualizer()
         tree.put(prop.property)
         return prop
     }
 
     fun checkbox(default: Boolean): Prop<Boolean> {
         val prop = Prop(default, Boolean::class.java)
-        prop["visualizer"] = Visualizer.CheckboxVisualizer::class.java
+        prop["visualizer"] = Visualizer.CheckboxVisualizer()
         tree.put(prop.property)
         return prop
     }
 
     fun button(function: Runnable): RunnableProp {
         val prop = RunnableProp(function)
-        prop["visualizer"] = Visualizer.ButtonVisualizer::class.java
+        prop["visualizer"] = Visualizer.ButtonVisualizer()
         tree.put(prop.property)
         return prop
     }
 
     fun color(default: PolyColor): ColorProp {
         val prop = ColorProp(default)
-        prop["visualizer"] = Visualizer.ColorVisualizer::class.java
+        prop["visualizer"] = Visualizer.ColorVisualizer()
         tree.put(prop.property)
         return prop
     }
 
     fun text(default: String): TextProp {
         val prop = TextProp(default)
-        prop["visualizer"] = Visualizer.TextVisualizer::class.java
+        prop["visualizer"] = Visualizer.TextVisualizer()
         tree.put(prop.property)
         return prop
     }
 
     fun slider(default: Float): FloatProp {
         val prop = FloatProp(default)
-        prop["visualizer"] = Visualizer.SliderVisualizer::class.java
+        prop["visualizer"] = Visualizer.SliderVisualizer()
         tree.put(prop.property)
         return prop
     }
 
     fun slider(default: Int): IntProp {
         val prop = IntProp(default)
-        prop["visualizer"] = Visualizer.SliderVisualizer::class.java
+        prop["visualizer"] = Visualizer.SliderVisualizer()
         tree.put(prop.property)
         return prop
     }
 
     fun number(default: Float): FloatProp {
         val prop = FloatProp(default)
-        prop["visualizer"] = Visualizer.NumberVisualizer::class.java
+        prop["visualizer"] = Visualizer.NumberVisualizer()
         tree.put(prop.property)
         return prop
     }
 
     fun number(default: Int): IntProp {
         val prop = IntProp(default)
-        prop["visualizer"] = Visualizer.NumberVisualizer::class.java
+        prop["visualizer"] = Visualizer.NumberVisualizer()
         tree.put(prop.property)
         return prop
     }
@@ -102,7 +102,7 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
 
     fun dropdown(defaultIndex: Int, vararg options: String): Prop<Int> {
         val prop = Prop(defaultIndex, Int::class.java)
-        prop["visualizer"] = Visualizer.DropdownVisualizer::class.java
+        prop["visualizer"] = Visualizer.DropdownVisualizer()
         prop["options"] = options
         tree.put(prop.property)
         return prop
@@ -110,14 +110,14 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
 
     inline fun <reified T : Enum<*>> dropdown(default: T): Prop<T> {
         val prop = Prop(default, T::class.java)
-        prop["visualizer"] = Visualizer.DropdownVisualizer::class.java
+        prop["visualizer"] = Visualizer.DropdownVisualizer()
         tree.put(prop.property)
         return prop
     }
 
     fun radiobutton(defaultIndex: Int, vararg options: String): Prop<Int> {
         val prop = Prop(defaultIndex, Int::class.java)
-        prop["visualizer"] = Visualizer.RadioVisualizer::class.java
+        prop["visualizer"] = Visualizer.RadioVisualizer()
         prop["options"] = options
         tree.put(prop.property)
         return prop
@@ -125,7 +125,7 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
 
     inline fun <reified T : Enum<*>> radiobutton(default: T): Prop<T> {
         val prop = Prop(default, T::class.java)
-        prop["visualizer"] = Visualizer.RadioVisualizer::class.java
+        prop["visualizer"] = Visualizer.RadioVisualizer()
         tree.put(prop.property)
         return prop
     }

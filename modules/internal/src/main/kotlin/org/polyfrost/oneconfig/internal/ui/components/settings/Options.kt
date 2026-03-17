@@ -7,48 +7,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.internal.ui.api.settings.BooleanOptionData
-import org.polyfrost.oneconfig.internal.ui.api.settings.ButtonOptionData
-import org.polyfrost.oneconfig.internal.ui.api.settings.ColorOptionData
-import org.polyfrost.oneconfig.internal.ui.api.settings.DropdownOptionData
-import org.polyfrost.oneconfig.internal.ui.api.settings.InfoOptionData
-import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
-import org.polyfrost.oneconfig.internal.ui.api.settings.NumberOptionData
-import org.polyfrost.oneconfig.internal.ui.api.settings.RadioButtonOptionData
-import org.polyfrost.oneconfig.internal.ui.api.settings.SliderOptionData
-import org.polyfrost.oneconfig.internal.ui.api.settings.TextOptionData
-import org.polyfrost.oneconfig.internal.ui.api.settings.optionDataFrom
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
 fun Option(prop: Property<*>) {
-    val data = remember(prop) { optionDataFrom(prop) }
-    if (data == null) {
-        val value = prop.get()
-        Text(
-            when (value) {
-                is Boolean -> if (value) "On" else "Off"
-                null -> "—"
-                else -> value.toString()
-            },
-            color = LocalTheme.current.textColorSecondary,
-            fontSize = 14.sp,
-        )
+    val vis = remember(prop) { prop.getMetadata<Visualizer>("visualizer") }
+    if (vis != null) {
+        vis.visualize(prop)
         return
     }
-    when (data) {
-        is BooleanOptionData -> BooleanOption(data)
-        is SliderOptionData -> SliderOption(data)
-        is NumberOptionData -> NumberOption(data)
-        is TextOptionData -> TextOption(data)
-        is DropdownOptionData -> DropdownOption(data)
-        is RadioButtonOptionData -> RadioButtonOption(data)
-        is ColorOptionData -> ColorOption(data)
-        is KeybindOptionData -> KeybindOption(data)
-        is ButtonOptionData -> ButtonOption(data)
-        else -> {}
-    }
+    // Fallback: render value as text for properties with no visualizer set
+    val value = prop.get()
+    Text(
+        when (value) {
+            is Boolean -> if (value) "On" else "Off"
+            null -> "—"
+            else -> value.toString()
+        },
+        color = LocalTheme.current.textColorSecondary,
+        fontSize = 14.sp,
+    )
 }
 
 @Composable

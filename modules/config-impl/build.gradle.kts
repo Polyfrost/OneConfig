@@ -24,10 +24,14 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
+plugins {
+    alias(libs.plugins.kotlin.compose)
+}
+
 dependencies {
     compileOnly("dev.deftu:omnicore-1.8.9-forge:${libs.versions.omnicore.get()}")
     implementation(libs.bundles.nightconfig)
     api(project(":modules:config"))
     api(project(":modules:poly-compose"))
+    api(libs.jetbrains.compose.runtime)
 }
-

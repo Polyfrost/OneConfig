@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.api.settings
 
 import org.polyfrost.oneconfig.api.config.v1.Property
-import org.polyfrost.oneconfig.api.config.v1.Visualizer
 
 sealed class OptionData(val prop: Property<*>) {
     val title: String get() = prop.title ?: prop.id ?: ""
@@ -64,50 +63,3 @@ class ButtonOptionData(prop: Property<*>) : OptionData(prop) {
 
 class InfoOptionData(prop: Property<*>) : OptionData(prop)
 
-fun optionDataFrom(prop: Property<*>): OptionData? {
-    val vis = prop.getMetadata<Class<*>>("visualizer")
-    if (vis != null) {
-        return when {
-            Visualizer.SwitchVisualizer::class.java.isAssignableFrom(vis) ->
-                BooleanOptionData(prop, BooleanOptionData.Style.Switch)
-            Visualizer.CheckboxVisualizer::class.java.isAssignableFrom(vis) ->
-                BooleanOptionData(prop, BooleanOptionData.Style.Checkbox)
-            Visualizer.SliderVisualizer::class.java.isAssignableFrom(vis) ->
-                SliderOptionData(prop)
-            Visualizer.NumberVisualizer::class.java.isAssignableFrom(vis) ->
-                NumberOptionData(prop)
-            Visualizer.TextVisualizer::class.java.isAssignableFrom(vis) ->
-                TextOptionData(prop)
-            Visualizer.DropdownVisualizer::class.java.isAssignableFrom(vis) ->
-                DropdownOptionData(prop)
-            Visualizer.RadioVisualizer::class.java.isAssignableFrom(vis) ->
-                RadioButtonOptionData(prop)
-            Visualizer.ColorVisualizer::class.java.isAssignableFrom(vis) ->
-                ColorOptionData(prop)
-            Visualizer.KeybindVisualizer::class.java.isAssignableFrom(vis) ->
-                KeybindOptionData(prop)
-            Visualizer.ButtonVisualizer::class.java.isAssignableFrom(vis) ->
-                ButtonOptionData(prop)
-            Visualizer.InfoVisualizer::class.java.isAssignableFrom(vis) ->
-                InfoOptionData(prop)
-            else -> null
-        }
-    }
-    // Type-based fallback when no visualizer metadata is set
-    val type = prop.type ?: return null
-    return when {
-        type == Boolean::class.java || type == Boolean::class.javaPrimitiveType ->
-            BooleanOptionData(prop, BooleanOptionData.Style.Switch)
-        type == String::class.java ->
-            TextOptionData(prop)
-        type.isEnum ->
-            DropdownOptionData(prop)
-        Number::class.java.isAssignableFrom(type) ||
-            type == Int::class.javaPrimitiveType ||
-            type == Float::class.javaPrimitiveType ||
-            type == Double::class.javaPrimitiveType ||
-            type == Long::class.javaPrimitiveType ->
-            NumberOptionData(prop)
-        else -> null
-    }
-}
