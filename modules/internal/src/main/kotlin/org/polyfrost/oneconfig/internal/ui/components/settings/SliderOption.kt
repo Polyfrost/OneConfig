@@ -67,13 +67,13 @@ fun SliderOption(data: SliderOptionData) {
                     awaitEachGesture {
                         val down = awaitFirstDown()
                         value = xToValue(down.position.x)
-                        data.numProp.set(value)
+                        data.numProp.set(value.toNumberType(data.prop.type))
                         do {
                             val event = awaitPointerEvent()
                             event.changes.forEach { ch ->
                                 if (ch.pressed) {
                                     value = xToValue(ch.position.x)
-                                    data.numProp.set(value)
+                                    data.numProp.set(value.toNumberType(data.prop.type))
                                     ch.consume()
                                 }
                             }
@@ -113,7 +113,7 @@ fun SliderOption(data: SliderOptionData) {
         }
         NumberSpinner(
             value = value,
-            onValueChange = { value = it; data.numProp.set(it) },
+            onValueChange = { value = it; data.numProp.set(it.toNumberType(data.prop.type)) },
             min = data.min,
             max = data.max,
             step = if (data.step > 0f) data.step else 1f,

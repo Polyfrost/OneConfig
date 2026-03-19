@@ -14,7 +14,13 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
 fun Option(prop: Property<*>) {
-    val vis = remember(prop) { prop.getMetadata<Visualizer>("visualizer") }
+    val vis = remember(prop) {
+        when (val raw = prop.getMetadata<Any>("visualizer")) {
+            is Visualizer -> raw
+            is Class<*> -> (raw.getDeclaredConstructor().newInstance() as? Visualizer)
+            else -> null
+        }
+    }
     if (vis != null) {
         vis.visualize(prop)
         return

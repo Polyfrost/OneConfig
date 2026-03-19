@@ -37,6 +37,15 @@ import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import kotlin.math.roundToInt
 
+fun Float.toNumberType(type: Class<*>): Number = when (type) {
+    Int::class.java, java.lang.Integer::class.java, Integer.TYPE -> toInt()
+    Long::class.java, java.lang.Long::class.java, java.lang.Long.TYPE -> toLong()
+    Double::class.java, java.lang.Double::class.java, java.lang.Double.TYPE -> toDouble()
+    Short::class.java, java.lang.Short::class.java, java.lang.Short.TYPE -> toInt().toShort()
+    Byte::class.java, java.lang.Byte::class.java, java.lang.Byte.TYPE -> toInt().toByte()
+    else -> this
+}
+
 fun filterNumberInput(input: String): String {
     val sb = StringBuilder()
     var hasDot = false
@@ -139,7 +148,7 @@ fun NumberOption(data: NumberOptionData) {
 
     NumberSpinner(
         value = value,
-        onValueChange = { value = it; data.numProp.set(it) },
+        onValueChange = { value = it; data.numProp.set(it.toNumberType(data.prop.type)) },
         min = data.min,
         max = data.max,
         step = step,
