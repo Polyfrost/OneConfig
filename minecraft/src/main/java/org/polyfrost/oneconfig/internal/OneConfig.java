@@ -186,10 +186,11 @@ public class OneConfig
         EventManager.register(InitializationEvent.class, e -> HudManager.INSTANCE.initialize());
         EventManager.register(HudRenderEvent.class, e -> {
             if (!SkiaCtx.INSTANCE.isReady()) return;
-            SkiaCtx.INSTANCE.queueDraw((Runnable) () -> {
+            SkiaCtx.INSTANCE.queueHudDraw(() -> {
                 var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
                 HudManager.INSTANCE.render(ctx, OmniClient.getWindow().getScreenWidth(), OmniClient.getWindow().getScreenHeight());
             });
+            SkiaCtx.INSTANCE.drawNow();
         });
         EventManager.register(HudEditorToggleEvent.class, e -> {
             if (e.open) {

@@ -4,16 +4,21 @@ import com.mojang.blaze3d.pipeline.RenderTarget
 import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.Minecraft
 import org.jetbrains.skia.*
-
-
 object BlurRenderer {
     private val client get() = Minecraft.getInstance()
     private val paints = HashMap<Float, Paint>()
+
     private var cachedSurface: Surface? = null
     private var cachedBackendRenderTarget: BackendRenderTarget? = null
     private var cachedFramebufferId = -1
     private var cachedWidth = -1
     private var cachedHeight = -1
+
+    private var cachedVkSurface: Surface? = null
+    private var cachedVkBRT: BackendRenderTarget? = null
+    private var cachedVkImage: Long = 0L
+    private var cachedVkWidth = -1
+    private var cachedVkHeight = -1
 
     fun drawBlur() {
         SkiaCtx.queueDraw {
@@ -23,9 +28,7 @@ object BlurRenderer {
     }
 
     fun drawRegion(canvas: Canvas, x: Float, y: Float, width: Float, height: Float, radius: Float) {
-        if (width <= 0f || height <= 0f) {
-            return
-        }
+        if (width <= 0f || height <= 0f) return
 
         val target = client.mainRenderTarget
         val sourceSurface = resolveSurface(target, target.width, target.height) ?: return
@@ -39,15 +42,19 @@ object BlurRenderer {
     }
 
     private fun resolveSurface(target: RenderTarget, width: Int, height: Int): Surface? {
-        //#if MC >= 1.21.5
-        //$$ val frameBufferId = getFboId(target) // praying ts works 🙏🙏
+        if (SkiaCtx.isVulkanMode) return resolveVkSurface(target, width, height)
+
+        //#if MC >= 1.21.5 && MC <= 1.21.11
+        //$$ val frameBufferId = getFboId(target)
+        //#else
+        //#if MC > 1.21.11
+        //$$ val frameBufferId = -1 // 26.1+ uses Vulkan exclusively; GL path is unreachable
         //#else
         val frameBufferId = target.frameBufferId
         //#endif
+        //#endif
 
-        if (width <= 0 || height <= 0 || frameBufferId <= 0) {
-            return null
-        }
+        if (width <= 0 || height <= 0 || frameBufferId <= 0) return null
         if (cachedSurface != null && cachedFramebufferId == frameBufferId && cachedWidth == width && cachedHeight == height) {
             return cachedSurface
         }
@@ -55,43 +62,56 @@ object BlurRenderer {
         cachedSurface?.close()
         cachedBackendRenderTarget?.close()
 
-        val backendRenderTarget = BackendRenderTarget.makeGL(
-            width,
-            height,
-            0,
-            8,
-            frameBufferId,
-            FramebufferFormat.GR_GL_RGBA8
-        )
-
+        val backendRenderTarget = BackendRenderTarget.makeGL(width, height, 0, 8, frameBufferId, FramebufferFormat.GR_GL_RGBA8)
         val surface = Surface.makeFromBackendRenderTarget(
-            SkiaCtx.directContext,
-            backendRenderTarget,
-            SurfaceOrigin.BOTTOM_LEFT,
-            SurfaceColorFormat.RGBA_8888,
-            ColorSpace.sRGB,
-            null
+            SkiaCtx.directContext, backendRenderTarget,
+            SurfaceOrigin.BOTTOM_LEFT, SurfaceColorFormat.RGBA_8888, ColorSpace.sRGB, null,
         )
 
         if (surface == null) {
             backendRenderTarget.close()
-            cachedBackendRenderTarget = null
-            cachedSurface = null
-            cachedFramebufferId = -1
-            cachedWidth = -1
-            cachedHeight = -1
+            cachedBackendRenderTarget = null; cachedSurface = null
+            cachedFramebufferId = -1; cachedWidth = -1; cachedHeight = -1
             return null
         }
 
         cachedBackendRenderTarget = backendRenderTarget
         cachedSurface = surface
-        cachedFramebufferId = frameBufferId
-        cachedWidth = width
-        cachedHeight = height
+        cachedFramebufferId = frameBufferId; cachedWidth = width; cachedHeight = height
         return surface
     }
 
-    //#if MC >= 1.21.5
+    private fun resolveVkSurface(target: RenderTarget, width: Int, height: Int): Surface? {
+        val svc = SkiaCtx.vulkanService ?: return null
+        val (vkImg, vkFmt, queueFamily) = svc.getMainColorImageInfo()
+        if (vkImg == 0L || width <= 0 || height <= 0) return null
+
+        if (cachedVkSurface != null && cachedVkImage == vkImg && cachedVkWidth == width && cachedVkHeight == height) {
+            return cachedVkSurface
+        }
+
+        cachedVkSurface?.close()
+        cachedVkBRT?.close()
+
+        val brt = svc.makeBackendRenderTarget(width, height, vkImg, vkFmt, queueFamily)
+        val surface = Surface.makeFromBackendRenderTarget(
+            SkiaCtx.directContext, brt,
+            SurfaceOrigin.BOTTOM_LEFT, SurfaceColorFormat.RGBA_8888, ColorSpace.sRGB, null,
+        )
+
+        if (surface == null) {
+            brt.close()
+            cachedVkBRT = null; cachedVkSurface = null
+            cachedVkImage = 0L; cachedVkWidth = -1; cachedVkHeight = -1
+            return null
+        }
+
+        cachedVkBRT = brt; cachedVkSurface = surface
+        cachedVkImage = vkImg; cachedVkWidth = width; cachedVkHeight = height
+        return surface
+    }
+
+    //#if MC >= 1.21.5 && MC <= 1.21.11
     /**
      * Credits: lowercasebtw
      * Taken from: https://discord.com/channels/507304429255393322/807617488313516032/1452333789778018314 (The Fabric Project)

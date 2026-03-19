@@ -19,6 +19,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.function.Predicate
 import kotlin.io.path.absolutePathString
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
 import java.lang.Boolean as JBoolean
 
 plugins {
@@ -49,6 +52,7 @@ toolkitLoomHelper {
     useProperty("mixin.debug.export", "true", GameSide.CLIENT)
     useProperty("debugBytecode", "true", GameSide.CLIENT)
     useProperty("forge.logging.console.level", "debug", GameSide.CLIENT)
+    useProperty("oshi.os.windows.wmi.timeout", "3000", GameSide.CLIENT)
     if (org.gradle.internal.os.OperatingSystem.current().isMacOsX) {
         useProperty("fml.earlyprogresswindow", "false", GameSide.CLIENT)
     }
@@ -336,6 +340,10 @@ dependencies {
     ksp(rootProject.project(":modules:relocator"))
     annotationProcessor(rootProject.project(":modules:relocator"))
 
+    if (properties["minecraft.vulkan"] != null) {
+        implementation("graphics.cinnabar:cinnabar-fabric:26.1-snapshot-9-0.0.7-beta-85-gd3508cc")
+    }
+
     for (project in rootProject.project(":modules").subprojects) {
         if ("relocator" in project.path) {
             compileOnly(project(project.path))
@@ -368,6 +376,60 @@ dependencies {
         compileOnly("net.azureaaron:dandelion:1.0.0-alpha.3") { isTransitive = false }
     }
     api("dev.deftu:enhancedeventbus:2.0.0") // TODO
+    if (properties["minecraft.vulkan"] != null) {
+        // i couldnt find a way to get it to work
+        // soooooooooooooooooooooooooooooooo
+        val fabricApiPatchSrc = configurations.create("fabricApiPatchSrc") {
+            isCanBeConsumed = false
+            isCanBeResolved = true
+        }
+        dependencies.add(fabricApiPatchSrc.name, "net.fabricmc.fabric-api:fabric-screen-api-v1:4.0.0+9f78a5a8ed") { isTransitive = false }
+        dependencies.add(fabricApiPatchSrc.name, "net.fabricmc.fabric-api:fabric-rendering-v1:23.0.2+f348b6c3c3") { isTransitive = false }
+
+        val patchedFabricApiDir = layout.buildDirectory.dir("patched-fabric-api")
+
+        val patchFabricApiMods by tasks.registering {
+            inputs.files(fabricApiPatchSrc)
+            outputs.dir(patchedFabricApiDir)
+            doLast {
+                val outDir = patchedFabricApiDir.get().asFile
+                outDir.mkdirs()
+                val jarFiles: Set<File> = fabricApiPatchSrc.resolvedConfiguration.resolvedArtifacts.map { it.file }.toSet()
+                for (jar: File in jarFiles) {
+                    val mixinJson: String? = when {
+                        "screen-api" in jar.name -> "fabric-screen-api-v1.mixins.json"
+                        "rendering-v1" in jar.name -> "fabric-rendering-v1.mixins.json"
+                        else -> null
+                    }
+                    val outFile = File(outDir, jar.name)
+                    ZipFile(jar).use { zf ->
+                        ZipOutputStream(outFile.outputStream().buffered()).use { zos ->
+                            zf.entries().asSequence().forEach { entry ->
+                                val bytes = zf.getInputStream(entry).readBytes()
+                                val content = if (mixinJson != null && entry.name == mixinJson) {
+                                    var json = String(bytes)
+                                        .replace("\"required\": true", "\"required\": false")
+                                        .replace("\"defaultRequire\": 1", "\"defaultRequire\": 0")
+                                    if ("rendering-v1" in mixinJson) {
+                                        json = json.replace(Regex("\"client\"\\s*:\\s*\\[.*?\\]", RegexOption.DOT_MATCHES_ALL), "\"client\": []")
+                                    }
+                                    json.toByteArray()
+                                } else bytes
+                                zos.putNextEntry(ZipEntry(entry.name))
+                                zos.write(content)
+                                zos.closeEntry()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        val patchedScreenApi = patchedFabricApiDir.map { it.file("fabric-screen-api-v1-4.0.0+9f78a5a8ed.jar") }
+        val patchedRenderingV1 = patchedFabricApiDir.map { it.file("fabric-rendering-v1-23.0.2+f348b6c3c3.jar") }
+        maybeModApi(files(patchedScreenApi) { builtBy(patchFabricApiMods) })
+        maybeModApi(files(patchedRenderingV1) { builtBy(patchFabricApiMods) })
+    }
 }
 
 tasks {

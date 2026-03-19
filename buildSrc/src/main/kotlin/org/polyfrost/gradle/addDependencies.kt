@@ -42,7 +42,7 @@ private val fabricApiModuleVersions = mapOf(
     "api-base-12109" to "0.5.2+2fa446b294", // 1.21.9
     "api-base-12110" to "1.0.0+14b92d8968", // 1.21.10
     "api-base-12111" to "1.0.5+4ebb5c0853", // 1.21.11
-    "api-base-260100" to "2.0.0+574290ba7d", // 26.1
+    "api-base-260100" to "2.0.3+ece06323c3", // 26.1
     "lifecycle-events-v1-common" to "1.1.0+2c3f108c81e6", // Common (Legacy Fabric API)
     "lifecycle-events-v1-10809" to "1.1.0+1.8.9+2c3f108c81e6", // 1.8.9
     "lifecycle-events-v1-11202" to "1.1.0+1.12.2+2c3f108c81e6", // 1.12.2
@@ -65,7 +65,7 @@ private val fabricApiModuleVersions = mapOf(
     "lifecycle-events-v1-12109" to "2.6.8+33df5e6e94", // 1.21.9
     "lifecycle-events-v1-12110" to "2.6.9+33df5e6e68", // 1.21.10
     "lifecycle-events-v1-12111" to "2.6.15+4ebb5c0853", // 1.21.11
-    "lifecycle-events-v1-260100" to "4.0.2+a208210e7d", // 26.1
+    "lifecycle-events-v1-260100" to "4.0.5+c82f0461c3", // 26.1
     "keybindings-api-v1-common" to "1.1.1+281301ea81e6", // Common (Legacy Fabric API)
     "keybindings-api-v1-10809" to "1.1.1+1.8.9+2c3f108c81e6", // 1.8.9
     "keybindings-api-v1-11202" to "1.1.1+1.12.2+2c3f108c81e6", // 1.12.2
@@ -88,7 +88,7 @@ private val fabricApiModuleVersions = mapOf(
     "key-binding-api-v1-12109" to "1.1.0+4ec8267494", // 1.21.9
     "key-binding-api-v1-12110" to "1.1.1+b3ba9c4868", // 1.21.10
     "key-binding-api-v1-12111" to "1.1.7+4fc5413f53", // 1.21.11
-    "key-mapping-api-v1-260100" to "2.0.0+574290ba7d", // 26.1
+    "key-mapping-api-v1-260100" to "2.0.4+e2bdee78c3", // 26.1
     "rendering-api-v1-common" to "1.0.0+7c545fdb81e6", // Common (Legacy Fabric API)
     "rendering-api-v1-10809" to "1.0.0+1.8.9+2c3f108c81e6", // 1.8.9
     "rendering-api-v1-11202" to "1.0.0+1.8.9+2c3f108c81e6", // 1.12.2
@@ -111,7 +111,7 @@ private val fabricApiModuleVersions = mapOf(
     "rendering-v1-12109" to "15.0.2+9bce411b94", // 1.21.9
     "rendering-v1-12110" to "16.0.1+328a75ba68", // 1.21.10
     "rendering-v1-12111" to "16.2.5+1fb1cde953", // 1.21.11
-    "rendering-v1-260100" to "18.0.0+a9f246707d", // 26.1
+    "rendering-v1-260100" to "23.0.2+f348b6c3c3", // 26.1
     "screen-api-v1-11605" to "1.0.1+3cc0f0907d", // 1.16.5
     "screen-api-v1-11701" to "1.0.5+cf39a74318", // 1.17.1
     "screen-api-v1-11802" to "1.0.11+d882b91560", // 1.18.2
@@ -131,7 +131,7 @@ private val fabricApiModuleVersions = mapOf(
     "screen-api-v1-12109" to "3.0.2+86b3ae5794", // 1.21.9
     "screen-api-v1-12110" to "3.1.0+9c82a79868", // 1.21.10
     "screen-api-v1-12111" to "3.1.7+4ebb5c0853", // 1.21.11
-    "screen-api-v1-260100" to "4.0.0+574290ba7d", // 26.1
+    "screen-api-v1-260100" to "5.0.1+d871b99ec3", // 26.1
     "command-api-v1-11605" to "1.1.3+3cc0f0907d", // 1.16.5
     "command-api-v1-11701" to "1.1.4+cf39a74318", // 1.17.1
     "command-api-v1-11802" to "1.1.10+d7c144a860", // 1.18.2
@@ -151,7 +151,7 @@ private val fabricApiModuleVersions = mapOf(
     "command-api-v2-12109" to "2.3.5+33df5e6e94", // 1.21.9
     "command-api-v2-12110" to "2.3.7+328a75ba68", // 1.21.10
     "command-api-v2-12111" to "2.4.6+4ebb5c0853", // 1.21.11
-    "command-api-v2-260100" to "3.0.0+574290ba7d", // 26.1
+    "command-api-v2-260100" to "3.0.5+e2bdee78c3", // 26.1
     "transitive-access-wideners-v1-11802" to "1.1.0+e747827960", // 1.18.2
     "transitive-access-wideners-v1-11902" to "1.3.3+08b73de490", // 1.19.2
     "transitive-access-wideners-v1-11904" to "3.3.0+1b5f819af4", // 1.19.4
@@ -169,7 +169,7 @@ private val fabricApiModuleVersions = mapOf(
     "transitive-access-wideners-v1-12109" to "6.5.2+5d9dbead94", // 1.21.9
     "transitive-access-wideners-v1-12110" to "6.5.3+41eb434368", // 1.21.10
     "transitive-access-wideners-v1-12111" to "7.0.7+1fb1cde953", // 1.21.11
-    "transitive-access-wideners-v1-260100" to "8.0.1+a208210e7d", // 26.1
+    "transitive-access-wideners-v1-260100" to "8.0.11+d871b99ec3", // 26.1
 )
 
 /**
@@ -268,7 +268,7 @@ fun Project.provideIncludedDependencies(version: Triple<Int, Int, Int>?, loader:
     }
     if (version != null) {
         actualDeps.add(OCDependency("dev.deftu:textile-${shenanigans}-$loader:${libs.findVersion("textile").get().displayName}", true))
-        actualDeps.add(OCDependency("dev.deftu:omnicore-${shenanigans}-$loader:${libs.findVersion("omnicore").get().displayName}", true))
+        actualDeps.add(OCDependency("org.polyfrost:omnicore-${shenanigans}-$loader:${libs.findVersion("omnicore").get().displayName}", true))
     }
 
     return actualDeps
@@ -289,6 +289,10 @@ fun Project.provideFabricApiDependency(version: Triple<Int, Int, Int>): List<OCD
         // Modern Fabric
         val finalList = mutableListOf<String>()
         finalList.addAll(fabricApiModules)
+        if (version.first >= 2) {
+            finalList.remove("screen-api-v1")
+            finalList.remove("rendering-v1")
+        }
         if (version.first >= 2 || version.second >= 18) {
             finalList.add("transitive-access-wideners-v1")
         }

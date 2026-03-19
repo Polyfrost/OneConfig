@@ -10,6 +10,15 @@ plugins {
 // This will cause loom to completely break apart and throw itself into oblivion.
 // I have no idea how to fix it, and honestly, I don't want to know.
 
+allprojects {
+    repositories {
+        maven("https://pkg.frst.cloud/releases") {
+            name = "frstCloudReleases"
+        }
+        maven("https://maven.logix.dev/snapshots")
+    }
+}
+
 subprojects {
     pluginManager.withPlugin("java") {
         apply(plugin = rootProject.libs.plugins.licenser.get().pluginId)

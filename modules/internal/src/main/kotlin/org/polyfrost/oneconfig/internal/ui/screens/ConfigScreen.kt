@@ -39,7 +39,6 @@ import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
-import org.polyfrost.oneconfig.internal.ui.api.settings.optionDataFrom
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
@@ -188,7 +187,7 @@ private fun isAccordionToggle(prop: Property<*>): Boolean {
 }
 
 private fun isRenderableProperty(prop: Property<*>): Boolean {
-    return (prop.getMetadata<Any?>("visualizer") != null || optionDataFrom(prop) != null) && prop.canDisplay()
+    return (prop.getMetadata<Any?>("visualizer") != null) || prop.canDisplay()
 }
 
 private fun nodeGroup(node: Node, key: String, default: String): String {

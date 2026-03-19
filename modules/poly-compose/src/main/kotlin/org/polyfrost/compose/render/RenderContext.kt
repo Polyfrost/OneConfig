@@ -73,5 +73,5 @@ class RenderContext(val canvas: Canvas) {
     fun scale(sx: Float, sy: Float) = canvas.scale(sx, sy)
 
     fun clipRect(x: Float, y: Float, w: Float, h: Float) = canvas.clipRect(Rect.makeXYWH(x, y, w, h))
-    fun clipRRect(x: Float, y: Float, w: Float, h: Float, radius: Float) = canvas.clipRRect(RRect.makeXYWH(x, y, w, h, radius))
+    fun clipRRect(x: Float, y: Float, w: Float, h: Float, radius: Float) = canvas.clipRRect(RRect.makeXYWH(x, y, w, h, radius), true)
 }
