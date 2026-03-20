@@ -36,6 +36,7 @@ import org.polyfrost.compose.composables.PolyCanvas
 import org.polyfrost.compose.composables.PolyMcText
 import org.polyfrost.compose.composables.PolyModifier
 import org.polyfrost.compose.composables.align
+import org.polyfrost.compose.composables.background
 import org.polyfrost.compose.composables.padding
 import org.polyfrost.compose.composables.size
 import org.polyfrost.compose.layout.PolyAlign
@@ -55,6 +56,13 @@ abstract class TextHud(
     @TextAnnotation(title = "Text Suffix") var suffix: String = "",
 ) : Hud(id, title, category) {
 
+    init {
+        padLeft = 4f
+        padRight = 4f
+        padTop = 4f
+        padBottom = 4f
+    }
+
     @get:JvmName("getStringBuilder")
     protected val sb = StringBuilder()
 
@@ -62,7 +70,6 @@ abstract class TextHud(
 
     @Composable
     override fun Content() {
-        // Apply caseType transform
         val text = when (caseType) {
             1 -> displayText.uppercase()
             2 -> displayText.lowercase()
@@ -70,64 +77,58 @@ abstract class TextHud(
         }
 
         val contentAlign = alignment
+        val padInsets = PolyInsets(padLeft, padTop, padRight, padBottom)
+        val fgColor = PolyColor(textColor)
 
-        if (font == Font.Poppins) {
-            val fontName = when {
-                textBold && textItalic -> "poppins-bold-italic"
-                textBold -> "poppins-bold"
-                textItalic -> "poppins-italic"
-                else -> "poppins"
-            }
-            val fontSize = 8f * textScale
-            val skiaFont = FontManager.getFont(fontSize, fontName)
-            val textWidth = skiaFont.measureTextWidth(text)
-            val textHeight = skiaFont.metrics.let { it.descent - it.ascent }
-            val padInsets = PolyInsets(padLeft, padTop, padRight, padBottom)
-
-            if (staticWidth) {
-                PolyBox(modifier = PolyModifier.size(staticW, staticH).padding(padInsets)) {
-                    PolyCanvas(modifier = PolyModifier.size(textWidth, textHeight)
-                        .align(contentAlign)) { x, y, _, _ ->
-                        text(text, x, y - skiaFont.metrics.ascent, PolyColor.WHITE, skiaFont)
-                    }
-                }
-            } else {
-                PolyBox(modifier = PolyModifier.padding(padInsets)) {
-                    PolyCanvas(modifier = PolyModifier.size(textWidth, textHeight)) { x, y, _, _ ->
-                        text(text, x, y - skiaFont.metrics.ascent, PolyColor.WHITE, skiaFont)
-                    }
-                }
-            }
+        val outerModifier = if (showBackground) {
+            val bgModifier = PolyModifier.background(PolyColor(bgColor), bgRadius)
+            if (staticWidth) bgModifier.size(staticW, staticH).padding(padInsets)
+            else bgModifier.padding(padInsets)
         } else {
-            val formatted = buildString {
-                if (textBold) append("§l")
-                if (textItalic) append("§o")
-                append(text)
-                if (textBold || textItalic) append("§r")
-            }
+            if (staticWidth) PolyModifier.size(staticW, staticH).padding(padInsets)
+            else PolyModifier.padding(padInsets)
+        }
 
-            if (staticWidth) {
-                PolyBox(
-                    modifier = PolyModifier
-                        .size(staticW, staticH)
-                        .padding(PolyInsets(padLeft, padTop, padRight, padBottom))
-                ) {
-                    PolyMcText(
-                        text = formatted,
-                        scale = textScale,
-                        modifier = PolyModifier.align(contentAlign)
-                    )
+        PolyBox(modifier = outerModifier) {
+            if (font == Font.Poppins) {
+                val fontName = when {
+                    textBold && textItalic -> "poppins-bold-italic"
+                    textBold -> "poppins-bold"
+                    textItalic -> "poppins-italic"
+                    else -> "poppins"
+                }
+                val fontSize = 8f * textScale
+                val skiaFont = FontManager.getFont(fontSize, fontName)
+                val textWidth = skiaFont.measureTextWidth(text)
+                val textHeight = skiaFont.metrics.let { it.descent - it.ascent }
+
+                if (showShadow) {
+                    PolyCanvas(modifier = PolyModifier.size(textWidth, textHeight)
+                        .let { if (staticWidth) it.align(contentAlign) else it }) { x, y, _, _ ->
+                        text(text, x + shadowOffsetX, y - skiaFont.metrics.ascent + shadowOffsetY, PolyColor(shadowColor), skiaFont)
+                        text(text, x, y - skiaFont.metrics.ascent, fgColor, skiaFont)
+                    }
+                } else {
+                    PolyCanvas(modifier = PolyModifier.size(textWidth, textHeight)
+                        .let { if (staticWidth) it.align(contentAlign) else it }) { x, y, _, _ ->
+                        text(text, x, y - skiaFont.metrics.ascent, fgColor, skiaFont)
+                    }
                 }
             } else {
-                PolyBox(
-                    modifier = PolyModifier
-                        .padding(PolyInsets(padLeft, padTop, padRight, padBottom))
-                ) {
-                    PolyMcText(
-                        text = formatted,
-                        scale = textScale,
-                    )
+                val formatted = buildString {
+                    if (textBold) append("§l")
+                    if (textItalic) append("§o")
+                    append(text)
+                    if (textBold || textItalic) append("§r")
                 }
+
+                PolyMcText(
+                    text = formatted,
+                    color = textColor,
+                    shadow = showShadow,
+                    scale = textScale,
+                    modifier = if (staticWidth) PolyModifier.align(contentAlign) else PolyModifier,
+                )
             }
         }
     }

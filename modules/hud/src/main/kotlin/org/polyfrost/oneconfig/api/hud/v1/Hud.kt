@@ -50,6 +50,14 @@ enum class Font {
     Poppins;
 }
 
+enum class Section {
+    TopLeft, TopCenter, TopRight,
+    CenterLeft, Center, CenterRight,
+    BottomLeft, BottomCenter, BottomRight
+}
+
+private const val GRID_SIZE = 3
+
 @Suppress("EqualsOrHashCode", "UnstableApiUsage")
 abstract class Hud(id: String, title: String, val category: Category) : Cloneable, Config(id, null, title, null) {
     private var _staticWidth: MutableState<Boolean> = mutableStateOf(false)
@@ -67,17 +75,102 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var toggleKey: Int = -1
     var showKey: Int = -1
 
-    private var _x: MutableState<Float> = mutableStateOf(0f)
-    var x: Float get() = _x.value; set(v) { _x.value = v }
+    private var _section: MutableState<Section> = mutableStateOf(Section.TopLeft)
+    var section: Section get() = _section.value; set(v) { _section.value = v }
 
-    private var _y: MutableState<Float> = mutableStateOf(0f)
-    var y: Float get() = _y.value; set(v) { _y.value = v }
+    private var _relativeX: MutableState<Float> = mutableStateOf(0f)
+    var relativeX: Float get() = _relativeX.value; set(v) { _relativeX.value = v }
+
+    private var _relativeY: MutableState<Float> = mutableStateOf(0f)
+    var relativeY: Float get() = _relativeY.value; set(v) { _relativeY.value = v }
 
     private var _renderedW: MutableState<Float> = mutableStateOf(0f)
     var renderedW: Float get() = _renderedW.value; set(v) { _renderedW.value = v }
 
     private var _renderedH: MutableState<Float> = mutableStateOf(0f)
     var renderedH: Float get() = _renderedH.value; set(v) { _renderedH.value = v }
+
+    val scaledWidth: Float get() {
+        val w = if (staticWidth) staticW else renderedW
+        return if (w > 0f) w else 1f
+    }
+
+    val scaledHeight: Float get() {
+        val h = if (staticWidth) staticH else renderedH
+        return if (h > 0f) h else 1f
+    }
+
+    var x: Float
+        get() {
+            val sw = HudManager.guiScreenWidth
+            val secPos = (sw / GRID_SIZE * relativeX).toInt()
+            return when (section) {
+                Section.TopLeft, Section.CenterLeft, Section.BottomLeft -> secPos.toFloat()
+                Section.TopCenter, Section.Center, Section.BottomCenter -> (sw - scaledWidth) / 2f + secPos
+                Section.TopRight, Section.CenterRight, Section.BottomRight -> sw - scaledWidth - secPos
+            }
+        }
+        set(v) { updateRelativeX(v) }
+
+    var y: Float
+        get() {
+            val sh = HudManager.guiScreenHeight
+            val secPos = (sh / GRID_SIZE * relativeY).toInt()
+            return when (section) {
+                Section.TopLeft, Section.TopCenter, Section.TopRight -> secPos.toFloat()
+                Section.CenterLeft, Section.Center, Section.CenterRight -> (sh - scaledHeight) / 2f + secPos
+                Section.BottomLeft, Section.BottomCenter, Section.BottomRight -> sh - scaledHeight - secPos
+            }
+        }
+        set(v) { updateRelativeY(v) }
+
+    private fun updateRelativeX(absX: Float) {
+        val sw = HudManager.guiScreenWidth
+        val gridW = sw / GRID_SIZE
+        relativeX = when (section) {
+            Section.TopLeft, Section.CenterLeft, Section.BottomLeft -> absX / gridW
+            Section.TopCenter, Section.Center, Section.BottomCenter -> (absX - (sw - scaledWidth) / 2f) / gridW
+            else -> (sw - scaledWidth - absX) / gridW
+        }.coerceIn(-1f, 2f)
+    }
+
+    private fun updateRelativeY(absY: Float) {
+        val sh = HudManager.guiScreenHeight
+        val gridH = sh / GRID_SIZE
+        relativeY = when (section) {
+            Section.TopLeft, Section.TopCenter, Section.TopRight -> absY / gridH
+            Section.CenterLeft, Section.Center, Section.CenterRight -> (absY - (sh - scaledHeight) / 2f) / gridH
+            else -> (sh - scaledHeight - absY) / gridH
+        }.coerceIn(-1f, 2f)
+    }
+
+    fun setAbsolutePosition(absX: Float, absY: Float) {
+        val sw = HudManager.guiScreenWidth
+        val sh = HudManager.guiScreenHeight
+        val gridW = sw / GRID_SIZE
+        val gridH = sh / GRID_SIZE
+
+        section = when {
+            absX < gridW -> when {
+                absY > 2 * gridH -> Section.BottomLeft
+                absY > gridH -> Section.CenterLeft
+                else -> Section.TopLeft
+            }
+            absX < 2 * gridW -> when {
+                absY > 2 * gridH -> Section.BottomCenter
+                absY > gridH -> Section.Center
+                else -> Section.TopCenter
+            }
+            else -> when {
+                absY > 2 * gridH -> Section.BottomRight
+                absY > gridH -> Section.CenterRight
+                else -> Section.TopRight
+            }
+        }
+
+        updateRelativeX(absX)
+        updateRelativeY(absY)
+    }
 
     var hidden: Boolean = false
 
@@ -123,6 +216,38 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     private var _textAlign: MutableState<Int> = mutableStateOf(1)
     var textAlign: Int get() = _textAlign.value; set(v) { _textAlign.value = v }
 
+    private var _useGuiScale: MutableState<Boolean> = mutableStateOf(true)
+    var useGuiScale: Boolean get() = _useGuiScale.value; set(v) { _useGuiScale.value = v }
+
+    private var _customScale: MutableState<Float> = mutableStateOf(1f)
+    var customScale: Float get() = _customScale.value; set(v) { _customScale.value = v }
+
+    val effectiveScale: Float get() = if (useGuiScale) 1f else customScale
+
+    private var _showBackground: MutableState<Boolean> = mutableStateOf(true)
+    var showBackground: Boolean get() = _showBackground.value; set(v) { _showBackground.value = v }
+
+    private var _bgColor: MutableState<Int> = mutableStateOf(0x80000000.toInt())
+    var bgColor: Int get() = _bgColor.value; set(v) { _bgColor.value = v }
+
+    private var _bgRadius: MutableState<Float> = mutableStateOf(4f)
+    var bgRadius: Float get() = _bgRadius.value; set(v) { _bgRadius.value = v }
+
+    private var _textColor: MutableState<Int> = mutableStateOf(0xFFFFFFFF.toInt())
+    var textColor: Int get() = _textColor.value; set(v) { _textColor.value = v }
+
+    private var _showShadow: MutableState<Boolean> = mutableStateOf(false)
+    var showShadow: Boolean get() = _showShadow.value; set(v) { _showShadow.value = v }
+
+    private var _shadowColor: MutableState<Int> = mutableStateOf(0x40000000)
+    var shadowColor: Int get() = _shadowColor.value; set(v) { _shadowColor.value = v }
+
+    private var _shadowOffsetX: MutableState<Float> = mutableStateOf(2f)
+    var shadowOffsetX: Float get() = _shadowOffsetX.value; set(v) { _shadowOffsetX.value = v }
+
+    private var _shadowOffsetY: MutableState<Float> = mutableStateOf(2f)
+    var shadowOffsetY: Float get() = _shadowOffsetY.value; set(v) { _shadowOffsetY.value = v }
+
     override fun addToInitQueue() {}
 
     val isReal get() = tree != null
@@ -156,8 +281,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             tree.addMetadata("category", category)
             tree.addMetadata("hidden", true)
             var hidden = { Property.Display.HIDDEN }
-            tree["x"] = ktProperty(out::x).apply { addDisplayCondition(hidden) }
-            tree["y"] = ktProperty(out::y).apply { addDisplayCondition(hidden) }
+            tree["section"] = ktProperty(out::section).apply { addDisplayCondition(hidden) }
+            tree["relativeX"] = ktProperty(out::relativeX).apply { addDisplayCondition(hidden) }
+            tree["relativeY"] = ktProperty(out::relativeY).apply { addDisplayCondition(hidden) }
             tree["toggleKey"] = ktProperty(out::toggleKey).apply { addDisplayCondition(hidden) }
             tree["showKey"] = ktProperty(out::showKey).apply { addDisplayCondition(hidden) }
             tree["alignment"] = ktProperty(out::alignment).apply { addDisplayCondition(hidden) }
@@ -175,6 +301,16 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             tree["textItalic"] = ktProperty(out::textItalic).apply { addDisplayCondition(hidden) }
             tree["textUnderline"] = ktProperty(out::textUnderline).apply { addDisplayCondition(hidden) }
             tree["textAlign"] = ktProperty(out::textAlign).apply { addDisplayCondition(hidden) }
+            tree["useGuiScale"] = ktProperty(out::useGuiScale).apply { addDisplayCondition(hidden) }
+            tree["customScale"] = ktProperty(out::customScale).apply { addDisplayCondition(hidden) }
+            tree["showBackground"] = ktProperty(out::showBackground).apply { addDisplayCondition(hidden) }
+            tree["bgColor"] = ktProperty(out::bgColor).apply { addDisplayCondition(hidden) }
+            tree["bgRadius"] = ktProperty(out::bgRadius).apply { addDisplayCondition(hidden) }
+            tree["textColor"] = ktProperty(out::textColor).apply { addDisplayCondition(hidden) }
+            tree["showShadow"] = ktProperty(out::showShadow).apply { addDisplayCondition(hidden) }
+            tree["shadowColor"] = ktProperty(out::shadowColor).apply { addDisplayCondition(hidden) }
+            tree["shadowOffsetX"] = ktProperty(out::shadowOffsetX).apply { addDisplayCondition(hidden) }
+            tree["shadowOffsetY"] = ktProperty(out::shadowOffsetY).apply { addDisplayCondition(hidden) }
             addToSerialized(tree)
             tree["hudClass"] = simple(value = out::class.java.name).apply {
                 addDisplayCondition { Property.Display.HIDDEN }
@@ -216,8 +352,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         showKey = -1
         toggleKey = -1
         _staticWidth = mutableStateOf(this@Hud.staticWidth)
-        _x = mutableStateOf(this@Hud.x)
-        _y = mutableStateOf(this@Hud.y)
+        _section = mutableStateOf(this@Hud.section)
+        _relativeX = mutableStateOf(this@Hud.relativeX)
+        _relativeY = mutableStateOf(this@Hud.relativeY)
         _renderedW = mutableStateOf(0f)
         _renderedH = mutableStateOf(0f)
         _alignment = mutableStateOf(this@Hud.alignment)
@@ -234,6 +371,16 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         _textItalic = mutableStateOf(this@Hud.textItalic)
         _textUnderline = mutableStateOf(this@Hud.textUnderline)
         _textAlign = mutableStateOf(this@Hud.textAlign)
+        _useGuiScale = mutableStateOf(this@Hud.useGuiScale)
+        _customScale = mutableStateOf(this@Hud.customScale)
+        _showBackground = mutableStateOf(this@Hud.showBackground)
+        _bgColor = mutableStateOf(this@Hud.bgColor)
+        _bgRadius = mutableStateOf(this@Hud.bgRadius)
+        _textColor = mutableStateOf(this@Hud.textColor)
+        _showShadow = mutableStateOf(this@Hud.showShadow)
+        _shadowColor = mutableStateOf(this@Hud.shadowColor)
+        _shadowOffsetX = mutableStateOf(this@Hud.shadowOffsetX)
+        _shadowOffsetY = mutableStateOf(this@Hud.shadowOffsetY)
     }
 
     class Category(val name: String, val id: Byte) {

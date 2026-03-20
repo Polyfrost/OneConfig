@@ -48,7 +48,8 @@ object HudManager {
     var isEditing = false
         private set
 
-    var useGuiScale = false
+    @Volatile @JvmField var guiScreenWidth: Float = 960f
+    @Volatile @JvmField var guiScreenHeight: Float = 540f
 
     private val lastUpdates = HashMap<Hud, Long>()
 
@@ -136,24 +137,27 @@ object HudManager {
 
     @ApiStatus.Internal
     fun render(ctx: RenderContext, screenWidth: Float, screenHeight: Float) {
-        val scale = if (useGuiScale) OmniResolution.scaleFactor.toFloat() else 1f
+        val scale = OmniResolution.scaleFactor.toFloat()
 
         ctx.save()
         ctx.scale(scale, scale)
 
         for (hud in activeInstances) {
-            if (hud.hidden) continue
+            if (hud.hidden || hud is LegacyHud) continue
 
             hud.update()
+
+            val hudScale = hud.effectiveScale
             val rt = hud.runtime
-            rt.frame(screenWidth, screenHeight)
+            rt.frame(screenWidth / scale / hudScale, screenHeight / scale / hudScale)
             val root = rt.root
             Snapshot.withMutableSnapshot {
-                hud.renderedW = root.width
-                hud.renderedH = root.height
+                hud.renderedW = root.width * hudScale
+                hud.renderedH = root.height * hudScale
             }
             ctx.save()
             ctx.translate(hud.x, hud.y)
+            if (hudScale != 1f) ctx.scale(hudScale, hudScale)
             root.render(ctx)
             ctx.restore()
         }
@@ -188,8 +192,16 @@ object HudManager {
                 val h = hudProviders[cls] ?: MHUtils.instantiate(cls, true).getOrThrow()
                 used.add(cls)
                 val hud = h.make(data)
-                hud.x = data.getProp("x")?.getAs<Number?>()?.toFloat() ?: 0f
-                hud.y = data.getProp("y")?.getAs<Number?>()?.toFloat() ?: 0f
+                val sec = data.getProp("section")?.getAs<Section?>()
+                if (sec != null) {
+                    hud.section = sec
+                    hud.relativeX = data.getProp("relativeX")?.getAs<Number?>()?.toFloat() ?: 0f
+                    hud.relativeY = data.getProp("relativeY")?.getAs<Number?>()?.toFloat() ?: 0f
+                } else {
+                    val absX = data.getProp("x")?.getAs<Number?>()?.toFloat() ?: 0f
+                    val absY = data.getProp("y")?.getAs<Number?>()?.toFloat() ?: 0f
+                    hud.setAbsolutePosition(absX, absY)
+                }
                 activeInstances.add(hud)
                 hud.setup()
                 i++
@@ -211,24 +223,13 @@ object HudManager {
             val (dx, dy) = h.defaultPosition()
             if (dx <= 0f && dy <= 0f) return@forEach
             val hud = h.make()
-            hud.x = dx
-            hud.y = dy
+            hud.setAbsolutePosition(dx, dy)
             activeInstances.add(hud)
             hud.setup()
             LOGGER.info("Added HUD ${hud.title} at default position ($dx, $dy)")
         }
 
-        eventHandler { _: ScreenOpenEvent ->
-            if (useGuiScale) {
-                val scale = OmniResolution.scaleFactor.toFloat()
-                for (hud in activeInstances) {
-                    if (hud !is LegacyHud) {
-                        hud.x = (hud.x).coerceAtLeast(0f)
-                        hud.y = (hud.y).coerceAtLeast(0f)
-                    }
-                }
-            }
-        }
+        eventHandler { _: ScreenOpenEvent -> }
 
         LOGGER.info("HUD load took {}ms, loaded {} HUDs from {} providers ({} registered)",
             (System.nanoTime() - now) / 1_000_000.0, i, used.size, hudProviders.size)

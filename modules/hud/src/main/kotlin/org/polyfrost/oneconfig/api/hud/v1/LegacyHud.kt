@@ -36,6 +36,9 @@ abstract class LegacyHud(id: String, title: String, category: Category) : Hud(id
     abstract val width: Float
     abstract val height: Float
 
+    abstract fun render(mcCtx: OmniRenderingContext)
+
+
     @Composable
     override fun Content() {}
 }

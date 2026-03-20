@@ -142,7 +142,7 @@ fun ColorOption(data: ColorOptionData) {
     }
     var currentColor by remember(data.prop) { mutableStateOf(initialColor) }
     val textColor by animateColorAsState(
-        if (currentColor.luminance() > 0.6f) Color.White else Color.Black
+        if (currentColor.luminance() > 0.6f) Color.Black else Color.White
     )
 
     val borderColor by animateColorAsState(

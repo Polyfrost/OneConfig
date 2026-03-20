@@ -2,7 +2,6 @@ package org.polyfrost.oneconfig.internal.ui.hud.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -37,9 +36,7 @@ import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -47,6 +44,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.skiaCanvas
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.TextStyle
@@ -57,6 +55,7 @@ import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.runtime.PolyComposeRuntime
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
+import org.polyfrost.oneconfig.api.hud.v1.LegacyHud
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
@@ -67,6 +66,7 @@ import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.layout.FlexibleLayout
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Designer
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Settings
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 
 enum class StudioCategory(val title: String, val icon: String) {
@@ -79,10 +79,13 @@ enum class EditorMode(val title: String, val icon: String) {
     Stage("Stage", "move"),
 }
 
-private fun hitTestHud(hud: Hud, x: Float, y: Float): Boolean {
+private fun hitTestHud(hud: Hud, screenX: Float, screenY: Float): Boolean {
+    val s = Platform.screen().screenToMcScale()
+    val mcX = screenX * s
+    val mcY = screenY * s
     val w = if (hud.staticWidth) hud.staticW else hud.renderedW.takeIf { it > 0f } ?: return false
     val h = if (hud.staticWidth) hud.staticH else hud.renderedH.takeIf { it > 0f } ?: return false
-    return x >= hud.x && x <= hud.x + w && y >= hud.y && y <= hud.y + h
+    return mcX >= hud.x && mcX <= hud.x + w && mcY >= hud.y && mcY <= hud.y + h
 }
 
 private val panelBackground = Color(17, 23, 28).copy(0.95f)
@@ -102,7 +105,7 @@ fun HudDesignStudio() {
     var filterModId by remember { mutableStateOf<String?>(null) }
     var searchText by remember { mutableStateOf("") }
 
-    val providers = remember { HudManager.providers().toList() }
+    val providers = remember { HudManager.providers().filter { it !is LegacyHud }.toList() }
     val modIds = remember(providers) { providers.mapNotNull { it.configId }.distinct() }
     val filteredProviders = providers.filter { hud ->
         (filterModId == null || hud.configId == filterModId) &&
@@ -124,12 +127,13 @@ fun HudDesignStudio() {
         .onPointerEvent(PointerEventType.Press) { event ->
             if (event.changes.any { it.isConsumed }) return@onPointerEvent
             val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
+            val s = Platform.screen().screenToMcScale()
             val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
             Snapshot.withMutableSnapshot {
                 selectedHud = hit
                 if (hit != null) {
-                    dragOffsetX = pos.x - hit.x
-                    dragOffsetY = pos.y - hit.y
+                    dragOffsetX = pos.x * s - hit.x
+                    dragOffsetY = pos.y * s - hit.y
                     isDragging = true
                 }
             }
@@ -142,9 +146,9 @@ fun HudDesignStudio() {
                 }
                 val hud = selectedHud ?: return@onPointerEvent
                 val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
+                val s = Platform.screen().screenToMcScale()
                 Snapshot.withMutableSnapshot {
-                    hud.x = pos.x - dragOffsetX
-                    hud.y = pos.y - dragOffsetY
+                    hud.setAbsolutePosition(pos.x * s - dragOffsetX, pos.y * s - dragOffsetY)
                 }
             }
         }
@@ -156,9 +160,10 @@ fun HudDesignStudio() {
         .onPointerEvent(PointerEventType.Press) { event ->
             if (event.changes.any { it.isConsumed }) return@onPointerEvent
             val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
-            val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
+            val hit = HudManager.activeInstances.lastOrNull { it !is LegacyHud && hitTestHud(it, pos.x, pos.y) }
             Snapshot.withMutableSnapshot { selectedHud = hit }
         }
+
 
     Box(
         modifier = Modifier
@@ -170,24 +175,29 @@ fun HudDesignStudio() {
                 .fillMaxSize()
                 .drawWithContent {
                     drawContent()
+                    val mcToScreen = Platform.screen().mcToScreenScale()
                     for (hud in HudManager.activeInstances) {
                         val w = if (hud.staticWidth) hud.staticW else hud.renderedW.takeIf { it > 0f } ?: continue
                         val h = if (hud.staticWidth) hud.staticH else hud.renderedH.takeIf { it > 0f } ?: continue
+                        val sx = hud.x * mcToScreen
+                        val sy = hud.y * mcToScreen
+                        val sw = w * mcToScreen
+                        val sh = h * mcToScreen
                         val isSelected = hud === selectedHud
                         val strokeColor = if (isSelected) Color(0xFF4A90E2) else Color.White.copy(0.25f)
                         val strokeWidth = if (isSelected) 2f else 1f
                         val pad = 3f
                         drawRect(
                             color = strokeColor,
-                            topLeft = Offset(hud.x - pad, hud.y - pad),
-                            size = Size(w + pad * 2, h + pad * 2),
+                            topLeft = Offset(sx - pad, sy - pad),
+                            size = Size(sw + pad * 2, sh + pad * 2),
                             style = Stroke(width = strokeWidth)
                         )
                         if (isSelected) {
                             drawRect(
                                 color = Color(0xFF4A90E2).copy(alpha = 0.08f),
-                                topLeft = Offset(hud.x - pad, hud.y - pad),
-                                size = Size(w + pad * 2, h + pad * 2),
+                                topLeft = Offset(sx - pad, sy - pad),
+                                size = Size(sw + pad * 2, sh + pad * 2),
                             )
                         }
                     }
@@ -379,6 +389,11 @@ private const val PREVIEW_SCALE = 2f
 
 @Composable
 private fun HudPreviewCard(hud: Hud) {
+    ComposeHudPreviewCard(hud)
+}
+
+@Composable
+private fun ComposeHudPreviewCard(hud: Hud) {
     val previewRuntime = remember(hud) {
         PolyComposeRuntime().also { rt -> rt.setContent { hud.Content() } }
     }
@@ -417,8 +432,9 @@ private fun HudPreviewCard(hud: Hud) {
                     try {
                         val instance = hud.make()
                         val (dx, dy) = hud.defaultPosition()
-                        instance.x = if (dx > 0f) dx else 200f
-                        instance.y = if (dy > 0f) dy else 200f
+                        val px = if (dx > 0f) dx else 200f
+                        val py = if (dy > 0f) dy else 200f
+                        instance.setAbsolutePosition(px, py)
                         if (instance !in HudManager.activeInstances) {
                             HudManager.activeInstances.add(instance)
                             instance.setup()
@@ -429,10 +445,10 @@ private fun HudPreviewCard(hud: Hud) {
         ) {
             drawIntoCanvas { canvas ->
                 val root = previewRuntime.root
-                canvas.nativeCanvas.save()
-                canvas.nativeCanvas.scale(PREVIEW_SCALE, PREVIEW_SCALE)
-                root.render(RenderContext(canvas.nativeCanvas))
-                canvas.nativeCanvas.restore()
+                canvas.skiaCanvas.save()
+                canvas.skiaCanvas.scale(PREVIEW_SCALE, PREVIEW_SCALE)
+                root.render(RenderContext(canvas.skiaCanvas))
+                canvas.skiaCanvas.restore()
             }
         }
     }

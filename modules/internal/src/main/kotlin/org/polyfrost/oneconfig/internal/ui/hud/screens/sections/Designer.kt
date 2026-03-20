@@ -21,18 +21,28 @@ import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import org.polyfrost.compose.mc.McFontQueue
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.oneconfig.api.hud.v1.Font
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.internal.ui.components.SelectableIconButton
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.onClick
+import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerPopup
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
 import org.polyfrost.oneconfig.internal.ui.hud.components.AlignmentPicker
 import org.polyfrost.oneconfig.internal.ui.hud.components.Dropdown
@@ -102,6 +112,8 @@ fun Designer(hud: Hud? = null) {
             )]
         )
     }
+    var textColor by remember(hud) { mutableStateOf(Color(hud.textColor)) }
+    var showShadow by remember(hud) { mutableStateOf(hud.showShadow) }
 
     Column(verticalArrangement = Arrangement.spacedBy(22.dp)) {
         Section("Size & Alignment") {
@@ -204,7 +216,7 @@ fun Designer(hud: Hud? = null) {
                     val textH = skiaFont.metrics.let { it.descent - it.ascent }
                     Canvas(modifier = Modifier.size((textW / density).dp, (textH / density).dp)) {
                         drawIntoCanvas { canvas ->
-                            val paint = org.jetbrains.skia.Paint().apply { color = 0xFFFFFFFF.toInt() }
+                            val paint = org.jetbrains.skia.Paint().apply { color = textColor.toArgb() }
                             canvas.nativeCanvas.drawString(previewText, 0f, -skiaFont.metrics.ascent, skiaFont, paint)
                         }
                     }
@@ -224,8 +236,8 @@ fun Designer(hud: Hud? = null) {
                                 mcText,
                                 0f,
                                 0f,
-                                0xFFFFFFFF.toInt(),
-                                false,
+                                textColor.toArgb(),
+                                showShadow,
                                 scale
                             )
                         }
@@ -306,4 +318,38 @@ fun Section(title: String, content: @Composable () -> Unit) = Column(
 ) {
     Text(title.uppercase(), color = LocalTheme.current.textColorSecondary, fontSize = 12.sp)
     content()
+}
+
+@Composable
+internal fun ColorButton(label: String, color: Color, onColorChanged: (Color) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    val theme = LocalTheme.current
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(label, color = theme.textColor, fontSize = 14.sp)
+        Box {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(theme.sideBarNavigationEntryShape)
+                    .background(color)
+                    .border(1.dp, theme.borderColor, theme.sideBarNavigationEntryShape)
+                    .onClick(rememberInteractionSource()) { expanded = !expanded }
+                    .pointerHoverIcon(PointerIcon.Hand)
+            )
+            if (expanded) {
+                Popup(
+                    alignment = Alignment.TopStart,
+                    offset = IntOffset(0, 40),
+                    onDismissRequest = { expanded = false },
+                    properties = PopupProperties(focusable = true),
+                ) {
+                    ColorPickerPopup(
+                        initialColor = color,
+                        onColorChanged = onColorChanged,
+                        onClose = { expanded = false }
+                    )
+                }
+            }
+        }
+    }
 }

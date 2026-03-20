@@ -35,6 +35,7 @@ import dev.deftu.omnicore.api.client.chat.OmniClientChat;
 import dev.deftu.omnicore.api.client.commands.OmniClientCommandSource;
 import dev.deftu.omnicore.api.client.commands.OmniClientCommands;
 import dev.deftu.omnicore.api.client.input.OmniKeys;
+import dev.deftu.omnicore.api.client.render.OmniResolution;
 import dev.deftu.omnicore.api.client.screen.OmniScreens;
 import dev.deftu.omnicore.api.loader.ModInfo;
 import dev.deftu.omnicore.api.loader.OmniLoader;
@@ -54,6 +55,7 @@ import org.polyfrost.oneconfig.api.event.v1.events.WindowFocusEvent;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
+import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudRenderer;
 import org.polyfrost.oneconfig.api.hypixel.v1.HypixelUtils;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.internal.BlurHandler;
@@ -186,9 +188,15 @@ public class OneConfig
         EventManager.register(InitializationEvent.class, e -> HudManager.INSTANCE.initialize());
         EventManager.register(HudRenderEvent.class, e -> {
             if (!SkiaCtx.INSTANCE.isReady()) return;
+            float sw = OmniClient.getWindow().getScreenWidth();
+            float sh = OmniClient.getWindow().getScreenHeight();
+            float scale = (float) OmniResolution.getScaleFactor();
+            HudManager.guiScreenWidth = sw / scale;
+            HudManager.guiScreenHeight = sh / scale;
+            LegacyHudRenderer.INSTANCE.renderLive(e.ctx);
             SkiaCtx.INSTANCE.queueHudDraw(() -> {
                 var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
-                HudManager.INSTANCE.render(ctx, OmniClient.getWindow().getScreenWidth(), OmniClient.getWindow().getScreenHeight());
+                HudManager.INSTANCE.render(ctx, sw, sh);
             });
             SkiaCtx.INSTANCE.drawNow();
         });
@@ -205,6 +213,7 @@ public class OneConfig
             ConfigManager.initialize();
             ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
             org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar.register();
+            org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry.INSTANCE.loadFromConfig();
         });
 //        //#if MC < 1.13
 //        // this is cringe but is better than the alternative of checking every frame in a mixin (that's how vanilla does it lol)

@@ -88,7 +88,7 @@ class CinnabarVulkanService private constructor(
     companion object {
         private val LOG = LoggerFactory.getLogger(CinnabarVulkanService::class.java)
 
-        private fun hgFormatToVkFormat(name: String): Int = when (name) {
+        fun hgFormatToVkFormat(name: String): Int= when (name) {
             "RGBA8_UNORM" -> VK_FORMAT_R8G8B8A8_UNORM
             "RGBA8_SRGB" -> VK_FORMAT_R8G8B8A8_SRGB
             "BGRA8_UNORM" -> VK_FORMAT_B8G8R8A8_UNORM
