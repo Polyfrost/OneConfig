@@ -440,8 +440,8 @@ fun HudConfigScreen(tree: Tree, initialCategory: String? = null) {
             return@Column
         }
 
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(entries) { entry ->
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            entries.forEach { entry ->
                 when (entry) {
                     is ConfigListEntry.SubcategoryHeader -> SubcategoryHeader(entry.title)
                     is ConfigListEntry.Item -> when (val node = entry.node) {
