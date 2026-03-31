@@ -119,6 +119,7 @@ data object MoulConfigCompat {
         children.forEach {
             val tree = parseCategory(config, it, this) { parent -> map[parent] ?: this }
             map[it.identifier] = tree
+            this.put(tree)
         }
     }
 
@@ -141,6 +142,8 @@ data object MoulConfigCompat {
         return Tree.tree().apply {
             id = UUID.randomUUID().toString()
             this.category = categoryName
+            this.title = displayName
+            this.subcategory = displayName
         }
     }
 

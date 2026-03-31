@@ -21,8 +21,8 @@ class KeybindHelper {
     fun inScreens() = apply { inScreens = true }
     fun duration(nanos: Long) = apply { durationNanos = nanos }
     fun action(fn: (Boolean) -> Boolean) = apply { action = fn }
-    fun action(fn: () -> Unit) = apply { action = { fn(); true } }
-    fun action(fn: Runnable) = apply { action = { fn.run(); true } }
+    fun action(fn: () -> Unit) = apply { action = { b -> if (b) fn(); true } }
+    fun action(fn: Runnable) = apply { action = { b -> if (b) fn.run(); true } }
     fun action(fn: java.util.function.Consumer<Boolean>) = apply { action = { b -> fn.accept(b); true } }
 
     fun build(): OneConfigKeybind {

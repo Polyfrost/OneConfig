@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.ui.components.settings
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.withInfiniteAnimationFrameNanos
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +57,7 @@ import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
 import kotlin.math.roundToInt
 
 private val PickerShape @Composable get() = LocalTheme.current.popupShape
@@ -135,6 +138,7 @@ fun ColorOption(data: ColorOptionData) {
     val initialColor = remember(data.prop) {
         when (val v = data.prop.get()) {
             is Color -> v
+            is PolyColor -> Color(v.argb)
             is Int -> Color(v)
             is java.awt.Color -> Color(v.red / 255f, v.green / 255f, v.blue / 255f, v.alpha / 255f)
             else -> Color.White
@@ -179,8 +183,10 @@ fun ColorOption(data: ColorOptionData) {
                         when {
                             data.prop.type == Int::class.java || data.prop.type == Int::class.javaPrimitiveType ->
                                 (data.prop as Property<Any>).set(color.toArgb())
-                            data.prop.type == PolyColor::class.java ->
+                            data.prop.type == PolyColor::class.java -> {
                                 (data.prop as Property<Any>).set(PolyColor(color.toArgb()))
+                                updateAccent()
+                            }
                             else  ->
                                 (data.prop as Property<Any>).set(color)
                         }
@@ -206,6 +212,23 @@ fun ColorPickerPopup(
     var brightness by remember { mutableFloatStateOf(hsb[2]) }
     var alpha by remember { mutableFloatStateOf(initialColor.alpha) }
     var hexText by remember { mutableStateOf(colorToHex(initialColor)) }
+    var chromaEnabled by remember { mutableStateOf(false) }
+    var chromaSpeed by remember { mutableFloatStateOf(1f) } // rotations per second
+
+    LaunchedEffect(chromaEnabled, chromaSpeed) {
+        if (!chromaEnabled) return@LaunchedEffect
+        var lastNanos = withInfiniteAnimationFrameNanos { it }
+        while (true) {
+            withInfiniteAnimationFrameNanos { frameNanos ->
+                val dt = (frameNanos - lastNanos) / 1_000_000_000f
+                lastNanos = frameNanos
+                hue = (hue + 360f * chromaSpeed * dt) % 360f
+                val c = hsbToColor(hue, saturation, brightness, alpha)
+                hexText = colorToHex(c)
+                onColorChanged(c)
+            }
+        }
+    }
 
     val currentColor = remember(hue, saturation, brightness, alpha) {
         hsbToColor(hue, saturation, brightness, alpha)
@@ -409,6 +432,93 @@ fun ColorPickerPopup(
                     .background(Color.White)
                     .border(1.dp, Color.White.copy(0.5f), LocalTheme.current.checkBoxShape)
             )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(14.dp)
+                        .clip(LocalTheme.current.circleShape)
+                        .background(
+                            Brush.sweepGradient(
+                                listOf(
+                                    Color.Red, Color.Yellow, Color.Green,
+                                    Color.Cyan, Color.Blue, Color.Magenta, Color.Red
+                                )
+                            )
+                        )
+                )
+                Text("Chroma", color = theme.textColor, fontSize = 13.sp)
+            }
+            SwitchControl(chromaEnabled) { chromaEnabled = it }
+        }
+
+        if (chromaEnabled) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text("Speed", color = theme.textColorSecondary, fontSize = 12.sp)
+                    Text("%.1fx".format(chromaSpeed), color = theme.textColorSecondary, fontSize = 12.sp)
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .clip(LocalTheme.current.sideBarNavigationEntryShape)
+                        .drawWithCache {
+                            val gradient = Brush.horizontalGradient(
+                                listOf(theme.componentBackground, Accent)
+                            )
+                            onDrawBehind { drawRect(gradient) }
+                        }
+                        .pointerInput(Unit) {
+                            awaitEachGesture {
+                                val down = awaitFirstDown()
+                                fun update(x: Float) {
+                                    chromaSpeed = ((x / size.width) * 4f).coerceIn(0.1f, 4f)
+                                }
+                                update(down.position.x)
+                                do {
+                                    val event = awaitPointerEvent()
+                                    event.changes.forEach { ch ->
+                                        if (ch.pressed) { update(ch.position.x); ch.consume() }
+                                    }
+                                } while (event.changes.any { it.pressed })
+                            }
+                        }
+                ) {
+                    var speedBarWidth by remember { mutableStateOf(0f) }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(16.dp)
+                            .onSizeChanged { speedBarWidth = it.width.toFloat() }
+                    )
+                    Box(
+                        modifier = Modifier
+                            .offset {
+                                IntOffset(
+                                    (((chromaSpeed - 0.1f) / 3.9f) * speedBarWidth - 5.dp.toPx())
+                                        .roundToInt().coerceAtLeast(0), 0
+                                )
+                            }
+                            .size(10.dp, 10.dp)
+                            .clip(LocalTheme.current.circleShape)
+                            .background(Color.White)
+                            .border(1.dp, Color.White.copy(0.5f), LocalTheme.current.checkBoxShape)
+                    )
+                }
+            }
         }
 
         Row(

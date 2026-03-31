@@ -116,7 +116,8 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
                             }
                             .hoverable(interactionSource)
                             .pointerHoverIcon(PointerIcon.Hand)
-                            .padding(horizontal = 12.dp, vertical = 7.dp),
+                            .height(32.dp)
+                            .padding(horizontal = 16.dp),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(

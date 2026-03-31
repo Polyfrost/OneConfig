@@ -169,7 +169,6 @@ public class OneConfig
 
     private static void registerKeybinds() {
         KeybindHelper.builder()
-            .inScreens()
             .key(OmniKeys.KEY_RIGHT_SHIFT)
             .action(() -> {
                 if (OmniClient.getWorld() == null && !OmniLoader.isDevelopment()) return;
@@ -188,16 +187,28 @@ public class OneConfig
         EventManager.register(InitializationEvent.class, e -> HudManager.INSTANCE.initialize());
         EventManager.register(HudRenderEvent.class, e -> {
             if (!SkiaCtx.INSTANCE.isReady()) return;
+
             float sw = OmniClient.getWindow().getScreenWidth();
             float sh = OmniClient.getWindow().getScreenHeight();
             float scale = (float) OmniResolution.getScaleFactor();
             HudManager.guiScreenWidth = sw / scale;
             HudManager.guiScreenHeight = sh / scale;
+
+            // Update HUD visibility state for per-HUD filtering
+            HudManager.isDebugScreenVisible = dev.deftu.omnicore.api.client.options.OmniVideoSettings.isDebugRendering();
+            HudManager.isTabListVisible = org.lwjgl.glfw.GLFW.glfwGetKey(
+                net.minecraft.client.Minecraft.getInstance().getWindow().getWindow(),
+                org.lwjgl.glfw.GLFW.GLFW_KEY_TAB
+            ) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+            HudManager.isGuiScreenOpen = Platform.screen().current() != null;
+
             LegacyHudRenderer.INSTANCE.renderLive(e.ctx);
             SkiaCtx.INSTANCE.queueHudDraw(() -> {
                 var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
                 HudManager.INSTANCE.render(ctx, sw, sh);
             });
+            // Render Skia HUDs into the offscreen TextureTarget.
+            // The mixin blits the texture onto MC's render target afterwards.
             SkiaCtx.INSTANCE.drawNow();
         });
         EventManager.register(HudEditorToggleEvent.class, e -> {
@@ -207,6 +218,13 @@ public class OneConfig
                 if (Platform.screen().current() instanceof HudEditorUIScreen) {
                     Platform.screen().display(null, 0);
                 }
+            }
+        });
+        // Safety: if the HUD editor screen is closed by MC (e.g. player presses ESC)
+        // without going through HudManager.closeEditor(), reset the editing flag
+        EventManager.register(org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent.class, e -> {
+            if (HudManager.INSTANCE.isEditing() && !(e.getScreen() instanceof HudEditorUIScreen)) {
+                HudManager.INSTANCE.closeEditor();
             }
         });
         EventManager.register(InitializationEvent.class, e -> {

@@ -107,7 +107,6 @@ fun KeybindOption(data: KeybindOptionData) {
                         return@onKeyEvent true
                     }
                     if (event.key == Key.Backspace || event.key == Key.Delete) {
-                        // Clear the keybind — create an unbound keybind preserving the action
                         val existingAction = currentKeybind?.action ?: { true }
                         val unbound = OneConfigKeybind(null, null, KeyModifiers.NONE, 0L, existingAction)
                         @Suppress("UNCHECKED_CAST")
@@ -116,7 +115,6 @@ fun KeybindOption(data: KeybindOptionData) {
                         recording = false
                         return@onKeyEvent true
                     }
-                    // Set new key — create keybind with the pressed key, preserving the action
                     val existingAction = currentKeybind?.action ?: { true }
                     val newKeybind = OneConfigKeybind(
                         intArrayOf(nativeKeyCode),

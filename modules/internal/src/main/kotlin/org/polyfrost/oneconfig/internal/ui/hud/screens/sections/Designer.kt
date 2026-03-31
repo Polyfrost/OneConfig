@@ -123,7 +123,15 @@ fun Designer(hud: Hud? = null) {
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     SwitchControl(staticWidth) {
-                        Snapshot.withMutableSnapshot { staticWidth = it; hud.staticWidth = it }
+                        Snapshot.withMutableSnapshot {
+                            staticWidth = it; hud.staticWidth = it
+                            if (it) {
+                                staticW = hud.staticW
+                                staticH = hud.staticH
+                            } else {
+                                hud.updateAndRecalculate()
+                            }
+                        }
                     }
                     Text("Static Size", color = LocalTheme.current.textColor, fontSize = 14.sp)
                 }
@@ -252,8 +260,8 @@ fun Designer(hud: Hud? = null) {
                 )
                 NumberSpinner(
                     "Font size", "align", "px",
-                    textScale, { Snapshot.withMutableSnapshot { textScale = it; hud.textScale = it } },
-                    0f, 4f, 0.15f, width = 112.dp
+                    textScale * 14f, { Snapshot.withMutableSnapshot { val s = it / 14f; textScale = s; hud.textScale = s } },
+                    6f, 64f, 1f, width = 112.dp
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Modifiers", color = LocalTheme.current.textColor, fontSize = 14.sp)

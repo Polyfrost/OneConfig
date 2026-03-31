@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -91,12 +92,12 @@ private fun NavigationEntries() {
                 "hud",
                 "Edit HUD",
             ) {
-                HudManager.toggleEditor()
+                HudManager.openEditor()
             }
             NavigationEntry(
                 "search",
                 "Global Search",
-            ) { /* todo: open global search */ }
+            ) { if (ShellState.searchQuery.isBlank()) ShellState.searchQuery = " " }
         }
 
         NavigationGroups.forEach {
@@ -183,17 +184,17 @@ private fun NavigationEntry(icon: String, title: String, route: Any? = null, isS
 @Composable
 private fun Account() {
     Box(
-        modifier = Modifier.size(263.dp, 73.dp)
+        modifier = Modifier.fillMaxWidth().height(73.dp)
             .topBorder(LocalTheme.current.borderColor, 1f),
         contentAlignment = Alignment.Center
     ) {
         Row(
-            Modifier.fillMaxSize().padding(18.dp),
+            Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(18.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Image(
@@ -206,8 +207,12 @@ private fun Account() {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
-                    Text("refactoring", color = LocalTheme.current.textColor)
-                    Text("Fabric 26.2", color = LocalTheme.current.textColorSecondary, fontSize = 11.sp)
+                    Text(ShellState.playerName, color = LocalTheme.current.textColor)
+                    Text(
+                        ShellState.versionLabel.ifBlank { "OneConfig" },
+                        color = LocalTheme.current.textColorSecondary,
+                        fontSize = 11.sp
+                    )
                 }
             }
             IconWithIndicator(

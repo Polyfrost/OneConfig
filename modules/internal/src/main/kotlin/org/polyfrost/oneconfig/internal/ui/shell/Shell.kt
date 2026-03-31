@@ -1,9 +1,12 @@
 package org.polyfrost.oneconfig.internal.ui.shell
 
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -42,6 +45,8 @@ import org.polyfrost.oneconfig.internal.ui.components.Header
 import org.polyfrost.oneconfig.internal.ui.components.Sidebar
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.navigation
+import org.polyfrost.oneconfig.internal.ui.screens.SearchResultsScreen
+import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -94,24 +99,32 @@ fun Shell(
                 .weight(1f)
                 .background(theme.pageBackground),
         ) {
+            val searchQuery = ShellState.searchQuery
+            val isSearching = searchQuery.isNotBlank()
             Column(
                 modifier = Modifier.weight(1f)
                     .padding(horizontal = 25.dp, vertical = 19.dp),
-                verticalArrangement = Arrangement.spacedBy(19.dp)
+                verticalArrangement = Arrangement.spacedBy(if (isSearching) 0.dp else 19.dp)
             ) {
                 Header()
-                NavHost(
-                    modifier = Modifier.weight(1f).fillMaxSize(),
-                    navController = LocalNavController.current,
-                    startDestination = ModsGraph,
+                Box(modifier = Modifier.weight(1f).fillMaxSize()) {
+                    if (isSearching) {
+                        SearchResultsScreen(searchQuery)
+                    } else {
+                        NavHost(
+                            modifier = Modifier.fillMaxSize(),
+                            navController = LocalNavController.current,
+                            startDestination = ModsGraph,
 
-                    enterTransition = { fadeIn() },
-                    exitTransition = { fadeOut() },
+                            enterTransition = { slideInHorizontally(tween(250)) { it / 5 } + fadeIn(tween(250)) },
+                            exitTransition = { slideOutHorizontally(tween(250)) { -it / 5 } + fadeOut(tween(250)) },
 
-                    popEnterTransition = { fadeIn() },
-                    popExitTransition = { fadeOut() }
-                ) {
-                    navigation()
+                            popEnterTransition = { slideInHorizontally(tween(250)) { -it / 5 } + fadeIn(tween(250)) },
+                            popExitTransition = { slideOutHorizontally(tween(250)) { it / 5 } + fadeOut(tween(250)) }
+                        ) {
+                            navigation()
+                        }
+                    }
                 }
             }
         }

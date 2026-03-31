@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -8,13 +9,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -86,13 +91,21 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
             else items.filter { it.category == category.configCategory }
         }
 
-    LazyVerticalGrid(
-        modifier = Modifier.weight(1f),
-        columns = GridCells.Fixed(4),
-        verticalArrangement = Arrangement.spacedBy(19.dp),
-        horizontalArrangement = Arrangement.spacedBy(19.dp),
-    ) {
-        items(filtered) { ModCard(it) }
+    val gridState = rememberLazyGridState()
+    Box(modifier = Modifier.weight(1f)) {
+        LazyVerticalGrid(
+            state = gridState,
+            columns = GridCells.Fixed(4),
+            verticalArrangement = Arrangement.spacedBy(19.dp),
+            horizontalArrangement = Arrangement.spacedBy(19.dp),
+            modifier = Modifier.padding(end = 8.dp),
+        ) {
+            items(filtered) { ModCard(it) }
+        }
+        VerticalScrollbar(
+            adapter = rememberScrollbarAdapter(gridState),
+            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
+        )
     }
 }
 

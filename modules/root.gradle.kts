@@ -140,4 +140,5 @@ apiValidation {
     ignoredProjects.add("internal")
     ignoredProjects.add("dependencies")
     ignoredProjects.add("legacy")
+    ignoredProjects.add("compose-bundle")
 }

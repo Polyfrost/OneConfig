@@ -34,6 +34,9 @@ fun Settings(hud: Hud? = null) {
     var textColor by remember(hud) { mutableStateOf(Color(hud.textColor)) }
     var showShadow by remember(hud) { mutableStateOf(hud.showShadow) }
     var shadowColor by remember(hud) { mutableStateOf(Color(hud.shadowColor)) }
+    var showInF3 by remember(hud) { mutableStateOf(hud.showInF3) }
+    var showInTab by remember(hud) { mutableStateOf(hud.showInTab) }
+    var showInScreens by remember(hud) { mutableStateOf(hud.showInScreens) }
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(22.dp),
@@ -111,6 +114,40 @@ fun Settings(hud: Hud? = null) {
                         ColorButton("Shadow Color", shadowColor) {
                             Snapshot.withMutableSnapshot { shadowColor = it; hud.shadowColor = it.toArgb() }
                         }
+                    }
+                }
+            }
+        }
+
+        item {
+            Section("Visibility") {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        SwitchControl(showInF3) {
+                            Snapshot.withMutableSnapshot { showInF3 = it; hud.showInF3 = it }
+                        }
+                        Text("Show in F3 Screen", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        SwitchControl(showInTab) {
+                            Snapshot.withMutableSnapshot { showInTab = it; hud.showInTab = it }
+                        }
+                        Text("Show in Tab List", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        SwitchControl(showInScreens) {
+                            Snapshot.withMutableSnapshot { showInScreens = it; hud.showInScreens = it }
+                        }
+                        Text("Show in GUIs", color = LocalTheme.current.textColor, fontSize = 14.sp)
                     }
                 }
             }

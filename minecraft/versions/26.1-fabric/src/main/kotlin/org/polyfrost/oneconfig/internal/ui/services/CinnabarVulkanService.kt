@@ -5,9 +5,11 @@ import graphics.cinnabar.api.CinnabarAPI
 import graphics.cinnabar.api.c3d.C3DGpuDevice
 import graphics.cinnabar.core.hg3d.Hg3DGpuTexture
 import graphics.cinnabar.core.mercury.MercuryImage
+import com.mojang.blaze3d.pipeline.RenderTarget
 import net.minecraft.client.Minecraft
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.DirectContext
+import org.jetbrains.skia.SurfaceColorFormat
 import org.lwjgl.vulkan.VK
 import org.lwjgl.vulkan.VK10.VK_FORMAT_B8G8R8A8_SRGB
 import org.lwjgl.vulkan.VK10.VK_FORMAT_B8G8R8A8_UNORM
@@ -64,6 +66,23 @@ class CinnabarVulkanService private constructor(
         /* sampleCount = */ 1,
         /* levelCount  = */ 1,
     )
+
+    override fun makeOffscreenBRT(
+        target: RenderTarget,
+        width: Int,
+        height: Int,
+    ): Pair<BackendRenderTarget, SurfaceColorFormat> {
+        val colorTexture = target.colorTexture as? Hg3DGpuTexture
+            ?: error("Expected Hg3DGpuTexture on offscreen TextureTarget, got ${target.colorTexture?.javaClass}")
+        val image = colorTexture.image() as? MercuryImage
+            ?: error("Expected MercuryImage, got ${colorTexture.image()?.javaClass}")
+        val vkFmt = hgFormatToVkFormat(image.format().toString())
+        val colorFormat = when (vkFmt) {
+            VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_SRGB -> SurfaceColorFormat.BGRA_8888
+            else -> SurfaceColorFormat.RGBA_8888
+        }
+        return makeBackendRenderTarget(width, height, image.vkImage(), vkFmt, queueFamilyIndex) to colorFormat
+    }
 
     override fun midFrameFlush() {
         val encoder = c3dDevice.createCommandEncoder()

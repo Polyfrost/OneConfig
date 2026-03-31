@@ -1,12 +1,16 @@
 package org.polyfrost.oneconfig.internal.ui.hud.screens
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -23,6 +27,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
@@ -37,17 +42,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.skiaCanvas
 import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -74,18 +81,41 @@ enum class StudioCategory(val title: String, val icon: String) {
     Settings("HUD Settings", "qol");
 }
 
-enum class EditorMode(val title: String, val icon: String) {
-    Design("Design", "paintbrush"),
-    Stage("Stage", "move"),
-}
-
 private fun hitTestHud(hud: Hud, screenX: Float, screenY: Float): Boolean {
     val s = Platform.screen().screenToMcScale()
     val mcX = screenX * s
     val mcY = screenY * s
-    val w = if (hud.staticWidth) hud.staticW else hud.renderedW.takeIf { it > 0f } ?: return false
-    val h = if (hud.staticWidth) hud.staticH else hud.renderedH.takeIf { it > 0f } ?: return false
+    val scale = hud.effectiveScale
+    val rawW = if (hud.staticWidth) hud.staticW else hud.renderedW.takeIf { it > 0f } ?: hud.staticW.takeIf { it > 0f } ?: return false
+    val rawH = if (hud.staticWidth) hud.staticH else hud.renderedH.takeIf { it > 0f } ?: hud.staticH.takeIf { it > 0f } ?: return false
+    val w = rawW * scale
+    val h = rawH * scale
     return mcX >= hud.x && mcX <= hud.x + w && mcY >= hud.y && mcY <= hud.y + h
+}
+
+private fun hitTestGear(hud: Hud, screenX: Float, screenY: Float, mcToScreen: Float, iconPx: Float): Boolean {
+    val scale = hud.effectiveScale
+    val w = (if (hud.staticWidth) hud.staticW else hud.renderedW.takeIf { it > 0f } ?: return false) * scale
+    val h = (if (hud.staticWidth) hud.staticH else hud.renderedH.takeIf { it > 0f } ?: return false) * scale
+    val sx = hud.x * mcToScreen
+    val sy = hud.y * mcToScreen
+    val sw = w * mcToScreen
+    val sh = h * mcToScreen
+    val iconX = sx + sw / 2 - iconPx / 2
+    val iconY = sy + sh + 6f
+    return screenX >= iconX && screenX <= iconX + iconPx && screenY >= iconY && screenY <= iconPx + iconY
+}
+
+private fun hitTestHudWithGear(hud: Hud, screenX: Float, screenY: Float, mcToScreen: Float, iconPx: Float): Boolean {
+    val scale = hud.effectiveScale
+    val w = (if (hud.staticWidth) hud.staticW else hud.renderedW.takeIf { it > 0f } ?: return false) * scale
+    val h = (if (hud.staticWidth) hud.staticH else hud.renderedH.takeIf { it > 0f } ?: return false) * scale
+    val sx = hud.x * mcToScreen
+    val sy = hud.y * mcToScreen
+    val sw = w * mcToScreen
+    val sh = h * mcToScreen
+    val totalH = sh + 6f + iconPx
+    return screenX >= sx && screenX <= sx + sw && screenY >= sy && screenY <= sy + totalH
 }
 
 private val panelBackground = Color(17, 23, 28).copy(0.95f)
@@ -95,15 +125,17 @@ private val panelShape = RoundedCornerShape(16.dp)
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun HudDesignStudio() {
-    var editorMode by remember { mutableStateOf(EditorMode.Design) }
     var activeCategory by remember { mutableStateOf(StudioCategory.Designer) }
     var selectedHud by remember { mutableStateOf<Hud?>(null) }
+    var hoveredHud by remember { mutableStateOf<Hud?>(null) }
     var dragOffsetX by remember { mutableStateOf(0f) }
     var dragOffsetY by remember { mutableStateOf(0f) }
     var isDragging by remember { mutableStateOf(false) }
+    var draggedHud by remember { mutableStateOf<Hud?>(null) }
     var libraryVisible by remember { mutableStateOf(false) }
     var filterModId by remember { mutableStateOf<String?>(null) }
     var searchText by remember { mutableStateOf("") }
+    var panelAreaWidth by remember { mutableStateOf(0f) }
 
     val providers = remember { HudManager.providers().filter { it !is LegacyHud }.toList() }
     val modIds = remember(providers) { providers.mapNotNull { it.configId }.distinct() }
@@ -111,64 +143,100 @@ fun HudDesignStudio() {
         (filterModId == null || hud.configId == filterModId) &&
             (searchText.isEmpty() || hud.title?.contains(searchText, ignoreCase = true) == true)
     }
+    val densityObj = LocalDensity.current
+    val densityFloat = densityObj.density
+    val gearIconPx = with(densityObj) { 24.dp.toPx() }
 
-    LaunchedEffect(editorMode) {
-        Snapshot.withMutableSnapshot {
-            isDragging = false
-            selectedHud = null
-            if (editorMode == EditorMode.Design) {
-                libraryVisible = false
-                filterModId = null
-            }
-        }
-    }
-
-    val stagePointerModifier = Modifier
+    // Unified pointer modifier: drag any HUD, click to select, hover to show gear
+    val pointerModifier = Modifier
         .onPointerEvent(PointerEventType.Press) { event ->
             if (event.changes.any { it.isConsumed }) return@onPointerEvent
             val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
+            if (panelAreaWidth > 0f && pos.x > size.width - panelAreaWidth) return@onPointerEvent
+            val currentGearTarget = selectedHud ?: hoveredHud
+            if (currentGearTarget != null && currentGearTarget !is LegacyHud) {
+                val mcToScreen = Platform.screen().mcToScreenScale()
+                if (hitTestGear(currentGearTarget, pos.x, pos.y, mcToScreen, gearIconPx)) return@onPointerEvent
+            }
             val s = Platform.screen().screenToMcScale()
-            val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
+            val hit = HudManager.activeInstances.lastOrNull { it !is LegacyHud && hitTestHud(it, pos.x, pos.y) }
             Snapshot.withMutableSnapshot {
-                selectedHud = hit
                 if (hit != null) {
                     dragOffsetX = pos.x * s - hit.x
                     dragOffsetY = pos.y * s - hit.y
                     isDragging = true
+                    draggedHud = hit
+                    hoveredHud = hit
+                    libraryVisible = false
+                } else {
+                    selectedHud = null
                 }
             }
         }
         .onPointerEvent(PointerEventType.Move) { event ->
+            val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
             if (isDragging) {
                 if (event.changes.none { it.pressed }) {
-                    Snapshot.withMutableSnapshot { isDragging = false; selectedHud = null }
+                    Snapshot.withMutableSnapshot {
+                        isDragging = false
+                        draggedHud = null
+                    }
                     return@onPointerEvent
                 }
-                val hud = selectedHud ?: return@onPointerEvent
-                val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
                 val s = Platform.screen().screenToMcScale()
+                val hit = draggedHud ?: return@onPointerEvent
                 Snapshot.withMutableSnapshot {
-                    hud.setAbsolutePosition(pos.x * s - dragOffsetX, pos.y * s - dragOffsetY)
+                    hit.setAbsolutePosition(pos.x * s - dragOffsetX, pos.y * s - dragOffsetY)
+                }
+            } else {
+                val hit = HudManager.activeInstances.lastOrNull { it !is LegacyHud && hitTestHud(it, pos.x, pos.y) }
+                val mcToScreen = Platform.screen().mcToScreenScale()
+                val overGear = hoveredHud?.let { hh ->
+                    hh !is LegacyHud && hitTestGear(hh, pos.x, pos.y, mcToScreen, gearIconPx)
+                } == true
+                val inExpandedZone = hoveredHud?.let { hh ->
+                    hh !is LegacyHud && hitTestHudWithGear(hh, pos.x, pos.y, mcToScreen, gearIconPx)
+                } == true
+                if (hit != null) {
+                    hoveredHud = hit
+                } else if (!overGear && !inExpandedZone) {
+                    hoveredHud = null
                 }
             }
         }
-        .onPointerEvent(PointerEventType.Release) {
-            Snapshot.withMutableSnapshot { isDragging = false; selectedHud = null }
+        .onPointerEvent(PointerEventType.Release) { event ->
+            val wasDragging = isDragging
+            val wasDraggedHud = draggedHud
+            Snapshot.withMutableSnapshot {
+                isDragging = false
+                draggedHud = null
+            }
+            if (!wasDragging || wasDraggedHud == null) {
+                val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
+                val currentGearTarget = selectedHud ?: hoveredHud
+                if (currentGearTarget != null && currentGearTarget !is LegacyHud) {
+                    val mcToScreen = Platform.screen().mcToScreenScale()
+                    if (hitTestGear(currentGearTarget, pos.x, pos.y, mcToScreen, gearIconPx)) return@onPointerEvent
+                }
+                val hit = HudManager.activeInstances.lastOrNull { it !is LegacyHud && hitTestHud(it, pos.x, pos.y) }
+                if (hit != null) {
+                    Snapshot.withMutableSnapshot {
+                        selectedHud = hit
+                        libraryVisible = false
+                    }
+                }
+            } else {
+                Snapshot.withMutableSnapshot {
+                    selectedHud = wasDraggedHud
+                    libraryVisible = false
+                }
+            }
         }
-
-    val designPointerModifier = Modifier
-        .onPointerEvent(PointerEventType.Press) { event ->
-            if (event.changes.any { it.isConsumed }) return@onPointerEvent
-            val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
-            val hit = HudManager.activeInstances.lastOrNull { it !is LegacyHud && hitTestHud(it, pos.x, pos.y) }
-            Snapshot.withMutableSnapshot { selectedHud = hit }
-        }
-
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .then(if (editorMode == EditorMode.Stage) stagePointerModifier else designPointerModifier)
+            .then(pointerModifier)
     ) {
         Box(
             modifier = Modifier
@@ -177,62 +245,122 @@ fun HudDesignStudio() {
                     drawContent()
                     val mcToScreen = Platform.screen().mcToScreenScale()
                     for (hud in HudManager.activeInstances) {
-                        val w = if (hud.staticWidth) hud.staticW else hud.renderedW.takeIf { it > 0f } ?: continue
-                        val h = if (hud.staticWidth) hud.staticH else hud.renderedH.takeIf { it > 0f } ?: continue
+                        val scale = hud.effectiveScale
+                        val w = (if (hud.staticWidth) hud.staticW else hud.renderedW.takeIf { it > 0f } ?: continue) * scale
+                        val h = (if (hud.staticWidth) hud.staticH else hud.renderedH.takeIf { it > 0f } ?: continue) * scale
                         val sx = hud.x * mcToScreen
                         val sy = hud.y * mcToScreen
                         val sw = w * mcToScreen
                         val sh = h * mcToScreen
                         val isSelected = hud === selectedHud
-                        val strokeColor = if (isSelected) Color(0xFF4A90E2) else Color.White.copy(0.25f)
-                        val strokeWidth = if (isSelected) 2f else 1f
-                        val pad = 3f
-                        drawRect(
-                            color = strokeColor,
-                            topLeft = Offset(sx - pad, sy - pad),
-                            size = Size(sw + pad * 2, sh + pad * 2),
-                            style = Stroke(width = strokeWidth)
-                        )
-                        if (isSelected) {
+                        val isHovered = hud === hoveredHud
+                        val isBeingDragged = hud === draggedHud && isDragging
+
+                        if (isBeingDragged) {
+                            val glowPad = 6f
+                            val cr = CornerRadius(6f, 6f)
+                            drawRoundRect(
+                                color = Color(0xFF4A90E2).copy(alpha = 0.12f),
+                                topLeft = Offset(sx - glowPad, sy - glowPad),
+                                size = Size(sw + glowPad * 2, sh + glowPad * 2),
+                                cornerRadius = cr,
+                            )
+                            drawRoundRect(
+                                color = Color(0xFF4A90E2).copy(alpha = 0.85f),
+                                topLeft = Offset(sx - glowPad, sy - glowPad),
+                                size = Size(sw + glowPad * 2, sh + glowPad * 2),
+                                cornerRadius = cr,
+                                style = Stroke(width = 2.5f)
+                            )
+                        } else {
+                            val strokeColor = when {
+                                isSelected -> Color(0xFF4A90E2)
+                                isHovered -> Color.White.copy(0.5f)
+                                else -> Color.White.copy(0.25f)
+                            }
+                            val strokeWidth = if (isSelected) 2f else 1f
+                            val pad = 3f
                             drawRect(
-                                color = Color(0xFF4A90E2).copy(alpha = 0.08f),
+                                color = strokeColor,
                                 topLeft = Offset(sx - pad, sy - pad),
                                 size = Size(sw + pad * 2, sh + pad * 2),
+                                style = Stroke(width = strokeWidth)
                             )
+                            if (isSelected) {
+                                drawRect(
+                                    color = Color(0xFF4A90E2).copy(alpha = 0.08f),
+                                    topLeft = Offset(sx - pad, sy - pad),
+                                    size = Size(sw + pad * 2, sh + pad * 2),
+                                )
+                            }
                         }
                     }
                 }
         )
 
-        Row(
-            modifier = Modifier.align(Alignment.TopCenter).padding(top = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            EditorMode.entries.forEach { mode ->
-                Chip(mode.title, mode == editorMode, mode.icon) {
-                    Snapshot.withMutableSnapshot {
-                        editorMode = mode
-                        selectedHud = null
+        val gearTarget = if (selectedHud != null) selectedHud else hoveredHud
+        if (gearTarget != null && gearTarget !is LegacyHud) {
+            val mcToScreen = Platform.screen().mcToScreenScale()
+            val scale = gearTarget.effectiveScale
+            val w = (if (gearTarget.staticWidth) gearTarget.staticW else gearTarget.renderedW) * scale
+            val h = (if (gearTarget.staticWidth) gearTarget.staticH else gearTarget.renderedH) * scale
+            if (w > 0f && h > 0f) {
+                val sx = gearTarget.x * mcToScreen
+                val sy = gearTarget.y * mcToScreen
+                val sw = w * mcToScreen
+                val sh = h * mcToScreen
+                val iconSize = 24.dp
+                val iconX = ((sx + sw / 2 - gearIconPx / 2) / densityFloat).coerceAtLeast(0f)
+                val iconY = ((sy + sh + 6f) / densityFloat).coerceAtLeast(0f)
+                Box(
+                    modifier = Modifier
+                        .padding(start = iconX.dp, top = iconY.dp)
+                        .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+                            if (event.changes.none { it.isConsumed }) {
+                                event.changes.forEach { it.consume() }
+                                Snapshot.withMutableSnapshot { selectedHud = gearTarget }
+                            }
+                        }
+                        .onPointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
+                            event.changes.forEach { if (!it.isConsumed) it.consume() }
+                        }
+                ) {
+                    IconButton("settings", modifier = Modifier.size(iconSize)) {
+                        Snapshot.withMutableSnapshot { selectedHud = gearTarget }
                     }
                 }
             }
         }
 
         AnimatedVisibility(
-            visible = editorMode == EditorMode.Design && selectedHud != null,
-            modifier = Modifier.align(Alignment.CenterEnd),
+            visible = selectedHud != null,
             enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
             exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
+            modifier = Modifier.align(Alignment.CenterEnd)
+                .onSizeChanged { panelAreaWidth = maxOf(panelAreaWidth, it.width.toFloat()) }
         ) {
-            DesignStudioPanel(
-                selectedHud = selectedHud,
-                activeCategory = activeCategory,
-                onCategoryChange = { activeCategory = it },
-                onBack = { Snapshot.withMutableSnapshot { selectedHud = null } }
-            )
+            Box(
+                modifier = Modifier
+                    .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+                        event.changes.forEach { if (!it.isConsumed) it.consume() }
+                    }
+                    .onPointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
+                        event.changes.forEach { if (!it.isConsumed) it.consume() }
+                    }
+                    .onPointerEvent(PointerEventType.Release, PointerEventPass.Final) { event ->
+                        event.changes.forEach { if (!it.isConsumed) it.consume() }
+                    }
+            ) {
+                DesignStudioPanel(
+                    selectedHud = selectedHud,
+                    activeCategory = activeCategory,
+                    onCategoryChange = { activeCategory = it },
+                    onBack = { Snapshot.withMutableSnapshot { selectedHud = null } }
+                )
+            }
         }
 
-        if (editorMode == EditorMode.Stage && modIds.isNotEmpty()) {
+        if (modIds.isNotEmpty() && selectedHud == null) {
             Row(
                 modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -247,6 +375,27 @@ fun HudDesignStudio() {
                         searchText = searchText,
                         onSearchChange = { searchText = it },
                         filteredProviders = filteredProviders,
+                        onDragStart = { hud, sx, sy, hudLocalOffX, hudLocalOffY ->
+                            try {
+                                val instance = hud.make()
+                                val s = Platform.screen().screenToMcScale()
+                                val effScale = instance.effectiveScale
+                                val offX = hudLocalOffX * effScale
+                                val offY = hudLocalOffY * effScale
+                                instance.setAbsolutePosition(sx * s - offX, sy * s - offY)
+                                if (instance !in HudManager.activeInstances) {
+                                    HudManager.activeInstances.add(instance)
+                                    instance.setup()
+                                }
+                                Snapshot.withMutableSnapshot {
+                                    dragOffsetX = offX
+                                    dragOffsetY = offY
+                                    isDragging = true
+                                    draggedHud = instance
+                                    libraryVisible = false
+                                }
+                            } catch (_: Throwable) {}
+                        },
                     )
                 }
                 ModIconColumn(
@@ -296,7 +445,7 @@ private fun DesignStudioPanel(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    IconButton("left-arrow") { onBack() }
+                    IconButton("close") { onBack() }
                     SearchBar()
                 }
                 Text("HUD Design Studio", color = Color.White, fontSize = 24.sp)
@@ -306,14 +455,39 @@ private fun DesignStudioPanel(
                     }
                 }
             }
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    when (activeCategory) {
-                        StudioCategory.Designer -> Designer(selectedHud)
-                        StudioCategory.Settings -> Settings(selectedHud)
+            Box(modifier = Modifier.fillMaxSize()) {
+                AnimatedContent(
+                    targetState = activeCategory,
+                    transitionSpec = {
+                        val direction = if (targetState.ordinal > initialState.ordinal) 1 else -1
+                        (slideInHorizontally(tween(250)) { direction * it / 3 } + fadeIn(tween(250)))
+                            .togetherWith(slideOutHorizontally(tween(250)) { -direction * it / 3 } + fadeOut(tween(250)))
+                    },
+                    modifier = Modifier.fillMaxSize()
+                ) { category ->
+                    when (category) {
+                        StudioCategory.Designer -> {
+                            val panelScrollState = rememberScrollState()
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                Column(
+                                    modifier = Modifier.fillMaxSize()
+                                        .verticalScroll(panelScrollState)
+                                        .padding(end = 8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    Designer(selectedHud)
+                                }
+                                VerticalScrollbar(
+                                    adapter = rememberScrollbarAdapter(panelScrollState),
+                                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
+                                )
+                            }
+                        }
+                        StudioCategory.Settings -> {
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                Settings(selectedHud)
+                            }
+                        }
                     }
                 }
             }
@@ -326,6 +500,7 @@ private fun HudLibraryPanel(
     searchText: String,
     onSearchChange: (String) -> Unit,
     filteredProviders: List<Hud>,
+    onDragStart: (Hud, Float, Float, Float, Float) -> Unit = { _, _, _, _, _ -> },
 ) {
     Column(
         modifier = Modifier
@@ -344,17 +519,26 @@ private fun HudLibraryPanel(
             Text("HUDs", color = Color.White, fontSize = 18.sp)
             LibrarySearchBar(searchText, onSearchChange)
         }
-        Column(
-            modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()),
-        ) {
-            FlexibleLayout(
-                horizontalSpacing = 10.dp,
-                verticalSpacing = 10.dp
+        val libraryScrollState = rememberScrollState()
+        Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+                    .verticalScroll(libraryScrollState)
+                    .padding(end = 8.dp),
             ) {
-                filteredProviders.forEach { hud ->
-                    HudPreviewCard(hud)
+                FlexibleLayout(
+                    horizontalSpacing = 10.dp,
+                    verticalSpacing = 10.dp
+                ) {
+                    filteredProviders.forEach { hud ->
+                        HudPreviewCard(hud, onDragStart)
+                    }
                 }
             }
+            VerticalScrollbar(
+                adapter = rememberScrollbarAdapter(libraryScrollState),
+                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
+            )
         }
     }
 }
@@ -388,27 +572,33 @@ private fun ModIconColumn(
 private const val PREVIEW_SCALE = 2f
 
 @Composable
-private fun HudPreviewCard(hud: Hud) {
-    ComposeHudPreviewCard(hud)
+private fun HudPreviewCard(hud: Hud, onDragStart: (Hud, Float, Float, Float, Float) -> Unit) {
+    ComposeHudPreviewCard(hud, onDragStart)
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun ComposeHudPreviewCard(hud: Hud) {
+private fun ComposeHudPreviewCard(hud: Hud, onDragStart: (Hud, Float, Float, Float, Float) -> Unit) {
     val previewRuntime = remember(hud) {
         PolyComposeRuntime().also { rt -> rt.setContent { hud.Content() } }
     }
     var naturalW by remember(hud) { mutableStateOf(0f) }
     var naturalH by remember(hud) { mutableStateOf(0f) }
     val density = LocalDensity.current.density
-    val interactionSource = rememberInteractionSource()
-    val isHovered by interactionSource.collectIsHoveredAsState()
+
+    // Hover state tracked via pointer Enter/Exit
+    var isHovered by remember { mutableStateOf(false) }
     val backgroundColor by animateColorAsState(
-        if (isHovered) Accent else panelBackground
+        if (isHovered) Accent else panelBackground,
+        animationSpec = tween(150)
     )
+
+    var pressPos by remember { mutableStateOf<Offset?>(null) }
+    var dragStarted by remember { mutableStateOf(false) }
 
     LaunchedEffect(hud) {
         hud.update()
-        if (hud.staticWidth) {
+        if (hud.staticWidth && hud.staticW > 0f && hud.staticH > 0f) {
             previewRuntime.frame(hud.staticW, hud.staticH)
             naturalW = hud.staticW
             naturalH = hud.staticH
@@ -428,18 +618,39 @@ private fun ComposeHudPreviewCard(hud: Hud) {
                 .size(w, h)
                 .background(backgroundColor, RoundedCornerShape(8.dp))
                 .border(1.dp, panelBorder, RoundedCornerShape(8.dp))
-                .onClick(interactionSource) {
-                    try {
-                        val instance = hud.make()
-                        val (dx, dy) = hud.defaultPosition()
-                        val px = if (dx > 0f) dx else 200f
-                        val py = if (dy > 0f) dy else 200f
-                        instance.setAbsolutePosition(px, py)
-                        if (instance !in HudManager.activeInstances) {
-                            HudManager.activeInstances.add(instance)
-                            instance.setup()
+                .onPointerEvent(PointerEventType.Enter) { isHovered = true }
+                .onPointerEvent(PointerEventType.Exit) {
+                    isHovered = false
+                    if (!dragStarted) pressPos = null
+                }
+                .onPointerEvent(PointerEventType.Press) { event ->
+                    val pos = event.changes.firstOrNull()?.position
+                    if (pos != null) {
+                        pressPos = pos
+                        dragStarted = false
+                    }
+                }
+                .onPointerEvent(PointerEventType.Move) { event ->
+                    val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
+                    val start = pressPos ?: return@onPointerEvent
+                    if (!dragStarted && event.changes.any { it.pressed }) {
+                        val dx = pos.x - start.x
+                        val dy = pos.y - start.y
+                        val dist = kotlin.math.sqrt(dx * dx + dy * dy)
+                        if (dist > 8f) {
+                            dragStarted = true
+                            val paddingPx = 12f * density
+                            val hudLocalX = ((start.x - paddingPx) / PREVIEW_SCALE).coerceAtLeast(0f)
+                            val hudLocalY = ((start.y - paddingPx) / PREVIEW_SCALE).coerceAtLeast(0f)
+                            onDragStart(hud, pos.x, pos.y, hudLocalX, hudLocalY)
+                            pressPos = null
+                            isHovered = false
                         }
-                    } catch (_: Throwable) {}
+                    }
+                }
+                .onPointerEvent(PointerEventType.Release) {
+                    pressPos = null
+                    dragStarted = false
                 }
                 .padding(cardPadding)
         ) {
@@ -503,10 +714,15 @@ fun SearchBar() {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon("search", color = iconColor, modifier = Modifier.padding(start = 8.dp).size(12.dp))
-            Box {
+            Box(modifier = Modifier.weight(1f)) {
                 if (!isFocused && searchText.isEmpty())
                     Text("Search ...", color = iconColor, fontSize = 12.sp)
                 innerTextField()
+            }
+            if (searchText.isNotEmpty()) {
+                IconButton("close", modifier = Modifier.padding(end = 4.dp).size(16.dp)) {
+                    searchText = ""
+                }
             }
         }
     }
@@ -540,10 +756,15 @@ private fun LibrarySearchBar(value: String, onValueChange: (String) -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon("search", color = iconColor, modifier = Modifier.padding(start = 8.dp).size(12.dp))
-            Box {
+            Box(modifier = Modifier.weight(1f)) {
                 if (!isFocused && value.isEmpty())
                     Text("Search HUDs...", color = iconColor, fontSize = 12.sp)
                 innerTextField()
+            }
+            if (value.isNotEmpty()) {
+                IconButton("close", modifier = Modifier.padding(end = 4.dp).size(16.dp)) {
+                    onValueChange("")
+                }
             }
         }
     }

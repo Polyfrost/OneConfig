@@ -5,7 +5,30 @@ import org.polyfrost.compose.render.PolyColor
 
 open class PolyModifier internal constructor(internal val block: PolyLayoutStyle.() -> Unit) {
     fun then(other: PolyModifier) = PolyModifier { block(); other.block(this) }
-    fun applyTo(style: PolyLayoutStyle) = style.block()
+
+    fun applyTo(style: PolyLayoutStyle) {
+        val lt = style.layoutType
+        val g = style.gap
+        style.width = PolySize.Wrap
+        style.height = PolySize.Wrap
+        style.align = PolyAlign.TopLeft
+        style.padding = PolyInsets()
+        style.margin = PolyInsets()
+        style.positionMode = PolyPositionMode.Relative
+        style.x = 0f
+        style.y = 0f
+        style.background = PolyColor.TRANSPARENT
+        style.radius = 0f
+        style.borderColor = PolyColor.TRANSPARENT
+        style.borderWidth = 0f
+        style.clipToBounds = false
+        style.alpha = 1f
+        // Restore structural properties
+        style.layoutType = lt
+        style.gap = g
+        // Apply the modifier chain
+        style.block()
+    }
 
     companion object : PolyModifier({})
 }

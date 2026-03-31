@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.components.SelectableIconButton
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.onClick
+import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 interface RadioValue {
@@ -39,21 +41,32 @@ inline fun <reified E> Radio(
                 .border(1.dp, LocalTheme.current.borderColor, RoundedCornerShape(6.dp))
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                modifier = Modifier.padding(horizontal = 0.dp, vertical = 0.dp),
+                horizontalArrangement = Arrangement.spacedBy(0.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 enumValues<E>().forEach { it as RadioValue
-                    SelectableIconButton(
-                        it.icon,
-                        selected = value == it,
-                        modifier = Modifier.size(18.dp),
-                        onClick = {
-                            Snapshot.withMutableSnapshot {
-                                onChange(it)
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .onClick(rememberInteractionSource()) {
+                                Snapshot.withMutableSnapshot {
+                                    onChange(it)
+                                }
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        SelectableIconButton(
+                            it.icon,
+                            selected = value == it,
+                            modifier = Modifier.size(18.dp),
+                            onClick = {
+                                Snapshot.withMutableSnapshot {
+                                    onChange(it)
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }

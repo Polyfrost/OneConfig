@@ -1,13 +1,17 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
+import com.mojang.blaze3d.pipeline.TextureTarget
 import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.GuiGraphics
 import org.jetbrains.skia.BackendRenderTarget
+import org.jetbrains.skia.Color
 import org.jetbrains.skia.ColorSpace
 import org.jetbrains.skia.DirectContext
 import org.jetbrains.skia.Surface
 import org.jetbrains.skia.SurfaceColorFormat
 import org.jetbrains.skia.SurfaceOrigin
 import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL30
 import org.polyfrost.oneconfig.internal.ui.compose.opengl.StoredGLState
 import org.polyfrost.oneconfig.internal.ui.services.VulkanService
 import org.slf4j.LoggerFactory
@@ -29,8 +33,40 @@ object SkiaCtx {
 
     private val gl = StoredGLState(330)
 
-    private var glHudSurface: Surface? = null
-    private var glHudBrt: BackendRenderTarget? = null
+    private var hudTarget: TextureTarget? = null
+    private var hudSurface: Surface? = null
+    private var hudBrt: BackendRenderTarget? = null
+    //#if MC >= 1.21.5
+    //$$ private val HUD_TEXTURE_LOC = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("oneconfig", "hud_skia")
+    //$$ private var hudTextureWrapper: HudGpuTexture? = null
+    //$$ private class HudGpuTexture : net.minecraft.client.renderer.texture.AbstractTexture() {
+    //$$     fun setGpuTexture(t: com.mojang.blaze3d.textures.GpuTexture?) { this.texture = t }
+    //#if MC >= 1.21.8
+    //$$     fun setGpuTextureView(v: com.mojang.blaze3d.textures.GpuTextureView?) { this.textureView = v }
+    //#endif
+    //$$     override fun close() {
+    //$$         this.texture = null
+    //#if MC >= 1.21.8
+    //$$         this.textureView = null
+    //#endif
+    //$$     }
+    //$$ }
+    //#else
+    private val HUD_TEXTURE_LOC = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("oneconfig", "hud_skia")
+    private var hudTextureWrapper: HudGlTexture? = null
+    //#if MC >= 1.21.4
+    //$$ private class HudGlTexture : net.minecraft.client.renderer.texture.AbstractTexture() {
+    //$$     fun setGlTexId(id: Int) { this.id = id }
+    //$$     override fun close() { this.id = -1 }
+    //$$ }
+    //#else
+    private class HudGlTexture : net.minecraft.client.renderer.texture.AbstractTexture() {
+        fun setGlTexId(id: Int) { this.id = id }
+        override fun load(manager: net.minecraft.server.packs.resources.ResourceManager) {}
+        override fun close() { this.id = -1 }
+    }
+    //#endif
+    //#endif
 
     private var glSurface: Surface? = null
     private var glBrt: BackendRenderTarget? = null
@@ -71,49 +107,96 @@ object SkiaCtx {
     }
 
     fun drawNow() {
-        flush(queuedHudDraws, midFrame = true)
+        if (!this::directContext.isInitialized) return
+        val draws = queuedHudDraws.toList()
+        queuedHudDraws.clear()
+        if (draws.isEmpty()) return
+        flushToTarget(draws, resolveHudSurface() ?: return)
+    }
+
+    fun blitHud(guiGraphics: GuiGraphics) {
+        val rt = hudTarget ?: return
+        val w = rt.width; val h = rt.height
+        val guiScale = client.window.guiScale.toFloat()
+
+        //#if MC >= 1.21.5
+        //$$ val colorTex = rt.getColorTexture() ?: return
+        //$$ var wrapper = hudTextureWrapper
+        //$$ if (wrapper == null) {
+        //$$     wrapper = HudGpuTexture()
+        //$$     hudTextureWrapper = wrapper
+        //$$     client.textureManager.register(HUD_TEXTURE_LOC, wrapper)
+        //$$ }
+        //$$ wrapper.setGpuTexture(colorTex)
+        //#if MC >= 1.21.8
+        //$$ wrapper.setGpuTextureView(rt.getColorTextureView())
+        //$$ guiGraphics.pose().pushMatrix()
+        //$$ guiGraphics.pose().scale(1f / guiScale, 1f / guiScale)
+        //$$ guiGraphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        //$$ guiGraphics.pose().popMatrix()
+        //#else
+        //$$ guiGraphics.pose().pushPose()
+        //$$ guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
+        //$$ guiGraphics.blit(net.minecraft.client.renderer.RenderType::guiTextured, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        //$$ guiGraphics.pose().popPose()
+        //#endif
+        //#else
+        var wrapper = hudTextureWrapper
+        if (wrapper == null) {
+            wrapper = HudGlTexture()
+            hudTextureWrapper = wrapper
+            client.textureManager.register(HUD_TEXTURE_LOC, wrapper)
+        }
+        wrapper.setGlTexId(rt.colorTextureId)
+        guiGraphics.pose().pushPose()
+        guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
+        //#if MC >= 1.21.4
+        //$$ guiGraphics.blit(net.minecraft.client.renderer.RenderType::guiTextured, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        //#else
+        guiGraphics.blit(HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        //#endif
+        guiGraphics.pose().popPose()
+        //#endif
     }
 
     fun draw() {
-        flush(queuedDraws, midFrame = false)
-    }
-
-    private fun flush(queue: CopyOnWriteArrayList<() -> Unit>, midFrame: Boolean) {
         if (!this::directContext.isInitialized) return
-
-        val draws = queue.toList()
-        queue.clear()
+        val draws = queuedDraws.toList()
+        queuedDraws.clear()
         if (draws.isEmpty()) return
 
         currentSurface = if (isVulkanMode) {
             resolveVkSurface()
-        } else if (midFrame) {
-            resolveGLHudSurface()
         } else {
             resolveGLSurface()
         }
         if (currentSurface == null) return
 
-        if (isVulkanMode) {
-            vulkanService?.midFrameFlush()
-            directContext.resetAll()
-        } else {
-            gl.capture()
-            directContext.resetGLAll()
-            GL11.glViewport(0, 0, currentSurface!!.width, currentSurface!!.height)
-            GL11.glDisable(GL11.GL_SCISSOR_TEST)
+        try {
+            if (isVulkanMode) {
+                vulkanService?.midFrameFlush()
+                directContext.resetAll()
+            } else {
+                gl.capture()
+                directContext.resetGLAll()
+                GL11.glViewport(0, 0, currentSurface!!.width, currentSurface!!.height)
+                GL11.glDisable(GL11.GL_SCISSOR_TEST)
+            }
+
+            draws.forEach { it() }
+
+            if (isVulkanMode) {
+                directContext.flushAndSubmit(currentSurface!!, false)
+            } else {
+                directContext.flush()
+                gl.restore()
+            }
+        } catch (e: Throwable) {
+            LOG.warn("SkiaCtx.draw() error", e)
+            if (!isVulkanMode) try { gl.restore() } catch (_: Throwable) {}
+        } finally {
+            currentSurface = null
         }
-
-        draws.forEach { it() }
-
-        if (isVulkanMode) {
-            directContext.flushAndSubmit(currentSurface!!, false)
-        } else {
-            directContext.flush()
-            gl.restore()
-        }
-
-        currentSurface = null
     }
 
     fun recreateSurface(width: Int, height: Int) {
@@ -123,9 +206,108 @@ object SkiaCtx {
         } else {
             glSurface?.close(); glSurface = null
             glBrt?.close(); glBrt = null
-            glHudSurface?.close(); glHudSurface = null
-            glHudBrt?.close(); glHudBrt = null
         }
+        destroyHudTarget()
+    }
+
+    private fun flushToTarget(draws: List<() -> Unit>, surface: Surface) {
+        currentSurface = surface
+        val savedFbo = IntArray(1)
+        try {
+            if (isVulkanMode) {
+                vulkanService?.midFrameFlush()
+                directContext.resetAll()
+            } else {
+                gl.capture()
+                GL30.glGetIntegerv(GL30.GL_FRAMEBUFFER_BINDING, savedFbo)
+                directContext.resetGLAll()
+                GL11.glViewport(0, 0, surface.width, surface.height)
+                GL11.glDisable(GL11.GL_SCISSOR_TEST)
+            }
+
+            canvas.clear(Color.TRANSPARENT)
+            draws.forEach { it() }
+
+            if (isVulkanMode) {
+                directContext.flushAndSubmit(surface, false)
+            } else {
+                directContext.flush()
+                GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, savedFbo[0])
+                gl.restore()
+            }
+        } catch (e: Throwable) {
+            LOG.warn("SkiaCtx.flushToTarget() error", e)
+            if (!isVulkanMode) try {
+                GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, savedFbo[0])
+                gl.restore()
+            } catch (_: Throwable) {}
+        } finally {
+            currentSurface = null
+        }
+    }
+
+    private fun resolveHudSurface(): Surface? {
+        val w = client.window.width
+        val h = client.window.height
+        if (w <= 0 || h <= 0) return null
+
+        var rt = hudTarget
+        if (rt == null || rt.width != w || rt.height != h) {
+            destroyHudTarget()
+            //#if MC >= 1.21.5
+            //$$ rt = TextureTarget(null, w, h, true)
+            //#else
+            //#if MC >= 1.21.4
+            //$$ rt = TextureTarget(w, h, true)
+            //#else
+            rt = TextureTarget(w, h, true, Minecraft.ON_OSX)
+            //#endif
+            //#endif
+            hudTarget = rt
+
+            val svc = vulkanService ?: return null
+            val (brt, colorFmt) = svc.makeOffscreenBRT(rt, w, h)
+            hudBrt = brt
+            hudSurface = Surface.makeFromBackendRenderTarget(
+                directContext, brt,
+                SurfaceOrigin.TOP_LEFT,
+                colorFmt,
+                ColorSpace.sRGB,
+                null,
+            )
+            if (hudSurface == null) {
+                LOG.warn("SkiaCtx: hudSurface is null (w={} h={} vk={})", w, h, isVulkanMode)
+                brt.close(); hudBrt = null
+            }
+        }
+        return hudSurface
+    }
+
+    private fun destroyHudTarget() {
+        hudSurface?.close(); hudSurface = null
+        hudBrt?.close(); hudBrt = null
+        hudTarget?.destroyBuffers()
+        hudTarget = null
+    }
+
+    private fun resolveGLSurface(): Surface? {
+        val svc = vulkanService ?: return null
+        val w = client.window.width
+        val h = client.window.height
+        if (w <= 0 || h <= 0) return null
+        val existing = glSurface
+        if (existing != null && existing.width == w && existing.height == h) return existing
+
+        glSurface?.close(); glBrt?.close()
+        glBrt = svc.makeBackBufferRenderTarget(w, h)
+        glSurface = Surface.makeFromBackendRenderTarget(
+            directContext, glBrt!!,
+            SurfaceOrigin.BOTTOM_LEFT,
+            SurfaceColorFormat.RGBA_8888,
+            ColorSpace.sRGB,
+            null,
+        )
+        return glSurface
     }
 
     private fun resolveVkSurface(): Surface? {
@@ -162,8 +344,6 @@ object SkiaCtx {
                     java.lang.Long.toHexString(vkImg), vkFmt)
                 return null
             }
-            LOG.info("Created VK surface #{} for image 0x{} ({}x{} fmt={})",
-                vkSurfaces.size + 1, java.lang.Long.toHexString(vkImg), w, h, vkFmt)
             VkSurfaceEntry(surf, brt)
         }.surface
     }
@@ -171,45 +351,5 @@ object SkiaCtx {
     private fun invalidateVkSurfaces() {
         vkSurfaces.values.forEach { (s, brt) -> s.close(); brt.close() }
         vkSurfaces.clear()
-    }
-
-    private fun resolveGLHudSurface(): Surface? {
-        val svc = vulkanService ?: return null
-        val w = client.window.width
-        val h = client.window.height
-        if (w <= 0 || h <= 0) return null
-        val existing = glHudSurface
-        if (existing != null && existing.width == w && existing.height == h) return existing
-
-        glHudSurface?.close(); glHudBrt?.close()
-        glHudBrt = svc.makeBackendRenderTarget(w, h)
-        glHudSurface = Surface.makeFromBackendRenderTarget(
-            directContext, glHudBrt!!,
-            SurfaceOrigin.BOTTOM_LEFT,
-            SurfaceColorFormat.RGBA_8888,
-            ColorSpace.sRGB,
-            null,
-        )
-        return glHudSurface
-    }
-
-    private fun resolveGLSurface(): Surface? {
-        val svc = vulkanService ?: return null
-        val w = client.window.width
-        val h = client.window.height
-        if (w <= 0 || h <= 0) return null
-        val existing = glSurface
-        if (existing != null && existing.width == w && existing.height == h) return existing
-
-        glSurface?.close(); glBrt?.close()
-        glBrt = svc.makeBackBufferRenderTarget(w, h)
-        glSurface = Surface.makeFromBackendRenderTarget(
-            directContext, glBrt!!,
-            SurfaceOrigin.BOTTOM_LEFT,
-            SurfaceColorFormat.RGBA_8888,
-            ColorSpace.sRGB,
-            null,
-        )
-        return glSurface
     }
 }

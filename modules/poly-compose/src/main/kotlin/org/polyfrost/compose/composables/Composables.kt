@@ -27,9 +27,9 @@ fun PolyImage(
     modifier: PolyModifier = PolyModifier,
     image: Image,
 ) {
-    ComposeNode<PolyNode, PolyApplier>(
+    ComposeNode<ImageNode, PolyApplier>(
         factory = { ImageNode(image).also { it.style.layoutType = LayoutType.Box; it.remeasure() } },
-        update = { set(modifier) { modifier.applyTo(style) } },
+        update = { set(modifier) { modifier.applyTo(style); remeasure() } },
     )
 }
 
@@ -84,7 +84,7 @@ fun PolyText(
             set(shadow) { this.shadow = it }
             set(shadowColor) { this.shadowColor = it }
             set(shadowOffset) { this.shadowOffset = it }
-            set(modifier) { modifier.applyTo(style) }
+            set(modifier) { modifier.applyTo(style); remeasure() }
         },
     )
 }
@@ -104,7 +104,7 @@ fun PolyMcText(
             set(scale) { this.scale = it; remeasure() }
             set(color) { this.color = it }
             set(shadow) { this.shadow = it }
-            set(modifier) { modifier.applyTo(style) }
+            set(modifier) { modifier.applyTo(style); remeasure() }
         },
     )
 }
@@ -142,8 +142,8 @@ fun PolyRect(
     ComposeNode<PolyNode, PolyApplier>(
         factory = { PolyNode().also { it.style.layoutType = LayoutType.Box } },
         update = {
+            set(modifier) { modifier.applyTo(style); style.background = color }
             set(color) { style.background = it }
-            set(modifier) { modifier.applyTo(style) }
         },
     )
 }

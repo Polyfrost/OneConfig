@@ -29,7 +29,7 @@ private class WindowInfoImpl : WindowInfo {
         return IntSize(mc.window.screenWidth, mc.window.screenHeight)
     }
 
-    private fun isKeyDown(glfwKey: Int): Boolean {
+    private fun     isKeyDown(glfwKey: Int): Boolean {
         return GLFW.glfwGetKey(Minecraft.getInstance().window.window, glfwKey) == GLFW.GLFW_PRESS
     }
 
@@ -44,7 +44,7 @@ private class WindowInfoImpl : WindowInfo {
         )
 
     override val isWindowFocused: Boolean
-        get() = true
+        get() = glfwGetWindowAttrib(Minecraft.getInstance().window.window, GLFW_FOCUSED) == GLFW_TRUE
 }
 
 @OptIn(InternalComposeUiApi::class, ExperimentalComposeUiApi::class)

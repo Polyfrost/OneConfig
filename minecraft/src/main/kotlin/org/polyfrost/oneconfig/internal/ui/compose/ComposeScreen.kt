@@ -1,15 +1,24 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asComposeCanvas
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.NativeClipboard
 import androidx.compose.ui.scene.CanvasLayersComposeScene
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
+import dev.deftu.clipboard.Clipboard
 import dev.deftu.omnicore.api.client.input.KeyboardModifiers
 import dev.deftu.omnicore.api.client.input.OmniKey
 import dev.deftu.omnicore.api.client.input.OmniMouseButton
@@ -18,11 +27,65 @@ import dev.deftu.omnicore.api.client.screen.KeyPressEvent
 import dev.deftu.omnicore.api.client.screen.OmniScreen
 import net.minecraft.client.Minecraft
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-import org.jetbrains.skiko.FrameDispatcher
 import org.lwjgl.glfw.GLFW
 import java.awt.Component
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+
+@Suppress("DEPRECATION")
+private object CopycatClipboardManager : androidx.compose.ui.platform.ClipboardManager {
+    private val clipboard get() = Clipboard.getInstance()
+
+    override fun getText(): AnnotatedString? {
+        return try {
+            val data = clipboard.string
+                ?: return null
+            AnnotatedString(data)
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    override fun setText(annotatedString: AnnotatedString) {
+        try {
+            clipboard.setString(
+                annotatedString.text
+            )
+        } catch (_: Throwable) {}
+    }
+
+    override fun hasText(): Boolean {
+        return true
+    }
+}
+
+
+@Suppress("DEPRECATION")
+private object CopycatClipboard : androidx.compose.ui.platform.Clipboard {
+    override val nativeClipboard: Any = Unit
+
+    private val clipboard get() = Clipboard.getInstance()
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    override suspend fun getClipEntry(): ClipEntry? {
+        val text = clipboard.string ?: return null
+        return ClipEntry(java.awt.datatransfer.StringSelection(text))
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    override suspend fun setClipEntry(clipEntry: ClipEntry?) {
+        if (clipEntry == null) return
+        try {
+            val transferable = clipEntry.nativeClipEntry as? java.awt.datatransfer.Transferable
+            if (transferable != null &&
+                transferable.isDataFlavorSupported(java.awt.datatransfer.DataFlavor.stringFlavor)
+            ) {
+                val text = transferable.getTransferData(java.awt.datatransfer.DataFlavor.stringFlavor) as? String
+                if (text != null) clipboard.setString(text)
+            }
+        } catch (_: Throwable) {}
+    }
+}
 
 @OptIn(InternalComposeUiApi::class)
 abstract class ComposeScreen(
@@ -44,7 +107,6 @@ abstract class ComposeScreen(
 //        }
 //    }
 
-    // TODO: on demand rendering
 
     protected val scene = CanvasLayersComposeScene(
         platformContext = ComposeSceneContextImpl.platformContext,
@@ -67,7 +129,13 @@ abstract class ComposeScreen(
         syncSceneMetrics()
 
         scene.setContent {
-            compose()
+            @Suppress("DEPRECATION")
+            CompositionLocalProvider(
+                LocalClipboardManager provides CopycatClipboardManager,
+                LocalClipboard provides CopycatClipboard
+            ) {
+                compose()
+            }
         }
     }
 
@@ -76,33 +144,37 @@ abstract class ComposeScreen(
         syncSceneMetrics()
     }
 
-    override fun onRender(ctx: OmniRenderingContext, mouseX: Int, mouseY: Int, tickDelta: Float) {
-//        if (renderMode == RenderMode.ON_DEMAND) {
-//            if (!dispatcher.isIdle()) {
-//                dispatcher.runNextTask()
-//            }
-//            SkiaCtx.queueDraw {
-//                composeRenderer.render()
-//            }
-//        } else {
-//            SkiaCtx.queueDraw {
-//                composeRenderer.render { scene.render(this.asComposeCanvas(), System.nanoTime()) }
-//                composeRenderer.render()
-//            }
-//        }
+    override fun onScreenClose() {
+        try {
+            scene.close()
+        } catch (_: Throwable) {}
+    }
 
+    override fun onRender(ctx: OmniRenderingContext, mouseX: Int, mouseY: Int, tickDelta: Float) {
         syncSceneMetrics()
-        val pointerPosition = pointerPosition()
-        scene.sendPointerEvent(PointerEventType.Move, pointerPosition)
+
+        val focused = GLFW.glfwGetWindowAttrib(client.window.window, GLFW.GLFW_FOCUSED) == GLFW.GLFW_TRUE
+        if (focused) {
+            try {
+                val pointerPosition = pointerPosition()
+                scene.sendPointerEvent(PointerEventType.Move, pointerPosition)
+            } catch (_: Throwable) {}
+        }
+
+        try { scene.invalidatePositionInWindow() } catch (_: Throwable) {}
+
         SkiaCtx.queueDraw {
-            val canvas = SkiaCtx.canvas
-            val pixelRatio = Platform.screen().pixelRatio()
-            canvas.save()
-            if (pixelRatio != 1f) {
-                canvas.scale(pixelRatio, pixelRatio)
+            try {
+                val canvas = SkiaCtx.canvas
+                val pixelRatio = Platform.screen().pixelRatio()
+                canvas.save()
+                if (pixelRatio != 1f) {
+                    canvas.scale(pixelRatio, pixelRatio)
+                }
+                scene.render(canvas.asComposeCanvas(), System.nanoTime())
+                canvas.restore()
+            } catch (_: Throwable) {
             }
-            scene.render(canvas.asComposeCanvas(), System.nanoTime())
-            canvas.restore()
         }
     }
 
@@ -133,10 +205,11 @@ abstract class ComposeScreen(
     }
 
     override fun onMouseScroll(x: Double, y: Double, amount: Double, horizontalAmount: Double): Boolean {
+        val scrollScale = 14f
         scene.sendPointerEvent(
             eventType = PointerEventType.Scroll,
             position = pointerPosition(),
-            scrollDelta = Offset(0f, -amount.toFloat()),
+            scrollDelta = Offset((-horizontalAmount * scrollScale).toFloat(), (-amount * scrollScale).toFloat()),
         )
         return super.onMouseScroll(x, y, amount, horizontalAmount)
     }
@@ -239,14 +312,17 @@ abstract class ComposeScreen(
     }
 
     private fun syncSceneMetrics() {
+        val w = client.window.screenWidth
+        val h = client.window.screenHeight
+        if (w <= 0 || h <= 0) return
         scene.density = Density(sceneDensity())
-        scene.size = IntSize(client.window.screenWidth, client.window.screenHeight)
+        scene.size = IntSize(w, h)
     }
 
     private fun sceneDensity(): Float {
         val pixelRatio = Platform.screen().pixelRatio().takeIf { it > 0f } ?: 1f
         GLFW.glfwGetWindowContentScale(client.window.window, contentScaleX, contentScaleY)
-        val contentScale = maxOf(contentScaleX[0], contentScaleY[0], pixelRatio)
+        val contentScale = maxOf(contentScaleX[0], contentScaleY[0]).coerceAtLeast(1f)
         return (contentScale / pixelRatio).coerceAtLeast(1f)
     }
 

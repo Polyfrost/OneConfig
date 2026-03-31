@@ -21,6 +21,12 @@ object OCViewModelStoreOwner: ViewModelStoreOwner {
 }
 object ShellState {
     var title by mutableStateOf<String?>(null)
+
+    var playerName by mutableStateOf("Player")
+
+    var versionLabel by mutableStateOf("")
+
+    var searchQuery by mutableStateOf("")
 }
 object LocalNavController {
     lateinit var current: NavHostController
@@ -32,6 +38,7 @@ object LocalNavController {
 
         fun navigate(route: Any) {
             forwardStack.clear()
+            ShellState.searchQuery = ""
             current.navigate(route)
         }
 

@@ -61,7 +61,48 @@ private const val GRID_SIZE = 3
 @Suppress("EqualsOrHashCode", "UnstableApiUsage")
 abstract class Hud(id: String, title: String, val category: Category) : Cloneable, Config(id, null, title, null) {
     private var _staticWidth: MutableState<Boolean> = mutableStateOf(false)
-    var staticWidth: Boolean get() = _staticWidth.value; set(v) { _staticWidth.value = v }
+    var staticWidth: Boolean
+        get() = _staticWidth.value
+        set(v) {
+            val wasStatic = _staticWidth.value
+            _staticWidth.value = v
+            if (!wasStatic && v) {
+                val (minW, minH) = minimumSize()
+                if (renderedW > 0f || renderedH > 0f) {
+                    staticW = maxOf(renderedW, minW)
+                    staticH = maxOf(renderedH, minH)
+                } else {
+                    val natural = measureNaturalContentSize()
+                    if (natural != null) {
+                        staticW = maxOf(natural.first, minW)
+                        staticH = maxOf(natural.second, minH)
+                    }
+                }
+            } else if (wasStatic && !v) {
+                // Switching from static → dynamic: seed rendered dimensions from the
+                // static values so the HUD doesn't collapse to 0×0 until the render loop
+                // recalculates the natural content size.
+                val (minW, minH) = minimumSize()
+                renderedW = maxOf(staticW, minW)
+                renderedH = maxOf(staticH, minH)
+            }
+        }
+
+    protected fun measureNaturalContentSize(): Pair<Float, Float>? {
+        val rt = _runtime ?: return null
+        val wasStatic = _staticWidth.value
+        return try {
+            _staticWidth.value = false
+            rt.frame(2000f, 2000f)
+            val w = rt.root.width
+            val h = rt.root.height
+            if (w > 0f && h > 0f) w to h else null
+        } catch (_: Throwable) {
+            null
+        } finally {
+            _staticWidth.value = wasStatic
+        }
+    }
 
     @Switch(title = "Show in F3")
     var showInF3 = true
@@ -92,20 +133,22 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     val scaledWidth: Float get() {
         val w = if (staticWidth) staticW else renderedW
-        return if (w > 0f) w else 1f
+        val (minW, _) = minimumSize()
+        return maxOf(w, minW).coerceAtLeast(1f)
     }
 
     val scaledHeight: Float get() {
         val h = if (staticWidth) staticH else renderedH
-        return if (h > 0f) h else 1f
+        val (_, minH) = minimumSize()
+        return maxOf(h, minH).coerceAtLeast(1f)
     }
 
     var x: Float
         get() {
             val sw = HudManager.guiScreenWidth
-            val secPos = (sw / GRID_SIZE * relativeX).toInt()
+            val secPos = Math.round(sw / GRID_SIZE * relativeX).toFloat()
             return when (section) {
-                Section.TopLeft, Section.CenterLeft, Section.BottomLeft -> secPos.toFloat()
+                Section.TopLeft, Section.CenterLeft, Section.BottomLeft -> secPos
                 Section.TopCenter, Section.Center, Section.BottomCenter -> (sw - scaledWidth) / 2f + secPos
                 Section.TopRight, Section.CenterRight, Section.BottomRight -> sw - scaledWidth - secPos
             }
@@ -115,9 +158,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var y: Float
         get() {
             val sh = HudManager.guiScreenHeight
-            val secPos = (sh / GRID_SIZE * relativeY).toInt()
+            val secPos = Math.round(sh / GRID_SIZE * relativeY).toFloat()
             return when (section) {
-                Section.TopLeft, Section.TopCenter, Section.TopRight -> secPos.toFloat()
+                Section.TopLeft, Section.TopCenter, Section.TopRight -> secPos
                 Section.CenterLeft, Section.Center, Section.CenterRight -> (sh - scaledHeight) / 2f + secPos
                 Section.BottomLeft, Section.BottomCenter, Section.BottomRight -> sh - scaledHeight - secPos
             }
@@ -174,7 +217,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     var hidden: Boolean = false
 
-    private var _alignment: MutableState<PolyAlign> = mutableStateOf(PolyAlign.TopLeft)
+    private var _alignment: MutableState<PolyAlign> = mutableStateOf(PolyAlign.Center)
     var alignment: PolyAlign get() = _alignment.value; set(v) { _alignment.value = v }
 
     private var _padTop: MutableState<Float> = mutableStateOf(0f)
@@ -189,10 +232,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     private var _padRight: MutableState<Float> = mutableStateOf(0f)
     var padRight: Float get() = _padRight.value; set(v) { _padRight.value = v }
 
-    private var _staticW: MutableState<Float> = mutableStateOf(120f)
+    private var _staticW: MutableState<Float> = mutableStateOf(200f)
     var staticW: Float get() = _staticW.value; set(v) { _staticW.value = v }
 
-    private var _staticH: MutableState<Float> = mutableStateOf(32f)
+    private var _staticH: MutableState<Float> = mutableStateOf(48f)
     var staticH: Float get() = _staticH.value; set(v) { _staticH.value = v }
 
     private var _font: MutableState<Font> = mutableStateOf(Font.Minecraft)
@@ -311,6 +354,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             tree["shadowColor"] = ktProperty(out::shadowColor).apply { addDisplayCondition(hidden) }
             tree["shadowOffsetX"] = ktProperty(out::shadowOffsetX).apply { addDisplayCondition(hidden) }
             tree["shadowOffsetY"] = ktProperty(out::shadowOffsetY).apply { addDisplayCondition(hidden) }
+            (tree["showInF3"] as? Property<*>)?.addDisplayCondition(hidden)
+            (tree["showInTab"] as? Property<*>)?.addDisplayCondition(hidden)
+            (tree["showInScreens"] as? Property<*>)?.addDisplayCondition(hidden)
             addToSerialized(tree)
             tree["hudClass"] = simple(value = out::class.java.name).apply {
                 addDisplayCondition { Property.Display.HIDDEN }
@@ -331,14 +377,14 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         else LOGGER.warn("attempted to add callback to {}'s option '{}', but it is not real.", title, optionName)
     }
 
-    protected fun updateAndRecalculate() {
+    fun updateAndRecalculate() {
         update()
     }
 
     open fun setup() {}
     abstract fun update(): Boolean
     open fun updateFrequency(): Long = -1L
-    open fun defaultPosition(): Pair<Float, Float> = 0f to 0f
+    open fun defaultPosition(): Pair<Float, Float> = 10f to 10f
     open fun hasBackground(): Boolean = true
     open fun backgroundColor(): PolyColor? = null
     open fun multipleInstancesAllowed(): Boolean = true

@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,13 +10,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -223,13 +227,21 @@ private fun MdBlocks(node: Node, styles: MdStyles, modifier: Modifier = Modifier
 
 @Composable
 fun Changelog() {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        changelogs.sections.forEachIndexed { index, section ->
-            item { ChangelogEntry(section, index) }
+    val lazyListState = rememberLazyListState()
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            state = lazyListState,
+            modifier = Modifier.fillMaxSize().padding(end = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            changelogs.sections.forEachIndexed { index, section ->
+                item { ChangelogEntry(section, index) }
+            }
         }
+        VerticalScrollbar(
+            adapter = rememberScrollbarAdapter(lazyListState),
+            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
+        )
     }
 }
 
@@ -247,48 +259,56 @@ fun Changelog(index: Int) {
     )
     val doc = remember(data.content) { mdParser.parse(data.content) }
 
-    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        data.headerImageUrl?.let { url ->
-            Box(
-                modifier = Modifier.fillMaxWidth().height(221.dp)
-                    .clip(theme.modCardShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource("/assets/oneconfig/images/$url.png"),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize().blur(30.dp),
-                    contentScale = ContentScale.Crop,
-                    colorFilter = ColorFilter.tint(Color.Black.copy(0.4f).compositeOver(Accent)
-                        .copy(0.4f), BlendMode.Multiply)
-                )
-                Image(
-                    painter = painterResource("/assets/oneconfig/images/$url.png"),
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit
-                )
-            }
-        }
-        Column(
-            modifier = Modifier.padding(vertical = 22.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(data.title, color = theme.textColor, fontSize = 24.sp, fontWeight = FontWeight.Medium)
-                Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("Written by", color = theme.textColorSecondary, fontSize = 12.sp)
-                        Text(data.author, color = theme.textColor, fontSize = 12.sp)
-                    }
-                    Text(data.date, color = theme.textColorSecondary, fontSize = 12.sp)
+    val scrollState = rememberScrollState()
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(end = 8.dp)) {
+            data.headerImageUrl?.let { url ->
+                Box(
+                    modifier = Modifier.fillMaxWidth().height(221.dp)
+                        .clip(theme.modCardShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource("/assets/oneconfig/images/$url.png"),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize().blur(30.dp),
+                        contentScale = ContentScale.Crop,
+                        colorFilter = ColorFilter.tint(Color.Black.copy(0.4f).compositeOver(Accent)
+                            .copy(0.4f), BlendMode.Multiply)
+                    )
+                    Image(
+                        painter = painterResource("/assets/oneconfig/images/$url.png"),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit
+                    )
                 }
             }
-            MdBlocks(node = doc, styles = styles, modifier = Modifier.fillMaxWidth())
+            Column(
+                modifier = Modifier.padding(vertical = 22.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(data.title, color = theme.textColor, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                    Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text("Written by", color = theme.textColorSecondary, fontSize = 12.sp)
+                            Text(data.author, color = theme.textColor, fontSize = 12.sp)
+                        }
+                        Text(data.date, color = theme.textColorSecondary, fontSize = 12.sp)
+                    }
+                }
+                MdBlocks(node = doc, styles = styles, modifier = Modifier.fillMaxWidth())
+            }
         }
+        VerticalScrollbar(
+            adapter = rememberScrollbarAdapter(scrollState),
+            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
+        )
     }
 }
 
