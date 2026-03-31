@@ -1,7 +1,9 @@
 package org.polyfrost.oneconfig.internal.ui.services
 
+import com.mojang.blaze3d.pipeline.RenderTarget
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.DirectContext
+import org.jetbrains.skia.SurfaceColorFormat
 import org.slf4j.LoggerFactory
 
 /**
@@ -21,8 +23,9 @@ interface VulkanService {
         vkFormat: Int = 0,
         vkQueueFamily: Int = 0,
     ): BackendRenderTarget
+
     /**
-     * Create a BackendRenderTarget for the given dimensions, that draws directly to the back buffer
+     * Create a BackendRenderTarget that draws directly to the back buffer
      */
     fun makeBackBufferRenderTarget(
         width: Int, height: Int,
@@ -30,6 +33,16 @@ interface VulkanService {
         vkFormat: Int = 0,
         vkQueueFamily: Int = 0,
     ): BackendRenderTarget = makeBackendRenderTarget(width, height, vkImageHandle, vkFormat, vkQueueFamily)
+
+    /**
+     * Create a [BackendRenderTarget] that wraps [target]'s color attachment for use as an
+     * offscreen Skia render target.
+     */
+    fun makeOffscreenBRT(
+        target: RenderTarget,
+        width: Int,
+        height: Int,
+    ): Pair<BackendRenderTarget, SurfaceColorFormat>
 
     /**
      * @return (vkImageHandle, vkFormat, queueFamily) for MC's main color render target.

@@ -148,7 +148,7 @@ fun ProfileCard(profile: ProfileData) {
                 .onClick(starInteractionSource) { profile.liked = !profile.liked }
                 .pointerHoverIcon(PointerIcon.Hand)
         ) {
-            Icon("star", color = if (profile.liked) Accent else theme.textColor)
+            Icon("star", color = if (profile.liked) Color(0xFFFFD700) else theme.textColor.copy(0.5f))
         }
 
         Column(

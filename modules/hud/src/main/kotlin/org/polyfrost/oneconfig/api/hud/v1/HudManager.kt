@@ -51,6 +51,10 @@ object HudManager {
     @Volatile @JvmField var guiScreenWidth: Float = 960f
     @Volatile @JvmField var guiScreenHeight: Float = 540f
 
+    @Volatile @JvmField var isDebugScreenVisible: Boolean = false
+    @Volatile @JvmField var isTabListVisible: Boolean = false
+    @Volatile @JvmField var isGuiScreenOpen: Boolean = false
+
     private val lastUpdates = HashMap<Hud, Long>()
 
     @ApiStatus.Internal
@@ -139,11 +143,17 @@ object HudManager {
     fun render(ctx: RenderContext, screenWidth: Float, screenHeight: Float) {
         val scale = OmniResolution.scaleFactor.toFloat()
 
+        // Ensure any pending state mutations (e.g. background/color changes) are visible to compose runtimes
+        Snapshot.sendApplyNotifications()
+
         ctx.save()
         ctx.scale(scale, scale)
 
         for (hud in activeInstances) {
             if (hud.hidden || hud is LegacyHud) continue
+            if (isDebugScreenVisible && !hud.showInF3) continue
+            if (isTabListVisible && !hud.showInTab) continue
+            if (isGuiScreenOpen && !hud.showInScreens) continue
 
             hud.update()
 
@@ -167,8 +177,21 @@ object HudManager {
 
     @ApiStatus.Internal
     fun toggleEditor() {
-        isEditing = !isEditing
-        EventManager.INSTANCE.post(if (isEditing) HudEditorToggleEvent.OPEN else HudEditorToggleEvent.CLOSE)
+        if (isEditing) closeEditor() else openEditor()
+    }
+
+    @ApiStatus.Internal
+    fun openEditor() {
+        if (isEditing) return
+        isEditing = true
+        EventManager.INSTANCE.post(HudEditorToggleEvent.OPEN)
+    }
+
+    @ApiStatus.Internal
+    fun closeEditor() {
+        if (!isEditing) return
+        isEditing = false
+        EventManager.INSTANCE.post(HudEditorToggleEvent.CLOSE)
     }
 
     @Suppress("UNCHECKED_CAST")

@@ -56,11 +56,18 @@ abstract class TextHud(
     @TextAnnotation(title = "Text Suffix") var suffix: String = "",
 ) : Hud(id, title, category) {
 
+    companion object {
+        private const val UNMEASURED = -1f
+    }
+
     init {
         padLeft = 4f
         padRight = 4f
         padTop = 4f
         padBottom = 4f
+        staticWidth = true
+        staticW = UNMEASURED
+        staticH = UNMEASURED
     }
 
     @get:JvmName("getStringBuilder")
@@ -80,12 +87,14 @@ abstract class TextHud(
         val padInsets = PolyInsets(padLeft, padTop, padRight, padBottom)
         val fgColor = PolyColor(textColor)
 
+        val isStaticValid = staticWidth && staticW > 0f && staticH > 0f
+
         val outerModifier = if (showBackground) {
             val bgModifier = PolyModifier.background(PolyColor(bgColor), bgRadius)
-            if (staticWidth) bgModifier.size(staticW, staticH).padding(padInsets)
+            if (isStaticValid) bgModifier.size(staticW, staticH).padding(padInsets)
             else bgModifier.padding(padInsets)
         } else {
-            if (staticWidth) PolyModifier.size(staticW, staticH).padding(padInsets)
+            if (isStaticValid) PolyModifier.size(staticW, staticH).padding(padInsets)
             else PolyModifier.padding(padInsets)
         }
 
@@ -104,13 +113,13 @@ abstract class TextHud(
 
                 if (showShadow) {
                     PolyCanvas(modifier = PolyModifier.size(textWidth, textHeight)
-                        .let { if (staticWidth) it.align(contentAlign) else it }) { x, y, _, _ ->
+                        .let { if (isStaticValid) it.align(contentAlign) else it }) { x, y, _, _ ->
                         text(text, x + shadowOffsetX, y - skiaFont.metrics.ascent + shadowOffsetY, PolyColor(shadowColor), skiaFont)
                         text(text, x, y - skiaFont.metrics.ascent, fgColor, skiaFont)
                     }
                 } else {
                     PolyCanvas(modifier = PolyModifier.size(textWidth, textHeight)
-                        .let { if (staticWidth) it.align(contentAlign) else it }) { x, y, _, _ ->
+                        .let { if (isStaticValid) it.align(contentAlign) else it }) { x, y, _, _ ->
                         text(text, x, y - skiaFont.metrics.ascent, fgColor, skiaFont)
                     }
                 }
@@ -127,7 +136,7 @@ abstract class TextHud(
                     color = textColor,
                     shadow = showShadow,
                     scale = textScale,
-                    modifier = if (staticWidth) PolyModifier.align(contentAlign) else PolyModifier,
+                    modifier = if (isStaticValid) PolyModifier.align(contentAlign) else PolyModifier,
                 )
             }
         }
@@ -142,7 +151,8 @@ abstract class TextHud(
         return true
     }
 
-    override fun minimumSize() = 120f to 32f
+    override fun minimumSize(): Pair<Float, Float> =
+        (padLeft + padRight + 2f) to (padTop + padBottom + 2f)
 
     override fun setup() {
         super.setup()
@@ -151,6 +161,27 @@ abstract class TextHud(
             updateWhenChanged("suffix")
         }
         update()
+
+        if (staticW <= 0f || staticH <= 0f) {
+            seedStaticDimensionsFromContent()
+        }
+    }
+
+    private fun seedStaticDimensionsFromContent() {
+        try {
+            @Suppress("UNUSED_VARIABLE") val ignore = runtime
+            val natural = measureNaturalContentSize()
+            if (natural != null && natural.first > 0f && natural.second > 0f) {
+                staticW = natural.first
+                staticH = natural.second
+            } else {
+                staticW = padLeft + padRight + 80f
+                staticH = padTop + padBottom + 16f
+            }
+        } catch (_: Throwable) {
+            staticW = padLeft + padRight + 80f
+            staticH = padTop + padBottom + 16f
+        }
     }
 
     protected abstract fun getText(): String?

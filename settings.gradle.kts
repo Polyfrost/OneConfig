@@ -71,6 +71,7 @@ listOf(
     "utils",
     "relocator",
     "poly-compose",
+    "compose-bundle",
 ).forEach { module ->
     include(":modules:$module")
 }

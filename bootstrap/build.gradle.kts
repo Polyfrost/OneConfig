@@ -51,13 +51,16 @@ dependencies {
 
         provideIncludedDependencies(
             tripleVersion,
-            mcData.loader.friendlyString
+            mcData.loader.friendlyString,
+            includeCompose = false
         ).forEach {
             includeOrShade(compileOnly(it.dep)!!)
         }
 
+        includeOrShade(compileOnly(project(":modules:compose-bundle"))!!)
+
         for (project in rootProject.project(":modules").subprojects) {
-            if ("dependencies" !in project.path && "relocator" !in project.path) {
+            if ("dependencies" !in project.path && "relocator" !in project.path && "compose-bundle" !in project.path) {
                 includeOrShade(project(project.path))
             }
         }

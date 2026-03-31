@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.ui.screens
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -11,12 +12,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.FlowRowScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -109,16 +113,27 @@ fun ConfigScreen(tree: Tree, initialCategory: String? = null) {
             return@Column
         }
 
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(entries) { entry ->
-                when (entry) {
-                    is ConfigListEntry.SubcategoryHeader -> SubcategoryHeader(entry.title)
-                    is ConfigListEntry.Item -> when (val node = entry.node) {
-                        is SettingNode.Leaf -> SettingRow(node.prop)
-                        is SettingNode.Accordion -> AccordionRow(node)
+        val lazyListState = rememberLazyListState()
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                state = lazyListState,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(end = 8.dp)
+            ) {
+                items(entries) { entry ->
+                    when (entry) {
+                        is ConfigListEntry.SubcategoryHeader -> SubcategoryHeader(entry.title)
+                        is ConfigListEntry.Item -> when (val node = entry.node) {
+                            is SettingNode.Leaf -> SettingRow(node.prop)
+                            is SettingNode.Accordion -> AccordionRow(node)
+                        }
                     }
                 }
             }
+            VerticalScrollbar(
+                adapter = rememberScrollbarAdapter(lazyListState),
+                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
+            )
         }
     }
 }

@@ -30,7 +30,7 @@ object SkiaFontRenderer : PreparableReloadListener {
 
     fun init() {
         McFontQueue.measureWidth = { text, scale -> measureWidth(text) * scale }
-        McFontQueue.measureHeight = { scale -> LINE_HEIGHT * scale }
+        McFontQueue.measureHeight = { scale -> cellH.toFloat() * scale }
         McFontQueue.renderer = ::draw
         val resourceManager = Minecraft.getInstance().resourceManager
         if (resourceManager is ReloadableResourceManager) {

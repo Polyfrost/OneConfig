@@ -178,7 +178,7 @@ private val fabricApiModuleVersions = mapOf(
  * @param version The version of Minecraft. If null, the method is running inside the `:dependencies:legacy` module.
  * @param loader The mod loader being used.
  */
-fun Project.provideIncludedDependencies(version: Triple<Int, Int, Int>?, loader: String?, shenanigans: String? = version?.toMCVer()): List<OCDependency> { // Either a String or ExternalModuleDependency
+fun Project.provideIncludedDependencies(version: Triple<Int, Int, Int>?, loader: String?, shenanigans: String? = version?.toMCVer(), includeCompose: Boolean = true): List<OCDependency> { // Either a String or ExternalModuleDependency
     project.logger.lifecycle("===> Adding dependencies for Minecraft ${version?.toMCVer()} & $loader")
 
     val libs = rootProject
@@ -230,17 +230,9 @@ fun Project.provideIncludedDependencies(version: Triple<Int, Int, Int>?, loader:
 
     deps.add(libs.findLibrary("hypixel-modapi").get().get())
     deps.add(libs.findLibrary("hypixel-data").get().get())
-    deps.add(libs.findLibrary("jetbrains-compose-foundation").get().get())
-    deps.add(libs.findLibrary("jetbrains-compose-material").get().get())
-    deps.add(libs.findLibrary("jetbrains-compose-runtime").get().get())
-    deps.add(libs.findLibrary("jetbrains-compose-ui").get().get())
-    deps.add(libs.findLibrary("jetbrains-compose-ui-tooling-preview").get().get())
-    deps.add(libs.findLibrary("jetbrains-compose-ui-util").get().get())
-    deps.add(libs.findLibrary("jetbrains-skiko-awt").get().get())
-    deps.add(libs.findLibrary("jetbrains-skiko-awt-runtime-windows-x64").get().get())
-    deps.add(libs.findLibrary("jetbrains-skiko-awt-runtime-linux-x64").get().get())
-    deps.add(libs.findLibrary("jetbrains-skiko-awt-runtime-macos-x64").get().get())
-    deps.add(libs.findLibrary("jetbrains-skiko-awt-runtime-macos-arm64").get().get())
+    if (includeCompose) {
+        deps.addAll(provideComposeDependencies())
+    }
     if (loader == "fabric") {
         deps.add(libs.findLibrary("fabric-language-kotlin").get().get())
     } else if (version != null && version.second > 12) { // forge / neoforge
@@ -258,9 +250,6 @@ fun Project.provideIncludedDependencies(version: Triple<Int, Int, Int>?, loader:
     }
     deps.add(libs.findLibrary("mixin-extras").get().get())
     deps.add(libs.findLibrary("mixin-squared").get().get())
-    deps.add(libs.findLibrary("jetbrains-compose-navigation").get().get())
-    deps.add(libs.findLibrary("jetbrains-lifecycle").get().get())
-    deps.add(libs.findLibrary("jetbrains-viewmodel").get().get())
     deps.add(libs.findLibrary("commonmark").get().get())
     val actualDeps = mutableListOf<OCDependency>()
     for (dep in deps) {
@@ -272,6 +261,29 @@ fun Project.provideIncludedDependencies(version: Triple<Int, Int, Int>?, loader:
     }
 
     return actualDeps
+}
+
+fun Project.provideComposeDependencies(): List<Any> {
+    val libs = rootProject
+        .extensions
+        .getByType<VersionCatalogsExtension>()
+        .named("libs")
+    return listOf(
+        libs.findLibrary("jetbrains-compose-foundation").get().get(),
+        libs.findLibrary("jetbrains-compose-material").get().get(),
+        libs.findLibrary("jetbrains-compose-runtime").get().get(),
+        libs.findLibrary("jetbrains-compose-ui").get().get(),
+        libs.findLibrary("jetbrains-compose-ui-tooling-preview").get().get(),
+        libs.findLibrary("jetbrains-compose-ui-util").get().get(),
+        libs.findLibrary("jetbrains-skiko-awt").get().get(),
+        libs.findLibrary("jetbrains-skiko-awt-runtime-windows-x64").get().get(),
+        libs.findLibrary("jetbrains-skiko-awt-runtime-linux-x64").get().get(),
+        libs.findLibrary("jetbrains-skiko-awt-runtime-macos-x64").get().get(),
+        libs.findLibrary("jetbrains-skiko-awt-runtime-macos-arm64").get().get(),
+        libs.findLibrary("jetbrains-compose-navigation").get().get(),
+        libs.findLibrary("jetbrains-lifecycle").get().get(),
+        libs.findLibrary("jetbrains-viewmodel").get().get(),
+    )
 }
 
 fun Project.provideFabricApiDependency(version: Triple<Int, Int, Int>): List<OCDependency> {
