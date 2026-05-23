@@ -1,22 +1,17 @@
 package org.polyfrost.oneconfig.internal.compat
 
-import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfig
-import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigButton
-import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigEntry
-import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigObjectEntry
-import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigValueEntry
-import com.teamresourceful.resourcefulconfig.api.types.options.EntryType
-import com.teamresourceful.resourcefulconfig.api.types.options.Option
-import dev.deftu.omnicore.api.client.getIconResource
-import dev.deftu.omnicore.api.client.getIconResourcePath
-import dev.deftu.omnicore.api.loader.ModInfo
-import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+//? rconfig_compat {
+/*import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
+import org.polyfrost.oneconfig.api.config.v1.dsl.category
+import org.polyfrost.oneconfig.api.config.v1.dsl.icon
+import org.polyfrost.oneconfig.api.config.v1.dsl.index
+import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
+import org.polyfrost.oneconfig.api.config.v1.dsl.visualizer
 import org.polyfrost.oneconfig.internal.DynamicImage
-import org.polyfrost.oneconfig.api.config.v1.dsl.*
-import java.util.*
+import java.util.UUID
 
 internal object RConfigCompat {
 
@@ -176,5 +171,5 @@ internal object RConfigCompat {
             this@RConfigPropertyBuilder.metadata.entries.forEach { (key, value) -> addMetadata(key, value) }
         }
     }
-
 }
+*///? }

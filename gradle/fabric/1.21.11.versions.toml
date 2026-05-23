@@ -1,2 +1,20 @@
 [versions]
-test = "meow"
+api-base = "1.0.5+4ebb5c0853"
+lifecycle-events-v1 = "2.6.15+4ebb5c0853"
+rendering-v1 = "16.2.5+1fb1cde953"
+screen-api-v1 = "3.1.7+4ebb5c0853"
+transitive-access-wideners-v1 = "7.0.7+1fb1cde953"
+command-api-v2 = "2.4.6+4ebb5c0853"
+key-binding-api-v1 = "1.1.7+4fc5413f53"
+
+[libraries]
+api-base = { module = "net.fabricmc.fabric-api:fabric-api-base", version.ref = "api-base" }
+lifecycle-events-v1 = { module = "net.fabricmc.fabric-api:fabric-lifecycle-events-v1", version.ref = "lifecycle-events-v1" }
+rendering-v1 = { module = "net.fabricmc.fabric-api:fabric-rendering-v1", version.ref = "rendering-v1" }
+screen-api-v1 = { module = "net.fabricmc.fabric-api:fabric-screen-api-v1", version.ref = "screen-api-v1" }
+transitive-access-wideners-v1 = { module = "net.fabricmc.fabric-api:fabric-transitive-access-wideners-v1", version.ref = "transitive-access-wideners-v1" }
+command-api-v2 = { module = "net.fabricmc.fabric-api:fabric-command-api-v2", version.ref = "command-api-v2" }
+key-binding-api-v1 = { module = "net.fabricmc.fabric-api:fabric-key-binding-api-v1", version.ref = "key-binding-api-v1" }
+
+[bundles]
+fabric-api = ["api-base", "lifecycle-events-v1", "rendering-v1", "screen-api-v1", "transitive-access-wideners-v1", "command-api-v2", "key-binding-api-v1"]

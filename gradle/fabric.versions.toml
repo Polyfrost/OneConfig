@@ -1,6 +1,11 @@
 [versions]
 loom = "1.16-SNAPSHOT"
+loader = "0.19.2"
+
+[libraries]
+fabric-loader = { module = "net.fabricmc:fabric-loader", version.ref = "loader" }
 
 [plugins]
 loom-remap = {id = "net.fabricmc.fabric-loom-remap", version.ref = "loom"}
 loom = {id = "net.fabricmc.fabric-loom", version.ref = "loom"}
+

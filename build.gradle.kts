@@ -1,3 +1,12 @@
+
+allprojects {
+    repositories {
+        mavenCentral()
+        maven("https://maven.fabricmc.net/releases")
+        maven("https://maven.logix.dev/snapshots")
+    }
+}
+
 /*
 plugins {
     alias(libs.plugins.kotlin) apply(false)
@@ -11,13 +20,7 @@ plugins {
 // This will cause loom to completely break apart and throw itself into oblivion.
 // I have no idea how to fix it, and honestly, I don't want to know.
 
-allprojects {
-    repositories {
-        mavenCentral()
-        maven("https://maven.fabricmc.net/releases")
-        maven("https://maven.logix.dev/snapshots")
-    }
-}
+
 
 subprojects {
     pluginManager.withPlugin("java") {

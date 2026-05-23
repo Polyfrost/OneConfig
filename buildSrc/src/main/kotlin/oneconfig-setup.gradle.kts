@@ -223,7 +223,12 @@ dependencies {
 
     if (loader == "fabric") {
         handleApiDep(versionedCatalog["fabric-language-kotlin"])
-        //handleApiDep(versionedCatalog.bundles["fabric"])
+        handleApiDep(versionedCatalog["fabric-loader"])
+        handleApiDep(versionedCatalog.bundles["fabric-api"])
+    }
+
+    if (versionedCatalog.has("cinnabar")) {
+        handleApiDep(versionedCatalog["cinnabar"])
     }
 
     //if (mcData.isFabric) {
@@ -240,10 +245,6 @@ dependencies {
 
     //"ksp"(rootProject.project(":modules:relocator"))
     //"annotationProcessor"(rootProject.project(":modules:relocator"))
-
-    if (properties["minecraft.vulkan"] != null) {
-        implementation("graphics.cinnabar:cinnabar-fabric:26.1-snapshot-9-0.0.7-beta-85-gd3508cc")
-    }
 
     for (project in rootProject.project(":modules").subprojects) {
         if ("relocator" in project.path) {

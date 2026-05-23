@@ -16,6 +16,8 @@ stonecutter {
             this["moul_compat"] = false
             this["yacl_compat"] = false
             this["modmenu_compat"] = false
+            this["rconfig_compat"] = false
+            this["cinnabar"] = false
         }
     }
 }
