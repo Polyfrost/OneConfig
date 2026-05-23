@@ -25,7 +25,6 @@
  */
 
 dependencies {
-    compileOnly("dev.deftu:omnicore-1.8.9-forge:${libs.versions.omnicore.get()}")
     @Suppress("VulnerableLibrariesLocal") // reason: we need to use version this because it is what 1.8.9 uses
     compileOnly("com.google.code.gson:gson:2.2.4")
     compileOnly(rootProject.libs.copycat)

@@ -1,0 +1,3 @@
+plugins {
+    `oneconfig-neoforge`
+}

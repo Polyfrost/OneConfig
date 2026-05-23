@@ -26,39 +26,23 @@
 
 package org.polyfrost.oneconfig.api.platform.v1.internal;
 
-import dev.deftu.textile.Text;
-//#if MC >= 1.16.5
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-//#else
-//$ import net.minecraft.util.EnumChatFormatting;
-//$ import net.minecraft.util.IChatComponent;
-//#endif
+import net.minecraft.network.chat.FormattedText;
 import org.polyfrost.oneconfig.api.platform.v1.I18nPlatform;
 
 public class I18nPlatformImpl implements I18nPlatform {
     @Override
     public String getUnformattedText(Object component) {
         String s;
-        //#if MC >= 1.16.5
         if (component instanceof Component) {
             s = ((Component) component).getString();
-        } else if (component instanceof Text) {
-            s = ((Text) component).collapseToString();
+        } else if (component instanceof FormattedText) {
+            //s = ((FormattedText) component).collapseToString();
+            s = "";
         } else {
             s = component.toString();
         }
         return ChatFormatting.stripFormatting(s);
-        //#else
-        //$ if (component instanceof IChatComponent) {
-        //$     //noinspection StringOperationCanBeSimplified
-        //$     s = ((IChatComponent) component).getUnformattedText().toString();
-        //$ } else if (component instanceof Text) {
-        //$     s = ((Text) component).collapseToString();
-        //$ } else {
-        //$     s = component.toString();
-        //$ }
-        //$ return EnumChatFormatting.getTextWithoutFormattingCodes(s);
-        //#endif
     }
 }

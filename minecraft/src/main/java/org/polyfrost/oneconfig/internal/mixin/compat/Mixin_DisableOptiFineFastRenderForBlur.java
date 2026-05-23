@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.internal.mixin.compat;
 
+/* todo
 import org.polyfrost.oneconfig.api.ui.v1.internal.BlurHandler;
 import org.spongepowered.asm.mixin.Dynamic;
 import org.spongepowered.asm.mixin.Mixin;
@@ -47,3 +48,4 @@ public abstract class Mixin_DisableOptiFineFastRenderForBlur {
     }
 
 }
+*/

@@ -30,7 +30,7 @@ private class WindowInfoImpl : WindowInfo {
     }
 
     private fun     isKeyDown(glfwKey: Int): Boolean {
-        return GLFW.glfwGetKey(Minecraft.getInstance().window.window, glfwKey) == GLFW.GLFW_PRESS
+        return GLFW.glfwGetKey(Minecraft.getInstance().window.handle(), glfwKey) == GLFW.GLFW_PRESS
     }
 
     override val keyboardModifiers: PointerKeyboardModifiers
@@ -44,7 +44,7 @@ private class WindowInfoImpl : WindowInfo {
         )
 
     override val isWindowFocused: Boolean
-        get() = glfwGetWindowAttrib(Minecraft.getInstance().window.window, GLFW_FOCUSED) == GLFW_TRUE
+        get() = glfwGetWindowAttrib(Minecraft.getInstance().window.handle(), GLFW_FOCUSED) == GLFW_TRUE
 }
 
 @OptIn(InternalComposeUiApi::class, ExperimentalComposeUiApi::class)
@@ -64,7 +64,7 @@ private class PlatformImpl : PlatformContext {
     private val textCursor = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR)
     private val moveCursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR)
 
-    private val handle = Minecraft.getInstance().window.window
+    private val handle = Minecraft.getInstance().window.handle()
 
     override fun setPointerIcon(pointerIcon: PointerIcon) {
         when (pointerIcon) {

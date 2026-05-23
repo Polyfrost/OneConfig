@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
+//? moul_compat {
+/*
 import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorSlider;
 import io.github.notenoughupdates.moulconfig.processor.ProcessedOption;
 import org.polyfrost.oneconfig.internal.compat.GuiOptionEditorSliderAccessor;
@@ -14,9 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Pseudo
 @MoulConfig
-//#if MC==1.8.9||MC>=1.21.4
 @RelocatedMixin
-//#endif
 @Mixin(value = GuiOptionEditorSlider.class, remap = false)
 public class Mixin_GuiOptionEditorSlider implements GuiOptionEditorSliderAccessor {
 
@@ -49,3 +49,4 @@ public class Mixin_GuiOptionEditorSlider implements GuiOptionEditorSliderAccesso
         return oneconfig$minStep;
     }
 }
+*///? }

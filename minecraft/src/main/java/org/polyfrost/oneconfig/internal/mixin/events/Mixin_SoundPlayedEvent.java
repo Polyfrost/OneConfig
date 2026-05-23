@@ -14,11 +14,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 @Mixin(SoundManager.class)
 public class Mixin_SoundPlayedEvent {
     @ModifyVariable(
-            //#if MC >= 1.21.8
-            //$$ method = "play",
-            //#else
             method = "play",
-            //#endif
             at = @At("HEAD"),
             argsOnly = true
     )

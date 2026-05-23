@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
+//? moul_compat {
+/*
 import io.github.notenoughupdates.moulconfig.processor.ConfigProcessorDriver;
 import io.github.notenoughupdates.moulconfig.processor.ConfigStructureReader;
 import io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor;
@@ -17,9 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Pseudo
 @MoulConfig
-//#if MC==1.8.9||MC>=1.21.4
 @RelocatedMixin
-//#endif
 @Mixin(value = ConfigProcessorDriver.class, remap = false)
 public class Mixin_ConfigProcessorDriver {
 
@@ -36,3 +36,4 @@ public class Mixin_ConfigProcessorDriver {
         }
     }
 }
+*///? }

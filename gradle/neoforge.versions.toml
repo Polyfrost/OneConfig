@@ -1,0 +1,5 @@
+[versions]
+moddev = "2.0.141"
+
+[plugins]
+moddev = { id = "net.neoforged.moddev", version.ref = "moddev"}

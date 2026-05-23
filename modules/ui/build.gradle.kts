@@ -25,7 +25,7 @@
  */
 
 plugins {
-    alias(libs.plugins.kotlin.compose)
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 dependencies {
@@ -38,8 +38,6 @@ dependencies {
     api(project(":modules:events"))
 
     compileOnly(libs.bundles.lwjgl)
-    compileOnly("dev.deftu:omnicore-1.16.5-forge:${libs.versions.omnicore.get()}")
-    compileOnly("dev.deftu:textile-1.16.5-forge:${libs.versions.textile.get()}")
 
     testImplementation(libs.lwjgl.tinyfd)
 }

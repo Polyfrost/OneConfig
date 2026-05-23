@@ -20,8 +20,6 @@ copycat = "0.1.3"
 copycat-image-awt = "0.1.1"
 
 # Per version
-textile = "1.0.0-beta.18"
-omnicore = "1.0.0-beta.41"
 lwjgl = "3.3.3" # All downloaded by the isolated-lwjgl3-loader
 
 # Legacy only
@@ -77,8 +75,6 @@ annotations = { module = "org.jetbrains:annotations", version.ref = "annotations
 
 logging-api = { module = "org.apache.logging.log4j:log4j-api", version.ref = "log4j-api" }
 logging-impl = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j-impl" }
-
-textile = { module = "dev.deftu:textile", version.ref = "textile" }
 
 lwjgl = { module = "org.lwjgl:lwjgl", version.ref = "lwjgl" }
 lwjgl-nvg = { module = "org.lwjgl:lwjgl-nanovg", version.ref = "lwjgl" }

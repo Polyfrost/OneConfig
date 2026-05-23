@@ -25,8 +25,6 @@
  */
 
 dependencies {
-    compileOnly("dev.deftu:omnicore-1.8.9-forge:${libs.versions.omnicore.get()}")
-    compileOnly("dev.deftu:textile-1.8.9-forge:${libs.versions.textile.get()}")
     api(project(":modules:utils"))
 }
 

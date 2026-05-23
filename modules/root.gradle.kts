@@ -4,7 +4,7 @@
 
 plugins {
     alias(libs.plugins.kotlinx.api.validator)
-    alias(libs.plugins.jetbrains.idea.ext)
+    id("org.jetbrains.gradle.plugin.idea-ext")
     id("maven-publish")
     id("signing")
 }
@@ -13,9 +13,6 @@ val rootModuleProject = project
 
 subprojects {
     apply(plugin = "kotlin")
-    apply(plugin = rootProject.libs.plugins.dgt.java.get().pluginId)
-    apply(plugin = rootProject.libs.plugins.dgt.kotlin.get().pluginId)
-    apply(plugin = rootProject.libs.plugins.dgt.publishing.maven.get().pluginId)
     apply(plugin = "jvm-test-suite")
 
     if (project.parent?.name == "dependencies") {
@@ -25,7 +22,7 @@ subprojects {
     repositories {
         maven("https://repo.polyfrost.org/releases")
         maven("https://repo.polyfrost.org/snapshots")
-        maven("https://maven.deftu.dev/releases")
+        maven("https://nexus.prsm.wtf/repository/maven-public/maven-repo/releases/")
 
         google()
     }
@@ -35,17 +32,6 @@ subprojects {
         "compileOnly"(rootProject.libs.logging.api)
         "testImplementation"(rootProject.libs.bundles.test.core)
         "testImplementation"(platform(rootProject.libs.junit.bom))
-
-        if (project.name != "legacy") { // dependencies:legacy module, which internally uses mc 1.16. we dont run anything here, so its ok.
-            constraints {
-                "compileOnly"(rootProject.libs.logging.api) {
-                    version {
-                        strictly(rootProject.libs.versions.log4j.api.get())
-                    }
-                    because("Version of log4j used by Minecraft 1.8")
-                }
-            }
-        }
     }
 
     configure<TestingExtension> {
@@ -104,6 +90,8 @@ subprojects {
         }
     }
 
+    /*
+    todo
     afterEvaluate {
         publishing {
             publications {
@@ -119,6 +107,7 @@ subprojects {
             }
         }
     }
+     */
 
     tasks {
         named<Jar>("jar") {
@@ -139,6 +128,6 @@ apiValidation {
     ignoredPackages.add("org.polyfrost.oneconfig.api.hypixel.v1.internal")
     ignoredProjects.add("internal")
     ignoredProjects.add("dependencies")
-    ignoredProjects.add("legacy")
+    //ignoredProjects.add("legacy")
     ignoredProjects.add("compose-bundle")
 }

@@ -25,7 +25,7 @@
  */
 
 plugins {
-    alias(libs.plugins.kotlin.compose)
+    id("org.jetbrains.kotlin.plugin.compose")
     alias(libs.plugins.kotlin.serialization)
 }
 
@@ -46,8 +46,6 @@ dependencies {
     implementation(libs.jetbrains.skiko.awt.runtime.windows.x64)
 
     implementation(libs.commonmark)
-
-    compileOnly("dev.deftu:omnicore-1.8.9-forge:${libs.versions.omnicore.get()}")
 }
 
 kotlin {

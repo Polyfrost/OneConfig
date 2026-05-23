@@ -31,33 +31,12 @@ import org.polyfrost.oneconfig.api.platform.v1.LoaderPlatform;
 
 import java.nio.file.Path;
 
-//#if FABRIC
-import net.fabricmc.loader.impl.launch.FabricLauncherBase;
-//#else
-//#if MC >= 1.15.2
-//$ // TODO
-//#else
-//$ import net.minecraft.launchwrapper.Launch;
-//#endif
-//#endif
-
 public class LoaderPlatformImpl implements LoaderPlatform {
     @Override
-    //#if FABRIC
-    @SuppressWarnings("deprecation")
-    //#endif
     public void addToClasspath(@NotNull Path path) {
-        //#if FORGE-LIKE
-        //#if MC > 1.12.2
-        //$ throw new UnsupportedOperationException("TODO"); // hiiii init!!!
-        //#else
-        //$ try {
-        //$     Launch.classLoader.addURL(path.toUri().toURL());
-        //$ } catch (Exception e) {
-        //$     throw new RuntimeException(e);
-        //$ }
-        //#endif
-        //#else
+        //? neoforge {
+        //throw new UnsupportedOperationException("TODO"); // hiiii init!!!
+        //? } else {
         try {
             FabricLauncherBase.getLauncher().addToClassPath(path);
         } catch (Exception e) {
@@ -67,7 +46,7 @@ public class LoaderPlatformImpl implements LoaderPlatform {
                 throw new RuntimeException(e2);
             }
         }
-        //#endif
+        //? }
     }
 
 }

@@ -1,3 +1,4 @@
+/*
 plugins {
     alias(libs.plugins.kotlin) apply(false)
     alias(libs.plugins.licenser) apply(false)
@@ -12,9 +13,8 @@ plugins {
 
 allprojects {
     repositories {
-        maven("https://pkg.frst.cloud/releases") {
-            name = "frstCloudReleases"
-        }
+        mavenCentral()
+        maven("https://maven.fabricmc.net/releases")
         maven("https://maven.logix.dev/snapshots")
     }
 }
@@ -40,3 +40,5 @@ subprojects {
         }
     }
 }
+
+ */

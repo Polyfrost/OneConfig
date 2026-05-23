@@ -11,12 +11,13 @@ private val legacyFabricApiModules = listOf(
     "rendering-api-v1"
 )
 
-private val fabricApiModules = listOf( // command-api-v2 introduced in 1.19, transitive-access-wideners-v1 introduced in 1.18
-    "api-base",
-    "lifecycle-events-v1",
-    "rendering-v1",
-    "screen-api-v1"
-)
+private val fabricApiModules =
+    listOf( // command-api-v2 introduced in 1.19, transitive-access-wideners-v1 introduced in 1.18
+        "api-base",
+        "lifecycle-events-v1",
+        "rendering-v1",
+        "screen-api-v1"
+    )
 
 // Yes, this is genuinely worth the effort of maintaining. Without this, syncing would require having to remap significantly more modules.
 private val fabricApiModuleVersions = mapOf(
@@ -178,7 +179,12 @@ private val fabricApiModuleVersions = mapOf(
  * @param version The version of Minecraft. If null, the method is running inside the `:dependencies:legacy` module.
  * @param loader The mod loader being used.
  */
-fun Project.provideIncludedDependencies(version: Triple<Int, Int, Int>?, loader: String?, shenanigans: String? = version?.toMCVer(), includeCompose: Boolean = true): List<OCDependency> { // Either a String or ExternalModuleDependency
+fun Project.provideIncludedDependencies(
+    version: Triple<Int, Int, Int>?,
+    loader: String?,
+    shenanigans: String? = version?.toMCVer(),
+    includeCompose: Boolean = true,
+): List<OCDependency> { // Either a String or ExternalModuleDependency
     project.logger.lifecycle("===> Adding dependencies for Minecraft ${version?.toMCVer()} & $loader")
 
     val libs = rootProject
@@ -191,7 +197,6 @@ fun Project.provideIncludedDependencies(version: Triple<Int, Int, Int>?, loader:
     deps.addAll(libs.findBundle("nightconfig").get().get())
     deps.add(libs.findLibrary("snakeyaml").get().get())
     deps.add(libs.findLibrary("isolated-lwjgl3-loader").get().get())
-    deps.add(libs.findLibrary("textile").get().get())
     deps.add(libs.findLibrary("polyio").get().get())
     val copycat = libs.findLibrary("copycat").get().get()
     deps.add(copycat)
@@ -239,7 +244,8 @@ fun Project.provideIncludedDependencies(version: Triple<Int, Int, Int>?, loader:
         // TODO add KFF
     }
     if ((version == null && loader != null) // legacy dep module
-        || (version != null && version.first == 1 && version.second <= 12 && loader == "forge")) {
+        || (version != null && version.first == 1 && version.second <= 12 && loader == "forge")
+    ) {
         deps.add(libs.findLibrary("mixin").get().get()) // PolyMixin
     }
     if (version != null && version.second <= 12) {
@@ -254,10 +260,6 @@ fun Project.provideIncludedDependencies(version: Triple<Int, Int, Int>?, loader:
     val actualDeps = mutableListOf<OCDependency>()
     for (dep in deps) {
         actualDeps.add(OCDependency(dep))
-    }
-    if (version != null) {
-        actualDeps.add(OCDependency("dev.deftu:textile-${shenanigans}-$loader:${libs.findVersion("textile").get().displayName}", true))
-        actualDeps.add(OCDependency("org.polyfrost:omnicore-${shenanigans}-$loader:${libs.findVersion("omnicore").get().displayName}", true))
     }
 
     return actualDeps
@@ -289,39 +291,30 @@ fun Project.provideComposeDependencies(): List<Any> {
 fun Project.provideFabricApiDependency(version: Triple<Int, Int, Int>): List<OCDependency> {
     val deps = mutableListOf<OCDependency>()
 
-    if (version.first == 1 && version.second <= 12) {
-        // Legacy Fabric
-        for (module in legacyFabricApiModules) {
-            val commonVersionValue = fabricApiModuleVersions["$module-common"] ?: error("No version found for $module-common")
-            deps.add(OCDependency("net.legacyfabric.legacy-fabric-api:legacy-fabric-$module-common:$commonVersionValue", true))
-            val mcVersionValue = fabricApiModuleVersions["$module-${version.toPreprocessorNumber()}"] ?: error("No version found for $module-${version.toMCVer()}")
-            deps.add(OCDependency("net.legacyfabric.legacy-fabric-api:legacy-fabric-$module:$mcVersionValue", true))
-        }
+    // Modern Fabric
+    val finalList = mutableListOf<String>()
+    finalList.addAll(fabricApiModules)
+    if (version.first >= 2) {
+        finalList.remove("screen-api-v1")
+        finalList.remove("rendering-v1")
+    }
+    if (version.first >= 2 || version.second >= 18) {
+        finalList.add("transitive-access-wideners-v1")
+    }
+    if (version.first >= 2 || version.second >= 19) {
+        finalList.add("command-api-v2")
     } else {
-        // Modern Fabric
-        val finalList = mutableListOf<String>()
-        finalList.addAll(fabricApiModules)
-        if (version.first >= 2) {
-            finalList.remove("screen-api-v1")
-            finalList.remove("rendering-v1")
-        }
-        if (version.first >= 2 || version.second >= 18) {
-            finalList.add("transitive-access-wideners-v1")
-        }
-        if (version.first >= 2 || version.second >= 19) {
-            finalList.add("command-api-v2")
-        } else {
-            finalList.add("command-api-v1")
-        }
-        if (version.first >= 2) {
-            finalList.add("key-mapping-api-v1")
-        } else {
-            finalList.add("key-binding-api-v1")
-        }
-        for (module in finalList) {
-            val mcVersionValue = fabricApiModuleVersions["$module-${version.toPreprocessorNumber()}"] ?: error("No version found for $module-${version.toMCVer()}")
-            deps.add(OCDependency("net.fabricmc.fabric-api:fabric-$module:$mcVersionValue", true))
-        }
+        finalList.add("command-api-v1")
+    }
+    if (version.first >= 2) {
+        finalList.add("key-mapping-api-v1")
+    } else {
+        finalList.add("key-binding-api-v1")
+    }
+    for (module in finalList) {
+        val mcVersionValue = fabricApiModuleVersions["$module-${version.toPreprocessorNumber()}"]
+            ?: error("No version found for $module-${version.toMCVer()}")
+        deps.add(OCDependency("net.fabricmc.fabric-api:fabric-$module:$mcVersionValue", true))
     }
     return deps
 }

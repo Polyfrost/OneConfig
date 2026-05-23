@@ -1,4 +1,4 @@
-/*
+package org.polyfrost.oneconfig.internal.mixin.events;/*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
  * Copyright (C) 2021~2024 Polyfrost.
@@ -24,37 +24,37 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-//#if FORGE
-//$$ package org.polyfrost.oneconfig.internal.mixin.events;
-//$$
-//$$ import dev.deftu.textile.minecraft.MCText;
-//$$ import net.neoforged.neoforge.client.event.ClientChatReceivedEvent;
-//$$ import net.neoforged.bus.api.Event;
-//$$ import net.neoforged.bus.api.EventBus;
-//$$ import org.polyfrost.oneconfig.api.event.v1.EventManager;
-//$$ import org.polyfrost.oneconfig.api.event.v1.events.ChatEvent;
-//$$ import org.spongepowered.asm.mixin.Mixin;
-//$$ import org.spongepowered.asm.mixin.injection.At;
-//$$ import org.spongepowered.asm.mixin.injection.Inject;
-//$$ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-//$$
-//$$ @Mixin(EventBus.class)
-//$$ public abstract class Mixin_ChatReceiveEvent_Forge {
-//$$
-//$$     @Inject(method = "post", at = @At(value = "HEAD"), remap = false)
-//$$     private void receiveEventCallback(Event e, CallbackInfo ci) {
-//$$         if (!(e instanceof ClientChatReceivedEvent)) {
-//$$             return;
-//$$         }
-//$$
-//$$         ClientChatReceivedEvent event = (ClientChatReceivedEvent) e;
-//$$         ChatEvent.Receive ev = new ChatEvent.Receive(MCText.wrap(event.getMessage()));
-//$$         EventManager.INSTANCE.post(ev);
-//$$         event.setMessage(MCText.convert(ev.getMessage()));
-//$$         if (ev.cancelled) {
-//$$             event.setCanceled(true);
-//$$         }
-//$$     }
-//$$
-//$$ }
-//#endif
+//? neoforge {
+//package org.polyfrost.oneconfig.internal.mixin.events;
+//
+//import dev.deftu.textile.minecraft.MCText;
+//import net.neoforged.neoforge.client.event.ClientChatReceivedEvent;
+//import net.neoforged.bus.api.Event;
+//import net.neoforged.bus.api.EventBus;
+//import org.polyfrost.oneconfig.api.event.v1.EventManager;
+//import org.polyfrost.oneconfig.api.event.v1.events.ChatEvent;
+//import org.spongepowered.asm.mixin.Mixin;
+//import org.spongepowered.asm.mixin.injection.At;
+//import org.spongepowered.asm.mixin.injection.Inject;
+//import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+//
+//@Mixin(EventBus.class)
+//public abstract class Mixin_ChatReceiveEvent_Forge {
+//
+//    @Inject(method = "post", at = @At(value = "HEAD"), remap = false)
+//    private void receiveEventCallback(Event e, CallbackInfo ci) {
+//        if (!(e instanceof ClientChatReceivedEvent)) {
+//            return;
+//        }
+//
+//        ClientChatReceivedEvent event = (ClientChatReceivedEvent) e;
+//        ChatEvent.Receive ev = new ChatEvent.Receive(MCText.wrap(event.getMessage()));
+//        EventManager.INSTANCE.post(ev);
+//        event.setMessage(MCText.convert(ev.getMessage()));
+//        if (ev.cancelled) {
+//            event.setCanceled(true);
+//        }
+//    }
+//
+//}
+//? }

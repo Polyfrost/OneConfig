@@ -1,11 +1,11 @@
 package org.polyfrost.oneconfig.internal.compat
 
-import dev.deftu.omnicore.api.loader.ModInfo
-import dev.deftu.omnicore.api.loader.OmniLoader
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.Event
 import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
 import java.net.URI
+
+typealias ModInfo = Any // todo
 
 object CompatLoader {
     private val forcedModId = ThreadLocal<String?>()

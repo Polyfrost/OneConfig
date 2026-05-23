@@ -1,20 +1,9 @@
 @file:Suppress("PropertyName")
 
-import groovy.lang.MissingPropertyException
-
 pluginManagement {
     repositories {
-        // Releases
-        maven("https://maven.deftu.dev/releases")
-        maven("https://maven.fabricmc.net")
-        maven("https://maven.architectury.dev/")
-        maven("https://maven.minecraftforge.net")
-        maven("https://repo.essential.gg/repository/maven-public")
-        maven("https://server.bbkr.space/artifactory/libs-release/")
-        maven("https://jitpack.io/")
+        maven("https://maven.kikugie.dev/snapshots")
 
-        // Snapshots
-        maven("https://maven.deftu.dev/snapshots")
         mavenLocal()
 
         // Default
@@ -23,34 +12,103 @@ pluginManagement {
     }
 
     plugins {
-        kotlin("jvm") version("2.3.0")
-        id("dev.deftu.gradle.multiversion-root") version("2.73.0") // Update in libs.versions.toml too!!!
-    }
-}
-
-dependencyResolutionManagement {
-    repositories {
-        mavenLocal()
-        mavenCentral()
-        maven("https://repo.polyfrost.org/releases")
-        maven("https://repo.hypixel.net/repository/Hypixel")
+        kotlin("jvm") version ("2.3.0")
     }
 }
 
 plugins {
+    id("dev.kikugie.stonecutter") version "0.9"
     id("org.gradle.toolchains.foojay-resolver-convention") version ("1.0.0")
 }
 
-val projectName: String = extra["project.name"]?.toString()
-    ?: throw MissingPropertyException("mod.name has not been set.")
 
-rootProject.name = projectName
-if (rootDir.name != projectName) {
-    logger.error("""
-        Root directory name (${rootDir.absolutePath}) does not match project name ($projectName)! 
-        This may cause issues with indexing and other tools (see https://youtrack.jetbrains.com/issue/IDEA-317606#focus=Comments-27-7257761.0-0 and https://stackoverflow.com/questions/77878944 ). 
-        If you are experiencing issues, please rename the root directory to match the project name, re-import the project, and invalidate caches if you are on IntelliJ.
-    """.trimIndent())
+interface ModLoader {
+    val name: String
+    fun buildFile(version: String): String
+    fun versionName(version: String): String
+}
+
+val stonecutterExt = stonecutter
+val FABRIC: ModLoader = object : ModLoader {
+    override val name: String = "fabric"
+    override fun versionName(version: String) = "$version-fabric"
+    override fun buildFile(version: String) = if (stonecutterExt.eval(version, ">= 26.1")) {
+        "fabric.gradle.kts"
+    } else {
+        "fabric.obf.gradle.kts"
+    }
+}
+
+val NEO_FORGE: ModLoader = object : ModLoader {
+    override val name: String = "neoforge"
+    override fun versionName(version: String) = "$version-neoforge"
+    override fun buildFile(version: String) = "neoforge.gradle.kts"
+}
+
+val versions = buildList {
+    fun fabric(version: String) = add(version to listOf(FABRIC))
+    fun neoforge(version: String) = add(version to listOf(NEO_FORGE))
+    fun both(version: String) {
+        add(version to listOf(FABRIC, NEO_FORGE))
+    }
+
+    both("26.1")
+    both("1.21.11")
+    both("1.21.10")
+    both("1.21.8")
+    both("1.21.5")
+    both("1.21.4")
+    both("1.21.1")
+}
+
+stonecutter {
+    create("minecraft") {
+        versions.forEach { (version, loaders) ->
+            loaders.forEach { loader ->
+                version(loader.versionName(version), version).buildscript = loader.buildFile(version)
+            }
+        }
+    }
+}
+
+dependencyResolutionManagement {
+    versionCatalogs {
+        create("fabric") {
+            from(files(rootProject.projectDir.resolve("gradle/fabric.versions.toml")))
+        }
+        create("neoforge") {
+            from(files(rootProject.projectDir.resolve("gradle/neoforge.versions.toml")))
+        }
+        versions.forEach { (version, loaders) ->
+            val common = "common$version".replace(".", "")
+            create(common) {
+                println("creating version catalogue $common")
+                val file = rootProject.projectDir.resolve("gradle/common/$version.versions.toml")
+
+                if (!file.exists()) {
+                    file.parentFile.mkdirs()
+                    file.createNewFile()
+                }
+
+                from(files(file))
+            }
+
+            loaders.forEach { loader ->
+                val name = "${loader.name}$version".replace(".", "")
+                create(name) {
+                    println("creating version catalogue $name")
+                    val file = rootProject.projectDir.resolve("gradle/${loader.name}/$version.versions.toml")
+
+                    if (!file.exists()) {
+                        file.parentFile.mkdirs()
+                        file.createNewFile()
+                    }
+
+                    from(files(file))
+                }
+            }
+        }
+    }
 }
 
 include(":modules")
@@ -65,9 +123,10 @@ listOf(
     "hud",
     "events",
     "ui",
+    "compat",
     "internal",
     "dependencies",
-    "dependencies:legacy",
+    //"dependencies:legacy",
     "utils",
     "relocator",
     "poly-compose",
@@ -76,9 +135,23 @@ listOf(
     include(":modules:$module")
 }
 
+/*
+val projectName: String = extra["project.name"]?.toString()
+    ?: throw MissingPropertyException("mod.name has not been set.")
+
+rootProject.name = projectName
+if (rootDir.name != projectName) {
+    logger.error("""
+        Root directory name (${rootDir.absolutePath}) does not match project name ($projectName)! 
+        This may cause issues with indexing and other tools (see https://youtrack.jetbrains.com/issue/IDEA-317606#focus=Comments-27-7257761.0-0 and https://stackoverflow.com/questions/77878944 ). 
+        If you are experiencing issues, please rename the root directory to match the project name, re-import the project, and invalidate caches if you are on IntelliJ.
+    """.trimIndent())
+}
+
 // FOR ALL NEW VERSIONS MAKE SURE TO INCLUDE THEM IN root.gradle.kts !
 include(":minecraft")
 project(":minecraft").buildFileName = "root.gradle.kts"
+/*
 include(":bootstrap")
 project(":bootstrap").buildFileName = "root.gradle.kts"
 listOf(
@@ -132,4 +205,4 @@ listOf(
             buildFileName = "../../build.gradle.kts"
         }
     }
-}
+}*/

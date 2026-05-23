@@ -18,9 +18,8 @@ public class Mixin_HudRenderEvent {
 
     @Inject(method = "render", at = @At("TAIL"))
     private void renderHudCallback(GuiGraphics ctx, DeltaTracker deltaTracker, CallbackInfo ci) {
-        //#if MC < 1.21.8
-        ctx.flush();
-        //#endif
+        //? < 1.21.8
+        //ctx.flush();
         OmniRenderingContext context = OmniRenderingContext.from(ctx);
         float partialTicks = OmniRenderTicks.get();
         EventManager.INSTANCE.post(new HudRenderEvent(context, partialTicks));

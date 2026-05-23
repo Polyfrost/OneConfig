@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
+//? moul_compat {
+/*
 import io.github.notenoughupdates.moulconfig.Config;
 import io.github.notenoughupdates.moulconfig.gui.MoulConfigEditor;
 import io.github.notenoughupdates.moulconfig.processor.ProcessedCategory;
@@ -18,9 +20,7 @@ import java.util.LinkedHashMap;
 
 @Pseudo
 @MoulConfig
-//#if MC==1.8.9||MC>=1.21.4
 @RelocatedMixin
-//#endif
 @Mixin(value = MoulConfigEditor.class, remap = false)
 public class Mixin_MoulConfigEditor<T extends Config> {
     @Shadow
@@ -36,3 +36,4 @@ public class Mixin_MoulConfigEditor<T extends Config> {
         MoulConfigCompat.parseMoulconfigFromEditor(this.allCategories.values(), this.configObject);
     }
 }
+*///? }

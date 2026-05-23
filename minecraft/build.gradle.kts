@@ -1,4 +1,8 @@
-@file:Suppress("UnstableApiUsage")
+plugins {
+    `oneconfig-setup`
+}
+
+/*@file:Suppress("UnstableApiUsage")
 // Shared build logic for all versions of OneConfig.
 
 import com.google.devtools.ksp.gradle.KspAATask
@@ -23,141 +27,6 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 import java.lang.Boolean as JBoolean
-
-plugins {
-    java
-    alias(libs.plugins.kotlin)
-    alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.google.ksp)
-    id(libs.plugins.dgt.multiversion.platform.get().pluginId)
-    id(libs.plugins.dgt.base.get().pluginId)
-    id(libs.plugins.dgt.resources.get().pluginId)
-    id(libs.plugins.dgt.loom.get().pluginId)
-    id(libs.plugins.dgt.publishing.maven.get().pluginId)
-}
-
-evaluationDependsOn(":modules")
-
-if (mcData.isForge) {
-    loom.forge.mixinConfig("mixins.oneconfigv1.init.json")
-}
-
-toolkitLoomHelper {
-    disableRunConfigs(GameSide.SERVER)
-
-    if (mcData.version < MinecraftVersions.VERSION_1_21_11) {
-        useDevAuth("+")
-    }
-
-    useProperty("mixin.debug.export", "true", GameSide.CLIENT)
-    useProperty("debugBytecode", "true", GameSide.CLIENT)
-    useProperty("forge.logging.console.level", "debug", GameSide.CLIENT)
-    useProperty("oshi.os.windows.wmi.timeout", "3000", GameSide.CLIENT)
-    if (org.gradle.internal.os.OperatingSystem.current().isMacOsX) {
-        useProperty("fml.earlyprogresswindow", "false", GameSide.CLIENT)
-    }
-
-    if (mcData.isForge) {
-        useForgeMixin("oneconfigv1")
-    }
-
-    if (mcData.isLegacyForge) {
-        useTweaker("org.polyfrost.oneconfig.internal.legacy.OneConfigTweaker")
-    }
-}
-
-java {
-    withSourcesJar()
-    registerFeature("oneConfigModules") {
-        usingSourceSet(sourceSets.create("oneConfigModules"))
-    }
-}
-
-repositories {
-    maven("https://repo.polyfrost.org/releases")
-    maven("https://repo.polyfrost.org/snapshots")
-    maven("https://repo.hypixel.net/repository/Hypixel/")
-    maven("https://maven.deftu.dev/releases")
-    maven("https://maven.notenoughupdates.org/releases") {
-        content { includeGroup("org.notenoughupdates.moulconfig") }
-    }
-    maven("https://maven.teamresourceful.com/repository/maven-releases") {
-        content { includeGroup("com.teamresourceful.resourcefulconfig") }
-    }
-    maven("https://maven.isxander.dev/releases") {
-        content { includeGroup("dev.isxander") }
-    }
-    maven("https://api.modrinth.com/maven") {
-        content { includeGroup("maven.modrinth") } // for some reason yacl versions exist that aren't on the official repo???
-    }
-    maven("https://maven.terraformersmc.com/") {
-        content { includeGroup("com.terraformersmc" ) }
-    }
-    maven("https://jitpack.io") {
-        content { includeGroupAndSubgroups("com.github") }
-    }
-    maven("https://maven.teamresourceful.com/repository/maven-public/") {
-        content { includeGroupAndSubgroups("me.owdding") }
-    }
-    maven("https://maven.azureaaron.net/releases") {
-        content { includeGroup("net.azureaaron") }
-    }
-    maven("https://maven.bawnorton.com/releases") {
-        content { includeGroup("com.github.bawnorton.mixinsquared") }
-    }
-    maven("https://redirector.kotlinlang.org/maven/compose-dev")
-    google()
-}
-
-if (mcData.isLegacyForge) { // Quick substitution for relaunch in dev env, so that mixinextras works properly (yay!)
-    configurations.all {
-        resolutionStrategy {
-            dependencySubstitution {
-                all {
-                    if (requested is ModuleComponentSelector) {
-                        val module = (requested as ModuleComponentSelector)
-                        if (module.group == "org.ow2.asm" && module.version == "5.0.3") {
-                            logger.warn("Substituting ${module.group}:${module.module}:${module.version} with ${libs.asm.get()}")
-                            useTarget(module.group + ":" + module.module + ":" + libs.asm.get().version)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-val includeInLoader = Attribute.of("org.polyfrost.oneconfig.loader.include", Boolean::class.javaObjectType)
-val jijInLoader = Attribute.of("org.polyfrost.oneconfig.loader.jij", Boolean::class.javaObjectType)
-
-
-fun DependencyHandlerScope.handleApiDep(dependency: String, isMod: Boolean = false) {
-    val dep = project.dependencies.create(dependency) as ExternalModuleDependency
-    this.handleApiDep(dep, isMod)
-}
-
-fun DependencyHandlerScope.handleApiDep(dependency: ExternalModuleDependency, isMod: Boolean = false) {
-    val dep = "${dependency.group}:${dependency.name}:${dependency.version}"
-    if (isMod) "oneConfigModulesCompileOnlyApi"(maybeModApi(dep) {
-        isTransitive = false
-        attributes {
-            attribute(includeInLoader, JBoolean.TRUE)
-        }
-    }) else api(dep) {
-        isTransitive = false
-    }
-}
-
-preprocess {
-    val filter: Predicate<File> = Predicate {
-        val seperator = File.separator
-        val path = "build${seperator}generated${seperator}ksp"
-        !it.toPath().absolutePathString().contains(path)
-    }
-
-    javaFilter = filter
-    kotlinFilter = filter
-}
 
 val skyhanniRelocated = registerRelocationAttribute("relocate-skyhanni-moulconfig") {
     relocate("io.github.notenoughupdates.moulconfig", "at.hannibal2.skyhanni.deps.moulconfig")
@@ -282,22 +151,6 @@ dependencies {
         modMenu("1.21.11", "17.0.0-alpha.1"),
     )
     compileOnlyCompat(modMenu[mcVersionString])
-
-    implementation(libs.jetbrains.compose.foundation)
-    implementation(libs.jetbrains.compose.material)
-    implementation(libs.jetbrains.compose.runtime)
-    implementation(libs.jetbrains.compose.ui)
-    implementation(libs.jetbrains.compose.ui.tooling.preview)
-    implementation(libs.jetbrains.compose.ui.util)
-    implementation(libs.jetbrains.skiko.awt)
-    implementation(libs.jetbrains.skiko.awt.runtime.windows.x64)
-    implementation(libs.jetbrains.skiko.awt.runtime.linux.x64)
-    implementation(libs.jetbrains.skiko.awt.runtime.macos.x64)
-    implementation(libs.jetbrains.skiko.awt.runtime.macos.arm64)
-    implementation(libs.jetbrains.compose.navigation)
-    implementation(libs.jetbrains.lifecycle)
-    implementation(libs.jetbrains.viewmodel)
-    implementation(libs.commonmark)
 
     provideIncludedDependencies(
         tripleVersion,
@@ -453,7 +306,7 @@ tasks {
     }
 
     withType(Jar::class) {
-        exclude("**/**_Test.**")
+        exclude("** /**_Test.**")
         exclude("**/**_Test$**.**")
     }
     if (mcData.version.isDrop) {
@@ -516,7 +369,4 @@ afterEvaluate {
         }
     }
 }
-
-ksp {
-    arg("relocator.mcVersion", mcData.version.toString())
-}
+*/

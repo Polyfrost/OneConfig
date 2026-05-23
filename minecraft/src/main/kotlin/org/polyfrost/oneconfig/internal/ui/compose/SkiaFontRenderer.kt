@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
 import net.minecraft.client.Minecraft
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.PreparableReloadListener
 import net.minecraft.server.packs.resources.ReloadableResourceManager
 import net.minecraft.server.packs.resources.ResourceManager
@@ -74,7 +74,7 @@ object SkiaFontRenderer : PreparableReloadListener {
 
     private fun loadAtlas() {
         val rm = Minecraft.getInstance().resourceManager
-        val bytes = rm.getResource(ResourceLocation.withDefaultNamespace("textures/font/ascii.png"))
+        val bytes = rm.getResource(Identifier.withDefaultNamespace("textures/font/ascii.png"))
             .getOrNull()?.open()?.readBytes() ?: return
         val img = Image.makeFromEncoded(bytes) ?: return
         atlas = img
@@ -173,28 +173,28 @@ object SkiaFontRenderer : PreparableReloadListener {
         return (a shl 24) or (r shl 16) or (g shl 8) or b
     }
 
-    //#if MC < 1.21.10
-    override fun reload(
+
+    //? < 1.21.10 {
+    /*override fun reload(
         preparationBarrier: PreparableReloadListener.PreparationBarrier?,
-        resourceManager: ResourceManager?,
-        //#if MC < 1.21.4
-        profilerFiller: ProfilerFiller?,
+        resourceManager: ResourceManager,
+        //? < 1.21.4 {
+        /*profilerFiller: ProfilerFiller?,
         profilerFiller2: ProfilerFiller?,
-        //#endif
+        *///? }
         executor: Executor?,
         executor2: Executor?
     ): CompletableFuture<Void?> {
-    //#else
-    //$$ override fun reload(
-    //$$    sharedState: PreparableReloadListener.SharedState,
-    //$$    executor: Executor,
-    //$$    preparationBarrier: PreparableReloadListener.PreparationBarrier,
-    //$$    executor2: Executor
-    //$$ ): CompletableFuture<Void> {
-    //#endif
-        //#if MC >= 1.21.10
-        //$$ val resourceManager = sharedState.resourceManager()
-        //#endif
+    *///? } else {
+    override fun reload(
+       sharedState: PreparableReloadListener.SharedState,
+       executor: Executor,
+       preparationBarrier: PreparableReloadListener.PreparationBarrier,
+       executor2: Executor
+    ): CompletableFuture<Void> {
+    //? }
+        //? >= 1.21.10
+        val resourceManager = sharedState.resourceManager()
 
         data class Prepared(val img: Image, val cw: Int, val ch: Int, val widths: FloatArray) {
             override fun equals(other: Any?): Boolean {
@@ -221,8 +221,8 @@ object SkiaFontRenderer : PreparableReloadListener {
         }
         return CompletableFuture.supplyAsync({
             val bytes = resourceManager
-                ?.getResource(ResourceLocation.withDefaultNamespace("textures/font/ascii.png"))
-                ?.getOrNull()?.open()?.readBytes() ?: return@supplyAsync null
+                .getResource(Identifier.withDefaultNamespace("textures/font/ascii.png"))
+                .getOrNull()?.open()?.readBytes() ?: return@supplyAsync null
             val img = Image.makeFromEncoded(bytes) ?: return@supplyAsync null
             val cw = img.width / COLS
             val ch = img.height / ROWS
@@ -246,12 +246,11 @@ object SkiaFontRenderer : PreparableReloadListener {
             bitmap.close()
             Prepared(img, cw, ch, widths)
         }, executor).thenCompose { prepared ->
-            //#if MC >= 1.21.10
-            //$$ @Suppress("UNCHECKED_CAST")
-            //$$ preparationBarrier.wait(prepared as Any) as CompletableFuture<Prepared?>
-            //#else
-            preparationBarrier!!.wait(prepared)
-            //#endif
+            //? >= 1.21.10 {
+            @Suppress("UNCHECKED_CAST")
+            preparationBarrier.wait(prepared as Any) as CompletableFuture<Prepared?>
+            //? } else
+            //preparationBarrier!!.wait(prepared)
         }.thenAcceptAsync({ prepared ->
             atlas?.close()
             colorFilterCache.clear()

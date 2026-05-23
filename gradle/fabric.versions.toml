@@ -1,0 +1,6 @@
+[versions]
+loom = "1.16-SNAPSHOT"
+
+[plugins]
+loom-remap = {id = "net.fabricmc.fabric-loom-remap", version.ref = "loom"}
+loom = {id = "net.fabricmc.fabric-loom", version.ref = "loom"}

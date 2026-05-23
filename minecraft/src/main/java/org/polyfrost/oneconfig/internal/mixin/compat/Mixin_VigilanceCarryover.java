@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.internal.mixin.compat;
 
+/* todo
 import gg.essential.vigilance.Vigilant;
 import gg.essential.vigilance.data.PropertyCollector;
 import gg.essential.vigilance.data.SortingBehavior;
@@ -49,3 +50,4 @@ public abstract class Mixin_VigilanceCarryover {
     }
 
 }
+*/

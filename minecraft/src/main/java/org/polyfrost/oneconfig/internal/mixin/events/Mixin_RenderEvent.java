@@ -22,11 +22,10 @@ public class Mixin_RenderEvent {
     }
 
     @Inject(method = "runTick", at = @At(value = "INVOKE",
-            //#if MC >= 1.21.4
-            //$$ target = "Lcom/mojang/blaze3d/platform/Window;updateDisplay(Lcom/mojang/blaze3d/TracyFrameCapture;)V"
-            //#else
-            target = "Lcom/mojang/blaze3d/platform/Window;updateDisplay()V"
-            //#endif
+            //? >= 1.21.4 {
+            target = "Lcom/mojang/blaze3d/platform/Window;updateDisplay(Lcom/mojang/blaze3d/TracyFrameCapture;)V"
+            //? } else
+            //target = "Lcom/mojang/blaze3d/platform/Window;updateDisplay()V"
     ))
     private void renderTickEndCallback(CallbackInfo ci) {
         RenderEvent e = RenderEvent.Post.INSTANCE;

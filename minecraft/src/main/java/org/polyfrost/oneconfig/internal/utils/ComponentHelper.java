@@ -4,6 +4,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 
 import java.util.List;
+import java.util.Optional;
 
 public class ComponentHelper {
 
@@ -26,17 +27,13 @@ public class ComponentHelper {
         String indentation = indent(indent);
         sb.append(indentation).append(component.getClass().getSimpleName()).append(" {\n");
 
-        //#if MC >= 1.19.2
-        //$$ StringBuilder textBuilder = new StringBuilder();
-        //$$ component.getContents().visit((content) -> {
-        //$$     textBuilder.append(content);
-        //$$     return java.util.Optional.empty();
-        //$$ });
-        //$$
-        //$$ String text = textBuilder.toString();
-        //#else
-        String text = component.getString();
-        //#endif
+        StringBuilder textBuilder = new StringBuilder();
+        component.getContents().visit((content) -> {
+            textBuilder.append(content);
+            return Optional.empty();
+        });
+
+        String text = textBuilder.toString();
         if (!text.isEmpty()) {
             sb.append(indentation).append(baselineIndent).append("text: ").append('"').append(text).append('"').append("\n");
         }
@@ -51,11 +48,7 @@ public class ComponentHelper {
                     .append(baselineIndent)
                     .append(baselineIndent)
                     .append("color: ")
-                    //#if MC >= 1.16.5
-                    //$$ .append(style.getColor() != null ? style.getColor().serialize() : "null")
-                    //#else
-                    .append(style.getColor() != null ? style.getColor().formatValue() : "null")
-                    //#endif
+                    .append(style.getColor() != null ? style.getColor().serialize() : "null")
                     .append("\n");
 
             sb.append(indentation)

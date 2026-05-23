@@ -2,7 +2,8 @@ package org.polyfrost.oneconfig.internal.ui.compose
 
 import com.mojang.blaze3d.pipeline.TextureTarget
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.resources.Identifier
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.Color
 import org.jetbrains.skia.ColorSpace
@@ -36,42 +37,50 @@ object SkiaCtx {
     private var hudTarget: TextureTarget? = null
     private var hudSurface: Surface? = null
     private var hudBrt: BackendRenderTarget? = null
-    //#if MC >= 1.21.5
-    //$$ private val HUD_TEXTURE_LOC = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("oneconfig", "hud_skia")
-    //$$ private var hudTextureWrapper: HudGpuTexture? = null
-    //$$ private class HudGpuTexture : net.minecraft.client.renderer.texture.AbstractTexture() {
-    //$$     fun setGpuTexture(t: com.mojang.blaze3d.textures.GpuTexture?) { this.texture = t }
-    //#if MC >= 1.21.8
-    //$$     fun setGpuTextureView(v: com.mojang.blaze3d.textures.GpuTextureView?) { this.textureView = v }
-    //#endif
-    //$$     override fun close() {
-    //$$         this.texture = null
-    //#if MC >= 1.21.8
-    //$$         this.textureView = null
-    //#endif
-    //$$     }
-    //$$ }
-    //#else
-    private val HUD_TEXTURE_LOC = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("oneconfig", "hud_skia")
+
+    //? >= 1.21.5 {
+    private val HUD_TEXTURE_LOC = Identifier.fromNamespaceAndPath("oneconfig", "hud_skia")
+    private var hudTextureWrapper: HudGpuTexture? = null
+
+    private class HudGpuTexture : net.minecraft.client.renderer.texture.AbstractTexture() {
+        fun setGpuTexture(t: com.mojang.blaze3d.textures.GpuTexture?) {
+            this.texture = t
+        }
+
+        //? >= 1.21.8 {
+        fun setGpuTextureView(v: com.mojang.blaze3d.textures.GpuTextureView?) {
+            this.textureView = v
+        }
+        //? }
+
+        override fun close() {
+            this.texture = null
+            //? >= 1.21.8
+            this.textureView = null
+        }
+    }
+    //? } else {
+    /*private val HUD_TEXTURE_LOC = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("oneconfig", "hud_skia")
     private var hudTextureWrapper: HudGlTexture? = null
-    //#if MC >= 1.21.4
-    //$$ private class HudGlTexture : net.minecraft.client.renderer.texture.AbstractTexture() {
-    //$$     fun setGlTexId(id: Int) { this.id = id }
-    //$$     override fun close() { this.id = -1 }
-    //$$ }
-    //#else
+    //? >= 1.21.4 {
+    private class HudGlTexture : net.minecraft.client.renderer.texture.AbstractTexture() {
+        fun setGlTexId(id: Int) { this.id = id }
+        override fun close() { this.id = -1 }
+    }
+    //? } else {
     private class HudGlTexture : net.minecraft.client.renderer.texture.AbstractTexture() {
         fun setGlTexId(id: Int) { this.id = id }
         override fun load(manager: net.minecraft.server.packs.resources.ResourceManager) {}
         override fun close() { this.id = -1 }
     }
-    //#endif
-    //#endif
+    //? }
+    *///? }
 
     private var glSurface: Surface? = null
     private var glBrt: BackendRenderTarget? = null
 
     private data class VkSurfaceEntry(val surface: Surface, val brt: BackendRenderTarget)
+
     private val vkSurfaces = LinkedHashMap<Long, VkSurfaceEntry>()
     private var vkSurfaceWidth = 0
     private var vkSurfaceHeight = 0
@@ -114,34 +123,35 @@ object SkiaCtx {
         flushToTarget(draws, resolveHudSurface() ?: return)
     }
 
-    fun blitHud(guiGraphics: GuiGraphics) {
+    fun blitHud(guiGraphics: GuiGraphicsExtractor) {
         val rt = hudTarget ?: return
-        val w = rt.width; val h = rt.height
+        val w = rt.width;
+        val h = rt.height
         val guiScale = client.window.guiScale.toFloat()
 
-        //#if MC >= 1.21.5
-        //$$ val colorTex = rt.getColorTexture() ?: return
-        //$$ var wrapper = hudTextureWrapper
-        //$$ if (wrapper == null) {
-        //$$     wrapper = HudGpuTexture()
-        //$$     hudTextureWrapper = wrapper
-        //$$     client.textureManager.register(HUD_TEXTURE_LOC, wrapper)
-        //$$ }
-        //$$ wrapper.setGpuTexture(colorTex)
-        //#if MC >= 1.21.8
-        //$$ wrapper.setGpuTextureView(rt.getColorTextureView())
-        //$$ guiGraphics.pose().pushMatrix()
-        //$$ guiGraphics.pose().scale(1f / guiScale, 1f / guiScale)
-        //$$ guiGraphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
-        //$$ guiGraphics.pose().popMatrix()
-        //#else
-        //$$ guiGraphics.pose().pushPose()
-        //$$ guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
-        //$$ guiGraphics.blit(net.minecraft.client.renderer.RenderType::guiTextured, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
-        //$$ guiGraphics.pose().popPose()
-        //#endif
-        //#else
+        //? >= 1.21.5 {
+        val colorTex = rt.getColorTexture() ?: return
         var wrapper = hudTextureWrapper
+        if (wrapper == null) {
+            wrapper = HudGpuTexture()
+            hudTextureWrapper = wrapper
+            client.textureManager.register(HUD_TEXTURE_LOC, wrapper)
+        }
+        wrapper.setGpuTexture(colorTex)
+        //? >= 1.21.8 {
+        wrapper.setGpuTextureView(rt.getColorTextureView())
+        guiGraphics.pose().pushMatrix()
+        guiGraphics.pose().scale(1f / guiScale, 1f / guiScale)
+        guiGraphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        guiGraphics.pose().popMatrix()
+        //? } else {
+        /*guiGraphics.pose().pushPose()
+        guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
+        guiGraphics.blit(net.minecraft.client.renderer.RenderType::guiTextured, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        guiGraphics.pose().popPose()
+        *///? }
+        //? } else {
+        /*var wrapper = hudTextureWrapper
         if (wrapper == null) {
             wrapper = HudGlTexture()
             hudTextureWrapper = wrapper
@@ -150,13 +160,13 @@ object SkiaCtx {
         wrapper.setGlTexId(rt.colorTextureId)
         guiGraphics.pose().pushPose()
         guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
-        //#if MC >= 1.21.4
-        //$$ guiGraphics.blit(net.minecraft.client.renderer.RenderType::guiTextured, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
-        //#else
-        guiGraphics.blit(HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
-        //#endif
+        //? >= 1.21.4 {
+        guiGraphics.blit(net.minecraft.client.renderer.RenderType::guiTextured, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        //?} else {
+        //guiGraphics.blit(HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        //?}
         guiGraphics.pose().popPose()
-        //#endif
+        *///? }
     }
 
     fun draw() {
@@ -193,7 +203,10 @@ object SkiaCtx {
             }
         } catch (e: Throwable) {
             LOG.warn("SkiaCtx.draw() error", e)
-            if (!isVulkanMode) try { gl.restore() } catch (_: Throwable) {}
+            if (!isVulkanMode) try {
+                gl.restore()
+            } catch (_: Throwable) {
+            }
         } finally {
             currentSurface = null
         }
@@ -240,7 +253,8 @@ object SkiaCtx {
             if (!isVulkanMode) try {
                 GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, savedFbo[0])
                 gl.restore()
-            } catch (_: Throwable) {}
+            } catch (_: Throwable) {
+            }
         } finally {
             currentSurface = null
         }
@@ -254,15 +268,13 @@ object SkiaCtx {
         var rt = hudTarget
         if (rt == null || rt.width != w || rt.height != h) {
             destroyHudTarget()
-            //#if MC >= 1.21.5
-            //$$ rt = TextureTarget(null, w, h, true)
-            //#else
-            //#if MC >= 1.21.4
-            //$$ rt = TextureTarget(w, h, true)
-            //#else
-            rt = TextureTarget(w, h, true, Minecraft.ON_OSX)
-            //#endif
-            //#endif
+            //? >= 1.21.5 {
+            rt = TextureTarget(null, w, h, true)
+            //? } else if >= 1.21.4 {
+            // rt = TextureTarget(w, h, true)
+            //? } else {
+            //rt = TextureTarget(w, h, true, Minecraft.ON_OSX)
+            //? }
             hudTarget = rt
 
             val svc = vulkanService ?: return null
@@ -329,7 +341,7 @@ object SkiaCtx {
             val brt = svc.makeBackendRenderTarget(w, h, vkImg, vkFmt, queueFamily)
             val colorFmt = when (vkFmt) {
                 44, 50 -> SurfaceColorFormat.BGRA_8888
-                else   -> SurfaceColorFormat.RGBA_8888
+                else -> SurfaceColorFormat.RGBA_8888
             }
             val surf = Surface.makeFromBackendRenderTarget(
                 directContext, brt,
@@ -340,8 +352,10 @@ object SkiaCtx {
             )
             if (surf == null) {
                 brt.close()
-                LOG.warn("makeFromBackendRenderTarget returned null for VkImage=0x{} fmt={}",
-                    java.lang.Long.toHexString(vkImg), vkFmt)
+                LOG.warn(
+                    "makeFromBackendRenderTarget returned null for VkImage=0x{} fmt={}",
+                    java.lang.Long.toHexString(vkImg), vkFmt
+                )
                 return null
             }
             VkSurfaceEntry(surf, brt)

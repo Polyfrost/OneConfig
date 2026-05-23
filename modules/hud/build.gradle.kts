@@ -25,7 +25,7 @@
  */
 
 plugins {
-    alias(libs.plugins.kotlin.compose)
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 dependencies {
@@ -34,7 +34,6 @@ dependencies {
     api(project(":modules:poly-compose"))
     api(project(":modules:events"))
     compileOnly(libs.jetbrains.compose.runtime)
-    compileOnly("dev.deftu:omnicore-1.8.9-forge:${libs.versions.omnicore.get()}")
 }
 
 

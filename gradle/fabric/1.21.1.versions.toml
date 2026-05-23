@@ -1,0 +1,5 @@
+[versions]
+loader_version="0.19.2"
+loom_version="1.16-SNAPSHOT"
+
+fabric_api_version="0.116.12+1.21.1"

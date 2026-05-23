@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
-import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorDropdown;
+//? moul_compat {
+/*import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorDropdown;
 import org.polyfrost.oneconfig.internal.utils.MoulConfigGuiOptionEditorDropdownAccessor;
 import org.polyfrost.oneconfig.relocator.annotations.MoulConfig;
 import org.polyfrost.oneconfig.relocator.annotations.RelocatedMixin;
@@ -15,9 +16,7 @@ import java.util.List;
 
 @Pseudo
 @MoulConfig
-//#if MC==1.8.9||MC>=1.21.4
 @RelocatedMixin
-//#endif
 @Mixin(value = GuiOptionEditorDropdown.class, remap = false)
 public class Mixin_GuiOptionEditorDropdown implements MoulConfigGuiOptionEditorDropdownAccessor {
     @Shadow
@@ -73,3 +72,4 @@ public class Mixin_GuiOptionEditorDropdown implements MoulConfigGuiOptionEditorD
     }
 
 }
+*///? }

@@ -19,13 +19,13 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import dev.deftu.clipboard.Clipboard
-import dev.deftu.omnicore.api.client.input.KeyboardModifiers
-import dev.deftu.omnicore.api.client.input.OmniKey
-import dev.deftu.omnicore.api.client.input.OmniMouseButton
-import dev.deftu.omnicore.api.client.render.OmniRenderingContext
-import dev.deftu.omnicore.api.client.screen.KeyPressEvent
-import dev.deftu.omnicore.api.client.screen.OmniScreen
 import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.client.gui.screens.Screen
+import net.minecraft.client.input.CharacterEvent
+import net.minecraft.client.input.MouseButtonEvent
+import net.minecraft.client.input.KeyEvent as McKeyEvent
+import net.minecraft.network.chat.CommonComponents
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.lwjgl.glfw.GLFW
 import java.awt.Component
@@ -90,7 +90,7 @@ private object CopycatClipboard : androidx.compose.ui.platform.Clipboard {
 @OptIn(InternalComposeUiApi::class)
 abstract class ComposeScreen(
     protected val renderMode: RenderMode = RenderMode.ON_DEMAND
-) : OmniScreen() {
+) : Screen(CommonComponents.EMPTY) {
     enum class RenderMode {
         CONTINUOUS,
         ON_DEMAND
@@ -121,7 +121,7 @@ abstract class ComposeScreen(
 //        composeRenderer.render { scene.render(this.asComposeCanvas(), System.nanoTime()) }
 //    }
 
-    override fun onInitialize(width: Int, height: Int) {
+    override fun init() {
         if (renderMode == RenderMode.ON_DEMAND) {
 //            composeRenderer.initialize(width, height)
         }
@@ -150,10 +150,10 @@ abstract class ComposeScreen(
         } catch (_: Throwable) {}
     }
 
-    override fun onRender(ctx: OmniRenderingContext, mouseX: Int, mouseY: Int, tickDelta: Float) {
+    override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
         syncSceneMetrics()
 
-        val focused = GLFW.glfwGetWindowAttrib(client.window.window, GLFW.GLFW_FOCUSED) == GLFW.GLFW_TRUE
+        val focused = GLFW.glfwGetWindowAttrib(client.window.handle(), GLFW.GLFW_FOCUSED) == GLFW.GLFW_TRUE
         if (focused) {
             try {
                 val pointerPosition = pointerPosition()
@@ -178,71 +178,74 @@ abstract class ComposeScreen(
         }
     }
 
-    override fun onMouseClick(button: OmniMouseButton, x: Double, y: Double, modifiers: KeyboardModifiers): Boolean {
+    override fun mouseClicked(event: MouseButtonEvent, doubleClick: Boolean): Boolean {
         scene.sendPointerEvent(
             PointerEventType.Press,
-            button = when (button.code) {
-                0 -> PointerButton.Primary
-                1 -> PointerButton.Secondary
+            button = when (event.button()) {
+                GLFW.GLFW_MOUSE_BUTTON_LEFT -> PointerButton.Primary
+                GLFW.GLFW_MOUSE_BUTTON_RIGHT -> PointerButton.Secondary
                 else -> null
             },
             position = pointerPosition()
         )
-        return super.onMouseClick(button, x, y, modifiers)
+        return super.mouseClicked(event, doubleClick)
     }
 
-    override fun onMouseRelease(button: OmniMouseButton, x: Double, y: Double, modifiers: KeyboardModifiers): Boolean {
+    override fun mouseReleased(event: MouseButtonEvent): Boolean {
         scene.sendPointerEvent(
             PointerEventType.Release,
-            button = when (button.code) {
-                0 -> PointerButton.Primary
-                1 -> PointerButton.Secondary
+            button = when (event.button()) {
+                GLFW.GLFW_MOUSE_BUTTON_LEFT -> PointerButton.Primary
+                GLFW.GLFW_MOUSE_BUTTON_RIGHT -> PointerButton.Secondary
                 else -> null
             },
             position = pointerPosition()
         )
-        return super.onMouseRelease(button, x, y, modifiers)
+        return super.mouseReleased(event)
     }
 
-    override fun onMouseScroll(x: Double, y: Double, amount: Double, horizontalAmount: Double): Boolean {
+    override fun mouseScrolled(x: Double, y: Double, scrollX: Double, scrollY: Double): Boolean {
         val scrollScale = 14f
         scene.sendPointerEvent(
             eventType = PointerEventType.Scroll,
             position = pointerPosition(),
-            scrollDelta = Offset((-horizontalAmount * scrollScale).toFloat(), (-amount * scrollScale).toFloat()),
+            scrollDelta = Offset((-scrollX * scrollScale).toFloat(), (-scrollY * scrollScale).toFloat()),
         )
-        return super.onMouseScroll(x, y, amount, horizontalAmount)
+        return super.mouseScrolled(x, y, scrollX, scrollY)
     }
 
-    override fun onKeyPress(key: OmniKey, scanCode: Int, typedChar: Char, modifiers: KeyboardModifiers, event: KeyPressEvent): Boolean {
-        val awtCode = glfwToAwtKeyCode(key.code)
-        val printable = typedChar.isPrintable()
+    override fun charTyped(event: CharacterEvent): Boolean {
+        return super.charTyped(event)
+    }
+    override fun keyPressed(event: McKeyEvent): Boolean {
+        val awtCode = glfwToAwtKeyCode(event.key)
+        val printable = event.char.isPrintable()
 
         val eventType = if (printable) KeyEvent.KEY_TYPED else KeyEvent.KEY_PRESSED
         val eventLocation = if (printable) KeyEvent.KEY_LOCATION_UNKNOWN else KeyEvent.KEY_LOCATION_STANDARD
         val eventCode = if (printable) 0 else awtCode
-        val eventCodePoint = if (printable) typedChar.code else awtCode
+        val eventCodePoint = if (printable) event..code else awtCode
 
         val composeEvent = androidx.compose.ui.input.key.KeyEvent(
             key = androidx.compose.ui.input.key.Key(awtCode),
             type = KeyEventType.KeyDown,
             codePoint = eventCodePoint,
-            isCtrlPressed = modifiers.isCtrl,
-            isShiftPressed = modifiers.isShift,
-            isAltPressed = modifiers.isAlt,
+            isCtrlPressed = event.isControlDown,
+            isShiftPressed = event.isShiftDown,
+            isAltPressed = event.isAltDown,
             nativeEvent = KeyEvent(
                 dummyComponent,
                 eventType,
                 System.currentTimeMillis(),
-                modifiersToAwt(modifiers),
+                modifiersToAwt(event),
                 eventCode,
-                typedChar,
+                event.keyChar,
                 eventLocation
             )
         )
 
         scene.sendKeyEvent(composeEvent)
-        return super.onKeyPress(key, scanCode, typedChar, modifiers, event)
+        return super.onke
     }
 
     override fun onKeyRelease(key: OmniKey, scanCode: Int, modifiers: KeyboardModifiers): Boolean {
@@ -278,11 +281,11 @@ abstract class ComposeScreen(
                 block != Character.UnicodeBlock.SPECIALS
     }
 
-    private fun modifiersToAwt(modifiers: KeyboardModifiers): Int {
+    private fun modifiersToAwt(modifiers: KeyEvent): Int {
         var m = 0
-        if (modifiers.isCtrl) m = m or InputEvent.CTRL_DOWN_MASK
-        if (modifiers.isAlt) m = m or InputEvent.ALT_DOWN_MASK
-        if (modifiers.isShift) m = m or InputEvent.SHIFT_DOWN_MASK
+        if (modifiers.isControlDown) m = m or InputEvent.CTRL_DOWN_MASK
+        if (modifiers.isAltDown) m = m or InputEvent.ALT_DOWN_MASK
+        if (modifiers.isShiftDown) m = m or InputEvent.SHIFT_DOWN_MASK
         return m
     }
 
@@ -321,7 +324,7 @@ abstract class ComposeScreen(
 
     private fun sceneDensity(): Float {
         val pixelRatio = Platform.screen().pixelRatio().takeIf { it > 0f } ?: 1f
-        GLFW.glfwGetWindowContentScale(client.window.window, contentScaleX, contentScaleY)
+        GLFW.glfwGetWindowContentScale(client.window.handle(), contentScaleX, contentScaleY)
         val contentScale = maxOf(contentScaleX[0], contentScaleY[0]).coerceAtLeast(1f)
         return (contentScale / pixelRatio).coerceAtLeast(1f)
     }

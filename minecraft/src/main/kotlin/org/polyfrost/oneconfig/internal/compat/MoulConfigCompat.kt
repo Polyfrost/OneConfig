@@ -1,4 +1,5 @@
-package org.polyfrost.oneconfig.internal.compat
+//? if > 1.21.10 && fabric && moul_compat {
+/*package org.polyfrost.oneconfig.internal.compat
 
 import dev.deftu.omnicore.api.client.getIconResource
 import dev.deftu.omnicore.api.client.getIconResourcePath
@@ -310,4 +311,4 @@ data object MoulConfigCompat {
     }
 
 }
-
+*///? }

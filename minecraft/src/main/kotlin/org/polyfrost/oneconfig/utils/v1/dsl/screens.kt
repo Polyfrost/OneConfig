@@ -29,7 +29,6 @@ package org.polyfrost.oneconfig.utils.v1.dsl
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import dev.deftu.omnicore.api.client.commands.OmniClientCommandSource
 import dev.deftu.omnicore.api.client.commands.OmniClientCommands
-import dev.deftu.omnicore.api.client.commands.command
 import net.minecraft.client.gui.screens.Screen
 import org.polyfrost.oneconfig.api.commands.v1.CommandManager
 import org.polyfrost.oneconfig.api.config.v1.Config

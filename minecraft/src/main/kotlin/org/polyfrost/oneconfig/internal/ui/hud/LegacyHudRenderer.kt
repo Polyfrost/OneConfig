@@ -2,11 +2,12 @@ package org.polyfrost.oneconfig.internal.ui.hud
 
 import androidx.compose.runtime.snapshots.Snapshot
 import dev.deftu.omnicore.api.client.render.OmniRenderingContext
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHud
 
 object LegacyHudRenderer {
-    fun renderLive(eventCtx: OmniRenderingContext) {
+    fun renderLive(eventCtx: GuiGraphicsExtractor) {
         if (!eventCtx.areGraphicsAvailable) return
         for (hud in HudManager.activeInstances) {
             if (hud !is LegacyHud || hud.hidden) continue
@@ -19,16 +20,16 @@ object LegacyHudRenderer {
                 hud.renderedW = hud.width * hudScale
                 hud.renderedH = hud.height * hudScale
             }
-            //#if MC >= 1.21.8
-            //$$ val graphics = eventCtx.graphics ?: continue
-            //$$ val pose = graphics.pose()
-            //$$ pose.pushMatrix()
-            //$$ pose.translate(hud.x, hud.y)
-            //$$ if (hudScale != 1f) pose.scale(hudScale, hudScale)
-            //$$ hud.render(eventCtx)
-            //$$ pose.popMatrix()
-            //#else
+            //? >= 1.21.8 {
             val graphics = eventCtx.graphics ?: continue
+            val pose = graphics.pose()
+            pose.pushMatrix()
+            pose.translate(hud.x, hud.y)
+            if (hudScale != 1f) pose.scale(hudScale, hudScale)
+            hud.render(eventCtx)
+            pose.popMatrix()
+            //? } else {
+            /*val graphics = eventCtx.graphics ?: continue
             val pose = graphics.pose()
             pose.pushPose()
             pose.translate(hud.x.toDouble(), hud.y.toDouble(), 0.0)
@@ -36,7 +37,7 @@ object LegacyHudRenderer {
             hud.render(eventCtx)
             graphics.flush()
             pose.popPose()
-            //#endif
+            *///? }
         }
     }
 }

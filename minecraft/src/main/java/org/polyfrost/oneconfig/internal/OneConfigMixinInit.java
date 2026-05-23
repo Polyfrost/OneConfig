@@ -67,59 +67,32 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
             mixins.add(e);
             return Unit.INSTANCE;
         });
-        mixins.add("compat.moulconfig.Mixin_MCConfigEditorIntegration_Firmament");
-        mixins.add("compat.moulconfig.Mixin_MoulConfigAdapter_DandelionBp");
+        //? moul_compat {
+        //mixins.add("compat.moulconfig.Mixin_MCConfigEditorIntegration_Firmament");
+        //mixins.add("compat.moulconfig.Mixin_MoulConfigAdapter_DandelionBp");
+        //? }
 
-        //#if MC>=1.19.2
-        //$$ mixins.add("Mixin_MinecraftClientResourceStuff");
-        //$$ mixins.add("compat.yacl.Mixin_YetAnotherConfigLib_Builder");
-        //#endif
+        mixins.add("Mixin_MinecraftClientResourceStuff");
+        //? yacl_compat
+        //mixins.add("compat.yacl.Mixin_YetAnotherConfigLib_Builder");
 
-        //#if MC>=1.20.4
-        //$$ // mixins.add("compat.rconfig.Mixin_Configurations");
-        //#endif
+        // mixins.add("compat.rconfig.Mixin_Configurations");
 
-        //#if MC>1.16
-        //$$mixins.add("compat.modmenu.Mixin_ModMenu");
-        //#endif
+        //? modmenu_compat
+        //mixins.add("compat.modmenu.Mixin_ModMenu");
 
-        //#if FORGE
-        //$$ mixins.add("events.Mixin_ChatReceiveEvent_Forge");
-        //$$ mixins.add("events.Mixin_ScreenOpenEvent_Forge");
-        //#if MC < 1.13
-        //$$ mixins.add("compat.Mixin_LegacyOneConfigCarryover");
-        //$$ mixins.add("compat.Mixin_OverwriteLegacyCommand");
-        //$$ mixins.add("compat.Mixin_OverwriteLegacyKeyBind");
-        //$$ mixins.add("fixes.Mixin_ASMModParser_IgnoreForgeJava9Spam");
-        //$$ mixins.add("fixes.Mixin_JarDiscoverer_IgnoreForgeJava9Spam");
-        //$$ mixins.add("hidpi.Mixin_FixLoadingScreenHiDPI");
-        //#endif
-        //#else
-        //#if MC < 1.21.2
-        //$$ mixins.add("fabric.Mixin_LoadShaderInvoker_Fabric");
-        //#endif
-        //$$ mixins.add("fabric.Mixin_ChatReceiveEvent_Fabric");
-        //$$ mixins.add("events.Mixin_ScreenOpenEvent_Fabric");
-        //#endif
+        //? neoforge {
+        //mixins.add("events.Mixin_ChatReceiveEvent_Forge");
+        //mixins.add("events.Mixin_ScreenOpenEvent_Forge");
+        //? } else {
+        //? < 1.21.2
+        //mixins.add("fabric.Mixin_LoadShaderInvoker_Fabric");
+        mixins.add("fabric.Mixin_ChatReceiveEvent_Fabric");
+        mixins.add("events.Mixin_ScreenOpenEvent_Fabric");
+        //? }
 
-        //#if MC >= 1.16
-        //$$ mixins.add("events.Mixin_ModernWindowFocusEvent");
-        //$$ // mixins.add("command.Mixin_ModernArgumentTypeEntryAccessor");
-        //#if MC < 1.19
-        //$$ mixins.add("fixes.Mixin_LazyDataFixerUpper");
-        //$$ mixins.add("events.Mixin_ChatSendEvent");
-        //#endif
-        //#else
-        //$$ mixins.add("events.Mixin_KeyInputEvent_Screen");
-        //$$ mixins.add("events.Mixin_MouseInputEvent_Screen");
-        //$$ mixins.add("hidpi.Mixin_EnableHiDPI");
-        //$$ mixins.add("hidpi.Mixin_FixDisplaySizeHiDPI");
-        //$$ mixins.add("hidpi.Mixin_FixMousePositionHiDPI_Screen");
-        //$$ mixins.add("hidpi.Mixin_FixMousePositionHiDPI");
-        //#if MC <= 1.8.9
-        //$$ mixins.add("Mixin_SoundHandlerAccessor");
-        //#endif
-        //#endif
+        mixins.add("events.Mixin_ModernWindowFocusEvent");
+        // mixins.add("command.Mixin_ModernArgumentTypeEntryAccessor");
 
         mixins.add("skia.Mixin_InitSkia");
         mixins.add("skia.Mixin_SkiaFrame");

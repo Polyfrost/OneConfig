@@ -1,4 +1,5 @@
-package org.polyfrost.oneconfig.internal.compat
+//? yacl_compat {
+/*package org.polyfrost.oneconfig.internal.compat
 
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
@@ -182,3 +183,4 @@ object YACLCompat {
     }
 }
 
+*///? }

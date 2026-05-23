@@ -31,17 +31,11 @@ import io.netty.buffer.Unpooled;
 import net.hypixel.modapi.HypixelModAPI;
 import net.hypixel.modapi.serializer.PacketSerializer;
 import net.minecraft.client.Minecraft;
-//#if MC >= 1.16.5
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
 import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
-//#else
-//$ import net.minecraft.client.network.NetHandlerPlayClient;
-//$ import net.minecraft.network.PacketBuffer;
-//$ import net.minecraft.network.play.client.C17PacketCustomPayload;
-//$ import net.minecraft.network.play.server.S3FPacketCustomPayload;
-//#endif
+import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
+import net.minecraft.resources.Identifier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
@@ -66,97 +60,47 @@ public final class HypixelApiInternalsImpl implements HypixelApiInternals {
     private void registerHypixelApi() {
         LOGGER.info("Registering Hypixel API packet handlers");
         HypixelModAPI.getInstance().setPacketSender((packet) -> {
-            //#if MC >= 1.16.5
             ClientPacketListener netHandler = Minecraft.getInstance().getConnection();
-            //#else
-            //$ NetHandlerPlayClient netHandler = Minecraft.getMinecraft().getNetHandler();
-            //#endif
             if (netHandler == null) {
-                if (OmniLoader.isDevelopment()) LOGGER.warn("dropping packet {} because no net handler is available, retrying in 1s", packet);
+                if (OmniLoader.isDevelopment()) {
+                    LOGGER.warn("dropping packet {} because no net handler is available, retrying in 1s", packet);
+                }
                 EventDelay.tick(20, () -> HypixelModAPI.getInstance().sendPacket(packet));
                 return false;
             }
-            //#if MC >= 1.16.5
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            //#else
-            //$ PacketBuffer buf = new PacketBuffer(Unpooled.buffer());
-            //#endif
             packet.write(new PacketSerializer(buf));
-            //#if MC >= 1.16.5
             netHandler.send(new ServerboundCustomPayloadPacket(
-                    //#if MC >= 1.20.4
-                    //#if FORGE
-                    //$$ new net.minecraft.network.protocol.common.custom.DiscardedPayload(
-                    //#else
-                    new Payload(
-                    //#endif
-                    //#endif
-                    //#if MC >= 1.21.1
-                    net.minecraft.resources.ResourceLocation.parse(packet.getIdentifier()),
-                    //#elseif MC >= 1.20.4 || MC == 1.16.5
-                    //$$ new net.minecraft.resources.ResourceLocation(packet.getIdentifier()),
-                    //#endif
-                    //#if MC >= 1.20.4
-                    buf
-                    )
-                    //#endif
+                            new Payload(
+                                    Identifier.parse(packet.getIdentifier()),
+                                    buf
+                            )
+
                     )
             );
-            //#else
-            //$ netHandler.addToSendQueue(new C17PacketCustomPayload(
-            //$         //#if MC <= 1.12.2
-            //$         packet.getIdentifier(),
-            //$         //#endif
-            //$         //#if MC < 1.20.4
-            //$         buf
-            //$         //#endif
-            //$         )
-            //$ );
-            //#endif
             return true;
         });
-        EventManager.register(PacketEvent.Receive.class, (ev) -> {
-            //#if MC >= 1.16.5
-            if (!(ev.getPacket() instanceof ClientboundCustomPayloadPacket)) {
-                return;
-            }
+        EventManager.register(
+                PacketEvent.Receive.class, (ev) -> {
+                    if (!(ev.getPacket() instanceof ClientboundCustomPayloadPacket)) {
+                        return;
+                    }
 
-            ClientboundCustomPayloadPacket packet = ev.getPacket();
-            //#if MC >= 1.21.1
-            String identifier = packet.payload().type().id().toString();
-            //#elseif MC >= 1.20.6
-            //$$ String identifier = packet.comp_1646().getId().comp_2242().toString();
-            //#elseif MC >= 1.20.4
-            //$$ String identifier = packet.payload().id().toString();
-            //#else
-            //$$ String identifier = packet.getChannelName().toString();
-            //#endif
-            //#else
-            //$ if (!(ev.getPacket() instanceof S3FPacketCustomPayload)) {
-            //$     return;
-            //$ }
-            //$
-            //$ S3FPacketCustomPayload packet = ev.getPacket();
-            //$ //noinspection StringOperationCanBeSimplified
-            //$ String identifier = packet.getChannelName().toString();
-            //#endif
-            if (!HypixelModAPI.getInstance().getRegistry().isRegistered(identifier)) {
-                return;
-            }
+                    ClientboundCustomPayloadPacket packet = ev.getPacket();
+                    String identifier = packet.payload().type().id().toString();
+                    if (!HypixelModAPI.getInstance().getRegistry().isRegistered(identifier)) {
+                        return;
+                    }
 
-            try {
-                PacketSerializer s = new PacketSerializer(
-                        //#if MC >= 1.20.4 && FABRIC || NEOFORGE
-                        ((Payload) packet.payload()).data()
-                        //#else
-                        //$$ packet.getBufferData()
-                        //#endif
-                );
-                HypixelModAPI.getInstance().handle(identifier, s);
-            } catch (Exception e) {
-                LOGGER.warn("Failed to handle packet {}", identifier, e);
-            }
-        });
+                    try {
+                        PacketSerializer s = new PacketSerializer(
+                                ((Payload) packet.payload()).data()
+                        );
+                        HypixelModAPI.getInstance().handle(identifier, s);
+                    } catch (Exception e) {
+                        LOGGER.warn("Failed to handle packet {}", identifier, e);
+                    }
+                });
     }
 
     @ApiStatus.Internal
@@ -166,30 +110,24 @@ public final class HypixelApiInternalsImpl implements HypixelApiInternals {
 
     //#if MC >= 1.20.4 && FABRIC || NEOFORGE
     public static final class Payload implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
-        private final net.minecraft.resources.ResourceLocation id;
+        private final net.minecraft.resources.Identifier id;
         private final io.netty.buffer.ByteBuf data;
 
-        public Payload(net.minecraft.resources.ResourceLocation id, io.netty.buffer.ByteBuf data) {
+        public Payload(net.minecraft.resources.Identifier id, io.netty.buffer.ByteBuf data) {
             this.id = id;
             this.data = data.copy();
             data.skipBytes(data.readableBytes());
         }
 
-        public void write(net.minecraft.network.FriendlyByteBuf arg) {
+        public void write(FriendlyByteBuf arg) {
             if (this.data != null) {
                 arg.writeBytes(this.data.slice());
             }
         }
 
-        //#if MC >= 1.20.6
         public Type<Payload> type() {
             return new Type<>(this.id);
         }
-        //#else
-        //$$ public net.minecraft.resources.ResourceLocation id() {
-        //$     return this.id;
-        //$$ }
-        //#endif
 
         public io.netty.buffer.ByteBuf data() {
             return this.data;

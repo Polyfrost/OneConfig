@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
+//? moul_compat {
+/*
 import org.polyfrost.oneconfig.internal.compat.MoulConfigCompat;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -33,3 +35,4 @@ public class Mixin_MoulConfigAdapter_DandelionBp {
         } catch (Throwable ignored) {}
     }
 }
+*///? }

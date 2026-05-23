@@ -70,39 +70,26 @@ import org.polyfrost.oneconfig.test.TestMod_Test;
 /**
  * The main class of OneConfig.
  */
-//#if FORGE-LIKE
-//#if NEOFORGE
-//$$ @net.neoforged.fml.common.Mod("oneconfigv1")
-//#else
-//$$ @net.minecraftforge.fml.common.Mod("oneconfigv1")
-//#endif
-//#endif
+//? neoforge
+//@net.neoforged.fml.common.Mod("oneconfigv1")
 public class OneConfig
-        //#if FABRIC
+        //? fabric
         implements net.fabricmc.api.ClientModInitializer
-        //#endif
 {
     public static final OneConfig INSTANCE = new OneConfig();
     private static final Logger LOGGER = LogManager.getLogger("OneConfig");
     private boolean initialized = false;
 
-    //#if FORGE-LIKE
-    //#if MC <= 1.12.2
-    //$$@net.minecraftforge.fml.common.Mod.EventHandler
-    //$$private void onInit(net.minecraftforge.fml.common.event.FMLPostInitializationEvent ev) {
-    //$$    init();
-    //$$}
-    //#else
-    //$$ static {
-    //$$     INSTANCE.init();
-    //$$ }
-    //#endif
-    //#else
+    //? neoforge {
+    //static {
+    //    INSTANCE.init();
+    //}
+    //? } else {
     @Override
     public void onInitializeClient() {
         init();
     }
-    //#endif
+    //? }
 
 
     private void init() {
@@ -115,9 +102,8 @@ public class OneConfig
         // -Drenderdoc.enabled=true
         // (Windows) -Drenderdoc.path="C:\Program Files\RenderDoc\renderdoc.dll" (or wherever you installed RenderDoc)
         // (Linux)   Ensure that librenderdoc.so is available in your LD_PRELOAD
-        //#if MC >= 1.19.2
-        //$$ // RenderDoc.init();
-        //#endif
+        //? >= 1.19.2
+        // RenderDoc.init();
 
 //        if (Boolean.getBoolean("oneconfig.test")) {
             try {

@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.yacl;
 
-import org.polyfrost.oneconfig.internal.compat.YACLCompat;
+//? yacl_compat {
+/*import org.polyfrost.oneconfig.internal.compat.YACLCompat;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,4 +20,5 @@ public class Mixin_YetAnotherConfigLib_Builder {
         }
     }
 }
+*///? }
 

@@ -60,13 +60,13 @@ public class TestCommand_Test {
 
     @Handler
     private void playerTest(GameProfile profile) {
-        //#if MC >= 1.21.9
-        //$$ String name = profile.name();
-        //$$ String id = profile.id().toString();
-        //#else
-        String name = profile.getName();
-        String id = profile.getId().toString();
-        //#endif
+        //? >= 1.21.9 {
+        String name = profile.name();
+        String id = profile.id().toString();
+        //? } else {
+        //String name = profile.getName();
+        //String id = profile.getId().toString();
+        //? }
         OmniClientChat.displayChatMessage("Player test: " + name);
         OmniClientChat.displayChatMessage(id);
     }

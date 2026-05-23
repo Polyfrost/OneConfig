@@ -54,7 +54,7 @@ import kotlin.metadata.jvm.syntheticMethodForDelegate
 import kotlin.metadata.jvm.toJvmInternalName
 import org.objectweb.asm.commons.Remapper
 
-@OptIn(ExperimentalContextReceivers::class)
+@OptIn(ExperimentalContextReceivers::class, ExperimentalContextParameters::class)
 class KotlinClassRemapper(private val remapper: Remapper) {
     fun remap(clazz: KmClass): KmClass {
         clazz.name = remap(clazz.name)
@@ -113,7 +113,7 @@ class KotlinClassRemapper(private val remapper: Remapper) {
     private fun remap(function: KmFunction): KmFunction {
         function.typeParameters.replaceAll(this::remap)
         function.receiverParameterType = function.receiverParameterType?.let { remap(it) }
-        function.contextReceiverTypes.replaceAll(this::remap)
+        function.contextParameters.replaceAll(this::remap)
         function.valueParameters.replaceAll(this::remap)
         function.returnType = remap(function.returnType)
         function.signature = function.signature?.let { remap(it) }
@@ -123,7 +123,7 @@ class KotlinClassRemapper(private val remapper: Remapper) {
     private fun remap(property: KmProperty): KmProperty {
         property.typeParameters.replaceAll(this::remap)
         property.receiverParameterType = property.receiverParameterType?.let { remap(it) }
-        property.contextReceiverTypes.replaceAll(this::remap)
+        property.contextParameters.replaceAll(this::remap)
         property.setterParameter = property.setterParameter?.let { remap(it) }
         property.returnType = remap(property.returnType)
         property.fieldSignature = property.fieldSignature?.let { remap(it) }

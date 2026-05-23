@@ -1,4 +1,5 @@
-package org.polyfrost.oneconfig.internal.compat
+//? if > 1.21.10 && fabric && moul_compat {
+/*package org.polyfrost.oneconfig.internal.compat
 
 import io.github.notenoughupdates.moulconfig.processor.ProcessedOption
 import org.polyfrost.oneconfig.api.config.v1.Properties
@@ -45,3 +46,4 @@ class MoulPropertyBuilder internal constructor(option: ProcessedOption) {
         }
     }
 }
+*///? }
