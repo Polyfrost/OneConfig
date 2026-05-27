@@ -3,9 +3,9 @@ package org.polyfrost.oneconfig.internal.compat
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.Event
 import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
+import org.polyfrost.oneconfig.api.platform.v1.ModInfo
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import java.net.URI
-
-typealias ModInfo = Any // todo
 
 object CompatLoader {
     private val forcedModId = ThreadLocal<String?>()
@@ -34,7 +34,7 @@ object CompatLoader {
 
     fun findFirstMod(): ModInfo? {
         forcedModId.get()?.let { forcedId ->
-            val forcedMod = OmniLoader.mods.firstOrNull { it.id == forcedId }
+            val forcedMod = Platform.compatibility().mods.firstOrNull { it.id == forcedId }
             if (forcedMod != null) return forcedMod
         }
         Thread.currentThread().stackTrace.firstOrNull {
@@ -71,12 +71,12 @@ object CompatLoader {
         }
     }
 
-    fun hasMod(id: String): Boolean = OmniLoader.mods.any { it.id == id }
+    fun hasMod(id: String): Boolean = ModInfo.loadedMods.any { it.id == id }
 
     private val list: MutableList<Pair<Int, () -> Unit>> = mutableListOf()
 
     init {
-        OmniLoader.mods.forEach { mod ->
+        ModInfo.loadedMods.forEach { mod ->
             mod.file?.let {
                 pathFactory[mod] = it.toUri().toString()::plus
             }

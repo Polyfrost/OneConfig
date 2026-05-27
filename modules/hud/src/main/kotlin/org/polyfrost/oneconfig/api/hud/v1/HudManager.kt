@@ -27,7 +27,6 @@
 package org.polyfrost.oneconfig.api.hud.v1
 
 import androidx.compose.runtime.snapshots.Snapshot
-import dev.deftu.omnicore.api.client.render.OmniResolution
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.compose.render.RenderContext
@@ -36,6 +35,7 @@ import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.eventHandler
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.utils.v1.MHUtils
 
 object HudManager {
@@ -141,7 +141,7 @@ object HudManager {
 
     @ApiStatus.Internal
     fun render(ctx: RenderContext, screenWidth: Float, screenHeight: Float) {
-        val scale = OmniResolution.scaleFactor.toFloat()
+        val scale = Platform.compatibility().options().guiScale
 
         Snapshot.sendApplyNotifications()
 
@@ -149,7 +149,6 @@ object HudManager {
         ctx.scale(scale, scale)
 
         for (hud in activeInstances) {
-            if (hud.hidden || hud is LegacyHud) continue
             if (isDebugScreenVisible && !hud.showInF3) continue
             if (isTabListVisible && !hud.showInTab) continue
             if (isGuiScreenOpen && !hud.showInScreens) continue

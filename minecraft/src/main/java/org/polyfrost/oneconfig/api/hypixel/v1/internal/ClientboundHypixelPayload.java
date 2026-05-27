@@ -1,3 +1,4 @@
+/*
 package org.polyfrost.oneconfig.api.hypixel.v1.internal;
 
 import dev.deftu.omnicore.api.network.PacketPayload;
@@ -7,13 +8,15 @@ import net.hypixel.modapi.error.ErrorReason;
 import net.hypixel.modapi.packet.ClientboundHypixelPacket;
 import net.hypixel.modapi.serializer.PacketSerializer;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
-public class ClientboundHypixelPayload implements PacketPayload {
+public class ClientboundHypixelPayload implements CustomPacketPayload {
     private final Identifier id;
     private final ClientboundHypixelPacket packet;
     private final ErrorReason errorReason;
+    private final Type<ClientboundHypixelPayload> TYPE = new Type<>(id);
 
     private ClientboundHypixelPayload(Identifier id, FriendlyByteBuf data) {
         this.id = id;
@@ -28,6 +31,11 @@ public class ClientboundHypixelPayload implements PacketPayload {
 
         this.packet = HypixelModAPI.getInstance().getRegistry().createClientboundPacket(id.toString(), serializer);
         this.errorReason = null;
+    }
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return null;
     }
 
     @Override
@@ -53,3 +61,4 @@ public class ClientboundHypixelPayload implements PacketPayload {
         }, buf -> new ClientboundHypixelPayload(id, buf));
     }
 }
+*/

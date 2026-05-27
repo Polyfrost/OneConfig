@@ -31,7 +31,6 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
-import dev.deftu.omnicore.api.client.screen.OmniScreen
 import org.polyfrost.oneconfig.internal.ui.navigation.NavigationGroups
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState

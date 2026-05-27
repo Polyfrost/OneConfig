@@ -26,7 +26,6 @@
 
 package org.polyfrost.oneconfig.api.hypixel.v1;
 
-import dev.deftu.omnicore.api.client.network.OmniClientServers;
 import net.hypixel.data.rank.MonthlyPackageRank;
 import net.hypixel.data.rank.PackageRank;
 import net.hypixel.data.rank.PlayerRank;
@@ -74,9 +73,11 @@ public final class HypixelUtils {
 
     @SuppressWarnings("deprecation")
     public static boolean isHypixel() {
-        String brand = OmniClientServers.getServerBrand();
-        if (brand == null) return false;
-        return brand.toLowerCase().contains("hypixel");
+        // todo use hypixel mod api for this??
+        //String brand = OmniClientServers.getServerBrand();
+        //if (brand == null) return false;
+        //return brand.toLowerCase().contains("hypixel");
+        return false;
     }
 
     public static PlayerInfo getPlayerInfo() {

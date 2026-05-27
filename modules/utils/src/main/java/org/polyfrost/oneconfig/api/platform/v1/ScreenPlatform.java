@@ -26,7 +26,6 @@
 
 package org.polyfrost.oneconfig.api.platform.v1;
 
-import dev.deftu.omnicore.api.client.render.OmniResolution;
 import org.jetbrains.annotations.Nullable;
 
 public interface ScreenPlatform {
@@ -48,10 +47,9 @@ public interface ScreenPlatform {
      * <br>
      * These window/screen coordinates are used by mouse and input, as well as resizing.
      * See the inverse, {@link #screenToMcScale()}.
-     * @implNote same as {@link OmniResolution#getScaleFactor()} / {@link #pixelRatio()}
      */
     default float mcToScreenScale() {
-        return (float) OmniResolution.getScaleFactor() / pixelRatio();
+        return Platform.compatibility().options().getGuiScale() / pixelRatio();
     }
 
     /**
@@ -62,7 +60,7 @@ public interface ScreenPlatform {
      * @implNote same as {@code 1f / }{@link  #mcToScreenScale()}
      */
     default float screenToMcScale() {
-        return pixelRatio() / (float) OmniResolution.getScaleFactor();
+        return pixelRatio() / Platform.compatibility().options().getGuiScale();
     }
 
     void display(@Nullable Object screen, int ticks);

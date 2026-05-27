@@ -1,12 +1,23 @@
 package org.polyfrost.oneconfig.api.platform.v1;
 
-import dev.deftu.omnicore.api.loader.ModInfo;
+import net.kyori.adventure.text.Component;
+import org.polyfrost.oneconfig.api.platform.v1.commands.CommandPlatform;
 
 import java.util.Set;
 
 public interface CompatibilityPlatform {
-    Set<ModInfo> getValidTrees();
+    void displayChatMessage(Component text);
+    default void displayChatMessage(String text) {
+        displayChatMessage(Component.text(text));
+    }
+    Set<ModInfo> getMods();
+    boolean isDevelopment();
+    String version();
+    String loader();
+    Options options();
+    CommandPlatform commandPlatform();
+    Keys keys();
 
-    void executeTreeAction(String action);
+    long windowHandle();
 }
 

@@ -27,6 +27,7 @@
 dependencies {
     @Suppress("VulnerableLibrariesLocal") // reason: we need to use version this because it is what 1.8.9 uses
     compileOnly("com.google.code.gson:gson:2.2.4")
+    compileOnly("com.mojang:brigadier:1.0.18")
     compileOnly(rootProject.libs.copycat)
     compileOnly(rootProject.libs.copycat.image.awt)
     api(libs.hypixel.modapi)

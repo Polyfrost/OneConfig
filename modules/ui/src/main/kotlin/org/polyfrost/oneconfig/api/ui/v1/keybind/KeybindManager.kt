@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.api.ui.v1.keybind
 
-import dev.deftu.omnicore.api.client.input.OmniKeys
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.event.v1.eventHandler
 import org.polyfrost.oneconfig.api.event.v1.events.KeyInputEvent
@@ -8,6 +7,7 @@ import org.polyfrost.oneconfig.api.event.v1.events.MouseInputEvent
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent
 import org.polyfrost.oneconfig.api.event.v1.events.WindowFocusEvent
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import kotlin.experimental.and
 import kotlin.experimental.inv
 import kotlin.experimental.or
@@ -24,14 +24,14 @@ object KeybindManager {
     private var mods: Byte = KeyModifiers.NONE
 
     private val MODIFIER_MAP = mapOf(
-        OmniKeys.KEY_LEFT_SHIFT.code to KeyModifiers.SHIFT,
-        OmniKeys.KEY_RIGHT_SHIFT.code to KeyModifiers.SHIFT,
-        OmniKeys.KEY_LEFT_CONTROL.code to KeyModifiers.CTRL,
-        OmniKeys.KEY_RIGHT_CONTROL.code to KeyModifiers.CTRL,
-        OmniKeys.KEY_LEFT_ALT.code to KeyModifiers.ALT,
-        OmniKeys.KEY_RIGHT_ALT.code to KeyModifiers.ALT,
-        OmniKeys.KEY_LEFT_SUPER.code to KeyModifiers.META,
-        OmniKeys.KEY_RIGHT_SUPER.code to KeyModifiers.META,
+        Platform.compatibility().keys().keyLeftShift to KeyModifiers.SHIFT,
+        Platform.compatibility().keys().keyRightShift to KeyModifiers.SHIFT,
+        Platform.compatibility().keys().keyLeftControl to KeyModifiers.CTRL,
+        Platform.compatibility().keys().keyRightControl to KeyModifiers.CTRL,
+        Platform.compatibility().keys().keyLeftAlt to KeyModifiers.ALT,
+        Platform.compatibility().keys().keyRightAlt to KeyModifiers.ALT,
+        Platform.compatibility().keys().keyLeftSuper to KeyModifiers.META,
+        Platform.compatibility().keys().keyRightSuper to KeyModifiers.META,
     )
 
     init {
@@ -40,7 +40,7 @@ object KeybindManager {
             val down = state == 1
             val mod = MODIFIER_MAP[key]
             if (mod != null) {
-                mods = if (down) (mods or mod).toByte() else (mods and mod.inv()).toByte()
+                mods = if (down) (mods or mod) else (mods and mod.inv())
             }
             if (down) downKeys.add(key) else downKeys.remove(key)
         }

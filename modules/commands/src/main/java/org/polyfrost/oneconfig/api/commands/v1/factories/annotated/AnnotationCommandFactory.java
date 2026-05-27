@@ -30,11 +30,11 @@ import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
-import dev.deftu.omnicore.api.client.commands.OmniClientCommandSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.commands.v1.factories.CommandFactory;
+import org.polyfrost.oneconfig.api.platform.v1.commands.ClientCommandSource;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
 
 import java.lang.reflect.Method;
@@ -48,7 +48,7 @@ public class AnnotationCommandFactory implements CommandFactory {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/BrigaiderTranslator");
 
     @Override
-    public LiteralCommandNode<OmniClientCommandSource>[] create(@NotNull Object obj) {
+    public LiteralCommandNode<ClientCommandSource>[] create(@NotNull Object obj) {
         Class<?> cls = obj.getClass();
         Command command = cls.getAnnotation(Command.class);
         if (command == null) {
@@ -71,13 +71,13 @@ public class AnnotationCommandFactory implements CommandFactory {
             help.append(')');
         }
 
-        LiteralArgumentBuilder<OmniClientCommandSource> builder = literal(primaryName);
+        LiteralArgumentBuilder<ClientCommandSource> builder = literal(primaryName);
         setup(true, builder, obj, help, "  /" + primaryName);
 
         @SuppressWarnings("unchecked")
-        LiteralCommandNode<OmniClientCommandSource>[] nodes = new LiteralCommandNode[Math.max(1, command.value().length + 1)];
+        LiteralCommandNode<ClientCommandSource>[] nodes = new LiteralCommandNode[Math.max(1, command.value().length + 1)];
 
-        builder.then(literal("help").executes((ctx) -> ctx.getSource().replyChat(help.toString())));
+        builder.then(literal("help").executes((ctx) -> ctx.getSource().sendText(help.toString())));
 
         nodes[0] = builder.build();
         for (int i = 1; i < command.value().length; i++) {
@@ -87,7 +87,7 @@ public class AnnotationCommandFactory implements CommandFactory {
         return nodes;
     }
 
-    private void setup(boolean isRoot, LiteralArgumentBuilder<OmniClientCommandSource> tree, Object obj, StringBuilder help, String stem) {
+    private void setup(boolean isRoot, LiteralArgumentBuilder<ClientCommandSource> tree, Object obj, StringBuilder help, String stem) {
         // Flag to check if the root help message's formatting has been set up
         // We do it this way so that it can be conditional, if there are no additional subcommands
         boolean isRootFormattingSetup = false;
@@ -107,7 +107,7 @@ public class AnnotationCommandFactory implements CommandFactory {
             String[] aliases = command.value();
             String primaryName = aliases.length == 0 ? clz.getSimpleName() : aliases[0];
 
-            LiteralArgumentBuilder<OmniClientCommandSource> subTree = literal(primaryName);
+            LiteralArgumentBuilder<ClientCommandSource> subTree = literal(primaryName);
             setup(false, subTree, MHUtils.instantiate(clz, true), help, stem + " " + primaryName);
         }
 
@@ -128,7 +128,7 @@ public class AnnotationCommandFactory implements CommandFactory {
             StringBuilder currentSection = new StringBuilder();
             currentSection.append(stem).append(' ').append(primaryName); // Append the stem of our command and the primary subcommand name
 
-            ArgumentBuilder<OmniClientCommandSource, ?> theMethod;
+            ArgumentBuilder<ClientCommandSource, ?> theMethod;
             if (method.getParameterCount() > 0) {
                 String[] paramNames = new String[method.getParameterCount()];
                 Class<?>[] paramTypes = method.getParameterTypes();

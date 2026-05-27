@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.IntSize
 import net.minecraft.client.Minecraft
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.glfw.GLFW.*
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 
 private class InputModeManagerImpl : InputModeManager {
     override val inputMode: InputMode = InputMode.Keyboard
@@ -64,7 +65,7 @@ private class PlatformImpl : PlatformContext {
     private val textCursor = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR)
     private val moveCursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR)
 
-    private val handle = Minecraft.getInstance().window.handle()
+    private val handle = Platform.compatibility().windowHandle()
 
     override fun setPointerIcon(pointerIcon: PointerIcon) {
         when (pointerIcon) {

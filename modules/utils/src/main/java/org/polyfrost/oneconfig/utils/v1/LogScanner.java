@@ -48,11 +48,11 @@
 
 package org.polyfrost.oneconfig.utils.v1;
 
-import dev.deftu.omnicore.api.loader.ModInfo;
-import dev.deftu.omnicore.api.loader.OmniLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -168,7 +168,7 @@ public final class LogScanner {
      */
     @NotNull
     public static Set<ModInfo> identifyFromClass(Class<?> clazz) {
-        Set<ModInfo> modMap = OmniLoader.getMods();
+        Set<ModInfo> modMap = ModInfo.getLoadedMods();
         modMap.removeIf(Objects::isNull);
 
         try {
@@ -190,10 +190,10 @@ public final class LogScanner {
                 uri = new URL(s.substring(4, s.lastIndexOf("!"))).toURI();
             }
 
-            if (uri.toString().endsWith(".class") && OmniLoader.isDevelopment()) {
+            if (uri.toString().endsWith(".class") && Platform.compatibility().isDevelopment()) {
                 LOGGER.error("The mod you are currently developing caused this issue, or another class file. Returning 'this'.");
                 LOGGER.error("Class: {}", clazz.getName());
-                return Collections.singleton(new ModInfo("this", "this", "Unknown", null, null));
+                return Collections.singleton(new ModInfo("this", "this", "Unknown", null));
             }
 
             return getModsAt(Paths.get(uri), modMap);
@@ -206,7 +206,7 @@ public final class LogScanner {
     private static Set<ModInfo> getModsAt(Path path, Set<ModInfo> modMap) {
         Set<ModInfo> mods = modMap.stream().filter(m -> m.getFile().equals(path)).collect(Collectors.toSet());
         if (!mods.isEmpty()) return mods;
-        else if (OmniLoader.isDevelopment()) {
+        else if (Platform.compatibility().isDevelopment()) {
             // For some reason, in dev, the mod being tested has the 'resources' folder as the origin instead of the 'classes' folder.
             String resourcesPathString = path.toString().replace("\\", "/")
                     // Make it work with Architectury as well
@@ -215,7 +215,7 @@ public final class LogScanner {
                     .replace("classes/java/main", "resources/main")
                     .replace("classes/kotlin/main", "resources/main");
             Path resourcesPath = Paths.get(resourcesPathString);
-            return modMap.stream().filter(m -> m.getFile().equals(resourcesPath)).collect(Collectors.toSet());
+            return modMap.stream().filter(m -> Objects.equals(m.getFile(), resourcesPath)).collect(Collectors.toSet());
         } else {
             return Collections.emptySet();
         }

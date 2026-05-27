@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.api.ui.v1.keybind
 
-import dev.deftu.omnicore.api.client.input.OmniKey
 import kotlin.experimental.or
 
 class KeybindHelper {
@@ -12,7 +11,6 @@ class KeybindHelper {
     private var action: ((Boolean) -> Boolean)? = null
 
     fun key(vararg codes: Int) = apply { keyCodes.addAll(codes.asList()) }
-    fun key(vararg keys: OmniKey) = apply { keyCodes.addAll(keys.map { it.code }) }
     fun mouse(vararg btns: Int) = apply { mouseBtns.addAll(btns.asList()) }
     fun shift() = apply { mods = (mods or KeyModifiers.SHIFT).toByte() }
     fun ctrl() = apply { mods = (mods or KeyModifiers.CTRL).toByte() }

@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.api.platform.v1.internal;
 
+import net.fabricmc.loader.impl.launch.FabricLauncherBase;
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.platform.v1.LoaderPlatform;
 

@@ -27,8 +27,8 @@
 package org.polyfrost.oneconfig.api.commands.v1.factories;
 
 import com.mojang.brigadier.tree.LiteralCommandNode;
-import dev.deftu.omnicore.api.client.commands.OmniClientCommandSource;
 import org.jetbrains.annotations.NotNull;
+import org.polyfrost.oneconfig.api.platform.v1.commands.ClientCommandSource;
 
 
 @FunctionalInterface
@@ -39,5 +39,5 @@ public interface CommandFactory {
      * @param obj the object to create the command from
      * @return the command, or null if this factory cannot create a command from the given object. Ideally this is fail-fast.
      */
-    LiteralCommandNode<OmniClientCommandSource>[] create(@NotNull Object obj);
+    LiteralCommandNode<ClientCommandSource>[] create(@NotNull Object obj);
 }

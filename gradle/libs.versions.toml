@@ -52,6 +52,8 @@ commonmark = "0.24.0"
 junit-bom = "5.10.2"
 log4j-impl = "2.23.1" # unvulnerable version
 
+adventure = "5.1.1"
+
 [libraries]
 junit = { module = "org.junit.jupiter:junit-jupiter" }
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
@@ -114,6 +116,8 @@ jetbrains-skiko-awt-runtime-macos-x64 = { module = "org.jetbrains.skiko:skiko-aw
 jetbrains-skiko-awt-runtime-macos-arm64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-macos-arm64", version.ref = "skiko" }
 
 commonmark = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
+
+adventure = { module = "net.kyori:adventure-api", version.ref = "adventure" }
 
 [bundles]
 kotlin = ["kotlin-reflect", "kotlin-stdlib", "kotlin-stdlib-jdk7", "kotlin-stdlib-jdk8"]

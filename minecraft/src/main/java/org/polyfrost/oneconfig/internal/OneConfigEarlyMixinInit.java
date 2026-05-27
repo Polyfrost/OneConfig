@@ -16,36 +16,36 @@ import java.util.Set;
 
 public class OneConfigEarlyMixinInit implements IMixinConfigPlugin {
     //? neoforge {
-    private static final ServiceLoader<MixinCanceller> CANCELLERS = ServiceLoader.load(MixinCanceller.class);
+    /*private static final ServiceLoader<MixinCanceller> CANCELLERS = ServiceLoader.load(MixinCanceller.class);
     private static final ServiceLoader<MixinAnnotationAdjuster> ANNOTATION_ADJUSTERS = ServiceLoader.load(MixinAnnotationAdjuster.class);
-    //? }
+    *///? }
 
 
     public static void load() {
         //? neoforge {
-        CANCELLERS.forEach(MixinCancellerRegistrar::register);
+        /*CANCELLERS.forEach(MixinCancellerRegistrar::register);
         ANNOTATION_ADJUSTERS.forEach(MixinAnnotationAdjusterRegistrar::register);
-        //? } else {
-        //net.fabricmc.loader.api.FabricLoader.getInstance().getEntrypointContainers("mixinsquared", MixinCanceller.class).forEach(container -> {
-        //    String id = container.getProvider().getMetadata().getId();
-        //    try {
-        //        MixinCanceller canceller = container.getEntrypoint();
-        //        MixinCancellerRegistrar.register(canceller);
-        //    } catch (Throwable e) {
-        //        System.err.printf("Mod %s provides a broken MixinCanceller implementation:\n", id);
-        //        e.printStackTrace(System.err);
-        //    }
-        //});
-        //net.fabricmc.loader.api.FabricLoader.getInstance().getEntrypointContainers("mixinsquared-adjuster", MixinAnnotationAdjuster.class).forEach(container -> {
-        //    String id = container.getProvider().getMetadata().getId();
-        //    try {
-        //        MixinAnnotationAdjuster annotationAdjuster = container.getEntrypoint();
-        //        MixinAnnotationAdjusterRegistrar.register(annotationAdjuster);
-        //    } catch (Throwable e) {
-        //        System.err.printf("Mod %s provides a broken MixinAnnotationAdjuster implementation:\n", id);
-        //        e.printStackTrace(System.err);
-        //    }
-        //});
+        *///? } else {
+        net.fabricmc.loader.api.FabricLoader.getInstance().getEntrypointContainers("mixinsquared", MixinCanceller.class).forEach(container -> {
+            String id = container.getProvider().getMetadata().getId();
+            try {
+                MixinCanceller canceller = container.getEntrypoint();
+                MixinCancellerRegistrar.register(canceller);
+            } catch (Throwable e) {
+                System.err.printf("Mod %s provides a broken MixinCanceller implementation:\n", id);
+                e.printStackTrace(System.err);
+            }
+        });
+        net.fabricmc.loader.api.FabricLoader.getInstance().getEntrypointContainers("mixinsquared-adjuster", MixinAnnotationAdjuster.class).forEach(container -> {
+            String id = container.getProvider().getMetadata().getId();
+            try {
+                MixinAnnotationAdjuster annotationAdjuster = container.getEntrypoint();
+                MixinAnnotationAdjusterRegistrar.register(annotationAdjuster);
+            } catch (Throwable e) {
+                System.err.printf("Mod %s provides a broken MixinAnnotationAdjuster implementation:\n", id);
+                e.printStackTrace(System.err);
+            }
+        });
         //? }
     }
 

@@ -123,7 +123,6 @@ listOf(
     "hud",
     "events",
     "ui",
-    "compat",
     "internal",
     "dependencies",
     //"dependencies:legacy",

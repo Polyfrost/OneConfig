@@ -24,9 +24,10 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
+/*
+//~ gui_graphics
 package org.polyfrost.oneconfig.test;
 
-import dev.deftu.omnicore.api.client.render.OmniRenderingContext;
 import kotlin.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -78,3 +79,4 @@ public class TestLegacyHud_Test extends LegacyHud {
         return new Pair<>(10f, 120f);
     }
 }
+*/

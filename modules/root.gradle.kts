@@ -27,11 +27,17 @@ subprojects {
         google()
     }
 
+    configure<JavaPluginExtension> {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+
     dependencies {
         "implementation"(rootProject.libs.annotations)
         "compileOnly"(rootProject.libs.logging.api)
         "testImplementation"(rootProject.libs.bundles.test.core)
         "testImplementation"(platform(rootProject.libs.junit.bom))
+        "compileOnly"(rootProject.libs.adventure)
     }
 
     configure<TestingExtension> {
@@ -65,8 +71,6 @@ subprojects {
                     dependsOn(suite)
                 }
             }
-            createTestSuite("j8Tests", 8)
-            createTestSuite("j17Tests", 17)
             createTestSuite("j21Tests", 21)
         }
     }
@@ -86,7 +90,7 @@ subprojects {
         }
 
         toolchain {
-            languageVersion.set(JavaLanguageVersion.of(11))
+            languageVersion.set(JavaLanguageVersion.of(21))
         }
     }
 
@@ -128,6 +132,5 @@ apiValidation {
     ignoredPackages.add("org.polyfrost.oneconfig.api.hypixel.v1.internal")
     ignoredProjects.add("internal")
     ignoredProjects.add("dependencies")
-    //ignoredProjects.add("legacy")
     ignoredProjects.add("compose-bundle")
 }

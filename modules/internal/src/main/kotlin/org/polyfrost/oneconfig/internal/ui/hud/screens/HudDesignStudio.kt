@@ -62,7 +62,6 @@ import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.runtime.PolyComposeRuntime
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
-import org.polyfrost.oneconfig.api.hud.v1.LegacyHud
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
@@ -137,7 +136,7 @@ fun HudDesignStudio() {
     var searchText by remember { mutableStateOf("") }
     var panelAreaWidth by remember { mutableStateOf(0f) }
 
-    val providers = remember { HudManager.providers().filter { it !is LegacyHud }.toList() }
+    val providers = remember { HudManager.providers().toList() }
     val modIds = remember(providers) { providers.mapNotNull { it.configId }.distinct() }
     val filteredProviders = providers.filter { hud ->
         (filterModId == null || hud.configId == filterModId) &&
@@ -154,12 +153,12 @@ fun HudDesignStudio() {
             val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
             if (panelAreaWidth > 0f && pos.x > size.width - panelAreaWidth) return@onPointerEvent
             val currentGearTarget = selectedHud ?: hoveredHud
-            if (currentGearTarget != null && currentGearTarget !is LegacyHud) {
+            if (currentGearTarget != null) {
                 val mcToScreen = Platform.screen().mcToScreenScale()
                 if (hitTestGear(currentGearTarget, pos.x, pos.y, mcToScreen, gearIconPx)) return@onPointerEvent
             }
             val s = Platform.screen().screenToMcScale()
-            val hit = HudManager.activeInstances.lastOrNull { it !is LegacyHud && hitTestHud(it, pos.x, pos.y) }
+            val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
             Snapshot.withMutableSnapshot {
                 if (hit != null) {
                     dragOffsetX = pos.x * s - hit.x
@@ -189,13 +188,13 @@ fun HudDesignStudio() {
                     hit.setAbsolutePosition(pos.x * s - dragOffsetX, pos.y * s - dragOffsetY)
                 }
             } else {
-                val hit = HudManager.activeInstances.lastOrNull { it !is LegacyHud && hitTestHud(it, pos.x, pos.y) }
+                val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
                 val mcToScreen = Platform.screen().mcToScreenScale()
                 val overGear = hoveredHud?.let { hh ->
-                    hh !is LegacyHud && hitTestGear(hh, pos.x, pos.y, mcToScreen, gearIconPx)
+                    hitTestGear(hh, pos.x, pos.y, mcToScreen, gearIconPx)
                 } == true
                 val inExpandedZone = hoveredHud?.let { hh ->
-                    hh !is LegacyHud && hitTestHudWithGear(hh, pos.x, pos.y, mcToScreen, gearIconPx)
+                    hitTestHudWithGear(hh, pos.x, pos.y, mcToScreen, gearIconPx)
                 } == true
                 if (hit != null) {
                     hoveredHud = hit
@@ -214,11 +213,11 @@ fun HudDesignStudio() {
             if (!wasDragging || wasDraggedHud == null) {
                 val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
                 val currentGearTarget = selectedHud ?: hoveredHud
-                if (currentGearTarget != null && currentGearTarget !is LegacyHud) {
+                if (currentGearTarget != null) {
                     val mcToScreen = Platform.screen().mcToScreenScale()
                     if (hitTestGear(currentGearTarget, pos.x, pos.y, mcToScreen, gearIconPx)) return@onPointerEvent
                 }
-                val hit = HudManager.activeInstances.lastOrNull { it !is LegacyHud && hitTestHud(it, pos.x, pos.y) }
+                val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
                 if (hit != null) {
                     Snapshot.withMutableSnapshot {
                         selectedHud = hit
@@ -299,7 +298,7 @@ fun HudDesignStudio() {
         )
 
         val gearTarget = if (selectedHud != null) selectedHud else hoveredHud
-        if (gearTarget != null && gearTarget !is LegacyHud) {
+        if (gearTarget != null) {
             val mcToScreen = Platform.screen().mcToScreenScale()
             val scale = gearTarget.effectiveScale
             val w = (if (gearTarget.staticWidth) gearTarget.staticW else gearTarget.renderedW) * scale

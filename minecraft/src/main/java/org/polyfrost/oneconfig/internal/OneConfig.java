@@ -24,47 +24,40 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
+//~ gui_graphics
 package org.polyfrost.oneconfig.internal;
 
 import com.mojang.brigadier.Command;
-import com.mojang.brigadier.arguments.FloatArgumentType;
-import com.mojang.brigadier.tree.LiteralCommandNode;
 import dev.deftu.clipboard.Clipboard;
-import dev.deftu.omnicore.api.client.OmniClient;
-import dev.deftu.omnicore.api.client.chat.OmniClientChat;
-import dev.deftu.omnicore.api.client.commands.OmniClientCommandSource;
-import dev.deftu.omnicore.api.client.commands.OmniClientCommands;
-import dev.deftu.omnicore.api.client.input.OmniKeys;
-import dev.deftu.omnicore.api.client.render.OmniResolution;
-import dev.deftu.omnicore.api.client.screen.OmniScreens;
-import dev.deftu.omnicore.api.loader.ModInfo;
-import dev.deftu.omnicore.api.loader.OmniLoader;
-import dev.deftu.omnicore.internal.client.commands.ClientCommandInternals;
-import dev.deftu.textile.Text;
-import dev.deftu.textile.minecraft.MCTextStyle;
-import dev.deftu.textile.minecraft.TextColors;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.lwjgl.glfw.GLFW;
 import org.polyfrost.compose.render.RenderContext;
+import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
-import org.polyfrost.oneconfig.api.event.v1.events.HudRenderEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
-import org.polyfrost.oneconfig.api.event.v1.events.TickEvent;
-import org.polyfrost.oneconfig.api.event.v1.events.WindowFocusEvent;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent;
-import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
-import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudRenderer;
 import org.polyfrost.oneconfig.api.hypixel.v1.HypixelUtils;
+import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
+import org.polyfrost.oneconfig.api.platform.v1.commands.ClientCommandSource;
 import org.polyfrost.oneconfig.api.ui.v1.internal.BlurHandler;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindHelper;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
 import org.polyfrost.oneconfig.internal.ui.compose.McFontService;
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
+import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen;
+import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudRenderer;
 import org.polyfrost.oneconfig.test.TestMod_Test;
 
 /**
@@ -74,151 +67,116 @@ import org.polyfrost.oneconfig.test.TestMod_Test;
 //@net.neoforged.fml.common.Mod("oneconfigv1")
 public class OneConfig
         //? fabric
-        implements net.fabricmc.api.ClientModInitializer
-{
+        implements net.fabricmc.api.ClientModInitializer {
     public static final OneConfig INSTANCE = new OneConfig();
     private static final Logger LOGGER = LogManager.getLogger("OneConfig");
     private boolean initialized = false;
 
-    //? neoforge {
-    //static {
-    //    INSTANCE.init();
-    //}
-    //? } else {
-    @Override
-    public void onInitializeClient() {
-        init();
-    }
-    //? }
-
-
-    private void init() {
-        if (initialized) {
-            LOGGER.error("Attempted to initialize oneconfig twice! this will be ignored");
-            return;
-        }
-
-        // To enable RenderDoc, set the following JVM arguments:
-        // -Drenderdoc.enabled=true
-        // (Windows) -Drenderdoc.path="C:\Program Files\RenderDoc\renderdoc.dll" (or wherever you installed RenderDoc)
-        // (Linux)   Ensure that librenderdoc.so is available in your LD_PRELOAD
-        //? >= 1.19.2
-        // RenderDoc.init();
-
-//        if (Boolean.getBoolean("oneconfig.test")) {
-            try {
-                TestMod_Test.initialize();
-            } catch (Throwable e) {
-                e.printStackTrace();
-            }
-//        }
-        
-        long t1 = System.nanoTime();
-        ModInfo self = OmniLoader.findModOrNull("oneconfig");
-        String v = self == null ? "LOCAL" : self.getVersion();
-        LOGGER.info("Loading OneConfig v{}", v);
-        BlurHandler.init();
-        McFontService.INSTANCE.init();
-
-        preloadCopycat();
-
-        new OneConfigConfig();
-        registerCommands();
-        registerKeybinds();
-        registerEventHandlers();
-
-        initialized = true;
-        LOGGER.info("OneConfig initialization took {}ms", (System.nanoTime() - t1) / 1_000_000.0);
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes", "UnstableApiUsage"})
     private static void registerCommands() {
-        ClientCommandInternals.initialize();
-        Command<OmniClientCommandSource> executor = (ctx) -> ctx.getSource().openScreen(new OneConfigUIScreen());
+        Command<ClientCommandSource> executor = (_) -> OneConfig.INSTANCE.openScreen(new OneConfigUIScreen());
 
-        LiteralCommandNode<OmniClientCommandSource> node = OmniClientCommands.literal("oneconfig")
+        var node = CommandManager.literal("oneconfig")
                 .executes(executor)
-                .then(OmniClientCommands.literal("delete")
+                .then(CommandManager.literal("delete")
+                        .executes((ctx) -> ctx.getSource()
+                                .sendText("Deleted OneConfig UI. Please make a report if you were having issues!"))
+                )
+                .then(CommandManager.literal("hud")
                         .executes((ctx) -> {
-                            return ctx.getSource().replyChat("Deleted OneConfig UI. Please make a report if you were having issues!");
+                            HudManager.INSTANCE.toggleEditor();
+                            return Command.SINGLE_SUCCESS;
                         })
                 )
-                .then(OmniClientCommands.literal("hud")
-                        .executes((ctx) -> { HudManager.INSTANCE.toggleEditor(); return Command.SINGLE_SUCCESS; })
-                )
-                .then(OmniClientCommands.literal("locraw")
-                        .executes((ctx) -> ctx.getSource().replyChat(HypixelUtils.getLocation().toString()))
+                .then(CommandManager.literal("locraw")
+                        .executes((ctx) -> ctx.getSource().sendText(HypixelUtils.getLocation().toString()))
                 ).build();
-        OmniClientCommands.register(node);
-        OmniClientCommands.register(OmniClientCommands.literal("ocfg").executes(executor).redirect(node));
+        CommandManager.register(node);
+        CommandManager.register(CommandManager.literal("ocfg").executes(executor).redirect(node));
+    }
+
+    public static boolean isInChatScreen() {
+        return Minecraft.getInstance().screen instanceof ChatScreen;
     }
 
     private static void registerKeybinds() {
         KeybindHelper.builder()
-            .key(OmniKeys.KEY_RIGHT_SHIFT)
-            .action(() -> {
-                if (OmniClient.getWorld() == null && !OmniLoader.isDevelopment()) return;
-                if (OmniScreens.isInChatScreen()) return;
-                try {
-                    Platform.screen().display(new OneConfigUIScreen());
-                } catch (Throwable t) {
-                    OmniClientChat.displayChatMessage(Text.literal("Failed to open OneConfig UI: " + t.getMessage() + ". Please report this!").setStyle(MCTextStyle.color(TextColors.RED)));
-                    throw t;
-                }
-            })
-            .register();
+                .key(GLFW.GLFW_KEY_RIGHT_SHIFT)
+                .action(() -> {
+                    if (Minecraft.getInstance().level == null && !Platform.compatibility().isDevelopment()) {
+                        return;
+                    }
+                    if (isInChatScreen()) {
+                        return;
+                    }
+                    try {
+                        Platform.screen().display(new OneConfigUIScreen());
+                    } catch (Throwable t) {
+                        Minecraft.getInstance().gui.getChat()
+                                .addMessage(Component.literal("Failed to open OneConfig UI: " + t.getMessage() + ". Please report this!")
+                                        .withStyle(
+                                                ChatFormatting.RED));
+                        throw t;
+                    }
+                })
+                .register();
+    }
+
+    public static void render(GuiGraphics graphics, float partial) {
+        if (!SkiaCtx.INSTANCE.isReady()) {
+            return;
+        }
+
+        float sw = graphics.guiWidth();
+        float sh = graphics.guiHeight();
+        float scale = (float) Minecraft.getInstance().options.guiScale().get();
+        HudManager.guiScreenWidth = sw / scale;
+        HudManager.guiScreenHeight = sh / scale;
+
+        // Update HUD visibility state for per-HUD filtering
+        HudManager.isDebugScreenVisible = Minecraft.getInstance().getDebugOverlay().showDebugScreen();
+        HudManager.isTabListVisible = org.lwjgl.glfw.GLFW.glfwGetKey(
+                Minecraft.getInstance().getWindow().handle(),
+                org.lwjgl.glfw.GLFW.GLFW_KEY_TAB
+        ) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+        HudManager.isGuiScreenOpen = Platform.screen().current() != null;
+
+        //LegacyHudRenderer.INSTANCE.renderLive(graphics);
+        SkiaCtx.INSTANCE.queueHudDraw(() -> {
+            var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
+            HudManager.INSTANCE.render(ctx, sw, sh);
+        });
+        // Render Skia HUDs into the offscreen TextureTarget.
+        // The mixin blits the texture onto MC's render target afterwards.
+        SkiaCtx.INSTANCE.drawNow();
     }
 
     private static void registerEventHandlers() {
         EventManager.register(InitializationEvent.class, e -> HudManager.INSTANCE.initialize());
-        EventManager.register(HudRenderEvent.class, e -> {
-            if (!SkiaCtx.INSTANCE.isReady()) return;
-
-            float sw = OmniClient.getWindow().getScreenWidth();
-            float sh = OmniClient.getWindow().getScreenHeight();
-            float scale = (float) OmniResolution.getScaleFactor();
-            HudManager.guiScreenWidth = sw / scale;
-            HudManager.guiScreenHeight = sh / scale;
-
-            // Update HUD visibility state for per-HUD filtering
-            HudManager.isDebugScreenVisible = dev.deftu.omnicore.api.client.options.OmniVideoSettings.isDebugRendering();
-            HudManager.isTabListVisible = org.lwjgl.glfw.GLFW.glfwGetKey(
-                net.minecraft.client.Minecraft.getInstance().getWindow().getWindow(),
-                org.lwjgl.glfw.GLFW.GLFW_KEY_TAB
-            ) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
-            HudManager.isGuiScreenOpen = Platform.screen().current() != null;
-
-            LegacyHudRenderer.INSTANCE.renderLive(e.ctx);
-            SkiaCtx.INSTANCE.queueHudDraw(() -> {
-                var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
-                HudManager.INSTANCE.render(ctx, sw, sh);
-            });
-            // Render Skia HUDs into the offscreen TextureTarget.
-            // The mixin blits the texture onto MC's render target afterwards.
-            SkiaCtx.INSTANCE.drawNow();
-        });
-        EventManager.register(HudEditorToggleEvent.class, e -> {
-            if (e.open) {
-                Platform.screen().display(new HudEditorUIScreen(), 0);
-            } else {
-                if (Platform.screen().current() instanceof HudEditorUIScreen) {
-                    Platform.screen().display(null, 0);
-                }
-            }
-        });
+        EventManager.register(
+                HudEditorToggleEvent.class, e -> {
+                    if (e.open) {
+                        Platform.screen().display(new HudEditorUIScreen(), 0);
+                    } else {
+                        if (Platform.screen().current() instanceof HudEditorUIScreen) {
+                            Platform.screen().display(null, 0);
+                        }
+                    }
+                });
         // Safety: if the HUD editor screen is closed by MC (e.g. player presses ESC)
         // without going through HudManager.closeEditor(), reset the editing flag
-        EventManager.register(org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent.class, e -> {
-            if (HudManager.INSTANCE.isEditing() && !(e.getScreen() instanceof HudEditorUIScreen)) {
-                HudManager.INSTANCE.closeEditor();
-            }
-        });
-        EventManager.register(InitializationEvent.class, e -> {
-            ConfigManager.initialize();
-            ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
-            org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar.register();
-            org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry.INSTANCE.loadFromConfig();
-        });
+        EventManager.register(
+                org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent.class, e -> {
+                    if (HudManager.INSTANCE.isEditing() && !(e.getScreen() instanceof HudEditorUIScreen)) {
+                        HudManager.INSTANCE.closeEditor();
+                    }
+                });
+        EventManager.register(
+                InitializationEvent.class, e -> {
+                    ConfigManager.initialize();
+                    ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
+                    org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar.register();
+                    org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry.INSTANCE.loadFromConfig();
+                });
 //        //#if MC < 1.13
 //        // this is cringe but is better than the alternative of checking every frame in a mixin (that's how vanilla does it lol)
 //        AtomicBoolean active = new AtomicBoolean(false);
@@ -243,5 +201,64 @@ public class OneConfig
         }
 
         LOGGER.info("  -> Copycat preload took {}ms", (System.nanoTime() - t1) / 1_000_000.0);
+    }
+
+    //? neoforge {
+    //static {
+    //    INSTANCE.init();
+    //}
+    //? }
+    @Override
+    public void onInitializeClient() {
+        init();
+    }
+
+    private void init() {
+        if (initialized) {
+            LOGGER.error("Attempted to initialize oneconfig twice! this will be ignored");
+            return;
+        }
+
+        // To enable RenderDoc, set the following JVM arguments:
+        // -Drenderdoc.enabled=true
+        // (Windows) -Drenderdoc.path="C:\Program Files\RenderDoc\renderdoc.dll" (or wherever you installed RenderDoc)
+        // (Linux)   Ensure that librenderdoc.so is available in your LD_PRELOAD
+        //? >= 1.19.2
+        //RenderDoc.init();
+
+//        if (Boolean.getBoolean("oneconfig.test")) {
+        try {
+            TestMod_Test.initialize();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+//        }
+
+        long t1 = System.nanoTime();
+        ModInfo self = Platform.compatibility()
+                .getMods()
+                .stream()
+                .filter(it -> "oneconfig".equals(it.getId()))
+                .findFirst()
+                .orElse(null);
+        String v = self == null ? "LOCAL" : self.getVersion();
+        LOGGER.info("Loading OneConfig v{}", v);
+        BlurHandler.init();
+        McFontService.INSTANCE.init();
+
+        preloadCopycat();
+
+        new OneConfigConfig();
+        registerCommands();
+        registerKeybinds();
+        registerEventHandlers();
+
+        initialized = true;
+        LOGGER.info("OneConfig initialization took {}ms", (System.nanoTime() - t1) / 1_000_000.0);
+    }
+
+    private int openScreen(Screen screen) {
+        Platform.screen().display(screen);
+        return Command.SINGLE_SUCCESS;
     }
 }

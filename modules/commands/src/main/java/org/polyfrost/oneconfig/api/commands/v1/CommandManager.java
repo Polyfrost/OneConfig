@@ -30,13 +30,13 @@ import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
-import dev.deftu.omnicore.api.client.commands.OmniClientCommandSource;
-import dev.deftu.omnicore.api.client.commands.OmniClientCommands;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.commands.v1.factories.CommandFactory;
 import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.AnnotationCommandFactory;
 import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.Command;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
+import org.polyfrost.oneconfig.api.platform.v1.commands.ClientCommandSource;
 import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
 
 import java.util.HashSet;
@@ -72,37 +72,37 @@ public class CommandManager {
         registerFactory(new AnnotationCommandFactory());
     }
 
-    public static void register(LiteralArgumentBuilder<OmniClientCommandSource> builder) {
+    public static void register(LiteralArgumentBuilder<ClientCommandSource> builder) {
         register(builder.build());
     }
 
-    public static void register(LiteralCommandNode<OmniClientCommandSource> node) {
-        OmniClientCommands.register(node);
+    public static void register(LiteralCommandNode<ClientCommandSource> node) {
+        Platform.compatibility().commandPlatform().register(node);
     }
 
     public static boolean register(Object obj) {
-        LiteralCommandNode<OmniClientCommandSource>[] nodes = INSTANCE.create(obj);
+        LiteralCommandNode<ClientCommandSource>[] nodes = INSTANCE.create(obj);
         if (nodes == null) {
             return false;
         }
 
-        for (LiteralCommandNode<OmniClientCommandSource> node : nodes) {
+        for (LiteralCommandNode<ClientCommandSource> node : nodes) {
             if (node == null) {
                 LOGGER.warn("Command node for object {} is null, skipping registration", obj);
                 continue;
             }
 
-            OmniClientCommands.register(node);
+            Platform.compatibility().commandPlatform().register(node);
 //            LOGGER.info("Registered command node for object {}: {}", obj, node.getName());
         }
 
         return true;
     }
 
-    public LiteralCommandNode<OmniClientCommandSource>[] create(Object obj) {
+    public LiteralCommandNode<ClientCommandSource>[] create(Object obj) {
         for (CommandFactory factory : factories) {
             try {
-                LiteralCommandNode<OmniClientCommandSource>[] nodes = factory.create(obj);
+                LiteralCommandNode<ClientCommandSource>[] nodes = factory.create(obj);
                 if (nodes != null) {
                     return nodes;
                 }
@@ -114,16 +114,16 @@ public class CommandManager {
         return null;
     }
 
-    public static LiteralArgumentBuilder<OmniClientCommandSource> literal(String name) {
-        return OmniClientCommands.literal(name);
+    public static LiteralArgumentBuilder<ClientCommandSource> literal(String name) {
+        return LiteralArgumentBuilder.literal(name);
     }
 
-    public static <T> RequiredArgumentBuilder<OmniClientCommandSource, T> argument(String name, ArgumentType<T> type) {
+    public static <T> RequiredArgumentBuilder<ClientCommandSource, T> argument(String name, ArgumentType<T> type) {
         if (type == null) {
             throw new NullPointerException("Can't get argument type for argument '" + name + "' as type is null");
         }
 
-        return OmniClientCommands.argument(name, type);
+        return RequiredArgumentBuilder.argument(name, type);
     }
 
     /**

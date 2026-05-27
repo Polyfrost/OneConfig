@@ -27,9 +27,9 @@
 package org.polyfrost.oneconfig.test;
 
 import com.mojang.authlib.GameProfile;
-import dev.deftu.omnicore.api.client.chat.OmniClientChat;
 import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.Command;
 import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.Handler;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.utils.v1.dsl.ScreensKt;
 
 @Command(value = {"testmod", "tmod"})
@@ -37,7 +37,7 @@ public class TestCommand_Test {
 
     @Handler
     private static void main() {  // /test
-        OmniClientChat.displayChatMessage("Main command");
+        Platform.compatibility().displayChatMessage("Main command");
     }
 
     private static void joinAndChat(String... stuff) {
@@ -45,7 +45,7 @@ public class TestCommand_Test {
         for (Object thing : stuff) {
             builder.append(thing).append(' ');
         }
-        OmniClientChat.displayChatMessage(builder.toString().trim());
+        Platform.compatibility().displayChatMessage(builder.toString().trim());
     }
 
     @Handler
@@ -67,25 +67,25 @@ public class TestCommand_Test {
         //String name = profile.getName();
         //String id = profile.getId().toString();
         //? }
-        OmniClientChat.displayChatMessage("Player test: " + name);
-        OmniClientChat.displayChatMessage(id);
+        Platform.compatibility().displayChatMessage("Player test: " + name);
+        Platform.compatibility().displayChatMessage(id);
     }
 
     @Command(value = {"subcommand", "s"})
     private static class TestSubCommand {
         private static void main(int a, float b, String c) { // /test subcommand <a> <b> <c>
-            OmniClientChat.displayChatMessage("Integer main: " + (a + b) + " " + c);
+            Platform.compatibility().displayChatMessage("Integer main: " + (a + b) + " " + c);
         }
 
         @Handler(value = {"yesNo"})
         private void yes(double a, double b, String c) { // /test subcommand <a> <b> <c>
-            OmniClientChat.displayChatMessage("Double main: " + a + " " + b + " " + c);
+            Platform.compatibility().displayChatMessage("Double main: " + a + " " + b + " " + c);
         }
 
         @Command(value = {"subSub", "ss"})
         private static class TestSubSubCommand {
             private void wow(int a, float b, String c) { // /test subSub <a> <b> <c>
-                OmniClientChat.displayChatMessage("Integer subSub: " + (a + b) + " " + c);
+                Platform.compatibility().displayChatMessage("Integer subSub: " + (a + b) + " " + c);
             }
         }
     }

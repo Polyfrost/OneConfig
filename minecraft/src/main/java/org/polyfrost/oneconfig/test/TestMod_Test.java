@@ -44,7 +44,7 @@ public final class TestMod_Test {
             }
             ConfigRegistry.INSTANCE.registerTree(config.getTree(), ConfigSource.OC);
 
-            HudManager.INSTANCE.register(new TestLegacyHud_Test(), "test_mod");
+            //HudManager.INSTANCE.register(new TestLegacyHud_Test(), "test_mod");
         });
     }
 }

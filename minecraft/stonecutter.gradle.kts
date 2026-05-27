@@ -4,7 +4,7 @@ plugins {
     id("dev.kikugie.stonecutter")
 }
 
-stonecutter active "26.1-fabric"
+stonecutter active "1.21.11-fabric"
 stonecutter {
     parameters {
         constants {
@@ -18,6 +18,12 @@ stonecutter {
             this["modmenu_compat"] = false
             this["rconfig_compat"] = false
             this["cinnabar"] = false
+        }
+
+        replacements {
+            string(current.version >= "26.1", "gui_graphics") {
+                replace("GuiGraphics", "GuiGraphicsExtractor")
+            }
         }
     }
 }

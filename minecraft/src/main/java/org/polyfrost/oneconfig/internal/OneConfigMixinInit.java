@@ -30,7 +30,7 @@ import kotlin.Unit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.tree.ClassNode;
-import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
+//todo import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
@@ -63,16 +63,16 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         List<String> mixins = new ArrayList<>();
 
 
-        RelocatedMixins.INSTANCE.register(e -> {
-            mixins.add(e);
-            return Unit.INSTANCE;
-        });
+        // todo RelocatedMixins.INSTANCE.register(e -> {
+        //    mixins.add(e);
+        //    return Unit.INSTANCE;
+        //});
         //? moul_compat {
         //mixins.add("compat.moulconfig.Mixin_MCConfigEditorIntegration_Firmament");
         //mixins.add("compat.moulconfig.Mixin_MoulConfigAdapter_DandelionBp");
         //? }
 
-        mixins.add("Mixin_MinecraftClientResourceStuff");
+        //mixins.add("Mixin_MinecraftClientResourceStuff");
         //? yacl_compat
         //mixins.add("compat.yacl.Mixin_YetAnotherConfigLib_Builder");
 
@@ -87,7 +87,6 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? } else {
         //? < 1.21.2
         //mixins.add("fabric.Mixin_LoadShaderInvoker_Fabric");
-        mixins.add("fabric.Mixin_ChatReceiveEvent_Fabric");
         mixins.add("events.Mixin_ScreenOpenEvent_Fabric");
         //? }
 

@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.api.event.v1.events;
 
-import dev.deftu.textile.Text;
+import net.kyori.adventure.text.Component;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 
 public abstract class ChatEvent extends Event.Cancellable {
@@ -43,9 +43,9 @@ public abstract class ChatEvent extends Event.Cancellable {
     }
 
     public static final class Receive extends ChatEvent {
-        private Text message;
+        private Component message;
 
-        public Receive(Text message) {
+        public Receive(Component message) {
             this.message = message;
         }
 
@@ -53,15 +53,15 @@ public abstract class ChatEvent extends Event.Cancellable {
             return Platform.i18n().getUnformattedText(message);
         }
 
-        public Text getMessage() {
+        public Component getMessage() {
             return message;
         }
 
-        public void setMessage(Text message) {
+        public void setMessage(Component message) {
             this.message = message;
         }
 
-        public Text component1() {
+        public Component component1() {
             return message;
         }
     }

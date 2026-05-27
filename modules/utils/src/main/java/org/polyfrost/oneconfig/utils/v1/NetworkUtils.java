@@ -26,9 +26,9 @@
 
 package org.polyfrost.oneconfig.utils.v1;
 
-import dev.deftu.omnicore.api.client.OmniDesktop;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -122,12 +122,11 @@ public final class NetworkUtils {
     /**
      * Launches a URL in the default browser.
      *
-     * @param uri The URI to launch.
-     * @see OmniDesktop#browse(URI)
+     * @param uri The URI to launch
      * @see java.awt.Desktop#browse(URI)
      */
     public static void browseLink(String uri) {
-        OmniDesktop.browse(URI.create(uri));
+        DesktopHelper.browse(URI.create(uri));
     }
 
     public static InputStream setupConnection(String url) throws IOException {

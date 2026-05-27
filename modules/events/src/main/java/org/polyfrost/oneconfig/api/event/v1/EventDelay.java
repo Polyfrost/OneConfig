@@ -28,7 +28,6 @@ package org.polyfrost.oneconfig.api.event.v1;
 
 
 import org.polyfrost.oneconfig.api.event.v1.events.Event;
-import org.polyfrost.oneconfig.api.event.v1.events.RenderEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 
@@ -85,10 +84,4 @@ public final class EventDelay {
         of(TickEvent.End.class, ticks, function);
     }
 
-    /**
-     * {@link #of(Class, int, Runnable)} with RenderEvent.Post.
-     */
-    public static void render(int ticks, Runnable function) {
-        of(RenderEvent.Post.class, ticks, function);
-    }
 }

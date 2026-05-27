@@ -1,5 +1,5 @@
 {
-    "compatibilityLevel": "${java_version}",
+    "compatibilityLevel": "JAVA_21",
     "minVersion": "0.8",
     "package": "org.polyfrost.oneconfig.internal.mixin",
     "plugin": "org.polyfrost.oneconfig.internal.OneConfigMixinInit",
@@ -8,8 +8,6 @@
     },
     "verbose": true,
     "client": [
-        "compat.Mixin_DisableOptiFineFastRenderForBlur",
-        "compat.Mixin_VigilanceCarryover",
         "events.Mixin_ChatSendEvent",
         "events.Mixin_DebugOpenEvent",
         "events.Mixin_FramebufferRenderEvent",
@@ -20,9 +18,7 @@
         "events.Mixin_MouseInputEvent",
         "events.Mixin_PlayerInteractEvent_LeftAction",
         "events.Mixin_PlayerInteractEvent_RightAction",
-        "events.Mixin_PostWorldRenderEvent",
         "events.Mixin_ReceivePacketEvent",
-        "events.Mixin_RenderEvent",
         "events.Mixin_RenderLivingEntityEvent",
         "events.Mixin_ResizeEvent",
         "events.Mixin_ServerJoinEvent",

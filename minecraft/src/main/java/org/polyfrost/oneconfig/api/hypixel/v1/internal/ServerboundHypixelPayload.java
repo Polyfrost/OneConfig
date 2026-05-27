@@ -1,3 +1,4 @@
+/*
 package org.polyfrost.oneconfig.api.hypixel.v1.internal;
 
 import dev.deftu.omnicore.api.OmniResourceLocation;
@@ -34,3 +35,4 @@ public class ServerboundHypixelPayload implements PacketPayload {
         });
     }
 }
+*/

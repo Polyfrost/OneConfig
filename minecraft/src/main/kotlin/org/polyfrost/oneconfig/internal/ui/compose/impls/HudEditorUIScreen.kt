@@ -14,10 +14,9 @@ import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import dev.deftu.omnicore.api.client.input.KeyboardModifiers
-import dev.deftu.omnicore.api.client.input.OmniKey
-import dev.deftu.omnicore.api.client.render.OmniRenderingContext
-import dev.deftu.omnicore.api.client.screen.KeyPressEvent
+import com.mojang.blaze3d.platform.InputConstants
+import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.input.KeyEvent
 import org.lwjgl.glfw.GLFW
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
@@ -39,8 +38,8 @@ class HudEditorUIScreen : ComposeScreen() {
 
     private var requestCloseCallback: (() -> Unit)? = null
 
-    override fun onKeyPress(key: OmniKey, scanCode: Int, typedChar: Char, modifiers: KeyboardModifiers, event: KeyPressEvent): Boolean {
-        if (key.code == GLFW.GLFW_KEY_ESCAPE) {
+    override fun keyPressed(event: KeyEvent): Boolean {
+        if (event.key == InputConstants.KEY_ESCAPE) {
             if (!closeRequested) {
                 closeRequested = true
                 closeRequestedAt = System.currentTimeMillis()
@@ -48,15 +47,15 @@ class HudEditorUIScreen : ComposeScreen() {
             }
             return true
         }
-        return super.onKeyPress(key, scanCode, typedChar, modifiers, event)
+        return super.keyPressed(event)
     }
 
-    override fun onRender(ctx: OmniRenderingContext, mouseX: Int, mouseY: Int, tickDelta: Float) {
+    override fun render(ctx: GuiGraphics, mouseX: Int, mouseY: Int, tickDelta: Float) {
         if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= CLOSE_ANIMATION_MS) {
             Platform.screen().close()
             return
         }
-        super.onRender(ctx, mouseX, mouseY, tickDelta)
+        super.render(ctx, mouseX, mouseY, tickDelta)
     }
 
     @Composable

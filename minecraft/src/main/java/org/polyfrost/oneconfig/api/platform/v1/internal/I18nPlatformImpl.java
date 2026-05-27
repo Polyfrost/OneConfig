@@ -39,6 +39,7 @@ public class I18nPlatformImpl implements I18nPlatform {
             s = ((Component) component).getString();
         } else if (component instanceof FormattedText) {
             //s = ((FormattedText) component).collapseToString();
+            // todo deventure components
             s = "";
         } else {
             s = component.toString();

@@ -26,8 +26,6 @@
 
 package org.polyfrost.oneconfig.api.platform.v1;
 
-import dev.deftu.omnicore.api.OmniEnvironment;
-import dev.deftu.omnicore.api.loader.OmniLoader;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -40,6 +38,6 @@ public interface LoaderPlatform {
      * for example, if the loader is Forge and the minecraft version is 1.16.5, this will return "1.16.5-forge".
      */
     default String getLoaderString() {
-        return OmniEnvironment.getMinecraftVersion() + '-' + OmniLoader.getLoader().name().toLowerCase();
+        return Platform.compatibility().version() + '-' + Platform.compatibility().loader();
     }
 }

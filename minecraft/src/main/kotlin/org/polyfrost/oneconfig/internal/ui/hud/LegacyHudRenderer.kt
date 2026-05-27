@@ -1,16 +1,13 @@
 package org.polyfrost.oneconfig.internal.ui.hud
 
+//~ gui_graphics
 import androidx.compose.runtime.snapshots.Snapshot
-import dev.deftu.omnicore.api.client.render.OmniRenderingContext
-import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.client.gui.GuiGraphics
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
-import org.polyfrost.oneconfig.api.hud.v1.LegacyHud
 
 object LegacyHudRenderer {
-    fun renderLive(eventCtx: GuiGraphicsExtractor) {
-        if (!eventCtx.areGraphicsAvailable) return
+    /*fun renderLive(eventCtx: GuiGraphics) {
         for (hud in HudManager.activeInstances) {
-            if (hud !is LegacyHud || hud.hidden) continue
             if (HudManager.isDebugScreenVisible && !hud.showInF3) continue
             if (HudManager.isTabListVisible && !hud.showInTab) continue
             if (HudManager.isGuiScreenOpen && !hud.showInScreens) continue
@@ -39,5 +36,5 @@ object LegacyHudRenderer {
             pose.popPose()
             *///? }
         }
-    }
+    }*/
 }

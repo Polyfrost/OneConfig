@@ -26,11 +26,12 @@
 
 package org.polyfrost.oneconfig.test;
 
-import dev.deftu.omnicore.api.client.chat.OmniClientChat;
-import dev.deftu.omnicore.api.client.input.OmniKeys;
+import com.mojang.blaze3d.platform.InputConstants;
+import org.lwjgl.glfw.GLFW;
 import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.annotations.*;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindHelper;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
 import java.util.function.Consumer;
@@ -50,7 +51,7 @@ public class TestConfig_Test extends Config {
     public static int number = 50;
 
     @Keybind(title = "keybinding", description = "please send help")
-    OneConfigKeybind bind0 = KeybindHelper.builder().key(OmniKeys.KEY_P).ctrl().action((Consumer<Boolean>) (it) -> OmniClientChat.displayChatMessage(it ? "pressed keybind" : "released keybind")).register();
+    OneConfigKeybind bind0 = KeybindHelper.builder().key(InputConstants.KEY_P).ctrl().action((Consumer<Boolean>) (it) -> Platform.compatibility().displayChatMessage(it ? "pressed keybind" : "released keybind")).register();
     @Slider(title = "Slide", min = 10f, max = 110f, icon = "assets/oneconfig/ico/paintbrush.svg", description = "I do sliding", category = "bob")
     public static float p = 50f;
     @Text(title = "Text")
@@ -90,7 +91,7 @@ public class TestConfig_Test extends Config {
     public float slide = 40f;
 
     @Keybind(title = "keybind")
-    private final OneConfigKeybind bind = KeybindHelper.builder().ctrl().key(OmniKeys.KEY_G).action((Runnable) () -> {}).register();
+    private final OneConfigKeybind bind = KeybindHelper.builder().ctrl().key(InputConstants.KEY_G).action((Runnable) () -> {}).register();
 
     public TestConfig_Test() {
         super("test_mod.json", "Test Mod", Category.QOL);
@@ -100,7 +101,7 @@ public class TestConfig_Test extends Config {
 
     @Button(title = "Test")
     private void button() {
-        OmniClientChat.displayChatMessage("button pressed");
+        Platform.compatibility().displayChatMessage("button pressed");
     }
 
     public static TestConfig_Test getInstance() {

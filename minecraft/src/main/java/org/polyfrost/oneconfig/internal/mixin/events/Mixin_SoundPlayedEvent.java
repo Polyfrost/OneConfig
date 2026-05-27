@@ -1,9 +1,8 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
-import dev.deftu.omnicore.api.client.options.SoundCategory;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundManager;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.SoundPlayedEvent;
 import org.spongepowered.asm.mixin.Mixin;

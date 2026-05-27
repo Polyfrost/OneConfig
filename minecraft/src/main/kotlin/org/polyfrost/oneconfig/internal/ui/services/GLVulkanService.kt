@@ -20,9 +20,9 @@ object GLVulkanService : VulkanService {
     ): BackendRenderTarget {
         val target = client.mainRenderTarget
         //? > 1.21.11 {
-        val frameBufferId = -1
-        //? } else if >= 1.21.5 {
-        //val frameBufferId = getFboId(target)
+        /*val frameBufferId = -1
+        *///? } else if >= 1.21.5 {
+        val frameBufferId = getFboId(target)
         //? } else
         //val frameBufferId = target.frameBufferId
 
@@ -46,9 +46,9 @@ object GLVulkanService : VulkanService {
         height: Int,
     ): Pair<BackendRenderTarget, SurfaceColorFormat> {
         //? > 1.21.11 {
-        val fboId = -1//todo target.frameBufferId
-        //? } else if >= 1.21.5 {
-        //val fboId = getFboId(target)
+        /*val fboId = -1//todo target.frameBufferId
+        *///? } else if >= 1.21.5 {
+        val fboId = getFboId(target)
         //? } else
         //val fboId = target.frameBufferId
 
@@ -61,7 +61,7 @@ object GLVulkanService : VulkanService {
      * Taken from: https://discord.com/channels/507304429255393322/807617488313516032/1452333789778018314 (The Fabric Project)
      */
     //? >= 1.21.5 && <= 1.21.11 {
-    /*fun getFboId(frameBuffer: RenderTarget): Int {
+    fun getFboId(frameBuffer: RenderTarget): Int {
        val device = RenderSystem.getDevice()
       if (device !is com.mojang.blaze3d.opengl.GlDevice) {
           return -1
@@ -70,6 +70,6 @@ object GLVulkanService : VulkanService {
           return texture.getFbo((device as com.mojang.blaze3d.opengl.GlDevice).directStateAccess(), frameBuffer.getDepthTexture())
       }
     }
-    *///? }
+    //? }
 
 }

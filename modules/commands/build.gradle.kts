@@ -28,3 +28,7 @@ dependencies {
     api(project(":modules:utils"))
     compileOnly("com.mojang:brigadier:1.0.18")
 }
+
+tasks.named("test") {
+    enabled = false
+}

@@ -1,5 +1,5 @@
-import java.lang.Boolean.TRUE
 import dev.kikugie.stonecutter.build.StonecutterBuildExtension
+import java.lang.Boolean.TRUE
 
 plugins {
     java
@@ -28,7 +28,7 @@ repositories {
         content { includeGroup("maven.modrinth") } // for some reason yacl versions exist that aren't on the official repo???
     }
     maven("https://maven.terraformersmc.com/") {
-        content { includeGroup("com.terraformersmc" ) }
+        content { includeGroup("com.terraformersmc") }
     }
     maven("https://jitpack.io") {
         content { includeGroupAndSubgroups("com.github") }
@@ -59,27 +59,42 @@ val includeInLoader = Attribute.of("org.polyfrost.oneconfig.loader.include", Boo
 val jijInLoader = Attribute.of("org.polyfrost.oneconfig.loader.jij", Boolean::class.javaObjectType)
 
 
-fun DependencyHandlerScope.handleApiDep(dependency: String, isMod: Boolean = false) {
+fun DependencyHandlerScope.handleApiDep(dependency: String, isMod: Boolean = false, transitive: Boolean = false) {
     val dep = project.dependencies.create(dependency) as ExternalModuleDependency
     this.handleApiDep(dep, isMod)
 }
-fun DependencyHandlerScope.handleApiDep(dependency: ExternalModuleDependency, isMod: Boolean = false) {
+
+fun DependencyHandlerScope.handleApiDep(
+    dependency: ExternalModuleDependency,
+    isMod: Boolean = false,
+    transitive: Boolean = false,
+) {
     this.handleApiDep(project.provider { dependency }, isMod)
 }
 
 @JvmName("handleApiDepBundle")
-fun DependencyHandlerScope.handleApiDep(dependency: Provider<out ExternalModuleDependencyBundle>, isMod: Boolean = false) {
+fun DependencyHandlerScope.handleApiDep(
+    dependency: Provider<out ExternalModuleDependencyBundle>,
+    isMod: Boolean = false,
+    transitive: Boolean = false,
+) {
     dependency.get().forEach { handleApiDep(it, isMod) }
 }
 
-fun DependencyHandlerScope.handleApiDep(dependency: Provider<out ExternalModuleDependency>, isMod: Boolean = false) {
-    if (isMod) "oneConfigModulesCompileOnlyApi"("modApi"(dependency) {
-        isTransitive = false
+fun DependencyHandlerScope.handleApiDep(
+    dependency: Provider<out ExternalModuleDependency>,
+    isMod: Boolean = false,
+    transitive: Boolean = false,
+) {
+    if (isMod) "modImplementation"(dependency) {
+        isTransitive = transitive
         attributes {
             attribute(includeInLoader, TRUE)
         }
-    }) else "api"(dependency) {
-        isTransitive = false
+    } else {
+        "implementation"(dependency) {
+            isTransitive = transitive
+        }
     }
 }
 
@@ -139,7 +154,7 @@ dependencies {
         modVersion: String,
         mcVersionOverride: String = mcVersion,
         withoutLoader: Boolean = false,
-        noForge: Boolean = false
+        noForge: Boolean = false,
     ) = mcVersion to if (withoutLoader)
         CompatDependency("dev.isxander:yet-another-config-lib:$modVersion")
     else CompatDependency(
@@ -163,7 +178,8 @@ dependencies {
     )
     //compileOnlyCompat(yacl[mcVersionString])
 
-    fun modMenu(mcVersion: String, version: String) = mcVersion to CompatDependency(fabric = "com.terraformersmc:modmenu:$version")
+    fun modMenu(mcVersion: String, version: String) =
+        mcVersion to CompatDependency(fabric = "com.terraformersmc:modmenu:$version")
 
     val modMenu = mapOf(
         modMenu("1.21.1", "11.0.3"),
@@ -194,6 +210,11 @@ dependencies {
     "implementation"(versionedCatalog["jetbrains.lifecycle"])
     "implementation"(versionedCatalog["jetbrains.viewmodel"])
     "implementation"(versionedCatalog["commonmark"])
+    "implementation"(versionedCatalog["adventure"])
+
+    if (loader == "fabric") {
+        "modImplementation"("net.kyori:adventure-platform-mod-shared-fabric-repack:6.8.0")
+    }
 
     handleApiDep(versionedCatalog.bundles["kotlin"])
     handleApiDep(versionedCatalog.bundles["kotlinx"])
@@ -217,14 +238,13 @@ dependencies {
     handleApiDep(versionedCatalog["hypixel-modapi"])
     handleApiDep(versionedCatalog["hypixel-data"])
 
-    handleApiDep(versionedCatalog["mixin-extras"])
     handleApiDep(versionedCatalog["mixin-squared"])
     handleApiDep(versionedCatalog["commonmark"])
 
     if (loader == "fabric") {
-        handleApiDep(versionedCatalog["fabric-language-kotlin"])
-        handleApiDep(versionedCatalog["fabric-loader"])
-        handleApiDep(versionedCatalog.bundles["fabric-api"])
+        handleApiDep(versionedCatalog["fabric-language-kotlin"], transitive = true)
+        handleApiDep(versionedCatalog["fabric-loader"], isMod = true, transitive = true)
+        handleApiDep(versionedCatalog.bundles["fabric-api"], true, transitive = true)
     }
 
     if (versionedCatalog.has("cinnabar")) {
@@ -315,5 +335,29 @@ dependencies {
         //val patchedRenderingV1 = patchedFabricApiDir.map { it.file("fabric-rendering-v1-23.0.2+f348b6c3c3.jar") }
         //"maybeModApi"(files(patchedScreenApi) { builtBy(patchFabricApiMods) })
         //"maybeModApi"(files(patchedRenderingV1) { builtBy(patchFabricApiMods) })
+    }
+}
+
+version = project.parent!!.version
+
+tasks.withType<ProcessResources>() {
+    val range = if (versionedCatalog.versions.has("minecraft.range")) {
+        versionedCatalog.versions.get("minecraft.range").toString()
+    } else {
+        val start = versionedCatalog.versions.getOrFallback("minecraft.start", "minecraft")
+        val end = versionedCatalog.versions.getOrFallback("minecraft.end", "minecraft")
+        ">=$start <=$end"
+    }
+    val version = project.version
+
+    val fabricProperties = buildMap {
+        put("mod_version", version)
+        put("fabric_mc_version", range)
+    }
+
+    this.inputs.properties(fabricProperties)
+
+    this.filesMatching("fabric.mod.json") {
+        expand(fabricProperties)
     }
 }
