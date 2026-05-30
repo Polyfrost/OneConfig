@@ -52,7 +52,7 @@ val versions = buildList {
         add(version to listOf(FABRIC))
     }
 
-    //both("26.1")
+    both("26.1")
     both("1.21.11")
     both("1.21.10")
     both("1.21.8")

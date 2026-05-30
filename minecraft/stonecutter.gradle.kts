@@ -4,7 +4,7 @@ plugins {
     id("dev.kikugie.stonecutter")
 }
 
-stonecutter active "1.21.11-fabric"
+stonecutter active "26.1-fabric"
 stonecutter {
     parameters {
         constants {
@@ -24,6 +24,15 @@ stonecutter {
 
             string(eval(current.version, ">= 26.1"), "gui_graphics") {
                 replace("GuiGraphics", "GuiGraphicsExtractor")
+            }
+
+            regex(eval(current.version, ">= 26.1")) {
+                replace(
+                    "import net.minecraft.client.gui.GuiGraphicsExtractor(?!;)",
+                    "import net.minecraft.client.gui.GuiGraphics as GuiGraphicsExtractor",
+                    "import net.minecraft.client.gui.GuiGraphics as GuiGraphicsExtractor",
+                    "import net.minecraft.client.gui.GuiGraphicsExtractor",
+                )
             }
             string(eval(current.version, ">= 1.21.11"), "identifier") {
                 replace("ResourceLocation", "Identifier")

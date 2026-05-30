@@ -25,7 +25,6 @@
  */
 
 /*
-//~ gui_graphics
 package org.polyfrost.oneconfig.test;
 
 import kotlin.Pair;

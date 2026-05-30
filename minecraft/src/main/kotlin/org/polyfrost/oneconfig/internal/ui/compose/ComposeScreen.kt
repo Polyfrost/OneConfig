@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
-//~ gui_graphics
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -20,7 +19,7 @@ import androidx.compose.ui.unit.IntSize
 import com.mojang.blaze3d.platform.InputConstants
 import dev.deftu.clipboard.Clipboard
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.screens.Screen
 //? >= 1.21.10 {
 import net.minecraft.client.input.CharacterEvent
@@ -160,8 +159,8 @@ abstract class ComposeScreen(
         }
     }
 
-    //~ if >= 26.1 'render' -> 'extraRenderState'
-    override fun render(ctx: GuiGraphics, mouseX: Int, mouseY: Int, tickDelta: Float) {
+    //~ if >= 26.1 'render' -> 'extractRenderState'
+    override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
         syncSceneMetrics()
 
         val focused = GLFW.glfwGetWindowAttrib(Platform.compatibility().windowHandle(), GLFW.GLFW_FOCUSED) == GLFW.GLFW_TRUE
@@ -252,11 +251,15 @@ abstract class ComposeScreen(
     override fun charTyped(event: CharacterEvent): Boolean {
         val char = Char(event.codepoint)
         val codepoint = event.codepoint
-        val modifiers = event.modifiers
+        //? >= 26.1 {
+        val modifiers = 0 //they removed them from the event, apparently glfw doesn't pass them anymore.
+        //? } else
+        //val modifiers = event.modifiers
     //? } else {
     //override fun charTyped(char: Char, modifiers: Int): Boolean {
     //   val codepoint = char.code
     //? }
+
 
         val awtCode = KeyEvent.VK_UNDEFINED
 

@@ -1,9 +1,8 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
-//~ gui_graphics
 import com.mojang.blaze3d.pipeline.TextureTarget
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.resources.Identifier
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.Color
@@ -124,7 +123,7 @@ object SkiaCtx {
         flushToTarget(draws, resolveHudSurface() ?: return)
     }
 
-    fun blitHud(guiGraphics: GuiGraphics) {
+    fun blitHud(guiGraphics: GuiGraphicsExtractor) {
         val rt = hudTarget ?: return
         val w = rt.width;
         val h = rt.height

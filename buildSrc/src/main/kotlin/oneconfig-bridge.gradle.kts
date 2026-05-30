@@ -3,11 +3,17 @@ plugins {
 }
 
 configurations.create("modImplementation") {
-    extendsFrom(configurations.named("implementation"))
+    configurations.named("implementation") {
+        extendsFrom(this@create)
+    }
 }
 configurations.create("modRuntimeOnly") {
-    extendsFrom(configurations.named("runtimeOnly"))
+    configurations.named("runtimeOnly") {
+        extendsFrom(this@create)
+    }
 }
 configurations.create("modCompileOnly") {
-    extendsFrom(configurations.named("compileOnly"))
+    configurations.named("compileOnly") {
+        extendsFrom(this@create)
+    }
 }

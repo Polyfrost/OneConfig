@@ -1,12 +1,11 @@
 package org.polyfrost.oneconfig.internal.ui.hud
 
-//~ gui_graphics
 import androidx.compose.runtime.snapshots.Snapshot
-import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 
 object LegacyHudRenderer {
-    /*fun renderLive(eventCtx: GuiGraphics) {
+    /*fun renderLive(eventCtx: GuiGraphicsExtractor) {
         for (hud in HudManager.activeInstances) {
             if (HudManager.isDebugScreenVisible && !hud.showInF3) continue
             if (HudManager.isTabListVisible && !hud.showInTab) continue
