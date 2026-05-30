@@ -100,7 +100,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("skia.Mixin_FixComposeRaceCondition");
 
         //? cinnabar
-        //mixins.add("skia.Mixin_CinnabarSkiaFlush");
+        mixins.add("skia.Mixin_CinnabarSkiaFlush");
 
         {
             Logger logger = LogManager.getLogger(OneConfigMixinInit.class);

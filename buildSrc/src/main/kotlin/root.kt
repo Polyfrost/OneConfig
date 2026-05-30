@@ -1,11 +1,14 @@
+import dev.kikugie.stonecutter.data.StonecutterProject
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ExternalModuleDependencyBundle
 import org.gradle.api.artifacts.MinimalExternalModuleDependency
 import org.gradle.api.artifacts.VersionCatalog
+import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.artifacts.VersionConstraint
 import org.gradle.api.attributes.AttributeDisambiguationRule
 import org.gradle.api.attributes.MultipleCandidatesDetails
 import org.gradle.api.provider.Provider
+import org.gradle.kotlin.dsl.getByType
 import org.gradle.plugin.use.PluginDependency
 import java.util.*
 import javax.inject.Inject
@@ -46,6 +49,19 @@ data class ForwardingVersionCatalog(
         ) = runCatching { this[name] }.getOrElse { this[fallbackName] }
     }
 }
+
+fun Project.getForwardingVersionCatalog(project: StonecutterProject): ForwardingVersionCatalog {
+    val loader = project.project.substringAfterLast("-")
+    val version = project.version.replace(".", "")
+    val verisonCatalog = rootProject.extensions.getByType<VersionCatalogsExtension>()
+    return ForwardingVersionCatalog(
+        verisonCatalog.named("$loader$version"),
+        verisonCatalog.named("common$version"),
+        verisonCatalog.named(loader),
+        verisonCatalog.named("libs")
+    )
+}
+
 
 internal val entries: MutableMap<Project, ForwardingVersionCatalog> = mutableMapOf()
 val Project.versionedCatalog get() = entries[this] ?: ForwardingVersionCatalog()

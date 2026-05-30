@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.services
 
 //? cinnabar {
-/*import com.mojang.blaze3d.pipeline.RenderTarget
+import com.mojang.blaze3d.pipeline.RenderTarget
 import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.Minecraft
 import org.jetbrains.skia.BackendRenderTarget
@@ -190,4 +190,4 @@ class CinnabarVulkanService private constructor(
         }
     }
 }
-*///? }
+//? }

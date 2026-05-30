@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.plugin.extraProperties
-
 plugins {
     id("dev.kikugie.stonecutter")
 }
@@ -13,11 +11,13 @@ stonecutter {
                 "fabric",
                 "neoforge"
             )
-            this["moul_compat"] = false
-            this["yacl_compat"] = false
-            this["modmenu_compat"] = false
-            this["rconfig_compat"] = false
-            this["cinnabar"] = false
+            val catalogue = rootProject.getForwardingVersionCatalog(current)
+
+            this["moul_compat"] = catalogue.has("moulconfig")
+            this["yacl_compat"] = catalogue.has("yacl")
+            this["modmenu_compat"] = catalogue.has("modmenu")
+            this["rconfig_compat"] = catalogue.has("rconfig")
+            this["cinnabar"] = catalogue.has("cinnabar")
         }
 
         replacements {
@@ -26,7 +26,7 @@ stonecutter {
                 replace("GuiGraphics", "GuiGraphicsExtractor")
             }
 
-            regex(eval(current.version, ">= 26.1")) {
+            regex(eval(current.version, "< 26.1")) {
                 replace(
                     "import net.minecraft.client.gui.GuiGraphicsExtractor(?!;)",
                     "import net.minecraft.client.gui.GuiGraphics as GuiGraphicsExtractor",
