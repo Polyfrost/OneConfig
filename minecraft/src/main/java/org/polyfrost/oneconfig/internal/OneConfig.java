@@ -57,7 +57,6 @@ import org.polyfrost.oneconfig.internal.ui.compose.McFontService;
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen;
-import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudRenderer;
 import org.polyfrost.oneconfig.test.TestMod_Test;
 
 /**
@@ -73,7 +72,7 @@ public class OneConfig
     private boolean initialized = false;
 
     private static void registerCommands() {
-        Command<ClientCommandSource> executor = (_) -> OneConfig.INSTANCE.openScreen(new OneConfigUIScreen());
+        Command<ClientCommandSource> executor = (c) -> OneConfig.INSTANCE.openScreen(new OneConfigUIScreen());
 
         var node = CommandManager.literal("oneconfig")
                 .executes(executor)

@@ -1,4 +1,5 @@
 import dev.kikugie.stonecutter.build.StonecutterBuildExtension
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
 import java.lang.Boolean.TRUE
 
 plugins {
@@ -370,4 +371,20 @@ tasks.withType<ProcessResources>() {
     this.filesMatching("fabric.mod.json") {
         expand(fabricProperties)
     }
+}
+
+val minJavaVersion = 21
+val javaVersion = if (stonecutter.eval(stonecutter.current.version, ">= 26.1")) {
+    25
+} else {
+    21
+}
+
+configure<JavaPluginExtension> {
+    targetCompatibility = JavaVersion.toVersion(javaVersion)
+    sourceCompatibility = JavaVersion.toVersion(minJavaVersion)
+}
+
+configure<KotlinJvmExtension> {
+    jvmToolchain(javaVersion)
 }
