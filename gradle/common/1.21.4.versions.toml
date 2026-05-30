@@ -1,2 +1,6 @@
 [versions]
 minecraft = "1.21.4"
+parchment = "2025.03.23"
+
+[libraries]
+parchment = { module = "org.parchmentmc.data:parchment-1.21.4", version.ref = "parchment" }

@@ -21,8 +21,20 @@ stonecutter {
         }
 
         replacements {
-            string(current.version >= "26.1", "gui_graphics") {
+
+            string(eval(current.version, ">= 26.1"), "gui_graphics") {
                 replace("GuiGraphics", "GuiGraphicsExtractor")
+            }
+            string(eval(current.version, ">= 1.21.11"), "identifier") {
+                replace("ResourceLocation", "Identifier")
+            }
+            regex(eval(current.version, "< 1.21.11")) {
+                replace(
+                    "import net.minecraft.resources.Identifier(?!;)",
+                    "import net.minecraft.resources.ResourceLocation as Identifier",
+                    "import net.minecraft.resources.ResourceLocation as Identifier",
+                    "import net.minecraft.resources.Identifier",
+                )
             }
         }
     }

@@ -49,10 +49,10 @@ val versions = buildList {
     fun fabric(version: String) = add(version to listOf(FABRIC))
     fun neoforge(version: String) = add(version to listOf(NEO_FORGE))
     fun both(version: String) {
-        add(version to listOf(FABRIC, NEO_FORGE))
+        add(version to listOf(FABRIC))
     }
 
-    both("26.1")
+    //both("26.1")
     both("1.21.11")
     both("1.21.10")
     both("1.21.8")

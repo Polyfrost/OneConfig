@@ -99,10 +99,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("skia.Mixin_InitSkiaFontRenderer");
         mixins.add("skia.Mixin_FixComposeRaceCondition");
 
-        try {
-            Class.forName("org.polyfrost.oneconfig.internal.ui.services.CinnabarVulkanService");
-            mixins.add("skia.Mixin_CinnabarSkiaFlush");
-        } catch (ClassNotFoundException ignored) {}
+        //? cinnabar
+        //mixins.add("skia.Mixin_CinnabarSkiaFlush");
 
         {
             Logger logger = LogManager.getLogger(OneConfigMixinInit.class);

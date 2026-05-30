@@ -2,10 +2,8 @@ package org.polyfrost.oneconfig.internal.mixin.events;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
-import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
-import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.world.entity.LivingEntity;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.RenderLivingEvent;
@@ -15,10 +13,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 //? >= 1.21.9 {
-//? } else {
-//import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
-//import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.state.CameraRenderState;
 //? }
+//? if >= 1.21.2
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+//? if < 1.21.2
+//import net.minecraft.client.Minecraft;
 
 @Mixin(LivingEntityRenderer.class)
 public class Mixin_RenderLivingEntityEvent<

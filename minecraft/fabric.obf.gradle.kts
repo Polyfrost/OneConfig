@@ -1,8 +1,16 @@
+@file:Suppress("UnstableApiUsage")
 plugins {
     id("net.fabricmc.fabric-loom-remap")
     `oneconfig-fabric`
 }
 
 dependencies {
-    mappings(loom.officialMojangMappings())
+    mappings(loom.layered {
+        officialMojangMappings()
+        if (versionedCatalog.has("parchment")) {
+            parchment(variantOf(versionedCatalog["parchment"]) {
+                artifactType("zip")
+            })
+        }
+    })
 }

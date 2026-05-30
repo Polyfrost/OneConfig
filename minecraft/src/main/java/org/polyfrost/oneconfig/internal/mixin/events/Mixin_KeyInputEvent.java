@@ -1,8 +1,10 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
 import net.minecraft.client.KeyboardHandler;
+//? >= 1.21.10 {
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
+//? }
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.KeyInputEvent;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
@@ -39,7 +41,7 @@ public class Mixin_KeyInputEvent {
 
     @Inject(method = "charTyped", at = @At("HEAD"))
     private void charCallback(long window, int codepoint, int mods, CallbackInfo ci) {
-        if (window != OmniClient.getWindowHandle()) {
+        if (window != Platform.compatibility().windowHandle()) {
             return;
         }
         EventManager.INSTANCE.post(new KeyInputEvent(0, (char) codepoint, 1));

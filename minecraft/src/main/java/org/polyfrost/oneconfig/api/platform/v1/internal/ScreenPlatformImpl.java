@@ -30,6 +30,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.event.v1.EventDelay;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
 
 public class ScreenPlatformImpl implements ScreenPlatform {
@@ -63,7 +64,7 @@ public class ScreenPlatformImpl implements ScreenPlatform {
     // See also: https://github.com/glfw/glfw/pull/2457
     @Override
     public float pixelRatio() {
-        long handle = Minecraft.getInstance().getWindow().handle();
+        long handle = Platform.compatibility().windowHandle();
         org.lwjgl.glfw.GLFW.glfwGetFramebufferSize(handle, fbWidth, null);
         org.lwjgl.glfw.GLFW.glfwGetWindowSize(handle, winWidth, null);
         if (winWidth[0] > 0) {

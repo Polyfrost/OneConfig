@@ -135,7 +135,7 @@ public class OneConfig
         // Update HUD visibility state for per-HUD filtering
         HudManager.isDebugScreenVisible = Minecraft.getInstance().getDebugOverlay().showDebugScreen();
         HudManager.isTabListVisible = org.lwjgl.glfw.GLFW.glfwGetKey(
-                Minecraft.getInstance().getWindow().handle(),
+                Platform.compatibility().windowHandle(),
                 org.lwjgl.glfw.GLFW.GLFW_KEY_TAB
         ) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
         HudManager.isGuiScreenOpen = Platform.screen().current() != null;
@@ -222,8 +222,7 @@ public class OneConfig
         // To enable RenderDoc, set the following JVM arguments:
         // -Drenderdoc.enabled=true
         // (Windows) -Drenderdoc.path="C:\Program Files\RenderDoc\renderdoc.dll" (or wherever you installed RenderDoc)
-        // (Linux)   Ensure that librenderdoc.so is available in your LD_PRELOAD
-        //? >= 1.19.2
+        // (Linux)   Ensure that librenderdoc.so is available in your LD_PRELOAD todo?
         //RenderDoc.init();
 
 //        if (Boolean.getBoolean("oneconfig.test")) {

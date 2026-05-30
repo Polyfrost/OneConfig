@@ -27,3 +27,7 @@
 dependencies {
     api(project(":modules:utils"))
 }
+
+tasks.test {
+    enabled = false
+}

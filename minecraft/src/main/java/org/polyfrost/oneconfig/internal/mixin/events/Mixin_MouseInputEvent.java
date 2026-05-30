@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.mixin.events;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
+//? >= 1.21.10
 import net.minecraft.client.input.MouseButtonInfo;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.MouseInputEvent;
@@ -35,7 +36,7 @@ public class Mixin_MouseInputEvent {
 
     @Inject(method = "onMove", at = @At("HEAD"))
     private void mouseMoveCallback(long handle, double x, double y, CallbackInfo ci) {
-        if (OmniScreens.isInScreen()) {
+        if (Minecraft.getInstance().screen != null) {
             MouseInputEvent.Moved.post((float) x, (float) y);
         }
     }

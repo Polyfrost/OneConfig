@@ -15,6 +15,8 @@ import java.util.stream.Collectors;
 
 public class CompatibilityPlatformImpl implements CompatibilityPlatform {
     Options options = new OptionsImpl();
+    CommandPlatform command = new CommandPlatformImpl();
+    Keys keys = new KeysImpl();
 
     @Override
     public void displayChatMessage(Component text) {
@@ -43,6 +45,7 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
 
     @Override
     public String version() {
+        //~ if >= 1.21.8 '.getName()' -> '.name()'
         return SharedConstants.getCurrentVersion().name();
     }
 
@@ -61,16 +64,17 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
 
     @Override
     public CommandPlatform commandPlatform() {
-        return null;
+        return command;
     }
 
     @Override
     public Keys keys() {
-        return null;
+        return keys;
     }
 
     @Override
     public long windowHandle() {
+        //~ if >= 1.21.10 '.getWindow();' -> '.handle();'
         return Minecraft.getInstance().getWindow().handle();
     }
 }

@@ -12,12 +12,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.KeyEventType
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.gui.GuiGraphics
+//? >= 1.21.10
 import net.minecraft.client.input.KeyEvent
-import org.lwjgl.glfw.GLFW
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.PolyGlassDark
@@ -38,8 +39,14 @@ class HudEditorUIScreen : ComposeScreen() {
 
     private var requestCloseCallback: (() -> Unit)? = null
 
+
+    //? >= 1.21.10 {
     override fun keyPressed(event: KeyEvent): Boolean {
-        if (event.key == InputConstants.KEY_ESCAPE) {
+        val key = event.key
+    //? } else {
+    //override fun keyPressed(key: Int, scanCode: Int, modifiers: Int): Boolean {
+    //? }
+        if (key == InputConstants.KEY_ESCAPE) {
             if (!closeRequested) {
                 closeRequested = true
                 closeRequestedAt = System.currentTimeMillis()
@@ -47,8 +54,13 @@ class HudEditorUIScreen : ComposeScreen() {
             }
             return true
         }
+        //? >= 1.21.10 {
         return super.keyPressed(event)
+        //? } else {
+        //return super.keyPressed(key, scanCode, modifiers)
+        //? }
     }
+
 
     override fun render(ctx: GuiGraphics, mouseX: Int, mouseY: Int, tickDelta: Float) {
         if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= CLOSE_ANIMATION_MS) {

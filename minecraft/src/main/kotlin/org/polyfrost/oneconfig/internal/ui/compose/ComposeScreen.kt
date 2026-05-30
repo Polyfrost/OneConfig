@@ -22,16 +22,18 @@ import dev.deftu.clipboard.Clipboard
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.Screen
+//? >= 1.21.10 {
 import net.minecraft.client.input.CharacterEvent
 import net.minecraft.client.input.InputWithModifiers
 import net.minecraft.client.input.MouseButtonEvent
+import net.minecraft.client.input.KeyEvent as McKeyEvent
+//? }
 import net.minecraft.network.chat.CommonComponents
 import org.lwjgl.glfw.GLFW
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import java.awt.Component
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import net.minecraft.client.input.KeyEvent as McKeyEvent
 
 @Suppress("DEPRECATION")
 private object CopycatClipboardManager : androidx.compose.ui.platform.ClipboardManager {
@@ -142,7 +144,11 @@ abstract class ComposeScreen(
         }
     }
 
-    override fun resize(width: Int, height: Int) {
+    override fun resize(
+        //? < 26.1
+        //minecraft: Minecraft,
+        width: Int, height: Int
+    ) {
 //        composeRenderer.initialize(width, height)
         syncSceneMetrics()
     }
@@ -158,7 +164,7 @@ abstract class ComposeScreen(
     override fun render(ctx: GuiGraphics, mouseX: Int, mouseY: Int, tickDelta: Float) {
         syncSceneMetrics()
 
-        val focused = GLFW.glfwGetWindowAttrib(client.window.handle(), GLFW.GLFW_FOCUSED) == GLFW.GLFW_TRUE
+        val focused = GLFW.glfwGetWindowAttrib(Platform.compatibility().windowHandle(), GLFW.GLFW_FOCUSED) == GLFW.GLFW_TRUE
         if (focused) {
             try {
                 val pointerPosition = pointerPosition()
@@ -187,30 +193,49 @@ abstract class ComposeScreen(
         }
     }
 
+    //? >= 1.21.10 {
     override fun mouseClicked(event: MouseButtonEvent, doubleClick: Boolean): Boolean {
+        val button = event.button()
+    //? } else {
+    //override fun mouseClicked(x: Double, y: Double, button: Int): Boolean {
+    //? }
         scene.sendPointerEvent(
             PointerEventType.Press,
-            button = when (event.button()) {
+            button = when (button) {
                 GLFW.GLFW_MOUSE_BUTTON_LEFT -> PointerButton.Primary
                 GLFW.GLFW_MOUSE_BUTTON_RIGHT -> PointerButton.Secondary
                 else -> null
             },
             position = pointerPosition()
         )
+        //? >= 1.21.10 {
         return super.mouseClicked(event, doubleClick)
+        //? } else {
+        //return super.mouseClicked(x, y, button)
+        //? }
     }
 
+    //? >= 1.21.10 {
     override fun mouseReleased(event: MouseButtonEvent): Boolean {
+        val button = event.button()
+    //? } else {
+    //override fun mouseReleased(x: Double, y: Double, button: Int): Boolean {
+    //? }
         scene.sendPointerEvent(
             PointerEventType.Release,
-            button = when (event.button()) {
+            button = when (button) {
                 GLFW.GLFW_MOUSE_BUTTON_LEFT -> PointerButton.Primary
                 GLFW.GLFW_MOUSE_BUTTON_RIGHT -> PointerButton.Secondary
                 else -> null
             },
             position = pointerPosition()
         )
+
+        //? >= 1.21.10 {
         return super.mouseReleased(event)
+        //? } else {
+        //return super.mouseReleased(x, y, button)
+        //? }
     }
 
     override fun mouseScrolled(x: Double, y: Double, scrollX: Double, scrollY: Double): Boolean {
@@ -223,43 +248,60 @@ abstract class ComposeScreen(
         return super.mouseScrolled(x, y, scrollX, scrollY)
     }
 
+    //? >= 1.21.10 {
     override fun charTyped(event: CharacterEvent): Boolean {
+        val char = Char(event.codepoint)
+        val codepoint = event.codepoint
+        val modifiers = event.modifiers
+    //? } else {
+    //override fun charTyped(char: Char, modifiers: Int): Boolean {
+    //   val codepoint = char.code
+    //? }
+
         val awtCode = KeyEvent.VK_UNDEFINED
-        val printable = false
 
         val eventType = KeyEvent.KEY_TYPED
         val eventLocation = KeyEvent.KEY_LOCATION_UNKNOWN
         val eventCode = 0
-        val eventCodePoint = event.codepoint
 
         val composeEvent = androidx.compose.ui.input.key.KeyEvent(
             key = androidx.compose.ui.input.key.Key(awtCode),
             type = KeyEventType.KeyDown,
-            codePoint = eventCodePoint,
-            isCtrlPressed = event.modifiers.ctrlDown(),
-            isShiftPressed = event.modifiers.shiftDown(),
-            isAltPressed = event.modifiers.altDown(),
+            codePoint = codepoint,
+            isCtrlPressed = modifiers.ctrlDown(),
+            isShiftPressed = modifiers.shiftDown(),
+            isAltPressed = modifiers.altDown(),
             nativeEvent = KeyEvent(
                 dummyComponent,
                 eventType,
                 System.currentTimeMillis(),
-                modifiersToAwt(event.modifiers),
+                modifiersToAwt(modifiers),
                 eventCode,
-                Char(event.codepoint),
+                char,
                 eventLocation
             )
         )
 
         scene.sendKeyEvent(composeEvent)
-        return true
+        //? >= 1.21.10 {
+        return super.charTyped(event)
+        //? } else {
+        //return super.charTyped(char, modifiers)
+        //? }
     }
 
-    fun Int.ctrlDown() = this and InputConstants.MOD_CONTROL != 0
-    fun Int.shiftDown() = this and InputConstants.MOD_SHIFT != 0
-    fun Int.altDown() = this and InputConstants.MOD_ALT != 0
+    fun Int.ctrlDown() = this and GLFW.GLFW_MOD_CONTROL != 0
+    fun Int.shiftDown() = this and GLFW.GLFW_MOD_SHIFT != 0
+    fun Int.altDown() = this and GLFW.GLFW_MOD_ALT != 0
 
+    //? >= 1.21.10 {
     override fun keyPressed(event: McKeyEvent): Boolean {
-        val awtCode = glfwToAwtKeyCode(event.key)
+        val key = event.key
+        val modifiers = event.modifiers
+        //? } else {
+    //override fun keyPressed(key: Int, scanCode: Int, modifiers: Int): Boolean {
+    //? }
+        val awtCode = glfwToAwtKeyCode(key)
 
         val eventType = KeyEvent.KEY_PRESSED
         val eventLocation = KeyEvent.KEY_LOCATION_STANDARD
@@ -268,14 +310,14 @@ abstract class ComposeScreen(
             key = androidx.compose.ui.input.key.Key(awtCode),
             type = KeyEventType.KeyDown,
             codePoint = awtCode,
-            isCtrlPressed = event.hasControlDown(),
-            isShiftPressed = event.hasShiftDown(),
-            isAltPressed = event.hasAltDown(),
+            isCtrlPressed = modifiers.ctrlDown(),
+            isShiftPressed = modifiers.shiftDown(),
+            isAltPressed = modifiers.altDown(),
             nativeEvent = KeyEvent(
                 dummyComponent,
                 eventType,
                 System.currentTimeMillis(),
-                modifiersToAwt(event.modifiers),
+                modifiersToAwt(modifiers),
                 awtCode,
                 Char(0),
                 eventLocation
@@ -283,25 +325,35 @@ abstract class ComposeScreen(
         )
 
         scene.sendKeyEvent(composeEvent)
-        return true
+        //? >= 1.21.10 {
+        return super.keyPressed(event)
+        //? } else {
+        //return super.keyPressed(key, scanCode, modifiers)
+        //? }
     }
 
 
+    //? >= 1.21.10 {
     override fun keyReleased(event: McKeyEvent): Boolean {
-        val awtCode = glfwToAwtKeyCode(event.key)
+        val key = event.key
+        val modifiers = event.modifiers
+    //? } else {
+    //override fun keyReleased(key: Int, scanCode: Int, modifiers: Int): Boolean {
+    //? }
+        val awtCode = glfwToAwtKeyCode(key)
 
         val composeEvent = androidx.compose.ui.input.key.KeyEvent(
             key = androidx.compose.ui.input.key.Key(awtCode),
             type = KeyEventType.KeyUp,
             codePoint = awtCode,
-            isCtrlPressed = event.hasControlDown(),
-            isShiftPressed = event.hasShiftDown(),
-            isAltPressed = event.hasAltDown(),
+            isCtrlPressed = modifiers.ctrlDown(),
+            isShiftPressed = modifiers.shiftDown(),
+            isAltPressed = modifiers.altDown(),
             nativeEvent = KeyEvent(
                 dummyComponent,
                 KeyEvent.KEY_RELEASED,
                 System.currentTimeMillis(),
-                modifiersToAwt(event.modifiers),
+                modifiersToAwt(modifiers),
                 awtCode,
                 KeyEvent.CHAR_UNDEFINED,
                 KeyEvent.KEY_LOCATION_STANDARD
@@ -309,7 +361,11 @@ abstract class ComposeScreen(
         )
 
         scene.sendKeyEvent(composeEvent)
+        //? >= 1.21.10 {
         return super.keyReleased(event)
+        //? } else {
+        //return super.keyReleased(key, scanCode, modifiers)
+        //? }
     }
 
     private fun Char.isPrintable(): Boolean {
@@ -320,7 +376,7 @@ abstract class ComposeScreen(
                 block != Character.UnicodeBlock.SPECIALS
     }
 
-    private fun modifiersToAwt(modifiers: @InputWithModifiers.Modifiers Int): Int {
+    private fun modifiersToAwt(modifiers: Int): Int {
         var m = 0
         if (modifiers.ctrlDown()) m = m or InputEvent.CTRL_DOWN_MASK
         if (modifiers.altDown()) m = m or InputEvent.ALT_DOWN_MASK
@@ -363,7 +419,7 @@ abstract class ComposeScreen(
 
     private fun sceneDensity(): Float {
         val pixelRatio = Platform.screen().pixelRatio().takeIf { it > 0f } ?: 1f
-        GLFW.glfwGetWindowContentScale(client.window.handle(), contentScaleX, contentScaleY)
+        GLFW.glfwGetWindowContentScale(Platform.compatibility().windowHandle(), contentScaleX, contentScaleY)
         val contentScale = maxOf(contentScaleX[0], contentScaleY[0]).coerceAtLeast(1f)
         return (contentScale / pixelRatio).coerceAtLeast(1f)
     }

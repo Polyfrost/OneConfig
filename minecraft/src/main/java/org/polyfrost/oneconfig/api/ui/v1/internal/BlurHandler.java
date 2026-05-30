@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.internal;
 
+//~ identifier
 import net.minecraft.resources.Identifier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -42,11 +42,14 @@ repositories {
     maven("https://maven.bawnorton.com/releases") {
         content { includeGroup("com.github.bawnorton.mixinsquared") }
     }
+    maven("https://maven.parchmentmc.org") {
+        content { includeGroupAndSubgroups("org.parchmentmc") }
+    }
     maven("https://redirector.kotlinlang.org/maven/compose-dev")
     google()
 }
 
-//evaluationDependsOn(":modules")
+evaluationDependsOn(":modules")
 
 java {
     withSourcesJar()
@@ -54,6 +57,10 @@ java {
         usingSourceSet(sourceSets.create("oneConfigModules"))
     }
 }
+
+private val stonecutter = project.extensions.getByName("stonecutter") as StonecutterBuildExtension
+val loader = stonecutter.current.project.substringAfterLast("-")
+
 
 val includeInLoader = Attribute.of("org.polyfrost.oneconfig.loader.include", Boolean::class.javaObjectType)
 val jijInLoader = Attribute.of("org.polyfrost.oneconfig.loader.jij", Boolean::class.javaObjectType)
@@ -70,6 +77,13 @@ fun DependencyHandlerScope.handleApiDep(
     transitive: Boolean = false,
 ) {
     this.handleApiDep(project.provider { dependency }, isMod)
+}
+
+if (loader != "fabric") {
+    configurations {
+        val localRuntime = create("localRuntime")
+        named("runtimeClasspath") { this.extendsFrom(localRuntime) }
+    }
 }
 
 @JvmName("handleApiDepBundle")
@@ -97,10 +111,6 @@ fun DependencyHandlerScope.handleApiDep(
         }
     }
 }
-
-private val stonecutter = project.extensions.getByName("stonecutter") as StonecutterBuildExtension
-val loader = stonecutter.current.project.substringAfterLast("-")
-
 dependencies {
     data class CompatDependency(
         val all: String? = null,
@@ -218,7 +228,7 @@ dependencies {
 
     handleApiDep(versionedCatalog.bundles["kotlin"])
     handleApiDep(versionedCatalog.bundles["kotlinx"])
-    handleApiDep(versionedCatalog["nightconfig"])
+    handleApiDep(versionedCatalog.bundles["nightconfig"])
     handleApiDep(versionedCatalog["snakeyaml"])
     handleApiDep(versionedCatalog["isolated-lwjgl3-loader"]) //todo check if needed
     handleApiDep(versionedCatalog["polyio"]) //todo check if needed
@@ -270,12 +280,12 @@ dependencies {
         if ("relocator" in project.path) {
             "compileOnly"(project(project.path))
         } else if ("dependencies" !in project.path) {
-            "oneConfigModulesCompileOnlyApi"("runtimeOnly"("compileOnly"(project(project.path)) {
+            "api"(project(project.path)) {
                 isTransitive = false
                 attributes {
                     attribute(includeInLoader, TRUE)
                 }
-            })!!)
+            }
         }
     }
 

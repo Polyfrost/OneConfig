@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.gui.GuiGraphics
+//? >= 1.21.10
 import net.minecraft.client.input.KeyEvent
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -16,7 +17,6 @@ import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-import org.lwjgl.glfw.GLFW
 
 class OneConfigUIScreen @JvmOverloads constructor(
     private val initialTreeId: String? = null,
@@ -55,8 +55,14 @@ class OneConfigUIScreen @JvmOverloads constructor(
         super.init()
     }
 
+    @Suppress("DuplicatedCode")
+    //? >= 1.21.10 {
     override fun keyPressed(event: KeyEvent): Boolean {
-        if (event.key == InputConstants.KEY_ESCAPE) {
+        val key = event.key
+        //? } else {
+        //override fun keyPressed(key: Int, scanCode: Int, modifiers: Int): Boolean {
+        //? }
+        if (key == InputConstants.KEY_ESCAPE) {
             if (!closeRequested) {
                 closeRequested = true
                 closeRequestedAt = System.currentTimeMillis()
@@ -64,7 +70,11 @@ class OneConfigUIScreen @JvmOverloads constructor(
             }
             return true
         }
+        //? >= 1.21.10 {
         return super.keyPressed(event)
+        //? } else {
+        //return super.keyPressed(key, scanCode, modifiers)
+        //? }
     }
 
     override fun render(ctx: GuiGraphics, mouseX: Int, mouseY: Int, tickDelta: Float) {
