@@ -14,6 +14,11 @@ val rootModuleProject = project
 subprojects {
     apply(plugin = "kotlin")
     apply(plugin = "jvm-test-suite")
+    apply(plugin = "maven-publish")
+    apply(plugin = "signing")
+
+    group = rootProject.group
+    version = rootProject.version
 
     if (project.parent?.name == "dependencies") {
         this.group = "${project.group}.dependencies"
@@ -91,6 +96,37 @@ subprojects {
 
         toolchain {
             languageVersion.set(JavaLanguageVersion.of(21))
+        }
+    }
+
+    configure<PublishingExtension> {
+        repositories {
+            listOf("releases", "snapshots").forEach { type ->
+                maven {
+                    name = type
+                    url = uri("https://repo.polyfrost.org/$type")
+                    credentials {
+                        username = providers.gradleProperty("polyfrostRepoUsername").orNull
+                        password = providers.gradleProperty("polyfrostRepoToken").orNull
+                    }
+                    authentication { create<BasicAuthentication>("basic") }
+                }
+            }
+        }
+
+        publications {
+            create<MavenPublication>("mavenJava") {
+                from(components["java"])
+                artifactId = project.name
+                groupId = project.group.toString()
+            }
+        }
+    }
+
+    configure<SigningExtension> {
+        isRequired = project.properties["signing.keyId"] != null
+        if (isRequired) {
+            sign(extensions.getByType<PublishingExtension>().publications["mavenJava"])
         }
     }
 
