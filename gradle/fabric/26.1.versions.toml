@@ -7,6 +7,8 @@ key-mapping-api-v1 = "2.0.4+e2bdee78c3"
 
 cinnabar = "26.1-snapshot-9-0.0.7-beta-85-gd3508cc"
 
+modmenu = "17.0.0-alpha.1"
+yacl = "3.9.0+26.1-fabric"
 
 [libraries]
 api-base = { module = "net.fabricmc.fabric-api:fabric-api-base", version.ref = "api-base" }
@@ -17,5 +19,9 @@ key-mapping-api-v1 = { module = "net.fabricmc.fabric-api:fabric-key-mapping-api-
 
 cinnabar = { module = "graphics.cinnabar:cinnabar-fabric", version.ref = "cinnabar" }
 
+modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
+yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
+
 [bundles]
+compat = ["modmenu", "yacl"]
 fabric-api = ["api-base", "lifecycle-events-v1", "transitive-access-wideners-v1", "command-api-v2", "key-mapping-api-v1"]

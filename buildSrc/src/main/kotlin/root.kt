@@ -43,6 +43,7 @@ data class ForwardingVersionCatalog(
     ) {
         fun has(name: String): Boolean = runCatching { get(name) }.map { true }.getOrDefault(false)
         operator fun get(name: String): T = parent.first(name, lookup)
+        fun getOrNull(name: String): T? = runCatching { parent.first(name, lookup) }.getOrNull()
         fun getOrFallback(
             name: String,
             fallbackName: String

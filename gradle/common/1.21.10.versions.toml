@@ -2,5 +2,11 @@
 minecraft = "1.21.10"
 parchment = "2025.10.12"
 
+rconfig = "3.9.1"
+
 [libraries]
 parchment = { module = "org.parchmentmc.data:parchment-1.21.10", version.ref = "parchment" }
+rconfig = { module = "com.teamresourceful.resourcefulconfig:resourcefulconfig-common-1.21.9", version.ref = "rconfig"}
+
+[bundles]
+common-compat = ["rconfig"]

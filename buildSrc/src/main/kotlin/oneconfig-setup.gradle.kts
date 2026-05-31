@@ -113,98 +113,21 @@ fun DependencyHandlerScope.handleApiDep(
     }
 }
 dependencies {
-    data class CompatDependency(
-        val all: String? = null,
-        val forge: String? = all,
-        val fabric: String? = all,
-        val neoforge: String? = all,
-    )
-
-    fun DependencyHandlerScope.compileOnlyCompat(notation: String?) =
-        notation?.let { "modCompileOnly"(it) { isTransitive = false } }
-
-    fun DependencyHandlerScope.compileOnlyCompat(notation: CompatDependency?) {
-        when {
-            //mcData.isNeoForge -> compileOnlyCompat(notation?.neoforge)
-            //mcData.isForge -> compileOnlyCompat(notation?.forge)
-            //mcData.isFabric -> compileOnlyCompat(notation?.fabric)
+    listOf("compat", "common-compat").forEach {
+        versionedCatalog.bundles.getOrNull(it)?.let { bundle ->
+            "modCompileOnly"(bundle) {
+                isTransitive = false
+            }
         }
     }
 
-    val mcVersionString = stonecutter.current
-
-    compileOnlyCompat("org.notenoughupdates.moulconfig:common:3.11.0")
+    //compileOnlyCompat("org.notenoughupdates.moulconfig:common:3.11.0")
     //skyhanniRelocatedConfiguration("org.notenoughupdates.moulconfig:common:3.11.0")
     //compileOnly(prebundle(skyhanniRelocatedConfiguration))
     //firmamentRelocatedConfiguration("org.notenoughupdates.moulconfig:common:3.11.0")
     //compileOnly(prebundle(firmamentRelocatedConfiguration))
     //dandelionBpRelocatedConfiguration("org.notenoughupdates.moulconfig:common:3.11.0")
     //compileOnly(prebundle(dandelionBpRelocatedConfiguration))
-
-    fun rconfig(mcVersion: String, modVersion: String, mcVersionOverride: String = mcVersion) =
-        mcVersion to CompatDependency("com.teamresourceful.resourcefulconfig:resourcefulconfig-common-$mcVersionOverride:$modVersion")
-
-    val rconfig = mapOf(
-        rconfig("1.21.1", "3.0.11", "1.21"),
-        rconfig("1.21.2", "3.0.11", "1.21"),
-        rconfig("1.21.3", "3.3.4"),
-        rconfig("1.21.4", "3.4.3"),
-        rconfig("1.21.5", "3.5.9"),
-        rconfig("1.21.6", "3.6.2"),
-        rconfig("1.21.7", "3.7.2"),
-        rconfig("1.21.8", "3.7.2", "1.21.7"),
-        rconfig("1.21.9", "3.9.1"),
-        rconfig("1.21.10", "3.9.1", "1.21.9"),
-        rconfig("1.21.11", "3.9.1", "1.21.9"),
-    )
-
-    //compileOnlyCompat(rconfig[mcVersionString])
-
-    fun yacl(
-        mcVersion: String,
-        modVersion: String,
-        mcVersionOverride: String = mcVersion,
-        withoutLoader: Boolean = false,
-        noForge: Boolean = false,
-    ) = mcVersion to if (withoutLoader)
-        CompatDependency("dev.isxander:yet-another-config-lib:$modVersion")
-    else CompatDependency(
-        fabric = "dev.isxander:yet-another-config-lib:$modVersion+$mcVersionOverride-fabric",
-        forge = "dev.isxander:yet-another-config-lib:$modVersion+$mcVersionOverride-forge".takeUnless { noForge },
-        neoforge = "dev.isxander:yet-another-config-lib:$modVersion+$mcVersionOverride-neoforge"
-    )
-
-    val yacl = mapOf(
-        yacl("1.21.1", "3.7.1"),
-        yacl("1.21.2", "3.7.1", "1.21.3"),
-        yacl("1.21.3", "3.7.1"),
-        yacl("1.21.4", "3.7.1"),
-        yacl("1.21.5", "3.7.1"),
-        yacl("1.21.6", "3.7.1"),
-        yacl("1.21.7", "3.7.1", "1.21.6"),
-        yacl("1.21.8", "3.7.1", "1.21.6"),
-        yacl("1.21.9", "3.8.0", "1.21.6"),
-        yacl("1.21.10", "3.8.0", "1.21.9"),
-        yacl("1.21.11", "3.8.0", "1.21.9"),
-    )
-    //compileOnlyCompat(yacl[mcVersionString])
-
-    fun modMenu(mcVersion: String, version: String) =
-        mcVersion to CompatDependency(fabric = "com.terraformersmc:modmenu:$version")
-
-    val modMenu = mapOf(
-        modMenu("1.21.1", "11.0.3"),
-        modMenu("1.21.2", "12.0.0"),
-        modMenu("1.21.3", "12.0.0"),
-        modMenu("1.21.4", "13.0.3"),
-        modMenu("1.21.5", "14.0.0-rc.2"),
-        modMenu("1.21.6", "15.0.0-beta.3"),
-        modMenu("1.21.7", "15.0.0-beta.3"),
-        modMenu("1.21.8", "15.0.0-beta.3"),
-        modMenu("1.21.10", "16.0.0-rc.1"),
-        modMenu("1.21.11", "17.0.0-alpha.1"),
-    )
-    //compileOnlyCompat(modMenu[mcVersionString])
 
     "implementation"(versionedCatalog["jetbrains.compose.foundation"])
     "implementation"(versionedCatalog["jetbrains.compose.material"])

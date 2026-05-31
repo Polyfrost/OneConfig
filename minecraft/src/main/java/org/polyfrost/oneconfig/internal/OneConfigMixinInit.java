@@ -74,12 +74,12 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
         //mixins.add("Mixin_MinecraftClientResourceStuff");
         //? yacl_compat
-        //mixins.add("compat.yacl.Mixin_YetAnotherConfigLib_Builder");
+        mixins.add("compat.yacl.Mixin_YetAnotherConfigLib_Builder");
 
         // mixins.add("compat.rconfig.Mixin_Configurations");
 
         //? modmenu_compat
-        //mixins.add("compat.modmenu.Mixin_ModMenu");
+        mixins.add("compat.modmenu.Mixin_ModMenu");
 
         //? neoforge {
         //mixins.add("events.Mixin_ChatReceiveEvent_Forge");

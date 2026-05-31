@@ -1,5 +1,5 @@
 //? yacl_compat {
-/*package org.polyfrost.oneconfig.internal.compat
+package org.polyfrost.oneconfig.internal.compat
 
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
@@ -9,6 +9,7 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.category
 import org.polyfrost.oneconfig.api.config.v1.dsl.noCache
 import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
+import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import java.util.*
 
 object YACLCompat {
@@ -32,7 +33,7 @@ object YACLCompat {
         }
     }
 
-    private fun parseYACLInstance(yaclInstance: Any, mod: dev.deftu.omnicore.api.loader.ModInfo?): Tree? {
+    private fun parseYACLInstance(yaclInstance: Any, mod: ModInfo?): Tree? {
         val yaclClass = yaclInstance::class.java
 
         val categoriesMethod = yaclClass.methods.firstOrNull {
@@ -183,4 +184,4 @@ object YACLCompat {
     }
 }
 
-*///? }
+//? }
