@@ -16,7 +16,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.mojang.blaze3d.platform.InputConstants
-import net.minecraft.client.gui.GuiGraphics as GuiGraphicsExtractor
+import net.minecraft.client.gui.GuiGraphicsExtractor
 //? >= 1.21.10
 import net.minecraft.client.input.KeyEvent
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
@@ -62,13 +62,13 @@ class HudEditorUIScreen : ComposeScreen() {
     }
 
     //~ if >= 26.1 'render' -> 'extractRenderState'
-    override fun render(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
+    override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
         if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= CLOSE_ANIMATION_MS) {
             Platform.screen().close()
             return
         }
         //~ if >= 26.1 'render' -> 'extractRenderState'
-        super.render(ctx, mouseX, mouseY, tickDelta)
+        super.extractRenderState(ctx, mouseX, mouseY, tickDelta)
     }
 
     @Composable

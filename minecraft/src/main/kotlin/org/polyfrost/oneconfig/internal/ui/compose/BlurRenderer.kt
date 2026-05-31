@@ -45,14 +45,14 @@ object BlurRenderer {
         if (SkiaCtx.isVulkanMode) return resolveVkSurface(target, width, height)
 
         //? > 1.21.11 {
-        /*val frameBufferId = -1 // 26.1+ uses Vulkan exclusively; GL path is unreachable
-        *///? } else if >= 1.21.5 {
-        val frameBufferId = getFboId(target)
-        //? } else
+        val frameBufferId = -1 // 26.1+ uses Vulkan exclusively; GL path is unreachable
+        //? } else if >= 1.21.5 {
+        /*val frameBufferId = getFboId(target)
+        *///? } else
         //val frameBufferId = target.frameBufferId
 
         //? > 1.21.11
-        //@Suppress("KotlinConstantConditions")
+        @Suppress("KotlinConstantConditions")
         if (width <= 0 || height <= 0 || frameBufferId <= 0) return null
         if (cachedSurface != null && cachedFramebufferId == frameBufferId && cachedWidth == width && cachedHeight == height) {
             return cachedSurface
@@ -115,7 +115,7 @@ object BlurRenderer {
      * Taken from: https://discord.com/channels/507304429255393322/807617488313516032/1452333789778018314 (The Fabric Project)
      */
     //? >= 1.21.5 && <= 1.21.11 {
-    fun getFboId(frameBuffer: RenderTarget): Int {
+    /*fun getFboId(frameBuffer: RenderTarget): Int {
        val device = RenderSystem.getDevice()
       if (device !is com.mojang.blaze3d.opengl.GlDevice) {
           return -1
@@ -124,7 +124,7 @@ object BlurRenderer {
           return texture.getFbo((device as com.mojang.blaze3d.opengl.GlDevice).directStateAccess(), frameBuffer.getDepthTexture())
       }
     }
-    //? }
+    *///? }
 
     private fun paintFor(radius: Float): Paint = paints.getOrPut(radius) {
         Paint().also { paint ->

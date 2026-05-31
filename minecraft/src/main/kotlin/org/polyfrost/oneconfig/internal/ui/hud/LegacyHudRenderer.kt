@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.hud
 
 import androidx.compose.runtime.snapshots.Snapshot
-import net.minecraft.client.gui.GuiGraphics as GuiGraphicsExtractor
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 
 object LegacyHudRenderer {

@@ -31,7 +31,7 @@ import com.mojang.brigadier.Command;
 import dev.deftu.clipboard.Clipboard;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -112,7 +112,7 @@ public class OneConfig
                     } catch (Throwable t) {
                         Minecraft.getInstance().gui.getChat()
                                 //~ if >= 26.1 'addMessage' -> 'addClientSystemMessage'
-                                .addMessage(Component.literal("Failed to open OneConfig UI: " + t.getMessage() + ". Please report this!")
+                                .addClientSystemMessage(Component.literal("Failed to open OneConfig UI: " + t.getMessage() + ". Please report this!")
                                         .withStyle(
                                                 ChatFormatting.RED));
                         throw t;
@@ -121,7 +121,7 @@ public class OneConfig
                 .register();
     }
 
-    public static void render(GuiGraphics graphics, float partial) {
+    public static void render(GuiGraphicsExtractor graphics, float partial) {
         if (!SkiaCtx.INSTANCE.isReady()) {
             return;
         }
