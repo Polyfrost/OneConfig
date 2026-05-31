@@ -7,7 +7,7 @@ key-mapping-api-v1 = "2.0.4+e2bdee78c3"
 
 cinnabar = "26.1-snapshot-9-0.0.7-beta-85-gd3508cc"
 
-modmenu = "17.0.0-alpha.1"
+modmenu = "18.0.0-beta.1"
 yacl = "3.9.0+26.1-fabric"
 
 [libraries]

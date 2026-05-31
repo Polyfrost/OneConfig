@@ -79,7 +79,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         // mixins.add("compat.rconfig.Mixin_Configurations");
 
         //? modmenu_compat
-        mixins.add("compat.modmenu.Mixin_ModMenu");
+        mixins.add("compat.Mixin_ModMenu");
 
         //? neoforge {
         //mixins.add("events.Mixin_ChatReceiveEvent_Forge");
