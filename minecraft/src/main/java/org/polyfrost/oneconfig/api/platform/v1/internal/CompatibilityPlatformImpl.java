@@ -8,14 +8,12 @@ import org.polyfrost.oneconfig.api.platform.v1.CompatibilityPlatform;
 import org.polyfrost.oneconfig.api.platform.v1.Keys;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Options;
-import org.polyfrost.oneconfig.api.platform.v1.commands.CommandPlatform;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class CompatibilityPlatformImpl implements CompatibilityPlatform {
     Options options = new OptionsImpl();
-    CommandPlatform command = new CommandPlatformImpl();
     Keys keys = new KeysImpl();
 
     @Override
@@ -60,11 +58,6 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
     @Override
     public Options options() {
         return options;
-    }
-
-    @Override
-    public CommandPlatform commandPlatform() {
-        return command;
     }
 
     @Override

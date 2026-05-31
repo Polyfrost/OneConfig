@@ -29,6 +29,7 @@ package org.polyfrost.oneconfig.internal;
 
 import com.mojang.brigadier.Command;
 import dev.deftu.clipboard.Clipboard;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -48,7 +49,6 @@ import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent;
 import org.polyfrost.oneconfig.api.hypixel.v1.HypixelUtils;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
-import org.polyfrost.oneconfig.api.platform.v1.commands.ClientCommandSource;
 import org.polyfrost.oneconfig.api.ui.v1.internal.BlurHandler;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindHelper;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
@@ -73,13 +73,17 @@ public class OneConfig
     private boolean initialized = false;
 
     private static void registerCommands() {
-        Command<ClientCommandSource> executor = (c) -> OneConfig.INSTANCE.openScreen(new OneConfigUIScreen());
+        Command<FabricClientCommandSource> executor = (c) -> OneConfig.INSTANCE.openScreen(new OneConfigUIScreen());
 
         var node = CommandManager.literal("oneconfig")
                 .executes(executor)
                 .then(CommandManager.literal("delete")
-                        .executes((ctx) -> ctx.getSource()
-                                .sendText("Deleted OneConfig UI. Please make a report if you were having issues!"))
+                        .executes((ctx) -> {
+                            ctx.getSource()
+                                    .sendFeedback(Component.literal(
+                                            "Deleted OneConfig UI. Please make a report if you were having issues!"));
+                            return 1;
+                        })
                 )
                 .then(CommandManager.literal("hud")
                         .executes((ctx) -> {
@@ -88,10 +92,13 @@ public class OneConfig
                         })
                 )
                 .then(CommandManager.literal("locraw")
-                        .executes((ctx) -> ctx.getSource().sendText(HypixelUtils.getLocation().toString()))
+                        .executes((ctx) -> {
+                            ctx.getSource().sendFeedback(Component.literal(HypixelUtils.getLocation().toString()));
+                            return 1;
+                        })
                 ).build();
-        CommandManager.register(node);
-        CommandManager.register(CommandManager.literal("ocfg").executes(executor).redirect(node));
+        CommandManager.INSTANCE.register(node);
+        CommandManager.INSTANCE.register(CommandManager.literal("ocfg").executes(executor).redirect(node));
     }
 
     public static boolean isInChatScreen() {

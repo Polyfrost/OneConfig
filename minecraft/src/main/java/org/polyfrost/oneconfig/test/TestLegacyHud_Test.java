@@ -24,7 +24,7 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-
+//~ gui_graphics
 package org.polyfrost.oneconfig.test;
 
 import kotlin.Pair;

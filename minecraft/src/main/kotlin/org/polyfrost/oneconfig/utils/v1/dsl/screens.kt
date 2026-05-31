@@ -27,12 +27,14 @@
 package org.polyfrost.oneconfig.utils.v1.dsl
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
+import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.Screen
+import org.polyfrost.oneconfig.api.commands.v1.ClientCommandSource
 import org.polyfrost.oneconfig.api.commands.v1.CommandManager
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-import org.polyfrost.oneconfig.api.platform.v1.commands.ClientCommandSource
+import org.polyfrost.oneconfig.internal.OneConfig
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
@@ -83,6 +85,8 @@ fun Config.openUI(initialCategory: String) = Platform.screen().display(createScr
 
 fun Config.addDefaultCommand(command: String = this.title.lowercase()): LiteralArgumentBuilder<ClientCommandSource> {
     return CommandManager.literal(command).executes { ctx ->
-        ctx.source.openScreen(this.createScreen())
+        Minecraft.getInstance().screen?.onClose()
+        Minecraft.getInstance().screen = this.createScreen()
+        1
     }
 }
