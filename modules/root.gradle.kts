@@ -158,13 +158,6 @@ subprojects {
             }
             archiveBaseName.set(project.name)
         }
-
-        named("apiCheck") {
-            enabled = false
-        }
-        named("apiBuild") {
-            enabled = false
-        }
     }
 }
 
