@@ -57,6 +57,7 @@ import org.polyfrost.oneconfig.internal.ui.compose.McFontService;
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen;
+import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudRenderer;
 import org.polyfrost.oneconfig.test.TestMod_Test;
 
 /**
@@ -140,7 +141,7 @@ public class OneConfig
         ) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
         HudManager.isGuiScreenOpen = Platform.screen().current() != null;
 
-        //LegacyHudRenderer.INSTANCE.renderLive(graphics);
+        LegacyHudRenderer.INSTANCE.renderLive(graphics);
         SkiaCtx.INSTANCE.queueHudDraw(() -> {
             var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
             HudManager.INSTANCE.render(ctx, sw, sh);

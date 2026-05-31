@@ -24,12 +24,11 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-/*
+
 package org.polyfrost.oneconfig.test;
 
 import kotlin.Pair;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.NotNull;
@@ -60,22 +59,19 @@ public class TestLegacyHud_Test extends LegacyHud {
         return false;
     }
 
-    @Override
-    public void render(@NotNull OmniRenderingContext mcCtx) {
-        GuiGraphics graphics = mcCtx.graphics();
-        if (graphics == null) return;
-
-        if (stack == null) stack = new ItemStack(Items.DIAMOND_SWORD);
-
-        graphics.fill(0, 0, (int) W, (int) H, 0x80000000);
-
-        graphics.renderItem(stack, 2, 2);
-    }
-
     @NotNull
     @Override
     public Pair<Float, Float> defaultPosition() {
         return new Pair<>(10f, 120f);
     }
+
+    @Override
+    public void render(@NotNull GuiGraphicsExtractor graphics) {
+        if (stack == null) stack = new ItemStack(Items.DIAMOND_SWORD);
+
+        graphics.fill(0, 0, (int) W, (int) H, 0x80000000);
+
+        //~ if >= 26.1 'renderItem' -> 'item'
+        graphics.item(stack, 2, 2);
+    }
 }
-*/

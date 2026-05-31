@@ -149,6 +149,7 @@ object HudManager {
         ctx.scale(scale, scale)
 
         for (hud in activeInstances) {
+            if (hud.hidden || hud is LegacyHudMarker) continue
             if (isDebugScreenVisible && !hud.showInF3) continue
             if (isTabListVisible && !hud.showInTab) continue
             if (isGuiScreenOpen && !hud.showInScreens) continue

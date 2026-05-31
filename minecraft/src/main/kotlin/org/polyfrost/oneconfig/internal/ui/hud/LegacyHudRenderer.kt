@@ -3,10 +3,12 @@ package org.polyfrost.oneconfig.internal.ui.hud
 import androidx.compose.runtime.snapshots.Snapshot
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
+import org.polyfrost.oneconfig.api.hud.v1.LegacyHud
 
 object LegacyHudRenderer {
-    /*fun renderLive(eventCtx: GuiGraphicsExtractor) {
+    fun renderLive(graphics: GuiGraphicsExtractor) {
         for (hud in HudManager.activeInstances) {
+            if (hud !is LegacyHud || hud.hidden) continue
             if (HudManager.isDebugScreenVisible && !hud.showInF3) continue
             if (HudManager.isTabListVisible && !hud.showInTab) continue
             if (HudManager.isGuiScreenOpen && !hud.showInScreens) continue
@@ -17,12 +19,11 @@ object LegacyHudRenderer {
                 hud.renderedH = hud.height * hudScale
             }
             //? >= 1.21.8 {
-            val graphics = eventCtx.graphics ?: continue
             val pose = graphics.pose()
             pose.pushMatrix()
             pose.translate(hud.x, hud.y)
             if (hudScale != 1f) pose.scale(hudScale, hudScale)
-            hud.render(eventCtx)
+            hud.render(graphics)
             pose.popMatrix()
             //? } else {
             /*val graphics = eventCtx.graphics ?: continue
@@ -35,5 +36,5 @@ object LegacyHudRenderer {
             pose.popPose()
             *///? }
         }
-    }*/
+    }
 }
