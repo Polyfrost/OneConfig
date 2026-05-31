@@ -44,9 +44,10 @@ internal object RConfigCompat {
         tree.subcategory = config.info().title().toLocalizedString()
         if (category == null) {
             mod?.let {
-                val path = it.getIconResourcePath(Int.MAX_VALUE) ?: return@let
-                val stream = it.getIconResource(Int.MAX_VALUE) ?: return@let
-                tree.icon = DynamicImage(path, stream)
+                //todo holy how tf??
+                //val path = it.getIconResourcePath(Int.MAX_VALUE) ?: return@let
+                //val stream = it.getIconResource(Int.MAX_VALUE) ?: return@let
+                //tree.icon = DynamicImage(path, stream)
             }
         }
 
@@ -59,8 +60,9 @@ internal object RConfigCompat {
             )
         }.forEach((root ?: tree)::put)
 
-        parseAny(config.entries().values, tree)
-        parseButtons(config.buttons(), tree)
+        // todo wait for sophie to be awake so i can annoy her about how tf this works now :3333
+        //parseAny(config.entries().values, tree)
+        //parseButtons(config.buttons(), tree)
 
         tree.addMetadata("custom_save", Runnable { config.save() })
         tree.addMetadata("no_cache", true)
@@ -95,7 +97,8 @@ internal object RConfigCompat {
         objectEntry.category = tree.category
         objectEntry.subcategory = entry.options().title.toLocalizedString()
         objectEntry.index = -1
-        parseAny(entry.entries().values, objectEntry)
+        //todo annoy sophie even more
+        //parseAny(entry.entries().values, objectEntry)
         tree.put(objectEntry)
     }
 

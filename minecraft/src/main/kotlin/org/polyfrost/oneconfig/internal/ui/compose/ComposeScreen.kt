@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.IntSize
 import com.mojang.blaze3d.platform.InputConstants
 import dev.deftu.clipboard.Clipboard
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.client.gui.GuiGraphics as GuiGraphicsExtractor
 import net.minecraft.client.gui.screens.Screen
 //? >= 1.21.10 {
 import net.minecraft.client.input.CharacterEvent
@@ -145,7 +145,7 @@ abstract class ComposeScreen(
 
     override fun resize(
         //? < 26.1
-        //minecraft: Minecraft,
+        minecraft: Minecraft,
         width: Int, height: Int
     ) {
 //        composeRenderer.initialize(width, height)
@@ -160,7 +160,7 @@ abstract class ComposeScreen(
     }
 
     //~ if >= 26.1 'render' -> 'extractRenderState'
-    override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
+    override fun render(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
         syncSceneMetrics()
 
         val focused = GLFW.glfwGetWindowAttrib(Platform.compatibility().windowHandle(), GLFW.GLFW_FOCUSED) == GLFW.GLFW_TRUE
@@ -252,9 +252,9 @@ abstract class ComposeScreen(
         val char = Char(event.codepoint)
         val codepoint = event.codepoint
         //? >= 26.1 {
-        val modifiers = 0 //they removed them from the event, apparently glfw doesn't pass them anymore.
-        //? } else
-        //val modifiers = event.modifiers
+        /*val modifiers = 0 //they removed them from the event, apparently glfw doesn't pass them anymore.
+        *///? } else
+        val modifiers = event.modifiers
     //? } else {
     //override fun charTyped(char: Char, modifiers: Int): Boolean {
     //   val codepoint = char.code

@@ -2,7 +2,7 @@ package org.polyfrost.oneconfig.internal.ui.compose
 
 import com.mojang.blaze3d.pipeline.TextureTarget
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.client.gui.GuiGraphics as GuiGraphicsExtractor
 import net.minecraft.resources.Identifier
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.Color

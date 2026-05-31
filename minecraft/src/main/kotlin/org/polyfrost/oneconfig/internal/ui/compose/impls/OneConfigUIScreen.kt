@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import com.mojang.blaze3d.platform.InputConstants
-import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.client.gui.GuiGraphics as GuiGraphicsExtractor
 //? >= 1.21.10
 import net.minecraft.client.input.KeyEvent
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
@@ -78,14 +78,14 @@ class OneConfigUIScreen @JvmOverloads constructor(
     }
 
     //~ if >= 26.1 'render' -> 'extractRenderState'
-    override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
+    override fun render(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
         if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= CLOSE_ANIMATION_MS) {
             Platform.screen().close()
             return
         }
         BlurRenderer.drawBlur()
         //~ if >= 26.1 'render' -> 'extractRenderState'
-        super.extractRenderState(ctx, mouseX, mouseY, tickDelta)
+        super.render(ctx, mouseX, mouseY, tickDelta)
     }
 
     /** Holds a reference to the close-animation trigger from Compose */
