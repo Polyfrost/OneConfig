@@ -28,14 +28,11 @@ repositories {
     maven("https://api.modrinth.com/maven") {
         content { includeGroup("maven.modrinth") } // for some reason yacl versions exist that aren't on the official repo???
     }
-    maven("https://maven.terraformersmc.com/") {
-        content { includeGroup("com.terraformersmc") }
-    }
     maven("https://jitpack.io") {
         content { includeGroupAndSubgroups("com.github") }
     }
     maven("https://maven.teamresourceful.com/repository/maven-public/") {
-        content { includeGroupAndSubgroups("me.owdding") }
+        content { includeGroupAndSubgroups("me.owdding"); includeGroup("com.terraformersmc") }
     }
     maven("https://maven.azureaaron.net/releases") {
         content { includeGroup("net.azureaaron") }
