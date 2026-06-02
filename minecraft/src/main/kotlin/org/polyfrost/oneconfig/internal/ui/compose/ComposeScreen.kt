@@ -274,6 +274,7 @@ abstract class ComposeScreen(
             isCtrlPressed = modifiers.ctrlDown(),
             isShiftPressed = modifiers.shiftDown(),
             isAltPressed = modifiers.altDown(),
+            isMetaPressed = modifiers.superDown(),
             nativeEvent = KeyEvent(
                 dummyComponent,
                 eventType,
@@ -296,6 +297,7 @@ abstract class ComposeScreen(
     fun Int.ctrlDown() = this and GLFW.GLFW_MOD_CONTROL != 0
     fun Int.shiftDown() = this and GLFW.GLFW_MOD_SHIFT != 0
     fun Int.altDown() = this and GLFW.GLFW_MOD_ALT != 0
+    fun Int.superDown() = this and GLFW.GLFW_MOD_SUPER != 0
 
     //? >= 1.21.10 {
     override fun keyPressed(event: McKeyEvent): Boolean {
@@ -384,6 +386,7 @@ abstract class ComposeScreen(
         if (modifiers.ctrlDown()) m = m or InputEvent.CTRL_DOWN_MASK
         if (modifiers.altDown()) m = m or InputEvent.ALT_DOWN_MASK
         if (modifiers.shiftDown()) m = m or InputEvent.SHIFT_DOWN_MASK
+        if (modifiers.superDown()) m = m or InputEvent.META_DOWN_MASK
         return m
     }
 
@@ -405,6 +408,7 @@ abstract class ComposeScreen(
         GLFW.GLFW_KEY_CAPS_LOCK -> KeyEvent.VK_CAPS_LOCK
         GLFW.GLFW_KEY_LEFT_SHIFT, GLFW.GLFW_KEY_RIGHT_SHIFT -> KeyEvent.VK_SHIFT
         GLFW.GLFW_KEY_LEFT_CONTROL, GLFW.GLFW_KEY_RIGHT_CONTROL -> KeyEvent.VK_CONTROL
+        GLFW.GLFW_KEY_LEFT_SUPER, GLFW.GLFW_KEY_RIGHT_SUPER -> KeyEvent.VK_META
         GLFW.GLFW_KEY_LEFT_ALT, GLFW.GLFW_KEY_RIGHT_ALT -> KeyEvent.VK_ALT
         in GLFW.GLFW_KEY_F1..GLFW.GLFW_KEY_F12 -> KeyEvent.VK_F1 + (glfwKey - GLFW.GLFW_KEY_F1)
         in GLFW.GLFW_KEY_0..GLFW.GLFW_KEY_9 -> KeyEvent.VK_0 + (glfwKey - GLFW.GLFW_KEY_0)

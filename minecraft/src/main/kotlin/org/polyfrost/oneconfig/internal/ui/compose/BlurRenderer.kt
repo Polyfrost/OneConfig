@@ -4,6 +4,7 @@ import com.mojang.blaze3d.pipeline.RenderTarget
 import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.Minecraft
 import org.jetbrains.skia.*
+
 object BlurRenderer {
     private val client get() = Minecraft.getInstance()
     private val paints = HashMap<Float, Paint>()
@@ -45,7 +46,7 @@ object BlurRenderer {
         if (SkiaCtx.isVulkanMode) return resolveVkSurface(target, width, height)
 
         //? > 1.21.11 {
-        val frameBufferId = -1 // 26.1+ uses Vulkan exclusively; GL path is unreachable
+        val frameBufferId = -1
         //? } else if >= 1.21.5 {
         /*val frameBufferId = getFboId(target)
         *///? } else

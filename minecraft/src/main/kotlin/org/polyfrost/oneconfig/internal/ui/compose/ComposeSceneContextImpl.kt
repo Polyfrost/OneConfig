@@ -12,7 +12,6 @@ import androidx.compose.ui.platform.WindowInfo
 import androidx.compose.ui.scene.ComposeSceneContext
 import androidx.compose.ui.unit.IntSize
 import net.minecraft.client.Minecraft
-import org.lwjgl.glfw.GLFW
 import org.lwjgl.glfw.GLFW.*
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 
@@ -30,18 +29,19 @@ private class WindowInfoImpl : WindowInfo {
         return IntSize(mc.window.screenWidth, mc.window.screenHeight)
     }
 
-    private fun     isKeyDown(glfwKey: Int): Boolean {
-        return GLFW.glfwGetKey(Platform.compatibility().windowHandle(), glfwKey) == GLFW.GLFW_PRESS
+    private fun isKeyDown(glfwKey: Int): Boolean {
+        return glfwGetKey(Platform.compatibility().windowHandle(), glfwKey) == GLFW_PRESS
     }
 
     override val keyboardModifiers: PointerKeyboardModifiers
         get() = PointerKeyboardModifiers(
-            isCtrlPressed = isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL) || isKeyDown(GLFW.GLFW_KEY_RIGHT_CONTROL),
-            isShiftPressed = isKeyDown(GLFW.GLFW_KEY_LEFT_SHIFT) || isKeyDown(GLFW.GLFW_KEY_RIGHT_SHIFT),
-            isAltPressed = isKeyDown(GLFW.GLFW_KEY_LEFT_ALT) || isKeyDown(GLFW.GLFW_KEY_RIGHT_ALT),
-            isCapsLockOn = isKeyDown(GLFW.GLFW_KEY_CAPS_LOCK),
-            isScrollLockOn = isKeyDown(GLFW.GLFW_KEY_SCROLL_LOCK),
-            isNumLockOn = isKeyDown(GLFW.GLFW_KEY_NUM_LOCK)
+            isCtrlPressed = isKeyDown(GLFW_KEY_LEFT_CONTROL) || isKeyDown(GLFW_KEY_RIGHT_CONTROL),
+            isShiftPressed = isKeyDown(GLFW_KEY_LEFT_SHIFT) || isKeyDown(GLFW_KEY_RIGHT_SHIFT),
+            isAltPressed = isKeyDown(GLFW_KEY_LEFT_ALT) || isKeyDown(GLFW_KEY_RIGHT_ALT),
+            isCapsLockOn = isKeyDown(GLFW_KEY_CAPS_LOCK),
+            isScrollLockOn = isKeyDown(GLFW_KEY_SCROLL_LOCK),
+            isNumLockOn = isKeyDown(GLFW_KEY_NUM_LOCK),
+            isMetaPressed = isKeyDown(GLFW_KEY_LEFT_SUPER) || isKeyDown(GLFW_KEY_RIGHT_SUPER)
         )
 
     override val isWindowFocused: Boolean
