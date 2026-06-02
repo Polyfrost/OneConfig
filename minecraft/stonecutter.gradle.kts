@@ -17,7 +17,7 @@ stonecutter {
             this["yacl_compat"] = catalogue.has("yacl")
             this["modmenu_compat"] = catalogue.has("modmenu")
             this["rconfig_compat"] = catalogue.has("rconfig")
-            this["cinnabar"] = catalogue.has("cinnabar")
+            this["cinnabar"] = catalogue.has("cinnabar") && rootProject.hasProperty("minecraft.vulkan")
         }
 
         replacements {

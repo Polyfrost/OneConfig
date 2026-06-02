@@ -1,7 +1,6 @@
 public final class org/polyfrost/oneconfig/api/event/v1/EventDelay {
 	public static fun of (Ljava/lang/Class;ILjava/lang/Runnable;)V
 	public static fun of (Ljava/lang/Class;ILjava/util/function/Consumer;)V
-	public static fun render (ILjava/lang/Runnable;)V
 	public static fun tick (ILjava/lang/Runnable;)V
 }
 
@@ -34,11 +33,11 @@ public abstract class org/polyfrost/oneconfig/api/event/v1/events/ChatEvent : or
 }
 
 public final class org/polyfrost/oneconfig/api/event/v1/events/ChatEvent$Receive : org/polyfrost/oneconfig/api/event/v1/events/ChatEvent {
-	public fun <init> (Ldev/deftu/textile/Text;)V
-	public fun component1 ()Ldev/deftu/textile/Text;
+	public fun <init> (Lnet/kyori/adventure/text/Component;)V
+	public fun component1 ()Lnet/kyori/adventure/text/Component;
 	public fun getFullyUnformattedMessage ()Ljava/lang/String;
-	public fun getMessage ()Ldev/deftu/textile/Text;
-	public fun setMessage (Ldev/deftu/textile/Text;)V
+	public fun getMessage ()Lnet/kyori/adventure/text/Component;
+	public fun setMessage (Lnet/kyori/adventure/text/Component;)V
 }
 
 public final class org/polyfrost/oneconfig/api/event/v1/events/ChatEvent$Send : org/polyfrost/oneconfig/api/event/v1/events/ChatEvent {
@@ -79,14 +78,6 @@ public final class org/polyfrost/oneconfig/api/event/v1/events/HudEvent$Debug : 
 public final class org/polyfrost/oneconfig/api/event/v1/events/HudEvent$Tab : org/polyfrost/oneconfig/api/event/v1/events/HudEvent {
 	public static final field CLOSED Lorg/polyfrost/oneconfig/api/event/v1/events/HudEvent$Tab;
 	public static final field OPENED Lorg/polyfrost/oneconfig/api/event/v1/events/HudEvent$Tab;
-}
-
-public class org/polyfrost/oneconfig/api/event/v1/events/HudRenderEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
-	public final field ctx Ldev/deftu/omnicore/api/client/render/OmniRenderingContext;
-	public final field deltaTicks F
-	public fun <init> (Ldev/deftu/omnicore/api/client/render/OmniRenderingContext;F)V
-	public fun component1 ()Ldev/deftu/omnicore/api/client/render/OmniRenderingContext;
-	public fun component2 ()F
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/events/HypixelLocationEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
@@ -162,28 +153,6 @@ public final class org/polyfrost/oneconfig/api/event/v1/events/PlayerInteractEve
 	public static final field ENTITY Lorg/polyfrost/oneconfig/api/event/v1/events/PlayerInteractEvent$Type;
 	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/event/v1/events/PlayerInteractEvent$Type;
 	public static fun values ()[Lorg/polyfrost/oneconfig/api/event/v1/events/PlayerInteractEvent$Type;
-}
-
-public class org/polyfrost/oneconfig/api/event/v1/events/PostWorldRenderEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
-	public fun <init> (Ldev/deftu/omnicore/api/client/render/stack/OmniPoseStack;F)V
-	public fun getPartialTicks ()F
-	public fun getStack ()Ldev/deftu/omnicore/api/client/render/stack/OmniPoseStack;
-}
-
-public abstract class org/polyfrost/oneconfig/api/event/v1/events/RenderEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
-	public field ctx Ldev/deftu/omnicore/api/client/render/OmniRenderingContext;
-	public field deltaTicks F
-	public fun <init> ()V
-	public fun component1 ()F
-	public fun component2 ()Ldev/deftu/omnicore/api/client/render/OmniRenderingContext;
-}
-
-public class org/polyfrost/oneconfig/api/event/v1/events/RenderEvent$Post : org/polyfrost/oneconfig/api/event/v1/events/RenderEvent {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/event/v1/events/RenderEvent$Post;
-}
-
-public class org/polyfrost/oneconfig/api/event/v1/events/RenderEvent$Pre : org/polyfrost/oneconfig/api/event/v1/events/RenderEvent {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/event/v1/events/RenderEvent$Pre;
 }
 
 public abstract class org/polyfrost/oneconfig/api/event/v1/events/RenderLivingEvent : org/polyfrost/oneconfig/api/event/v1/events/Event$Cancellable {

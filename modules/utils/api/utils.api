@@ -20,6 +20,7 @@ public final class org/polyfrost/oneconfig/api/hypixel/v1/HypixelUtils$Location 
 	public fun getLobbyName ()Ljava/util/Optional;
 	public fun getMapName ()Ljava/util/Optional;
 	public fun getMode ()Ljava/util/Optional;
+	public synthetic fun getPacket ()Lnet/hypixel/modapi/packet/ClientboundHypixelPacket;
 	public fun getServerName ()Ljava/util/Optional;
 	public fun getServerType ()Ljava/util/Optional;
 	public fun inGame ()Z
@@ -32,6 +33,7 @@ public final class org/polyfrost/oneconfig/api/hypixel/v1/HypixelUtils$Location 
 public final class org/polyfrost/oneconfig/api/hypixel/v1/HypixelUtils$PartyInfo {
 	public fun <init> ()V
 	public fun getMembers ()Ljava/util/Map;
+	public synthetic fun getPacket ()Lnet/hypixel/modapi/packet/ClientboundHypixelPacket;
 	public fun getPartySize ()I
 	public fun isInParty ()Z
 	public fun update ()V
@@ -41,27 +43,43 @@ public final class org/polyfrost/oneconfig/api/hypixel/v1/HypixelUtils$PlayerInf
 	public fun <init> ()V
 	public fun getMonthlyPackageRank ()Ljava/util/Optional;
 	public fun getPackageRank ()Ljava/util/Optional;
+	public synthetic fun getPacket ()Lnet/hypixel/modapi/packet/ClientboundHypixelPacket;
 	public fun getPrefix ()Ljava/util/Optional;
 	public fun getRank ()Ljava/util/Optional;
 	public fun update ()V
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/CompatibilityPlatform {
-	public abstract fun executeTreeAction (Ljava/lang/String;)V
-	public abstract fun getValidTrees ()Ljava/util/Set;
+	public fun displayChatMessage (Ljava/lang/String;)V
+	public abstract fun displayChatMessage (Lnet/kyori/adventure/text/Component;)V
+	public abstract fun getMods ()Ljava/util/Set;
+	public abstract fun isDevelopment ()Z
+	public abstract fun keys ()Lorg/polyfrost/oneconfig/api/platform/v1/Keys;
+	public abstract fun loader ()Ljava/lang/String;
+	public abstract fun options ()Lorg/polyfrost/oneconfig/api/platform/v1/Options;
+	public abstract fun version ()Ljava/lang/String;
+	public abstract fun windowHandle ()J
 }
 
-public abstract interface class org/polyfrost/oneconfig/api/platform/v1/GLPlatform {
-	public abstract fun getFunctionAddress (Ljava/lang/String;)J
-	public abstract fun glVertexAttribIPointer (IIIIJ)V
-	public fun glViewport ()[I
-	public abstract fun glViewport ([I)[I
-	public abstract fun memAddress (Ljava/nio/ByteBuffer;)J
-	public abstract fun syncOpenGLContext ()V
+public final class org/polyfrost/oneconfig/api/platform/v1/DesktopHelper {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/platform/v1/DesktopHelper;
+	public static final fun browse (Ljava/net/URI;)Z
+	public final fun executeIfDesktop (Ljava/awt/Desktop$Action;Lkotlin/jvm/functions/Function1;)Z
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/I18nPlatform {
 	public abstract fun getUnformattedText (Ljava/lang/Object;)Ljava/lang/String;
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/platform/v1/Keys {
+	public abstract fun getKeyLeftAlt ()I
+	public abstract fun getKeyLeftControl ()I
+	public abstract fun getKeyLeftShift ()I
+	public abstract fun getKeyLeftSuper ()I
+	public abstract fun getKeyRightAlt ()I
+	public abstract fun getKeyRightControl ()I
+	public abstract fun getKeyRightShift ()I
+	public abstract fun getKeyRightSuper ()I
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/LoaderPlatform {
@@ -69,9 +87,39 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/LoaderPl
 	public fun getLoaderString ()Ljava/lang/String;
 }
 
+public final class org/polyfrost/oneconfig/api/platform/v1/ModInfo {
+	public static final field Companion Lorg/polyfrost/oneconfig/api/platform/v1/ModInfo$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/nio/file/Path;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/nio/file/Path;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/nio/file/Path;)Lorg/polyfrost/oneconfig/api/platform/v1/ModInfo;
+	public static synthetic fun copy$default (Lorg/polyfrost/oneconfig/api/platform/v1/ModInfo;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/nio/file/Path;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/platform/v1/ModInfo;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFile ()Ljava/nio/file/Path;
+	public final fun getId ()Ljava/lang/String;
+	public static final fun getLoadedMods ()Ljava/util/Set;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getVersion ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/platform/v1/ModInfo$Companion {
+	public final fun getLoadedMods ()Ljava/util/Set;
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/platform/v1/ModInfoProvider {
+	public abstract fun listMods ()Ljava/util/Set;
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/platform/v1/Options {
+	public abstract fun getGuiScale ()F
+}
+
 public final class org/polyfrost/oneconfig/api/platform/v1/Platform {
 	public static fun compatibility ()Lorg/polyfrost/oneconfig/api/platform/v1/CompatibilityPlatform;
-	public static fun gl ()Lorg/polyfrost/oneconfig/api/platform/v1/GLPlatform;
 	public static fun i18n ()Lorg/polyfrost/oneconfig/api/platform/v1/I18nPlatform;
 	public static fun loader ()Lorg/polyfrost/oneconfig/api/platform/v1/LoaderPlatform;
 	public static fun screen ()Lorg/polyfrost/oneconfig/api/platform/v1/ScreenPlatform;

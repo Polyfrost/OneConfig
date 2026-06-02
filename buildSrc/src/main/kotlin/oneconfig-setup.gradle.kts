@@ -1,4 +1,8 @@
 import dev.kikugie.stonecutter.build.StonecutterBuildExtension
+import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.api.publish.PublishingExtension
+import org.gradle.authentication.http.BasicAuthentication
+import org.gradle.plugins.signing.SigningExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
 import java.lang.Boolean.TRUE
 
@@ -8,6 +12,8 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
     id("versioned-catalogues")
+    `maven-publish`
+    signing
 }
 
 repositories {
@@ -58,6 +64,9 @@ java {
 
 private val stonecutter = project.extensions.getByName("stonecutter") as StonecutterBuildExtension
 val loader = stonecutter.current.project.substringAfterLast("-")
+val enableMoulRelocatorKsp = loader == "fabric"
+    && stonecutter.eval(stonecutter.current.version, "> 1.21.10")
+    && versionedCatalog.has("moulconfig")
 
 
 val includeInLoader = Attribute.of("org.polyfrost.oneconfig.loader.include", Boolean::class.javaObjectType)
@@ -178,7 +187,7 @@ dependencies {
         handleApiDep(versionedCatalog.bundles["fabric-api"], true, transitive = true)
     }
 
-    if (versionedCatalog.has("cinnabar")) {
+    if (versionedCatalog.has("cinnabar") && project.hasProperty("minecraft.vulkan")) {
         handleApiDep(versionedCatalog["cinnabar"])
     }
 
@@ -194,8 +203,12 @@ dependencies {
     "annotationProcessor"(versionedCatalog["mixin.extras"])
     "annotationProcessor"(versionedCatalog["mixin.squared"])
 
-    //"ksp"(rootProject.project(":modules:relocator"))
-    //"annotationProcessor"(rootProject.project(":modules:relocator"))
+    if (enableMoulRelocatorKsp) {
+        "ksp"(rootProject.project(":modules:relocator"))
+        "compileOnly"("org.notenoughupdates.moulconfig:common:3.11.0") {
+            isTransitive = false
+        }
+    }
 
     for (project in rootProject.project(":modules").subprojects) {
         if ("relocator" in project.path) {
@@ -269,7 +282,51 @@ dependencies {
     }
 }
 
-version = project.parent!!.version
+if (enableMoulRelocatorKsp) {
+    extensions.configure<com.google.devtools.ksp.gradle.KspExtension> {
+        arg("relocator.mcVersion", stonecutter.current.version)
+    }
+} else {
+    tasks.matching { it.name.startsWith("ksp") }.configureEach {
+        enabled = false
+    }
+}
+
+group = rootProject.group
+version = rootProject.version
+
+afterEvaluate {
+    configure<PublishingExtension> {
+        repositories {
+            listOf("releases", "snapshots").forEach { type ->
+                maven {
+                    name = type
+                    url = uri("https://repo.polyfrost.org/$type")
+                    credentials {
+                        username = providers.gradleProperty("polyfrostRepoUsername").orNull
+                        password = providers.gradleProperty("polyfrostRepoToken").orNull
+                    }
+                    authentication { create<BasicAuthentication>("basic") }
+                }
+            }
+        }
+
+        publications {
+            create<MavenPublication>("mavenJava") {
+                from(components["java"])
+                groupId = rootProject.group.toString()
+                artifactId = project.name
+            }
+        }
+    }
+
+    configure<SigningExtension> {
+        isRequired = project.properties["signing.keyId"] != null
+        if (isRequired) {
+            sign(extensions.getByType<PublishingExtension>().publications["mavenJava"])
+        }
+    }
+}
 
 tasks.withType<ProcessResources>() {
     val range = if (versionedCatalog.versions.has("minecraft.range")) {

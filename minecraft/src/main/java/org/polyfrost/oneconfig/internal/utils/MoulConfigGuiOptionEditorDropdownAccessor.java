@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.utils;
 
-import org.polyfrost.oneconfig.relocator.annotations.MoulConfig;
+//? moul_compat {
+/*import org.polyfrost.oneconfig.relocator.annotations.MoulConfig;
 
 @MoulConfig
 public interface MoulConfigGuiOptionEditorDropdownAccessor {
@@ -12,3 +13,4 @@ public interface MoulConfigGuiOptionEditorDropdownAccessor {
     Enum<?>[] oneconfig$constants();
 
 }
+*///? }

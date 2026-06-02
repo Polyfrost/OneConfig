@@ -26,13 +26,11 @@ object LegacyHudRenderer {
             hud.render(graphics)
             pose.popMatrix()
             //? } else {
-            /*val graphics = eventCtx.graphics ?: continue
-            val pose = graphics.pose()
+            /*val pose = graphics.pose()
             pose.pushPose()
             pose.translate(hud.x.toDouble(), hud.y.toDouble(), 0.0)
             if (hudScale != 1f) pose.scale(hudScale, hudScale, 1f)
-            hud.render(eventCtx)
-            graphics.flush()
+            hud.render(graphics)
             pose.popPose()
             *///? }
         }
