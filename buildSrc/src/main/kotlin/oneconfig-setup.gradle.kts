@@ -214,7 +214,7 @@ dependencies {
         if ("relocator" in project.path) {
             "compileOnly"(project(project.path))
         } else if ("dependencies" !in project.path) {
-            "api"(project(project.path)) {
+            "implementation"(project(project.path)) {
                 isTransitive = false
                 attributes {
                     attribute(includeInLoader, TRUE)
