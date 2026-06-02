@@ -29,7 +29,7 @@ plugins {
 }
 
 dependencies {
-    implementation(libs.bundles.nightconfig)
+    api(libs.bundles.nightconfig)
     api(project(":modules:config"))
     api(project(":modules:poly-compose"))
     api(libs.jetbrains.compose.runtime)

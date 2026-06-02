@@ -1,4 +1,5 @@
 import dev.kikugie.stonecutter.build.StonecutterBuildExtension
+import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.authentication.http.BasicAuthentication
@@ -7,7 +8,7 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
 import java.lang.Boolean.TRUE
 
 plugins {
-    java
+    `java-library`
     kotlin("jvm")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
@@ -50,6 +51,9 @@ repositories {
         content { includeGroupAndSubgroups("org.parchmentmc") }
     }
     maven("https://redirector.kotlinlang.org/maven/compose-dev")
+    maven("https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1") {
+        content { includeGroup("me.djtheredstoner") }
+    }
     google()
 }
 
@@ -75,7 +79,7 @@ val jijInLoader = Attribute.of("org.polyfrost.oneconfig.loader.jij", Boolean::cl
 
 fun DependencyHandlerScope.handleApiDep(dependency: String, isMod: Boolean = false, transitive: Boolean = false) {
     val dep = project.dependencies.create(dependency) as ExternalModuleDependency
-    this.handleApiDep(dep, isMod)
+    this.handleApiDep(dep, isMod, transitive)
 }
 
 fun DependencyHandlerScope.handleApiDep(
@@ -83,7 +87,7 @@ fun DependencyHandlerScope.handleApiDep(
     isMod: Boolean = false,
     transitive: Boolean = false,
 ) {
-    this.handleApiDep(project.provider { dependency }, isMod)
+    this.handleApiDep(project.provider { dependency }, isMod, transitive)
 }
 
 if (loader != "fabric") {
@@ -99,7 +103,7 @@ fun DependencyHandlerScope.handleApiDep(
     isMod: Boolean = false,
     transitive: Boolean = false,
 ) {
-    dependency.get().forEach { handleApiDep(it, isMod) }
+    dependency.get().forEach { handleApiDep(it, isMod, transitive) }
 }
 
 fun DependencyHandlerScope.handleApiDep(
@@ -113,7 +117,7 @@ fun DependencyHandlerScope.handleApiDep(
             attribute(includeInLoader, TRUE)
         }
     } else {
-        "implementation"(dependency) {
+        "api"(dependency) {
             isTransitive = transitive
         }
     }
@@ -135,25 +139,27 @@ dependencies {
     //dandelionBpRelocatedConfiguration("org.notenoughupdates.moulconfig:common:3.11.0")
     //compileOnly(prebundle(dandelionBpRelocatedConfiguration))
 
-    "implementation"(versionedCatalog["jetbrains.compose.foundation"])
-    "implementation"(versionedCatalog["jetbrains.compose.material"])
-    "implementation"(versionedCatalog["jetbrains.compose.runtime"])
-    "implementation"(versionedCatalog["jetbrains.compose.ui"])
-    "implementation"(versionedCatalog["jetbrains.compose.ui.tooling.preview"])
-    "implementation"(versionedCatalog["jetbrains.compose.ui.util"])
-    "implementation"(versionedCatalog["jetbrains.skiko.awt"])
-    "implementation"(versionedCatalog["jetbrains.skiko.awt.runtime.windows.x64"])
-    "implementation"(versionedCatalog["jetbrains.skiko.awt.runtime.linux.x64"])
-    "implementation"(versionedCatalog["jetbrains.skiko.awt.runtime.macos.x64"])
-    "implementation"(versionedCatalog["jetbrains.skiko.awt.runtime.macos.arm64"])
-    "implementation"(versionedCatalog["jetbrains.compose.navigation"])
-    "implementation"(versionedCatalog["jetbrains.lifecycle"])
-    "implementation"(versionedCatalog["jetbrains.viewmodel"])
-    "implementation"(versionedCatalog["commonmark"])
-    "implementation"(versionedCatalog["adventure"])
+    "api"(versionedCatalog["jetbrains.compose.foundation"])
+    "api"(versionedCatalog["jetbrains.compose.material"])
+    "api"(versionedCatalog["jetbrains.compose.runtime"])
+    "api"(versionedCatalog["jetbrains.compose.ui"])
+    "api"(versionedCatalog["jetbrains.compose.ui.tooling.preview"])
+    "api"(versionedCatalog["jetbrains.compose.ui.util"])
+    "api"(versionedCatalog["jetbrains.skiko.awt"])
+    "api"(versionedCatalog["jetbrains.skiko.awt.runtime.windows.x64"])
+    "api"(versionedCatalog["jetbrains.skiko.awt.runtime.linux.x64"])
+    "api"(versionedCatalog["jetbrains.skiko.awt.runtime.macos.x64"])
+    "api"(versionedCatalog["jetbrains.skiko.awt.runtime.macos.arm64"])
+    "api"(versionedCatalog["jetbrains.compose.navigation"])
+    "api"(versionedCatalog["jetbrains.lifecycle"])
+    "api"(versionedCatalog["jetbrains.viewmodel"])
+    "api"(versionedCatalog["commonmark"])
+    handleApiDep(versionedCatalog.bundles["adventure"])
 
     if (loader == "fabric") {
-        "modImplementation"("net.kyori:adventure-platform-mod-shared-fabric-repack:6.8.0")
+        val adventurePlatform = "net.kyori:adventure-platform-mod-shared-fabric-repack:6.8.0"
+        "modApi"(adventurePlatform)
+        "modImplementation"(adventurePlatform)
     }
 
     handleApiDep(versionedCatalog.bundles["kotlin"])
@@ -187,6 +193,12 @@ dependencies {
         handleApiDep(versionedCatalog.bundles["fabric-api"], true, transitive = true)
     }
 
+    val libsCatalog = rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs")
+    when (loader) {
+        "fabric" -> "modRuntimeOnly"(libsCatalog.findLibrary("devauth-fabric").get())
+        "neoforge" -> "runtimeOnly"(libsCatalog.findLibrary("devauth-neoforge").get())
+    }
+
     if (versionedCatalog.has("cinnabar") && project.hasProperty("minecraft.vulkan")) {
         handleApiDep(versionedCatalog["cinnabar"])
     }
@@ -214,8 +226,7 @@ dependencies {
         if ("relocator" in project.path) {
             "compileOnly"(project(project.path))
         } else if ("dependencies" !in project.path) {
-            "implementation"(project(project.path)) {
-                isTransitive = false
+            "api"(project(project.path)) {
                 attributes {
                     attribute(includeInLoader, TRUE)
                 }

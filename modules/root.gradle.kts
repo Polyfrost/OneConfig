@@ -12,6 +12,7 @@ plugins {
 val rootModuleProject = project
 
 subprojects {
+    apply(plugin = "java-library")
     apply(plugin = "kotlin")
     apply(plugin = "jvm-test-suite")
     apply(plugin = "maven-publish")
@@ -42,7 +43,7 @@ subprojects {
         "compileOnly"(rootProject.libs.logging.api)
         "testImplementation"(rootProject.libs.bundles.test.core)
         "testImplementation"(platform(rootProject.libs.junit.bom))
-        "compileOnly"(rootProject.libs.adventure)
+        "api"(rootProject.libs.bundles.adventure)
     }
 
     configure<TestingExtension> {
