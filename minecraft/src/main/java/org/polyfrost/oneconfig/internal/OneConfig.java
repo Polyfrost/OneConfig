@@ -142,10 +142,7 @@ public class OneConfig
 
         // Update HUD visibility state for per-HUD filtering
         HudManager.isDebugScreenVisible = Minecraft.getInstance().getDebugOverlay().showDebugScreen();
-        HudManager.isTabListVisible = org.lwjgl.glfw.GLFW.glfwGetKey(
-                Platform.compatibility().windowHandle(),
-                org.lwjgl.glfw.GLFW.GLFW_KEY_TAB
-        ) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+        HudManager.isTabListVisible = Minecraft.getInstance().options.keyPlayerList.isDown();
         HudManager.isGuiScreenOpen = Platform.screen().current() != null;
 
         LegacyHudRenderer.INSTANCE.renderLive(graphics);
