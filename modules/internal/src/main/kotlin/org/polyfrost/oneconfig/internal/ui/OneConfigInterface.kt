@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.animation.core.EaseIn
 import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -34,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.delay
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 import org.polyfrost.oneconfig.internal.ui.shell.Lifecycle
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
@@ -45,6 +47,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
 import org.polyfrost.oneconfig.internal.ui.themes.UIBranding
 import org.polyfrost.oneconfig.internal.ui.themes.UITheme
 import org.polyfrost.oneconfig.internal.ui.themes.UITypography
+import kotlin.time.Duration.Companion.milliseconds
 
 val PolyGlassDark = UITheme(
     "polyglass-dark", "PolyGlass Dark",
@@ -223,11 +226,14 @@ fun OneConfigInterface(
     }
 
     var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { visible = true }
+    LaunchedEffect(Unit) {
+        withFrameNanos { }
+        visible = true
+    }
 
     LaunchedEffect(visible) {
         if (!visible) {
-            kotlinx.coroutines.delay(220L)
+            delay(220L.milliseconds)
             onCloseRequest()
         }
     }
