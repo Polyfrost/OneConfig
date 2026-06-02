@@ -8,10 +8,6 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
-import org.polyfrost.oneconfig.internal.ui.MinecraftDark
-import org.polyfrost.oneconfig.internal.ui.MinecraftLight
-import org.polyfrost.oneconfig.internal.ui.PolyGlassDark
-import org.polyfrost.oneconfig.internal.ui.PolyGlassLight
 import org.polyfrost.oneconfig.internal.ui.api.settings.BuiltinVisualizers
 
 object ThemeRegistry {
