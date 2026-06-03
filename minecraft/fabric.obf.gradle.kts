@@ -4,7 +4,7 @@ plugins {
     `oneconfig-fabric`
 }
 
-dependencies {
+dependencies {4
     mappings(loom.layered {
         officialMojangMappings()
         if (versionedCatalog.has("parchment")) {
@@ -13,4 +13,6 @@ dependencies {
             })
         }
     })
+
+    modRuntimeOnly(rootProject.fileTree("minecraft/run/extra_mods").include("*.jar"))
 }

@@ -28,7 +28,13 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
         return FabricLoader.getInstance().getAllMods().stream()
                 .map(mod -> {
                     var metadata = mod.getMetadata();
-                    return new ModInfo(metadata.getId(), metadata.getName(), metadata.getVersion().getFriendlyString(), mod.getRootPaths().getFirst());
+                    return new ModInfo(
+                        metadata.getId(),
+                        metadata.getName(),
+                        metadata.getVersion().getFriendlyString(),
+                        mod.getRootPaths().getFirst(),
+                        metadata.getIconPath(Integer.MAX_VALUE).orElse(null)
+                    );
                 }).collect(Collectors.toSet());
         //? }
 
