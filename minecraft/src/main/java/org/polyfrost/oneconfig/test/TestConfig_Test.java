@@ -47,6 +47,8 @@ public class TestConfig_Test extends Config {
     public static boolean chicken = true;
     @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do", subcategory = "Chick")
     public static boolean cow = false;
+    @Checkbox(title = "checkbox", description = "I do checkboxes", category = "bob")
+    public static boolean checkbox = false;
     @Number(title = "number", unit = "px", category = "bob")
     public static int number = 50;
 
@@ -92,6 +94,55 @@ public class TestConfig_Test extends Config {
 
     @Keybind(title = "keybind")
     private final OneConfigKeybind bind = KeybindHelper.builder().ctrl().key(InputConstants.KEY_G).action((Runnable) () -> {}).register();
+
+    // DraggableList: drag-only (order preserved, no checkboxes)
+    @DraggableList(
+            title = "Draggable List (order only)",
+            description = "Drag to reorder. No checkboxes.",
+            category = "Lists",
+            subcategory = "Draggable"
+    )
+    public static String[] draggableOrder = {"Alpha", "Bravo", "Charlie", "Delta", "Echo"};
+
+    // DraggableList: drag + checkable (enabled subset stored in prop)
+    @DraggableList(
+            title = "Draggable List (with checkboxes)",
+            description = "Drag to reorder. Check to enable.",
+            category = "Lists",
+            subcategory = "Draggable",
+            options = {"Alpha", "Bravo", "Charlie", "Delta", "Echo"},
+            checkable = true
+    )
+    public static String[] draggableCheckable = {"Alpha", "Charlie", "Echo"};
+
+    // MultiSelectDropdown: multi-select with checkboxes (boolean[])
+    @MultiSelectDropdown(
+            title = "Multi-Select Dropdown",
+            description = "Click to open. Check multiple items.",
+            category = "Lists",
+            subcategory = "Dropdown",
+            options = {"Apple", "Banana", "Cherry", "Date", "Elderberry"}
+    )
+    public static boolean[] multiSelect = {true, false, true, false, false};
+
+    // MultiSelectDropdown: single-select list (int, checkable=false)
+    @MultiSelectDropdown(
+            title = "Single-Select List Dropdown",
+            description = "Click to open. Pick one item.",
+            category = "Lists",
+            subcategory = "Dropdown",
+            options = {"Option A", "Option B", "Option C", "Option D"},
+            checkable = false
+    )
+    public static int singleSelectList = 0;
+
+    @Info(
+            title = "Info",
+            description = "This is an info message that may be useful to the player!",
+            category = "Lists",
+            subcategory = "Info"
+    )
+    public static String infoMessage = "";
 
     public TestConfig_Test() {
         super("test_mod.json", "Test Mod", Category.QOL);

@@ -89,6 +89,20 @@ private fun radioProp(id: String, title: String, desc: String, value: Int, varar
         p.addMetadata("options", arrayOf(*options))
     }
 
+private fun draggableListProp(id: String, title: String, desc: String, vararg options: String, checkable: Boolean = false) =
+    Properties.simple(id, title, desc, options.toTypedArray(), Array<String>::class.java).also { p ->
+        p.addMetadata("visualizer", Visualizer.DraggableListVisualizer::class.java)
+        p.addMetadata("options", options.toTypedArray())
+        if (checkable) p.addMetadata("checkable", true)
+    }
+
+private fun multiSelectProp(id: String, title: String, desc: String, vararg options: String, checkable: Boolean = true) =
+    Properties.simple(id, title, desc, BooleanArray(options.size), BooleanArray::class.java).also { p ->
+        p.addMetadata("visualizer", Visualizer.MultiSelectDropdownVisualizer::class.java)
+        p.addMetadata("options", options.toTypedArray())
+        if (!checkable) p.addMetadata("checkable", false)
+    }
+
 private fun buttonProp(id: String, title: String, desc: String, text: String, action: () -> Unit) =
     Properties.simple(id, title, desc, Runnable(action), Runnable::class.java).also { p ->
         p.addMetadata("visualizer", Visualizer.ButtonVisualizer::class.java)
@@ -178,6 +192,12 @@ private fun testControlsTree(): Tree {
     selectors.put(radioProp("quality", "Quality Preset", "Rendering quality level", 1, "Low", "Medium", "High", "Ultra"))
     selectors.put(radioProp("corner-style", "Corner Style", "Shape of UI corners", 0, "Sharp", "Rounded", "Pill"))
 
+    val lists = Tree("lists", "Lists", null, null).also { it.addMetadata("icon", "layers") }
+    lists.put(draggableListProp("drag-only", "Drag to Reorder", "No checkboxes — drag only", "Alpha", "Beta", "Gamma", "Delta", "Epsilon"))
+    lists.put(draggableListProp("drag-check", "Drag & Select", "Drag to reorder, check to enable", "Alpha", "Beta", "Gamma", "Delta", "Epsilon", checkable = true))
+    lists.put(multiSelectProp("multi-check", "Multi-Select", "Checkbox multi-select dropdown", "Apples", "Bananas", "Cherries", "Dates", "Elderberries"))
+    lists.put(multiSelectProp("multi-plain", "List Picker", "Single-select list dropdown", "Easy", "Normal", "Hard", "Extreme", checkable = false))
+
     val actions = Tree("actions", "Actions & Info", null, null).also { it.addMetadata("icon", "cog") }
     actions.put(infoProp("info-tip", "Tip", "This is an informational option with no control."))
     actions.put(buttonProp("reset-settings", "Reset Settings", "Restore all defaults", "Reset") {
@@ -187,7 +207,7 @@ private fun testControlsTree(): Tree {
         println("Export clicked")
     })
 
-    tree.put(booleans, numbers, text, selectors, actions)
+    tree.put(booleans, numbers, text, selectors, lists, actions)
     return tree
 }
 

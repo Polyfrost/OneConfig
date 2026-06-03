@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
@@ -400,6 +401,14 @@ private fun displayAlpha(display: Property.Display): Float {
 @Composable
 private fun SettingContent(prop: Property<*>, nested: Boolean = false) {
     val theme = LocalTheme.current
+
+    if (prop.getMetadata<Any?>("visualizer") == Visualizer.InfoVisualizer::class.java) {
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+            Option(prop)
+        }
+        return
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()

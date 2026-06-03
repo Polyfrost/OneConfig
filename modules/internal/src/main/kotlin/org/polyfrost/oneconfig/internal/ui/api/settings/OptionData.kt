@@ -61,5 +61,28 @@ class ButtonOptionData(prop: Property<*>) : OptionData(prop) {
     val runnable: Runnable? get() = prop.getMetadata("runnable") ?: prop.getAs()
 }
 
-class InfoOptionData(prop: Property<*>) : OptionData(prop)
+class InfoOptionData(prop: Property<*>) : OptionData(prop) {
+    enum class Type { Info, Success, Warning, Error }
+
+    /** The message body shown beside the icon. */
+    val message: String get() = prop.description ?: title
+
+    val type: Type
+        get() = when (prop.getMetadata<Any>("type")?.toString()?.lowercase()) {
+            "success" -> Type.Success
+            "warning" -> Type.Warning
+            "error", "danger" -> Type.Error
+            else -> Type.Info
+        }
+}
+
+class DraggableListOptionData(prop: Property<*>) : OptionData(prop) {
+    val options: Array<String>? get() = prop.getMetadata<Array<String>>("options")?.takeIf { it.isNotEmpty() }
+    val checkable: Boolean get() = prop.getMetadata("checkable") ?: false
+}
+
+class MultiSelectDropdownOptionData(prop: Property<*>) : OptionData(prop) {
+    val options: Array<String>? get() = prop.getMetadata<Array<String>>("options")?.takeIf { it.isNotEmpty() }
+    val checkable: Boolean get() = prop.getMetadata("checkable") ?: true
+}
 

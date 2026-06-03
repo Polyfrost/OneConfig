@@ -4,8 +4,11 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.internal.ui.components.settings.BooleanOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.ButtonOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.ColorOption
+import org.polyfrost.oneconfig.internal.ui.components.settings.DraggableListOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.DropdownOption
+import org.polyfrost.oneconfig.internal.ui.components.settings.InfoOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindOption
+import org.polyfrost.oneconfig.internal.ui.components.settings.MultiSelectDropdownOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.NumberOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.RadioButtonOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.SliderOption
@@ -42,6 +45,15 @@ internal object BuiltinVisualizers {
         })
         Visualizer.register(Visualizer.ButtonVisualizer::class.java, Visualizer { prop ->
             ButtonOption(ButtonOptionData(prop))
+        })
+        Visualizer.register(Visualizer.DraggableListVisualizer::class.java, Visualizer { prop ->
+            DraggableListOption(DraggableListOptionData(prop))
+        })
+        Visualizer.register(Visualizer.MultiSelectDropdownVisualizer::class.java, Visualizer { prop ->
+            MultiSelectDropdownOption(MultiSelectDropdownOptionData(prop))
+        })
+        Visualizer.register(Visualizer.InfoVisualizer::class.java, Visualizer { prop ->
+            InfoOption(InfoOptionData(prop))
         })
     }
 }
