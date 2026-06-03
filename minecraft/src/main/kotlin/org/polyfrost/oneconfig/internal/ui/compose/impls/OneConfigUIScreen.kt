@@ -25,11 +25,14 @@ class OneConfigUIScreen @JvmOverloads constructor(
 ) : ComposeScreen() {
     private companion object {
         const val SHELL_BLUR_RADIUS = 48f
-        const val CLOSE_ANIMATION_MS = 220L
+        const val FULLSCREEN_BLUR_RADIUS = 8f
+        const val OPEN_ANIMATION_MS = 250L
+        const val CLOSE_ANIMATION_MS = 600L
     }
 
     @Volatile private var closeRequested = false
     @Volatile private var closeRequestedAt = 0L
+    @Volatile private var openedAt = 0L
 
     override fun init() {
         ConfigRegistry.loadFrom(ConfigManager.active(), ConfigSource.OC)
@@ -52,6 +55,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
             ShellState.versionLabel = "OneConfig"
         }
 
+        openedAt = System.currentTimeMillis()
         super.init()
     }
 
@@ -83,9 +87,19 @@ class OneConfigUIScreen @JvmOverloads constructor(
             Platform.screen().close()
             return
         }
-        BlurRenderer.drawBlur()
+        BlurRenderer.drawBlur(fullscreenBlurRadius())
         //~ if >= 26.1 'render' -> 'extractRenderState'
         super.extractRenderState(ctx, mouseX, mouseY, tickDelta)
+    }
+
+    private fun fullscreenBlurRadius(): Float {
+        val now = System.currentTimeMillis()
+        val progress = if (closeRequested) {
+            1f - (now - closeRequestedAt).toFloat() / CLOSE_ANIMATION_MS
+        } else {
+            (now - openedAt).toFloat() / OPEN_ANIMATION_MS
+        }
+        return FULLSCREEN_BLUR_RADIUS * progress.coerceIn(0f, 1f)
     }
 
     /** Holds a reference to the close-animation trigger from Compose */
@@ -102,8 +116,10 @@ class OneConfigUIScreen @JvmOverloads constructor(
             client.window.screenHeight.toFloat(),
             initialRoute = initialRoute,
             onCloseRequest = {
-                closeRequested = true
-                closeRequestedAt = 0L
+                if (!closeRequested) {
+                    closeRequested = true
+                    closeRequestedAt = System.currentTimeMillis()
+                }
             },
             onCloseReady = { closeRequest ->
                 requestCloseCallback = closeRequest

@@ -16,8 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.animation.core.EaseIn
-import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.animation.core.Easing
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -29,7 +28,6 @@ import androidx.compose.ui.unit.Density
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.compose.rememberNavController
-import kotlinx.coroutines.delay
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 import org.polyfrost.oneconfig.internal.ui.shell.Lifecycle
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
@@ -37,7 +35,7 @@ import org.polyfrost.oneconfig.internal.ui.shell.OCViewModelStoreOwner
 import org.polyfrost.oneconfig.internal.ui.shell.Shell
 import org.polyfrost.oneconfig.internal.ui.themes.Theme
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.math.pow
 
 @Composable
 fun OneConfigInterface(
@@ -59,16 +57,15 @@ fun OneConfigInterface(
     }
 
     var visible by remember { mutableStateOf(false) }
+    var opened by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         withFrameNanos { }
         visible = true
     }
 
     LaunchedEffect(visible) {
-        if (!visible) {
-            delay(220L.milliseconds)
-            onCloseRequest()
-        }
+        if (visible) opened = true
+        else if (opened) onCloseRequest()
     }
 
     val requestClose: () -> Unit = { visible = false }
@@ -103,8 +100,8 @@ fun OneConfigInterface(
                     Theme {
                         AnimatedVisibility(
                             visible = visible,
-                            enter = fadeIn(tween(200, easing = EaseOutCubic)) + scaleIn(tween(200, easing = EaseOutCubic), initialScale = 0.92f),
-                            exit = fadeOut(tween(200, easing = EaseIn)) + scaleOut(tween(200, easing = EaseIn), targetScale = 0.92f),
+                            enter = fadeIn(tween(GUI_ANIMATION_MS, easing = EaseOutExpo)) + scaleIn(tween(GUI_ANIMATION_MS, easing = EaseOutExpo), initialScale = 0.9f),
+                            exit = fadeOut(tween(GUI_ANIMATION_MS, easing = EaseOutExpo)) + scaleOut(tween(GUI_ANIMATION_MS, easing = EaseOutExpo), targetScale = 0.9f),
                         ) {
                             Shell(windowWidth, windowHeight, shellBackdrop)
                         }
@@ -117,5 +114,9 @@ fun OneConfigInterface(
 
 private const val DESIGN_WIDTH_DP  = 1391f
 private const val DESIGN_HEIGHT_DP = 700f
+
+private const val GUI_ANIMATION_MS = 600
+
+private val EaseOutExpo = Easing { x -> if (x >= 1f) 1f else 1f - 2f.pow(-10f * x) }
 
 val LocalCloseRequest = staticCompositionLocalOf { {} }

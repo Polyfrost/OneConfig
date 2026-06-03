@@ -21,10 +21,11 @@ object BlurRenderer {
     private var cachedVkWidth = -1
     private var cachedVkHeight = -1
 
-    fun drawBlur() {
+    fun drawBlur(radius: Float = 8f) {
+        if (radius < 0.5f) return
         SkiaCtx.queueDraw {
             val target = client.mainRenderTarget
-            drawRegion(SkiaCtx.canvas, 0f, 0f, target.width.toFloat(), target.height.toFloat(), 8f)
+            drawRegion(SkiaCtx.canvas, 0f, 0f, target.width.toFloat(), target.height.toFloat(), radius)
         }
     }
 
