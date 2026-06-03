@@ -20,8 +20,9 @@ val LocalTheme = compositionLocalOf<UITheme> { error("A UI theme is required but
 @Composable
 fun Theme(content: @Composable () -> Unit) {
     _accent = Color(ThemeConfig.accentColor.argb)
+    val target = ThemeRegistry.activeTheme ?: error("No active theme provided")
     CompositionLocalProvider(
-        LocalTheme provides (ThemeRegistry.activeTheme ?: error("No active theme provided")),
+        LocalTheme provides animateTheme(target),
         content = content
     )
 }

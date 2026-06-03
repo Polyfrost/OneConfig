@@ -7,7 +7,7 @@ oneconfig.huds.player=Player
 
 oneconfig.hudeditor.title=HUD Editor
 oneconfig.hudeditor.designer.title=Designer
-oneconfig.hudeditor.settings.title=HUD Settings
+oneconfig.hudeditor.settings.title=Settings
 oneconfig.hudeditor.general.title=Component Options
 oneconfig.hudeditor.choosesomething=Click on an element to continue.
 oneconfig.hudeditor.cantedit.aslegacy=This HUD is running in legacy compatibility mode and cannot be edited.

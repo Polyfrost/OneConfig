@@ -10,6 +10,8 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -30,12 +32,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.compose.currentBackStackEntryAsState
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.TreeConfigData
 import org.polyfrost.oneconfig.internal.ui.LocalCloseRequest
+import org.polyfrost.oneconfig.internal.ui.navigation.searchPlaceholder
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -152,6 +156,10 @@ internal fun performSearch(query: String): Map<String, List<SearchResult>> {
 
 @Composable
 fun GlobalSearchBar() {
+    val navController = LocalNavController.current
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val placeholder = searchPlaceholder(backStackEntry?.destination)
+
     var searchText by remember { mutableStateOf(ShellState.searchQuery) }
     val interactionSource = rememberInteractionSource()
     val isFocused by interactionSource.collectIsFocusedAsState()
@@ -160,11 +168,11 @@ fun GlobalSearchBar() {
     LaunchedEffect(ShellState.searchQuery) { if (ShellState.searchQuery != searchText) searchText = ShellState.searchQuery }
 
     val searchTextStyle = TextStyle(
-        color = LocalTheme.current.textColor,
+        color = LocalTheme.current.textColorSecondary,
         fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
+        fontSize = 12.sp,
         fontFamily = LocalTheme.current.typography.family,
-        lineHeight = 14.sp,
+        lineHeight = 12.sp,
         lineHeightStyle = LineHeightStyle(
             alignment = LineHeightStyle.Alignment.Center,
             trim = LineHeightStyle.Trim.Both,
@@ -175,7 +183,7 @@ fun GlobalSearchBar() {
         value = searchText,
         onValueChange = { searchText = it },
         singleLine = true,
-        cursorBrush = SolidColor(LocalTheme.current.textColor),
+        cursorBrush = SolidColor(LocalTheme.current.textColorSecondary),
         textStyle = searchTextStyle,
         interactionSource = interactionSource
     ) { innerTextField ->
@@ -194,19 +202,33 @@ fun GlobalSearchBar() {
             contentAlignment = Alignment.CenterStart
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 10.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Icon("search", color = LocalTheme.current.textColorSecondary)
-                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                Box(
+                    modifier = Modifier.fillMaxHeight(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        "search",
+                        color = LocalTheme.current.textColorSecondary,
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
                     if (searchText.isEmpty() && !isFocused) {
                         Text(
-                            "Search for ...",
+                            placeholder,
                             color = LocalTheme.current.textColorSecondary,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 14.sp,
-                            lineHeight = 14.sp,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 12.sp,
+                            lineHeight = 12.sp,
                         )
                     }
                     innerTextField()

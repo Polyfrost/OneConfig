@@ -1,5 +1,8 @@
 package org.polyfrost.oneconfig.internal.ui.navigation
 
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ChangeLogGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.FeedbackGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.KeybindsGraph
@@ -65,3 +68,13 @@ val NavigationGroups = listOf(
         ),
     )
 )
+
+fun searchPlaceholder(destination: NavDestination?): String {
+    val section = NavigationGroups
+        .asSequence()
+        .flatMap { it.routes.asSequence() }
+        .firstOrNull { def ->
+            destination?.hierarchy?.any { it.hasRoute(def.route::class) } == true
+        }
+    return if (section != null) "Search ${section.id}..." else "Search..."
+}

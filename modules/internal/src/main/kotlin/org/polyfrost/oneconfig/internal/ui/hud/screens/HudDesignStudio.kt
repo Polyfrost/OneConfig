@@ -77,8 +77,8 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 
 enum class StudioCategory(val title: String, val icon: String) {
-    Designer("Designer", "paintbrush"),
-    Settings("HUD Settings", "qol");
+    Settings("Settings", "qol"),
+    Designer("Designer", "paintbrush");
 }
 
 private fun hitTestHud(hud: Hud, screenX: Float, screenY: Float): Boolean {
@@ -125,7 +125,7 @@ private val panelShape = RoundedCornerShape(16.dp)
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun HudDesignStudio() {
-    var activeCategory by remember { mutableStateOf(StudioCategory.Designer) }
+    var activeCategory by remember { mutableStateOf(StudioCategory.Settings) }
     var selectedHud by remember { mutableStateOf<Hud?>(null) }
     var hoveredHud by remember { mutableStateOf<Hud?>(null) }
     var dragOffsetX by remember { mutableStateOf(0f) }
