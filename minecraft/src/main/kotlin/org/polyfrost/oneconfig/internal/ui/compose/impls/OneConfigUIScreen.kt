@@ -17,6 +17,7 @@ import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import kotlin.math.pow
 
 class OneConfigUIScreen @JvmOverloads constructor(
     private val initialTreeId: String? = null,
@@ -27,7 +28,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         const val SHELL_BLUR_RADIUS = 48f
         const val FULLSCREEN_BLUR_RADIUS = 8f
         const val OPEN_ANIMATION_MS = 250L
-        const val CLOSE_ANIMATION_MS = 600L
+        const val CLOSE_ANIMATION_MS = 300L
     }
 
     @Volatile private var closeRequested = false
@@ -95,11 +96,15 @@ class OneConfigUIScreen @JvmOverloads constructor(
     private fun fullscreenBlurRadius(): Float {
         val now = System.currentTimeMillis()
         val progress = if (closeRequested) {
-            1f - (now - closeRequestedAt).toFloat() / CLOSE_ANIMATION_MS
+            1f - easeOutExpo((now - closeRequestedAt).toFloat() / CLOSE_ANIMATION_MS)
         } else {
             (now - openedAt).toFloat() / OPEN_ANIMATION_MS
         }
         return FULLSCREEN_BLUR_RADIUS * progress.coerceIn(0f, 1f)
+    }
+
+    private fun easeOutExpo(progress: Float): Float {
+        return if (progress >= 1f) 1f else 1f - 2f.pow(-10f * progress)
     }
 
     /** Holds a reference to the close-animation trigger from Compose */
