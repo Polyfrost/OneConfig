@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.ui.components.settings
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -22,7 +23,9 @@ fun Option(prop: Property<*>) {
         }
     }
     if (vis != null) {
-        vis.visualize(prop)
+        key(prop) {
+            vis.visualize(prop)
+        }
         return
     }
     // Fallback: render value as text for properties with no visualizer set
@@ -40,7 +43,7 @@ fun Option(prop: Property<*>) {
 
 @Composable
 fun BooleanOption(data: BooleanOptionData) {
-    var checked by remember { mutableStateOf(data.boolProp.get() == true) }
+    var checked by remember(data.prop) { mutableStateOf(data.boolProp.get() == true) }
     when (data.style) {
         BooleanOptionData.Style.Switch -> SwitchControl(checked) { checked = it; data.boolProp.set(it) }
         BooleanOptionData.Style.Checkbox -> CheckboxControl(checked) { checked = it; data.boolProp.set(it) }

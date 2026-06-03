@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
@@ -38,6 +39,7 @@ const val THEMES_ID = "themes.json"
 
 @Composable
 fun Themes() {
+    val revision = ConfigRegistry.revision
     val tree = ConfigRegistry.findTree(THEMES_ID)
     DisposableEffect(Unit) {
         ShellState.title = "Themes"
@@ -59,7 +61,9 @@ fun Themes() {
             }
             return
         }
-        ConfigScreen(tree)
+        key(revision, tree) {
+            ConfigScreen(tree)
+        }
     }
 }
 

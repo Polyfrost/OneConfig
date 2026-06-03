@@ -64,8 +64,8 @@ fun KeybindOption(data: KeybindOptionData) {
     val theme = LocalTheme.current
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
-    var recording by remember { mutableStateOf(false) }
-    val focusRequester = remember { FocusRequester() }
+    var recording by remember(data.prop) { mutableStateOf(false) }
+    val focusRequester = remember(data.prop) { FocusRequester() }
 
     val currentKeybind = remember(data.prop) {
         data.prop.get() as? OneConfigKeybind

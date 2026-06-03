@@ -47,7 +47,7 @@ fun TextOption(data: TextOptionData) {
         else theme.textColorSecondary
     )
 
-    var text by remember { mutableStateOf(data.strProp.get() ?: "") }
+    var text by remember(data.prop) { mutableStateOf(data.strProp.get() ?: "") }
 
     BasicTextField(
         value = text,

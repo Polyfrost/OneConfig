@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
@@ -15,6 +16,7 @@ const val PREFERENCES_ID = "oneconfig.json"
 
 @Composable
 fun Preferences() {
+    val revision = ConfigRegistry.revision
     val tree = ConfigRegistry.findTree(PREFERENCES_ID)
 
     DisposableEffect(Unit) {
@@ -29,5 +31,7 @@ fun Preferences() {
         return
     }
 
-    ConfigScreen(tree)
+    key(revision, tree) {
+        ConfigScreen(tree)
+    }
 }

@@ -45,25 +45,36 @@ public final class org/polyfrost/oneconfig/api/config/v1/Config$Category {
 public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public static final field PROFILES_DIR Ljava/nio/file/Path;
 	public static fun active ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
+	public static fun activeProfile ()Ljava/lang/String;
 	public static fun backup ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
 	public static fun collect (Ljava/lang/Object;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public static fun core ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
+	public static fun createProfile (Ljava/lang/String;)V
 	public fun delete (Ljava/lang/String;)Z
+	public static fun deleteProfile (Ljava/lang/String;)V
+	public static fun favoriteProfiles ()Ljava/util/List;
 	public fun gatherAll (Ljava/lang/String;)Ljava/util/Collection;
 	public fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun getFolder ()Ljava/nio/file/Path;
 	public fun getNoRegister (Ljava/nio/file/Path;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public static fun initialize ()V
 	public static fun internal ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
+	public static fun isFavoriteProfile (Ljava/lang/String;)Z
 	public static fun isFirstRun ()Z
 	public fun load (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public static fun openProfile (Ljava/lang/String;)V
+	public static fun profileIcon (Ljava/lang/String;)Ljava/lang/String;
+	public static fun profileIcons ()Ljava/util/Map;
+	public static fun profiles ()Ljava/util/List;
 	public fun register (Ljava/lang/Object;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun register (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Lorg/polyfrost/oneconfig/api/config/v1/backend/Backend$RegistrationResult;
 	public static fun registerCollector (Lorg/polyfrost/oneconfig/api/config/v1/collect/PropertyCollector;)V
+	public static fun renameProfile (Ljava/lang/String;Ljava/lang/String;)V
 	public fun save (Ljava/lang/String;)Z
 	public fun save (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z
 	public fun saveAll ()V
+	public static fun setFavoriteProfile (Ljava/lang/String;Z)V
+	public static fun setProfileIcon (Ljava/lang/String;Ljava/lang/String;)V
 	public static fun submitForInitialization (Lorg/polyfrost/oneconfig/api/config/v1/Config;)V
 	public fun trees ()Ljava/util/Collection;
 }
@@ -225,6 +236,16 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun value ()[Ljava/lang/String;
 }
 
+public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/DraggableList : java/lang/annotation/Annotation {
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun checkable ()Z
+	public abstract fun description ()Ljava/lang/String;
+	public abstract fun icon ()Ljava/lang/String;
+	public abstract fun options ()[Ljava/lang/String;
+	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun title ()Ljava/lang/String;
+}
+
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Dropdown : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
@@ -249,6 +270,16 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun category ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
 	public abstract fun icon ()Ljava/lang/String;
+	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun title ()Ljava/lang/String;
+}
+
+public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/MultiSelectDropdown : java/lang/annotation/Annotation {
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun checkable ()Z
+	public abstract fun description ()Ljava/lang/String;
+	public abstract fun icon ()Ljava/lang/String;
+	public abstract fun options ()[Ljava/lang/String;
 	public abstract fun subcategory ()Ljava/lang/String;
 	public abstract fun title ()Ljava/lang/String;
 }

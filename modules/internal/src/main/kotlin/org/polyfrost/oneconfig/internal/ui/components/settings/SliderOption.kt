@@ -35,7 +35,7 @@ import kotlin.math.roundToInt
 fun SliderOption(data: SliderOptionData) {
     val theme = LocalTheme.current
 
-    var value by remember { mutableStateOf(data.numProp.get()?.toFloat() ?: data.min) }
+    var value by remember(data.prop) { mutableStateOf(data.numProp.get()?.toFloat() ?: data.min) }
     var trackWidthPx by remember { mutableStateOf(0f) }
 
     val thumbDp = 19.dp

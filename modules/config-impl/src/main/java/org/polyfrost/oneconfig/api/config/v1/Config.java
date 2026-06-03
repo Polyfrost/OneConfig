@@ -100,9 +100,18 @@ public abstract class Config {
             }
 
             tree.addMetadata("category", category);
-            ConfigManager.backup().backend.save0(tree);
+            if (!ConfigManager.isRebindingProfiles()) {
+                ConfigManager.backup().backend.save0(tree);
+            }
             tree = ConfigManager.active().register(tree).get();
+            ConfigManager.markInitialized(this);
         }
+    }
+
+    @ApiStatus.Internal
+    void rebindToActiveProfile() {
+        tree = null;
+        initialize(true);
     }
 
     protected void addDependency(String option, String name, Supplier<Property.Display> condition) {

@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,13 +58,15 @@ private data class KeybindEntry(
 
 @Composable
 fun Keybinds() {
+    val revision = ConfigRegistry.revision
+
     DisposableEffect(Unit) {
         ShellState.title = "Keybinds"
         onDispose { }
     }
 
     val configs = ConfigRegistry.configs.toList()
-    val groups = remember(configs) { collectKeybindGroups(configs.filterIsInstance<TreeConfigData>()) }
+    val groups = remember(revision, configs) { collectKeybindGroups(configs.filterIsInstance<TreeConfigData>()) }
 
     if (groups.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -80,14 +83,16 @@ fun Keybinds() {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             groups.forEach { group ->
-                item(key = "header:${group.modId}") {
+                item(key = "header:$revision:${group.modId}") {
                     KeybindGroupHeader(group)
                 }
                 items(
                     items = group.entries,
-                    key = { entry -> "${group.modId}:${entry.path}" },
+                    key = { entry -> "$revision:${group.modId}:${entry.path}" },
                 ) { entry ->
-                    KeybindRow(entry)
+                    key(revision, entry.prop) {
+                        KeybindRow(entry)
+                    }
                 }
             }
         }
