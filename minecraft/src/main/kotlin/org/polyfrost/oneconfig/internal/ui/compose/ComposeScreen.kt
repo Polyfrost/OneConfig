@@ -152,6 +152,13 @@ abstract class ComposeScreen(
         syncSceneMetrics()
     }
 
+    override fun isPauseScreen(): Boolean = false
+
+    //~ if >= 26.1 'renderBackground' -> 'extractBackground'
+    override fun extractBackground(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
+
+    }
+
     override fun onClose() {
         try {
             scene.close()
