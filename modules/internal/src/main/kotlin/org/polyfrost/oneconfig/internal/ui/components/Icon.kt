@@ -21,11 +21,12 @@ fun Icon(iconName: String, color: Color = Color.Unspecified, modifier: Modifier 
     val resolvedColor = if (color == Color.Unspecified) LocalTheme.current.textColor else color
     val path = if (iconName.contains('/') || iconName.contains('.')) iconName
                else "/assets/oneconfig/ico/$iconName.svg"
+    val isSvg = path.endsWith(".svg", ignoreCase = true)
     Image(
         painter = painterResource(path),
         contentDescription = null,
         modifier = modifier.size(18.dp),
-        colorFilter = ColorFilter.tint(resolvedColor)
+        colorFilter = if (isSvg) ColorFilter.tint(resolvedColor) else null
     )
 }
 
