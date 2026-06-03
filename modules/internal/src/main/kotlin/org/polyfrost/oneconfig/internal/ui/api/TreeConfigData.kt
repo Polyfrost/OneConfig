@@ -9,7 +9,7 @@ class TreeConfigData(
     override val onOpen: (() -> Unit)? = null,
 ) : ConfigData {
     override val id: String get() = tree.id ?: ""
-    override val title: String get() = tree.title ?: id
+    override val title: Any get() = tree.title ?: id
 
     /**
      * Returns the full resource path for the icon (from [Config.iconPath] stored as "icon_path" metadata),

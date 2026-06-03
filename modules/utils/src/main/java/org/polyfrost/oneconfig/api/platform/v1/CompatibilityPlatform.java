@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.api.platform.v1;
 import net.kyori.adventure.text.Component;
 
 import java.util.Set;
+import net.kyori.adventure.text.TranslatableComponent;
 
 public interface CompatibilityPlatform {
     void displayChatMessage(Component text);
@@ -17,5 +18,8 @@ public interface CompatibilityPlatform {
     Keys keys();
 
     long windowHandle();
+
+    String resolveComponent(Component component);
+    Object wrapPlatformComponent(Object component);
 }
 

@@ -48,7 +48,7 @@ public class Tree extends Node implements Serializable {
 
     private final Map<String, Node> theMap;
 
-    public Tree(@Nullable String id, @Nullable String title, @Nullable String description, @Nullable Map<String, Node> items) {
+    public Tree(@Nullable String id, @Nullable Object title, @Nullable Object description, @Nullable Map<String, Node> items) {
         super(id, title, description);
         if (items != null) {
             theMap = new LinkedHashMap<>(items.size());

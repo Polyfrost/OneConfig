@@ -107,8 +107,8 @@ object Properties {
         getter: java.util.function.Supplier<T>,
         setter: java.util.function.Consumer<T>,
         id: String? = null,
-        name: String? = null,
-        description: String? = null,
+        name: Any? = null,
+        description: Any? = null,
         type: Class<T>? = null,
     ): Property<T> = Property.Functional(id, name, description, setter, getter, type)
 

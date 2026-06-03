@@ -42,17 +42,17 @@ import org.jetbrains.annotations.VisibleForTesting;
 public abstract class Node {
     protected static final Logger LOGGER = LogManager.getLogger("OneConfig/Config");
     @Nullable
-    public transient String description;
+    public transient Object description;
     // @jdk.internal.vm.annotation.Stable
     private transient String id;
     // @jdk.internal.vm.annotation.Stable
     @Nullable
-    private transient String title;
+    private transient Object title;
     @Nullable
     private transient Map<String, Object> metadata = null;
 
-    public Node(@Nullable String id, @Nullable String title, @Nullable String description) {
-        this.id = strv(id);
+    public Node(@Nullable String id, @Nullable Object title, @Nullable Object description) {
+        this.id = (String) strv(id);
         this.title = strv(title);
         this.description = strv(description);
     }
@@ -61,9 +61,10 @@ public abstract class Node {
      * validate and trim the given string, returning null if it is empty.
      */
     @Contract("null -> null")
-    public static String strv(String s) {
+    public static Object strv(Object s) {
         if (s == null) return null;
-        String s1 = s.trim();
+        if (!(s instanceof String string)) return s;
+        String s1 = string.trim();
         if (s1.isEmpty()) return null;
         return s1;
     }
@@ -93,11 +94,11 @@ public abstract class Node {
     }
 
     @Nullable
-    public String getTitle() {
+    public Object getTitle() {
         return title;
     }
 
-    public void setTitle(String title) {
+    public void setTitle(Object title) {
         if (this.title != null) throw new IllegalArgumentException("title is already set");
         title = strv(title);
         if (title == null) throw new IllegalArgumentException("title cannot be null or empty");

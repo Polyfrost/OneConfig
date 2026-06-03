@@ -165,7 +165,7 @@ public abstract class Backend {
      * Save all trees under the given path.
      */
     public final void saveAll(@Nullable String matching) {
-        String m = Node.strv(matching);
+        String m = (String) Node.strv(matching);
         if (m == null) {
             for (Tree t : trees.values()) {
                 save(t);

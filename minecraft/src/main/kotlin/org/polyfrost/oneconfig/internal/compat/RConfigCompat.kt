@@ -10,6 +10,9 @@ import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfig
 import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigValueEntry
 import com.teamresourceful.resourcefulconfig.api.types.options.EntryType
 import com.teamresourceful.resourcefulconfig.api.types.options.Option
+import net.kyori.adventure.platform.modcommon.impl.AdventureCommon
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.ComponentLike
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
@@ -46,10 +49,8 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         info("Creating config wrapper for ${config.id()}!")
         val tree = Tree.tree()
         tree.id = config.id()
-        tree.title = config.info().title().toComponent().string
-        tree.description = config.info().description().toComponent().string
-        tree.category = config.info().title().toComponent().string
-        tree.subcategory = config.info().title().toComponent().string
+        tree.title = config.info().title().toComponent()
+        tree.description = config.info().description().toComponent()
         mod?.modIconPath?.let {
             tree.addMetadata("icon_path", it)
         }
@@ -118,8 +119,8 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
 
     private fun parseCategory(entry: ResourcefulConfigCategory, tree: Tree) {
         val category = Tree.tree()
-        category.title = entry.info().title().toComponent().string
-        category.description = entry.info().description().toComponent().string
+        category.title = entry.info().title().toComponent()
+        category.description = entry.info().description().toComponent()
         category.id = UUID.randomUUID().toString()
         category.category = tree.category
         category.subcategory = entry.info().title().toComponent().string
@@ -130,8 +131,8 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
 
     private fun parseObject(entry: ResourcefulConfigObjectEntry, tree: Tree) {
         val objectEntry = Tree.tree()
-        objectEntry.title = entry.options().title.toComponent().string
-        objectEntry.description = entry.options().comment.toComponent().string
+        objectEntry.title = entry.options().title.toComponent()
+        objectEntry.description = entry.options().comment.toComponent()
         objectEntry.id = UUID.randomUUID().toString()
         objectEntry.category = tree.category
         objectEntry.subcategory = entry.options().title.toComponent().string
@@ -186,8 +187,8 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
     }
 
     private class RConfigPropertyBuilder constructor(option: ResourcefulConfigValueEntry) {
-        val name: String? = option.options().title.toComponent().string
-        val description: String? = option.options().comment().toComponent().string
+        val name = option.options().title.toComponent()
+        val description = option.options().comment().toComponent()
 
         var setter: (Any) -> Unit = { value ->
             when (option.type()) {

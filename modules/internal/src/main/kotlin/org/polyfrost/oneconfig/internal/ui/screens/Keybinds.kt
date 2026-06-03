@@ -38,13 +38,14 @@ import org.polyfrost.oneconfig.internal.ui.api.TreeConfigData
 import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindOption
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private data class KeybindGroup(
     val modId: String,
-    val modTitle: String,
+    val modTitle: Any,
     val modIcon: String,
     val entries: List<KeybindEntry>,
 )
@@ -113,7 +114,7 @@ private fun KeybindGroupHeader(group: KeybindGroup) {
     ) {
         Icon(group.modIcon, color = theme.textColorSecondary, modifier = Modifier.size(18.dp))
         Text(
-            group.modTitle.uppercase(),
+            group.modTitle,
             color = theme.textColorSecondary,
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
@@ -172,7 +173,7 @@ private fun KeybindRow(entry: KeybindEntry) {
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
                     )
-                    prop.description?.takeIf { it.isNotBlank() }?.let {
+                    prop.description?.takeUnless { it.isEmptyText() }?.let {
                         Text(it, color = theme.textColorSecondary, fontSize = 13.sp)
                     }
                     Text(

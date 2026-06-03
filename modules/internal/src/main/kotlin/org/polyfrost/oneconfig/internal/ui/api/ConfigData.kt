@@ -10,7 +10,7 @@ enum class ConfigSource {
 
 interface ConfigData {
     val id: String
-    val title: String
+    val title: Any
     val icon: String
     val source: ConfigSource
     val category: Config.Category

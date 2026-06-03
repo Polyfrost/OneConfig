@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -19,7 +20,7 @@ fun ModConfig(id: String, initialCategory: String? = null) {
     val tree = ConfigRegistry.findTree(id)
 
     DisposableEffect(id) {
-        ShellState.title = config?.title
+        ShellState.title = config?.title?.asRenderText()
         onDispose {  }
     }
 

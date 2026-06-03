@@ -157,9 +157,9 @@ dependencies {
     handleApiDep(versionedCatalog.bundles["adventure"])
 
     if (loader == "fabric") {
-        val adventurePlatform = "net.kyori:adventure-platform-mod-shared-fabric-repack:6.8.0"
-        "modApi"(adventurePlatform)
-        "modImplementation"(adventurePlatform)
+        val adventurePlatform = "net.kyori:adventure-platform-fabric:6.8.0"
+        "modApi"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
+        "modImplementation"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
     }
 
     handleApiDep(versionedCatalog.bundles["kotlin"])

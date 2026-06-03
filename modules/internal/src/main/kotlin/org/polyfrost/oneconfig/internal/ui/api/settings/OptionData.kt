@@ -3,8 +3,8 @@ package org.polyfrost.oneconfig.internal.ui.api.settings
 import org.polyfrost.oneconfig.api.config.v1.Property
 
 sealed class OptionData(val prop: Property<*>) {
-    val title: String get() = prop.title ?: prop.id ?: ""
-    val description: String? get() = prop.description
+    val title: Any get() = prop.title ?: prop.id ?: ""
+    val description: Any? get() = prop.description
     val icon: String? get() = prop.getMetadata("icon")
 }
 
@@ -57,7 +57,7 @@ class ColorOptionData(prop: Property<*>) : OptionData(prop)
 class KeybindOptionData(prop: Property<*>) : OptionData(prop)
 
 class ButtonOptionData(prop: Property<*>) : OptionData(prop) {
-    val buttonText: String? get() = prop.getMetadata("text")
+    val buttonText: Any? get() = prop.getMetadata("text")
     val runnable: Runnable? get() = prop.getMetadata("runnable") ?: prop.getAs()
 }
 
@@ -65,7 +65,7 @@ class InfoOptionData(prop: Property<*>) : OptionData(prop) {
     enum class Type { Info, Success, Warning, Error }
 
     /** The message body shown beside the icon. */
-    val message: String get() = prop.description ?: title
+    val message: Any get() = prop.description ?: title
 
     val type: Type
         get() = when (prop.getMetadata<Any>("type")?.toString()?.lowercase()) {
