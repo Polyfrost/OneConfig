@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.VerticalScrollbar
@@ -32,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.center
@@ -228,6 +230,7 @@ private fun AccordionRow(node: SettingNode.Accordion) {
 
     var expanded by remember(node) { mutableStateOf(node.head?.get() != false) }
     val headerInteraction = rememberInteractionSource()
+    val chevronRotation by animateFloatAsState(if (expanded) 180f else 90f)
 
     Column(
         modifier = Modifier
@@ -275,13 +278,25 @@ private fun AccordionRow(node: SettingNode.Accordion) {
                 }
             }
 
-            if (node.head != null) {
-                var headChecked by remember(node) { mutableStateOf(node.head.get() == true) }
-                LaunchedEffect(headChecked) {
-                    node.head.set(headChecked)
-                    expanded = headChecked
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                if (node.head != null) {
+                    var headChecked by remember(node) { mutableStateOf(node.head.get() == true) }
+                    LaunchedEffect(headChecked) {
+                        node.head.set(headChecked)
+                        expanded = headChecked
+                    }
+                    SwitchControl(headChecked) { headChecked = it }
                 }
-                SwitchControl(headChecked) { headChecked = it }
+                Icon(
+                    "up",
+                    color = theme.textColorSecondary,
+                    modifier = Modifier
+                        .size(12.dp)
+                        .rotate(chevronRotation),
+                )
             }
         }
 
