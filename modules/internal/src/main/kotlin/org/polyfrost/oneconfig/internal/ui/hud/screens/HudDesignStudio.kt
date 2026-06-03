@@ -47,17 +47,21 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.skiaCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.isShiftPressed
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.runtime.PolyComposeRuntime
 import org.polyfrost.oneconfig.api.hud.v1.Hud
@@ -75,47 +79,194 @@ import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Designer
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Settings
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 enum class StudioCategory(val title: String, val icon: String) {
     Settings("Settings", "qol"),
     Designer("Designer", "paintbrush");
 }
 
+private data class HudBounds(val x: Float, val y: Float, val width: Float, val height: Float)
+
+private enum class ResizeCorner {
+    TopLeft,
+    TopRight,
+    BottomLeft,
+    BottomRight;
+
+    val isLeft get() = this == TopLeft || this == BottomLeft
+    val isTop get() = this == TopLeft || this == TopRight
+}
+
+private const val SELECTION_BLUE_ARGB = 0xFF0D99FF.toInt()
+private val selectionBlue = Color(SELECTION_BLUE_ARGB)
+
+private fun hudBounds(hud: Hud): HudBounds? {
+    val scale = hud.effectiveScale
+    val width = if (hud.staticWidth) {
+        hud.staticW.takeIf { it > 0f }?.times(scale)
+    } else {
+        hud.renderedW.takeIf { it > 0f } ?: hud.staticW.takeIf { it > 0f }?.times(scale)
+    } ?: return null
+    val height = if (hud.staticWidth) {
+        hud.staticH.takeIf { it > 0f }?.times(scale)
+    } else {
+        hud.renderedH.takeIf { it > 0f } ?: hud.staticH.takeIf { it > 0f }?.times(scale)
+    } ?: return null
+    return HudBounds(hud.x, hud.y, width, height)
+}
+
 private fun hitTestHud(hud: Hud, screenX: Float, screenY: Float): Boolean {
     val s = Platform.screen().screenToMcScale()
     val mcX = screenX * s
     val mcY = screenY * s
-    val scale = hud.effectiveScale
-    val rawW = if (hud.staticWidth) hud.staticW else hud.renderedW.takeIf { it > 0f } ?: hud.staticW.takeIf { it > 0f } ?: return false
-    val rawH = if (hud.staticWidth) hud.staticH else hud.renderedH.takeIf { it > 0f } ?: hud.staticH.takeIf { it > 0f } ?: return false
-    val w = rawW * scale
-    val h = rawH * scale
-    return mcX >= hud.x && mcX <= hud.x + w && mcY >= hud.y && mcY <= hud.y + h
+    val bounds = hudBounds(hud) ?: return false
+    return mcX >= bounds.x && mcX <= bounds.x + bounds.width && mcY >= bounds.y && mcY <= bounds.y + bounds.height
 }
 
 private fun hitTestGear(hud: Hud, screenX: Float, screenY: Float, mcToScreen: Float, iconPx: Float): Boolean {
-    val scale = hud.effectiveScale
-    val w = (if (hud.staticWidth) hud.staticW else hud.renderedW.takeIf { it > 0f } ?: return false) * scale
-    val h = (if (hud.staticWidth) hud.staticH else hud.renderedH.takeIf { it > 0f } ?: return false) * scale
-    val sx = hud.x * mcToScreen
-    val sy = hud.y * mcToScreen
-    val sw = w * mcToScreen
-    val sh = h * mcToScreen
+    val bounds = hudBounds(hud) ?: return false
+    val sx = bounds.x * mcToScreen
+    val sy = bounds.y * mcToScreen
+    val sw = bounds.width * mcToScreen
+    val sh = bounds.height * mcToScreen
     val iconX = sx + sw / 2 - iconPx / 2
     val iconY = sy + sh + 6f
     return screenX >= iconX && screenX <= iconX + iconPx && screenY >= iconY && screenY <= iconPx + iconY
 }
 
 private fun hitTestHudWithGear(hud: Hud, screenX: Float, screenY: Float, mcToScreen: Float, iconPx: Float): Boolean {
-    val scale = hud.effectiveScale
-    val w = (if (hud.staticWidth) hud.staticW else hud.renderedW.takeIf { it > 0f } ?: return false) * scale
-    val h = (if (hud.staticWidth) hud.staticH else hud.renderedH.takeIf { it > 0f } ?: return false) * scale
-    val sx = hud.x * mcToScreen
-    val sy = hud.y * mcToScreen
-    val sw = w * mcToScreen
-    val sh = h * mcToScreen
+    val bounds = hudBounds(hud) ?: return false
+    val sx = bounds.x * mcToScreen
+    val sy = bounds.y * mcToScreen
+    val sw = bounds.width * mcToScreen
+    val sh = bounds.height * mcToScreen
     val totalH = sh + 6f + iconPx
     return screenX >= sx && screenX <= sx + sw && screenY >= sy && screenY <= sy + totalH
+}
+
+private fun hitTestResizeHandle(hud: Hud, screenX: Float, screenY: Float, mcToScreen: Float): ResizeCorner? {
+    val bounds = hudBounds(hud) ?: return null
+    val sx = bounds.x * mcToScreen
+    val sy = bounds.y * mcToScreen
+    val sw = bounds.width * mcToScreen
+    val sh = bounds.height * mcToScreen
+    val hitSize = 14f
+    fun contains(cx: Float, cy: Float): Boolean =
+        screenX >= cx - hitSize / 2 && screenX <= cx + hitSize / 2 &&
+            screenY >= cy - hitSize / 2 && screenY <= cy + hitSize / 2
+
+    return when {
+        contains(sx, sy) -> ResizeCorner.TopLeft
+        contains(sx + sw, sy) -> ResizeCorner.TopRight
+        contains(sx, sy + sh) -> ResizeCorner.BottomLeft
+        contains(sx + sw, sy + sh) -> ResizeCorner.BottomRight
+        else -> null
+    }
+}
+
+private fun resizeHud(
+    hud: Hud,
+    corner: ResizeCorner,
+    startBounds: HudBounds,
+    startTextScale: Float,
+    startStaticW: Float,
+    startStaticH: Float,
+    mouseX: Float,
+    mouseY: Float,
+    freeResize: Boolean,
+) {
+    val anchorX = if (corner.isLeft) startBounds.x + startBounds.width else startBounds.x
+    val anchorY = if (corner.isTop) startBounds.y + startBounds.height else startBounds.y
+    val targetWidth = (if (corner.isLeft) anchorX - mouseX else mouseX - anchorX).coerceAtLeast(1f)
+    val targetHeight = (if (corner.isTop) anchorY - mouseY else mouseY - anchorY).coerceAtLeast(1f)
+
+    if (freeResize) {
+        val effectiveScale = hud.effectiveScale.coerceAtLeast(0.001f)
+        val (minStaticW, minStaticH) = hud.minimumSize()
+        val newWidth = targetWidth.coerceAtLeast(minStaticW * effectiveScale)
+        val newHeight = targetHeight.coerceAtLeast(minStaticH * effectiveScale)
+        val newX = if (corner.isLeft) anchorX - newWidth else anchorX
+        val newY = if (corner.isTop) anchorY - newHeight else anchorY
+
+        hud.staticWidth = true
+        hud.staticW = newWidth / effectiveScale
+        hud.staticH = newHeight / effectiveScale
+        hud.setAbsolutePosition(newX, newY)
+        return
+    }
+
+    val widthFactor = targetWidth / startBounds.width
+    val heightFactor = targetHeight / startBounds.height
+    val rawFactor = if (abs(widthFactor - 1f) > abs(heightFactor - 1f)) widthFactor else heightFactor
+    val minTextScale = 6f / 14f
+    val maxTextScale = 64f / 14f
+    val newTextScale = (startTextScale * rawFactor).coerceIn(minTextScale, maxTextScale)
+    val factor = if (startTextScale > 0f) newTextScale / startTextScale else 1f
+    val newWidth = startBounds.width * factor
+    val newHeight = startBounds.height * factor
+    val newX = if (corner.isLeft) anchorX - newWidth else anchorX
+    val newY = if (corner.isTop) anchorY - newHeight else anchorY
+
+    hud.textScale = newTextScale
+    if (hud.staticWidth && startStaticW > 0f && startStaticH > 0f) {
+        hud.staticW = startStaticW * factor
+        hud.staticH = startStaticH * factor
+    }
+    hud.setAbsolutePosition(newX, newY)
+}
+
+private fun DrawScope.drawSelectedHudBounds(bounds: HudBounds, mcToScreen: Float) {
+    val sx = bounds.x * mcToScreen
+    val sy = bounds.y * mcToScreen
+    val sw = bounds.width * mcToScreen
+    val sh = bounds.height * mcToScreen
+
+    drawRect(
+        color = selectionBlue,
+        topLeft = Offset(sx, sy),
+        size = Size(sw, sh),
+        style = Stroke(width = 1f)
+    )
+
+    val handleSize = 7f
+    listOf(
+        Offset(sx, sy),
+        Offset(sx + sw, sy),
+        Offset(sx, sy + sh),
+        Offset(sx + sw, sy + sh),
+    ).forEach { corner ->
+        val topLeft = Offset(corner.x - handleSize / 2, corner.y - handleSize / 2)
+        drawRect(color = Color.White, topLeft = topLeft, size = Size(handleSize, handleSize))
+        drawRect(color = selectionBlue, topLeft = topLeft, size = Size(handleSize, handleSize), style = Stroke(width = 1f))
+    }
+
+    drawHudSizeBadge("${bounds.width.roundToInt()} x ${bounds.height.roundToInt()}", sx + sw / 2, sy + sh + 9f)
+}
+
+private fun DrawScope.drawHudSizeBadge(label: String, centerX: Float, topY: Float) {
+    val font = FontManager.getFont(10f, "poppins")
+    val metrics = font.metrics
+    val textWidth = font.measureTextWidth(label)
+    val textHeight = metrics.descent - metrics.ascent
+    val horizontalPadding = 5f
+    val badgeWidth = textWidth + horizontalPadding * 2
+    val badgeHeight = 16f
+    val badgeX = centerX - badgeWidth / 2
+
+    drawRoundRect(
+        color = selectionBlue,
+        topLeft = Offset(badgeX, topY),
+        size = Size(badgeWidth, badgeHeight),
+        cornerRadius = CornerRadius(3f, 3f)
+    )
+    drawIntoCanvas { canvas ->
+        val paint = org.jetbrains.skia.Paint().apply { color = Color.White.toArgb() }
+        val textX = badgeX + horizontalPadding
+        val textY = topY + (badgeHeight - textHeight) / 2f - metrics.ascent
+        canvas.skiaCanvas.drawString(label, textX, textY, font, paint)
+    }
 }
 
 private val panelBackground = Color(17, 23, 28).copy(0.95f)
@@ -132,6 +283,13 @@ fun HudDesignStudio() {
     var dragOffsetY by remember { mutableStateOf(0f) }
     var isDragging by remember { mutableStateOf(false) }
     var draggedHud by remember { mutableStateOf<Hud?>(null) }
+    var isResizing by remember { mutableStateOf(false) }
+    var resizedHud by remember { mutableStateOf<Hud?>(null) }
+    var resizeCorner by remember { mutableStateOf<ResizeCorner?>(null) }
+    var resizeStartBounds by remember { mutableStateOf<HudBounds?>(null) }
+    var resizeStartTextScale by remember { mutableStateOf(1f) }
+    var resizeStartStaticW by remember { mutableStateOf(0f) }
+    var resizeStartStaticH by remember { mutableStateOf(0f) }
     var libraryVisible by remember { mutableStateOf(false) }
     var filterModId by remember { mutableStateOf<String?>(null) }
     var searchText by remember { mutableStateOf("") }
@@ -153,9 +311,29 @@ fun HudDesignStudio() {
             if (event.changes.any { it.isConsumed }) return@onPointerEvent
             val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
             if (panelAreaWidth > 0f && pos.x > size.width - panelAreaWidth) return@onPointerEvent
-            val currentGearTarget = selectedHud ?: hoveredHud
+            val mcToScreen = Platform.screen().mcToScreenScale()
+            val selected = selectedHud
+            if (selected != null && selected !is LegacyHud) {
+                val handle = hitTestResizeHandle(selected, pos.x, pos.y, mcToScreen)
+                val bounds = hudBounds(selected)
+                if (handle != null && bounds != null) {
+                    event.changes.forEach { it.consume() }
+                    Snapshot.withMutableSnapshot {
+                        isResizing = true
+                        resizedHud = selected
+                        resizeCorner = handle
+                        resizeStartBounds = bounds
+                        resizeStartTextScale = selected.textScale
+                        resizeStartStaticW = selected.staticW
+                        resizeStartStaticH = selected.staticH
+                        hoveredHud = selected
+                        libraryVisible = false
+                    }
+                    return@onPointerEvent
+                }
+            }
+            val currentGearTarget = if (selectedHud == null) hoveredHud else null
             if (currentGearTarget != null && currentGearTarget !is LegacyHud) {
-                val mcToScreen = Platform.screen().mcToScreenScale()
                 if (hitTestGear(currentGearTarget, pos.x, pos.y, mcToScreen, gearIconPx)) return@onPointerEvent
             }
             val s = Platform.screen().screenToMcScale()
@@ -175,7 +353,34 @@ fun HudDesignStudio() {
         }
         .onPointerEvent(PointerEventType.Move) { event ->
             val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
-            if (isDragging) {
+            if (isResizing) {
+                if (event.changes.none { it.pressed }) {
+                    Snapshot.withMutableSnapshot {
+                        isResizing = false
+                        resizedHud = null
+                        resizeCorner = null
+                        resizeStartBounds = null
+                    }
+                    return@onPointerEvent
+                }
+                val hit = resizedHud ?: return@onPointerEvent
+                val corner = resizeCorner ?: return@onPointerEvent
+                val bounds = resizeStartBounds ?: return@onPointerEvent
+                val s = Platform.screen().screenToMcScale()
+                Snapshot.withMutableSnapshot {
+                    resizeHud(
+                        hud = hit,
+                        corner = corner,
+                        startBounds = bounds,
+                        startTextScale = resizeStartTextScale,
+                        startStaticW = resizeStartStaticW,
+                        startStaticH = resizeStartStaticH,
+                        mouseX = pos.x * s,
+                        mouseY = pos.y * s,
+                        freeResize = event.keyboardModifiers.isShiftPressed,
+                    )
+                }
+            } else if (isDragging) {
                 if (event.changes.none { it.pressed }) {
                     Snapshot.withMutableSnapshot {
                         isDragging = false
@@ -191,7 +396,7 @@ fun HudDesignStudio() {
             } else {
                 val hit = HudManager.activeInstances.lastOrNull { it !is LegacyHud && hitTestHud(it, pos.x, pos.y) }
                 val mcToScreen = Platform.screen().mcToScreenScale()
-                val overGear = hoveredHud?.let { hh ->
+                val overGear = selectedHud == null && hoveredHud?.let { hh ->
                     hh !is LegacyHud && hitTestGear(hh, pos.x, pos.y, mcToScreen, gearIconPx)
                 } == true
                 val inExpandedZone = hoveredHud?.let { hh ->
@@ -205,6 +410,21 @@ fun HudDesignStudio() {
             }
         }
         .onPointerEvent(PointerEventType.Release) { event ->
+            val wasResizing = isResizing
+            val wasResizedHud = resizedHud
+            Snapshot.withMutableSnapshot {
+                isResizing = false
+                resizedHud = null
+                resizeCorner = null
+                resizeStartBounds = null
+            }
+            if (wasResizing) {
+                Snapshot.withMutableSnapshot {
+                    selectedHud = wasResizedHud
+                    libraryVisible = false
+                }
+                return@onPointerEvent
+            }
             val wasDragging = isDragging
             val wasDraggedHud = draggedHud
             Snapshot.withMutableSnapshot {
@@ -213,7 +433,7 @@ fun HudDesignStudio() {
             }
             if (!wasDragging || wasDraggedHud == null) {
                 val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
-                val currentGearTarget = selectedHud ?: hoveredHud
+                val currentGearTarget = if (selectedHud == null) hoveredHud else null
                 if (currentGearTarget != null && currentGearTarget !is LegacyHud) {
                     val mcToScreen = Platform.screen().mcToScreenScale()
                     if (hitTestGear(currentGearTarget, pos.x, pos.y, mcToScreen, gearIconPx)) return@onPointerEvent
@@ -245,70 +465,46 @@ fun HudDesignStudio() {
                     drawContent()
                     val mcToScreen = Platform.screen().mcToScreenScale()
                     for (hud in HudManager.activeInstances) {
-                        val scale = hud.effectiveScale
-                        val w = (if (hud.staticWidth) hud.staticW else hud.renderedW.takeIf { it > 0f } ?: continue) * scale
-                        val h = (if (hud.staticWidth) hud.staticH else hud.renderedH.takeIf { it > 0f } ?: continue) * scale
-                        val sx = hud.x * mcToScreen
-                        val sy = hud.y * mcToScreen
-                        val sw = w * mcToScreen
-                        val sh = h * mcToScreen
+                        if (hud is LegacyHud) continue
+                        val bounds = hudBounds(hud) ?: continue
+                        val sx = bounds.x * mcToScreen
+                        val sy = bounds.y * mcToScreen
+                        val sw = bounds.width * mcToScreen
+                        val sh = bounds.height * mcToScreen
                         val isSelected = hud === selectedHud
                         val isHovered = hud === hoveredHud
                         val isBeingDragged = hud === draggedHud && isDragging
 
                         if (isBeingDragged) {
-                            val glowPad = 6f
-                            val cr = CornerRadius(6f, 6f)
-                            drawRoundRect(
-                                color = Color(0xFF4A90E2).copy(alpha = 0.12f),
-                                topLeft = Offset(sx - glowPad, sy - glowPad),
-                                size = Size(sw + glowPad * 2, sh + glowPad * 2),
-                                cornerRadius = cr,
-                            )
-                            drawRoundRect(
-                                color = Color(0xFF4A90E2).copy(alpha = 0.85f),
-                                topLeft = Offset(sx - glowPad, sy - glowPad),
-                                size = Size(sw + glowPad * 2, sh + glowPad * 2),
-                                cornerRadius = cr,
-                                style = Stroke(width = 2.5f)
-                            )
-                        } else {
-                            val strokeColor = when {
-                                isSelected -> Color(0xFF4A90E2)
-                                isHovered -> Color.White.copy(0.5f)
-                                else -> Color.White.copy(0.25f)
-                            }
-                            val strokeWidth = if (isSelected) 2f else 1f
-                            val pad = 3f
                             drawRect(
-                                color = strokeColor,
-                                topLeft = Offset(sx - pad, sy - pad),
-                                size = Size(sw + pad * 2, sh + pad * 2),
-                                style = Stroke(width = strokeWidth)
+                                color = selectionBlue.copy(alpha = 0.10f),
+                                topLeft = Offset(sx, sy),
+                                size = Size(sw, sh),
                             )
-                            if (isSelected) {
-                                drawRect(
-                                    color = Color(0xFF4A90E2).copy(alpha = 0.08f),
-                                    topLeft = Offset(sx - pad, sy - pad),
-                                    size = Size(sw + pad * 2, sh + pad * 2),
-                                )
-                            }
+                            drawSelectedHudBounds(bounds, mcToScreen)
+                        } else if (isSelected) {
+                            drawSelectedHudBounds(bounds, mcToScreen)
+                        } else if (isHovered) {
+                            drawRect(
+                                color = Color.White.copy(0.5f),
+                                topLeft = Offset(sx, sy),
+                                size = Size(sw, sh),
+                                style = Stroke(width = 1f)
+                            )
                         }
                     }
                 }
         )
 
-        val gearTarget = if (selectedHud != null) selectedHud else hoveredHud
+        val gearTarget = if (selectedHud == null) hoveredHud else null
         if (gearTarget != null && gearTarget !is LegacyHud) {
             val mcToScreen = Platform.screen().mcToScreenScale()
-            val scale = gearTarget.effectiveScale
-            val w = (if (gearTarget.staticWidth) gearTarget.staticW else gearTarget.renderedW) * scale
-            val h = (if (gearTarget.staticWidth) gearTarget.staticH else gearTarget.renderedH) * scale
-            if (w > 0f && h > 0f) {
-                val sx = gearTarget.x * mcToScreen
-                val sy = gearTarget.y * mcToScreen
-                val sw = w * mcToScreen
-                val sh = h * mcToScreen
+            val bounds = hudBounds(gearTarget)
+            if (bounds != null && bounds.width > 0f && bounds.height > 0f) {
+                val sx = bounds.x * mcToScreen
+                val sy = bounds.y * mcToScreen
+                val sw = bounds.width * mcToScreen
+                val sh = bounds.height * mcToScreen
                 val iconSize = 24.dp
                 val iconX = ((sx + sw / 2 - gearIconPx / 2) / densityFloat).coerceAtLeast(0f)
                 val iconY = ((sy + sh + 6f) / densityFloat).coerceAtLeast(0f)
