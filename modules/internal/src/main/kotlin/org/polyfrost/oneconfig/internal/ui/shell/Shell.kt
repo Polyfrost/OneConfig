@@ -47,7 +47,6 @@ import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.navigation
 import org.polyfrost.oneconfig.internal.ui.screens.SearchResultsScreen
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
-import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -82,12 +81,12 @@ fun Shell(
                     it.nativeCanvas.drawCircle(147f, -199f, 500f, Paint().apply {
                         imageFilter = ImageFilter.makeBlur(300f, 300f, FilterTileMode.CLAMP)
                         color = Accent.toArgb()
-                        setAlphaf(.45f)
+                        setAlphaf(.25f)
                     })
                     it.nativeCanvas.drawCircle(893f, 736f, 500f, Paint().apply {
                         imageFilter = ImageFilter.makeBlur(300f, 300f, FilterTileMode.CLAMP)
                         color = Accent.toArgb()
-                        setAlphaf(.45f)
+                        setAlphaf(.25f)
                     })
                 }
             }
