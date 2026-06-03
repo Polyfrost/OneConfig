@@ -96,6 +96,11 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("skia.Mixin_InitSkia");
         mixins.add("skia.Mixin_SkiaFrame");
         mixins.add("skia.Mixin_SkiaFrameVk");
+        //? >= 26.1 {
+        mixins.add("blaze3d.GpuDeviceAccessor");
+        mixins.add("blaze3d.GlDeviceAccessor");
+        mixins.add("skia.Mixin_SkiaFramePresent");
+        //? }
         mixins.add("skia.Mixin_InitSkiaFontRenderer");
         mixins.add("skia.Mixin_FixComposeRaceCondition");
 

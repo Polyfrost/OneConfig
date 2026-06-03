@@ -50,6 +50,10 @@ object SkiaCtx {
         //? >= 1.21.8 {
         fun setGpuTextureView(v: com.mojang.blaze3d.textures.GpuTextureView?) {
             this.textureView = v
+            //? >= 26.1 {
+            this.sampler = com.mojang.blaze3d.systems.RenderSystem.getSamplerCache()
+                .getClampToEdge(com.mojang.blaze3d.textures.FilterMode.LINEAR)
+            //? }
         }
         //? }
 

@@ -1,0 +1,37 @@
+package org.polyfrost.oneconfig.internal.ui
+
+import com.mojang.blaze3d.opengl.GlTexture
+import com.mojang.blaze3d.pipeline.RenderTarget
+import com.mojang.blaze3d.systems.RenderSystem
+//? if >= 26.1 {
+import org.polyfrost.oneconfig.internal.mixin.blaze3d.GlDeviceAccessor
+import org.polyfrost.oneconfig.internal.mixin.blaze3d.GpuDeviceAccessor
+//? }
+
+/**
+ * Credits: lowercasebtw
+ * Taken from: https://discord.com/channels/507304429255393322/807617488313516032/1452333789778018314 (The Fabric Project)
+ */
+object RenderTargetFbo {
+    //? if >= 26.1 {
+    fun getFboId(frameBuffer: RenderTarget): Int {
+        val device = RenderSystem.getDevice()
+        val backend = (device as GpuDeviceAccessor).`oneconfig$getBackend`()
+        if (backend !is GlDeviceAccessor) return -1
+        val dsa = backend.`oneconfig$getDirectStateAccess`()
+        val texture = frameBuffer.colorTexture as? GlTexture ?: return -1
+        return texture.getFbo(dsa, frameBuffer.depthTexture)
+    }
+    //? } else if >= 1.21.5 {
+    /*fun getFboId(frameBuffer: RenderTarget): Int {
+        val device = RenderSystem.getDevice()
+        if (device !is com.mojang.blaze3d.opengl.GlDevice) {
+            return -1
+        } else {
+            val texture = frameBuffer.colorTexture as? com.mojang.blaze3d.opengl.GlTexture
+                ?: return -1
+            return texture.getFbo(device.directStateAccess(), frameBuffer.depthTexture)
+        }
+    }
+    *///? }
+}

@@ -2,11 +2,11 @@ package org.polyfrost.oneconfig.internal.ui.services
 
 import net.minecraft.client.Minecraft
 import com.mojang.blaze3d.pipeline.RenderTarget
-import com.mojang.blaze3d.systems.RenderSystem
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.DirectContext
 import org.jetbrains.skia.FramebufferFormat
 import org.jetbrains.skia.SurfaceColorFormat
+import org.polyfrost.oneconfig.internal.ui.RenderTargetFbo
 
 object GLVulkanService : VulkanService {
     private val client get() = Minecraft.getInstance()
@@ -19,11 +19,9 @@ object GLVulkanService : VulkanService {
         vkImageHandle: Long, vkFormat: Int, vkQueueFamily: Int,
     ): BackendRenderTarget {
         val target = client.mainRenderTarget
-        //? > 1.21.11 {
-        val frameBufferId = -1
-        //? } else if >= 1.21.5 {
-        /*val frameBufferId = getFboId(target)
-        *///? } else
+        //? >= 1.21.5 {
+        val frameBufferId = RenderTargetFbo.getFboId(target)
+        //? } else
         //val frameBufferId = target.frameBufferId
 
         return BackendRenderTarget.makeGL(
@@ -45,31 +43,13 @@ object GLVulkanService : VulkanService {
         width: Int,
         height: Int,
     ): Pair<BackendRenderTarget, SurfaceColorFormat> {
-        //? > 1.21.11 {
-        val fboId = -1//todo target.frameBufferId
-        //? } else if >= 1.21.5 {
-        /*val fboId = getFboId(target)
-        *///? } else
+        //? >= 1.21.5 {
+        val fboId = RenderTargetFbo.getFboId(target)
+        //? } else
         //val fboId = target.frameBufferId
 
         return BackendRenderTarget.makeGL(width, height, 0, 8, fboId, FramebufferFormat.GR_GL_RGBA8) to
                 SurfaceColorFormat.RGBA_8888
     }
-
-    /**
-     * Credits: lowercasebtw
-     * Taken from: https://discord.com/channels/507304429255393322/807617488313516032/1452333789778018314 (The Fabric Project)
-     */
-    //? >= 1.21.5 && <= 1.21.11 {
-    /*fun getFboId(frameBuffer: RenderTarget): Int {
-       val device = RenderSystem.getDevice()
-      if (device !is com.mojang.blaze3d.opengl.GlDevice) {
-          return -1
-      } else {
-          val texture = (frameBuffer.getColorTexture() as com.mojang.blaze3d.opengl.GlTexture?) ?: error("well, someone messed up!")
-          return texture.getFbo((device as com.mojang.blaze3d.opengl.GlDevice).directStateAccess(), frameBuffer.getDepthTexture())
-      }
-    }
-    *///? }
 
 }
