@@ -4,6 +4,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import kotlinx.serialization.Serializable
+import org.polyfrost.oneconfig.internal.ui.screens.Keybinds
 
 @Serializable
 data object KeybindsGraph
@@ -14,6 +15,7 @@ data object KeybindsRoute
 fun NavGraphBuilder.keybindsGraph() {
     navigation<KeybindsGraph>(startDestination = KeybindsRoute) {
         composable<KeybindsRoute> {
+            Keybinds()
         }
     }
 }
