@@ -72,7 +72,10 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //mixins.add("compat.moulconfig.Mixin_MoulConfigAdapter_DandelionBp");
         //? }
 
-        //mixins.add("Mixin_MinecraftClientResourceStuff");
+        //? rconfig_compat
+        mixins.add("compat.rconfig.Mixin_Configurations");
+
+        mixins.add("Mixin_SimpleReloadInstance");
         //? yacl_compat
         mixins.add("compat.yacl.Mixin_YetAnotherConfigLib_Builder");
 

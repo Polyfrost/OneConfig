@@ -3,11 +3,15 @@ package org.polyfrost.oneconfig.internal.compat
 //? rconfig_compat {
 import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfig
 import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigButton
-import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigEntry
+import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigCategory
+import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigElement
+import com.teamresourceful.resourcefulconfig.api.types.elements.ResourcefulConfigEntryElement
 import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigObjectEntry
 import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigValueEntry
 import com.teamresourceful.resourcefulconfig.api.types.options.EntryType
 import com.teamresourceful.resourcefulconfig.api.types.options.Option
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -19,50 +23,42 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.config.v1.dsl.visualizer
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.internal.DynamicImage
-import java.util.UUID
+import java.util.*
 
-internal object RConfigCompat {
+internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/RconfigCompat") {
 
 
     @JvmStatic
     fun enable() {
-
+        info("Detected rconfig, enabling compat layer!")
     }
 
     @JvmStatic
     fun addConfig(config: ResourcefulConfig) {
         val mod = CompatLoader.findFirstMod()
-        CompatLoader.requireTranslations { parseConfig(config, null, null, mod)?.let(ConfigManager.active()::register) }
+        info("Preparing config wrapper for ${config.id()}!")
+        CompatLoader.requireTranslations {
+            parseConfig(config, mod).let(ConfigManager.active()::register)
+        }
     }
 
-    private fun parseConfig(config: ResourcefulConfig, category: String?, root: Tree?, mod: ModInfo?): Tree? {
+    private fun parseConfig(config: ResourcefulConfig, mod: ModInfo?): Tree {
+        info("Creating config wrapper for ${config.id()}!")
         val tree = Tree.tree()
         tree.id = config.id()
-        tree.title = config.info().title().toLocalizedString()
-        tree.description = config.info().description().toLocalizedString()
-        tree.category = category ?: config.info().title().toLocalizedString()
-        tree.subcategory = config.info().title().toLocalizedString()
-        if (category == null) {
-            mod?.let {
-                //todo holy how tf??
-                //val path = it.getIconResourcePath(Int.MAX_VALUE) ?: return@let
-                //val stream = it.getIconResource(Int.MAX_VALUE) ?: return@let
-                //tree.icon = DynamicImage(path, stream)
-            }
+        tree.title = config.info().title().toComponent().toString()
+        tree.description = config.info().description().toComponent().toString()
+        tree.category = config.info().title().toComponent().toString()
+        tree.subcategory = config.info().title().toComponent().toString()
+        mod?.modIconPath?.let {
+            tree.addMetadata("icon_path", it)
         }
 
         config.categories().values.mapNotNull {
-            parseConfig(
-                it,
-                category ?: it.info().title().toLocalizedString(),
-                root ?: tree,
-                mod
-            )
-        }.forEach((root ?: tree)::put)
+            parseCategory(it, config.id(), null, tree)
+        }
 
-        // todo wait for sophie to be awake so i can annoy her about how tf this works now :3333
-        //parseAny(config.entries().values, tree)
-        //parseButtons(config.buttons(), tree)
+        parseAny(config.elements(), tree)
 
         tree.addMetadata("custom_save", Runnable { config.save() })
         tree.addMetadata("no_cache", true)
@@ -70,35 +66,77 @@ internal object RConfigCompat {
         return tree
     }
 
-    private fun parseButtons(buttons: List<ResourcefulConfigButton>, tree: Tree) {
-        buttons.forEach { button ->
-            val property = Properties.dummy(id = UUID.randomUUID().toString())
-            property.title = button.title()?.takeUnless { it.isEmpty() }
-                ?: "button" //todo find a better way of doing this, rconfig allows empty names
-            property.description = button.description()
-            property.visualizer = Visualizer.ButtonVisualizer::class.java
-            property.metadata?.put("runnable", Runnable { button.invoke() })
-            tree.put(property)
+
+    // 1st layer gets converted to categories, 2nd+ layer to subcategories
+    private fun parseCategory(config: ResourcefulConfig, id: String, category: String?, root: Tree) {
+        val tree = Tree.tree()
+
+        val id = "$id/${config.id()}"
+        val title = config.info().title().toComponent().toString()
+
+        tree.category = category ?: title
+        if (category != null) {
+            tree.subcategory = title
+        }
+
+        for ((_, entry) in config.categories()) {
+            parseCategory(entry, id, category ?: title, root)
+        }
+        parseAny(config.elements(), tree)
+
+        tree.map.forEach { (_, node) ->
+            node.category = tree.category
+            node.subcategory = tree.subcategory
+            root.put(node)
         }
     }
 
-    private fun parseAny(list: Iterable<ResourcefulConfigEntry>, tree: Tree) = list.forEach {
+    private fun parseButton(button: ResourcefulConfigButton, tree: Tree) {
+        val property = Properties.dummy(id = UUID.randomUUID().toString())
+        property.title = button.title()?.takeUnless { it.isEmpty() }
+            ?: "button" //todo find a better way of doing this, rconfig allows empty names
+        property.description = button.description()
+        property.visualizer = Visualizer.ButtonVisualizer::class.java
+        property.metadata?.put("runnable", Runnable { button.invoke() })
+        tree.put(property)
+    }
+
+    private fun parseAny(list: Iterable<ResourcefulConfigElement>, tree: Tree) = list.forEach {
         when (it) {
-            is ResourcefulConfigObjectEntry -> parseCategory(it, tree)
-            is ResourcefulConfigValueEntry -> buildAndAdd(it, tree)
+            is ResourcefulConfigCategory -> parseCategory(it, tree)
+            is ResourcefulConfigEntryElement -> parseAny(it, tree)
+            is ResourcefulConfigButton -> parseButton(it, tree)
         }
     }
 
-    private fun parseCategory(entry: ResourcefulConfigObjectEntry, tree: Tree) {
+    private fun parseAny(entry: ResourcefulConfigEntryElement, tree: Tree) {
+        when (val entry = entry.entry()) {
+            is ResourcefulConfigObjectEntry -> parseObject(entry, tree)
+            is ResourcefulConfigValueEntry -> buildAndAdd(entry, tree)
+        }
+    }
+
+    private fun parseCategory(entry: ResourcefulConfigCategory, tree: Tree) {
+        val category = Tree.tree()
+        category.title = entry.info().title().toComponent().toString()
+        category.description = entry.info().description().toComponent().toString()
+        category.id = UUID.randomUUID().toString()
+        category.category = tree.category
+        category.subcategory = entry.info().title().toComponent().toString()
+        category.index = -1
+        parseAny(entry.elements(), category)
+        tree.put(category)
+    }
+
+    private fun parseObject(entry: ResourcefulConfigObjectEntry, tree: Tree) {
         val objectEntry = Tree.tree()
-        objectEntry.title = entry.options().title.toLocalizedString()
-        objectEntry.description = entry.options().comment.toLocalizedString()
+        objectEntry.title = entry.options().title.toComponent().toString()
+        objectEntry.description = entry.options().comment.toComponent().toString()
         objectEntry.id = UUID.randomUUID().toString()
         objectEntry.category = tree.category
-        objectEntry.subcategory = entry.options().title.toLocalizedString()
+        objectEntry.subcategory = entry.options().title.toComponent().toString()
         objectEntry.index = -1
-        //todo annoy sophie even more
-        //parseAny(entry.entries().values, objectEntry)
+        parseAny(entry.elements(), objectEntry)
         tree.put(objectEntry)
     }
 
@@ -148,8 +186,8 @@ internal object RConfigCompat {
     }
 
     private class RConfigPropertyBuilder constructor(option: ResourcefulConfigValueEntry) {
-        val name: String? = option.options().title.toLocalizedString()
-        val description: String? = option.options().comment().toLocalizedString()
+        val name: String? = option.options().title.toComponent().toString()
+        val description: String? = option.options().comment().toComponent().toString()
 
         var setter: (Any) -> Unit = { value ->
             when (option.type()) {

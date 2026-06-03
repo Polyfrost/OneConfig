@@ -193,7 +193,7 @@ public final class LogScanner {
             if (uri.toString().endsWith(".class") && Platform.compatibility().isDevelopment()) {
                 LOGGER.error("The mod you are currently developing caused this issue, or another class file. Returning 'this'.");
                 LOGGER.error("Class: {}", clazz.getName());
-                return Collections.singleton(new ModInfo("this", "this", "Unknown", null));
+                return Collections.singleton(new ModInfo("this", "this", "Unknown", null, null));
             }
 
             return getModsAt(Paths.get(uri), modMap);
