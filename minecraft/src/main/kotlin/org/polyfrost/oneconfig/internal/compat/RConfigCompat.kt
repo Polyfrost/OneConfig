@@ -46,10 +46,10 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         info("Creating config wrapper for ${config.id()}!")
         val tree = Tree.tree()
         tree.id = config.id()
-        tree.title = config.info().title().toComponent().toString()
-        tree.description = config.info().description().toComponent().toString()
-        tree.category = config.info().title().toComponent().toString()
-        tree.subcategory = config.info().title().toComponent().toString()
+        tree.title = config.info().title().toComponent().string
+        tree.description = config.info().description().toComponent().string
+        tree.category = config.info().title().toComponent().string
+        tree.subcategory = config.info().title().toComponent().string
         mod?.modIconPath?.let {
             tree.addMetadata("icon_path", it)
         }
@@ -72,7 +72,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         val tree = Tree.tree()
 
         val id = "$id/${config.id()}"
-        val title = config.info().title().toComponent().toString()
+        val title = config.info().title().toComponent().string
 
         tree.category = category ?: title
         if (category != null) {
@@ -118,11 +118,11 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
 
     private fun parseCategory(entry: ResourcefulConfigCategory, tree: Tree) {
         val category = Tree.tree()
-        category.title = entry.info().title().toComponent().toString()
-        category.description = entry.info().description().toComponent().toString()
+        category.title = entry.info().title().toComponent().string
+        category.description = entry.info().description().toComponent().string
         category.id = UUID.randomUUID().toString()
         category.category = tree.category
-        category.subcategory = entry.info().title().toComponent().toString()
+        category.subcategory = entry.info().title().toComponent().string
         category.index = -1
         parseAny(entry.elements(), category)
         tree.put(category)
@@ -130,11 +130,11 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
 
     private fun parseObject(entry: ResourcefulConfigObjectEntry, tree: Tree) {
         val objectEntry = Tree.tree()
-        objectEntry.title = entry.options().title.toComponent().toString()
-        objectEntry.description = entry.options().comment.toComponent().toString()
+        objectEntry.title = entry.options().title.toComponent().string
+        objectEntry.description = entry.options().comment.toComponent().string
         objectEntry.id = UUID.randomUUID().toString()
         objectEntry.category = tree.category
-        objectEntry.subcategory = entry.options().title.toComponent().toString()
+        objectEntry.subcategory = entry.options().title.toComponent().string
         objectEntry.index = -1
         parseAny(entry.elements(), objectEntry)
         tree.put(objectEntry)
@@ -186,8 +186,8 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
     }
 
     private class RConfigPropertyBuilder constructor(option: ResourcefulConfigValueEntry) {
-        val name: String? = option.options().title.toComponent().toString()
-        val description: String? = option.options().comment().toComponent().toString()
+        val name: String? = option.options().title.toComponent().string
+        val description: String? = option.options().comment().toComponent().string
 
         var setter: (Any) -> Unit = { value ->
             when (option.type()) {

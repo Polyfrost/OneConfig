@@ -4,7 +4,7 @@ plugins {
     `oneconfig-fabric`
 }
 
-dependencies {4
+dependencies {
     mappings(loom.layered {
         officialMojangMappings()
         if (versionedCatalog.has("parchment")) {
