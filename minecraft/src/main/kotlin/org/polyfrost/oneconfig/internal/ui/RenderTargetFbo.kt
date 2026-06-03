@@ -1,11 +1,13 @@
 package org.polyfrost.oneconfig.internal.ui
 
-import com.mojang.blaze3d.opengl.GlTexture
-import com.mojang.blaze3d.pipeline.RenderTarget
-import com.mojang.blaze3d.systems.RenderSystem
 //? if >= 26.1 {
+import com.mojang.blaze3d.opengl.GlTexture
 import org.polyfrost.oneconfig.internal.mixin.blaze3d.GlDeviceAccessor
 import org.polyfrost.oneconfig.internal.mixin.blaze3d.GpuDeviceAccessor
+//? }
+//? if >= 1.21.5 {
+import com.mojang.blaze3d.pipeline.RenderTarget
+import com.mojang.blaze3d.systems.RenderSystem
 //? }
 
 /**
