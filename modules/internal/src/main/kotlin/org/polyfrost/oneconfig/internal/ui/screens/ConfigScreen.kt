@@ -94,7 +94,11 @@ fun ConfigScreen(tree: Tree, initialCategory: String? = null) {
 
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
         if (categories.size > 1) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 categories.forEach { category ->
                     Chip(
                         label = category.name,
@@ -457,7 +461,11 @@ fun HudConfigScreen(tree: Tree, initialCategory: String? = null) {
 
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
         if (categories.size > 1) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 categories.forEach { category ->
                     Chip(
                         label = category.name,
