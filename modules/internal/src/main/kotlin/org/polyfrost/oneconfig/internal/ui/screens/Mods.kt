@@ -85,7 +85,7 @@ fun Mods() {
 fun ColumnScope.ModsGrid(category: ModCategory) {
     val configs = ConfigRegistry.configs
     val filtered = configs
-        .filter { it.id != PREFERENCES_ID }
+        .filter { it.id != PREFERENCES_ID && it.id != THEMES_ID }
         .let { items ->
             if (category.configCategory == null) items
             else items.filter { it.category == category.configCategory }
@@ -109,6 +109,8 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
     }
 }
 
+private val ModCardFooterHeight = 36.dp
+
 @Composable
 fun ModCard(mod: ConfigData) {
     val interactionSource = rememberInteractionSource()
@@ -131,11 +133,28 @@ fun ModCard(mod: ConfigData) {
             .clip(theme.modCardShape)
             .pointerHoverIcon(PointerIcon.Hand)
     ) {
-        Box(
-            modifier = Modifier.fillMaxWidth().height(88.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(mod.icon, color = theme.textColor, modifier = Modifier.size(48.dp))
+        Column(Modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(mod.icon, color = theme.textColor, modifier = Modifier.size(48.dp))
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(ModCardFooterHeight)
+                    .background(Accent),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    mod.title,
+                    color = LocalTheme.current.accentTextColor,
+                    fontSize = 16.sp,
+                    lineHeight = 16.sp,
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                )
+            }
         }
 
         if (LocalTheme.current.shadowEnabled) {
@@ -165,14 +184,6 @@ fun ModCard(mod: ConfigData) {
                     onDrawBehind { drawRect(gradient, size = Size(size.width, 50f)) }
                 }
             )
-        }
-        Box(
-            modifier = Modifier.fillMaxWidth().height(36.dp)
-                .background(Accent)
-                .align(Alignment.BottomCenter),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(mod.title, color = LocalTheme.current.accentTextColor, fontSize = 16.sp)
         }
     }
 }
