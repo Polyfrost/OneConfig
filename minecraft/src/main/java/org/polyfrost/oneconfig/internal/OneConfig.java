@@ -136,9 +136,9 @@ public class OneConfig
 
         float sw = graphics.guiWidth();
         float sh = graphics.guiHeight();
-        float scale = (float) Minecraft.getInstance().options.guiScale().get();
-        HudManager.guiScreenWidth = sw / scale;
-        HudManager.guiScreenHeight = sh / scale;
+        // guiWidth()/guiHeight() are already GUI-scaled (== Screen dimensions), do not divide by guiScale again.
+        HudManager.guiScreenWidth = sw;
+        HudManager.guiScreenHeight = sh;
 
         // Update HUD visibility state for per-HUD filtering
         HudManager.isDebugScreenVisible = Minecraft.getInstance().getDebugOverlay().showDebugScreen();
