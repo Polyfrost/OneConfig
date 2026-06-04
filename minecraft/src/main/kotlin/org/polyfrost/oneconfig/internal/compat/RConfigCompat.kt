@@ -3,16 +3,17 @@ package org.polyfrost.oneconfig.internal.compat
 //? rconfig_compat {
 import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfig
 import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigButton
+//? >= 1.21.5 {
 import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigCategory
 import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigElement
 import com.teamresourceful.resourcefulconfig.api.types.elements.ResourcefulConfigEntryElement
+//? } else {
+import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigEntry
+//? }
 import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigObjectEntry
 import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigValueEntry
 import com.teamresourceful.resourcefulconfig.api.types.options.EntryType
 import com.teamresourceful.resourcefulconfig.api.types.options.Option
-import net.kyori.adventure.platform.modcommon.impl.AdventureCommon
-import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.ComponentLike
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
@@ -20,16 +21,13 @@ import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.dsl.category
-import org.polyfrost.oneconfig.api.config.v1.dsl.icon
 import org.polyfrost.oneconfig.api.config.v1.dsl.index
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.config.v1.dsl.visualizer
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
-import org.polyfrost.oneconfig.internal.DynamicImage
 import java.util.*
 
 internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/RconfigCompat") {
-
 
     @JvmStatic
     fun enable() {
@@ -49,17 +47,27 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         info("Creating config wrapper for ${config.id()}!")
         val tree = Tree.tree()
         tree.id = config.id()
+        //? >= 1.21.5 {
         tree.title = config.info().title().toComponent()
         tree.description = config.info().description().toComponent()
+        //? } else {
+        tree.title = config.info().title().toLocalizedString()
+        tree.description = config.info().description().toLocalizedString()
+        //? }
         mod?.modIconPath?.let {
             tree.addMetadata("icon_path", it)
         }
 
-        config.categories().values.mapNotNull {
+        config.categories().values.forEach {
             parseCategory(it, config.id(), null, tree)
         }
 
+        //? >= 1.21.5 {
         parseAny(config.elements(), tree)
+        //? } else {
+        parseAny(config.entries().values, tree)
+        parseButtons(config.buttons(), tree)
+        //? }
 
         tree.addMetadata("custom_save", Runnable { config.save() })
         tree.addMetadata("no_cache", true)
@@ -72,8 +80,12 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
     private fun parseCategory(config: ResourcefulConfig, id: String, category: String?, root: Tree) {
         val tree = Tree.tree()
 
-        val id = "$id/${config.id()}"
+        val nestedId = "$id/${config.id()}"
+        //? >= 1.21.5 {
         val title = config.info().title().toComponent().string
+        //? } else {
+        val title = config.info().title().toLocalizedString()
+        //? }
 
         tree.category = category ?: title
         if (category != null) {
@@ -81,9 +93,14 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         }
 
         for ((_, entry) in config.categories()) {
-            parseCategory(entry, id, category ?: title, root)
+            parseCategory(entry, nestedId, category ?: title, root)
         }
+        //? >= 1.21.5 {
         parseAny(config.elements(), tree)
+        //? } else {
+        parseAny(config.entries().values, tree)
+        parseButtons(config.buttons(), tree)
+        //? }
 
         tree.map.forEach { (_, node) ->
             node.category = tree.category
@@ -102,6 +119,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         tree.put(property)
     }
 
+    //? >= 1.21.5 {
     private fun parseAny(list: Iterable<ResourcefulConfigElement>, tree: Tree) = list.forEach {
         when (it) {
             is ResourcefulConfigCategory -> parseCategory(it, tree)
@@ -140,6 +158,30 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         parseAny(entry.elements(), objectEntry)
         tree.put(objectEntry)
     }
+    //? } else {
+    private fun parseAny(list: Iterable<ResourcefulConfigEntry>, tree: Tree) = list.forEach {
+        when (it) {
+            is ResourcefulConfigObjectEntry -> parseObject(it, tree)
+            is ResourcefulConfigValueEntry -> buildAndAdd(it, tree)
+        }
+    }
+
+    private fun parseButtons(buttons: List<ResourcefulConfigButton>, tree: Tree) {
+        buttons.forEach { parseButton(it, tree) }
+    }
+
+    private fun parseObject(entry: ResourcefulConfigObjectEntry, tree: Tree) {
+        val objectEntry = Tree.tree()
+        objectEntry.title = entry.options().title.toLocalizedString()
+        objectEntry.description = entry.options().comment.toLocalizedString()
+        objectEntry.id = UUID.randomUUID().toString()
+        objectEntry.category = tree.category
+        objectEntry.subcategory = entry.options().title.toLocalizedString()
+        objectEntry.index = -1
+        parseAny(entry.entries().values, objectEntry)
+        tree.put(objectEntry)
+    }
+    //? }
 
     private fun buildAndAdd(entry: ResourcefulConfigValueEntry, tree: Tree) {
         val builder = RConfigPropertyBuilder(entry)
@@ -187,8 +229,13 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
     }
 
     private class RConfigPropertyBuilder constructor(option: ResourcefulConfigValueEntry) {
+        //? >= 1.21.5 {
         val name = option.options().title.toComponent()
-        val description = option.options().comment().toComponent()
+        val description = option.options().comment.toComponent()
+        //? } else {
+        val name = option.options().title.toLocalizedString()
+        val description = option.options().comment.toLocalizedString()
+        //? }
 
         var setter: (Any) -> Unit = { value ->
             when (option.type()) {

@@ -102,7 +102,7 @@ afterEvaluate {
         .isTransitive = false
 }
 
-base.archivesName.set("OneConfigBootstrap")
+base.archivesName.set("OneConfigBootstrap-${project.name}")
 
 tasks.withType<ProcessResources>().configureEach {
     val range = if (versionedCatalog.versions.has("minecraft.range")) {

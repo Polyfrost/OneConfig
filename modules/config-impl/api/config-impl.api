@@ -446,15 +446,15 @@ public class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop {
 	public static final field $stable I
 	public fun <init> (Ljava/lang/Object;Ljava/lang/Class;)V
 	public final fun get (Ljava/lang/String;)Ljava/lang/Object;
-	public final fun getDescription ()Ljava/lang/String;
+	public final fun getDescription ()Ljava/lang/Object;
 	public final fun getId ()Ljava/lang/String;
 	public final fun getProperty ()Lorg/polyfrost/oneconfig/api/config/v1/Property;
-	public final fun getTitle ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/Object;
 	public final fun getValue ()Ljava/lang/Object;
 	public final fun set (Ljava/lang/String;Ljava/lang/Object;)V
-	public final fun setDescription (Ljava/lang/String;)V
+	public final fun setDescription (Ljava/lang/Object;)V
 	public final fun setId (Ljava/lang/String;)V
-	public final fun setTitle (Ljava/lang/String;)V
+	public final fun setTitle (Ljava/lang/Object;)V
 	public final fun setValue (Ljava/lang/Object;)V
 }
 

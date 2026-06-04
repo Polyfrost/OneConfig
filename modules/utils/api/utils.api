@@ -57,8 +57,10 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/Compatib
 	public abstract fun keys ()Lorg/polyfrost/oneconfig/api/platform/v1/Keys;
 	public abstract fun loader ()Ljava/lang/String;
 	public abstract fun options ()Lorg/polyfrost/oneconfig/api/platform/v1/Options;
+	public abstract fun resolveComponent (Lnet/kyori/adventure/text/Component;)Ljava/lang/String;
 	public abstract fun version ()Ljava/lang/String;
 	public abstract fun windowHandle ()J
+	public abstract fun wrapPlatformComponent (Ljava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class org/polyfrost/oneconfig/api/platform/v1/DesktopHelper {
