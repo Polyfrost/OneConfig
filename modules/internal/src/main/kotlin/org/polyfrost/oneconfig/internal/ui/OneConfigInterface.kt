@@ -1,6 +1,8 @@
 package org.polyfrost.oneconfig.internal.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -28,8 +30,10 @@ import androidx.compose.ui.unit.Density
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.compose.rememberNavController
+import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 import org.polyfrost.oneconfig.internal.ui.shell.Lifecycle
+import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.OCViewModelStoreOwner
 import org.polyfrost.oneconfig.internal.ui.shell.Shell
@@ -52,7 +56,25 @@ fun OneConfigInterface(
 
     LaunchedEffect(initialRoute) {
         if (initialRoute != ModsGraph) {
+            // an initial navigation will fire a page transition; let "Show opening page animation" gate it
+            ShellState.initialTransitionConsumed = false
+            ShellState.animateOpeningPage = OneConfigConfig.showOpeningPageAnimation
+            // the NavHost only sets its graph once the Shell is composed (after `visible` flips true);
+            // wait for it so navigate() doesn't crash with "must call setGraph() before getGraph()".
+            var attempts = 0
+            while (attempts++ < 600) {
+                val ready = try {
+                    LocalNavController.current.graph; true
+                } catch (_: IllegalStateException) {
+                    false
+                }
+                if (ready) break
+                withFrameNanos { }
+            }
             LocalNavController.wrapper.navigate(initialRoute)
+        } else {
+            // no initial navigation, so the first user-driven transition should use the normal setting
+            ShellState.initialTransitionConsumed = true
         }
     }
 
@@ -89,8 +111,10 @@ fun OneConfigInterface(
                     1f
                 ).coerceAtLeast(0.25f)
             }
-            val adjustedDensity = if (scaleFactor >= 1f) currentDensity
-                else Density(currentDensity.density * scaleFactor, currentDensity.fontScale)
+            val userScale = if (OneConfigConfig.useCustomScale) OneConfigConfig.customScale.coerceIn(0.5f, 2f) else 1f
+            val effectiveScale = scaleFactor * userScale
+            val adjustedDensity = if (effectiveScale == 1f) currentDensity
+                else Density(currentDensity.density * effectiveScale, currentDensity.fontScale)
 
             CompositionLocalProvider(LocalDensity provides adjustedDensity) {
                 CompositionLocalProvider(
@@ -98,10 +122,17 @@ fun OneConfigInterface(
                     LocalViewModelStoreOwner provides OCViewModelStoreOwner,
                 ) {
                     Theme {
+                        val animMs = (OneConfigConfig.animationTime * 1000f).toInt().coerceAtLeast(1)
+                        val enter = if (OneConfigConfig.guiOpenAnimation)
+                            fadeIn(tween(animMs, easing = EaseOutExpo)) + scaleIn(tween(animMs, easing = EaseOutExpo), initialScale = 0.9f)
+                        else EnterTransition.None
+                        val exit = if (OneConfigConfig.guiClosingAnimation)
+                            fadeOut(tween(animMs, easing = EaseOutExpo)) + scaleOut(tween(animMs, easing = EaseOutExpo), targetScale = 0.9f)
+                        else ExitTransition.None
                         AnimatedVisibility(
                             visible = visible,
-                            enter = fadeIn(tween(GUI_ANIMATION_MS, easing = EaseOutExpo)) + scaleIn(tween(GUI_ANIMATION_MS, easing = EaseOutExpo), initialScale = 0.9f),
-                            exit = fadeOut(tween(GUI_ANIMATION_MS, easing = EaseOutExpo)) + scaleOut(tween(GUI_ANIMATION_MS, easing = EaseOutExpo), targetScale = 0.9f),
+                            enter = enter,
+                            exit = exit,
                         ) {
                             Shell(windowWidth, windowHeight, shellBackdrop)
                         }
@@ -114,8 +145,6 @@ fun OneConfigInterface(
 
 private const val DESIGN_WIDTH_DP  = 1391f
 private const val DESIGN_HEIGHT_DP = 700f
-
-private const val GUI_ANIMATION_MS = 600
 
 private val EaseOutExpo = Easing { x -> if (x >= 1f) 1f else 1f - 2f.pow(-10f * x) }
 

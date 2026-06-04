@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.shell
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -41,6 +43,7 @@ import androidx.navigation.compose.NavHost
 import org.jetbrains.skia.FilterTileMode
 import org.jetbrains.skia.ImageFilter
 import org.jetbrains.skia.Paint
+import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.components.Header
 import org.polyfrost.oneconfig.internal.ui.components.Sidebar
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
@@ -110,16 +113,26 @@ fun Shell(
                     if (isSearching) {
                         SearchResultsScreen(searchQuery)
                     } else {
+                        // The first transition after the menu opens follows "Show opening page animation";
+                        // all subsequent page transitions follow "Show Page Animations".
+                        fun resolvePageAnimate(): Boolean =
+                            if (!ShellState.initialTransitionConsumed) {
+                                ShellState.initialTransitionConsumed = true
+                                ShellState.animateOpeningPage
+                            } else OneConfigConfig.showPageAnimations
+
+                        fun pageMs() = (OneConfigConfig.pageAnimationDuration * 1000f).toInt().coerceAtLeast(1)
+
                         NavHost(
                             modifier = Modifier.fillMaxSize(),
                             navController = LocalNavController.current,
                             startDestination = ModsGraph,
 
-                            enterTransition = { slideInHorizontally(tween(250)) { it / 5 } + fadeIn(tween(250)) },
-                            exitTransition = { slideOutHorizontally(tween(250)) { -it / 5 } + fadeOut(tween(250)) },
+                            enterTransition = { if (resolvePageAnimate()) slideInHorizontally(tween(pageMs())) { it / 5 } + fadeIn(tween(pageMs())) else EnterTransition.None },
+                            exitTransition = { if (resolvePageAnimate()) slideOutHorizontally(tween(pageMs())) { -it / 5 } + fadeOut(tween(pageMs())) else ExitTransition.None },
 
-                            popEnterTransition = { slideInHorizontally(tween(250)) { -it / 5 } + fadeIn(tween(250)) },
-                            popExitTransition = { slideOutHorizontally(tween(250)) { it / 5 } + fadeOut(tween(250)) }
+                            popEnterTransition = { if (OneConfigConfig.showPageAnimations) slideInHorizontally(tween(pageMs())) { -it / 5 } + fadeIn(tween(pageMs())) else EnterTransition.None },
+                            popExitTransition = { if (OneConfigConfig.showPageAnimations) slideOutHorizontally(tween(pageMs())) { it / 5 } + fadeOut(tween(pageMs())) else ExitTransition.None }
                         ) {
                             navigation()
                         }

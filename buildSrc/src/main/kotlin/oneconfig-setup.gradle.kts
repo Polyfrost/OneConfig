@@ -157,7 +157,16 @@ dependencies {
     handleApiDep(versionedCatalog.bundles["adventure"])
 
     if (loader == "fabric") {
-        val adventurePlatformVersion = if (stonecutter.eval(stonecutter.current.version, ">= 26.1")) "6.9.0" else "6.8.0"
+        val adventurePlatformVersion = when {
+            stonecutter.eval(stonecutter.current.version, ">= 26.1") -> "6.9.0"
+            stonecutter.eval(stonecutter.current.version, ">= 1.21.11") -> "6.8.0"
+            stonecutter.eval(stonecutter.current.version, ">= 1.21.10") -> "6.7.0"
+            stonecutter.eval(stonecutter.current.version, ">= 1.21.8") -> "6.6.0"
+            stonecutter.eval(stonecutter.current.version, ">= 1.21.5") -> "6.4.0"
+            stonecutter.eval(stonecutter.current.version, ">= 1.21.4") -> "6.3.0"
+            stonecutter.eval(stonecutter.current.version, ">= 1.21.1") -> "5.14.2"
+            else -> error("No adventure-platform-fabric version for ${stonecutter.current.version}")
+        }
         val adventurePlatform = "net.kyori:adventure-platform-fabric:$adventurePlatformVersion"
         "modApi"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
         "modImplementation"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }

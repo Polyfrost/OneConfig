@@ -107,27 +107,30 @@ public class OneConfig
     }
 
     private static void registerKeybinds() {
-        KeybindHelper.builder()
-                .key(GLFW.GLFW_KEY_RIGHT_SHIFT)
-                .action(() -> {
-                    if (Minecraft.getInstance().level == null && !Platform.compatibility().isDevelopment()) {
-                        return;
-                    }
-                    if (isInChatScreen()) {
-                        return;
-                    }
-                    try {
-                        Platform.screen().display(new OneConfigUIScreen());
-                    } catch (Throwable t) {
-                        Minecraft.getInstance().gui.getChat()
-                                //~ if >= 26.1 'addMessage' -> 'addClientSystemMessage'
-                                .addClientSystemMessage(Component.literal("Failed to open OneConfig UI: " + t.getMessage() + ". Please report this!")
-                                        .withStyle(
-                                                ChatFormatting.RED));
-                        throw t;
-                    }
-                })
-                .register();
+        // Supply the open-GUI action to the config-backed OneConfig keybind. The action lives here (not on the
+        // keybind itself) because it references platform classes and is lost when the keybind is deserialized.
+        OneConfigConfig.setOpenAction(pressed -> {
+            if (!pressed) {
+                return true;
+            }
+            if (Minecraft.getInstance().level == null && !Platform.compatibility().isDevelopment()) {
+                return true;
+            }
+            if (isInChatScreen()) {
+                return true;
+            }
+            try {
+                Platform.screen().display(new OneConfigUIScreen());
+            } catch (Throwable t) {
+                Minecraft.getInstance().gui.getChat()
+                        //~ if >= 26.1 'addMessage' -> 'addClientSystemMessage'
+                        .addClientSystemMessage(Component.literal("Failed to open OneConfig UI: " + t.getMessage() + ". Please report this!")
+                                .withStyle(
+                                        ChatFormatting.RED));
+                throw t;
+            }
+            return true;
+        });
     }
 
     public static void render(GuiGraphicsExtractor graphics, float partial) {
@@ -253,10 +256,10 @@ public class OneConfig
 
         preloadCopycat();
 
+        registerKeybinds();
         new OneConfigConfig();
         new ThemeConfig();
         registerCommands();
-        registerKeybinds();
         registerEventHandlers();
 
         initialized = true;

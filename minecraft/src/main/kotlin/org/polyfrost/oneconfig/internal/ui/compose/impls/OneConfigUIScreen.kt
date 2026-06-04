@@ -9,12 +9,16 @@ import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.input.KeyEvent
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
 import org.polyfrost.oneconfig.internal.ui.compose.BlurRenderer
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.ChangeLogGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.PreferencesGraph
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import kotlin.math.pow
@@ -35,9 +39,19 @@ class OneConfigUIScreen @JvmOverloads constructor(
     @Volatile private var closeRequestedAt = 0L
     @Volatile private var openedAt = 0L
 
+    /** Captured once on open: whether to show the first-launch message (changelog) for this session. */
+    private var openToChangelog = false
+
+    private fun markClosed() {
+        ShellState.lastClosedAt = System.currentTimeMillis()
+    }
+
     override fun init() {
         ConfigRegistry.loadFrom(ConfigManager.active(), ConfigSource.OC)
         initialTree?.let { ConfigRegistry.registerTree(it, ConfigSource.OC) }
+
+        openToChangelog = OneConfigConfig.showFirstLaunchMessage
+        if (openToChangelog) OneConfigConfig.markFirstLaunchShown()
 
         try {
             ShellState.playerName = net.minecraft.client.Minecraft.getInstance().user.name
@@ -71,6 +85,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
             if (!closeRequested) {
                 closeRequested = true
                 closeRequestedAt = System.currentTimeMillis()
+                markClosed()
                 requestCloseCallback?.invoke()
             }
             return true
@@ -88,7 +103,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
             Platform.screen().close()
             return
         }
-        BlurRenderer.drawBlur(fullscreenBlurRadius())
+        if (OneConfigConfig.enableBlur) BlurRenderer.drawBlur(fullscreenBlurRadius())
         //~ if >= 26.1 'render' -> 'extractRenderState'
         super.extractRenderState(ctx, mouseX, mouseY, tickDelta)
     }
@@ -107,14 +122,33 @@ class OneConfigUIScreen @JvmOverloads constructor(
         return if (progress >= 1f) 1f else 1f - 2f.pow(-10f * progress)
     }
 
+    /**
+     * Resolves the route to open based on the "Opening Behavior" preference:
+     * 0 = Mods, 1 = Preferences, 2 = Previous page, 3 = Smart reset (previous page unless idle past "Time before reset").
+     */
+    private fun resolveOpeningBehaviorRoute(): Any = when (OneConfigConfig.openingBehavior) {
+        0 -> ModsGraph
+        1 -> PreferencesGraph
+        2 -> ShellState.lastRoute ?: ModsGraph
+        3 -> {
+            val last = ShellState.lastClosedAt
+            val withinWindow = last > 0L &&
+                    System.currentTimeMillis() - last <= (OneConfigConfig.timeBeforeReset * 1000f).toLong()
+            if (withinWindow) ShellState.lastRoute ?: ModsGraph else ModsGraph
+        }
+        else -> ModsGraph
+    }
+
     /** Holds a reference to the close-animation trigger from Compose */
     private var requestCloseCallback: (() -> Unit)? = null
 
     @Composable
     override fun compose() {
-        val initialRoute =
-            if (initialTreeId != null) ModConfigRoute(initialTreeId, initialCategory)
-            else org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
+        val initialRoute = when {
+            initialTreeId != null -> ModConfigRoute(initialTreeId, initialCategory)
+            openToChangelog -> ChangeLogGraph
+            else -> resolveOpeningBehaviorRoute()
+        }
 
         OneConfigInterface(
             client.window.screenWidth.toFloat(),
@@ -124,21 +158,24 @@ class OneConfigUIScreen @JvmOverloads constructor(
                 if (!closeRequested) {
                     closeRequested = true
                     closeRequestedAt = System.currentTimeMillis()
+                    markClosed()
                 }
             },
             onCloseReady = { closeRequest ->
                 requestCloseCallback = closeRequest
             },
         ) { windowOffset ->
-            drawIntoCanvas { canvas ->
-                BlurRenderer.drawRegion(
-                    canvas.nativeCanvas,
-                    windowOffset.x,
-                    windowOffset.y,
-                    size.width,
-                    size.height,
-                    SHELL_BLUR_RADIUS
-                )
+            if (OneConfigConfig.enableBlur) {
+                drawIntoCanvas { canvas ->
+                    BlurRenderer.drawRegion(
+                        canvas.nativeCanvas,
+                        windowOffset.x,
+                        windowOffset.y,
+                        size.width,
+                        size.height,
+                        SHELL_BLUR_RADIUS
+                    )
+                }
             }
         }
     }

@@ -27,6 +27,18 @@ object ShellState {
     var versionLabel by mutableStateOf("")
 
     var searchQuery by mutableStateOf("")
+
+    /** Last top-level route navigated to, used by the "Previous page" / "Smart reset" opening behaviors. */
+    var lastRoute: Any? = null
+
+    /** Wall-clock time (ms) the menu was last closed, used by the "Smart reset" opening behavior. */
+    var lastClosedAt: Long = 0L
+
+    /** When true, the initial page transition on open is animated (driven by "Show opening page animation"). */
+    var animateOpeningPage: Boolean = false
+
+    /** Consumed once per open so the first page transition can be treated specially. */
+    var initialTransitionConsumed: Boolean = false
 }
 object LocalNavController {
     lateinit var current: NavHostController
@@ -39,6 +51,7 @@ object LocalNavController {
         fun navigate(route: Any) {
             forwardStack.clear()
             ShellState.searchQuery = ""
+            ShellState.lastRoute = route
             current.navigate(route)
         }
 
@@ -54,6 +67,7 @@ object LocalNavController {
 
         fun forward() {
             val next = forwardStack.removeLastOrNull() ?: return
+            ShellState.lastRoute = next
             current.navigate(next)
         }
     }

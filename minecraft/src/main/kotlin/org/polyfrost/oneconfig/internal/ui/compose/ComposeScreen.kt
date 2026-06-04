@@ -316,10 +316,10 @@ abstract class ComposeScreen(
         val awtCode = glfwToAwtKeyCode(key)
 
         val eventType = KeyEvent.KEY_PRESSED
-        val eventLocation = KeyEvent.KEY_LOCATION_STANDARD
+        val eventLocation = glfwKeyLocation(key)
 
         val composeEvent = androidx.compose.ui.input.key.KeyEvent(
-            key = androidx.compose.ui.input.key.Key(awtCode),
+            key = androidx.compose.ui.input.key.Key(awtCode, eventLocation),
             type = KeyEventType.KeyDown,
             codePoint = awtCode,
             isCtrlPressed = modifiers.ctrlDown(),
@@ -353,9 +353,10 @@ abstract class ComposeScreen(
     //override fun keyReleased(key: Int, scanCode: Int, modifiers: Int): Boolean {
     //? }
         val awtCode = glfwToAwtKeyCode(key)
+        val eventLocation = glfwKeyLocation(key)
 
         val composeEvent = androidx.compose.ui.input.key.KeyEvent(
-            key = androidx.compose.ui.input.key.Key(awtCode),
+            key = androidx.compose.ui.input.key.Key(awtCode, eventLocation),
             type = KeyEventType.KeyUp,
             codePoint = awtCode,
             isCtrlPressed = modifiers.ctrlDown(),
@@ -368,7 +369,7 @@ abstract class ComposeScreen(
                 modifiersToAwt(modifiers),
                 awtCode,
                 KeyEvent.CHAR_UNDEFINED,
-                KeyEvent.KEY_LOCATION_STANDARD
+                eventLocation
             )
         )
 
@@ -395,6 +396,14 @@ abstract class ComposeScreen(
         if (modifiers.shiftDown()) m = m or InputEvent.SHIFT_DOWN_MASK
         if (modifiers.superDown()) m = m or InputEvent.META_DOWN_MASK
         return m
+    }
+
+    // AWT collapses left/right modifiers to one key code; preserve the side via key location so keybinds can tell
+    // left shift from right shift (etc). Read back in KeybindOption via Key.nativeKeyLocation.
+    private fun glfwKeyLocation(glfwKey: Int): Int = when (glfwKey) {
+        GLFW.GLFW_KEY_RIGHT_SHIFT, GLFW.GLFW_KEY_RIGHT_CONTROL, GLFW.GLFW_KEY_RIGHT_ALT, GLFW.GLFW_KEY_RIGHT_SUPER -> KeyEvent.KEY_LOCATION_RIGHT
+        GLFW.GLFW_KEY_LEFT_SHIFT, GLFW.GLFW_KEY_LEFT_CONTROL, GLFW.GLFW_KEY_LEFT_ALT, GLFW.GLFW_KEY_LEFT_SUPER -> KeyEvent.KEY_LOCATION_LEFT
+        else -> KeyEvent.KEY_LOCATION_STANDARD
     }
 
     private fun glfwToAwtKeyCode(glfwKey: Int): Int = when (glfwKey) {
