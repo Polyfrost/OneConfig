@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.compose.opengl
 
+import java.nio.ByteBuffer
 import java.util.BitSet
 
 class StoredGLStateProps {
@@ -19,6 +20,7 @@ class StoredGLStateProps {
     val lastBlendDstAlpha = IntArray(1)
     val lastBlendEquationRgb = IntArray(1)
     val lastBlendEquationAlpha = IntArray(1)
+    val lastColorMask = ByteBuffer.allocateDirect(4)
 
     val lastPixelUnpackBufferBinding = IntArray(1)
     val lastUnpackAlignment = IntArray(1)

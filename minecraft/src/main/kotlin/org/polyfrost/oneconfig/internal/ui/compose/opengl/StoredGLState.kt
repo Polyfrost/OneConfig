@@ -28,6 +28,9 @@ class StoredGLState(private val glVersion: Int) {
             glGetIntegerv(GL_BLEND_DST_ALPHA, lastBlendDstAlpha)
             glGetIntegerv(GL_BLEND_EQUATION_RGB, lastBlendEquationRgb)
             glGetIntegerv(GL_BLEND_EQUATION_ALPHA, lastBlendEquationAlpha)
+            lastColorMask.clear()
+            glGetBooleanv(GL_COLOR_WRITEMASK, lastColorMask)
+            lastColorMask.rewind()
             lastEnableBlend = glIsEnabled(GL_BLEND)
             lastEnableCullFace = glIsEnabled(GL_CULL_FACE)
             lastEnableDepthTest = glIsEnabled(GL_DEPTH_TEST)
@@ -87,6 +90,12 @@ class StoredGLState(private val glVersion: Int) {
                 lastBlendDstRgb[0],
                 lastBlendSrcAlpha[0],
                 lastBlendDstAlpha[0]
+            )
+            glColorMask(
+                lastColorMask.get(0).toInt() != 0,
+                lastColorMask.get(1).toInt() != 0,
+                lastColorMask.get(2).toInt() != 0,
+                lastColorMask.get(3).toInt() != 0
             )
             if (lastEnableBlend) glEnable(GL_BLEND)
             else glDisable(GL_BLEND)

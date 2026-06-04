@@ -100,6 +100,7 @@ public final class org/polyfrost/oneconfig/api/platform/v1/ModInfo {
 	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/nio/file/Path;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/platform/v1/ModInfo;
 	public static synthetic fun copy$default (Lorg/polyfrost/oneconfig/api/platform/v1/ModInfo;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/nio/file/Path;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/platform/v1/ModInfo;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun extractIconFile ()Ljava/lang/String;
 	public final fun getFile ()Ljava/nio/file/Path;
 	public final fun getId ()Ljava/lang/String;
 	public static final fun getLoadedMods ()Ljava/util/Set;

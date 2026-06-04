@@ -44,8 +44,8 @@ class HudEditorUIScreen : ComposeScreen() {
     override fun keyPressed(event: KeyEvent): Boolean {
         val key = event.key
     //? } else {
-    //override fun keyPressed(key: Int, scanCode: Int, modifiers: Int): Boolean {
-    //? }
+    /*override fun keyPressed(key: Int, scanCode: Int, modifiers: Int): Boolean {
+    *///? }
         if (key == InputConstants.KEY_ESCAPE) {
             if (!closeRequested) {
                 closeRequested = true
@@ -57,8 +57,8 @@ class HudEditorUIScreen : ComposeScreen() {
         //? >= 1.21.10 {
         return super.keyPressed(event)
         //? } else {
-        //return super.keyPressed(key, scanCode, modifiers)
-        //? }
+        /*return super.keyPressed(key, scanCode, modifiers)
+        *///? }
     }
 
     //~ if >= 26.1 'render' -> 'extractRenderState'

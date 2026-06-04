@@ -64,9 +64,9 @@ public class TestCommand_Test {
         String name = profile.name();
         String id = profile.id().toString();
         //? } else {
-        //String name = profile.getName();
-        //String id = profile.getId().toString();
-        //? }
+        /*String name = profile.getName();
+        String id = profile.getId().toString();
+        *///? }
         Platform.compatibility().displayChatMessage("Player test: " + name);
         Platform.compatibility().displayChatMessage(id);
     }

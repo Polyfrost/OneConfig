@@ -1,10 +1,13 @@
 package org.polyfrost.oneconfig.api.platform.v1.internal;
 
 import net.fabricmc.loader.api.FabricLoader;
-import net.kyori.adventure.platform.modcommon.MinecraftAudiences;
+//? if >=1.21.4 {
 import net.kyori.adventure.platform.modcommon.MinecraftClientAudiences;
+//?} else {
+/*import net.kyori.adventure.platform.fabric.FabricClientAudiences;
+*///?}
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.ComponentLike;import net.minecraft.SharedConstants;
+import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
 import org.polyfrost.oneconfig.api.platform.v1.CompatibilityPlatform;
 import org.polyfrost.oneconfig.api.platform.v1.Keys;
@@ -81,14 +84,22 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
 
     @Override
     public String resolveComponent(Component component) {
+        //? if >=1.21.4 {
         var minecraftComponent = MinecraftClientAudiences.of().asNative(component);
+        //?} else {
+        /*var minecraftComponent = FabricClientAudiences.of().toNative(component);
+        *///?}
         return minecraftComponent.getString();
     }
 
     @Override
     public Object wrapPlatformComponent(Object component) {
         if (component instanceof net.minecraft.network.chat.Component comp) {
+            //? if >=1.21.4 {
             return MinecraftClientAudiences.of().asAdventure(comp);
+            //?} else {
+            /*return comp.asComponent();
+            *///?}
         }
         return component;
     }

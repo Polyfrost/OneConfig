@@ -33,8 +33,8 @@ public class Mixin_KeyInputEvent {
         EventManager.INSTANCE.post(new KeyInputEvent(0, (char) event.codepoint(), 1));
     }
     //? } else {
-    /*
-    @Inject(method = "keyPress", at = @At("HEAD"))
+    
+    /*@Inject(method = "keyPress", at = @At("HEAD"))
     private void keyCallback(long window, int key, int scancode, int action, int mods, CallbackInfo ci) {
         EventManager.INSTANCE.post(new KeyInputEvent(key, (char) 0, action));
     }

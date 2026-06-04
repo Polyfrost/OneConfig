@@ -24,6 +24,9 @@ object ShellState {
 
     var playerName by mutableStateOf("Player")
 
+    /** PNG bytes for the local player's head avatar, or null until loaded. */
+    var playerHeadPng by mutableStateOf<ByteArray?>(null)
+
     var versionLabel by mutableStateOf("")
 
     var searchQuery by mutableStateOf("")

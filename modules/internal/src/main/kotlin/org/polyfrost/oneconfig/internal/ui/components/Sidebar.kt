@@ -196,13 +196,7 @@ private fun Account() {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Image(
-                    painter = painterResource("/assets/oneconfig/images/head.png"), // todo: replace with coil
-                    contentDescription = null,
-                    modifier = Modifier.size(32.dp)
-                        .clip(LocalTheme.current.sideBarNavigationEntryShape)
-                        .border(1.dp, LocalTheme.current.borderColor, LocalTheme.current.sideBarNavigationEntryShape)
-                )
+                PlayerHead(Modifier.size(32.dp))
                 Column(
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {

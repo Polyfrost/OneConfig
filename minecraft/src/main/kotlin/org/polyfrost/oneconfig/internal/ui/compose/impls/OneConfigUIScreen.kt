@@ -19,6 +19,7 @@ import org.polyfrost.oneconfig.internal.ui.navigation.graph.ChangeLogGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.PreferencesGraph
+import org.polyfrost.oneconfig.internal.ui.PlayerHeadLoader
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import kotlin.math.pow
@@ -58,6 +59,16 @@ class OneConfigUIScreen @JvmOverloads constructor(
         } catch (_: Throwable) {
             ShellState.playerName = "Player"
         }
+        ShellState.playerHeadPng = null
+        val client = net.minecraft.client.Minecraft.getInstance()
+        Thread {
+            val head = PlayerHeadLoader.loadLocalPlayerHeadPng() ?: return@Thread
+            client.execute { ShellState.playerHeadPng = head }
+        }.apply {
+            isDaemon = true
+            name = "OneConfig-PlayerHead"
+            start()
+        }
         try {
             val loaderStr = Platform.loader().loaderString
             val parts = loaderStr.split("-", limit = 2)
@@ -79,8 +90,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
     override fun keyPressed(event: KeyEvent): Boolean {
         val key = event.key
         //? } else {
-        //override fun keyPressed(key: Int, scanCode: Int, modifiers: Int): Boolean {
-        //? }
+        /*override fun keyPressed(key: Int, scanCode: Int, modifiers: Int): Boolean {
+        *///? }
         if (key == InputConstants.KEY_ESCAPE) {
             if (!closeRequested) {
                 closeRequested = true
@@ -93,8 +104,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
         //? >= 1.21.10 {
         return super.keyPressed(event)
         //? } else {
-        //return super.keyPressed(key, scanCode, modifiers)
-        //? }
+        /*return super.keyPressed(key, scanCode, modifiers)
+        *///? }
     }
 
     //~ if >= 26.1 'render' -> 'extractRenderState'

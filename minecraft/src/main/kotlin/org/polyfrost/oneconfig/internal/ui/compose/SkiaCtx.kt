@@ -72,12 +72,12 @@ object SkiaCtx {
         override fun close() { this.id = -1 }
     }
     //? } else {
-    private class HudGlTexture : net.minecraft.client.renderer.texture.AbstractTexture() {
+    /*private class HudGlTexture : net.minecraft.client.renderer.texture.AbstractTexture() {
         fun setGlTexId(id: Int) { this.id = id }
         override fun load(manager: net.minecraft.server.packs.resources.ResourceManager) {}
         override fun close() { this.id = -1 }
     }
-    //? }
+    *///? }
     *///? }
 
     private var glSurface: Surface? = null
@@ -167,8 +167,8 @@ object SkiaCtx {
         //? >= 1.21.4 {
         guiGraphics.blit(net.minecraft.client.renderer.RenderType::guiTextured, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
         //?} else {
-        //guiGraphics.blit(HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
-        //?}
+        /*guiGraphics.blit(HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        *///?}
         guiGraphics.pose().popPose()
         *///? }
     }
@@ -277,8 +277,8 @@ object SkiaCtx {
             //? } else if >= 1.21.4 {
             // rt = TextureTarget(w, h, true)
             //? } else {
-            //rt = TextureTarget(w, h, true, Minecraft.ON_OSX)
-            //? }
+            /*rt = TextureTarget(w, h, true, Minecraft.ON_OSX)
+            *///? }
             hudTarget = rt
 
             val svc = vulkanService ?: return null

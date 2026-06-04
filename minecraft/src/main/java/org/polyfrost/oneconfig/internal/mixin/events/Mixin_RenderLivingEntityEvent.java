@@ -33,8 +33,8 @@ public class Mixin_RenderLivingEntityEvent<
             //~ if >= 26.1 'state/Camera' -> 'state/level/Camera'
             method = "submit(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V",
             //? } >= 1.21.2 {
-            //method = "render(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
-            //? } else
+            /*method = "render(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
+            *///? } else
             //method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
             at = @At("HEAD"),
             cancellable = true
@@ -45,9 +45,9 @@ public class Mixin_RenderLivingEntityEvent<
             //? } else
             //T entity,
             //? <= 1.21.1 {
-            //float entityYaw,
-            //float partialTicks,
-            //? }
+            /*float entityYaw,
+            float partialTicks,
+            *///? }
             //? >= 1.21.9 {
             PoseStack matrixStack,
             SubmitNodeCollector renderQueue,
@@ -66,10 +66,10 @@ public class Mixin_RenderLivingEntityEvent<
         double z = entity.z;
         float partialTicks = Minecraft.getInstance().getFrameTimeNs();
         //? } else {
-        //double x = entity.getX();
-        //double y = entity.getY();
-        //double z = entity.getZ();
-        //? }
+        /*double x = entity.getX();
+        double y = entity.getY();
+        double z = entity.getZ();
+        *///? }
         RenderLivingEvent event = new RenderLivingEvent.Pre(entity, partialTicks, x, y, z);
         EventManager.INSTANCE.post(event);
         if (event.cancelled) {
@@ -82,8 +82,8 @@ public class Mixin_RenderLivingEntityEvent<
             //~ if >= 26.1 'state/Camera' -> 'state/level/Camera'
             method = "submit(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V",
             //? } >= 1.21.2 {
-            // method = "render(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
-            //?} else
+             /*method = "render(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
+            *///?} else
             //method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
             at = @At("TAIL")
     )
@@ -93,9 +93,9 @@ public class Mixin_RenderLivingEntityEvent<
             //? } else
             //T entity,
             //? <= 1.21.1 {
-            //float entityYaw,
-            //float partialTicks,
-            //? }
+            /*float entityYaw,
+            float partialTicks,
+            *///? }
             //? >= 1.21.9 {
             PoseStack matrixStack,
             SubmitNodeCollector renderQueue,
@@ -113,10 +113,10 @@ public class Mixin_RenderLivingEntityEvent<
         double z = entity.z;
         float partialTicks = Minecraft.getInstance().getFrameTimeNs();
         //? } else {
-        //double x = entity.getX();
-        //double y = entity.getY();
-        //double z = entity.getZ();
-        //? }
+        /*double x = entity.getX();
+        double y = entity.getY();
+        double z = entity.getZ();
+        *///? }
         RenderLivingEvent event = new RenderLivingEvent.Post(entity, partialTicks, x, y, z);
         EventManager.INSTANCE.post(event);
         // Can't cancel when the method has already returned lol
