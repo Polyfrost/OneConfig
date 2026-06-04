@@ -54,8 +54,10 @@ import androidx.compose.ui.graphics.skiaCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.isShiftPressed
 import androidx.compose.ui.input.pointer.onPointerEvent
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -75,6 +77,8 @@ import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.layout.FlexibleLayout
+import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasResetMenu
+import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Designer
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Settings
 import org.polyfrost.oneconfig.api.platform.v1.Platform
@@ -125,25 +129,64 @@ private fun hitTestHud(hud: Hud, screenX: Float, screenY: Float): Boolean {
     return mcX >= bounds.x && mcX <= bounds.x + bounds.width && mcY >= bounds.y && mcY <= bounds.y + bounds.height
 }
 
-private fun hitTestGear(hud: Hud, screenX: Float, screenY: Float, mcToScreen: Float, iconPx: Float): Boolean {
-    val bounds = hudBounds(hud) ?: return false
+private data class HudActionBarLayout(val settingsX: Float, val deleteX: Float, val y: Float)
+
+private fun hudActionBarLayout(
+    hud: Hud,
+    mcToScreen: Float,
+    iconPx: Float,
+    gapPx: Float,
+): HudActionBarLayout? {
+    val bounds = hudBounds(hud) ?: return null
     val sx = bounds.x * mcToScreen
     val sy = bounds.y * mcToScreen
     val sw = bounds.width * mcToScreen
     val sh = bounds.height * mcToScreen
-    val iconX = sx + sw / 2 - iconPx / 2
-    val iconY = sy + sh + 6f
-    return screenX >= iconX && screenX <= iconX + iconPx && screenY >= iconY && screenY <= iconPx + iconY
+    val barWidth = iconPx * 2 + gapPx
+    val startX = sx + sw / 2 - barWidth / 2
+    return HudActionBarLayout(startX, startX + iconPx + gapPx, sy + sh + 6f)
 }
 
-private fun hitTestHudWithGear(hud: Hud, screenX: Float, screenY: Float, mcToScreen: Float, iconPx: Float): Boolean {
+private fun hitTestActionButton(
+    screenX: Float,
+    screenY: Float,
+    iconX: Float,
+    iconY: Float,
+    iconPx: Float,
+): Boolean =
+    screenX >= iconX && screenX <= iconX + iconPx && screenY >= iconY && screenY <= iconY + iconPx
+
+private fun hitTestHudActionBar(
+    hud: Hud,
+    screenX: Float,
+    screenY: Float,
+    mcToScreen: Float,
+    iconPx: Float,
+    gapPx: Float,
+): Boolean {
+    val layout = hudActionBarLayout(hud, mcToScreen, iconPx, gapPx) ?: return false
+    return hitTestActionButton(screenX, screenY, layout.settingsX, layout.y, iconPx) ||
+        hitTestActionButton(screenX, screenY, layout.deleteX, layout.y, iconPx)
+}
+
+private fun hitTestHudWithActionBar(
+    hud: Hud,
+    screenX: Float,
+    screenY: Float,
+    mcToScreen: Float,
+    iconPx: Float,
+    gapPx: Float,
+): Boolean {
     val bounds = hudBounds(hud) ?: return false
     val sx = bounds.x * mcToScreen
     val sy = bounds.y * mcToScreen
     val sw = bounds.width * mcToScreen
     val sh = bounds.height * mcToScreen
+    val barWidth = iconPx * 2 + gapPx
+    val zoneW = maxOf(sw, barWidth)
+    val zoneX = sx + sw / 2 - zoneW / 2
     val totalH = sh + 6f + iconPx
-    return screenX >= sx && screenX <= sx + sw && screenY >= sy && screenY <= sy + totalH
+    return screenX >= zoneX && screenX <= zoneX + zoneW && screenY >= sy && screenY <= sy + totalH
 }
 
 private fun hitTestResizeHandle(hud: Hud, screenX: Float, screenY: Float, mcToScreen: Float): ResizeCorner? {
@@ -294,6 +337,12 @@ fun HudDesignStudio() {
     var filterModId by remember { mutableStateOf<String?>(null) }
     var searchText by remember { mutableStateOf("") }
     var panelAreaWidth by remember { mutableStateOf(0f) }
+    var hudContextMenuTarget by remember { mutableStateOf<Hud?>(null) }
+    var hudContextMenuOffset by remember { mutableStateOf(IntOffset.Zero) }
+
+    LaunchedEffect(selectedHud) {
+        selectedHud?.let { repairHudStaticSize(it) }
+    }
 
     val providers = remember { HudManager.providers().filter { it !is LegacyHud }.toList() }
     val modIds = remember(providers) { providers.mapNotNull { it.configId }.distinct() }
@@ -303,14 +352,28 @@ fun HudDesignStudio() {
     }
     val densityObj = LocalDensity.current
     val densityFloat = densityObj.density
-    val gearIconPx = with(densityObj) { 24.dp.toPx() }
+    val actionIconPx = with(densityObj) { 24.dp.toPx() }
+    val actionBarGapPx = with(densityObj) { 8.dp.toPx() }
 
-    // Unified pointer modifier: drag any HUD, click to select, hover to show gear
+    // Unified pointer modifier: drag any HUD, click to select, hover to show action bar
     val pointerModifier = Modifier
         .onPointerEvent(PointerEventType.Press) { event ->
             if (event.changes.any { it.isConsumed }) return@onPointerEvent
             val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
             if (panelAreaWidth > 0f && pos.x > size.width - panelAreaWidth) return@onPointerEvent
+            if (event.buttons.isSecondaryPressed) {
+                val hit = HudManager.activeInstances.lastOrNull { it !is LegacyHud && hitTestHud(it, pos.x, pos.y) }
+                if (hit != null) {
+                    event.changes.forEach { it.consume() }
+                    Snapshot.withMutableSnapshot {
+                        hudContextMenuTarget = hit
+                        hudContextMenuOffset = IntOffset(pos.x.roundToInt(), pos.y.roundToInt())
+                        selectedHud = hit
+                        libraryVisible = false
+                    }
+                }
+                return@onPointerEvent
+            }
             val mcToScreen = Platform.screen().mcToScreenScale()
             val selected = selectedHud
             if (selected != null && selected !is LegacyHud) {
@@ -332,9 +395,11 @@ fun HudDesignStudio() {
                     return@onPointerEvent
                 }
             }
-            val currentGearTarget = if (selectedHud == null) hoveredHud else null
-            if (currentGearTarget != null && currentGearTarget !is LegacyHud) {
-                if (hitTestGear(currentGearTarget, pos.x, pos.y, mcToScreen, gearIconPx)) return@onPointerEvent
+            val currentActionBarTarget = if (selectedHud == null) hoveredHud else null
+            if (currentActionBarTarget != null && currentActionBarTarget !is LegacyHud) {
+                if (hitTestHudActionBar(currentActionBarTarget, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx)) {
+                    return@onPointerEvent
+                }
             }
             val s = Platform.screen().screenToMcScale()
             val hit = HudManager.activeInstances.lastOrNull { it !is LegacyHud && hitTestHud(it, pos.x, pos.y) }
@@ -396,15 +461,15 @@ fun HudDesignStudio() {
             } else {
                 val hit = HudManager.activeInstances.lastOrNull { it !is LegacyHud && hitTestHud(it, pos.x, pos.y) }
                 val mcToScreen = Platform.screen().mcToScreenScale()
-                val overGear = selectedHud == null && hoveredHud?.let { hh ->
-                    hh !is LegacyHud && hitTestGear(hh, pos.x, pos.y, mcToScreen, gearIconPx)
+                val overActionBar = selectedHud == null && hoveredHud?.let { hh ->
+                    hh !is LegacyHud && hitTestHudActionBar(hh, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx)
                 } == true
                 val inExpandedZone = hoveredHud?.let { hh ->
-                    hh !is LegacyHud && hitTestHudWithGear(hh, pos.x, pos.y, mcToScreen, gearIconPx)
+                    hh !is LegacyHud && hitTestHudWithActionBar(hh, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx)
                 } == true
                 if (hit != null) {
                     hoveredHud = hit
-                } else if (!overGear && !inExpandedZone) {
+                } else if (!overActionBar && !inExpandedZone) {
                     hoveredHud = null
                 }
             }
@@ -433,10 +498,12 @@ fun HudDesignStudio() {
             }
             if (!wasDragging || wasDraggedHud == null) {
                 val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
-                val currentGearTarget = if (selectedHud == null) hoveredHud else null
-                if (currentGearTarget != null && currentGearTarget !is LegacyHud) {
+                val currentActionBarTarget = if (selectedHud == null) hoveredHud else null
+                if (currentActionBarTarget != null && currentActionBarTarget !is LegacyHud) {
                     val mcToScreen = Platform.screen().mcToScreenScale()
-                    if (hitTestGear(currentGearTarget, pos.x, pos.y, mcToScreen, gearIconPx)) return@onPointerEvent
+                    if (hitTestHudActionBar(currentActionBarTarget, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx)) {
+                        return@onPointerEvent
+                    }
                 }
                 val hit = HudManager.activeInstances.lastOrNull { it !is LegacyHud && hitTestHud(it, pos.x, pos.y) }
                 if (hit != null) {
@@ -496,33 +563,59 @@ fun HudDesignStudio() {
                 }
         )
 
-        val gearTarget = if (selectedHud == null) hoveredHud else null
-        if (gearTarget != null && gearTarget !is LegacyHud) {
+        val actionBarTarget = if (selectedHud == null) hoveredHud else null
+        if (actionBarTarget != null && actionBarTarget !is LegacyHud) {
             val mcToScreen = Platform.screen().mcToScreenScale()
-            val bounds = hudBounds(gearTarget)
-            if (bounds != null && bounds.width > 0f && bounds.height > 0f) {
-                val sx = bounds.x * mcToScreen
-                val sy = bounds.y * mcToScreen
-                val sw = bounds.width * mcToScreen
-                val sh = bounds.height * mcToScreen
+            val bounds = hudBounds(actionBarTarget)
+            val layout = hudActionBarLayout(actionBarTarget, mcToScreen, actionIconPx, actionBarGapPx)
+            if (bounds != null && bounds.width > 0f && bounds.height > 0f && layout != null) {
                 val iconSize = 24.dp
-                val iconX = ((sx + sw / 2 - gearIconPx / 2) / densityFloat).coerceAtLeast(0f)
-                val iconY = ((sy + sh + 6f) / densityFloat).coerceAtLeast(0f)
-                Box(
+                val barX = (layout.settingsX / densityFloat).coerceAtLeast(0f)
+                val iconY = (layout.y / densityFloat).coerceAtLeast(0f)
+                Row(
                     modifier = Modifier
-                        .padding(start = iconX.dp, top = iconY.dp)
+                        .padding(start = barX.dp, top = iconY.dp)
                         .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
                             if (event.changes.none { it.isConsumed }) {
                                 event.changes.forEach { it.consume() }
-                                Snapshot.withMutableSnapshot { selectedHud = gearTarget }
                             }
                         }
                         .onPointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
                             event.changes.forEach { if (!it.isConsumed) it.consume() }
-                        }
+                        },
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    IconButton("settings", modifier = Modifier.size(iconSize)) {
-                        Snapshot.withMutableSnapshot { selectedHud = gearTarget }
+                    Box(
+                        modifier = Modifier.onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+                            if (event.changes.none { it.isConsumed }) {
+                                event.changes.forEach { it.consume() }
+                                Snapshot.withMutableSnapshot { selectedHud = actionBarTarget }
+                            }
+                        },
+                    ) {
+                        IconButton("settings", modifier = Modifier.size(iconSize)) {
+                            Snapshot.withMutableSnapshot { selectedHud = actionBarTarget }
+                        }
+                    }
+                    Box(
+                        modifier = Modifier.onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+                            if (event.changes.none { it.isConsumed }) {
+                                event.changes.forEach { it.consume() }
+                                Snapshot.withMutableSnapshot {
+                                    if (selectedHud === actionBarTarget) selectedHud = null
+                                    hoveredHud = null
+                                    HudManager.removeHud(actionBarTarget, delete = true)
+                                }
+                            }
+                        },
+                    ) {
+                        IconButton("trash", modifier = Modifier.size(iconSize)) {
+                            Snapshot.withMutableSnapshot {
+                                if (selectedHud === actionBarTarget) selectedHud = null
+                                hoveredHud = null
+                                HudManager.removeHud(actionBarTarget, delete = true)
+                            }
+                        }
                     }
                 }
             }
@@ -610,6 +703,13 @@ fun HudDesignStudio() {
                 }
             }
         }
+
+        HudCanvasResetMenu(
+            hud = hudContextMenuTarget,
+            expanded = hudContextMenuTarget != null,
+            offset = hudContextMenuOffset,
+            onDismiss = { hudContextMenuTarget = null },
+        )
     }
 }
 

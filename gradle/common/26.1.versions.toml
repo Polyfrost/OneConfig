@@ -1,5 +1,6 @@
 [versions]
 minecraft = "26.1"
+minecraft-end = "26.1.2"
 
 rconfig = "4.0.1"
 

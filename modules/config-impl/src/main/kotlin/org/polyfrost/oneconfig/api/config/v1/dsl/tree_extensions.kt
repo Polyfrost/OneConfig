@@ -33,3 +33,10 @@ var Tree.saveFunction: Runnable?
 var Tree.noCache: Boolean
     get() = metadata?.getOrDefault("no_cache", false) as Boolean
     set(value) = addMetadata("no_cache", value)
+
+/** When true, this tree is shown in the UI but is not loaded from or saved to disk. */
+var Tree.uiOnly: Boolean
+    get() = metadata?.get("ui_only") == true
+    set(value) {
+        if (value) addMetadata("ui_only", true) else removeMetadata("ui_only")
+    }

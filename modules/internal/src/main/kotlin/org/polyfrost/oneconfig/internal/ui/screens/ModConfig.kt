@@ -24,9 +24,17 @@ fun ModConfig(id: String, initialCategory: String? = null) {
         onDispose {  }
     }
 
+    val externalOpen = config?.onOpen
+
     when {
         config == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("Unknown mod: $id", color = LocalTheme.current.textColorSecondary)
+        }
+        tree?.getMetadata<Boolean>("ui_only") == true && externalOpen != null -> Box(
+            Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("This mod opens its own settings screen.", color = LocalTheme.current.textColorSecondary)
         }
         tree == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("This mod manages its own configuration.", color = LocalTheme.current.textColorSecondary)

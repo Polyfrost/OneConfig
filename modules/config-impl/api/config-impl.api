@@ -16,6 +16,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
 	protected fun addMigrationEntries ([Ljava/lang/String;)V
 	protected fun addMigrationEntry (Ljava/lang/String;Ljava/lang/String;)V
 	protected fun addToInitQueue ()V
+	public static fun captureDefaults (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 	protected fun getProperty (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	protected static fun getProperty (Lorg/polyfrost/oneconfig/api/config/v1/Tree;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public fun getTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
@@ -481,6 +482,7 @@ public final class org/polyfrost/oneconfig/api/config/v1/dsl/Tree_extensionsKt {
 	public static final fun getNoCache (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z
 	public static final fun getSaveFunction (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Ljava/lang/Runnable;
 	public static final fun getSubcategory (Lorg/polyfrost/oneconfig/api/config/v1/Node;)Ljava/lang/String;
+	public static final fun getUiOnly (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z
 	public static final fun getVisualizer (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Ljava/lang/Class;
 	public static final fun setCategory (Lorg/polyfrost/oneconfig/api/config/v1/Node;Ljava/lang/String;)V
 	public static final fun setIcon (Lorg/polyfrost/oneconfig/api/config/v1/Node;Ljava/lang/String;)V
@@ -488,6 +490,7 @@ public final class org/polyfrost/oneconfig/api/config/v1/dsl/Tree_extensionsKt {
 	public static final fun setNoCache (Lorg/polyfrost/oneconfig/api/config/v1/Tree;Z)V
 	public static final fun setSaveFunction (Lorg/polyfrost/oneconfig/api/config/v1/Tree;Ljava/lang/Runnable;)V
 	public static final fun setSubcategory (Lorg/polyfrost/oneconfig/api/config/v1/Node;Ljava/lang/String;)V
+	public static final fun setUiOnly (Lorg/polyfrost/oneconfig/api/config/v1/Tree;Z)V
 	public static final fun setVisualizer (Lorg/polyfrost/oneconfig/api/config/v1/Property;Ljava/lang/Class;)V
 }
 

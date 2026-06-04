@@ -104,6 +104,64 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         }
     }
 
+    /**
+     * Fills in [staticW]/[staticH] when static sizing is enabled but dimensions are unset or invalid
+     * (e.g. [TextHud]'s unmeasured sentinel of {@code -1f}). Safe to call after a reset-to-default.
+     */
+    fun reseedStaticSizeIfNeeded() {
+        if (!staticWidth) return
+        if (staticW > 0f && staticH > 0f) return
+        reseedStaticWidth()
+        reseedStaticHeight()
+    }
+
+    /** Re-measures content and applies a new static width. */
+    fun reseedStaticWidth() {
+        if (!staticWidth) return
+        val (minW, _) = minimumSize()
+        val natural = measureNaturalContentSize()
+        staticW = if (natural != null && natural.first > 0f) {
+            maxOf(natural.first, minW)
+        } else {
+            maxOf(padLeft + padRight + 80f, minW)
+        }
+    }
+
+    /** Re-measures content and applies a new static height. */
+    fun reseedStaticHeight() {
+        if (!staticWidth) return
+        val (_, minH) = minimumSize()
+        val natural = measureNaturalContentSize()
+        staticH = if (natural != null && natural.second > 0f) {
+            maxOf(natural.second, minH)
+        } else {
+            maxOf(padTop + padBottom + 16f, minH)
+        }
+    }
+
+    /**
+     * Stores the current valid [staticW]/[staticH] as reset defaults (the size after first layout).
+     * [TextHud]'s unmeasured {@code -1f} sentinel is never stored.
+     */
+    fun captureStaticSizeDefaults(force: Boolean = false) {
+        val t = tree ?: return
+        if (!staticWidth) return
+        if (staticW > 0f) {
+            t.getProp("staticW")?.let { prop ->
+                if (force || prop.getMetadata<Any?>("default") == null) {
+                    prop.addMetadata("default", staticW)
+                }
+            }
+        }
+        if (staticH > 0f) {
+            t.getProp("staticH")?.let { prop ->
+                if (force || prop.getMetadata<Any?>("default") == null) {
+                    prop.addMetadata("default", staticH)
+                }
+            }
+        }
+    }
+
     @Switch(title = "Show in F3")
     var showInF3 = true
 
@@ -363,6 +421,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             }
             addCallbacks(tree)
             if (with == null) LOGGER.info("generated new HUD config for $title -> ${tree.id}")
+            Config.captureDefaults(tree)
+            sanitizeHudCapturedDefaults(tree)
             ConfigManager.active().register(tree)
             this.tree = tree
         }
@@ -427,6 +487,17 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         _shadowColor = mutableStateOf(this@Hud.shadowColor)
         _shadowOffsetX = mutableStateOf(this@Hud.shadowOffsetX)
         _shadowOffsetY = mutableStateOf(this@Hud.shadowOffsetY)
+    }
+
+    private companion object {
+        private fun sanitizeHudCapturedDefaults(tree: Tree) {
+            for (id in listOf("staticW", "staticH")) {
+                val prop = tree.getProp(id) ?: continue
+                val def = prop.getMetadata<Any?>("default") ?: continue
+                val f = (def as? Number)?.toFloat() ?: continue
+                if (f <= 0f) prop.removeMetadata("default")
+            }
+        }
     }
 
     class Category(val name: String, val id: Byte) {

@@ -1,0 +1,243 @@
+package org.polyfrost.oneconfig.internal.ui.hud
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.isSecondaryPressed
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
+import kotlin.math.roundToInt
+import org.polyfrost.oneconfig.internal.ui.components.Icon
+import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.onClick
+import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
+import org.polyfrost.oneconfig.internal.ui.components.settings.optionHasDefault
+import org.polyfrost.oneconfig.internal.ui.components.settings.resetOption
+
+private val hudUiEpochs = mutableStateMapOf<Hud, Int>()
+
+private val STATIC_SIZE_OPTIONS = setOf("staticW", "staticH")
+
+/** Bumped when any HUD field is reset so bound [remember] state is recreated from the HUD. */
+fun hudUiEpoch(hud: Hud): Int = hudUiEpochs[hud] ?: 0
+
+private fun bumpHudUiEpoch(hud: Hud) {
+    hudUiEpochs[hud] = (hudUiEpochs[hud] ?: 0) + 1
+}
+
+fun hudProperty(hud: Hud, optionId: String): Property<*>? =
+    hud.tree?.getProp(optionId)
+
+fun resetHudProperty(hud: Hud, optionId: String) {
+    val prop = hudProperty(hud, optionId) ?: return
+    resetOption(prop)
+    finishHudReset(hud)
+}
+
+fun hudHasResettableDefaults(hud: Hud): Boolean {
+    val tree = hud.tree ?: return false
+    return treeHasResettableDefaults(tree)
+}
+
+private fun treeHasResettableDefaults(tree: Tree): Boolean {
+    for (node in tree.map.values) {
+        when (node) {
+            is Property<*> -> if (optionHasDefault(node)) return true
+            is Tree -> if (treeHasResettableDefaults(node)) return true
+        }
+    }
+    return false
+}
+
+fun resetAllHudProperties(hud: Hud) {
+    val tree = hud.tree ?: return
+    resetTreeDefaults(hud, tree)
+    finishHudReset(hud)
+}
+
+private fun finishHudReset(hud: Hud) {
+    hud.reseedStaticSizeIfNeeded()
+    hud.captureStaticSizeDefaults()
+    bumpHudUiEpoch(hud)
+    hud.updateAndRecalculate()
+}
+
+private fun canResetHudOption(hud: Hud, prop: Property<*>, optionId: String): Boolean {
+    if (optionHasDefault(prop)) return true
+    return hud.staticWidth && optionId in STATIC_SIZE_OPTIONS
+}
+
+private fun performHudOptionReset(hud: Hud, prop: Property<*>, optionId: String) {
+    when (optionId) {
+        "staticW" -> {
+            if (optionHasDefault(prop)) resetOption(prop) else hud.reseedStaticWidth()
+        }
+        "staticH" -> {
+            if (optionHasDefault(prop)) resetOption(prop) else hud.reseedStaticHeight()
+        }
+        else -> resetOption(prop)
+    }
+    hud.captureStaticSizeDefaults(force = optionId in STATIC_SIZE_OPTIONS)
+}
+
+/** Fixes invalid static dimensions (e.g. after a bad reset) and refreshes the settings UI. */
+fun repairHudStaticSize(hud: Hud) {
+    if (!hud.staticWidth) return
+    if (hud.staticW > 0f && hud.staticH > 0f) {
+        hud.captureStaticSizeDefaults(force = true)
+        return
+    }
+    hud.reseedStaticSizeIfNeeded()
+    hud.captureStaticSizeDefaults(force = true)
+    bumpHudUiEpoch(hud)
+}
+
+private fun resetTreeDefaults(hud: Hud, tree: Tree) {
+    for (node in tree.map.values) {
+        when (node) {
+            is Property<*> -> {
+                val optionId = node.id ?: node.getID()
+                if (optionId in STATIC_SIZE_OPTIONS && hud.staticWidth) {
+                    performHudOptionReset(hud, node, optionId)
+                } else if (optionHasDefault(node)) {
+                    resetOption(node)
+                }
+            }
+            is Tree -> resetTreeDefaults(hud, node)
+        }
+    }
+}
+
+/**
+ * Wraps a HUD designer/settings control so right-click offers "Reset to default" for [optionId].
+ */
+@Composable
+fun HudSettingTarget(
+    hud: Hud,
+    optionId: String,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val prop = remember(hud, optionId) { hudProperty(hud, optionId) }
+    if (prop == null) {
+        Box(modifier) { content() }
+        return
+    }
+
+    var menuOpen by remember(prop) { mutableStateOf(false) }
+    var menuOffset by remember(prop) { mutableStateOf(IntOffset.Zero) }
+
+    Box(
+        modifier = modifier.pointerInput(prop) {
+            awaitPointerEventScope {
+                while (true) {
+                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                    if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed) {
+                        val pos = event.changes.first().position
+                        menuOffset = IntOffset(pos.x.roundToInt(), pos.y.roundToInt())
+                        menuOpen = true
+                        event.changes.forEach { it.consume() }
+                    }
+                }
+            }
+        },
+    ) {
+        content()
+        OptionContextMenu(
+            prop = prop,
+            expanded = menuOpen,
+            offset = menuOffset,
+            onDismiss = { menuOpen = false },
+            resetEnabled = canResetHudOption(hud, prop, optionId),
+            onReset = {
+                performHudOptionReset(hud, prop, optionId)
+                finishHudReset(hud)
+            },
+        )
+    }
+}
+
+/** Recompose key for HUD panels whose controls use local [remember] copies of HUD fields. */
+@Composable
+fun HudSettingsContent(hud: Hud, content: @Composable () -> Unit) {
+    key(hud, hudUiEpoch(hud)) {
+        content()
+    }
+}
+
+/** Right-click menu on a HUD element in the design studio canvas. */
+@Composable
+fun HudCanvasResetMenu(
+    hud: Hud?,
+    expanded: Boolean,
+    offset: IntOffset,
+    onDismiss: () -> Unit,
+) {
+    if (hud == null || !expanded) return
+    val theme = LocalTheme.current
+    val enabled = hudHasResettableDefaults(hud)
+    Popup(
+        alignment = Alignment.TopStart,
+        offset = offset,
+        onDismissRequest = onDismiss,
+        properties = PopupProperties(focusable = true),
+    ) {
+        Column(
+            modifier = Modifier
+                .background(theme.popupBackground, theme.popupShape)
+                .border(1.dp, theme.borderColor, theme.popupShape)
+                .padding(4.dp),
+        ) {
+            val interactionSource = rememberInteractionSource()
+            val color = if (enabled) theme.textColor else theme.textColorSecondary
+            Row(
+                modifier = Modifier
+                    .clip(theme.sideBarNavigationEntryShape)
+                    .then(
+                        if (enabled) {
+                            Modifier.onClick(interactionSource) {
+                                resetAllHudProperties(hud)
+                                onDismiss()
+                            }.pointerHoverIcon(PointerIcon.Hand)
+                        } else {
+                            Modifier
+                        },
+                    )
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Icon("refresh", color = color, modifier = Modifier.size(14.dp))
+                Text("Reset all to default", color = color, fontSize = 13.sp)
+            }
+        }
+    }
+}

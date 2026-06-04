@@ -18,16 +18,25 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.isSecondaryPressed
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -35,11 +44,11 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.TreeConfigData
-import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
-import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindOption
+import org.polyfrost.oneconfig.internal.ui.components.settings.Option
+import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -129,10 +138,25 @@ private fun KeybindRow(entry: KeybindEntry) {
     val theme = LocalTheme.current
     val shape = theme.modCardShape
     val prop = entry.prop
+    var menuOpen by remember(prop) { mutableStateOf(false) }
+    var menuOffset by remember(prop) { mutableStateOf(IntOffset.Zero) }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .pointerInput(prop) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed) {
+                            val pos = event.changes.first().position
+                            menuOffset = IntOffset(pos.x.roundToInt(), pos.y.roundToInt())
+                            menuOpen = true
+                            event.changes.forEach { it.consume() }
+                        }
+                    }
+                }
+            }
             .background(theme.modCardBackground, shape)
             .border(
                 1.dp,
@@ -185,8 +209,10 @@ private fun KeybindRow(entry: KeybindEntry) {
                     )
                 }
             }
-            KeybindOption(KeybindOptionData(prop))
+            Option(prop)
         }
+
+        OptionContextMenu(prop, menuOpen, menuOffset, onDismiss = { menuOpen = false })
     }
 }
 

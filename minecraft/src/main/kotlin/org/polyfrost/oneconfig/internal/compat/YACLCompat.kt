@@ -101,7 +101,8 @@ object YACLCompat {
 
         for (option in options) {
             if (option == null) continue
-            parseOption(option, categoryName, groupName, root)
+            runCatching { parseOption(option, categoryName, groupName, root) }
+                .onFailure { LOGGER.warn("Failed to parse YACL option", it) }
         }
     }
 
@@ -120,16 +121,38 @@ object YACLCompat {
             }.getOrNull()
         }
 
+        // Older YACL exposes a Binding (getValue/setValue/defaultValue). Newer YACL uses a state
+        // manager and throws UnsupportedOperationException from binding(), so fall back to the
+        // Option-level pendingValue()/requestSet(T) accessors in that case.
         val bindingMethod = optionClass.methods.firstOrNull { it.name == "binding" && it.parameterCount == 0 }
-        val binding = bindingMethod?.invoke(option) ?: return
-        val bindingClass = binding::class.java
+        val binding = bindingMethod?.let { runCatching { it.invoke(option) }.getOrNull() }
 
-        val getValueMethod = bindingClass.methods.firstOrNull { it.name == "getValue" && it.parameterCount == 0 }
-        val setValueMethod = bindingClass.methods.firstOrNull { it.name == "setValue" && it.parameterCount == 1 }
+        val getter: () -> Any?
+        val setter: (Any?) -> Unit
+        val defaultValue: Any?
 
-        if (getValueMethod == null || setValueMethod == null) return
+        if (binding != null) {
+            val bindingClass = binding::class.java
+            val getValueMethod = bindingClass.methods.firstOrNull { it.name == "getValue" && it.parameterCount == 0 }?.apply { isAccessible = true } ?: return
+            val setValueMethod = bindingClass.methods.firstOrNull { it.name == "setValue" && it.parameterCount == 1 }?.apply { isAccessible = true } ?: return
+            getter = { getValueMethod.invoke(binding) }
+            setter = { value -> setValueMethod.invoke(binding, value) }
+            defaultValue = bindingClass.methods
+                .firstOrNull { it.name == "defaultValue" && it.parameterCount == 0 }
+                ?.apply { isAccessible = true }
+                ?.let { runCatching { it.invoke(binding) }.getOrNull() }
+        } else {
+            // New state-manager API: read/write through the Option directly.
+            val pendingMethod = optionClass.methods.firstOrNull { it.name == "pendingValue" && it.parameterCount == 0 }?.apply { isAccessible = true } ?: return
+            val requestSetMethod = optionClass.methods.firstOrNull { it.name == "requestSet" && it.parameterCount == 1 }?.apply { isAccessible = true } ?: return
+            getter = { pendingMethod.invoke(option) }
+            setter = { value -> requestSetMethod.invoke(option, value) }
+            defaultValue = null
+        }
 
-        val currentValue = getValueMethod.invoke(binding) ?: return
+        // ButtonOption and similar value-less options expose a binding whose getValue() throws
+        // UnsupportedOperationException (EmptyBinderImpl). Skip them instead of logging a warning.
+        val currentValue = runCatching { getter() }.getOrNull() ?: return
 
         val visualizer: Class<out Visualizer> = when (currentValue) {
             is Boolean -> Visualizer.SwitchVisualizer::class.java
@@ -141,14 +164,15 @@ object YACLCompat {
         }
 
         val property = Properties.functional(
-            getter = { getValueMethod.invoke(binding) },
-            setter = { value -> setValueMethod.invoke(binding, value) },
+            getter = { getter() },
+            setter = { value -> setter(value) },
             id = UUID.randomUUID().toString(),
             name = name,
             description = desc,
         )
 
         property.addMetadata("visualizer", visualizer)
+        defaultValue?.let { property.addMetadata("default", it) }
         property.category = categoryName
         property.subcategory = subcategoryName
 

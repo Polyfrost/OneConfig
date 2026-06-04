@@ -6,6 +6,7 @@ import com.terraformersmc.modmenu.util.mod.Mod
 import net.minecraft.client.Minecraft
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.api.config.v1.backend.Backend
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 
@@ -35,12 +36,14 @@ object ModMenuCompat {
                 modMenuTree.id = mod.id
                 modMenuTree.title = mod.name
                 modMenuTree.description = "(Mod Menu Compat)"
-                ModInfo.loadedMods.firstOrNull { it.id == mod.id }?.modIconPath?.let { iconPath ->
+                ModInfo.loadedMods.firstOrNull { it.id == mod.id }?.extractIconFile()?.let { iconPath ->
                     modMenuTree.addMetadata("icon_path", iconPath)
                 }
                 modMenuTree.addMetadata("on_click") {
                     Platform.screen().display(ModMenu.getConfigScreen(mod.id, Platform.screen().current()))
                 }
+                // Listed in the mods menu and opened via Mod Menu only — never persisted by OneConfig.
+                modMenuTree.addMetadata(Backend.UI_ONLY_METADATA, true)
 
                 ConfigManager.active().register(modMenuTree)
                 CompatLoader.markFirstModAsSkip()

@@ -38,9 +38,15 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.isSecondaryPressed
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -52,6 +58,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
+import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -413,36 +420,59 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false) {
         return
     }
 
-    Row(
+    var menuOpen by remember(prop) { mutableStateOf(false) }
+    var menuOffset by remember(prop) { mutableStateOf(IntOffset.Zero) }
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            prop.getMetadata<String>("icon")?.let {
-                Icon(it, color = theme.textColor, modifier = Modifier.size(32.dp))
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    prop.title ?: prop.id ?: "",
-                    color = theme.textColor,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                )
-                if (!nested) {
-                    prop.description?.let {
-                        Text(it, color = theme.textColorSecondary, fontSize = 13.sp)
+            .pointerInput(prop) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed) {
+                            val pos = event.changes.first().position
+                            menuOffset = IntOffset(pos.x.roundToInt(), pos.y.roundToInt())
+                            menuOpen = true
+                            event.changes.forEach { it.consume() }
+                        }
                     }
                 }
             }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                prop.getMetadata<String>("icon")?.let {
+                    Icon(it, color = theme.textColor, modifier = Modifier.size(32.dp))
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        prop.title ?: prop.id ?: "",
+                        color = theme.textColor,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    if (!nested) {
+                        prop.description?.let {
+                            Text(it, color = theme.textColorSecondary, fontSize = 13.sp)
+                        }
+                    }
+                }
+            }
+
+            Option(prop)
         }
 
-        Option(prop)
+        OptionContextMenu(prop, menuOpen, menuOffset, onDismiss = { menuOpen = false })
     }
 }
 

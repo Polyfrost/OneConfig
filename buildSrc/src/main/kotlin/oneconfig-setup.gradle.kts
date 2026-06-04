@@ -157,7 +157,8 @@ dependencies {
     handleApiDep(versionedCatalog.bundles["adventure"])
 
     if (loader == "fabric") {
-        val adventurePlatform = "net.kyori:adventure-platform-fabric:6.8.0"
+        val adventurePlatformVersion = if (stonecutter.eval(stonecutter.current.version, ">= 26.1")) "6.9.0" else "6.8.0"
+        val adventurePlatform = "net.kyori:adventure-platform-fabric:$adventurePlatformVersion"
         "modApi"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
         "modImplementation"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
     }

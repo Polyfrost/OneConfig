@@ -126,9 +126,17 @@ public final class ConfigManager {
 
     @ApiStatus.Internal
     public static void submitForInitialization(Config config) {
-        if (initialized) {
-            config.initialize(false);
-        } else {
+        // IMPORTANT: never initialize synchronously here. This is called from the Config base
+        // constructor, *before* the subclass's instance-field initializers have run. Initializing
+        // now would make collect(), default-capture and the backup save read uninitialized
+        // (zero/null) instance fields.
+        //
+        // Instead the config is initialized lazily, after construction has completed:
+        //   - configs created before OneConfig startup are drained by initialize() below;
+        //   - configs created afterwards initialize on first access through a `tree == null` guard
+        //     (e.g. preload(), createScreen(), getProperty()), or from their own constructor body
+        //     (which runs after field initializers).
+        if (!initialized) {
             pendingInitialization.add(config);
         }
     }

@@ -31,11 +31,14 @@ import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
+import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -103,9 +106,49 @@ public abstract class Config {
             if (!ConfigManager.isRebindingProfiles()) {
                 ConfigManager.backup().backend.save0(tree);
             }
+            // capture the code-defined default of every property before register() loads stored values over them,
+            // so the UI can offer a "reset to default" action. stored as transient metadata, so it is never persisted.
+            captureDefaults(tree);
             tree = ConfigManager.active().register(tree).get();
             ConfigManager.markInitialized(this);
         }
+    }
+
+    /**
+     * Recursively record the current value of every property in [tree] as transient {@code "default"}
+     * metadata. Call before {@link ConfigManager#register(Tree)} so stored profile values do not
+     * overwrite the captured code defaults.
+     * <br>
+     * For complex (non-simple) types a deep copy is stored, because {@link Property.Field#set0} mutates such values
+     * in place; storing the live reference would alias the working value and make a reset a no-op.
+     */
+    @ApiStatus.Internal
+    public static void captureDefaults(Tree tree) {
+        for (Node node : tree.map.values()) {
+            if (node instanceof Property) {
+                Property<?> p = (Property<?>) node;
+                Object value = p.get();
+                if (value == null) continue;
+                p.getOrPutMetadata("default", () -> copyDefault(p.type, value));
+            } else if (node instanceof Tree) {
+                captureDefaults((Tree) node);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object copyDefault(Class<?> type, Object value) {
+        if (WrappingUtils.isSimpleClass(type)) return value;
+        try {
+            Object serialized = ObjectSerializer.INSTANCE.serialize(value, false, false);
+            if (serialized instanceof Map) {
+                Object copy = ObjectSerializer.INSTANCE.deserialize((Map<String, Object>) serialized);
+                if (copy != null) return copy;
+            }
+        } catch (Throwable t) {
+            ConfigManager.LOGGER.warn("failed to deep-copy default for type {}, falling back to reference", type, t);
+        }
+        return value;
     }
 
     @ApiStatus.Internal

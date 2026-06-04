@@ -3,13 +3,13 @@ package org.polyfrost.oneconfig.internal.compat
 //? rconfig_compat {
 import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfig
 import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigButton
-//? >= 1.21.5 {
+//? >= 1.21.8 {
 import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigCategory
 import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigElement
 import com.teamresourceful.resourcefulconfig.api.types.elements.ResourcefulConfigEntryElement
 //? } else {
-import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigEntry
-//? }
+/*import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigEntry
+*///? }
 import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigObjectEntry
 import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigValueEntry
 import com.teamresourceful.resourcefulconfig.api.types.options.EntryType
@@ -47,14 +47,14 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         info("Creating config wrapper for ${config.id()}!")
         val tree = Tree.tree()
         tree.id = config.id()
-        //? >= 1.21.5 {
+        //? >= 1.21.8 {
         tree.title = config.info().title().toComponent()
         tree.description = config.info().description().toComponent()
         //? } else {
-        tree.title = config.info().title().toLocalizedString()
+        /*tree.title = config.info().title().toLocalizedString()
         tree.description = config.info().description().toLocalizedString()
-        //? }
-        mod?.modIconPath?.let {
+        *///? }
+        mod?.extractIconFile()?.let {
             tree.addMetadata("icon_path", it)
         }
 
@@ -62,12 +62,12 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
             parseCategory(it, config.id(), null, tree)
         }
 
-        //? >= 1.21.5 {
+        //? >= 1.21.8 {
         parseAny(config.elements(), tree)
         //? } else {
-        parseAny(config.entries().values, tree)
+        /*parseAny(config.entries().values, tree)
         parseButtons(config.buttons(), tree)
-        //? }
+        *///? }
 
         tree.addMetadata("custom_save", Runnable { config.save() })
         tree.addMetadata("no_cache", true)
@@ -81,11 +81,11 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         val tree = Tree.tree()
 
         val nestedId = "$id/${config.id()}"
-        //? >= 1.21.5 {
+        //? >= 1.21.8 {
         val title = config.info().title().toComponent().string
         //? } else {
-        val title = config.info().title().toLocalizedString()
-        //? }
+        /*val title = config.info().title().toLocalizedString()
+        *///? }
 
         tree.category = category ?: title
         if (category != null) {
@@ -95,12 +95,12 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         for ((_, entry) in config.categories()) {
             parseCategory(entry, nestedId, category ?: title, root)
         }
-        //? >= 1.21.5 {
+        //? >= 1.21.8 {
         parseAny(config.elements(), tree)
         //? } else {
-        parseAny(config.entries().values, tree)
+        /*parseAny(config.entries().values, tree)
         parseButtons(config.buttons(), tree)
-        //? }
+        *///? }
 
         tree.map.forEach { (_, node) ->
             node.category = tree.category
@@ -119,7 +119,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         tree.put(property)
     }
 
-    //? >= 1.21.5 {
+    //? >= 1.21.8 {
     private fun parseAny(list: Iterable<ResourcefulConfigElement>, tree: Tree) = list.forEach {
         when (it) {
             is ResourcefulConfigCategory -> parseCategory(it, tree)
@@ -159,7 +159,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         tree.put(objectEntry)
     }
     //? } else {
-    private fun parseAny(list: Iterable<ResourcefulConfigEntry>, tree: Tree) = list.forEach {
+    /*private fun parseAny(list: Iterable<ResourcefulConfigEntry>, tree: Tree) = list.forEach {
         when (it) {
             is ResourcefulConfigObjectEntry -> parseObject(it, tree)
             is ResourcefulConfigValueEntry -> buildAndAdd(it, tree)
@@ -181,7 +181,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         parseAny(entry.entries().values, objectEntry)
         tree.put(objectEntry)
     }
-    //? }
+    *///? }
 
     private fun buildAndAdd(entry: ResourcefulConfigValueEntry, tree: Tree) {
         val builder = RConfigPropertyBuilder(entry)
@@ -229,13 +229,13 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
     }
 
     private class RConfigPropertyBuilder constructor(option: ResourcefulConfigValueEntry) {
-        //? >= 1.21.5 {
+        //? >= 1.21.8 {
         val name = option.options().title.toComponent()
         val description = option.options().comment.toComponent()
         //? } else {
-        val name = option.options().title.toLocalizedString()
+        /*val name = option.options().title.toLocalizedString()
         val description = option.options().comment.toLocalizedString()
-        //? }
+        *///? }
 
         var setter: (Any) -> Unit = { value ->
             when (option.type()) {
@@ -254,6 +254,10 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         }
         var getter: () -> Any = option::get
 
+        // the code-defined default, so the UI can offer "reset to default" (mirrors Config.captureDefaults
+        // for native configs). rconfig exposes this directly, so no pre-load snapshot is needed.
+        val defaultValue: Any? = option.defaultValue()
+
         val metadata: MutableMap<String, Any?> = mutableMapOf()
 
         operator fun set(key: String, value: Any?) = metadata.set(key, value)
@@ -265,6 +269,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
             description = description,
             id = UUID.randomUUID().toString()
         ).apply {
+            defaultValue?.let { addMetadata("default", it) }
             this@RConfigPropertyBuilder.metadata.entries.forEach { (key, value) -> addMetadata(key, value) }
         }
     }

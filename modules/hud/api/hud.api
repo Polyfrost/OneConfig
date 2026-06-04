@@ -14,6 +14,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	protected fun addToInitQueue ()V
 	protected fun addToSerialized (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 	public fun backgroundColor ()Lorg/polyfrost/compose/render/PolyColor;
+	public final fun captureStaticSizeDefaults (Z)V
+	public static synthetic fun captureStaticSizeDefaults$default (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;ZILjava/lang/Object;)V
 	public synthetic fun clone ()Ljava/lang/Object;
 	public fun clone ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public fun defaultPosition ()Lkotlin/Pair;
@@ -70,6 +72,9 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun minimumSize ()Lkotlin/Pair;
 	public fun multipleInstancesAllowed ()Z
 	public fun remove ()V
+	public final fun reseedStaticHeight ()V
+	public final fun reseedStaticSizeIfNeeded ()V
+	public final fun reseedStaticWidth ()V
 	public final fun setAbsolutePosition (FF)V
 	public final fun setAlignment (Lorg/polyfrost/compose/layout/PolyAlign;)V
 	public final fun setBgColor (I)V

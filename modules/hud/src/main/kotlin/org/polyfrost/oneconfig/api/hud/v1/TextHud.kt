@@ -161,27 +161,8 @@ abstract class TextHud(
             updateWhenChanged("suffix")
         }
         update()
-
-        if (staticW <= 0f || staticH <= 0f) {
-            seedStaticDimensionsFromContent()
-        }
-    }
-
-    private fun seedStaticDimensionsFromContent() {
-        try {
-            @Suppress("UNUSED_VARIABLE") val ignore = runtime
-            val natural = measureNaturalContentSize()
-            if (natural != null && natural.first > 0f && natural.second > 0f) {
-                staticW = natural.first
-                staticH = natural.second
-            } else {
-                staticW = padLeft + padRight + 80f
-                staticH = padTop + padBottom + 16f
-            }
-        } catch (_: Throwable) {
-            staticW = padLeft + padRight + 80f
-            staticH = padTop + padBottom + 16f
-        }
+        reseedStaticSizeIfNeeded()
+        captureStaticSizeDefaults()
     }
 
     protected abstract fun getText(): String?

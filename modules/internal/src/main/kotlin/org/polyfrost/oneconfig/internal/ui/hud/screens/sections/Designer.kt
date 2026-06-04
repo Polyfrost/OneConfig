@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,10 +39,15 @@ import org.polyfrost.compose.mc.McFontQueue
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.oneconfig.api.hud.v1.Font
 import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
+import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
+import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.components.SelectableIconButton
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.settings.ChromaColorAnimation
+import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerModel
 import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerPopup
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
 import org.polyfrost.oneconfig.internal.ui.hud.components.AlignmentPicker
@@ -84,19 +90,22 @@ enum class Weight {
 fun Designer(hud: Hud? = null) {
     if (hud == null) return
 
-    var staticWidth by remember(hud) { mutableStateOf(hud.staticWidth) }
-    var staticW by remember(hud) { mutableStateOf(hud.staticW) }
-    var staticH by remember(hud) { mutableStateOf(hud.staticH) }
-    var alignment by remember(hud) { mutableStateOf(hud.alignment) }
-    var padLeft by remember(hud) { mutableStateOf(hud.padLeft) }
-    var padRight by remember(hud) { mutableStateOf(hud.padRight) }
-    var padTop by remember(hud) { mutableStateOf(hud.padTop) }
-    var padBottom by remember(hud) { mutableStateOf(hud.padBottom) }
-    var font by remember(hud) { mutableStateOf(hud.font) }
-    var textScale by remember(hud) { mutableStateOf(hud.textScale) }
-    var textBold by remember(hud) { mutableStateOf(hud.textBold) }
-    var textItalic by remember(hud) { mutableStateOf(hud.textItalic) }
-    var caseType by remember(hud) {
+    LaunchedEffect(hud) { repairHudStaticSize(hud) }
+
+    HudSettingsContent(hud) {
+    var staticWidth by remember { mutableStateOf(hud.staticWidth) }
+    var staticW by remember { mutableStateOf(hud.staticW) }
+    var staticH by remember { mutableStateOf(hud.staticH) }
+    var alignment by remember { mutableStateOf(hud.alignment) }
+    var padLeft by remember { mutableStateOf(hud.padLeft) }
+    var padRight by remember { mutableStateOf(hud.padRight) }
+    var padTop by remember { mutableStateOf(hud.padTop) }
+    var padBottom by remember { mutableStateOf(hud.padBottom) }
+    var font by remember { mutableStateOf(hud.font) }
+    var textScale by remember { mutableStateOf(hud.textScale) }
+    var textBold by remember { mutableStateOf(hud.textBold) }
+    var textItalic by remember { mutableStateOf(hud.textItalic) }
+    var caseType by remember {
         mutableStateOf(
             CaseType.entries[hud.caseType.coerceIn(
                 0,
@@ -104,7 +113,7 @@ fun Designer(hud: Hud? = null) {
             )]
         )
     }
-    var textAlign by remember(hud) {
+    var textAlign by remember {
         mutableStateOf(
             AlignType.entries[hud.textAlign.coerceIn(
                 0,
@@ -112,45 +121,52 @@ fun Designer(hud: Hud? = null) {
             )]
         )
     }
-    var textColor by remember(hud) { mutableStateOf(Color(hud.textColor)) }
-    var showShadow by remember(hud) { mutableStateOf(hud.showShadow) }
+    var textColor by remember { mutableStateOf(Color(hud.textColor)) }
+    var showShadow by remember { mutableStateOf(hud.showShadow) }
 
     Column(verticalArrangement = Arrangement.spacedBy(22.dp)) {
         Section("Size & Alignment") {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    SwitchControl(staticWidth) {
-                        Snapshot.withMutableSnapshot {
-                            staticWidth = it; hud.staticWidth = it
-                            if (it) {
-                                staticW = hud.staticW
-                                staticH = hud.staticH
-                            } else {
-                                hud.updateAndRecalculate()
+                HudSettingTarget(hud, "staticWidth") {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        SwitchControl(staticWidth) {
+                            Snapshot.withMutableSnapshot {
+                                staticWidth = it; hud.staticWidth = it
+                                if (it) {
+                                    staticW = hud.staticW
+                                    staticH = hud.staticH
+                                } else {
+                                    hud.updateAndRecalculate()
+                                }
                             }
                         }
+                        Text("Static Size", color = LocalTheme.current.textColor, fontSize = 14.sp)
                     }
-                    Text("Static Size", color = LocalTheme.current.textColor, fontSize = 14.sp)
                 }
 
                 if (staticWidth) {
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        NumberSpinner(
-                            "Width", "px",
-                            staticW, { Snapshot.withMutableSnapshot { staticW = it; hud.staticW = it } },
-                            20f, 2000f, 1f, width = 128.dp
-                        )
-                        NumberSpinner(
-                            "Height", "px",
-                            staticH, { Snapshot.withMutableSnapshot { staticH = it; hud.staticH = it } },
-                            8f, 2000f, 1f, width = 128.dp
-                        )
+                        HudSettingTarget(hud, "staticW") {
+                            NumberSpinner(
+                                "Width", "px",
+                                staticW, { Snapshot.withMutableSnapshot { staticW = it; hud.staticW = it } },
+                                20f, 2000f, 1f, width = 128.dp
+                            )
+                        }
+                        HudSettingTarget(hud, "staticH") {
+                            NumberSpinner(
+                                "Height", "px",
+                                staticH, { Snapshot.withMutableSnapshot { staticH = it; hud.staticH = it } },
+                                8f, 2000f, 1f, width = 128.dp
+                            )
+                        }
                     }
                 }
 
+                HudSettingTarget(hud, "alignment") {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -168,6 +184,7 @@ fun Designer(hud: Hud? = null) {
                         )
                     }
                 }
+                }
             }
         }
 
@@ -175,22 +192,30 @@ fun Designer(hud: Hud? = null) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Edge padding", color = LocalTheme.current.textColor, fontSize = 14.sp)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    NumberSpinnerWithIcon(
-                        "align", "px",
-                        padLeft, { Snapshot.withMutableSnapshot { padLeft = it; hud.padLeft = it } }, 0f, 100f, 1f
-                    )
-                    NumberSpinnerWithIcon(
-                        "align", "px",
-                        padRight, { Snapshot.withMutableSnapshot { padRight = it; hud.padRight = it } }, 0f, 100f, 1f
-                    )
-                    NumberSpinnerWithIcon(
-                        "align", "px",
-                        padTop, { Snapshot.withMutableSnapshot { padTop = it; hud.padTop = it } }, 0f, 100f, 1f
-                    )
-                    NumberSpinnerWithIcon(
-                        "align", "px",
-                        padBottom, { Snapshot.withMutableSnapshot { padBottom = it; hud.padBottom = it } }, 0f, 100f, 1f
-                    )
+                    HudSettingTarget(hud, "padLeft") {
+                        NumberSpinnerWithIcon(
+                            "align", "px",
+                            padLeft, { Snapshot.withMutableSnapshot { padLeft = it; hud.padLeft = it } }, 0f, 100f, 1f
+                        )
+                    }
+                    HudSettingTarget(hud, "padRight") {
+                        NumberSpinnerWithIcon(
+                            "align", "px",
+                            padRight, { Snapshot.withMutableSnapshot { padRight = it; hud.padRight = it } }, 0f, 100f, 1f
+                        )
+                    }
+                    HudSettingTarget(hud, "padTop") {
+                        NumberSpinnerWithIcon(
+                            "align", "px",
+                            padTop, { Snapshot.withMutableSnapshot { padTop = it; hud.padTop = it } }, 0f, 100f, 1f
+                        )
+                    }
+                    HudSettingTarget(hud, "padBottom") {
+                        NumberSpinnerWithIcon(
+                            "align", "px",
+                            padBottom, { Snapshot.withMutableSnapshot { padBottom = it; hud.padBottom = it } }, 0f, 100f, 1f
+                        )
+                    }
                 }
             }
         }
@@ -253,16 +278,21 @@ fun Designer(hud: Hud? = null) {
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Dropdown(
-                    "Font",
-                    font,
-                    { Snapshot.withMutableSnapshot { font = it; hud.font = it } }
-                )
-                NumberSpinner(
-                    "Font size", "align", "px",
-                    textScale * 14f, { Snapshot.withMutableSnapshot { val s = it / 14f; textScale = s; hud.textScale = s } },
-                    6f, 64f, 1f, width = 112.dp
-                )
+                HudSettingTarget(hud, "font") {
+                    Dropdown(
+                        "Font",
+                        font,
+                        { Snapshot.withMutableSnapshot { font = it; hud.font = it } }
+                    )
+                }
+                HudSettingTarget(hud, "textScale") {
+                    NumberSpinner(
+                        "Font size", "align", "px",
+                        textScale * 14f, { Snapshot.withMutableSnapshot { val s = it / 14f; textScale = s; hud.textScale = s } },
+                        6f, 64f, 1f, width = 112.dp
+                    )
+                }
+                HudSettingTarget(hud, "textBold") {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Modifiers", color = LocalTheme.current.textColor, fontSize = 14.sp)
                     Box(
@@ -304,19 +334,25 @@ fun Designer(hud: Hud? = null) {
                         }
                     }
                 }
+                }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Dropdown("Weight", Weight.Regular, {})
-                Radio(
-                    "Align",
-                    textAlign,
-                ) { a -> Snapshot.withMutableSnapshot { textAlign = a; hud.textAlign = a.ordinal } }
-                Radio(
-                    "Case Type",
-                    caseType,
-                ) { c -> Snapshot.withMutableSnapshot { caseType = c; hud.caseType = c.ordinal } }
+                HudSettingTarget(hud, "textAlign") {
+                    Radio(
+                        "Align",
+                        textAlign,
+                    ) { a -> Snapshot.withMutableSnapshot { textAlign = a; hud.textAlign = a.ordinal } }
+                }
+                HudSettingTarget(hud, "caseType") {
+                    Radio(
+                        "Case Type",
+                        caseType,
+                    ) { c -> Snapshot.withMutableSnapshot { caseType = c; hud.caseType = c.ordinal } }
+                }
             }
         }
+    }
     }
 }
 
@@ -331,7 +367,15 @@ fun Section(title: String, content: @Composable () -> Unit) = Column(
 @Composable
 internal fun ColorButton(label: String, color: Color, onColorChanged: (Color) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
+    var displayColor by remember { mutableStateOf(color) }
+    val pickerModel = remember { ColorPickerModel(color) }
     val theme = LocalTheme.current
+
+    ChromaColorAnimation(pickerModel) { c ->
+        displayColor = c
+        onColorChanged(c)
+    }
+
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(label, color = theme.textColor, fontSize = 14.sp)
         Box {
@@ -339,7 +383,7 @@ internal fun ColorButton(label: String, color: Color, onColorChanged: (Color) ->
                 modifier = Modifier
                     .size(32.dp)
                     .clip(theme.sideBarNavigationEntryShape)
-                    .background(color)
+                    .background(displayColor)
                     .border(1.dp, theme.borderColor, theme.sideBarNavigationEntryShape)
                     .onClick(rememberInteractionSource()) { expanded = !expanded }
                     .pointerHoverIcon(PointerIcon.Hand)
@@ -352,9 +396,12 @@ internal fun ColorButton(label: String, color: Color, onColorChanged: (Color) ->
                     properties = PopupProperties(focusable = true),
                 ) {
                     ColorPickerPopup(
-                        initialColor = color,
-                        onColorChanged = onColorChanged,
-                        onClose = { expanded = false }
+                        model = pickerModel,
+                        onColorChanged = { c ->
+                            displayColor = c
+                            onColorChanged(c)
+                        },
+                        onClose = { expanded = false },
                     )
                 }
             }

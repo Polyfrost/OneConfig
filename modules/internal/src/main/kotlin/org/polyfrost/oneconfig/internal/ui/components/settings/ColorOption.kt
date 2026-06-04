@@ -126,6 +126,45 @@ private fun hexToColor(hex: String): Color? {
     } catch (_: Exception) { null }
 }
 
+internal class ColorPickerModel(initialColor: Color) {
+    private val hsb = colorToHsb(initialColor)
+    var hue by mutableFloatStateOf(hsb[0])
+    var saturation by mutableFloatStateOf(hsb[1])
+    var brightness by mutableFloatStateOf(hsb[2])
+    var alpha by mutableFloatStateOf(initialColor.alpha)
+    var chromaEnabled by mutableStateOf(false)
+    var chromaSpeed by mutableFloatStateOf(1f)
+
+    fun currentColor(): Color = hsbToColor(hue, saturation, brightness, alpha)
+
+    fun applyFrom(color: Color) {
+        val newHsb = colorToHsb(color)
+        hue = newHsb[0]
+        saturation = newHsb[1]
+        brightness = newHsb[2]
+        alpha = color.alpha
+    }
+}
+
+@Composable
+internal fun ChromaColorAnimation(
+    model: ColorPickerModel,
+    onColorChanged: (Color) -> Unit,
+) {
+    LaunchedEffect(model.chromaEnabled, model.chromaSpeed) {
+        if (!model.chromaEnabled) return@LaunchedEffect
+        var lastNanos = withInfiniteAnimationFrameNanos { it }
+        while (true) {
+            withInfiniteAnimationFrameNanos { frameNanos ->
+                val dt = (frameNanos - lastNanos) / 1_000_000_000f
+                lastNanos = frameNanos
+                model.hue = (model.hue + 360f * model.chromaSpeed * dt) % 360f
+                onColorChanged(model.currentColor())
+            }
+        }
+    }
+}
+
 // TODO: make this design accurate
 
 @Composable
@@ -145,6 +184,7 @@ fun ColorOption(data: ColorOptionData) {
         }
     }
     var currentColor by remember(data.prop) { mutableStateOf(initialColor) }
+    val pickerModel = remember(data.prop) { ColorPickerModel(initialColor) }
     val textColor by animateColorAsState(
         if (currentColor.luminance() > 0.6f) Color.Black else Color.White
     )
@@ -152,6 +192,26 @@ fun ColorOption(data: ColorOptionData) {
     val borderColor by animateColorAsState(
         if (isHovered || expanded) theme.textColor.copy(0.3f) else theme.borderColor
     )
+
+    fun persistColor(color: Color) {
+        currentColor = color
+        @Suppress("UNCHECKED_CAST")
+        when {
+            data.prop.type == Int::class.java || data.prop.type == Int::class.javaPrimitiveType ->
+                (data.prop as Property<Any>).set(color.toArgb())
+            data.prop.type == PolyColor::class.java -> {
+                (data.prop as Property<Any>).set(PolyColor(color.toArgb()))
+                updateAccent()
+            }
+            data.prop.type == java.awt.Color::class.java -> {
+                val argb = color.toArgb()
+                (data.prop as Property<Any>).set(java.awt.Color(argb, true))
+            }
+            else -> (data.prop as Property<Any>).set(color)
+        }
+    }
+
+    ChromaColorAnimation(pickerModel) { persistColor(it) }
 
     Box {
         Row(
@@ -176,22 +236,9 @@ fun ColorOption(data: ColorOptionData) {
                 properties = PopupProperties(focusable = true),
             ) {
                 ColorPickerPopup(
-                    initialColor = currentColor,
-                    onColorChanged = { color ->
-                        currentColor = color
-                        @Suppress("UNCHECKED_CAST")
-                        when {
-                            data.prop.type == Int::class.java || data.prop.type == Int::class.javaPrimitiveType ->
-                                (data.prop as Property<Any>).set(color.toArgb())
-                            data.prop.type == PolyColor::class.java -> {
-                                (data.prop as Property<Any>).set(PolyColor(color.toArgb()))
-                                updateAccent()
-                            }
-                            else  ->
-                                (data.prop as Property<Any>).set(color)
-                        }
-                    },
-                    onClose = { expanded = false }
+                    model = pickerModel,
+                    onColorChanged = ::persistColor,
+                    onClose = { expanded = false },
                 )
             }
         }
@@ -199,40 +246,25 @@ fun ColorOption(data: ColorOptionData) {
 }
 
 @Composable
-fun ColorPickerPopup(
-    initialColor: Color,
+internal fun ColorPickerPopup(
+    model: ColorPickerModel,
     onColorChanged: (Color) -> Unit,
     onClose: () -> Unit,
 ) {
     val theme = LocalTheme.current
-    val hsb = remember(initialColor) { colorToHsb(initialColor) }
+    val hue = model.hue
+    val saturation = model.saturation
+    val brightness = model.brightness
+    val alpha = model.alpha
+    val chromaEnabled = model.chromaEnabled
+    val chromaSpeed = model.chromaSpeed
+    var hexText by remember(model) { mutableStateOf(colorToHex(model.currentColor())) }
 
-    var hue by remember { mutableFloatStateOf(hsb[0]) }
-    var saturation by remember { mutableFloatStateOf(hsb[1]) }
-    var brightness by remember { mutableFloatStateOf(hsb[2]) }
-    var alpha by remember { mutableFloatStateOf(initialColor.alpha) }
-    var hexText by remember { mutableStateOf(colorToHex(initialColor)) }
-    var chromaEnabled by remember { mutableStateOf(false) }
-    var chromaSpeed by remember { mutableFloatStateOf(1f) } // rotations per second
-
-    LaunchedEffect(chromaEnabled, chromaSpeed) {
-        if (!chromaEnabled) return@LaunchedEffect
-        var lastNanos = withInfiniteAnimationFrameNanos { it }
-        while (true) {
-            withInfiniteAnimationFrameNanos { frameNanos ->
-                val dt = (frameNanos - lastNanos) / 1_000_000_000f
-                lastNanos = frameNanos
-                hue = (hue + 360f * chromaSpeed * dt) % 360f
-                val c = hsbToColor(hue, saturation, brightness, alpha)
-                hexText = colorToHex(c)
-                onColorChanged(c)
-            }
-        }
+    LaunchedEffect(model.chromaEnabled, model.hue) {
+        if (model.chromaEnabled) hexText = colorToHex(model.currentColor())
     }
 
-    val currentColor = remember(hue, saturation, brightness, alpha) {
-        hsbToColor(hue, saturation, brightness, alpha)
-    }
+    val currentColor = model.currentColor()
 
     Column(
         modifier = Modifier
@@ -277,9 +309,9 @@ fun ColorPickerPopup(
                     awaitEachGesture {
                         val down = awaitFirstDown()
                         fun update(x: Float, y: Float) {
-                            saturation = (x / sbPaneSize.width).coerceIn(0f, 1f)
-                            brightness = 1f - (y / sbPaneSize.height).coerceIn(0f, 1f)
-                            val c = hsbToColor(hue, saturation, brightness, alpha)
+                            model.saturation = (x / sbPaneSize.width).coerceIn(0f, 1f)
+                            model.brightness = 1f - (y / sbPaneSize.height).coerceIn(0f, 1f)
+                            val c = model.currentColor()
                             hexText = colorToHex(c)
                             onColorChanged(c)
                         }
@@ -332,8 +364,8 @@ fun ColorPickerPopup(
                     awaitEachGesture {
                         val down = awaitFirstDown()
                         fun update(x: Float) {
-                            hue = ((x / size.width) * 360f).coerceIn(0f, 360f)
-                            val c = hsbToColor(hue, saturation, brightness, alpha)
+                            model.hue = ((x / size.width) * 360f).coerceIn(0f, 360f)
+                            val c = model.currentColor()
                             hexText = colorToHex(c)
                             onColorChanged(c)
                         }
@@ -399,8 +431,8 @@ fun ColorPickerPopup(
                     awaitEachGesture {
                         val down = awaitFirstDown()
                         fun update(x: Float) {
-                            alpha = (x / size.width).coerceIn(0f, 1f)
-                            val c = hsbToColor(hue, saturation, brightness, alpha)
+                            model.alpha = (x / size.width).coerceIn(0f, 1f)
+                            val c = model.currentColor()
                             hexText = colorToHex(c)
                             onColorChanged(c)
                         }
@@ -458,7 +490,7 @@ fun ColorPickerPopup(
                 )
                 Text("Chroma", color = theme.textColor, fontSize = 13.sp)
             }
-            SwitchControl(chromaEnabled) { chromaEnabled = it }
+            SwitchControl(chromaEnabled) { model.chromaEnabled = it }
         }
 
         if (chromaEnabled) {
@@ -485,7 +517,7 @@ fun ColorPickerPopup(
                             awaitEachGesture {
                                 val down = awaitFirstDown()
                                 fun update(x: Float) {
-                                    chromaSpeed = ((x / size.width) * 4f).coerceIn(0.1f, 4f)
+                                    model.chromaSpeed = ((x / size.width) * 4f).coerceIn(0.1f, 4f)
                                 }
                                 update(down.position.x)
                                 do {
@@ -540,11 +572,7 @@ fun ColorPickerPopup(
                     val filtered = input.filter { it.isLetterOrDigit() }.take(8)
                     hexText = filtered
                     hexToColor(filtered)?.let { c ->
-                        val newHsb = colorToHsb(c)
-                        hue = newHsb[0]
-                        saturation = newHsb[1]
-                        brightness = newHsb[2]
-                        alpha = c.alpha
+                        model.applyFrom(c)
                         onColorChanged(c)
                     }
                 },
