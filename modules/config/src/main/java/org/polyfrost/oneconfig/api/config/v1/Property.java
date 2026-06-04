@@ -60,7 +60,7 @@ public abstract class Property<T> extends Node implements Serializable {
     private transient Display display = Display.SHOWN;
     private transient List<Supplier<Display>> conditions = null;
 
-    protected Property(@Nullable String id, @Nullable String title, @Nullable String description, @NotNull Class<T> type) {
+    protected Property(@Nullable String id, @Nullable Object title, @Nullable Object description, @NotNull Class<T> type) {
         super(id, title, description);
         this.type = WrappingUtils.getUnwrapped(type);
     }
@@ -347,7 +347,7 @@ public abstract class Property<T> extends Node implements Serializable {
         private T value;
 
         @SuppressWarnings("unchecked")
-        Simple(@Nullable String id, @Nullable String title, @Nullable String description, @Nullable T value, @Nullable Class<T> type) {
+        Simple(@Nullable String id, @Nullable Object title, @Nullable Object description, @Nullable T value, @Nullable Class<T> type) {
             super(id, title, description, type == null ? (Class<T>) Objects.requireNonNull(value).getClass() : type);
             this.value = value;
         }
@@ -368,7 +368,7 @@ public abstract class Property<T> extends Node implements Serializable {
         private final Supplier<T> getter;
 
         @SuppressWarnings("unchecked")
-        Functional(@Nullable String id, @Nullable String title, @Nullable String description, @NotNull Consumer<T> setter, @NotNull Supplier<T> getter, @Nullable Class<T> type) {
+        Functional(@Nullable String id, @Nullable Object title, @Nullable Object description, @NotNull Consumer<T> setter, @NotNull Supplier<T> getter, @Nullable Class<T> type) {
             super(id, title, description, type == null ? (Class<T>) getter.get().getClass() : type);
             this.setter = setter;
             this.getter = getter;

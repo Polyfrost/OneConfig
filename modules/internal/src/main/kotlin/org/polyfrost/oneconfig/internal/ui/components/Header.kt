@@ -88,7 +88,7 @@ fun Header() {
 }
 
 internal sealed interface SearchResult {
-    val displayName: String
+    val displayName: Any
     val icon: String?
 }
 
@@ -99,8 +99,8 @@ internal data class ModResult(val config: ConfigData) : SearchResult {
 
 internal data class OptionResult(
     val modId: String,
-    val modTitle: String,
-    val optionTitle: String,
+    val modTitle: Any,
+    val optionTitle: Any,
     val category: String?,
     override val icon: String?,
     val prop: Property<*>?,
@@ -113,7 +113,7 @@ internal fun performSearch(query: String): Map<String, List<SearchResult>> {
     val q = query.trim().lowercase()
     val results = LinkedHashMap<String, MutableList<SearchResult>>()
 
-    val matchingMods = ConfigRegistry.configs.filter { it.title.lowercase().contains(q) }
+    val matchingMods = ConfigRegistry.configs.filter { it.title.asRenderText().contains(q, ignoreCase = true) }
     if (matchingMods.isNotEmpty()) {
         results["Mods"] = matchingMods.map { ModResult(it) }.toMutableList()
     }
@@ -125,20 +125,20 @@ internal fun performSearch(query: String): Map<String, List<SearchResult>> {
             when (node) {
                 is Property<*> -> {
                     val title = node.title ?: return@forEach
-                    if (title.lowercase().contains(q)) {
+                    if (title.asRenderText().lowercase().contains(q)) {
                         val cat = node.getMetadata<String>("category")
                         matchingOptions += OptionResult(configData.id, configData.title, title, cat, configData.icon, node)
                     }
                 }
                 is Tree -> {
                     val subTitle = node.title
-                    if (subTitle != null && subTitle.lowercase().contains(q)) {
+                    if (subTitle != null && subTitle.asRenderText().lowercase().contains(q)) {
                         val cat = node.getMetadata<String>("category")
                         matchingOptions += OptionResult(configData.id, configData.title, subTitle, cat, configData.icon, null)
                     }
                     node.map.values.filterIsInstance<Property<*>>().forEach { prop ->
                         val pt = prop.title ?: return@forEach
-                        if (pt.lowercase().contains(q)) {
+                        if (pt.asRenderText().lowercase().contains(q)) {
                             val cat = prop.getMetadata<String>("category")
                             matchingOptions += OptionResult(configData.id, configData.title, pt, cat, configData.icon, prop)
                         }
@@ -147,7 +147,7 @@ internal fun performSearch(query: String): Map<String, List<SearchResult>> {
             }
         }
         if (matchingOptions.isNotEmpty()) {
-            results[configData.title] = matchingOptions
+            results[configData.title.asRenderText()] = matchingOptions
         }
     }
 

@@ -4,16 +4,44 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.ComponentLike
+import net.kyori.adventure.text.TextComponent
+import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.internal.ui.api.TextComponent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
+fun Any.asRenderText(): String {
+    val comp: Any = Platform.compatibility().wrapPlatformComponent(this)
+
+    return when (comp) {
+        is String -> comp
+        is Component -> Platform.compatibility().resolveComponent(comp)
+        is ComponentLike -> comp.asComponent().asRenderText()
+        else -> comp.toString()
+    }
+}
+
+fun Any.isEmptyText() = this.asRenderText().isEmpty()
+
 @Composable
-fun Text(text: String, modifier: Modifier = Modifier, color: Color, fontSize: TextUnit = 14.sp, lineHeight: TextUnit? = null, shift: BaselineShift = BaselineShift.None, fontWeight: FontWeight = FontWeight.Normal) {
+fun Text(text: Any, modifier: Modifier = Modifier, color: Color, fontSize: TextUnit = 14.sp, lineHeight: TextUnit? = null, shift: BaselineShift = BaselineShift.None, fontWeight: FontWeight = FontWeight.Normal) {
+    val text = when (val comp: Any = Platform.compatibility().wrapPlatformComponent(text)) {
+        is Component -> TextComponent(comp)
+        is ComponentLike -> TextComponent(comp.asComponent())
+        is String -> AnnotatedString(comp, ParagraphStyle())
+        else -> TODO(comp.javaClass.simpleName)
+    }
+
     BasicText(
         text, style = TextStyle(
             fontSize = fontSize, fontWeight = fontWeight,

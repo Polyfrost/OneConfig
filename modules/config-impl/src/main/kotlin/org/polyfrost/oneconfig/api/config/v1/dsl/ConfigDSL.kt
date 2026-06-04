@@ -194,11 +194,11 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
             get() = property.id
             set(value) { property.id = value }
 
-        var title: String?
+        var title: Any?
             get() = property.title
             set(value) { property.title = value }
 
-        var description: String?
+        var description: Any?
             get() = property.description
             set(value) { property.description = value }
 
