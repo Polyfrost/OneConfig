@@ -31,6 +31,7 @@ object ModMenuCompat {
             .forEach { mod ->
                 val modMenuTree = Tree.tree()
 
+                modMenuTree.id = mod.id
                 modMenuTree.title = mod.name
                 modMenuTree.description = "(Mod Menu Compat)"
                 //TODO icon, idfk how to set a native image as PolyImage :sob:
