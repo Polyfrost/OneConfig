@@ -34,21 +34,30 @@ fun Any.asRenderText(): String {
 fun Any.isEmptyText() = this.asRenderText().isEmpty()
 
 @Composable
-fun Text(text: Any, modifier: Modifier = Modifier, color: Color, fontSize: TextUnit = 14.sp, lineHeight: TextUnit? = null, shift: BaselineShift = BaselineShift.None, fontWeight: FontWeight = FontWeight.Normal) {
-    val text = when (val comp: Any = Platform.compatibility().wrapPlatformComponent(text)) {
-        is Component -> TextComponent(comp)
-        is ComponentLike -> TextComponent(comp.asComponent())
-        is String -> AnnotatedString(comp, ParagraphStyle())
+fun Text(
+    text: Any,
+    modifier: Modifier = Modifier,
+    color: Color,
+    fontSize: TextUnit = 14.sp,
+    lineHeight: TextUnit? = null,
+    shift: BaselineShift = BaselineShift.None,
+    fontWeight: FontWeight = FontWeight.Normal
+) {
+    when (val comp: Any = Platform.compatibility().wrapPlatformComponent(text)) {
+        is Component -> TextComponent(comp, modifier, color, fontSize, lineHeight, shift, fontWeight)
+        is ComponentLike -> TextComponent(comp.asComponent(), modifier, color, fontSize, lineHeight, shift, fontWeight)
+        is String -> BasicText(
+            comp, style = TextStyle(
+                fontSize = fontSize, fontWeight = fontWeight,
+                fontFamily = LocalTheme.current.typography.family,
+                color = color,
+                lineHeight = lineHeight ?: TextStyle.Default.lineHeight,
+            ),
+            modifier = modifier
+        )
+
         else -> TODO(comp.javaClass.simpleName)
     }
 
-    BasicText(
-        text, style = TextStyle(
-            fontSize = fontSize, fontWeight = fontWeight,
-            fontFamily = LocalTheme.current.typography.family,
-            color = color,
-            lineHeight = lineHeight ?: TextStyle.Default.lineHeight,
-        ),
-        modifier = modifier
-    )
+
 }
