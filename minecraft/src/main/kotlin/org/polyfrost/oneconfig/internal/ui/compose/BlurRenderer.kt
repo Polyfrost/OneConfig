@@ -9,6 +9,11 @@ object BlurRenderer {
     private val client get() = Minecraft.getInstance()
     private val paints = HashMap<Float, Paint>()
 
+    private val OPAQUE_ALPHA_PAINT = Paint().apply {
+        color = 0xFF000000.toInt()
+        blendMode = BlendMode.PLUS
+    }
+
     private var cachedSurface: Surface? = null
     private var cachedBackendRenderTarget: BackendRenderTarget? = null
     private var cachedFramebufferId = -1
@@ -40,6 +45,16 @@ object BlurRenderer {
         canvas.clipRect(Rect.makeXYWH(0f, 0f, width, height))
         canvas.translate(-x, -y)
         sourceSurface.draw(canvas, 0, 0, paintFor(radius))
+        canvas.restore()
+
+        // BlendMode.SRC above copies the source's alpha verbatim. On 1.21.11 and below Minecraft's
+        // main render target leaves that alpha < 1, which is harmless when drawing straight to the
+        // opaque back buffer, but makes the backdrop turn transparent the moment Compose composites
+        // it through an offscreen layer (the open/close fade uses one). Force the region opaque while
+        // preserving its colour so the backdrop survives layer compositing on every version.
+        canvas.save()
+        canvas.clipRect(Rect.makeXYWH(0f, 0f, width, height))
+        canvas.drawRect(Rect.makeXYWH(0f, 0f, width, height), OPAQUE_ALPHA_PAINT)
         canvas.restore()
     }
 
