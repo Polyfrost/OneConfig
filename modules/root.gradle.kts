@@ -81,6 +81,12 @@ subprojects {
         }
     }
 
+    // Tests run via the j21Tests suite (JUnit Jupiter); the default `test` task compiles
+    // sources but does not use the JUnit Platform and fails on Gradle 9+.
+    tasks.named<Test>("test") {
+        enabled = false
+    }
+
     tasks.withType<Javadoc> {
         options {
             (this as CoreJavadocOptions).addBooleanOption("Xdoclint:none", true)

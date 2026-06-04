@@ -69,6 +69,16 @@ stonecutter {
             }
         }
     }
+
+    // The bootstrap tree mirrors every Fabric node of the minecraft tree. Each
+    // node JiJ-includes the matching platform jar plus all modules and deps.
+    create("bootstrap") {
+        versions.forEach { (version, loaders) ->
+            loaders.filter { it == FABRIC }.forEach { loader ->
+                version(loader.versionName(version), version).buildscript = loader.buildFile(version)
+            }
+        }
+    }
 }
 
 dependencyResolutionManagement {
