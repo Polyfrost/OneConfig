@@ -6,6 +6,7 @@ import com.terraformersmc.modmenu.util.mod.Mod
 import net.minecraft.client.Minecraft
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 
 object ModMenuCompat {
@@ -34,7 +35,9 @@ object ModMenuCompat {
                 modMenuTree.id = mod.id
                 modMenuTree.title = mod.name
                 modMenuTree.description = "(Mod Menu Compat)"
-                //TODO icon, idfk how to set a native image as PolyImage :sob:
+                ModInfo.loadedMods.firstOrNull { it.id == mod.id }?.modIconPath?.let { iconPath ->
+                    modMenuTree.addMetadata("icon_path", iconPath)
+                }
                 modMenuTree.addMetadata("on_click") {
                     Platform.screen().display(ModMenu.getConfigScreen(mod.id, Platform.screen().current()))
                 }

@@ -15,6 +15,7 @@ loom.apply {
         ideConfigGenerated(true)
         runDir = "../../run"
         property("devauth.enabled", "true")
+        property("oneconfig.test", "true")
         //vmArg("-Dfabric.modsFolder=" + '"' + rootProject.projectDir.resolve("run/${mcVersion}Mods").absolutePath + '"')
     }
 }

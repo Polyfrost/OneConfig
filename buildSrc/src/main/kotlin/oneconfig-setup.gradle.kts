@@ -376,3 +376,8 @@ configure<JavaPluginExtension> {
 configure<KotlinJvmExtension> {
     jvmToolchain(javaVersion)
 }
+
+tasks.withType<Jar>().configureEach {
+    exclude("**/*_Test.class")
+    exclude("**/*_Test\$*.class")
+}

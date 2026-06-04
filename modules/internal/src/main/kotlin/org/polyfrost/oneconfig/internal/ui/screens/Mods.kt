@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
@@ -43,6 +44,7 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
@@ -81,11 +83,19 @@ fun Mods() {
     }
 }
 
+val EXCLUDED_MODS = listOf(
+    PREFERENCES_ID,
+    THEMES_ID,
+    "minecraft",
+    "resourcefulconfig",
+    "modmenu"
+)
+
 @Composable
 fun ColumnScope.ModsGrid(category: ModCategory) {
     val configs = ConfigRegistry.configs
     val filtered = configs
-        .filter { it.id != PREFERENCES_ID && it.id != THEMES_ID }
+        .filterNot { it.id.lowercase() in EXCLUDED_MODS }
         .let { items ->
             if (category.configCategory == null) items
             else items.filter { it.category == category.configCategory }
@@ -125,9 +135,10 @@ fun ModCard(mod: ConfigData) {
                 ), theme.modCardShape
             )
             .onClick(interactionSource) {
-                when (mod.source) {
-                    ConfigSource.OC -> LocalNavController.wrapper.navigate(ModConfigRoute(mod.id))
-                    else -> mod.onOpen?.invoke()
+                val onOpen = mod.onOpen
+                when {
+                    onOpen != null -> onOpen()
+                    mod.source == ConfigSource.OC -> LocalNavController.wrapper.navigate(ModConfigRoute(mod.id))
                 }
             }
             .clip(theme.modCardShape)
@@ -138,7 +149,19 @@ fun ModCard(mod: ConfigData) {
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(mod.icon, color = theme.textColor, modifier = Modifier.size(48.dp))
+                val icon = mod.icon
+                if (icon != null) {
+                    Icon(icon, color = theme.textColor, modifier = Modifier.size(48.dp))
+                } else {
+                    Text(
+                        mod.title.asRenderText(),
+                        color = theme.textColor,
+                        fontSize = 16.sp,
+                        lineHeight = 18.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    )
+                }
             }
             Box(
                 modifier = Modifier

@@ -15,6 +15,4 @@ public class ThemeConfig extends Config {
     public ThemeConfig() {
         super("themes.json", "assets/oneconfig/brand/oneconfig.svg", "Themes", Category.QOL);
     }
-
-    static { new ThemeConfig(); }
 }

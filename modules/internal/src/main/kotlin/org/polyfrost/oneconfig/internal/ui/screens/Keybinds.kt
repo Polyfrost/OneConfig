@@ -46,7 +46,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 private data class KeybindGroup(
     val modId: String,
     val modTitle: Any,
-    val modIcon: String,
+    val modIcon: String?,
     val entries: List<KeybindEntry>,
 )
 
@@ -112,7 +112,9 @@ private fun KeybindGroupHeader(group: KeybindGroup) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Icon(group.modIcon, color = theme.textColorSecondary, modifier = Modifier.size(18.dp))
+        group.modIcon?.let { icon ->
+            Icon(icon, color = theme.textColorSecondary, modifier = Modifier.size(18.dp))
+        }
         Text(
             group.modTitle,
             color = theme.textColorSecondary,
