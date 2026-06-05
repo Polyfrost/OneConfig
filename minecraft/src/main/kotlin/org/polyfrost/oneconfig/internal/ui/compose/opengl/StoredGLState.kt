@@ -1,6 +1,10 @@
 package org.polyfrost.oneconfig.internal.ui.compose.opengl
 
+//? if >= 1.21.5 {
 import com.mojang.blaze3d.opengl.GlStateManager
+//? } else {
+/*import com.mojang.blaze3d.platform.GlStateManager
+*///? }
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL45.*
 
