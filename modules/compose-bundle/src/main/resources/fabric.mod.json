@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "oneconfig-compose-bundle",
+  "version": "${version}",
+  "name": "Compose Bundle",
+  "description": "Bundled Jetpack Compose and Skiko runtime used by OneConfig.",
+  "authors": [
+    "Polyfrost"
+  ],
+  "contact": {
+    "homepage": "https://polyfrost.org",
+    "sources": "https://github.com/Polyfrost/OneConfig"
+  },
+  "license": "LGPL-3.0-or-later",
+  "environment": "client",
+  "depends": {
+    "fabricloader": ">=0.15.0"
+  }
+}

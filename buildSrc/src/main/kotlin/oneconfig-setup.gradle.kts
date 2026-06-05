@@ -178,19 +178,7 @@ dependencies {
     handleApiDep(versionedCatalog["snakeyaml"])
     handleApiDep(versionedCatalog["isolated-lwjgl3-loader"]) //todo check if needed
     handleApiDep(versionedCatalog["polyio"]) //todo check if needed
-    val copycat = versionedCatalog["copycat"].get()
-    handleApiDep(copycat)
-    setOf(
-        "windows" to setOf("x64", "x86"),
-        "linux" to setOf("x64", "x86", "arm", "arm64"),
-        "osx" to setOf("x64", "arm64")
-    ).forEach { (os, arches) ->
-        arches.forEach { arch ->
-            handleApiDep("${copycat.group}:${copycat.name}-natives-$os-$arch:${copycat.version}")
-        }
-    }
-
-    handleApiDep(versionedCatalog["copycat-image-awt"])
+    handleApiDep(versionedCatalog["java-objc-bridge"])
     handleApiDep(versionedCatalog["hypixel-modapi"])
     handleApiDep(versionedCatalog["hypixel-data"])
 

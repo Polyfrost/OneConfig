@@ -26,8 +26,6 @@
 
 package org.polyfrost.oneconfig.utils.v1;
 
-import dev.deftu.clipboard.BufferedClipboardImage;
-import dev.deftu.clipboard.Clipboard;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
@@ -193,7 +191,7 @@ public final class OneImage {
      * Copy the image to the system clipboard and delete the graphics object.
      */
     public void copyToClipboard() {
-        Clipboard.getInstance().setImage(BufferedClipboardImage.toClipboardImage(this.image));
+        ClipboardHelper.setImage(this.image);
         dispose();
     }
 

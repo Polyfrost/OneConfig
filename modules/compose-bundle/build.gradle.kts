@@ -1,3 +1,9 @@
+// compose-bundle ships as a standalone Fabric mod (see src/main/resources/fabric.mod.json)
+// so the shaded Compose/skiko runtime can be published to Modrinth separately. It is
+// therefore excluded from the bootstrap JiJ (see oneconfig-bootstrap.gradle.kts).
+group = "${rootProject.group}.compose"
+version = rootProject.version
+
 repositories {
     maven("https://redirector.kotlinlang.org/maven/compose-dev")
 }
@@ -28,5 +34,11 @@ dependencies {
 tasks.jar {
     from(shade.map { if (it.isDirectory) it else zipTree(it) })
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.processResources {
+    val props = mapOf("version" to project.version)
+    inputs.properties(props)
+    filesMatching("fabric.mod.json") { expand(props) }
 }
 

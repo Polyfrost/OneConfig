@@ -9,6 +9,7 @@
   ],
   "environment": "client",
   "depends": {
-    "minecraft": "${mc_version}"
+    "minecraft": "${mc_version}",
+    "oneconfig-compose-bundle": "*"
   }
 }

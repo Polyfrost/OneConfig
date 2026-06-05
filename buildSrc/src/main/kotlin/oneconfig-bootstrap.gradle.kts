@@ -62,7 +62,9 @@ afterEvaluate {
         "org.jetbrains.kotlinx:atomicfu-jvm",
         "org.jetbrains.kotlinx:kotlinx-datetime-jvm",
         "org.jetbrains.kotlinx:kotlinx-io-core-jvm",
-        "org.jetbrains.kotlinx:kotlinx-io-bytestring-jvm"
+        "org.jetbrains.kotlinx:kotlinx-io-bytestring-jvm",
+
+        "net.fabricmc:fabric-language-kotlin"
     )
 
     // Compose/skiko classes are shipped via the shaded :modules:compose-bundle jar.
@@ -84,7 +86,12 @@ afterEvaluate {
         (dependencies.add("include", coord) as ExternalModuleDependency).isTransitive = false
     }
 
+    // compose-bundle ships as its own Fabric mod on Modrinth, so it must NOT be JiJ'd
+    // into the bootstrap. The platform still compiles against it (api dependency).
+    val excludedProjects = setOf(":modules:compose-bundle")
+
     fun includeProject(path: String) {
+        if (path in excludedProjects) return
         if (!seen.add(path)) return
         (dependencies.add("include", dependencies.project(path)) as ModuleDependency).isTransitive = false
     }

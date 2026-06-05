@@ -17,8 +17,8 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import com.mojang.blaze3d.platform.InputConstants
-import dev.deftu.clipboard.Clipboard
 import net.minecraft.client.Minecraft
+import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.screens.Screen
 //? >= 1.21.10 {
@@ -35,13 +35,10 @@ import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 
 @Suppress("DEPRECATION")
-private object CopycatClipboardManager : androidx.compose.ui.platform.ClipboardManager {
-    private val clipboard get() = Clipboard.getInstance()
-
+private object SystemClipboardManager : androidx.compose.ui.platform.ClipboardManager {
     override fun getText(): AnnotatedString? {
         return try {
-            val data = clipboard.string
-                ?: return null
+            val data = ClipboardHelper.getString() ?: return null
             AnnotatedString(data)
         } catch (_: Throwable) {
             null
@@ -50,9 +47,7 @@ private object CopycatClipboardManager : androidx.compose.ui.platform.ClipboardM
 
     override fun setText(annotatedString: AnnotatedString) {
         try {
-            clipboard.setString(
-                annotatedString.text
-            )
+            ClipboardHelper.setString(annotatedString.text)
         } catch (_: Throwable) {
         }
     }
@@ -64,14 +59,12 @@ private object CopycatClipboardManager : androidx.compose.ui.platform.ClipboardM
 
 
 @Suppress("DEPRECATION")
-private object CopycatClipboard : androidx.compose.ui.platform.Clipboard {
+private object SystemClipboard : androidx.compose.ui.platform.Clipboard {
     override val nativeClipboard: Any = Unit
-
-    private val clipboard get() = Clipboard.getInstance()
 
     @OptIn(ExperimentalComposeUiApi::class)
     override suspend fun getClipEntry(): ClipEntry? {
-        val text = clipboard.string ?: return null
+        val text = ClipboardHelper.getString() ?: return null
         return ClipEntry(java.awt.datatransfer.StringSelection(text))
     }
 
@@ -80,11 +73,8 @@ private object CopycatClipboard : androidx.compose.ui.platform.Clipboard {
         if (clipEntry == null) return
         try {
             val transferable = clipEntry.nativeClipEntry as? java.awt.datatransfer.Transferable
-            if (transferable != null &&
-                transferable.isDataFlavorSupported(java.awt.datatransfer.DataFlavor.stringFlavor)
-            ) {
-                val text = transferable.getTransferData(java.awt.datatransfer.DataFlavor.stringFlavor) as? String
-                if (text != null) clipboard.setString(text)
+            if (transferable != null) {
+                ClipboardHelper.setTransferable(transferable)
             }
         } catch (_: Throwable) {
         }
@@ -135,8 +125,8 @@ abstract class ComposeScreen(
         scene.setContent {
             @Suppress("DEPRECATION")
             CompositionLocalProvider(
-                LocalClipboardManager provides CopycatClipboardManager,
-                LocalClipboard provides CopycatClipboard
+                LocalClipboardManager provides SystemClipboardManager,
+                LocalClipboard provides SystemClipboard
             ) {
                 compose()
             }

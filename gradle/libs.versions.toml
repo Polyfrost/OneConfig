@@ -16,8 +16,7 @@ snakeyaml = "1.31"
 nightconfig = "3.6.6"
 isolated-lwjgl3-loader = "0.3.0"
 polyio = "0.1.0"
-copycat = "0.1.3"
-copycat-image-awt = "0.1.1"
+java-objc-bridge = "1.2"
 
 # Per version
 lwjgl = "3.3.3" # All downloaded by the isolated-lwjgl3-loader
@@ -72,8 +71,7 @@ brigadier = { module = "com.mojang:brigadier", version.ref = "brigadier" }
 
 isolated-lwjgl3-loader = { module = "org.polyfrost:isolated-lwjgl3-loader", version.ref = "isolated-lwjgl3-loader" }
 polyio = { module = "org.polyfrost:polyio", version.ref = "polyio" }
-copycat = { module = "dev.deftu:copycat", version.ref = "copycat" }
-copycat-image-awt = { module = "dev.deftu:copycat-image-awt", version.ref = "copycat-image-awt" }
+java-objc-bridge = { module = "ca.weblite:java-objc-bridge", version.ref = "java-objc-bridge" }
 
 hypixel-modapi = { module = "net.hypixel:mod-api", version.ref = "hypixel-modapi" }
 hypixel-data = { module = "net.hypixel:hypixel-data", version.ref = "hypixel-data" }

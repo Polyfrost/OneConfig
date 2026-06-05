@@ -28,13 +28,6 @@ package org.polyfrost.oneconfig.utils.v1;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
-
-import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -79,33 +72,5 @@ public final class IOUtils {
                     .substring(1));
         }
         return stringBuffer.toString();
-    }
-
-
-    private static class ImageSelection implements Transferable {
-        private final Image image;
-
-        public ImageSelection(Image image) {
-            this.image = image;
-        }
-
-        @Override
-        public DataFlavor[] getTransferDataFlavors() {
-            return new DataFlavor[]{DataFlavor.imageFlavor};
-        }
-
-        @Override
-        public boolean isDataFlavorSupported(DataFlavor flavor) {
-            return DataFlavor.imageFlavor.equals(flavor);
-        }
-
-        @NotNull
-        @Override
-        public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
-            if (!DataFlavor.imageFlavor.equals(flavor)) {
-                throw new UnsupportedFlavorException(flavor);
-            }
-            return image;
-        }
     }
 }

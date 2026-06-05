@@ -28,7 +28,6 @@
 package org.polyfrost.oneconfig.internal;
 
 import com.mojang.brigadier.Command;
-import dev.deftu.clipboard.Clipboard;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -200,18 +199,6 @@ public class OneConfig
 //        //#endif
     }
 
-    private static void preloadCopycat() {
-        long t1 = System.nanoTime();
-        try {
-            // Copycat
-            Clipboard.getInstance();
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to preload necessary Copycat classes", e);
-        }
-
-        LOGGER.info("  -> Copycat preload took {}ms", (System.nanoTime() - t1) / 1_000_000.0);
-    }
-
     //? neoforge {
     //static {
     //    INSTANCE.init();
@@ -253,8 +240,6 @@ public class OneConfig
         LOGGER.info("Loading OneConfig v{}", v);
         BlurHandler.init();
         McFontService.INSTANCE.init();
-
-        preloadCopycat();
 
         registerKeybinds();
         new OneConfigConfig();
