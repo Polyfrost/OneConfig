@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.compose.opengl
 
+import com.mojang.blaze3d.opengl.GlStateManager
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL45.*
 
@@ -20,6 +21,7 @@ class StoredGLState(private val glVersion: Int) {
             if (glVersion >= 200) {
                 glGetIntegerv(GL_POLYGON_MODE, lastPolygonMode)
             }
+            glGetIntegerv(GL_DEPTH_FUNC, lastDepthFunc)
             glGetIntegerv(GL_VIEWPORT, lastViewport)
             glGetIntegerv(GL_SCISSOR_BOX, lastScissorBox)
             glGetIntegerv(GL_BLEND_SRC_RGB, lastBlendSrcRgb)
@@ -97,16 +99,25 @@ class StoredGLState(private val glVersion: Int) {
                 lastColorMask.get(2).toInt() != 0,
                 lastColorMask.get(3).toInt() != 0
             )
-            if (lastEnableBlend) glEnable(GL_BLEND)
-            else glDisable(GL_BLEND)
-            if (lastEnableCullFace) glEnable(GL_CULL_FACE)
-            else glDisable(GL_CULL_FACE)
-            if (lastEnableDepthTest) glEnable(GL_DEPTH_TEST)
-            else glDisable(GL_DEPTH_TEST)
+
+            // Skia's resetGLAll() changes real GL without updating GlStateManager's cache. If we
+            // restore with raw glEnable/glDisable, the cache can still think the old value is active
+            // and MC will skip the GL call on the next draw (e.g. item culling) until a full device
+            // reset such as a window resize. Toggle through GlStateManager to force cache + GL sync.
+            forceToggle(lastEnableBlend, GlStateManager::_enableBlend, GlStateManager::_disableBlend)
+            forceToggle(lastEnableCullFace, GlStateManager::_enableCull, GlStateManager::_disableCull)
+            forceToggle(
+                lastEnableDepthTest,
+                GlStateManager::_enableDepthTest,
+                GlStateManager::_disableDepthTest,
+            )
             if (lastEnableStencilTest) glEnable(GL_STENCIL_TEST)
             else glDisable(GL_STENCIL_TEST)
-            if (lastEnableScissorTest) glEnable(GL_SCISSOR_TEST)
-            else glDisable(GL_SCISSOR_TEST)
+            forceToggle(
+                lastEnableScissorTest,
+                GlStateManager::_enableScissorTest,
+                GlStateManager::_disableScissorTest,
+            )
             if (glVersion >= 310) {
                 if (lastEnablePrimitiveRestart) glEnable(GL_PRIMITIVE_RESTART)
                 else glDisable(GL_PRIMITIVE_RESTART)
@@ -114,6 +125,8 @@ class StoredGLState(private val glVersion: Int) {
             if (glVersion >= 200) {
                 glPolygonMode(GL_FRONT_AND_BACK, lastPolygonMode[0])
             }
+            forceDepthFunc(lastDepthFunc[0])
+            forceDepthMask(lastDepthMask)
             glViewport(lastViewport[0], lastViewport[1], lastViewport[2], lastViewport[3])
             glScissor(
                 lastScissorBox[0],
@@ -143,10 +156,28 @@ class StoredGLState(private val glVersion: Int) {
                 glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, lastUnpackImageHeight[0])
                 glPixelStorei(GL_UNPACK_SKIP_IMAGES, lastUnpackSkipImages[0])
             }
-
-            // This state is not restored in the original imgui-java project but is included to address bugs encountered when drawing with Skija.
-            glDepthMask(lastDepthMask) // This is a workaround for a bug where the text renderer of Minecraft would not render text properly (flickering text). This also fixes the issue that resizing the window would cause the buttons and more to disappear.
         }
         return this
+    }
+
+    private fun forceToggle(enabled: Boolean, enable: () -> Unit, disable: () -> Unit) {
+        if (enabled) {
+            disable()
+            enable()
+        } else {
+            enable()
+            disable()
+        }
+    }
+
+    private fun forceDepthFunc(func: Int) {
+        val bogus = if (func == GL_LEQUAL) GL_GREATER else GL_LEQUAL
+        GlStateManager._depthFunc(bogus)
+        GlStateManager._depthFunc(func)
+    }
+
+    private fun forceDepthMask(mask: Boolean) {
+        GlStateManager._depthMask(!mask)
+        GlStateManager._depthMask(mask)
     }
 }

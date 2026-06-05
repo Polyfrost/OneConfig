@@ -12,6 +12,7 @@ class StoredGLStateProps {
     val lastArrayBuffer = IntArray(1)
     val lastVertexArrayObject = IntArray(1)
     val lastPolygonMode = IntArray(2)
+    val lastDepthFunc = IntArray(1)
     val lastViewport = IntArray(4)
     val lastScissorBox = IntArray(4)
     val lastBlendSrcRgb = IntArray(1)

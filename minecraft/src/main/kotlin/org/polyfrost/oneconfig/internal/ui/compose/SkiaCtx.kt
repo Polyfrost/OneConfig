@@ -282,6 +282,15 @@ object SkiaCtx {
             hudTarget = rt
 
             val svc = vulkanService ?: return null
+            //? >= 1.21.5 {
+            val fboId = org.polyfrost.oneconfig.internal.ui.RenderTargetFbo.getFboId(rt)
+            if (fboId <= 0) {
+                LOG.warn("SkiaCtx: hud TextureTarget FBO not ready (id={}), retry next frame", fboId)
+                hudTarget = null
+                rt.destroyBuffers()
+                return null
+            }
+            //? }
             val (brt, colorFmt) = svc.makeOffscreenBRT(rt, w, h)
             hudBrt = brt
             hudSurface = Surface.makeFromBackendRenderTarget(
