@@ -31,6 +31,7 @@ object SkiaCtx {
 
     private val queuedHudDraws = CopyOnWriteArrayList<() -> Unit>()
     private val queuedDraws = CopyOnWriteArrayList<() -> Unit>()
+    private val queuedWarmups = CopyOnWriteArrayList<() -> Unit>()
 
     private val gl = StoredGLState(330)
 
@@ -119,6 +120,45 @@ object SkiaCtx {
         queuedDraws.add { block.run() }
     }
 
+    fun queueWarmup(block: () -> Unit) {
+        queuedWarmups.add(block)
+    }
+
+    private fun runWarmups() {
+        if (!this::directContext.isInitialized) return
+        if (queuedWarmups.isEmpty()) return
+        val warmups = queuedWarmups.toList()
+        queuedWarmups.clear()
+        val savedFbo = IntArray(1)
+        try {
+            if (isVulkanMode) {
+                vulkanService?.midFrameFlush()
+                directContext.resetAll()
+            } else {
+                gl.capture()
+                GL30.glGetIntegerv(GL30.GL_FRAMEBUFFER_BINDING, savedFbo)
+                directContext.resetGLAll()
+            }
+
+            warmups.forEach { it() }
+
+            if (isVulkanMode) {
+                directContext.flush()
+            } else {
+                directContext.flush()
+                GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, savedFbo[0])
+                gl.restore()
+            }
+        } catch (e: Throwable) {
+            LOG.warn("SkiaCtx.runWarmups() error", e)
+            if (!isVulkanMode) try {
+                GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, savedFbo[0])
+                gl.restore()
+            } catch (_: Throwable) {
+            }
+        }
+    }
+
     fun drawNow() {
         if (!this::directContext.isInitialized) return
         val draws = queuedHudDraws.toList()
@@ -175,6 +215,7 @@ object SkiaCtx {
 
     fun draw() {
         if (!this::directContext.isInitialized) return
+        runWarmups()
         val draws = queuedDraws.toList()
         queuedDraws.clear()
         if (draws.isEmpty()) return

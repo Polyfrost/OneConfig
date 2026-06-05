@@ -36,6 +36,7 @@ object SkiaFontRenderer : PreparableReloadListener {
         if (resourceManager is ReloadableResourceManager) {
             resourceManager.registerReloadListener(this)
         }
+        ComposePreloader.preloadGpuWarmup()
     }
 
     fun measureWidth(text: String): Float {
