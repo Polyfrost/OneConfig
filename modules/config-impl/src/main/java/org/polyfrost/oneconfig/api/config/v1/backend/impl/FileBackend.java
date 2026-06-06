@@ -45,6 +45,7 @@ public class FileBackend extends Backend {
     public final Path folder;
     private final Map<String, FileSerializer<String>> serializers = new HashMap<>(4);
     private boolean hasWatcher = false;
+    private WatchService watcherService = null;
     private volatile boolean dodge = false;
 
     @SafeVarargs
@@ -85,6 +86,7 @@ public class FileBackend extends Backend {
         if (hasWatcher) return this;
         WatchService service = folder.getFileSystem().newWatchService();
         folder.register(service, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
+        watcherService = service;
 //        Files.walkFileTree(folder, new SimpleFileVisitor<Path>() {
 //            @Override
 //            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
@@ -96,7 +98,7 @@ public class FileBackend extends Backend {
 
         Thread t = new Thread(() -> {
             int i = 0;
-            while (true) {
+            while (hasWatcher) {
                 try {
                     WatchKey key = service.take();
                     for (WatchEvent<?> event : key.pollEvents()) {
@@ -127,6 +129,8 @@ public class FileBackend extends Backend {
                         hasWatcher = false;
                         break;
                     }
+                } catch (ClosedWatchServiceException e) {
+                    break;
                 } catch (Exception e) {
                     i++;
                     LOGGER.error("error with config file watcher (error no. {})", i, e);
@@ -137,6 +141,8 @@ public class FileBackend extends Backend {
                     }
                 }
             }
+            hasWatcher = false;
+            watcherService = null;
             try {
                 service.close();
             } catch (IOException e) {
@@ -152,6 +158,16 @@ public class FileBackend extends Backend {
 
     public boolean hasWatcher() {
         return hasWatcher;
+    }
+
+    public synchronized void closeWatcher() {
+        if (!hasWatcher || watcherService == null) return;
+        hasWatcher = false;
+        try {
+            watcherService.close();
+        } catch (IOException e) {
+            LOGGER.error("Failed to close file watcher service", e);
+        }
     }
 
     public void dodge() {

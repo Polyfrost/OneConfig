@@ -231,7 +231,7 @@ public final class ConfigManager {
         }
         if (active != null) {
             if (saveCurrent) active.saveAll();
-            active.shutdown = true;
+            active.close();
         }
         internal().get("profiles.json").getProp("activeProfile").setAs(profile);
         internal().save("profiles.json");
@@ -619,5 +619,12 @@ public final class ConfigManager {
         shutdown = true;
         LOGGER.info("shutdown requested; saving all configs in ./{}", backend.folder.getFileName());
         backend.saveAll();
+        backend.closeWatcher();
+    }
+
+    private synchronized void close() {
+        if (shutdown) return;
+        shutdown = true;
+        backend.closeWatcher();
     }
 }
