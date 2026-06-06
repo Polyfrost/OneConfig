@@ -14,6 +14,15 @@ val shade: Configuration by configurations.creating {
     exclude(group = "org.jetbrains", module = "annotations")
 }
 
+fun isExcludedFromBundle(file: File): Boolean {
+    val artifact = shade.resolvedConfiguration.resolvedArtifacts.find { it.file == file }
+    return artifact?.moduleVersion?.id?.let { id ->
+        id.group == "org.jetbrains.kotlin" ||
+            id.group == "org.jetbrains.kotlinx" ||
+            (id.group == "org.jetbrains" && id.name == "annotations")
+    } ?: false
+}
+
 dependencies {
     shade(libs.jetbrains.compose.foundation)
     shade(libs.jetbrains.compose.material)
@@ -32,7 +41,21 @@ dependencies {
 }
 
 tasks.jar {
-    from(shade.map { if (it.isDirectory) it else zipTree(it) })
+    from(shade.map { file ->
+        when {
+            isExcludedFromBundle(file) -> files()
+            file.isDirectory -> fileTree(file)
+            else -> zipTree(file)
+        }
+    })
+    exclude(
+        "kotlin/**",
+        "kotlinx/**",
+        "META-INF/kotlin-stdlib*.kotlin_module",
+        "META-INF/maven/org.jetbrains.kotlin/**",
+        "META-INF/maven/org.jetbrains/annotations/**",
+        "org/jetbrains/annotations/**",
+    )
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
@@ -41,4 +64,3 @@ tasks.processResources {
     inputs.properties(props)
     filesMatching("fabric.mod.json") { expand(props) }
 }
-
