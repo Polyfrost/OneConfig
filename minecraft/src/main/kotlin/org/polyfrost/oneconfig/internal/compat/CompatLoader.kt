@@ -30,6 +30,8 @@ object CompatLoader {
         "net.azureaaron.dandelion_bp.deps.moulconfig",
         "net.azureaaron.dandelion_bp.impl.moulconfig",
         "moe.nea.firmament.deps.moulconfig",
+        "dev.tr7zw.trender",
+        "dev.tr7zw.transition",
         "kotlin"
     )
 

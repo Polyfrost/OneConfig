@@ -82,6 +82,9 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? clothconfig_compat
         mixins.add("compat.cloth.Mixin_ConfigBuilderImpl");
 
+        //? tr7zw_compat
+        mixins.add("compat.tr7zw.Mixin_AbstractConfigScreen");
+
         // mixins.add("compat.rconfig.Mixin_Configurations");
 
         //? modmenu_compat

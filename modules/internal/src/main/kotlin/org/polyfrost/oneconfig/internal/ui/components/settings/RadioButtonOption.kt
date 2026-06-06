@@ -53,9 +53,15 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
         data.prop.type.superclass?.isEnum == true -> data.prop.type.superclass
         else -> null
     }
+    val values: List<Any?> = when {
+        enumClass != null -> enumClass.enumConstants.toList()
+        else -> emptyList()
+    }
     val options: List<String> = when {
-        enumClass != null -> enumClass.enumConstants.map { (it as Enum<*>).name }
-        data.options != null -> data.options!!.toList()
+        enumClass != null -> values.mapIndexed { index, value ->
+            data.options?.getOrNull(index) ?: (value as Enum<*>).name
+        }
+        data.options != null -> data.options!!
         else -> emptyList()
     }
 
@@ -109,7 +115,7 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
                                 selectedIdx = index
                                 @Suppress("UNCHECKED_CAST")
                                 if (enumClass != null) {
-                                    (data.prop as Property<Any>).set(enumClass.enumConstants[index])
+                                    (data.prop as Property<Any>).set(values[index])
                                 } else {
                                     (data.prop as Property<Any>).set(index)
                                 }

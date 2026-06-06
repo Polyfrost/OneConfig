@@ -18,6 +18,7 @@ stonecutter {
             this["clothconfig_compat"] = catalogue.has("clothconfig")
             this["modmenu_compat"] = catalogue.has("modmenu")
             this["rconfig_compat"] = catalogue.has("rconfig")
+            this["tr7zw_compat"] = true
             this["cinnabar"] = catalogue.has("cinnabar") && rootProject.hasProperty("minecraft.vulkan")
         }
 

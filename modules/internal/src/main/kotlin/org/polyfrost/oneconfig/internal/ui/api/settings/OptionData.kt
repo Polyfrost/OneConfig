@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.api.settings
 
 import org.polyfrost.oneconfig.api.config.v1.Property
+import java.lang.reflect.Array as ReflectArray
 
 sealed class OptionData(val prop: Property<*>) {
     val title: Any get() = prop.title ?: prop.id ?: ""
@@ -43,12 +44,12 @@ class TextOptionData(prop: Property<*>) : OptionData(prop) {
 }
 
 class DropdownOptionData(prop: Property<*>) : OptionData(prop) {
-    val options: Array<String>? get() = prop.getMetadata("options")
+    val options: List<String>? get() = prop.optionLabels()
     val isEnum: Boolean get() = prop.type.isEnum || prop.type.superclass?.isEnum == true
 }
 
 class RadioButtonOptionData(prop: Property<*>) : OptionData(prop) {
-    val options: Array<String>? get() = prop.getMetadata("options")
+    val options: List<String>? get() = prop.optionLabels()
     val isEnum: Boolean get() = prop.type.isEnum || prop.type.superclass?.isEnum == true
 }
 
@@ -86,3 +87,15 @@ class MultiSelectDropdownOptionData(prop: Property<*>) : OptionData(prop) {
     val checkable: Boolean get() = prop.getMetadata("checkable") ?: true
 }
 
+private fun Property<*>.optionLabels(): List<String>? {
+    val raw = getMetadata<Any>("options") ?: return null
+    val labels = when {
+        raw is Iterable<*> -> raw.map { it?.toString() ?: "" }
+        raw.javaClass.isArray -> List(ReflectArray.getLength(raw)) { index ->
+            ReflectArray.get(raw, index)?.toString() ?: ""
+        }
+        else -> return null
+    }.filter { it.isNotBlank() }
+
+    return labels.takeIf { it.isNotEmpty() }
+}
