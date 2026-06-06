@@ -2,7 +2,7 @@
 // so the shaded Compose/skiko runtime can be published to Modrinth separately. It is
 // therefore excluded from the bootstrap JiJ (see oneconfig-bootstrap.gradle.kts).
 group = "${rootProject.group}.compose"
-version = rootProject.version
+version = "1.0.0+compose.${libs.versions.compose.asProvider().get()}-skiko.${libs.versions.skiko.get()}"
 
 repositories {
     maven("https://redirector.kotlinlang.org/maven/compose-dev")
