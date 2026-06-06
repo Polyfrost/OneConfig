@@ -31,6 +31,9 @@ object ShellState {
 
     var searchQuery by mutableStateOf("")
 
+    /** True when the account footer should show an unread-notification indicator. */
+    var hasUnreadNotifications by mutableStateOf(false)
+
     /** Last top-level route navigated to, used by the "Previous page" / "Smart reset" opening behaviors. */
     var lastRoute: Any? = null
 

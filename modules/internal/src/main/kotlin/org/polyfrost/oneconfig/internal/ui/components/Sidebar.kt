@@ -209,7 +209,10 @@ private fun Account() {
                 }
             }
             IconWithIndicator(
-                iconName = "bell", color = LocalTheme.current.textColor, Modifier.size(18.dp)
+                iconName = "bell",
+                color = LocalTheme.current.textColor,
+                modifier = Modifier.size(18.dp),
+                showIndicator = ShellState.hasUnreadNotifications,
             )
         }
     }

@@ -60,7 +60,12 @@ fun Icon(iconName: String, color: Color = Color.Unspecified, modifier: Modifier 
 }
 
 @Composable
-fun IconWithIndicator(iconName: String, color: Color = Color.Unspecified, modifier: Modifier = Modifier) {
+fun IconWithIndicator(
+    iconName: String,
+    color: Color = Color.Unspecified,
+    modifier: Modifier = Modifier,
+    showIndicator: Boolean = true,
+) {
     val resolvedColor = if (color == Color.Unspecified) LocalTheme.current.textColor else color
     Box {
         Image(
@@ -69,7 +74,7 @@ fun IconWithIndicator(iconName: String, color: Color = Color.Unspecified, modifi
             modifier = modifier.size(18.dp),
             colorFilter = ColorFilter.tint(resolvedColor)
         )
-        Box(
+        if (showIndicator) Box(
             modifier = Modifier.align(Alignment.TopEnd)
                 .offset(2.dp, (-2).dp),
             contentAlignment = Alignment.Center
