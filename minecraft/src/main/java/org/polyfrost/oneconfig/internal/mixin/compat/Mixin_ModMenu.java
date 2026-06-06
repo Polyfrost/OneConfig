@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.compat;
 
+//? modmenu_compat {
 import com.terraformersmc.modmenu.ModMenu;
 import org.polyfrost.oneconfig.internal.compat.ModMenuCompat;
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,3 +19,4 @@ public class Mixin_ModMenu {
     }
 
 }
+//? }

@@ -5,6 +5,9 @@ import com.mojang.blaze3d.opengl.GlTexture
 import org.polyfrost.oneconfig.internal.mixin.blaze3d.GlDeviceAccessor
 import org.polyfrost.oneconfig.internal.mixin.blaze3d.GpuDeviceAccessor
 //? }
+//? if >= 26.2 {
+/*import com.mojang.blaze3d.opengl.FrameBufferAttachment
+*///? }
 //? if >= 1.21.5 {
 import com.mojang.blaze3d.pipeline.RenderTarget
 import com.mojang.blaze3d.systems.RenderSystem
@@ -15,7 +18,17 @@ import com.mojang.blaze3d.systems.RenderSystem
  * Taken from: https://discord.com/channels/507304429255393322/807617488313516032/1452333789778018314 (The Fabric Project)
  */
 object RenderTargetFbo {
-    //? if >= 26.1 {
+    //? if >= 26.2 {
+    /*fun getFboId(frameBuffer: RenderTarget): Int {
+        val device = RenderSystem.getDevice()
+        val backend = (device as GpuDeviceAccessor).`oneconfig$getBackend`()
+        if (backend !is GlDeviceAccessor) return -1
+        val dsa = backend.`oneconfig$getDirectStateAccess`()
+        val color = frameBuffer.colorTexture as? GlTexture ?: return -1
+        val depth = frameBuffer.depthTexture as? GlTexture
+        return backend.`oneconfig$getFrameBufferCache`().getFbo(dsa, listOf<FrameBufferAttachment>(color), depth)
+    }
+    *///? } else if >= 26.1 {
     fun getFboId(frameBuffer: RenderTarget): Int {
         val device = RenderSystem.getDevice()
         val backend = (device as GpuDeviceAccessor).`oneconfig$getBackend`()

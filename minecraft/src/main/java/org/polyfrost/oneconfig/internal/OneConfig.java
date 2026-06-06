@@ -102,7 +102,11 @@ public class OneConfig
     }
 
     public static boolean isInChatScreen() {
+        //? if >= 26.2 {
+        /*return Minecraft.getInstance().gui.screen() instanceof ChatScreen;
+        *///?} else {
         return Minecraft.getInstance().screen instanceof ChatScreen;
+        //?}
     }
 
     private static void registerKeybinds() {
@@ -121,6 +125,7 @@ public class OneConfig
             try {
                 Platform.screen().display(new OneConfigUIScreen());
             } catch (Throwable t) {
+                //~ if >= 26.2 'gui.getChat' -> 'gui.hud.getChat'
                 Minecraft.getInstance().gui.getChat()
                         //~ if >= 26.1 'addMessage' -> 'addClientSystemMessage'
                         .addClientSystemMessage(Component.literal("Failed to open OneConfig UI: " + t.getMessage() + ". Please report this!")

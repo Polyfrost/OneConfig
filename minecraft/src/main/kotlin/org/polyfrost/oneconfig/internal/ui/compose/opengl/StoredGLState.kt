@@ -108,7 +108,11 @@ class StoredGLState(private val glVersion: Int) {
             // restore with raw glEnable/glDisable, the cache can still think the old value is active
             // and MC will skip the GL call on the next draw (e.g. item culling) until a full device
             // reset such as a window resize. Toggle through GlStateManager to force cache + GL sync.
+            //? if >= 26.2 {
+            /*forceToggle(lastEnableBlend, { GlStateManager._enableBlend(0) }, { GlStateManager._disableBlend(0) })
+            *///?} else {
             forceToggle(lastEnableBlend, GlStateManager::_enableBlend, GlStateManager::_disableBlend)
+            //?}
             forceToggle(lastEnableCullFace, GlStateManager::_enableCull, GlStateManager::_disableCull)
             forceToggle(
                 lastEnableDepthTest,

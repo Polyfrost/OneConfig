@@ -23,7 +23,11 @@ public class Mixin_MouseInputEvent {
 
     @Inject(method = "onMove", at = @At("HEAD"))
     private void mouseMoveCallback(long handle, double x, double y, CallbackInfo ci) {
+        //? if >= 26.2 {
+        /*if (Minecraft.getInstance().gui.screen() != null) {
+        *///?} else {
         if (Minecraft.getInstance().screen != null) {
+        //?}
             MouseInputEvent.Moved.post((float) x, (float) y);
         }
     }

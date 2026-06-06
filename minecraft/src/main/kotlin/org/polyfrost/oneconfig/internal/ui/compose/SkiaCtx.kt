@@ -313,7 +313,9 @@ object SkiaCtx {
         var rt = hudTarget
         if (rt == null || rt.width != w || rt.height != h) {
             destroyHudTarget()
-            //? >= 1.21.5 {
+            //? if >= 26.2 {
+            /*rt = TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
+            *///? } else if >= 1.21.5 {
             rt = TextureTarget(null, w, h, true)
             //? } else if >= 1.21.4 {
             // rt = TextureTarget(w, h, true)

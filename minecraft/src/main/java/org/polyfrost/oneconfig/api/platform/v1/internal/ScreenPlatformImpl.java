@@ -75,14 +75,23 @@ public class ScreenPlatformImpl implements ScreenPlatform {
 
     @Override
     public void display(@Nullable Object screen, int ticks) {
+        //? if >= 26.2 {
+        /*if (ticks < 1) Minecraft.getInstance().setScreenAndShow((Screen) screen);
+        else EventDelay.tick(ticks, () -> Minecraft.getInstance().setScreenAndShow((Screen) screen));
+        *///?} else {
         if (ticks < 1) Minecraft.getInstance().setScreen((Screen) screen);
         else EventDelay.tick(ticks, () -> Minecraft.getInstance().setScreen((Screen) screen));
+        //?}
     }
 
     @Override
     @SuppressWarnings("unchecked" /*, reason = "reduces friction between versions" */)
     public <T> @Nullable T current() {
+        //? if >= 26.2 {
+        /*return (T) Minecraft.getInstance().gui.screen();
+        *///?} else {
         return (T) Minecraft.getInstance().screen;
+        //?}
     }
 
 }

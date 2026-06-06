@@ -1,12 +1,32 @@
 package org.polyfrost.oneconfig.internal.mixin.skia;
 
 //? >= 26.1 {
-import com.mojang.blaze3d.systems.RenderSystem;
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+//? if >= 26.2 {
+/*import net.minecraft.client.Minecraft;
+
+// 26.2 removed RenderSystem.flipFrame. The frame is now presented in Minecraft.renderFrame:
+// GameRenderer.render -> GpuSurface.blitFromTexture(mainRenderTarget) -> GpuSurface.present().
+// Flush queued Compose/Skia draws onto the back buffer right after the blit and before present.
+@Mixin(Minecraft.class)
+public class Mixin_SkiaFramePresent {
+
+    @Inject(method = "renderFrame", at = @At(value = "INVOKE",
+            target = "Lcom/mojang/blaze3d/systems/GpuSurface;blitFromTexture(Lcom/mojang/blaze3d/systems/CommandEncoder;Lcom/mojang/blaze3d/textures/GpuTextureView;)V",
+            shift = At.Shift.AFTER))
+    private void impl$onPresent(boolean tick, CallbackInfo ci) {
+        if (!SkiaCtx.INSTANCE.isVulkanMode()) {
+            SkiaCtx.INSTANCE.draw();
+        }
+    }
+}
+*///? } else {
+
+import com.mojang.blaze3d.systems.RenderSystem;
 
 /**
  * 26.1 removed {@code Window.updateDisplay}, which is where {@link Mixin_SkiaFrame} used to flush the
@@ -24,4 +44,5 @@ public class Mixin_SkiaFramePresent {
         }
     }
 }
+//? }
 //? }

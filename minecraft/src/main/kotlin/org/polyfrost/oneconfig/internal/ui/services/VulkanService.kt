@@ -58,18 +58,27 @@ interface VulkanService {
         private val LOG = LoggerFactory.getLogger(VulkanService::class.java)
 
         fun detect(): VulkanService {
-            return try {
-                val cls = Class.forName("org.polyfrost.oneconfig.internal.ui.services.CinnabarVulkanService")
-                val svc = cls.getDeclaredMethod("tryCreate").invoke(null) as? VulkanService
-                if (svc != null) {
-                    LOG.info("VK service is available, using Vulkan Skia backend")
-                    svc
-                } else {
-                    error("CinnabarVulkanService.tryCreate() returned null")
+            // Try each backend-specific Vulkan service in order; only one is compiled per MC version
+            // (NativeVulkanService on >= 26.2, CinnabarVulkanService on the Cinnabar builds). A missing
+            // class or GL-mode (tryCreate returns null) both fall through to the GL backend.
+            for (className in listOf(
+                "org.polyfrost.oneconfig.internal.ui.services.NativeVulkanService",
+                "org.polyfrost.oneconfig.internal.ui.services.CinnabarVulkanService",
+            )) {
+                try {
+                    val cls = Class.forName(className)
+                    val svc = cls.getDeclaredMethod("tryCreate").invoke(null) as? VulkanService
+                    if (svc != null) {
+                        LOG.info("VK service available ({}), using Vulkan Skia backend", className)
+                        return svc
+                    }
+                } catch (_: ClassNotFoundException) {
+                    // not present on this version
+                } catch (e: Exception) {
+                    LOG.warn("VK service {} failed to initialize", className, e)
                 }
-            } catch (_: ClassNotFoundException) {
-                GLVulkanService
             }
+            return GLVulkanService
         }
     }
 }

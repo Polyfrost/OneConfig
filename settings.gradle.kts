@@ -12,7 +12,7 @@ pluginManagement {
     }
 
     plugins {
-        kotlin("jvm") version ("2.3.0")
+        kotlin("jvm") version ("2.3.20")
     }
 }
 
@@ -52,6 +52,7 @@ val versions = buildList {
         add(version to listOf(FABRIC))
     }
 
+    both("26.2")
     both("26.1")
     both("1.21.11")
     both("1.21.10")
