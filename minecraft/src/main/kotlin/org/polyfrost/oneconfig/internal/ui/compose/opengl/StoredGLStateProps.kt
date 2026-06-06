@@ -23,6 +23,14 @@ class StoredGLStateProps {
     val lastBlendEquationAlpha = IntArray(1)
     val lastColorMask = ByteBuffer.allocateDirect(4)
 
+    val lastStencilFunc = IntArray(1)
+    val lastStencilRef = IntArray(1)
+    val lastStencilValueMask = IntArray(1)
+    val lastStencilWriteMask = IntArray(1)
+    val lastStencilFail = IntArray(1)
+    val lastStencilPassDepthFail = IntArray(1)
+    val lastStencilPassDepthPass = IntArray(1)
+
     val lastPixelUnpackBufferBinding = IntArray(1)
     val lastUnpackAlignment = IntArray(1)
     val lastUnpackRowLength = IntArray(1)
@@ -41,7 +49,7 @@ class StoredGLStateProps {
     val lastUnpackImageHeight = IntArray(1)
     val lastUnpackSkipImages = IntArray(1)
 
-    private val flags = BitSet(7)
+    private val flags = BitSet(8)
 
     var lastEnableBlend
         get() = flags[0]
@@ -78,5 +86,10 @@ class StoredGLStateProps {
         get() = flags[6]
         set(value) {
             flags[6] = value
+        }
+    var lastFramebufferSrgb
+        get() = flags[7]
+        set(value) {
+            flags[7] = value
         }
 }

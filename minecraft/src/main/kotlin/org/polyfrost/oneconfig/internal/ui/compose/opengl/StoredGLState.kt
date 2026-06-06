@@ -37,6 +37,16 @@ class StoredGLState(private val glVersion: Int) {
             lastColorMask.clear()
             glGetBooleanv(GL_COLOR_WRITEMASK, lastColorMask)
             lastColorMask.rewind()
+
+            glGetIntegerv(GL_STENCIL_FUNC, lastStencilFunc)
+            glGetIntegerv(GL_STENCIL_REF, lastStencilRef)
+            glGetIntegerv(GL_STENCIL_VALUE_MASK, lastStencilValueMask)
+            glGetIntegerv(GL_STENCIL_WRITEMASK, lastStencilWriteMask)
+            glGetIntegerv(GL_STENCIL_FAIL, lastStencilFail)
+            glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, lastStencilPassDepthFail)
+            glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, lastStencilPassDepthPass)
+            lastFramebufferSrgb = glIsEnabled(GL_FRAMEBUFFER_SRGB)
+
             lastEnableBlend = glIsEnabled(GL_BLEND)
             lastEnableCullFace = glIsEnabled(GL_CULL_FACE)
             lastEnableDepthTest = glIsEnabled(GL_DEPTH_TEST)
@@ -88,6 +98,13 @@ class StoredGLState(private val glVersion: Int) {
                 glBindSampler(0, lastSampler[0])
             }
             glActiveTexture(lastActiveTexture[0])
+
+            for (unit in 0..7) {
+                GlStateManager._activeTexture(GL_TEXTURE0 + unit)
+                GlStateManager._bindTexture(0)
+            }
+            GlStateManager._activeTexture(GL_TEXTURE0)
+
             glBindVertexArray(lastVertexArrayObject[0])
             glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer[0])
             glBlendEquationSeparate(lastBlendEquationRgb[0], lastBlendEquationAlpha[0])
@@ -121,6 +138,11 @@ class StoredGLState(private val glVersion: Int) {
             )
             if (lastEnableStencilTest) glEnable(GL_STENCIL_TEST)
             else glDisable(GL_STENCIL_TEST)
+            glStencilFunc(lastStencilFunc[0], lastStencilRef[0], lastStencilValueMask[0])
+            glStencilMask(lastStencilWriteMask[0])
+            glStencilOp(lastStencilFail[0], lastStencilPassDepthFail[0], lastStencilPassDepthPass[0])
+            if (lastFramebufferSrgb) glEnable(GL_FRAMEBUFFER_SRGB)
+            else glDisable(GL_FRAMEBUFFER_SRGB)
             forceToggle(
                 lastEnableScissorTest,
                 GlStateManager::_enableScissorTest,
