@@ -15,6 +15,7 @@ stonecutter {
 
             this["moul_compat"] = catalogue.has("moulconfig")
             this["yacl_compat"] = catalogue.has("yacl")
+            this["clothconfig_compat"] = catalogue.has("clothconfig")
             this["modmenu_compat"] = catalogue.has("modmenu")
             this["rconfig_compat"] = catalogue.has("rconfig")
             this["cinnabar"] = catalogue.has("cinnabar") && rootProject.hasProperty("minecraft.vulkan")

@@ -79,6 +79,9 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? yacl_compat
         mixins.add("compat.yacl.Mixin_YetAnotherConfigLib_Builder");
 
+        //? clothconfig_compat
+        mixins.add("compat.cloth.Mixin_ConfigBuilderImpl");
+
         // mixins.add("compat.rconfig.Mixin_Configurations");
 
         //? modmenu_compat
