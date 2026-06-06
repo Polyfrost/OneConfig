@@ -21,8 +21,11 @@ public class OneConfigConfig extends Config {
     @Keybind(title = "OneConfig Keybind", subcategory = "GUI", description = "The keybind used to open the OneConfig menu.")
     public static OneConfigKeybind oneConfigKeybind = new OneConfigKeybind(new int[]{344}, null, KeyModifiers.NONE, 0L, pressed -> true);
 
-    @Switch(title = "Enable Blur", subcategory = "GUI", description = "Blurs the background when the OneConfig menu is open.")
-    public static boolean enableBlur = true;
+    @Switch(title = "Window Blur", subcategory = "GUI", description = "Blurs the area behind the OneConfig window.")
+    public static boolean enableWindowBlur = true;
+
+    @Switch(title = "Background Blur", subcategory = "GUI", description = "Blurs the full game background when the OneConfig menu is open.")
+    public static boolean enableBackgroundBlur = true;
 
     @Switch(title = "Use custom GUI scale", subcategory = "GUI", description = "Override the Minecraft GUI scale for the OneConfig menu.")
     public static boolean useCustomScale = false;

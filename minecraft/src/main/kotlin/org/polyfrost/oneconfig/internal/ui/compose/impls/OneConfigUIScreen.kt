@@ -114,7 +114,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
             Platform.screen().close()
             return
         }
-        if (OneConfigConfig.enableBlur) BlurRenderer.drawBlur(fullscreenBlurRadius())
+        if (OneConfigConfig.enableBackgroundBlur) BlurRenderer.drawBlur(fullscreenBlurRadius())
         //~ if >= 26.1 'render' -> 'extractRenderState'
         super.extractRenderState(ctx, mouseX, mouseY, tickDelta)
     }
@@ -176,7 +176,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
                 requestCloseCallback = closeRequest
             },
         ) { windowOffset ->
-            if (OneConfigConfig.enableBlur) {
+            if (OneConfigConfig.enableWindowBlur) {
                 drawIntoCanvas { canvas ->
                     BlurRenderer.drawRegion(
                         canvas.nativeCanvas,
