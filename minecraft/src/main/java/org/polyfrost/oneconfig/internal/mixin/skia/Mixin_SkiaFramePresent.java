@@ -16,6 +16,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class Mixin_SkiaFramePresent {
 
     @Inject(method = "renderFrame", at = @At(value = "INVOKE",
+            target = "Lcom/mojang/blaze3d/systems/GpuSurface;blitFromTexture(Lcom/mojang/blaze3d/systems/CommandEncoder;Lcom/mojang/blaze3d/textures/GpuTextureView;)V"))
+    private void impl$onPresentVk(boolean tick, CallbackInfo ci) {
+        if (SkiaCtx.INSTANCE.isVulkanMode()) {
+            SkiaCtx.INSTANCE.draw();
+        }
+    }
+
+    @Inject(method = "renderFrame", at = @At(value = "INVOKE",
             target = "Lcom/mojang/blaze3d/systems/GpuSurface;blitFromTexture(Lcom/mojang/blaze3d/systems/CommandEncoder;Lcom/mojang/blaze3d/textures/GpuTextureView;)V",
             shift = At.Shift.AFTER))
     private void impl$onPresent(boolean tick, CallbackInfo ci) {

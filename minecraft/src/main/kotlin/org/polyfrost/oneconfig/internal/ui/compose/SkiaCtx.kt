@@ -207,7 +207,10 @@ object SkiaCtx {
         //? >= 1.21.4 {
         guiGraphics.blit(net.minecraft.client.renderer.RenderType::guiTextured, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
         //?} else {
-        /*guiGraphics.blit(HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        /*com.mojang.blaze3d.systems.RenderSystem.enableBlend()
+        com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc()
+        guiGraphics.blit(HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        com.mojang.blaze3d.systems.RenderSystem.disableBlend()
         *///?}
         guiGraphics.pose().popPose()
         *///? }
@@ -326,12 +329,14 @@ object SkiaCtx {
 
             val svc = vulkanService ?: return null
             //? >= 1.21.5 {
-            val fboId = org.polyfrost.oneconfig.internal.ui.RenderTargetFbo.getFboId(rt)
-            if (fboId <= 0) {
-                LOG.warn("SkiaCtx: hud TextureTarget FBO not ready (id={}), retry next frame", fboId)
-                hudTarget = null
-                rt.destroyBuffers()
-                return null
+            if (!isVulkanMode) {
+                val fboId = org.polyfrost.oneconfig.internal.ui.RenderTargetFbo.getFboId(rt)
+                if (fboId <= 0) {
+                    LOG.warn("SkiaCtx: hud TextureTarget FBO not ready (id={}), retry next frame", fboId)
+                    hudTarget = null
+                    rt.destroyBuffers()
+                    return null
+                }
             }
             //? }
             val (brt, colorFmt) = svc.makeOffscreenBRT(rt, w, h)

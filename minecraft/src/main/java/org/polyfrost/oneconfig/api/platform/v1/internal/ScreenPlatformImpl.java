@@ -76,8 +76,10 @@ public class ScreenPlatformImpl implements ScreenPlatform {
     @Override
     public void display(@Nullable Object screen, int ticks) {
         //? if >= 26.2 {
-        /*if (ticks < 1) Minecraft.getInstance().setScreenAndShow((Screen) screen);
-        else EventDelay.tick(ticks, () -> Minecraft.getInstance().setScreenAndShow((Screen) screen));
+        /*// 26.2 removed Minecraft#setScreen. Use Gui#setScreen, not setScreenAndShow (which force-calls
+        // renderFrame and re-enters our renderFrame mixin -> nested frame -> 1-frame black flash).
+        if (ticks < 1) Minecraft.getInstance().gui.setScreen((Screen) screen);
+        else EventDelay.tick(ticks, () -> Minecraft.getInstance().gui.setScreen((Screen) screen));
         *///?} else {
         if (ticks < 1) Minecraft.getInstance().setScreen((Screen) screen);
         else EventDelay.tick(ticks, () -> Minecraft.getInstance().setScreen((Screen) screen));

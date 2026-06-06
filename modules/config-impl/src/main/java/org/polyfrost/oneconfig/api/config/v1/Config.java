@@ -196,7 +196,8 @@ public abstract class Config {
         Property<?> cond = getProperty(condition);
         if (cond.type != boolean.class) throw new IllegalArgumentException("Condition property must be boolean");
         Property<?> opt = getProperty(option).addDisplayCondition((Property<Boolean>) cond, hide);
-        opt.getOrPutMetadata("dependencyNames", () -> new ArrayList<String>(3)).add(cond.getTitle().toString());
+        Object title = cond.getTitle();
+        opt.getOrPutMetadata("dependencyNames", () -> new ArrayList<String>(3)).add(title != null ? title.toString() : condition);
     }
 
     /**
