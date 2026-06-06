@@ -348,6 +348,7 @@ public class org/polyfrost/oneconfig/api/config/v1/backend/impl/FileBackend : or
 	public fun <init> (Ljava/nio/file/Path;[Lorg/polyfrost/oneconfig/api/config/v1/serialize/impl/FileSerializer;)V
 	public fun addSerializer (Lorg/polyfrost/oneconfig/api/config/v1/serialize/impl/FileSerializer;)V
 	public fun addWatcher ()Lorg/polyfrost/oneconfig/api/config/v1/backend/impl/FileBackend;
+	public fun closeWatcher ()V
 	protected fun corrupt0 (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z
 	protected fun delete0 (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z
 	public fun dodge ()V

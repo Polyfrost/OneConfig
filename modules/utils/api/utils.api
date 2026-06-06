@@ -165,6 +165,14 @@ public final class org/polyfrost/oneconfig/utils/v1/ArrayCastUtils {
 	public static fun unboxNumberArray ([Ljava/lang/Object;Ljava/lang/Class;)Ljava/lang/Object;
 }
 
+public final class org/polyfrost/oneconfig/utils/v1/ClipboardHelper {
+	public static fun clear ()Z
+	public static fun getString ()Ljava/lang/String;
+	public static fun setImage (Ljava/awt/image/BufferedImage;)Z
+	public static fun setString (Ljava/lang/String;)Z
+	public static fun setTransferable (Ljava/awt/datatransfer/Transferable;)Z
+}
+
 public final class org/polyfrost/oneconfig/utils/v1/Deprecator {
 	public static fun markDeprecated ()V
 }
@@ -249,6 +257,13 @@ public final class org/polyfrost/oneconfig/utils/v1/MHUtils$Result$Companion {
 public final class org/polyfrost/oneconfig/utils/v1/MHUtils$Result$Failure {
 	public fun <init> (Ljava/lang/Throwable;)V
 	public final fun getT ()Ljava/lang/Throwable;
+}
+
+public final class org/polyfrost/oneconfig/utils/v1/MacOSClipboard {
+	public static fun clear ()Z
+	public static fun copyImageFromPath (Ljava/lang/String;)Z
+	public static fun getString ()Ljava/lang/String;
+	public static fun setString (Ljava/lang/String;)Z
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/Multithreading {
