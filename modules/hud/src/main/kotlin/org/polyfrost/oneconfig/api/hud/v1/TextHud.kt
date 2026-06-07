@@ -85,12 +85,14 @@ abstract class TextHud(
 
         val contentAlign = alignment
         val padInsets = PolyInsets(padLeft, padTop, padRight, padBottom)
-        val fgColor = PolyColor(textColor)
+        // Build chroma-aware colours: when chroma is enabled, PolyColor.argb cycles based on the
+        // current time, so it keeps animating at render time without needing recomposition.
+        val fgColor = PolyColor(textColor, textChroma, textChromaSpeed)
 
         val isStaticValid = staticWidth && staticW > 0f && staticH > 0f
 
         val outerModifier = if (showBackground) {
-            val bgModifier = PolyModifier.background(PolyColor(bgColor), bgRadius)
+            val bgModifier = PolyModifier.background(PolyColor(bgColor, bgChroma, bgChromaSpeed), bgRadius)
             if (isStaticValid) bgModifier.size(staticW, staticH).padding(padInsets)
             else bgModifier.padding(padInsets)
         } else {
@@ -112,9 +114,10 @@ abstract class TextHud(
                 val textHeight = skiaFont.metrics.let { it.descent - it.ascent }
 
                 if (showShadow) {
+                    val shadowCol = PolyColor(shadowColor, shadowChroma, shadowChromaSpeed)
                     PolyCanvas(modifier = PolyModifier.size(textWidth, textHeight)
                         .let { if (isStaticValid) it.align(contentAlign) else it }) { x, y, _, _ ->
-                        text(text, x + shadowOffsetX, y - skiaFont.metrics.ascent + shadowOffsetY, PolyColor(shadowColor), skiaFont)
+                        text(text, x + shadowOffsetX, y - skiaFont.metrics.ascent + shadowOffsetY, shadowCol, skiaFont)
                         text(text, x, y - skiaFont.metrics.ascent, fgColor, skiaFont)
                     }
                 } else {
@@ -133,7 +136,7 @@ abstract class TextHud(
 
                 PolyMcText(
                     text = formatted,
-                    color = textColor,
+                    color = fgColor,
                     shadow = showShadow,
                     scale = textScale,
                     modifier = if (isStaticValid) PolyModifier.align(contentAlign) else PolyModifier,

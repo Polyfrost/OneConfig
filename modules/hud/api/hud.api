@@ -20,6 +20,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun clone ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public fun defaultPosition ()Lkotlin/Pair;
 	public final fun getAlignment ()Lorg/polyfrost/compose/layout/PolyAlign;
+	public final fun getBgChroma ()Z
+	public final fun getBgChromaSpeed ()F
 	public final fun getBgColor ()I
 	public final fun getBgRadius ()F
 	public final fun getCaseType ()I
@@ -42,6 +44,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getScaledHeight ()F
 	public final fun getScaledWidth ()F
 	public final fun getSection ()Lorg/polyfrost/oneconfig/api/hud/v1/Section;
+	public final fun getShadowChroma ()Z
+	public final fun getShadowChromaSpeed ()F
 	public final fun getShadowColor ()I
 	public final fun getShadowOffsetX ()F
 	public final fun getShadowOffsetY ()F
@@ -56,6 +60,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getStaticWidth ()Z
 	public final fun getTextAlign ()I
 	public final fun getTextBold ()Z
+	public final fun getTextChroma ()Z
+	public final fun getTextChromaSpeed ()F
 	public final fun getTextColor ()I
 	public final fun getTextItalic ()Z
 	public final fun getTextScale ()F
@@ -77,6 +83,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun reseedStaticWidth ()V
 	public final fun setAbsolutePosition (FF)V
 	public final fun setAlignment (Lorg/polyfrost/compose/layout/PolyAlign;)V
+	public final fun setBgChroma (Z)V
+	public final fun setBgChromaSpeed (F)V
 	public final fun setBgColor (I)V
 	public final fun setBgRadius (F)V
 	public final fun setCaseType (I)V
@@ -93,6 +101,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setRenderedH (F)V
 	public final fun setRenderedW (F)V
 	public final fun setSection (Lorg/polyfrost/oneconfig/api/hud/v1/Section;)V
+	public final fun setShadowChroma (Z)V
+	public final fun setShadowChromaSpeed (F)V
 	public final fun setShadowColor (I)V
 	public final fun setShadowOffsetX (F)V
 	public final fun setShadowOffsetY (F)V
@@ -107,6 +117,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setStaticWidth (Z)V
 	public final fun setTextAlign (I)V
 	public final fun setTextBold (Z)V
+	public final fun setTextChroma (Z)V
+	public final fun setTextChromaSpeed (F)V
 	public final fun setTextColor (I)V
 	public final fun setTextItalic (Z)V
 	public final fun setTextScale (F)V

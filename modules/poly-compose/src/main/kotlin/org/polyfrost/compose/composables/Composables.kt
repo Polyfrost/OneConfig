@@ -92,7 +92,7 @@ fun PolyText(
 @Composable
 fun PolyMcText(
     text: String,
-    color: Int = 0xFFFFFFFF.toInt(),
+    color: PolyColor = PolyColor.WHITE,
     shadow: Boolean = true,
     scale: Float = 1f,
     modifier: PolyModifier = PolyModifier,

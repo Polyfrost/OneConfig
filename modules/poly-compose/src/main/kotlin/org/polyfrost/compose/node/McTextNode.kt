@@ -2,11 +2,12 @@ package org.polyfrost.compose.node
 
 import org.polyfrost.compose.layout.PolySize
 import org.polyfrost.compose.mc.McFontQueue
+import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.render.RenderContext
 
 class McTextNode : PolyNode() {
     var text: String = ""
-    var color: Int = 0xFFFFFFFF.toInt()
+    var color: PolyColor = PolyColor.WHITE
     var shadow: Boolean = true
     var scale: Float = 1f
 
@@ -17,6 +18,7 @@ class McTextNode : PolyNode() {
 
     override fun render(ctx: RenderContext) {
         val renderer = McFontQueue.renderer
-        if (renderer != null) renderer(ctx.canvas, text, x, y, color, shadow, scale)
+        // Read color.argb at draw time so chroma colours keep cycling every frame.
+        if (renderer != null) renderer(ctx.canvas, text, x, y, color.argb, shadow, scale)
     }
 }

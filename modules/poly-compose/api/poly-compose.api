@@ -11,7 +11,7 @@ public final class org/polyfrost/compose/composables/ComposablesKt {
 	public static final fun PolyCanvas (Lorg/polyfrost/compose/composables/PolyModifier;Lkotlin/jvm/functions/Function5;Landroidx/compose/runtime/Composer;I)V
 	public static final fun PolyColumn (FLorg/polyfrost/compose/composables/PolyModifier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PolyImage (Lorg/polyfrost/compose/composables/PolyModifier;Lorg/jetbrains/skia/Image;Landroidx/compose/runtime/Composer;II)V
-	public static final fun PolyMcText (Ljava/lang/String;IZFLorg/polyfrost/compose/composables/PolyModifier;Landroidx/compose/runtime/Composer;II)V
+	public static final fun PolyMcText (Ljava/lang/String;Lorg/polyfrost/compose/render/PolyColor;ZFLorg/polyfrost/compose/composables/PolyModifier;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PolyRect (Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/composables/PolyModifier;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PolyRow (FLorg/polyfrost/compose/composables/PolyModifier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PolySpacer (FFLandroidx/compose/runtime/Composer;II)V
@@ -265,13 +265,13 @@ public final class org/polyfrost/compose/node/ImageNode : org/polyfrost/compose/
 public final class org/polyfrost/compose/node/McTextNode : org/polyfrost/compose/node/PolyNode {
 	public static final field $stable I
 	public fun <init> ()V
-	public final fun getColor ()I
+	public final fun getColor ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getScale ()F
 	public final fun getShadow ()Z
 	public final fun getText ()Ljava/lang/String;
 	public final fun remeasure ()V
 	public fun render (Lorg/polyfrost/compose/render/RenderContext;)V
-	public final fun setColor (I)V
+	public final fun setColor (Lorg/polyfrost/compose/render/PolyColor;)V
 	public final fun setScale (F)V
 	public final fun setShadow (Z)V
 	public final fun setText (Ljava/lang/String;)V

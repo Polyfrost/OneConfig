@@ -331,17 +331,35 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     private var _bgColor: MutableState<Int> = mutableStateOf(0x80000000.toInt())
     var bgColor: Int get() = _bgColor.value; set(v) { _bgColor.value = v }
 
+    private var _bgChroma: MutableState<Boolean> = mutableStateOf(false)
+    var bgChroma: Boolean get() = _bgChroma.value; set(v) { _bgChroma.value = v }
+
+    private var _bgChromaSpeed: MutableState<Float> = mutableStateOf(1f)
+    var bgChromaSpeed: Float get() = _bgChromaSpeed.value; set(v) { _bgChromaSpeed.value = v }
+
     private var _bgRadius: MutableState<Float> = mutableStateOf(4f)
     var bgRadius: Float get() = _bgRadius.value; set(v) { _bgRadius.value = v }
 
     private var _textColor: MutableState<Int> = mutableStateOf(0xFFFFFFFF.toInt())
     var textColor: Int get() = _textColor.value; set(v) { _textColor.value = v }
 
+    private var _textChroma: MutableState<Boolean> = mutableStateOf(false)
+    var textChroma: Boolean get() = _textChroma.value; set(v) { _textChroma.value = v }
+
+    private var _textChromaSpeed: MutableState<Float> = mutableStateOf(1f)
+    var textChromaSpeed: Float get() = _textChromaSpeed.value; set(v) { _textChromaSpeed.value = v }
+
     private var _showShadow: MutableState<Boolean> = mutableStateOf(false)
     var showShadow: Boolean get() = _showShadow.value; set(v) { _showShadow.value = v }
 
     private var _shadowColor: MutableState<Int> = mutableStateOf(0x40000000)
     var shadowColor: Int get() = _shadowColor.value; set(v) { _shadowColor.value = v }
+
+    private var _shadowChroma: MutableState<Boolean> = mutableStateOf(false)
+    var shadowChroma: Boolean get() = _shadowChroma.value; set(v) { _shadowChroma.value = v }
+
+    private var _shadowChromaSpeed: MutableState<Float> = mutableStateOf(1f)
+    var shadowChromaSpeed: Float get() = _shadowChromaSpeed.value; set(v) { _shadowChromaSpeed.value = v }
 
     private var _shadowOffsetX: MutableState<Float> = mutableStateOf(2f)
     var shadowOffsetX: Float get() = _shadowOffsetX.value; set(v) { _shadowOffsetX.value = v }
@@ -406,10 +424,16 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             tree["customScale"] = ktProperty(out::customScale).apply { addDisplayCondition(hidden) }
             tree["showBackground"] = ktProperty(out::showBackground).apply { addDisplayCondition(hidden) }
             tree["bgColor"] = ktProperty(out::bgColor).apply { addDisplayCondition(hidden) }
+            tree["bgChroma"] = ktProperty(out::bgChroma).apply { addDisplayCondition(hidden) }
+            tree["bgChromaSpeed"] = ktProperty(out::bgChromaSpeed).apply { addDisplayCondition(hidden) }
             tree["bgRadius"] = ktProperty(out::bgRadius).apply { addDisplayCondition(hidden) }
             tree["textColor"] = ktProperty(out::textColor).apply { addDisplayCondition(hidden) }
+            tree["textChroma"] = ktProperty(out::textChroma).apply { addDisplayCondition(hidden) }
+            tree["textChromaSpeed"] = ktProperty(out::textChromaSpeed).apply { addDisplayCondition(hidden) }
             tree["showShadow"] = ktProperty(out::showShadow).apply { addDisplayCondition(hidden) }
             tree["shadowColor"] = ktProperty(out::shadowColor).apply { addDisplayCondition(hidden) }
+            tree["shadowChroma"] = ktProperty(out::shadowChroma).apply { addDisplayCondition(hidden) }
+            tree["shadowChromaSpeed"] = ktProperty(out::shadowChromaSpeed).apply { addDisplayCondition(hidden) }
             tree["shadowOffsetX"] = ktProperty(out::shadowOffsetX).apply { addDisplayCondition(hidden) }
             tree["shadowOffsetY"] = ktProperty(out::shadowOffsetY).apply { addDisplayCondition(hidden) }
             (tree["showInF3"] as? Property<*>)?.addDisplayCondition(hidden)
@@ -481,10 +505,16 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         _customScale = mutableStateOf(this@Hud.customScale)
         _showBackground = mutableStateOf(this@Hud.showBackground)
         _bgColor = mutableStateOf(this@Hud.bgColor)
+        _bgChroma = mutableStateOf(this@Hud.bgChroma)
+        _bgChromaSpeed = mutableStateOf(this@Hud.bgChromaSpeed)
         _bgRadius = mutableStateOf(this@Hud.bgRadius)
         _textColor = mutableStateOf(this@Hud.textColor)
+        _textChroma = mutableStateOf(this@Hud.textChroma)
+        _textChromaSpeed = mutableStateOf(this@Hud.textChromaSpeed)
         _showShadow = mutableStateOf(this@Hud.showShadow)
         _shadowColor = mutableStateOf(this@Hud.shadowColor)
+        _shadowChroma = mutableStateOf(this@Hud.shadowChroma)
+        _shadowChromaSpeed = mutableStateOf(this@Hud.shadowChromaSpeed)
         _shadowOffsetX = mutableStateOf(this@Hud.shadowOffsetX)
         _shadowOffsetY = mutableStateOf(this@Hud.shadowOffsetY)
     }

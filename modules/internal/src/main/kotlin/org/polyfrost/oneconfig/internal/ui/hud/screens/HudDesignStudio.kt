@@ -360,7 +360,10 @@ fun HudDesignStudio() {
         .onPointerEvent(PointerEventType.Press) { event ->
             if (event.changes.any { it.isConsumed }) return@onPointerEvent
             val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
-            if (panelAreaWidth > 0f && pos.x > size.width - panelAreaWidth) return@onPointerEvent
+            // Only treat the right strip as the settings panel area while the panel is actually shown.
+            // panelAreaWidth never shrinks (it's a maxOf), so without this guard the strip would keep
+            // swallowing clicks after the panel closes, making HUDs there un-selectable/un-editable.
+            if (selectedHud != null && panelAreaWidth > 0f && pos.x > size.width - panelAreaWidth) return@onPointerEvent
             if (event.buttons.isSecondaryPressed) {
                 val hit = HudManager.activeInstances.lastOrNull { it !is LegacyHud && hitTestHud(it, pos.x, pos.y) }
                 if (hit != null) {

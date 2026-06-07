@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.hud.screens.sections
 
+import androidx.compose.animation.core.withInfiniteAnimationFrameNanos
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -37,6 +38,7 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import org.polyfrost.compose.mc.McFontQueue
 import org.polyfrost.compose.render.FontManager
+import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.hud.v1.Font
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
@@ -46,7 +48,6 @@ import org.polyfrost.oneconfig.internal.ui.components.SelectableIconButton
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.components.settings.ChromaColorAnimation
 import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerModel
 import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerPopup
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
@@ -365,15 +366,38 @@ fun Section(title: String, content: @Composable () -> Unit) = Column(
 }
 
 @Composable
-internal fun ColorButton(label: String, color: Color, onColorChanged: (Color) -> Unit) {
+internal fun ColorButton(
+    label: String,
+    color: Color,
+    chroma: Boolean = false,
+    chromaSpeed: Float = 1f,
+    onColorChanged: (Color) -> Unit,
+    onChromaChanged: (Boolean, Float) -> Unit = { _, _ -> },
+) {
     var expanded by remember { mutableStateOf(false) }
-    var displayColor by remember { mutableStateOf(color) }
-    val pickerModel = remember { ColorPickerModel(color) }
+    val pickerModel = remember {
+        ColorPickerModel(color).apply {
+            chromaEnabled = chroma
+            this.chromaSpeed = chromaSpeed
+        }
+    }
     val theme = LocalTheme.current
 
-    ChromaColorAnimation(pickerModel) { c ->
-        displayColor = c
-        onColorChanged(c)
+    // Live swatch preview. When chroma is enabled, cycle the swatch using the exact same math the
+    // HUD uses at render time (PolyColor.argb) so the preview matches the in-game result. The stored
+    // base colour is never mutated by this animation - it only drives the preview.
+    var displayColor by remember { mutableStateOf(color) }
+    val baseArgb = color.toArgb()
+    LaunchedEffect(pickerModel.chromaEnabled, pickerModel.chromaSpeed, baseArgb) {
+        if (!pickerModel.chromaEnabled) {
+            displayColor = Color(baseArgb)
+            return@LaunchedEffect
+        }
+        while (true) {
+            withInfiniteAnimationFrameNanos {
+                displayColor = Color(PolyColor(baseArgb, true, pickerModel.chromaSpeed).argb)
+            }
+        }
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -398,8 +422,8 @@ internal fun ColorButton(label: String, color: Color, onColorChanged: (Color) ->
                     ColorPickerPopup(
                         model = pickerModel,
                         onColorChanged = { c ->
-                            displayColor = c
                             onColorChanged(c)
+                            onChromaChanged(pickerModel.chromaEnabled, pickerModel.chromaSpeed)
                         },
                         onClose = { expanded = false },
                     )

@@ -37,10 +37,16 @@ fun Settings(hud: Hud? = null) {
         var customScale by remember { mutableStateOf(hud.customScale) }
         var showBackground by remember { mutableStateOf(hud.showBackground) }
         var bgColor by remember { mutableStateOf(Color(hud.bgColor)) }
+        var bgChroma by remember { mutableStateOf(hud.bgChroma) }
+        var bgChromaSpeed by remember { mutableStateOf(hud.bgChromaSpeed) }
         var bgRadius by remember { mutableStateOf(hud.bgRadius) }
         var textColor by remember { mutableStateOf(Color(hud.textColor)) }
+        var textChroma by remember { mutableStateOf(hud.textChroma) }
+        var textChromaSpeed by remember { mutableStateOf(hud.textChromaSpeed) }
         var showShadow by remember { mutableStateOf(hud.showShadow) }
         var shadowColor by remember { mutableStateOf(Color(hud.shadowColor)) }
+        var shadowChroma by remember { mutableStateOf(hud.shadowChroma) }
+        var shadowChromaSpeed by remember { mutableStateOf(hud.shadowChromaSpeed) }
         var showInF3 by remember { mutableStateOf(hud.showInF3) }
         var showInTab by remember { mutableStateOf(hud.showInTab) }
         var showInScreens by remember { mutableStateOf(hud.showInScreens) }
@@ -95,9 +101,19 @@ fun Settings(hud: Hud? = null) {
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             HudSettingTarget(hud, "bgColor") {
-                                ColorButton("Background Color", bgColor) {
-                                    Snapshot.withMutableSnapshot { bgColor = it; hud.bgColor = it.toArgb() }
-                                }
+                                ColorButton(
+                                    "Background Color", bgColor,
+                                    chroma = bgChroma, chromaSpeed = bgChromaSpeed,
+                                    onColorChanged = {
+                                        Snapshot.withMutableSnapshot { bgColor = it; hud.bgColor = it.toArgb() }
+                                    },
+                                    onChromaChanged = { en, sp ->
+                                        Snapshot.withMutableSnapshot {
+                                            bgChroma = en; hud.bgChroma = en
+                                            bgChromaSpeed = sp; hud.bgChromaSpeed = sp
+                                        }
+                                    },
+                                )
                             }
                             HudSettingTarget(hud, "bgRadius") {
                                 NumberSpinner(
@@ -116,9 +132,19 @@ fun Settings(hud: Hud? = null) {
             Section("Appearance") {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     HudSettingTarget(hud, "textColor") {
-                        ColorButton("Text Color", textColor) {
-                            Snapshot.withMutableSnapshot { textColor = it; hud.textColor = it.toArgb() }
-                        }
+                        ColorButton(
+                            "Text Color", textColor,
+                            chroma = textChroma, chromaSpeed = textChromaSpeed,
+                            onColorChanged = {
+                                Snapshot.withMutableSnapshot { textColor = it; hud.textColor = it.toArgb() }
+                            },
+                            onChromaChanged = { en, sp ->
+                                Snapshot.withMutableSnapshot {
+                                    textChroma = en; hud.textChroma = en
+                                    textChromaSpeed = sp; hud.textChromaSpeed = sp
+                                }
+                            },
+                        )
                     }
                     HudSettingTarget(hud, "showShadow") {
                         Row(
@@ -133,9 +159,19 @@ fun Settings(hud: Hud? = null) {
                     }
                     if (showShadow) {
                         HudSettingTarget(hud, "shadowColor") {
-                            ColorButton("Shadow Color", shadowColor) {
-                                Snapshot.withMutableSnapshot { shadowColor = it; hud.shadowColor = it.toArgb() }
-                            }
+                            ColorButton(
+                                "Shadow Color", shadowColor,
+                                chroma = shadowChroma, chromaSpeed = shadowChromaSpeed,
+                                onColorChanged = {
+                                    Snapshot.withMutableSnapshot { shadowColor = it; hud.shadowColor = it.toArgb() }
+                                },
+                                onChromaChanged = { en, sp ->
+                                    Snapshot.withMutableSnapshot {
+                                        shadowChroma = en; hud.shadowChroma = en
+                                        shadowChromaSpeed = sp; hud.shadowChromaSpeed = sp
+                                    }
+                                },
+                            )
                         }
                     }
                 }

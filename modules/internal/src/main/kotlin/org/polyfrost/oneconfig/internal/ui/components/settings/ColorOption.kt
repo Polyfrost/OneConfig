@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,6 +44,9 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -248,6 +252,7 @@ fun ColorOption(data: ColorOptionData) {
                     model = pickerModel,
                     onColorChanged = ::persistColor,
                     onClose = { expanded = false },
+                    chromaCapable = data.prop.type == PolyColor::class.java,
                 )
             }
         }
@@ -259,6 +264,7 @@ internal fun ColorPickerPopup(
     model: ColorPickerModel,
     onColorChanged: (Color) -> Unit,
     onClose: () -> Unit,
+    chromaCapable: Boolean = true,
 ) {
     val theme = LocalTheme.current
     val hue = model.hue
@@ -268,6 +274,8 @@ internal fun ColorPickerPopup(
     val chromaEnabled = model.chromaEnabled
     val chromaSpeed = model.chromaSpeed
     var hexText by remember(model) { mutableStateOf(colorToHex(model.currentColor())) }
+    var alphaText by remember(model) { mutableStateOf((model.alpha * 100f).roundToInt().toString()) }
+    var speedText by remember(model) { mutableStateOf("%.1f".format(model.chromaSpeed)) }
 
     LaunchedEffect(model.chromaEnabled, model.hue) {
         if (model.chromaEnabled) hexText = colorToHex(model.currentColor())
@@ -400,6 +408,7 @@ internal fun ColorPickerPopup(
             )
             Box(
                 modifier = Modifier
+                    .align(Alignment.CenterStart)
                     .offset { IntOffset(((hue / 360f) * hueBarWidth - 5.dp.toPx()).roundToInt().coerceAtLeast(0), 0) }
                     .size(10.dp, 10.dp)
                     .clip(LocalTheme.current.circleShape)
@@ -409,7 +418,27 @@ internal fun ColorPickerPopup(
         }
 
         // alpha bar
-        Text("Opacity", color = theme.textColorSecondary, fontSize = 12.sp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Opacity", color = theme.textColorSecondary, fontSize = 12.sp)
+            SliderValueField(
+                text = alphaText,
+                suffix = "%",
+                onValueChange = { input ->
+                    val filtered = input.filter { it.isDigit() }.take(3)
+                    alphaText = filtered
+                    filtered.toIntOrNull()?.coerceIn(0, 100)?.let { pct ->
+                        model.alpha = pct / 100f
+                        val c = model.currentColor()
+                        hexText = colorToHex(c)
+                        onColorChanged(c)
+                    }
+                },
+            )
+        }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -441,6 +470,7 @@ internal fun ColorPickerPopup(
                         val down = awaitFirstDown()
                         fun update(x: Float) {
                             model.alpha = (x / size.width).coerceIn(0f, 1f)
+                            alphaText = (model.alpha * 100f).roundToInt().toString()
                             val c = model.currentColor()
                             hexText = colorToHex(c)
                             onColorChanged(c)
@@ -467,6 +497,7 @@ internal fun ColorPickerPopup(
             )
             Box(
                 modifier = Modifier
+                    .align(Alignment.CenterStart)
                     .offset { IntOffset(((alpha) * alphaBarWidth - 5.dp.toPx()).roundToInt().coerceAtLeast(0), 0) }
                     .size(10.dp, 10.dp)
                     .clip(LocalTheme.current.circleShape)
@@ -475,44 +506,61 @@ internal fun ColorPickerPopup(
             )
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        // Chroma is only offered when the backing property can actually persist it (a PolyColor).
+        // For Int / java.awt.Color properties there is nowhere to store the chroma flag, so showing
+        // the toggle would be misleading - it would "work" until the screen closed, then freeze.
+        if (chromaCapable) {
             Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(14.dp)
-                        .clip(LocalTheme.current.circleShape)
-                        .background(
-                            Brush.sweepGradient(
-                                listOf(
-                                    Color.Red, Color.Yellow, Color.Green,
-                                    Color.Cyan, Color.Blue, Color.Magenta, Color.Red
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(14.dp)
+                            .clip(LocalTheme.current.circleShape)
+                            .background(
+                                Brush.sweepGradient(
+                                    listOf(
+                                        Color.Red, Color.Yellow, Color.Green,
+                                        Color.Cyan, Color.Blue, Color.Magenta, Color.Red
+                                    )
                                 )
                             )
-                        )
-                )
-                Text("Chroma", color = theme.textColor, fontSize = 13.sp)
-            }
-            SwitchControl(chromaEnabled) {
-                model.chromaEnabled = it
-                onColorChanged(model.currentColor())
+                    )
+                    Text("Chroma", color = theme.textColor, fontSize = 13.sp)
+                }
+                SwitchControl(chromaEnabled) {
+                    model.chromaEnabled = it
+                    onColorChanged(model.currentColor())
+                }
             }
         }
 
-        if (chromaEnabled) {
+        if (chromaCapable && chromaEnabled) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text("Speed", color = theme.textColorSecondary, fontSize = 12.sp)
-                    Text("%.1fx".format(chromaSpeed), color = theme.textColorSecondary, fontSize = 12.sp)
+                    SliderValueField(
+                        text = speedText,
+                        suffix = "x",
+                        onValueChange = { input ->
+                            val filtered = filterNumberInput(input).take(4)
+                            speedText = filtered
+                            filtered.toFloatOrNull()?.coerceIn(0.1f, 4f)?.let {
+                                model.chromaSpeed = it
+                                onColorChanged(model.currentColor())
+                            }
+                        },
+                    )
                 }
                 Box(
                     modifier = Modifier
@@ -530,6 +578,7 @@ internal fun ColorPickerPopup(
                                 val down = awaitFirstDown()
                                 fun update(x: Float) {
                                     model.chromaSpeed = ((x / size.width) * 4f).coerceIn(0.1f, 4f)
+                                    speedText = "%.1f".format(model.chromaSpeed)
                                     onColorChanged(model.currentColor())
                                 }
                                 update(down.position.x)
@@ -551,6 +600,7 @@ internal fun ColorPickerPopup(
                     )
                     Box(
                         modifier = Modifier
+                            .align(Alignment.CenterStart)
                             .offset {
                                 IntOffset(
                                     (((chromaSpeed - 0.1f) / 3.9f) * speedBarWidth - 5.dp.toPx())
@@ -610,6 +660,47 @@ internal fun ColorPickerPopup(
                         innerTextField()
                     }
                 },
+            )
+        }
+    }
+}
+
+@Composable
+private fun SliderValueField(
+    text: String,
+    onValueChange: (String) -> Unit,
+    suffix: String = "",
+    width: Dp = 56.dp,
+) {
+    val theme = LocalTheme.current
+    Row(
+        modifier = Modifier
+            .width(width)
+            .background(theme.componentBackground, theme.sideBarNavigationEntryShape)
+            .border(1.dp, theme.borderColor, theme.sideBarNavigationEntryShape)
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        BasicTextField(
+            value = text,
+            onValueChange = onValueChange,
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            textStyle = TextStyle(
+                color = theme.textColor,
+                fontSize = 12.sp,
+                fontFamily = theme.typography.family,
+                textAlign = TextAlign.End,
+            ),
+            cursorBrush = SolidColor(theme.textColor),
+            modifier = Modifier.weight(1f),
+        )
+        if (suffix.isNotEmpty()) {
+            Text(
+                suffix,
+                color = theme.textColorSecondary,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(start = 4.dp),
             )
         }
     }
