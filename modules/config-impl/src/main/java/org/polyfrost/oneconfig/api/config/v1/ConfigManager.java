@@ -64,7 +64,7 @@ public final class ConfigManager {
 //    @UnmodifiableView
 //    public static List<String> newOrUpdatedModIds;
     private static final Queue<Config> pendingInitialization = new ArrayDeque<>();
-    private static final Set<Config> initializedConfigs = Collections.newSetFromMap(new IdentityHashMap<>());
+    private static final Map<String, Config> initializedConfigs = new LinkedHashMap<>();
     private static boolean rebindingProfiles = false;
 
     static {
@@ -142,7 +142,7 @@ public final class ConfigManager {
     }
 
     static synchronized void markInitialized(Config config) {
-        initializedConfigs.add(config);
+        initializedConfigs.put(config.id, config);
     }
 
     static boolean isRebindingProfiles() {
@@ -443,9 +443,10 @@ public final class ConfigManager {
 
     private static void rebindInitializedConfigs() {
         if (initializedConfigs.isEmpty()) return;
+        ArrayList<Config> configs = new ArrayList<>(initializedConfigs.values());
         rebindingProfiles = true;
         try {
-            for (Config config : initializedConfigs) {
+            for (Config config : configs) {
                 config.rebindToActiveProfile();
             }
         } finally {

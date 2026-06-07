@@ -8,11 +8,13 @@ import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.util.profiling.ProfilerFiller
 import org.jetbrains.skia.*
 import org.polyfrost.compose.mc.McFontQueue
+import org.slf4j.LoggerFactory
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import kotlin.jvm.optionals.getOrNull
 
 object SkiaFontRenderer : PreparableReloadListener {
+    private val LOGGER = LoggerFactory.getLogger("OneConfig/SkiaFontRenderer")
     private const val COLS = 16
     private const val ROWS = 16
     private const val GLYPH_HEIGHT = 8f
@@ -23,7 +25,13 @@ object SkiaFontRenderer : PreparableReloadListener {
     private var cellH = 8
 
     private var atlas: Image? = null
-    private var loaded = false
+    @Volatile private var loaded = false
+    // Throttle lazy reload retries so a draw happening mid-reload (packs not yet settled)
+    // doesn't decode every frame; it heals once the resource manager settles.
+    private var lastLoadAttempt = 0L
+    private const val RETRY_INTERVAL_MS = 200L
+
+    private val ASCII = Identifier.withDefaultNamespace("textures/font/ascii.png")
 
     private val paint = Paint()
     private val colorFilterCache = HashMap<Int, ColorFilter>(8)
@@ -69,44 +77,71 @@ object SkiaFontRenderer : PreparableReloadListener {
 
     private fun ensureLoaded() {
         if (loaded) return
-        loaded = true
-        runCatching { loadAtlas() }
-    }
+        // Lazy self-heal: read from the *live* resource manager, which reflects the final
+        // pack stack only after a reload has fully settled. Throttled so we don't thrash
+        // if a draw lands mid-reload (truncated read / packs being swapped).
+        val now = System.currentTimeMillis()
+        if (now - lastLoadAttempt < RETRY_INTERVAL_MS) return
+        lastLoadAttempt = now
 
-    private fun loadAtlas() {
         val rm = Minecraft.getInstance().resourceManager
-        val bytes = rm.getResource(Identifier.withDefaultNamespace("textures/font/ascii.png"))
-            .getOrNull()?.open()?.readBytes() ?: return
-        val img = Image.makeFromEncoded(bytes) ?: return
-        atlas = img
-        cellW = img.width / COLS
-        cellH = img.height / ROWS
-        computeWidths(img)
+        val bytes = runCatching {
+            rm.getResource(ASCII).getOrNull()?.open()?.use { it.readBytes() }
+        }.getOrNull()
+        if (buildAtlas(bytes)) loaded = true
     }
 
-    private fun computeWidths(image: Image) {
-        val bitmap = Bitmap()
-        bitmap.allocPixels(ImageInfo.makeN32Premul(image.width, image.height))
-        image.readPixels(bitmap)
-        val pixmap = bitmap.peekPixels() ?: return
+    /**
+     * Decode [bytes] into the glyph atlas and swap it in. Returns false (without touching the
+     * current atlas) if the bytes are missing, incomplete, or undecodable — e.g. the resource
+     * pack zip was closed mid-read while reloads were settling. Never throws.
+     */
+    private fun buildAtlas(bytes: ByteArray?): Boolean {
+        // Reject empty/truncated reads up front so skia isn't handed garbage. A complete PNG
+        // starts with the 8-byte signature 89 50 4E 47 0D 0A 1A 0A.
+        if (bytes == null || bytes.size < 8 ||
+            bytes[0] != 0x89.toByte() || bytes[1] != 0x50.toByte() ||
+            bytes[2] != 0x4E.toByte() || bytes[3] != 0x47.toByte()
+        ) return false
 
-        for (c in 0 until 256) {
-            if (c == ' '.code) { charWidths[c] = 4f; continue }
-            val startX = (c % COLS) * cellW
-            val startY = (c / COLS) * cellH
-            var glyphW = 0
-            outer@ for (px in cellW - 1 downTo 0) {
-                for (py in 0 until cellH) {
-                    if (pixmap.getAlphaF(startX + px, startY + py) > 0f) {
-                        glyphW = px + 1
-                        break@outer
-                    }
+        val img = runCatching { Image.makeFromEncoded(bytes) }.getOrNull() ?: return false
+
+        val cw = img.width / COLS
+        val ch = img.height / ROWS
+        val widths = FloatArray(256) { 6f }
+        val bitmap = Bitmap()
+        try {
+            bitmap.allocPixels(ImageInfo.makeN32Premul(img.width, img.height))
+            img.readPixels(bitmap)
+            val pixmap = bitmap.peekPixels()
+            if (pixmap != null) {
+                for (c in 0 until 256) {
+                    if (c == ' '.code) { widths[c] = 4f; continue }
+                    val startX = (c % COLS) * cw
+                    val startY = (c / COLS) * ch
+                    var glyphW = 0
+                    outer@ for (px in cw - 1 downTo 0)
+                        for (py in 0 until ch)
+                            if (pixmap.getAlphaF(startX + px, startY + py) > 0f) { glyphW = px + 1; break@outer }
+                    widths[c] = (glyphW + 1).toFloat()
                 }
             }
-            charWidths[c] = (glyphW + 1).toFloat()
+        } catch (t: Throwable) {
+            LOGGER.warn("Failed to build SkiaFontRenderer atlas, keeping previous", t)
+            bitmap.close()
+            img.close()
+            return false
         }
-
         bitmap.close()
+
+        // Only mutate shared state once decode fully succeeded.
+        atlas?.close()
+        colorFilterCache.clear()
+        atlas = img
+        cellW = cw
+        cellH = ch
+        widths.copyInto(charWidths)
+        return true
     }
 
     private fun drawGlyphs(canvas: Canvas, img: Image, text: String, x: Float, y: Float, color: Int, scale: Float, isShadow: Boolean) {
@@ -197,71 +232,28 @@ object SkiaFontRenderer : PreparableReloadListener {
         //? >= 1.21.10
         val resourceManager = sharedState.resourceManager()
 
-        data class Prepared(val img: Image, val cw: Int, val ch: Int, val widths: FloatArray) {
-            override fun equals(other: Any?): Boolean {
-                if (this === other) return true
-                if (javaClass != other?.javaClass) return false
-
-                other as Prepared
-
-                if (cw != other.cw) return false
-                if (ch != other.ch) return false
-                if (img != other.img) return false
-                if (!widths.contentEquals(other.widths)) return false
-
-                return true
-            }
-
-            override fun hashCode(): Int {
-                var result = cw
-                result = 31 * result + ch
-                result = 31 * result + img.hashCode()
-                result = 31 * result + widths.contentHashCode()
-                return result
-            }
-        }
         return CompletableFuture.supplyAsync({
-            val bytes = resourceManager
-                .getResource(Identifier.withDefaultNamespace("textures/font/ascii.png"))
-                .getOrNull()?.open()?.readBytes() ?: return@supplyAsync null
-            val img = Image.makeFromEncoded(bytes) ?: return@supplyAsync null
-            val cw = img.width / COLS
-            val ch = img.height / ROWS
-            val widths = FloatArray(256) { 6f }
-            val bitmap = Bitmap()
-            bitmap.allocPixels(ImageInfo.makeN32Premul(img.width, img.height))
-            img.readPixels(bitmap)
-            val pixmap = bitmap.peekPixels()
-            if (pixmap != null) {
-                for (c in 0 until 256) {
-                    if (c == ' '.code) { widths[c] = 4f; continue }
-                    val startX = (c % COLS) * cw
-                    val startY = (c / COLS) * ch
-                    var glyphW = 0
-                    outer@ for (px in cw - 1 downTo 0)
-                        for (py in 0 until ch)
-                            if (pixmap.getAlphaF(startX + px, startY + py) > 0f) { glyphW = px + 1; break@outer }
-                    widths[c] = (glyphW + 1).toFloat()
-                }
-            }
-            bitmap.close()
-            Prepared(img, cw, ch, widths)
-        }, executor).thenCompose { prepared ->
+            // Only read the encoded bytes here (cheap, no skia). Decoding/atlas build happens in
+            // the apply stage. Never throw out of the reload future — a failure here must not abort
+            // the whole resource reload (which would make MC drop the server's resource pack).
+            runCatching {
+                resourceManager.getResource(ASCII).getOrNull()?.open()?.use { it.readBytes() }
+            }.getOrNull()
+        }, executor).thenCompose { bytes ->
             //? >= 1.21.10 {
             @Suppress("UNCHECKED_CAST")
-            preparationBarrier.wait(prepared as Any) as CompletableFuture<Prepared?>
+            preparationBarrier.wait(bytes as Any) as CompletableFuture<ByteArray?>
             //? } else
-            //preparationBarrier!!.wait(prepared)
-        }.thenAcceptAsync({ prepared ->
-            atlas?.close()
-            colorFilterCache.clear()
-            if (prepared != null) {
-                atlas = prepared.img
-                cellW = prepared.cw
-                cellH = prepared.ch
-                prepared.widths.copyInto(charWidths)
+            //preparationBarrier!!.wait(bytes)
+        }.thenAcceptAsync({ bytes ->
+            if (buildAtlas(bytes)) {
+                loaded = true
+            } else {
+                // Read/decode failed during reload (pack not settled yet). Defer to the lazy
+                // self-heal in ensureLoaded(), which re-reads once the pack stack is stable.
+                loaded = false
+                lastLoadAttempt = 0L
             }
-            loaded = atlas != null
         }, executor2)
     }
 }

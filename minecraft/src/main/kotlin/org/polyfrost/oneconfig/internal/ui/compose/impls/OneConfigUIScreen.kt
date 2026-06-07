@@ -2,7 +2,7 @@ package org.polyfrost.oneconfig.internal.ui.compose.impls
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.skiaCanvas
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.gui.GuiGraphicsExtractor
 //? >= 1.21.10
@@ -179,7 +179,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
             if (OneConfigConfig.enableWindowBlur) {
                 drawIntoCanvas { canvas ->
                     BlurRenderer.drawRegion(
-                        canvas.nativeCanvas,
+                        canvas.skiaCanvas,
                         windowOffset.x,
                         windowOffset.y,
                         size.width,
