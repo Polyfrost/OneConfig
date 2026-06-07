@@ -36,6 +36,10 @@ object KeybindManager {
 
     init {
         eventHandler { (key, _, state): KeyInputEvent ->
+            // key == 0 marks a character (text input) event, not a coded key press. These only ever fire
+            // with state == 1 (never released), so adding them to downKeys would leave 0 stuck there and
+            // match any keybind bound to code 0. Ignore them entirely; keybinds only care about key codes.
+            if (key == 0) return@eventHandler
             if (state == 2) return@eventHandler
             val down = state == 1
             val mod = MODIFIER_MAP[key]
@@ -72,6 +76,29 @@ object KeybindManager {
     fun unregister(bind: OneConfigKeybind) {
         binds.remove(bind)
         activeBinds.remove(bind)
+    }
+
+    @JvmStatic
+    fun isRegistered(bind: OneConfigKeybind): Boolean = bind in binds
+
+    /**
+     * Swap a registered keybind for a new one, preserving its registration.
+     *
+     * Used by the settings UI when the user rebinds a keybind: setting the config property may either mutate the
+     * existing keybind in place (in which case [old] and [new] are the same instance and it is already registered
+     * with the updated keys) or replace it with a fresh instance (in which case the old, stale instance must be
+     * swapped out of the manager). Handling both here means a mod's keybind keeps working after a rebind without
+     * the mod having to register its own change callback to unregister/re-register.
+     *
+     * If [old] was never registered, nothing happens — keybinds the caller chose not to manage are left alone.
+     */
+    @JvmStatic
+    fun replace(old: OneConfigKeybind?, new: OneConfigKeybind): OneConfigKeybind {
+        if (old === new) return new
+        if (old == null || old !in binds) return new
+        unregister(old)
+        register(new)
+        return new
     }
 
     @JvmStatic

@@ -29,15 +29,48 @@ package org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl;
 import org.polyfrost.compose.render.PolyColor;
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter;
 
-public class PolyColorAdapter extends Adapter<PolyColor, int[]> {
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class PolyColorAdapter extends Adapter<PolyColor, Object> {
 	@Override
-	public int[] serialize(PolyColor in) {
-		return new int[]{in.getRed(), in.getGreen(), in.getBlue(), in.getAlpha()};
+	public Object serialize(PolyColor in) {
+		if (!in.getChroma()) {
+			return rgba(in.getRawArgb());
+		}
+
+		Map<String, Object> out = new HashMap<>();
+		out.put("rgba", rgba(in.getRawArgb()));
+		out.put("chroma", true);
+		out.put("chromaSpeed", in.getChromaSpeed());
+		return out;
 	}
 
 	@Override
-	public PolyColor deserialize(int[] in) {
-		return PolyColor.Companion.rgba(in[0], in[1], in[2], in[3]);
+	public PolyColor deserialize(Object in) {
+		if (in instanceof Map<?, ?>) {
+			Map<?, ?> map = (Map<?, ?>) in;
+			PolyColor color = deserialize(map.get("rgba"));
+			color.setChroma(Boolean.TRUE.equals(map.get("chroma")));
+			Object speed = map.get("chromaSpeed");
+			if (speed instanceof Number) color.setChromaSpeed(((Number) speed).floatValue());
+			return color;
+		}
+		if (in instanceof int[]) {
+			int[] color = (int[]) in;
+			return PolyColor.Companion.rgba(color[0], color[1], color[2], color[3]);
+		}
+		if (in instanceof List<?>) {
+			List<?> color = (List<?>) in;
+			return PolyColor.Companion.rgba(
+				((Number) color.get(0)).intValue(),
+				((Number) color.get(1)).intValue(),
+				((Number) color.get(2)).intValue(),
+				((Number) color.get(3)).intValue()
+			);
+		}
+		throw new IllegalArgumentException("Unsupported PolyColor value: " + in);
 	}
 
 	@Override
@@ -46,7 +79,16 @@ public class PolyColorAdapter extends Adapter<PolyColor, int[]> {
 	}
 
 	@Override
-	public Class<int[]> getOutputClass() {
-		return int[].class;
+	public Class<Object> getOutputClass() {
+		return Object.class;
+	}
+
+	private static int[] rgba(int argb) {
+		return new int[]{
+			(argb >> 16) & 0xFF,
+			(argb >> 8) & 0xFF,
+			argb & 0xFF,
+			(argb >> 24) & 0xFF
+		};
 	}
 }

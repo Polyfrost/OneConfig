@@ -76,6 +76,27 @@ val enableMoulRelocatorKsp = loader == "fabric"
 val includeInLoader = Attribute.of("org.polyfrost.oneconfig.loader.include", Boolean::class.javaObjectType)
 val jijInLoader = Attribute.of("org.polyfrost.oneconfig.loader.jij", Boolean::class.javaObjectType)
 
+if (loader == "fabric") {
+    val modMenuShimClasses = layout.buildDirectory.dir("classes/modMenuShim")
+    val compileModMenuApiShimJava = tasks.register<JavaCompile>("compileModMenuApiShimJava") {
+        val mainSourceSet = sourceSets.named("main").get()
+        source(rootProject.projectDir.resolve("minecraft/src/modMenuShim/java"))
+        classpath = files(mainSourceSet.output.classesDirs, mainSourceSet.compileClasspath)
+        destinationDirectory.set(modMenuShimClasses)
+        dependsOn(tasks.named("compileJava"), tasks.named("compileKotlin"))
+    }
+    val modMenuApiShimJar = tasks.register<Jar>("modMenuApiShimJar") {
+        archiveFileName.set("modmenu-api-shim.jar")
+        from(modMenuShimClasses)
+        dependsOn(compileModMenuApiShimJava)
+    }
+    tasks.named<ProcessResources>("processResources") {
+        from(modMenuApiShimJar) {
+            into("META-INF/oneconfig")
+        }
+    }
+}
+
 
 fun DependencyHandlerScope.handleApiDep(dependency: String, isMod: Boolean = false, transitive: Boolean = false) {
     val dep = project.dependencies.create(dependency) as ExternalModuleDependency

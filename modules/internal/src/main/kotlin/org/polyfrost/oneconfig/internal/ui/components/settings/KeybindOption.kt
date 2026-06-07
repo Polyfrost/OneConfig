@@ -23,14 +23,15 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.nativeKeyLocation
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.utf16CodePoint
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
@@ -43,43 +44,23 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val KeybindShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
 
-// java.awt.event.KeyEvent.KEY_LOCATION_RIGHT; used to pick the correct GLFW code for left/right modifier keys.
-private const val KEY_LOCATION_RIGHT = 3
-
-/**
- * Converts an AWT key code (the space the Compose UI delivers key events in, see ComposeScreen.glfwToAwtKeyCode)
- * into the GLFW key code the KeybindManager matches against. Modifier keys (which AWT collapses to a single code)
- * are disambiguated by [location] into their specific left/right GLFW code. Letters and digits share the same value
- * in both spaces, so they (and any unmapped code) pass through unchanged.
- */
-private fun awtToGlfwKeyCodes(awtCode: Int, location: Int): IntArray = when (awtCode) {
-    16 -> intArrayOf(if (location == KEY_LOCATION_RIGHT) 344 else 340)   // VK_SHIFT   -> RIGHT/LEFT_SHIFT
-    17 -> intArrayOf(if (location == KEY_LOCATION_RIGHT) 345 else 341)   // VK_CONTROL -> RIGHT/LEFT_CONTROL
-    18 -> intArrayOf(if (location == KEY_LOCATION_RIGHT) 346 else 342)   // VK_ALT     -> RIGHT/LEFT_ALT
-    157 -> intArrayOf(if (location == KEY_LOCATION_RIGHT) 347 else 343)  // VK_META    -> RIGHT/LEFT_SUPER
-    8 -> intArrayOf(259)         // VK_BACK_SPACE
-    9 -> intArrayOf(258)         // VK_TAB
-    10 -> intArrayOf(257)        // VK_ENTER
-    27 -> intArrayOf(256)        // VK_ESCAPE
-    127 -> intArrayOf(261)       // VK_DELETE
-    155 -> intArrayOf(260)       // VK_INSERT
-    39 -> intArrayOf(262)        // VK_RIGHT
-    37 -> intArrayOf(263)        // VK_LEFT
-    40 -> intArrayOf(264)        // VK_DOWN
-    38 -> intArrayOf(265)        // VK_UP
-    33 -> intArrayOf(266)        // VK_PAGE_UP
-    34 -> intArrayOf(267)        // VK_PAGE_DOWN
-    36 -> intArrayOf(268)        // VK_HOME
-    35 -> intArrayOf(269)        // VK_END
-    20 -> intArrayOf(280)        // VK_CAPS_LOCK
-    in 112..123 -> intArrayOf(290 + (awtCode - 112)) // VK_F1..VK_F12 -> GLFW_KEY_F1..F12
-    else -> intArrayOf(awtCode)  // digits (48-57) and letters (65-90) coincide
-}
-
 /** Human-readable name for a GLFW key code. */
 private fun keyCodeToName(glfwCode: Int): String = when (glfwCode) {
     -1 -> "None"
     32 -> "Space"
+    39 -> "'"
+    44 -> ","
+    45 -> "-"
+    46 -> "."
+    47 -> "/"
+    59 -> ";"
+    61 -> "="
+    91 -> "["
+    92 -> "\\"
+    93 -> "]"
+    96 -> "`"
+    161 -> "Non-US #1"
+    162 -> "Non-US #2"
     256 -> "Escape"
     257 -> "Enter"
     258 -> "Tab"
@@ -95,6 +76,17 @@ private fun keyCodeToName(glfwCode: Int): String = when (glfwCode) {
     268 -> "Home"
     269 -> "End"
     280 -> "Caps Lock"
+    281 -> "Scroll Lock"
+    282 -> "Num Lock"
+    283 -> "Print Screen"
+    284 -> "Pause"
+    330 -> "Numpad ."
+    331 -> "Numpad /"
+    332 -> "Numpad *"
+    333 -> "Numpad -"
+    334 -> "Numpad +"
+    335 -> "Numpad Enter"
+    336 -> "Numpad ="
     340 -> "Left Shift"
     344 -> "Right Shift"
     341 -> "Left Ctrl"
@@ -103,9 +95,11 @@ private fun keyCodeToName(glfwCode: Int): String = when (glfwCode) {
     346 -> "Right Alt"
     343 -> "Left Super"
     347 -> "Right Super"
+    348 -> "Menu"
     in 48..57 -> ('0' + (glfwCode - 48)).toString()
     in 65..90 -> ('A' + (glfwCode - 65)).toString()
-    in 290..301 -> "F${glfwCode - 289}"
+    in 290..313 -> "F${glfwCode - 289}"          // F1..F24
+    in 320..329 -> "Numpad ${glfwCode - 320}"    // KP_0..KP_9
     else -> "Key $glfwCode"
 }
 
@@ -126,10 +120,26 @@ fun KeybindOption(data: KeybindOptionData) {
     var recording by remember(data.prop) { mutableStateOf(false) }
     val focusRequester = remember(data.prop) { FocusRequester() }
 
-    val currentKeybind = remember(data.prop) {
-        data.prop.get() as? OneConfigKeybind
+    var currentKeybind by remember(data.prop) {
+        mutableStateOf(data.prop.get() as? OneConfigKeybind)
     }
     var displayName by remember(data.prop) { mutableStateOf(keybindDisplayName(currentKeybind)) }
+
+    // Writes the new keybind to the config property and re-syncs the KeybindManager. Setting the property may either
+    // mutate the existing keybind in place or swap in a fresh instance; KeybindManager.replace handles both so the
+    // bind keeps firing on the new key without the mod registering its own change callback. The action is carried
+    // over from the previous keybind so it survives the rebind.
+    fun applyKeybind(keys: IntArray?, mouse: IntArray?) {
+        val old = currentKeybind
+        val existingAction = old?.action ?: { true }
+        val newKeybind = OneConfigKeybind(keys, mouse, KeyModifiers.NONE, 0L, existingAction)
+        @Suppress("UNCHECKED_CAST")
+        (data.prop as Property<Any>).set(newKeybind)
+        val applied = data.prop.get() as? OneConfigKeybind ?: newKeybind
+        KeybindManager.replace(old, applied)
+        currentKeybind = applied
+        displayName = keybindDisplayName(applied)
+    }
 
     val bgColor by animateColorAsState(
         when {
@@ -159,35 +169,23 @@ fun KeybindOption(data: KeybindOptionData) {
             .focusable()
             .onKeyEvent { event ->
                 if (recording && event.type == KeyEventType.KeyDown) {
-                    // Compose Desktop packs the AWT key code in the low 32 bits and the key location in the high 32.
-                    val nativeKeyCode = event.key.keyCode.toInt()
-                    val nativeKeyLocation = event.key.nativeKeyLocation
                     if (event.key == Key.Escape) {
                         // Cancel recording
                         recording = false
                         return@onKeyEvent true
                     }
                     if (event.key == Key.Backspace || event.key == Key.Delete) {
-                        val existingAction = currentKeybind?.action ?: { true }
-                        val unbound = OneConfigKeybind(null, null, KeyModifiers.NONE, 0L, existingAction)
-                        @Suppress("UNCHECKED_CAST")
-                        (data.prop as Property<Any>).set(unbound)
-                        displayName = "None"
+                        applyKeybind(null, null)
                         recording = false
                         return@onKeyEvent true
                     }
-                    val existingAction = currentKeybind?.action ?: { true }
-                    val glfwCodes = awtToGlfwKeyCodes(nativeKeyCode, nativeKeyLocation)
-                    val newKeybind = OneConfigKeybind(
-                        glfwCodes,
-                        null,
-                        KeyModifiers.NONE,
-                        0L,
-                        existingAction
-                    )
-                    @Suppress("UNCHECKED_CAST")
-                    (data.prop as Property<Any>).set(newKeybind)
-                    displayName = keybindDisplayName(newKeybind)
+                    // ComposeScreen carries the raw GLFW key code in the event's codePoint, so the KeybindManager
+                    // gets the exact code it matches against without a lossy AWT round-trip. A code <= 0 means an
+                    // unknown key (GLFW_KEY_UNKNOWN) or a character event; ignore it instead of storing a bind that
+                    // would match nothing useful (or, for code 0, match everything).
+                    val glfwCode = event.utf16CodePoint
+                    if (glfwCode <= 0) return@onKeyEvent true
+                    applyKeybind(intArrayOf(glfwCode), null)
                     recording = false
                     return@onKeyEvent true
                 }

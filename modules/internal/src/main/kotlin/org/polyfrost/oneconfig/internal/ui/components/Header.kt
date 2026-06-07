@@ -151,7 +151,7 @@ internal fun performSearch(query: String): Map<String, List<SearchResult>> {
     val q = query.trim().lowercase()
     val results = LinkedHashMap<String, MutableList<SearchResult>>()
 
-    val matchingMods = ConfigRegistry.configs.filter { searchMatches(it.title.asRenderText(), q) }
+    val matchingMods = ConfigRegistry.modCardConfigs.filter { searchMatches(it.title.asRenderText(), q) }
     if (matchingMods.isNotEmpty()) {
         results["Mods"] = matchingMods.map { ModResult(it) }.toMutableList()
     }
@@ -280,5 +280,4 @@ fun GlobalSearchBar() {
         }
     }
 }
-
 

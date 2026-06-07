@@ -29,7 +29,13 @@ object ModMenuCompat {
     }
 
     fun postLoad() = CompatLoader.requireTranslations(1000, true) {
-        mods.filterNot { CompatLoader.nativeLoadedConfigs.contains(it.id) }
+        val nativeCoveredMods = mods.mapNotNull { mod ->
+            val nativeChild = mod.findNativeLoadedChild() ?: return@mapNotNull null
+            mod.aliasNativeChildConfig(nativeChild)
+            mod.id
+        }.toSet()
+
+        mods.filterNot { CompatLoader.nativeLoadedConfigs.contains(it.id) || it.id in nativeCoveredMods }
             .forEach { mod ->
                 val modMenuTree = Tree.tree()
 
@@ -48,6 +54,24 @@ object ModMenuCompat {
                 ConfigManager.active().register(modMenuTree)
                 CompatLoader.markFirstModAsSkip()
             }
+    }
+
+    private fun Mod.findNativeLoadedChild(): Mod? {
+        return ModMenu.PARENT_MAP.get(this).firstNotNullOfOrNull { child ->
+            if (CompatLoader.nativeLoadedConfigs.contains(child.id)) {
+                child
+            } else {
+                child.findNativeLoadedChild()
+            }
+        }
+    }
+
+    private fun Mod.aliasNativeChildConfig(child: Mod) {
+        val tree = runCatching { ConfigManager.active().get(child.id) }.getOrNull() ?: return
+        tree.addMetadata("mod_card_title", name)
+        ModInfo.loadedMods.firstOrNull { it.id == id }?.extractIconFile()?.let { iconPath ->
+            tree.addMetadata("mod_card_icon_path", iconPath)
+        }
     }
 
 }

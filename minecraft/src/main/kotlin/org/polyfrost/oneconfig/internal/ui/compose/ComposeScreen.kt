@@ -235,10 +235,12 @@ abstract class ComposeScreen(
     }
 
     override fun mouseScrolled(x: Double, y: Double, scrollX: Double, scrollY: Double): Boolean {
-        val scrollScale = 14f
+        val scrollScale = 8f
+        val position = pointerPosition()
+        scene.sendPointerEvent(PointerEventType.Move, position)
         scene.sendPointerEvent(
             eventType = PointerEventType.Scroll,
-            position = pointerPosition(),
+            position = position,
             scrollDelta = Offset((-scrollX * scrollScale).toFloat(), (-scrollY * scrollScale).toFloat()),
         )
         return super.mouseScrolled(x, y, scrollX, scrollY)
@@ -311,7 +313,9 @@ abstract class ComposeScreen(
         val composeEvent = androidx.compose.ui.input.key.KeyEvent(
             key = androidx.compose.ui.input.key.Key(awtCode, eventLocation),
             type = KeyEventType.KeyDown,
-            codePoint = awtCode,
+            // Carry the raw GLFW key code so consumers (e.g. KeybindOption) can recover it losslessly;
+            // the AWT round-trip in the Key collapses unmapped keys to VK_UNDEFINED.
+            codePoint = key,
             isCtrlPressed = modifiers.ctrlDown(),
             isShiftPressed = modifiers.shiftDown(),
             isAltPressed = modifiers.altDown(),
@@ -348,7 +352,7 @@ abstract class ComposeScreen(
         val composeEvent = androidx.compose.ui.input.key.KeyEvent(
             key = androidx.compose.ui.input.key.Key(awtCode, eventLocation),
             type = KeyEventType.KeyUp,
-            codePoint = awtCode,
+            codePoint = key,
             isCtrlPressed = modifiers.ctrlDown(),
             isShiftPressed = modifiers.shiftDown(),
             isAltPressed = modifiers.altDown(),
@@ -388,8 +392,9 @@ abstract class ComposeScreen(
         return m
     }
 
-    // AWT collapses left/right modifiers to one key code; preserve the side via key location so keybinds can tell
-    // left shift from right shift (etc). Read back in KeybindOption via Key.nativeKeyLocation.
+    // AWT collapses left/right modifiers to one key code; preserve the side via key location so Compose can still
+    // tell left shift from right shift in the Key it receives. (Keybinds themselves now read the raw GLFW code
+    // from codePoint, which already distinguishes the sides.)
     private fun glfwKeyLocation(glfwKey: Int): Int = when (glfwKey) {
         GLFW.GLFW_KEY_RIGHT_SHIFT, GLFW.GLFW_KEY_RIGHT_CONTROL, GLFW.GLFW_KEY_RIGHT_ALT, GLFW.GLFW_KEY_RIGHT_SUPER -> KeyEvent.KEY_LOCATION_RIGHT
         GLFW.GLFW_KEY_LEFT_SHIFT, GLFW.GLFW_KEY_LEFT_CONTROL, GLFW.GLFW_KEY_LEFT_ALT, GLFW.GLFW_KEY_LEFT_SUPER -> KeyEvent.KEY_LOCATION_LEFT

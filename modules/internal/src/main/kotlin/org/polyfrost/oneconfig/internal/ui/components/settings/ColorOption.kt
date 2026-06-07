@@ -174,8 +174,9 @@ fun ColorOption(data: ColorOptionData) {
     val isHovered by interactionSource.collectIsHoveredAsState()
     var expanded by remember { mutableStateOf(false) }
 
-    val initialColor = remember(data.prop) {
-        when (val v = data.prop.get()) {
+    val initialValue = remember(data.prop) { data.prop.get() }
+    val initialColor = remember(data.prop, initialValue) {
+        when (val v = initialValue) {
             is Color -> v
             is PolyColor -> Color(v.argb)
             is Int -> Color(v)
@@ -184,7 +185,13 @@ fun ColorOption(data: ColorOptionData) {
         }
     }
     var currentColor by remember(data.prop) { mutableStateOf(initialColor) }
-    val pickerModel = remember(data.prop) { ColorPickerModel(initialColor) }
+    val pickerModel = remember(data.prop, initialValue) {
+        ColorPickerModel(initialColor).apply {
+            val color = initialValue as? PolyColor
+            chromaEnabled = color?.chroma == true
+            chromaSpeed = color?.chromaSpeed ?: 1f
+        }
+    }
     val textColor by animateColorAsState(
         if (currentColor.luminance() > 0.6f) Color.Black else Color.White
     )
@@ -200,7 +207,9 @@ fun ColorOption(data: ColorOptionData) {
             data.prop.type == Int::class.java || data.prop.type == Int::class.javaPrimitiveType ->
                 (data.prop as Property<Any>).set(color.toArgb())
             data.prop.type == PolyColor::class.java -> {
-                (data.prop as Property<Any>).set(PolyColor(color.toArgb()))
+                (data.prop as Property<Any>).set(
+                    PolyColor(color.toArgb(), pickerModel.chromaEnabled, pickerModel.chromaSpeed)
+                )
                 updateAccent()
             }
             data.prop.type == java.awt.Color::class.java -> {
@@ -490,7 +499,10 @@ internal fun ColorPickerPopup(
                 )
                 Text("Chroma", color = theme.textColor, fontSize = 13.sp)
             }
-            SwitchControl(chromaEnabled) { model.chromaEnabled = it }
+            SwitchControl(chromaEnabled) {
+                model.chromaEnabled = it
+                onColorChanged(model.currentColor())
+            }
         }
 
         if (chromaEnabled) {
@@ -518,6 +530,7 @@ internal fun ColorPickerPopup(
                                 val down = awaitFirstDown()
                                 fun update(x: Float) {
                                     model.chromaSpeed = ((x / size.width) * 4f).coerceIn(0.1f, 4f)
+                                    onColorChanged(model.currentColor())
                                 }
                                 update(down.position.x)
                                 do {

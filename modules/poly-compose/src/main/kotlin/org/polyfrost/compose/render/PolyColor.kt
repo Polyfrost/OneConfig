@@ -3,7 +3,21 @@ package org.polyfrost.compose.render
 import org.jetbrains.annotations.ApiStatus
 import kotlin.math.roundToInt
 
-class PolyColor(val argb: Int) {
+class PolyColor @JvmOverloads constructor(
+    argb: Int = 0xFFFFFFFF.toInt(),
+    var chroma: Boolean = false,
+    var chromaSpeed: Float = 1f,
+) {
+    private var staticArgb: Int = argb
+
+    var argb: Int
+        get() = if (chroma) chromaArgb(staticArgb, chromaSpeed) else staticArgb
+        set(value) {
+            staticArgb = value
+        }
+
+    val rawArgb: Int get() = staticArgb
+
     val alpha: Int get() = (argb ushr 24) and 0xFF
     val red: Int get() = (argb ushr 16) and 0xFF
     val green: Int get() = (argb ushr 8) and 0xFF
@@ -14,12 +28,12 @@ class PolyColor(val argb: Int) {
     val greenF: Float get() = green / 255f
     val blueF: Float get() = blue / 255f
 
-    fun withAlpha(a: Int): PolyColor = PolyColor((argb and 0x00FFFFFF) or ((a.coerceIn(0, 255)) shl 24))
+    fun withAlpha(a: Int): PolyColor = PolyColor((argb and 0x00FFFFFF) or ((a.coerceIn(0, 255)) shl 24), chroma, chromaSpeed)
     fun withAlpha(a: Float): PolyColor = withAlpha((a * 255f).roundToInt())
 
-    fun withRed(r: Int): PolyColor = PolyColor((argb and 0xFF00FFFF.toInt()) or ((r.coerceIn(0, 255)) shl 16))
-    fun withGreen(g: Int): PolyColor = PolyColor((argb and 0xFFFF00FF.toInt()) or ((g.coerceIn(0, 255)) shl 8))
-    fun withBlue(b: Int): PolyColor = PolyColor((argb and 0xFFFFFF00.toInt()) or (b.coerceIn(0, 255)))
+    fun withRed(r: Int): PolyColor = PolyColor((argb and 0xFF00FFFF.toInt()) or ((r.coerceIn(0, 255)) shl 16), chroma, chromaSpeed)
+    fun withGreen(g: Int): PolyColor = PolyColor((argb and 0xFFFF00FF.toInt()) or ((g.coerceIn(0, 255)) shl 8), chroma, chromaSpeed)
+    fun withBlue(b: Int): PolyColor = PolyColor((argb and 0xFFFFFF00.toInt()) or (b.coerceIn(0, 255)), chroma, chromaSpeed)
 
     fun multiplyAlpha(factor: Float): PolyColor = withAlpha((alpha * factor).roundToInt().coerceIn(0, 255))
 
@@ -145,5 +159,30 @@ class PolyColor(val argb: Int) {
         }
 
         fun lerp(from: PolyColor, to: PolyColor, t: Float) = from.lerp(to, t)
+
+        private fun chromaArgb(argb: Int, speed: Float): Int {
+            val alpha = (argb ushr 24) and 0xFF
+            val hsb = rgbToHsb((argb ushr 16) and 0xFF, (argb ushr 8) and 0xFF, argb and 0xFF)
+            val elapsedSeconds = System.nanoTime() / 1_000_000_000.0
+            val hue = ((hsb[0] + elapsedSeconds * speed.coerceAtLeast(0f)) % 1.0).toFloat()
+            return hsv(hue * 360f, hsb[1], hsb[2], alpha / 255f).rawArgb
+        }
+
+        private fun rgbToHsb(red: Int, green: Int, blue: Int): FloatArray {
+            val r = red / 255f
+            val g = green / 255f
+            val b = blue / 255f
+            val max = maxOf(r, g, b)
+            val min = minOf(r, g, b)
+            val delta = max - min
+            val hue = when {
+                delta == 0f -> 0f
+                max == r -> (((g - b) / delta).mod(6f)) / 6f
+                max == g -> (((b - r) / delta) + 2f) / 6f
+                else -> (((r - g) / delta) + 4f) / 6f
+            }
+            val saturation = if (max == 0f) 0f else delta / max
+            return floatArrayOf(hue, saturation, max)
+        }
     }
 }

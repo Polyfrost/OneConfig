@@ -9,9 +9,44 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 
 object ConfigRegistry {
+    private val hiddenModCardIds = setOf(
+        "oneconfig.json",
+        "themes.json",
+        "minecraft",
+        "resourcefulconfig",
+        "modmenu",
+        "badoptimizations",
+        "respackopts",
+        "midnightlib",
+        "ukulib",
+        "modernconfig",
+        "collective",
+        "cloth-config",
+        "compose-bundle",
+        "trender",
+        "libjf-config-core-v2",
+        "libjf-config-network-v0",
+        "libjf-web-v1",
+        "libjf-translate-v1",
+    )
+
+    private val hiddenModCardTitles = setOf(
+        "trender",
+        "libjf config",
+        "libjf config: network",
+        "libjf web",
+        "libjf translate",
+    )
+
     val configs: SnapshotStateList<ConfigData> = mutableStateListOf()
+    val modCardConfigs: List<ConfigData>
+        get() = configs.filter(::shouldShowModCard)
+
     var revision by mutableIntStateOf(0)
         private set
+
+    fun shouldShowModCard(config: ConfigData): Boolean =
+        config.id.lowercase() !in hiddenModCardIds && config.title.toString().lowercase() !in hiddenModCardTitles
 
     /**
      * Loads all trees from the given [ConfigManager] as [source] entries.

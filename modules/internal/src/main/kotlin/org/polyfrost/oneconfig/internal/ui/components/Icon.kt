@@ -22,6 +22,8 @@ import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import java.io.File
 
+private object IconResourceMarker
+
 @Composable
 fun Icon(iconName: String, color: Color = Color.Unspecified, modifier: Modifier = Modifier) {
     val resolvedColor = if (color == Color.Unspecified) LocalTheme.current.textColor else color
@@ -34,22 +36,25 @@ fun Icon(iconName: String, color: Color = Color.Unspecified, modifier: Modifier 
     if (file != null) {
         val isSvg = file.extension.equals("svg", ignoreCase = true)
         val density = LocalDensity.current
-        val painter = remember(iconName) {
-            file.inputStream().buffered().use { stream ->
-                if (isSvg) loadSvgPainter(stream, density) else BitmapPainter(loadImageBitmap(stream))
-            }
+        val painter = remember(iconName, density) {
+            runCatching {
+                file.inputStream().buffered().use { stream ->
+                    if (isSvg) loadSvgPainter(stream, density) else BitmapPainter(loadImageBitmap(stream))
+                }
+            }.getOrNull()
         }
-        Image(
-            painter = painter,
-            contentDescription = null,
-            modifier = modifier.size(18.dp),
-            colorFilter = if (isSvg) ColorFilter.tint(resolvedColor) else null
-        )
-        return
+        if (painter != null) {
+            Image(
+                painter = painter,
+                contentDescription = null,
+                modifier = modifier.size(18.dp),
+                colorFilter = if (isSvg) ColorFilter.tint(resolvedColor) else null
+            )
+            return
+        }
     }
 
-    val path = if (iconName.contains('/') || iconName.contains('.')) iconName
-               else "/assets/oneconfig/ico/$iconName.svg"
+    val path = iconName.toIconResourcePath().takeIf(::iconResourceExists) ?: return
     val isSvg = path.endsWith(".svg", ignoreCase = true)
     Image(
         painter = painterResource(path),
@@ -57,6 +62,23 @@ fun Icon(iconName: String, color: Color = Color.Unspecified, modifier: Modifier 
         modifier = modifier.size(18.dp),
         colorFilter = if (isSvg) ColorFilter.tint(resolvedColor) else null
     )
+}
+
+fun canRenderIcon(iconName: String): Boolean {
+    if (iconName.contains('/') || iconName.contains('.')) {
+        val file = File(iconName)
+        if (file.isAbsolute) return file.isFile
+    }
+    return iconResourceExists(iconName.toIconResourcePath())
+}
+
+private fun String.toIconResourcePath(): String =
+    if (contains('/') || contains('.')) this else "/assets/oneconfig/ico/$this.svg"
+
+private fun iconResourceExists(path: String): Boolean {
+    val normalized = path.removePrefix("/")
+    return Thread.currentThread().contextClassLoader?.getResource(normalized) != null ||
+        IconResourceMarker::class.java.classLoader?.getResource(normalized) != null
 }
 
 @Composable

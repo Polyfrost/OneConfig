@@ -45,6 +45,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
+import org.polyfrost.oneconfig.internal.ui.components.canRenderIcon
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
@@ -83,19 +84,9 @@ fun Mods() {
     }
 }
 
-val EXCLUDED_MODS = listOf(
-    PREFERENCES_ID,
-    THEMES_ID,
-    "minecraft",
-    "resourcefulconfig",
-    "modmenu"
-)
-
 @Composable
 fun ColumnScope.ModsGrid(category: ModCategory) {
-    val configs = ConfigRegistry.configs
-    val filtered = configs
-        .filterNot { it.id.lowercase() in EXCLUDED_MODS }
+    val filtered = ConfigRegistry.modCardConfigs
         .let { items ->
             if (category.configCategory == null) items
             else items.filter { it.category == category.configCategory }
@@ -149,7 +140,7 @@ fun ModCard(mod: ConfigData) {
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                val icon = mod.icon
+                val icon = mod.icon?.takeIf(::canRenderIcon)
                 if (icon != null) {
                     Icon(icon, color = theme.textColor, modifier = Modifier.size(48.dp))
                 } else {

@@ -116,7 +116,9 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindManager {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindManager;
 	public static final fun builder ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
+	public static final fun isRegistered (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Z
 	public static final fun register (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
+	public static final fun replace (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
 	public static final fun unregister (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
 }
 
