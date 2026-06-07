@@ -46,7 +46,6 @@ import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent;
-import org.polyfrost.oneconfig.api.hypixel.v1.HypixelUtils;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.internal.BlurHandler;
@@ -87,14 +86,8 @@ public class OneConfig
                 )
                 .then(CommandManager.literal("hud")
                         .executes((ctx) -> {
-                            HudManager.INSTANCE.toggleEditor();
+                            HudManager.INSTANCE.openEditor();
                             return Command.SINGLE_SUCCESS;
-                        })
-                )
-                .then(CommandManager.literal("locraw")
-                        .executes((ctx) -> {
-                            ctx.getSource().sendFeedback(Component.literal(HypixelUtils.getLocation().toString()));
-                            return 1;
                         })
                 ).build();
         CommandManager.INSTANCE.register(node);
@@ -171,18 +164,18 @@ public class OneConfig
         EventManager.register(
                 HudEditorToggleEvent.class, e -> {
                     if (e.open) {
-                        Platform.screen().display(new HudEditorUIScreen(), 0);
+                        Platform.screen().display(new HudEditorUIScreen());
                     } else {
                         if (Platform.screen().current() instanceof HudEditorUIScreen) {
                             Platform.screen().display(null, 0);
                         }
                     }
                 });
-        // Safety: if the HUD editor screen is closed by MC (e.g. player presses ESC)
-        // without going through HudManager.closeEditor(), reset the editing flag
+        // Safety: if another screen replaces the HUD editor without going through HudManager.closeEditor(),
+        // reset the editing flag. Null screen opens are ignored because commands close chat before deferred screens open.
         EventManager.register(
                 org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent.class, e -> {
-                    if (HudManager.INSTANCE.isEditing() && !(e.getScreen() instanceof HudEditorUIScreen)) {
+                    if (HudManager.INSTANCE.isEditing() && e.getScreen() != null && !(e.getScreen() instanceof HudEditorUIScreen)) {
                         HudManager.INSTANCE.closeEditor();
                     }
                 });

@@ -160,6 +160,18 @@ public abstract class Config {
     protected void addDependency(String option, String name, Supplier<Property.Display> condition) {
         Property<?> opt = getProperty(option).addDisplayCondition(condition);
         if (name != null) opt.getOrPutMetadata("dependencyNames", () -> new ArrayList<String>(3)).add(name);
+        // the supplier can read any property in the tree, but unlike the boolean-option variant it has no
+        // reference to a specific parent to subscribe to. re-evaluate this option whenever any sibling property
+        // changes so the display stays in sync (e.g. a dropdown gating a slider).
+        java.lang.ref.WeakReference<Property<?>> ref = new java.lang.ref.WeakReference<>(opt);
+        tree.onAllProps((s, p) -> {
+            if (p == opt) return;
+            p.addCallback(t -> {
+                Property<?> self = ref.get();
+                if (self != null) self.revaluateDisplay();
+                return false;
+            });
+        });
     }
 
     protected void restoreDefaults() {

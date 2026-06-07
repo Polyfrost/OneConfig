@@ -204,9 +204,23 @@ abstract class TextHud(
     ) : TextHud("date_time_hud.yml", "Date/Time Hud", Category.INFO, header, suffix) {
 
         private var _formatter: DateTimeFormatter? = null
+        private var _formatterTemplate: String? = null
 
-        private val formatter: DateTimeFormatter
-            get() = _formatter ?: DateTimeFormatter.ofPattern(template).also { _formatter = it }
+        private val formatter: DateTimeFormatter?
+            get() {
+                if (_formatterTemplate == template) return _formatter
+
+                return try {
+                    DateTimeFormatter.ofPattern(template).also {
+                        _formatter = it
+                        _formatterTemplate = template
+                    }
+                } catch (_: IllegalArgumentException) {
+                    _formatter = null
+                    _formatterTemplate = template
+                    null
+                }
+            }
 
         override fun updateFrequency(): Long = when {
             'S' in template -> 100_000_000L
@@ -217,11 +231,18 @@ abstract class TextHud(
 
         override fun setup() {
             super.setup()
-            if (isReal) addCallback("template") { _formatter = null; updateAndRecalculate() }
+            if (isReal) addCallback("template") {
+                _formatter = null
+                _formatterTemplate = null
+                updateAndRecalculate()
+            }
         }
 
-        override fun getText(): String = LocalDateTime.now().format(formatter)
+        override fun getText(): String? = formatter?.let { LocalDateTime.now().format(it) }
 
-        override fun clone(): Hud = (super.clone() as DateTime).also { it._formatter = null }
+        override fun clone(): Hud = (super.clone() as DateTime).also {
+            it._formatter = null
+            it._formatterTemplate = null
+        }
     }
 }

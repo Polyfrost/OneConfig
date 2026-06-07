@@ -64,7 +64,8 @@ public class OneConfigCollector extends ReflectiveCollector {
                 Property<?> condition = tree.getProp(cond);
                 if (condition == null) throw new IllegalArgumentException("Property " + p.getID() + " is dependant on property " + cond + ", but that property does not exist");
                 if (condition.type == boolean.class) {
-                    p.addDisplayCondition(condition::getAs);
+                    //noinspection unchecked
+                    p.addDisplayCondition((Property<Boolean>) condition, false);
                 } else throw new IllegalArgumentException("Property " + p.getID() + " is dependant on property " + cond + ", but it is not a boolean property");
             }
         });
