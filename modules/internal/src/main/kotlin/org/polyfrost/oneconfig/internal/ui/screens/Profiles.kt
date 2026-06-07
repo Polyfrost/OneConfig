@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.text.BasicTextField
@@ -38,6 +39,8 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
@@ -48,6 +51,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.searchMatches
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -114,6 +118,16 @@ fun Profiles() {
     Column(
         verticalArrangement = Arrangement.spacedBy(19.dp)
     ) {
+        val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
+        val categorizedProfiles = when (activeCategory) {
+            ProfileCategory.All -> profiles
+            ProfileCategory.Favorited -> profiles.filter { it.favorite }
+        }
+        val visibleProfiles = remember(categorizedProfiles, localSearchQuery) {
+            if (localSearchQuery.isBlank()) categorizedProfiles
+            else categorizedProfiles.filter { it.matchesSearch(localSearchQuery) }
+        }
+
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ProfileCategory.entries.forEach {
                 Chip(
@@ -126,11 +140,10 @@ fun Profiles() {
         }
 
         ProfilesGrid(
-            profiles = when (activeCategory) {
-                ProfileCategory.All -> profiles
-                ProfileCategory.Favorited -> profiles.filter { it.favorite }
-            },
-            showCreateProfile = activeCategory == ProfileCategory.All,
+            profiles = visibleProfiles,
+            showCreateProfile = activeCategory == ProfileCategory.All && localSearchQuery.isBlank(),
+            emptyMessage = if (localSearchQuery.isBlank()) "No favorite profiles."
+                else "No profiles match \"$localSearchQuery\"",
             newProfileName = newProfileName,
             createError = error,
             onNewProfileNameChange = {
@@ -166,6 +179,12 @@ fun Profiles() {
     }
 }
 
+private fun UiProfile.matchesSearch(query: String): Boolean {
+    val q = query.lowercase()
+    return listOf(name, id, icon)
+        .any { searchMatches(it, q) }
+}
+
 private fun loadProfiles(): List<UiProfile> {
     val active = ConfigManager.activeProfile()
     val favorites = ConfigManager.favoriteProfiles().toSet()
@@ -185,6 +204,7 @@ private fun loadProfiles(): List<UiProfile> {
 private fun ColumnScope.ProfilesGrid(
     profiles: List<UiProfile>,
     showCreateProfile: Boolean,
+    emptyMessage: String,
     newProfileName: String,
     createError: String?,
     onNewProfileNameChange: (String) -> Unit,
@@ -197,7 +217,7 @@ private fun ColumnScope.ProfilesGrid(
 ) {
     if (profiles.isEmpty() && !showCreateProfile) {
         Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No favorite profiles.", color = LocalTheme.current.textColorSecondary)
+            Text(emptyMessage, color = LocalTheme.current.textColorSecondary)
         }
         return
     }
@@ -431,11 +451,20 @@ private fun ProfileCard(
                     onIconChange = onIconChange,
                 )
             } else {
-                Text(
+                BasicText(
                     profile.name,
-                    color = theme.textColor,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp),
+                    style = TextStyle(
+                        color = theme.textColor,
+                        fontSize = 18.sp,
+                        fontFamily = theme.typography.family,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }

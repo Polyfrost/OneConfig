@@ -87,6 +87,18 @@ class ProfileManagerTest {
     }
 
     @Test
+    void persistsDefaultProfileFavorite() {
+        ConfigManager.setFavoriteProfile("", true);
+
+        assertTrue(ConfigManager.isFavoriteProfile(""));
+        assertTrue(ConfigManager.favoriteProfiles().contains(""));
+
+        ConfigManager.setFavoriteProfile("", false);
+        assertFalse(ConfigManager.isFavoriteProfile(""));
+        assertFalse(ConfigManager.favoriteProfiles().contains(""));
+    }
+
+    @Test
     void persistsProfileIcons() {
         ConfigManager.createProfile(PROFILE_A);
 
@@ -151,6 +163,7 @@ class ProfileManagerTest {
     }
 
     private static void cleanupProfiles() throws IOException {
+        ConfigManager.setFavoriteProfile("", false);
         ConfigManager.setFavoriteProfile(PROFILE_A, false);
         ConfigManager.setFavoriteProfile(PROFILE_B, false);
         ConfigManager.setFavoriteProfile(PROFILE_C, false);

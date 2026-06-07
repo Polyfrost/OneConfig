@@ -116,6 +116,9 @@ public class OneConfig
             if (!pressed) {
                 return true;
             }
+            if (Platform.screen().current() instanceof OneConfigUIScreen) {
+                return true;
+            }
             if (Minecraft.getInstance().level == null && !Platform.compatibility().isDevelopment()) {
                 return true;
             }

@@ -31,6 +31,12 @@ object ShellState {
 
     var searchQuery by mutableStateOf("")
 
+    var globalSearchActive by mutableStateOf(false)
+
+    var focusSearchField by mutableStateOf(false)
+
+    var showSearchField by mutableStateOf(false)
+
     /** True when the account footer should show an unread-notification indicator. */
     var hasUnreadNotifications by mutableStateOf(false)
 
@@ -57,6 +63,8 @@ object LocalNavController {
         fun navigate(route: Any) {
             forwardStack.clear()
             ShellState.searchQuery = ""
+            ShellState.globalSearchActive = false
+            ShellState.showSearchField = false
             ShellState.lastRoute = route
             current.navigate(route)
         }
@@ -68,12 +76,16 @@ object LocalNavController {
 
             if (this@LocalNavController.current.popBackStack()) {
                 current?.let { forwardStack.addLast(it) }
+                ShellState.globalSearchActive = false
+                ShellState.showSearchField = false
             }
         }
 
         fun forward() {
             val next = forwardStack.removeLastOrNull() ?: return
             ShellState.lastRoute = next
+            ShellState.globalSearchActive = false
+            ShellState.showSearchField = false
             current.navigate(next)
         }
     }

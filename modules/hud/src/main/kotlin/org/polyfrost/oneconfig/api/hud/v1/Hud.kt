@@ -50,6 +50,14 @@ enum class Font {
     Poppins;
 }
 
+enum class Weight {
+    Thin,
+    Regular,
+    Medium,
+    Bold,
+    Black;
+}
+
 enum class Section {
     TopLeft, TopCenter, TopRight,
     CenterLeft, Center, CenterRight,
@@ -314,6 +322,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     private var _textUnderline: MutableState<Boolean> = mutableStateOf(false)
     var textUnderline: Boolean get() = _textUnderline.value; set(v) { _textUnderline.value = v }
 
+    private var _textWeight: MutableState<Weight> = mutableStateOf(Weight.Regular)
+    var textWeight: Weight get() = _textWeight.value; set(v) { _textWeight.value = v }
+
     private var _textAlign: MutableState<Int> = mutableStateOf(1)
     var textAlign: Int get() = _textAlign.value; set(v) { _textAlign.value = v }
 
@@ -324,6 +335,17 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var customScale: Float get() = _customScale.value; set(v) { _customScale.value = v }
 
     val effectiveScale: Float get() = if (useGuiScale) 1f else customScale
+
+    fun getPoppinsFontName(): String {
+        val base = when {
+            textBold || textWeight == Weight.Bold -> "poppins-bold"
+            textWeight == Weight.Thin -> "poppins-thin"
+            textWeight == Weight.Medium -> "poppins-medium"
+            textWeight == Weight.Black -> "poppins-black"
+            else -> "poppins"
+        }
+        return if (textItalic) "$base-italic" else base
+    }
 
     private var _showBackground: MutableState<Boolean> = mutableStateOf(true)
     var showBackground: Boolean get() = _showBackground.value; set(v) { _showBackground.value = v }
@@ -419,6 +441,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             tree["textBold"] = ktProperty(out::textBold).apply { addDisplayCondition(hidden) }
             tree["textItalic"] = ktProperty(out::textItalic).apply { addDisplayCondition(hidden) }
             tree["textUnderline"] = ktProperty(out::textUnderline).apply { addDisplayCondition(hidden) }
+            tree["textWeight"] = ktProperty(out::textWeight).apply { addDisplayCondition(hidden) }
             tree["textAlign"] = ktProperty(out::textAlign).apply { addDisplayCondition(hidden) }
             tree["useGuiScale"] = ktProperty(out::useGuiScale).apply { addDisplayCondition(hidden) }
             tree["customScale"] = ktProperty(out::customScale).apply { addDisplayCondition(hidden) }
@@ -500,6 +523,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         _textBold = mutableStateOf(this@Hud.textBold)
         _textItalic = mutableStateOf(this@Hud.textItalic)
         _textUnderline = mutableStateOf(this@Hud.textUnderline)
+        _textWeight = mutableStateOf(this@Hud.textWeight)
         _textAlign = mutableStateOf(this@Hud.textAlign)
         _useGuiScale = mutableStateOf(this@Hud.useGuiScale)
         _customScale = mutableStateOf(this@Hud.customScale)

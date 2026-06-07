@@ -55,11 +55,14 @@ import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.searchMatches
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
+import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private sealed interface SettingNode {
@@ -78,6 +81,7 @@ private data class SubcategoryGroup(
 )
 
 private sealed interface ConfigListEntry {
+    data class CategoryHeader(val title: String) : ConfigListEntry
     data class SubcategoryHeader(val title: String) : ConfigListEntry
     data class Item(val node: SettingNode) : ConfigListEntry
 }
@@ -85,6 +89,7 @@ private sealed interface ConfigListEntry {
 @Composable
 fun ConfigScreen(tree: Tree, initialCategory: String? = null) {
     val categories = remember(tree) { buildCategories(tree) }
+    val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
     var selectedCategory by remember(tree, initialCategory) {
         mutableStateOf(
             categories.firstOrNull { it.name.equals(initialCategory, ignoreCase = true) }
@@ -100,7 +105,7 @@ fun ConfigScreen(tree: Tree, initialCategory: String? = null) {
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
-        if (categories.size > 1) {
+        if (localSearchQuery.isBlank() && categories.size > 1) {
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -116,13 +121,19 @@ fun ConfigScreen(tree: Tree, initialCategory: String? = null) {
             }
         }
 
-        val entries = remember(selectedCategory) {
-            selectedCategory?.let(::flattenEntries).orEmpty()
+        val entries = remember(categories, selectedCategory, localSearchQuery) {
+            if (localSearchQuery.isBlank()) {
+                selectedCategory?.let(::flattenEntries).orEmpty()
+            } else {
+                flattenSearchEntries(filterCategories(categories, localSearchQuery))
+            }
         }
 
         if (entries.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No settings available.", color = LocalTheme.current.textColorSecondary)
+                val message = if (localSearchQuery.isBlank()) "No settings available."
+                else "No settings match \"$localSearchQuery\""
+                Text(message, color = LocalTheme.current.textColorSecondary)
             }
             return@Column
         }
@@ -136,6 +147,7 @@ fun ConfigScreen(tree: Tree, initialCategory: String? = null) {
             ) {
                 items(entries) { entry ->
                     when (entry) {
+                        is ConfigListEntry.CategoryHeader -> CategoryHeader(entry.title)
                         is ConfigListEntry.SubcategoryHeader -> SubcategoryHeader(entry.title)
                         is ConfigListEntry.Item -> when (val node = entry.node) {
                             is SettingNode.Leaf -> SettingRow(node.prop)
@@ -164,6 +176,63 @@ private fun flattenEntries(category: CategoryGroup): List<ConfigListEntry> {
             subcategory.nodes.forEach { add(ConfigListEntry.Item(it)) }
         }
     }
+}
+
+private fun flattenSearchEntries(categories: List<CategoryGroup>): List<ConfigListEntry> {
+    return buildList {
+        val showCategoryHeaders = categories.size > 1
+        categories.forEach { category ->
+            if (showCategoryHeaders) {
+                add(ConfigListEntry.CategoryHeader(category.name))
+            }
+            addAll(flattenEntries(category))
+        }
+    }
+}
+
+private fun filterCategories(categories: List<CategoryGroup>, query: String): List<CategoryGroup> {
+    val q = query.lowercase()
+    return categories.mapNotNull { category ->
+        val categoryMatches = searchMatches(category.name, q)
+        val subcategories = category.subcategories.mapNotNull { subcategory ->
+            val subcategoryMatches = categoryMatches || searchMatches(subcategory.name, q)
+            val nodes = subcategory.nodes.mapNotNull { node ->
+                filterSettingNode(node, category.name, subcategory.name, q, subcategoryMatches)
+            }
+            if (nodes.isEmpty()) null else subcategory.copy(nodes = nodes)
+        }
+        if (subcategories.isEmpty()) null else category.copy(subcategories = subcategories)
+    }
+}
+
+private fun filterSettingNode(
+    node: SettingNode,
+    category: String,
+    subcategory: String,
+    query: String,
+    groupMatches: Boolean,
+): SettingNode? {
+    return when (node) {
+        is SettingNode.Leaf -> if (groupMatches || node.prop.matchesLocalSearch(category, subcategory, query)) node else null
+        is SettingNode.Accordion -> {
+            val accordionMatches = groupMatches || node.tree.matchesLocalSearch(category, subcategory, query) ||
+                node.head?.matchesLocalSearch(category, subcategory, query) == true
+            val body = if (accordionMatches) node.body
+            else node.body.filter { it.matchesLocalSearch(category, subcategory, query) }
+
+            if (body.isEmpty()) null else node.copy(body = body)
+        }
+    }
+}
+
+private fun Property<*>.matchesLocalSearch(category: String, subcategory: String, query: String): Boolean {
+    return listOfNotNull(title, id, description, category, subcategory)
+        .any { searchMatches(it.asRenderText(), query) }
+}
+
+private fun Tree.matchesLocalSearch(category: String, subcategory: String, query: String): Boolean {
+    return listOfNotNull(title, id, description, category, subcategory)
+        .any { searchMatches(it.asRenderText(), query) }
 }
 
 private fun buildCategories(tree: Tree): List<CategoryGroup> {
@@ -225,6 +294,17 @@ private fun nodeGroup(node: Node, key: String, default: String): String {
 }
 
 @Composable
+private fun CategoryHeader(title: String) {
+    Text(
+        title,
+        color = LocalTheme.current.textColorSecondary,
+        fontSize = 11.sp,
+        fontWeight = FontWeight.Medium,
+        modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
+    )
+}
+
+@Composable
 private fun SubcategoryHeader(title: String) {
     Text(
         title,
@@ -240,7 +320,12 @@ private fun AccordionRow(node: SettingNode.Accordion) {
     val theme = LocalTheme.current
     val shape = theme.modCardShape
 
-    var expanded by remember(node) { mutableStateOf(node.head?.get() != false) }
+    var expanded by remember(node) {
+        mutableStateOf(
+            if (node.tree.getMetadata<Boolean>("collapsed") == true) false
+            else node.head?.get() != false
+        )
+    }
     val headerInteraction = rememberInteractionSource()
     val chevronRotation by animateFloatAsState(if (expanded) 180f else 90f)
 
@@ -483,6 +568,7 @@ fun HudConfigScreen(tree: Tree, initialCategory: String? = null) {
         tree
     }
     val categories = remember(filteredTree) { buildHudCategories(filteredTree) }
+    val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
     var selectedCategory by remember(filteredTree, initialCategory) {
         mutableStateOf(
             categories.firstOrNull { it.name.equals(initialCategory, ignoreCase = true) }
@@ -491,7 +577,7 @@ fun HudConfigScreen(tree: Tree, initialCategory: String? = null) {
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
-        if (categories.size > 1) {
+        if (localSearchQuery.isBlank() && categories.size > 1) {
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -507,13 +593,19 @@ fun HudConfigScreen(tree: Tree, initialCategory: String? = null) {
             }
         }
 
-        val entries = remember(selectedCategory) {
-            selectedCategory?.let(::flattenEntries).orEmpty()
+        val entries = remember(categories, selectedCategory, localSearchQuery) {
+            if (localSearchQuery.isBlank()) {
+                selectedCategory?.let(::flattenEntries).orEmpty()
+            } else {
+                flattenSearchEntries(filterCategories(categories, localSearchQuery))
+            }
         }
 
         if (entries.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No settings available.", color = LocalTheme.current.textColorSecondary)
+                val message = if (localSearchQuery.isBlank()) "No settings available."
+                else "No settings match \"$localSearchQuery\""
+                Text(message, color = LocalTheme.current.textColorSecondary)
             }
             return@Column
         }
@@ -521,6 +613,7 @@ fun HudConfigScreen(tree: Tree, initialCategory: String? = null) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             entries.forEach { entry ->
                 when (entry) {
+                    is ConfigListEntry.CategoryHeader -> CategoryHeader(entry.title)
                     is ConfigListEntry.SubcategoryHeader -> SubcategoryHeader(entry.title)
                     is ConfigListEntry.Item -> when (val node = entry.node) {
                         is SettingNode.Leaf -> SettingRow(node.prop)
@@ -563,4 +656,3 @@ private fun buildHudCategories(tree: Tree): List<CategoryGroup> {
         if (groups.isEmpty()) null else CategoryGroup(category, groups)
     }
 }
-

@@ -372,11 +372,19 @@ object SkiaCtx {
         if (existing != null && existing.width == w && existing.height == h) return existing
 
         glSurface?.close(); glBrt?.close()
-        glBrt = svc.makeBackBufferRenderTarget(w, h)
+        // Compose screens must land in Minecraft's main render target so screenshots, Tracy captures,
+        // and the window blit all see the same final UI.
+        //? if >= 26.2 {
+        /*val target = client.gameRenderer.mainRenderTarget()
+        *///? } else {
+        val target = client.mainRenderTarget
+        //? }
+        val (brt, colorFmt) = svc.makeOffscreenBRT(target, w, h)
+        glBrt = brt
         glSurface = Surface.makeFromBackendRenderTarget(
             directContext, glBrt!!,
             SurfaceOrigin.BOTTOM_LEFT,
-            SurfaceColorFormat.RGBA_8888,
+            colorFmt,
             ColorSpace.sRGB,
             null,
         )

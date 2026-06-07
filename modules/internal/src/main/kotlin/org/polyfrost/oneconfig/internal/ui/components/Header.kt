@@ -42,6 +42,8 @@ import org.polyfrost.oneconfig.internal.ui.api.TreeConfigData
 import org.polyfrost.oneconfig.internal.ui.LocalCloseRequest
 import org.polyfrost.oneconfig.internal.ui.navigation.searchPlaceholder
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -137,7 +139,7 @@ private fun levenshtein(a: String, b: String, max: Int): Int {
  * Returns true if [text] matches [q] either as a substring or, when "Search Distance" > 0, by a fuzzy
  * (Levenshtein) match against the whole string or any of its words. [q] is expected to be lowercase.
  */
-private fun searchMatches(text: String, q: String): Boolean {
+internal fun searchMatches(text: String, q: String): Boolean {
     val t = text.lowercase()
     if (t.contains(q)) return true
     val dist = OneConfigConfig.searchDistance
@@ -202,8 +204,17 @@ fun GlobalSearchBar() {
     val interactionSource = rememberInteractionSource()
     val isFocused by interactionSource.collectIsFocusedAsState()
 
+    val focusRequester = remember { FocusRequester() }
+
     LaunchedEffect(searchText) { ShellState.searchQuery = searchText }
     LaunchedEffect(ShellState.searchQuery) { if (ShellState.searchQuery != searchText) searchText = ShellState.searchQuery }
+
+    LaunchedEffect(ShellState.focusSearchField) {
+        if (ShellState.focusSearchField) {
+            focusRequester.requestFocus()
+            ShellState.focusSearchField = false
+        }
+    }
 
     val searchTextStyle = TextStyle(
         color = LocalTheme.current.textColorSecondary,
@@ -223,7 +234,8 @@ fun GlobalSearchBar() {
         singleLine = true,
         cursorBrush = SolidColor(LocalTheme.current.textColorSecondary),
         textStyle = searchTextStyle,
-        interactionSource = interactionSource
+        interactionSource = interactionSource,
+        modifier = Modifier.focusRequester(focusRequester)
     ) { innerTextField ->
         Box(
             modifier = Modifier
@@ -274,10 +286,10 @@ fun GlobalSearchBar() {
                 if (searchText.isNotEmpty()) {
                     IconButton("close", modifier = Modifier.size(16.dp)) {
                         searchText = ""
+                        ShellState.globalSearchActive = false
                     }
                 }
             }
         }
     }
 }
-

@@ -96,7 +96,14 @@ private fun NavigationEntries() {
             NavigationEntry(
                 "search",
                 "Global Search",
-            ) { if (ShellState.searchQuery.isBlank()) ShellState.searchQuery = " " }
+            ) {
+                ShellState.globalSearchActive = true
+                if (ShellState.searchQuery.isBlank()) {
+                    ShellState.searchQuery = ""
+                }
+                ShellState.showSearchField = true
+                ShellState.focusSearchField = true
+            }
         }
 
         NavigationGroups.forEach {

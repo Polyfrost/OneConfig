@@ -41,6 +41,7 @@ import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.hud.v1.Font
 import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.api.hud.v1.Weight
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
@@ -76,16 +77,9 @@ enum class CaseType(override val icon: String) : RadioValue {
 }
 enum class Modifiers(override val icon: String) : RadioValue {
     Bold("bold"),
-    Italic("italic"),
-    Underline("underline");
+    Italic("italic");
 }
-enum class Weight {
-    Thin,
-    Regular,
-    Medium,
-    Bold,
-    Black;
-}
+
 
 @Composable
 fun Designer(hud: Hud? = null) {
@@ -106,6 +100,8 @@ fun Designer(hud: Hud? = null) {
     var textScale by remember { mutableStateOf(hud.textScale) }
     var textBold by remember { mutableStateOf(hud.textBold) }
     var textItalic by remember { mutableStateOf(hud.textItalic) }
+    var textUnderline by remember { mutableStateOf(hud.textUnderline) }
+    var textWeight by remember { mutableStateOf(hud.textWeight) }
     var caseType by remember {
         mutableStateOf(
             CaseType.entries[hud.caseType.coerceIn(
@@ -239,25 +235,31 @@ fun Designer(hud: Hud? = null) {
                 }
                 val density = LocalDensity.current.density
                 if (font == Font.Poppins) {
-                    val fontName = when {
-                        textBold && textItalic -> "poppins-bold-italic"
-                        textBold -> "poppins-bold"
-                        textItalic -> "poppins-italic"
-                        else -> "poppins"
-                    }
+                    val fontName = hud.getPoppinsFontName()
                     val skiaFont = FontManager.getFont(14f * textScale, fontName)
                     val textW = skiaFont.measureTextWidth(previewText)
                     val textH = skiaFont.metrics.let { it.descent - it.ascent }
                     Canvas(modifier = Modifier.size((textW / density).dp, (textH / density).dp)) {
                         drawIntoCanvas { canvas ->
                             val paint = org.jetbrains.skia.Paint().apply { color = textColor.toArgb() }
-                            canvas.nativeCanvas.drawString(previewText, 0f, -skiaFont.metrics.ascent, skiaFont, paint)
+                            val baseline = -skiaFont.metrics.ascent
+                            canvas.nativeCanvas.drawString(previewText, 0f, baseline, skiaFont, paint)
+                            if (textUnderline) {
+                                val underlinePos = skiaFont.metrics.underlinePosition ?: (14f * textScale * 0.08f)
+                                val underlineThick = skiaFont.metrics.underlineThickness ?: (14f * textScale * 0.06f)
+                                val linePaint = org.jetbrains.skia.Paint().apply {
+                                    color = textColor.toArgb()
+                                    strokeWidth = underlineThick
+                                }
+                                canvas.nativeCanvas.drawLine(0f, baseline + underlinePos, textW, baseline + underlinePos, linePaint)
+                            }
                         }
                     }
                 } else {
                     val mcText = buildString {
                         if (textBold) append("§l")
                         if (textItalic) append("§o")
+                        if (textUnderline) append("§n")
                         append(previewText)
                     }
                     val scale = textScale
@@ -326,19 +328,19 @@ fun Designer(hud: Hud? = null) {
                                     }
                                 }
                             )
-                            SelectableIconButton(
-                                Modifiers.Underline.icon,
-                                selected = false,
-                                modifier = Modifier.size(18.dp),
-                                onClick = {}
-                            )
                         }
                     }
                 }
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Dropdown("Weight", Weight.Regular, {})
+                HudSettingTarget(hud, "textWeight") {
+                    Dropdown(
+                        "Weight",
+                        textWeight,
+                        { Snapshot.withMutableSnapshot { textWeight = it; hud.textWeight = it } }
+                    )
+                }
                 HudSettingTarget(hud, "textAlign") {
                     Radio(
                         "Align",

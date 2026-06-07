@@ -39,7 +39,9 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.currentBackStackEntryAsState
 import org.jetbrains.skia.FilterTileMode
 import org.jetbrains.skia.ImageFilter
 import org.jetbrains.skia.Paint
@@ -47,6 +49,7 @@ import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.components.Header
 import org.polyfrost.oneconfig.internal.ui.components.Sidebar
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.navigation
 import org.polyfrost.oneconfig.internal.ui.screens.SearchResultsScreen
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
@@ -101,8 +104,10 @@ fun Shell(
                 .weight(1f)
                 .background(theme.pageBackground),
         ) {
+            val backStackEntry by LocalNavController.current.currentBackStackEntryAsState()
+            val isModsMenu = backStackEntry?.destination?.hasRoute(ModsRoute::class) == true
             val searchQuery = ShellState.searchQuery
-            val isSearching = searchQuery.isNotBlank()
+            val isSearching = searchQuery.isNotBlank() && (ShellState.globalSearchActive || isModsMenu)
             Column(
                 modifier = Modifier.weight(1f)
                     .padding(horizontal = 25.dp, vertical = 19.dp),

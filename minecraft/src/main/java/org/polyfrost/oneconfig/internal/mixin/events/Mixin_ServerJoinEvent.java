@@ -12,9 +12,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class Mixin_ServerJoinEvent {
 
     //? < 1.21.4 {
-    @Inject(method = "handleGameProfile", at = @At("RETURN"))
-    //? } else {
-    //@Inject(method = "handleLoginFinished", at = @At("RETURN"))
+    /*@Inject(method = "handleGameProfile", at = @At("RETURN"))
+    *///? } else {
+    @Inject(method = "handleLoginFinished", at = @At("RETURN"))
     //? }
     private void onLoginSuccess(CallbackInfo ci) {
         EventManager.INSTANCE.post(ServerJoinEvent.INSTANCE);

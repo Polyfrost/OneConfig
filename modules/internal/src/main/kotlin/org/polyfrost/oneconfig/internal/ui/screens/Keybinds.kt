@@ -46,7 +46,9 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.TreeConfigData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
+import org.polyfrost.oneconfig.internal.ui.components.searchMatches
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
@@ -77,10 +79,16 @@ fun Keybinds() {
 
     val configs = ConfigRegistry.configs.toList()
     val groups = remember(revision, configs) { collectKeybindGroups(configs.filterIsInstance<TreeConfigData>()) }
+    val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
+    val visibleGroups = remember(groups, localSearchQuery) {
+        if (localSearchQuery.isBlank()) groups else filterKeybindGroups(groups, localSearchQuery)
+    }
 
-    if (groups.isEmpty()) {
+    if (visibleGroups.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No keybinds available.", color = LocalTheme.current.textColorSecondary, fontSize = 15.sp)
+            val message = if (localSearchQuery.isBlank()) "No keybinds available."
+            else "No keybinds match \"$localSearchQuery\""
+            Text(message, color = LocalTheme.current.textColorSecondary, fontSize = 15.sp)
         }
         return
     }
@@ -92,7 +100,7 @@ fun Keybinds() {
             modifier = Modifier.fillMaxSize().padding(end = 10.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            groups.forEach { group ->
+            visibleGroups.forEach { group ->
                 item(key = "header:$revision:${group.modId}") {
                     KeybindGroupHeader(group)
                 }
@@ -111,6 +119,21 @@ fun Keybinds() {
             modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
         )
     }
+}
+
+private fun filterKeybindGroups(groups: List<KeybindGroup>, query: String): List<KeybindGroup> {
+    val q = query.lowercase()
+    return groups.mapNotNull { group ->
+        val groupMatches = searchMatches(group.modTitle.asRenderText(), q) || searchMatches(group.modId, q)
+        val entries = if (groupMatches) group.entries else group.entries.filter { it.matchesSearch(q) }
+        if (entries.isEmpty()) null else group.copy(entries = entries)
+    }
+}
+
+private fun KeybindEntry.matchesSearch(query: String): Boolean {
+    val prop = this.prop
+    return listOfNotNull(path, category, subcategory, prop.title, prop.id, prop.description)
+        .any { searchMatches(it.asRenderText(), query) }
 }
 
 @Composable

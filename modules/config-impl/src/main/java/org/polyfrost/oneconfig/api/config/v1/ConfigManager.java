@@ -347,7 +347,7 @@ public final class ConfigManager {
         if (favorite != null) {
             try {
                 String normalized = normalizeProfileName(favorite.toString(), true);
-                if (!normalized.isEmpty() && Files.isDirectory(profilePath(normalized)) && !out.contains(normalized)) {
+                if ((normalized.isEmpty() || Files.isDirectory(profilePath(normalized))) && !out.contains(normalized)) {
                     out.add(normalized);
                 }
             } catch (IllegalArgumentException ignored) {
@@ -357,13 +357,12 @@ public final class ConfigManager {
 
     public static synchronized boolean isFavoriteProfile(String profile) {
         profile = normalizeProfileName(profile, true);
-        return !profile.isEmpty() && favoriteProfiles().contains(profile);
+        return favoriteProfiles().contains(profile);
     }
 
     public static synchronized void setFavoriteProfile(String profile, boolean favorite) {
         profile = normalizeProfileName(profile, true);
-        if (profile.isEmpty()) return;
-        if (favorite && !Files.isDirectory(profilePath(profile))) {
+        if (favorite && !profile.isEmpty() && !Files.isDirectory(profilePath(profile))) {
             throw new IllegalArgumentException("Profile does not exist: " + profile);
         }
         ArrayList<String> favorites = new ArrayList<>(favoriteProfiles());

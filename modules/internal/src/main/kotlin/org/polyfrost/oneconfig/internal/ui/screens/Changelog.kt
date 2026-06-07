@@ -66,8 +66,10 @@ import org.commonmark.parser.Parser
 import org.polyfrost.oneconfig.internal.ui.api.ChangelogData
 import org.polyfrost.oneconfig.internal.ui.api.ChangelogSection
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.searchMatches
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ChangeLogEntryRoute
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
+import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -228,13 +230,28 @@ private fun MdBlocks(node: Node, styles: MdStyles, modifier: Modifier = Modifier
 @Composable
 fun Changelog() {
     val lazyListState = rememberLazyListState()
+    val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
+    val visibleSections = remember(localSearchQuery) {
+        changelogs.sections.mapIndexed { index, section -> index to section }
+            .filter { (_, section) ->
+                localSearchQuery.isBlank() || section.matchesSearch(localSearchQuery)
+            }
+    }
+
+    if (visibleSections.isEmpty()) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("No changelog entries match \"$localSearchQuery\"", color = LocalTheme.current.textColorSecondary)
+        }
+        return
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             state = lazyListState,
             modifier = Modifier.fillMaxSize().padding(end = 8.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            changelogs.sections.forEachIndexed { index, section ->
+            visibleSections.forEach { (index, section) ->
                 item { ChangelogEntry(section, index) }
             }
         }
@@ -243,6 +260,11 @@ fun Changelog() {
             modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
         )
     }
+}
+
+private fun ChangelogSection.matchesSearch(query: String): Boolean {
+    val q = query.lowercase()
+    return listOf(title, content, author, date).any { searchMatches(it, q) }
 }
 
 @Composable
