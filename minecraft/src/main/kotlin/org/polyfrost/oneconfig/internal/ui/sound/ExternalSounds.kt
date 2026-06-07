@@ -56,10 +56,14 @@ object ExternalSounds {
 
     fun ensureDownloaded() {
         if (!started.compareAndSet(false, true)) return
+        try {
+            writePackMeta()
+        } catch (t: Throwable) {
+            LOGGER.warn("Failed to write sound pack metadata", t)
+        }
         Multithreading.submit {
             try {
                 val changed = download()
-                writePackMeta()
                 if (changed) {
                     val mc = Minecraft.getInstance()
                     mc.execute {
@@ -114,16 +118,17 @@ object ExternalSounds {
 
     private fun writePackMeta() {
         val meta = OneConfigSoundPackSource.PACK_ROOT.resolve("pack.mcmeta")
-        val json = """{"pack":{"pack_format":${currentPackFormat()},"description":"OneConfig downloaded sounds"}}"""
         Files.createDirectories(meta.parent)
-        Files.write(meta, json.toByteArray(Charsets.UTF_8))
+        Files.write(meta, packMetaJson().toByteArray(Charsets.UTF_8))
     }
 
-    private fun currentPackFormat(): Int =
+    private fun packMetaJson(): String =
         //? if >= 26.1 {
-        net.minecraft.SharedConstants.getCurrentVersion().packVersion(net.minecraft.server.packs.PackType.CLIENT_RESOURCES).major()
+        net.minecraft.SharedConstants.getCurrentVersion().packVersion(net.minecraft.server.packs.PackType.CLIENT_RESOURCES).let { fmt ->
+            """{"pack":{"description":"OneConfig downloaded sounds","min_format":[${fmt.major()},${fmt.minor()}],"max_format":[${fmt.major()},${fmt.minor()}]}}"""
+        }
         //?} else {
-        /*net.minecraft.SharedConstants.getCurrentVersion().getPackVersion(net.minecraft.server.packs.PackType.CLIENT_RESOURCES)
+        /*"""{"pack":{"description":"OneConfig downloaded sounds","pack_format":${net.minecraft.SharedConstants.getCurrentVersion().getPackVersion(net.minecraft.server.packs.PackType.CLIENT_RESOURCES)}}}"""
         *///?}
 
     private fun sha1Of(path: Path): String {
