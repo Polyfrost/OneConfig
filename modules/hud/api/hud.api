@@ -35,6 +35,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getPadLeft ()F
 	public final fun getPadRight ()F
 	public final fun getPadTop ()F
+	public final fun getPoppinsFontName ()Ljava/lang/String;
 	public final fun getRelativeX ()F
 	public final fun getRelativeY ()F
 	public final fun getRenderedH ()F
@@ -66,6 +67,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getTextItalic ()Z
 	public final fun getTextScale ()F
 	public final fun getTextUnderline ()Z
+	public final fun getTextWeight ()Lorg/polyfrost/oneconfig/api/hud/v1/Weight;
 	public final fun getToggleKey ()I
 	public final fun getUseGuiScale ()Z
 	public final fun getX ()F
@@ -123,6 +125,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setTextItalic (Z)V
 	public final fun setTextScale (F)V
 	public final fun setTextUnderline (Z)V
+	public final fun setTextWeight (Lorg/polyfrost/oneconfig/api/hud/v1/Weight;)V
 	public final fun setToggleKey (I)V
 	public final fun setUseGuiScale (Z)V
 	public final fun setX (F)V
@@ -238,6 +241,17 @@ public final class org/polyfrost/oneconfig/api/hud/v1/TextHud$Simple : org/polyf
 	public final fun getIt ()Ljava/lang/String;
 	public final fun setIt (Ljava/lang/String;)V
 	public fun setup ()V
+}
+
+public final class org/polyfrost/oneconfig/api/hud/v1/Weight : java/lang/Enum {
+	public static final field Black Lorg/polyfrost/oneconfig/api/hud/v1/Weight;
+	public static final field Bold Lorg/polyfrost/oneconfig/api/hud/v1/Weight;
+	public static final field Medium Lorg/polyfrost/oneconfig/api/hud/v1/Weight;
+	public static final field Regular Lorg/polyfrost/oneconfig/api/hud/v1/Weight;
+	public static final field Thin Lorg/polyfrost/oneconfig/api/hud/v1/Weight;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/hud/v1/Weight;
+	public static fun values ()[Lorg/polyfrost/oneconfig/api/hud/v1/Weight;
 }
 
 public class org/polyfrost/oneconfig/api/hud/v1/events/HudEditorToggleEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
