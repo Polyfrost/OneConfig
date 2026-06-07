@@ -1,58 +1,51 @@
 //? if > 1.21.10 && fabric && moul_compat {
+
 /*package org.polyfrost.oneconfig.internal.compat
 
-import dev.deftu.omnicore.api.client.getIconResource
-import dev.deftu.omnicore.api.client.getIconResourcePath
 import io.github.notenoughupdates.moulconfig.ChromaColour
-import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorAccordion
-import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorBoolean
-import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorButton
-import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorColour
-import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorDraggableList
-import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorInfoText
-import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorText
+import io.github.notenoughupdates.moulconfig.gui.editors.*
 import io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor
 import io.github.notenoughupdates.moulconfig.processor.ProcessedCategory
 import io.github.notenoughupdates.moulconfig.processor.ProcessedOption
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
-import org.polyfrost.oneconfig.api.config.v1.Visualizer.ButtonVisualizer
-import org.polyfrost.oneconfig.api.config.v1.Visualizer.ColorVisualizer
-import org.polyfrost.oneconfig.api.config.v1.Visualizer.DropdownVisualizer
-import org.polyfrost.oneconfig.api.config.v1.Visualizer.SliderVisualizer
-import org.polyfrost.oneconfig.api.config.v1.Visualizer.SwitchVisualizer
-import org.polyfrost.oneconfig.api.config.v1.Visualizer.TextVisualizer
+import org.polyfrost.oneconfig.api.config.v1.Visualizer.*
 import org.polyfrost.oneconfig.api.config.v1.dsl.category
-import org.polyfrost.oneconfig.api.config.v1.dsl.icon
 import org.polyfrost.oneconfig.api.config.v1.dsl.noCache
 import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
-import org.polyfrost.oneconfig.internal.DynamicImage
 import org.polyfrost.oneconfig.internal.utils.MoulConfigGuiOptionEditorDropdownAccessor
-import java.lang.reflect.Type
 import java.awt.Color
+import java.lang.reflect.Type
 import java.util.*
 import kotlin.reflect.KClass
+// do not remove the im
+import org.polyfrost.oneconfig.internal.compat.MoulPropertyBuilder
 import io.github.notenoughupdates.moulconfig.Config as MoulConfig
 import org.polyfrost.oneconfig.relocator.annotations.MoulConfig as Moulconfig
 
 @Moulconfig
 data object MoulConfigCompat {
+
+    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/$this")
+
     @JvmStatic
     fun parseMoulconfig(processor: MoulConfigProcessor<*>, config: MoulConfig) {
+        LOGGER.info("Loading compat.")
         runCatching {
             val categories = processor.allCategories.values
             val tree = parseConfigTree(config, categories)
             ConfigManager.active().register(tree)
             CompatLoader.markFirstModAsSkip()
         }.onFailure {
-            println("Failed to load moulconfig compat for $this due to $it")
+            LOGGER.error("Failed to load moulconfig compat for $this due to $it")
         }
     }
 
     @JvmStatic
     fun parseMoulconfigFromEditor(categories: Collection<ProcessedCategory>, config: MoulConfig) {
+        LOGGER.info("Loading editor compat.")
         val mod = CompatLoader.findFirstMod()
         if (mod != null && CompatLoader.nativeLoadedConfigs.contains(mod.id)) {
             return
@@ -62,7 +55,7 @@ data object MoulConfigCompat {
             ConfigManager.active().register(tree)
             CompatLoader.markFirstModAsSkip()
         }.onFailure {
-            println("Failed to load moulconfig compat for $this due to $it")
+            LOGGER.error("Failed to load moulconfig editor compat for $this due to $it")
         }
     }
 
@@ -73,16 +66,28 @@ data object MoulConfigCompat {
         val (candidates, forcedModIds) = when {
             configClass.startsWith("moe.nea.firmament.deps.moulconfig.") ->
                 listOf("MoulConfigCompat_firmament") to listOf("firmament")
+
             configClass.startsWith("moe.nea.firmament.compat.moulconfig.") ->
                 listOf("MoulConfigCompat_firmament") to listOf("firmament")
+
             configClass.startsWith("net.azureaaron.dandelion_bp.deps.moulconfig.") ->
-                listOf("MoulConfigCompat_dandelion_bp", "MoulConfigCompat_dandelion") to listOf("skyblocker", "dandelion-bp")
+                listOf("MoulConfigCompat_dandelion_bp", "MoulConfigCompat_dandelion") to listOf(
+                    "skyblocker",
+                    "dandelion-bp"
+                )
+
             configClass.startsWith("net.azureaaron.dandelion_bp.impl.moulconfig.") ->
-                listOf("MoulConfigCompat_dandelion_bp", "MoulConfigCompat_dandelion") to listOf("skyblocker", "dandelion-bp")
+                listOf("MoulConfigCompat_dandelion_bp", "MoulConfigCompat_dandelion") to listOf(
+                    "skyblocker",
+                    "dandelion-bp"
+                )
+
             configClass.startsWith("net.azureaaron.dandelion.deps.moulconfig.") ->
                 listOf("MoulConfigCompat_dandelion") to listOf("skyblocker", "dandelion-bp")
+
             configClass.startsWith("at.hannibal2.skyhanni.deps.moulconfig.") ->
                 listOf("MoulConfigCompat_skyhanni") to listOf("skyhanni")
+
             else -> emptyList<String>() to emptyList()
         }
         if (candidates.isEmpty()) return
@@ -107,14 +112,14 @@ data object MoulConfigCompat {
     fun parseConfigTree(config: MoulConfig, children: Iterable<ProcessedCategory>): Tree = Tree.tree().apply {
         val map = mutableMapOf<String?, Tree>()
         val mod = CompatLoader.findFirstMod()
+        LOGGER.info("Loading for ${mod?.id ?: "unknown"}")
         this.id = mod?.id ?: config.toString()
         this.saveFunction = Runnable { config.saveNow() }
         this.noCache = true
-        this.title = mod?.name?.takeIf { it.isNotBlank() } ?: config::class.java.simpleName.takeIf { it.isNotBlank() } ?: "MoulConfig"
-        mod?.let {
-            val path = it.getIconResourcePath(Int.MAX_VALUE) ?: return@let
-            val stream = it.getIconResource(Int.MAX_VALUE) ?: return@let
-//            this.icon = DynamicImage(path, stream) todo
+        this.title = mod?.name?.takeIf { it.isNotBlank() } ?: config::class.java.simpleName.takeIf { it.isNotBlank() }
+                ?: "MoulConfig"
+        mod?.extractIconFile()?.let {
+            this.addMetadata("icon_path", it)
         }
 
         children.forEach {
@@ -158,10 +163,8 @@ data object MoulConfigCompat {
     ) {
         val property = MoulPropertyBuilder(children)
 
-        val editor = children.editor
-
         @Suppress("DEPRECATION")
-        val visualizer: Class<out Visualizer> = when (editor) {
+        val visualizer: Class<out Visualizer> = when (val editor = children.editor) {
             is GuiOptionEditorAccordion -> {
                 val accordionTree = Tree.tree()
                 accordionTree.id = UUID.randomUUID().toString()
@@ -178,6 +181,7 @@ data object MoulConfigCompat {
                 accordionMap[editor.accordionId] = accordionTree
                 return
             }
+
             is GuiOptionEditorBoolean -> SwitchVisualizer::class.java
             is GuiOptionEditorButton -> {
                 property.metadata["runnable"] = Runnable { editor.onClick() }

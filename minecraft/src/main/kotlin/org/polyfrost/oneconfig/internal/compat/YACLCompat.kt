@@ -24,6 +24,7 @@ object YACLCompat {
             if (mod != null && CompatLoader.nativeLoadedConfigs.contains(mod.id)) {
                 return
             }
+            LOGGER.info("Creating config wrapper for " + mod?.id)
             val tree = parseYACLInstance(yaclInstance, mod)
             if (tree != null) {
                 ConfigManager.active().register(tree)

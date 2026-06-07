@@ -11,6 +11,7 @@ resource-loader-v1 = "1.0.2+225bca4068"
 
 modmenu = "16.0.0-rc.1"
 yacl = "3.8.0+1.21.9-fabric"
+moulconfig = "3.11.0"
 
 [libraries]
 api-base = { module = "net.fabricmc.fabric-api:fabric-api-base", version.ref = "api-base" }
@@ -25,6 +26,7 @@ resource-loader-v1 = { module = "net.fabricmc.fabric-api:fabric-resource-loader-
 
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
+moulconfig = { module = "org.notenoughupdates.moulconfig:common", version.ref = "moulconfig" }
 
 [bundles]
 compat = ["modmenu", "yacl"]

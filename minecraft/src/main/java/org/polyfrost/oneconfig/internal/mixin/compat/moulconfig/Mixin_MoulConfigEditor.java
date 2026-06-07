@@ -1,8 +1,8 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
 //? moul_compat {
-/*
-import io.github.notenoughupdates.moulconfig.Config;
+
+/*import io.github.notenoughupdates.moulconfig.Config;
 import io.github.notenoughupdates.moulconfig.gui.MoulConfigEditor;
 import io.github.notenoughupdates.moulconfig.processor.ProcessedCategory;
 import org.polyfrost.oneconfig.internal.compat.MoulConfigCompat;
@@ -31,7 +31,7 @@ public class Mixin_MoulConfigEditor<T extends Config> {
     @Final
     private T configObject;
 
-    @Inject(at = @At("TAIL"), method = "<init>(Ljava/util/LinkedHashMap;Lio/github/notenoughupdates/moulconfig/Config;)V")
+    @Inject(at = @At("TAIL"), method = "<init>(Ljava/util/LinkedHashMap;Lio/github/notenoughupdates/moulconfig/Config;)V", require = 0)
     public void oneconfig$init(CallbackInfo ci) {
         MoulConfigCompat.parseMoulconfigFromEditor(this.allCategories.values(), this.configObject);
     }

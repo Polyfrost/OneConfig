@@ -5,6 +5,8 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.authentication.http.BasicAuthentication
 import org.gradle.plugins.signing.SigningExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
+import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
+import gg.essential.gradle.util.prebundle
 import java.lang.Boolean.TRUE
 
 plugins {
@@ -143,6 +145,32 @@ fun DependencyHandlerScope.handleApiDep(
         }
     }
 }
+
+
+val skyhanniRelocated = registerRelocationAttribute("relocate-skyhanni-moulconfig") {
+    relocate("io.github.notenoughupdates.moulconfig", "at.hannibal2.skyhanni.deps.moulconfig")
+}
+
+val skyhanniRelocatedConfiguration: Configuration by configurations.creating {
+    attributes { attribute(skyhanniRelocated, true) }
+}
+
+val firmamentRelocated = registerRelocationAttribute("relocate-firmament-moulconfig") {
+    relocate("io.github.notenoughupdates.moulconfig", "moe.nea.firmament.deps.moulconfig")
+}
+
+val firmamentRelocatedConfiguration: Configuration by configurations.creating {
+    attributes { attribute(firmamentRelocated, true) }
+}
+
+val dandelionBpRelocated = registerRelocationAttribute("relocate-dandelion-bp-moulconfig") {
+    relocate("io.github.notenoughupdates.moulconfig", "net.azureaaron.dandelion_bp.deps.moulconfig")
+}
+
+val dandelionBpRelocatedConfiguration: Configuration by configurations.creating {
+    attributes { attribute(dandelionBpRelocated, true) }
+}
+
 dependencies {
     listOf("compat", "common-compat").forEach {
         versionedCatalog.bundles.getOrNull(it)?.let { bundle ->
@@ -151,14 +179,16 @@ dependencies {
             }
         }
     }
+    fun moulConfig(vararg configurations: Configuration) {
+        if (!versionedCatalog.has("moulconfig")) return
+        compileOnly(versionedCatalog["moulconfig"])
+        configurations.forEach { configuration ->
+            configuration(versionedCatalog["moulconfig"])
+            compileOnly(prebundle(configuration))
+        }
+    }
 
-    //compileOnlyCompat("org.notenoughupdates.moulconfig:common:3.11.0")
-    //skyhanniRelocatedConfiguration("org.notenoughupdates.moulconfig:common:3.11.0")
-    //compileOnly(prebundle(skyhanniRelocatedConfiguration))
-    //firmamentRelocatedConfiguration("org.notenoughupdates.moulconfig:common:3.11.0")
-    //compileOnly(prebundle(firmamentRelocatedConfiguration))
-    //dandelionBpRelocatedConfiguration("org.notenoughupdates.moulconfig:common:3.11.0")
-    //compileOnly(prebundle(dandelionBpRelocatedConfiguration))
+    moulConfig(skyhanniRelocatedConfiguration, firmamentRelocatedConfiguration, dandelionBpRelocatedConfiguration)
 
     "api"(versionedCatalog["jetbrains.compose.foundation"])
     "api"(versionedCatalog["jetbrains.compose.material"])
@@ -178,7 +208,8 @@ dependencies {
     handleApiDep(versionedCatalog.bundles["adventure"])
 
     if (loader == "fabric") {
-        val adventurePlatformVersion = when {
+        val adventurePlatformVersion =
+            when {
             stonecutter.eval(stonecutter.current.version, ">= 26.1") -> "6.9.0"
             stonecutter.eval(stonecutter.current.version, ">= 1.21.11") -> "6.8.0"
             stonecutter.eval(stonecutter.current.version, ">= 1.21.10") -> "6.7.0"
@@ -236,9 +267,6 @@ dependencies {
 
     if (enableMoulRelocatorKsp) {
         "ksp"(rootProject.project(":modules:relocator"))
-        "compileOnly"("org.notenoughupdates.moulconfig:common:3.11.0") {
-            isTransitive = false
-        }
     }
 
     for (project in rootProject.project(":modules").subprojects) {
@@ -260,8 +288,7 @@ dependencies {
         val fabricApiPatchSrc = configurations.create("fabricApiPatchSrc") {
             isCanBeConsumed = false
             isCanBeResolved = true
-        }
-        /*
+        }/*
         dependencies.add(fabricApiPatchSrc.name, "net.fabricmc.fabric-api:fabric-screen-api-v1:4.0.0+9f78a5a8ed") { isTransitive = false }
         dependencies.add(fabricApiPatchSrc.name, "net.fabricmc.fabric-api:fabric-rendering-v1:23.0.2+f348b6c3c3") { isTransitive = false }
 
