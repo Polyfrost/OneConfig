@@ -42,6 +42,7 @@ import org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerializer;
 
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
@@ -495,7 +496,12 @@ public final class ConfigManager {
                     Files.createDirectories(to);
                 } else if (Files.isRegularFile(from)) {
                     Files.createDirectories(to.getParent());
-                    Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
+                    try {
+                        Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
+                    } catch (NoSuchFileException ignored) {
+                        if (Files.exists(from)) throw ignored;
+                        // The active config folder can change underneath profile creation via file watchers.
+                    }
                 }
             }
         }

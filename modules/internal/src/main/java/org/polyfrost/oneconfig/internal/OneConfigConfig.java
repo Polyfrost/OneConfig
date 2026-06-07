@@ -57,14 +57,32 @@ public class OneConfigConfig extends Config {
     @Switch(title = "Show Page Animations", subcategory = "Animations", description = "Animate transitions between pages.")
     public static boolean showPageAnimations = true;
 
-    @Switch(title = "UI Sounds", subcategory = "Animations", description = "Play sound effects when interacting with the OneConfig menu and HUD designer.")
+    @Switch(title = "UI Sounds", subcategory = "Sounds", description = "Play sound effects when interacting with the OneConfig menu and HUD designer.")
     public static boolean enableUISounds = true;
 
-    @Switch(title = "UI Ambience", subcategory = "Animations", description = "Play a soft ambient loop while the OneConfig menu or HUD designer is open.")
+    @Switch(title = "Menu Sounds", subcategory = "Sounds", description = "Play sounds when opening and closing OneConfig screens.")
+    public static boolean enableUIMenuSounds = true;
+
+    @Switch(title = "Click Sounds", subcategory = "Sounds", description = "Play sounds when clicking OneConfig controls.")
+    public static boolean enableUIClickSounds = true;
+
+    @Switch(title = "Slider Sounds", subcategory = "Sounds", description = "Play tick sounds when dragging sliders and ordered lists.")
+    public static boolean enableUISliderSounds = true;
+
+    @Switch(title = "HUD Editor Sounds", subcategory = "Sounds", description = "Play sounds when selecting, dragging, and resizing HUD elements.")
+    public static boolean enableHudEditorSounds = true;
+
+    @Switch(title = "UI Ambience", subcategory = "Sounds", description = "Play a soft ambient loop while the OneConfig menu or HUD designer is open.")
     public static boolean enableUIAmbience = true;
 
-    @Slider(title = "UI Sound Volume", subcategory = "Animations", min = 0f, max = 1f, step = 0.05f, description = "Volume of OneConfig's UI sounds and ambience.")
+    @Switch(title = "Duck Music During Ambience", subcategory = "Sounds", description = "Lower Minecraft music while OneConfig ambience is playing.")
+    public static boolean enableUIMusicDucking = true;
+
+    @Slider(title = "UI Sound Volume", subcategory = "Sounds", min = 0f, max = 1f, step = 0.05f, description = "Volume of OneConfig's UI sound effects.")
     public static float uiSoundVolume = 1f;
+
+    @Slider(title = "UI Ambience Volume", subcategory = "Sounds", min = 0f, max = 1f, step = 0.05f, description = "Volume of OneConfig's UI ambience.")
+    public static float uiAmbienceVolume = 1f;
 
     @Slider(title = "Page Animation Duration", subcategory = "Animations", min = 0.1f, max = 0.6f, step = 0.05f, description = "Duration of page transition animations, in seconds.")
     public static float pageAnimationDuration = 0.3f;
@@ -98,11 +116,22 @@ public class OneConfigConfig extends Config {
         addDependency("customScale", "useCustomScale");
         // "Time before reset" only applies to the smart reset opening behavior (index 3).
         addDependency("timeBeforeReset", "Opening Behavior", () -> openingBehavior == 3 ? Property.Display.SHOWN : Property.Display.HIDDEN);
+        addDependency("enableUIMenuSounds", "enableUISounds");
+        addDependency("enableUIClickSounds", "enableUISounds");
+        addDependency("enableUISliderSounds", "enableUISounds");
+        addDependency("enableHudEditorSounds", "enableUISounds");
+        addDependency("enableUIMusicDucking", "enableUIAmbience");
+        addDependency("uiSoundVolume", "UI Sounds", () -> enableUISounds ? Property.Display.SHOWN : Property.Display.DISABLED);
+        addDependency("uiAmbienceVolume", "UI Ambience", () -> enableUIAmbience ? Property.Display.SHOWN : Property.Display.DISABLED);
         addCallback("enableUIAmbience", (Boolean v) -> {
             org.polyfrost.oneconfig.internal.ui.sound.UiSounds.refreshAmbience();
             return false;
         });
-        addCallback("uiSoundVolume", (Float v) -> {
+        addCallback("enableUIMusicDucking", (Boolean v) -> {
+            org.polyfrost.oneconfig.internal.ui.sound.UiSounds.refreshAmbience();
+            return false;
+        });
+        addCallback("uiAmbienceVolume", (Float v) -> {
             org.polyfrost.oneconfig.internal.ui.sound.UiSounds.refreshAmbience();
             return false;
         });

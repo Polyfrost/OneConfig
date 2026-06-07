@@ -15,13 +15,28 @@ object UiSounds {
         null
     }
 
-    private fun volume(): Float = OneConfigConfig.uiSoundVolume.coerceIn(0f, 1f)
+    private fun soundVolume(): Float = OneConfigConfig.uiSoundVolume.coerceIn(0f, 1f)
+
+    private fun ambienceVolume(): Float = OneConfigConfig.uiAmbienceVolume.coerceIn(0f, 1f)
 
     fun play(event: UiSoundEvent) {
         if (!OneConfigConfig.enableUISounds) return
-        val v = volume()
+        if (!isEventEnabled(event)) return
+        val v = soundVolume()
         if (v <= 0f) return
         service?.play(event, UiSoundTheme.current(), v)
+    }
+
+    private fun isEventEnabled(event: UiSoundEvent): Boolean = when (event) {
+        UiSoundEvent.OPEN,
+        UiSoundEvent.CLOSE -> OneConfigConfig.enableUIMenuSounds
+        UiSoundEvent.CLICK -> OneConfigConfig.enableUIClickSounds
+        UiSoundEvent.SLIDER_TICK -> OneConfigConfig.enableUISliderSounds
+        UiSoundEvent.HUD_SELECT,
+        UiSoundEvent.HUD_DRAG_START,
+        UiSoundEvent.HUD_DRAG_END,
+        UiSoundEvent.HUD_RESIZE_START,
+        UiSoundEvent.HUD_RESIZE_END -> OneConfigConfig.enableHudEditorSounds
     }
 
     @JvmStatic
@@ -55,6 +70,6 @@ object UiSounds {
 
     private fun startAmbienceIfEnabled() {
         if (!OneConfigConfig.enableUIAmbience) return
-        service?.startAmbience(UiSoundTheme.current(), volume())
+        service?.startAmbience(UiSoundTheme.current(), ambienceVolume())
     }
 }
