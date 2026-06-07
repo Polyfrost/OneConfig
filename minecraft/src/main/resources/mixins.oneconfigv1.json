@@ -8,6 +8,7 @@
     },
     "verbose": true,
     "client": [
+        "Mixin_PackRepository",
         "events.Mixin_ChatSendEvent",
         "events.Mixin_DebugOpenEvent",
         "events.Mixin_FramebufferRenderEvent",

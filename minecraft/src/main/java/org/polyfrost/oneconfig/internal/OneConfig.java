@@ -241,6 +241,7 @@ public class OneConfig
         LOGGER.info("Loading OneConfig v{}", v);
         BlurHandler.init();
         McFontService.INSTANCE.init();
+        org.polyfrost.oneconfig.internal.ui.sound.ExternalSounds.INSTANCE.ensureDownloaded();
 
         registerKeybinds();
         new OneConfigConfig();

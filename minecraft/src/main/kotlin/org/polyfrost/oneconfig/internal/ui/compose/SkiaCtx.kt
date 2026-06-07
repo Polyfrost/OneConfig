@@ -230,12 +230,18 @@ object SkiaCtx {
         }
         if (currentSurface == null) return
 
+        val savedFbo = IntArray(1)
         try {
             if (isVulkanMode) {
                 vulkanService?.midFrameFlush()
                 directContext.resetAll()
             } else {
                 gl.capture()
+                // Skia's draw binds our main-RT FBO via raw glBindFramebuffer, bypassing MC's
+                // GlStateManager cache. Save the framebuffer that was bound when the main framebuffer
+                // finished rendering and rebind it after, so the following blitToScreen targets the
+                // correct framebuffer instead of the one Skia left bound (otherwise the screen flickers).
+                GL30.glGetIntegerv(GL30.GL_FRAMEBUFFER_BINDING, savedFbo)
                 directContext.resetGLAll()
                 GL11.glViewport(0, 0, currentSurface!!.width, currentSurface!!.height)
                 GL11.glDisable(GL11.GL_SCISSOR_TEST)
@@ -247,11 +253,13 @@ object SkiaCtx {
                 directContext.flushAndSubmit(currentSurface!!, false)
             } else {
                 directContext.flush()
+                GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, savedFbo[0])
                 gl.restore()
             }
         } catch (e: Throwable) {
             LOG.warn("SkiaCtx.draw() error", e)
             if (!isVulkanMode) try {
+                GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, savedFbo[0])
                 gl.restore()
             } catch (_: Throwable) {
             }

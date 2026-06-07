@@ -62,10 +62,10 @@ object HudManager {
 
     init {
         register(object : TextHud.DateTime("Date:", "yyyy-MM-dd") {
-            override fun defaultPosition() = 10f to 60f
+            override fun defaultPosition() = 0f to 0f
         })
         register(object : TextHud.DateTime("Time:", "HH:mm:ss") {
-            override fun defaultPosition() = 10f to 80f
+            override fun defaultPosition() = 0f to 0f
         })
     }
 

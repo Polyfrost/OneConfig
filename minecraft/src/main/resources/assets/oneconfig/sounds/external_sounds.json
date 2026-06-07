@@ -1,0 +1,10 @@
+{
+  "baseUrl": "https://raw.githubusercontent.com/Polyfrost/OneConfig/v1/sounds/",
+  "files": {
+    "ambient/lullaby.ogg": { "sha1": "d91adc5bb679cabf4eda02926a411b207ac46a67", "size": 3341758 },
+    "ambient/moog_1.ogg": { "sha1": "3606e9b1a494046ee4267ef97c26ef033aeb4362", "size": 2828698 },
+    "ambient/moog_2.ogg": { "sha1": "ba69ad83f15cf9df0065fac6ff84bf834707574e", "size": 3011389 },
+    "ambient/trees.ogg": { "sha1": "395af987f483785b064696ed39bf7e105961b5c8", "size": 3252543 },
+    "ui/pad_loop.ogg": { "sha1": "53723a75805d2e80cb350f5563c39b44a8b7f19b", "size": 726131 }
+  }
+}
