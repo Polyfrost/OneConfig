@@ -72,7 +72,7 @@ object YACLCompat {
         val categoryClass = category::class.java
 
         val nameMethod = categoryClass.methods.firstOrNull { it.name == "name" && it.parameterCount == 0 }
-        val categoryName = nameMethod?.let { resolveComponent(it.invoke(category)) } ?: "General"
+        val categoryName = nameMethod?.let { resolveComponent(it.invoke(category)) }?.nonBlankOrNull() ?: "General"
 
         val groupsMethod = categoryClass.methods.firstOrNull {
             it.name == "groups" && it.parameterCount == 0
@@ -91,7 +91,7 @@ object YACLCompat {
         val groupClass = group::class.java
 
         val nameMethod = groupClass.methods.firstOrNull { it.name == "name" && it.parameterCount == 0 }
-        val groupName = nameMethod?.let { resolveComponent(it.invoke(group)) } ?: categoryName
+        val groupName = nameMethod?.let { resolveComponent(it.invoke(group)) }?.nonBlankOrNull() ?: categoryName
 
         val optionsMethod = groupClass.methods.firstOrNull {
             it.name == "options" && it.parameterCount == 0
@@ -107,7 +107,7 @@ object YACLCompat {
             runCatching {
                 val descResult = it.invoke(group)
                 val textMethod = descResult?.javaClass?.methods?.firstOrNull { m -> m.name == "text" && m.parameterCount == 0 }
-                textMethod?.let { tm -> resolveComponent(tm.invoke(descResult)) }
+                textMethod?.let { tm -> resolveComponent(tm.invoke(descResult)) }?.nonBlankOrNull()
             }.getOrNull()
         }
 
@@ -146,13 +146,13 @@ object YACLCompat {
 
         val nameMethod = optionClass.methods.firstOrNull { it.name == "name" && it.parameterCount == 0 }
         val descMethod = optionClass.methods.firstOrNull { it.name == "description" && it.parameterCount == 0 }
-        val name = nameMethod?.let { resolveComponent(it.invoke(option)) } ?: return
+        val name = nameMethod?.let { resolveComponent(it.invoke(option)) }?.nonBlankOrNull() ?: return
         val desc = descMethod?.let {
             runCatching {
                 val descResult = it.invoke(option)
                 // description() returns OptionDescription which has text() -> Component
                 val textMethod = descResult?.javaClass?.methods?.firstOrNull { m -> m.name == "text" && m.parameterCount == 0 }
-                textMethod?.let { tm -> resolveComponent(tm.invoke(descResult)) }
+                textMethod?.let { tm -> resolveComponent(tm.invoke(descResult)) }?.nonBlankOrNull()
             }.getOrNull()
         }
 
@@ -241,6 +241,8 @@ object YACLCompat {
 
         return value.toString()
     }
+
+    private fun String?.nonBlankOrNull(): String? = this?.trim()?.takeIf { it.isNotEmpty() }
 }
 
 //? }
