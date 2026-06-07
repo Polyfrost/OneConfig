@@ -7,6 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
+import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 
 @Composable
 fun rememberInteractionSource() = remember { MutableInteractionSource() }
@@ -14,5 +16,8 @@ fun rememberInteractionSource() = remember { MutableInteractionSource() }
 fun Modifier.onClick(interactionSource: MutableInteractionSource, onClick: () -> Unit) = clickable(
     interactionSource = interactionSource,
     indication = null,
-    onClick = onClick
+    onClick = {
+        UiSounds.play(UiSoundEvent.CLICK)
+        onClick()
+    }
 )

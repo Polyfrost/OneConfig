@@ -9,6 +9,8 @@ import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.internal.ui.api.settings.BuiltinVisualizers
+import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
+import org.polyfrost.oneconfig.internal.ui.sound.UiSoundTheme
 
 object ThemeRegistry {
     internal val registry = mutableStateListOf<UITheme>()
@@ -36,8 +38,12 @@ object ThemeRegistry {
     }
 
     fun activate(theme: UITheme) {
+        val previous = activeTheme
         activeTheme = theme
         saveThemeToConfig()
+        if (previous != null && UiSoundTheme.of(previous) != UiSoundTheme.of(theme)) {
+            UiSounds.onSoundThemeChanged()
+        }
     }
 
     fun loadFromConfig() {

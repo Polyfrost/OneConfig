@@ -21,6 +21,8 @@ import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.PreferencesGraph
 import org.polyfrost.oneconfig.internal.ui.PlayerHeadLoader
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
+import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import kotlin.math.pow
 
@@ -82,7 +84,14 @@ class OneConfigUIScreen @JvmOverloads constructor(
         }
 
         openedAt = System.currentTimeMillis()
+        UiSounds.play(UiSoundEvent.OPEN)
+        UiSounds.acquireAmbience()
         super.init()
+    }
+
+    override fun removed() {
+        UiSounds.releaseAmbience()
+        super.removed()
     }
 
     @Suppress("DuplicatedCode")
@@ -97,6 +106,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
                 closeRequested = true
                 closeRequestedAt = System.currentTimeMillis()
                 markClosed()
+                UiSounds.play(UiSoundEvent.CLOSE)
                 requestCloseCallback?.invoke()
             }
             return true
@@ -170,6 +180,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
                     closeRequested = true
                     closeRequestedAt = System.currentTimeMillis()
                     markClosed()
+                    UiSounds.play(UiSoundEvent.CLOSE)
                 }
             },
             onCloseReady = { closeRequest ->

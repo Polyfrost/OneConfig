@@ -41,6 +41,8 @@ import org.polyfrost.oneconfig.internal.ui.api.settings.DraggableListOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
+import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import kotlin.math.roundToInt
@@ -111,12 +113,19 @@ fun DraggableListOption(data: DraggableListOptionData) {
         (data.prop as Property<Any>).set(toSave.toTypedArray())
     }
 
+    var lastTickIndex by remember { mutableStateOf(-1) }
+
     val draggableState = rememberDraggableState { delta ->
         if (draggingIndex == -1) return@rememberDraggableState
         dragAccum = (dragAccum + delta).coerceIn(
             -draggingIndex * stridePx,
             (items.lastIndex - draggingIndex) * stridePx,
         )
+        val target = (draggingIndex + (dragAccum / stridePx).roundToInt()).coerceIn(0, items.lastIndex)
+        if (target != lastTickIndex) {
+            lastTickIndex = target
+            UiSounds.play(UiSoundEvent.SLIDER_TICK)
+        }
     }
 
     Box(
@@ -169,7 +178,7 @@ fun DraggableListOption(data: DraggableListOptionData) {
                             .draggable(
                                 orientation = Orientation.Vertical,
                                 state = draggableState,
-                                onDragStarted = { draggingIndex = index; dragAccum = 0f },
+                                onDragStarted = { draggingIndex = index; dragAccum = 0f; lastTickIndex = index },
                                 onDragStopped = {
                                     if (dragTargetIndex != draggingIndex) {
                                         val list = items.toMutableList()

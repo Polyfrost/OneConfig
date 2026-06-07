@@ -81,6 +81,8 @@ import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasResetMenu
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Designer
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Settings
+import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
+import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import kotlin.math.abs
@@ -384,6 +386,7 @@ fun HudDesignStudio() {
                 val bounds = hudBounds(selected)
                 if (handle != null && bounds != null) {
                     event.changes.forEach { it.consume() }
+                    UiSounds.play(UiSoundEvent.HUD_RESIZE_START)
                     Snapshot.withMutableSnapshot {
                         isResizing = true
                         resizedHud = selected
@@ -406,6 +409,7 @@ fun HudDesignStudio() {
             }
             val s = Platform.screen().screenToMcScale()
             val hit = HudManager.activeInstances.lastOrNull { it !is LegacyHud && hitTestHud(it, pos.x, pos.y) }
+            if (hit != null) UiSounds.play(UiSoundEvent.HUD_DRAG_START)
             Snapshot.withMutableSnapshot {
                 if (hit != null) {
                     dragOffsetX = pos.x * s - hit.x
@@ -487,6 +491,7 @@ fun HudDesignStudio() {
                 resizeStartBounds = null
             }
             if (wasResizing) {
+                UiSounds.play(UiSoundEvent.HUD_RESIZE_END)
                 Snapshot.withMutableSnapshot {
                     selectedHud = wasResizedHud
                     libraryVisible = false
@@ -510,12 +515,14 @@ fun HudDesignStudio() {
                 }
                 val hit = HudManager.activeInstances.lastOrNull { it !is LegacyHud && hitTestHud(it, pos.x, pos.y) }
                 if (hit != null) {
+                    if (hit !== selectedHud) UiSounds.play(UiSoundEvent.HUD_SELECT)
                     Snapshot.withMutableSnapshot {
                         selectedHud = hit
                         libraryVisible = false
                     }
                 }
             } else {
+                UiSounds.play(UiSoundEvent.HUD_DRAG_END)
                 Snapshot.withMutableSnapshot {
                     selectedHud = wasDraggedHud
                     libraryVisible = false
@@ -592,6 +599,7 @@ fun HudDesignStudio() {
                         modifier = Modifier.onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
                             if (event.changes.none { it.isConsumed }) {
                                 event.changes.forEach { it.consume() }
+                                UiSounds.play(UiSoundEvent.HUD_SELECT)
                                 Snapshot.withMutableSnapshot { selectedHud = actionBarTarget }
                             }
                         },
@@ -604,6 +612,7 @@ fun HudDesignStudio() {
                         modifier = Modifier.onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
                             if (event.changes.none { it.isConsumed }) {
                                 event.changes.forEach { it.consume() }
+                                UiSounds.play(UiSoundEvent.CLICK)
                                 Snapshot.withMutableSnapshot {
                                     if (selectedHud === actionBarTarget) selectedHud = null
                                     hoveredHud = null
@@ -679,6 +688,7 @@ fun HudDesignStudio() {
                                     HudManager.activeInstances.add(instance)
                                     instance.setup()
                                 }
+                                UiSounds.play(UiSoundEvent.HUD_DRAG_START)
                                 Snapshot.withMutableSnapshot {
                                     dragOffsetX = offX
                                     dragOffsetY = offY

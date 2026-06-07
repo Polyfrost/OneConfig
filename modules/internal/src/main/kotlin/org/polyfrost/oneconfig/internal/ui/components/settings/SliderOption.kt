@@ -27,6 +27,8 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.internal.ui.api.settings.SliderOptionData
+import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
+import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import kotlin.math.roundToInt
@@ -54,6 +56,17 @@ fun SliderOption(data: SliderOptionData) {
                 .onSizeChanged { trackWidthPx = it.width.toFloat() }
                 .pointerInput(data.min, data.max, data.step) {
                     val thumbPx = thumbDp.toPx()
+                    var lastTickValue = Float.NaN
+                    var lastTickAt = 0L
+                    fun maybeTick(newValue: Float) {
+                        if (newValue == lastTickValue) return
+                        lastTickValue = newValue
+                        val now = System.currentTimeMillis()
+                        if (now - lastTickAt >= 70L) {
+                            lastTickAt = now
+                            UiSounds.play(UiSoundEvent.SLIDER_TICK)
+                        }
+                    }
                     fun snap(raw: Float): Float {
                         val clamped = raw.coerceIn(data.min, data.max)
                         if (data.step <= 0f) return clamped
@@ -67,12 +80,14 @@ fun SliderOption(data: SliderOptionData) {
                     awaitEachGesture {
                         val down = awaitFirstDown()
                         value = xToValue(down.position.x)
+                        maybeTick(value)
                         data.numProp.set(value.toNumberType(data.prop.type))
                         do {
                             val event = awaitPointerEvent()
                             event.changes.forEach { ch ->
                                 if (ch.pressed) {
                                     value = xToValue(ch.position.x)
+                                    maybeTick(value)
                                     data.numProp.set(value.toNumberType(data.prop.type))
                                     ch.consume()
                                 }

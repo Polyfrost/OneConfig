@@ -4,6 +4,7 @@ lifecycle-events-v1 = "4.1.1+9d6daa97f7"
 transitive-access-wideners-v1 = "8.1.3+e098252df7"
 command-api-v2 = "3.0.8+06488ac1f7"
 key-mapping-api-v1 = "2.0.5+e2bdee78f7"
+resource-loader-v1 = "2.0.12+d3d84472f7"
 
 # 26.2 uses Minecraft's native Vulkan renderer -> no Cinnabar.
 # No 26.2 build of modmenu yet -> modmenu_compat disabled.
@@ -15,9 +16,10 @@ lifecycle-events-v1 = { module = "net.fabricmc.fabric-api:fabric-lifecycle-event
 transitive-access-wideners-v1 = { module = "net.fabricmc.fabric-api:fabric-transitive-access-wideners-v1", version.ref = "transitive-access-wideners-v1" }
 command-api-v2 = { module = "net.fabricmc.fabric-api:fabric-command-api-v2", version.ref = "command-api-v2" }
 key-mapping-api-v1 = { module = "net.fabricmc.fabric-api:fabric-key-mapping-api-v1", version.ref = "key-mapping-api-v1" }
+resource-loader-v1 = { module = "net.fabricmc.fabric-api:fabric-resource-loader-v1", version.ref = "resource-loader-v1" }
 
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
 
 [bundles]
 compat = ["yacl"]
-fabric-api = ["api-base", "lifecycle-events-v1", "transitive-access-wideners-v1", "command-api-v2", "key-mapping-api-v1"]
+fabric-api = ["api-base", "lifecycle-events-v1", "transitive-access-wideners-v1", "command-api-v2", "key-mapping-api-v1", "resource-loader-v1"]

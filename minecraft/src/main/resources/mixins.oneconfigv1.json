@@ -16,6 +16,7 @@
         "events.Mixin_KeyInputEvent",
         "events.Mixin_ModernWindowFocusEvent",
         "events.Mixin_MouseInputEvent",
+        "events.Mixin_MusicDucking",
         "events.Mixin_PlayerInteractEvent_LeftAction",
         "events.Mixin_PlayerInteractEvent_RightAction",
         "events.Mixin_ReceivePacketEvent",

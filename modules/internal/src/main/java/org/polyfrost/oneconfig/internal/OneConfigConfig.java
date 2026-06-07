@@ -57,6 +57,15 @@ public class OneConfigConfig extends Config {
     @Switch(title = "Show Page Animations", subcategory = "Animations", description = "Animate transitions between pages.")
     public static boolean showPageAnimations = true;
 
+    @Switch(title = "UI Sounds", subcategory = "Animations", description = "Play sound effects when interacting with the OneConfig menu and HUD designer.")
+    public static boolean enableUISounds = true;
+
+    @Switch(title = "UI Ambience", subcategory = "Animations", description = "Play a soft ambient loop while the OneConfig menu or HUD designer is open.")
+    public static boolean enableUIAmbience = true;
+
+    @Slider(title = "UI Sound Volume", subcategory = "Animations", min = 0f, max = 1f, step = 0.05f, description = "Volume of OneConfig's UI sounds and ambience.")
+    public static float uiSoundVolume = 1f;
+
     @Slider(title = "Page Animation Duration", subcategory = "Animations", min = 0.1f, max = 0.6f, step = 0.05f, description = "Duration of page transition animations, in seconds.")
     public static float pageAnimationDuration = 0.3f;
 
@@ -89,6 +98,14 @@ public class OneConfigConfig extends Config {
         addDependency("customScale", "useCustomScale");
         // "Time before reset" only applies to the smart reset opening behavior (index 3).
         addDependency("timeBeforeReset", "Opening Behavior", () -> openingBehavior == 3 ? Property.Display.SHOWN : Property.Display.HIDDEN);
+        addCallback("enableUIAmbience", (Boolean v) -> {
+            org.polyfrost.oneconfig.internal.ui.sound.UiSounds.refreshAmbience();
+            return false;
+        });
+        addCallback("uiSoundVolume", (Float v) -> {
+            org.polyfrost.oneconfig.internal.ui.sound.UiSounds.refreshAmbience();
+            return false;
+        });
         // Re-register the keybind whenever the user rebinds it, and once now to pick up the value loaded from disk
         // (the loaded keybind carries no action, so it must be rebuilt from its keys plus the supplied open action).
         addCallback("oneConfigKeybind", (OneConfigKeybind kb) -> {

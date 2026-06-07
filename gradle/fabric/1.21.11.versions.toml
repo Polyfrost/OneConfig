@@ -6,6 +6,7 @@ screen-api-v1 = "3.1.7+4ebb5c0853"
 transitive-access-wideners-v1 = "7.0.7+1fb1cde953"
 command-api-v2 = "2.4.6+4ebb5c0853"
 key-binding-api-v1 = "1.1.7+4fc5413f53"
+resource-loader-v1 = "1.0.10+78c8b46653"
 
 modmenu = "17.0.0-alpha.1"
 yacl = "3.8.0+1.21.9-fabric"
@@ -18,10 +19,11 @@ screen-api-v1 = { module = "net.fabricmc.fabric-api:fabric-screen-api-v1", versi
 transitive-access-wideners-v1 = { module = "net.fabricmc.fabric-api:fabric-transitive-access-wideners-v1", version.ref = "transitive-access-wideners-v1" }
 command-api-v2 = { module = "net.fabricmc.fabric-api:fabric-command-api-v2", version.ref = "command-api-v2" }
 key-binding-api-v1 = { module = "net.fabricmc.fabric-api:fabric-key-binding-api-v1", version.ref = "key-binding-api-v1" }
+resource-loader-v1 = { module = "net.fabricmc.fabric-api:fabric-resource-loader-v1", version.ref = "resource-loader-v1" }
 
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
 
 [bundles]
 compat = ["modmenu", "yacl"]
-fabric-api = ["api-base", "lifecycle-events-v1", "rendering-v1", "screen-api-v1", "transitive-access-wideners-v1", "command-api-v2", "key-binding-api-v1"]
+fabric-api = ["api-base", "lifecycle-events-v1", "rendering-v1", "screen-api-v1", "transitive-access-wideners-v1", "command-api-v2", "key-binding-api-v1", "resource-loader-v1"]

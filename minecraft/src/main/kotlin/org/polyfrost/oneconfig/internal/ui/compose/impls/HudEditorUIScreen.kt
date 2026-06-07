@@ -21,12 +21,13 @@ import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.input.KeyEvent
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-import org.polyfrost.oneconfig.internal.ui.themes.PolyGlassDark
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignStudio
 import org.polyfrost.oneconfig.internal.ui.shell.Lifecycle
 import org.polyfrost.oneconfig.internal.ui.shell.OCViewModelStoreOwner
-import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
+import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
+import org.polyfrost.oneconfig.internal.ui.themes.Theme
 
 @OptIn(InternalComposeUiApi::class)
 class HudEditorUIScreen : ComposeScreen() {
@@ -39,6 +40,15 @@ class HudEditorUIScreen : ComposeScreen() {
 
     private var requestCloseCallback: (() -> Unit)? = null
 
+    override fun init() {
+        UiSounds.acquireAmbience()
+        super.init()
+    }
+
+    override fun removed() {
+        UiSounds.releaseAmbience()
+        super.removed()
+    }
 
     //? >= 1.21.10 {
     override fun keyPressed(event: KeyEvent): Boolean {
@@ -50,6 +60,7 @@ class HudEditorUIScreen : ComposeScreen() {
             if (!closeRequested) {
                 closeRequested = true
                 closeRequestedAt = System.currentTimeMillis()
+                UiSounds.play(UiSoundEvent.CLOSE)
                 requestCloseCallback?.invoke()
             }
             return true
@@ -96,11 +107,12 @@ class HudEditorUIScreen : ComposeScreen() {
         ) {
             Box(Modifier.fillMaxSize()) {
                 CompositionLocalProvider(
-                    LocalTheme provides PolyGlassDark,
                     LocalLifecycleOwner provides Lifecycle,
                     LocalViewModelStoreOwner provides OCViewModelStoreOwner
                 ) {
-                    HudDesignStudio()
+                    Theme {
+                        HudDesignStudio()
+                    }
                 }
             }
         }
