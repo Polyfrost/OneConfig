@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.ui.api
 
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 
 class TreeConfigData(
     val tree: Tree,
@@ -35,6 +36,21 @@ class TreeConfigData(
             ?: tree.getMetadata<String>("icon_path")
             ?: tree.getMetadata<String>("icon_name")
 
+    override val authors: String?
+        get() = tree.getMetadata<String>("mod_card_authors")?.nonBlankOrNull()
+            ?: modInfo?.authors?.nonBlankOrNull()
+
+    override val credits: String?
+        get() = tree.getMetadata<String>("mod_card_credits")?.nonBlankOrNull()
+            ?: modInfo?.credits?.nonBlankOrNull()
+
     override val category: Config.Category
         get() = tree.getMetadata<Config.Category>("category") ?: Config.Category.OTHER
+
+    private val modInfo: ModInfo?
+        get() = id.takeIf { it.isNotBlank() }?.let { modId ->
+            ModInfo.loadedMods.firstOrNull { it.id == modId }
+        }
+
+    private fun String.nonBlankOrNull(): String? = trim().takeIf { it.isNotEmpty() }
 }

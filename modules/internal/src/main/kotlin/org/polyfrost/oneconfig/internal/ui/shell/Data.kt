@@ -21,6 +21,9 @@ object OCViewModelStoreOwner: ViewModelStoreOwner {
 }
 object ShellState {
     var title by mutableStateOf<String?>(null)
+    var titleInfoForTitle by mutableStateOf<String?>(null)
+    var titleAuthors by mutableStateOf<String?>(null)
+    var titleCredits by mutableStateOf<String?>(null)
 
     var playerName by mutableStateOf("Player")
 

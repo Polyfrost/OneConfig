@@ -7,6 +7,8 @@ data class ModInfo(
     val name: String,
     val version: String,
     val file: Path?,
+    val authors: String? = null,
+    val credits: String? = null,
 ){
     companion object {
         @get:JvmStatic

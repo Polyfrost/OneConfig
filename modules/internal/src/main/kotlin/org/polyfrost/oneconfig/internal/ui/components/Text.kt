@@ -10,6 +10,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
@@ -41,17 +42,19 @@ fun Text(
     fontSize: TextUnit = 14.sp,
     lineHeight: TextUnit? = null,
     shift: BaselineShift = BaselineShift.None,
-    fontWeight: FontWeight = FontWeight.Normal
+    fontWeight: FontWeight = FontWeight.Normal,
+    textAlign: TextAlign = TextAlign.Start
 ) {
     when (val comp: Any = Platform.compatibility().wrapPlatformComponent(text)) {
-        is Component -> TextComponent(comp, modifier, color, fontSize, lineHeight, shift, fontWeight)
-        is ComponentLike -> TextComponent(comp.asComponent(), modifier, color, fontSize, lineHeight, shift, fontWeight)
+        is Component -> TextComponent(comp, modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign)
+        is ComponentLike -> TextComponent(comp.asComponent(), modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign)
         is String -> BasicText(
             comp, style = TextStyle(
                 fontSize = fontSize, fontWeight = fontWeight,
                 fontFamily = LocalTheme.current.typography.family,
                 color = color,
                 lineHeight = lineHeight ?: TextStyle.Default.lineHeight,
+                textAlign = textAlign,
             ),
             modifier = modifier
         )

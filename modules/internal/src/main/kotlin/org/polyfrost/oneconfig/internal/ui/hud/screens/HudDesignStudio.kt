@@ -106,6 +106,8 @@ private enum class ResizeCorner {
 }
 
 private const val SELECTION_BLUE_ARGB = 0xFF0D99FF.toInt()
+private const val HUD_SIZE_BADGE_HEIGHT = 16f
+private const val HUD_SIZE_BADGE_GAP = 9f
 private val selectionBlue = Color(SELECTION_BLUE_ARGB)
 
 private fun hudBounds(hud: Hud): HudBounds? {
@@ -287,7 +289,8 @@ private fun DrawScope.drawSelectedHudBounds(bounds: HudBounds, mcToScreen: Float
         drawRect(color = selectionBlue, topLeft = topLeft, size = Size(handleSize, handleSize), style = Stroke(width = 1f))
     }
 
-    drawHudSizeBadge("${bounds.width.roundToInt()} x ${bounds.height.roundToInt()}", sx + sw / 2, sy + sh + 9f)
+    val badgeTopY = (sy - HUD_SIZE_BADGE_GAP - HUD_SIZE_BADGE_HEIGHT).coerceAtLeast(0f)
+    drawHudSizeBadge("${bounds.width.roundToInt()} x ${bounds.height.roundToInt()}", sx + sw / 2, badgeTopY)
 }
 
 private fun DrawScope.drawHudSizeBadge(label: String, centerX: Float, topY: Float) {
@@ -297,7 +300,7 @@ private fun DrawScope.drawHudSizeBadge(label: String, centerX: Float, topY: Floa
     val textHeight = metrics.descent - metrics.ascent
     val horizontalPadding = 5f
     val badgeWidth = textWidth + horizontalPadding * 2
-    val badgeHeight = 16f
+    val badgeHeight = HUD_SIZE_BADGE_HEIGHT
     val badgeX = centerX - badgeWidth / 2
 
     drawRoundRect(

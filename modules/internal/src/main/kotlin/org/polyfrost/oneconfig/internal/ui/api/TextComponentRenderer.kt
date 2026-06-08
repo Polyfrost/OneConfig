@@ -22,6 +22,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextGeometricTransform
 import androidx.compose.ui.text.withStyle
@@ -45,7 +46,8 @@ fun TextComponent(
     fontSize: TextUnit = 14.sp,
     lineHeight: TextUnit? = null,
     shift: BaselineShift = BaselineShift.None,
-    fontWeight: FontWeight = FontWeight.Normal
+    fontWeight: FontWeight = FontWeight.Normal,
+    textAlign: TextAlign = TextAlign.Start
 ) {
     Box {
         component.iterable(ComponentIteratorType.DEPTH_FIRST).forEach {
@@ -56,6 +58,7 @@ fun TextComponent(
                         fontFamily = LocalTheme.current.typography.family,
                         color = color,
                         lineHeight = lineHeight ?: TextStyle.Default.lineHeight,
+                        textAlign = textAlign,
                     ), modifier = modifier
                 )
             }

@@ -6,9 +6,12 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,7 +19,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -75,7 +81,14 @@ fun Header() {
                 }
             ) { text ->
                 text?.let {
-                    Text(it, color = LocalTheme.current.textColor, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(it, color = LocalTheme.current.textColor, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                        TitleAuthorByline(it)
+                        TitleInfoTooltip(it)
+                    }
                 }
             }
         }
@@ -86,6 +99,71 @@ fun Header() {
         ) {
             GlobalSearchBar()
             IconButton("close") { closeRequest() }
+        }
+    }
+}
+
+@Composable
+private fun TitleAuthorByline(title: String) {
+    if (ShellState.titleInfoForTitle != title) return
+    val byline = ShellState.titleAuthors?.authorByline() ?: return
+    Text(
+        byline,
+        color = LocalTheme.current.textColorSecondary,
+        fontSize = 14.sp,
+        fontWeight = FontWeight.Medium,
+    )
+}
+
+private fun String.authorByline(): String? {
+    val authors = split(',')
+        .mapNotNull { it.trim().takeIf(String::isNotEmpty) }
+    val first = authors.firstOrNull() ?: return null
+    val remaining = authors.size - 1
+    return if (remaining > 0) {
+        "by $first and $remaining more..."
+    } else {
+        "by $first"
+    }
+}
+
+@Composable
+private fun TitleInfoTooltip(title: String) {
+    if (ShellState.titleInfoForTitle != title) return
+    val authors = ShellState.titleAuthors
+    val credits = ShellState.titleCredits
+    if (authors == null && credits == null) return
+    val interactionSource = rememberInteractionSource()
+    val isHovered by interactionSource.collectIsHoveredAsState()
+
+    Row(
+        modifier = Modifier.hoverable(interactionSource),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Box(
+            modifier = Modifier.size(22.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon("info", color = LocalTheme.current.textColorSecondary, modifier = Modifier.size(14.dp))
+        }
+
+        if (isHovered) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier
+                    .widthIn(max = 260.dp)
+                    .background(Color(0xff2C2C2C), shape = RoundedCornerShape(8.dp))
+                    .border(1.dp, Color.White.copy(alpha = 0.1f), shape = RoundedCornerShape(8.dp))
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                if (authors != null) {
+                    Text("Author: $authors", color = LocalTheme.current.textColor, fontSize = 12.sp)
+                }
+                if (credits != null) {
+                    Text("Credits: $credits", color = LocalTheme.current.textColor, fontSize = 12.sp)
+                }
+            }
         }
     }
 }

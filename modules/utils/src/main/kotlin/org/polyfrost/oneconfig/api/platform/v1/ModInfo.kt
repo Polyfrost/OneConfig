@@ -5,12 +5,14 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 
 
-data class ModInfo(
+data class ModInfo @JvmOverloads constructor(
     val id: String,
     val name: String,
     val version: String,
     val file: Path?,
     val modIconPath: String?,
+    val authors: String? = null,
+    val credits: String? = null,
 ){
     /**
      * Resolves [modIconPath] against this mod's own jar root ([file]) and copies the icon out to a

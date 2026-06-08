@@ -38,7 +38,15 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
                         metadata.getName(),
                         metadata.getVersion().getFriendlyString(),
                         mod.getRootPaths().getFirst(),
-                        metadata.getIconPath(Integer.MAX_VALUE).orElse(null)
+                        metadata.getIconPath(Integer.MAX_VALUE).orElse(null),
+                        metadata.getAuthors().stream()
+                                .map(person -> person.getName())
+                                .filter(name -> !name.isBlank())
+                                .collect(Collectors.joining(", ")),
+                        metadata.getContributors().stream()
+                                .map(person -> person.getName())
+                                .filter(name -> !name.isBlank())
+                                .collect(Collectors.joining(", "))
                     );
                 }).collect(Collectors.toSet());
         //? }

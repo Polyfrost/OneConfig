@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -36,6 +37,7 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
@@ -157,8 +159,9 @@ fun ModCard(mod: ConfigData) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(ModCardFooterHeight)
-                    .background(Accent),
+                    .heightIn(min = ModCardFooterHeight)
+                    .background(Accent)
+                    .padding(horizontal = 8.dp, vertical = 2.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -166,7 +169,8 @@ fun ModCard(mod: ConfigData) {
                     color = LocalTheme.current.accentTextColor,
                     fontSize = 16.sp,
                     lineHeight = 16.sp,
-                    modifier = Modifier.padding(horizontal = 8.dp),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
