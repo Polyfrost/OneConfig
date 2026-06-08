@@ -28,7 +28,7 @@ object DandelionCompat {
 
     @JvmStatic
     fun initialize(title: Component, categories: MutableList<ConfigCategory>, save: Supplier<Boolean>) = CompatLoader.requireTranslations {
-        LOGGER.info("Silly thing loaded")
+        LOGGER.info("Dandelion compat loaded for $title")
         val mod = CompatLoader.findFirstMod()
         val tree = parseConfig(title, categories, mod, save)
         if (tree != null) {
@@ -45,6 +45,10 @@ object DandelionCompat {
         tree.saveFunction = { save }
         // Dandelion exposes no icon, so fall back to the mod's icon (same source Mod Menu uses).
         mod.extractIconFile()?.let {
+            tree.addMetadata("icon_path", it)
+        }
+
+        mod?.extractIconFile()?.let {
             tree.addMetadata("icon_path", it)
         }
 
