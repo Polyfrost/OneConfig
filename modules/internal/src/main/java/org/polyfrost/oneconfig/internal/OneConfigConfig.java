@@ -39,6 +39,9 @@ public class OneConfigConfig extends Config {
     @Switch(title = "Show opening page animation", subcategory = "GUI", description = "Plays the page animation when the menu is first opened.")
     public static boolean showOpeningPageAnimation = false;
 
+    @Switch(title = "Instant Search", subcategory = "GUI", description = "Focuses the search bar when the OneConfig menu opens.")
+    public static boolean instantSearch = true;
+
     @Slider(title = "Time before reset", subcategory = "GUI", min = 5f, max = 60f, step = 1f, description = "Seconds of inactivity before the smart reset returns to the default page.")
     public static float timeBeforeReset = 15f;
 

@@ -62,6 +62,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
             ShellState.playerName = "Player"
         }
         ShellState.playerHeadPng = null
+        ShellState.focusSearchField = OneConfigConfig.instantSearch
         val client = net.minecraft.client.Minecraft.getInstance()
         Thread {
             val head = PlayerHeadLoader.loadLocalPlayerHeadPng() ?: return@Thread
