@@ -12,6 +12,7 @@
     "sources": "https://github.com/Polyfrost/OneConfig",
     "issues": "https://inv.wtf/polyfrost"
   },
+  "icon": "oneconfig-icon.png",
   "license": "LGPL-3.0",
   "environment": "client",
   "depends": {

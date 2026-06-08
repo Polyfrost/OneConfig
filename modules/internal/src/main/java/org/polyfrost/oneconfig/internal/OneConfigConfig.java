@@ -107,7 +107,7 @@ public class OneConfigConfig extends Config {
     private static OneConfigKeybind registeredKeybind;
 
     public OneConfigConfig() {
-        super("oneconfig.json", "assets/oneconfig/brand/oneconfig.svg", "OneConfig", Category.QOL);
+        super("oneconfig.json", "assets/oneconfig/brand/oneconfig-icon.svg", "OneConfig", Category.QOL);
         INSTANCE = this;
     }
 

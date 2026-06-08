@@ -17,7 +17,7 @@ public class ThemeConfig extends Config {
     public static boolean animations = true;
 
     public ThemeConfig() {
-        super("themes.json", "assets/oneconfig/brand/oneconfig.svg", "Themes", Category.QOL);
+        super("themes.json", "assets/oneconfig/brand/oneconfig-icon.svg", "Themes", Category.QOL);
     }
 
     @Override
