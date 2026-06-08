@@ -49,6 +49,10 @@ object Tr7zwConfigCompat {
             ?: readScreenTitle(screen)?.takeIf { it.isNotBlank() }
             ?: "tr7zw Config"
         tree.noCache = true
+        // tr7zw/trender configs expose no icon, so fall back to the mod's icon (same source Mod Menu uses).
+        mod?.extractIconFile()?.let {
+            tree.addMetadata("icon_path", it)
+        }
 
         findMethod(screen.javaClass, "save")?.let { saveMethod ->
             tree.saveFunction = Runnable { runCatching { saveMethod.invoke(screen) } }

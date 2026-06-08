@@ -60,6 +60,10 @@ object ClothConfigCompat {
         if (savingRunnable != null) {
             tree.saveFunction = savingRunnable
         }
+        // Cloth Config exposes no icon, so fall back to the mod's icon (same source Mod Menu uses).
+        mod?.extractIconFile()?.let {
+            tree.addMetadata("icon_path", it)
+        }
 
         var added = false
         for (category in categoryMap.values) {

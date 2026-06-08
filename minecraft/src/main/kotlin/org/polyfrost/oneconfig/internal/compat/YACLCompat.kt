@@ -60,6 +60,10 @@ object YACLCompat {
         if (saveRunnable != null) {
             tree.saveFunction = saveRunnable
         }
+        // YACL exposes no icon, so fall back to the mod's icon (same source Mod Menu uses).
+        mod?.extractIconFile()?.let {
+            tree.addMetadata("icon_path", it)
+        }
 
         for (category in categories) {
             if (category == null) continue
