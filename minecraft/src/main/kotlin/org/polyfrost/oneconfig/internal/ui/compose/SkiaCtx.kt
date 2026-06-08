@@ -167,6 +167,40 @@ object SkiaCtx {
         flushToTarget(draws, resolveHudSurface() ?: return)
     }
 
+    /**
+     * Pre-26.1 only: the fullscreen Compose GUI is drawn straight onto the back buffer (see [resolveGLSurface]),
+     * so it never reaches the main render target that screenshots read. Called right before a screenshot reads
+     * the main render target's colour texture; blits the finished back buffer (which already holds the GUI) into
+     * it so the capture matches what is on screen. The HUD is unaffected - it is already blitted into the main RT.
+     */
+    fun compositeBackBufferForScreenshot(target: com.mojang.blaze3d.pipeline.RenderTarget) {
+        //? if >= 26.1 {
+        // 26.1+ draws compose into the main render target already, so no compositing is needed here.
+        //? } else {
+        /*if (!this::directContext.isInitialized) return
+        if (isVulkanMode) return
+        if (client.screen !is ComposeScreen) return
+        val w = target.width
+        val h = target.height
+        if (w <= 0 || h <= 0) return
+        val drawFbo = org.polyfrost.oneconfig.internal.ui.RenderTargetFbo.getFboId(target)
+        if (drawFbo <= 0) return
+
+        val savedRead = IntArray(1)
+        val savedDraw = IntArray(1)
+        GL30.glGetIntegerv(GL30.GL_READ_FRAMEBUFFER_BINDING, savedRead)
+        GL30.glGetIntegerv(GL30.GL_DRAW_FRAMEBUFFER_BINDING, savedDraw)
+        try {
+            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, 0)
+            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, drawFbo)
+            GL30.glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL30.GL_COLOR_BUFFER_BIT, GL30.GL_NEAREST)
+        } finally {
+            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, savedRead[0])
+            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, savedDraw[0])
+        }
+        *///? }
+    }
+
     fun blitHud(guiGraphics: GuiGraphicsExtractor) {
         val rt = hudTarget ?: return
         val w = rt.width;
@@ -380,8 +414,9 @@ object SkiaCtx {
         if (existing != null && existing.width == w && existing.height == h) return existing
 
         glSurface?.close(); glBrt?.close()
-        // Compose screens must land in Minecraft's main render target so screenshots, Tracy captures,
-        // and the window blit all see the same final UI.
+        //? if >= 26.1 {
+        // 26.1+: SkiaCtx.draw() runs before RenderTarget.blitToScreen (Mixin_SkiaFramePresent), so compose
+        // lands in Minecraft's main render target and is seen by the window blit, screenshots and Tracy captures.
         //? if >= 26.2 {
         /*val target = client.gameRenderer.mainRenderTarget()
         *///? } else {
@@ -396,6 +431,18 @@ object SkiaCtx {
             ColorSpace.sRGB,
             null,
         )
+        //? } else {
+        /*// Pre-26.1: SkiaCtx.draw() runs at Window.updateDisplay, which is after the main render target has
+        // already been blitted to the back buffer. Draw straight onto the back buffer so compose is visible.
+        glBrt = svc.makeBackBufferRenderTarget(w, h)
+        glSurface = Surface.makeFromBackendRenderTarget(
+            directContext, glBrt!!,
+            SurfaceOrigin.BOTTOM_LEFT,
+            SurfaceColorFormat.RGBA_8888,
+            ColorSpace.sRGB,
+            null,
+        )
+        *///? }
         return glSurface
     }
 

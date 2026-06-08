@@ -8,8 +8,8 @@ import org.polyfrost.oneconfig.internal.mixin.blaze3d.GpuDeviceAccessor
 //? if >= 26.2 {
 /*import com.mojang.blaze3d.opengl.FrameBufferAttachment
 *///? }
-//? if >= 1.21.5 {
 import com.mojang.blaze3d.pipeline.RenderTarget
+//? if >= 1.21.5 {
 import com.mojang.blaze3d.systems.RenderSystem
 //? }
 
@@ -47,6 +47,10 @@ object RenderTargetFbo {
                 ?: return -1
             return texture.getFbo(device.directStateAccess(), frameBuffer.depthTexture)
         }
+    }
+    *///? } else {
+    /*fun getFboId(frameBuffer: RenderTarget): Int {
+        return frameBuffer.frameBufferId
     }
     *///? }
 }

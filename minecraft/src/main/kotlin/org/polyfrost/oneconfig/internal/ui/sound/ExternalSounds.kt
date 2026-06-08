@@ -119,17 +119,15 @@ object ExternalSounds {
     private fun writePackMeta() {
         val meta = OneConfigSoundPackSource.PACK_ROOT.resolve("pack.mcmeta")
         Files.createDirectories(meta.parent)
-        Files.write(meta, packMetaJson().toByteArray(Charsets.UTF_8))
+        Files.write(meta, PACK_META.toByteArray(Charsets.UTF_8))
     }
 
-    private fun packMetaJson(): String =
-        //? if >= 26.1 {
-        net.minecraft.SharedConstants.getCurrentVersion().packVersion(net.minecraft.server.packs.PackType.CLIENT_RESOURCES).let { fmt ->
-            """{"pack":{"description":"OneConfig downloaded sounds","min_format":[${fmt.major()},${fmt.minor()}],"max_format":[${fmt.major()},${fmt.minor()}]}}"""
-        }
-        //?} else {
-        /*"""{"pack":{"description":"OneConfig downloaded sounds","pack_format":${net.minecraft.SharedConstants.getCurrentVersion().getPackVersion(net.minecraft.server.packs.PackType.CLIENT_RESOURCES)}}}"""
-        *///?}
+    // pack_format is deliberately a fixed 64 (the highest value that does NOT trip the "newer than 64 requires
+    // min_format/max_format" parser rule introduced in 26.1) so a single mcmeta parses on every supported MC
+    // version regardless of mappings. The resulting compatibility mismatch is irrelevant: OneConfigSoundPackSource
+    // marks the pack as required, and PackRepository always selects required packs without checking compatibility.
+    private const val PACK_META =
+        """{"pack":{"description":"OneConfig downloaded sounds","pack_format":64}}"""
 
     private fun sha1Of(path: Path): String {
         val digest = MessageDigest.getInstance("SHA-1")
