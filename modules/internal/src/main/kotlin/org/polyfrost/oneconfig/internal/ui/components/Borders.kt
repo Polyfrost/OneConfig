@@ -1,9 +1,17 @@
 package org.polyfrost.oneconfig.internal.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.ScrollState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
 fun Modifier.topBorder(
     color: Color,
@@ -55,4 +63,46 @@ fun Modifier.leftBorder(
         end = Offset(0f, size.height),
         strokeWidth = width,
     )
+}
+
+/**
+ * Draws a [color]-to-transparent scrim at the top and/or bottom edge of a scroll viewport to
+ * indicate more content is available in that direction. Each edge fades in only when the content
+ * can scroll that way. Place on the same node that owns the [verticalScroll] modifier, after it.
+ */
+@Composable
+fun Modifier.fadingEdges(
+    scrollState: ScrollState,
+    color: Color,
+    length: Dp = 32.dp,
+): Modifier {
+    val topAlpha by animateFloatAsState(if (scrollState.canScrollBackward) 1f else 0f)
+    val bottomAlpha by animateFloatAsState(if (scrollState.canScrollForward) 1f else 0f)
+    return this.drawWithContent {
+        drawContent()
+        val lengthPx = length.toPx().coerceAtMost(size.height / 2f)
+        if (topAlpha > 0f) {
+            drawRect(
+                brush = Brush.verticalGradient(
+                    colors = listOf(color, Color.Transparent),
+                    startY = 0f,
+                    endY = lengthPx,
+                ),
+                size = Size(size.width, lengthPx),
+                alpha = topAlpha,
+            )
+        }
+        if (bottomAlpha > 0f) {
+            drawRect(
+                brush = Brush.verticalGradient(
+                    colors = listOf(Color.Transparent, color),
+                    startY = size.height - lengthPx,
+                    endY = size.height,
+                ),
+                topLeft = Offset(0f, size.height - lengthPx),
+                size = Size(size.width, lengthPx),
+                alpha = bottomAlpha,
+            )
+        }
+    }
 }

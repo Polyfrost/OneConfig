@@ -15,9 +15,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +43,7 @@ import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.settings.MultiSelectDropdownOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
@@ -143,12 +147,16 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
                     enter = fadeIn(),
                     exit = fadeOut(),
                 ) {
+                    val scrollState = rememberScrollState()
                     Column(
                         modifier = Modifier
                             .width(300.dp)
                             .clip(DropdownShape)
                             .background(theme.componentBackground, DropdownShape)
                             .border(1.dp, theme.borderColor, DropdownShape)
+                            .heightIn(max = 280.dp)
+                            .fadingEdges(scrollState, theme.componentBackground)
+                            .verticalScroll(scrollState)
                             .padding(4.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {

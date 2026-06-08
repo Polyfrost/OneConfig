@@ -10,8 +10,10 @@ import com.teamresourceful.resourcefulconfig.api.types.elements.ResourcefulConfi
 //? } else {
 /*import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigEntry
 *///? }
+import com.teamresourceful.resourcefulconfig.api.types.info.Translatable
 import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigObjectEntry
 import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigValueEntry
+import com.teamresourceful.resourcefulconfig.api.types.options.EntryData
 import com.teamresourceful.resourcefulconfig.api.types.options.EntryType
 import com.teamresourceful.resourcefulconfig.api.types.options.Option
 import org.apache.logging.log4j.LogManager
@@ -185,9 +187,13 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
 
     private fun buildAndAdd(entry: ResourcefulConfigValueEntry, tree: Tree) {
         val builder = RConfigPropertyBuilder(entry)
+        val options = entry.options()
 
-        if (entry.get().javaClass.isArray) return
-        val options = entry.options() // todo draggable list and multiselects
+        if (entry.isArray) {
+            // Only enum arrays are supported: a draggable reorderable list, or a multi-select dropdown.
+            if (entry.type() == EntryType.ENUM) buildEnumArray(entry, builder, options, tree)
+            return
+        }
 
         val visualizer: Class<out Visualizer> = when (entry.type()) {
             EntryType.BYTE, EntryType.SHORT, EntryType.INTEGER, EntryType.LONG, EntryType.FLOAT, EntryType.DOUBLE -> {
@@ -220,13 +226,63 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
             }
 
             EntryType.BOOLEAN -> Visualizer.SwitchVisualizer::class.java
-            EntryType.ENUM -> Visualizer.DropdownVisualizer::class.java
+            EntryType.ENUM -> {
+                // Show the same display names rconfig itself renders (Translatable / StringRepresentable /
+                // fallback), positionally aligned to the enum constant order the dropdown iterates.
+                entry.objectType().enumConstants?.filterIsInstance<Enum<*>>()?.takeIf { it.isNotEmpty() }?.let {
+                    builder["optionLabels"] = it.map(::enumDisplayName).toTypedArray()
+                }
+                Visualizer.DropdownVisualizer::class.java
+            }
             else -> null
         } ?: return
 
         builder["visualizer"] = visualizer
         tree.put(builder.build())
     }
+
+    // enum arrays render as either a draggable (reorderable) list or a multi-select dropdown,
+    // depending on whether the field is annotated @ConfigOption.Draggable.
+    private fun buildEnumArray(
+        entry: ResourcefulConfigValueEntry,
+        builder: RConfigPropertyBuilder,
+        options: EntryData,
+        tree: Tree,
+    ) {
+        val constants = entry.objectType().enumConstants?.filterIsInstance<Enum<*>>()?.takeIf { it.isNotEmpty() } ?: return
+        val names = constants.map { it.name }.toTypedArray()
+        val byName = constants.associateBy { it.name }
+        builder["options"] = names
+        // "options" stays the enum names (used for state mapping); show rconfig's display names instead.
+        builder["optionLabels"] = constants.map(::enumDisplayName).toTypedArray()
+
+        if (options.hasOption(Option.DRAGGABLE)) {
+            // value is the full ordering of enum names
+            builder.getter = { (entry.getArray() ?: emptyArray()).mapNotNull { (it as? Enum<*>)?.name }.toTypedArray() }
+            builder.setter = setter@{ value ->
+                val ordered = (value as? Array<*>)?.mapNotNull { it as? String } ?: return@setter
+                entry.setArray(ordered.mapNotNull { byName[it] }.toTypedArray())
+            }
+            builder["visualizer"] = Visualizer.DraggableListVisualizer::class.java
+        } else {
+            // value is a boolean[] indexed by option position (selected items)
+            builder.getter = {
+                val selected = (entry.getArray() ?: emptyArray()).mapNotNull { (it as? Enum<*>)?.name }.toSet()
+                BooleanArray(names.size) { names[it] in selected }
+            }
+            builder.setter = setter@{ value ->
+                val flags = value as? BooleanArray ?: return@setter
+                entry.setArray(names.filterIndexed { i, _ -> flags.getOrElse(i) { false } }.mapNotNull { byName[it] }.toTypedArray())
+            }
+            builder["checkable"] = true
+            builder["visualizer"] = Visualizer.MultiSelectDropdownVisualizer::class.java
+        }
+        tree.put(builder.build())
+    }
+
+    // Mirror rconfig's own enum label resolution: Translatable key, then StringRepresentable serialized
+    // name, then the raw enum name. Resolved via Translatable.toComponent so the active language applies.
+    private fun enumDisplayName(value: Enum<*>): String = Translatable.toComponent(value).string
 
     private class RConfigPropertyBuilder constructor(option: ResourcefulConfigValueEntry) {
         //? >= 1.21.8 {

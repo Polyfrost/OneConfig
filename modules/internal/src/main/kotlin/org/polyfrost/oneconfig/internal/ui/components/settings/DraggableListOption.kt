@@ -14,11 +14,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -40,6 +43,7 @@ import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.settings.DraggableListOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
@@ -57,42 +61,30 @@ fun DraggableListOption(data: DraggableListOptionData) {
     val density = LocalDensity.current
 
     val allOptions: List<String> = remember(data.prop) {
-        data.options?.toList() ?: run {
-            when (val v = data.prop.get()) {
-                is Array<*> -> v.filterIsInstance<String>()
-                is List<*> -> v.filterIsInstance<String>()
-                else -> emptyList()
-            }
-        }
+        data.options?.toList() ?: propValueList(data.prop)
     }
     val optionLabels = data.optionLabels
 
+    // Stable per-slot id so duplicate values render and reorder independently.
+    val idGen = remember(data.prop) { intArrayOf(0) }
+
     // Current ordered items. When checkable, includes disabled items appended after enabled ones.
     var items by remember(data.prop) {
-        val propList: List<String> = when (val v = data.prop.get()) {
-            is Array<*> -> v.filterIsInstance<String>()
-            is List<*> -> v.filterIsInstance<String>()
-            else -> emptyList()
-        }
-        val ordered = propList.ifEmpty { allOptions }
+        val ordered = propValueList(data.prop).ifEmpty { allOptions }
         val result = if (data.checkable) {
             val enabledSet = ordered.toSet()
             ordered + allOptions.filter { it !in enabledSet }
         } else {
             ordered
         }
-        mutableStateOf(result)
+        mutableStateOf(result.map { ListEntry(idGen[0]++, it) })
     }
 
-    // Enabled items set (checkable only — property value = enabled items in order)
-    var enabledSet by remember(data.prop) {
-        if (!data.checkable) return@remember mutableStateOf(emptySet<String>())
-        val propList: List<String> = when (val v = data.prop.get()) {
-            is Array<*> -> v.filterIsInstance<String>()
-            is List<*> -> v.filterIsInstance<String>()
-            else -> allOptions
-        }
-        mutableStateOf(propList.ifEmpty { allOptions }.toSet())
+    // Enabled slot ids (checkable only — property value = enabled items in order)
+    var enabledIds by remember(data.prop) {
+        if (!data.checkable) return@remember mutableStateOf(emptySet<Int>())
+        val enabled = propValueList(data.prop).ifEmpty { allOptions }.toSet()
+        mutableStateOf(items.filter { it.value in enabled }.map { it.id }.toSet())
     }
 
     var draggingIndex by remember { mutableStateOf(-1) }
@@ -109,9 +101,9 @@ fun DraggableListOption(data: DraggableListOptionData) {
         (itemHeightPx * items.size + spacingPx * (items.size - 1).coerceAtLeast(0)).toDp()
     }
 
-    fun save(list: List<String> = items) {
-        val toSave = if (data.checkable) list.filter { it in enabledSet } else list
-        (data.prop as Property<Any>).set(toSave.toTypedArray())
+    fun save(list: List<ListEntry> = items) {
+        val toSave = if (data.checkable) list.filter { it.id in enabledIds } else list
+        (data.prop as Property<Any>).set(toSave.map { it.value }.toTypedArray())
     }
 
     var lastTickIndex by remember { mutableStateOf(-1) }
@@ -137,13 +129,21 @@ fun DraggableListOption(data: DraggableListOptionData) {
             .border(1.dp, theme.borderColor, ListContainerShape)
             .padding(15.dp),
     ) {
+        val scrollState = rememberScrollState()
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(contentHeight),
+                .heightIn(max = 280.dp)
+                .fadingEdges(scrollState, theme.componentBackground)
+                .verticalScroll(scrollState),
         ) {
+          Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(contentHeight),
+          ) {
             items.forEachIndexed { index, item ->
-                key(item) {
+                key(item.id) {
                     val isDragging = draggingIndex == index
                     val rowInteraction = rememberInteractionSource()
                     val isHovered by rowInteraction.collectIsHoveredAsState()
@@ -175,37 +175,42 @@ fun DraggableListOption(data: DraggableListOptionData) {
                             .background(bgColor, ListItemShape)
                             .border(1.dp, theme.borderColor, ListItemShape)
                             .hoverable(rowInteraction)
-                            .pointerHoverIcon(PointerIcon.Hand)
-                            .draggable(
-                                orientation = Orientation.Vertical,
-                                state = draggableState,
-                                onDragStarted = { draggingIndex = index; dragAccum = 0f; lastTickIndex = index },
-                                onDragStopped = {
-                                    if (dragTargetIndex != draggingIndex) {
-                                        val list = items.toMutableList()
-                                        val moved = list.removeAt(draggingIndex)
-                                        list.add(dragTargetIndex, moved)
-                                        items = list
-                                        save(list)
-                                    } else {
-                                        save()
-                                    }
-                                    draggingIndex = -1
-                                    dragAccum = 0f
-                                },
-                            )
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(15.dp),
                     ) {
-                        Icon("dots-grid", modifier = Modifier.size(16.dp), color = contentColor)
+                        Icon(
+                            "dots-grid",
+                            modifier = Modifier
+                                .size(16.dp)
+                                .pointerHoverIcon(PointerIcon.Hand)
+                                .draggable(
+                                    orientation = Orientation.Vertical,
+                                    state = draggableState,
+                                    onDragStarted = { draggingIndex = index; dragAccum = 0f; lastTickIndex = index },
+                                    onDragStopped = {
+                                        if (dragTargetIndex != draggingIndex) {
+                                            val list = items.toMutableList()
+                                            val moved = list.removeAt(draggingIndex)
+                                            list.add(dragTargetIndex, moved)
+                                            items = list
+                                            save(list)
+                                        } else {
+                                            save()
+                                        }
+                                        draggingIndex = -1
+                                        dragAccum = 0f
+                                    },
+                                ),
+                            color = contentColor,
+                        )
 
                         if (data.checkable) {
-                            val checked = item in enabledSet
+                            val checked = item.id in enabledIds
                             CheckboxIndicator(
                                 checked = checked,
                                 onToggle = {
-                                    enabledSet = if (checked) enabledSet - item else enabledSet + item
+                                    enabledIds = if (checked) enabledIds - item.id else enabledIds + item.id
                                     save()
                                 },
                             )
@@ -213,10 +218,20 @@ fun DraggableListOption(data: DraggableListOptionData) {
 
                         data.icon?.takeIf { it.isNotEmpty() }?.let { Icon(it, modifier = Modifier.size(16.dp), color = contentColor) }
 
-                        Text(optionLabels[item] ?: item, color = contentColor, fontSize = 13.sp)
+                        Text(optionLabels[item.value] ?: item.value, color = contentColor, fontSize = 13.sp)
                     }
                 }
             }
+          }
         }
     }
+}
+
+/** A single list slot. [id] is stable across reorders so duplicate [value]s stay distinct. */
+private data class ListEntry(val id: Int, val value: String)
+
+private fun propValueList(prop: Property<*>): List<String> = when (val v = prop.get()) {
+    is Array<*> -> v.filterIsInstance<String>()
+    is List<*> -> v.filterIsInstance<String>()
+    else -> emptyList()
 }
