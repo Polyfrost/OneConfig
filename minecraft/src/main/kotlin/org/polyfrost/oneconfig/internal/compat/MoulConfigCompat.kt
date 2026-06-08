@@ -3,6 +3,7 @@
 /*package org.polyfrost.oneconfig.internal.compat
 
 import io.github.notenoughupdates.moulconfig.ChromaColour
+import io.github.notenoughupdates.moulconfig.common.KeyboardConstants
 import io.github.notenoughupdates.moulconfig.gui.editors.*
 import io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor
 import io.github.notenoughupdates.moulconfig.processor.ProcessedCategory
@@ -15,6 +16,8 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.category
 import org.polyfrost.oneconfig.api.config.v1.dsl.noCache
 import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.utils.MoulConfigGuiOptionEditorDropdownAccessor
 import java.awt.Color
 import java.lang.reflect.Type
@@ -270,6 +273,28 @@ data object MoulConfigCompat {
                 }
 
                 SliderVisualizer::class.java
+            }
+
+            is GuiOptionEditorKeybind -> {
+                // MoulConfig stores a keybind as a single int GLFW key code on an int/Integer property; a code <= 0
+                // (GLFW_KEY_UNKNOWN / "none") means unbound. Bridge it to OneConfig's OneConfigKeybind, which carries
+                // an array of key codes. The action is a no-op stub since MoulConfig owns the actual bind firing.
+                property.getter = {
+                    val code = (children.get() as? Number)?.toInt() ?: KeyboardConstants.none
+                    if (code <= 0) {
+                        OneConfigKeybind(null, null, KeyModifiers.NONE, 0L) { true }
+                    } else {
+                        OneConfigKeybind(intArrayOf(code), null, KeyModifiers.NONE, 0L) { true }
+                    }
+                }
+                property.setter = setter@{ value ->
+                    val keybind = value as? OneConfigKeybind ?: return@setter
+                    val code = keybind.keyCodes?.firstOrNull()
+                        ?: keybind.mouseBtns?.firstOrNull()
+                        ?: KeyboardConstants.none
+                    children.set(code)
+                }
+                KeybindVisualizer::class.java
             }
 
             is GuiOptionEditorInfoText -> return
