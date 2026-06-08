@@ -1,9 +1,9 @@
 [versions]
-minecraft = "26.2-pre-4"
-minecraft-end = "26.2-pre-4"
-# Fabric Loader normalizes the game version to semver (26.2-pre-4 -> 26.2-pre.4),
+minecraft = "26.2-pre-5"
+minecraft-end = "26.2-pre-5"
+# Fabric Loader normalizes the game version to semver (26.2-pre-5 -> 26.2-pre.5),
 # so the dependency range must use the normalized form or resolution fails.
-minecraft-range = ">=26.2-pre.4 <=26.2-pre.4"
+minecraft-range = ">=26.2-pre.5 <=26.2-pre.5"
 
 # No 26.2 build of resourcefulconfig yet -> rconfig_compat disabled.
 
