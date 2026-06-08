@@ -109,7 +109,7 @@ afterEvaluate {
         .isTransitive = false
 }
 
-base.archivesName.set("OneConfigBootstrap-${project.name}")
+base.archivesName.set("OneConfig-${project.name}")
 
 tasks.withType<ProcessResources>().configureEach {
     val range = if (versionedCatalog.versions.has("minecraft.range")) {
@@ -122,7 +122,7 @@ tasks.withType<ProcessResources>().configureEach {
 
     val props = mapOf(
         "mod_id" to (project.findProperty("mod.id") ?: "oneconfigbootstrap"),
-        "mod_name" to (project.findProperty("mod.name") ?: "OneConfigBootstrap"),
+        "mod_name" to (project.findProperty("mod.name") ?: "OneConfig"),
         "mod_version" to project.version,
         "mod_description" to (project.findProperty("mod.description") ?: "OneConfig bootstrap loader."),
         "mc_version" to range,

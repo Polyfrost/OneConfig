@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "id": "oneconfigv1",
-  "name": "OneConfig",
+  "name": "OneConfig (Platform Module)",
   "version": "${mod_version}",
-  "description": "OneConfig",
+  "description": "Access all your mod settings in one place, with a sleek and intuitive interface.",
   "authors": [
     "Polyfrost"
   ],
@@ -31,7 +31,7 @@
   },
   "custom": {
     "modmenu": {
-      "badges": [ "library" ]
+      "parent": "oneconfigbootstrap"
     }
   }
 }
