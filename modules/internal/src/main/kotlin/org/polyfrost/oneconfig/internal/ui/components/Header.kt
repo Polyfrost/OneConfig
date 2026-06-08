@@ -36,8 +36,13 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
+import org.polyfrost.oneconfig.internal.ui.components.dropdown.DropdownPositionProvider
 import androidx.navigation.compose.currentBackStackEntryAsState
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -135,33 +140,36 @@ private fun TitleInfoTooltip(title: String) {
     if (authors == null && credits == null) return
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
+    val density = LocalDensity.current
 
-    Row(
-        modifier = Modifier.hoverable(interactionSource),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    Box(
+        modifier = Modifier.size(22.dp).hoverable(interactionSource),
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier.size(22.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon("info", color = LocalTheme.current.textColorSecondary, modifier = Modifier.size(14.dp))
-        }
+        Icon("info", color = LocalTheme.current.textColorSecondary, modifier = Modifier.size(14.dp))
 
         if (isHovered) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier
-                    .widthIn(max = 260.dp)
-                    .background(Color(0xff2C2C2C), shape = RoundedCornerShape(8.dp))
-                    .border(1.dp, Color.White.copy(alpha = 0.1f), shape = RoundedCornerShape(8.dp))
-                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            // Render in a Popup overlay so the tooltip doesn't take layout space in the
+            // header Row (which would push the search bar over and hide the close button)
+            // and isn't clipped by the Row's fixed height.
+            Popup(
+                popupPositionProvider = DropdownPositionProvider(DpOffset(0.dp, 6.dp), density),
+                properties = PopupProperties(focusable = false)
             ) {
-                if (authors != null) {
-                    Text("Author: $authors", color = LocalTheme.current.textColor, fontSize = 12.sp)
-                }
-                if (credits != null) {
-                    Text("Credits: $credits", color = LocalTheme.current.textColor, fontSize = 12.sp)
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier
+                        .widthIn(max = 260.dp)
+                        .background(Color(0xff2C2C2C), shape = RoundedCornerShape(8.dp))
+                        .border(1.dp, Color.White.copy(alpha = 0.1f), shape = RoundedCornerShape(8.dp))
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                ) {
+                    if (authors != null) {
+                        Text("Author: $authors", color = LocalTheme.current.textColor, fontSize = 12.sp)
+                    }
+                    if (credits != null) {
+                        Text("Credits: $credits", color = LocalTheme.current.textColor, fontSize = 12.sp)
+                    }
                 }
             }
         }
