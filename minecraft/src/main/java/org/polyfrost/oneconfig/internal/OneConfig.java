@@ -28,8 +28,10 @@
 package org.polyfrost.oneconfig.internal;
 
 import com.mojang.brigadier.Command;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ChatScreen;
@@ -133,6 +135,27 @@ public class OneConfig
         });
     }
 
+    private static void unbindRightShiftMinecraftKeybindsOnFirstRun() {
+        if (!ConfigManager.isFirstRun()) return;
+
+        Minecraft minecraft = Minecraft.getInstance();
+        String rightShift = InputConstants.Type.KEYSYM.getOrCreate(InputConstants.KEY_RSHIFT).getName();
+        int unbound = 0;
+
+        for (KeyMapping keyMapping : minecraft.options.keyMappings) {
+            if (rightShift.equals(keyMapping.saveString())) {
+                keyMapping.setKey(InputConstants.UNKNOWN);
+                unbound++;
+            }
+        }
+
+        if (unbound > 0) {
+            KeyMapping.resetMapping();
+            minecraft.options.save();
+            LOGGER.info("Unbound {} Minecraft keybind(s) using Right Shift on first launch", unbound);
+        }
+    }
+
     public static void render(GuiGraphicsExtractor graphics, float partial) {
         if (!SkiaCtx.INSTANCE.isReady()) {
             return;
@@ -182,6 +205,7 @@ public class OneConfig
         EventManager.register(
                 InitializationEvent.class, e -> {
                     ConfigManager.initialize();
+                    unbindRightShiftMinecraftKeybindsOnFirstRun();
                     ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
                     org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar.register();
                     org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry.INSTANCE.loadFromConfig();
