@@ -15,7 +15,6 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
 import org.polyfrost.oneconfig.internal.ui.compose.BlurRenderer
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.ChangeLogGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.PreferencesGraph
@@ -42,9 +41,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
     @Volatile private var closeRequestedAt = 0L
     @Volatile private var openedAt = 0L
 
-    /** Captured once on open: whether to show the first-launch message (changelog) for this session. */
-    private var openToChangelog = false
-
     private fun markClosed() {
         ShellState.lastClosedAt = System.currentTimeMillis()
     }
@@ -52,9 +48,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
     override fun init() {
         ConfigRegistry.loadFrom(ConfigManager.active(), ConfigSource.OC)
         initialTree?.let { ConfigRegistry.registerTree(it, ConfigSource.OC) }
-
-        openToChangelog = OneConfigConfig.showFirstLaunchMessage
-        if (openToChangelog) OneConfigConfig.markFirstLaunchShown()
 
         try {
             ShellState.playerName = net.minecraft.client.Minecraft.getInstance().user.name
@@ -168,7 +161,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
     override fun compose() {
         val initialRoute = when {
             initialTreeId != null -> ModConfigRoute(initialTreeId, initialCategory)
-            openToChangelog -> ChangeLogGraph
             else -> resolveOpeningBehaviorRoute()
         }
 
