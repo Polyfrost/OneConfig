@@ -88,7 +88,8 @@ afterEvaluate {
 
     // compose-bundle ships as its own Fabric mod on Modrinth, so it must NOT be JiJ'd
     // into the bootstrap. The platform still compiles against it (api dependency).
-    val excludedProjects = setOf(":modules:compose-bundle")
+    val excludedProjects = setOf<String>()
+        //setOf(":modules:compose-bundle") TODO re-add
 
     fun includeProject(path: String) {
         if (path in excludedProjects) return

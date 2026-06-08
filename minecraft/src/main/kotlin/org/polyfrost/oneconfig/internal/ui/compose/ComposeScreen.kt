@@ -285,11 +285,11 @@ abstract class ComposeScreen(
             )
         )
 
-        scene.sendKeyEvent(composeEvent)
+        val handled = scene.sendKeyEvent(composeEvent)
         //? >= 1.21.10 {
-        return super.charTyped(event)
+        return handled || super.charTyped(event)
         //? } else {
-        /*return super.charTyped(char, modifiers)
+        /*return handled || super.charTyped(char, modifiers)
         *///? }
     }
 
@@ -331,11 +331,11 @@ abstract class ComposeScreen(
             )
         )
 
-        scene.sendKeyEvent(composeEvent)
+        val handled = scene.sendKeyEvent(composeEvent)
         //? >= 1.21.10 {
-        return super.keyPressed(event)
+        return handled || super.keyPressed(event)
         //? } else {
-        /*return super.keyPressed(key, scanCode, modifiers)
+        /*return handled || super.keyPressed(key, scanCode, modifiers)
         *///? }
     }
 
@@ -369,11 +369,11 @@ abstract class ComposeScreen(
             )
         )
 
-        scene.sendKeyEvent(composeEvent)
+        val handled = scene.sendKeyEvent(composeEvent)
         //? >= 1.21.10 {
-        return super.keyReleased(event)
+        return handled || super.keyReleased(event)
         //? } else {
-        /*return super.keyReleased(key, scanCode, modifiers)
+        /*return handled || super.keyReleased(key, scanCode, modifiers)
         *///? }
     }
 
