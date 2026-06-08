@@ -892,6 +892,7 @@ private fun HudPreviewCard(hud: Hud, onDragStart: (Hud, Float, Float, Float, Flo
 @Composable
 private fun ComposeHudPreviewCard(hud: Hud, onDragStart: (Hud, Float, Float, Float, Float) -> Unit) {
     val previewRuntime = remember(hud) {
+        hud.update()
         PolyComposeRuntime().also { rt -> rt.setContent { hud.Content() } }
     }
     var naturalW by remember(hud) { mutableStateOf(0f) }

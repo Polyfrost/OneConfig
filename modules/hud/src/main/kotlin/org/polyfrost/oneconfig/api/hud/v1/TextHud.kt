@@ -27,9 +27,8 @@
 package org.polyfrost.oneconfig.api.hud.v1
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.compose.composables.PolyBox
 import org.polyfrost.compose.composables.PolyCanvas
@@ -71,9 +70,14 @@ abstract class TextHud(
     }
 
     @get:JvmName("getStringBuilder")
-    protected val sb = StringBuilder()
+    protected var sb = StringBuilder()
 
-    private var displayText by mutableStateOf("")
+    private var displayTextState: MutableState<String> = mutableStateOf("")
+    private var displayText: String
+        get() = displayTextState.value
+        set(value) {
+            displayTextState.value = value
+        }
 
     @Composable
     override fun Content() {
@@ -182,6 +186,11 @@ abstract class TextHud(
     }
 
     protected abstract fun getText(): String?
+
+    override fun clone(): Hud = (super.clone() as TextHud).also {
+        it.sb = StringBuilder()
+        it.displayTextState = mutableStateOf("")
+    }
 
     @ApiStatus.Internal
     class Simple(

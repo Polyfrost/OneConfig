@@ -28,7 +28,10 @@ package org.polyfrost.oneconfig.api.hud.v1;
 
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -48,6 +51,26 @@ public class TextHudTest {
         assertNotNull(hud.text());
     }
 
+    @Test
+    void cloneDoesNotShareDisplayState() throws Exception {
+        TestMutableTextHud provider = new TestMutableTextHud("Provider");
+        provider.update();
+
+        TestMutableTextHud clone = (TestMutableTextHud) provider.clone();
+        clone.setText("Clone");
+        clone.update();
+
+        assertEquals("Label Provider", displayText(provider));
+        assertEquals("Label Clone", displayText(clone));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static String displayText(TextHud hud) throws Exception {
+        Field field = TextHud.class.getDeclaredField("displayTextState");
+        field.setAccessible(true);
+        return ((androidx.compose.runtime.MutableState<String>) field.get(hud)).getValue();
+    }
+
     private static class TestDateTimeHud extends TextHud.DateTime {
         TestDateTimeHud(String template) {
             super("Date:", template, "");
@@ -55,6 +78,24 @@ public class TextHudTest {
 
         String text() {
             return getText();
+        }
+    }
+
+    private static class TestMutableTextHud extends TextHud {
+        private String text;
+
+        TestMutableTextHud(String text) {
+            super("test_text_hud.yml", "Test Text Hud", Hud.Category.Companion.getINFO(), "Label", "");
+            this.text = text;
+        }
+
+        void setText(String text) {
+            this.text = text;
+        }
+
+        @Override
+        protected String getText() {
+            return text;
         }
     }
 }
