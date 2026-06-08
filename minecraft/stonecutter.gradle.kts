@@ -13,7 +13,9 @@ stonecutter {
             )
             val catalogue = rootProject.getForwardingVersionCatalog(current)
 
-            this["moul_compat"] = catalogue.has("moulconfig")
+            this["moul_compat"] = current.project.endsWith("-fabric") &&
+                eval(current.version, "> 1.21.10") &&
+                catalogue.has("moulconfig")
             this["yacl_compat"] = catalogue.has("yacl")
             this["clothconfig_compat"] = catalogue.has("clothconfig")
             this["modmenu_compat"] = catalogue.has("modmenu")

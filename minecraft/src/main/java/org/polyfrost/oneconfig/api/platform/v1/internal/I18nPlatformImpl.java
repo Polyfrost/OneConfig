@@ -28,6 +28,9 @@ package org.polyfrost.oneconfig.api.platform.v1.internal;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.resources.language.I18n;
+//? if >= 26.2 {
+/*import net.minecraft.locale.Language;
+*///?}
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import org.polyfrost.oneconfig.api.platform.v1.I18nPlatform;
@@ -45,7 +48,11 @@ public class I18nPlatformImpl implements I18nPlatform {
 
     @Override
     public boolean hasTranslation(String key) {
+        //? if >= 26.2 {
+        /*return Language.getInstance().has(key);
+        *///?} else {
         return I18n.exists(key);
+        //?}
     }
 
     @Override
