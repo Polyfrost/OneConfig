@@ -174,9 +174,8 @@ object SkiaCtx {
      * it so the capture matches what is on screen. The HUD is unaffected - it is already blitted into the main RT.
      */
     fun compositeBackBufferForScreenshot(target: com.mojang.blaze3d.pipeline.RenderTarget) {
-        //? if >= 26.1 {
-        // 26.1+ draws compose into the main render target already, so no compositing is needed here.
-        //? } else {
+        //26.1+ draws compose into the main render target already, so no compositing is needed here.
+        //? if < 26.1 {
         /*if (!this::directContext.isInitialized) return
         if (isVulkanMode) return
         if (client.screen !is ComposeScreen) return
