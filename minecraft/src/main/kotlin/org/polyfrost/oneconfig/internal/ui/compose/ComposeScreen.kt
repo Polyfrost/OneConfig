@@ -319,6 +319,7 @@ abstract class ComposeScreen(
             isCtrlPressed = modifiers.ctrlDown(),
             isShiftPressed = modifiers.shiftDown(),
             isAltPressed = modifiers.altDown(),
+            isMetaPressed = modifiers.superDown(),
             nativeEvent = KeyEvent(
                 dummyComponent,
                 eventType,
@@ -356,6 +357,7 @@ abstract class ComposeScreen(
             isCtrlPressed = modifiers.ctrlDown(),
             isShiftPressed = modifiers.shiftDown(),
             isAltPressed = modifiers.altDown(),
+            isMetaPressed = modifiers.superDown(),
             nativeEvent = KeyEvent(
                 dummyComponent,
                 KeyEvent.KEY_RELEASED,
