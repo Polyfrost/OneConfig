@@ -175,7 +175,7 @@ object SkiaCtx {
      */
     fun compositeBackBufferForScreenshot(target: com.mojang.blaze3d.pipeline.RenderTarget) {
         //? if >= 26.1 {
-        // 26.1+ draws compose into the main render target already, so no compositing is needed here.
+         26.1+ draws compose into the main render target already, so no compositing is needed here.
         //? } else {
         /*if (!this::directContext.isInitialized) return
         if (isVulkanMode) return

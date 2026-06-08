@@ -10,6 +10,8 @@ resource-loader-v1 = "1.0.10+78c8b46653"
 
 modmenu = "17.0.0-alpha.1"
 yacl = "3.8.0+1.21.9-fabric"
+moulconfig = "3.11.0"
+dandelion = "1.0.0-alpha.15+1.21.11"
 
 [libraries]
 api-base = { module = "net.fabricmc.fabric-api:fabric-api-base", version.ref = "api-base" }
@@ -23,7 +25,8 @@ resource-loader-v1 = { module = "net.fabricmc.fabric-api:fabric-resource-loader-
 
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
+dandelion = { module = "net.azureaaron:dandelion", version.ref = "dandelion" }
 
 [bundles]
-compat = ["modmenu", "yacl"]
+compat = ["modmenu", "yacl", "dandelion"]
 fabric-api = ["api-base", "lifecycle-events-v1", "rendering-v1", "screen-api-v1", "transitive-access-wideners-v1", "command-api-v2", "key-binding-api-v1", "resource-loader-v1"]

@@ -18,6 +18,10 @@ plugins {
 }
 
 repositories {
+    fun scopedMaven(url: String, vararg groups: String, includeSubgroups: Boolean = false) = maven(url) {
+        content { for (group in groups) if (!includeSubgroups) includeGroup(group) else includeGroupAndSubgroups(group) }
+    }
+
     maven("https://repo.polyfrost.org/releases")
     maven("https://repo.polyfrost.org/snapshots")
     maven("https://repo.hypixel.net/repository/Hypixel/")
@@ -51,9 +55,8 @@ repositories {
         content { includeGroupAndSubgroups("org.parchmentmc") }
     }
     maven("https://redirector.kotlinlang.org/maven/compose-dev")
-    maven("https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1") {
-        content { includeGroup("me.djtheredstoner") }
-    }
+    scopedMaven("https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1", "me.djtheredstoner")
+    scopedMaven("https://maven.azureaaron.net/snapshots", "net.azureaaron")
     google()
 }
 
