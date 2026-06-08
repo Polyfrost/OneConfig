@@ -44,16 +44,26 @@ import java.lang.annotation.*;
 public @interface DraggableList {
     String title();
 
+    String titleKey() default "";
+
     String description() default "";
+
+    String descriptionKey() default "";
 
     String icon() default "";
 
     String category() default "General";
 
+    String categoryKey() default "";
+
     String subcategory() default "General";
+
+    String subcategoryKey() default "";
 
     /** Full set of items. Required when {@code checkable = true}; optional otherwise. */
     String[] options() default {};
+
+    String[] optionsKey() default {};
 
     /** Show checkboxes to enable/disable individual items. */
     boolean checkable() default false;

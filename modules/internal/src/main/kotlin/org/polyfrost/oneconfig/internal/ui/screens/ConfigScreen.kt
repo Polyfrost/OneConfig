@@ -56,6 +56,9 @@ import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
+import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
+import org.polyfrost.oneconfig.internal.ui.components.localizedGroup
+import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.searchMatches
@@ -226,12 +229,12 @@ private fun filterSettingNode(
 }
 
 private fun Property<*>.matchesLocalSearch(category: String, subcategory: String, query: String): Boolean {
-    return listOfNotNull(title, id, description, category, subcategory)
+    return listOfNotNull(localizedTitle(), id, localizedDescription(), category, subcategory)
         .any { searchMatches(it.asRenderText(), query) }
 }
 
 private fun Tree.matchesLocalSearch(category: String, subcategory: String, query: String): Boolean {
-    return listOfNotNull(title, id, description, category, subcategory)
+    return listOfNotNull(localizedTitle(), id, localizedDescription(), category, subcategory)
         .any { searchMatches(it.asRenderText(), query) }
 }
 
@@ -289,8 +292,7 @@ private fun isRenderableProperty(prop: Property<*>): Boolean {
 }
 
 private fun nodeGroup(node: Node, key: String, default: String): String {
-    val value = node.getMetadata<String>(key)?.trim()
-    return value?.takeUnless(String::isEmpty) ?: default
+    return node.localizedGroup(key, "${key}Key", default)
 }
 
 @Composable

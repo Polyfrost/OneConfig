@@ -42,12 +42,20 @@ public @interface Info {
 	/** Title for the info block. Due to Java annotation limitations, if the value is unchanged, it will be replaced with the actual type name. */
 	String title() default "polyui.info";
 
+	String titleKey() default "";
+
 	/** Icon for the info block. Due to Java annotation limitations, if the value is unchanged, it will be replaced with the actual type icon. */
 	String icon() default "polyui/info.svg";
 
 	String description();
 
+	String descriptionKey() default "";
+
 	String category() default "General";
 
+	String categoryKey() default "";
+
 	String subcategory() default "General";
+
+	String subcategoryKey() default "";
 }

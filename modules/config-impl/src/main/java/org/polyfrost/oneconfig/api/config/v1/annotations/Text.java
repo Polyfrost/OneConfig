@@ -37,7 +37,11 @@ import java.lang.annotation.*;
 public @interface Text {
     String title();
 
+    String titleKey() default "";
+
     String description() default "";
+
+    String descriptionKey() default "";
 
     String icon() default "";
 
@@ -48,7 +52,13 @@ public @interface Text {
 
     String category() default "General";
 
+    String categoryKey() default "";
+
     String subcategory() default "General";
 
+    String subcategoryKey() default "";
+
     String placeholder() default "polyui.textinput.placeholder";
+
+    String placeholderKey() default "";
 }

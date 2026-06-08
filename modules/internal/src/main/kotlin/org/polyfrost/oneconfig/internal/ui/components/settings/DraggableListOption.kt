@@ -65,6 +65,7 @@ fun DraggableListOption(data: DraggableListOptionData) {
             }
         }
     }
+    val optionLabels = data.optionLabels
 
     // Current ordered items. When checkable, includes disabled items appended after enabled ones.
     var items by remember(data.prop) {
@@ -212,7 +213,7 @@ fun DraggableListOption(data: DraggableListOptionData) {
 
                         data.icon?.takeIf { it.isNotEmpty() }?.let { Icon(it, modifier = Modifier.size(16.dp), color = contentColor) }
 
-                        Text(item, color = contentColor, fontSize = 13.sp)
+                        Text(optionLabels[item] ?: item, color = contentColor, fontSize = 13.sp)
                     }
                 }
             }

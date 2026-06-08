@@ -27,11 +27,27 @@
 package org.polyfrost.oneconfig.api.platform.v1.internal;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import org.polyfrost.oneconfig.api.platform.v1.I18nPlatform;
 
 public class I18nPlatformImpl implements I18nPlatform {
+    @Override
+    public Object translate(String key, Object... args) {
+        return Component.translatable(key, args);
+    }
+
+    @Override
+    public String translateString(String key, Object... args) {
+        return I18n.get(key, args);
+    }
+
+    @Override
+    public boolean hasTranslation(String key) {
+        return I18n.exists(key);
+    }
+
     @Override
     public String getUnformattedText(Object component) {
         String s;

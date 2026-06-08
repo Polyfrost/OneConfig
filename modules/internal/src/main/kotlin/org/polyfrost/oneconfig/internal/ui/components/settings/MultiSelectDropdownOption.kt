@@ -54,7 +54,7 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
     val theme = LocalTheme.current
 
     val options: List<String> = remember(data.prop) {
-        data.options?.toList() ?: emptyList()
+        data.optionLabels ?: data.options?.toList() ?: emptyList()
     }
 
     // Checkable (multi-select): property = Array<Boolean> indexed by option

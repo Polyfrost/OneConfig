@@ -200,37 +200,54 @@ public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$TextVisualiz
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Accordion : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun categoryKey ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
+	public abstract fun descriptionKey ()Ljava/lang/String;
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun index ()I
 	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun subcategoryKey ()Ljava/lang/String;
 	public abstract fun title ()Ljava/lang/String;
+	public abstract fun titleKey ()Ljava/lang/String;
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Button : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun categoryKey ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
+	public abstract fun descriptionKey ()Ljava/lang/String;
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun subcategoryKey ()Ljava/lang/String;
 	public abstract fun text ()Ljava/lang/String;
+	public abstract fun textKey ()Ljava/lang/String;
 	public abstract fun title ()Ljava/lang/String;
+	public abstract fun titleKey ()Ljava/lang/String;
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Checkbox : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun categoryKey ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
+	public abstract fun descriptionKey ()Ljava/lang/String;
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun subcategoryKey ()Ljava/lang/String;
 	public abstract fun title ()Ljava/lang/String;
+	public abstract fun titleKey ()Ljava/lang/String;
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Color : java/lang/annotation/Annotation {
 	public abstract fun alpha ()Z
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun categoryKey ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
+	public abstract fun descriptionKey ()Ljava/lang/String;
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun subcategoryKey ()Ljava/lang/String;
 	public abstract fun title ()Ljava/lang/String;
+	public abstract fun titleKey ()Ljava/lang/String;
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/DependsOn : java/lang/annotation/Annotation {
@@ -239,21 +256,31 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/DraggableList : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun categoryKey ()Ljava/lang/String;
 	public abstract fun checkable ()Z
 	public abstract fun description ()Ljava/lang/String;
+	public abstract fun descriptionKey ()Ljava/lang/String;
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun options ()[Ljava/lang/String;
+	public abstract fun optionsKey ()[Ljava/lang/String;
 	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun subcategoryKey ()Ljava/lang/String;
 	public abstract fun title ()Ljava/lang/String;
+	public abstract fun titleKey ()Ljava/lang/String;
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Dropdown : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun categoryKey ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
+	public abstract fun descriptionKey ()Ljava/lang/String;
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun options ()[Ljava/lang/String;
+	public abstract fun optionsKey ()[Ljava/lang/String;
 	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun subcategoryKey ()Ljava/lang/String;
 	public abstract fun title ()Ljava/lang/String;
+	public abstract fun titleKey ()Ljava/lang/String;
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Include : java/lang/annotation/Annotation {
@@ -261,40 +288,59 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Info : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun categoryKey ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
+	public abstract fun descriptionKey ()Ljava/lang/String;
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun subcategoryKey ()Ljava/lang/String;
 	public abstract fun title ()Ljava/lang/String;
+	public abstract fun titleKey ()Ljava/lang/String;
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Keybind : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun categoryKey ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
+	public abstract fun descriptionKey ()Ljava/lang/String;
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun subcategoryKey ()Ljava/lang/String;
 	public abstract fun title ()Ljava/lang/String;
+	public abstract fun titleKey ()Ljava/lang/String;
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/MultiSelectDropdown : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun categoryKey ()Ljava/lang/String;
 	public abstract fun checkable ()Z
 	public abstract fun description ()Ljava/lang/String;
+	public abstract fun descriptionKey ()Ljava/lang/String;
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun options ()[Ljava/lang/String;
+	public abstract fun optionsKey ()[Ljava/lang/String;
 	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun subcategoryKey ()Ljava/lang/String;
 	public abstract fun title ()Ljava/lang/String;
+	public abstract fun titleKey ()Ljava/lang/String;
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Number : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun categoryKey ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
+	public abstract fun descriptionKey ()Ljava/lang/String;
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun max ()F
 	public abstract fun min ()F
 	public abstract fun placeholder ()Ljava/lang/String;
+	public abstract fun placeholderKey ()Ljava/lang/String;
 	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun subcategoryKey ()Ljava/lang/String;
 	public abstract fun title ()Ljava/lang/String;
+	public abstract fun titleKey ()Ljava/lang/String;
 	public abstract fun unit ()Ljava/lang/String;
+	public abstract fun unitKey ()Ljava/lang/String;
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Option : java/lang/annotation/Annotation {
@@ -307,40 +353,58 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/RadioButton : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun categoryKey ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
+	public abstract fun descriptionKey ()Ljava/lang/String;
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun options ()[Ljava/lang/String;
+	public abstract fun optionsKey ()[Ljava/lang/String;
 	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun subcategoryKey ()Ljava/lang/String;
 	public abstract fun title ()Ljava/lang/String;
+	public abstract fun titleKey ()Ljava/lang/String;
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Slider : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun categoryKey ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
+	public abstract fun descriptionKey ()Ljava/lang/String;
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun max ()F
 	public abstract fun min ()F
 	public abstract fun step ()F
 	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun subcategoryKey ()Ljava/lang/String;
 	public abstract fun title ()Ljava/lang/String;
+	public abstract fun titleKey ()Ljava/lang/String;
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Switch : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun categoryKey ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
+	public abstract fun descriptionKey ()Ljava/lang/String;
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun subcategoryKey ()Ljava/lang/String;
 	public abstract fun title ()Ljava/lang/String;
+	public abstract fun titleKey ()Ljava/lang/String;
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Text : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun categoryKey ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
+	public abstract fun descriptionKey ()Ljava/lang/String;
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun placeholder ()Ljava/lang/String;
+	public abstract fun placeholderKey ()Ljava/lang/String;
 	public abstract fun regex ()Ljava/lang/String;
 	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun subcategoryKey ()Ljava/lang/String;
 	public abstract fun title ()Ljava/lang/String;
+	public abstract fun titleKey ()Ljava/lang/String;
 }
 
 public class org/polyfrost/oneconfig/api/config/v1/backend/impl/FileBackend : org/polyfrost/oneconfig/api/config/v1/backend/Backend {

@@ -71,10 +71,17 @@ fun DropdownOption(data: DropdownOptionData) {
         data.options != null -> data.options!!
         else -> emptyList()
     }
+    val optionValues = data.optionValues ?: options
 
     val initialValue = data.prop.get()
     var selectedIdx by remember(data.prop) {
-        mutableStateOf(if (initialValue is Enum<*>) initialValue.ordinal else initialValue as? Int ?: 0)
+        mutableStateOf(
+            when (initialValue) {
+                is Enum<*> -> initialValue.ordinal
+                is String -> optionValues.indexOf(initialValue).takeIf { it >= 0 } ?: 0
+                else -> initialValue as? Int ?: 0
+            }
+        )
     }
     val selectedName = options.getOrElse(selectedIdx) { "—" }
 
@@ -164,6 +171,8 @@ fun DropdownOption(data: DropdownOptionData) {
                                             @Suppress("UNCHECKED_CAST")
                                             if (enumClass != null) {
                                                 (data.prop as Property<Any>).set(values[index])
+                                            } else if (data.prop.type == String::class.java) {
+                                                (data.prop as Property<Any>).set(optionValues.getOrElse(index) { option })
                                             } else {
                                                 (data.prop as Property<Any>).set(index)
                                             }

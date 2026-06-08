@@ -37,13 +37,21 @@ import java.lang.annotation.*;
 public @interface Color {
     String title();
 
+    String titleKey() default "";
+
     String description() default "";
+
+    String descriptionKey() default "";
 
     String icon() default "";
 
     String category() default "General";
 
+    String categoryKey() default "";
+
     String subcategory() default "General";
+
+    String subcategoryKey() default "";
 
     boolean alpha() default true;
 }

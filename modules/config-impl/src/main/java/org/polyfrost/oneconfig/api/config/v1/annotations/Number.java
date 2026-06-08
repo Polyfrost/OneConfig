@@ -37,19 +37,31 @@ import java.lang.annotation.*;
 public @interface Number {
     String title();
 
+    String titleKey() default "";
+
     String description() default "";
+
+    String descriptionKey() default "";
 
     String icon() default "";
 
     String category() default "General";
 
+    String categoryKey() default "";
+
     String subcategory() default "General";
 
+    String subcategoryKey() default "";
+
     String unit() default "";
+
+    String unitKey() default "";
 
     float min() default -10f;
 
     float max() default 100f;
 
     String placeholder() default "oneconfig.numberinput.placeholder";
+
+    String placeholderKey() default "";
 }

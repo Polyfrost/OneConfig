@@ -45,15 +45,25 @@ import java.lang.annotation.*;
 public @interface MultiSelectDropdown {
     String title();
 
+    String titleKey() default "";
+
     String description() default "";
+
+    String descriptionKey() default "";
 
     String icon() default "";
 
     String category() default "General";
 
+    String categoryKey() default "";
+
     String subcategory() default "General";
 
+    String subcategoryKey() default "";
+
     String[] options() default {};
+
+    String[] optionsKey() default {};
 
     /** When true (default), renders checkboxes for multi-select. When false, single-select list. */
     boolean checkable() default true;

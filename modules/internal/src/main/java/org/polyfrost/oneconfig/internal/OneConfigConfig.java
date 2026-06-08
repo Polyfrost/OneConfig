@@ -18,79 +18,79 @@ public class OneConfigConfig extends Config {
     // AWT capture into GLFW). 344 == GLFW_KEY_RIGHT_SHIFT, declared as a literal to avoid a GLFW dependency here. The
     // action that opens the GUI is supplied by the minecraft module via setOpenAction (it cannot be serialized, so it
     // lives outside the keybind).
-    @Keybind(title = "OneConfig Keybind", subcategory = "GUI", description = "The keybind used to open the OneConfig menu.")
+    @Keybind(title = "OneConfig Keybind", titleKey = "oneconfig.preferences.keybind.title", subcategory = "GUI", subcategoryKey = "oneconfig.preferences.category.gui", description = "The keybind used to open the OneConfig menu.", descriptionKey = "oneconfig.preferences.keybind.description")
     public static OneConfigKeybind oneConfigKeybind = new OneConfigKeybind(new int[]{344}, null, KeyModifiers.NONE, 0L, pressed -> true);
 
-    @Switch(title = "Window Blur", subcategory = "GUI", description = "Blurs the area behind the OneConfig window.")
+    @Switch(title = "Window Blur", titleKey = "oneconfig.preferences.window_blur.title", subcategory = "GUI", subcategoryKey = "oneconfig.preferences.category.gui", description = "Blurs the area behind the OneConfig window.", descriptionKey = "oneconfig.preferences.window_blur.description")
     public static boolean enableWindowBlur = true;
 
-    @Switch(title = "Background Blur", subcategory = "GUI", description = "Blurs the full game background when the OneConfig menu is open.")
+    @Switch(title = "Background Blur", titleKey = "oneconfig.preferences.background_blur.title", subcategory = "GUI", subcategoryKey = "oneconfig.preferences.category.gui", description = "Blurs the full game background when the OneConfig menu is open.", descriptionKey = "oneconfig.preferences.background_blur.description")
     public static boolean enableBackgroundBlur = true;
 
-    @Switch(title = "Use custom GUI scale", subcategory = "GUI", description = "Override the Minecraft GUI scale for the OneConfig menu.")
+    @Switch(title = "Use custom GUI scale", titleKey = "oneconfig.preferences.use_custom_scale.title", subcategory = "GUI", subcategoryKey = "oneconfig.preferences.category.gui", description = "Override the Minecraft GUI scale for the OneConfig menu.", descriptionKey = "oneconfig.preferences.use_custom_scale.description")
     public static boolean useCustomScale = false;
 
-    @Slider(title = "Custom GUI scale", subcategory = "GUI", min = 0.5f, max = 2f, step = 0.05f, description = "The custom GUI scale to use for the OneConfig menu.")
+    @Slider(title = "Custom GUI scale", titleKey = "oneconfig.preferences.custom_scale.title", subcategory = "GUI", subcategoryKey = "oneconfig.preferences.category.gui", min = 0.5f, max = 2f, step = 0.05f, description = "The custom GUI scale to use for the OneConfig menu.", descriptionKey = "oneconfig.preferences.custom_scale.description")
     public static float customScale = 1f;
 
-    @Dropdown(title = "Opening Behavior", subcategory = "GUI", options = {"Mods", "Preferences", "Previous page", "Smart reset"}, description = "Which page to open when the OneConfig menu is launched.")
+    @Dropdown(title = "Opening Behavior", titleKey = "oneconfig.preferences.opening_behavior.title", subcategory = "GUI", subcategoryKey = "oneconfig.preferences.category.gui", options = {"Mods", "Preferences", "Previous page", "Smart reset"}, optionsKey = {"oneconfig.mods", "oneconfig.preferences", "oneconfig.preferences.opening_behavior.previous_page", "oneconfig.preferences.opening_behavior.smart_reset"}, description = "Which page to open when the OneConfig menu is launched.", descriptionKey = "oneconfig.preferences.opening_behavior.description")
     public static int openingBehavior = 3;
 
-    @Switch(title = "Show opening page animation", subcategory = "GUI", description = "Plays the page animation when the menu is first opened.")
+    @Switch(title = "Show opening page animation", titleKey = "oneconfig.preferences.show_opening_page_animation.title", subcategory = "GUI", subcategoryKey = "oneconfig.preferences.category.gui", description = "Plays the page animation when the menu is first opened.", descriptionKey = "oneconfig.preferences.show_opening_page_animation.description")
     public static boolean showOpeningPageAnimation = false;
 
-    @Switch(title = "Instant Search", subcategory = "GUI", description = "Focuses the search bar when the OneConfig menu opens.")
+    @Switch(title = "Instant Search", titleKey = "oneconfig.preferences.instant_search.title", subcategory = "GUI", subcategoryKey = "oneconfig.preferences.category.gui", description = "Focuses the search bar when the OneConfig menu opens.", descriptionKey = "oneconfig.preferences.instant_search.description")
     public static boolean instantSearch = true;
 
-    @Slider(title = "Time before reset", subcategory = "GUI", min = 5f, max = 60f, step = 1f, description = "Seconds of inactivity before the smart reset returns to the default page.")
+    @Slider(title = "Time before reset", titleKey = "oneconfig.preferences.time_before_reset.title", subcategory = "GUI", subcategoryKey = "oneconfig.preferences.category.gui", min = 5f, max = 60f, step = 1f, description = "Seconds of inactivity before the smart reset returns to the default page.", descriptionKey = "oneconfig.preferences.time_before_reset.description")
     public static float timeBeforeReset = 15f;
 
-    @Number(title = "Search Distance", subcategory = "Search", min = 0f, max = 10f, description = "The maximum Levenshtein distance used when fuzzy-matching search queries.")
+    @Number(title = "Search Distance", titleKey = "oneconfig.preferences.search_distance.title", subcategory = "Search", subcategoryKey = "oneconfig.preferences.category.search", min = 0f, max = 10f, description = "The maximum Levenshtein distance used when fuzzy-matching search queries.", descriptionKey = "oneconfig.preferences.search_distance.description")
     public static int searchDistance = 2;
 
-    @Switch(title = "Opening Animation", subcategory = "Animations", description = "Plays an animation when opening the OneConfig menu.")
+    @Switch(title = "Opening Animation", titleKey = "oneconfig.preferences.opening_animation.title", subcategory = "Animations", subcategoryKey = "oneconfig.preferences.category.animations", description = "Plays an animation when opening the OneConfig menu.", descriptionKey = "oneconfig.preferences.opening_animation.description")
     public static boolean guiOpenAnimation = true;
 
-    @Switch(title = "Closing Animation", subcategory = "Animations", description = "Plays an animation when closing the OneConfig menu.")
+    @Switch(title = "Closing Animation", titleKey = "oneconfig.preferences.closing_animation.title", subcategory = "Animations", subcategoryKey = "oneconfig.preferences.category.animations", description = "Plays an animation when closing the OneConfig menu.", descriptionKey = "oneconfig.preferences.closing_animation.description")
     public static boolean guiClosingAnimation = true;
 
-    @Slider(title = "Opening Time", subcategory = "Animations", min = 0.05f, max = 2f, step = 0.05f, description = "Duration of the opening and closing animations, in seconds.")
+    @Slider(title = "Opening Time", titleKey = "oneconfig.preferences.opening_time.title", subcategory = "Animations", subcategoryKey = "oneconfig.preferences.category.animations", min = 0.05f, max = 2f, step = 0.05f, description = "Duration of the opening and closing animations, in seconds.", descriptionKey = "oneconfig.preferences.opening_time.description")
     public static float animationTime = 0.6f;
 
-    @Switch(title = "Show Page Animations", subcategory = "Animations", description = "Animate transitions between pages.")
+    @Switch(title = "Show Page Animations", titleKey = "oneconfig.preferences.show_page_animations.title", subcategory = "Animations", subcategoryKey = "oneconfig.preferences.category.animations", description = "Animate transitions between pages.", descriptionKey = "oneconfig.preferences.show_page_animations.description")
     public static boolean showPageAnimations = true;
 
-    @Switch(title = "UI Sounds", subcategory = "Sounds", description = "Play sound effects when interacting with the OneConfig menu and HUD designer.")
+    @Switch(title = "UI Sounds", titleKey = "oneconfig.preferences.ui_sounds.title", subcategory = "Sounds", subcategoryKey = "oneconfig.preferences.category.sounds", description = "Play sound effects when interacting with the OneConfig menu and HUD designer.", descriptionKey = "oneconfig.preferences.ui_sounds.description")
     public static boolean enableUISounds = true;
 
-    @Switch(title = "Menu Sounds", subcategory = "Sounds", description = "Play sounds when opening and closing OneConfig screens.")
+    @Switch(title = "Menu Sounds", titleKey = "oneconfig.preferences.menu_sounds.title", subcategory = "Sounds", subcategoryKey = "oneconfig.preferences.category.sounds", description = "Play sounds when opening and closing OneConfig screens.", descriptionKey = "oneconfig.preferences.menu_sounds.description")
     public static boolean enableUIMenuSounds = true;
 
-    @Switch(title = "Click Sounds", subcategory = "Sounds", description = "Play sounds when clicking OneConfig controls.")
+    @Switch(title = "Click Sounds", titleKey = "oneconfig.preferences.click_sounds.title", subcategory = "Sounds", subcategoryKey = "oneconfig.preferences.category.sounds", description = "Play sounds when clicking OneConfig controls.", descriptionKey = "oneconfig.preferences.click_sounds.description")
     public static boolean enableUIClickSounds = true;
 
-    @Switch(title = "Slider Sounds", subcategory = "Sounds", description = "Play tick sounds when dragging sliders and ordered lists.")
+    @Switch(title = "Slider Sounds", titleKey = "oneconfig.preferences.slider_sounds.title", subcategory = "Sounds", subcategoryKey = "oneconfig.preferences.category.sounds", description = "Play tick sounds when dragging sliders and ordered lists.", descriptionKey = "oneconfig.preferences.slider_sounds.description")
     public static boolean enableUISliderSounds = true;
 
-    @Switch(title = "HUD Editor Sounds", subcategory = "Sounds", description = "Play sounds when selecting, dragging, and resizing HUD elements.")
+    @Switch(title = "HUD Editor Sounds", titleKey = "oneconfig.preferences.hud_editor_sounds.title", subcategory = "Sounds", subcategoryKey = "oneconfig.preferences.category.sounds", description = "Play sounds when selecting, dragging, and resizing HUD elements.", descriptionKey = "oneconfig.preferences.hud_editor_sounds.description")
     public static boolean enableHudEditorSounds = true;
 
-    @Switch(title = "UI Ambience", subcategory = "Sounds", description = "Play a soft ambient loop while the OneConfig menu or HUD designer is open.")
+    @Switch(title = "UI Ambience", titleKey = "oneconfig.preferences.ui_ambience.title", subcategory = "Sounds", subcategoryKey = "oneconfig.preferences.category.sounds", description = "Play a soft ambient loop while the OneConfig menu or HUD designer is open.", descriptionKey = "oneconfig.preferences.ui_ambience.description")
     public static boolean enableUIAmbience = true;
 
-    @Switch(title = "Duck Music During Ambience", subcategory = "Sounds", description = "Lower Minecraft music while OneConfig ambience is playing.")
+    @Switch(title = "Duck Music During Ambience", titleKey = "oneconfig.preferences.duck_music.title", subcategory = "Sounds", subcategoryKey = "oneconfig.preferences.category.sounds", description = "Lower Minecraft music while OneConfig ambience is playing.", descriptionKey = "oneconfig.preferences.duck_music.description")
     public static boolean enableUIMusicDucking = true;
 
-    @Slider(title = "UI Sound Volume", subcategory = "Sounds", min = 0f, max = 1f, step = 0.05f, description = "Volume of OneConfig's UI sound effects.")
+    @Slider(title = "UI Sound Volume", titleKey = "oneconfig.preferences.ui_sound_volume.title", subcategory = "Sounds", subcategoryKey = "oneconfig.preferences.category.sounds", min = 0f, max = 1f, step = 0.05f, description = "Volume of OneConfig's UI sound effects.", descriptionKey = "oneconfig.preferences.ui_sound_volume.description")
     public static float uiSoundVolume = 1f;
 
-    @Slider(title = "UI Ambience Volume", subcategory = "Sounds", min = 0f, max = 1f, step = 0.05f, description = "Volume of OneConfig's UI ambience.")
+    @Slider(title = "UI Ambience Volume", titleKey = "oneconfig.preferences.ui_ambience_volume.title", subcategory = "Sounds", subcategoryKey = "oneconfig.preferences.category.sounds", min = 0f, max = 1f, step = 0.05f, description = "Volume of OneConfig's UI ambience.", descriptionKey = "oneconfig.preferences.ui_ambience_volume.description")
     public static float uiAmbienceVolume = 1f;
 
-    @Slider(title = "Page Animation Duration", subcategory = "Animations", min = 0.1f, max = 0.6f, step = 0.05f, description = "Duration of page transition animations, in seconds.")
+    @Slider(title = "Page Animation Duration", titleKey = "oneconfig.preferences.page_animation_duration.title", subcategory = "Animations", subcategoryKey = "oneconfig.preferences.category.animations", min = 0.1f, max = 0.6f, step = 0.05f, description = "Duration of page transition animations, in seconds.", descriptionKey = "oneconfig.preferences.page_animation_duration.description")
     public static float pageAnimationDuration = 0.3f;
 
-    @Switch(title = "Show First Launch Message", subcategory = "General", description = "Show the welcome message the first time OneConfig is launched.")
+    @Switch(title = "Show First Launch Message", titleKey = "oneconfig.preferences.show_first_launch_message.title", subcategory = "General", subcategoryKey = "oneconfig.preferences.category.general", description = "Show the welcome message the first time OneConfig is launched.", descriptionKey = "oneconfig.preferences.show_first_launch_message.description")
     public static boolean showFirstLaunchMessage = true;
 
     /** The live instance, used to persist programmatic changes (e.g. {@link #markFirstLaunchShown()}). */
