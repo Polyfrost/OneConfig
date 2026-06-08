@@ -27,6 +27,8 @@ modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
 dandelion = { module = "net.azureaaron:dandelion", version.ref = "dandelion" }
 
+moulconfig = { module = "org.notenoughupdates.moulconfig:common", version.ref = "moulconfig" }
+
 [bundles]
 compat = ["modmenu", "yacl", "dandelion"]
 fabric-api = ["api-base", "lifecycle-events-v1", "rendering-v1", "screen-api-v1", "transitive-access-wideners-v1", "command-api-v2", "key-binding-api-v1", "resource-loader-v1"]

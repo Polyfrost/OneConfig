@@ -1,8 +1,8 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
 //? moul_compat {
-/*
-import org.polyfrost.oneconfig.internal.compat.MoulConfigCompat;
+
+/*import org.polyfrost.oneconfig.internal.compat.MoulConfigCompat;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
@@ -15,7 +15,7 @@ import java.util.Collection;
 @Pseudo
 @Mixin(targets = "moe.nea.firmament.compat.moulconfig.MCConfigEditorIntegration", remap = false)
 public class Mixin_MCConfigEditorIntegration_Firmament {
-    @Inject(method = "<init>()V", at = @At("TAIL"))
+    @Inject(method = "<init>()V", at = @At("TAIL"), require = 0)
     private void oneconfig$onInit(CallbackInfo ci) {
         try {
             Field categoriesField = this.getClass().getDeclaredField("categories");

@@ -15,12 +15,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Configurations.class)
 public class Mixin_Configurations {
 
-    @Inject(at = @At("HEAD"), method = "<clinit>")
+    @Inject(at = @At("HEAD"), method = "<clinit>", require = 0)
     private static void clinit(CallbackInfo ci) {
         RConfigCompat.enable();
     }
 
-    @Inject(method = "addConfig", at = @At("HEAD"))
+    @Inject(method = "addConfig", at = @At("HEAD"), require = 0)
     private void addConfig(CallbackInfo ci, @Local(argsOnly = true) ResourcefulConfig config) {
         RConfigCompat.addConfig(config);
     }

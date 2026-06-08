@@ -110,8 +110,7 @@ public class Tree extends Node implements Serializable {
     private static void _unpack(Map<String, Object> out, Tree t) {
         for (Map.Entry<String, Node> e : t.theMap.entrySet()) {
             Node n = e.getValue();
-            if (n instanceof Tree) {
-                Tree tt = (Tree) n;
+            if (n instanceof Tree tt) {
                 Map<String, Object> sub = new LinkedHashMap<>(tt.theMap.size());
                 _unpack(sub, tt);
                 out.put(e.getKey(), sub);
@@ -124,11 +123,11 @@ public class Tree extends Node implements Serializable {
     }
 
     private static void _contentToString(StringBuilder sb, int depth, Tree t) {
-        for (int i = 0; i < depth; i++) sb.append('\t');
+        sb.repeat("\t", Math.max(0, depth));
         sb.append(t.getTitle()).append(":\n");
         for (Map.Entry<String, Node> e : t.theMap.entrySet()) {
             if (e.getValue() instanceof Property) {
-                for (int i = 0; i < depth + 1; i++) sb.append('\t');
+                sb.repeat("\t", Math.max(0, depth + 1));
                 sb.append(e.getValue()).append('\n');
             } else {
                 _contentToString(sb, depth + 1, (Tree) e.getValue());
@@ -354,13 +353,13 @@ public class Tree extends Node implements Serializable {
 
     private static boolean _evaluatePath(StringBuilder sb, Tree root, Node node) {
         if (root == node) {
-            if (sb.length() > 0) sb.append('.');
+            if (!sb.isEmpty()) sb.append('.');
             sb.append(node.getID());
             return true;
         }
         for (Map.Entry<String, Node> e : root.theMap.entrySet()) {
             if (e.getValue() == node) {
-                if (sb.length() > 0) sb.append('.');
+                if (!sb.isEmpty()) sb.append('.');
                 sb.append(e.getKey());
                 return true;
             }

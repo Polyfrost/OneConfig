@@ -1,8 +1,8 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
 //? moul_compat {
-/*
-import io.github.notenoughupdates.moulconfig.processor.ConfigProcessorDriver;
+
+/*import io.github.notenoughupdates.moulconfig.processor.ConfigProcessorDriver;
 import io.github.notenoughupdates.moulconfig.processor.ConfigStructureReader;
 import io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor;
 import org.polyfrost.oneconfig.internal.compat.MoulConfigCompat;
@@ -27,7 +27,7 @@ public class Mixin_ConfigProcessorDriver {
     @Final
     public ConfigStructureReader reader;
 
-    @Inject(at = @At("TAIL"), method = "processConfig")
+    @Inject(at = @At("TAIL"), method = "processConfig", require = 0)
     public void processorEndConfig(CallbackInfo ci) {
         if (reader instanceof MoulConfigProcessor<?> && reader instanceof MoulConfigProcessorAccessor) {
             MoulConfigCompat.parseMoulconfig(

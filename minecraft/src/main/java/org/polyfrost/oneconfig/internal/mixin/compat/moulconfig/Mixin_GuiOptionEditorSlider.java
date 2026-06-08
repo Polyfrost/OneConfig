@@ -1,8 +1,8 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
 //? moul_compat {
-/*
-import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorSlider;
+
+/*import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorSlider;
 import io.github.notenoughupdates.moulconfig.processor.ProcessedOption;
 import org.polyfrost.oneconfig.internal.compat.GuiOptionEditorSliderAccessor;
 import org.polyfrost.oneconfig.relocator.annotations.MoulConfig;
@@ -27,7 +27,7 @@ public class Mixin_GuiOptionEditorSlider implements GuiOptionEditorSliderAccesso
     @Unique
     private float oneconfig$minStep;
 
-    @Inject(method = "<init>", at = @At("RETURN"))
+    @Inject(method = "<init>", at = @At("RETURN"), require = 0)
     public void meow(ProcessedOption option, float minValue, float maxValue, float minStep, CallbackInfo ci) {
         this.oneconfig$minValue = minValue;
         this.oneconfig$maxValue = maxValue;
