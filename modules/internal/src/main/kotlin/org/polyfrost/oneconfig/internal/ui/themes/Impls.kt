@@ -8,6 +8,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
 
+private val MinecraftIconOverrides = mapOf(
+    "align-center" to "/assets/oneconfig/ico/minecraft/align-center.svg",
+    "align-left" to "/assets/oneconfig/ico/minecraft/align-left.svg",
+    "align-right" to "/assets/oneconfig/ico/minecraft/align-right.svg",
+    "bell" to "/assets/oneconfig/ico/minecraft/bell.svg",
+    "cog" to "/assets/oneconfig/ico/minecraft/preferences.svg",
+    "dots-grid" to "/assets/oneconfig/ico/minecraft/dots-grid.svg",
+    "down" to "/assets/oneconfig/ico/minecraft/down.svg",
+    "keyboard" to "/assets/oneconfig/ico/minecraft/keyboard.svg",
+    "maximise" to "/assets/oneconfig/ico/minecraft/maximise.svg",
+    "minus" to "/assets/oneconfig/ico/minecraft/minus.svg",
+    "plus" to "/assets/oneconfig/ico/minecraft/plus.svg",
+    "profiles" to "/assets/oneconfig/ico/minecraft/profiles.svg",
+    "refresh" to "/assets/oneconfig/ico/minecraft/refresh.svg",
+    "settings" to "/assets/oneconfig/ico/minecraft/settings.svg",
+    "text" to "/assets/oneconfig/ico/minecraft/text.svg",
+    "text-input" to "/assets/oneconfig/ico/minecraft/text-input.svg",
+    "trash" to "/assets/oneconfig/ico/minecraft/trash.svg",
+    "up" to "/assets/oneconfig/ico/minecraft/up.svg",
+)
+
 val PolyGlassDark = UITheme(
     "polyglass-dark", "PolyGlass Dark",
 
@@ -127,7 +148,8 @@ val MinecraftDark = UITheme(
             Font("assets/oneconfig/fonts/minecraft/Minecraft-Bold.otf", FontWeight.Bold),
             Font("assets/oneconfig/fonts/minecraft/Minecraft-Regular.otf", FontWeight.Normal)
         )
-    )
+    ),
+    MinecraftIconOverrides
 )
 val MinecraftLight = UITheme(
     "minecraft-light", "Minecraft Light",
@@ -163,5 +185,6 @@ val MinecraftLight = UITheme(
             Font("assets/oneconfig/fonts/minecraft/Minecraft-Bold.otf", FontWeight.Bold),
             Font("assets/oneconfig/fonts/minecraft/Minecraft-Regular.otf", FontWeight.Normal)
         )
-    )
+    ),
+    MinecraftIconOverrides
 )

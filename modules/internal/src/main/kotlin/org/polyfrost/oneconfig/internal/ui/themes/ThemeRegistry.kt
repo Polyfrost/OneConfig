@@ -5,9 +5,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
-import org.polyfrost.oneconfig.api.config.v1.Properties
-import org.polyfrost.oneconfig.api.config.v1.Property
-import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.api.settings.BuiltinVisualizers
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundTheme
@@ -16,9 +14,7 @@ object ThemeRegistry {
     internal val registry = mutableStateListOf<UITheme>()
     internal var activeTheme by mutableStateOf<UITheme?>(null)
 
-    private const val CONFIG_ID = "oneconfig/theme"
-    private const val THEME_KEY = "activeTheme"
-    private var configTree: Tree? = null
+    private const val DEFAULT_THEME_NAME = "PolyGlass Dark"
 
     init {
         register(PolyGlassDark)
@@ -26,7 +22,7 @@ object ThemeRegistry {
         register(MinecraftDark)
         register(MinecraftLight)
 
-        activate(PolyGlassDark)
+        activeTheme = PolyGlassDark
 
         BuiltinVisualizers.register()
     }
@@ -40,6 +36,7 @@ object ThemeRegistry {
     fun activate(theme: UITheme) {
         val previous = activeTheme
         activeTheme = theme
+        ThemeConfig.activeTheme = theme.name
         saveThemeToConfig()
         if (previous != null && UiSoundTheme.of(previous) != UiSoundTheme.of(theme)) {
             UiSounds.onSoundThemeChanged()
@@ -48,30 +45,18 @@ object ThemeRegistry {
 
     fun loadFromConfig() {
         try {
-            val existing = ConfigManager.active().get(CONFIG_ID)
-            if (existing != null) {
-                configTree = existing
-                val savedName = existing.getProp(THEME_KEY)?.getAs<String?>()
-                if (savedName != null) {
-                    val theme = registry.find { it.name == savedName }
-                    if (theme != null) activeTheme = theme
-                }
-            } else {
-                val tree = Tree.tree(CONFIG_ID)
-                tree.addMetadata("hidden", true)
-                tree[THEME_KEY] = Properties.simple<String>(activeTheme?.name ?: "PolyGlass Dark")
-                ConfigManager.active().register(tree)
-                configTree = tree
+            val theme = registry.find { it.name == ThemeConfig.activeTheme }
+                ?: registry.find { it.name == DEFAULT_THEME_NAME }
+            if (theme != null) {
+                activeTheme = theme
+                ThemeConfig.activeTheme = theme.name
             }
         } catch (_: Exception) {}
     }
 
-    @Suppress("UNCHECKED_CAST")
     private fun saveThemeToConfig() {
-        val tree = configTree ?: return
-        val theme = activeTheme ?: return
         try {
-            (tree.getProp(THEME_KEY) as? Property<Any>)?.set(theme.name)
+            ConfigManager.active().save("themes.json")
         } catch (_: Exception) {}
     }
 }

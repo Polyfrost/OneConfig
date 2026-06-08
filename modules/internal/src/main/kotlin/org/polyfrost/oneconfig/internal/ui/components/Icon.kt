@@ -21,12 +21,20 @@ import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import java.io.File
+import kotlin.math.sqrt
 
 private object IconResourceMarker
+private const val DefaultIconSize = 18f
 
 @Composable
-fun Icon(iconName: String, color: Color = Color.Unspecified, modifier: Modifier = Modifier) {
-    val resolvedColor = if (color == Color.Unspecified) LocalTheme.current.textColor else color
+fun Icon(
+    iconName: String,
+    color: Color = Color.Unspecified,
+    modifier: Modifier = Modifier,
+    fitAspectRatio: Boolean = false,
+) {
+    val theme = LocalTheme.current
+    val resolvedColor = if (color == Color.Unspecified) theme.textColor else color
 
     // Absolute filesystem path (e.g. a mod icon extracted from its own jar) — load from disk
     // rather than the classpath so distinct mods can't collide on a shared resource name.
@@ -44,22 +52,28 @@ fun Icon(iconName: String, color: Color = Color.Unspecified, modifier: Modifier 
             }.getOrNull()
         }
         if (painter != null) {
+            val aspectRatio = remember(iconName, file.lastModified()) {
+                if (fitAspectRatio && isSvg) file.inputStream().buffered().use(::readSvgAspectRatio) else null
+            }
             Image(
                 painter = painter,
                 contentDescription = null,
-                modifier = modifier.size(18.dp),
+                modifier = modifier.then(iconSizeModifier(aspectRatio)),
                 colorFilter = if (isSvg) ColorFilter.tint(resolvedColor) else null
             )
             return
         }
     }
 
-    val path = iconName.toIconResourcePath().takeIf(::iconResourceExists) ?: return
+    val defaultPath = iconName.toIconResourcePath()
+    val overridePath = theme.iconOverrides[iconName]?.toIconResourcePath()
+    val path = overridePath?.takeIf(::iconResourceExists) ?: defaultPath.takeIf(::iconResourceExists) ?: return
     val isSvg = path.endsWith(".svg", ignoreCase = true)
+    val aspectRatio = remember(path, fitAspectRatio) { if (fitAspectRatio && isSvg) readSvgAspectRatio(path) else null }
     Image(
         painter = painterResource(path),
         contentDescription = null,
-        modifier = modifier.size(18.dp),
+        modifier = modifier.then(iconSizeModifier(aspectRatio)),
         colorFilter = if (isSvg) ColorFilter.tint(resolvedColor) else null
     )
 }
@@ -79,6 +93,30 @@ private fun iconResourceExists(path: String): Boolean {
     val normalized = path.removePrefix("/")
     return Thread.currentThread().contextClassLoader?.getResource(normalized) != null ||
         IconResourceMarker::class.java.classLoader?.getResource(normalized) != null
+}
+
+private fun iconSizeModifier(aspectRatio: Float?): Modifier {
+    val ratio = aspectRatio?.takeIf { it.isFinite() && it > 0f } ?: 1f
+    val scale = sqrt(ratio)
+    return Modifier.size((DefaultIconSize * scale).dp, (DefaultIconSize / scale).dp)
+}
+
+private fun readSvgAspectRatio(path: String): Float? {
+    val normalized = path.removePrefix("/")
+    val loader = Thread.currentThread().contextClassLoader ?: IconResourceMarker::class.java.classLoader
+    return loader.getResourceAsStream(normalized)?.buffered()?.use(::readSvgAspectRatio)
+        ?: IconResourceMarker::class.java.classLoader?.getResourceAsStream(normalized)?.buffered()?.use(::readSvgAspectRatio)
+}
+
+private fun readSvgAspectRatio(stream: java.io.InputStream): Float? {
+    val header = stream.reader().use { it.readText().take(512) }
+    val viewBox = Regex("""viewBox\s*=\s*"([^"]+)"""").find(header)?.groupValues?.get(1) ?: return null
+    val values = viewBox.trim().split(Regex("""[\s,]+""")).mapNotNull { it.toFloatOrNull() }
+    if (values.size < 4) return null
+    val width = values[2]
+    val height = values[3]
+    if (width <= 0f || height <= 0f) return null
+    return width / height
 }
 
 @Composable

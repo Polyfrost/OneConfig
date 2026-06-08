@@ -182,7 +182,7 @@ private fun NavigationEntry(icon: String, title: String, route: Any? = null, isS
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Icon(icon, modifier = Modifier.padding(start = 12.dp), color = textAndIconColor)
+        Icon(icon, modifier = Modifier.padding(start = 12.dp), color = textAndIconColor, fitAspectRatio = true)
         Text(title, color = textAndIconColor)
     }
 }

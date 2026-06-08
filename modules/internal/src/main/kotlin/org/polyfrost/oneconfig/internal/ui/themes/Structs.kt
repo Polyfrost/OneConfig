@@ -35,6 +35,7 @@ data class UITheme(
 
     val branding: UIBranding,
     val typography: UITypography,
+    val iconOverrides: Map<String, String> = emptyMap(),
 )
 
 data class UIBranding(
