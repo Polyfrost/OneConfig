@@ -16,6 +16,10 @@ import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfig
 import com.teamresourceful.resourcefulconfig.api.types.options.EntryData
 import com.teamresourceful.resourcefulconfig.api.types.options.EntryType
 import com.teamresourceful.resourcefulconfig.api.types.options.Option
+//? < 1.21.8 {
+/*import net.minecraft.client.resources.language.I18n
+import net.minecraft.util.StringRepresentable
+*///? }
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
@@ -281,8 +285,18 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
     }
 
     // Mirror rconfig's own enum label resolution: Translatable key, then StringRepresentable serialized
-    // name, then the raw enum name. Resolved via Translatable.toComponent so the active language applies.
-    private fun enumDisplayName(value: Enum<*>): String = Translatable.toComponent(value).string
+    // name, then the raw enum name.
+    private fun enumDisplayName(value: Enum<*>): String {
+        //? >= 1.21.8 {
+        return Translatable.toComponent(value).string
+        //? } else {
+        /*return when (value) {
+            is Translatable -> I18n.get(value.translationKey)
+            is StringRepresentable -> value.serializedName
+            else -> value.toString()
+        }
+        *///? }
+    }
 
     private class RConfigPropertyBuilder constructor(option: ResourcefulConfigValueEntry) {
         //? >= 1.21.8 {
