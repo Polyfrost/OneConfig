@@ -59,5 +59,25 @@
       { "name": "oneconfig:ambient/moog_2", "stream": true },
       { "name": "oneconfig:ambient/lullaby", "stream": true }
     ]
+  },
+  "ui.mc_ambient.trees": {
+    "sounds": [
+      { "name": "oneconfig:ambient/trees", "stream": true }
+    ]
+  },
+  "ui.mc_ambient.moog_1": {
+    "sounds": [
+      { "name": "oneconfig:ambient/moog_1", "stream": true }
+    ]
+  },
+  "ui.mc_ambient.moog_2": {
+    "sounds": [
+      { "name": "oneconfig:ambient/moog_2", "stream": true }
+    ]
+  },
+  "ui.mc_ambient.lullaby": {
+    "sounds": [
+      { "name": "oneconfig:ambient/lullaby", "stream": true }
+    ]
   }
 }
