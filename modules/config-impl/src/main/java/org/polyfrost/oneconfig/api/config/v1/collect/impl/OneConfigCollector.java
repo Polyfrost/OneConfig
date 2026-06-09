@@ -148,6 +148,15 @@ public class OneConfigCollector extends ReflectiveCollector {
         DependsOn d = f.getDeclaredAnnotation(DependsOn.class);
         if (d != null) property.addMetadata("conditions", d.value());
 
+        if (a instanceof Slider) {
+            Slider slider = (Slider) a;
+            float range = slider.max() - slider.min();
+            if (slider.step() > 0f && slider.step() > range) {
+                throw new IllegalArgumentException(String.format("@Slider field '%s' has step (%s) larger than its range (%s to %s, range=%s). The slider will not function correctly.",
+                        f.getName(), slider.step(), slider.min(), slider.max(), range));
+            }
+        }
+
         PreviousNames p = f.getDeclaredAnnotation(PreviousNames.class);
         if (p != null) {
             String[] names = p.value();

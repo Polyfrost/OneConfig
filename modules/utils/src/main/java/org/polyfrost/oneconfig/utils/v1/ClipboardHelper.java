@@ -30,6 +30,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
 
 import javax.imageio.ImageIO;
 import java.awt.Image;
@@ -46,7 +47,7 @@ import java.nio.file.Path;
 import java.util.Locale;
 
 /**
- * Cross-platform system clipboard access (AWT on Windows/Linux, NSPasteboard on macOS).
+ * Cross-platform system clipboard access (GLFW/AWT on Windows/Linux, NSPasteboard on macOS).
  */
 public final class ClipboardHelper {
 
@@ -57,6 +58,7 @@ public final class ClipboardHelper {
             .contains("mac");
 
     private static final String MACOS_CLIPBOARD_CLASS = "org.polyfrost.oneconfig.utils.v1.MacOSClipboard";
+    private static final String GLFW_CLASS = "org.lwjgl.glfw.GLFW";
 
     private ClipboardHelper() {
     }
@@ -66,6 +68,10 @@ public final class ClipboardHelper {
         try {
             if (IS_MAC) {
                 return invokeMacNullable("getString");
+            }
+            String glfwValue = getStringFromGlfw();
+            if (glfwValue != null) {
+                return glfwValue;
             }
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
             if (!clipboard.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
@@ -85,6 +91,9 @@ public final class ClipboardHelper {
         try {
             if (IS_MAC) {
                 return invokeMacBoolean("setString", value);
+            }
+            if (setStringWithGlfw(value)) {
+                return true;
             }
             Toolkit.getDefaultToolkit().getSystemClipboard()
                     .setContents(new StringSelection(value), null);
@@ -146,6 +155,9 @@ public final class ClipboardHelper {
             if (IS_MAC) {
                 return invokeMacBoolean("clear");
             }
+            if (setStringWithGlfw("")) {
+                return true;
+            }
             Toolkit.getDefaultToolkit().getSystemClipboard()
                     .setContents(new StringSelection(""), null);
             return true;
@@ -177,6 +189,48 @@ public final class ClipboardHelper {
             method = clazz.getMethod(methodName, paramTypes);
         }
         return Boolean.TRUE.equals(method.invoke(null, args));
+    }
+
+    @Nullable
+    private static String getStringFromGlfw() {
+        try {
+            Method method = Class.forName(GLFW_CLASS).getMethod("glfwGetClipboardString", long.class);
+            return (String) method.invoke(null, Platform.compatibility().windowHandle());
+        } catch (Throwable t) {
+            LOGGER.debug("Failed to read GLFW clipboard text", t);
+            return null;
+        }
+    }
+
+    private static boolean setStringWithGlfw(String value) {
+        try {
+            Class<?> clazz = Class.forName(GLFW_CLASS);
+            Method method = findGlfwSetClipboardString(clazz);
+            if (method == null) {
+                return false;
+            }
+            method.invoke(null, Platform.compatibility().windowHandle(), value);
+            return true;
+        } catch (Throwable t) {
+            LOGGER.debug("Failed to write GLFW clipboard text", t);
+            return false;
+        }
+    }
+
+    @Nullable
+    private static Method findGlfwSetClipboardString(Class<?> clazz) {
+        for (Method method : clazz.getMethods()) {
+            if (!method.getName().equals("glfwSetClipboardString")) {
+                continue;
+            }
+            Class<?>[] parameterTypes = method.getParameterTypes();
+            if (parameterTypes.length == 2
+                    && parameterTypes[0] == long.class
+                    && parameterTypes[1].isAssignableFrom(String.class)) {
+                return method;
+            }
+        }
+        return null;
     }
 
     private static final class ImageSelection implements Transferable {

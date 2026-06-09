@@ -68,6 +68,17 @@ private class PlatformImpl : PlatformContext {
     private val handle = Platform.compatibility().windowHandle()
 
     override fun setPointerIcon(pointerIcon: PointerIcon) {
+        if (pointerIcon != PointerIcon.Default && !allowCursorChanges()) {
+            return
+        }
+        applyPointerIcon(pointerIcon)
+    }
+
+    fun resetPointerIcon() {
+        applyPointerIcon(PointerIcon.Default)
+    }
+
+    private fun applyPointerIcon(pointerIcon: PointerIcon) {
         when (pointerIcon) {
             PointerIcon.Default -> glfwSetCursor(handle, defaultCursor)
             PointerIcon.Hand -> glfwSetCursor(handle, handCursor)
@@ -80,9 +91,20 @@ private class PlatformImpl : PlatformContext {
         glfwFocusWindow(handle)
         return glfwGetWindowAttrib(handle, GLFW_FOCUSED) == GLFW_TRUE
     }
+
+    private fun allowCursorChanges(): Boolean {
+        //? if >= 1.21.10 {
+        return Minecraft.getInstance().options.allowCursorChanges().get()
+        //?} else
+        //return true
+    }
 }
 
 @OptIn(InternalComposeUiApi::class)
 object ComposeSceneContextImpl : ComposeSceneContext {
     override val platformContext: PlatformContext = PlatformImpl()
+
+    fun resetPointerIcon() {
+        (platformContext as PlatformImpl).resetPointerIcon()
+    }
 }

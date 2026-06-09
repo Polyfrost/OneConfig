@@ -150,10 +150,16 @@ abstract class ComposeScreen(
     }
 
     override fun onClose() {
+        ComposeSceneContextImpl.resetPointerIcon()
         try {
             scene.close()
         } catch (_: Throwable) {
         }
+    }
+
+    override fun removed() {
+        ComposeSceneContextImpl.resetPointerIcon()
+        super.removed()
     }
 
     //~ if >= 26.1 'render' -> 'extractRenderState'

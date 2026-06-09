@@ -366,12 +366,12 @@ private fun AccordionRow(node: SettingNode.Accordion) {
                 node.tree.getMetadata<String>("icon")?.let { Icon(it, color = theme.textColor, modifier = Modifier.size(32.dp)) }
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
-                        node.tree.title ?: node.tree.id ?: "",
+                        node.tree.localizedTitle(),
                         color = theme.textColor,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
                     )
-                    node.tree.description?.let {
+                    node.tree.localizedDescription()?.let {
                         Text(it, color = theme.textColorSecondary, fontSize = 13.sp)
                     }
                 }
@@ -544,13 +544,13 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false) {
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
-                        prop.title ?: prop.id ?: "",
+                        prop.localizedTitle(),
                         color = theme.textColor,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
                     )
                     if (!nested) {
-                        prop.description?.let {
+                        prop.localizedDescription()?.let {
                             Text(it, color = theme.textColorSecondary, fontSize = 13.sp)
                         }
                     }
