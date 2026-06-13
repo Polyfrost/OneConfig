@@ -55,6 +55,7 @@ import org.polyfrost.oneconfig.internal.ui.navigation.searchPlaceholder
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import net.kyori.adventure.text.ComponentLike
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -248,23 +249,30 @@ internal fun performSearch(query: String): Map<String, List<SearchResult>> {
         val tree = (configData as? TreeConfigData)?.tree ?: continue
         val matchingOptions = mutableListOf<SearchResult>()
         tree.map.values.forEach { node ->
+            val descriptionMatches = node.description?.asRenderText()?.let { searchMatches(it, q) } == true
+            val searchTags = node.metadata?.get("searchTags")?.let {
+                if (it is Iterable<*>) it.mapNotNull {
+                    if (it !is String && it !is ComponentLike) return@mapNotNull null
+                    it.asRenderText()
+                } else if (it is String) listOf(it) else listOf()
+            }?.any { searchMatches(it, q) } == true
             when (node) {
                 is Property<*> -> {
                     val title = node.title ?: return@forEach
-                    if (searchMatches(title.asRenderText(), q)) {
+                    if (searchMatches(title.asRenderText(), q) || descriptionMatches || searchTags) {
                         val cat = node.getMetadata<String>("category")
                         matchingOptions += OptionResult(configData.id, configData.title, title, cat, configData.icon, node)
                     }
                 }
                 is Tree -> {
                     val subTitle = node.title
-                    if (subTitle != null && searchMatches(subTitle.asRenderText(), q)) {
+                    if (subTitle != null && searchMatches(subTitle.asRenderText(), q) ) {
                         val cat = node.getMetadata<String>("category")
                         matchingOptions += OptionResult(configData.id, configData.title, subTitle, cat, configData.icon, null)
                     }
                     node.map.values.filterIsInstance<Property<*>>().forEach { prop ->
                         val pt = prop.title ?: return@forEach
-                        if (searchMatches(pt.asRenderText(), q)) {
+                        if (searchMatches(pt.asRenderText(), q) || descriptionMatches || searchTags) {
                             val cat = prop.getMetadata<String>("category")
                             matchingOptions += OptionResult(configData.id, configData.title, pt, cat, configData.icon, prop)
                         }

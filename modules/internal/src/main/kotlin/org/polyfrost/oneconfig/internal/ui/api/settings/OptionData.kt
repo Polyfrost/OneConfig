@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.api.settings
 
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedString
 import org.polyfrost.oneconfig.internal.ui.components.localizedText
@@ -57,12 +58,14 @@ class RadioButtonOptionData(prop: Property<*>) : OptionData(prop) {
     val isEnum: Boolean get() = prop.type.isEnum || prop.type.superclass?.isEnum == true
 }
 
-class ColorOptionData(prop: Property<*>) : OptionData(prop)
+class ColorOptionData(prop: Property<*>) : OptionData(prop) {
+    val alpha = prop.getMetadata<Any>("noAlpha") == null
+}
 
 class KeybindOptionData(prop: Property<*>) : OptionData(prop)
 
 class ButtonOptionData(prop: Property<*>) : OptionData(prop) {
-    val buttonText: Any? get() = localizedText(prop.getMetadata("textKey"), prop.getMetadata("text"))
+    val buttonText: Any? get() = localizedText(prop.getMetadata<Any?>("textKey")?.asRenderText(), prop.getMetadata<Any?>("text")?.asRenderText())
     val runnable: Runnable? get() = prop.getMetadata("runnable") ?: prop.getAs()
 }
 
