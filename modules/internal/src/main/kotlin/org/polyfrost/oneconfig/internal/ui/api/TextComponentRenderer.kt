@@ -13,10 +13,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -35,6 +37,7 @@ import net.kyori.adventure.text.ComponentIteratorType
 import net.kyori.adventure.text.event.HoverEvent
 import net.kyori.adventure.text.format.TextDecoration as KyoriDecoration
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.internal.ui.components.layout.FlexibleLayout
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -49,7 +52,7 @@ fun TextComponent(
     fontWeight: FontWeight = FontWeight.Normal,
     textAlign: TextAlign = TextAlign.Start
 ) {
-    Box {
+     Row {
         component.iterable(ComponentIteratorType.DEPTH_FIRST).forEach {
             val text = @Composable {
                 BasicText(
@@ -107,7 +110,7 @@ fun text(text: Component) = buildAnnotatedString {
                     })
             } else null,
             fontWeight = if (text.hasDecoration(KyoriDecoration.BOLD)) FontWeight.Bold else null)) {
-        append(Platform.compatibility().resolveComponent(text))
+        append(Platform.compatibility().resolveComponent(text.children(emptyList())))
     }
 }
 
