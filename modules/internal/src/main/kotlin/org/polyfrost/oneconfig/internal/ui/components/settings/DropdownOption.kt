@@ -68,7 +68,7 @@ fun DropdownOption(data: DropdownOptionData) {
         enumClass != null -> enumClass.enumConstants.toList()
         else -> emptyList()
     }
-    val options: List<String> = when {
+    val options: List<Any> = when {
         enumClass != null -> values.mapIndexed { index, value ->
             data.options?.getOrNull(index) ?: (value as Enum<*>).name
         }

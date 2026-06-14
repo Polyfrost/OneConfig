@@ -57,7 +57,7 @@ private val ItemShape @Composable get() = LocalTheme.current.sideBarNavigationEn
 fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
     val theme = LocalTheme.current
 
-    val options: List<String> = remember(data.prop) {
+    val options: List<Any> = remember(data.prop) {
         data.optionLabels ?: data.options?.toList() ?: emptyList()
     }
 
@@ -195,7 +195,7 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
 
 @Composable
 private fun CheckableListItem(
-    label: String,
+    label: Any,
     icon: String?,
     checked: Boolean,
     onToggle: () -> Unit,
@@ -233,7 +233,7 @@ private fun CheckableListItem(
 
 @Composable
 private fun PlainListItem(
-    label: String,
+    label: Any,
     icon: String?,
     selected: Boolean,
     onSelect: () -> Unit,

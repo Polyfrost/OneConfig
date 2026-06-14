@@ -21,6 +21,8 @@ import net.minecraft.network.chat.Component
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
+import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.config.v1.Property.Display
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.dsl.category
@@ -32,6 +34,7 @@ import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import java.util.UUID
+import java.util.function.Function
 import java.util.function.Supplier
 
 object DandelionCompat {
@@ -146,10 +149,10 @@ object DandelionCompat {
                     description = option.description(),
                 )
 
-
                 property.addMetadata("searchTags", option.tags())
                 property.category = category
                 property.subcategory = subcategory
+                property.addDisplayCondition { if (option.modifiable()) Display.SHOWN else Display.DISABLED }
 
                 when (controller) {
                     is BooleanController -> property.visualizer = Visualizer.SwitchVisualizer::class.java
@@ -157,12 +160,17 @@ object DandelionCompat {
                         property.visualizer = Visualizer.ColorVisualizer::class.java
                         property.addMetadata("noAlpha", Unit)
                     }
-                    is EnumController<*> -> {
+                    is EnumController<*> if defaultValue is Enum<*> -> {
                         property.visualizer = Visualizer.DropdownVisualizer::class.java
-
+                        property.addMetadata("optionLabels", defaultValue.javaClass.enumConstants.map { (controller.formatter() as Function<T, Component>).apply(it) })
                     }
                     is NumberController<*> -> {
-                        property.visualizer = Visualizer.NumberVisualizer::class.java
+                        if (controller.slider()) {
+                            property.visualizer = Visualizer.SliderVisualizer::class.java
+                        } else {
+                            property.visualizer = Visualizer.NumberVisualizer::class.java
+                        }
+                        property.addMetadata("step", controller.step().toFloat())
                         property.addMetadata("min", controller.min().toFloat())
                         property.addMetadata("max", controller.max().toFloat())
                     }
