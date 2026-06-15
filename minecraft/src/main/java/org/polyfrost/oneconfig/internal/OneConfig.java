@@ -246,7 +246,7 @@ public class OneConfig
         // (Linux)   Ensure that librenderdoc.so is available in your LD_PRELOAD todo?
         //RenderDoc.init();
 
-        if (Boolean.getBoolean("oneconfig.test") || true) {
+        if (Boolean.getBoolean("oneconfig.test")) {
             try {
                 TestMod_Test.initialize();
             } catch (Throwable e) {
