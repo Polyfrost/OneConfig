@@ -144,13 +144,20 @@ val modrinthToken = findProperty("modrinth.token")?.toString()?.takeIf { it.isNo
 val rawMinecraftVersion = versionedCatalog.versions["minecraft"].requiredVersion
 val minecraftVersion = modrinthMinecraftVersionOverride[rawMinecraftVersion] ?: listOf(rawMinecraftVersion)
 val publishJarTaskName = if ("remapJar" in tasks.names) "remapJar" else "jar"
+val changelogs = rootProject.file("CHANGELOG.md").takeIf { it.exists() }?.readText() ?: "No changelog provided."
+
+tasks.publishMods.get().doFirst {
+    if (!changelogs.contains(project.version.toString())) {
+        throw GradleException("Changelog for version ${project.version} not found.")
+    }
+}
 
 publishMods {
     file = tasks.named<AbstractArchiveTask>(publishJarTaskName).flatMap { it.archiveFile }
 
     displayName = project.version.toString()
     version = "v${project.version}"
-    changelog = rootProject.file("CHANGELOG.md").takeIf { it.exists() }?.readText() ?: "No changelog provided."
+    changelog = changelogs
     type = BETA
 
     modLoaders.add("fabric")
