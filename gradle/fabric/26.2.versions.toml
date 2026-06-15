@@ -1,10 +1,10 @@
 [versions]
-api-base = "2.0.4+ece06323f7"
-lifecycle-events-v1 = "4.1.1+9d6daa97f7"
-transitive-access-wideners-v1 = "8.1.3+e098252df7"
-command-api-v2 = "3.0.8+06488ac1f7"
-key-mapping-api-v1 = "2.0.5+e2bdee78f7"
-resource-loader-v1 = "2.0.12+d3d84472f7"
+api-base = "2.0.4+ece063239c"
+lifecycle-events-v1 = "4.1.3+4575b05f9c"
+transitive-access-wideners-v1 = "8.1.3+e098252d9c"
+command-api-v2 = "3.1.0+00cb03469c"
+key-mapping-api-v1 = "2.0.5+e2bdee789c"
+resource-loader-v1 = "2.0.13+9edec1269c"
 
 # 26.2 uses Minecraft's native Vulkan renderer -> no Cinnabar.
 # No 26.2 build of modmenu yet -> modmenu_compat disabled.
