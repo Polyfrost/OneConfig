@@ -8,6 +8,11 @@ import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
+import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
+import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
+import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 
 object ModMenuCompat {
 
@@ -51,7 +56,25 @@ object ModMenuCompat {
                     modMenuTree.addMetadata("icon_path", iconPath)
                 }
                 modMenuTree.addMetadata("on_click") {
-                    Platform.screen().display(ModMenu.getConfigScreen(mod.id, Platform.screen().current()))
+                    val foreignScreen = runCatching {
+                        ModMenu.getConfigScreen(mod.id, Platform.screen().current())
+                    }.getOrNull()
+
+                    val nativeTree = runCatching { ConfigManager.active().get(mod.id) }.getOrNull()
+                    val hasNative = nativeTree != null &&
+                        nativeTree !== modMenuTree &&
+                        nativeTree.getMetadata<Boolean>(Backend.UI_ONLY_METADATA) != true
+
+                    if (hasNative && nativeTree != null) {
+                        ConfigRegistry.registerTree(nativeTree, ConfigSource.OC)
+                    }
+
+                    when {
+                        hasNative && LocalNavController.isReady ->
+                            LocalNavController.wrapper.navigate(ModConfigRoute(mod.id))
+                        hasNative -> Platform.screen().display(OneConfigUIScreen(initialTreeId = mod.id))
+                        foreignScreen != null -> Platform.screen().display(foreignScreen)
+                    }
                 }
                 // Listed in the mods menu and opened via Mod Menu only — never persisted by OneConfig.
                 modMenuTree.addMetadata(Backend.UI_ONLY_METADATA, true)

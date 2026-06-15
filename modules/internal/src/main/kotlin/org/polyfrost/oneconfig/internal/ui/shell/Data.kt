@@ -58,6 +58,9 @@ object ShellState {
 object LocalNavController {
     lateinit var current: NavHostController
 
+    /** True once a nav host is attached, i.e. the OC UI is open and navigable. */
+    val isReady: Boolean get() = ::current.isInitialized
+
     val wrapper = NavControllerWrapper
 
     object NavControllerWrapper {
