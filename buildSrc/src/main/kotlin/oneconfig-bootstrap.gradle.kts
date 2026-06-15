@@ -146,10 +146,18 @@ val minecraftVersion = modrinthMinecraftVersionOverride[rawMinecraftVersion] ?: 
 val publishJarTaskName = if ("remapJar" in tasks.names) "remapJar" else "jar"
 val changelogs = rootProject.file("CHANGELOG.md").takeIf { it.exists() }?.readText() ?: "No changelog provided."
 
-tasks.publishMods.get().doFirst {
+val validateChangelog by tasks.registering {
+    description = "Validates that the changelog is written for the current version."
     if (!changelogs.contains(project.version.toString())) {
         throw GradleException("Changelog for version ${project.version} not found.")
     }
+}
+
+tasks.publishMods.configure {
+    dependsOn(validateChangelog)
+}
+tasks.matching { it.name == "publishModrinth" }.configureEach {
+    dependsOn(validateChangelog)
 }
 
 publishMods {
