@@ -3,7 +3,6 @@ package org.polyfrost.oneconfig.internal.compat
 //? modmenu_compat {
 import com.terraformersmc.modmenu.ModMenu
 import com.terraformersmc.modmenu.util.mod.Mod
-import net.minecraft.client.Minecraft
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend
@@ -16,9 +15,15 @@ object ModMenuCompat {
 
     fun preLoad() = CompatLoader.requireTranslations(-1000, true) {
         ModMenu.ROOT_MODS.forEach { (_, mod) ->
-            // doing this to force create *all* config screens, this allows for direct integration without requiring manul opening first.
-            runCatching { ModMenu.getConfigScreen(mod.id, Minecraft.getInstance().screen) }.getOrNull() ?: return@forEach
-            mods.add(mod)
+            // Only record which mods expose a config screen; do NOT build the screen here.
+            // getConfigScreen() instantiates the screen's widget tree (e.g. Cloth EditBox), which
+            // lazily bakes font glyphs. preLoad runs inside the ResourceFinishedLoading event —
+            // off-frame, with the GL texture-bind cache desynced — so baking there corrupts the
+            // vanilla font atlas (garbled glyphs until F3+T). hasConfigScreen() only looks up the
+            // registered factory, so the actual screen is built lazily on open (in a render frame).
+            if (runCatching { ModMenu.hasConfigScreen(mod.id) }.getOrDefault(false)) {
+                mods.add(mod)
+            }
         }
     }
 

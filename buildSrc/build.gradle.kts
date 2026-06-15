@@ -6,8 +6,8 @@ plugins {
 repositories {
     mavenCentral()
     gradlePluginPortal()
-    maven("https://repo.polyfrost.org/releases")
     maven("https://maven.fabricmc.net/")
+    maven("https://repo.polyfrost.org/releases")
 }
 fun plugin(provider: Provider<PluginDependency>): Provider<String> = provider.map {
     "${it.pluginId}:${it.pluginId}.gradle.plugin:${it.version}"
