@@ -4,7 +4,6 @@ allprojects {
         mavenCentral()
         maven("https://maven.fabricmc.net/releases")
         maven("https://maven.parchmentmc.org")
-        maven("https://maven.logix.dev/snapshots")
     }
 }
 

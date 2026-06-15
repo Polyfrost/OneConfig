@@ -1,10 +1,12 @@
 import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.artifacts.ModuleDependency
 import org.gradle.api.artifacts.ProjectDependency
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
 
 plugins {
     java
     id("versioned-catalogues")
+    id("me.modmuss50.mod-publish-plugin")
 }
 
 repositories {
@@ -131,4 +133,42 @@ tasks.withType<ProcessResources>().configureEach {
 
     inputs.properties(props)
     filesMatching("fabric.mod.json") { expand(props) }
+}
+
+val modrinthMinecraftVersionOverride = mapOf(
+    "26.1" to listOf("26.1", "26.1.1", "26.1.2")
+)
+
+val modrinthId = findProperty("publish.modrinth")?.toString()?.takeIf { it.isNotBlank() }
+val modrinthToken = findProperty("modrinth.token")?.toString()?.takeIf { it.isNotBlank() }
+val rawMinecraftVersion = versionedCatalog.versions["minecraft"].requiredVersion
+val minecraftVersion = modrinthMinecraftVersionOverride[rawMinecraftVersion] ?: listOf(rawMinecraftVersion)
+val publishJarTaskName = if ("remapJar" in tasks.names) "remapJar" else "jar"
+
+publishMods {
+    file = tasks.named<AbstractArchiveTask>(publishJarTaskName).flatMap { it.archiveFile }
+
+    displayName = project.version.toString()
+    version = "v${project.version}"
+    changelog = rootProject.file("CHANGELOG.md").takeIf { it.exists() }?.readText() ?: "No changelog provided."
+    type = BETA
+
+    modLoaders.add("fabric")
+
+    dryRun = modrinthId == null || modrinthToken == null
+
+    if (modrinthId != null) {
+        modrinth {
+            projectId = modrinthId
+            accessToken = modrinthToken.orEmpty()
+
+            minecraftVersions.addAll(minecraftVersion)
+
+            requires("fabric-language-kotlin")
+            findProperty("publish.modrinth.compose-bundle")
+                ?.toString()
+                ?.takeIf { it.isNotBlank() }
+                ?.let { requires(it) }
+        }
+    }
 }

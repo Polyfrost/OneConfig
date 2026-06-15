@@ -3,6 +3,16 @@ plugins {
 }
 
 stonecutter active "26.1-fabric"
+stonecutter tasks {
+    order("publishModrinth")
+}
+
+tasks.register("publishMods") {
+    group = "publishing"
+    description = "Publishes all bootstrap nodes to Modrinth."
+    dependsOn(stonecutter.tasks.named("publishMods"))
+}
+
 stonecutter {
     parameters {
         constants {

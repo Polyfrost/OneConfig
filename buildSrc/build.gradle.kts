@@ -8,6 +8,7 @@ repositories {
     gradlePluginPortal()
     maven("https://maven.fabricmc.net/")
     maven("https://repo.polyfrost.org/releases")
+    maven("https://maven.modmuss50.me/releases")
 }
 fun plugin(provider: Provider<PluginDependency>): Provider<String> = provider.map {
     "${it.pluginId}:${it.pluginId}.gradle.plugin:${it.version}"
@@ -31,4 +32,5 @@ dependencies {
     implementation(plugin(neoforge.plugins.moddev))
 
     implementation("dev.kikugie.stonecutter:dev.kikugie.stonecutter.gradle.plugin:0.9")
+    implementation("me.modmuss50.mod-publish-plugin:me.modmuss50.mod-publish-plugin.gradle.plugin:1.1.0")
 }
