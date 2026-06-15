@@ -1,3 +1,8 @@
-<svg preserveAspectRatio="xMidYMid meet" width="100%" height="100%" overflow="visible" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M4 4H10V10H4V4ZM13 4H19V10H13V4ZM22 4H28V10H22V4ZM4 13H10V19H4V13ZM13 13H19V19H13V13ZM22 13H28V19H22V13ZM4 22H10V28H4V22ZM13 22H19V28H13V22ZM22 22H28V28H22V22Z" fill="var(--fill-0, #DFEAFF)"/>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M8 6H10V8H8V6Z" fill="white"/>
+<path d="M14 6H16V8H14V6Z" fill="white"/>
+<path d="M8 11H10V13H8V11Z" fill="white"/>
+<path d="M14 11H16V13H14V11Z" fill="white"/>
+<path d="M8 16H10V18H8V16Z" fill="white"/>
+<path d="M14 16H16V18H14V16Z" fill="white"/>
 </svg>

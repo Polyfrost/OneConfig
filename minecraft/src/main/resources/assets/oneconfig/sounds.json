@@ -14,34 +14,9 @@
       "oneconfig:ui/click"
     ]
   },
-  "ui.slider_1": {
+  "ui.slider": {
     "sounds": [
-      "oneconfig:ui/slider_1"
-    ]
-  },
-  "ui.slider_2": {
-    "sounds": [
-      "oneconfig:ui/slider_2"
-    ]
-  },
-  "ui.slider_3": {
-    "sounds": [
-      "oneconfig:ui/slider_3"
-    ]
-  },
-  "ui.slider_4": {
-    "sounds": [
-      "oneconfig:ui/slider_4"
-    ]
-  },
-  "ui.slider_5": {
-    "sounds": [
-      "oneconfig:ui/slider_5"
-    ]
-  },
-  "ui.slider_6": {
-    "sounds": [
-      "oneconfig:ui/slider_6"
+      "oneconfig:ui/slider"
     ]
   },
   "ui.pad_loop": {

@@ -44,10 +44,7 @@ class McUiSoundService : UiSoundService {
             UiSoundEvent.OPEN -> playModernSound("ui.open", 1f, volume)
             UiSoundEvent.CLOSE -> playModernSound("ui.close", 1f, volume)
             UiSoundEvent.CLICK -> playModernSound("ui.click", 1f, volume * MODERN_CLICK_VOLUME)
-            UiSoundEvent.SLIDER_TICK -> {
-                val variant = sliderTick.getAndIncrement().mod(6) + 1
-                playModernSound("ui.slider_$variant", 1f, volume * MODERN_SLIDER_VOLUME)
-            }
+            UiSoundEvent.SLIDER_TICK -> playModernSound("ui.slider", 1f, volume * MODERN_SLIDER_VOLUME)
             UiSoundEvent.HUD_SELECT -> playModernSound("ui.click", 1.0f, volume * MODERN_CLICK_VOLUME)
             UiSoundEvent.HUD_DRAG_START -> playModernSound("ui.click", 0.9f, volume * MODERN_CLICK_VOLUME)
             UiSoundEvent.HUD_DRAG_END -> playModernSound("ui.click", 1.1f, volume * MODERN_CLICK_VOLUME)

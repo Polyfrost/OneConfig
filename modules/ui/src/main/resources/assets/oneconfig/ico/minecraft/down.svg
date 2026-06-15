@@ -1,3 +1,3 @@
-<svg preserveAspectRatio="xMidYMid meet" width="100%" height="100%" overflow="visible" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M4 8H28V16H24V20H20V24H12V20H8V16H4V8Z" fill="var(--fill-0, #DFEAFF)"/>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M13 16H11V14H13V16ZM11 14H9V12H11V14ZM15 14H13V12H15V14ZM9 12H7V10H9V12ZM17 12H15V10H17V12ZM7 10H5V8H7V10ZM19 10H17V8H19V10Z" fill="white"/>
 </svg>

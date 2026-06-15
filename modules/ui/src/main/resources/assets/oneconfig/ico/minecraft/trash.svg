@@ -1,3 +1,6 @@
-<svg preserveAspectRatio="xMidYMid meet" width="100%" height="100%" overflow="visible" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M8 0H24V4H32V8H0V4H8V0ZM4 12H28V32H4V12ZM8 16V28H12V16H8ZM20 16V28H24V16H20Z" fill="var(--fill-0, #DFEAFF)"/>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M17 22H7V20H17V22ZM16 4H8V2H16V4Z" fill="white"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M21 6V8H19V20H17V8H7V20H5V8H3V6H21Z" fill="white"/>
+<path d="M11 10H9V18H11V10Z" fill="white"/>
+<path d="M15 10H13V18H15V10Z" fill="white"/>
 </svg>
