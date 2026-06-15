@@ -119,8 +119,10 @@ object DandelionCompat {
 
             else if controller == null -> {
                 val property = Properties.dummy(id = option.id()?.toString() ?: UUID.randomUUID().toString())
+                property.title = option.name()
                 property.description =
                     Component.literal("Failed to create compat entry for option! ").append(option.name())
+                        .append("\nPlease report this to the Polyfrost Discord: https://discord.gg/polyfrost")
                 property.visualizer = Visualizer.InfoVisualizer::class.java
                 property.category = category
                 property.subcategory = subcategory
@@ -176,18 +178,34 @@ object DandelionCompat {
                     }
                     is StringController -> property.visualizer = Visualizer.TextVisualizer::class.java
                     else -> {
-                        val property = Properties.dummy(id = option.id()?.toString() ?: UUID.randomUUID().toString())
-                        property.description =
-                            Component.literal("Failed to create compat entry for option! ").append(controller.javaClass.name)
-                        property.visualizer = Visualizer.InfoVisualizer::class.java
-                        property.addMetadata("type", "error")
-                        root.put(property)
-                        return@runCatching null
+                        LOGGER.warn("Unsupported: ${option.name()} - ${controller.javaClass.simpleName}")
+                        root.put(unsupportedOptionProperty(option, controller, category, subcategory))
+                        return@runCatching
                     }
                 }
                 root.put(property)
             }
         }
+    }
+
+    private fun <T : Any> unsupportedOptionProperty(
+        option: Option<T>,
+        controller: Any,
+        category: String,
+        subcategory: String
+    ): Property<Void> {
+        val property = Properties.dummy(id = option.id()?.toString() ?: UUID.randomUUID().toString())
+        property.title = option.name()
+        property.description =
+            Component.literal("Option currently not supported by OneConfig")
+                .append("\nType: ").append(controller.javaClass.simpleName ?: "Unknown")
+                .append("\nIf you need to access this option, please open the mod config manually via Mod Menu.")
+                .append("\nThe Polyfrost team will be working on adding support for this option soon!")
+        property.visualizer = Visualizer.InfoVisualizer::class.java
+        property.category = category
+        property.subcategory = subcategory
+        property.addMetadata("type", "warning")
+        return property
     }
 
 }

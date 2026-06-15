@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
@@ -8,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.api.settings.InfoOptionData
@@ -32,10 +34,31 @@ fun InfoOption(data: InfoOptionData) {
 
     Row(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Icon(iconName, color = iconColor, modifier = Modifier.size(24.dp))
-        Text(data.message, color = theme.textColor, fontSize = 16.sp)
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                data.heading,
+                modifier = Modifier.fillMaxWidth(),
+                color = theme.textColor,
+                fontSize = 16.sp,
+                lineHeight = 19.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            data.body?.let {
+                Text(
+                    it,
+                    modifier = Modifier.fillMaxWidth(),
+                    color = theme.textColorSecondary,
+                    fontSize = 13.sp,
+                    lineHeight = 16.sp,
+                )
+            }
+        }
     }
 }

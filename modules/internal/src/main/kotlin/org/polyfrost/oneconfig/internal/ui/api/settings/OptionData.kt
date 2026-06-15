@@ -72,7 +72,26 @@ class ButtonOptionData(prop: Property<*>) : OptionData(prop) {
 class InfoOptionData(prop: Property<*>) : OptionData(prop) {
     enum class Type { Info, Success, Warning, Error }
 
+    /** Whether a real title was set (not the default placeholder). */
+    private val hasTitle: Boolean
+        get() = !prop.getMetadata<String>("titleKey").isNullOrBlank() ||
+                (prop.title != null && prop.title != "polyui.info")
+
+    private val descriptionParts: Pair<String?, String?>
+        get() {
+            val lines = description?.asRenderText()?.lines() ?: return null to null
+            return lines.firstOrNull()?.takeIf { it.isNotBlank() } to
+                    lines.drop(1).joinToString("\n").takeIf { it.isNotBlank() }
+        }
+
+    /** The bold heading shown beside the icon. Falls back to the description when no title was set. */
+    val heading: Any get() = if (hasTitle) title else (descriptionParts.first ?: title)
+
+    /** The secondary line shown below the heading, or null when no title was set. */
+    val body: Any? get() = if (hasTitle) description?.asRenderText() else descriptionParts.second
+
     /** The message body shown beside the icon. */
+    @Deprecated("Use heading/body", ReplaceWith("heading"))
     val message: Any get() = description ?: title
 
     val type: Type
