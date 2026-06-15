@@ -119,24 +119,29 @@ private fun hexToColor(hex: String): Color? {
                 Integer.parseInt(h.substring(2, 4), 16) / 255f,
                 Integer.parseInt(h.substring(4, 6), 16) / 255f,
             )
+
             8 -> Color(
                 Integer.parseInt(h.substring(2, 4), 16) / 255f,
                 Integer.parseInt(h.substring(4, 6), 16) / 255f,
                 Integer.parseInt(h.substring(6, 8), 16) / 255f,
                 Integer.parseInt(h.substring(0, 2), 16) / 255f,
             )
+
             else -> null
         }
-    } catch (_: Exception) { null }
+    } catch (_: Exception) {
+        null
+    }
 }
 
-internal class ColorPickerModel(initialColor: Color) {
+internal class ColorPickerModel(initialColor: Color, hasAlpha: Boolean = true) {
     private val hsb = colorToHsb(initialColor)
     var hue by mutableFloatStateOf(hsb[0])
     var saturation by mutableFloatStateOf(hsb[1])
     var brightness by mutableFloatStateOf(hsb[2])
     var alpha by mutableFloatStateOf(initialColor.alpha)
     var chromaEnabled by mutableStateOf(false)
+    val alphaEnabled = hasAlpha
     var chromaSpeed by mutableFloatStateOf(1f)
 
     fun currentColor(): Color = hsbToColor(hue, saturation, brightness, alpha)
@@ -182,15 +187,24 @@ fun ColorOption(data: ColorOptionData) {
     val initialColor = remember(data.prop, initialValue) {
         when (val v = initialValue) {
             is Color -> v
-            is PolyColor -> Color(v.argb)
+            is PolyColor -> Color(v.argb).let {
+                if (data.alpha) it else it.copy(alpha = 1f)
+            }
+
             is Int -> Color(v)
-            is java.awt.Color -> Color(v.red / 255f, v.green / 255f, v.blue / 255f, v.alpha / 255f)
+            is java.awt.Color -> Color(
+                v.red / 255f,
+                v.green / 255f,
+                v.blue / 255f,
+                if (data.alpha) v.alpha / 255f else 1f
+            )
+
             else -> Color.White
         }
     }
     var currentColor by remember(data.prop) { mutableStateOf(initialColor) }
     val pickerModel = remember(data.prop, initialValue) {
-        ColorPickerModel(initialColor).apply {
+        ColorPickerModel(initialColor, data.alpha).apply {
             val color = initialValue as? PolyColor
             chromaEnabled = color?.chroma == true
             chromaSpeed = color?.chromaSpeed ?: 1f
@@ -210,16 +224,19 @@ fun ColorOption(data: ColorOptionData) {
         when {
             data.prop.type == Int::class.java || data.prop.type == Int::class.javaPrimitiveType ->
                 (data.prop as Property<Any>).set(color.toArgb())
+
             data.prop.type == PolyColor::class.java -> {
                 (data.prop as Property<Any>).set(
                     PolyColor(color.toArgb(), pickerModel.chromaEnabled, pickerModel.chromaSpeed)
                 )
                 updateAccent()
             }
+
             data.prop.type == java.awt.Color::class.java -> {
                 val argb = color.toArgb()
                 (data.prop as Property<Any>).set(java.awt.Color(argb, true))
             }
+
             else -> (data.prop as Property<Any>).set(color)
         }
     }
@@ -418,92 +435,94 @@ internal fun ColorPickerPopup(
         }
 
         // alpha bar
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("Opacity", color = theme.textColorSecondary, fontSize = 12.sp)
-            SliderValueField(
-                text = alphaText,
-                suffix = "%",
-                onValueChange = { input ->
-                    val filtered = input.filter { it.isDigit() }.take(3)
-                    alphaText = filtered
-                    filtered.toIntOrNull()?.coerceIn(0, 100)?.let { pct ->
-                        model.alpha = pct / 100f
-                        val c = model.currentColor()
-                        hexText = colorToHex(c)
-                        onColorChanged(c)
-                    }
-                },
-            )
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(16.dp)
-                .clip(LocalTheme.current.sideBarNavigationEntryShape)
-                .drawWithCache {
-                    val opaqueColor = hsbToColor(hue, saturation, brightness, 1f)
-                    val alphaGradient = Brush.horizontalGradient(
-                        listOf(opaqueColor.copy(alpha = 0f), opaqueColor)
-                    )
-                    onDrawBehind {
-                        // checkerboard background
-                        val cellSize = 6f
-                        for (row in 0..(size.height / cellSize).toInt()) {
-                            for (col in 0..(size.width / cellSize).toInt()) {
-                                val isLight = (row + col) % 2 == 0
-                                drawRect(
-                                    if (isLight) Color(0xFFCCCCCC) else Color(0xFF999999),
-                                    topLeft = Offset(col * cellSize, row * cellSize),
-                                    size = Size(cellSize, cellSize)
-                                )
-                            }
-                        }
-                        drawRect(alphaGradient)
-                    }
-                }
-                .pointerInput(Unit) {
-                    awaitEachGesture {
-                        val down = awaitFirstDown()
-                        fun update(x: Float) {
-                            model.alpha = (x / size.width).coerceIn(0f, 1f)
-                            alphaText = (model.alpha * 100f).roundToInt().toString()
+        if (model.alphaEnabled) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("Opacity", color = theme.textColorSecondary, fontSize = 12.sp)
+                SliderValueField(
+                    text = alphaText,
+                    suffix = "%",
+                    onValueChange = { input ->
+                        val filtered = input.filter { it.isDigit() }.take(3)
+                        alphaText = filtered
+                        filtered.toIntOrNull()?.coerceIn(0, 100)?.let { pct ->
+                            model.alpha = pct / 100f
                             val c = model.currentColor()
                             hexText = colorToHex(c)
                             onColorChanged(c)
                         }
-                        update(down.position.x)
-                        do {
-                            val event = awaitPointerEvent()
-                            event.changes.forEach { ch ->
-                                if (ch.pressed) {
-                                    update(ch.position.x)
-                                    ch.consume()
-                                }
-                            }
-                        } while (event.changes.any { it.pressed })
-                    }
-                }
-        ) {
-            var alphaBarWidth by remember { mutableStateOf(0f) }
+                    },
+                )
+            }
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(16.dp)
-                    .onSizeChanged { alphaBarWidth = it.width.toFloat() }
-            )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .offset { IntOffset(((alpha) * alphaBarWidth - 5.dp.toPx()).roundToInt().coerceAtLeast(0), 0) }
-                    .size(10.dp, 10.dp)
-                    .clip(LocalTheme.current.circleShape)
-                    .background(Color.White)
-                    .border(1.dp, Color.White.copy(0.5f), LocalTheme.current.checkBoxShape)
-            )
+                    .clip(LocalTheme.current.sideBarNavigationEntryShape)
+                    .drawWithCache {
+                        val opaqueColor = hsbToColor(hue, saturation, brightness, 1f)
+                        val alphaGradient = Brush.horizontalGradient(
+                            listOf(opaqueColor.copy(alpha = 0f), opaqueColor)
+                        )
+                        onDrawBehind {
+                            // checkerboard background
+                            val cellSize = 6f
+                            for (row in 0..(size.height / cellSize).toInt()) {
+                                for (col in 0..(size.width / cellSize).toInt()) {
+                                    val isLight = (row + col) % 2 == 0
+                                    drawRect(
+                                        if (isLight) Color(0xFFCCCCCC) else Color(0xFF999999),
+                                        topLeft = Offset(col * cellSize, row * cellSize),
+                                        size = Size(cellSize, cellSize)
+                                    )
+                                }
+                            }
+                            drawRect(alphaGradient)
+                        }
+                    }
+                    .pointerInput(Unit) {
+                        awaitEachGesture {
+                            val down = awaitFirstDown()
+                            fun update(x: Float) {
+                                model.alpha = (x / size.width).coerceIn(0f, 1f)
+                                alphaText = (model.alpha * 100f).roundToInt().toString()
+                                val c = model.currentColor()
+                                hexText = colorToHex(c)
+                                onColorChanged(c)
+                            }
+                            update(down.position.x)
+                            do {
+                                val event = awaitPointerEvent()
+                                event.changes.forEach { ch ->
+                                    if (ch.pressed) {
+                                        update(ch.position.x)
+                                        ch.consume()
+                                    }
+                                }
+                            } while (event.changes.any { it.pressed })
+                        }
+                    }
+            ) {
+                var alphaBarWidth by remember { mutableStateOf(0f) }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .onSizeChanged { alphaBarWidth = it.width.toFloat() }
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .offset { IntOffset(((alpha) * alphaBarWidth - 5.dp.toPx()).roundToInt().coerceAtLeast(0), 0) }
+                        .size(10.dp, 10.dp)
+                        .clip(LocalTheme.current.circleShape)
+                        .background(Color.White)
+                        .border(1.dp, Color.White.copy(0.5f), LocalTheme.current.checkBoxShape)
+                )
+            }
         }
 
         // Chroma is only offered when the backing property can actually persist it (a PolyColor).
@@ -585,7 +604,9 @@ internal fun ColorPickerPopup(
                                 do {
                                     val event = awaitPointerEvent()
                                     event.changes.forEach { ch ->
-                                        if (ch.pressed) { update(ch.position.x); ch.consume() }
+                                        if (ch.pressed) {
+                                            update(ch.position.x); ch.consume()
+                                        }
                                     }
                                 } while (event.changes.any { it.pressed })
                             }

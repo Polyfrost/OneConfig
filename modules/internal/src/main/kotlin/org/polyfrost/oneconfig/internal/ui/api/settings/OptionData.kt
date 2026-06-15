@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.api.settings
 
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedString
 import org.polyfrost.oneconfig.internal.ui.components.localizedText
@@ -47,22 +48,24 @@ class TextOptionData(prop: Property<*>) : OptionData(prop) {
 }
 
 class DropdownOptionData(prop: Property<*>) : OptionData(prop) {
-    val options: List<String>? get() = prop.optionLabels()
-    val optionValues: List<String>? get() = prop.optionValues()
+    val options: List<Any>? get() = prop.optionLabels()
+    val optionValues: List<Any>? get() = prop.optionValues()
     val isEnum: Boolean get() = prop.type.isEnum || prop.type.superclass?.isEnum == true
 }
 
 class RadioButtonOptionData(prop: Property<*>) : OptionData(prop) {
-    val options: List<String>? get() = prop.optionLabels()
+    val options: List<Any>? get() = prop.optionLabels()
     val isEnum: Boolean get() = prop.type.isEnum || prop.type.superclass?.isEnum == true
 }
 
-class ColorOptionData(prop: Property<*>) : OptionData(prop)
+class ColorOptionData(prop: Property<*>) : OptionData(prop) {
+    val alpha = prop.getMetadata<Any>("noAlpha") == null
+}
 
 class KeybindOptionData(prop: Property<*>) : OptionData(prop)
 
 class ButtonOptionData(prop: Property<*>) : OptionData(prop) {
-    val buttonText: Any? get() = localizedText(prop.getMetadata("textKey"), prop.getMetadata("text"))
+    val buttonText: Any? get() = localizedText(prop.getMetadata<Any?>("textKey")?.asRenderText(), prop.getMetadata<Any?>("text")?.asRenderText())
     val runnable: Runnable? get() = prop.getMetadata("runnable") ?: prop.getAs()
 }
 
@@ -83,50 +86,49 @@ class InfoOptionData(prop: Property<*>) : OptionData(prop) {
 
 class DraggableListOptionData(prop: Property<*>) : OptionData(prop) {
     val options: Array<String>? get() = prop.getMetadata<Array<String>>("options")?.takeIf { it.isNotEmpty() }
-    val optionLabels: Map<String, String> get() = prop.optionLabelMap()
+    val optionLabels: Map<String, Any> get() = prop.optionLabelMap()
     val checkable: Boolean get() = prop.getMetadata("checkable") ?: false
 }
 
 class MultiSelectDropdownOptionData(prop: Property<*>) : OptionData(prop) {
     val options: Array<String>? get() = prop.getMetadata<Array<String>>("options")?.takeIf { it.isNotEmpty() }
-    val optionLabels: List<String>? get() = prop.optionLabels()
+    val optionLabels: List<Any>? get() = prop.optionLabels()
     val checkable: Boolean get() = prop.getMetadata("checkable") ?: true
 }
 
-private fun Property<*>.optionLabels(): List<String>? {
+private fun Property<*>.optionLabels(): List<Any>? {
     // Explicit display labels (e.g. compat layers that resolve labels themselves) take precedence
     // over deriving them from the raw option values. Positionally aligned with "options".
-    getMetadata<Any>("optionLabels").optionList().takeIf { it.isNotEmpty() }?.let { return it }
+    getMetadata<Any>("optionLabels").optionList().takeIf { it.asRenderText().isNotEmpty() }?.let { return it }
 
     val raw = getMetadata<Any>("options") ?: return null
-    val keys = getMetadata<Any>("optionsKey").optionList()
+    val keys = getMetadata<Any>("optionsKey").optionList().map { it.toString() }
     val labels = when {
-        raw is Iterable<*> -> raw.map { it?.toString() ?: "" }
+        raw is Iterable<*> -> raw.map { it ?: "" }
         raw.javaClass.isArray -> List(ReflectArray.getLength(raw)) { index ->
-            ReflectArray.get(raw, index)?.toString() ?: ""
+            ReflectArray.get(raw, index) ?: ""
         }
         else -> return null
-    }.mapIndexed { index, option -> localizedString(keys.getOrNull(index), option) }
-        .filter { it.isNotBlank() }
+    }.mapIndexed { index, option -> localizedText(keys.getOrNull(index), option) }.filter { it.asRenderText().isNotBlank() }
 
     return labels.takeIf { it.isNotEmpty() }
 }
 
-private fun Property<*>.optionValues(): List<String>? = getMetadata<Any>("optionValues").optionList().takeIf { it.isNotEmpty() }
+private fun Property<*>.optionValues(): List<Any>? = getMetadata<Any>("optionValues").optionList().takeIf { it.isNotEmpty() }
 
-private fun Property<*>.optionLabelMap(): Map<String, String> {
-    val options = getMetadata<Any>("options").optionList()
+private fun Property<*>.optionLabelMap(): Map<String, Any> {
+    val options = getMetadata<Any>("options").optionList().map { it.toString() }
     val labels = optionLabels() ?: return emptyMap()
     return options.zip(labels).toMap()
 }
 
-private fun Any?.optionList(): List<String> {
+private fun Any?.optionList(): List<Any> {
     val raw = this ?: return emptyList()
     return when {
-        raw is Iterable<*> -> raw.map { it?.toString() ?: "" }
+        raw is Iterable<*> -> raw.map { it ?: "" }
         raw.javaClass.isArray -> List(ReflectArray.getLength(raw)) { index ->
-            ReflectArray.get(raw, index)?.toString() ?: ""
+            ReflectArray.get(raw, index) ?: ""
         }
         else -> emptyList()
-    }.filter { it.isNotBlank() }
+    }.filter { it.asRenderText().isNotBlank() }
 }

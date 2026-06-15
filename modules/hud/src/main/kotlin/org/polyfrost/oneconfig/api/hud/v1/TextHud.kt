@@ -29,6 +29,8 @@ package org.polyfrost.oneconfig.api.hud.v1
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.util.fastFilterNotNull
+import androidx.compose.ui.util.fastJoinToString
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.compose.composables.PolyBox
 import org.polyfrost.compose.composables.PolyCanvas
@@ -68,9 +70,6 @@ abstract class TextHud(
         staticW = UNMEASURED
         staticH = UNMEASURED
     }
-
-    @get:JvmName("getStringBuilder")
-    protected var sb = StringBuilder()
 
     private var displayTextState: MutableState<String> = mutableStateOf("")
     private var displayText: String
@@ -114,31 +113,54 @@ abstract class TextHud(
 
                 if (showShadow) {
                     val shadowCol = PolyColor(shadowColor, shadowChroma, shadowChromaSpeed)
-                    PolyCanvas(modifier = PolyModifier.size(textWidth, textHeight)
-                        .let { if (isStaticValid) it.align(contentAlign) else it }) { x, y, _, _ ->
+                    PolyCanvas(
+                        modifier = PolyModifier.size(textWidth, textHeight)
+                            .let { if (isStaticValid) it.align(contentAlign) else it }) { x, y, _, _ ->
                         val baseline = y - skiaFont.metrics.ascent
                         text(text, x + shadowOffsetX, baseline + shadowOffsetY, shadowCol, skiaFont)
                         if (textUnderline) {
                             val underlinePos = skiaFont.metrics.underlinePosition ?: (fontSize * 0.08f)
                             val underlineThick = skiaFont.metrics.underlineThickness ?: (fontSize * 0.06f)
-                            line(x + shadowOffsetX, baseline + shadowOffsetY + underlinePos, x + shadowOffsetX + textWidth, baseline + shadowOffsetY + underlinePos, shadowCol, underlineThick)
+                            line(
+                                x + shadowOffsetX,
+                                baseline + shadowOffsetY + underlinePos,
+                                x + shadowOffsetX + textWidth,
+                                baseline + shadowOffsetY + underlinePos,
+                                shadowCol,
+                                underlineThick
+                            )
                         }
                         text(text, x, baseline, fgColor, skiaFont)
                         if (textUnderline) {
                             val underlinePos = skiaFont.metrics.underlinePosition ?: (fontSize * 0.08f)
                             val underlineThick = skiaFont.metrics.underlineThickness ?: (fontSize * 0.06f)
-                            line(x, baseline + underlinePos, x + textWidth, baseline + underlinePos, fgColor, underlineThick)
+                            line(
+                                x,
+                                baseline + underlinePos,
+                                x + textWidth,
+                                baseline + underlinePos,
+                                fgColor,
+                                underlineThick
+                            )
                         }
                     }
                 } else {
-                    PolyCanvas(modifier = PolyModifier.size(textWidth, textHeight)
-                        .let { if (isStaticValid) it.align(contentAlign) else it }) { x, y, _, _ ->
+                    PolyCanvas(
+                        modifier = PolyModifier.size(textWidth, textHeight)
+                            .let { if (isStaticValid) it.align(contentAlign) else it }) { x, y, _, _ ->
                         val baseline = y - skiaFont.metrics.ascent
                         text(text, x, baseline, fgColor, skiaFont)
                         if (textUnderline) {
                             val underlinePos = skiaFont.metrics.underlinePosition ?: (fontSize * 0.08f)
                             val underlineThick = skiaFont.metrics.underlineThickness ?: (fontSize * 0.06f)
-                            line(x, baseline + underlinePos, x + textWidth, baseline + underlinePos, fgColor, underlineThick)
+                            line(
+                                x,
+                                baseline + underlinePos,
+                                x + textWidth,
+                                baseline + underlinePos,
+                                fgColor,
+                                underlineThick
+                            )
                         }
                     }
                 }
@@ -162,12 +184,18 @@ abstract class TextHud(
         }
     }
 
+    open val concatString: String get() = " "
+
+    open fun concat(prefix: String, value: String?, suffix: String): String {
+        return arrayListOf(
+            prefix.takeIf { it.isNotEmpty() },
+            value?.takeIf { it.isNotEmpty() },
+            suffix.takeIf { it.isNotEmpty() }
+        ).fastFilterNotNull().fastJoinToString(concatString)
+    }
+
     override fun update(): Boolean {
-        if (prefix.isNotEmpty()) sb.append(prefix).append(' ')
-        getText()?.let { sb.append(it) }
-        if (suffix.isNotEmpty()) sb.append(' ').append(suffix)
-        displayText = sb.toString()
-        sb.clear()
+        displayText = concat(prefix, getText(), suffix)
         return true
     }
 
@@ -188,7 +216,6 @@ abstract class TextHud(
     protected abstract fun getText(): String?
 
     override fun clone(): Hud = (super.clone() as TextHud).also {
-        it.sb = StringBuilder()
         it.displayTextState = mutableStateOf("")
     }
 

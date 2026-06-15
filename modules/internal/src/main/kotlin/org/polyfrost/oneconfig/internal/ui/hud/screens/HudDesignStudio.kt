@@ -349,7 +349,7 @@ fun HudDesignStudio() {
         selectedHud?.let { repairHudStaticSize(it) }
     }
 
-    val providers = remember { HudManager.providers().filter { it !is LegacyHud }.toList() }
+    val providers = remember { HudManager.providers().toList() }
     val modIds = remember(providers) { providers.mapNotNull { it.configId }.distinct() }
     val filteredProviders = providers.filter { hud ->
         (filterModId == null || hud.configId == filterModId) &&
@@ -370,7 +370,7 @@ fun HudDesignStudio() {
             // swallowing clicks after the panel closes, making HUDs there un-selectable/un-editable.
             if (selectedHud != null && panelAreaWidth > 0f && pos.x > size.width - panelAreaWidth) return@onPointerEvent
             if (event.buttons.isSecondaryPressed) {
-                val hit = HudManager.activeInstances.lastOrNull { it !is LegacyHud && hitTestHud(it, pos.x, pos.y) }
+                val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
                 if (hit != null) {
                     event.changes.forEach { it.consume() }
                     Snapshot.withMutableSnapshot {
@@ -384,7 +384,7 @@ fun HudDesignStudio() {
             }
             val mcToScreen = Platform.screen().mcToScreenScale()
             val selected = selectedHud
-            if (selected != null && selected !is LegacyHud) {
+            if (selected != null) {
                 val handle = hitTestResizeHandle(selected, pos.x, pos.y, mcToScreen)
                 val bounds = hudBounds(selected)
                 if (handle != null && bounds != null) {
@@ -405,13 +405,13 @@ fun HudDesignStudio() {
                 }
             }
             val currentActionBarTarget = if (selectedHud == null) hoveredHud else null
-            if (currentActionBarTarget != null && currentActionBarTarget !is LegacyHud) {
+            if (currentActionBarTarget != null) {
                 if (hitTestHudActionBar(currentActionBarTarget, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx)) {
                     return@onPointerEvent
                 }
             }
             val s = Platform.screen().screenToMcScale()
-            val hit = HudManager.activeInstances.lastOrNull { it !is LegacyHud && hitTestHud(it, pos.x, pos.y) }
+            val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
             if (hit != null) UiSounds.play(UiSoundEvent.HUD_DRAG_START)
             Snapshot.withMutableSnapshot {
                 if (hit != null) {
@@ -469,13 +469,13 @@ fun HudDesignStudio() {
                     hit.setAbsolutePosition(pos.x * s - dragOffsetX, pos.y * s - dragOffsetY)
                 }
             } else {
-                val hit = HudManager.activeInstances.lastOrNull { it !is LegacyHud && hitTestHud(it, pos.x, pos.y) }
+                val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
                 val mcToScreen = Platform.screen().mcToScreenScale()
                 val overActionBar = selectedHud == null && hoveredHud?.let { hh ->
-                    hh !is LegacyHud && hitTestHudActionBar(hh, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx)
+                    hitTestHudActionBar(hh, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx)
                 } == true
                 val inExpandedZone = hoveredHud?.let { hh ->
-                    hh !is LegacyHud && hitTestHudWithActionBar(hh, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx)
+                    hitTestHudWithActionBar(hh, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx)
                 } == true
                 if (hit != null) {
                     hoveredHud = hit
@@ -510,13 +510,13 @@ fun HudDesignStudio() {
             if (!wasDragging || wasDraggedHud == null) {
                 val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
                 val currentActionBarTarget = if (selectedHud == null) hoveredHud else null
-                if (currentActionBarTarget != null && currentActionBarTarget !is LegacyHud) {
+                if (currentActionBarTarget != null) {
                     val mcToScreen = Platform.screen().mcToScreenScale()
                     if (hitTestHudActionBar(currentActionBarTarget, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx)) {
                         return@onPointerEvent
                     }
                 }
-                val hit = HudManager.activeInstances.lastOrNull { it !is LegacyHud && hitTestHud(it, pos.x, pos.y) }
+                val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
                 if (hit != null) {
                     if (hit !== selectedHud) UiSounds.play(UiSoundEvent.HUD_SELECT)
                     Snapshot.withMutableSnapshot {
@@ -577,7 +577,7 @@ fun HudDesignStudio() {
         )
 
         val actionBarTarget = if (selectedHud == null) hoveredHud else null
-        if (actionBarTarget != null && actionBarTarget !is LegacyHud) {
+        if (actionBarTarget != null) {
             val mcToScreen = Platform.screen().mcToScreenScale()
             val bounds = hudBounds(actionBarTarget)
             val layout = hudActionBarLayout(actionBarTarget, mcToScreen, actionIconPx, actionBarGapPx)
