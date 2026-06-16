@@ -71,8 +71,10 @@ object SkiaFontRenderer : PreparableReloadListener {
     fun draw(canvas: Canvas, text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) {
         ensureLoaded()
         val img = atlas ?: return
-        if (shadow) drawGlyphs(canvas, img, text, x + scale, y + scale, color, scale, true)
-        drawGlyphs(canvas, img, text, x, y, color, scale, false)
+        text.lines().forEachIndexed { index, line ->
+            if (shadow) drawGlyphs(canvas, img, line, x + scale, y + scale + index * cellH * scale, color, scale, true)
+            drawGlyphs(canvas, img, line, x, y + index * cellH * scale, color, scale, false)
+        }
     }
 
     private fun ensureLoaded() {

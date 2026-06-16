@@ -32,6 +32,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.util.fastFilterNotNull
 import androidx.compose.ui.util.fastJoinToString
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.skia.paragraph.Direction
+import org.jetbrains.skia.paragraph.ParagraphBuilder
+import org.jetbrains.skia.paragraph.ParagraphStyle
+import org.jetbrains.skia.paragraph.TextBox
 import org.polyfrost.compose.composables.PolyBox
 import org.polyfrost.compose.composables.PolyCanvas
 import org.polyfrost.compose.composables.PolyMcText
@@ -108,13 +112,12 @@ abstract class TextHud(
                 val fontName = getPoppinsFontName()
                 val fontSize = 8f * textScale
                 val skiaFont = FontManager.getFont(fontSize, fontName)
-                val textWidth = skiaFont.measureTextWidth(text)
-                val textHeight = skiaFont.metrics.let { it.descent - it.ascent }
+                val textScale = skiaFont.measureText(text)
 
                 if (showShadow) {
                     val shadowCol = PolyColor(shadowColor, shadowChroma, shadowChromaSpeed)
                     PolyCanvas(
-                        modifier = PolyModifier.size(textWidth, textHeight)
+                        modifier = PolyModifier.size(textScale.width, textScale.height)
                             .let { if (isStaticValid) it.align(contentAlign) else it }) { x, y, _, _ ->
                         val baseline = y - skiaFont.metrics.ascent
                         text(text, x + shadowOffsetX, baseline + shadowOffsetY, shadowCol, skiaFont)
@@ -124,7 +127,7 @@ abstract class TextHud(
                             line(
                                 x + shadowOffsetX,
                                 baseline + shadowOffsetY + underlinePos,
-                                x + shadowOffsetX + textWidth,
+                                x + shadowOffsetX + textScale.width,
                                 baseline + shadowOffsetY + underlinePos,
                                 shadowCol,
                                 underlineThick
@@ -137,7 +140,7 @@ abstract class TextHud(
                             line(
                                 x,
                                 baseline + underlinePos,
-                                x + textWidth,
+                                x + textScale.width,
                                 baseline + underlinePos,
                                 fgColor,
                                 underlineThick
@@ -146,7 +149,7 @@ abstract class TextHud(
                     }
                 } else {
                     PolyCanvas(
-                        modifier = PolyModifier.size(textWidth, textHeight)
+                        modifier = PolyModifier.size(textScale.width, textScale.height)
                             .let { if (isStaticValid) it.align(contentAlign) else it }) { x, y, _, _ ->
                         val baseline = y - skiaFont.metrics.ascent
                         text(text, x, baseline, fgColor, skiaFont)
@@ -156,7 +159,7 @@ abstract class TextHud(
                             line(
                                 x,
                                 baseline + underlinePos,
-                                x + textWidth,
+                                x + textScale.width,
                                 baseline + underlinePos,
                                 fgColor,
                                 underlineThick

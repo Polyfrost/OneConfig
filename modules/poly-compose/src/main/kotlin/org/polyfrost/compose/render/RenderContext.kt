@@ -3,7 +3,7 @@ package org.polyfrost.compose.render
 import org.jetbrains.skia.*
 
 class RenderContext(val canvas: Canvas) {
-    private val paint = Paint()
+    val paint = Paint()
 
     private var _absX = 0f
     private var _absY = 0f

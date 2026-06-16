@@ -67,6 +67,9 @@ object HudManager {
         register(object : TextHud.DateTime("Time:", "HH:mm:ss") {
             override fun defaultPosition() = 0f to 0f
         })
+        register(object : TextHud("test", "test", Hud.Category.COMBAT, "") {
+            override fun getText(): String = "mmrp\nmeow"
+        })
     }
 
     @JvmStatic

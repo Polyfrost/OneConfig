@@ -12,8 +12,9 @@ class McTextNode : PolyNode() {
     var scale: Float = 1f
 
     fun remeasure() {
-        style.width = PolySize.Px(McFontQueue.measureTextWidth(text, scale))
-        style.height = PolySize.Px(McFontQueue.measureTextHeight(scale))
+        val lines = text.lines()
+        style.width = PolySize.Px(lines.maxOf {  McFontQueue.measureTextWidth(it, scale) })
+        style.height = PolySize.Px(lines.size * McFontQueue.measureTextHeight(scale))
     }
 
     override fun render(ctx: RenderContext) {
