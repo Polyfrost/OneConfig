@@ -118,7 +118,7 @@ class MultiSelectDropdownOptionData(prop: Property<*>) : OptionData(prop) {
 private fun Property<*>.optionLabels(): List<Any>? {
     // Explicit display labels (e.g. compat layers that resolve labels themselves) take precedence
     // over deriving them from the raw option values. Positionally aligned with "options".
-    getMetadata<Any>("optionLabels").optionList().takeIf { it.asRenderText().isNotEmpty() }?.let { return it }
+    getMetadata<Any>("optionLabels").optionList().takeIf { it.isNotEmpty() }?.let { return it }
 
     val raw = getMetadata<Any>("options") ?: return null
     val keys = getMetadata<Any>("optionsKey").optionList().map { it.toString() }
