@@ -2,6 +2,7 @@ import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.artifacts.ModuleDependency
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
+import kotlin.collections.listOf
 
 plugins {
     java
@@ -26,6 +27,7 @@ repositories {
         content { includeGroup("net.azureaaron") }
     }
     maven("https://redirector.kotlinlang.org/maven/compose-dev")
+    maven("https://central.sonatype.com/repository/maven-snapshots/")
     google()
 }
 
@@ -139,8 +141,8 @@ val modrinthMinecraftVersionOverride = mapOf(
     "26.1" to listOf("26.1", "26.1.1", "26.1.2")
 )
 
-val modrinthId = findProperty("publish.modrinth")?.toString()?.takeIf { it.isNotBlank() }
-val modrinthToken = findProperty("modrinth.token")?.toString()?.takeIf { it.isNotBlank() }
+val modrinthId = listOf("oneconfig.publish.modrinth", "publish.modrinth").firstNotNullOfOrNull { findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
+val modrinthToken = listOf("oneconfig.publish.modrinth.token", "publish.modrinth.token", "modrinth.token").firstNotNullOfOrNull { findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
 val rawMinecraftVersion = versionedCatalog.versions["minecraft"].requiredVersion
 val minecraftVersion = modrinthMinecraftVersionOverride[rawMinecraftVersion] ?: listOf(rawMinecraftVersion)
 val publishJarTaskName = if ("remapJar" in tasks.names) "remapJar" else "jar"

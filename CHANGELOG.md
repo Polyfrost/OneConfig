@@ -1,14 +1,7 @@
-1.0.0-beta.2 changelogs:
+1.0.0-beta.3 changelogs:
 
-- Improve support with Dandelion (Skyblocker)
-- Update modern theme sounds
-- Update Minecraft theme icons
-- Update our 26.2 build to 26.2-rc.2
-- Add `oneconfig` as a modid alias
+- Bumped 26.2 from rc to stable
 
-- Fix font letters randomly disappearing
-- Fix translated text being lowercase
-- Fix clipboard not working on Windows/Linux
-- Fix not being able to move legacy HUDs
-- Fix mouse input event
-- Warn when slider step is larger than its range
+- Fix multiline mc style text not working.
+- Fix an issue that caused most dropdowns to be empty.
+- Fix showing alpha slider for all color options.
