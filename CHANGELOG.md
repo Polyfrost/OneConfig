@@ -1,7 +1,3 @@
-1.0.0-beta.3 changelogs:
+1.0.0-beta.4 changelogs:
 
-- Bumped 26.2 from rc to stable
-
-- Fix multiline mc style text not working.
-- Fix an issue that caused most dropdowns to be empty.
-- Fix showing alpha slider for all color options.
+- Fix test HUD being included by accident

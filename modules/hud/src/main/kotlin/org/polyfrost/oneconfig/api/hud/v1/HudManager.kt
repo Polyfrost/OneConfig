@@ -67,9 +67,12 @@ object HudManager {
         register(object : TextHud.DateTime("Time:", "HH:mm:ss") {
             override fun defaultPosition() = 0f to 0f
         })
-        register(object : TextHud("test", "test", Hud.Category.COMBAT, "") {
-            override fun getText(): String = "mmrp\nmeow"
-        })
+        if (java.lang.Boolean.getBoolean("oneconfig.test")) {
+            register(object : TextHud("test", "test", Category.COMBAT, "") {
+                override fun defaultPosition() = 0f to 0f
+                override fun getText(): String = "mmrp\nmeow"
+            })
+        }
     }
 
     @JvmStatic
