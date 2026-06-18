@@ -111,13 +111,10 @@ public class OneConfig
             if (!pressed) {
                 return true;
             }
-            if (Platform.screen().current() instanceof OneConfigUIScreen) {
+            if (Platform.screen().current() != null) {
                 return true;
             }
             if (Minecraft.getInstance().level == null && !Platform.compatibility().isDevelopment()) {
-                return true;
-            }
-            if (isInChatScreen()) {
                 return true;
             }
             try {
@@ -187,7 +184,9 @@ public class OneConfig
         EventManager.register(
                 HudEditorToggleEvent.class, e -> {
                     if (e.open) {
-                        Platform.screen().display(new HudEditorUIScreen());
+                        if (!(Platform.screen().current() instanceof HudEditorUIScreen)) {
+                            Platform.screen().display(new HudEditorUIScreen());
+                        }
                     } else {
                         if (Platform.screen().current() instanceof HudEditorUIScreen) {
                             Platform.screen().display(null, 0);

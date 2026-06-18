@@ -42,6 +42,7 @@ object HudManager {
     internal val LOGGER = LogManager.getLogger("OneConfig/HUD")
 
     private val hudProviders = HashMap<Class<out Hud>, Hud>()
+    private val hudIcons = HashMap<String, String>()
     private var init = false
 
     @get:JvmName("isEditing")
@@ -57,6 +58,9 @@ object HudManager {
 
     private val lastUpdates = HashMap<Hud, Long>()
 
+    /**
+     * NOTE: NEVER CALL THIS RAW! THERE ARE CERTAIN THINGS THAT MUST BE DONE TO PROPERLY REGISTER AN ACTIVE HUD!
+     */
     @ApiStatus.Internal
     val activeInstances = ArrayList<Hud>()
 
@@ -86,6 +90,22 @@ object HudManager {
         hud.configId = configId
         register(hud)
     }
+
+    /**
+     * Registers a HUD under [configId] and associates a menu [icon] with that id, used for the
+     * HUD library's per-mod icon column. [icon] is either an OC icon name (e.g. `"combat"`,
+     * resolved under `assets/oneconfig/ico/`) or a classpath/absolute resource path
+     * (e.g. `"/assets/yourmod/icon.svg"`). Lets HUD-only mods set a menu icon without
+     * registering a matching [org.polyfrost.oneconfig.api.config.v1.Config].
+     */
+    @JvmStatic
+    fun register(hud: Hud, configId: String, icon: String) {
+        hudIcons[configId] = icon
+        register(hud, configId)
+    }
+
+    /** The menu icon associated with [configId] via [register], or `null` if none was set. */
+    fun iconFor(configId: String): String? = hudIcons[configId]
 
     @JvmStatic
     fun register(vararg huds: Hud) {
@@ -187,7 +207,10 @@ object HudManager {
 
     @ApiStatus.Internal
     fun openEditor() {
-        if (isEditing) return
+        // Always (re)assert editing and post OPEN, even if [isEditing] is already true: the flag can
+        // get stuck (e.g. the editor screen closed without closeEditor() running), and an early return
+        // here would make the "Edit HUD" button silently do nothing. The OPEN handler is responsible
+        // for not opening a duplicate editor screen.
         isEditing = true
         EventManager.INSTANCE.post(HudEditorToggleEvent.OPEN)
     }

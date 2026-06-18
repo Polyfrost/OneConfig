@@ -377,6 +377,17 @@ public class ObjectSerializer {
         if (!cls.isAssignableFrom(input.getClass())) {
             throw new IllegalArgumentException("Cannot merge two objects of different classes: " + cls.getName() + " and " + input.getClass().getName());
         }
+        if (cls.isArray()) {
+            // arrays have no declared fields to iterate; copy elements in place so the reference is preserved
+            int len = java.lang.reflect.Array.getLength(input);
+            if (java.lang.reflect.Array.getLength(self) != len) {
+                // cannot resize in place; signal the caller (e.g. Property.Field#set0) to replace the reference
+                throw new SerializationException("Cannot overwrite array of length " + java.lang.reflect.Array.getLength(self) + " with array of length " + len);
+            }
+            //noinspection SuspiciousSystemArraycopy
+            System.arraycopy(input, 0, self, 0, len);
+            return self;
+        }
         fieldStream(cls).forEach(f -> {
             try {
                 MHUtils.setAccessible(f);

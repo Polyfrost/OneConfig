@@ -85,7 +85,6 @@ import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
-import kotlin.math.abs
 import kotlin.math.roundToInt
 
 enum class StudioCategory(val title: String, val icon: String) {
@@ -112,6 +111,12 @@ private val selectionBlue = Color(SELECTION_BLUE_ARGB)
 
 private fun hudBounds(hud: Hud): HudBounds? {
     val scale = hud.effectiveScale
+    if (hud is LegacyHud) {
+        // Legacy HUDs are fixed-size; minimumSize() carries their real dimensions.
+        val (lw, lh) = hud.minimumSize()
+        if (lw <= 0f || lh <= 0f) return null
+        return HudBounds(hud.x, hud.y, lw * scale, lh * scale)
+    }
     val width = if (hud.staticWidth) {
         hud.staticW.takeIf { it > 0f }?.times(scale)
     } else {
@@ -244,9 +249,17 @@ private fun resizeHud(
         return
     }
 
-    val widthFactor = targetWidth / startBounds.width
-    val heightFactor = targetHeight / startBounds.height
-    val rawFactor = if (abs(widthFactor - 1f) > abs(heightFactor - 1f)) widthFactor else heightFactor
+    // Scale proportionally by projecting the mouse onto the diagonal from the anchor to the
+    // dragged corner. Using the per-axis max-deviation factor amplified small moves on the
+    // short axis into huge uniform jumps and made the corner drift away from the cursor.
+    val cornerVecX = if (corner.isLeft) -startBounds.width else startBounds.width
+    val cornerVecY = if (corner.isTop) -startBounds.height else startBounds.height
+    val mouseVecX = mouseX - anchorX
+    val mouseVecY = mouseY - anchorY
+    val diagLenSq = cornerVecX * cornerVecX + cornerVecY * cornerVecY
+    val rawFactor = if (diagLenSq > 0f) {
+        (mouseVecX * cornerVecX + mouseVecY * cornerVecY) / diagLenSq
+    } else 1f
     val minTextScale = 6f / 14f
     val maxTextScale = 64f / 14f
     val newTextScale = (startTextScale * rawFactor).coerceIn(minTextScale, maxTextScale)
@@ -264,7 +277,7 @@ private fun resizeHud(
     hud.setAbsolutePosition(newX, newY)
 }
 
-private fun DrawScope.drawSelectedHudBounds(bounds: HudBounds, mcToScreen: Float) {
+private fun DrawScope.drawSelectedHudBounds(bounds: HudBounds, mcToScreen: Float, showHandles: Boolean) {
     val sx = bounds.x * mcToScreen
     val sy = bounds.y * mcToScreen
     val sw = bounds.width * mcToScreen
@@ -277,16 +290,18 @@ private fun DrawScope.drawSelectedHudBounds(bounds: HudBounds, mcToScreen: Float
         style = Stroke(width = 1f)
     )
 
-    val handleSize = 7f
-    listOf(
-        Offset(sx, sy),
-        Offset(sx + sw, sy),
-        Offset(sx, sy + sh),
-        Offset(sx + sw, sy + sh),
-    ).forEach { corner ->
-        val topLeft = Offset(corner.x - handleSize / 2, corner.y - handleSize / 2)
-        drawRect(color = Color.White, topLeft = topLeft, size = Size(handleSize, handleSize))
-        drawRect(color = selectionBlue, topLeft = topLeft, size = Size(handleSize, handleSize), style = Stroke(width = 1f))
+    if (showHandles) {
+        val handleSize = 7f
+        listOf(
+            Offset(sx, sy),
+            Offset(sx + sw, sy),
+            Offset(sx, sy + sh),
+            Offset(sx + sw, sy + sh),
+        ).forEach { corner ->
+            val topLeft = Offset(corner.x - handleSize / 2, corner.y - handleSize / 2)
+            drawRect(color = Color.White, topLeft = topLeft, size = Size(handleSize, handleSize))
+            drawRect(color = selectionBlue, topLeft = topLeft, size = Size(handleSize, handleSize), style = Stroke(width = 1f))
+        }
     }
 
     val badgeTopY = (sy - HUD_SIZE_BADGE_GAP - HUD_SIZE_BADGE_HEIGHT).coerceAtLeast(0f)
@@ -384,7 +399,7 @@ fun HudDesignStudio() {
             }
             val mcToScreen = Platform.screen().mcToScreenScale()
             val selected = selectedHud
-            if (selected != null) {
+            if (selected != null && selected !is LegacyHud) {
                 val handle = hitTestResizeHandle(selected, pos.x, pos.y, mcToScreen)
                 val bounds = hudBounds(selected)
                 if (handle != null && bounds != null) {
@@ -545,8 +560,8 @@ fun HudDesignStudio() {
                     drawContent()
                     val mcToScreen = Platform.screen().mcToScreenScale()
                     for (hud in HudManager.activeInstances) {
-                        if (hud is LegacyHud) continue
                         val bounds = hudBounds(hud) ?: continue
+                        val resizable = hud !is LegacyHud
                         val sx = bounds.x * mcToScreen
                         val sy = bounds.y * mcToScreen
                         val sw = bounds.width * mcToScreen
@@ -561,9 +576,9 @@ fun HudDesignStudio() {
                                 topLeft = Offset(sx, sy),
                                 size = Size(sw, sh),
                             )
-                            drawSelectedHudBounds(bounds, mcToScreen)
+                            drawSelectedHudBounds(bounds, mcToScreen, resizable)
                         } else if (isSelected) {
-                            drawSelectedHudBounds(bounds, mcToScreen)
+                            drawSelectedHudBounds(bounds, mcToScreen, resizable)
                         } else if (isHovered) {
                             drawRect(
                                 color = Color.White.copy(0.5f),
@@ -872,9 +887,9 @@ private fun ModIconColumn(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         modIds.forEach { modId ->
-            val config = ConfigRegistry.findById(modId)
+            val icon = HudManager.iconFor(modId) ?: ConfigRegistry.findById(modId)?.icon ?: "qol"
             ModFilterIcon(
-                iconName = config?.icon ?: "qol",
+                iconName = icon,
                 selected = filterModId == modId && libraryVisible,
             ) { onModClick(modId) }
         }
@@ -885,7 +900,83 @@ private const val PREVIEW_SCALE = 2f
 
 @Composable
 private fun HudPreviewCard(hud: Hud, onDragStart: (Hud, Float, Float, Float, Float) -> Unit) {
-    ComposeHudPreviewCard(hud, onDragStart)
+    // Legacy HUDs have no Compose content tree, so render a sized, titled placeholder tile
+    // instead of an empty (zero-size, invisible) preview. The placed instance still renders
+    // for real through LegacyHudRenderer once dragged onto the canvas.
+    if (hud is LegacyHud) {
+        LegacyHudPreviewCard(hud, onDragStart)
+    } else {
+        ComposeHudPreviewCard(hud, onDragStart)
+    }
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+private fun LegacyHudPreviewCard(hud: Hud, onDragStart: (Hud, Float, Float, Float, Float) -> Unit) {
+    val (naturalW, naturalH) = hud.minimumSize()
+    if (naturalW <= 0f || naturalH <= 0f) return
+    val density = LocalDensity.current.density
+
+    var isHovered by remember { mutableStateOf(false) }
+    val backgroundColor by animateColorAsState(
+        if (isHovered) Accent else panelBackground,
+        animationSpec = tween(150)
+    )
+    var pressPos by remember { mutableStateOf<Offset?>(null) }
+    var dragStarted by remember { mutableStateOf(false) }
+
+    val cardPadding = 12.dp
+    val minTile = 72.dp
+    val w = ((naturalW * PREVIEW_SCALE / density).dp + cardPadding * 2).coerceAtLeast(minTile)
+    val h = ((naturalH * PREVIEW_SCALE / density).dp + cardPadding * 2).coerceAtLeast(minTile)
+    Box(
+        modifier = Modifier
+            .size(w, h)
+            .background(backgroundColor, RoundedCornerShape(8.dp))
+            .border(1.dp, panelBorder, RoundedCornerShape(8.dp))
+            .onPointerEvent(PointerEventType.Enter) { isHovered = true }
+            .onPointerEvent(PointerEventType.Exit) {
+                isHovered = false
+                if (!dragStarted) pressPos = null
+            }
+            .onPointerEvent(PointerEventType.Press) { event ->
+                val pos = event.changes.firstOrNull()?.position
+                if (pos != null) {
+                    pressPos = pos
+                    dragStarted = false
+                }
+            }
+            .onPointerEvent(PointerEventType.Move) { event ->
+                val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
+                val start = pressPos ?: return@onPointerEvent
+                if (!dragStarted && event.changes.any { it.pressed }) {
+                    val dx = pos.x - start.x
+                    val dy = pos.y - start.y
+                    val dist = kotlin.math.sqrt(dx * dx + dy * dy)
+                    if (dist > 8f) {
+                        dragStarted = true
+                        val paddingPx = 12f * density
+                        val hudLocalX = ((start.x - paddingPx) / PREVIEW_SCALE).coerceAtLeast(0f)
+                        val hudLocalY = ((start.y - paddingPx) / PREVIEW_SCALE).coerceAtLeast(0f)
+                        onDragStart(hud, pos.x, pos.y, hudLocalX, hudLocalY)
+                        pressPos = null
+                        isHovered = false
+                    }
+                }
+            }
+            .onPointerEvent(PointerEventType.Release) {
+                pressPos = null
+                dragStarted = false
+            }
+            .padding(cardPadding),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            hud.title ?: "Legacy HUD",
+            color = Color.White.copy(0.85f),
+            fontSize = 12.sp,
+        )
+    }
 }
 
 @OptIn(ExperimentalComposeUiApi::class)

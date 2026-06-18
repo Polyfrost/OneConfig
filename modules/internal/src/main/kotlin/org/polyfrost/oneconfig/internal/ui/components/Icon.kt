@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -10,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.BitmapPainter
@@ -25,6 +27,7 @@ import kotlin.math.sqrt
 
 private object IconResourceMarker
 private const val DefaultIconSize = 18f
+private val DefaultRasterIconShape = RoundedCornerShape(8.dp)
 
 @Composable
 fun Icon(
@@ -55,10 +58,16 @@ fun Icon(
             val aspectRatio = remember(iconName, file.lastModified()) {
                 if (fitAspectRatio && isSvg) file.inputStream().buffered().use(::readSvgAspectRatio) else null
             }
+            val imageModifier = modifier.then(iconSizeModifier(aspectRatio))
+            val clippedModifier = if (!isSvg) {
+                imageModifier.clip(DefaultRasterIconShape)
+            } else {
+                imageModifier
+            }
             Image(
                 painter = painter,
                 contentDescription = null,
-                modifier = modifier.then(iconSizeModifier(aspectRatio)),
+                modifier = clippedModifier,
                 colorFilter = if (isSvg) ColorFilter.tint(resolvedColor) else null
             )
             return
@@ -70,10 +79,16 @@ fun Icon(
     val path = overridePath?.takeIf(::iconResourceExists) ?: defaultPath.takeIf(::iconResourceExists) ?: return
     val isSvg = path.endsWith(".svg", ignoreCase = true)
     val aspectRatio = remember(path, fitAspectRatio) { if (fitAspectRatio && isSvg) readSvgAspectRatio(path) else null }
+    val resourceModifier = modifier.then(iconSizeModifier(aspectRatio))
+    val clippedResourceModifier = if (!isSvg) {
+        resourceModifier.clip(DefaultRasterIconShape)
+    } else {
+        resourceModifier
+    }
     Image(
         painter = painterResource(path),
         contentDescription = null,
-        modifier = modifier.then(iconSizeModifier(aspectRatio)),
+        modifier = clippedResourceModifier,
         colorFilter = if (isSvg) ColorFilter.tint(resolvedColor) else null
     )
 }

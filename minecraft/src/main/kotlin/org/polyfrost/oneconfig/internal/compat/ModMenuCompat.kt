@@ -45,7 +45,11 @@ object ModMenuCompat {
             mod.id
         }.toSet()
 
-        mods.filterNot { CompatLoader.nativeLoadedConfigs.contains(it.id) || it.id in nativeCoveredMods }
+        mods.filterNot {
+            CompatLoader.nativeLoadedConfigs.contains(it.id) ||
+                it.id in nativeCoveredMods ||
+                hasNativeOcConfig(it.id)
+        }
             .forEach { mod ->
                 val modMenuTree = Tree.tree()
 
@@ -83,6 +87,20 @@ object ModMenuCompat {
                 CompatLoader.markFirstModAsSkip()
             }
     }
+
+    // A mod can ship BOTH a native OneConfig config and a Mod Menu entrypoint. The native config
+    // registers under its file id (e.g. "legacyskyblock.json") while the Mod Menu mod id is the bare
+    // loader id ("legacyskyblock"), so they have different ConfigRegistry ids and show as two cards.
+    // nativeLoadedConfigs only tracks foreign-compat configs, never native OneConfig ones, so detect
+    // the native tree directly from the config registry (matching the source of truth used by on_click)
+    // and skip building a duplicate Mod Menu Compat card for it.
+    private fun hasNativeOcConfig(modId: String): Boolean = runCatching {
+        ConfigManager.active().trees().any { tree ->
+            val id = tree.id ?: return@any false
+            id.removeSuffix(".json") == modId &&
+                tree.getMetadata<Boolean>(Backend.UI_ONLY_METADATA) != true
+        }
+    }.getOrDefault(false)
 
     private fun Mod.findNativeLoadedChild(): Mod? {
         return ModMenu.PARENT_MAP.get(this).firstNotNullOfOrNull { child ->

@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
@@ -114,7 +115,7 @@ fun Shell(
                 verticalArrangement = Arrangement.spacedBy(if (isSearching) 0.dp else 19.dp)
             ) {
                 Header()
-                Box(modifier = Modifier.weight(1f).fillMaxSize()) {
+                Box(modifier = Modifier.weight(1f).fillMaxSize().clipToBounds()) {
                     if (isSearching) {
                         SearchResultsScreen(searchQuery)
                     } else {

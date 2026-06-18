@@ -81,7 +81,7 @@ object ClothConfigCompat {
             for (entry in entries) {
                 if (entry == null) continue
                 runCatching {
-                    if (parseEntry(entry, categoryName, categoryName, tree)) added = true
+                    if (parseEntry(entry, categoryName, categoryName, tree, tree)) added = true
                 }.onFailure { LOGGER.warn("Failed to parse Cloth entry", it) }
             }
         }
@@ -89,7 +89,7 @@ object ClothConfigCompat {
         return if (added) tree else null
     }
 
-    private fun parseEntry(entry: Any, categoryName: String, subcategoryName: String, root: Tree): Boolean {
+    private fun parseEntry(entry: Any, categoryName: String, subcategoryName: String, dest: Tree, root: Tree): Boolean {
         val name = runCatching {
             resolveComponent(entry.javaClass.getMethod("getFieldName").invoke(entry))
         }.getOrNull() ?: return false
@@ -102,13 +102,26 @@ object ClothConfigCompat {
                 resolveComponent(entry.javaClass.getMethod("getCategoryName").invoke(entry))
             }.getOrNull()?.takeIf { it.isNotBlank() }
             val subName = cleanName(rawSubName, name)
+
+            val accordion = if (dest === root) {
+                Tree.tree(UUID.randomUUID().toString()).also {
+                    it.title = subName
+                    it.addMetadata("category", categoryName)
+                    if (!isExpanded(entry)) it.addMetadata("collapsed", true)
+                }
+            } else {
+                dest
+            }
+
             var added = false
             for (child in children) {
                 if (child == null) continue
                 runCatching {
-                    if (parseEntry(child, categoryName, subName, root)) added = true
+                    if (parseEntry(child, categoryName, subName, accordion, root)) added = true
                 }.onFailure { LOGGER.warn("Failed to parse Cloth sub-entry", it) }
             }
+
+            if (added && accordion !== dest) root.put(accordion)
             return added
         }
 
@@ -166,8 +179,16 @@ object ClothConfigCompat {
             }
         }
 
-        root.put(property)
+        dest.put(property)
         return true
+    }
+
+    private fun isExpanded(entry: Any): Boolean {
+        val method = entry.javaClass.methods.firstOrNull {
+            it.name == "isExpanded" && it.parameterCount == 0 &&
+                (it.returnType == Boolean::class.java || it.returnType == Boolean::class.javaPrimitiveType)
+        } ?: return false
+        return runCatching { method.invoke(entry) as? Boolean }.getOrNull() ?: false
     }
 
     private fun cleanName(raw: String?, fallback: String): String {

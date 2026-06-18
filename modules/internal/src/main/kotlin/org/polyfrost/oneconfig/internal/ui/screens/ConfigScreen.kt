@@ -291,6 +291,14 @@ private fun isRenderableProperty(prop: Property<*>): Boolean {
     return (prop.getMetadata<Any?>("visualizer") != null) || prop.canDisplay()
 }
 
+private fun isWideControl(prop: Property<*>): Boolean {
+    return when (prop.getMetadata<Any?>("visualizer")) {
+        Visualizer.SliderVisualizer::class.java -> true
+        is Visualizer.SliderVisualizer -> true
+        else -> false
+    }
+}
+
 private fun nodeGroup(node: Node, key: String, default: String): String {
     return node.localizedGroup(key, "${key}Key", default)
 }
@@ -318,7 +326,7 @@ private fun SubcategoryHeader(title: String) {
 }
 
 @Composable
-private fun AccordionRow(node: SettingNode.Accordion) {
+private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) {
     val theme = LocalTheme.current
     val shape = theme.modCardShape
 
@@ -417,10 +425,10 @@ private fun AccordionRow(node: SettingNode.Accordion) {
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    maxItemsInEachRow = 2,
+                    maxItemsInEachRow = if (compact) 1 else 2,
                 ) {
                     node.body.forEach { prop ->
-                        AccordionSettingRow(prop)
+                        AccordionSettingRow(prop, compact = compact)
                     }
                 }
             }
@@ -429,7 +437,7 @@ private fun AccordionRow(node: SettingNode.Accordion) {
 }
 
 @Composable
-fun SettingRow(prop: Property<*>) {
+fun SettingRow(prop: Property<*>, compact: Boolean = false) {
     val display = rememberDisplay(prop)
     if (display == Property.Display.HIDDEN) {
         return
@@ -462,19 +470,19 @@ fun SettingRow(prop: Property<*>) {
                 onDrawBehind { drawRect(gradient) }
             }
         )
-        SettingContent(prop)
+        SettingContent(prop, compact = compact)
     }
 }
 
 @Composable
-private fun FlowRowScope.AccordionSettingRow(prop: Property<*>) {
+private fun FlowRowScope.AccordionSettingRow(prop: Property<*>, compact: Boolean = false) {
     val display = rememberDisplay(prop)
     if (display == Property.Display.HIDDEN) {
         return
     }
 
     Box(Modifier.weight(1f).alpha(displayAlpha(display))) {
-        SettingContent(prop, nested = true)
+        SettingContent(prop, nested = true, compact = compact)
     }
 }
 
@@ -497,7 +505,7 @@ private fun displayAlpha(display: Property.Display): Float {
 }
 
 @Composable
-private fun SettingContent(prop: Property<*>, nested: Boolean = false) {
+private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: Boolean = false) {
     val theme = LocalTheme.current
 
     if (prop.getMetadata<Any?>("visualizer") == Visualizer.InfoVisualizer::class.java) {
@@ -527,40 +535,66 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false) {
                 }
             }
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Row(
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+        if (compact) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                prop.getMetadata<String>("icon")?.let {
-                    Icon(it, color = theme.textColor, modifier = Modifier.size(32.dp))
-                }
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(
-                        prop.localizedTitle(),
-                        color = theme.textColor,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    if (!nested) {
-                        prop.localizedDescription()?.let {
-                            Text(it, color = theme.textColorSecondary, fontSize = 13.sp)
-                        }
-                    }
-                }
+                SettingLabel(prop, nested = nested)
+                Option(prop)
             }
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                SettingLabel(
+                    prop = prop,
+                    nested = nested,
+                    modifier = Modifier.weight(1f),
+                )
 
-            Option(prop)
+                Option(prop)
+            }
         }
 
         OptionContextMenu(prop, menuOpen, menuOffset, onDismiss = { menuOpen = false })
+    }
+}
+
+@Composable
+private fun SettingLabel(
+    prop: Property<*>,
+    nested: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val theme = LocalTheme.current
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        prop.getMetadata<String>("icon")?.let {
+            Icon(it, color = theme.textColor, modifier = Modifier.size(32.dp))
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                prop.localizedTitle(),
+                color = theme.textColor,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            if (!nested) {
+                prop.localizedDescription()?.let {
+                    Text(it, color = theme.textColorSecondary, fontSize = 13.sp)
+                }
+            }
+        }
     }
 }
 
@@ -618,8 +652,8 @@ fun HudConfigScreen(tree: Tree, initialCategory: String? = null) {
                     is ConfigListEntry.CategoryHeader -> CategoryHeader(entry.title)
                     is ConfigListEntry.SubcategoryHeader -> SubcategoryHeader(entry.title)
                     is ConfigListEntry.Item -> when (val node = entry.node) {
-                        is SettingNode.Leaf -> SettingRow(node.prop)
-                        is SettingNode.Accordion -> AccordionRow(node)
+                        is SettingNode.Leaf -> SettingRow(node.prop, compact = isWideControl(node.prop))
+                        is SettingNode.Accordion -> AccordionRow(node, compact = node.body.any(::isWideControl))
                     }
                 }
             }

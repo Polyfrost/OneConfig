@@ -9,7 +9,7 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 private object BuiltinHudConfigData : ConfigData {
     override val id = "oneconfig.builtin"
     override val title = "OneConfig"
-    override val icon = "hud"
+    override val icon = "/assets/oneconfig/brand/oneconfig-icon.svg"
     override val source = ConfigSource.OC
     override val category = Config.Category.OTHER
 }

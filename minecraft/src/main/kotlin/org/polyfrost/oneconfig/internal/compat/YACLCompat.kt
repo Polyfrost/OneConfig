@@ -222,12 +222,36 @@ object YACLCompat {
                 property.addMetadata("options", constants?.map { it.toString() } ?: emptyList<String>())
             }
             is Int, is Float, is Double, is Long -> {
-                property.addMetadata("min", 0f)
-                property.addMetadata("max", 100f)
+                val range = resolveSliderRange(option)
+                property.addMetadata("min", range?.first ?: 0f)
+                property.addMetadata("max", range?.second ?: 100f)
+                range?.third?.let { property.addMetadata("step", it) }
             }
         }
 
         root.put(property)
+    }
+
+    private fun resolveSliderRange(option: Any): Triple<Float, Float, Float?>? {
+        val controllerMethod = option::class.java.methods.firstOrNull {
+            it.name == "controller" && it.parameterCount == 0
+        } ?: return null
+        // controller() returns a supplier-bound Controller; some YACL versions wrap it in a Supplier.
+        var controller = runCatching { controllerMethod.invoke(option) }.getOrNull() ?: return null
+        (controller as? java.util.function.Supplier<*>)?.let { controller = it.get() ?: return null }
+
+        val c = controller
+        val min = invokeNumber(c, "min") ?: return null
+        val max = invokeNumber(c, "max") ?: return null
+        val step = invokeNumber(c, "interval") ?: invokeNumber(c, "step")
+        return Triple(min, max, step)
+    }
+
+    private fun invokeNumber(target: Any, name: String): Float? {
+        val method = target::class.java.methods.firstOrNull {
+            it.name == name && it.parameterCount == 0
+        } ?: return null
+        return runCatching { (method.invoke(target) as? Number)?.toFloat() }.getOrNull()
     }
 
     private fun resolveComponent(value: Any?): String? {

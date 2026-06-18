@@ -32,11 +32,20 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.NotNull;
+import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHud;
 
 public class TestLegacyHud_Test extends LegacyHud {
     private static final float W = 20f;
     private static final float H = 20f;
+
+    @Slider(
+            title = "Test Slider",
+            min = 0f,
+            max = 100f,
+            step = 1f
+    )
+    public static int testSlider = 50;
 
     private ItemStack stack;
 
