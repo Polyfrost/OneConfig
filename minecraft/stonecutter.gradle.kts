@@ -9,7 +9,8 @@ stonecutter {
             match(
                 current.project.substringAfterLast("-"),
                 "fabric",
-                "neoforge"
+                "neoforge",
+                "ornithe"
             )
             val catalogue = rootProject.getForwardingVersionCatalog(current)
 

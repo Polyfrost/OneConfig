@@ -46,19 +46,19 @@ group = "${rootProject.group}.bootstrap"
 version = rootProject.version
 
 val node = project.name
+val isOrnithe = node.endsWith("-ornithe")
 val platformPath = ":minecraft:$node"
 
 dependencies {
     "minecraft"("com.mojang:minecraft:${versionedCatalog.versions["minecraft"]}")
 }
 
-evaluationDependsOn(platformPath)
-
-afterEvaluate {
+gradle.projectsEvaluated {
     val platform = rootProject.project(platformPath)
 
     fun isExcluded(group: String?, name: String) =
-        (group == "net.fabricmc" && (name == "fabric-loader")) || group == "net.fabricmc.fabric-api"
+        (group == "net.fabricmc" && (name == "fabric-loader")) || group == "net.fabricmc.fabric-api" ||
+            (isOrnithe && ((group == "io.github.moehreag" && name == "legacy-lwjgl3") || group == "net.ornithemc.osl-gen2"))
 
     val seen = HashSet<String>()
 
@@ -183,6 +183,15 @@ tasks.matching { it.name == "publishModrinth" }.configureEach {
     dependsOn(validateChangelog)
 }
 
+if (!isOrnithe) {
+    tasks.publishMods.configure {
+        enabled = false
+    }
+    tasks.matching { it.name == "publishModrinth" }.configureEach {
+        enabled = false
+    }
+}
+
 publishMods {
     file = tasks.named<AbstractArchiveTask>(publishJarTaskName).flatMap { it.archiveFile }
 
@@ -191,7 +200,7 @@ publishMods {
     changelog = changelogs
     type = STABLE
 
-    modLoaders.add("fabric")
+    modLoaders.add(if (isOrnithe) "ornithe" else "fabric")
 
     dryRun = modrinthId == null || modrinthToken == null
 
@@ -202,7 +211,12 @@ publishMods {
 
             minecraftVersions.addAll(minecraftVersion)
 
-            requires("fabric-api")
+            if (isOrnithe) {
+                requires("osl")
+                requires("moehreag-legacy-lwjgl3")
+            } else {
+                requires("fabric-api")
+            }
             requires("fabric-language-kotlin")
             findProperty("publish.modrinth.compose-bundle")
                 ?.toString()

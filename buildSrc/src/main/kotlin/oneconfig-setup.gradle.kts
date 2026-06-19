@@ -127,7 +127,7 @@ fun DependencyHandlerScope.handleApiDep(
     this.handleApiDep(project.provider { dependency }, isMod, transitive)
 }
 
-if (loader != "fabric") {
+if (loader == "neoforge") {
     configurations {
         val localRuntime = create("localRuntime")
         named("runtimeClasspath") { this.extendsFrom(localRuntime) }
@@ -278,7 +278,7 @@ dependencies {
 
     val libsCatalog = rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs")
     when (loader) {
-        "fabric" -> "modRuntimeOnly"(libsCatalog.findLibrary("devauth-fabric").get())
+        "fabric", "ornithe" -> "modRuntimeOnly"(libsCatalog.findLibrary("devauth-fabric").get())
         "neoforge" -> "runtimeOnly"(libsCatalog.findLibrary("devauth-neoforge").get())
     }
 
@@ -378,6 +378,15 @@ afterEvaluate {
     }
 }
 
+if (loader != "ornithe") {
+    tasks.withType<PublishToMavenRepository>().configureEach {
+        enabled = false
+    }
+    tasks.withType<PublishToMavenLocal>().configureEach {
+        enabled = false
+    }
+}
+
 tasks.withType<ProcessResources>() {
     val range = if (versionedCatalog.versions.has("minecraft.range")) {
         versionedCatalog.versions.get("minecraft.range").toString()
@@ -395,8 +404,14 @@ tasks.withType<ProcessResources>() {
 
     this.inputs.properties(fabricProperties)
 
-    this.filesMatching("fabric.mod.json") {
+    this.filesMatching(if (loader == "ornithe") "ornithe.mod.json" else "fabric.mod.json") {
         expand(fabricProperties)
+    }
+    if (loader == "ornithe") {
+        exclude("fabric.mod.json")
+        eachFile { if (path == "ornithe.mod.json") path = "fabric.mod.json" }
+    } else {
+        exclude("ornithe.mod.json")
     }
 
     val mixinCompat = if (stonecutter.eval(stonecutter.current.version, ">= 26.1")) "JAVA_25" else "JAVA_21"
