@@ -55,6 +55,7 @@ import org.polyfrost.oneconfig.api.ui.v1.internal.BlurHandler;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindHelper;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
+import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories;
 import org.polyfrost.oneconfig.internal.ui.compose.McFontService;
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
@@ -266,6 +267,7 @@ public class OneConfig
         LOGGER.info("Loading OneConfig v{}", v);
         BlurHandler.init();
         McFontService.INSTANCE.init();
+        ThirdPartyModCategories.INSTANCE.init();
         org.polyfrost.oneconfig.internal.ui.sound.ExternalSounds.INSTANCE.ensureDownloaded();
 
         registerKeybinds();

@@ -43,6 +43,7 @@ import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
+import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
@@ -91,11 +92,14 @@ fun Mods() {
 
 @Composable
 fun ColumnScope.ModsGrid(category: ModCategory) {
-    val filtered = ConfigRegistry.modCardConfigs
-        .let { items ->
+    val registryRevision = ConfigRegistry.revision
+    val categoryRevision = ThirdPartyModCategories.revision
+    val filtered = remember(registryRevision, category, categoryRevision) {
+        ConfigRegistry.modCardConfigs.let { items ->
             if (category.configCategory == null) items
             else items.filter { it.category == category.configCategory }
         }
+    }
 
     val gridState = rememberLazyGridState()
     Box(modifier = Modifier.weight(1f)) {

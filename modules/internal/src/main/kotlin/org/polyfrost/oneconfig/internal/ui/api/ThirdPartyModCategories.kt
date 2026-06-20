@@ -1,236 +1,66 @@
 package org.polyfrost.oneconfig.internal.ui.api
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
+import org.polyfrost.oneconfig.utils.v1.JsonUtils
 
 object ThirdPartyModCategories {
-    // Seeded from Polyfrost/DataStorage OneClient packwiz bundles.
-    private val hypixel = setOf(
-        "catharsis",
-        "customscoreboard",
-        "firmament",
-        "hotshirtlessmen",
-        "modern-warp-menu",
-        "modernwarpmenu",
-        "rei",
-        "rei-search-bar-calculations",
-        "roughlyenoughitems",
-        "skyblock-custom-scoreboard",
-        "skyblock-profile-viewer",
-        "skyblocker",
-        "skyblocker-liap",
-        "skyblockpv",
-        "skycubed",
-        "skyhanni",
-        "skyocean",
+    private const val URL = "https://data.polyfrost.org/oneconfig/third-party-mod-categories.json"
+    private val LOGGER = LogManager.getLogger("OneConfig/ThirdPartyModCategories")
+
+    @Volatile
+    private var byId: Map<String, Config.Category> = emptyMap()
+
+    @Volatile
+    private var initialized = false
+
+    var revision by mutableIntStateOf(0)
+        private set
+
+    private val categories = mapOf(
+        "hypixel" to Config.Category.HYPIXEL,
+        "performance" to Config.Category.PERFORMANCE,
+        "visuals" to Config.Category.VISUALS,
+        "hud" to Config.Category.HUD,
+        "utility" to Config.Category.UTILITY,
+        "qol" to Config.Category.QOL,
     )
 
-    private val performance = setOf(
-        "asyncparticles",
-        "badoptimizations",
-        "c2me",
-        "c2me-fabric",
-        "debugify",
-        "dynamic-fps",
-        "dynamic_fps",
-        "entityculling",
-        "fastquit",
-        "fastserverpings",
-        "ferrite-core",
-        "ferritecore",
-        "immediatelyfast",
-        "lithium",
-        "modernfix",
-        "modernfix-mvus",
-        "noxesium",
-        "rrls",
-        "scalablelux",
-        "sodium",
-        "sodium-extra",
-    )
-
-    private val visuals = setOf(
-        "animatica",
-        "animatium",
-        "better-block-entities",
-        "better-elytra-render",
-        "better-mipmaps",
-        "better-selection",
-        "betterblockentities",
-        "blur",
-        "continuity",
-        "cull-fewer-leaves",
-        "entity-model-features",
-        "entity_model_features",
-        "entity_texture_features",
-        "entitytexturefeatures",
-        "euphoria-patches",
-        "iris",
-        "lambdynamiclights",
-        "lambdynlights",
-        "modelfix",
-        "optipainting",
-        "particle_core",
-        "polytone",
-        "presence-footsteps",
-        "presencefootsteps",
-        "sciophobia",
-        "skinlayers3d",
-        "skyboxify",
-        "smooth-skies",
-        "smoothskies",
-        "wavey-capes",
-        "waveycapes",
-    )
-
-    private val hud = setOf(
-        "appleskin",
-        "betterstats",
-        "bettermounthud",
-        "centered-crosshair",
-        "clean-debug",
-        "detailab",
-        "detailabreconst",
-        "inventoryhud",
-        "inventoryhudplus",
-        "scoreboardtweaks",
-        "status-effect-bars",
-        "tabtweaks",
-        "titletweaks",
-        "ukus-armor-hud",
-    )
-
-    private val utility = setOf(
-        "amecs",
-        "amecs-reborn",
-        "bettercommandblockui",
-        "commandkeys",
-        "controlify",
-        "controlling",
-        "crash_assistant",
-        "crashpatch",
-        "e4mc",
-        "firmamentpacketfix",
-        "forge-config-api-port",
-        "forgeconfigapiport",
-        "ias",
-        "in-game-account-switcher",
-        "islandutils",
-        "ixeris",
-        "jade",
-        "lazy-language-loader",
-        "fix-keyboard-on-linux",
-        "logcleaner",
-        "mixintrace",
-        "modmenu",
-        "nbt-autocomplete",
-        "nbt_ac",
-        "one-click-join",
-        "oneconfigbootstrap",
-        "packmanager",
-        "quick-pack",
-        "quickjoin",
-        "reeses-sodium-options",
-        "resourcify",
-        "respackopts",
-        "screenshotclipboard",
-        "screenshotcompression",
-        "simple-modpack-update-checker",
-        "simple-voice-chat",
-        "spark",
-        "spu",
-        "stackdeobfuscator",
-        "viafabricplus",
-        "voicechat",
-        "yacl",
-        "yet_another_config_lib_v3",
-        "yosbr",
-    )
-
-    private val qol = setOf(
-        "autogg",
-        "better-screens",
-        "better-stats",
-        "betternarratorerror",
-        "betternightvision",
-        "betterscreens",
-        "black-bar-concealer",
-        "blackbarconcealer",
-        "chat-heads",
-        "chat-impressive-animation",
-        "chat_heads",
-        "chatimpressiveanimation",
-        "compacting",
-        "confirmdisconnect",
-        "confirmresetkeys",
-        "countdown",
-        "crosshairtweaks",
-        "cubes-without-borders",
-        "cwb",
-        "damagetint",
-        "dark-loading-screen",
-        "darkgraph",
-        "droppeditemtweaks",
-        "entity_sound_features",
-        "esf",
-        "effecttimerplus",
-        "forcecloseworldloadingscreen",
-        "gamma-utils",
-        "gammautils",
-        "hold_that_chunk_2",
-        "hypixelautotip",
-        "idontwannascrollagain",
-        "mountopacity",
-        "nametagtweaks",
-        "no-chat-reports",
-        "nochatreports",
-        "nochatrestrictions",
-        "notsoessential",
-        "numericalenchantments",
-        "optigui",
-        "overlaytweaks",
-        "paginatedadvancements",
-        "polytime",
-        "polyweather",
-        "rendertweaks",
-        "reward-claim",
-        "rewardclaim",
-        "screencopy",
-        "scrolltweaks",
-        "secureskins",
-        "shaketweaks",
-        "shulkerboxtooltip",
-        "simple-block-overlay",
-        "simpleblockoverlay",
-        "simplenickhider",
-        "slice",
-        "smoothscrollingrefurbished",
-        "sound-controller",
-        "sound-physics-remastered",
-        "sound_physics_perfected",
-        "sound_physics_remastered",
-        "soundcontroller",
-        "symbol-chat",
-        "text_tunnels",
-        "tiptapshow",
-        "tntcountdown",
-        "toggle-toggle-sprint",
-        "tooltipscroll",
-        "viewmodel",
-        "zoomify",
-    )
-
-    private val byId: Map<String, Config.Category> =
-        hypixel.associateWith { Config.Category.HYPIXEL } +
-            performance.associateWith { Config.Category.PERFORMANCE } +
-            visuals.associateWith { Config.Category.VISUALS } +
-            hud.associateWith { Config.Category.HUD } +
-            utility.associateWith { Config.Category.UTILITY } +
-            qol.associateWith { Config.Category.QOL }
+    fun init() {
+        if (initialized) return
+        initialized = true
+        JsonUtils.parseFromUrlAsync(URL) { element ->
+            val loaded = parse(element.asJsonObject)
+            if (loaded.isNotEmpty()) {
+                byId = loaded
+                revision++
+            }
+        }
+    }
 
     fun categoryFor(id: String?, modInfo: ModInfo?): Config.Category? =
         sequenceOf(id, id?.removeSuffix(".json"), modInfo?.id, modInfo?.id?.removeSuffix(".json"))
             .filterNotNull()
             .map { it.lowercase() }
             .firstNotNullOfOrNull(byId::get)
+
+    private fun parse(root: JsonObject): Map<String, Config.Category> {
+        val result = LinkedHashMap<String, Config.Category>()
+        categories.forEach { (name, category) ->
+            val ids = root.get(name)
+            if (ids !is JsonArray) {
+                LOGGER.warn("Missing third-party mod category '{}'", name)
+                return@forEach
+            }
+            ids.mapNotNull { it.asString?.lowercase() }
+                .forEach { result[it] = category }
+        }
+        return result
+    }
 }
