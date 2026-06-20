@@ -62,10 +62,10 @@ enum class ModCategory(
 ) {
     All("All", null, null),
     Hypixel("Hypixel", "hypixel", Config.Category.HYPIXEL),
-    Performance("Performance", null, Config.Category.PERFORMANCE),
-    Visuals("Visuals", null, Config.Category.VISUALS),
-    HUD("HUD", null, Config.Category.HUD),
-    Utility("Utility", null, Config.Category.UTILITY),
+    Performance("Performance", "lightning-01", Config.Category.PERFORMANCE),
+    Visuals("Visuals", "paintbrush", Config.Category.VISUALS),
+    HUD("HUD", "hud", Config.Category.HUD),
+    Utility("Utility", "settings", Config.Category.UTILITY),
     QoL("Quality of Life", "qol", Config.Category.QOL),
     Other("Other", null, Config.Category.OTHER);
 }

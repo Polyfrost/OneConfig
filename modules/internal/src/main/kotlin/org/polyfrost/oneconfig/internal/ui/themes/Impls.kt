@@ -32,6 +32,7 @@ private val MinecraftIconOverrides = mapOf(
     "keyboard" to "/assets/oneconfig/ico/minecraft/keyboard.svg",
     "layers" to "/assets/oneconfig/ico/minecraft/layers.svg",
     "left-arrow" to "/assets/oneconfig/ico/minecraft/left-arrow.svg",
+    "lightning-01" to "/assets/oneconfig/ico/minecraft/lightning-01.svg",
     "lowercase" to "/assets/oneconfig/ico/minecraft/lowercase.svg",
     "maximise" to "/assets/oneconfig/ico/minecraft/maximise.svg",
     "minus" to "/assets/oneconfig/ico/minecraft/minus.svg",
