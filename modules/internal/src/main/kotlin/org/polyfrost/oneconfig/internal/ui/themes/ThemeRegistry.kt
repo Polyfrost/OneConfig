@@ -23,6 +23,7 @@ object ThemeRegistry {
         register(MinecraftLight)
 
         activeTheme = PolyGlassDark
+        syncNotificationTheme(PolyGlassDark)
 
         BuiltinVisualizers.register()
     }
@@ -37,6 +38,7 @@ object ThemeRegistry {
         val previous = activeTheme
         activeTheme = theme
         ThemeConfig.activeTheme = theme.name
+        syncNotificationTheme(theme)
         saveThemeToConfig()
         if (previous != null && UiSoundTheme.of(previous) != UiSoundTheme.of(theme)) {
             UiSounds.onSoundThemeChanged()
@@ -50,6 +52,7 @@ object ThemeRegistry {
             if (theme != null) {
                 activeTheme = theme
                 ThemeConfig.activeTheme = theme.name
+                syncNotificationTheme(theme)
             }
         } catch (_: Exception) {}
     }

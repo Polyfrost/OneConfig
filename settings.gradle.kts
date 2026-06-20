@@ -133,6 +133,7 @@ listOf(
     "commands",
     "hud",
     "events",
+    "notifications",
     "ui",
     "internal",
     "dependencies",

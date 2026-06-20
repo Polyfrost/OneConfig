@@ -116,8 +116,9 @@ object CommandManager {
         return RequiredArgumentBuilder.argument<ClientCommandSource, T>(name, type)
     }
 
-    fun <T> getArgumentType(type: Class<T>): ArgumentType<T> {
-        return argumentTypes[WrappingUtils.getUnwrapped(type)] as ArgumentType<T>
+    fun <T> getArgumentType(type: Class<T>): ArgumentType<T>? {
+        @Suppress("UNCHECKED_CAST")
+        return argumentTypes[WrappingUtils.getUnwrapped(type)] as ArgumentType<T>?
     }
 
 }

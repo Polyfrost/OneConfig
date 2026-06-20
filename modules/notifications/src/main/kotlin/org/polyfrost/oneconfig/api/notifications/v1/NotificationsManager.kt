@@ -24,31 +24,46 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-plugins {
-    id("org.jetbrains.kotlin.plugin.compose")
-    alias(libs.plugins.kotlin.serialization)
-}
+package org.polyfrost.oneconfig.api.notifications.v1
 
-dependencies {
-    api(project(":modules:hud"))
-    api(project(":modules:events"))
-    api(project(":modules:commands"))
-    api(project(":modules:notifications"))
-    api(libs.jetbrains.compose.foundation)
-    api(libs.jetbrains.compose.material)
-    api(libs.jetbrains.compose.runtime)
-    api(libs.jetbrains.compose.ui)
-    api(libs.jetbrains.compose.ui.tooling.preview)
-    api(libs.jetbrains.compose.ui.util)
-    api(libs.jetbrains.compose.navigation)
-    api(libs.jetbrains.lifecycle)
-    api(libs.jetbrains.viewmodel)
-    api(project(":modules:poly-compose"))
-    implementation(libs.jetbrains.skiko.awt.runtime.windows.x64)
+import androidx.compose.runtime.mutableStateListOf
+import org.jetbrains.annotations.ApiStatus
 
-    implementation(libs.commonmark)
-}
+/**
+ * Holds the set of currently-live notifications.
+ */
+object NotificationsManager {
+    private val _active = mutableStateListOf<Notification>()
 
-kotlin {
-    jvmToolchain(21)
+    /**
+     * The notifications currently on screen, oldest first.
+     */
+    val active: List<Notification> get() = _active
+
+    /**
+     * Adds [notification] to the live set so it begins rendering on the next frame.
+     */
+    fun push(notification: Notification) {
+        _active.add(notification)
+    }
+
+    /**
+     * Removes [notification] immediately, skipping any exit animation.
+     */
+    fun dismiss(notification: Notification) {
+        _active.remove(notification)
+    }
+
+    fun dismiss(id: Long) {
+        _active.removeAll { it.id == id }
+    }
+
+    fun clearAll() {
+        _active.clear()
+    }
+
+    val count: Int get() = _active.size
+
+    @ApiStatus.Internal
+    fun contains(notification: Notification): Boolean = _active.contains(notification)
 }

@@ -48,6 +48,7 @@ import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent;
+import org.polyfrost.oneconfig.api.notifications.v1.NotificationsRenderer;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.internal.BlurHandler;
@@ -173,6 +174,7 @@ public class OneConfig
         SkiaCtx.INSTANCE.queueHudDraw(() -> {
             var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
             HudManager.INSTANCE.render(ctx, sw, sh);
+            NotificationsRenderer.render(ctx, sw, sh);
         });
         // Render Skia HUDs into the offscreen TextureTarget.
         // The mixin blits the texture onto MC's render target afterwards.

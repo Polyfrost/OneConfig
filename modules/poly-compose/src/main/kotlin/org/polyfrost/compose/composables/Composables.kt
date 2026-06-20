@@ -73,6 +73,7 @@ fun PolyText(
     shadow: Boolean = false,
     shadowColor: PolyColor = PolyColor(0x80000000.toInt()),
     shadowOffset: Float = 1f,
+    font: String? = null,
     modifier: PolyModifier = PolyModifier,
 ) {
     ComposeNode<TextNode, PolyApplier>(
@@ -84,6 +85,7 @@ fun PolyText(
             set(shadow) { this.shadow = it }
             set(shadowColor) { this.shadowColor = it }
             set(shadowOffset) { this.shadowOffset = it }
+            set(font) { this.fontName = it; remeasure() }
             set(modifier) { modifier.applyTo(style); remeasure() }
         },
     )

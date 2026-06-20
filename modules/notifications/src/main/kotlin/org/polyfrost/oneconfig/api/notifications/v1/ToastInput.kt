@@ -24,31 +24,38 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-plugins {
-    id("org.jetbrains.kotlin.plugin.compose")
-    alias(libs.plugins.kotlin.serialization)
-}
+package org.polyfrost.oneconfig.api.notifications.v1
 
-dependencies {
-    api(project(":modules:hud"))
-    api(project(":modules:events"))
-    api(project(":modules:commands"))
-    api(project(":modules:notifications"))
-    api(libs.jetbrains.compose.foundation)
-    api(libs.jetbrains.compose.material)
-    api(libs.jetbrains.compose.runtime)
-    api(libs.jetbrains.compose.ui)
-    api(libs.jetbrains.compose.ui.tooling.preview)
-    api(libs.jetbrains.compose.ui.util)
-    api(libs.jetbrains.compose.navigation)
-    api(libs.jetbrains.lifecycle)
-    api(libs.jetbrains.viewmodel)
-    api(project(":modules:poly-compose"))
-    implementation(libs.jetbrains.skiko.awt.runtime.windows.x64)
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import org.polyfrost.oneconfig.api.event.v1.EventManager
+import org.polyfrost.oneconfig.api.event.v1.events.MouseInputEvent
+import java.util.concurrent.atomic.AtomicBoolean
 
-    implementation(libs.commonmark)
-}
+internal object ToastInput {
+    @Volatile var mouseX: Float = -1f
+        private set
 
-kotlin {
-    jvmToolchain(21)
+    @Volatile var mouseY: Float = -1f
+        private set
+
+    var hoveredAction by mutableStateOf<NotificationAction?>(null)
+
+    @Volatile
+    var hoverTarget: ToastHit? = null
+
+    private val installed = AtomicBoolean(false)
+
+    fun install() {
+        if (!installed.compareAndSet(false, true)) return
+        EventManager.register(MouseInputEvent.Moved::class.java) { e ->
+            mouseX = e.x
+            mouseY = e.y
+        }
+        EventManager.register(MouseInputEvent::class.java) { e ->
+            // GLFW left button (0), GLFW_PRESS (1)
+            if (e.button == 0 && e.state == 1) NotificationsRenderer.dispatchClick(hoverTarget)
+        }
+    }
 }

@@ -109,7 +109,7 @@ class AnnotationCommandFactory : CommandFactory {
                 val name = params[0].name
                 paramNames[0] = name
 
-                val argumentType: ArgumentType<*> = getArgumentType(paramTypes[0])
+                val argumentType: ArgumentType<*>? = getArgumentType(paramTypes[0])
                 if (argumentType == null) {
                     LOGGER.error(
                         "Failed to find argument type for parameter {} of method {} in class {}",

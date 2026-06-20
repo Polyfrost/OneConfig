@@ -15,5 +15,11 @@ object McFontService {
         FontManager.loadFromResource("assets/oneconfig/fonts/Poppins/Poppins-BoldItalic.ttf", "poppins-bold-italic")
         FontManager.loadFromResource("assets/oneconfig/fonts/Poppins/Poppins-Black.ttf", "poppins-black")
         FontManager.loadFromResource("assets/oneconfig/fonts/Poppins/Poppins-BlackItalic.ttf", "poppins-black-italic")
+        // Minecraft theme font (used by toasts when a Minecraft theme is active).
+        FontManager.loadFromResource("assets/oneconfig/fonts/minecraft/Minecraft-Regular.otf", "minecraft")
+        FontManager.loadFromResource("assets/oneconfig/fonts/minecraft/Minecraft-Bold.otf", "minecraft-bold")
+        // Make Poppins the default typeface so PolyText (which uses the default font) renders glyphs;
+        // previously nothing was registered for the default key.
+        FontManager.setDefault("poppins")
     }
 }

@@ -23,6 +23,7 @@ open class PolyModifier internal constructor(internal val block: PolyLayoutStyle
         style.borderWidth = 0f
         style.clipToBounds = false
         style.alpha = 1f
+        style.tag = null
         // Restore structural properties
         style.layoutType = lt
         style.gap = g
@@ -61,6 +62,8 @@ fun PolyModifier.radius(r: Float) = then(PolyModifier { radius = r })
 fun PolyModifier.clip(radius: Float = 0f) = then(PolyModifier { clipToBounds = true; if (radius > 0f) this.radius = radius })
 fun PolyModifier.alpha(a: Float) = then(PolyModifier { alpha = a })
 fun PolyModifier.align(a: PolyAlign) = then(PolyModifier { align = a })
+
+fun PolyModifier.tag(value: Any?) = then(PolyModifier { tag = value })
 
 fun PolyModifier.absoluteAt(x: Float, y: Float) = then(PolyModifier {
     positionMode = PolyPositionMode.Absolute

@@ -15,7 +15,7 @@ public final class org/polyfrost/compose/composables/ComposablesKt {
 	public static final fun PolyRect (Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/composables/PolyModifier;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PolyRow (FLorg/polyfrost/compose/composables/PolyModifier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PolySpacer (FFLandroidx/compose/runtime/Composer;II)V
-	public static final fun PolyText (Ljava/lang/String;Lorg/polyfrost/compose/render/PolyColor;FZLorg/polyfrost/compose/render/PolyColor;FLorg/polyfrost/compose/composables/PolyModifier;Landroidx/compose/runtime/Composer;II)V
+	public static final fun PolyText (Ljava/lang/String;Lorg/polyfrost/compose/render/PolyColor;FZLorg/polyfrost/compose/render/PolyColor;FLjava/lang/String;Lorg/polyfrost/compose/composables/PolyModifier;Landroidx/compose/runtime/Composer;II)V
 }
 
 public class org/polyfrost/compose/composables/PolyModifier {
@@ -58,6 +58,7 @@ public final class org/polyfrost/compose/composables/PolyModifierKt {
 	public static final fun radius (Lorg/polyfrost/compose/composables/PolyModifier;F)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static final fun size (Lorg/polyfrost/compose/composables/PolyModifier;FF)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static final fun size (Lorg/polyfrost/compose/composables/PolyModifier;Lorg/polyfrost/compose/layout/PolySize;Lorg/polyfrost/compose/layout/PolySize;)Lorg/polyfrost/compose/composables/PolyModifier;
+	public static final fun tag (Lorg/polyfrost/compose/composables/PolyModifier;Ljava/lang/Object;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static final fun width (Lorg/polyfrost/compose/composables/PolyModifier;F)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static final fun width (Lorg/polyfrost/compose/composables/PolyModifier;Lorg/polyfrost/compose/layout/PolySize;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static final fun wrapHeight (Lorg/polyfrost/compose/composables/PolyModifier;)Lorg/polyfrost/compose/composables/PolyModifier;
@@ -149,6 +150,7 @@ public final class org/polyfrost/compose/layout/PolyLayoutStyle {
 	public final fun getPadding ()Lorg/polyfrost/compose/layout/PolyInsets;
 	public final fun getPositionMode ()Lorg/polyfrost/compose/layout/PolyPositionMode;
 	public final fun getRadius ()F
+	public final fun getTag ()Ljava/lang/Object;
 	public final fun getWidth ()Lorg/polyfrost/compose/layout/PolySize;
 	public final fun getX ()F
 	public final fun getY ()F
@@ -165,6 +167,7 @@ public final class org/polyfrost/compose/layout/PolyLayoutStyle {
 	public final fun setPadding (Lorg/polyfrost/compose/layout/PolyInsets;)V
 	public final fun setPositionMode (Lorg/polyfrost/compose/layout/PolyPositionMode;)V
 	public final fun setRadius (F)V
+	public final fun setTag (Ljava/lang/Object;)V
 	public final fun setWidth (Lorg/polyfrost/compose/layout/PolySize;)V
 	public final fun setX (F)V
 	public final fun setY (F)V
@@ -310,6 +313,7 @@ public final class org/polyfrost/compose/node/TextNode : org/polyfrost/compose/n
 	public static final field $stable I
 	public fun <init> ()V
 	public final fun getColor ()Lorg/polyfrost/compose/render/PolyColor;
+	public final fun getFontName ()Ljava/lang/String;
 	public final fun getFontSize ()F
 	public final fun getShadow ()Z
 	public final fun getShadowColor ()Lorg/polyfrost/compose/render/PolyColor;
@@ -318,6 +322,7 @@ public final class org/polyfrost/compose/node/TextNode : org/polyfrost/compose/n
 	public final fun remeasure ()V
 	public fun render (Lorg/polyfrost/compose/render/RenderContext;)V
 	public final fun setColor (Lorg/polyfrost/compose/render/PolyColor;)V
+	public final fun setFontName (Ljava/lang/String;)V
 	public final fun setFontSize (F)V
 	public final fun setShadow (Z)V
 	public final fun setShadowColor (Lorg/polyfrost/compose/render/PolyColor;)V
@@ -521,6 +526,7 @@ public final class org/polyfrost/compose/render/RenderContext {
 	public final fun getAbsoluteX ()F
 	public final fun getAbsoluteY ()F
 	public final fun getCanvas ()Lorg/jetbrains/skia/Canvas;
+	public final fun getPaint ()Lorg/jetbrains/skia/Paint;
 	public final fun image (Lorg/jetbrains/skia/Image;FFFFLorg/jetbrains/skia/Paint;)V
 	public final fun line (FFFFLorg/polyfrost/compose/render/PolyColor;F)V
 	public static synthetic fun line$default (Lorg/polyfrost/compose/render/RenderContext;FFFFLorg/polyfrost/compose/render/PolyColor;FILjava/lang/Object;)V

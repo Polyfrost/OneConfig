@@ -1,0 +1,120 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021~2024 Polyfrost.
+ *   <https://polyfrost.org> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.org/legal/oneconfig/additional-terms>
+ */
+
+package org.polyfrost.oneconfig.api.notifications.v1
+
+import androidx.compose.runtime.snapshots.Snapshot
+import org.apache.logging.log4j.LogManager
+import org.jetbrains.annotations.ApiStatus
+import org.polyfrost.compose.node.PolyNode
+import org.polyfrost.compose.render.RenderContext
+import org.polyfrost.compose.runtime.PolyComposeRuntime
+import org.polyfrost.oneconfig.api.platform.v1.Platform
+
+@ApiStatus.Internal
+object NotificationsRenderer {
+    private val LOGGER = LogManager.getLogger("OneConfig/Notifications")
+
+    @Volatile
+    private var runtime: PolyComposeRuntime? = null
+
+    private fun runtime(): PolyComposeRuntime =
+        runtime ?: PolyComposeRuntime().also {
+            runtime = it
+            it.setContent { NotificationToasts() }
+            ToastInput.install()
+        }
+
+    /**
+     * Renders the toast stack into [ctx].
+     */
+    @JvmStatic
+    fun render(ctx: RenderContext, screenWidth: Float, screenHeight: Float) {
+        val scale = Platform.compatibility().options().guiScale
+        val pixelWidth = screenWidth * scale
+        val pixelHeight = screenHeight * scale
+        ToastViewport.width = pixelWidth
+        ToastViewport.height = pixelHeight
+
+        Snapshot.sendApplyNotifications()
+        val rt = runtime()
+        rt.frame(pixelWidth, pixelHeight)
+        handleInput(rt.root)
+        rt.root.render(ctx)
+    }
+
+    private fun handleInput(root: PolyNode) {
+        // Reset hover state each frame.
+        for (notification in NotificationsManager.active) notification.hovered = false
+        ToastInput.hoveredAction = null
+        ToastInput.hoverTarget = null
+
+        val screenOpen = Platform.screen().current<Any?>() != null
+        val mx = ToastInput.mouseX
+        val my = ToastInput.mouseY
+        if (!screenOpen || mx < 0f || my < 0f) return
+
+        val hits = ArrayList<PolyNode>()
+        collectHits(root, hits)
+
+        var top: ToastHit? = null
+        for (node in hits) {
+            val tag = node.style.tag as? ToastHit ?: continue
+            if (!contains(node, mx, my)) continue
+            tag.notification.hovered = true
+            top = tag
+        }
+
+        ToastInput.hoverTarget = top
+        if (top is ToastHit.Action) ToastInput.hoveredAction = top.action
+    }
+
+    internal fun dispatchClick(target: ToastHit?) {
+        when (target) {
+            is ToastHit.Action -> {
+                LOGGER.info("Notification #{} action '{}' clicked", target.notification.id, target.action.label)
+                runCatching { target.action.onClick.run() }
+                    .onFailure { LOGGER.error("Notification action '${target.action.label}' threw", it) }
+                target.notification.dismissRequested = true
+            }
+            is ToastHit.Body -> {
+                LOGGER.info("Notification #{} body clicked", target.notification.id)
+                runCatching { target.notification.onClick?.run() }
+                    .onFailure { LOGGER.error("Notification onClick threw", it) }
+                target.notification.dismissRequested = true
+            }
+            null -> {}
+        }
+    }
+
+    private fun collectHits(node: PolyNode, out: MutableList<PolyNode>) {
+        if (node.style.tag is ToastHit) out.add(node)
+        for (child in node.children) collectHits(child, out)
+    }
+
+    private fun contains(node: PolyNode, x: Float, y: Float): Boolean =
+        x >= node.x && x <= node.x + node.width && y >= node.y && y <= node.y + node.height
+}

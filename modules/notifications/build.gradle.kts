@@ -26,29 +26,14 @@
 
 plugins {
     id("org.jetbrains.kotlin.plugin.compose")
-    alias(libs.plugins.kotlin.serialization)
 }
 
 dependencies {
-    api(project(":modules:hud"))
-    api(project(":modules:events"))
-    api(project(":modules:commands"))
-    api(project(":modules:notifications"))
-    api(libs.jetbrains.compose.foundation)
-    api(libs.jetbrains.compose.material)
-    api(libs.jetbrains.compose.runtime)
-    api(libs.jetbrains.compose.ui)
-    api(libs.jetbrains.compose.ui.tooling.preview)
-    api(libs.jetbrains.compose.ui.util)
-    api(libs.jetbrains.compose.navigation)
-    api(libs.jetbrains.lifecycle)
-    api(libs.jetbrains.viewmodel)
+    api(project(":modules:utils"))
     api(project(":modules:poly-compose"))
-    implementation(libs.jetbrains.skiko.awt.runtime.windows.x64)
+    api(project(":modules:events"))
 
-    implementation(libs.commonmark)
-}
-
-kotlin {
-    jvmToolchain(21)
+    compileOnly(libs.jetbrains.compose.runtime)
+    compileOnly(libs.jetbrains.skiko.awt)
+    compileOnly(libs.kotlinx.coroutines)
 }
