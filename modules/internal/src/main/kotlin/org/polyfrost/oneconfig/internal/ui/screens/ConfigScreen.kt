@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -52,10 +53,12 @@ import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
+import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
+import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedGroup
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
@@ -583,16 +586,32 @@ private fun SettingLabel(
             Icon(it, color = theme.textColor, modifier = Modifier.size(32.dp))
         }
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-                prop.localizedTitle(),
-                color = theme.textColor,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-            )
-            if (!nested) {
-                prop.localizedDescription()?.let {
-                    Text(it, color = theme.textColorSecondary, fontSize = 13.sp)
+            val title = @Composable {
+                Text(
+                    prop.localizedTitle(),
+                    color = theme.textColor,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+            val description = prop.localizedDescription()?.takeUnless { it.isEmptyText() }
+
+            if (nested && description != null) {
+                Tooltip(
+                    text = {
+                        Text(description, color = theme.textColor, fontSize = 12.sp)
+                    },
+                    modifier = Modifier.widthIn(max = 260.dp),
+                    anchor = Alignment.TopCenter,
+                ) {
+                    title()
                 }
+            } else {
+                title()
+            }
+
+            if (!nested) {
+                description?.let { Text(it, color = theme.textColorSecondary, fontSize = 13.sp) }
             }
         }
     }

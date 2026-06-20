@@ -432,7 +432,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             tree["padBottom"] = ktProperty(out::padBottom).apply { addDisplayCondition(hidden) }
             tree["padLeft"] = ktProperty(out::padLeft).apply { addDisplayCondition(hidden) }
             tree["padRight"] = ktProperty(out::padRight).apply { addDisplayCondition(hidden) }
-            tree["staticWidth"] = ktProperty(out::staticWidth).apply { addDisplayCondition(hidden) }
+            tree["staticWidth"] = ktProperty(out::staticWidth).apply {
+                description = "Keeps this HUD at a fixed width and height. This also enables content alignment inside the HUD box."
+                addDisplayCondition(hidden)
+            }
             tree["staticW"] = ktProperty(out::staticW).apply { addDisplayCondition(hidden) }
             tree["staticH"] = ktProperty(out::staticH).apply { addDisplayCondition(hidden) }
             tree["font"] = ktProperty(out::font).apply { addDisplayCondition(hidden) }
@@ -443,7 +446,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             tree["textUnderline"] = ktProperty(out::textUnderline).apply { addDisplayCondition(hidden) }
             tree["textWeight"] = ktProperty(out::textWeight).apply { addDisplayCondition(hidden) }
             tree["textAlign"] = ktProperty(out::textAlign).apply { addDisplayCondition(hidden) }
-            tree["useGuiScale"] = ktProperty(out::useGuiScale).apply { addDisplayCondition(hidden) }
+            tree["useGuiScale"] = ktProperty(out::useGuiScale).apply {
+                description = "Uses Minecraft's current GUI scale for this HUD. Turn this off to use a custom HUD scale."
+                addDisplayCondition(hidden)
+            }
             tree["customScale"] = ktProperty(out::customScale).apply { addDisplayCondition(hidden) }
             tree["showBackground"] = ktProperty(out::showBackground).apply { addDisplayCondition(hidden) }
             tree["bgColor"] = ktProperty(out::bgColor).apply { addDisplayCondition(hidden) }
