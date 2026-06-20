@@ -26,6 +26,14 @@ oneconfig.all=All
 oneconfig.pvp=PvP
 oneconfig.qol=QoL
 oneconfig.combat=Combat
+oneconfig.hypixel=Hypixel
+oneconfig.performance=Performance
+oneconfig.visuals=Visuals
+oneconfig.hud=HUD
+oneconfig.controls=Controls
+oneconfig.chat=Chat
+oneconfig.utility=Utility
+oneconfig.other=Other
 
 oneconfig.preferences.category.general=General
 oneconfig.preferences.category.gui=GUI
