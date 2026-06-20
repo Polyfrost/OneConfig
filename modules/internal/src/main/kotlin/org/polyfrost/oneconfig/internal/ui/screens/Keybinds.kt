@@ -32,6 +32,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -49,10 +50,13 @@ import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.searchMatches
+import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindConflicts
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+
+private val CONFLICT_COLOR = Color(0xFFE0524F)
 
 private data class KeybindGroup(
     val modId: String,
@@ -93,6 +97,10 @@ fun Keybinds() {
         return
     }
 
+    val conflicts = remember(revision, KeybindConflicts.revision.intValue) {
+        KeybindConflicts.conflictMap()
+    }
+
     val listState = rememberLazyListState()
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
@@ -109,7 +117,7 @@ fun Keybinds() {
                     key = { entry -> "$revision:${group.modId}:${entry.path}" },
                 ) { entry ->
                     key(revision, entry.prop) {
-                        KeybindRow(entry)
+                        KeybindRow(entry, conflictsWith = conflicts[entry.prop].orEmpty())
                     }
                 }
             }
@@ -157,7 +165,7 @@ private fun KeybindGroupHeader(group: KeybindGroup) {
 }
 
 @Composable
-private fun KeybindRow(entry: KeybindEntry) {
+private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
     val theme = LocalTheme.current
     val shape = theme.modCardShape
     val prop = entry.prop
@@ -230,6 +238,20 @@ private fun KeybindRow(entry: KeybindEntry) {
                         color = theme.textColorSecondary,
                         fontSize = 11.sp,
                     )
+                    if (conflictsWith.isNotEmpty()) {
+                        val names = conflictsWith.joinToString(", ") { KeybindConflicts.displayName(it) }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Icon("alert-circle", color = CONFLICT_COLOR, modifier = Modifier.size(12.dp))
+                            Text(
+                                "Conflicts with $names",
+                                color = CONFLICT_COLOR,
+                                fontSize = 11.sp,
+                            )
+                        }
+                    }
                 }
             }
             Option(prop)

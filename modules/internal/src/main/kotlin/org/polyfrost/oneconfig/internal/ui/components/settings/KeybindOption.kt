@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -20,7 +21,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
@@ -34,6 +37,7 @@ import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
+import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
@@ -43,6 +47,8 @@ import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val KeybindShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
+
+private val CONFLICT_COLOR = Color(0xFFE0524F)
 
 /** Human-readable name for a GLFW key code. */
 private fun keyCodeToName(glfwCode: Int): String = when (glfwCode) {
@@ -112,6 +118,12 @@ private fun keybindDisplayName(keybind: OneConfigKeybind?): String {
     return parts.joinToString(" + ").ifEmpty { "None" }
 }
 
+private fun KeyEvent.awtKeyEventId(): Int? = runCatching {
+    val internal = nativeKeyEvent
+    val field = internal.javaClass.getDeclaredField("nativeEvent").apply { isAccessible = true }
+    (field.get(internal) as? java.awt.event.KeyEvent)?.id
+}.getOrNull()
+
 @Composable
 fun KeybindOption(data: KeybindOptionData) {
     val theme = LocalTheme.current
@@ -124,6 +136,13 @@ fun KeybindOption(data: KeybindOptionData) {
         mutableStateOf(data.prop.get() as? OneConfigKeybind)
     }
     var displayName by remember(data.prop) { mutableStateOf(keybindDisplayName(currentKeybind)) }
+
+    val recordedKeys = remember(data.prop) { mutableStateListOf<Int>() }
+    val heldKeys = remember(data.prop) { HashSet<Int>() }
+
+    val hasConflict = (KeybindConflicts.revision.intValue + ConfigRegistry.revision).let {
+        !recording && data.prop in KeybindConflicts.conflictingProps()
+    }
 
     // Writes the new keybind to the config property and re-syncs the KeybindManager. Setting the property may either
     // mutate the existing keybind in place or swap in a fresh instance; KeybindManager.replace handles both so the
@@ -139,6 +158,7 @@ fun KeybindOption(data: KeybindOptionData) {
         KeybindManager.replace(old, applied)
         currentKeybind = applied
         displayName = keybindDisplayName(applied)
+        KeybindConflicts.revision.intValue++
     }
 
     val bgColor by animateColorAsState(
@@ -151,16 +171,25 @@ fun KeybindOption(data: KeybindOptionData) {
     val borderColor by animateColorAsState(
         when {
             recording -> Accent
+            hasConflict -> CONFLICT_COLOR
             isHovered -> theme.textColor.copy(0.2f)
             else -> theme.borderColor
         }
     )
     val textColor by animateColorAsState(
-        if (recording) Accent else theme.textColor
+        when {
+            recording -> Accent
+            hasConflict -> CONFLICT_COLOR
+            else -> theme.textColor
+        }
     )
 
     LaunchedEffect(recording) {
-        if (recording) focusRequester.requestFocus()
+        if (recording) {
+            recordedKeys.clear()
+            heldKeys.clear()
+            focusRequester.requestFocus()
+        }
     }
 
     Row(
@@ -168,28 +197,41 @@ fun KeybindOption(data: KeybindOptionData) {
             .focusRequester(focusRequester)
             .focusable()
             .onKeyEvent { event ->
-                if (recording && event.type == KeyEventType.KeyDown) {
-                    if (event.key == Key.Escape) {
-                        // Cancel recording
-                        recording = false
+                if (!recording) return@onKeyEvent false
+                if (event.awtKeyEventId() == java.awt.event.KeyEvent.KEY_TYPED) return@onKeyEvent true
+                when (event.type) {
+                    KeyEventType.KeyDown -> {
+                        if (event.key == Key.Escape) {
+                            recording = false
+                            return@onKeyEvent true
+                        }
+                        if (event.key == Key.Backspace || event.key == Key.Delete) {
+                            if (recordedKeys.isEmpty()) {
+                                applyKeybind(null, null)
+                                recording = false
+                                return@onKeyEvent true
+                            }
+                        }
+                        // ComposeScreen carries the raw GLFW key code in the event's codePoint, so the KeybindManager
+                        // gets the exact code it matches against without a lossy AWT round-trip. A code <= 0 means an
+                        // unknown key (GLFW_KEY_UNKNOWN) or a character event; ignore it instead of storing a bind that
+                        // would match nothing useful (or, for code 0, match everything).
+                        val glfwCode = event.utf16CodePoint
+                        if (glfwCode <= 0) return@onKeyEvent true
+                        if (glfwCode !in recordedKeys) recordedKeys.add(glfwCode)
+                        heldKeys.add(glfwCode)
                         return@onKeyEvent true
                     }
-                    if (event.key == Key.Backspace || event.key == Key.Delete) {
-                        applyKeybind(null, null)
-                        recording = false
+                    KeyEventType.KeyUp -> {
+                        heldKeys.remove(event.utf16CodePoint)
+                        if (heldKeys.isEmpty() && recordedKeys.isNotEmpty()) {
+                            applyKeybind(recordedKeys.toIntArray(), null)
+                            recording = false
+                        }
                         return@onKeyEvent true
                     }
-                    // ComposeScreen carries the raw GLFW key code in the event's codePoint, so the KeybindManager
-                    // gets the exact code it matches against without a lossy AWT round-trip. A code <= 0 means an
-                    // unknown key (GLFW_KEY_UNKNOWN) or a character event; ignore it instead of storing a bind that
-                    // would match nothing useful (or, for code 0, match everything).
-                    val glfwCode = event.utf16CodePoint
-                    if (glfwCode <= 0) return@onKeyEvent true
-                    applyKeybind(intArrayOf(glfwCode), null)
-                    recording = false
-                    return@onKeyEvent true
+                    else -> return@onKeyEvent false
                 }
-                false
             }
             .background(bgColor, KeybindShape)
             .border(1.dp, borderColor, KeybindShape)
@@ -205,8 +247,11 @@ fun KeybindOption(data: KeybindOptionData) {
             modifier = Modifier.size(16.dp)
         )
         Text(
-            if (recording) "Press a key..."
-            else displayName,
+            when {
+                recording && recordedKeys.isEmpty() -> "Press keys..."
+                recording -> recordedKeys.joinToString(" + ") { keyCodeToName(it) }
+                else -> displayName
+            },
             color = textColor,
             fontSize = 13.sp,
         )
