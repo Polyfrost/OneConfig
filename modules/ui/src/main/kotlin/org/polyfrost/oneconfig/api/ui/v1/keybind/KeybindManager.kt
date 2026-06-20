@@ -102,6 +102,12 @@ object KeybindManager {
     }
 
     @JvmStatic
+    fun findConflicts(bind: OneConfigKeybind): List<OneConfigKeybind> {
+        if (!bind.isBound) return emptyList()
+        return binds.filter { it.conflictsWith(bind) }
+    }
+
+    @JvmStatic
     fun builder() = KeybindHelper()
 
     private fun checkBinds() {

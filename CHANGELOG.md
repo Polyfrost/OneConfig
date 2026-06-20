@@ -2,6 +2,8 @@
 
 - Add HUD snapping
 - Add HUD arrow keys to move the HUD
+- Add multi-key (chord) keybinds (#676)
+- Show keybind conflicts in the keybinds screen (#675)
 - Move HUD settings/delete icon inside the HUD
 - Round non-SVG icons automatically (#659)
 
