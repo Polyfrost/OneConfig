@@ -38,13 +38,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
-import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.config.v1.Property
-import org.polyfrost.oneconfig.api.config.v1.Tree
-import org.polyfrost.oneconfig.api.config.v1.Visualizer
-import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
-import org.polyfrost.oneconfig.internal.ui.api.TreeConfigData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
@@ -53,24 +48,14 @@ import org.polyfrost.oneconfig.internal.ui.components.searchMatches
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindConflicts
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindEntry
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroup
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry
+import org.polyfrost.oneconfig.internal.ui.keybind.collectAllKeybindGroups
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val CONFLICT_COLOR = Color(0xFFE0524F)
-
-private data class KeybindGroup(
-    val modId: String,
-    val modTitle: Any,
-    val modIcon: String?,
-    val entries: List<KeybindEntry>,
-)
-
-private data class KeybindEntry(
-    val path: String,
-    val category: String,
-    val subcategory: String,
-    val prop: Property<*>,
-)
 
 @Composable
 fun Keybinds() {
@@ -82,7 +67,8 @@ fun Keybinds() {
     }
 
     val configs = ConfigRegistry.configs.toList()
-    val groups = remember(revision, configs) { collectKeybindGroups(configs.filterIsInstance<TreeConfigData>()) }
+    val providerRevision = KeybindProviderRegistry.revision.intValue
+    val groups = remember(revision, providerRevision, configs) { collectAllKeybindGroups() }
     val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
     val visibleGroups = remember(groups, localSearchQuery) {
         if (localSearchQuery.isBlank()) groups else filterKeybindGroups(groups, localSearchQuery)
@@ -97,7 +83,7 @@ fun Keybinds() {
         return
     }
 
-    val conflicts = remember(revision, KeybindConflicts.revision.intValue) {
+    val conflicts = remember(revision, providerRevision, KeybindConflicts.revision.intValue) {
         KeybindConflicts.conflictMap()
     }
 
@@ -259,51 +245,4 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
 
         OptionContextMenu(prop, menuOpen, menuOffset, onDismiss = { menuOpen = false })
     }
-}
-
-private fun collectKeybindGroups(configs: List<TreeConfigData>): List<KeybindGroup> {
-    return configs.mapNotNull { config ->
-        val entries = collectKeybindEntries(config.tree)
-        if (entries.isEmpty()) null
-        else KeybindGroup(config.id, config.title, config.icon, entries)
-    }
-}
-
-private fun collectKeybindEntries(tree: Tree): List<KeybindEntry> {
-    val entries = ArrayList<KeybindEntry>()
-    tree.map.forEach { (id, node) ->
-        collectKeybindEntries(node, id, entries)
-    }
-    return entries
-}
-
-private fun collectKeybindEntries(node: Node, path: String, entries: MutableList<KeybindEntry>) {
-    when (node) {
-        is Property<*> -> {
-            if (node.isKeybindProperty()) {
-                entries += KeybindEntry(
-                    path = path,
-                    category = node.groupName("category", ConfigVisualizer.DEFAULT_CATEGORY),
-                    subcategory = node.groupName("subcategory", ConfigVisualizer.DEFAULT_SUBCATEGORY),
-                    prop = node,
-                )
-            }
-        }
-        is Tree -> {
-            node.map.forEach { (id, child) -> collectKeybindEntries(child, "$path.$id", entries) }
-        }
-    }
-}
-
-private fun Property<*>.isKeybindProperty(): Boolean {
-    return when (val visualizer = getMetadata<Any?>("visualizer")) {
-        Visualizer.KeybindVisualizer::class.java -> true
-        is Visualizer.KeybindVisualizer -> true
-        else -> false
-    }
-}
-
-private fun Node.groupName(key: String, default: String): String {
-    val value = getMetadata<String>(key)?.trim()
-    return value?.takeUnless(String::isEmpty) ?: default
 }
