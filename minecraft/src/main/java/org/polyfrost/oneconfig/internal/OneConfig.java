@@ -60,6 +60,8 @@ import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen;
 import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudRenderer;
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry;
+import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProvider;
 import org.polyfrost.oneconfig.test.TestMod_Test;
 
 /**
@@ -268,6 +270,7 @@ public class OneConfig
         McFontService.INSTANCE.init();
         org.polyfrost.oneconfig.internal.ui.sound.ExternalSounds.INSTANCE.ensureDownloaded();
 
+        KeybindProviderRegistry.INSTANCE.register(MinecraftKeybindProvider.INSTANCE);
         registerKeybinds();
         new OneConfigConfig();
         new ThemeConfig();
