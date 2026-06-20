@@ -34,8 +34,6 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
 
 public final class org/polyfrost/oneconfig/api/config/v1/Config$Category {
 	public static final field COMBAT Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
-	public static final field CHAT Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
-	public static final field CONTROLS Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
 	public static final field HUD Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
 	public static final field HYPIXEL Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
 	public static final field OTHER Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;

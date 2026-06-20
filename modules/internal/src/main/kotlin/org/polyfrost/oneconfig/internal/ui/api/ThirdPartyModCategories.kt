@@ -25,12 +25,6 @@ object ThirdPartyModCategories {
         "skyocean",
     )
 
-    private val combat = setOf(
-        "effecttimerplus",
-        "shaketweaks",
-        "viewmodel",
-    )
-
     private val performance = setOf(
         "asyncparticles",
         "badoptimizations",
@@ -106,38 +100,13 @@ object ThirdPartyModCategories {
         "ukus-armor-hud",
     )
 
-    private val controls = setOf(
+    private val utility = setOf(
         "amecs",
         "amecs-reborn",
+        "bettercommandblockui",
         "commandkeys",
         "controlify",
         "controlling",
-        "crosshairtweaks",
-        "fix-keyboard-on-linux",
-        "gamma-utils",
-        "gammautils",
-        "scrolltweaks",
-        "toggle-toggle-sprint",
-        "zoomify",
-    )
-
-    private val chat = setOf(
-        "autogg",
-        "chat-heads",
-        "chat-impressive-animation",
-        "chat_heads",
-        "chatimpressiveanimation",
-        "hypixelautotip",
-        "no-chat-reports",
-        "nochatreports",
-        "nochatrestrictions",
-        "simple-voice-chat",
-        "symbol-chat",
-        "voicechat",
-    )
-
-    private val utility = setOf(
-        "bettercommandblockui",
         "crash_assistant",
         "crashpatch",
         "e4mc",
@@ -150,6 +119,7 @@ object ThirdPartyModCategories {
         "ixeris",
         "jade",
         "lazy-language-loader",
+        "fix-keyboard-on-linux",
         "logcleaner",
         "mixintrace",
         "modmenu",
@@ -166,16 +136,19 @@ object ThirdPartyModCategories {
         "screenshotclipboard",
         "screenshotcompression",
         "simple-modpack-update-checker",
+        "simple-voice-chat",
         "spark",
         "spu",
         "stackdeobfuscator",
         "viafabricplus",
+        "voicechat",
         "yacl",
         "yet_another_config_lib_v3",
         "yosbr",
     )
 
     private val qol = setOf(
+        "autogg",
         "better-screens",
         "better-stats",
         "betternarratorerror",
@@ -183,10 +156,15 @@ object ThirdPartyModCategories {
         "betterscreens",
         "black-bar-concealer",
         "blackbarconcealer",
+        "chat-heads",
+        "chat-impressive-animation",
+        "chat_heads",
+        "chatimpressiveanimation",
         "compacting",
         "confirmdisconnect",
         "confirmresetkeys",
         "countdown",
+        "crosshairtweaks",
         "cubes-without-borders",
         "cwb",
         "damagetint",
@@ -195,11 +173,18 @@ object ThirdPartyModCategories {
         "droppeditemtweaks",
         "entity_sound_features",
         "esf",
+        "effecttimerplus",
         "forcecloseworldloadingscreen",
+        "gamma-utils",
+        "gammautils",
         "hold_that_chunk_2",
+        "hypixelautotip",
         "idontwannascrollagain",
         "mountopacity",
         "nametagtweaks",
+        "no-chat-reports",
+        "nochatreports",
+        "nochatrestrictions",
         "notsoessential",
         "numericalenchantments",
         "optigui",
@@ -211,7 +196,9 @@ object ThirdPartyModCategories {
         "reward-claim",
         "rewardclaim",
         "screencopy",
+        "scrolltweaks",
         "secureskins",
+        "shaketweaks",
         "shulkerboxtooltip",
         "simple-block-overlay",
         "simpleblockoverlay",
@@ -223,20 +210,21 @@ object ThirdPartyModCategories {
         "sound_physics_perfected",
         "sound_physics_remastered",
         "soundcontroller",
+        "symbol-chat",
         "text_tunnels",
         "tiptapshow",
         "tntcountdown",
+        "toggle-toggle-sprint",
         "tooltipscroll",
+        "viewmodel",
+        "zoomify",
     )
 
     private val byId: Map<String, Config.Category> =
         hypixel.associateWith { Config.Category.HYPIXEL } +
-            combat.associateWith { Config.Category.COMBAT } +
             performance.associateWith { Config.Category.PERFORMANCE } +
             visuals.associateWith { Config.Category.VISUALS } +
             hud.associateWith { Config.Category.HUD } +
-            controls.associateWith { Config.Category.CONTROLS } +
-            chat.associateWith { Config.Category.CHAT } +
             utility.associateWith { Config.Category.UTILITY } +
             qol.associateWith { Config.Category.QOL }
 

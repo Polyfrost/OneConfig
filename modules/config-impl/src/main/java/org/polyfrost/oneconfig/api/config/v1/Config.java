@@ -333,9 +333,7 @@ public abstract class Config {
         public static final Category PERFORMANCE = new Category("oneconfig.performance", 5);
         public static final Category VISUALS = new Category("oneconfig.visuals", 6);
         public static final Category HUD = new Category("oneconfig.hud", 7);
-        public static final Category CONTROLS = new Category("oneconfig.controls", 8);
-        public static final Category CHAT = new Category("oneconfig.chat", 9);
-        public static final Category UTILITY = new Category("oneconfig.utility", 10);
+        public static final Category UTILITY = new Category("oneconfig.utility", 8);
 
         private final String name;
         private final byte id;

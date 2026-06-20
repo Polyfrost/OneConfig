@@ -30,8 +30,6 @@ oneconfig.hypixel=Hypixel
 oneconfig.performance=Performance
 oneconfig.visuals=Visuals
 oneconfig.hud=HUD
-oneconfig.controls=Controls
-oneconfig.chat=Chat
 oneconfig.utility=Utility
 oneconfig.other=Other
 
