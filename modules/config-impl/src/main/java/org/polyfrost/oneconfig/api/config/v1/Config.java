@@ -330,6 +330,10 @@ public abstract class Config {
         public static final Category QOL = new Category("oneconfig.qol", 2);
         public static final Category HYPIXEL = new Category("oneconfig.hypixel", 3);
         public static final Category OTHER = new Category("oneconfig.other", 4);
+        public static final Category PERFORMANCE = new Category("oneconfig.performance", 5);
+        public static final Category VISUALS = new Category("oneconfig.visuals", 6);
+        public static final Category HUD = new Category("oneconfig.hud", 7);
+        public static final Category UTILITY = new Category("oneconfig.utility", 8);
 
         private final String name;
         private final byte id;

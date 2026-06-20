@@ -45,7 +45,11 @@ class TreeConfigData(
             ?: modInfo?.credits?.nonBlankOrNull()
 
     override val category: Config.Category
-        get() = tree.getMetadata<Config.Category>("category") ?: Config.Category.OTHER
+        get() {
+            val explicit = tree.getMetadata<Config.Category>("category")
+            if (explicit != null && explicit != Config.Category.OTHER) return explicit
+            return ThirdPartyModCategories.categoryFor(id, modInfo) ?: explicit ?: Config.Category.OTHER
+        }
 
     private val modInfo: ModInfo?
         get() = id.takeIf { it.isNotBlank() }?.let { modId ->

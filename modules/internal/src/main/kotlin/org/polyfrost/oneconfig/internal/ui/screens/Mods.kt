@@ -61,9 +61,12 @@ enum class ModCategory(
     val configCategory: Config.Category?
 ) {
     All("All", null, null),
-    Combat("Combat", "combat", Config.Category.COMBAT),
-    QoL("Quality of Life", "qol", Config.Category.QOL),
     Hypixel("Hypixel", "hypixel", Config.Category.HYPIXEL),
+    Performance("Performance", null, Config.Category.PERFORMANCE),
+    Visuals("Visuals", null, Config.Category.VISUALS),
+    HUD("HUD", null, Config.Category.HUD),
+    Utility("Utility", null, Config.Category.UTILITY),
+    QoL("Quality of Life", "qol", Config.Category.QOL),
     Other("Other", null, Config.Category.OTHER);
 }
 

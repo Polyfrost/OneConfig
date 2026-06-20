@@ -34,9 +34,13 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
 
 public final class org/polyfrost/oneconfig/api/config/v1/Config$Category {
 	public static final field COMBAT Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
+	public static final field HUD Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
 	public static final field HYPIXEL Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
 	public static final field OTHER Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
+	public static final field PERFORMANCE Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
 	public static final field QOL Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
+	public static final field UTILITY Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
+	public static final field VISUALS Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
 	public fun getId ()B
 	public fun getName ()Ljava/lang/String;
 	public fun hashCode ()I
@@ -588,4 +592,3 @@ public class org/polyfrost/oneconfig/api/config/v1/serialize/impl/NightConfigSer
 	public synthetic fun serialize (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Ljava/lang/Object;
 	public fun serialize (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Ljava/lang/String;
 }
-
