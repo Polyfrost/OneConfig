@@ -246,6 +246,7 @@ internal fun performSearch(query: String): Map<String, List<SearchResult>> {
     }
 
     for (configData in ConfigRegistry.configs) {
+        if (!ConfigRegistry.shouldShowInSearch(configData)) continue
         val tree = (configData as? TreeConfigData)?.tree ?: continue
         val matchingOptions = mutableListOf<SearchResult>()
         tree.map.values.forEach { node ->
