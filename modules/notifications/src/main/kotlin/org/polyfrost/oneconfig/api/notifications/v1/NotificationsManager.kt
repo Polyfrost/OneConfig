@@ -33,7 +33,10 @@ import org.jetbrains.annotations.ApiStatus
  * Holds the set of currently-live notifications.
  */
 object NotificationsManager {
+    private const val MAX_HISTORY = 50
+
     private val _active = mutableStateListOf<Notification>()
+    private val _history = mutableStateListOf<Notification>()
 
     /**
      * The notifications currently on screen, oldest first.
@@ -41,10 +44,40 @@ object NotificationsManager {
     val active: List<Notification> get() = _active
 
     /**
-     * Adds [notification] to the live set so it begins rendering on the next frame.
+     * Every notification that has been pushed (up to [MAX_HISTORY]), newest first.
+     */
+    val history: List<Notification> get() = _history
+
+    val unreadCount: Int get() = _history.count { !it.read }
+
+    /**
+     * Adds [notification] to the live set so it begins rendering on the next frame, and records it
+     * in the [history] so it remains visible in the notifications center after the toast dismisses.
      */
     fun push(notification: Notification) {
         _active.add(notification)
+        _history.add(0, notification)
+        while (_history.size > MAX_HISTORY) _history.removeAt(_history.lastIndex)
+    }
+
+    fun markAllRead() {
+        for (notification in _history) notification.read = true
+    }
+
+    fun removeFromHistory(notification: Notification) {
+        _history.remove(notification)
+    }
+
+    /**
+     * Fully kills/retires [notification] (drop from history + dismiss)
+     */
+    fun remove(notification: Notification) {
+        notification.dismissRequested = true
+        _history.remove(notification)
+    }
+
+    fun clearHistory() {
+        _history.clear()
     }
 
     /**

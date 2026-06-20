@@ -18,15 +18,23 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
+import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -188,6 +196,46 @@ private fun NavigationEntry(icon: String, title: String, route: Any? = null, isS
 }
 
 @Composable
+private fun NotificationBell() {
+    var expanded by remember { mutableStateOf(false) }
+    var bellHeightPx by remember { mutableStateOf(0) }
+    val interactionSource = rememberInteractionSource()
+
+    Box(
+        modifier = Modifier
+            .onSizeChanged { bellHeightPx = it.height }
+            .onClick(interactionSource) {
+                expanded = !expanded
+                // Clear the unread indicator once the panel closes
+                if (!expanded) NotificationsManager.markAllRead()
+            }
+            .pointerHoverIcon(PointerIcon.Hand)
+    ) {
+        IconWithIndicator(
+            iconName = "bell",
+            color = LocalTheme.current.textColor,
+            modifier = Modifier.size(18.dp),
+            showIndicator = NotificationsManager.unreadCount > 0,
+        )
+
+        if (expanded) {
+            Popup(
+                // Open up and to the right of the bell.
+                alignment = Alignment.BottomStart,
+                offset = IntOffset(0, -(bellHeightPx + 12)),
+                onDismissRequest = {
+                    expanded = false
+                    NotificationsManager.markAllRead()
+                },
+                properties = PopupProperties(focusable = true),
+            ) {
+                NotificationsCenter()
+            }
+        }
+    }
+}
+
+@Composable
 private fun Account() {
     Box(
         modifier = Modifier.fillMaxWidth().height(73.dp)
@@ -215,12 +263,7 @@ private fun Account() {
                     )
                 }
             }
-            IconWithIndicator(
-                iconName = "bell",
-                color = LocalTheme.current.textColor,
-                modifier = Modifier.size(18.dp),
-                showIndicator = ShellState.hasUnreadNotifications,
-            )
+            NotificationBell()
         }
     }
 }

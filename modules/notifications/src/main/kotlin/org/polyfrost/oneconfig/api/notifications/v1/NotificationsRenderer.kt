@@ -98,7 +98,7 @@ object NotificationsRenderer {
                 LOGGER.info("Notification #{} action '{}' clicked", target.notification.id, target.action.label)
                 runCatching { target.action.onClick.run() }
                     .onFailure { LOGGER.error("Notification action '${target.action.label}' threw", it) }
-                target.notification.dismissRequested = true
+                NotificationsManager.remove(target.notification)
             }
             is ToastHit.Body -> {
                 LOGGER.info("Notification #{} body clicked", target.notification.id)

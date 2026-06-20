@@ -32,6 +32,7 @@ public final class org/polyfrost/oneconfig/api/notifications/v1/Notification {
 	public final fun getOnClick ()Ljava/lang/Runnable;
 	public final fun getPersistent ()Z
 	public final fun getProgress ()Ljava/util/concurrent/Callable;
+	public final fun getRead ()Z
 	public final fun getTitle ()Ljava/lang/String;
 	public final fun getType ()Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;
 	public final fun progressOrNull ()Ljava/lang/Float;
@@ -130,12 +131,18 @@ public final class org/polyfrost/oneconfig/api/notifications/v1/NotificationsMan
 	public static final field $stable I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationsManager;
 	public final fun clearAll ()V
+	public final fun clearHistory ()V
 	public final fun contains (Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;)Z
 	public final fun dismiss (J)V
 	public final fun dismiss (Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;)V
 	public final fun getActive ()Ljava/util/List;
 	public final fun getCount ()I
+	public final fun getHistory ()Ljava/util/List;
+	public final fun getUnreadCount ()I
+	public final fun markAllRead ()V
 	public final fun push (Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;)V
+	public final fun remove (Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;)V
+	public final fun removeFromHistory (Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;)V
 }
 
 public final class org/polyfrost/oneconfig/api/notifications/v1/NotificationsRenderer {
