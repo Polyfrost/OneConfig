@@ -50,6 +50,12 @@ public @interface Text {
      */
     String regex() default "";
 
+    /**
+     * Allow the text box to span multiple lines, wrapping long text and accepting line breaks
+     * (the enter key and pasted {@code \n} / {@code \r\n}).
+     */
+    boolean multiline() default false;
+
     String category() default "General";
 
     String categoryKey() default "";

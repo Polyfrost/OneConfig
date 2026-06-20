@@ -398,6 +398,7 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun description ()Ljava/lang/String;
 	public abstract fun descriptionKey ()Ljava/lang/String;
 	public abstract fun icon ()Ljava/lang/String;
+	public abstract fun multiline ()Z
 	public abstract fun placeholder ()Ljava/lang/String;
 	public abstract fun placeholderKey ()Ljava/lang/String;
 	public abstract fun regex ()Ljava/lang/String;
@@ -536,7 +537,9 @@ public final class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$RunnableP
 public final class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$TextProp : org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop {
 	public static final field $stable I
 	public fun <init> (Ljava/lang/String;)V
+	public final fun getMultiline ()Z
 	public final fun getPlaceholder ()Ljava/lang/String;
+	public final fun setMultiline (Z)V
 	public final fun setPlaceholder (Ljava/lang/String;)V
 }
 

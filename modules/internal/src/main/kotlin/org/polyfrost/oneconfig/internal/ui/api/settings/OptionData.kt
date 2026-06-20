@@ -42,6 +42,7 @@ class NumberOptionData(prop: Property<*>) : OptionData(prop) {
 class TextOptionData(prop: Property<*>) : OptionData(prop) {
     val placeholder: String? get() = localizedString(prop.getMetadata("placeholderKey"), prop.getMetadata<String>("placeholder")).takeIf { it.isNotBlank() }
     val regex: String? get() = prop.getMetadata("regex")
+    val multiline: Boolean get() = prop.getMetadata("multiline") ?: false
 
     @Suppress("UNCHECKED_CAST")
     val strProp: Property<String> get() = prop as Property<String>

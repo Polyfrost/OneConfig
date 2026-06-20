@@ -58,6 +58,8 @@ public class TestConfig_Test extends Config {
     public static float p = 50f;
     @Text(title = "Text")
     public static String text = "Hello world!";
+    @Text(title = "Multiline Text", description = "Supports line breaks and word wrap", multiline = true)
+    public static String multilineText = "Hello world!\nThis is a second line.\noneconfigoneconfigoneconfigoneconfigoneconfigoneconfig";
     @Dropdown(title = "A dropdown", description = "I do dropping (on Tuesdays)", options = {"A", "B", "C", "SADW", "AS", "FGAW", "ASDA", "ASDFHUA", "ASHDUIW", "HAWSUDIHWAUI", "&SHAJD", "AWSHUID"})
     public static int i = 0;
     @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")

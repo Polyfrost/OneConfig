@@ -180,6 +180,10 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
         var placeholder: String?
             get() = this["placeholder"] as String?
             set(value) { this["placeholder"] = value }
+
+        var multiline: Boolean
+            get() = this["multiline"] as? Boolean ?: false
+            set(value) { this["multiline"] = value }
     }
 
 

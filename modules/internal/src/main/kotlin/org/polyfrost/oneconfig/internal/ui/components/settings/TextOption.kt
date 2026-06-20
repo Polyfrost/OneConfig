@@ -8,6 +8,7 @@ import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -52,7 +53,7 @@ fun TextOption(data: TextOptionData) {
     BasicTextField(
         value = text,
         onValueChange = { text = it; data.strProp.set(it) },
-        singleLine = true,
+        singleLine = !data.multiline,
         textStyle = TextStyle(
             color = theme.textColor,
             fontSize = 14.sp,
@@ -62,12 +63,13 @@ fun TextOption(data: TextOptionData) {
         cursorBrush = SolidColor(theme.textColor),
         modifier = Modifier
             .width(300.dp)
+            .then(if (data.multiline) Modifier.heightIn(min = 96.dp) else Modifier)
             .background(theme.modCardBackground, LocalTheme.current.sideBarNavigationEntryShape)
             .border(1.dp, theme.borderColor, LocalTheme.current.sideBarNavigationEntryShape)
             .padding(horizontal = 12.dp, vertical = 7.dp),
         decorationBox = { innerTextField ->
             Row(
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = if (data.multiline) Alignment.Top else Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Icon("text-input", color = iconColor, modifier = Modifier.size(18.dp))
