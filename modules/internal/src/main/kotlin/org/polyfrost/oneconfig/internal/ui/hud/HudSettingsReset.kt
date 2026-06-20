@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -30,8 +31,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import kotlin.math.roundToInt
+import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
+import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -170,7 +174,20 @@ fun HudSettingTarget(
             }
         },
     ) {
-        content()
+        val description = prop.localizedDescription()?.takeUnless { it.isEmptyText() }
+        if (description != null) {
+            Tooltip(
+                text = {
+                    Text(description, color = LocalTheme.current.textColor, fontSize = 12.sp)
+                },
+                modifier = Modifier.widthIn(max = 260.dp),
+                anchor = Alignment.TopCenter,
+            ) {
+                content()
+            }
+        } else {
+            content()
+        }
         OptionContextMenu(
             prop = prop,
             expanded = menuOpen,
