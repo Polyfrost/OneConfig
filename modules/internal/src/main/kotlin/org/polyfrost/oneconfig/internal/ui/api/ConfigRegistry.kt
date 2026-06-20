@@ -30,6 +30,13 @@ object ConfigRegistry {
         "libjf-translate-v1",
     )
 
+    private val dedicatedScreenConfigIds = setOf(
+        "oneconfig.json",
+        "themes.json",
+    )
+
+    private val hiddenSearchIds = hiddenModCardIds - dedicatedScreenConfigIds
+
     private val hiddenModCardTitles = setOf(
         "trender",
         "libjf config",
@@ -47,6 +54,9 @@ object ConfigRegistry {
 
     fun shouldShowModCard(config: ConfigData): Boolean =
         config.id.lowercase() !in hiddenModCardIds && config.title.toString().lowercase() !in hiddenModCardTitles
+
+    fun shouldShowInSearch(config: ConfigData): Boolean =
+        config.id.lowercase() !in hiddenSearchIds && config.title.toString().lowercase() !in hiddenModCardTitles
 
     /**
      * Loads all trees from the given [ConfigManager] as [source] entries.
