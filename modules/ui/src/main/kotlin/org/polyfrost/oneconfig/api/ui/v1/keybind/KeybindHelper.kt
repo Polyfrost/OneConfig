@@ -9,9 +9,19 @@ class KeybindHelper {
     private var inScreens = false
     private var durationNanos: Long = 0L
     private var action: ((Boolean) -> Boolean)? = null
+    private var name: String? = null
+    private var category: String? = null
 
     fun key(vararg codes: Int) = apply { keyCodes.addAll(codes.asList()) }
     fun mouse(vararg btns: Int) = apply { mouseBtns.addAll(btns.asList()) }
+    /**
+     * Name shown for this keybind in Minecraft's Controls menu.
+     */
+    fun name(name: String) = apply { this.name = name }
+    /**
+     * Category heading for this keybind in Minecraft's Controls menu. Defaults to "OneConfig".
+     */
+    fun category(category: String) = apply { this.category = category }
     fun shift() = apply { mods = (mods or KeyModifiers.SHIFT).toByte() }
     fun ctrl() = apply { mods = (mods or KeyModifiers.CTRL).toByte() }
     fun alt() = apply { mods = (mods or KeyModifiers.ALT).toByte() }
@@ -27,8 +37,11 @@ class KeybindHelper {
         val fn = requireNotNull(action) { "KeybindHelper: action must be set before build()" }
         val keys = keyCodes.toIntArray().takeIf { it.isNotEmpty() }
         val mouse = mouseBtns.toIntArray().takeIf { it.isNotEmpty() }
-        return if (inScreens) OneConfigKeybind(keys, mouse, mods, durationNanos, fn)
+        val bind = if (inScreens) OneConfigKeybind(keys, mouse, mods, durationNanos, fn)
         else BindNotInScreen(keys, mouse, mods, durationNanos, fn)
+        bind.name = name
+        bind.category = category
+        return bind
     }
 
     fun register(): OneConfigKeybind = KeybindManager.register(build())

@@ -29,6 +29,11 @@
         "events.Mixin_TickEvent",
         "events.Mixin_WorldLoadEvent",
         "events.Mixin_WorldUnloadEvent",
-        "fixes.Mixin_FixScoreboardErrorSpam"
+        "fixes.Mixin_FixScoreboardErrorSpam",
+        "keybind.KeyMappingAccessor",
+        "keybind.Mixin_InjectOneConfigKeybinds",
+        "keybind.Mixin_KeybindComboDisplay",
+        "keybind.Mixin_KeybindConflictDetect",
+        "keybind.Mixin_KeybindConflictScope"
     ]
 }

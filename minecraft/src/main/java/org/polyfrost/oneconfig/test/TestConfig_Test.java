@@ -27,7 +27,8 @@
 package org.polyfrost.oneconfig.test;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import org.lwjgl.glfw.GLFW;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.annotations.*;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
@@ -38,6 +39,7 @@ import java.util.function.Consumer;
 
 @SuppressWarnings("unused")
 public class TestConfig_Test extends Config {
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig/TestMod");
     private static TestConfig_Test INSTANCE;
 
     @Switch(
@@ -53,7 +55,10 @@ public class TestConfig_Test extends Config {
     public static int number = 50;
 
     @Keybind(title = "keybinding", description = "please send help")
-    OneConfigKeybind bind0 = KeybindHelper.builder().key(InputConstants.KEY_P).ctrl().action((Consumer<Boolean>) (it) -> Platform.compatibility().displayChatMessage(it ? "pressed keybind" : "released keybind")).register();
+    OneConfigKeybind bind0 = KeybindHelper.builder().key(InputConstants.KEY_P).ctrl().action((it) -> {
+        LOGGER.info("Keybind 'keybinding' (Ctrl+P) {}", it ? "pressed" : "released");
+        Platform.compatibility().displayChatMessage(it ? "pressed keybind" : "released keybind");
+    }).register();
     @Slider(title = "Slide", min = 10f, max = 110f, icon = "assets/oneconfig/ico/paintbrush.svg", description = "I do sliding", category = "bob")
     public static float p = 50f;
     @Text(title = "Text")
@@ -95,7 +100,7 @@ public class TestConfig_Test extends Config {
     public float slide = 40f;
 
     @Keybind(title = "keybind")
-    private final OneConfigKeybind bind = KeybindHelper.builder().ctrl().key(InputConstants.KEY_G).action((Runnable) () -> {}).register();
+    private final OneConfigKeybind bind = KeybindHelper.builder().ctrl().key(InputConstants.KEY_G).action((Consumer<Boolean>) (it) -> LOGGER.info("Keybind 'keybind' (Ctrl+G) {}", it ? "pressed" : "released")).register();
 
     // DraggableList: drag-only (order preserved, no checkboxes)
     @DraggableList(

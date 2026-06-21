@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindRegistrar
 
 object ConfigRegistry {
     private val hiddenModCardIds = setOf(
@@ -66,6 +67,7 @@ object ConfigRegistry {
         val seenIds = HashSet<String>()
         manager.trees().forEach { tree ->
             tree.id?.let(seenIds::add)
+            MinecraftKeybindRegistrar.scan(tree)
             registerTree(tree, source, bumpRevision = false)
         }
         configs.removeAll { it.source == source && it.id !in seenIds }
@@ -74,6 +76,7 @@ object ConfigRegistry {
 
     @JvmOverloads
     fun registerTree(tree: Tree, source: ConfigSource, onOpen: (() -> Unit)? = null, bumpRevision: Boolean = true) {
+        MinecraftKeybindRegistrar.scan(tree)
         if (tree.id == null || tree.title == null) return
         if (tree.getMetadata<Any?>("hidden") != null) return
         upsert(TreeConfigData(tree, source, onOpen), bumpRevision)

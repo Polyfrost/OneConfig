@@ -8,6 +8,7 @@ import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent
 import org.polyfrost.oneconfig.api.event.v1.events.WindowFocusEvent
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import java.util.ServiceLoader
 import kotlin.experimental.and
 import kotlin.experimental.inv
 import kotlin.experimental.or
@@ -18,6 +19,25 @@ object KeybindManager {
 
     private val binds = ArrayList<OneConfigKeybind>()
     private val activeBinds = HashSet<OneConfigKeybind>()
+
+    /**
+     * Bridge into Minecraft's native Controls menu if present.
+     */
+    private val bridge: MinecraftKeybindBridge? by lazy {
+        try {
+            ServiceLoader.load(MinecraftKeybindBridge::class.java, MinecraftKeybindBridge::class.java.classLoader)
+                .iterator().let { if (it.hasNext()) it.next() else null }
+        } catch (t: Throwable) {
+            LOGGER.warn("Failed to load MinecraftKeybindBridge; OneConfig keybinds will not appear in the Controls menu", t)
+            null
+        }
+    }
+
+    /** Listeners notified when a keybind is rebound from Minecraft's Controls menu, with (old, new) instances. */
+    private val rebindListeners = ArrayList<(OneConfigKeybind, OneConfigKeybind) -> Unit>()
+
+    /** Listeners notified when a keybind is edited in-place from Minecraft's Controls menu (same instance). */
+    private val menuEditListeners = ArrayList<(OneConfigKeybind) -> Unit>()
 
     private val downKeys = HashSet<Int>()
     private val downMouse = HashSet<Int>()
@@ -68,7 +88,8 @@ object KeybindManager {
 
     @JvmStatic
     fun register(bind: OneConfigKeybind): OneConfigKeybind {
-        binds.add(bind)
+        if (bind !in binds) binds.add(bind)
+        bridge?.register(bind)
         return bind
     }
 
@@ -76,10 +97,20 @@ object KeybindManager {
     fun unregister(bind: OneConfigKeybind) {
         binds.remove(bind)
         activeBinds.remove(bind)
+        bridge?.unregister(bind)
     }
 
     @JvmStatic
     fun isRegistered(bind: OneConfigKeybind): Boolean = bind in binds
+
+    /**
+     * Re-push an already-registered keybind to the Minecraft Controls menu. Use after mutating a keybind's
+     * [OneConfigKeybind.name]/[OneConfigKeybind.category] so the vanilla mapping picks up the new metadata.
+     */
+    @JvmStatic
+    fun refreshMinecraftBinding(bind: OneConfigKeybind) {
+        if (bind in binds) bridge?.register(bind)
+    }
 
     /**
      * Swap a registered keybind for a new one, preserving its registration.
@@ -94,10 +125,63 @@ object KeybindManager {
      */
     @JvmStatic
     fun replace(old: OneConfigKeybind?, new: OneConfigKeybind): OneConfigKeybind {
-        if (old === new) return new
+        if (old != null && new !== old) {
+            if (new.name == null) new.name = old.name
+            if (new.category == null) new.category = old.category
+            if (new.defaultKeybind == null) new.defaultKeybind = old.defaultKeybind
+        }
+        if (old === new) {
+            bridge?.sync(new)
+            return new
+        }
         if (old == null || old !in binds) return new
         unregister(old)
         register(new)
+        return new
+    }
+
+    @JvmStatic
+    fun addRebindListener(listener: (OneConfigKeybind, OneConfigKeybind) -> Unit) {
+        rebindListeners.add(listener)
+    }
+
+    @JvmStatic
+    fun addMenuEditListener(listener: (OneConfigKeybind) -> Unit) {
+        menuEditListeners.add(listener)
+    }
+
+    /**
+     * Notify that [bind] was mutated in place by Minecraft's Controls menu (rebind/unbind/reset). Re-syncs the vanilla
+     * mapping and notifies [menuEditListeners]
+     */
+    @JvmStatic
+    fun notifyMenuEdit(bind: OneConfigKeybind) {
+        for (listener in menuEditListeners) {
+            try {
+                listener(bind)
+            } catch (t: Throwable) {
+                LOGGER.error("Keybind menu-edit listener threw an exception", t)
+            }
+        }
+    }
+
+    @JvmStatic
+    @JvmOverloads
+    fun rebindFromMinecraft(
+        old: OneConfigKeybind,
+        keyCodes: IntArray?,
+        mouseBtns: IntArray? = null,
+        mods: Byte = KeyModifiers.NONE,
+    ): OneConfigKeybind {
+        val new = old.copyWith(keyCodes, mouseBtns, mods)
+        replace(old, new)
+        for (listener in rebindListeners) {
+            try {
+                listener(old, new)
+            } catch (t: Throwable) {
+                LOGGER.error("Keybind rebind listener threw an exception", t)
+            }
+        }
         return new
     }
 
@@ -112,6 +196,8 @@ object KeybindManager {
 
     private fun checkBinds() {
         for (bind in binds) {
+            @Suppress("SENSELESS_COMPARISON")
+            if (bind.action == null) continue
             val triggered = bind.test(downKeys, downMouse, mods)
             val wasActive = bind in activeBinds
             try {

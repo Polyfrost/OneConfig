@@ -204,7 +204,13 @@ public abstract class Property<T> extends Node implements Serializable {
         Property<?> that = (Property<?>) with;
         this.addMetadata(that.getMetadata());
         Object in = that.get();
-        if (in != null) this.setAsReferential(in);
+        if (in != null) {
+            Object current = this.get();
+            if (current instanceof org.polyfrost.oneconfig.utils.v1.OverwriteMergeable) {
+                in = ((org.polyfrost.oneconfig.utils.v1.OverwriteMergeable) current).mergeOverwrite(in);
+            }
+            this.setAsReferential(in);
+        }
         if (that.conditions != null) this.addDisplayCondition(that.conditions);
         if (that.callbacks != null) addCallback((Collection) that.callbacks);
         if (root != null) {

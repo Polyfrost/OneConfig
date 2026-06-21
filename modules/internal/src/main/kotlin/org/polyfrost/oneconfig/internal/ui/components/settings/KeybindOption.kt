@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -109,10 +108,37 @@ private fun keyCodeToName(glfwCode: Int): String = when (glfwCode) {
     else -> "Key $glfwCode"
 }
 
+private fun modifierBit(glfwCode: Int): Byte? = when (glfwCode) {
+    340, 344 -> KeyModifiers.SHIFT
+    341, 345 -> KeyModifiers.CTRL
+    342, 346 -> KeyModifiers.ALT
+    343, 347 -> KeyModifiers.META
+    else -> null
+}
+
+private fun modifierNames(mods: Byte): List<String> = buildList {
+    if (KeyModifiers.has(mods, KeyModifiers.CTRL)) add("Ctrl")
+    if (KeyModifiers.has(mods, KeyModifiers.SHIFT)) add("Shift")
+    if (KeyModifiers.has(mods, KeyModifiers.ALT)) add("Alt")
+    if (KeyModifiers.has(mods, KeyModifiers.META)) add("Meta")
+}
+
+private fun splitModifiers(codes: List<Int>): Pair<Byte, IntArray> {
+    var mods = KeyModifiers.NONE
+    val keys = ArrayList<Int>(codes.size)
+    for (code in codes) {
+        val bit = modifierBit(code)
+        if (bit != null) mods = (mods.toInt() or bit.toInt()).toByte()
+        else keys += code
+    }
+    return mods to keys.toIntArray()
+}
+
 private fun keybindDisplayName(keybind: OneConfigKeybind?): String {
     if (keybind == null || !keybind.isBound) return "None"
     // LinkedHashSet dedups the left/right entries that a single modifier expands into (e.g. "Shift" + "Shift").
     val parts = LinkedHashSet<String>()
+    parts += modifierNames(keybind.mods)
     keybind.keyCodes?.forEach { parts += keyCodeToName(it) }
     keybind.mouseBtns?.forEach { parts += "Mouse ${it + 1}" }
     return parts.joinToString(" + ").ifEmpty { "None" }
@@ -148,10 +174,10 @@ fun KeybindOption(data: KeybindOptionData) {
     // mutate the existing keybind in place or swap in a fresh instance; KeybindManager.replace handles both so the
     // bind keeps firing on the new key without the mod registering its own change callback. The action is carried
     // over from the previous keybind so it survives the rebind.
-    fun applyKeybind(keys: IntArray?, mouse: IntArray?) {
-        val old = currentKeybind
+    fun applyKeybind(keys: IntArray?, mouse: IntArray?, mods: Byte = KeyModifiers.NONE) {
+        val old = (data.prop.get() as? OneConfigKeybind) ?: currentKeybind
         val existingAction = old?.action ?: { true }
-        val newKeybind = OneConfigKeybind(keys, mouse, KeyModifiers.NONE, 0L, existingAction)
+        val newKeybind = OneConfigKeybind(keys, mouse, mods, 0L, existingAction)
         @Suppress("UNCHECKED_CAST")
         (data.prop as Property<Any>).set(newKeybind)
         val applied = data.prop.get() as? OneConfigKeybind ?: newKeybind
@@ -225,7 +251,9 @@ fun KeybindOption(data: KeybindOptionData) {
                     KeyEventType.KeyUp -> {
                         heldKeys.remove(event.utf16CodePoint)
                         if (heldKeys.isEmpty() && recordedKeys.isNotEmpty()) {
-                            applyKeybind(recordedKeys.toIntArray(), null)
+                            val (mods, keys) = splitModifiers(recordedKeys.toList())
+                            if (keys.isEmpty()) applyKeybind(recordedKeys.toIntArray(), null)
+                            else applyKeybind(keys, null, mods)
                             recording = false
                         }
                         return@onKeyEvent true
