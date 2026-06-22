@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import net.minecraft.client.Minecraft
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
+//? if > 1.8.9
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.screens.Screen
 //? >= 1.21.10 {
@@ -27,7 +28,14 @@ import net.minecraft.client.input.CharacterEvent
 import net.minecraft.client.input.MouseButtonEvent
 import net.minecraft.client.input.KeyEvent as McKeyEvent
 //? }
+//? if > 1.8.9 {
 import net.minecraft.network.chat.CommonComponents
+//?} else {
+/*import org.polyfrost.oneconfig.internal.legacy.KeyCodes
+import org.lwjgl.input.Keyboard
+import org.lwjgl.input.Mouse
+import org.lwjgl.sdl.SDLVideo
+*///?}
 import org.jetbrains.skia.FilterTileMode
 import org.jetbrains.skia.ImageFilter
 import org.jetbrains.skia.Paint
@@ -93,6 +101,7 @@ private object SystemClipboard : androidx.compose.ui.platform.Clipboard {
 @OptIn(InternalComposeUiApi::class)
 abstract class ComposeScreen(
     protected val renderMode: RenderMode = RenderMode.ON_DEMAND,
+//~ if = 1.8.9 '(CommonComponents.EMPTY)' -> '()'
 ) : Screen(CommonComponents.EMPTY) {
     enum class RenderMode {
         CONTINUOUS,
@@ -252,6 +261,7 @@ abstract class ComposeScreen(
 
     private fun osUpscaleFactor(): Float {
         val handle = Platform.compatibility().windowHandle()
+        //? if > 1.8.9 {
         GLFW.glfwGetWindowContentScale(handle, contentScaleX, contentScaleY)
         val winCS = maxOf(contentScaleX[0], contentScaleY[0]).coerceAtLeast(1f)
         val mon = GLFW.glfwGetWindowMonitor(handle).takeIf { it != 0L } ?: GLFW.glfwGetPrimaryMonitor()
@@ -259,6 +269,13 @@ abstract class ComposeScreen(
         GLFW.glfwGetMonitorContentScale(mon, monScaleX, monScaleY)
         val monCS = maxOf(monScaleX[0], monScaleY[0]).coerceAtLeast(1f)
         return (monCS / winCS).coerceAtLeast(1f)
+        //?} else {
+        /*val windowScale = SDLVideo.SDL_GetWindowDisplayScale(handle).coerceAtLeast(1f)
+        val display = SDLVideo.SDL_GetDisplayForWindow(handle)
+        if (display == 0) return 1f
+        val displayScale = SDLVideo.SDL_GetDisplayContentScale(display).coerceAtLeast(1f)
+        return (displayScale / windowScale).coerceAtLeast(1f)
+        *///?}
     }
 
     override fun init() {
@@ -267,6 +284,9 @@ abstract class ComposeScreen(
             reportUnavailableAndClose()
             return
         }
+
+        //? if = 1.8.9
+        //Keyboard.enableRepeatEvents(true)
 
         sceneDirty = true
         lastPointer = null
@@ -327,6 +347,7 @@ abstract class ComposeScreen(
 
     override fun isPauseScreen(): Boolean = false
 
+    //? if > 1.8.9 {
     //~ if >= 26.1 'renderBackground' -> 'extractBackground'
     override fun extractBackground(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
         if (client.level == null) {
@@ -334,25 +355,33 @@ abstract class ComposeScreen(
             extractPanorama(ctx, tickDelta)
         }
     }
+    //?}
 
     private fun disposeScene() {
         SkiaCtx.clearComposeFrame()
         closeSceneQuietly()
     }
 
+    //? if > 1.8.9 {
     override fun onClose() {
         ComposeSceneContextImpl.resetPointerIcon()
         disposeScene()
     }
+    //?}
 
     override fun removed() {
+        //? if = 1.8.9
+        //Keyboard.enableRepeatEvents(false)
         ComposeSceneContextImpl.resetPointerIcon()
         disposeScene()
         super.removed()
     }
 
+    //? if > 1.8.9 {
     //~ if >= 26.1 'render' -> 'extractRenderState'
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
+    //?} else
+    //override fun render(mouseX: Int, mouseY: Int, tickDelta: Float) {
         if (Platform.screen().current<Any?>() !== this) return
         if (scenePoisoned) {
             if (sceneRebuilds >= MAX_SCENE_REBUILDS) {
@@ -393,10 +422,12 @@ abstract class ComposeScreen(
             withScene { it.invalidatePositionInWindow() }
         }
 
+        //? if > 1.8.9 {
         val debugOverlayOnTop = org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen.shouldSuppressVanilla()
         if (renderMode == RenderMode.ON_DEMAND && !sceneDirty && SkiaCtx.isDeferredComposeBackend && !debugOverlayOnTop) {
             if (SkiaCtx.blitComposeCached(ctx)) return
         }
+        //?}
 
         if (liveScene() == null) return
 
@@ -428,52 +459,105 @@ abstract class ComposeScreen(
         val wasDirty = sceneDirty || renderMode == RenderMode.CONTINUOUS
         sceneDirty = false
         when {
+            //? if > 1.8.9
             SkiaCtx.isDeferredComposeBackend -> SkiaCtx.drawComposeBlit(ctx, renderBlock)
             SkiaCtx.isVulkanMode -> SkiaCtx.queueDraw(renderBlock) // non-deferred Vulkan draws straight to the main RT
             else -> SkiaCtx.submitComposeFrame(wasDirty, renderBlock) // GL uses a cached FBO and re-renders only when dirty
         }
     }
 
+    //? if = 1.8.9 {
+    /*override fun handleMouse() {
+        val wheel = Mouse.getEventDWheel()
+        if (wheel != 0) {
+            mouseScrolled(wheel)
+        }
+
+        super.handleMouse()
+    }
+
+    override fun handleKeyboard() {
+        fun getModifiers(): Int {
+            var m = 0
+            if (Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL)) m = m or GLFW.GLFW_MOD_CONTROL
+            if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) m = m or GLFW.GLFW_MOD_SHIFT
+            if (Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU)) m = m or GLFW.GLFW_MOD_ALT
+            if (Keyboard.isKeyDown(Keyboard.KEY_LMETA) || Keyboard.isKeyDown(Keyboard.KEY_RMETA)) m = m or GLFW.GLFW_MOD_SUPER
+            return m
+        }
+
+        val char = Keyboard.getEventCharacter()
+        val legacyKey = Keyboard.getEventKey()
+        val key = if (legacyKey > 0) KeyCodes.fromLegacy(legacyKey).value else -1
+        val modifiers = getModifiers()
+
+        if (Keyboard.getEventKeyState()) {
+            val keyHandled = if (key >= 0) keyPressed(key, modifiers) else false
+            val typedHandled = if (char != Keyboard.CHAR_NONE.toChar()) {
+                charTyped(char, modifiers)
+            } else false
+
+            if (key >= 0 && !keyHandled && !typedHandled) {
+                super.keyPressed(char, legacyKey)
+            }
+        } else if (key >= 0) {
+            keyReleased(key, modifiers)
+        }
+        client.handleGuiKeyBindings()
+    }
+    *///?}
+
     //? >= 1.21.10 {
     override fun mouseClicked(event: MouseButtonEvent, doubleClick: Boolean): Boolean {
         val button = event.button()
-    //? } else {
+    //?} elif > 1.8.9 {
     /*override fun mouseClicked(x: Double, y: Double, button: Int): Boolean {
-    *///? }
+    *///?} else
+    //override fun mouseClicked(x: Int, y: Int, button: Int) {
         if (handleMouseClicked(button)) {
             consumedButtons += button
+            //$ if > 1.8.9 'return true' else 'return'
             return true
         }
         sendMouseButtonEvent(PointerEventType.Press, button)
 
-        //? >= 1.21.10 {
+        //? if >= 1.21.10 {
         return super.mouseClicked(event, doubleClick)
-        //? } else {
+        //?} elif > 1.8.9 {
         /*return super.mouseClicked(x, y, button)
-        *///? }
+        *///?} else
+        //super.mouseClicked(x, y, button)
     }
 
     //? >= 1.21.10 {
     override fun mouseReleased(event: MouseButtonEvent): Boolean {
         val button = event.button()
-    //? } else {
+    //?} elif > 1.8.9 {
     /*override fun mouseReleased(x: Double, y: Double, button: Int): Boolean {
-    *///? }
+    *///?} else
+    //override fun mouseReleased(x: Int, y: Int, button: Int) {
         if (!consumedButtons.remove(button)) sendMouseButtonEvent(PointerEventType.Release, button)
 
         //? if >= 1.21.10 {
         return super.mouseReleased(event)
-        //?} else {
+        //?} elif > 1.8.9 {
         /*return super.mouseReleased(x, y, button)
-        *///?}
+        *///?} else
+        //super.mouseReleased(x, y, button)
     }
 
     protected open val scrollSpeed: Float get() = 1f
 
+    //? if > 1.8.9 {
     override fun mouseScrolled(x: Double, y: Double, scrollX: Double, scrollY: Double): Boolean {
         sendScrollEvent(scrollX, scrollY)
         return super.mouseScrolled(x, y, scrollX, scrollY)
     }
+    //?} else {
+    /*private fun mouseScrolled(scrollY: Int) {
+        sendScrollEvent(0.0, scrollY.toDouble())
+    }
+    *///?}
 
     protected open fun handleMouseClicked(button: Int): Boolean = false
 
@@ -499,6 +583,7 @@ abstract class ComposeScreen(
             it.sendPointerEvent(
                 eventType = PointerEventType.Scroll,
                 position = position,
+                //~ if = 1.8.9 '(-scrollX * scrollScale).toFloat()' -> '0f'
                 scrollDelta = Offset((-scrollX * scrollScale).toFloat(), (-scrollY * scrollScale).toFloat()),
             )
         }
@@ -512,16 +597,20 @@ abstract class ComposeScreen(
         val modifiers = 0 //dropped from the event in 26.1 because glfw no longer passes them
         //? } else
         //val modifiers = event.modifiers
-    //? } else {
+    //?} elif > 1.8.9 {
     /*override fun charTyped(char: Char, modifiers: Int): Boolean {
        val codepoint = char.code
-    *///? }
+    *///?} else {
+    /*private fun charTyped(char: Char, modifiers: Int): Boolean {
+        val codepoint = char.code
+    *///?}
         val handled = sendCharacterEvent(char, codepoint, modifiers)
-        //? >= 1.21.10 {
+        //? if >= 1.21.10 {
         return handled || super.charTyped(event)
-        //? } else {
+        //?} elif > 1.8.9 {
         /*return handled || super.charTyped(char, modifiers)
-        *///? }
+        *///?} else
+        //return handled
     }
 
     fun Int.ctrlDown() = this and GLFW.GLFW_MOD_CONTROL != 0
@@ -538,30 +627,34 @@ abstract class ComposeScreen(
     override fun keyPressed(event: McKeyEvent): Boolean {
         val key = event.key
         val modifiers = event.modifiers
-    //?} else {
+    //?} elif > 1.8.9 {
     /*override fun keyPressed(key: Int, scanCode: Int, modifiers: Int): Boolean {
-    *///?}
+    *///?} else
+    //private fun keyPressed(key: Int, modifiers: Int): Boolean {
         val handled = dispatchKeyPressed(key, modifiers)
         //? if >= 1.21.10 {
         return handled || super.keyPressed(event)
-        //?} else {
+        //?} elif > 1.8.9 {
         /*return handled || super.keyPressed(key, scanCode, modifiers)
-        *///?}
+        *///?} else
+        //return handled
     }
 
     //? if >= 1.21.10 {
     override fun keyReleased(event: McKeyEvent): Boolean {
         val key = event.key
         val modifiers = event.modifiers
-    //?} else {
+    //?} elif > 1.8.9 {
     /*override fun keyReleased(key: Int, scanCode: Int, modifiers: Int): Boolean {
-    *///?}
+    *///?} else
+    //private fun keyReleased(key: Int, modifiers: Int): Boolean {
         val handled = if (consumedKeys.remove(key)) false else sendKeyReleasedEvent(key, modifiers)
         //? if >= 1.21.10 {
         return handled || super.keyReleased(event)
-        //?} else {
+        //?} elif > 1.8.9 {
         /*return handled || super.keyReleased(key, scanCode, modifiers)
-        *///?}
+        *///?} else
+        //return handled
     }
 
     private fun dispatchKeyPressed(key: Int, modifiers: Int): Boolean {
@@ -722,8 +815,11 @@ abstract class ComposeScreen(
 
     private fun sceneDensity(): Float {
         val pixelRatio = Platform.screen().pixelRatio().takeIf { it > 0f } ?: 1f
+        //? if > 1.8.9 {
         GLFW.glfwGetWindowContentScale(Platform.compatibility().windowHandle(), contentScaleX, contentScaleY)
         val contentScale = maxOf(contentScaleX[0], contentScaleY[0]).coerceAtLeast(1f)
+        //?} else
+        //val contentScale = SDLVideo.SDL_GetWindowDisplayScale(Platform.compatibility().windowHandle())
         return (contentScale / pixelRatio).coerceAtLeast(1f)
     }
 
@@ -737,8 +833,13 @@ abstract class ComposeScreen(
     }
 
     protected fun pointerPosition(): Offset {
+        //? if > 1.8.9 {
         val mouse = client.mouseHandler
         return Offset(mouse.xpos().toFloat(), mouse.ypos().toFloat())
+        //?} else {
+        /*val pixelRatio = Platform.screen().pixelRatio()
+        return Offset(Mouse.getX() / pixelRatio, (Platform.screen().viewportHeight() - Mouse.getY() - 1) / pixelRatio)
+        *///?}
     }
 
     private val dummyComponent by lazy { object : Component() {} }

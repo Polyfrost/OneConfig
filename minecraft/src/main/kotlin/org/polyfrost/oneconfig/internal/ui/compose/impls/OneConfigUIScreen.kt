@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.ui.compose.impls
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalWindowInfo
 import com.mojang.blaze3d.platform.InputConstants
+//? if > 1.8.9
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.lwjgl.glfw.GLFW
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
@@ -258,8 +259,11 @@ class OneConfigUIScreen @JvmOverloads constructor(
         return false
     }
 
+    //? if > 1.8.9 {
     //~ if >= 26.1 'render' -> 'extractRenderState'
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
+    //?} else
+    //override fun render(mouseX: Int, mouseY: Int, tickDelta: Float) {
         // tcdcommons-based screens like Better Statistics Screen render their parent by hand each frame
         // and that would queue a fullscreen blur which smears over the popup so bail unless we are current
         if (Platform.screen().current<Any?>() !== this) return
@@ -273,7 +277,9 @@ class OneConfigUIScreen @JvmOverloads constructor(
             //?} else {
             /*if (closeAnimationMs <= 0L) {
                 SkiaCtx.discardComposeFrame()
+                //~ if = 1.8.9 '(ctx, tickDelta)' -> '(tickDelta)'
                 OneConfig.render(ctx, tickDelta)
+                //~ if = 1.8.9 '(ctx)' -> '()'
                 SkiaCtx.blitHud(ctx)
             }
             *///?}
@@ -298,8 +304,11 @@ class OneConfigUIScreen @JvmOverloads constructor(
             //? }
             BlurRenderer.drawBlur(fullscreenBlurRadius())
         }
+        //? if > 1.8.9 {
         //~ if >= 26.1 'render' -> 'extractRenderState'
         super.extractRenderState(ctx, mouseX, mouseY, tickDelta)
+        //?} else
+        //super.render(mouseX, mouseY, tickDelta)
     }
 
     private fun fullscreenBlurRadius(): Float {

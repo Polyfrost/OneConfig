@@ -11,17 +11,23 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.PointerKeyboardModifiers
 import androidx.compose.ui.platform.PlatformContext
 import androidx.compose.ui.platform.PlatformScreenReader
-//? if >= 26.1
+//? if >= 26.1 || = 1.8.9
 import androidx.compose.ui.platform.PlatformTextInputMethodRequest
 import androidx.compose.ui.platform.WindowInfo
 import androidx.compose.ui.scene.ComposeSceneContext
 import androidx.compose.ui.unit.IntSize
-//? if >= 26.1
+//? if >= 26.1 || = 1.8.9
 import kotlinx.coroutines.awaitCancellation
 import net.minecraft.client.Minecraft
 import org.lwjgl.glfw.GLFW.*
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-//? if >= 26.1
+//? if = 1.8.9 {
+/*import org.lwjgl.input.Keyboard
+import org.lwjgl.sdl.SDLMouse.*
+import org.lwjgl.sdl.SDLVideo.SDL_RaiseWindow
+import org.polyfrost.oneconfig.internal.legacy.KeyCodes
+*///?}
+//? if >= 26.1 || = 1.8.9
 import java.util.concurrent.atomic.AtomicInteger
 
 private class InputModeManagerImpl : InputModeManager {
@@ -38,7 +44,10 @@ private class WindowInfoImpl : WindowInfo {
     )
 
     private fun isKeyDown(glfwKey: Int): Boolean {
+        //? if > 1.8.9 {
         return glfwGetKey(Platform.compatibility().windowHandle(), glfwKey) == GLFW_PRESS
+        //?} else
+        //return Keyboard.isKeyDown(KeyCodes.toLegacy(glfwKey))
     }
 
     override val keyboardModifiers: PointerKeyboardModifiers
@@ -68,9 +77,15 @@ private class PlatformImpl : PlatformContext {
     override val screenReader: PlatformScreenReader = PlatformScreenReaderImpl()
     override val inputModeManager: InputModeManager = InputModeManagerImpl()
 
+    //? if > 1.8.9 {
     private val handCursor = glfwCreateStandardCursor(GLFW_HAND_CURSOR)
     private val textCursor = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR)
     private val moveCursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR)
+    //?} else {
+    /*private val handCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_POINTER)
+    private val textCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_TEXT)
+    private val moveCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_MOVE)
+    *///?}
 
     private val handle = Platform.compatibility().windowHandle()
 
@@ -86,20 +101,33 @@ private class PlatformImpl : PlatformContext {
     }
 
     private fun applyPointerIcon(pointerIcon: PointerIcon) {
+        //? if > 1.8.9 {
         when (pointerIcon) {
             PointerIcon.Default -> glfwSetCursor(handle, 0L)
             PointerIcon.Hand -> glfwSetCursor(handle, handCursor)
             PointerIcon.Text -> glfwSetCursor(handle, textCursor)
             PointerIcon.Crosshair -> glfwSetCursor(handle, moveCursor)
         }
+        //?} else {
+        /*SDL_SetCursor(when (pointerIcon) {
+            PointerIcon.Default -> SDL_GetDefaultCursor()
+            PointerIcon.Hand -> handCursor
+            PointerIcon.Text -> textCursor
+            PointerIcon.Crosshair -> moveCursor
+            else -> SDL_GetDefaultCursor()
+        })
+        *///?}
     }
 
     override fun requestFocus(): Boolean {
+        //? if > 1.8.9 {
         glfwFocusWindow(handle)
+        //?} else
+        //SDL_RaiseWindow(handle)
         return Minecraft.getInstance().isWindowActive
     }
 
-    //? if >= 26.1 {
+    //? if >= 26.1 || = 1.8.9 {
     private val textInputSessions = AtomicInteger()
 
     override suspend fun startInputMethod(request: PlatformTextInputMethodRequest): Nothing {
