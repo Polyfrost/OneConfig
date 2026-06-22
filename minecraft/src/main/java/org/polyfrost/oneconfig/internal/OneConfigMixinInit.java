@@ -121,9 +121,11 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? apec_compat
         //mixins.add("compat.apec.Mixin_ApecMenu");
 
+        //? if > 1.8.9 {
         mixins.add("compat.skyhanni.Mixin_SkyHanniRenderData");
 
         mixins.add("compat.firmament.Mixin_FirmamentHudMeta");
+        //?}
         // Firmament has no stable release for 26.2 yet
         //? >= 1.21.8 && < 26.2
         //mixins.add("compat.firmament.Mixin_FirmamentContentCapture");
@@ -156,7 +158,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? if < 1.21.8
         //mixins.add("skia.Mixin_MainTargetRedirect");
         mixins.add("skia.Mixin_DebugOverlayAboveUi");
-        //? < 26.1 {
+        //? if < 26.1 && > 1.8.9 {
         /*mixins.add("skia.Mixin_ScreenshotComposite");
         *///? }
         mixins.add("skia.Mixin_InitSkiaFontRenderer");
@@ -164,7 +166,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
         //? if >= 1.21.10 {
         mixins.add("keybind.Mixin_KeybindCategoryLabel");
-        //?} else
+        //?} elif > 1.8.9
         //mixins.add("keybind.KeyMappingCategoryAccessor");
 
         mixins.add("keybind.Mixin_OneConfigKeybindRebind");

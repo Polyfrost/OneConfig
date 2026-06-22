@@ -9,11 +9,15 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+//~ if = 1.8.9 'SimpleReloadInstance' -> 'SimpleReloadableResourceManager'
 @Mixin(SimpleReloadInstance.class)
 public class Mixin_SimpleReloadInstance {
 
+    //~ if = 1.8.9 'create' -> 'startReload'
     @Inject(method = "create", at = @At("RETURN"))
+    //~ if = 1.8.9 'ReloadInstance' -> 'ResourceReload'
     private static void oneconfig$onResourceFinishedLoading(CallbackInfoReturnable<ReloadInstance> cir) {
+        //~ if = 1.8.9 'done()' -> 'result()'
         cir.getReturnValue().done().whenComplete((result, throwable) -> {
             EventManager.INSTANCE.post(ResourceFinishedLoading.INSTANCE);
         });

@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.firmament;
 
+//? if > 1.8.9 {
 //~ gui_graphics
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -68,3 +69,4 @@ public class Mixin_FirmamentContentCapture {
     }
     //? }
 }
+//?}

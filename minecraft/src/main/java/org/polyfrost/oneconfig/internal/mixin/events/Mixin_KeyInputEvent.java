@@ -1,6 +1,12 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
+//? if > 1.8.9 {
 import net.minecraft.client.KeyboardHandler;
+//?} else {
+/*import org.lwjgl.input.Keyboard;
+import org.polyfrost.oneconfig.internal.legacy.KeyCodes;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+*///?}
 //? >= 1.21.10 {
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
@@ -15,6 +21,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+//~ if = 1.8.9 'KeyboardHandler.class' -> 'Keyboard.class'
 @Mixin(KeyboardHandler.class)
 public class Mixin_KeyInputEvent {
 
@@ -33,8 +40,7 @@ public class Mixin_KeyInputEvent {
 
         EventManager.INSTANCE.post(new KeyInputEvent(0, (char) event.codepoint(), 1));
     }
-    //? } else {
-    
+    //?} elif > 1.8.9 {
     /*@Inject(method = "keyPress", at = @At("HEAD"))
     private void keyCallback(long window, int key, int scancode, int action, int mods, CallbackInfo ci) {
         EventManager.INSTANCE.post(new KeyInputEvent(key, (char) 0, action));
@@ -47,5 +53,21 @@ public class Mixin_KeyInputEvent {
         }
         EventManager.INSTANCE.post(new KeyInputEvent(0, (char) codepoint, 1));
     }
-    *///? }
+    *///?} else {
+    /*@Inject(method = "next", at = @At("RETURN"), remap = false)
+    private static void keyCallback(CallbackInfoReturnable<Boolean> cir) {
+        if (!cir.getReturnValue()) return;
+
+        int keyCode = Keyboard.getEventKey();
+        if (keyCode > 0) {
+            int action = Keyboard.isRepeatEvent() ? 2 : Keyboard.getEventKeyState() ? 1 : 0;
+            EventManager.INSTANCE.post(new KeyInputEvent(KeyCodes.fromLegacy(keyCode).getValue(), (char) 0, action));
+        }
+
+        char character = Keyboard.getEventCharacter();
+        if (character != 0) {
+            EventManager.INSTANCE.post(new KeyInputEvent(0, character, 1));
+        }
+    }
+    *///?}
 }
