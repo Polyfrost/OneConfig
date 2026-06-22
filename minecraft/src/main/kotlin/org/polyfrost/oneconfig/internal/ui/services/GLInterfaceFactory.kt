@@ -5,7 +5,7 @@ import org.jetbrains.skia.GLAssembledInterface
 import org.jetbrains.skia.makeGLWithInterface
 import org.lwjgl.opengl.GL
 import org.lwjgl.system.APIUtil
-//? if >=26.1
+//? if >= 26.1 || = 1.8.9
 import org.lwjgl.system.Callback
 import org.lwjgl.system.CallbackI
 import org.lwjgl.system.FunctionProvider
@@ -14,7 +14,7 @@ import org.lwjgl.system.Pointer
 import org.lwjgl.system.libffi.FFICIF
 import org.lwjgl.system.libffi.LibFFI
 import org.slf4j.LoggerFactory
-//? if >=26.1
+//? if >= 26.1 || = 1.8.9
 import java.lang.invoke.MethodHandles
 
 internal object GLInterfaceFactory {
@@ -60,9 +60,9 @@ internal object GLInterfaceFactory {
 
     @FunctionalInterface
     private fun interface GetProcCallbackI : CallbackI {
-        //? if >=26.1
+        //? if >= 26.1 || = 1.8.9 {
         override fun getDescriptor(): Callback.Descriptor = DESCRIPTOR
-        //? if <26.1
+        //?} else
         //override fun getCallInterface(): FFICIF = CALL_INTERFACE
 
         override fun callback(ret: Long, args: Long) {
@@ -82,7 +82,7 @@ internal object GLInterfaceFactory {
                 LibFFI.ffi_type_pointer,
                 LibFFI.ffi_type_pointer,
             )
-            //? if >= 26.3 {
+            //? if >= 26.3 || = 1.8.9 {
             /*private val DESCRIPTOR: Callback.Descriptor = Callback.Descriptor(GetProcCallbackI::class.java, MethodHandles.lookup(), CALL_INTERFACE)
             *///?} elif >= 26.1
             private val DESCRIPTOR: Callback.Descriptor = Callback.Descriptor(MethodHandles.lookup(), CALL_INTERFACE)

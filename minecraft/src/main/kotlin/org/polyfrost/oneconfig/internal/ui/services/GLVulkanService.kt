@@ -33,8 +33,10 @@ object GLVulkanService : VulkanService {
         //? } else
         //val frameBufferId = target.frameBufferId
 
+        //~ if = 1.8.9 '8' -> '0'
+        val stencilBits = 8
         return BackendRenderTarget.makeGL(
-            width, height, 0, 8, frameBufferId, FramebufferFormat.GR_GL_RGBA8
+            width, height, 0, stencilBits, frameBufferId, FramebufferFormat.GR_GL_RGBA8
         )
     }
 
@@ -42,8 +44,10 @@ object GLVulkanService : VulkanService {
         width: Int, height: Int,
         vkImageHandle: Long, vkFormat: Int, vkQueueFamily: Int,
     ): BackendRenderTarget {
+        //~ if = 1.8.9 '8' -> '0'
+        val stencilBits = 8
         return BackendRenderTarget.makeGL(
-            width, height, 0, 8, 0, FramebufferFormat.GR_GL_RGBA8
+            width, height, 0, stencilBits, 0, FramebufferFormat.GR_GL_RGBA8
         )
     }
 
@@ -57,7 +61,10 @@ object GLVulkanService : VulkanService {
         //? } else
         //val fboId = target.frameBufferId
 
-        return BackendRenderTarget.makeGL(width, height, 0, 8, fboId, FramebufferFormat.GR_GL_RGBA8) to
+        // 1.8.9 RenderTarget has no stencil attachment
+        //~ if = 1.8.9 '8' -> '0'
+        val stencilBits = 8
+        return BackendRenderTarget.makeGL(width, height, 0, stencilBits, fboId, FramebufferFormat.GR_GL_RGBA8) to
                 SurfaceColorFormat.RGBA_8888
     }
 
