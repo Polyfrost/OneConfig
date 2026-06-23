@@ -27,14 +27,22 @@
 package org.polyfrost.oneconfig.utils.v1;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.internal.Streams;
+import com.google.gson.stream.JsonReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.StringReader;
 import java.util.function.Consumer;
 
 public final class JsonUtils {
+    /**
+     * @deprecated The json parser by default accepts non-json compliant formats, this enables parsing invalid json and therefore may cause undesired behaviour.
+     */
+    @Deprecated
     public static final JsonParser PARSER = new JsonParser();
 
     private JsonUtils() {
@@ -42,14 +50,14 @@ public final class JsonUtils {
 
     @NotNull
     public static JsonElement parse(String json) throws JsonSyntaxException {
-        return PARSER.parse(json);
+        return Streams.parse(new JsonReader(new StringReader(json)));
     }
 
     @Nullable
     public static JsonElement parseOrNull(String json) {
         try {
-            return PARSER.parse(json);
-        } catch (Exception e) {
+            return parse(json);
+        } catch (JsonParseException e) {
             return null;
         }
     }

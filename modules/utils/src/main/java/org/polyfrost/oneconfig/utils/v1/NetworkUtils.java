@@ -98,8 +98,8 @@ public final class NetworkUtils {
      * @return Whether the download was successful.
      */
     public static boolean downloadFile(String url, Path path, String userAgent, int timeout, boolean useCaches) {
-        try (BufferedInputStream in = new BufferedInputStream(setupConnection(url, userAgent, timeout, useCaches))) {
-            Files.copy(in, path, StandardCopyOption.REPLACE_EXISTING);
+        try (var stream = setupConnection(url, userAgent, timeout, useCaches)) {
+            Files.copy(stream, path, StandardCopyOption.REPLACE_EXISTING);
         } catch (Exception e) {
             LOGGER.error("Failed to download file from {}", url, e);
             return false;
