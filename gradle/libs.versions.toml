@@ -26,7 +26,7 @@ mixin = "0.8.4+build.6"
 mixin-extras = "0.5.0"
 mixin-squared = "0.3.7-beta.1"
 asm = "5.2"
-brigadier = "1.0.18"
+brigadier = "1.0.500"
 
 oneconfig-loader = "1.1.0-alpha.48"
 
