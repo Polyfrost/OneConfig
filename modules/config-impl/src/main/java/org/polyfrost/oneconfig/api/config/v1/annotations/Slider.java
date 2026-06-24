@@ -57,6 +57,6 @@ public @interface Slider {
 
     float max() default 100f;
 
-    float step() default 10f;
+    float step() default 1f;
 
 }
