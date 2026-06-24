@@ -67,6 +67,7 @@ public final class org/polyfrost/oneconfig/api/platform/v1/DesktopHelper {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/platform/v1/DesktopHelper;
 	public static final fun browse (Ljava/net/URI;)Z
 	public static final fun edit (Ljava/io/File;)Z
+	public final fun executeIfDesktop (Ljava/awt/Desktop$Action;Lkotlin/jvm/functions/Function1;)Z
 	public static final fun isGnome ()Z
 	public static final fun isKde ()Z
 	public static final fun isLinux ()Z

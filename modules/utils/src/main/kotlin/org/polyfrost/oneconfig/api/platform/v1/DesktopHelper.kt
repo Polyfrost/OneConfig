@@ -70,6 +70,10 @@ object DesktopHelper {
     @JvmStatic
     fun edit(file: File): Boolean = editDesktop(file) || openSystemSpecific(file.path)
 
+    @Suppress("unused")
+    @Deprecated("Use browse(URI), open(File), edit(File) instead", ReplaceWith("browse(uri) || open(file) || edit(file)"))
+    fun executeIfDesktop(action: Desktop.Action, runnable: (Desktop) -> Unit) = false
+
     private fun openSystemSpecific(file: String): Boolean {
         return when {
             isLinux -> listOf("xdg-open", "kde-open", "gnome-open").any { runCommand(it, file, checkExitStatus = true) }
