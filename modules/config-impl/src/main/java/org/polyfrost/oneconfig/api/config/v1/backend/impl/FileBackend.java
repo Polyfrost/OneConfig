@@ -76,7 +76,13 @@ public class FileBackend extends Backend {
     protected static void write(Path p, String s) {
         try {
             Files.createDirectories(p.getParent());
-            Files.write(p, s.getBytes(CHARSET));
+            Path tmp = p.resolveSibling(p.getFileName() + ".tmp");
+            Files.write(tmp, s.getBytes(CHARSET));
+            try {
+                Files.move(tmp, p, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(tmp, p, StandardCopyOption.REPLACE_EXISTING);
+            }
         } catch (Exception e) {
             throw new SerializationException("Failed to write file", e);
         }
@@ -181,8 +187,13 @@ public class FileBackend extends Backend {
             LOGGER.error("No serializer found for loading file {}", p);
             return null;
         }
+        String src = read(p);
+        if (src.trim().isEmpty()) {
+            LOGGER.warn("read empty contents for config ID {}, skipping update (not marking corrupted)", id);
+            return null;
+        }
         try {
-            return serializer.deserialize(read(p));
+            return serializer.deserialize(src);
         } catch (Exception e) {
             LOGGER.error("Failed to load config ID {}, marking file as corrupted, config will be reset!", id, e);
             Files.move(p, folder.resolve(id + ".corrupted"), StandardCopyOption.REPLACE_EXISTING);

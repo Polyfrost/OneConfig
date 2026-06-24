@@ -291,6 +291,7 @@ private fun isAccordionToggle(prop: Property<*>): Boolean {
 }
 
 private fun isRenderableProperty(prop: Property<*>): Boolean {
+    if (prop.getMetadata<Any?>("hidden") != null) return false
     return (prop.getMetadata<Any?>("visualizer") != null) || prop.canDisplay()
 }
 

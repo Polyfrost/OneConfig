@@ -27,7 +27,7 @@
 package org.polyfrost.oneconfig.api.config.v1
 
 import org.polyfrost.compose.render.PolyColor
-import org.polyfrost.oneconfig.api.config.v1.Property.Display
+import java.util.function.BooleanSupplier
 import kotlin.jvm.java
 import kotlin.properties.PropertyDelegateProvider
 import kotlin.properties.ReadWriteProperty
@@ -41,7 +41,19 @@ import kotlin.reflect.KProperty0
  */
 open class KtConfig(id: String, title: String, category: Category, icon: String? = null) : Config(id, icon, title, category) {
 
-    final override fun makeTree() = Tree.tree(id)
+    private var pendingTree: Tree? = null
+
+    @JvmSynthetic
+    internal fun pendingTree(): Tree {
+        var p = pendingTree
+        if (p == null) {
+            p = Tree.tree(id)
+            pendingTree = p
+        }
+        return p
+    }
+
+    final override fun makeTree(): Tree = pendingTree ?: Tree.tree(id)
 
     /**
      * return the property with the given id by a kotlin property reference.
@@ -49,8 +61,8 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
     @Suppress("UNCHECKED_CAST")
     protected val <V> KProperty<V>.property: Property<V>
         get() {
-            if (tree == null) initialize(false)
-            return tree.getProp(this.name) as Property<V>
+            val t = tree ?: pendingTree()
+            return t.getProp(this.name) as Property<V>
         }
 
     /**
@@ -96,11 +108,13 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         }
 
     fun hideIf(option: KProperty<*>, condition: () -> Boolean) {
-        option.property.addDisplayCondition { if (condition()) Display.HIDDEN else Display.SHOWN }
+        if (tree == null) initialize(false)
+        hideIf(option.name, BooleanSupplier { condition() })
     }
 
     fun hideIf(option: KProperty<*>, condition: KProperty0<Boolean>) {
-        option.property.addDisplayCondition { if (condition.get()) Display.HIDDEN else Display.SHOWN }
+        if (tree == null) initialize(false)
+        hideIf(option.name, BooleanSupplier { condition.get() })
     }
 
     fun <T> addCallback(option: KProperty<T>, callback: (T?) -> Boolean) {
@@ -127,8 +141,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
             p.addMetadata("visualizer", visualizer)
             p.addMetadata("category", category)
             p.addMetadata("subcategory", subcategory)
-            if (thisRef.tree == null) thisRef.initialize(false)
-            thisRef.tree.put(p)
+            (if (thisRef.tree != null) thisRef.tree else thisRef.pendingTree()).put(p)
             return PropertyDelegate(p)
         }
     }

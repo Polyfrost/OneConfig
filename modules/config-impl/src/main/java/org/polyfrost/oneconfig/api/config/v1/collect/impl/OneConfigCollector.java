@@ -79,6 +79,7 @@ public class OneConfigCollector extends ReflectiveCollector {
             Class<? extends Annotation> type = a.annotationType();
             if (type == Include.class) {
                 Property<?> p = Properties.field(null, null, f, src);
+                p.addMetadata("hidden", true);
                 tree.put(p);
                 continue;
             }
