@@ -46,6 +46,9 @@ class HudEditorUIScreen : ComposeScreen() {
     }
 
     override fun removed() {
+        if (HudManager.isEditing) {
+            HudManager.closeEditor()
+        }
         UiSounds.releaseAmbience()
         super.removed()
     }
