@@ -168,12 +168,14 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public final fun getActiveInstances ()Ljava/util/ArrayList;
 	public final fun getHudsOfType (Ljava/lang/Class;)Ljava/util/ArrayList;
 	public final fun getProvider (Ljava/lang/Class;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
+	public final fun iconFor (Ljava/lang/String;)Ljava/lang/String;
 	public final fun initialize ()V
 	public final fun isEditing ()Z
 	public final fun openEditor ()V
 	public final fun providers ()Ljava/util/Collection;
 	public static final fun register (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)V
 	public static final fun register (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;)V
+	public static final fun register (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;Ljava/lang/String;)V
 	public static final fun register ([Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)V
 	public final fun removeHud (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Z)V
 	public static synthetic fun removeHud$default (Lorg/polyfrost/oneconfig/api/hud/v1/HudManager;Lorg/polyfrost/oneconfig/api/hud/v1/Hud;ZILjava/lang/Object;)V

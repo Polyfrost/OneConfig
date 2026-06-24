@@ -592,3 +592,4 @@ public class org/polyfrost/oneconfig/api/config/v1/serialize/impl/NightConfigSer
 	public synthetic fun serialize (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Ljava/lang/Object;
 	public fun serialize (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Ljava/lang/String;
 }
+

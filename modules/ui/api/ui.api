@@ -73,6 +73,7 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/TinyFdApi 
 public final class org/polyfrost/oneconfig/api/ui/v1/keybind/BindNotInScreen : org/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind {
 	public static final field $stable I
 	public fun <init> ([I[IBJLkotlin/jvm/functions/Function1;)V
+	public fun copyWith ([I[IB)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
 	public fun test (Ljava/util/Set;Ljava/util/Set;B)Z
 }
 
@@ -98,12 +99,14 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper {
 	public final fun alt ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun build ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
 	public static final fun builder ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
+	public final fun category (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun ctrl ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun duration (J)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun inScreens ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun key ([I)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun meta ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun mouse ([I)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
+	public final fun name (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun register ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
 	public final fun shift ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 }
@@ -115,22 +118,52 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper$Compa
 public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindManager {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindManager;
+	public static final fun addMenuEditListener (Lkotlin/jvm/functions/Function1;)V
+	public static final fun addRebindListener (Lkotlin/jvm/functions/Function2;)V
 	public static final fun builder ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
+	public static final fun findConflicts (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Ljava/util/List;
 	public static final fun isRegistered (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Z
+	public static final fun notifyMenuEdit (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
+	public static final fun rebindFromMinecraft (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;[I)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
+	public static final fun rebindFromMinecraft (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;[I[I)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
+	public static final fun rebindFromMinecraft (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;[I[IB)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
+	public static synthetic fun rebindFromMinecraft$default (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;[I[IBILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
+	public static final fun refreshMinecraftBinding (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
 	public static final fun register (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
 	public static final fun replace (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
 	public static final fun unregister (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
 }
 
-public class org/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind {
+public abstract interface class org/polyfrost/oneconfig/api/ui/v1/keybind/MinecraftKeybindBridge {
+	public abstract fun register (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
+	public abstract fun sync (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
+	public abstract fun unregister (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
+}
+
+public class org/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind : org/polyfrost/oneconfig/utils/v1/OverwriteMergeable {
 	public static final field $stable I
 	public fun <init> ([I[IBJLkotlin/jvm/functions/Function1;)V
+	public final fun conflictsWith (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Z
+	public fun copyWith ([I[IB)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
 	public final fun getAction ()Lkotlin/jvm/functions/Function1;
+	public final fun getBoundCode ()I
+	public final fun getCategory ()Ljava/lang/String;
+	public final fun getDefaultKeybind ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
 	public final fun getDurationNanos ()J
 	public final fun getKeyCodes ()[I
 	public final fun getMods ()B
 	public final fun getMouseBtns ()[I
+	public final fun getName ()Ljava/lang/String;
 	public final fun isBound ()Z
+	public final fun isMousePrimary ()Z
+	public fun mergeOverwrite (Ljava/lang/Object;)Ljava/lang/Object;
+	public final fun setCategory (Ljava/lang/String;)V
+	public final fun setDefaultKeybind (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
+	public final fun setDurationNanos (J)V
+	public final fun setKeyCodes ([I)V
+	public final fun setMods (B)V
+	public final fun setMouseBtns ([I)V
+	public final fun setName (Ljava/lang/String;)V
 	public fun test (Ljava/util/Set;Ljava/util/Set;B)Z
 }
 

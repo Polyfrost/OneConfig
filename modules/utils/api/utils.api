@@ -329,6 +329,10 @@ public final class org/polyfrost/oneconfig/utils/v1/OneImage {
 	public fun uploadToImgur ()Ljava/lang/String;
 }
 
+public abstract interface class org/polyfrost/oneconfig/utils/v1/OverwriteMergeable {
+	public abstract fun mergeOverwrite (Ljava/lang/Object;)Ljava/lang/Object;
+}
+
 public final class org/polyfrost/oneconfig/utils/v1/SimpleProfiler {
 	public static fun pop (Ljava/lang/String;)F
 	public static fun pop (Ljava/lang/String;Lorg/apache/logging/log4j/Level;)F
@@ -358,6 +362,7 @@ public final class org/polyfrost/oneconfig/utils/v1/dsl/IoKt {
 public final class org/polyfrost/oneconfig/utils/v1/dsl/MultithreadingKt {
 	public static final fun runAsync (Lkotlin/jvm/functions/Function0;)Ljava/util/concurrent/Future;
 	public static final fun schedule (JLjava/util/concurrent/TimeUnit;Lkotlin/jvm/functions/Function0;)V
+	public static final fun schedule-VtjQ1oo (JLkotlin/jvm/functions/Function0;)V
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/dsl/NetworkKt {
