@@ -71,7 +71,8 @@ object DesktopHelper {
     fun edit(file: File): Boolean = editDesktop(file) || openSystemSpecific(file.path)
 
     @Suppress("unused")
-    @Deprecated("Use browse(URI), open(File), edit(File) instead", ReplaceWith("browse(uri) || open(file) || edit(file)"))
+    @Deprecated("Use browse(URI), open(File), edit(File) instead", ReplaceWith("browse(uri) || open(file) || edit(file)"),
+        DeprecationLevel.HIDDEN)
     fun executeIfDesktop(action: Desktop.Action, runnable: (Desktop) -> Unit) = false
 
     private fun openSystemSpecific(file: String): Boolean {
