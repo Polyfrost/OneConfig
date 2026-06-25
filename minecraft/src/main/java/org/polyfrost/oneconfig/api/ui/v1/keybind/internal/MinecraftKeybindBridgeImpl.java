@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.api.ui.v1.keybind.internal;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 //? if >=1.21.10 {
 //~if >= 1.21.11 'ResourceLocation;' -> 'Identifier;'
@@ -71,6 +72,7 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
 
     private final Map<OneConfigKeybind, KeyMapping> mappings = new LinkedHashMap<>();
     private final Map<KeyMapping, OneConfigKeybind> reverse = new LinkedHashMap<>();
+    private final Set<KeyMapping> spliced = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
 
     public MinecraftKeybindBridgeImpl() {
         instance = this;
@@ -103,6 +105,23 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         applyKeyTo(mapping, bind);
         mappings.put(bind, mapping);
         reverse.put(mapping, bind);
+        syncOptionsArray();
+    }
+
+    private synchronized void syncOptionsArray() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null || mc.options == null) return;
+        KeyMapping[] current = mc.options.keyMappings;
+        if (current == null) return;
+        List<KeyMapping> rebuilt = new ArrayList<>(current.length + mappings.size());
+        for (KeyMapping km : current) {
+            if (!spliced.contains(km)) rebuilt.add(km);
+        }
+        rebuilt.addAll(mappings.values());
+        spliced.clear();
+        spliced.addAll(mappings.values());
+        ((org.polyfrost.oneconfig.internal.mixin.keybind.OptionsAccessor) (Object) mc.options)
+            .oneconfig$setKeyMappings(rebuilt.toArray(new KeyMapping[0]));
     }
 
     private static String identity(OneConfigKeybind bind) {
@@ -113,6 +132,7 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
     public synchronized void unregister(OneConfigKeybind bind) {
         KeyMapping mapping = mappings.remove(bind);
         if (mapping != null) reverse.remove(mapping);
+        syncOptionsArray();
     }
 
     @Override
@@ -127,6 +147,27 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
 
     public synchronized OneConfigKeybind bindFor(KeyMapping mapping) {
         return reverse.get(mapping);
+    }
+
+    private volatile KeyMapping activeRebind;
+
+    public void setActiveRebind(KeyMapping mapping) {
+        this.activeRebind = mapping;
+    }
+
+    public KeyMapping getActiveRebind() {
+        return activeRebind;
+    }
+
+    public synchronized boolean isComboMapping(KeyMapping mapping) {
+        OneConfigKeybind bind = reverse.get(mapping);
+        return bind != null && comboLabel(bind, Component.empty()) != null;
+    }
+
+    public synchronized Component comboTextFor(KeyMapping mapping) {
+        OneConfigKeybind bind = reverse.get(mapping);
+        if (bind == null || comboLabel(bind, Component.empty()) == null) return null;
+        return Component.literal(fullComboText(bind.getKeyCodes(), bind.getMouseBtns(), bind.getMods()));
     }
 
     private static final long MOUSE_TAG = 1L << 40;
@@ -288,6 +329,7 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
     }
 
     public void reconcile() {
+        syncOptionsArray();
         List<Runnable> pending = new ArrayList<>();
         synchronized (this) {
             for (Map.Entry<OneConfigKeybind, KeyMapping> e : mappings.entrySet()) {

@@ -410,6 +410,12 @@ tasks.withType<ProcessResources>() {
     this.filesMatching("fabric.mod.json") {
         expand(fabricProperties)
     }
+
+    val mixinCompat = if (stonecutter.eval(stonecutter.current.version, ">= 26.1")) "JAVA_25" else "JAVA_21"
+    this.inputs.property("mixin_compat", mixinCompat)
+    this.filesMatching("mixins.oneconfigv1*.json") {
+        filter { line -> line.replace("\"JAVA_21\"", "\"$mixinCompat\"") }
+    }
 }
 
 val minJavaVersion = 21

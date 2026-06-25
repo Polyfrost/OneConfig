@@ -13,6 +13,7 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
+import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindBridgeImpl
 
 object MinecraftKeybindProvider : KeybindGroupProvider {
     private val properties = IdentityHashMap<KeyMapping, Property<OneConfigKeybind>>()
@@ -35,7 +36,7 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
         val modsById = ModInfo.loadedMods.associateBy { it.id.lowercase() }
         val entriesByGroup = minecraft.options.keyMappings
             .asSequence()
-            .filterNot { isVanillaKeyName(it.name) }
+            .filterNot { isVanillaKeyName(it.name) || isOneConfigMirror(it) }
             .map { mapping ->
                 val owner = ownerMod(mapping, modsById)
                 val category = categoryLabel(mapping)
@@ -162,6 +163,9 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
     private fun isVanillaKeyName(name: String): Boolean {
         return name in VANILLA_KEY_NAMES || name.startsWith("key.debug.")
     }
+
+    private fun isOneConfigMirror(mapping: KeyMapping): Boolean =
+        MinecraftKeybindBridgeImpl.instance()?.bindFor(mapping) != null
 
     private val VANILLA_KEY_NAMES = setOf(
         "key.attack",

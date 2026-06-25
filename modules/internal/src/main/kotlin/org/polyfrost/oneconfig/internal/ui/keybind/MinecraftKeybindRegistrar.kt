@@ -57,7 +57,7 @@ object MinecraftKeybindRegistrar {
             @Suppress("UNCHECKED_CAST")
             (prop as Property<Any>).addCallback { value ->
                 (value as? OneConfigKeybind)?.let { propByBind[it] = prop }
-                true
+                false
             }
         }
     }
