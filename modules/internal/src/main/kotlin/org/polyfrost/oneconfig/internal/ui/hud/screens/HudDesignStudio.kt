@@ -247,7 +247,7 @@ private fun hitTestHudActionBar(
 ): Boolean {
     val layout = hudActionBarLayout(hud, mcToScreen, iconPx, gapPx) ?: return false
     return hitTestActionButton(screenX, screenY, layout.settingsX, layout.y, iconPx) ||
-        hitTestActionButton(screenX, screenY, layout.deleteX, layout.y, iconPx)
+        (hud.deletable() && hitTestActionButton(screenX, screenY, layout.deleteX, layout.y, iconPx))
 }
 
 private fun hitTestHudWithActionBar(
@@ -737,29 +737,31 @@ fun HudDesignStudio() {
                         Snapshot.withMutableSnapshot { selectedHud = actionBarTarget }
                     }
                 }
-                Box(
-                    modifier = Modifier
-                        .padding(start = deleteX.dp, top = iconY.dp)
-                        .onPointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
-                            event.changes.forEach { if (!it.isConsumed) it.consume() }
-                        }
-                        .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
-                            if (event.changes.none { it.isConsumed }) {
-                                event.changes.forEach { it.consume() }
-                                UiSounds.play(UiSoundEvent.CLICK)
-                                Snapshot.withMutableSnapshot {
-                                    if (selectedHud === actionBarTarget) selectedHud = null
-                                    hoveredHud = null
-                                    HudManager.removeHud(actionBarTarget, delete = true)
-                                }
+                if (actionBarTarget.deletable()) {
+                    Box(
+                        modifier = Modifier
+                            .padding(start = deleteX.dp, top = iconY.dp)
+                            .onPointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
+                                event.changes.forEach { if (!it.isConsumed) it.consume() }
                             }
-                        },
-                ) {
-                    IconButton("trash", modifier = Modifier.size(iconSize)) {
-                        Snapshot.withMutableSnapshot {
-                            if (selectedHud === actionBarTarget) selectedHud = null
-                            hoveredHud = null
-                            HudManager.removeHud(actionBarTarget, delete = true)
+                            .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+                                if (event.changes.none { it.isConsumed }) {
+                                    event.changes.forEach { it.consume() }
+                                    UiSounds.play(UiSoundEvent.CLICK)
+                                    Snapshot.withMutableSnapshot {
+                                        if (selectedHud === actionBarTarget) selectedHud = null
+                                        hoveredHud = null
+                                        HudManager.removeHud(actionBarTarget, delete = true)
+                                    }
+                                }
+                            },
+                    ) {
+                        IconButton("trash", modifier = Modifier.size(iconSize)) {
+                            Snapshot.withMutableSnapshot {
+                                if (selectedHud === actionBarTarget) selectedHud = null
+                                hoveredHud = null
+                                HudManager.removeHud(actionBarTarget, delete = true)
+                            }
                         }
                     }
                 }

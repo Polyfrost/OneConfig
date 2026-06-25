@@ -19,6 +19,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public synthetic fun clone ()Ljava/lang/Object;
 	public fun clone ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public fun defaultPosition ()Lkotlin/Pair;
+	public fun deletable ()Z
 	public final fun getAlignment ()Lorg/polyfrost/compose/layout/PolyAlign;
 	public final fun getBgChroma ()Z
 	public final fun getBgChromaSpeed ()F

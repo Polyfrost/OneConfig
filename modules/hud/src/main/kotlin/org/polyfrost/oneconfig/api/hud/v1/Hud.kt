@@ -502,6 +502,14 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     open fun backgroundColor(): PolyColor? = null
     open fun multipleInstancesAllowed(): Boolean = true
     open fun minimumSize(): Pair<Float, Float> = 0f to 0f
+
+    /**
+     * Whether this HUD may be deleted from the HUD design studio. When `false`, the editor hides
+     * the trash button so the HUD cannot be removed (it can still be hidden/moved). Useful for HUDs
+     * that are intrinsic to a mod and cannot be re-created once deleted.
+     */
+    open fun deletable(): Boolean = true
+
     open fun remove() {}
 
     @MustBeInvokedByOverriders
