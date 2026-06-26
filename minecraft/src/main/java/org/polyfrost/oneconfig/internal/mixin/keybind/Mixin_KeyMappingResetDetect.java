@@ -15,6 +15,7 @@ public class Mixin_KeyMappingResetDetect {
         MinecraftKeybindBridgeImpl bridge = MinecraftKeybindBridgeImpl.instance();
         if (bridge == null || bridge.isInternalSetKey()) return;
         KeyMapping self = (KeyMapping) (Object) this;
+        if (bridge.bindFor(self) == null) return;
         if (!key.equals(self.getDefaultKey())) return;
         if (bridge.menuReset(self)) ci.cancel();
     }
