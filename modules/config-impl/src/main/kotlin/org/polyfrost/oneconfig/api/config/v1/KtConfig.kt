@@ -40,7 +40,8 @@ import kotlin.reflect.KProperty0
  *
  * **Do not use in Java sources**.
  */
-open class KtConfig(id: String, title: String, category: Category, icon: String? = null) : Config(id, icon, title, category) {
+open class KtConfig(id: String, title: String, category: Category, icon: String? = null) :
+    Config(id, icon, title, category) {
 
     private var pendingTree: Tree? = null
 
@@ -70,19 +71,63 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
      * create a new delegate for the given property.
      */
     @JvmSynthetic
-    protected inline fun <reified T> property(def: T? = null, name: String? = null, description: String? = null, category: String? = null, subcategory: String? = null, visualizer: Visualizer) =
+    protected inline fun <reified T> property(
+        def: T? = null,
+        name: String? = null,
+        description: String? = null,
+        category: String? = null,
+        subcategory: String? = null,
+        visualizer: Visualizer
+    ) =
         Provider(def, name, description, category, subcategory, T::class.java, visualizer)
 
     @JvmSynthetic
-    protected fun switch(def: Boolean = false, name: String? = null, description: String? = null, category: String? = null, subcategory: String? = null) =
+    protected fun switch(
+        def: Boolean = false,
+        name: String? = null,
+        description: String? = null,
+        category: String? = null,
+        subcategory: String? = null
+    ) =
         Provider(def, name, description, category, subcategory, Boolean::class.java, Visualizer.SwitchVisualizer())
 
+    protected fun color(
+        name: String,
+        def: PolyColor = PolyColor.rgba(0, 0, 0, 255),
+        alpha: Boolean = true,
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+    ) = Provider(def, name, description, category, subcategory, PolyColor::class.java, Visualizer.ColorVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        this.addMetadata("noAlpha", alpha.takeUnless { it })
+    }
+
     @JvmSynthetic
-    protected fun color(def: PolyColor = PolyColor.rgba(0, 0, 0, 255), name: String? = null, description: String? = null, category: String? = null, subcategory: String? = null) =
+    protected fun color(
+        def: PolyColor = PolyColor.rgba(0, 0, 0, 255),
+        name: String? = null,
+        description: String? = null,
+        category: String? = null,
+        subcategory: String? = null
+    ) =
         Provider(def, name, description, category, subcategory, PolyColor::class.java, Visualizer.ColorVisualizer())
 
     @JvmSynthetic
-    protected fun slider(min: Float = 0f, max: Float = 0f, def: Float = 0f, name: String? = null, description: String? = null, category: String? = null, subcategory: String? = null) =
+    protected fun slider(
+        min: Float = 0f,
+        max: Float = 0f,
+        def: Float = 0f,
+        name: String? = null,
+        description: String? = null,
+        category: String? = null,
+        subcategory: String? = null
+    ) =
         Provider(def, name, description, category, subcategory, Float::class.java, Visualizer.SliderVisualizer()) {
             addMetadata("min", min)
             addMetadata("max", max)
@@ -90,7 +135,13 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
 
     @JvmSynthetic
     @Deprecated(message = "Use other text method.", level = DeprecationLevel.HIDDEN)
-    protected fun text(def: String = "", name: String? = null, description: String? = null, category: String? = null, subcategory: String? = null) =
+    protected fun text(
+        def: String = "",
+        name: String? = null,
+        description: String? = null,
+        category: String? = null,
+        subcategory: String? = null
+    ) =
         Provider(def, name, description, category, subcategory, String::class.java, Visualizer.TextVisualizer())
 
     private fun Node.addMetadata(
@@ -99,7 +150,6 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         description: String?,
         descriptionKey: String?,
         icon: String?,
-        multiline: Boolean,
         category: String?,
         categoryKey: String?,
         subcategory: String?,
@@ -110,7 +160,6 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         this.addMetadata("description", description)
         this.addMetadata("descriptionKey", descriptionKey)
         this.addMetadata("icon", icon)
-        this.addMetadata("multiline", multiline)
         this.addMetadata("category", category)
         this.addMetadata("categoryKey", categoryKey)
         this.addMetadata("subcategory", subcategory)
@@ -133,9 +182,98 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         placeholder: String? = null,
         placeholderKey: String? = "polyui.textinput.placeholder"
     ) = Provider(def, name, description, category, subcategory, String::class.java, Visualizer.TextVisualizer()) {
-        addMetadata(name, nameKey, description, descriptionKey, icon, multiline, category, categoryKey, subcategory, subcategoryKey)
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        this.addMetadata("placeholder", placeholder)
+        this.addMetadata("multiline", multiline)
+        this.addMetadata("placeholderKey", placeholderKey)
+    }
+
+    @JvmSynthetic
+    protected fun checkbox(
+        name: String,
+        def: Boolean,
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+    ) = Provider(def, name, description, category, subcategory, Boolean::class.java, Visualizer.CheckboxVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+    }
+
+    @JvmSynthetic
+    protected fun switch(
+        name: String,
+        def: Boolean,
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+    ) = Provider(def, name, description, category, subcategory, Boolean::class.java, Visualizer.SwitchVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+    }
+
+    @JvmSynthetic
+    protected fun number(
+        name: String,
+        def: Float,
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+
+        unit: String? = null,
+        unitKey: String? = null,
+        min: Float = -10f,
+        max: Float = 100f,
+        placeholder: String? = null,
+        placeholderKey: String? = "oneconfig.numberinput.placeholder"
+    ) = Provider(def, name, description, category, subcategory, Float::class.java, Visualizer.NumberVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        this.addMetadata("unit", unit)
+        this.addMetadata("unitKey", unitKey)
+        this.addMetadata("min", min)
+        this.addMetadata("max", max)
         this.addMetadata("placeholder", placeholder)
         this.addMetadata("placeholderKey", placeholderKey)
+    }
+
+    @JvmSynthetic
+    protected fun slider(
+        name: String,
+        def: Float,
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+
+        unit: String? = null,
+        unitKey: String? = null,
+        min: Float = -10f,
+        max: Float = 100f,
+        step: Float = 1f,
+    ) = Provider(def, name, description, category, subcategory, Float::class.java, Visualizer.NumberVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        this.addMetadata("unit", unit)
+        this.addMetadata("unitKey", unitKey)
+        this.addMetadata("min", min)
+        this.addMetadata("max", max)
+        this.addMetadata("step", step)
     }
 
     @JvmSynthetic
@@ -146,24 +284,45 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         description: String? = null,
         descriptionKey: String? = null,
         icon: String? = null,
-        multiline: Boolean = false,
         category: String? = "General",
         categoryKey: String? = null,
         subcategory: String? = "General",
         subcategoryKey: String? = null,
     ) =
-        Provider(def, name, description, category, subcategory, OneConfigKeybind::class.java, Visualizer.KeybindVisualizer()) {
-            addMetadata(name, nameKey, description, descriptionKey, icon, multiline, category, categoryKey, subcategory, subcategoryKey)
+        Provider(
+            def,
+            name,
+            description,
+            category,
+            subcategory,
+            OneConfigKeybind::class.java,
+            Visualizer.KeybindVisualizer()
+        ) {
+            addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
         }
 
     @JvmSynthetic
-    protected fun radiobutton(options: Array<String>, def: Int = 0, name: String? = null, description: String? = null, category: String? = null, subcategory: String? = null) =
+    protected fun radiobutton(
+        options: Array<String>,
+        def: Int = 0,
+        name: String? = null,
+        description: String? = null,
+        category: String? = null,
+        subcategory: String? = null
+    ) =
         Provider(def, name, description, category, subcategory, Int::class.java, Visualizer.RadioVisualizer()) {
             addMetadata("options", options)
         }
 
     @JvmSynthetic
-    protected fun dropdown(options: Array<String>, def: Int = 0, name: String? = null, description: String? = null, category: String? = null, subcategory: String? = null) =
+    protected fun dropdown(
+        options: Array<String>,
+        def: Int = 0,
+        name: String? = null,
+        description: String? = null,
+        category: String? = null,
+        subcategory: String? = null
+    ) =
         Provider(def, name, description, category, subcategory, Int::class.java, Visualizer.DropdownVisualizer()) {
             addMetadata("options", options)
         }
@@ -196,7 +355,10 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         private val visualizer: Visualizer,
         private val extra: (Property<T>.() -> Unit)? = null
     ) : PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, T>> {
-        override operator fun provideDelegate(thisRef: KtConfig, property: KProperty<*>): ReadWriteProperty<KtConfig, T> {
+        override operator fun provideDelegate(
+            thisRef: KtConfig,
+            property: KProperty<*>
+        ): ReadWriteProperty<KtConfig, T> {
             val p = Properties.simple(property.name, name ?: property.name, description, def, type)
             extra?.invoke(p)
             p.addMetadata("visualizer", visualizer)

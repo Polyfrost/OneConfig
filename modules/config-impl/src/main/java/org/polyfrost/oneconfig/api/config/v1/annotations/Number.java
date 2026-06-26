@@ -61,7 +61,7 @@ public @interface Number {
 
     float max() default 100f;
 
-    String placeholder() default "oneconfig.numberinput.placeholder";
+    String placeholder() default "";
 
-    String placeholderKey() default "";
+    String placeholderKey() default "oneconfig.numberinput.placeholder";
 }
