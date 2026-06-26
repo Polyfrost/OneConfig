@@ -222,6 +222,11 @@ object HudManager {
         EventManager.INSTANCE.post(HudEditorToggleEvent.CLOSE)
     }
 
+    @ApiStatus.Internal
+    fun onEditorScreenRemoved() {
+        isEditing = false
+    }
+
     @Suppress("UNCHECKED_CAST")
     @ApiStatus.Internal
     fun initialize() {

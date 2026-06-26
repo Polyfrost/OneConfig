@@ -172,6 +172,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public final fun iconFor (Ljava/lang/String;)Ljava/lang/String;
 	public final fun initialize ()V
 	public final fun isEditing ()Z
+	public final fun onEditorScreenRemoved ()V
 	public final fun openEditor ()V
 	public final fun providers ()Ljava/util/Collection;
 	public static final fun register (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)V
