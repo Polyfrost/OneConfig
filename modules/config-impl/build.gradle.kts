@@ -32,5 +32,6 @@ dependencies {
     api(libs.bundles.nightconfig)
     api(project(":modules:config"))
     api(project(":modules:poly-compose"))
+    api(project(":modules:ui"))
     api(libs.jetbrains.compose.runtime)
 }

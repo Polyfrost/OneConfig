@@ -64,7 +64,7 @@ public @interface Text {
 
     String subcategoryKey() default "";
 
-    String placeholder() default "polyui.textinput.placeholder";
+    String placeholder() default "";
 
-    String placeholderKey() default "";
+    String placeholderKey() default "polyui.textinput.placeholder";
 }

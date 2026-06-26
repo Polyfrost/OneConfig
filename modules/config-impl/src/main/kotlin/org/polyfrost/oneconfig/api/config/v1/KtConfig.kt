@@ -27,6 +27,7 @@
 package org.polyfrost.oneconfig.api.config.v1
 
 import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import java.util.function.BooleanSupplier
 import kotlin.jvm.java
 import kotlin.properties.PropertyDelegateProvider
@@ -88,12 +89,72 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         }
 
     @JvmSynthetic
+    @Deprecated(message = "Use other text method.", level = DeprecationLevel.HIDDEN)
     protected fun text(def: String = "", name: String? = null, description: String? = null, category: String? = null, subcategory: String? = null) =
         Provider(def, name, description, category, subcategory, String::class.java, Visualizer.TextVisualizer())
-// TODO: binds, why is this part of polyui in the first place?
-//    @JvmSynthetic
-//    protected fun keybind(def: PolyBind? = null, name: String? = null, description: String? = null, category: String? = null, subcategory: String? = null) =
-//        Provider(def, name, description, category, subcategory, PolyBind::class.java, Visualizer.KeybindVisualizer::class.java)
+
+    private fun Node.addMetadata(
+        name: String,
+        nameKey: String?,
+        description: String?,
+        descriptionKey: String?,
+        icon: String?,
+        multiline: Boolean,
+        category: String?,
+        categoryKey: String?,
+        subcategory: String?,
+        subcategoryKey: String?,
+    ) {
+        this.addMetadata("title", name)
+        this.addMetadata("titleKey", nameKey)
+        this.addMetadata("description", description)
+        this.addMetadata("descriptionKey", descriptionKey)
+        this.addMetadata("icon", icon)
+        this.addMetadata("multiline", multiline)
+        this.addMetadata("category", category)
+        this.addMetadata("categoryKey", categoryKey)
+        this.addMetadata("subcategory", subcategory)
+        this.addMetadata("subcategoryKey", subcategoryKey)
+    }
+
+    @JvmSynthetic
+    protected fun text(
+        name: String,
+        def: String = "",
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        multiline: Boolean = false,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        placeholder: String? = null,
+        placeholderKey: String? = "polyui.textinput.placeholder"
+    ) = Provider(def, name, description, category, subcategory, String::class.java, Visualizer.TextVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, multiline, category, categoryKey, subcategory, subcategoryKey)
+        this.addMetadata("placeholder", placeholder)
+        this.addMetadata("placeholderKey", placeholderKey)
+    }
+
+    @JvmSynthetic
+    protected fun keybind(
+        name: String,
+        def: OneConfigKeybind? = null,
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        multiline: Boolean = false,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+    ) =
+        Provider(def, name, description, category, subcategory, OneConfigKeybind::class.java, Visualizer.KeybindVisualizer()) {
+            addMetadata(name, nameKey, description, descriptionKey, icon, multiline, category, categoryKey, subcategory, subcategoryKey)
+        }
 
     @JvmSynthetic
     protected fun radiobutton(options: Array<String>, def: Int = 0, name: String? = null, description: String? = null, category: String? = null, subcategory: String? = null) =
