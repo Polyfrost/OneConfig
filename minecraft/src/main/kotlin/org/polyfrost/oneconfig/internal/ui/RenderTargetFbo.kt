@@ -53,4 +53,11 @@ object RenderTargetFbo {
         return frameBuffer.frameBufferId
     }
     *///? }
+
+    //? if >= 1.21.5 {
+    fun getColorTexId(frameBuffer: RenderTarget): Int =
+        (frameBuffer.colorTexture as? com.mojang.blaze3d.opengl.GlTexture)?.glId() ?: -1
+    //? } else {
+    /*fun getColorTexId(frameBuffer: RenderTarget): Int = frameBuffer.colorTextureId
+    *///? }
 }

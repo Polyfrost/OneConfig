@@ -12,6 +12,12 @@ import org.slf4j.LoggerFactory
 interface VulkanService {
     val isVulkan: Boolean
 
+    /**
+     * True only for VulkanMod (which defers the GUI to end-of-frame and can't
+     * have its command buffer flushed mid-frame)
+     */
+    val usesDeferredCompose: Boolean get() = false
+
     fun makeDirectContext(): DirectContext
 
     /**
@@ -50,6 +56,14 @@ interface VulkanService {
     fun getMainColorImageInfo(): Triple<Long, Int, Int> = Triple(0L, 0, 0)
 
     /**
+     * Capture [target] (MC's main render target, holding the world before the GUI composites) into a
+     * private, stable image used as the blur backdrop source.
+     */
+    fun takeWorldSnapshot(target: RenderTarget) {}
+
+    fun getBlurSourceImageInfo(): Triple<Long, Int, Int> = Triple(0L, 0, 0)
+
+    /**
      * Flush any pending GPU commands recorded since the last flush.
      */
     fun midFrameFlush() {}
@@ -59,11 +73,13 @@ interface VulkanService {
 
         fun detect(): VulkanService {
             // Try each backend-specific Vulkan service in order; only one is compiled per MC version
-            // (NativeVulkanService on >= 26.2, CinnabarVulkanService on the Cinnabar builds). A missing
-            // class or GL-mode (tryCreate returns null) both fall through to the GL backend.
+            // (NativeVulkanService on >= 26.2, CinnabarVulkanService on the Cinnabar builds,
+            // VulkanModVulkanService on the 1.21.x builds where the VulkanMod mod can be installed).
+            // A missing class or GL-mode (tryCreate returns null) both fall through to the GL backend.
             for (className in listOf(
                 "org.polyfrost.oneconfig.internal.ui.services.NativeVulkanService",
                 "org.polyfrost.oneconfig.internal.ui.services.CinnabarVulkanService",
+                "org.polyfrost.oneconfig.internal.ui.services.VulkanModVulkanService",
             )) {
                 try {
                     val cls = Class.forName(className)
@@ -74,6 +90,8 @@ interface VulkanService {
                     }
                 } catch (_: ClassNotFoundException) {
                     // not present on this version
+                } catch (_: LinkageError) {
+                    LOG.debug("VK service {} not linkable (mod absent), using GL backend", className)
                 } catch (e: Exception) {
                     LOG.warn("VK service {} failed to initialize", className, e)
                 }

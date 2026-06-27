@@ -137,6 +137,13 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? cinnabar
         //mixins.add("skia.Mixin_CinnabarSkiaFlush");
 
+        if (isClassPresent("net.vulkanmod.vulkan.Renderer")) {
+            mixins.add("skia.Mixin_VulkanModSkiaFlush");
+            //? >= 1.21.10 {
+            mixins.add("skia.Mixin_VulkanModBlurSnapshot");
+            //? }
+        }
+
         {
             Logger logger = LogManager.getLogger(OneConfigMixinInit.class);
             logger.info("Loaded {} non-common Mixins", mixins.size());
@@ -149,6 +156,15 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         }
 
         return mixins;
+    }
+
+    private static boolean isClassPresent(String className) {
+        try {
+            Class.forName(className, false, OneConfigMixinInit.class.getClassLoader());
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     @Override

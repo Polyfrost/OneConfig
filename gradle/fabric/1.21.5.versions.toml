@@ -12,6 +12,8 @@ modmenu = "14.0.0-rc.2"
 yacl = "3.7.1+1.21.5-fabric"
 moulconfig = "3.11.0"
 
+vulkanmod = "7pYvUnJk"
+
 [libraries]
 api-base = { module = "net.fabricmc.fabric-api:fabric-api-base", version.ref = "api-base" }
 lifecycle-events-v1 = { module = "net.fabricmc.fabric-api:fabric-lifecycle-events-v1", version.ref = "lifecycle-events-v1" }
@@ -25,6 +27,8 @@ resource-loader-v0 = { module = "net.fabricmc.fabric-api:fabric-resource-loader-
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
 moulconfig = { module = "org.notenoughupdates.moulconfig:common", version.ref = "moulconfig" }
+
+vulkanmod = { module = "maven.modrinth:vulkanmod", version.ref = "vulkanmod" }
 
 [bundles]
 compat = ["modmenu", "yacl"]
