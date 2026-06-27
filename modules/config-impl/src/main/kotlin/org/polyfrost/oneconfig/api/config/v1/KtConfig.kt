@@ -28,12 +28,12 @@ package org.polyfrost.oneconfig.api.config.v1
 
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
-import java.util.function.BooleanSupplier
 import kotlin.jvm.java
 import kotlin.properties.PropertyDelegateProvider
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty0
+import kotlin.reflect.KProperty1
 
 /**
  * Kotlin config class. allows to use the `by` keyword to create properties.
@@ -71,7 +71,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
      * create a new delegate for the given property.
      */
     @JvmSynthetic
-    protected inline fun <reified T> property(
+    protected inline fun <reified T : Any> property(
         def: T? = null,
         name: String? = null,
         description: String? = null,
@@ -104,7 +104,17 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         subcategory: String? = "General",
         subcategoryKey: String? = null,
     ) = Provider(def, name, description, category, subcategory, PolyColor::class.java, Visualizer.ColorVisualizer()) {
-        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        addMetadata(
+            name,
+            nameKey,
+            description,
+            descriptionKey,
+            icon,
+            category,
+            categoryKey,
+            subcategory,
+            subcategoryKey
+        )
         this.addMetadata("noAlpha", alpha.takeUnless { it })
     }
 
@@ -182,7 +192,17 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         placeholder: String? = null,
         placeholderKey: String? = "polyui.textinput.placeholder"
     ) = Provider(def, name, description, category, subcategory, String::class.java, Visualizer.TextVisualizer()) {
-        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        addMetadata(
+            name,
+            nameKey,
+            description,
+            descriptionKey,
+            icon,
+            category,
+            categoryKey,
+            subcategory,
+            subcategoryKey
+        )
         this.addMetadata("placeholder", placeholder)
         this.addMetadata("multiline", multiline)
         this.addMetadata("placeholderKey", placeholderKey)
@@ -201,7 +221,17 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         subcategory: String? = "General",
         subcategoryKey: String? = null,
     ) = Provider(def, name, description, category, subcategory, Boolean::class.java, Visualizer.CheckboxVisualizer()) {
-        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        addMetadata(
+            name,
+            nameKey,
+            description,
+            descriptionKey,
+            icon,
+            category,
+            categoryKey,
+            subcategory,
+            subcategoryKey
+        )
     }
 
     @JvmSynthetic
@@ -217,7 +247,17 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         subcategory: String? = "General",
         subcategoryKey: String? = null,
     ) = Provider(def, name, description, category, subcategory, Boolean::class.java, Visualizer.SwitchVisualizer()) {
-        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        addMetadata(
+            name,
+            nameKey,
+            description,
+            descriptionKey,
+            icon,
+            category,
+            categoryKey,
+            subcategory,
+            subcategoryKey
+        )
     }
 
     @JvmSynthetic
@@ -240,7 +280,17 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         placeholder: String? = null,
         placeholderKey: String? = "oneconfig.numberinput.placeholder"
     ) = Provider(def, name, description, category, subcategory, Float::class.java, Visualizer.NumberVisualizer()) {
-        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        addMetadata(
+            name,
+            nameKey,
+            description,
+            descriptionKey,
+            icon,
+            category,
+            categoryKey,
+            subcategory,
+            subcategoryKey
+        )
         this.addMetadata("unit", unit)
         this.addMetadata("unitKey", unitKey)
         this.addMetadata("min", min)
@@ -268,7 +318,17 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         max: Float = 100f,
         step: Float = 1f,
     ) = Provider(def, name, description, category, subcategory, Float::class.java, Visualizer.NumberVisualizer()) {
-        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        addMetadata(
+            name,
+            nameKey,
+            description,
+            descriptionKey,
+            icon,
+            category,
+            categoryKey,
+            subcategory,
+            subcategoryKey
+        )
         this.addMetadata("unit", unit)
         this.addMetadata("unitKey", unitKey)
         this.addMetadata("min", min)
@@ -298,7 +358,17 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
             OneConfigKeybind::class.java,
             Visualizer.KeybindVisualizer()
         ) {
-            addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+            addMetadata(
+                name,
+                nameKey,
+                description,
+                descriptionKey,
+                icon,
+                category,
+                categoryKey,
+                subcategory,
+                subcategoryKey
+            )
         }
 
     @JvmSynthetic
@@ -327,25 +397,114 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
             addMetadata("options", options)
         }
 
+    protected fun <Type : Any> dropdown(
+        name: String,
+        defaultOption: Type,
+        options: Array<Type>,
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        optionKeys: Array<String> = arrayOf(),
+        stringTransformer: (Type) -> String = { it.toString() },
+    ): PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>> {
+        val selectedIndex = options.indexOf(defaultOption)
+
+        val property = Provider(
+            selectedIndex,
+            name,
+            description,
+            category,
+            subcategory,
+            Int::class.java,
+            Visualizer.DropdownVisualizer()
+        ) {
+            addMetadata(
+                name,
+                nameKey,
+                description,
+                descriptionKey,
+                icon,
+                category,
+                categoryKey,
+                subcategory,
+                subcategoryKey
+            )
+            addMetadata("options", options.map { stringTransformer(it) })
+            addMetadata("optionsKey", optionKeys)
+        }
+        return CachedTransformedProvider(property, options::get, options::indexOf)
+    }
+
+    protected fun <Type : Any> radiobutton(
+        name: String,
+        defaultOption: Type,
+        options: Array<Type>,
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        optionKeys: Array<String> = arrayOf(),
+        stringTransformer: (Type) -> String = { it.toString() },
+    ): PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>> {
+        val selectedIndex = options.indexOf(defaultOption)
+
+        val property = Provider(
+            selectedIndex,
+            name,
+            description,
+            category,
+            subcategory,
+            Int::class.java,
+            Visualizer.RadioVisualizer()
+        ) {
+            addMetadata(
+                name,
+                nameKey,
+                description,
+                descriptionKey,
+                icon,
+                category,
+                categoryKey,
+                subcategory,
+                subcategoryKey
+            )
+            addMetadata("options", options.map { stringTransformer(it) })
+            addMetadata("optionsKey", optionKeys)
+        }
+        return CachedTransformedProvider(property, options::get, options::indexOf)
+    }
+
     fun hideIf(option: KProperty<*>, condition: () -> Boolean) {
         if (tree == null) initialize(false)
-        hideIf(option.name, BooleanSupplier { condition() })
+        hideIf(option.name) { condition() }
     }
 
     fun hideIf(option: KProperty<*>, condition: KProperty0<Boolean>) {
         if (tree == null) initialize(false)
-        hideIf(option.name, BooleanSupplier { condition.get() })
+        hideIf(option.name) { condition.get() }
     }
 
     fun <T> addCallback(option: KProperty<T>, callback: (T?) -> Boolean) {
-        option.property.addCallback { callback(it) }
+        option.property.addCallback { callback(when (option) {
+            is KProperty0<T> -> option.get()
+            is KProperty1<*, T> -> (option as KProperty1<Any, T>).get(this)
+            else -> option.call(this)
+        }) }
     }
-
 
     /**
      * provider for the [PropertyDelegate]. for some reason this has to be a class to avoid having to pass the reference directly.
      */
-    protected class Provider<T>(
+    protected class Provider<T : Any>(
         private val def: T?,
         private val name: String?,
         private val description: String?,
@@ -364,15 +523,100 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
             p.addMetadata("visualizer", visualizer)
             p.addMetadata("category", category)
             p.addMetadata("subcategory", subcategory)
-            (if (thisRef.tree != null) thisRef.tree else thisRef.pendingTree()).put(p)
+            (thisRef.tree ?: thisRef.pendingTree()).put(p)
             return PropertyDelegate(p)
         }
+    }
+
+    fun <Type : Any> observable(
+        property: PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>,
+        callback: (Type) -> Unit
+    ): PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>> = callback(property) {
+        callback(it)
+        false
+    }
+
+    fun <Type : Any> callback(
+        property: PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>,
+        callback: (Type) -> Boolean
+    ): PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>> =
+        ObservableProvider(property, callback)
+
+    fun <Source : Any, Target : Any> transformed(
+        property: PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Source>>,
+        to: (Source) -> Target,
+        from: (Target) -> Source,
+    ) : PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Target>> = CachedTransformedProvider(property, to, from)
+
+    @JvmName("withObservable")
+    fun <Type : Any> PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>.onChange(callback: (Type) -> Unit) = observable(this, callback)
+    fun <Type : Any> PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>.withCallback(callback: (Type) -> Boolean) = callback(this, callback)
+
+    private data class CachedTransformedProvider<Source : Any, Target : Any>(
+        val delegate: PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Source>>,
+        val to: (Source) -> Target,
+        val from: (Target) -> Source
+    ) : PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Target>> {
+        data class TransformedPropertyDelegate<Source : Any, Target : Any>(
+            val thisRef: KtConfig,
+            val property: KProperty<*>,
+            val delegate: ReadWriteProperty<KtConfig, Source>,
+            val to: (Source) -> Target,
+            val from: (Target) -> Source
+        ) : ReadWriteProperty<KtConfig, Target> {
+            var sourceValue: Source = delegate.getValue(thisRef, property)
+            var targetValue: Target = to(sourceValue)
+
+            fun updateValues() {
+                val currentSourceValue = delegate.getValue(thisRef, property)
+                if (sourceValue != currentSourceValue) {
+                    sourceValue = currentSourceValue
+                    targetValue = to(sourceValue)
+                }
+            }
+
+            override fun getValue(thisRef: KtConfig, property: KProperty<*>): Target {
+                updateValues()
+                return targetValue
+            }
+
+            override fun setValue(
+                thisRef: KtConfig,
+                property: KProperty<*>,
+                value: Target
+            ) {
+                this.targetValue = value
+                this.sourceValue = from(value)
+            }
+        }
+
+        override fun provideDelegate(thisRef: KtConfig, property: KProperty<*>): ReadWriteProperty<KtConfig, Target> =
+            TransformedPropertyDelegate(thisRef, property, delegate.provideDelegate(thisRef, property), to, from)
+    }
+
+    private data class ObservableProvider<Type : Any>(
+        val delegate: PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>,
+        val callback: (Type) -> Boolean
+    ) : PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>> {
+        override fun provideDelegate(
+            thisRef: KtConfig,
+            property: KProperty<*>
+        ): ReadWriteProperty<KtConfig, Type> {
+            val delegate = delegate.provideDelegate(thisRef, property)
+
+            thisRef.addCallback(property) { _ ->
+                callback(delegate.getValue(thisRef, property))
+            }
+
+            return delegate
+        }
+
     }
 
     /**
      * The actual delegate property. very simple.
      */
-    private class PropertyDelegate<T>(val property: Property<T>) : ReadWriteProperty<KtConfig, T> {
+    private class PropertyDelegate<T : Any>(val property: Property<T>) : ReadWriteProperty<KtConfig, T> {
         override operator fun getValue(thisRef: KtConfig, property: KProperty<*>): T = this.property.get() as T
 
         override operator fun setValue(thisRef: KtConfig, property: KProperty<*>, value: T) {

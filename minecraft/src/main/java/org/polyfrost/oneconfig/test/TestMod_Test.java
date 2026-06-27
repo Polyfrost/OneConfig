@@ -43,6 +43,8 @@ public final class TestMod_Test {
                 config.preload();
             }
             ConfigRegistry.INSTANCE.registerTree(config.getTree(), ConfigSource.OC);
+            TestKtConfig.INSTANCE.preload();
+            ConfigRegistry.INSTANCE.registerTree(TestKtConfig.INSTANCE.getTree(), ConfigSource.OC);
 
             HudManager.register(new TestLegacyHud_Test(), "test_mod", "combat");
         });

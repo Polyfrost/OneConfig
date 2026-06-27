@@ -26,6 +26,9 @@
 
 package org.polyfrost.oneconfig.api.config.v1
 
+import androidx.compose.ui.graphics.Path
+import org.jetbrains.skia.paragraph.Direction
+
 class KtConfigTest : KtConfig("super.json", "Super Config", Category.QOL) {
 
     var p by text("amazing", "actually so cool")
@@ -33,6 +36,12 @@ class KtConfigTest : KtConfig("super.json", "Super Config", Category.QOL) {
     var g by slider(0f, 100f, 5f, "great", "actually so cool")
 
     var a: Boolean by switch(true, "amazing")
+
+    var test by radiobutton(
+        "test",
+        Path.Direction.CounterClockwise,
+        arrayOf(Path.Direction.CounterClockwise)
+    ) { "$it.mrow" }
 
     init {
         hideIf(::g, ::a)
