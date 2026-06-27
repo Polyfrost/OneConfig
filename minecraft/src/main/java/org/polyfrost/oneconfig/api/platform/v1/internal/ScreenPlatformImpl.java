@@ -26,12 +26,16 @@
 
 package org.polyfrost.oneconfig.api.platform.v1.internal;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.event.v1.EventDelay;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
+import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen;
+import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 
 public class ScreenPlatformImpl implements ScreenPlatform {
     private final int[] fbWidth = new int[1];
@@ -75,6 +79,10 @@ public class ScreenPlatformImpl implements ScreenPlatform {
 
     @Override
     public void display(@Nullable Object screen, int ticks) {
+        if (screen instanceof ComposeScreen && !SkiaCtx.INSTANCE.isReady()) {
+            warnUiUnavailable();
+            return;
+        }
         //? if >= 26.2 {
         /*// 26.2 removed Minecraft#setScreen. Use Gui#setScreen, not setScreenAndShow (which force-calls
         // renderFrame and re-enters our renderFrame mixin -> nested frame -> 1-frame black flash).
@@ -84,6 +92,15 @@ public class ScreenPlatformImpl implements ScreenPlatform {
         if (ticks < 1) Minecraft.getInstance().setScreen((Screen) screen);
         else EventDelay.tick(ticks, () -> Minecraft.getInstance().setScreen((Screen) screen));
         //?}
+    }
+
+    private void warnUiUnavailable() {
+        String reason = SkiaCtx.INSTANCE.unavailableReason();
+        if (reason == null) return;
+        //~ if >= 26.2 'gui.getChat' -> 'gui.hud.getChat'
+        Minecraft.getInstance().gui.getChat()
+                //~ if >= 26.1 'addMessage' -> 'addClientSystemMessage'
+                .addClientSystemMessage(Component.literal(reason).withStyle(ChatFormatting.RED));
     }
 
     @Override

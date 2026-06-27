@@ -103,6 +103,16 @@ if (loader == "fabric") {
     }
 }
 
+// The legacy fade_in_blur post/program shaders use the pre-1.21.4 format and are unused on 1.21.1+
+if (stonecutter.eval(stonecutter.current.version, ">= 1.21.4")
+    && stonecutter.eval(stonecutter.current.version, "< 1.21.5")) {
+    tasks.named<ProcessResources>("processResources") {
+        exclude("assets/minecraft/shaders/post/fade_in_blur.json")
+        exclude("assets/minecraft/shaders/program/fade_in_blur.json")
+        exclude("assets/minecraft/shaders/program/fade_in_blur.fsh")
+    }
+}
+
 
 fun DependencyHandlerScope.handleApiDep(dependency: String, isMod: Boolean = false, transitive: Boolean = false) {
     val dep = project.dependencies.create(dependency) as ExternalModuleDependency
@@ -256,6 +266,11 @@ dependencies {
 
     if (versionedCatalog.has("cinnabar") && project.hasProperty("minecraft.vulkan")) {
         handleApiDep(versionedCatalog["cinnabar"])
+    }
+
+    if (versionedCatalog.has("vulkanmod")) {
+        "modCompileOnly"(versionedCatalog["vulkanmod"]) { isTransitive = false }
+        compileOnly(versionedCatalog["lwjgl-vulkan"])
     }
 
     //if (mcData.isFabric) {

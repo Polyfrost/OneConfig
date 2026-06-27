@@ -10,6 +10,8 @@ resource-loader-v1 = "2.0.9+d871b99ec3"
 modmenu = "18.0.0-beta.1"
 yacl = "3.9.0+26.1-fabric"
 
+vulkanmod = "0.6.8+26.1.2"
+
 [libraries]
 api-base = { module = "net.fabricmc.fabric-api:fabric-api-base", version.ref = "api-base" }
 lifecycle-events-v1 = { module = "net.fabricmc.fabric-api:fabric-lifecycle-events-v1", version.ref = "lifecycle-events-v1" }
@@ -21,6 +23,8 @@ resource-loader-v1 = { module = "net.fabricmc.fabric-api:fabric-resource-loader-
 
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
+
+vulkanmod = { module = "maven.modrinth:vulkanmod", version.ref = "vulkanmod" }
 
 [bundles]
 compat = ["modmenu", "yacl"]

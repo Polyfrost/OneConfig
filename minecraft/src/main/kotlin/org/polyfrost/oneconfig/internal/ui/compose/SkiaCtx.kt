@@ -13,6 +13,7 @@ import org.jetbrains.skia.SurfaceColorFormat
 import org.jetbrains.skia.SurfaceOrigin
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL30
+import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.internal.ui.compose.opengl.StoredGLState
 import org.polyfrost.oneconfig.internal.ui.services.VulkanService
 import org.slf4j.LoggerFactory
@@ -29,6 +30,31 @@ object SkiaCtx {
     val isReady get() = this::directContext.isInitialized
     val isVulkanMode get() = vulkanService?.isVulkan == true
 
+    /**
+     * True only for backends needing the deferred snapshot/blit compose path (VulkanMod)
+     */
+    val isDeferredComposeBackend get() = vulkanService?.usesDeferredCompose == true
+
+    val isVulkanModInstalled: Boolean by lazy {
+        try {
+            ModInfo.loadedMods.any { it.id.equals("vulkanmod", ignoreCase = true) }
+        } catch (_: Throwable) {
+            runCatching {
+                Class.forName("net.vulkanmod.Initializer", false, javaClass.classLoader)
+            }.isSuccess
+        }
+    }
+
+    fun unavailableReason(): String? {
+        if (isReady) return null
+        return if (isVulkanModInstalled) {
+            "OneConfig's UI can't render while VulkanMod is installed, because VulkanMod replaces " +
+                "Minecraft's OpenGL renderer. Remove VulkanMod to use the OneConfig UI."
+        } else {
+            "OneConfig's UI failed to initialize and can't be opened. Please check your logs and report this."
+        }
+    }
+
     private val queuedHudDraws = CopyOnWriteArrayList<() -> Unit>()
     private val queuedDraws = CopyOnWriteArrayList<() -> Unit>()
     private val queuedWarmups = CopyOnWriteArrayList<() -> Unit>()
@@ -39,9 +65,15 @@ object SkiaCtx {
     private var hudSurface: Surface? = null
     private var hudBrt: BackendRenderTarget? = null
 
+    private var composeTarget: TextureTarget? = null
+    private var composeSurface: Surface? = null
+    private var composeBrt: BackendRenderTarget? = null
+
     //? >= 1.21.5 {
     private val HUD_TEXTURE_LOC = Identifier.fromNamespaceAndPath("oneconfig", "hud_skia")
+    private val COMPOSE_TEXTURE_LOC = Identifier.fromNamespaceAndPath("oneconfig", "compose_skia")
     private var hudTextureWrapper: HudGpuTexture? = null
+    private var composeTextureWrapper: HudGpuTexture? = null
 
     private class HudGpuTexture : net.minecraft.client.renderer.texture.AbstractTexture() {
         fun setGpuTexture(t: com.mojang.blaze3d.textures.GpuTexture?) {
@@ -66,7 +98,9 @@ object SkiaCtx {
     }
     //? } else {
     /*private val HUD_TEXTURE_LOC = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("oneconfig", "hud_skia")
+    private val COMPOSE_TEXTURE_LOC = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("oneconfig", "compose_skia")
     private var hudTextureWrapper: HudGlTexture? = null
+    private var composeTextureWrapper: HudGlTexture? = null
     //? >= 1.21.4 {
     private class HudGlTexture : net.minecraft.client.renderer.texture.AbstractTexture() {
         fun setGlTexId(id: Int) { this.id = id }
@@ -102,7 +136,13 @@ object SkiaCtx {
                 directContext = svc.makeDirectContext()
                 LOG.info("SkiaCtx initialized (vulkan={})", svc.isVulkan)
             } catch (e: Exception) {
-                LOG.error("SkiaCtx.init() !", e)
+                if (isVulkanModInstalled) {
+                    LOG.error(
+                        "SkiaCtx.init() failed: VulkanMod is installed.", e
+                    )
+                } else {
+                    LOG.error("SkiaCtx.init() !", e)
+                }
                 vulkanService = null
             }
         }
@@ -165,6 +205,40 @@ object SkiaCtx {
         queuedHudDraws.clear()
         if (draws.isEmpty()) return
         flushToTarget(draws, resolveHudSurface() ?: return)
+    }
+
+    @Volatile
+    private var blurSnapshotRequested = false
+
+    fun requestBlurSnapshot() {
+        blurSnapshotRequested = true
+    }
+
+    fun consumeBlurSnapshotRequest(): Boolean {
+        val requested = blurSnapshotRequested
+        blurSnapshotRequested = false
+        return requested
+    }
+
+    fun takeWorldSnapshotIfNeeded() {
+        if (!this::directContext.isInitialized || !isDeferredComposeBackend) return
+        //? if >= 26.2 {
+        /*vulkanService?.takeWorldSnapshot(client.gameRenderer.mainRenderTarget())
+        *///? } else {
+        vulkanService?.takeWorldSnapshot(client.mainRenderTarget)
+        //? }
+    }
+
+    fun drawComposeBlit(ctx: GuiGraphicsExtractor, block: Runnable) {
+        if (!this::directContext.isInitialized) return
+        //? if < 1.21.10 {
+        takeWorldSnapshotIfNeeded()
+        //? }
+        val queued = queuedDraws.toList()
+        queuedDraws.clear()
+        val draws = queued + { block.run() }
+        flushToTarget(draws, resolveComposeSurface() ?: return)
+        blitCompose(ctx)
     }
 
     /**
@@ -249,6 +323,55 @@ object SkiaCtx {
         *///? }
     }
 
+    private fun blitCompose(guiGraphics: GuiGraphicsExtractor) {
+        val rt = composeTarget ?: return
+        val w = rt.width
+        val h = rt.height
+        val guiScale = client.window.guiScale.toFloat()
+
+        //? >= 1.21.5 {
+        val colorTex = rt.getColorTexture() ?: return
+        var wrapper = composeTextureWrapper
+        if (wrapper == null) {
+            wrapper = HudGpuTexture()
+            composeTextureWrapper = wrapper
+            client.textureManager.register(COMPOSE_TEXTURE_LOC, wrapper)
+        }
+        wrapper.setGpuTexture(colorTex)
+        //? >= 1.21.8 {
+        wrapper.setGpuTextureView(rt.getColorTextureView())
+        guiGraphics.pose().pushMatrix()
+        guiGraphics.pose().scale(1f / guiScale, 1f / guiScale)
+        guiGraphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        guiGraphics.pose().popMatrix()
+        //? } else {
+        /*guiGraphics.pose().pushPose()
+        guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
+        guiGraphics.blit(net.minecraft.client.renderer.RenderType::guiTextured, COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        guiGraphics.pose().popPose()
+        *///? }
+        //? } else {
+        /*var wrapper = composeTextureWrapper
+        if (wrapper == null) {
+            wrapper = HudGlTexture()
+            composeTextureWrapper = wrapper
+            client.textureManager.register(COMPOSE_TEXTURE_LOC, wrapper)
+        }
+        wrapper.setGlTexId(rt.colorTextureId)
+        guiGraphics.pose().pushPose()
+        guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
+        //? >= 1.21.4 {
+        guiGraphics.blit(net.minecraft.client.renderer.RenderType::guiTextured, COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        //?} else {
+        /*com.mojang.blaze3d.systems.RenderSystem.enableBlend()
+        com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc()
+        guiGraphics.blit(COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        com.mojang.blaze3d.systems.RenderSystem.disableBlend()
+        *///?}
+        guiGraphics.pose().popPose()
+        *///? }
+    }
+
     fun draw() {
         if (!this::directContext.isInitialized) return
         runWarmups()
@@ -310,6 +433,7 @@ object SkiaCtx {
             glBrt?.close(); glBrt = null
         }
         destroyHudTarget()
+        destroyComposeTarget()
     }
 
     private fun flushToTarget(draws: List<() -> Unit>, surface: Surface) {
@@ -317,7 +441,6 @@ object SkiaCtx {
         val savedFbo = IntArray(1)
         try {
             if (isVulkanMode) {
-                vulkanService?.midFrameFlush()
                 directContext.resetAll()
             } else {
                 gl.capture()
@@ -402,6 +525,61 @@ object SkiaCtx {
         hudBrt?.close(); hudBrt = null
         hudTarget?.destroyBuffers()
         hudTarget = null
+    }
+
+    private fun resolveComposeSurface(): Surface? {
+        val w = client.window.width
+        val h = client.window.height
+        if (w <= 0 || h <= 0) return null
+
+        var rt = composeTarget
+        if (rt == null || rt.width != w || rt.height != h) {
+            destroyComposeTarget()
+            //? if >= 26.2 {
+            /*rt = TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
+            *///? } else if >= 1.21.5 {
+            rt = TextureTarget(null, w, h, true)
+            //? } else if >= 1.21.4 {
+            // rt = TextureTarget(w, h, true)
+            //? } else {
+            /*rt = TextureTarget(w, h, true, Minecraft.ON_OSX)
+            *///? }
+            composeTarget = rt
+
+            val svc = vulkanService ?: return null
+            //? >= 1.21.5 {
+            if (!isVulkanMode) {
+                val fboId = org.polyfrost.oneconfig.internal.ui.RenderTargetFbo.getFboId(rt)
+                if (fboId <= 0) {
+                    LOG.warn("SkiaCtx: compose TextureTarget FBO not ready (id={}), retry next frame", fboId)
+                    composeTarget = null
+                    rt.destroyBuffers()
+                    return null
+                }
+            }
+            //? }
+            val (brt, colorFmt) = svc.makeOffscreenBRT(rt, w, h)
+            composeBrt = brt
+            composeSurface = Surface.makeFromBackendRenderTarget(
+                directContext, brt,
+                SurfaceOrigin.TOP_LEFT,
+                colorFmt,
+                ColorSpace.sRGB,
+                null,
+            )
+            if (composeSurface == null) {
+                LOG.warn("SkiaCtx: composeSurface is null (w={} h={} vk={})", w, h, isVulkanMode)
+                brt.close(); composeBrt = null
+            }
+        }
+        return composeSurface
+    }
+
+    private fun destroyComposeTarget() {
+        composeSurface?.close(); composeSurface = null
+        composeBrt?.close(); composeBrt = null
+        composeTarget?.destroyBuffers()
+        composeTarget = null
     }
 
     private fun resolveGLSurface(): Surface? {

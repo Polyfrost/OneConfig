@@ -15,6 +15,7 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
 import org.polyfrost.oneconfig.internal.ui.compose.BlurRenderer
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
+import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.PreferencesGraph
@@ -118,7 +119,16 @@ class OneConfigUIScreen @JvmOverloads constructor(
             Platform.screen().close()
             return
         }
-        if (OneConfigConfig.enableBackgroundBlur) BlurRenderer.drawBlur(fullscreenBlurRadius())
+        if (OneConfigConfig.enableBackgroundBlur) {
+            //? if >= 1.21.10 {
+            if (SkiaCtx.isDeferredComposeBackend) {
+                ctx.nextStratum()
+                ctx.blurBeforeThisStratum()
+                SkiaCtx.requestBlurSnapshot()
+            }
+            //? }
+            BlurRenderer.drawBlur(fullscreenBlurRadius())
+        }
         //~ if >= 26.1 'render' -> 'extractRenderState'
         super.extractRenderState(ctx, mouseX, mouseY, tickDelta)
     }

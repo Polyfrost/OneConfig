@@ -96,8 +96,12 @@ object BlurRenderer {
 
     private fun resolveVkSurface(target: RenderTarget, width: Int, height: Int): Surface? {
         val svc = SkiaCtx.vulkanService ?: return null
-        val (vkImg, vkFmt, queueFamily) = svc.getMainColorImageInfo()
-        if (vkImg == 0L || width <= 0 || height <= 0) return null
+        if (width <= 0 || height <= 0) return null
+
+        val deferred = svc.usesDeferredCompose
+        val (vkImg, vkFmt, queueFamily) =
+            if (deferred) svc.getBlurSourceImageInfo() else svc.getMainColorImageInfo()
+        if (vkImg == 0L) return null
 
         if (cachedVkSurface != null && cachedVkImage == vkImg && cachedVkWidth == width && cachedVkHeight == height) {
             return cachedVkSurface
@@ -107,9 +111,14 @@ object BlurRenderer {
         cachedVkBRT?.close()
 
         val brt = svc.makeBackendRenderTarget(width, height, vkImg, vkFmt, queueFamily)
+        val colorFmt = when (vkFmt) {
+            44, 50 -> SurfaceColorFormat.BGRA_8888
+            else -> SurfaceColorFormat.RGBA_8888
+        }
+        val origin = if (deferred) SurfaceOrigin.TOP_LEFT else SurfaceOrigin.BOTTOM_LEFT
         val surface = Surface.makeFromBackendRenderTarget(
             SkiaCtx.directContext, brt,
-            SurfaceOrigin.BOTTOM_LEFT, SurfaceColorFormat.RGBA_8888, ColorSpace.sRGB, null,
+            origin, colorFmt, ColorSpace.sRGB, null,
         )
 
         if (surface == null) {

@@ -23,6 +23,7 @@ stonecutter {
             this["dandelion_compat"] = catalogue.has("dandelion")
             this["tr7zw_compat"] = true
             this["cinnabar"] = catalogue.has("cinnabar") && rootProject.hasProperty("minecraft.vulkan")
+            this["vulkanmod"] = current.project.endsWith("-fabric") && catalogue.has("vulkanmod")
         }
 
         replacements {

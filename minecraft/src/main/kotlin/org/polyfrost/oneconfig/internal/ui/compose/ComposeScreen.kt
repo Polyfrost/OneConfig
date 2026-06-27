@@ -180,7 +180,7 @@ abstract class ComposeScreen(
         } catch (_: Throwable) {
         }
 
-        SkiaCtx.queueDraw {
+        val renderBlock = Runnable {
             try {
                 val canvas = SkiaCtx.canvas
                 val pixelRatio = Platform.screen().pixelRatio()
@@ -192,6 +192,12 @@ abstract class ComposeScreen(
                 canvas.restore()
             } catch (_: Throwable) {
             }
+        }
+
+        if (SkiaCtx.isDeferredComposeBackend) {
+            SkiaCtx.drawComposeBlit(ctx, renderBlock)
+        } else {
+            SkiaCtx.queueDraw(renderBlock)
         }
     }
 
