@@ -13,10 +13,16 @@ plugins {
 repositories {
     maven("https://repo.polyfrost.org/releases")
     maven("https://repo.polyfrost.org/snapshots")
-    maven("https://repo.hypixel.net/repository/Hypixel/")
-    maven("https://maven.deftu.dev/releases")
+    maven("https://repo.hypixel.net/repository/Hypixel/") {
+        content { includeGroupAndSubgroups("net.hypixel") }
+    }
+    maven("https://maven.deftu.dev/releases") {
+        content { includeGroupAndSubgroups("dev.deftu") }
+    }
     maven("https://nexus.prsm.wtf/repository/maven-public/maven-repo/releases/")
-    maven("https://maven.fabricmc.net/")
+    maven("https://maven.fabricmc.net/") {
+        content { includeGroupAndSubgroups("net.fabricmc") }
+    }
     maven("https://jitpack.io") {
         content { includeGroupAndSubgroups("com.github") }
     }
@@ -26,7 +32,9 @@ repositories {
     maven("https://maven.azureaaron.net/releases") {
         content { includeGroup("net.azureaaron") }
     }
-    maven("https://redirector.kotlinlang.org/maven/compose-dev")
+    maven("https://redirector.kotlinlang.org/maven/compose-dev") {
+        content { includeGroupAndSubgroups("org.jetbrains") }
+    }
     maven("https://central.sonatype.com/repository/maven-snapshots/")
     google()
 }
