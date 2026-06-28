@@ -5,7 +5,7 @@ import com.terraformersmc.modmenu.api.ModMenuApi
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 
-object ModMenuEntrypoint : ModMenuApi {
+internal object ModMenuEntrypoint : ModMenuApi {
 
     override fun getModConfigScreenFactory(): ConfigScreenFactory<*>? {
         return { it -> OneConfigUIScreen() }
