@@ -244,7 +244,6 @@ dependencies {
     handleApiDep(versionedCatalog.bundles["nightconfig"])
     handleApiDep(versionedCatalog["snakeyaml"])
     handleApiDep(versionedCatalog["isolated-lwjgl3-loader"]) //todo check if needed
-    handleApiDep(versionedCatalog["polyio"]) //todo check if needed
     handleApiDep(versionedCatalog["java-objc-bridge"])
     handleApiDep(versionedCatalog["hypixel-modapi"])
     handleApiDep(versionedCatalog["hypixel-data"])
@@ -281,8 +280,6 @@ dependencies {
     //        }
     //    }
     //}
-
-    "annotationProcessor"(versionedCatalog["mixin.extras"])
     "annotationProcessor"(versionedCatalog["mixin.squared"])
 
     if (enableMoulRelocatorKsp) {
