@@ -15,26 +15,16 @@ hypixel-data = "0.2.0" # Dep of hypixel-modapi
 snakeyaml = "1.31"
 nightconfig = "3.6.6"
 isolated-lwjgl3-loader = "0.3.0"
-polyio = "0.1.0"
 java-objc-bridge = "1.2"
 
 # Per version
 lwjgl = "3.3.3" # All downloaded by the isolated-lwjgl3-loader
 
 # Legacy only
-mixin = "0.8.4+build.6"
-mixin-extras = "0.5.0"
 mixin-squared = "0.3.7-beta.1"
-asm = "5.2"
-brigadier = "1.0.18"
-
-oneconfig-loader = "1.1.0-alpha.48"
 
 # Gradle
-dgt = "2.73.0"
 kotlinx-abi = "0.18.1"
-licenser = "2.1.1"
-jetbrains-idea-ext = "1.3"
 
 log4j-api = "2.0-beta9" # used because this is the version that 1.8.9 supports, so we have to compile against the same (annoying)
 
@@ -62,15 +52,9 @@ devauth = "1.2.2"
 junit = { module = "org.junit.jupiter:junit-jupiter" }
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
 
-mixin = { module = "org.polyfrost:polymixin", version.ref = "mixin" }
-mixin-extras = { module = "io.github.llamalad7:mixinextras-common", version.ref = "mixin-extras" }
 mixin-squared = { module = "com.github.bawnorton.mixinsquared:mixinsquared-common", version.ref = "mixin-squared" }
-asm = { module = "org.ow2.asm:asm-debug-all", version.ref = "asm" }
-
-brigadier = { module = "com.mojang:brigadier", version.ref = "brigadier" }
 
 isolated-lwjgl3-loader = { module = "org.polyfrost:isolated-lwjgl3-loader", version.ref = "isolated-lwjgl3-loader" }
-polyio = { module = "org.polyfrost:polyio", version.ref = "polyio" }
 java-objc-bridge = { module = "ca.weblite:java-objc-bridge", version.ref = "java-objc-bridge" }
 
 hypixel-modapi = { module = "net.hypixel:mod-api", version.ref = "hypixel-modapi" }
@@ -167,20 +151,5 @@ kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlinx-api-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "kotlinx-abi" }
-
-dgt-base = { id = "dev.deftu.gradle.tools", version.ref = "dgt" }
-dgt-multiversion-platform = { id = "dev.deftu.gradle.multiversion", version.ref = "dgt" }
-dgt-multiversion-root = { id = "dev.deftu.gradle.multiversion-root", version.ref = "dgt" }
-dgt-java = { id = "dev.deftu.gradle.tools.java", version.ref = "dgt" }
-dgt-kotlin = { id = "dev.deftu.gradle.tools.jvm.kotlin", version.ref = "dgt" }
-dgt-resources = { id = "dev.deftu.gradle.tools.resources", version.ref = "dgt" }
-dgt-bloom = { id = "dev.deftu.gradle.tools.bloom", version.ref = "dgt" }
-dgt-shadow = { id = "dev.deftu.gradle.tools.shadow", version.ref = "dgt" }
-dgt-publishing-maven = { id = "dev.deftu.gradle.tools.publishing.maven", version.ref = "dgt" }
-dgt-loom = { id = "dev.deftu.gradle.tools.minecraft.loom", version.ref = "dgt" }
-
-licenser = { id = "dev.yumi.gradle.licenser", version.ref = "licenser" }
-
-jetbrains-idea-ext = { id = "org.jetbrains.gradle.plugin.idea-ext", version.ref = "jetbrains-idea-ext" }
 
 google-ksp = { id = "com.google.devtools.ksp", version.ref = "google-ksp" }
