@@ -37,10 +37,16 @@ import java.lang.annotation.*;
 public @interface Text {
     String title();
 
+    boolean titleTranslation() default false;
+
+    @Deprecated
     String titleKey() default "";
 
     String description() default "";
 
+    boolean descriptionTranslation() default false;
+
+    @Deprecated
     String descriptionKey() default "";
 
     String icon() default "";
@@ -58,13 +64,21 @@ public @interface Text {
 
     String category() default "General";
 
+    @Deprecated
     String categoryKey() default "";
+
+    boolean categoryTranslation() default false;
 
     String subcategory() default "General";
 
+    @Deprecated
     String subcategoryKey() default "";
 
-    String placeholder() default "";
+    @TranslatedDefault("polyui.textinput.placeholder")
+    String placeholder() default "polyui.textinput.placeholder";
 
-    String placeholderKey() default "polyui.textinput.placeholder";
+    boolean placeholderTranslation() default false;
+
+    @Deprecated
+    String placeholderKey() default "";
 }

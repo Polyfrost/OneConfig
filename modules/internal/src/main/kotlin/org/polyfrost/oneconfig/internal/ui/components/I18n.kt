@@ -5,11 +5,7 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 
 fun localizedText(key: String?, fallback: Any?): Any {
     val translationKey = key?.trim()?.takeIf { it.isNotEmpty() } ?: return fallback ?: ""
-    return if (Platform.i18n().hasTranslation(translationKey)) {
-        Platform.i18n().translate(translationKey)
-    } else {
-        fallback ?: translationKey
-    }
+    return Platform.i18n().translate(translationKey, fallback ?: translationKey)
 }
 
 fun localizedString(key: String?, fallback: Any?): String {

@@ -17,9 +17,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- *   You should have received a copy of the GNU Lesser General Public
+ *   You should have received annotation copy of the GNU Lesser General Public
  * License.  If not, see <https://www.gnu.org/licenses/>. You should
- * have also received a copy of the Additional Terms Applicable
+ * have also received annotation copy of the Additional Terms Applicable
  * to OneConfig, as published by Polyfrost. If not, see
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
@@ -29,6 +29,7 @@ package org.polyfrost.oneconfig.api.config.v1.collect.impl;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.Properties;
 import org.polyfrost.oneconfig.api.config.v1.Property;
@@ -67,7 +68,7 @@ public class OneConfigCollector extends ReflectiveCollector {
                 if (condition.type == boolean.class) {
                     //noinspection unchecked
                     p.addDisplayCondition((Property<Boolean>) condition, false);
-                } else throw new IllegalArgumentException("Property " + p.getID() + " is dependant on property " + cond + ", but it is not a boolean property");
+                } else throw new IllegalArgumentException("Property " + p.getID() + " is dependant on property " + cond + ", but it is not annotation boolean property");
             }
         });
         return tree;
@@ -144,19 +145,32 @@ public class OneConfigCollector extends ReflectiveCollector {
         }
     }
 
-    protected void handleMetadata(Tree tree, @NotNull Property<?> property, @NotNull Annotation a, Option opt, Field f) {
-        property.addMetadata("visualizer", opt.display());
-        property.addMetadata(MHUtils.getAnnotationValues(a).getOrNull());
-        DependsOn d = f.getDeclaredAnnotation(DependsOn.class);
-        if (d != null) property.addMetadata("conditions", d.value());
+    protected void handleMetadata(Tree tree, @NotNull Property<?> property, @NotNull Annotation annotation, Option option, Field field) {
+        property.addMetadata("visualizer", option.display());
+        var metadata = MHUtils.getAnnotationValues(annotation).getOrNull();
+        if (metadata != null) {
+            var tempData = new HashMap<>(metadata);
 
+            metadata.forEach((key, value) -> {
+                var translationKey = key + "Translation";
+                if (metadata.containsKey(translationKey) && metadata.get(translationKey) instanceof Boolean && ((Boolean) metadata.get(translationKey)) == true) {
+                    tempData.put(key + "Key", value);
+                } else if (isIsDefaultTranslation(annotation, key, value)) {
+                    tempData.put(key + "Key", value);
+                }
+            });
 
-        switch (a) {
+            property.addMetadata(tempData);
+        }
+        DependsOn dependsOn = field.getDeclaredAnnotation(DependsOn.class);
+        if (dependsOn != null) property.addMetadata("conditions", dependsOn.value());
+
+        switch (annotation) {
             case Slider slider -> {
                 float range = slider.max() - slider.min();
                 if (slider.step() > 0f && slider.step() > range) {
                     throw new IllegalArgumentException(String.format("@Slider field '%s' has step (%s) larger than its range (%s to %s, range=%s). The slider will not function correctly.",
-                        f.getName(), slider.step(), slider.min(), slider.max(), range));
+                        field.getName(), slider.step(), slider.min(), slider.max(), range));
                 }
             }
             case Color color -> {
@@ -165,15 +179,28 @@ public class OneConfigCollector extends ReflectiveCollector {
             default -> {}
         }
 
-        PreviousNames p = f.getDeclaredAnnotation(PreviousNames.class);
-        if (p != null) {
-            String[] names = p.value();
+        PreviousNames previousName = field.getDeclaredAnnotation(PreviousNames.class);
+        if (previousName != null) {
+            String[] names = previousName.value();
             int len = names.length;
             HashMap<String, String> map = tree.getOrPutMetadata("migrationMap", () -> new HashMap<>(len));
             for (String s : names) {
                 map.put(s, property.getID());
             }
         }
+    }
+
+    private boolean isIsDefaultTranslation(@NonNull Annotation annotation, String key, Object value) {
+        try {
+            var method = annotation.annotationType().getMethod(key);
+            if (method.isAnnotationPresent(TranslatedDefault.class)){
+                var translated = method.getAnnotation(TranslatedDefault.class);
+                if (translated != null) {
+                    return translated.value().equals(value);
+                }
+            }
+        } catch (NoSuchMethodException ignored) {}
+        return false;
     }
 
 }

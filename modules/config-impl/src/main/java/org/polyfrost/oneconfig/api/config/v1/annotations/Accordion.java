@@ -34,20 +34,31 @@ import java.lang.annotation.*;
 public @interface Accordion {
     String title() default "";
 
+    boolean titleTranslation() default false;
+
     String titleKey() default "";
 
     String description() default "";
 
+    boolean descriptionTranslation() default false;
+
+    @Deprecated
     String descriptionKey() default "";
 
     String icon() default "";
 
     String category() default "General";
 
+    boolean categoryTranslation() default false;
+
+    @Deprecated
     String categoryKey() default "";
 
     String subcategory() default "General";
 
+    boolean subcategoryTranslation() default false;
+
+    @Deprecated
     String subcategoryKey() default "";
 
     int index() default -1;

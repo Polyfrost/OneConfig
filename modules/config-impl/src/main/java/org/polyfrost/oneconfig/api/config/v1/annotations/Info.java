@@ -40,22 +40,35 @@ public @interface Info {
 //	Notifications.Type value() default Notifications.Type.Info;
 
 	/** Title for the info block. Due to Java annotation limitations, if the value is unchanged, it will be replaced with the actual type name. */
+	@TranslatedDefault("polyui.info")
 	String title() default "polyui.info";
 
+	boolean titleTranslation() default false;
+
+	@Deprecated
 	String titleKey() default "";
+
+	String description() default "";
+
+	boolean descriptionTranslation() default false;
+
+	@Deprecated
+	String descriptionKey() default "";
 
 	/** Icon for the info block. Due to Java annotation limitations, if the value is unchanged, it will be replaced with the actual type icon. */
 	String icon() default "polyui/info.svg";
 
-	String description();
-
-	String descriptionKey() default "";
-
 	String category() default "General";
 
+	boolean categoryTranslation() default false;
+
+	@Deprecated
 	String categoryKey() default "";
 
 	String subcategory() default "General";
 
+	boolean subcategoryTranslation() default false;
+
+	@Deprecated
 	String subcategoryKey() default "";
 }

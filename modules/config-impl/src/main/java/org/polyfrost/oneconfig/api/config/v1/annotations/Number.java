@@ -37,31 +37,50 @@ import java.lang.annotation.*;
 public @interface Number {
     String title();
 
+    boolean titleTranslation() default false;
+
+    @Deprecated
     String titleKey() default "";
 
     String description() default "";
 
+    boolean descriptionTranslation() default false;
+
+    @Deprecated
     String descriptionKey() default "";
 
     String icon() default "";
 
     String category() default "General";
 
+    boolean categoryTranslation() default false;
+
+    @Deprecated
     String categoryKey() default "";
 
     String subcategory() default "General";
 
+    boolean subcategoryTranslation() default false;
+
+    @Deprecated
     String subcategoryKey() default "";
 
     String unit() default "";
 
+    boolean unitTranslation() default false;
+
+    @Deprecated
     String unitKey() default "";
 
     float min() default -10f;
 
     float max() default 100f;
 
-    String placeholder() default "";
+    @TranslatedDefault("oneconfig.numberinput.placeholder")
+    String placeholder() default "oneconfig.numberinput.placeholder";
 
-    String placeholderKey() default "oneconfig.numberinput.placeholder";
+    boolean placeholderTranslation() default false;
+
+    @Deprecated
+    String placeholderKey() default "";
 }
