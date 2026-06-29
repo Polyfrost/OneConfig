@@ -97,6 +97,9 @@ public final class org/polyfrost/oneconfig/api/notifications/v1/Notifications {
 	public static final fun error (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
 	public static final fun error (Ljava/lang/String;Ljava/lang/String;F)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
 	public static synthetic fun error$default (Ljava/lang/String;Ljava/lang/String;FILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static final fun icon (Ljava/lang/String;)Lorg/jetbrains/skia/Image;
+	public static final fun icon (Ljava/lang/String;I)Lorg/jetbrains/skia/Image;
+	public static synthetic fun icon$default (Ljava/lang/String;IILjava/lang/Object;)Lorg/jetbrains/skia/Image;
 	public static final fun info (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
 	public static final fun info (Ljava/lang/String;Ljava/lang/String;F)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
 	public static synthetic fun info$default (Ljava/lang/String;Ljava/lang/String;FILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;

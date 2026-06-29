@@ -80,6 +80,7 @@ public final class org/polyfrost/oneconfig/api/platform/v1/DesktopHelper {
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/I18nPlatform {
 	public abstract fun getUnformattedText (Ljava/lang/Object;)Ljava/lang/String;
 	public fun hasTranslation (Ljava/lang/String;)Z
+	public abstract fun translate (Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
 	public fun translate (Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
 	public fun translateString (Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
 }

@@ -142,9 +142,11 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/keybind/Minecr
 
 public class org/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind : org/polyfrost/oneconfig/utils/v1/OverwriteMergeable {
 	public static final field $stable I
+	public static final field Companion Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind$Companion;
 	public fun <init> ([I[IBJLkotlin/jvm/functions/Function1;)V
 	public final fun conflictsWith (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Z
 	public fun copyWith ([I[IB)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
+	public final fun displayName ()Ljava/lang/String;
 	public final fun getAction ()Lkotlin/jvm/functions/Function1;
 	public final fun getBoundCode ()I
 	public final fun getCategory ()Ljava/lang/String;
@@ -156,6 +158,7 @@ public class org/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind : org/po
 	public final fun getName ()Ljava/lang/String;
 	public final fun isBound ()Z
 	public final fun isMousePrimary ()Z
+	public static final fun keyName (I)Ljava/lang/String;
 	public fun mergeOverwrite (Ljava/lang/Object;)Ljava/lang/Object;
 	public final fun setCategory (Ljava/lang/String;)V
 	public final fun setDefaultKeybind (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
@@ -165,6 +168,10 @@ public class org/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind : org/po
 	public final fun setMouseBtns ([I)V
 	public final fun setName (Ljava/lang/String;)V
 	public fun test (Ljava/util/Set;Ljava/util/Set;B)Z
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind$Companion {
+	public final fun keyName (I)Ljava/lang/String;
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/screen/BlurScreen {
