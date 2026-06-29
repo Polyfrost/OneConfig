@@ -1,1 +1,43 @@
 tiny	2	0	intermediary	named
+c	net/minecraft/unmapped/C_49122968	net/minecraft/text/Formatting
+	m	()Ljava/lang/String;	m_85650466	serialize
+c	net/minecraft/unmapped/C_05113611	net/minecraft/unmapped/C_05113611
+	m	()Z	m_33616981	isSameThread
+c	net/minecraft/unmapped/C_70668269	net/minecraft/unmapped/C_70668269
+	m	()Z	m_33616981	isSameThread
+c	net/minecraft/client/Minecraft	net/minecraft/client/Minecraft
+	f	Lnet/minecraft/unmapped/C_24654288;	f_81460813	hitResult
+	f	Lnet/minecraft/unmapped/C_34399650;	f_26407825	level
+	m	(Lnet/minecraft/unmapped/C_85740840;)V	m_52715402	setScreen
+	m	()Z	m_33616981	isSameThread
+	m	(Z)V	m_77225877	continueAttack
+	m	()I	m_53086118	getFramerateLimit
+	m	()Lnet/minecraft/unmapped/C_06196994;	m_17688331	getMainRenderTarget
+	m	()V	m_61857590	startUseItem
+c	net/minecraft/unmapped/C_23708450	net/minecraft/client/KeyMapping
+	m	()Z	m_70603120	isDown
+c	net/minecraft/unmapped/C_76792751	net/minecraft/client/Options
+	f	[Lnet/minecraft/unmapped/C_23708450;	f_41636781	keyMappings
+	f	Lnet/minecraft/unmapped/C_23708450;	f_34423269	keyPlayerList
+c	net/minecraft/unmapped/C_85740840	net/minecraft/client/gui/screen/Screen
+	m	()Z	m_94022149	isPauseScreen
+c	net/minecraft/unmapped/C_67960412	net/minecraft/client/gui/screens/LevelLoadingScreen
+c	net/minecraft/unmapped/C_36550219	net/minecraft/client/gui/screens/options/controls/KeyBindsList
+c	net/minecraft/unmapped/C_36550219$C_66337664	net/minecraft/client/gui/screens/options/controls/KeyBindsList$KeyEntry
+c	net/minecraft/unmapped/C_67645866	net/minecraft/client/gui/screens/options/controls/KeyBindsScreen
+	f	Lnet/minecraft/unmapped/C_23708450;	f_46607866	selectedKey
+c	net/minecraft/unmapped/C_34399650	net/minecraft/client/multiplayer/ClientLevel
+c	net/minecraft/unmapped/C_57778754	net/minecraft/client/player/LocalPlayer
+c	net/minecraft/unmapped/C_30593188	net/minecraft/world/scores/Objective
+c	net/minecraft/unmapped/C_97595263	net/minecraft/world/scores/PlayerTeam
+c	net/minecraft/unmapped/C_73166169	net/minecraft/world/scores/Scoreboard
+	m	(Lnet/minecraft/unmapped/C_97595263;)V	m_18544454	removePlayerTeam
+c	net/minecraft/server/MinecraftServer	net/minecraft/server/MinecraftServer
+	m	()Z	m_33616981	isSameThread
+c	net/minecraft/unmapped/C_82920792	net/minecraft/client/render/texture/TextureManager
+	m	(Lnet/minecraft/unmapped/C_22168528;)Lnet/minecraft/unmapped/C_65241354;	m_17123242	getTexture
+c	net/minecraft/unmapped/C_95503740	net/minecraft/client/sound/system/SoundManager
+	m	(Lnet/minecraft/unmapped/C_28706180;F)V	m_88002341	updateSourceVolume
+	m	(Lnet/minecraft/unmapped/C_53396390;)Z	m_92956382	isActive
+c	net/minecraft/unmapped/C_98888256	net/minecraft/item/Item
+	m	()Ljava/lang/String;	m_27822537	getDescriptionId
