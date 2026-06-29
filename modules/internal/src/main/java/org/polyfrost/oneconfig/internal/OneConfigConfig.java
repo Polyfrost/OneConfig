@@ -50,6 +50,16 @@ public class OneConfigConfig extends Config {
     public static boolean enableBackgroundBlur = true;
 
     @Switch(
+        title = "oneconfig.preferences.pause_game.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.gui",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.pause_game.description",
+        descriptionTranslation = true
+    )
+    public static boolean pauseGame = false;
+
+    @Switch(
         title = "oneconfig.preferences.use_custom_scale.title",
         titleTranslation = true,
         subcategory = "oneconfig.preferences.category.gui",
@@ -108,6 +118,16 @@ public class OneConfigConfig extends Config {
         descriptionTranslation = true
     )
     public static boolean instantSearch = true;
+
+    @Switch(
+        title = "oneconfig.preferences.show_option_action_buttons.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.gui",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.show_option_action_buttons.description",
+        descriptionTranslation = true
+    )
+    public static boolean showOptionActionButtons = true;
 
     @Slider(
         title = "oneconfig.preferences.time_before_reset.title",

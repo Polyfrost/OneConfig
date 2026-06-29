@@ -2,7 +2,9 @@ package org.polyfrost.oneconfig.internal.ui.components.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -16,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -27,6 +30,7 @@ import androidx.compose.ui.window.PopupProperties
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
+import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.api.settings.BooleanOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
@@ -90,6 +94,42 @@ fun BooleanOption(data: BooleanOptionData) {
     when (data.style) {
         BooleanOptionData.Style.Switch -> SwitchControl(checked) { checked = it; data.boolProp.set(it) }
         BooleanOptionData.Style.Checkbox -> CheckboxControl(checked) { checked = it; data.boolProp.set(it) }
+    }
+}
+
+@Composable
+fun OptionActionButton(
+    visible: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    val theme = LocalTheme.current
+    val interactionSource = rememberInteractionSource()
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    val color = if (isHovered) theme.textColor else theme.textColorSecondary
+
+    if (!visible) {
+        Box(modifier = modifier.size(24.dp).alpha(0f))
+        return
+    }
+
+    Tooltip(
+        text = {
+            Text("More actions. Right-click option as shortcut.", color = theme.textColor, fontSize = 12.sp)
+        },
+        modifier = Modifier,
+        anchor = Alignment.TopCenter,
+    ) {
+        Box(
+            modifier = modifier
+                .size(24.dp)
+                .clip(theme.sideBarNavigationEntryShape)
+                .onClick(interactionSource, onClick)
+                .pointerHoverIcon(PointerIcon.Hand),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon("dots-vertical", color = color, modifier = Modifier.size(16.dp))
+        }
     }
 }
 

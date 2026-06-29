@@ -5,13 +5,16 @@ import org.jetbrains.skia.GLAssembledInterface
 import org.jetbrains.skia.makeGLWithInterface
 import org.lwjgl.opengl.GL
 import org.lwjgl.system.APIUtil
+//? if >=26.1
 import org.lwjgl.system.Callback
 import org.lwjgl.system.CallbackI
 import org.lwjgl.system.FunctionProvider
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.Pointer
+import org.lwjgl.system.libffi.FFICIF
 import org.lwjgl.system.libffi.LibFFI
 import org.slf4j.LoggerFactory
+//? if >=26.1
 import java.lang.invoke.MethodHandles
 
 internal object GLInterfaceFactory {
@@ -59,7 +62,10 @@ internal object GLInterfaceFactory {
         private val provider: FunctionProvider,
     ) : CallbackI {
 
+        //? if >=26.1
         override fun getDescriptor(): Callback.Descriptor = DESCRIPTOR
+        //? if <26.1
+        /*override fun getCallInterface(): FFICIF = CALL_INTERFACE*/
 
         override fun callback(ret: Long, args: Long) {
             var addr = 0L
@@ -77,15 +83,14 @@ internal object GLInterfaceFactory {
         }
 
         companion object {
-            private val DESCRIPTOR: Callback.Descriptor = Callback.Descriptor(
-                MethodHandles.lookup(),
-                APIUtil.apiCreateCIF(
-                    LibFFI.FFI_DEFAULT_ABI,
-                    LibFFI.ffi_type_pointer,
-                    LibFFI.ffi_type_pointer,
-                    LibFFI.ffi_type_pointer,
-                ),
+            private val CALL_INTERFACE: FFICIF = APIUtil.apiCreateCIF(
+                LibFFI.FFI_DEFAULT_ABI,
+                LibFFI.ffi_type_pointer,
+                LibFFI.ffi_type_pointer,
+                LibFFI.ffi_type_pointer,
             )
+            //? if >=26.1
+            private val DESCRIPTOR: Callback.Descriptor = Callback.Descriptor(MethodHandles.lookup(), CALL_INTERFACE)
         }
     }
 }

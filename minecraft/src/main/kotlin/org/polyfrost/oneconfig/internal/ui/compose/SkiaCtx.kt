@@ -56,6 +56,7 @@ object SkiaCtx {
     }
 
     private val queuedHudDraws = CopyOnWriteArrayList<() -> Unit>()
+    private val queuedNotifDraws = CopyOnWriteArrayList<() -> Unit>()
     private val queuedDraws = CopyOnWriteArrayList<() -> Unit>()
     private val queuedWarmups = CopyOnWriteArrayList<() -> Unit>()
 
@@ -150,6 +151,10 @@ object SkiaCtx {
 
     fun queueHudDraw(block: Runnable) {
         queuedHudDraws.add { block.run() }
+    }
+
+    fun queueNotifDraw(block: Runnable) {
+        queuedNotifDraws.add { block.run() }
     }
 
     fun queueDraw(block: () -> Unit) {
@@ -377,7 +382,9 @@ object SkiaCtx {
         runWarmups()
         val draws = queuedDraws.toList()
         queuedDraws.clear()
-        if (draws.isEmpty()) return
+        val notifDraws = queuedNotifDraws.toList()
+        queuedNotifDraws.clear()
+        if (draws.isEmpty() && notifDraws.isEmpty()) return
 
         currentSurface = if (isVulkanMode) {
             resolveVkSurface()
@@ -404,6 +411,7 @@ object SkiaCtx {
             }
 
             draws.forEach { it() }
+            notifDraws.forEach { it() }
 
             if (isVulkanMode) {
                 directContext.flushAndSubmit(currentSurface!!, false)

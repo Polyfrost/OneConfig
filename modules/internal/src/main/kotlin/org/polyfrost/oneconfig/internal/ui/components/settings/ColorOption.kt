@@ -241,7 +241,10 @@ fun ColorOption(data: ColorOptionData) {
         }
     }
 
-    ChromaColorAnimation(pickerModel) { persistColor(it) }
+    ChromaColorAnimation(pickerModel) {
+        currentColor = it
+        if (data.prop.type == PolyColor::class.java) updateAccent()
+    }
 
     Box {
         Row(

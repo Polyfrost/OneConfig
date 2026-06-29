@@ -240,7 +240,10 @@ private fun ToastIcon(notification: Notification, a: Float) {
     val tint = NotificationTheme.accentFor(notification.type).multiplyAlpha(a)
     PolyCanvas(modifier = PolyModifier.size(ICON_SIZE, ICON_SIZE).align(PolyAlign.Top)) { x, y, w, h ->
         if (custom != null) {
-            image(custom, x, y, w, h, Paint().also { it.setAlphaf(a) })
+            val s = minOf(w / custom.width.toFloat(), h / custom.height.toFloat())
+            val dw = custom.width * s
+            val dh = custom.height * s
+            image(custom, x + (w - dw) / 2f, y + (h - dh) / 2f, dw, dh, Paint().also { it.setAlphaf(a) })
         } else {
             val img = SvgRasterizer.get(notification.type.iconName, (w * ICON_RASTER_SCALE).toInt())
             if (img != null) {

@@ -3,6 +3,8 @@ package org.polyfrost.oneconfig.internal.ui.screens
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,23 +32,31 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
+import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
+import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
+import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.searchMatches
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindConflicts
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
+import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindEntry
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroup
@@ -157,10 +167,21 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
     val prop = entry.prop
     var menuOpen by remember(prop) { mutableStateOf(false) }
     var menuOffset by remember(prop) { mutableStateOf(IntOffset.Zero) }
+    var rowOrigin by remember(prop) { mutableStateOf(Offset.Zero) }
+    var actionMenuOffset by remember(prop) { mutableStateOf(IntOffset.Zero) }
+    val rowInteraction = rememberInteractionSource()
+    val isRowHovered by rowInteraction.collectIsHoveredAsState()
+    val showActionButton = OneConfigConfig.showOptionActionButtons
+    fun openMenuFromActionButton() {
+        menuOffset = actionMenuOffset
+        menuOpen = true
+    }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .hoverable(rowInteraction)
+            .onGloballyPositioned { rowOrigin = it.positionInRoot() }
             .pointerInput(prop) {
                 awaitPointerEventScope {
                     while (true) {
@@ -211,12 +232,12 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
-                        prop.title ?: prop.id ?: "",
+                        prop.localizedTitle(),
                         color = theme.textColor,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
                     )
-                    prop.description?.takeUnless { it.isEmptyText() }?.let {
+                    prop.localizedDescription()?.takeUnless { it.isEmptyText() }?.let {
                         Text(it, color = theme.textColorSecondary, fontSize = 13.sp)
                     }
                     Text(
@@ -239,6 +260,16 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
                         }
                     }
                 }
+            }
+            if (showActionButton) {
+                OptionActionButton(
+                    visible = isRowHovered || menuOpen,
+                    modifier = Modifier.onGloballyPositioned {
+                        val pos = it.positionInRoot() - rowOrigin
+                        actionMenuOffset = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
+                    },
+                    onClick = ::openMenuFromActionButton,
+                )
             }
             Option(prop)
         }

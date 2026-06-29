@@ -37,20 +37,25 @@ internal object SvgRasterizer {
 
     private class Optional(val image: Image?)
 
-    fun get(iconName: String, pixelSize: Int): Image? {
+    fun get(iconName: String, pixelSize: Int): Image? = getByPath("/assets/oneconfig/ico/$iconName.svg", pixelSize)
+
+    fun getByPath(resourcePath: String, pixelSize: Int): Image? {
         val size = pixelSize.coerceIn(1, 512)
-        return cache.getOrPut("$iconName@$size") { Optional(rasterize(iconName, size)) }.image
+        return cache.getOrPut("$resourcePath@$size") { Optional(rasterize(resourcePath, size)) }.image
     }
 
-    private fun rasterize(iconName: String, size: Int): Image? = runCatching {
-        val bytes = readResource("/assets/oneconfig/ico/$iconName.svg") ?: return null
+    private fun rasterize(resourcePath: String, size: Int): Image? = runCatching {
+        val bytes = readResource(resourcePath) ?: return null
         val dom = SVGDOM(Data.makeFromBytes(bytes))
         val root = dom.root
         val intrinsicW = root?.width?.value?.takeIf { it > 0f } ?: size.toFloat()
         val intrinsicH = root?.height?.value?.takeIf { it > 0f } ?: size.toFloat()
         dom.setContainerSize(intrinsicW, intrinsicH)
-        val surface = Surface.makeRasterN32Premul(size, size)
-        surface.canvas.scale(size / intrinsicW, size / intrinsicH)
+        val scale = size / maxOf(intrinsicW, intrinsicH)
+        val w = maxOf(1, Math.round(intrinsicW * scale))
+        val h = maxOf(1, Math.round(intrinsicH * scale))
+        val surface = Surface.makeRasterN32Premul(w, h)
+        surface.canvas.scale(scale, scale)
         dom.render(surface.canvas)
         surface.makeImageSnapshot()
     }.getOrNull()

@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.compat
 
+//? modmenu_compat {
 import com.terraformersmc.modmenu.api.ConfigScreenFactory
 import com.terraformersmc.modmenu.api.ModMenuApi
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
@@ -16,3 +17,4 @@ internal object ModMenuEntrypoint : ModMenuApi {
     }
 
 }
+//? }

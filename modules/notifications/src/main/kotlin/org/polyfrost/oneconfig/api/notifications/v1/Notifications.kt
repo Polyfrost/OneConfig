@@ -106,6 +106,10 @@ object Notifications {
     fun clearAll() = NotificationsManager.clearAll()
 
     @JvmStatic
+    @JvmOverloads
+    fun icon(resourcePath: String, size: Int = 64): Image? = SvgRasterizer.getByPath(resourcePath, size)
+
+    @JvmStatic
     fun builder(title: String, message: String): Builder = Builder(title, message)
 
     class Builder internal constructor(private val title: String, private val message: String) {

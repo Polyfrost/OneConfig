@@ -8,6 +8,7 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.TreeConfigData
+import org.polyfrost.oneconfig.internal.ui.components.localizedGroup
 
 data class KeybindGroup(
     val modId: String,
@@ -68,8 +69,8 @@ private fun collectKeybindEntries(node: Node, path: String, entries: MutableList
             if (node.isKeybindProperty()) {
                 entries += KeybindEntry(
                     path = path,
-                    category = node.groupName("category", ConfigVisualizer.DEFAULT_CATEGORY),
-                    subcategory = node.groupName("subcategory", ConfigVisualizer.DEFAULT_SUBCATEGORY),
+                    category = node.localizedGroup("category", "categoryKey", ConfigVisualizer.DEFAULT_CATEGORY),
+                    subcategory = node.localizedGroup("subcategory", "subcategoryKey", ConfigVisualizer.DEFAULT_SUBCATEGORY),
                     prop = node,
                 )
             }
@@ -86,9 +87,4 @@ fun Property<*>.isKeybindProperty(): Boolean {
         is Visualizer.KeybindVisualizer -> true
         else -> false
     }
-}
-
-private fun Node.groupName(key: String, default: String): String {
-    val value = getMetadata<String>(key)?.trim()
-    return value?.takeUnless(String::isEmpty) ?: default
 }

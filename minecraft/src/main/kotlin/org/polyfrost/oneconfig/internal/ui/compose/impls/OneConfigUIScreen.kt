@@ -89,6 +89,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
         super.removed()
     }
 
+    override fun isPauseScreen(): Boolean = OneConfigConfig.pauseGame
+
     @Suppress("DuplicatedCode")
     //? >= 1.21.10 {
     override fun keyPressed(event: KeyEvent): Boolean {

@@ -50,63 +50,7 @@ private val KeybindShape @Composable get() = LocalTheme.current.sideBarNavigatio
 private val CONFLICT_COLOR = Color(0xFFE0524F)
 
 /** Human-readable name for a GLFW key code. */
-private fun keyCodeToName(glfwCode: Int): String = when (glfwCode) {
-    -1 -> "None"
-    32 -> "Space"
-    39 -> "'"
-    44 -> ","
-    45 -> "-"
-    46 -> "."
-    47 -> "/"
-    59 -> ";"
-    61 -> "="
-    91 -> "["
-    92 -> "\\"
-    93 -> "]"
-    96 -> "`"
-    161 -> "Non-US #1"
-    162 -> "Non-US #2"
-    256 -> "Escape"
-    257 -> "Enter"
-    258 -> "Tab"
-    259 -> "Backspace"
-    260 -> "Insert"
-    261 -> "Delete"
-    262 -> "Right"
-    263 -> "Left"
-    264 -> "Down"
-    265 -> "Up"
-    266 -> "Page Up"
-    267 -> "Page Down"
-    268 -> "Home"
-    269 -> "End"
-    280 -> "Caps Lock"
-    281 -> "Scroll Lock"
-    282 -> "Num Lock"
-    283 -> "Print Screen"
-    284 -> "Pause"
-    330 -> "Numpad ."
-    331 -> "Numpad /"
-    332 -> "Numpad *"
-    333 -> "Numpad -"
-    334 -> "Numpad +"
-    335 -> "Numpad Enter"
-    336 -> "Numpad ="
-    340 -> "Left Shift"
-    344 -> "Right Shift"
-    341 -> "Left Ctrl"
-    345 -> "Right Ctrl"
-    342 -> "Left Alt"
-    346 -> "Right Alt"
-    343 -> "Left Super"
-    347 -> "Right Super"
-    348 -> "Menu"
-    in 48..57 -> ('0' + (glfwCode - 48)).toString()
-    in 65..90 -> ('A' + (glfwCode - 65)).toString()
-    in 290..313 -> "F${glfwCode - 289}"          // F1..F24
-    in 320..329 -> "Numpad ${glfwCode - 320}"    // KP_0..KP_9
-    else -> "Key $glfwCode"
-}
+private fun keyCodeToName(glfwCode: Int): String = OneConfigKeybind.keyName(glfwCode)
 
 private fun modifierBit(glfwCode: Int): Byte? = when (glfwCode) {
     340, 344 -> KeyModifiers.SHIFT
@@ -114,13 +58,6 @@ private fun modifierBit(glfwCode: Int): Byte? = when (glfwCode) {
     342, 346 -> KeyModifiers.ALT
     343, 347 -> KeyModifiers.META
     else -> null
-}
-
-private fun modifierNames(mods: Byte): List<String> = buildList {
-    if (KeyModifiers.has(mods, KeyModifiers.CTRL)) add("Ctrl")
-    if (KeyModifiers.has(mods, KeyModifiers.SHIFT)) add("Shift")
-    if (KeyModifiers.has(mods, KeyModifiers.ALT)) add("Alt")
-    if (KeyModifiers.has(mods, KeyModifiers.META)) add("Meta")
 }
 
 private fun splitModifiers(codes: List<Int>): Pair<Byte, IntArray> {
@@ -134,15 +71,7 @@ private fun splitModifiers(codes: List<Int>): Pair<Byte, IntArray> {
     return mods to keys.toIntArray()
 }
 
-private fun keybindDisplayName(keybind: OneConfigKeybind?): String {
-    if (keybind == null || !keybind.isBound) return "None"
-    // LinkedHashSet dedups the left/right entries that a single modifier expands into (e.g. "Shift" + "Shift").
-    val parts = LinkedHashSet<String>()
-    parts += modifierNames(keybind.mods)
-    keybind.keyCodes?.forEach { parts += keyCodeToName(it) }
-    keybind.mouseBtns?.forEach { parts += "Mouse ${it + 1}" }
-    return parts.joinToString(" + ").ifEmpty { "None" }
-}
+private fun keybindDisplayName(keybind: OneConfigKeybind?): String = keybind?.displayName() ?: "None"
 
 private fun KeyEvent.awtKeyEventId(): Int? = runCatching {
     val internal = nativeKeyEvent

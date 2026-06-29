@@ -46,8 +46,14 @@ import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
+import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
+import org.polyfrost.oneconfig.api.event.v1.events.WorldEvent;
+import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent;
+import org.polyfrost.oneconfig.api.notifications.v1.Notification;
+import org.polyfrost.oneconfig.api.notifications.v1.NotificationType;
+import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsRenderer;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
@@ -177,6 +183,9 @@ public class OneConfig
         SkiaCtx.INSTANCE.queueHudDraw(() -> {
             var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
             HudManager.INSTANCE.render(ctx, sw, sh);
+        });
+        SkiaCtx.INSTANCE.queueNotifDraw(() -> {
+            var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
             NotificationsRenderer.render(ctx, sw, sh);
         });
         // Render Skia HUDs into the offscreen TextureTarget.
@@ -214,6 +223,7 @@ public class OneConfig
                     org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar.register();
                     org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry.INSTANCE.loadFromConfig();
                 });
+        EventManager.register(WorldEvent.Load.class, e -> showFirstLaunchNotification());
 //        //#if MC < 1.13
 //        // this is cringe but is better than the alternative of checking every frame in a mixin (that's how vanilla does it lol)
 //        AtomicBoolean active = new AtomicBoolean(false);
@@ -226,6 +236,44 @@ public class OneConfig
 //            }
 //        });
 //        //#endif
+    }
+
+    private static Notification firstLaunchToast;
+    private static EventHandler<ScreenOpenEvent> firstLaunchScreenWatcher;
+
+    private static void showFirstLaunchNotification() {
+        if (!OneConfigConfig.showFirstLaunchMessage) {
+            return;
+        }
+        OneConfigConfig.markFirstLaunchShown();
+        String keyName = OneConfigConfig.oneConfigKeybind.displayName();
+        String title = Platform.i18n().translateString("oneconfig.notification.first_launch.title");
+        String message = Platform.i18n().translateString("oneconfig.notification.first_launch.message", keyName);
+        firstLaunchToast = Notifications.send(
+                title,
+                message,
+                NotificationType.INFO,
+                Notifications.icon("/assets/oneconfig/brand/oneconfig-icon.svg", 64),
+                -1f,
+                null,
+                () -> Platform.screen().display(new OneConfigUIScreen()));
+        firstLaunchScreenWatcher = EventManager.register(
+                ScreenOpenEvent.class, e -> {
+                    if (e.getScreen() instanceof OneConfigUIScreen) {
+                        dismissFirstLaunchToast();
+                    }
+                });
+    }
+
+    private static void dismissFirstLaunchToast() {
+        if (firstLaunchToast != null) {
+            Notifications.dismiss(firstLaunchToast);
+            firstLaunchToast = null;
+        }
+        if (firstLaunchScreenWatcher != null) {
+            EventManager.INSTANCE.unregister(firstLaunchScreenWatcher);
+            firstLaunchScreenWatcher = null;
+        }
     }
 
     //? neoforge {

@@ -38,6 +38,8 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 object NotificationsRenderer {
     private val LOGGER = LogManager.getLogger("OneConfig/Notifications")
 
+    private const val BASE_SCALE = 0.4f
+
     @Volatile
     private var runtime: PolyComposeRuntime? = null
 
@@ -53,29 +55,34 @@ object NotificationsRenderer {
      */
     @JvmStatic
     fun render(ctx: RenderContext, screenWidth: Float, screenHeight: Float) {
-        val scale = Platform.compatibility().options().guiScale
-        val pixelWidth = screenWidth * scale
-        val pixelHeight = screenHeight * scale
-        ToastViewport.width = pixelWidth
-        ToastViewport.height = pixelHeight
+        val guiScale = Platform.compatibility().options().guiScale
+        val scale = guiScale * BASE_SCALE
+        val viewWidth = screenWidth * guiScale / scale
+        val viewHeight = screenHeight * guiScale / scale
+        ToastViewport.width = viewWidth
+        ToastViewport.height = viewHeight
 
         Snapshot.sendApplyNotifications()
         val rt = runtime()
-        rt.frame(pixelWidth, pixelHeight)
-        handleInput(rt.root)
+        rt.frame(viewWidth, viewHeight)
+        handleInput(rt.root, scale)
+
+        ctx.save()
+        ctx.scale(scale, scale)
         rt.root.render(ctx)
+        ctx.restore()
     }
 
-    private fun handleInput(root: PolyNode) {
+    private fun handleInput(root: PolyNode, scale: Float) {
         // Reset hover state each frame.
         for (notification in NotificationsManager.active) notification.hovered = false
         ToastInput.hoveredAction = null
         ToastInput.hoverTarget = null
 
         val screenOpen = Platform.screen().current<Any?>() != null
-        val mx = ToastInput.mouseX
-        val my = ToastInput.mouseY
-        if (!screenOpen || mx < 0f || my < 0f) return
+        val mx = ToastInput.mouseX / scale
+        val my = ToastInput.mouseY / scale
+        if (!screenOpen || ToastInput.mouseX < 0f || ToastInput.mouseY < 0f) return
 
         val hits = ArrayList<PolyNode>()
         collectHits(root, hits)
