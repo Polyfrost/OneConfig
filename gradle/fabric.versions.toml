@@ -1,5 +1,5 @@
 [versions]
-loom = "1.16-SNAPSHOT"
+loom = "1.17-SNAPSHOT"
 loader = "0.19.2"
 
 [libraries]

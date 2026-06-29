@@ -1,3 +1,6 @@
+import net.fabricmc.loom.build.nesting.NestableJarGenerationTask
+import net.fabricmc.loom.task.NestJarsAction
+
 // compose-bundle ships as a standalone Fabric mod (see src/main/resources/fabric.mod.json)
 // so the shaded Compose/skiko runtime can be published to Modrinth separately. It is
 // therefore excluded from the bootstrap JiJ (see oneconfig-bootstrap.gradle.kts).
@@ -9,7 +12,9 @@ repositories {
 }
 
 val shade: Configuration by configurations.creating {
+    isTransitive = true
     exclude(group = "org.jetbrains.kotlin")
+    exclude(group = "org.jetbrains.androidx.lifecycle")
     exclude(group = "org.jetbrains.kotlinx")
     exclude(group = "org.jetbrains", module = "annotations")
 }
@@ -40,14 +45,29 @@ dependencies {
     shade(libs.jetbrains.viewmodel)
 }
 
+private fun createProcessTask(): TaskProvider<NestableJarGenerationTask> {
+
+    return project.tasks.register("processShadeJars", NestableJarGenerationTask::class.java) {
+        description = ""
+        from(shade)
+        outputDirectory.set(project.layout.buildDirectory.dir(name))
+        uncompressNestedJars.set(false)
+    }
+}
+
+val processTask = createProcessTask()
+
+private fun getOutputJars(): FileCollection {
+    return project.fileTree(processTask.flatMap(Transformer { it.outputDirectory })).matching { include("*.jar") }
+}
+
 tasks.jar {
-    from(shade.map { file ->
-        when {
-            isExcludedFromBundle(file) -> files()
-            file.isDirectory -> fileTree(file)
-            else -> zipTree(file)
-        }
-    })
+    dependsOn(processTask)
+
+    NestJarsAction.addToTask(this, getOutputJars())
+}
+
+tasks.jar {
     exclude(
         "kotlin/**",
         "kotlinx/**",
