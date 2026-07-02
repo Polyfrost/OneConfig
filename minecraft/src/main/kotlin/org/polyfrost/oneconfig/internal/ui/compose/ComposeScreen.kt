@@ -149,16 +149,25 @@ abstract class ComposeScreen(
 
     }
 
-    override fun onClose() {
-        ComposeSceneContextImpl.resetPointerIcon()
+    private var sceneClosed = false
+
+    private fun disposeScene() {
+        if (sceneClosed) return
+        sceneClosed = true
         try {
             scene.close()
         } catch (_: Throwable) {
         }
     }
 
+    override fun onClose() {
+        ComposeSceneContextImpl.resetPointerIcon()
+        disposeScene()
+    }
+
     override fun removed() {
         ComposeSceneContextImpl.resetPointerIcon()
+        disposeScene()
         super.removed()
     }
 
