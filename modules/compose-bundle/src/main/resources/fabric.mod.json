@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "compose-bundle",
+  "id": "compose-multiplatform",
   "version": "${version}",
   "name": "Compose Multiplatform",
   "description": "Library mod bundling JetBrains' Compose Multiplatform libs.",
