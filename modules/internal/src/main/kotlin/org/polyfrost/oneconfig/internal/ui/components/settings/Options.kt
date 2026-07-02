@@ -30,6 +30,7 @@ import androidx.compose.ui.window.PopupProperties
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.api.settings.BooleanOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
@@ -47,6 +48,10 @@ private val resetEpochs = mutableStateMapOf<Property<*>, Int>()
 
 /** True if [prop] has a captured default value that can be restored. */
 fun optionHasDefault(prop: Property<*>): Boolean = prop.getMetadata<Any?>("default") != null
+
+fun bumpResetEpoch(prop: Property<*>) {
+    resetEpochs[prop] = (resetEpochs[prop] ?: 0) + 1
+}
 
 /** Restore [prop] to the default value captured at config initialization, and refresh its UI. */
 @Suppress("UNCHECKED_CAST")
@@ -145,9 +150,13 @@ fun OptionContextMenu(
     onDismiss: () -> Unit,
     resetEnabled: Boolean = optionHasDefault(prop),
     onReset: (() -> Unit)? = null,
+    onUnbind: (() -> Unit)? = null,
 ) {
     if (!expanded) return
     val theme = LocalTheme.current
+    val isKeybind = remember(prop) { prop.get() is OneConfigKeybind }
+    val effectiveReset = onReset ?: if (isKeybind) ({ resetKeybindOption(prop) }) else null
+    val effectiveUnbind = onUnbind ?: if (isKeybind) ({ unbindKeybindOption(prop) }) else null
     Popup(
         alignment = Alignment.TopStart,
         offset = offset,
@@ -161,8 +170,14 @@ fun OptionContextMenu(
                 .padding(4.dp),
         ) {
             ContextMenuItem("refresh", "Reset to default", enabled = resetEnabled) {
-                if (onReset != null) onReset() else resetOption(prop)
+                if (effectiveReset != null) effectiveReset() else resetOption(prop)
                 onDismiss()
+            }
+            if (effectiveUnbind != null) {
+                ContextMenuItem("close", "Unbind", enabled = true) {
+                    effectiveUnbind()
+                    onDismiss()
+                }
             }
         }
     }

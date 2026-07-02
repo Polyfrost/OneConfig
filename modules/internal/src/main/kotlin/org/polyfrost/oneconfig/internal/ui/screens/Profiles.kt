@@ -23,10 +23,15 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -91,22 +96,30 @@ fun Profiles() {
     var profiles by remember { mutableStateOf(loadProfiles()) }
     var newProfileName by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    var busy by remember { mutableStateOf(false) }
+    var createTick by remember { mutableIntStateOf(0) }
 
     fun refresh() {
         ConfigRegistry.loadFrom(ConfigManager.active(), ConfigSource.OC)
         profiles = loadProfiles()
     }
 
-    fun runProfileAction(action: () -> Unit): Boolean {
-        try {
-            action()
-            error = null
-            refresh()
-            return true
-        } catch (t: Throwable) {
-            error = t.message ?: t::class.java.simpleName
-            profiles = loadProfiles()
-            return false
+    fun runProfileAction(onSuccess: () -> Unit = {}, action: () -> Unit) {
+        if (busy) return
+        busy = true
+        scope.launch(Dispatchers.IO) {
+            try {
+                action()
+                error = null
+                refresh()
+                onSuccess()
+            } catch (t: Throwable) {
+                error = t.message ?: t::class.java.simpleName
+                profiles = loadProfiles()
+            } finally {
+                busy = false
+            }
         }
     }
 
@@ -146,17 +159,18 @@ fun Profiles() {
                 else "No profiles match \"$localSearchQuery\"",
             newProfileName = newProfileName,
             createError = error,
+            busy = busy,
+            createTick = createTick,
             onNewProfileNameChange = {
                 newProfileName = it
                 error = null
             },
             onCreateProfile = {
                 val profileName = newProfileName
-                val created = runProfileAction {
+                runProfileAction(onSuccess = { createTick++ }) {
                     ConfigManager.createProfile(profileName)
                     newProfileName = ""
                 }
-                created
             },
             onOpen = { profile ->
                 if (!profile.active) {
@@ -207,8 +221,10 @@ private fun ColumnScope.ProfilesGrid(
     emptyMessage: String,
     newProfileName: String,
     createError: String?,
+    busy: Boolean,
+    createTick: Int,
     onNewProfileNameChange: (String) -> Unit,
-    onCreateProfile: () -> Boolean,
+    onCreateProfile: () -> Unit,
     onOpen: (UiProfile) -> Unit,
     onFavorite: (UiProfile) -> Unit,
     onRename: (UiProfile, String) -> Unit,
@@ -233,6 +249,8 @@ private fun ColumnScope.ProfilesGrid(
                 CreateProfileCard(
                     value = newProfileName,
                     error = createError,
+                    busy = busy,
+                    createTick = createTick,
                     onValueChange = onNewProfileNameChange,
                     onCreate = onCreateProfile,
                 )
@@ -257,14 +275,20 @@ private fun ColumnScope.ProfilesGrid(
 private fun CreateProfileCard(
     value: String,
     error: String?,
+    busy: Boolean,
+    createTick: Int,
     onValueChange: (String) -> Unit,
-    onCreate: () -> Boolean,
+    onCreate: () -> Unit,
 ) {
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
     val theme = LocalTheme.current
     val shape = theme.modCardShape
     var creating by remember { mutableStateOf(false) }
+
+    LaunchedEffect(createTick) {
+        if (createTick > 0) creating = false
+    }
 
     val borderColor by animateColorAsState(
         if (creating || isHovered) Accent else theme.borderColor
@@ -298,12 +322,13 @@ private fun CreateProfileCard(
             ) {
                 ActionIcon(
                     icon = "tick",
+                    enabled = !busy,
                     tint = theme.textColorSecondary.copy(0.45f),
                     hoveredTint = Accent,
                 ) {
-                    if (onCreate()) creating = false
+                    onCreate()
                 }
-                ActionIcon("close", tint = theme.textColorSecondary) {
+                ActionIcon("close", enabled = !busy, tint = theme.textColorSecondary) {
                     onValueChange("")
                     creating = false
                 }

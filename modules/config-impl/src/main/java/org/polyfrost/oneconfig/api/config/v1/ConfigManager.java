@@ -230,7 +230,12 @@ public final class ConfigManager {
         if (!profile.isEmpty() && !Files.isDirectory(profilePath(profile))) {
             throw new IllegalArgumentException("Profile does not exist: " + profile);
         }
+        List<Tree> externalTrees = new ArrayList<>();
         if (active != null) {
+            for (Tree t : active.trees()) {
+                String id = t.getID();
+                if (id != null && !initializedConfigs.containsKey(id)) externalTrees.add(t);
+            }
             if (saveCurrent) active.saveAll();
             active.close();
         }
@@ -244,6 +249,9 @@ public final class ConfigManager {
             active = new ConfigManager(PROFILES_DIR.resolve(profile), core.backend.getSerializers().toArray(new FileSerializer[0])).withHook().withWatcher();
         }
         rebindInitializedConfigs();
+        for (Tree t : externalTrees) {
+            active.register(t);
+        }
     }
 
     public static synchronized String activeProfile() {

@@ -73,6 +73,33 @@ private fun splitModifiers(codes: List<Int>): Pair<Byte, IntArray> {
 
 private fun keybindDisplayName(keybind: OneConfigKeybind?): String = keybind?.displayName() ?: "None"
 
+@Suppress("UNCHECKED_CAST")
+private fun writeKeybind(prop: Property<*>, keys: IntArray?, mouse: IntArray?, mods: Byte): OneConfigKeybind {
+    val old = prop.get() as? OneConfigKeybind
+    val existingAction = old?.action ?: { true }
+    val newKeybind = OneConfigKeybind(keys, mouse, mods, 0L, existingAction)
+    (prop as Property<Any>).set(newKeybind)
+    val applied = prop.get() as? OneConfigKeybind ?: newKeybind
+    KeybindManager.replace(old, applied)
+    KeybindConflicts.revision.intValue++
+    return applied
+}
+
+fun resetKeybindOption(prop: Property<*>) {
+    val def = prop.getMetadata<Any?>("default") as? OneConfigKeybind
+    if (def == null) {
+        writeKeybind(prop, null, null, KeyModifiers.NONE)
+    } else {
+        writeKeybind(prop, def.keyCodes?.clone(), def.mouseBtns?.clone(), def.mods)
+    }
+    bumpResetEpoch(prop)
+}
+
+fun unbindKeybindOption(prop: Property<*>) {
+    writeKeybind(prop, null, null, KeyModifiers.NONE)
+    bumpResetEpoch(prop)
+}
+
 private fun KeyEvent.awtKeyEventId(): Int? = runCatching {
     val internal = nativeKeyEvent
     val field = internal.javaClass.getDeclaredField("nativeEvent").apply { isAccessible = true }
@@ -104,16 +131,9 @@ fun KeybindOption(data: KeybindOptionData) {
     // bind keeps firing on the new key without the mod registering its own change callback. The action is carried
     // over from the previous keybind so it survives the rebind.
     fun applyKeybind(keys: IntArray?, mouse: IntArray?, mods: Byte = KeyModifiers.NONE) {
-        val old = (data.prop.get() as? OneConfigKeybind) ?: currentKeybind
-        val existingAction = old?.action ?: { true }
-        val newKeybind = OneConfigKeybind(keys, mouse, mods, 0L, existingAction)
-        @Suppress("UNCHECKED_CAST")
-        (data.prop as Property<Any>).set(newKeybind)
-        val applied = data.prop.get() as? OneConfigKeybind ?: newKeybind
-        KeybindManager.replace(old, applied)
+        val applied = writeKeybind(data.prop, keys, mouse, mods)
         currentKeybind = applied
         displayName = keybindDisplayName(applied)
-        KeybindConflicts.revision.intValue++
     }
 
     val bgColor by animateColorAsState(
