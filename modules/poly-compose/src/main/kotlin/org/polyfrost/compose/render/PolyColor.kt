@@ -75,6 +75,8 @@ class PolyColor @JvmOverloads constructor(
     override fun toString(): String = "PolyColor(#%08X)".format(argb.toLong() and 0xFFFFFFFFL)
 
     companion object {
+        const val CHROMA_CYCLE_SECONDS = 10.0
+
         val TRANSPARENT = PolyColor(0x00000000)
         val WHITE = PolyColor(0xFFFFFFFF.toInt())
         val BLACK = PolyColor(0xFF000000.toInt())
@@ -164,7 +166,7 @@ class PolyColor @JvmOverloads constructor(
             val alpha = (argb ushr 24) and 0xFF
             val hsb = rgbToHsb((argb ushr 16) and 0xFF, (argb ushr 8) and 0xFF, argb and 0xFF)
             val elapsedSeconds = System.nanoTime() / 1_000_000_000.0
-            val hue = ((hsb[0] + elapsedSeconds * speed.coerceAtLeast(0f)) % 1.0).toFloat()
+            val hue = ((hsb[0] + elapsedSeconds * speed.coerceAtLeast(0f) / CHROMA_CYCLE_SECONDS) % 1.0).toFloat()
             return hsv(hue * 360f, hsb[1], hsb[2], alpha / 255f).rawArgb
         }
 

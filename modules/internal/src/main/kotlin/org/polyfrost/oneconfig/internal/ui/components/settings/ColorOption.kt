@@ -167,7 +167,7 @@ internal fun ChromaColorAnimation(
             withInfiniteAnimationFrameNanos { frameNanos ->
                 val dt = (frameNanos - lastNanos) / 1_000_000_000f
                 lastNanos = frameNanos
-                model.hue = (model.hue + 360f * model.chromaSpeed * dt) % 360f
+                model.hue = (model.hue + (360f / PolyColor.CHROMA_CYCLE_SECONDS.toFloat()) * model.chromaSpeed * dt) % 360f
                 onColorChanged(model.currentColor())
             }
         }
