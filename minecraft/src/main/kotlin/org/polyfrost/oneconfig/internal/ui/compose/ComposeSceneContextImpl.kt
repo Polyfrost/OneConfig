@@ -45,7 +45,7 @@ private class WindowInfoImpl : WindowInfo {
         )
 
     override val isWindowFocused: Boolean
-        get() = glfwGetWindowAttrib(Platform.compatibility().windowHandle(), GLFW_FOCUSED) == GLFW_TRUE
+        get() = Minecraft.getInstance().isWindowActive
 }
 
 @OptIn(InternalComposeUiApi::class, ExperimentalComposeUiApi::class)
@@ -89,7 +89,7 @@ private class PlatformImpl : PlatformContext {
 
     override fun requestFocus(): Boolean {
         glfwFocusWindow(handle)
-        return glfwGetWindowAttrib(handle, GLFW_FOCUSED) == GLFW_TRUE
+        return Minecraft.getInstance().isWindowActive
     }
 
     private fun allowCursorChanges(): Boolean {

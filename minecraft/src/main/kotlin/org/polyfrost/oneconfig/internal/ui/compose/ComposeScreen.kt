@@ -175,7 +175,7 @@ abstract class ComposeScreen(
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
         syncSceneMetrics()
 
-        val focused = GLFW.glfwGetWindowAttrib(Platform.compatibility().windowHandle(), GLFW.GLFW_FOCUSED) == GLFW.GLFW_TRUE
+        val focused = client.isWindowActive
         if (focused) {
             try {
                 val pointerPosition = pointerPosition()
