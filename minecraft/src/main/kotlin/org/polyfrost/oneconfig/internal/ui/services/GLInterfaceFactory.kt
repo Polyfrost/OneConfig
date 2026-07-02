@@ -65,7 +65,7 @@ internal object GLInterfaceFactory {
         //? if >=26.1
         override fun getDescriptor(): Callback.Descriptor = DESCRIPTOR
         //? if <26.1
-        /*override fun getCallInterface(): FFICIF = CALL_INTERFACE*/
+        //override fun getCallInterface(): FFICIF = CALL_INTERFACE
 
         override fun callback(ret: Long, args: Long) {
             var addr = 0L
