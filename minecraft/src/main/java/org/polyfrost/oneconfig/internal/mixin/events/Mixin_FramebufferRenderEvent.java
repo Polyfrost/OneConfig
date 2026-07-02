@@ -11,20 +11,30 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Minecraft.class)
 public class Mixin_FramebufferRenderEvent {
 
-    @Inject(method = "runTick", at = @At(value = "INVOKE",
-            //? >= 1.21.4 {
-            target = "Lcom/mojang/blaze3d/platform/Window;updateDisplay(Lcom/mojang/blaze3d/TracyFrameCapture;)V"
-            //? } else
+    //~ if >= 26.1 'runTick' -> 'renderFrame'
+    @Inject(method = "renderFrame", at = @At(value = "INVOKE",
+            //? if >= 26.2 {
+            /*target = "Lcom/mojang/blaze3d/systems/GpuSurface;present()V"
+            *///?} elif 26.1 {
+            target = "Lcom/mojang/blaze3d/systems/RenderSystem;flipFrame(Lcom/mojang/blaze3d/TracyFrameCapture;)V"
+            //?} elif >= 1.21.4 {
+            /*target = "Lcom/mojang/blaze3d/platform/Window;updateDisplay(Lcom/mojang/blaze3d/TracyFrameCapture;)V"
+            *///?} else
             //target = "Lcom/mojang/blaze3d/platform/Window;updateDisplay()V"
     ))
     private void preFramebufferRenderCallback(CallbackInfo ci) {
         EventManager.INSTANCE.post(FramebufferRenderEvent.Start.INSTANCE);
     }
 
-    @Inject(method = "runTick", at = @At(value = "INVOKE",
-            //? >= 1.21.4 {
-            target = "Lcom/mojang/blaze3d/platform/Window;updateDisplay(Lcom/mojang/blaze3d/TracyFrameCapture;)V",
-            //? } else
+    //~ if >= 26.1 'runTick' -> 'renderFrame'
+    @Inject(method = "renderFrame", at = @At(value = "INVOKE",
+            //? if >= 26.2 {
+            /*target = "Lcom/mojang/blaze3d/systems/GpuSurface;present()V",
+            *///?} elif 26.1 {
+            target = "Lcom/mojang/blaze3d/systems/RenderSystem;flipFrame(Lcom/mojang/blaze3d/TracyFrameCapture;)V",
+            //?} elif >= 1.21.4 {
+            /*target = "Lcom/mojang/blaze3d/platform/Window;updateDisplay(Lcom/mojang/blaze3d/TracyFrameCapture;)V",
+            *///?} else
             //target = "Lcom/mojang/blaze3d/platform/Window;updateDisplay()V",
             shift = At.Shift.AFTER
     ))
