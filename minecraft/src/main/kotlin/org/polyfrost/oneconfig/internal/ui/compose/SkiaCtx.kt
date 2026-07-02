@@ -237,8 +237,8 @@ object SkiaCtx {
     fun drawComposeBlit(ctx: GuiGraphicsExtractor, block: Runnable) {
         if (!this::directContext.isInitialized) return
         //? if < 1.21.10 {
-        takeWorldSnapshotIfNeeded()
-        //? }
+        /*takeWorldSnapshotIfNeeded()
+        *///? }
         val queued = queuedDraws.toList()
         queuedDraws.clear()
         val draws = queued + { block.run() }
