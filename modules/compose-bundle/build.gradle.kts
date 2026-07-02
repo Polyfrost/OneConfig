@@ -5,7 +5,7 @@ import net.fabricmc.loom.task.NestJarsAction
 // so the shaded Compose/skiko runtime can be published to Modrinth separately. It is
 // therefore excluded from the bootstrap JiJ (see oneconfig-bootstrap.gradle.kts).
 group = "${rootProject.group}.compose"
-version = "1.0.1+compose.${libs.versions.compose.asProvider().get()}"
+version = "1.0.2+compose.${libs.versions.compose.asProvider().get()}"
 
 repositories {
     maven("https://redirector.kotlinlang.org/maven/compose-dev")
