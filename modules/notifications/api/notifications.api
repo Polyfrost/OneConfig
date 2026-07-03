@@ -64,12 +64,15 @@ public final class org/polyfrost/oneconfig/api/notifications/v1/NotificationThem
 	public final fun getError ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getFontBody ()Ljava/lang/String;
 	public final fun getFontTitle ()Ljava/lang/String;
+	public final fun getRadiusButton ()F
+	public final fun getRadiusCard ()F
+	public final fun getRadiusProgress ()F
 	public final fun getSubtleButton ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getSuccess ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getTextPrimary ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getTextSecondary ()Lorg/polyfrost/compose/render/PolyColor;
-	public final fun set (Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Ljava/lang/String;Ljava/lang/String;)V
-	public static synthetic fun set$default (Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationTheme;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)V
+	public final fun set (Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Ljava/lang/String;Ljava/lang/String;FFF)V
+	public static synthetic fun set$default (Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationTheme;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Ljava/lang/String;Ljava/lang/String;FFFILjava/lang/Object;)V
 }
 
 public final class org/polyfrost/oneconfig/api/notifications/v1/NotificationToastsKt {
