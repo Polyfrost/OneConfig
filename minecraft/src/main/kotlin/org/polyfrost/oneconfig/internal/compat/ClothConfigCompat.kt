@@ -1,6 +1,7 @@
 //? clothconfig_compat {
 package org.polyfrost.oneconfig.internal.compat
 
+import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -30,7 +31,7 @@ object ClothConfigCompat {
                 return
             }
             val tree = parseBuilder(builder, mod) ?: return
-            ConfigManager.active().register(tree)
+            CompatSnapshots.register(tree)
             CompatLoader.markFirstModAsSkip()
         }.onFailure {
             LOGGER.warn("Failed to parse Cloth config", it)

@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -25,6 +26,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -52,6 +54,7 @@ import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
+import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.searchMatches
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindConflicts
@@ -60,6 +63,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButto
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindEntry
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroup
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroupCollapseStore
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry
 import org.polyfrost.oneconfig.internal.ui.keybind.collectAllKeybindGroups
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
@@ -97,6 +101,8 @@ fun Keybinds() {
         KeybindConflicts.conflictMap()
     }
 
+    val searching = localSearchQuery.isNotBlank()
+
     val listState = rememberLazyListState()
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
@@ -105,15 +111,23 @@ fun Keybinds() {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             visibleGroups.forEach { group ->
+                val storedCollapsed = KeybindGroupCollapseStore.isCollapsed(group.modId)
+                val expanded = searching || !storedCollapsed
                 item(key = "header:$revision:${group.modId}") {
-                    KeybindGroupHeader(group)
+                    KeybindGroupHeader(
+                        group = group,
+                        expanded = expanded,
+                        onToggle = { KeybindGroupCollapseStore.setCollapsed(group.modId, !storedCollapsed) },
+                    )
                 }
-                items(
-                    items = group.entries,
-                    key = { entry -> "$revision:${group.modId}:${entry.path}" },
-                ) { entry ->
-                    key(revision, entry.prop) {
-                        KeybindRow(entry, conflictsWith = conflicts[entry.prop].orEmpty())
+                if (expanded) {
+                    items(
+                        items = group.entries,
+                        key = { entry -> "$revision:${group.modId}:${entry.path}" },
+                    ) { entry ->
+                        key(revision, entry.prop) {
+                            KeybindRow(entry, conflictsWith = conflicts[entry.prop].orEmpty())
+                        }
                     }
                 }
             }
@@ -141,10 +155,15 @@ private fun KeybindEntry.matchesSearch(query: String): Boolean {
 }
 
 @Composable
-private fun KeybindGroupHeader(group: KeybindGroup) {
+private fun KeybindGroupHeader(group: KeybindGroup, expanded: Boolean, onToggle: () -> Unit) {
     val theme = LocalTheme.current
+    val interaction = rememberInteractionSource()
+    val chevronRotation by animateFloatAsState(if (expanded) 180f else 90f)
     Row(
-        modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 2.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .onClick(interaction, onClick = onToggle)
+            .padding(top = 4.dp, bottom = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -156,6 +175,11 @@ private fun KeybindGroupHeader(group: KeybindGroup) {
             color = theme.textColorSecondary,
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
+        )
+        Icon(
+            "up",
+            color = theme.textColorSecondary,
+            modifier = Modifier.size(12.dp).rotate(chevronRotation),
         )
     }
 }

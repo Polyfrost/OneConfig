@@ -36,7 +36,7 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
         val modsById = ModInfo.loadedMods.associateBy { it.id.lowercase() }
         val entriesByGroup = minecraft.options.keyMappings
             .asSequence()
-            .filterNot { isVanillaKeyName(it.name) || isOneConfigMirror(it) }
+            .filterNot { isOneConfigMirror(it) }
             .map { mapping ->
                 val owner = ownerMod(mapping, modsById)
                 val category = categoryLabel(mapping)
@@ -45,7 +45,7 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
                         category = category,
                         ownerId = owner?.id ?: "unknown",
                         title = groupTitle(category, owner),
-                        icon = modIcon(owner),
+                        icon = modIcon(owner) ?: minecraftIcon(),
                     ),
                     entry = KeybindEntry(
                         path = "minecraft.${mapping.name}",
@@ -69,6 +69,11 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
                     entries = entries,
                 )
             }
+    }
+
+    fun managedMappings(): List<KeyMapping> {
+        val options = Minecraft.getInstance()?.options ?: return emptyList()
+        return options.keyMappings.filterNot { isOneConfigMirror(it) }
     }
 
     private fun propertyFor(mapping: KeyMapping): Property<OneConfigKeybind> {
@@ -106,6 +111,34 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
 
     private fun modIcon(owner: ModInfo?): String? =
         owner?.let { modIconCache.getOrPut(it.id) { it.extractIconFile() } }
+
+    private const val MINECRAFT_ICON_FALLBACK = "/assets/oneconfig/images/minecraft-light.svg"
+    private var minecraftIconResolved = false
+    private var minecraftIconPath: String? = null
+
+    private fun minecraftIcon(): String {
+        if (!minecraftIconResolved) {
+            minecraftIconPath = extractMinecraftIcon() ?: MINECRAFT_ICON_FALLBACK
+            minecraftIconResolved = true
+        }
+        return minecraftIconPath ?: MINECRAFT_ICON_FALLBACK
+    }
+
+    private fun extractMinecraftIcon(): String? = runCatching {
+        val vanilla = Minecraft.getInstance().vanillaPackResources
+        val bytes = listOf(128, 256, 64, 32).firstNotNullOfOrNull { size ->
+            runCatching {
+                val supplier = vanilla.getRootResource("icons", "icon_${size}x$size.png") ?: return@runCatching null
+                supplier.get().use { it.readBytes() }
+            }.getOrNull()
+        } ?: return@runCatching null
+        val dir = java.nio.file.Files.createDirectories(
+            java.nio.file.Path.of(System.getProperty("java.io.tmpdir"), "oneconfig-modicons")
+        )
+        val dest = dir.resolve("minecraft.png")
+        java.nio.file.Files.write(dest, bytes)
+        dest.toAbsolutePath().toString()
+    }.getOrNull()
 
     private fun groupTitle(category: String, owner: ModInfo?): String {
         val ownerName = owner?.name?.takeUnless { it.isBlank() } ?: return category
@@ -160,44 +193,6 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
         return translated?.takeUnless { it == key || it.isBlank() } ?: key
     }
 
-    private fun isVanillaKeyName(name: String): Boolean {
-        return name in VANILLA_KEY_NAMES || name.startsWith("key.debug.")
-    }
-
     private fun isOneConfigMirror(mapping: KeyMapping): Boolean =
         MinecraftKeybindBridgeImpl.instance()?.bindFor(mapping) != null
-
-    private val VANILLA_KEY_NAMES = setOf(
-        "key.attack",
-        "key.use",
-        "key.forward",
-        "key.left",
-        "key.back",
-        "key.right",
-        "key.jump",
-        "key.sneak",
-        "key.sprint",
-        "key.drop",
-        "key.inventory",
-        "key.chat",
-        "key.playerlist",
-        "key.pickItem",
-        "key.command",
-        "key.socialInteractions",
-        "key.screenshot",
-        "key.togglePerspective",
-        "key.smoothCamera",
-        "key.fullscreen",
-        "key.spectatorOutlines",
-        "key.swapOffhand",
-        "key.saveToolbarActivator",
-        "key.loadToolbarActivator",
-        "key.advancements",
-        "key.pause",
-        "key.narrator",
-        "key.quickActions",
-        "key.spectatorHotbar",
-        "key.toggleGui",
-        "key.toggleSpectatorShaderEffects",
-    ) + (1..9).map { "key.hotbar.$it" }
 }

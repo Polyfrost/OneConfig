@@ -219,6 +219,12 @@ public class OneConfig
                 InitializationEvent.class, e -> {
                     ConfigManager.initialize();
                     unbindRightShiftMinecraftKeybindsOnFirstRun();
+                    org.polyfrost.oneconfig.api.config.v1.CompatSnapshots.setDispatcher(r -> {
+                        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+                        if (mc != null) mc.execute(r);
+                        else r.run();
+                    });
+                    org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProfiles.init();
                     ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
                     org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar.register();
                     org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry.INSTANCE.loadFromConfig();

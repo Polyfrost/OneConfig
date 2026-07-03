@@ -2,7 +2,7 @@
 package org.polyfrost.oneconfig.internal.compat
 
 import net.minecraft.network.chat.Component
-import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
@@ -35,7 +35,7 @@ object Tr7zwConfigCompat {
                 return
             }
             val tree = parseScreen(screen, options, mod) ?: return
-            ConfigManager.active().register(tree)
+            CompatSnapshots.register(tree)
             CompatLoader.markFirstModAsSkip()
         }.onFailure {
             LOGGER.warn("Failed to parse tr7zw config", it)

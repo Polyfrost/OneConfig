@@ -39,6 +39,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class FileBackend extends Backend {
     private static final Charset CHARSET = StandardCharsets.UTF_8;
@@ -46,7 +47,7 @@ public class FileBackend extends Backend {
     private final Map<String, FileSerializer<String>> serializers = new HashMap<>(4);
     private boolean hasWatcher = false;
     private WatchService watcherService = null;
-    private volatile boolean dodge = false;
+    private final Set<String> selfEvents = ConcurrentHashMap.newKeySet();
 
     @SafeVarargs
     public FileBackend(Path folder, FileSerializer<String>... serializers) {
@@ -111,19 +112,18 @@ public class FileBackend extends Backend {
                         if (event.kind() == StandardWatchEventKinds.OVERFLOW) {
                             continue;
                         }
-                        if (dodge) {
-                            Backend.LOGGER.debug("Dodged self-created event!");
-                            dodge = false;
-                            continue;
-                        }
                         Path p = (Path) event.context();
                         String id = p.toString();
+                        if (selfEvents.remove(id)) {
+                            Backend.LOGGER.debug("Dodged self-created event for {}!", id);
+                            continue;
+                        }
                         if (!exists(id)) continue;
 
                         if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
+                            if (Files.exists(folder.resolve(id))) continue;
                             LOGGER.info("config {} deleted? saving", id);
                             save(id);
-                            dodge();
                         }
                         if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
                             LOGGER.info("config {} modified, update requested", id);
@@ -176,8 +176,8 @@ public class FileBackend extends Backend {
         }
     }
 
-    public void dodge() {
-        dodge = true;
+    public void dodge(String fileName) {
+        if (fileName != null) selfEvents.add(fileName);
     }
 
     public Tree load0(Path p, String id) throws Exception {
@@ -215,7 +215,7 @@ public class FileBackend extends Backend {
             return false;
         }
         write(p, serializer.serialize(tree));
-        dodge();
+        dodge(p.getFileName().toString());
         return true;
     }
 
@@ -224,7 +224,7 @@ public class FileBackend extends Backend {
         Path p = folder.resolve(tree.getID());
         if (!Files.exists(p)) return false;
         Files.delete(p);
-        dodge();
+        dodge(p.getFileName().toString());
         return true;
     }
 

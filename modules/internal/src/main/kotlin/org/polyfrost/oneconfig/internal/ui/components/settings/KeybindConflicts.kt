@@ -25,6 +25,7 @@ internal object KeybindConflicts {
         val conflicting = HashMap<Property<*>, MutableList<Property<*>>>()
         for (i in bound.indices) {
             for (j in i + 1 until bound.size) {
+                if (isContextGated(bound[i].first) || isContextGated(bound[j].first)) continue
                 if (bound[i].second.conflictsWith(bound[j].second)) {
                     conflicting.getOrPut(bound[i].first) { ArrayList() } += bound[j].first
                     conflicting.getOrPut(bound[j].first) { ArrayList() } += bound[i].first
@@ -33,6 +34,17 @@ internal object KeybindConflicts {
         }
         return conflicting
     }
+
+    private fun isContextGated(prop: Property<*>): Boolean {
+        val id = prop.id ?: return false
+        return CONTEXT_GATED_ID_PREFIXES.any { id.startsWith(it) }
+    }
+
+    private val CONTEXT_GATED_ID_PREFIXES = listOf(
+        "minecraft.key.debug.",
+        "minecraft.key.spectator",
+        "minecraft.key.toggleSpectatorShaderEffects",
+    )
 
     fun conflictingProps(): Set<Property<*>> = conflictMap().keys
 

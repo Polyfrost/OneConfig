@@ -8,7 +8,7 @@ import io.github.notenoughupdates.moulconfig.gui.editors.*
 import io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor
 import io.github.notenoughupdates.moulconfig.processor.ProcessedCategory
 import io.github.notenoughupdates.moulconfig.processor.ProcessedOption
-import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.Visualizer.*
@@ -39,7 +39,7 @@ data object MoulConfigCompat {
         runCatching {
             val categories = processor.allCategories.values
             val tree = parseConfigTree(config, categories)
-            ConfigManager.active().register(tree)
+            CompatSnapshots.register(tree)
             CompatLoader.markFirstModAsSkip()
         }.onFailure {
             LOGGER.error("Failed to load moulconfig compat for $this due to $it")
@@ -55,7 +55,7 @@ data object MoulConfigCompat {
         }
         runCatching {
             val tree = parseConfigTree(config, categories)
-            ConfigManager.active().register(tree)
+            CompatSnapshots.register(tree)
             CompatLoader.markFirstModAsSkip()
         }.onFailure {
             LOGGER.error("Failed to load moulconfig editor compat for $this due to $it")

@@ -1,7 +1,7 @@
 //? yacl_compat {
 package org.polyfrost.oneconfig.internal.compat
 
-import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
@@ -27,7 +27,7 @@ object YACLCompat {
             LOGGER.info("Creating config wrapper for " + mod?.id)
             val tree = parseYACLInstance(yaclInstance, mod)
             if (tree != null) {
-                ConfigManager.active().register(tree)
+                CompatSnapshots.register(tree)
                 CompatLoader.markFirstModAsSkip()
             }
         }.onFailure {

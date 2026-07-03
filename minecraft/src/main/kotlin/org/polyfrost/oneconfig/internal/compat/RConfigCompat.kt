@@ -22,7 +22,7 @@ import net.minecraft.util.StringRepresentable
 *///? }
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
-import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
@@ -45,7 +45,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         val mod = CompatLoader.findFirstMod()
         info("Preparing config wrapper for ${config.id()}!")
         CompatLoader.requireTranslations {
-            parseConfig(config, mod).let(ConfigManager.active()::register)
+            parseConfig(config, mod).let(CompatSnapshots::register)
         }
     }
 

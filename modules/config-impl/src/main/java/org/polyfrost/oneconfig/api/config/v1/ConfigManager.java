@@ -67,6 +67,20 @@ public final class ConfigManager {
     private static final Queue<Config> pendingInitialization = new ArrayDeque<>();
     private static final Map<String, Config> initializedConfigs = new LinkedHashMap<>();
     private static boolean rebindingProfiles = false;
+    private static final java.util.concurrent.CopyOnWriteArrayList<ProfileChangeListener> profileListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    public interface ProfileChangeListener {
+        void onProfileChanged(String newProfile);
+    }
+
+    public static void addProfileChangeListener(ProfileChangeListener listener) {
+        profileListeners.add(listener);
+    }
+
+    public static Path profileDir(String profile) {
+        profile = normalizeProfileName(profile, true);
+        return profile.isEmpty() ? Paths.get("config") : PROFILES_DIR.resolve(profile);
+    }
 
     static {
         ObjectSerializer.INSTANCE.registerTypeAdapter(new PolyColorAdapter());
@@ -187,6 +201,7 @@ public final class ConfigManager {
     }
 
     private static synchronized void initProfiles() {
+        addProfileChangeListener(CompatSnapshots.INSTANCE);
         Backend.RegistrationResult result = internal().register(
                 tree("profiles.json").put(
                         Properties.simple("activeProfile", "Active Profile", "The profile which is currently open.", ""),
@@ -251,6 +266,13 @@ public final class ConfigManager {
         rebindInitializedConfigs();
         for (Tree t : externalTrees) {
             active.register(t);
+        }
+        for (ProfileChangeListener listener : profileListeners) {
+            try {
+                listener.onProfileChanged(profile);
+            } catch (Throwable t) {
+                LOGGER.error("Profile change listener failed", t);
+            }
         }
     }
 

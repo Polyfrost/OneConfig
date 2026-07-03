@@ -19,7 +19,7 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.network.chat.Component
 import org.apache.logging.log4j.LogManager
-import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Property.Display
@@ -47,7 +47,7 @@ object DandelionCompat {
             val mod = CompatLoader.findFirstMod()
             val tree = parseConfig(title, categories, mod, save)
             if (tree != null) {
-                ConfigManager.active().register(tree)
+                CompatSnapshots.register(tree)
                 CompatLoader.markFirstModAsSkip()
             }
         }

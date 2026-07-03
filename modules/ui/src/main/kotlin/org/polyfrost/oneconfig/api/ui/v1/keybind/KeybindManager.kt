@@ -17,7 +17,7 @@ import kotlin.experimental.or
 object KeybindManager {
     private val LOGGER = LogManager.getLogger("OneConfig/Keybinds")
 
-    private val binds = ArrayList<OneConfigKeybind>()
+    private val binds = java.util.concurrent.CopyOnWriteArrayList<OneConfigKeybind>()
     private val activeBinds = HashSet<OneConfigKeybind>()
 
     /**
