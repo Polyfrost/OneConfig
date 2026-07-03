@@ -28,8 +28,13 @@ import net.minecraft.client.input.MouseButtonEvent
 import net.minecraft.client.input.KeyEvent as McKeyEvent
 //? }
 import net.minecraft.network.chat.CommonComponents
+import org.jetbrains.skia.FilterTileMode
+import org.jetbrains.skia.ImageFilter
+import org.jetbrains.skia.Paint
 import org.lwjgl.glfw.GLFW
+import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.internal.OneConfigConfig
 import java.awt.Component
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -102,7 +107,10 @@ abstract class ComposeScreen(
 //    }
 
 
-    protected val scene = CanvasLayersComposeScene(
+    protected var scene = createScene()
+        private set
+
+    private fun createScene() = CanvasLayersComposeScene(
         platformContext = ComposeSceneContextImpl.platformContext,
 //        invalidate = frameDispatcher::scheduleFrame
     )
@@ -110,6 +118,52 @@ abstract class ComposeScreen(
     protected val client get() = Minecraft.getInstance()
     private val contentScaleX = FloatArray(1)
     private val contentScaleY = FloatArray(1)
+    private val monScaleX = FloatArray(1)
+    private val monScaleY = FloatArray(1)
+
+    private var filterPaintKey = -1 to -1f
+    private var filterPaintCached: Paint? = null
+
+    private fun filterPaint(mode: Int, amount: Float): Paint {
+        val cached = filterPaintCached
+        if (cached != null && filterPaintKey == (mode to amount)) return cached
+        cached?.close()
+        val paint = Paint().apply { imageFilter = if (mode == 2) hardenFilter(amount) else sharpenFilter(amount) }
+        filterPaintCached = paint
+        filterPaintKey = mode to amount
+        return paint
+    }
+
+    private fun sharpenFilter(amount: Float): ImageFilter {
+        val a = amount
+        val kernel = floatArrayOf(
+            0f, -a, 0f,
+            -a, 1f + 4f * a, -a,
+            0f, -a, 0f,
+        )
+        return ImageFilter.makeMatrixConvolution(
+            3, 3, kernel, 1f, 0f, 1, 1, FilterTileMode.CLAMP, false, null, null,
+        )
+    }
+
+    private fun hardenFilter(amount: Float): ImageFilter {
+        val w = (0.5f - 0.48f * amount).coerceIn(0.02f, 0.5f)
+        val effect = org.jetbrains.skia.RuntimeEffect.makeForShader(HARDEN_SKSL)
+        val builder = org.jetbrains.skia.RuntimeShaderBuilder(effect)
+        builder.uniform("w", w)
+        return ImageFilter.makeRuntimeShader(builder, "content", null)
+    }
+
+    private fun osUpscaleFactor(): Float {
+        val handle = Platform.compatibility().windowHandle()
+        GLFW.glfwGetWindowContentScale(handle, contentScaleX, contentScaleY)
+        val winCS = maxOf(contentScaleX[0], contentScaleY[0]).coerceAtLeast(1f)
+        val mon = GLFW.glfwGetWindowMonitor(handle).takeIf { it != 0L } ?: GLFW.glfwGetPrimaryMonitor()
+        if (mon == 0L) return 1f
+        GLFW.glfwGetMonitorContentScale(mon, monScaleX, monScaleY)
+        val monCS = maxOf(monScaleX[0], monScaleY[0]).coerceAtLeast(1f)
+        return (monCS / winCS).coerceAtLeast(1f)
+    }
 
 //    private fun renderScene() {
 //        composeRenderer.render { scene.render(this.asComposeCanvas(), System.nanoTime()) }
@@ -118,6 +172,11 @@ abstract class ComposeScreen(
     override fun init() {
         if (renderMode == RenderMode.ON_DEMAND) {
 //            composeRenderer.initialize(width, height)
+        }
+
+        if (sceneClosed) {
+            scene = createScene()
+            sceneClosed = false
         }
 
         syncSceneMetrics()
@@ -193,11 +252,17 @@ abstract class ComposeScreen(
             try {
                 val canvas = SkiaCtx.canvas
                 val pixelRatio = Platform.screen().pixelRatio()
+                val mode = OneConfigConfig.reducedResFilter
+                val amount = OneConfigConfig.uiSharpening
+                val filter = mode != 0 && amount > 0f &&
+                    DesktopHelper.isMac && osUpscaleFactor() > 1.05f
                 canvas.save()
+                if (filter) canvas.saveLayer(null, filterPaint(mode, amount))
                 if (pixelRatio != 1f) {
                     canvas.scale(pixelRatio, pixelRatio)
                 }
                 scene.render(canvas.asComposeCanvas(), System.nanoTime())
+                if (filter) canvas.restore()
                 canvas.restore()
             } catch (_: Throwable) {
             }
@@ -472,4 +537,18 @@ abstract class ComposeScreen(
 
     // Dummy component needed for constructing AWT key events
     private val dummyComponent = object : Component() {}
+
+    private companion object {
+        const val HARDEN_SKSL = """
+            uniform shader content;
+            uniform float w;
+            half4 main(float2 xy) {
+                half4 c = content.eval(xy);
+                half a = c.a;
+                if (a <= 0.0) return half4(0.0);
+                half na = smoothstep(0.5 - w, 0.5 + w, a);
+                return half4(c.rgb / a * na, na);
+            }
+        """
+    }
 }

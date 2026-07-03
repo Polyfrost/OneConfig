@@ -19,6 +19,15 @@
   "oneconfig.preferences.custom_scale.title": "Custom GUI scale",
   "oneconfig.preferences.custom_scale.description": "The custom GUI scale to use for the OneConfig menu.",
 
+  "oneconfig.preferences.reduced_res_filter.title": "Reduced-resolution filter",
+  "oneconfig.preferences.reduced_res_filter.description": "Counteracts blur when the game renders at a reduced resolution (e.g. Sodium Extra's 'Reduce Resolution on macOS'). Only takes effect when the display is upscaling a reduced framebuffer. 'Sharpen' softly crisps the whole menu; 'Harden edges' aliases text/edges so they survive the upscale like Minecraft's font (crisper text, but blockier corners).",
+  "oneconfig.preferences.reduced_res_filter.off": "Off",
+  "oneconfig.preferences.reduced_res_filter.sharpen": "Sharpen",
+  "oneconfig.preferences.reduced_res_filter.harden": "Harden edges",
+
+  "oneconfig.preferences.ui_sharpening.title": "Filter strength",
+  "oneconfig.preferences.ui_sharpening.description": "How strongly to apply the reduced-resolution filter. Higher is crisper but can add halos (Sharpen) or jagged edges (Harden).",
+
   "oneconfig.preferences.opening_behavior.title": "Opening Behavior",
   "oneconfig.preferences.opening_behavior.description": "Which page to open when the OneConfig menu is launched.",
 

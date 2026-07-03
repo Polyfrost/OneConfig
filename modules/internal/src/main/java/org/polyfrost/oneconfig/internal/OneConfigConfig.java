@@ -83,6 +83,35 @@ public class OneConfigConfig extends Config {
     public static float customScale = 1f;
 
     @Dropdown(
+        title = "oneconfig.preferences.reduced_res_filter.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.gui",
+        subcategoryTranslation = true,
+        options = {
+            "oneconfig.preferences.reduced_res_filter.off",
+            "oneconfig.preferences.reduced_res_filter.sharpen",
+            "oneconfig.preferences.reduced_res_filter.harden"
+        },
+        optionsTranslation = true,
+        description = "oneconfig.preferences.reduced_res_filter.description",
+        descriptionTranslation = true
+    )
+    public static int reducedResFilter = 1;
+
+    @Slider(
+        title = "oneconfig.preferences.ui_sharpening.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.gui",
+        subcategoryTranslation = true,
+        min = 0f,
+        max = 1f,
+        step = 0.05f,
+        description = "oneconfig.preferences.ui_sharpening.description",
+        descriptionTranslation = true
+    )
+    public static float uiSharpening = 0.4f;
+
+    @Dropdown(
         title = "oneconfig.preferences.opening_behavior.title",
         titleTranslation = true,
         subcategory = "oneconfig.preferences.category.gui",
@@ -345,6 +374,10 @@ public class OneConfigConfig extends Config {
         }
         // "Custom GUI scale" only applies when "Use custom GUI scale" is enabled.
         addDependency("customScale", "useCustomScale");
+        addDependency(
+            "uiSharpening",
+            "Reduced-resolution filter",
+            () -> reducedResFilter != 0 ? Property.Display.SHOWN : Property.Display.DISABLED);
         // "Time before reset" only applies to the smart reset opening behavior (index 3).
         addDependency(
             "timeBeforeReset",
