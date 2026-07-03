@@ -55,6 +55,11 @@ fun OneConfigInterface(
     LocalNavController.current = rememberNavController()
 
     LaunchedEffect(initialRoute) {
+        ShellState.globalSearchActive = false
+        ShellState.searchQuery = ""
+        ShellState.showSearchField = false
+        ShellState.focusSearchField = false
+
         if (initialRoute != ModsGraph) {
             // an initial navigation will fire a page transition; let "Show opening page animation" gate it
             ShellState.initialTransitionConsumed = false

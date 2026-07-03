@@ -200,6 +200,39 @@ public final class ConfigManager {
         pendingInitialization.remove(config);
     }
 
+    static void reportResetOptions(Config config, List<String> options) {
+        Tree tree = config.getTree();
+        if (tree == null || tree.getID() == null) return;
+        String id = tree.getID();
+        ConfigManager mgr = active();
+        try {
+            Path file = mgr.getFolder().resolve(id);
+            if (Files.exists(file)) {
+                Files.copy(file, mgr.getFolder().resolve(id + ".corrupted"), StandardCopyOption.REPLACE_EXISTING);
+                LOGGER.warn("backed up problematic config {} to {}.corrupted", id, id);
+            }
+        } catch (IOException e) {
+            LOGGER.error("failed to back up problematic config {}", id, e);
+        }
+        // persist the reset (default) values so the incompatible entries are scrubbed from the file.
+        mgr.save(id);
+        LOGGER.warn("reset {} incompatible option(s) in config {}: {}", options.size(), id, options);
+        notifyResetOptions(config, options);
+    }
+
+    private static void notifyResetOptions(Config config, List<String> options) {
+        try {
+            String name = config.title != null ? config.title : config.id;
+            String message = options.size() == 1
+                    ? "The option '" + options.get(0) + "' could not be loaded and was reset to its default. A backup was saved as " + config.getTree().getID() + ".corrupted."
+                    : options.size() + " options could not be loaded and were reset to their defaults (" + String.join(", ", options) + "). A backup was saved as " + config.getTree().getID() + ".corrupted.";
+            org.polyfrost.oneconfig.api.notifications.v1.Notifications.error(name + ": options reset", message);
+        } catch (Throwable t) {
+            // notifications are best-effort and must never break config loading.
+            LOGGER.error("failed to notify about reset options for config {}", config.id, t);
+        }
+    }
+
     private static synchronized void initProfiles() {
         addProfileChangeListener(CompatSnapshots.INSTANCE);
         Backend.RegistrationResult result = internal().register(

@@ -39,7 +39,9 @@ public final class PlayerHeadBlit {
                 }
                 for (int dy = 0; dy < scale; dy++) {
                     for (int dx = 0; dx < scale; dx++) {
-                        dst.setPixelRGBA(x * scale + dx, y * scale + dy, color);
+                        int dx0 = x * scale + dx;
+                        int dy0 = y * scale + dy;
+                        dst.setPixelRGBA(dx0, dy0, composite(color, dst.getPixelRGBA(dx0, dy0)));
                     }
                 }
                 *///? } else {
@@ -49,11 +51,36 @@ public final class PlayerHeadBlit {
                 }
                 for (int dy = 0; dy < scale; dy++) {
                     for (int dx = 0; dx < scale; dx++) {
-                        dst.setPixel(x * scale + dx, y * scale + dy, color);
+                        int dx0 = x * scale + dx;
+                        int dy0 = y * scale + dy;
+                        dst.setPixel(dx0, dy0, composite(color, dst.getPixel(dx0, dy0)));
                     }
                 }
                 //? }
             }
         }
+    }
+
+    private static int composite(int src, int dst) {
+        int srcA = src >>> 24;
+        if (srcA == 0xFF) {
+            return src;
+        }
+        int dstA = dst >>> 24;
+        if (dstA == 0) {
+            return src;
+        }
+        int outA = srcA + dstA * (0xFF - srcA) / 0xFF;
+        if (outA == 0) {
+            return 0;
+        }
+        int outR = blendChannel(src & 0xFF, dst & 0xFF, srcA, dstA, outA);
+        int outG = blendChannel((src >> 8) & 0xFF, (dst >> 8) & 0xFF, srcA, dstA, outA);
+        int outB = blendChannel((src >> 16) & 0xFF, (dst >> 16) & 0xFF, srcA, dstA, outA);
+        return (outA << 24) | (outB << 16) | (outG << 8) | outR;
+    }
+
+    private static int blendChannel(int srcC, int dstC, int srcA, int dstA, int outA) {
+        return (srcC * srcA + dstC * dstA * (0xFF - srcA) / 0xFF) / outA;
     }
 }

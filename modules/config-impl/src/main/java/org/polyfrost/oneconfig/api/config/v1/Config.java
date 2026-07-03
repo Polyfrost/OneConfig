@@ -38,6 +38,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
@@ -109,8 +110,17 @@ public abstract class Config {
             // capture the code-defined default of every property before register() loads stored values over them,
             // so the UI can offer a "reset to default" action. stored as transient metadata, so it is never persisted.
             captureDefaults(tree);
-            tree = ConfigManager.active().register(tree).get();
+            Tree.beginFailureCollection();
+            List<String> resetOptions;
+            try {
+                tree = ConfigManager.active().register(tree).get();
+            } finally {
+                resetOptions = Tree.endFailureCollection();
+            }
             ConfigManager.markInitialized(this);
+            if (!resetOptions.isEmpty()) {
+                ConfigManager.reportResetOptions(this, resetOptions);
+            }
         }
     }
 

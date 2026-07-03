@@ -29,8 +29,10 @@ package org.polyfrost.oneconfig.api.config.v1;
 import org.jetbrains.annotations.*;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -47,6 +49,20 @@ public class Tree extends Node implements Serializable {
     public final Map<String, Node> map;
 
     private final Map<String, Node> theMap;
+
+    private static final ThreadLocal<List<String>> OVERWRITE_FAILURES = new ThreadLocal<>();
+
+    @ApiStatus.Internal
+    public static void beginFailureCollection() {
+        OVERWRITE_FAILURES.set(new ArrayList<>(2));
+    }
+
+    @ApiStatus.Internal
+    public static List<String> endFailureCollection() {
+        List<String> out = OVERWRITE_FAILURES.get();
+        OVERWRITE_FAILURES.remove();
+        return out == null ? Collections.emptyList() : out;
+    }
 
     public Tree(@Nullable String id, @Nullable Object title, @Nullable Object description, @Nullable Map<String, Node> items) {
         super(id, title, description);
@@ -103,7 +119,17 @@ public class Tree extends Node implements Serializable {
                 // nop. do not attempt to overwrite a tree with a property
                 else continue;
             }
-            _this.overwrite(that, preserveMissingOptions, skipOverwritten, root);
+            List<String> failures = OVERWRITE_FAILURES.get();
+            if (failures != null) {
+                try {
+                    _this.overwrite(that, preserveMissingOptions, skipOverwritten, root);
+                } catch (Throwable e) {
+                    LOGGER.error("failed to apply stored value for '{}' (incompatible or corrupted); resetting it to its default", key, e);
+                    failures.add(key);
+                }
+            } else {
+                _this.overwrite(that, preserveMissingOptions, skipOverwritten, root);
+            }
         }
     }
 

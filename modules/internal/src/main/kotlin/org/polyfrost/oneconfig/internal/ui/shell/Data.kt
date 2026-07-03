@@ -7,11 +7,8 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
-import androidx.navigation.NavController
-import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
-import org.polyfrost.oneconfig.internal.ui.navigation.NavigationGroups
-import kotlin.collections.flatten
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 
 object Lifecycle : LifecycleOwner {
     override val lifecycle = LifecycleRegistry(this)
@@ -53,18 +50,38 @@ object ShellState {
     var initialTransitionConsumed: Boolean = false
 }
 object LocalNavController {
-    lateinit var current: NavHostController
+    private var _current: NavHostController? = null
+
+    var current: NavHostController
+        get() = _current!!
+        set(value) {
+            if (_current !== value) {
+                _current = value
+                wrapper.reset()
+            }
+        }
 
     /** True once a nav host is attached, i.e. the OC UI is open and navigable. */
-    val isReady: Boolean get() = ::current.isInitialized
+    val isReady: Boolean get() = _current != null
 
     val wrapper = NavControllerWrapper
 
     object NavControllerWrapper {
+        private val backStack = ArrayDeque<Any>()
         private val forwardStack = ArrayDeque<Any>()
+
+        private var currentRoute: Any = ModsGraph
+
+        fun reset() {
+            backStack.clear()
+            forwardStack.clear()
+            currentRoute = ModsGraph
+        }
 
         fun navigate(route: Any) {
             forwardStack.clear()
+            backStack.addLast(currentRoute)
+            currentRoute = route
             ShellState.searchQuery = ""
             ShellState.globalSearchActive = false
             ShellState.showSearchField = false
@@ -73,12 +90,11 @@ object LocalNavController {
         }
 
         fun back() {
-            val current = NavigationGroups.map { it.routes }.toTypedArray().flatten()
-                .find { current.currentDestination?.hasRoute(it.route::class) == true }
-                ?.route
-
-            if (this@LocalNavController.current.popBackStack()) {
-                current?.let { forwardStack.addLast(it) }
+            if (backStack.isEmpty()) return
+            if (current.popBackStack()) {
+                forwardStack.addLast(currentRoute)
+                currentRoute = backStack.removeLast()
+                ShellState.lastRoute = currentRoute
                 ShellState.globalSearchActive = false
                 ShellState.showSearchField = false
             }
@@ -86,6 +102,8 @@ object LocalNavController {
 
         fun forward() {
             val next = forwardStack.removeLastOrNull() ?: return
+            backStack.addLast(currentRoute)
+            currentRoute = next
             ShellState.lastRoute = next
             ShellState.globalSearchActive = false
             ShellState.showSearchField = false

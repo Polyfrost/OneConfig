@@ -13,8 +13,13 @@ internal object ModMenuEntrypoint : ModMenuApi {
     }
 
     override fun getProvidedConfigScreenFactories(): Map<String, ConfigScreenFactory<*>> {
-        return ConfigManager.active().trees().associate { it.id.toString() to ConfigScreenFactory { _ -> OneConfigUIScreen(initialTree = it) } }
+        val factories = ConfigManager.active().trees()
+            .associateTo(mutableMapOf()) { it.id.toString() to ConfigScreenFactory { _ -> OneConfigUIScreen(initialTree = it) } }
+        factories.putIfAbsent(BOOTSTRAP_MOD_ID, ConfigScreenFactory { _ -> OneConfigUIScreen() })
+        return factories
     }
+
+    private const val BOOTSTRAP_MOD_ID = "oneconfigbootstrap"
 
 }
 //? }

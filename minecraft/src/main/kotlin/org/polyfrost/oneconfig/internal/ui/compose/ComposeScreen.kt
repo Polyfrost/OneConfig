@@ -321,7 +321,7 @@ abstract class ComposeScreen(
     }
 
     override fun mouseScrolled(x: Double, y: Double, scrollX: Double, scrollY: Double): Boolean {
-        val scrollScale = 8f
+        val scrollScale = if (DesktopHelper.isMac) 2f else 8f
         val position = pointerPosition()
         scene.sendPointerEvent(PointerEventType.Move, position)
         scene.sendPointerEvent(

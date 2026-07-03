@@ -33,5 +33,6 @@ dependencies {
     api(project(":modules:config"))
     api(project(":modules:poly-compose"))
     api(project(":modules:ui"))
+    implementation(project(":modules:notifications"))
     api(libs.jetbrains.compose.runtime)
 }
