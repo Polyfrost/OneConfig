@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -161,8 +160,8 @@ private fun TitleInfoTooltip(title: String) {
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier
                         .widthIn(max = 260.dp)
-                        .background(Color(0xff2C2C2C), shape = RoundedCornerShape(8.dp))
-                        .border(1.dp, Color.White.copy(alpha = 0.1f), shape = RoundedCornerShape(8.dp))
+                        .background(Color(0xff2C2C2C), shape = LocalTheme.current.popupShape)
+                        .border(1.dp, Color.White.copy(alpha = 0.1f), shape = LocalTheme.current.popupShape)
                         .padding(horizontal = 12.dp, vertical = 8.dp)
                 ) {
                     if (authors != null) {

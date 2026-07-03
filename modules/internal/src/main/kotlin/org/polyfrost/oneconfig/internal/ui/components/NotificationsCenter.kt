@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,8 +36,8 @@ import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val PanelWidth = 368.dp
-private val PanelShape = RoundedCornerShape(12.dp)
-private val ButtonShape = RoundedCornerShape(4.dp)
+private val PanelShape @Composable get() = LocalTheme.current.popupShape
+private val ButtonShape @Composable get() = LocalTheme.current.buttonShape
 
 private val SuccessColor = Color(0xFF3CAF77)
 private val ErrorColor = Color(0xFFF2545A)
@@ -135,7 +133,7 @@ private fun NotificationRow(notification: Notification) {
                         Modifier
                             .padding(start = 6.dp)
                             .size(6.dp)
-                            .background(Accent, CircleShape),
+                            .background(Accent, theme.circleShape),
                     )
                 }
             }
@@ -155,14 +153,14 @@ private fun NotificationRow(notification: Notification) {
                         .padding(top = 8.dp)
                         .fillMaxWidth()
                         .height(6.dp)
-                        .clip(CircleShape)
+                        .clip(theme.circleShape)
                         .background(Accent.copy(0.5f)),
                 ) {
                     Box(
                         Modifier
                             .fillMaxWidth(progress)
                             .height(6.dp)
-                            .clip(CircleShape)
+                            .clip(theme.circleShape)
                             .background(Accent),
                     )
                 }

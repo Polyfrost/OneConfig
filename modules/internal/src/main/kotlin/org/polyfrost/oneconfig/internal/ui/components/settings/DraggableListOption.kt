@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -51,8 +50,8 @@ import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import kotlin.math.roundToInt
 
-private val ListContainerShape = RoundedCornerShape(10.dp)
-private val ListItemShape = RoundedCornerShape(10.dp)
+private val ListContainerShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
+private val ListItemShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
 
 @Suppress("UNCHECKED_CAST")
 @Composable

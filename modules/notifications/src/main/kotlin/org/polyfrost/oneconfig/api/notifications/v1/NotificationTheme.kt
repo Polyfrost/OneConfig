@@ -63,6 +63,15 @@ object NotificationTheme {
     var fontBody by mutableStateOf<String?>(null)
         private set
 
+    var radiusCard by mutableStateOf(12f)
+        private set
+
+    var radiusButton by mutableStateOf(4f)
+        private set
+
+    var radiusProgress by mutableStateOf(3f)
+        private set
+
     fun accentFor(type: NotificationType): PolyColor = when (type) {
         NotificationType.INFO -> textPrimary
         NotificationType.SUCCESS -> success
@@ -82,6 +91,9 @@ object NotificationTheme {
         actionSubtleText: PolyColor = this.actionSubtleText,
         fontTitle: String? = this.fontTitle,
         fontBody: String? = this.fontBody,
+        radiusCard: Float = this.radiusCard,
+        radiusButton: Float = this.radiusButton,
+        radiusProgress: Float = this.radiusProgress,
     ) {
         this.background = background
         this.border = border
@@ -93,5 +105,8 @@ object NotificationTheme {
         this.actionSubtleText = actionSubtleText
         this.fontTitle = fontTitle
         this.fontBody = fontBody
+        this.radiusCard = radiusCard
+        this.radiusButton = radiusButton
+        this.radiusProgress = radiusProgress
     }
 }

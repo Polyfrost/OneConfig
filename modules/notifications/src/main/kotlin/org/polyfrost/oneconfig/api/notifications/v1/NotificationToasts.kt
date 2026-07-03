@@ -167,8 +167,8 @@ private fun Toast(notification: Notification) {
         gap = 12f,
         modifier = PolyModifier
             .width(CARD_WIDTH)
-            .background(cardBg, 12f)
-            .border(NotificationTheme.border.multiplyAlpha(a), 1f, 12f)
+            .background(cardBg, NotificationTheme.radiusCard)
+            .border(NotificationTheme.border.multiplyAlpha(a), 1f, NotificationTheme.radiusCard)
             .padding(horizontal = CARD_PAD_H, vertical = CARD_PAD_V)
             .tag(ToastHit.Body(notification)),
     ) {
@@ -206,13 +206,13 @@ private fun ProgressBar(progress: Float, a: Float) {
         modifier = PolyModifier
             .width(CONTENT_WIDTH)
             .height(6f)
-            .background(accent.multiplyAlpha(0.5f * a), 3f),
+            .background(accent.multiplyAlpha(0.5f * a), NotificationTheme.radiusProgress),
     ) {
         val fillWidth = (CONTENT_WIDTH * progress).coerceIn(0f, CONTENT_WIDTH)
         if (fillWidth > 0f) {
             PolyRect(
                 color = accent.multiplyAlpha(a),
-                modifier = PolyModifier.width(fillWidth).height(6f).radius(3f),
+                modifier = PolyModifier.width(fillWidth).height(6f).radius(NotificationTheme.radiusProgress),
             )
         }
     }
@@ -225,7 +225,7 @@ private fun ActionButton(notification: Notification, action: NotificationAction,
     val bg = (if (hovered) base.lighten(0.12f) else base).multiplyAlpha(a)
     PolyBox(
         modifier = PolyModifier
-            .background(bg, 4f)
+            .background(bg, NotificationTheme.radiusButton)
             .padding(horizontal = 12f, vertical = 6f)
             .tag(ToastHit.Action(notification, action)),
     ) {

@@ -58,5 +58,8 @@ internal fun syncNotificationTheme(theme: UITheme) {
         actionSubtleText = PolyColor(theme.textColor.toArgb()),
         fontTitle = if (minecraft) "minecraft-bold" else "poppins-medium",
         fontBody = if (minecraft) "minecraft" else null,
+        radiusCard = if (minecraft) 0f else 12f,
+        radiusButton = if (minecraft) 0f else 4f,
+        radiusProgress = if (minecraft) 0f else 3f,
     )
 }
