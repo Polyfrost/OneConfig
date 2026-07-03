@@ -108,6 +108,7 @@ public final class Multithreading {
             public Thread newThread(@NotNull Runnable r) {
                 Thread t = Executors.defaultThreadFactory().newThread(r);
                 t.setName("OneConfig-" + ai.getAndIncrement());
+                t.setDaemon(true);
                 return t;
             }
         });
@@ -115,7 +116,17 @@ public final class Multithreading {
     }
 
     public static ScheduledExecutorService getScheduledExecutor() {
-        if (runnableExecutor == null) runnableExecutor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() - 2);
+        if (runnableExecutor == null) runnableExecutor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() - 2, new ThreadFactory() {
+            private final AtomicInteger ai = new AtomicInteger();
+
+            @Override
+            public Thread newThread(@NotNull Runnable r) {
+                Thread t = Executors.defaultThreadFactory().newThread(r);
+                t.setName("OneConfig-Scheduled-" + ai.getAndIncrement());
+                t.setDaemon(true);
+                return t;
+            }
+        });
         return runnableExecutor;
     }
 }
