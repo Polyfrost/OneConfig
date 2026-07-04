@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -95,6 +94,7 @@ import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import kotlin.math.roundToInt
 
 enum class StudioCategory(val title: String, val icon: String) {
@@ -406,9 +406,6 @@ private fun DrawScope.drawHudSizeBadge(label: String, centerX: Float, topY: Floa
     }
 }
 
-private val panelBackground = Color(17, 23, 28).copy(0.95f)
-private val panelBorder = Color.White.copy(.10f)
-private val panelShape = RoundedCornerShape(16.dp)
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -874,13 +871,14 @@ private fun DesignStudioPanel(
     onCategoryChange: (StudioCategory) -> Unit,
     onBack: () -> Unit,
 ) {
+    val theme = LocalTheme.current
     Box(
         modifier = Modifier
             .fillMaxHeight()
             .width(500.dp)
             .padding(16.dp)
-            .background(panelBackground, panelShape)
-            .border(1.dp, panelBorder, panelShape),
+            .background(theme.popupBackground, theme.backgroundShape)
+            .border(1.dp, theme.borderColor, theme.backgroundShape),
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -898,7 +896,7 @@ private fun DesignStudioPanel(
                     IconButton("close") { onBack() }
                     SearchBar()
                 }
-                Text("HUD Design Studio", color = Color.White, fontSize = 24.sp)
+                Text("HUD Design Studio", color = theme.textColor, fontSize = 24.sp)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     StudioCategory.entries.forEach {
                         Chip(it.title, it == activeCategory, it.icon) { onCategoryChange(it) }
@@ -952,12 +950,13 @@ private fun HudLibraryPanel(
     filteredProviders: List<Hud>,
     onDragStart: (Hud, Float, Float, Float, Float) -> Unit = { _, _, _, _, _ -> },
 ) {
+    val theme = LocalTheme.current
     Column(
         modifier = Modifier
             .size(401.dp, 481.dp)
             .padding(start = 16.dp, top = 16.dp, bottom = 16.dp)
-            .background(panelBackground, panelShape)
-            .border(1.dp, panelBorder, panelShape)
+            .background(theme.popupBackground, theme.backgroundShape)
+            .border(1.dp, theme.borderColor, theme.backgroundShape)
             .padding(18.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -966,7 +965,7 @@ private fun HudLibraryPanel(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("HUDs", color = Color.White, fontSize = 18.sp)
+            Text("HUDs", color = theme.textColor, fontSize = 18.sp)
             LibrarySearchBar(searchText, onSearchChange)
         }
         val libraryScrollState = rememberScrollState()
@@ -1000,11 +999,12 @@ private fun ModIconColumn(
     libraryVisible: Boolean,
     onModClick: (String) -> Unit,
 ) {
+    val theme = LocalTheme.current
     Column(
         modifier = Modifier
             .padding(end = 16.dp, top = 16.dp, bottom = 16.dp)
-            .background(panelBackground, panelShape)
-            .border(1.dp, panelBorder, panelShape)
+            .background(theme.popupBackground, theme.backgroundShape)
+            .border(1.dp, theme.borderColor, theme.backgroundShape)
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -1039,10 +1039,11 @@ private fun LegacyHudPreviewCard(hud: Hud, onDragStart: (Hud, Float, Float, Floa
     val (naturalW, naturalH) = hud.minimumSize()
     if (naturalW <= 0f || naturalH <= 0f) return
     val density = LocalDensity.current.density
+    val theme = LocalTheme.current
 
     var isHovered by remember { mutableStateOf(false) }
     val backgroundColor by animateColorAsState(
-        if (isHovered) Accent else panelBackground,
+        if (isHovered) Accent else theme.popupBackground,
         animationSpec = tween(150)
     )
     var pressPos by remember { mutableStateOf<Offset?>(null) }
@@ -1055,8 +1056,8 @@ private fun LegacyHudPreviewCard(hud: Hud, onDragStart: (Hud, Float, Float, Floa
     Box(
         modifier = Modifier
             .size(w, h)
-            .background(backgroundColor, RoundedCornerShape(8.dp))
-            .border(1.dp, panelBorder, RoundedCornerShape(8.dp))
+            .background(backgroundColor, theme.buttonShape)
+            .border(1.dp, theme.borderColor, theme.buttonShape)
             .onPointerEvent(PointerEventType.Enter) { isHovered = true }
             .onPointerEvent(PointerEventType.Exit) {
                 isHovered = false
@@ -1096,7 +1097,7 @@ private fun LegacyHudPreviewCard(hud: Hud, onDragStart: (Hud, Float, Float, Floa
     ) {
         Text(
             hud.title ?: "Legacy HUD",
-            color = Color.White.copy(0.85f),
+            color = theme.textColor.copy(0.85f),
             fontSize = 12.sp,
         )
     }
@@ -1112,11 +1113,12 @@ private fun ComposeHudPreviewCard(hud: Hud, onDragStart: (Hud, Float, Float, Flo
     var naturalW by remember(hud) { mutableStateOf(0f) }
     var naturalH by remember(hud) { mutableStateOf(0f) }
     val density = LocalDensity.current.density
+    val theme = LocalTheme.current
 
     // Hover state tracked via pointer Enter/Exit
     var isHovered by remember { mutableStateOf(false) }
     val backgroundColor by animateColorAsState(
-        if (isHovered) Accent else panelBackground,
+        if (isHovered) Accent else theme.popupBackground,
         animationSpec = tween(150)
     )
 
@@ -1143,8 +1145,8 @@ private fun ComposeHudPreviewCard(hud: Hud, onDragStart: (Hud, Float, Float, Flo
         Canvas(
             modifier = Modifier
                 .size(w, h)
-                .background(backgroundColor, RoundedCornerShape(8.dp))
-                .border(1.dp, panelBorder, RoundedCornerShape(8.dp))
+                .background(backgroundColor, theme.buttonShape)
+                .border(1.dp, theme.borderColor, theme.buttonShape)
                 .onPointerEvent(PointerEventType.Enter) { isHovered = true }
                 .onPointerEvent(PointerEventType.Exit) {
                     isHovered = false
@@ -1196,10 +1198,11 @@ private fun ComposeHudPreviewCard(hud: Hud, onDragStart: (Hud, Float, Float, Flo
 private fun ModFilterIcon(iconName: String, selected: Boolean, onClick: () -> Unit) {
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
+    val theme = LocalTheme.current
     val iconColor by animateColorAsState(
-        if (selected) Color.White.copy(1f)
-        else if (isHovered) Color.White.copy(0.8f)
-        else Color.White.copy(0.7f)
+        if (selected) theme.textColor.copy(1f)
+        else if (isHovered) theme.textColor.copy(0.8f)
+        else theme.textColor.copy(0.7f)
     )
 
     Box(
@@ -1217,11 +1220,12 @@ fun SearchBar() {
     var searchText by remember { mutableStateOf("") }
     val interactionSource = rememberInteractionSource()
     val isFocused by interactionSource.collectIsFocusedAsState()
+    val theme = LocalTheme.current
     val borderColor by animateColorAsState(
-        if (isFocused) Color.White.copy(.20f) else Color.White.copy(.10f)
+        if (isFocused) theme.textColor.copy(.20f) else theme.textColor.copy(.10f)
     )
     val iconColor by animateColorAsState(
-        if (isFocused) Color(223, 234, 255).copy(0.70f) else Color(223, 234, 255).copy(0.50f)
+        if (isFocused) theme.textColor.copy(0.70f) else theme.textColor.copy(0.50f)
     )
 
     BasicTextField(
@@ -1235,8 +1239,8 @@ fun SearchBar() {
     ) { innerTextField ->
         Row(
             modifier = Modifier.size(181.dp, 32.dp)
-                .border(1.dp, borderColor, RoundedCornerShape(8.dp))
-                .background(Color(35, 45, 50).copy(0.95f), RoundedCornerShape(8.dp)),
+                .border(1.dp, borderColor, theme.buttonShape)
+                .background(theme.componentBackground, theme.buttonShape),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -1259,11 +1263,12 @@ fun SearchBar() {
 private fun LibrarySearchBar(value: String, onValueChange: (String) -> Unit) {
     val interactionSource = rememberInteractionSource()
     val isFocused by interactionSource.collectIsFocusedAsState()
+    val theme = LocalTheme.current
     val borderColor by animateColorAsState(
-        if (isFocused) Color.White.copy(.20f) else Color.White.copy(.10f)
+        if (isFocused) theme.textColor.copy(.20f) else theme.textColor.copy(.10f)
     )
     val iconColor by animateColorAsState(
-        if (isFocused) Color(223, 234, 255).copy(0.70f) else Color(223, 234, 255).copy(0.50f)
+        if (isFocused) theme.textColor.copy(0.70f) else theme.textColor.copy(0.50f)
     )
 
     BasicTextField(
@@ -1277,8 +1282,8 @@ private fun LibrarySearchBar(value: String, onValueChange: (String) -> Unit) {
     ) { innerTextField ->
         Row(
             modifier = Modifier.width(181.dp).height(32.dp)
-                .border(1.dp, borderColor, RoundedCornerShape(8.dp))
-                .background(Color(35, 45, 50).copy(0.95f), RoundedCornerShape(8.dp)),
+                .border(1.dp, borderColor, theme.buttonShape)
+                .background(theme.componentBackground, theme.buttonShape),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {

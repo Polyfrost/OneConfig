@@ -129,11 +129,12 @@ fun Tooltip(
         anchor = anchor, alignment = alignment, offset = offset
     )
 
+    val theme = LocalTheme.current
     TooltipArea(
         content = content, delayMillis = 200, tooltip = @Composable {
             Box(
-                modifier = modifier.background(Color(0xff2C2C2C), shape = RoundedCornerShape(8.dp))
-                    .border(1.dp, Color.White.copy(alpha = 0.1f), shape = RoundedCornerShape(8.dp))
+                modifier = modifier.background(theme.popupBackground, shape = RoundedCornerShape(8.dp))
+                    .border(1.dp, theme.borderColor, shape = RoundedCornerShape(8.dp))
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             ) {
                 text()

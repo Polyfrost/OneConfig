@@ -35,6 +35,7 @@ import org.lwjgl.glfw.GLFW
 import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ui.components.LocalUiOversample
 import java.awt.Component
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -185,7 +186,8 @@ abstract class ComposeScreen(
             @Suppress("DEPRECATION")
             CompositionLocalProvider(
                 LocalClipboardManager provides SystemClipboardManager,
-                LocalClipboard provides SystemClipboard
+                LocalClipboard provides SystemClipboard,
+                LocalUiOversample provides (Platform.screen().pixelRatio().takeIf { it > 0f } ?: 1f),
             ) {
                 compose()
             }

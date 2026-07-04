@@ -96,7 +96,7 @@ public class OneConfigConfig extends Config {
         description = "oneconfig.preferences.reduced_res_filter.description",
         descriptionTranslation = true
     )
-    public static int reducedResFilter = 1;
+    public static int reducedResFilter = 0;
 
     @Slider(
         title = "oneconfig.preferences.ui_sharpening.title",

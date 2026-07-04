@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -221,8 +220,8 @@ fun Designer(hud: Hud? = null) {
             Box(
                 modifier = Modifier.fillMaxWidth()
                     .height(58.dp)
-                    .background(Color(0x192126).copy(.7f), RoundedCornerShape(8.dp))
-                    .border(1.dp, LocalTheme.current.borderColor, RoundedCornerShape(8.dp)),
+                    .background(LocalTheme.current.componentBackground, LocalTheme.current.buttonShape)
+                    .border(1.dp, LocalTheme.current.borderColor, LocalTheme.current.buttonShape),
                 contentAlignment = Alignment.Center
             ) {
                 val previewText = run {
@@ -300,8 +299,8 @@ fun Designer(hud: Hud? = null) {
                     Text("Modifiers", color = LocalTheme.current.textColor, fontSize = 14.sp)
                     Box(
                         modifier = Modifier
-                            .background(Color(0x192126).copy(.7f), RoundedCornerShape(6.dp))
-                            .border(1.dp, LocalTheme.current.borderColor, RoundedCornerShape(6.dp))
+                            .background(LocalTheme.current.componentBackground, LocalTheme.current.buttonShape)
+                            .border(1.dp, LocalTheme.current.borderColor, LocalTheme.current.buttonShape)
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),

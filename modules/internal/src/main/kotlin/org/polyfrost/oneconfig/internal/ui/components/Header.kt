@@ -30,7 +30,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -160,8 +159,8 @@ private fun TitleInfoTooltip(title: String) {
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier
                         .widthIn(max = 260.dp)
-                        .background(Color(0xff2C2C2C), shape = LocalTheme.current.popupShape)
-                        .border(1.dp, Color.White.copy(alpha = 0.1f), shape = LocalTheme.current.popupShape)
+                        .background(LocalTheme.current.popupBackground, shape = LocalTheme.current.popupShape)
+                        .border(1.dp, LocalTheme.current.borderColor, shape = LocalTheme.current.popupShape)
                         .padding(horizontal = 12.dp, vertical = 8.dp)
                 ) {
                     if (authors != null) {

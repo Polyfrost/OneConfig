@@ -40,6 +40,9 @@ object ShellState {
     /** Last top-level route navigated to, used by the "Previous page" / "Smart reset" opening behaviors. */
     var lastRoute: Any? = null
 
+    /** Last selected settings category (tab) per mod id, restored when a mod's config is reopened. */
+    val selectedCategories = HashMap<String, String>()
+
     /** Wall-clock time (ms) the menu was last closed, used by the "Smart reset" opening behavior. */
     var lastClosedAt: Long = 0L
 

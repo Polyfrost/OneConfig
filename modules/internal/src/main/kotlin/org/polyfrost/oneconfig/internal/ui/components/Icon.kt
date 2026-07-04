@@ -15,9 +15,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.BitmapPainter
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.loadImageBitmap
-import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
@@ -46,12 +45,11 @@ fun Icon(
     } else null
     if (file != null) {
         val isSvg = file.extension.equals("svg", ignoreCase = true)
-        val density = LocalDensity.current
-        val painter = remember(iconName, density) {
+        val over = LocalUiOversample.current
+        val painter = remember(iconName, file.lastModified(), over) {
             runCatching {
-                file.inputStream().buffered().use { stream ->
-                    if (isSvg) loadSvgPainter(stream, density) else BitmapPainter(loadImageBitmap(stream))
-                }
+                if (isSvg) OversampledSvgPainter(file.readBytes(), over)
+                else file.inputStream().buffered().use { BitmapPainter(loadImageBitmap(it)) }
             }.getOrNull()
         }
         if (painter != null) {
@@ -85,12 +83,33 @@ fun Icon(
     } else {
         resourceModifier
     }
+    val painter = if (isSvg) {
+        rememberIconSvgPainter(path) ?: return
+    } else {
+        painterResource(path)
+    }
     Image(
-        painter = painterResource(path),
+        painter = painter,
         contentDescription = null,
         modifier = clippedResourceModifier,
         colorFilter = if (isSvg) ColorFilter.tint(resolvedColor) else null
     )
+}
+
+@Composable
+private fun rememberIconSvgPainter(path: String): Painter? {
+    val over = LocalUiOversample.current
+    return remember(path, over) {
+        readIconResourceBytes(path)?.let { OversampledSvgPainter(it, over) }
+    }
+}
+
+private fun readIconResourceBytes(path: String): ByteArray? {
+    val normalized = path.removePrefix("/")
+    val loader = Thread.currentThread().contextClassLoader ?: IconResourceMarker::class.java.classLoader
+    val stream = loader?.getResourceAsStream(normalized)
+        ?: IconResourceMarker::class.java.getResourceAsStream(path)
+    return stream?.use { it.readBytes() }
 }
 
 fun canRenderIcon(iconName: String): Boolean {
@@ -143,8 +162,9 @@ fun IconWithIndicator(
 ) {
     val resolvedColor = if (color == Color.Unspecified) LocalTheme.current.textColor else color
     Box {
-        Image(
-            painter = painterResource("/assets/oneconfig/ico/$iconName.svg"),
+        val painter = rememberIconSvgPainter("/assets/oneconfig/ico/$iconName.svg")
+        if (painter != null) Image(
+            painter = painter,
             contentDescription = null,
             modifier = modifier.size(18.dp),
             colorFilter = ColorFilter.tint(resolvedColor)

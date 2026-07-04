@@ -99,20 +99,32 @@ private sealed interface ConfigListEntry {
 }
 
 @Composable
-fun ConfigScreen(tree: Tree, initialCategory: String? = null) {
+fun ConfigScreen(tree: Tree, initialCategory: String? = null, modId: String? = null) {
     val categories = remember(tree) { buildCategories(tree) }
     val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
+
+    fun rememberedCategory(): CategoryGroup? {
+        val saved = modId?.let { ShellState.selectedCategories[it] }
+        return saved?.let { name -> categories.firstOrNull { it.name.equals(name, ignoreCase = true) } }
+    }
+
+    fun resolveInitialCategory(): CategoryGroup? =
+        categories.firstOrNull { it.name.equals(initialCategory, ignoreCase = true) }
+            ?: rememberedCategory()
+            ?: categories.firstOrNull()
+
     var selectedCategory by remember(tree, initialCategory) {
-        mutableStateOf(
-            categories.firstOrNull { it.name.equals(initialCategory, ignoreCase = true) }
-                ?: categories.firstOrNull()
-        )
+        mutableStateOf(resolveInitialCategory())
+    }
+
+    fun selectCategory(category: CategoryGroup) {
+        selectedCategory = category
+        if (modId != null) ShellState.selectedCategories[modId] = category.name
     }
 
     LaunchedEffect(categories, initialCategory) {
         if (selectedCategory == null || selectedCategory !in categories) {
-            selectedCategory = categories.firstOrNull { it.name.equals(initialCategory, ignoreCase = true) }
-                ?: categories.firstOrNull()
+            selectedCategory = resolveInitialCategory()
         }
     }
 
@@ -127,7 +139,7 @@ fun ConfigScreen(tree: Tree, initialCategory: String? = null) {
                     Chip(
                         label = category.name,
                         selected = selectedCategory == category,
-                        onClick = { selectedCategory = category }
+                        onClick = { selectCategory(category) }
                     )
                 }
             }
