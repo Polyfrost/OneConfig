@@ -736,7 +736,12 @@ fun HudDesignStudio() {
                             }
                         },
                 ) {
-                    IconButton("settings", modifier = Modifier.size(iconSize)) {
+                    IconButton(
+                        "settings",
+                        modifier = Modifier.size(iconSize),
+                        foreground = Color.White.copy(0.7f),
+                        hoveredForeground = Color.White,
+                    ) {
                         Snapshot.withMutableSnapshot { selectedHud = actionBarTarget }
                     }
                 }
@@ -759,7 +764,12 @@ fun HudDesignStudio() {
                                 }
                             },
                     ) {
-                        IconButton("trash", modifier = Modifier.size(iconSize)) {
+                        IconButton(
+                            "trash",
+                            modifier = Modifier.size(iconSize),
+                            foreground = Color.White.copy(0.7f),
+                            hoveredForeground = Color.White,
+                        ) {
                             Snapshot.withMutableSnapshot {
                                 if (selectedHud === actionBarTarget) selectedHud = null
                                 hoveredHud = null
