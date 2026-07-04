@@ -10,6 +10,7 @@ import net.minecraft.client.input.KeyEvent
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
@@ -99,6 +100,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         /*override fun keyPressed(key: Int, scanCode: Int, modifiers: Int): Boolean {
         *///? }
         if (key == InputConstants.KEY_ESCAPE) {
+            if (KeybindRecordingBus.consumeEscape()) return true
             if (!closeRequested) {
                 closeRequested = true
                 closeRequestedAt = System.currentTimeMillis()

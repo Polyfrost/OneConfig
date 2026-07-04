@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -37,6 +38,7 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
@@ -80,6 +82,9 @@ private fun writeKeybind(prop: Property<*>, keys: IntArray?, mouse: IntArray?, m
     val newKeybind = OneConfigKeybind(keys, mouse, mods, 0L, existingAction)
     (prop as Property<Any>).set(newKeybind)
     val applied = prop.get() as? OneConfigKeybind ?: newKeybind
+    applied.keyCodes = keys
+    applied.mouseBtns = mouse
+    applied.mods = mods
     KeybindManager.replace(old, applied)
     KeybindConflicts.revision.intValue++
     return applied
@@ -167,16 +172,28 @@ fun KeybindOption(data: KeybindOptionData) {
         }
     }
 
+    DisposableEffect(recording) {
+        if (recording) {
+            val handler = {
+                applyKeybind(null, null)
+                recording = false
+            }
+            KeybindRecordingBus.setEscapeHandler(handler)
+            onDispose { KeybindRecordingBus.clearEscapeHandler(handler) }
+        } else {
+            onDispose { }
+        }
+    }
+
     Row(
         modifier = Modifier
-            .focusRequester(focusRequester)
-            .focusable()
             .onKeyEvent { event ->
                 if (!recording) return@onKeyEvent false
                 if (event.awtKeyEventId() == java.awt.event.KeyEvent.KEY_TYPED) return@onKeyEvent true
                 when (event.type) {
                     KeyEventType.KeyDown -> {
                         if (event.key == Key.Escape) {
+                            applyKeybind(null, null)
                             recording = false
                             return@onKeyEvent true
                         }
@@ -210,6 +227,8 @@ fun KeybindOption(data: KeybindOptionData) {
                     else -> return@onKeyEvent false
                 }
             }
+            .focusRequester(focusRequester)
+            .focusable()
             .background(bgColor, KeybindShape)
             .border(1.dp, borderColor, KeybindShape)
             .onClick(interactionSource) { recording = !recording }

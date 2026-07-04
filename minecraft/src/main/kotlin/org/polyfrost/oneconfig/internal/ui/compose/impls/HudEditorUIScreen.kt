@@ -22,6 +22,7 @@ import net.minecraft.client.input.KeyEvent
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignStudio
 import org.polyfrost.oneconfig.internal.ui.shell.Lifecycle
 import org.polyfrost.oneconfig.internal.ui.shell.OCViewModelStoreOwner
@@ -60,6 +61,7 @@ class HudEditorUIScreen : ComposeScreen() {
     /*override fun keyPressed(key: Int, scanCode: Int, modifiers: Int): Boolean {
     *///? }
         if (key == InputConstants.KEY_ESCAPE) {
+            if (KeybindRecordingBus.consumeEscape()) return true
             if (!closeRequested) {
                 closeRequested = true
                 closeRequestedAt = System.currentTimeMillis()

@@ -36,6 +36,7 @@ import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.components.LocalUiOversample
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import java.awt.Component
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -393,6 +394,10 @@ abstract class ComposeScreen(
         //? } else {
     /*override fun keyPressed(key: Int, scanCode: Int, modifiers: Int): Boolean {
     *///? }
+        if (key == GLFW.GLFW_KEY_ESCAPE && KeybindRecordingBus.consumeEscape()) {
+            return true
+        }
+
         val awtCode = glfwToAwtKeyCode(key)
 
         val eventType = KeyEvent.KEY_PRESSED

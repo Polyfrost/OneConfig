@@ -80,7 +80,7 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
     }
     *///?}
 
-    //? if >=1.21.10 {
+    //? if >=26.1 {
     @Inject(method = "extractRenderState", at = @At("HEAD"))
     private void oneconfig$poll(CallbackInfo ci) {
         oneconfig$pollInputs();
@@ -141,9 +141,10 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
     @Override
     public void oneconfig$recordEscape() {
         MinecraftKeybindBridgeImpl bridge = MinecraftKeybindBridgeImpl.instance();
-        if (bridge != null && oneconfig$target != null) {
+        KeyMapping target = oneconfig$target != null ? oneconfig$target : this.selectedKey;
+        if (bridge != null && target != null) {
             bridge.clearPreview();
-            bridge.menuUnbind(oneconfig$target);
+            bridge.menuUnbind(target);
         }
         oneconfig$reset();
         oneconfig$finishSelection();
