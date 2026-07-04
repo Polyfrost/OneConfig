@@ -99,9 +99,11 @@ public final class org/polyfrost/oneconfig/api/config/v1/Property$KtProperty : o
 public class org/polyfrost/oneconfig/api/config/v1/Tree : org/polyfrost/oneconfig/api/config/v1/Node, java/io/Serializable {
 	public final field map Ljava/util/Map;
 	public fun <init> (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/util/Map;)V
+	public static fun beginFailureCollection ()V
 	public fun clear ()V
 	public fun contentToString ()Ljava/lang/String;
 	public fun deepEquals (Ljava/lang/Object;)Z
+	public static fun endFailureCollection ()Ljava/util/List;
 	public fun equals (Ljava/lang/Object;)Z
 	public static fun evaluatePath (Lorg/polyfrost/oneconfig/api/config/v1/Tree;Lorg/polyfrost/oneconfig/api/config/v1/Node;)Ljava/lang/String;
 	public fun get (Ljava/lang/Iterable;)Lorg/polyfrost/oneconfig/api/config/v1/Node;
