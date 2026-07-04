@@ -1,33 +1,25 @@
-1.0.0-beta.5 changelogs:
+1.0.0-beta.6 changelogs:
 
-- Introduce new categories
-  - Performance, Visuals, HUD, Utility
-- Add a new third-party mod category list
-  - This is a list of mods that we assign to categories based on their functionality
-- Add description tooltips to Accordions and HUD settings
-- Add HUD snapping
-- Add HUD arrow keys to move the HUD
-- Put external mod keybinds in OC Keybinds GUI
-- Make OneConfig key binds display in Minecraft key binds menu
-- Implement notifications center
-- Add multi-key (chord) keybinds (#676)
-- Show keybind conflicts in the keybinds screen (#675)
-- Optimize some dev utilities
-- Move HUD settings/delete icon inside the HUD
-- Round non-SVG icons automatically (#659)
-- Set default step size to 1f (#682)
+- Add VulkanMod support
+- Add BlazeSDL support
+- New translation API
+- Make profiles support keybinds and all mods, even compat mods
+- Add all vanilla Minecraft keybinds to OneConfig keybinds
+- Add missing options to KtConfig, including transformed and observable entries
+- Stop including Compose Multiplatform in the JAR
+- Add ModMenu entries
 
-- Fix duplicate mod card when a mod has both OneConfig and Mod Menu config support (#663)
-- Fix various issues with KtConfigs (#683, #685, #684)
-- Fix `@Include` fields showing in config menu (#681)
-- Fix UI clipping sidebar (#665)
-- Fix UI keybind working in other GUIs
-- Fix `HudManager#isEditing` not updating properly
-- Improve DesktopHelper utils and reliability
-- Fix HUD resizing not being correctly proportional to mouse drag (#662)
-- Fix slider text glitching out in HUD designer/settings (#667)
-- Fix MultiSelectDropdown not saving (#664)
-- Fix chroma UI accent color not working (#642)
-- Fix subcategories not being displayed as accordions in Cloth Config (#639)
-- Fix YACL compat not using min/max values (#669)
-- Fix hidden/test configs not being excluded from global search results (#679)
+- Fix keybinds not unbinding
+- Fix keybind infinite recursion StackOverflowError between OneConfig and kryptconfig (#688)
+- Fix LegacyHud editor issues (#686)
+- Fix Minecraft theme having rounded corners (#712)
+- Fix Fabric API dependency issues (#721)
+- Fix non-daemon threads delaying Minecraft shutdown on 26.2 (#722)
+- Fix FrameBufferEvent and ChatSendEvent mixins (#719)
+- Dispatch ServerJoinEvent once the play connection is established (#694)
+- Attempt to fix Sodium Extra resolution scaling
+- Fix various profiles issues
+- Reset config on corrupt data and improve tree overwrite resilience
+- Fix theme consistency in many places
+- Slow down chroma speed
+- Properly dispose Compose in certain situations
