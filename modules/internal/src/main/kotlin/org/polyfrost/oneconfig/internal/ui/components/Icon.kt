@@ -14,6 +14,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.loadImageBitmap
@@ -22,11 +23,25 @@ import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.sqrt
 
 private object IconResourceMarker
 private const val DefaultIconSize = 18f
 private val DefaultRasterIconShape = RoundedCornerShape(8.dp)
+
+private object IconBitmapCache {
+    private class Entry(val lastModified: Long, val bitmap: ImageBitmap)
+
+    private val cache = ConcurrentHashMap<String, Entry>()
+
+    fun load(path: String, lastModified: Long, decode: () -> ImageBitmap): ImageBitmap {
+        cache[path]?.let { if (it.lastModified == lastModified) return it.bitmap }
+        val bitmap = decode()
+        cache[path] = Entry(lastModified, bitmap)
+        return bitmap
+    }
+}
 
 @Composable
 fun Icon(
@@ -49,7 +64,11 @@ fun Icon(
         val painter = remember(iconName, file.lastModified(), over) {
             runCatching {
                 if (isSvg) OversampledSvgPainter(file.readBytes(), over)
-                else file.inputStream().buffered().use { BitmapPainter(loadImageBitmap(it)) }
+                else BitmapPainter(
+                    IconBitmapCache.load(iconName, file.lastModified()) {
+                        file.inputStream().buffered().use(::loadImageBitmap)
+                    }
+                )
             }.getOrNull()
         }
         if (painter != null) {

@@ -114,8 +114,13 @@ abstract class ComposeScreen(
 
     private fun createScene() = CanvasLayersComposeScene(
         platformContext = ComposeSceneContextImpl.platformContext,
-//        invalidate = frameDispatcher::scheduleFrame
+        invalidate = { sceneDirty = true }
     )
+
+    @Volatile
+    private var sceneDirty = true
+
+    private var lastPointer: Offset? = null
 
     protected val client get() = Minecraft.getInstance()
     private val contentScaleX = FloatArray(1)
@@ -181,6 +186,9 @@ abstract class ComposeScreen(
             sceneClosed = false
         }
 
+        sceneDirty = true
+        lastPointer = null
+
         syncSceneMetrics()
 
         scene.setContent {
@@ -208,7 +216,9 @@ abstract class ComposeScreen(
 
     //~ if >= 26.1 'renderBackground' -> 'extractBackground'
     override fun extractBackground(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
-
+        if (client.level == null) {
+            extractPanorama(ctx, tickDelta)
+        }
     }
 
     private var sceneClosed = false
@@ -241,7 +251,10 @@ abstract class ComposeScreen(
         if (focused) {
             try {
                 val pointerPosition = pointerPosition()
-                scene.sendPointerEvent(PointerEventType.Move, pointerPosition)
+                if (pointerPosition != lastPointer) {
+                    lastPointer = pointerPosition
+                    scene.sendPointerEvent(PointerEventType.Move, pointerPosition)
+                }
             } catch (_: Throwable) {
             }
         }
@@ -249,6 +262,10 @@ abstract class ComposeScreen(
         try {
             scene.invalidatePositionInWindow()
         } catch (_: Throwable) {
+        }
+
+        if (renderMode == RenderMode.ON_DEMAND && !sceneDirty && SkiaCtx.isDeferredComposeBackend) {
+            if (SkiaCtx.blitComposeCached(ctx)) return
         }
 
         val renderBlock = Runnable {
@@ -271,6 +288,7 @@ abstract class ComposeScreen(
             }
         }
 
+        sceneDirty = false
         if (SkiaCtx.isDeferredComposeBackend) {
             SkiaCtx.drawComposeBlit(ctx, renderBlock)
         } else {

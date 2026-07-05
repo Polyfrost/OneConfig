@@ -48,6 +48,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
     }
 
     override fun init() {
+        org.polyfrost.oneconfig.internal.OneConfig.dismissFirstLaunchToast()
         ConfigRegistry.loadFrom(ConfigManager.active(), ConfigSource.OC)
         initialTree?.let { ConfigRegistry.registerTree(it, ConfigSource.OC) }
 

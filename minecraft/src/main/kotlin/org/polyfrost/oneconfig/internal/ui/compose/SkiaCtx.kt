@@ -246,6 +246,13 @@ object SkiaCtx {
         blitCompose(ctx)
     }
 
+    fun blitComposeCached(ctx: GuiGraphicsExtractor): Boolean {
+        if (!this::directContext.isInitialized) return false
+        if (composeTarget == null || composeSurface == null) return false
+        blitCompose(ctx)
+        return true
+    }
+
     /**
      * Pre-26.1 only: the fullscreen Compose GUI is drawn straight onto the back buffer (see [resolveGLSurface]),
      * so it never reaches the main render target that screenshots read. Called right before a screenshot reads

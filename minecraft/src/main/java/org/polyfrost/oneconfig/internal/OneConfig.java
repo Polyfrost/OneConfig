@@ -48,7 +48,6 @@ import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.WorldEvent;
-import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent;
 import org.polyfrost.oneconfig.api.notifications.v1.Notification;
@@ -245,7 +244,6 @@ public class OneConfig
     }
 
     private static Notification firstLaunchToast;
-    private static EventHandler<ScreenOpenEvent> firstLaunchScreenWatcher;
 
     private static void showFirstLaunchNotification() {
         if (!OneConfigConfig.showFirstLaunchMessage) {
@@ -263,22 +261,12 @@ public class OneConfig
                 -1f,
                 null,
                 () -> Platform.screen().display(new OneConfigUIScreen()));
-        firstLaunchScreenWatcher = EventManager.register(
-                ScreenOpenEvent.class, e -> {
-                    if (e.getScreen() instanceof OneConfigUIScreen) {
-                        dismissFirstLaunchToast();
-                    }
-                });
     }
 
-    private static void dismissFirstLaunchToast() {
+    public static void dismissFirstLaunchToast() {
         if (firstLaunchToast != null) {
             Notifications.dismiss(firstLaunchToast);
             firstLaunchToast = null;
-        }
-        if (firstLaunchScreenWatcher != null) {
-            EventManager.INSTANCE.unregister(firstLaunchScreenWatcher);
-            firstLaunchScreenWatcher = null;
         }
     }
 
