@@ -415,7 +415,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     fun make(with: Tree? = null): Hud {
         if (tree != null) throw IllegalArgumentException("HUD is already made, it cannot be made again")
         val out = if (multipleInstancesAllowed()) clone() else this
-        val treeId = with?.id ?: "huds/${(1000..9999).random()}-$id"
+        val treeId = with?.id ?: if (multipleInstancesAllowed()) "huds/${(1000..9999).random()}-$id" else "huds/$id"
         val tree = ConfigManager.collect(out, treeId)
         out.apply {
             tree.title = title
