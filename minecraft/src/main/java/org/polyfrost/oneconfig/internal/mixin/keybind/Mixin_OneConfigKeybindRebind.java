@@ -48,16 +48,11 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
     private void oneconfig$keyPressed(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
         if (!oneconfig$isOurs()) return;
         if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-            MinecraftKeybindBridgeImpl.instance().clearPreview();
-            MinecraftKeybindBridgeImpl.instance().menuUnbind(this.selectedKey);
-            oneconfig$reset();
-            oneconfig$finishSelection();
+            oneconfig$recordEscape();
             cir.setReturnValue(true);
             return;
         }
-        oneconfig$recording = true;
-        oneconfig$keys.add(keyCode);
-        oneconfig$preview();
+        oneconfig$recordKey(keyCode);
         cir.setReturnValue(true);
     }
     *///?}
@@ -73,9 +68,7 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
     /*@Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
     private void oneconfig$mouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
         if (!oneconfig$isOurs()) return;
-        oneconfig$recording = true;
-        oneconfig$mouse.add(button);
-        oneconfig$preview();
+        oneconfig$recordMouse(button);
         cir.setReturnValue(true);
     }
     *///?}
