@@ -217,6 +217,7 @@ abstract class ComposeScreen(
     //~ if >= 26.1 'renderBackground' -> 'extractBackground'
     override fun extractBackground(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
         if (client.level == null) {
+            //~ if >= 26.1 'renderPanorama' -> 'extractPanorama'
             extractPanorama(ctx, tickDelta)
         }
     }
