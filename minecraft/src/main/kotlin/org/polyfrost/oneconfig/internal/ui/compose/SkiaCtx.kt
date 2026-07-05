@@ -70,6 +70,27 @@ object SkiaCtx {
     private var composeSurface: Surface? = null
     private var composeBrt: BackendRenderTarget? = null
 
+    @Volatile
+    private var composeActive = false
+    @Volatile
+    private var composeDirty = false
+    @Volatile
+    private var composeRender: (() -> Unit)? = null
+
+    fun submitComposeFrame(dirty: Boolean, render: Runnable) {
+        composeActive = true
+        if (dirty || composeRender == null) {
+            composeRender = { render.run() }
+            composeDirty = true
+        }
+    }
+
+    fun clearComposeFrame() {
+        composeActive = false
+        composeDirty = false
+        composeRender = null
+    }
+
     //? >= 1.21.5 {
     private val HUD_TEXTURE_LOC = Identifier.fromNamespaceAndPath("oneconfig", "hud_skia")
     private val COMPOSE_TEXTURE_LOC = Identifier.fromNamespaceAndPath("oneconfig", "compose_skia")
@@ -391,14 +412,12 @@ object SkiaCtx {
         queuedDraws.clear()
         val notifDraws = queuedNotifDraws.toList()
         queuedNotifDraws.clear()
-        if (draws.isEmpty() && notifDraws.isEmpty()) return
+        val wantCompose = composeActive && !isVulkanMode
+        if (draws.isEmpty() && notifDraws.isEmpty() && !wantCompose) return
 
-        currentSurface = if (isVulkanMode) {
-            resolveVkSurface()
-        } else {
-            resolveGLSurface()
-        }
-        if (currentSurface == null) return
+        val mainSurface = if (isVulkanMode) resolveVkSurface() else resolveGLSurface()
+        if (mainSurface == null) return
+        currentSurface = mainSurface
 
         val savedFbo = IntArray(1)
         try {
@@ -413,15 +432,34 @@ object SkiaCtx {
                 // correct framebuffer instead of the one Skia left bound (otherwise the screen flickers).
                 GL30.glGetIntegerv(GL30.GL_FRAMEBUFFER_BINDING, savedFbo)
                 directContext.resetGLAll()
-                GL11.glViewport(0, 0, currentSurface!!.width, currentSurface!!.height)
+                GL11.glViewport(0, 0, mainSurface.width, mainSurface.height)
                 GL11.glDisable(GL11.GL_SCISSOR_TEST)
             }
 
-            draws.forEach { it() }
+            draws.forEach { it() }        // blur backdrop onto the main RT (samples the live world)
+
+            if (wantCompose) {
+                val cs = resolveComposeSurface()
+                if (cs != null) {
+                    val block = composeRender
+                    if (composeDirty && block != null) {
+                        currentSurface = cs
+                        GL11.glViewport(0, 0, cs.width, cs.height)
+                        cs.canvas.clear(Color.TRANSPARENT)
+                        block()
+                        directContext.flush()
+                        composeDirty = false
+                        currentSurface = mainSurface
+                        GL11.glViewport(0, 0, mainSurface.width, mainSurface.height)
+                    }
+                    cs.draw(mainSurface.canvas, 0, 0, null)
+                }
+            }
+
             notifDraws.forEach { it() }
 
             if (isVulkanMode) {
-                directContext.flushAndSubmit(currentSurface!!, false)
+                directContext.flushAndSubmit(mainSurface, false)
             } else {
                 directContext.flush()
                 GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, savedFbo[0])
@@ -575,9 +613,10 @@ object SkiaCtx {
             //? }
             val (brt, colorFmt) = svc.makeOffscreenBRT(rt, w, h)
             composeBrt = brt
+            val composeOrigin = if (isVulkanMode) SurfaceOrigin.TOP_LEFT else SurfaceOrigin.BOTTOM_LEFT
             composeSurface = Surface.makeFromBackendRenderTarget(
                 directContext, brt,
-                SurfaceOrigin.TOP_LEFT,
+                composeOrigin,
                 colorFmt,
                 ColorSpace.sRGB,
                 null,

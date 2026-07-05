@@ -227,6 +227,7 @@ abstract class ComposeScreen(
     private fun disposeScene() {
         if (sceneClosed) return
         sceneClosed = true
+        SkiaCtx.clearComposeFrame()
         try {
             scene.close()
         } catch (_: Throwable) {
@@ -289,11 +290,12 @@ abstract class ComposeScreen(
             }
         }
 
+        val wasDirty = sceneDirty
         sceneDirty = false
-        if (SkiaCtx.isDeferredComposeBackend) {
-            SkiaCtx.drawComposeBlit(ctx, renderBlock)
-        } else {
-            SkiaCtx.queueDraw(renderBlock)
+        when {
+            SkiaCtx.isDeferredComposeBackend -> SkiaCtx.drawComposeBlit(ctx, renderBlock)
+            SkiaCtx.isVulkanMode -> SkiaCtx.queueDraw(renderBlock) // non-deferred Vulkan: draw straight to the main RT
+            else -> SkiaCtx.submitComposeFrame(wasDirty, renderBlock) // GL: cached FBO, re-render only when dirty
         }
     }
 
