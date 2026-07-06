@@ -170,6 +170,24 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         }
     }
 
+    /**
+     * Stores the reset defaults for [section]/[relativeX]/[relativeY] derived from [defaultPosition].
+     */
+    fun capturePositionDefaults() {
+        val t = tree ?: return
+        val (dx, dy) = defaultPosition()
+        val curSection = section
+        val curX = relativeX
+        val curY = relativeY
+        setAbsolutePosition(dx, dy)
+        t.getProp("section")?.addMetadata("default", section)
+        t.getProp("relativeX")?.addMetadata("default", relativeX)
+        t.getProp("relativeY")?.addMetadata("default", relativeY)
+        section = curSection
+        relativeX = curX
+        relativeY = curY
+    }
+
     @Switch(title = "Show in F3")
     var showInF3 = true
 
