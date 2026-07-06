@@ -247,6 +247,7 @@ abstract class ComposeScreen(
 
     //~ if >= 26.1 'render' -> 'extractRenderState'
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
+        if (Platform.screen().current<Screen>() !== this) return
         syncSceneMetrics()
 
         val focused = client.isWindowActive
@@ -544,6 +545,7 @@ abstract class ComposeScreen(
     }
 
     private fun syncSceneMetrics() {
+        if (sceneClosed) return
         val w = client.window.screenWidth
         val h = client.window.screenHeight
         if (w <= 0 || h <= 0) return

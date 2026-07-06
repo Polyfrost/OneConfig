@@ -57,7 +57,7 @@ object DandelionCompat {
         tree.id = mod?.id ?: return null
         tree.title = mod.name
         tree.noCache = true
-        tree.saveFunction = { save }
+        tree.saveFunction = { save.get() }
         // Dandelion exposes no icon, so fall back to the mod's icon (same source Mod Menu uses).
         mod.extractIconFile()?.let {
             tree.addMetadata("icon_path", it)

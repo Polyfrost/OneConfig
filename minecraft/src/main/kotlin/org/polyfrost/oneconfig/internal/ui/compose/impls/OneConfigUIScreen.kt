@@ -33,6 +33,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
     private val initialTree: Tree? = null,
 ) : ComposeScreen() {
     private companion object {
+        private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/UI")
         const val SHELL_BLUR_RADIUS = 48f
         const val FULLSCREEN_BLUR_RADIUS = 8f
         const val OPEN_ANIMATION_MS = 250L
@@ -88,6 +89,11 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     override fun removed() {
         UiSounds.releaseAmbience()
+        try {
+            ConfigManager.active().saveAll()
+        } catch (t: Throwable) {
+            LOGGER.error("Failed to save configs on OneConfig UI close", t)
+        }
         super.removed()
     }
 
