@@ -31,6 +31,7 @@ import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -44,6 +45,8 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     private static final String TAG = "oc_compat_snapshot";
 
     private final CompatSnapshotStore store = new CompatSnapshotStore();
+    private final CompatSnapshotStore baselineStore = new CompatSnapshotStore("compat-baseline.json");
+    private static final String BASELINE_BUCKET = "";
     private final Map<String, Tree> known = new ConcurrentHashMap<>();
     private final Map<Property<?>, Boolean> wired = Collections.synchronizedMap(new WeakHashMap<>());
     private final Set<Property<?>> applying = Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
@@ -104,17 +107,30 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
 
     private void applyProfile(Tree tree, String profile) {
         ensureKeys(tree);
-        Map<String, Object> snap = store.load(profile).get(tree.getID());
-        if (snap == null || snap.isEmpty()) {
-            captureAll(tree, profile);
-            return;
-        }
+        String treeId = tree.getID();
+        Map<String, Object> snap = store.load(profile).get(treeId);
         boolean[] changed = {false};
         forEachProp(tree, p -> {
             if (!isValueProp(p)) return;
             String key = keyOf(p);
-            if (!snap.containsKey(key)) return;
-            Object stored = snap.get(key);
+            Object liveSer = trySerialize(p.get());
+            Object baseline = getBaseline(treeId, key);
+
+            if (baseline != null && liveSer != null && !valuesEqual(liveSer, baseline)) {
+                store.putValue(profile, treeId, key, liveSer);
+                setBaseline(treeId, key, liveSer);
+                return;
+            }
+
+            Object stored = snap == null ? null : snap.get(key);
+            if (stored == null) {
+                if (liveSer != null) {
+                    store.putValue(profile, treeId, key, liveSer);
+                    setBaseline(treeId, key, liveSer);
+                }
+                return;
+            }
+
             Object value;
             try {
                 value = deserialize(stored);
@@ -130,6 +146,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
             applying.add(p);
             try {
                 p.setAsReferential(value);
+                setBaseline(treeId, key, stored);
                 changed[0] = true;
             } catch (Throwable t) {
                 ConfigManager.LOGGER.warn("Failed to apply compat value for '{}'", key, t);
@@ -137,18 +154,25 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
                 applying.remove(p);
             }
         });
+        store.flush(profile);
+        baselineStore.flush(BASELINE_BUCKET);
         if (changed[0]) runSave(tree);
     }
 
     private void captureAll(Tree tree, String profile) {
         ensureKeys(tree);
+        String treeId = tree.getID();
         forEachProp(tree, p -> {
             if (!isValueProp(p)) return;
             String key = keyOf(p);
             Object serialized = trySerialize(p.get());
-            if (serialized != null) store.putValue(profile, tree.getID(), key, serialized);
+            if (serialized != null) {
+                store.putValue(profile, treeId, key, serialized);
+                setBaseline(treeId, key, serialized);
+            }
         });
         store.flush(profile);
+        baselineStore.flush(BASELINE_BUCKET);
     }
 
     private void wire(Tree tree) {
@@ -163,7 +187,10 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
             prop.addCallback(value -> {
                 if (applying.contains(p)) return false;
                 Object serialized = trySerialize(value);
-                if (serialized != null) store.putValue(ConfigManager.activeProfile(), treeId, key, serialized);
+                if (serialized != null) {
+                    store.putValue(ConfigManager.activeProfile(), treeId, key, serialized);
+                    setBaseline(treeId, key, serialized);
+                }
                 return false;
             });
         });
@@ -178,6 +205,41 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
                 ConfigManager.LOGGER.warn("custom_save failed for compat tree '{}'", tree.getID(), t);
             }
         }
+    }
+
+    private Object getBaseline(String treeId, String key) {
+        return baselineStore.getValue(BASELINE_BUCKET, treeId, key);
+    }
+
+    private void setBaseline(String treeId, String key, Object serialized) {
+        baselineStore.putValue(BASELINE_BUCKET, treeId, key, serialized);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static boolean valuesEqual(Object a, Object b) {
+        if (a == b) return true;
+        if (a == null || b == null) return false;
+        if (a instanceof Number && b instanceof Number) {
+            return ((Number) a).doubleValue() == ((Number) b).doubleValue();
+        }
+        if (a instanceof Map && b instanceof Map) {
+            Map<String, Object> ma = (Map<String, Object>) a, mb = (Map<String, Object>) b;
+            if (ma.size() != mb.size()) return false;
+            for (Map.Entry<String, Object> e : ma.entrySet()) {
+                if (!mb.containsKey(e.getKey())) return false;
+                if (!valuesEqual(e.getValue(), mb.get(e.getKey()))) return false;
+            }
+            return true;
+        }
+        if (a instanceof List && b instanceof List) {
+            List<Object> la = (List<Object>) a, lb = (List<Object>) b;
+            if (la.size() != lb.size()) return false;
+            for (int i = 0; i < la.size(); i++) {
+                if (!valuesEqual(la.get(i), lb.get(i))) return false;
+            }
+            return true;
+        }
+        return a.equals(b);
     }
 
     private static Object trySerialize(Object value) {
