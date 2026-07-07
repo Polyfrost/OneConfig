@@ -58,8 +58,8 @@ fun OneConfigInterface(
         ShellState.globalSearchActive = false
         ShellState.searchQuery = ""
         ShellState.showSearchField = false
-        ShellState.focusSearchField = false
 
+        ShellState.openingTransitionTarget = null
         if (initialRoute != ModsGraph) {
             // an initial navigation will fire a page transition; let "Show opening page animation" gate it
             ShellState.initialTransitionConsumed = false

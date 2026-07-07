@@ -51,6 +51,8 @@ object ShellState {
 
     /** Consumed once per open so the first page transition can be treated specially. */
     var initialTransitionConsumed: Boolean = false
+
+    var openingTransitionTarget: String? = null
 }
 object LocalNavController {
     private var _current: NavHostController? = null

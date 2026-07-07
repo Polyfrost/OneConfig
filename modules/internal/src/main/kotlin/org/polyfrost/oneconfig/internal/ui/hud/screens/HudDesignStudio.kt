@@ -749,6 +749,7 @@ fun HudDesignStudio() {
                     modifier = Modifier
                         .padding(start = settingsX.dp, top = iconY.dp)
                         .onPointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
+                            if (event.changes.any { it.pressed }) return@onPointerEvent
                             event.changes.forEach { if (!it.isConsumed) it.consume() }
                         }
                         .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
@@ -773,6 +774,7 @@ fun HudDesignStudio() {
                         modifier = Modifier
                             .padding(start = deleteX.dp, top = iconY.dp)
                             .onPointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
+                                if (event.changes.any { it.pressed }) return@onPointerEvent
                                 event.changes.forEach { if (!it.isConsumed) it.consume() }
                             }
                             .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
@@ -817,6 +819,7 @@ fun HudDesignStudio() {
                         event.changes.forEach { if (!it.isConsumed) it.consume() }
                     }
                     .onPointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
+                        if (event.changes.any { it.pressed }) return@onPointerEvent
                         event.changes.forEach { if (!it.isConsumed) it.consume() }
                     }
                     .onPointerEvent(PointerEventType.Release, PointerEventPass.Final) { event ->
@@ -906,6 +909,11 @@ private fun DesignStudioPanel(
     onBack: () -> Unit,
 ) {
     val theme = LocalTheme.current
+    val isLegacy = selectedHud is LegacyHud
+    val categories = if (isLegacy) listOf(StudioCategory.Settings) else StudioCategory.entries
+    LaunchedEffect(isLegacy) {
+        if (isLegacy && activeCategory != StudioCategory.Settings) onCategoryChange(StudioCategory.Settings)
+    }
     Box(
         modifier = Modifier
             .fillMaxHeight()
@@ -931,9 +939,11 @@ private fun DesignStudioPanel(
                     SearchBar()
                 }
                 Text("HUD Design Studio", color = theme.textColor, fontSize = 24.sp)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    StudioCategory.entries.forEach {
-                        Chip(it.title, it == activeCategory, it.icon) { onCategoryChange(it) }
+                if (categories.size > 1) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        categories.forEach {
+                            Chip(it.title, it == activeCategory, it.icon) { onCategoryChange(it) }
+                        }
                     }
                 }
             }

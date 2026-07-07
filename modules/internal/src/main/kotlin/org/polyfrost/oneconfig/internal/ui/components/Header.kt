@@ -28,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
@@ -304,7 +305,11 @@ fun GlobalSearchBar() {
 
     LaunchedEffect(ShellState.focusSearchField) {
         if (ShellState.focusSearchField) {
-            focusRequester.requestFocus()
+            withFrameNanos { }
+            try {
+                focusRequester.requestFocus()
+            } catch (_: IllegalStateException) {
+            }
             ShellState.focusSearchField = false
         }
     }

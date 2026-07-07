@@ -298,7 +298,11 @@ public final class ConfigManager {
         }
         rebindInitializedConfigs();
         for (Tree t : externalTrees) {
-            active.register(t);
+            try {
+                active.register(t);
+            } catch (Throwable ex) {
+                LOGGER.error("Failed to rebind external tree {} onto profile {}", t.getID(), profile, ex);
+            }
         }
         for (ProfileChangeListener listener : profileListeners) {
             try {
@@ -510,7 +514,11 @@ public final class ConfigManager {
         rebindingProfiles = true;
         try {
             for (Config config : configs) {
-                config.rebindToActiveProfile();
+                try {
+                    config.rebindToActiveProfile();
+                } catch (Throwable ex) {
+                    LOGGER.error("Failed to rebind config {} onto active profile", config.id, ex);
+                }
             }
         } finally {
             rebindingProfiles = false;

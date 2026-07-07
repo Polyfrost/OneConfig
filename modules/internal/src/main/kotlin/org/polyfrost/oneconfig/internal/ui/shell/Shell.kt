@@ -121,11 +121,17 @@ fun Shell(
                     } else {
                         // The first transition after the menu opens follows "Show opening page animation";
                         // all subsequent page transitions follow "Show Page Animations".
-                        fun resolvePageAnimate(): Boolean =
-                            if (!ShellState.initialTransitionConsumed) {
-                                ShellState.initialTransitionConsumed = true
-                                ShellState.animateOpeningPage
-                            } else OneConfigConfig.showPageAnimations
+                        fun resolvePageAnimate(targetId: String): Boolean {
+                            if (ShellState.initialTransitionConsumed) return OneConfigConfig.showPageAnimations
+                            val openingId = ShellState.openingTransitionTarget
+                            if (openingId == null) {
+                                ShellState.openingTransitionTarget = targetId
+                                return ShellState.animateOpeningPage
+                            }
+                            if (targetId == openingId) return ShellState.animateOpeningPage
+                            ShellState.initialTransitionConsumed = true
+                            return OneConfigConfig.showPageAnimations
+                        }
 
                         fun pageMs() = (OneConfigConfig.pageAnimationDuration * 1000f).toInt().coerceAtLeast(1)
 
@@ -134,8 +140,8 @@ fun Shell(
                             navController = LocalNavController.current,
                             startDestination = ModsGraph,
 
-                            enterTransition = { if (resolvePageAnimate()) slideInHorizontally(tween(pageMs())) { it / 5 } + fadeIn(tween(pageMs())) else EnterTransition.None },
-                            exitTransition = { if (resolvePageAnimate()) slideOutHorizontally(tween(pageMs())) { -it / 5 } + fadeOut(tween(pageMs())) else ExitTransition.None },
+                            enterTransition = { if (resolvePageAnimate(targetState.id)) slideInHorizontally(tween(pageMs())) { it / 5 } + fadeIn(tween(pageMs())) else EnterTransition.None },
+                            exitTransition = { if (resolvePageAnimate(targetState.id)) slideOutHorizontally(tween(pageMs())) { -it / 5 } + fadeOut(tween(pageMs())) else ExitTransition.None },
 
                             popEnterTransition = { if (OneConfigConfig.showPageAnimations) slideInHorizontally(tween(pageMs())) { -it / 5 } + fadeIn(tween(pageMs())) else EnterTransition.None },
                             popExitTransition = { if (OneConfigConfig.showPageAnimations) slideOutHorizontally(tween(pageMs())) { it / 5 } + fadeOut(tween(pageMs())) else ExitTransition.None }

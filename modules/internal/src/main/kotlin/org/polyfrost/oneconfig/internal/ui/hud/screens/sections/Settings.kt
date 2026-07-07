@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
@@ -86,6 +87,7 @@ fun Settings(hud: Hud? = null) {
                 }
             }
 
+            if (hud !is LegacyHudMarker) {
             item {
                 Section("Background") {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -181,6 +183,7 @@ fun Settings(hud: Hud? = null) {
                         }
                     }
                 }
+            }
             }
 
             item {
