@@ -261,6 +261,7 @@ object HudManager {
                 activeInstances.add(hud)
                 hud.setup()
                 hud.captureStaticSizeDefaults()
+                hud.capturePositionDefaults()
                 i++
             } catch (e: ClassNotFoundException) {
                 val cls = e.message?.substringAfter(':')?.trim() ?: "unknown"
@@ -284,6 +285,7 @@ object HudManager {
             activeInstances.add(hud)
             hud.setup()
             hud.captureStaticSizeDefaults()
+            hud.capturePositionDefaults()
             LOGGER.info("Added HUD ${hud.title} at default position ($dx, $dy)")
         }
 

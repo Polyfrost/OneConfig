@@ -861,6 +861,8 @@ fun HudDesignStudio() {
                                 if (instance !in HudManager.activeInstances) {
                                     HudManager.activeInstances.add(instance)
                                     instance.setup()
+                                    instance.captureStaticSizeDefaults()
+                                    instance.capturePositionDefaults()
                                 }
                                 UiSounds.play(UiSoundEvent.HUD_DRAG_START)
                                 Snapshot.withMutableSnapshot {
