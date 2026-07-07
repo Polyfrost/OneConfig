@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.graphics.Color
+import kotlinx.coroutines.delay
 import androidx.compose.ui.graphics.toArgb
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationTheme
@@ -29,8 +30,12 @@ fun Theme(content: @Composable () -> Unit) {
 
     LaunchedEffect(Unit) {
         while (true) {
-            withFrameNanos { }
-            if (ThemeConfig.accentColor.chroma) updateAccent()
+            if (ThemeConfig.accentColor.chroma) {
+                withFrameNanos { }
+                updateAccent()
+            } else {
+                delay(200)
+            }
         }
     }
 

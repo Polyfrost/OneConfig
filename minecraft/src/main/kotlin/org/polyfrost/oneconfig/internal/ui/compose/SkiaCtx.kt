@@ -447,7 +447,6 @@ object SkiaCtx {
                         GL11.glViewport(0, 0, cs.width, cs.height)
                         cs.canvas.clear(Color.TRANSPARENT)
                         block()
-                        directContext.flush()
                         composeDirty = false
                         currentSurface = mainSurface
                         GL11.glViewport(0, 0, mainSurface.width, mainSurface.height)
