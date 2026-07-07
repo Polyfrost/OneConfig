@@ -70,6 +70,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.compose.render.FontManager
@@ -253,7 +255,7 @@ private fun hitTestHudActionBar(
 ): Boolean {
     val layout = hudActionBarLayout(hud, mcToScreen, iconPx, gapPx) ?: return false
     return hitTestActionButton(screenX, screenY, layout.settingsX, layout.y, iconPx) ||
-        (hud.deletable() && hitTestActionButton(screenX, screenY, layout.deleteX, layout.y, iconPx))
+            (hud.deletable() && hitTestActionButton(screenX, screenY, layout.deleteX, layout.y, iconPx))
 }
 
 private fun hitTestHudWithActionBar(
@@ -281,7 +283,7 @@ private fun hitTestResizeHandle(hud: Hud, screenX: Float, screenY: Float, mcToSc
     val hitSize = 14f
     fun contains(cx: Float, cy: Float): Boolean =
         screenX >= cx - hitSize / 2 && screenX <= cx + hitSize / 2 &&
-            screenY >= cy - hitSize / 2 && screenY <= cy + hitSize / 2
+                screenY >= cy - hitSize / 2 && screenY <= cy + hitSize / 2
 
     return when {
         contains(sx, sy) -> ResizeCorner.TopLeft
@@ -374,7 +376,12 @@ private fun DrawScope.drawSelectedHudBounds(bounds: HudBounds, mcToScreen: Float
         ).forEach { corner ->
             val topLeft = Offset(corner.x - handleSize / 2, corner.y - handleSize / 2)
             drawRect(color = Color.White, topLeft = topLeft, size = Size(handleSize, handleSize))
-            drawRect(color = selectionBlue, topLeft = topLeft, size = Size(handleSize, handleSize), style = Stroke(width = 1f))
+            drawRect(
+                color = selectionBlue,
+                topLeft = topLeft,
+                size = Size(handleSize, handleSize),
+                style = Stroke(width = 1f)
+            )
         }
     }
 
@@ -441,7 +448,7 @@ fun HudDesignStudio() {
     val modIds = remember(providers) { providers.mapNotNull { it.configId }.distinct() }
     val filteredProviders = providers.filter { hud ->
         (filterModId == null || hud.configId == filterModId) &&
-            (searchText.isEmpty() || hud.title?.contains(searchText, ignoreCase = true) == true)
+                (searchText.isEmpty() || hud.title?.contains(searchText, ignoreCase = true) == true)
     }
     val densityObj = LocalDensity.current
     val densityFloat = densityObj.density
@@ -494,7 +501,15 @@ fun HudDesignStudio() {
             }
             val currentActionBarTarget = selectedHud ?: hoveredHud
             if (currentActionBarTarget != null) {
-                if (hitTestHudActionBar(currentActionBarTarget, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx)) {
+                if (hitTestHudActionBar(
+                        currentActionBarTarget,
+                        pos.x,
+                        pos.y,
+                        mcToScreen,
+                        actionIconPx,
+                        actionBarGapPx
+                    )
+                ) {
                     return@onPointerEvent
                 }
             }
@@ -616,7 +631,15 @@ fun HudDesignStudio() {
                 val currentActionBarTarget = selectedHud ?: hoveredHud
                 if (currentActionBarTarget != null) {
                     val mcToScreen = Platform.screen().mcToScreenScale()
-                    if (hitTestHudActionBar(currentActionBarTarget, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx)) {
+                    if (hitTestHudActionBar(
+                            currentActionBarTarget,
+                            pos.x,
+                            pos.y,
+                            mcToScreen,
+                            actionIconPx,
+                            actionBarGapPx
+                        )
+                    ) {
                         return@onPointerEvent
                     }
                 }
@@ -849,7 +872,8 @@ fun HudDesignStudio() {
                                     draggedHud = instance
                                     libraryVisible = false
                                 }
-                            } catch (_: Throwable) {}
+                            } catch (_: Throwable) {
+                            }
                         },
                     )
                 }
@@ -953,6 +977,7 @@ private fun DesignStudioPanel(
                                 )
                             }
                         }
+
                         StudioCategory.Settings -> {
                             Box(modifier = Modifier.fillMaxSize()) {
                                 Settings(selectedHud)
