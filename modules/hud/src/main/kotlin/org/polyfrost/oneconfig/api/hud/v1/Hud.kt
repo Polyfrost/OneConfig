@@ -204,30 +204,30 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var section: Section get() = _section.value; set(v) { _section.value = v }
 
     private var _relativeX: MutableState<Float> = mutableStateOf(0f)
-    open var relativeX: Float get() = _relativeX.value; set(v) { _relativeX.value = v }
+    var relativeX: Float get() = _relativeX.value; set(v) { _relativeX.value = v }
 
     private var _relativeY: MutableState<Float> = mutableStateOf(0f)
-    open var relativeY: Float get() = _relativeY.value; set(v) { _relativeY.value = v }
+    var relativeY: Float get() = _relativeY.value; set(v) { _relativeY.value = v }
 
     private var _renderedW: MutableState<Float> = mutableStateOf(0f)
-    open var renderedW: Float get() = _renderedW.value; set(v) { _renderedW.value = v }
+    var renderedW: Float get() = _renderedW.value; set(v) { _renderedW.value = v }
 
     private var _renderedH: MutableState<Float> = mutableStateOf(0f)
-    open var renderedH: Float by _renderedH::value
+    var renderedH: Float get() = _renderedH.value; set(v) { _renderedH.value = v }
 
-    open val scaledWidth: Float get() {
+    val scaledWidth: Float get() {
         val w = if (staticWidth) staticW else renderedW
         val (minW, _) = minimumSize()
         return maxOf(w, minW).coerceAtLeast(1f)
     }
 
-    open val scaledHeight: Float get() {
+    val scaledHeight: Float get() {
         val h = if (staticWidth) staticH else renderedH
         val (_, minH) = minimumSize()
         return maxOf(h, minH).coerceAtLeast(1f)
     }
 
-    open var x: Float
+    var x: Float
         get() {
             val sw = HudManager.guiScreenWidth
             val secPos = Math.round(sw / GRID_SIZE * relativeX).toFloat()
@@ -239,7 +239,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         }
         set(v) { updateRelativeX(v) }
 
-    open var y: Float
+    var y: Float
         get() {
             val sh = HudManager.guiScreenHeight
             val secPos = Math.round(sh / GRID_SIZE * relativeY).toFloat()
@@ -251,7 +251,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         }
         set(v) { updateRelativeY(v) }
 
-    protected open fun updateRelativeX(absX: Float) {
+    private fun updateRelativeX(absX: Float) {
         val sw = HudManager.guiScreenWidth
         val gridW = sw / GRID_SIZE
         relativeX = when (section) {
@@ -261,7 +261,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         }.coerceIn(-1f, 2f)
     }
 
-    protected open fun updateRelativeY(absY: Float) {
+    private fun updateRelativeY(absY: Float) {
         val sh = HudManager.guiScreenHeight
         val gridH = sh / GRID_SIZE
         relativeY = when (section) {
@@ -439,7 +439,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             tree.title = title
             tree.addMetadata("category", category)
             tree.addMetadata("hidden", true)
-            val hidden = { Property.Display.HIDDEN }
+            var hidden = { Property.Display.HIDDEN }
             tree["section"] = ktProperty(out::section).apply { addDisplayCondition(hidden) }
             tree["relativeX"] = ktProperty(out::relativeX).apply { addDisplayCondition(hidden) }
             tree["relativeY"] = ktProperty(out::relativeY).apply { addDisplayCondition(hidden) }
@@ -526,7 +526,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
      * the trash button so the HUD cannot be removed (it can still be hidden/moved). Useful for HUDs
      * that are intrinsic to a mod and cannot be re-created once deleted.
      */
-    open fun deletable(): Boolean = isReal
+    open fun deletable(): Boolean = true
 
     open fun remove() {}
 
@@ -591,7 +591,6 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             @JvmStatic val COMBAT = Category("oneconfig.combat", 1)
             @JvmStatic val INFO = Category("oneconfig.info", 2)
             @JvmStatic val PLAYER = Category("oneconfig.player", 3)
-            @JvmStatic val COMPAT = Category("oneconfig.compat", 4)
         }
 
         override fun toString() = name
