@@ -21,6 +21,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.input.KeyEvent
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignStudio
@@ -68,6 +69,11 @@ class HudEditorUIScreen : ComposeScreen() {
                 UiSounds.play(UiSoundEvent.CLOSE)
                 requestCloseCallback?.invoke()
             }
+            return true
+        }
+        val toggleKey = OneConfigConfig.oneConfigKeybind.keyCodes?.firstOrNull()
+        if (toggleKey != null && key == toggleKey && !KeybindRecordingBus.isRecording) {
+            Platform.screen().display(OneConfigUIScreen())
             return true
         }
         //? >= 1.21.10 {

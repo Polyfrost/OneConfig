@@ -13,6 +13,9 @@ object KeybindRecordingBus {
     }
 
     @JvmStatic
+    val isRecording get() = escapeHandler != null
+
+    @JvmStatic
     fun consumeEscape(): Boolean {
         val handler = escapeHandler ?: return false
         handler()
