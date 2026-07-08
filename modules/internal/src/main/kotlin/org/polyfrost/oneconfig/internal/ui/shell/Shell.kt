@@ -65,6 +65,19 @@ fun Shell(
     var windowOffset by remember { mutableStateOf(Offset.Zero) }
 
     val theme = LocalTheme.current
+
+    val backgroundShadow = remember(theme.shadowColor, theme.backgroundShape) {
+        Shadow(50.dp, SolidColor(theme.shadowColor), 4.dp, DpOffset(0.dp, 13.dp), .42f, BlendMode.SrcOver)
+    }
+
+    val glowPaint = remember(Accent) {
+        Paint().apply {
+            imageFilter = ImageFilter.makeBlur(300f, 300f, FilterTileMode.CLAMP)
+            color = Accent.toArgb()
+            setAlphaf(.25f)
+        }
+    }
+
     Row(
         modifier = Modifier.onGloballyPositioned {
             windowOffset = it.positionInRoot()
@@ -72,29 +85,14 @@ fun Shell(
             1391.dp, 700.dp, 1391.dp, 700.dp
         ).clip(theme.backgroundShape)
             .let { mod ->
-                if (theme.shadowEnabled) mod.dropShadow(theme.backgroundShape, Shadow(
-                    50.dp,
-                    SolidColor(theme.shadowColor),
-                    4.dp,
-                    DpOffset(0.dp, 13.dp),
-                    .42f,
-                    BlendMode.SrcOver
-                )) else mod
+                if (theme.shadowEnabled) mod.dropShadow(theme.backgroundShape, backgroundShadow) else mod
             }
             .border(1.dp, theme.borderColor, theme.backgroundShape)
             .drawBehind {
                 backdrop(windowOffset)
                 drawIntoCanvas {
-                    it.nativeCanvas.drawCircle(147f, -199f, 500f, Paint().apply {
-                        imageFilter = ImageFilter.makeBlur(300f, 300f, FilterTileMode.CLAMP)
-                        color = Accent.toArgb()
-                        setAlphaf(.25f)
-                    })
-                    it.nativeCanvas.drawCircle(893f, 736f, 500f, Paint().apply {
-                        imageFilter = ImageFilter.makeBlur(300f, 300f, FilterTileMode.CLAMP)
-                        color = Accent.toArgb()
-                        setAlphaf(.25f)
-                    })
+                    it.nativeCanvas.drawCircle(147f, -199f, 500f, glowPaint)
+                    it.nativeCanvas.drawCircle(893f, 736f, 500f, glowPaint)
                 }
             }
     ) {
