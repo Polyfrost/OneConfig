@@ -32,6 +32,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -93,12 +94,16 @@ private val ProfileIconOptions = listOf(
 @Composable
 fun Profiles() {
     var activeCategory by remember { mutableStateOf(ProfileCategory.All) }
-    var profiles by remember { mutableStateOf(loadProfiles()) }
+    var profiles by remember { mutableStateOf(emptyList<UiProfile>()) }
     var newProfileName by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     var busy by remember { mutableStateOf(false) }
     var createTick by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        profiles = withContext(Dispatchers.IO) { loadProfiles() }
+    }
 
     fun refresh() {
         ConfigRegistry.loadFrom(ConfigManager.active(), ConfigSource.OC)

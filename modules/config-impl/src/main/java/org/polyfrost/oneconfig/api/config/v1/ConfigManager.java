@@ -42,6 +42,7 @@ import org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerializer;
 
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -337,18 +338,61 @@ public final class ConfigManager {
         return Collections.unmodifiableList(out);
     }
 
-    public static synchronized void createProfile(String profile) {
-        profile = normalizeProfileName(profile, false);
-        Path path = profilePath(profile);
-        if (Files.exists(path)) throw new IllegalArgumentException("Profile already exists: " + profile);
-        active().saveAll();
+    public static void createProfile(String profile) {
+        String name = normalizeProfileName(profile, false);
+        Path path = profilePath(name);
+        Path source;
+        Set<String> ownedSubdirs;
+        synchronized (ConfigManager.class) {
+            if (Files.exists(path)) throw new IllegalArgumentException("Profile already exists: " + name);
+            active().saveAll();
+            source = active.getFolder();
+            ownedSubdirs = oneConfigSubdirs(active);
+        }
         try {
             Files.createDirectories(path);
-            copyDirectory(active.getFolder(), path);
+            copyProfileFiles(source, path, ownedSubdirs);
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to create profile: " + profile, e);
+            throw new IllegalStateException("Failed to create profile: " + name, e);
         }
-        openProfile(profile);
+        openProfile(name);
+    }
+
+    private static Set<String> oneConfigSubdirs(ConfigManager mgr) {
+        Set<String> subdirs = new HashSet<>();
+        for (Tree t : mgr.trees()) {
+            String id = t.getID();
+            if (id == null) continue;
+            int slash = id.indexOf('/');
+            int back = id.indexOf('\\');
+            if (back >= 0 && (slash < 0 || back < slash)) slash = back;
+            if (slash > 0) subdirs.add(id.substring(0, slash));
+        }
+        return subdirs;
+    }
+
+    private static void copyProfileFiles(Path source, Path target, Set<String> ownedSubdirs) throws IOException {
+        if (!Files.exists(source)) return;
+        Files.createDirectories(target);
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(source)) {
+            for (Path entry : stream) {
+                String name = entry.getFileName().toString();
+                if (Files.isDirectory(entry)) {
+                    if (ownedSubdirs.contains(name)) copyDirectory(entry, target.resolve(name));
+                } else if (Files.isRegularFile(entry)) {
+                    copyFileSafely(entry, target.resolve(name));
+                }
+            }
+        }
+    }
+
+    private static void copyFileSafely(Path from, Path to) throws IOException {
+        Files.createDirectories(to.getParent());
+        try {
+            Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
+        } catch (NoSuchFileException ignored) {
+            if (Files.exists(from)) throw ignored;
+        }
     }
 
     public static synchronized void renameProfile(String profile, String newProfile) {
