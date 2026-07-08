@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.ui.hud.screens
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -51,6 +52,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.skiaCanvas
 import androidx.compose.ui.graphics.toArgb
@@ -78,6 +80,7 @@ import org.polyfrost.compose.runtime.PolyComposeRuntime
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker as LegacyHud
+import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
@@ -87,9 +90,11 @@ import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.layout.FlexibleLayout
 import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasResetMenu
+import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudOverlayBridge
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Designer
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Settings
+import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.api.platform.v1.Platform
@@ -641,6 +646,12 @@ fun HudDesignStudio() {
         if (selectedHud != null) keyFocusRequester.requestFocus()
     }
 
+    val chromeAlpha by animateFloatAsState(
+        targetValue = if (isDragging) OneConfigConfig.hudDragUiOpacity.coerceIn(0f, 1f) else 1f,
+        animationSpec = tween(150),
+        label = "hudDragChromeAlpha"
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -725,6 +736,7 @@ fun HudDesignStudio() {
                 Box(
                     modifier = Modifier
                         .padding(start = settingsX.dp, top = iconY.dp)
+                        .graphicsLayer { alpha = chromeAlpha }
                         .onPointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
                             if (event.changes.any { it.pressed }) return@onPointerEvent
                             event.changes.forEach { if (!it.isConsumed) it.consume() }
@@ -750,6 +762,7 @@ fun HudDesignStudio() {
                     Box(
                         modifier = Modifier
                             .padding(start = deleteX.dp, top = iconY.dp)
+                            .graphicsLayer { alpha = chromeAlpha }
                             .onPointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
                                 if (event.changes.any { it.pressed }) return@onPointerEvent
                                 event.changes.forEach { if (!it.isConsumed) it.consume() }
@@ -788,6 +801,7 @@ fun HudDesignStudio() {
             enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
             exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
             modifier = Modifier.align(Alignment.CenterEnd)
+                .graphicsLayer { alpha = chromeAlpha }
                 .onSizeChanged { panelAreaWidth = maxOf(panelAreaWidth, it.width.toFloat()) }
         ) {
             Box(
@@ -814,7 +828,8 @@ fun HudDesignStudio() {
 
         if (modIds.isNotEmpty() && selectedHud == null) {
             Row(
-                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
+                    .graphicsLayer { alpha = chromeAlpha },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(24.dp)
             ) {
@@ -877,6 +892,136 @@ fun HudDesignStudio() {
             onDismiss = { hudContextMenuTarget = null },
         )
     }
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+fun HudDragLayer(modifier: Modifier = Modifier) {
+    var hoveredHud by remember { mutableStateOf<Hud?>(null) }
+    var draggedHud by remember { mutableStateOf<Hud?>(null) }
+    var isDragging by remember { mutableStateOf(false) }
+    var dragOffsetX by remember { mutableStateOf(0f) }
+    var dragOffsetY by remember { mutableStateOf(0f) }
+    var snapGuides by remember { mutableStateOf(SnapGuides.NONE) }
+
+    fun endDrag() {
+        Snapshot.withMutableSnapshot {
+            isDragging = false
+            draggedHud = null
+            snapGuides = SnapGuides.NONE
+            ShellState.hudDragging = false
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .onPointerEvent(PointerEventType.Press) { event ->
+                if (event.changes.any { it.isConsumed }) return@onPointerEvent
+                if (event.buttons.isSecondaryPressed) return@onPointerEvent
+                val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
+                val s = Platform.screen().screenToMcScale()
+                val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
+                    ?: return@onPointerEvent
+                UiSounds.play(UiSoundEvent.HUD_DRAG_START)
+                Snapshot.withMutableSnapshot {
+                    dragOffsetX = pos.x * s - hit.x
+                    dragOffsetY = pos.y * s - hit.y
+                    isDragging = true
+                    draggedHud = hit
+                    hoveredHud = hit
+                    ShellState.hudDragging = true
+                }
+            }
+            .onPointerEvent(PointerEventType.Move) { event ->
+                val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
+                if (isDragging) {
+                    if (event.changes.none { it.pressed }) {
+                        endDrag()
+                        return@onPointerEvent
+                    }
+                    val s = Platform.screen().screenToMcScale()
+                    val hit = draggedHud ?: return@onPointerEvent
+                    val rawX = pos.x * s - dragOffsetX
+                    val rawY = pos.y * s - dragOffsetY
+                    val bounds = hudBounds(hit)
+                    if (bounds != null && !event.keyboardModifiers.isAltPressed) {
+                        val threshold = SNAP_DISTANCE_PX * s
+                        val snapX = snapAxis(rawX, bounds.width, verticalSnapLines(hit), threshold)
+                        val snapY = snapAxis(rawY, bounds.height, horizontalSnapLines(hit), threshold)
+                        Snapshot.withMutableSnapshot {
+                            hit.setAbsolutePosition(snapX.position, snapY.position)
+                            snapGuides = SnapGuides(snapX.line, snapY.line)
+                        }
+                    } else {
+                        Snapshot.withMutableSnapshot {
+                            hit.setAbsolutePosition(rawX, rawY)
+                            snapGuides = SnapGuides.NONE
+                        }
+                    }
+                } else {
+                    val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
+                    if (hit !== hoveredHud) hoveredHud = hit
+                }
+            }
+            .onPointerEvent(PointerEventType.Release) {
+                if (isDragging) UiSounds.play(UiSoundEvent.HUD_DRAG_END)
+                endDrag()
+            }
+            .drawWithContent {
+                drawContent()
+                val mcToScreen = Platform.screen().mcToScreenScale()
+                drawIntoCanvas { canvas ->
+                    val sk = canvas.skiaCanvas
+                    for (hud in HudManager.activeInstances) {
+                        if (hud.hidden || hud is LegacyHud) continue
+                        val root = hud.runtimeOrNull?.root ?: continue
+                        val bounds = hudBounds(hud) ?: continue
+                        val contentScale = hud.effectiveScale * mcToScreen
+                        sk.save()
+                        sk.translate(bounds.x * mcToScreen, bounds.y * mcToScreen)
+                        if (contentScale != 1f) sk.scale(contentScale, contentScale)
+                        try { root.render(RenderContext(sk)) } catch (_: Throwable) {}
+                        sk.restore()
+                    }
+                    LegacyHudOverlayBridge.painter?.invoke(sk)
+                }
+                if (isDragging) {
+                    snapGuides.vertical?.let { lineX ->
+                        val sx = lineX * mcToScreen
+                        drawLine(snapGuideColor, Offset(sx, 0f), Offset(sx, size.height), strokeWidth = 1f)
+                    }
+                    snapGuides.horizontal?.let { lineY ->
+                        val sy = lineY * mcToScreen
+                        drawLine(snapGuideColor, Offset(0f, sy), Offset(size.width, sy), strokeWidth = 1f)
+                    }
+                }
+                for (hud in HudManager.activeInstances) {
+                    val bounds = hudBounds(hud) ?: continue
+                    val sx = bounds.x * mcToScreen
+                    val sy = bounds.y * mcToScreen
+                    val sw = bounds.width * mcToScreen
+                    val sh = bounds.height * mcToScreen
+                    val isBeingDragged = hud === draggedHud && isDragging
+                    val isHovered = hud === hoveredHud
+                    if (isBeingDragged) {
+                        drawRect(
+                            color = selectionBlue.copy(alpha = 0.10f),
+                            topLeft = Offset(sx, sy),
+                            size = Size(sw, sh),
+                        )
+                        drawSelectedHudBounds(bounds, mcToScreen, showHandles = false)
+                    } else if (isHovered) {
+                        drawRect(
+                            color = Color.White.copy(0.5f),
+                            topLeft = Offset(sx, sy),
+                            size = Size(sw, sh),
+                            style = Stroke(width = 1f)
+                        )
+                    }
+                }
+            }
+    )
 }
 
 @Composable

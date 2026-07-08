@@ -178,7 +178,14 @@ public class OneConfig
         HudManager.isTabListVisible = Minecraft.getInstance().options.keyPlayerList.isDown();
         HudManager.isGuiScreenOpen = Platform.screen().current() != null;
 
-        LegacyHudRenderer.INSTANCE.renderLive(graphics);
+        if (!SkiaCtx.INSTANCE.suppressInGameHudRender) {
+            LegacyHudRenderer.INSTANCE.renderLive(graphics);
+        }
+        //? if >= 26.1 {
+        else org.polyfrost.oneconfig.internal.ui.hud.LegacyHudOffscreen.INSTANCE.render();
+        //? } else {
+        /*else LegacyHudRenderer.INSTANCE.renderLive(graphics);
+        *///? }
         SkiaCtx.INSTANCE.queueHudDraw(() -> {
             var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
             HudManager.INSTANCE.render(ctx, sw, sh);

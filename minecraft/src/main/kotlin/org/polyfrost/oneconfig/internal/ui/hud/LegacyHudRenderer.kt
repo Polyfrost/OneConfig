@@ -11,7 +11,7 @@ object LegacyHudRenderer {
             if (hud !is LegacyHud || hud.hidden) continue
             if (HudManager.isDebugScreenVisible && !hud.showInF3) continue
             if (HudManager.isTabListVisible && !hud.showInTab) continue
-            if (HudManager.isGuiScreenOpen && !hud.showInScreens) continue
+            if (HudManager.isGuiScreenOpen && !hud.showInScreens && !HudManager.overrideShowInScreens) continue
             hud.update()
             val hudScale = hud.effectiveScale
             Snapshot.withMutableSnapshot {

@@ -49,6 +49,19 @@ public class OneConfigConfig extends Config {
     )
     public static boolean enableBackgroundBlur = true;
 
+    @Slider(
+        title = "oneconfig.preferences.hud_drag_ui_opacity.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.gui",
+        subcategoryTranslation = true,
+        min = 0f,
+        max = 1f,
+        step = 0.05f,
+        description = "oneconfig.preferences.hud_drag_ui_opacity.description",
+        descriptionTranslation = true
+    )
+    public static float hudDragUiOpacity = 0.60f;
+
     @Switch(
         title = "oneconfig.preferences.pause_game.title",
         titleTranslation = true,

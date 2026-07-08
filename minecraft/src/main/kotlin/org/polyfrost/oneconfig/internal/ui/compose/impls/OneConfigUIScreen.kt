@@ -82,6 +82,9 @@ class OneConfigUIScreen @JvmOverloads constructor(
             ShellState.versionLabel = "OneConfig"
         }
 
+        SkiaCtx.suppressInGameHudRender = true
+        HudManager.overrideShowInScreens = true
+
         openedAt = System.currentTimeMillis()
         UiSounds.play(UiSoundEvent.OPEN)
         UiSounds.acquireAmbience()
@@ -89,6 +92,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
     }
 
     override fun removed() {
+        SkiaCtx.suppressInGameHudRender = false
+        HudManager.overrideShowInScreens = false
         UiSounds.releaseAmbience()
         try {
             ConfigManager.active().saveAll()

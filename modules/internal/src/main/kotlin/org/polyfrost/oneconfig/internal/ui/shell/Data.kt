@@ -37,6 +37,8 @@ object ShellState {
 
     var showSearchField by mutableStateOf(false)
 
+    var hudDragging by mutableStateOf(false)
+
     /** Last top-level route navigated to, used by the "Previous page" / "Smart reset" opening behaviors. */
     var lastRoute: Any? = null
 

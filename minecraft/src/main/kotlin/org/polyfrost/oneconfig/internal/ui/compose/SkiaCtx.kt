@@ -307,6 +307,10 @@ object SkiaCtx {
         *///? }
     }
 
+    @Volatile
+    @JvmField
+    var suppressInGameHudRender = false
+
     fun blitHud(guiGraphics: GuiGraphicsExtractor) {
         val rt = hudTarget ?: return
         val w = rt.width;

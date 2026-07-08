@@ -56,6 +56,8 @@ object HudManager {
     @Volatile @JvmField var isTabListVisible: Boolean = false
     @Volatile @JvmField var isGuiScreenOpen: Boolean = false
 
+    @Volatile @JvmField var overrideShowInScreens: Boolean = false
+
     private val lastUpdates = HashMap<Hud, Long>()
 
     /**
@@ -178,7 +180,7 @@ object HudManager {
             if (hud.hidden || hud is LegacyHudMarker) continue
             if (isDebugScreenVisible && !hud.showInF3) continue
             if (isTabListVisible && !hud.showInTab) continue
-            if (isGuiScreenOpen && !hud.showInScreens) continue
+            if (isGuiScreenOpen && !hud.showInScreens && !overrideShowInScreens) continue
 
             hud.update()
 

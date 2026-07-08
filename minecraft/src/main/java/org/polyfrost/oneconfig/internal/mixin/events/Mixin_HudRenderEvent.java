@@ -26,7 +26,9 @@ public class Mixin_HudRenderEvent {
     @Inject(method = "extractRenderState", at = @At("TAIL"))
     private void renderHudCallback(GuiGraphicsExtractor ctx, DeltaTracker deltaTracker, CallbackInfo ci) {
         OneConfig.render(ctx, deltaTracker.getRealtimeDeltaTicks());
-        SkiaCtx.INSTANCE.blitHud(ctx);
+        if (!SkiaCtx.INSTANCE.suppressInGameHudRender) {
+            SkiaCtx.INSTANCE.blitHud(ctx);
+        }
     }
 
 }

@@ -3,11 +3,13 @@ package org.polyfrost.oneconfig.internal.ui
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -24,6 +26,7 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
@@ -31,6 +34,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.compose.rememberNavController
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDragLayer
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 import org.polyfrost.oneconfig.internal.ui.shell.Lifecycle
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
@@ -106,13 +110,15 @@ fun OneConfigInterface(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
+            HudDragLayer()
+
             val currentDensity = LocalDensity.current
             val scaleFactor = run {
                 val designWidthPx  = DESIGN_WIDTH_DP  * currentDensity.density
                 val designHeightPx = DESIGN_HEIGHT_DP * currentDensity.density
                 minOf(
-                    constraints.maxWidth.toFloat()  / designWidthPx,
-                    constraints.maxHeight.toFloat() / designHeightPx,
+                    (constraints.maxWidth.toFloat()  * EDGE_MARGIN_FRACTION) / designWidthPx,
+                    (constraints.maxHeight.toFloat() * EDGE_MARGIN_FRACTION) / designHeightPx,
                     1f
                 ).coerceAtLeast(0.25f)
             }
@@ -134,12 +140,19 @@ fun OneConfigInterface(
                         val exit = if (OneConfigConfig.guiClosingAnimation)
                             fadeOut(tween(animMs, easing = EaseOutExpo)) + scaleOut(tween(animMs, easing = EaseOutExpo), targetScale = 0.9f)
                         else ExitTransition.None
+                        val dragAlpha by animateFloatAsState(
+                            targetValue = if (ShellState.hudDragging) OneConfigConfig.hudDragUiOpacity.coerceIn(0f, 1f) else 1f,
+                            animationSpec = tween(150),
+                            label = "hudDragShellAlpha"
+                        )
                         AnimatedVisibility(
                             visible = visible,
                             enter = enter,
                             exit = exit,
                         ) {
-                            Shell(windowWidth, windowHeight, shellBackdrop)
+                            Box(modifier = Modifier.graphicsLayer { alpha = dragAlpha }) {
+                                Shell(windowWidth, windowHeight, shellBackdrop)
+                            }
                         }
                     }
                 }
@@ -150,6 +163,7 @@ fun OneConfigInterface(
 
 private const val DESIGN_WIDTH_DP  = 1391f
 private const val DESIGN_HEIGHT_DP = 700f
+private const val EDGE_MARGIN_FRACTION = 0.9f
 
 private val EaseOutExpo = Easing { x -> if (x >= 1f) 1f else 1f - 2f.pow(-10f * x) }
 
