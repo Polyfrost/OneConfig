@@ -299,7 +299,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         updateRelativeY(absY)
     }
 
-    var hidden: Boolean = false
+    private var _hidden: MutableState<Boolean> = mutableStateOf(false)
+    var hidden: Boolean get() = _hidden.value; set(v) { _hidden.value = v }
 
     private var _alignment: MutableState<PolyAlign> = mutableStateOf(PolyAlign.Center)
     var alignment: PolyAlign get() = _alignment.value; set(v) { _alignment.value = v }
@@ -439,53 +440,54 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             tree.title = title
             tree.addMetadata("category", category)
             tree.addMetadata("hidden", true)
-            var hidden = { Property.Display.HIDDEN }
-            tree["section"] = ktProperty(out::section).apply { addDisplayCondition(hidden) }
-            tree["relativeX"] = ktProperty(out::relativeX).apply { addDisplayCondition(hidden) }
-            tree["relativeY"] = ktProperty(out::relativeY).apply { addDisplayCondition(hidden) }
-            tree["toggleKey"] = ktProperty(out::toggleKey).apply { addDisplayCondition(hidden) }
-            tree["showKey"] = ktProperty(out::showKey).apply { addDisplayCondition(hidden) }
-            tree["alignment"] = ktProperty(out::alignment).apply { addDisplayCondition(hidden) }
-            tree["padTop"] = ktProperty(out::padTop).apply { addDisplayCondition(hidden) }
-            tree["padBottom"] = ktProperty(out::padBottom).apply { addDisplayCondition(hidden) }
-            tree["padLeft"] = ktProperty(out::padLeft).apply { addDisplayCondition(hidden) }
-            tree["padRight"] = ktProperty(out::padRight).apply { addDisplayCondition(hidden) }
+            val hideFromConfigUi = { Property.Display.HIDDEN }
+            tree["hidden"] = ktProperty(out::hidden).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["section"] = ktProperty(out::section).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["relativeX"] = ktProperty(out::relativeX).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["relativeY"] = ktProperty(out::relativeY).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["toggleKey"] = ktProperty(out::toggleKey).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["showKey"] = ktProperty(out::showKey).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["alignment"] = ktProperty(out::alignment).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["padTop"] = ktProperty(out::padTop).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["padBottom"] = ktProperty(out::padBottom).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["padLeft"] = ktProperty(out::padLeft).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["padRight"] = ktProperty(out::padRight).apply { addDisplayCondition(hideFromConfigUi) }
             tree["staticWidth"] = ktProperty(out::staticWidth).apply {
                 description = "Keeps this HUD at a fixed width and height. This also enables content alignment inside the HUD box."
-                addDisplayCondition(hidden)
+                addDisplayCondition(hideFromConfigUi)
             }
-            tree["staticW"] = ktProperty(out::staticW).apply { addDisplayCondition(hidden) }
-            tree["staticH"] = ktProperty(out::staticH).apply { addDisplayCondition(hidden) }
-            tree["font"] = ktProperty(out::font).apply { addDisplayCondition(hidden) }
-            tree["caseType"] = ktProperty(out::caseType).apply { addDisplayCondition(hidden) }
-            tree["textScale"] = ktProperty(out::textScale).apply { addDisplayCondition(hidden) }
-            tree["textBold"] = ktProperty(out::textBold).apply { addDisplayCondition(hidden) }
-            tree["textItalic"] = ktProperty(out::textItalic).apply { addDisplayCondition(hidden) }
-            tree["textUnderline"] = ktProperty(out::textUnderline).apply { addDisplayCondition(hidden) }
-            tree["textWeight"] = ktProperty(out::textWeight).apply { addDisplayCondition(hidden) }
-            tree["textAlign"] = ktProperty(out::textAlign).apply { addDisplayCondition(hidden) }
+            tree["staticW"] = ktProperty(out::staticW).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["staticH"] = ktProperty(out::staticH).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["font"] = ktProperty(out::font).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["caseType"] = ktProperty(out::caseType).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["textScale"] = ktProperty(out::textScale).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["textBold"] = ktProperty(out::textBold).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["textItalic"] = ktProperty(out::textItalic).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["textUnderline"] = ktProperty(out::textUnderline).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["textWeight"] = ktProperty(out::textWeight).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["textAlign"] = ktProperty(out::textAlign).apply { addDisplayCondition(hideFromConfigUi) }
             tree["useGuiScale"] = ktProperty(out::useGuiScale).apply {
                 description = "Uses Minecraft's current GUI scale for this HUD. Turn this off to use a custom HUD scale."
-                addDisplayCondition(hidden)
+                addDisplayCondition(hideFromConfigUi)
             }
-            tree["customScale"] = ktProperty(out::customScale).apply { addDisplayCondition(hidden) }
-            tree["showBackground"] = ktProperty(out::showBackground).apply { addDisplayCondition(hidden) }
-            tree["bgColor"] = ktProperty(out::bgColor).apply { addDisplayCondition(hidden) }
-            tree["bgChroma"] = ktProperty(out::bgChroma).apply { addDisplayCondition(hidden) }
-            tree["bgChromaSpeed"] = ktProperty(out::bgChromaSpeed).apply { addDisplayCondition(hidden) }
-            tree["bgRadius"] = ktProperty(out::bgRadius).apply { addDisplayCondition(hidden) }
-            tree["textColor"] = ktProperty(out::textColor).apply { addDisplayCondition(hidden) }
-            tree["textChroma"] = ktProperty(out::textChroma).apply { addDisplayCondition(hidden) }
-            tree["textChromaSpeed"] = ktProperty(out::textChromaSpeed).apply { addDisplayCondition(hidden) }
-            tree["showShadow"] = ktProperty(out::showShadow).apply { addDisplayCondition(hidden) }
-            tree["shadowColor"] = ktProperty(out::shadowColor).apply { addDisplayCondition(hidden) }
-            tree["shadowChroma"] = ktProperty(out::shadowChroma).apply { addDisplayCondition(hidden) }
-            tree["shadowChromaSpeed"] = ktProperty(out::shadowChromaSpeed).apply { addDisplayCondition(hidden) }
-            tree["shadowOffsetX"] = ktProperty(out::shadowOffsetX).apply { addDisplayCondition(hidden) }
-            tree["shadowOffsetY"] = ktProperty(out::shadowOffsetY).apply { addDisplayCondition(hidden) }
-            (tree["showInF3"] as? Property<*>)?.addDisplayCondition(hidden)
-            (tree["showInTab"] as? Property<*>)?.addDisplayCondition(hidden)
-            (tree["showInScreens"] as? Property<*>)?.addDisplayCondition(hidden)
+            tree["customScale"] = ktProperty(out::customScale).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["showBackground"] = ktProperty(out::showBackground).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["bgColor"] = ktProperty(out::bgColor).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["bgChroma"] = ktProperty(out::bgChroma).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["bgChromaSpeed"] = ktProperty(out::bgChromaSpeed).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["bgRadius"] = ktProperty(out::bgRadius).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["textColor"] = ktProperty(out::textColor).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["textChroma"] = ktProperty(out::textChroma).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["textChromaSpeed"] = ktProperty(out::textChromaSpeed).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["showShadow"] = ktProperty(out::showShadow).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["shadowColor"] = ktProperty(out::shadowColor).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["shadowChroma"] = ktProperty(out::shadowChroma).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["shadowChromaSpeed"] = ktProperty(out::shadowChromaSpeed).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["shadowOffsetX"] = ktProperty(out::shadowOffsetX).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["shadowOffsetY"] = ktProperty(out::shadowOffsetY).apply { addDisplayCondition(hideFromConfigUi) }
+            (tree["showInF3"] as? Property<*>)?.addDisplayCondition(hideFromConfigUi)
+            (tree["showInTab"] as? Property<*>)?.addDisplayCondition(hideFromConfigUi)
+            (tree["showInScreens"] as? Property<*>)?.addDisplayCondition(hideFromConfigUi)
             addToSerialized(tree)
             tree["hudClass"] = simple(value = out::class.java.name).apply {
                 addDisplayCondition { Property.Display.HIDDEN }
@@ -522,9 +524,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     open fun minimumSize(): Pair<Float, Float> = 0f to 0f
 
     /**
-     * Whether this HUD may be deleted from the HUD design studio. When `false`, the editor hides
-     * the trash button so the HUD cannot be removed (it can still be hidden/moved). Useful for HUDs
-     * that are intrinsic to a mod and cannot be re-created once deleted.
+     * Whether this HUD may be deleted from the HUD design studio. When `false`, the settings panel
+     * hides the delete button so the HUD cannot be removed (it can still be hidden/moved). Useful
+     * for HUDs that are intrinsic to a mod and cannot be re-created once deleted.
      */
     open fun deletable(): Boolean = true
 
@@ -573,6 +575,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         _shadowChromaSpeed = mutableStateOf(this@Hud.shadowChromaSpeed)
         _shadowOffsetX = mutableStateOf(this@Hud.shadowOffsetX)
         _shadowOffsetY = mutableStateOf(this@Hud.shadowOffsetY)
+        _hidden = mutableStateOf(this@Hud.hidden)
     }
 
     private companion object {

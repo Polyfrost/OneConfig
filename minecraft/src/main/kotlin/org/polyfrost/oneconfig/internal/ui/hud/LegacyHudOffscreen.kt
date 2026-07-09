@@ -84,7 +84,7 @@ object LegacyHudOffscreen {
 
     private fun activeLegacyHuds(): List<LegacyHud> =
         HudManager.activeInstances.mapNotNull { hud: Hud ->
-            (hud as? LegacyHud)?.takeUnless { it.hidden }
+            (hud as? LegacyHud)?.takeUnless { it.hidden && !HudManager.isEditing }
         }
 
     fun render() {

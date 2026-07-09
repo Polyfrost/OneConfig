@@ -49,6 +49,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.resetOption
 private val hudUiEpochs = mutableStateMapOf<Hud, Int>()
 
 private val STATIC_SIZE_OPTIONS = setOf("staticW", "staticH")
+private val POSITION_OPTIONS = setOf("section", "relativeX", "relativeY")
 
 /** Bumped when any HUD field is reset so bound [remember] state is recreated from the HUD. */
 fun hudUiEpoch(hud: Hud): Int = hudUiEpochs[hud] ?: 0
@@ -85,6 +86,24 @@ fun resetAllHudProperties(hud: Hud) {
     val tree = hud.tree ?: return
     resetTreeDefaults(hud, tree)
     finishHudReset(hud)
+}
+
+fun hudHasPositionDefaults(hud: Hud): Boolean =
+    POSITION_OPTIONS.any { id ->
+        hudProperty(hud, id)?.let { optionHasDefault(it) } == true
+    }
+
+fun resetHudPosition(hud: Hud) {
+    var reset = false
+    for (id in POSITION_OPTIONS) {
+        val prop = hudProperty(hud, id) ?: continue
+        if (!optionHasDefault(prop)) continue
+        resetOption(prop)
+        reset = true
+    }
+    if (!reset) return
+    bumpHudUiEpoch(hud)
+    hud.updateAndRecalculate()
 }
 
 private fun finishHudReset(hud: Hud) {

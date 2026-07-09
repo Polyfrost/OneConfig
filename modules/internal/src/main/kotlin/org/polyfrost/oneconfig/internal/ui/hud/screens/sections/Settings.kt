@@ -1,8 +1,14 @@
 package org.polyfrost.oneconfig.internal.ui.hud.screens.sections
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -12,23 +18,35 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
+import org.polyfrost.oneconfig.internal.ui.hud.anyHudHasPositionDefaults
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
+import org.polyfrost.oneconfig.internal.ui.hud.resetAllHudPositions
+import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.onClick
+import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
 import org.polyfrost.oneconfig.internal.ui.hud.components.NumberSpinner
 import org.polyfrost.oneconfig.internal.ui.screens.HudConfigScreen
+import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
+private val DeleteButtonColor = Color(0xFFE5484D)
+
 @Composable
-fun Settings(hud: Hud? = null) {
+fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
     if (hud == null) return
 
     LaunchedEffect(hud) { repairHudStaticSize(hud) }
@@ -55,6 +73,12 @@ fun Settings(hud: Hud? = null) {
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(22.dp),
         ) {
+            item {
+                Section("Position") {
+                    ResetAllHudPositionsButton()
+                }
+            }
+
             item {
                 Section("GUI Scale") {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -231,6 +255,77 @@ fun Settings(hud: Hud? = null) {
                 item {
                     HudConfigScreen(tree)
                 }
+
+            if (hud.deletable()) {
+                item {
+                    DeleteHudButton(hud, onDeleted)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ResetAllHudPositionsButton() {
+    val theme = LocalTheme.current
+    val enabled = anyHudHasPositionDefaults()
+    val interactionSource = rememberInteractionSource()
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    val bgColor by animateColorAsState(
+        when {
+            !enabled -> theme.borderColor
+            isHovered -> Accent.copy(alpha = 0.75f)
+            else -> Accent
+        },
+    )
+    val textColor = if (enabled) theme.accentTextColor else theme.textColorSecondary
+
+    Box(
+        modifier = Modifier
+            .then(if (enabled) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier)
+            .background(bgColor, theme.buttonShape)
+            .then(
+                if (enabled) {
+                    Modifier.onClick(interactionSource) { resetAllHudPositions() }
+                } else {
+                    Modifier
+                },
+            )
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text("Reset all to default positions", color = textColor, fontSize = 13.sp)
+    }
+}
+
+@Composable
+private fun DeleteHudButton(hud: Hud, onDeleted: () -> Unit) {
+    val theme = LocalTheme.current
+    val interactionSource = rememberInteractionSource()
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    val bgColor by animateColorAsState(
+        if (isHovered) DeleteButtonColor.copy(alpha = 0.75f) else DeleteButtonColor,
+    )
+
+    Box(
+        modifier = Modifier
+            .pointerHoverIcon(PointerIcon.Hand)
+            .background(bgColor, theme.buttonShape)
+            .onClick(interactionSource) {
+                Snapshot.withMutableSnapshot {
+                    HudManager.removeHud(hud, delete = true)
+                }
+                onDeleted()
+            }
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon("trash", color = theme.accentTextColor, modifier = Modifier.size(14.dp))
+            Text("Delete HUD", color = theme.accentTextColor, fontSize = 13.sp)
         }
     }
 }

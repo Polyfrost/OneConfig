@@ -8,7 +8,8 @@ import org.polyfrost.oneconfig.api.hud.v1.LegacyHud
 object LegacyHudRenderer {
     fun renderLive(graphics: GuiGraphicsExtractor) {
         for (hud in HudManager.activeInstances) {
-            if (hud !is LegacyHud || hud.hidden) continue
+            if (hud !is LegacyHud) continue
+            if (hud.hidden && !HudManager.isEditing) continue
             if (HudManager.isDebugScreenVisible && !hud.showInF3) continue
             if (HudManager.isTabListVisible && !hud.showInTab) continue
             if (HudManager.isGuiScreenOpen && !hud.showInScreens && !HudManager.overrideShowInScreens) continue

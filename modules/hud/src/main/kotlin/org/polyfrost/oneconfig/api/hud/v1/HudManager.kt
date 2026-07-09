@@ -44,6 +44,7 @@ object HudManager {
     private val hudProviders = HashMap<Class<out Hud>, Hud>()
     private val hudIcons = HashMap<String, String>()
     private var init = false
+    private val hiddenHudPaint = org.jetbrains.skia.Paint().apply { setAlphaf(0.35f) }
 
     @get:JvmName("isEditing")
     var isEditing = false
@@ -177,7 +178,8 @@ object HudManager {
         ctx.scale(scale, scale)
 
         for (hud in activeInstances) {
-            if (hud.hidden || hud is LegacyHudMarker) continue
+            if (hud is LegacyHudMarker) continue
+            if (hud.hidden && !isEditing) continue
             if (isDebugScreenVisible && !hud.showInF3) continue
             if (isTabListVisible && !hud.showInTab) continue
             if (isGuiScreenOpen && !hud.showInScreens && !overrideShowInScreens) continue
@@ -195,7 +197,13 @@ object HudManager {
             ctx.save()
             ctx.translate(hud.x, hud.y)
             if (hudScale != 1f) ctx.scale(hudScale, hudScale)
-            root.render(ctx)
+            if (hud.hidden && isEditing) {
+                ctx.canvas.saveLayer(null, hiddenHudPaint)
+                root.render(ctx)
+                ctx.canvas.restore()
+            } else {
+                root.render(ctx)
+            }
             ctx.restore()
         }
 

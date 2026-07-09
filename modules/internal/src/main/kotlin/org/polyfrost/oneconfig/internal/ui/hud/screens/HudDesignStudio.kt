@@ -100,6 +100,7 @@ import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.jetbrains.skia.Paint
 import kotlin.math.roundToInt
 
 enum class StudioCategory(val title: String, val icon: String) {
@@ -108,6 +109,8 @@ enum class StudioCategory(val title: String, val icon: String) {
 }
 
 private data class HudBounds(val x: Float, val y: Float, val width: Float, val height: Float)
+
+private val hiddenHudPaint = Paint().apply { setAlphaf(0.35f) }
 
 private enum class ResizeCorner {
     TopLeft,
@@ -223,7 +226,7 @@ private fun hitTestHud(hud: Hud, screenX: Float, screenY: Float): Boolean {
     return mcX >= bounds.x && mcX <= bounds.x + bounds.width && mcY >= bounds.y && mcY <= bounds.y + bounds.height
 }
 
-private data class HudActionBarLayout(val settingsX: Float, val deleteX: Float, val y: Float)
+private data class HudActionBarLayout(val settingsX: Float, val visibilityX: Float, val y: Float)
 
 private fun hudActionBarLayout(
     hud: Hud,
@@ -258,7 +261,7 @@ private fun hitTestHudActionBar(
 ): Boolean {
     val layout = hudActionBarLayout(hud, mcToScreen, iconPx, gapPx) ?: return false
     return hitTestActionButton(screenX, screenY, layout.settingsX, layout.y, iconPx) ||
-        (hud.deletable() && hitTestActionButton(screenX, screenY, layout.deleteX, layout.y, iconPx))
+        hitTestActionButton(screenX, screenY, layout.visibilityX, layout.y, iconPx)
 }
 
 private fun hitTestHudWithActionBar(
@@ -434,6 +437,7 @@ fun HudDesignStudio() {
     var filterModId by remember { mutableStateOf<String?>(null) }
     var searchText by remember { mutableStateOf("") }
     var panelAreaWidth by remember { mutableStateOf(0f) }
+    var libraryChromeWidth by remember { mutableStateOf(0f) }
     var hudContextMenuTarget by remember { mutableStateOf<Hud?>(null) }
     var hudContextMenuOffset by remember { mutableStateOf(IntOffset.Zero) }
     val keyFocusRequester = remember { FocusRequester() }
@@ -452,6 +456,7 @@ fun HudDesignStudio() {
     val densityFloat = densityObj.density
     val actionIconPx = with(densityObj) { 24.dp.toPx() }
     val actionBarGapPx = with(densityObj) { 8.dp.toPx() }
+    val libraryChromeVisible = modIds.isNotEmpty() && selectedHud == null
 
     // Unified pointer modifier: drag any HUD, click to select, hover to show action bar
     val pointerModifier = Modifier
@@ -462,6 +467,8 @@ fun HudDesignStudio() {
             // panelAreaWidth never shrinks (it's a maxOf), so without this guard the strip would keep
             // swallowing clicks after the panel closes, making HUDs there un-selectable/un-editable.
             if (selectedHud != null && panelAreaWidth > 0f && pos.x > size.width - panelAreaWidth) return@onPointerEvent
+            // Same for the HUD library / mod-select chrome: overlapping HUDs must not steal clicks.
+            if (libraryChromeVisible && libraryChromeWidth > 0f && pos.x > size.width - libraryChromeWidth) return@onPointerEvent
             if (event.buttons.isSecondaryPressed) {
                 val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
                 if (hit != null) {
@@ -577,6 +584,10 @@ fun HudDesignStudio() {
                     }
                 }
             } else {
+                if (libraryChromeVisible && libraryChromeWidth > 0f && pos.x > size.width - libraryChromeWidth) {
+                    hoveredHud = null
+                    return@onPointerEvent
+                }
                 val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
                 val mcToScreen = Platform.screen().mcToScreenScale()
                 val overActionBar = (selectedHud ?: hoveredHud)?.let { hh ->
@@ -618,6 +629,9 @@ fun HudDesignStudio() {
             }
             if (!wasDragging || wasDraggedHud == null) {
                 val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
+                if (libraryChromeVisible && libraryChromeWidth > 0f && pos.x > size.width - libraryChromeWidth) {
+                    return@onPointerEvent
+                }
                 val currentActionBarTarget = selectedHud ?: hoveredHud
                 if (currentActionBarTarget != null) {
                     val mcToScreen = Platform.screen().mcToScreenScale()
@@ -731,8 +745,9 @@ fun HudDesignStudio() {
             if (bounds != null && bounds.width > 0f && bounds.height > 0f && layout != null) {
                 val iconSize = 24.dp
                 val settingsX = (layout.settingsX / densityFloat).coerceAtLeast(0f)
-                val deleteX = (layout.deleteX / densityFloat).coerceAtLeast(0f)
+                val visibilityX = (layout.visibilityX / densityFloat).coerceAtLeast(0f)
                 val iconY = (layout.y / densityFloat).coerceAtLeast(0f)
+                val isHidden = actionBarTarget.hidden
                 Box(
                     modifier = Modifier
                         .padding(start = settingsX.dp, top = iconY.dp)
@@ -758,38 +773,32 @@ fun HudDesignStudio() {
                         Snapshot.withMutableSnapshot { selectedHud = actionBarTarget }
                     }
                 }
-                if (actionBarTarget.deletable()) {
-                    Box(
-                        modifier = Modifier
-                            .padding(start = deleteX.dp, top = iconY.dp)
-                            .graphicsLayer { alpha = chromeAlpha }
-                            .onPointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
-                                if (event.changes.any { it.pressed }) return@onPointerEvent
-                                event.changes.forEach { if (!it.isConsumed) it.consume() }
-                            }
-                            .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
-                                if (event.changes.none { it.isConsumed }) {
-                                    event.changes.forEach { it.consume() }
-                                    UiSounds.play(UiSoundEvent.CLICK)
-                                    Snapshot.withMutableSnapshot {
-                                        if (selectedHud === actionBarTarget) selectedHud = null
-                                        hoveredHud = null
-                                        HudManager.removeHud(actionBarTarget, delete = true)
-                                    }
+                Box(
+                    modifier = Modifier
+                        .padding(start = visibilityX.dp, top = iconY.dp)
+                        .graphicsLayer { alpha = chromeAlpha }
+                        .onPointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
+                            if (event.changes.any { it.pressed }) return@onPointerEvent
+                            event.changes.forEach { if (!it.isConsumed) it.consume() }
+                        }
+                        .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+                            if (event.changes.none { it.isConsumed }) {
+                                event.changes.forEach { it.consume() }
+                                UiSounds.play(UiSoundEvent.CLICK)
+                                Snapshot.withMutableSnapshot {
+                                    actionBarTarget.hidden = !actionBarTarget.hidden
                                 }
-                            },
-                    ) {
-                        IconButton(
-                            "trash",
-                            modifier = Modifier.size(iconSize),
-                            foreground = Color.White.copy(0.7f),
-                            hoveredForeground = Color.White,
-                        ) {
-                            Snapshot.withMutableSnapshot {
-                                if (selectedHud === actionBarTarget) selectedHud = null
-                                hoveredHud = null
-                                HudManager.removeHud(actionBarTarget, delete = true)
                             }
+                        },
+                ) {
+                    IconButton(
+                        if (isHidden) "eye-off" else "eye",
+                        modifier = Modifier.size(iconSize),
+                        foreground = Color.White.copy(0.7f),
+                        hoveredForeground = Color.White,
+                    ) {
+                        Snapshot.withMutableSnapshot {
+                            actionBarTarget.hidden = !actionBarTarget.hidden
                         }
                     }
                 }
@@ -826,10 +835,21 @@ fun HudDesignStudio() {
             }
         }
 
-        if (modIds.isNotEmpty() && selectedHud == null) {
+        if (libraryChromeVisible) {
             Row(
                 modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
-                    .graphicsLayer { alpha = chromeAlpha },
+                    .graphicsLayer { alpha = chromeAlpha }
+                    .onSizeChanged { libraryChromeWidth = it.width.toFloat() }
+                    .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+                        event.changes.forEach { if (!it.isConsumed) it.consume() }
+                    }
+                    .onPointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
+                        if (event.changes.any { it.pressed }) return@onPointerEvent
+                        event.changes.forEach { if (!it.isConsumed) it.consume() }
+                    }
+                    .onPointerEvent(PointerEventType.Release, PointerEventPass.Final) { event ->
+                        event.changes.forEach { if (!it.isConsumed) it.consume() }
+                    },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(24.dp)
             ) {
@@ -974,14 +994,16 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                 drawIntoCanvas { canvas ->
                     val sk = canvas.skiaCanvas
                     for (hud in HudManager.activeInstances) {
-                        if (hud.hidden || hud is LegacyHud) continue
+                        if (hud is LegacyHud) continue
                         val root = hud.runtimeOrNull?.root ?: continue
                         val bounds = hudBounds(hud) ?: continue
                         val contentScale = hud.effectiveScale * mcToScreen
                         sk.save()
                         sk.translate(bounds.x * mcToScreen, bounds.y * mcToScreen)
                         if (contentScale != 1f) sk.scale(contentScale, contentScale)
+                        if (hud.hidden) sk.saveLayer(null, hiddenHudPaint)
                         try { root.render(RenderContext(sk)) } catch (_: Throwable) {}
+                        if (hud.hidden) sk.restore()
                         sk.restore()
                     }
                     LegacyHudOverlayBridge.painter?.invoke(sk)
@@ -1100,7 +1122,7 @@ private fun DesignStudioPanel(
                         }
                         StudioCategory.Settings -> {
                             Box(modifier = Modifier.fillMaxSize()) {
-                                Settings(selectedHud)
+                                Settings(selectedHud, onDeleted = onBack)
                             }
                         }
                     }
