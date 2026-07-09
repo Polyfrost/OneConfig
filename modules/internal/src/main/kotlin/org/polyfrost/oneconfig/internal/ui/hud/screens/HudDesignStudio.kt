@@ -450,7 +450,8 @@ fun HudDesignStudio() {
     val modIds = remember(providers) { providers.mapNotNull { it.configId }.distinct() }
     val filteredProviders = providers.filter { hud ->
         (filterModId == null || hud.configId == filterModId) &&
-            (searchText.isEmpty() || hud.title?.contains(searchText, ignoreCase = true) == true)
+            (searchText.isEmpty() || hud.title?.contains(searchText, ignoreCase = true) == true) &&
+            (hud.multipleInstancesAllowed() || HudManager.getHudsOfType(hud::class.java).isEmpty())
     }
     val densityObj = LocalDensity.current
     val densityFloat = densityObj.density
