@@ -74,8 +74,8 @@ public @interface Text {
     @Deprecated
     String subcategoryKey() default "";
 
-    @TranslatedDefault("polyui.textinput.placeholder")
-    String placeholder() default "polyui.textinput.placeholder";
+    @TranslatedDefault("oneconfig.textinput.placeholder")
+    String placeholder() default "oneconfig.textinput.placeholder";
 
     boolean placeholderTranslation() default false;
 

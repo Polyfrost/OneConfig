@@ -190,7 +190,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         subcategory: String? = "General",
         subcategoryKey: String? = null,
         placeholder: String? = null,
-        placeholderKey: String? = "polyui.textinput.placeholder"
+        placeholderKey: String? = "oneconfig.textinput.placeholder"
     ) = Provider(def, name, description, category, subcategory, String::class.java, Visualizer.TextVisualizer()) {
         addMetadata(
             name,
