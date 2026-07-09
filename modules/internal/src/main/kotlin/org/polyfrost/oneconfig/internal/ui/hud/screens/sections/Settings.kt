@@ -30,9 +30,9 @@ import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
-import org.polyfrost.oneconfig.internal.ui.hud.anyHudHasPositionDefaults
+import org.polyfrost.oneconfig.internal.ui.hud.hudHasPositionDefaults
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
-import org.polyfrost.oneconfig.internal.ui.hud.resetAllHudPositions
+import org.polyfrost.oneconfig.internal.ui.hud.resetHudPosition
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
@@ -75,7 +75,7 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
         ) {
             item {
                 Section("Position") {
-                    ResetAllHudPositionsButton()
+                    ResetHudPositionButton(hud)
                 }
             }
 
@@ -266,9 +266,9 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
 }
 
 @Composable
-private fun ResetAllHudPositionsButton() {
+private fun ResetHudPositionButton(hud: Hud) {
     val theme = LocalTheme.current
-    val enabled = anyHudHasPositionDefaults()
+    val enabled = hudHasPositionDefaults(hud)
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
     val bgColor by animateColorAsState(
@@ -286,7 +286,7 @@ private fun ResetAllHudPositionsButton() {
             .background(bgColor, theme.buttonShape)
             .then(
                 if (enabled) {
-                    Modifier.onClick(interactionSource) { resetAllHudPositions() }
+                    Modifier.onClick(interactionSource) { resetHudPosition(hud) }
                 } else {
                     Modifier
                 },
@@ -294,7 +294,7 @@ private fun ResetAllHudPositionsButton() {
             .padding(horizontal = 16.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text("Reset all to default positions", color = textColor, fontSize = 13.sp)
+        Text("Reset to default position", color = textColor, fontSize = 13.sp)
     }
 }
 

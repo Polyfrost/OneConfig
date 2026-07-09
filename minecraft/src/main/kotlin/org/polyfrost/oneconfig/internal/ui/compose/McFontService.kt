@@ -18,6 +18,8 @@ object McFontService {
         // Minecraft theme font (used by toasts when a Minecraft theme is active).
         FontManager.loadFromResource("assets/oneconfig/fonts/minecraft/Minecraft-Regular.otf", "minecraft")
         FontManager.loadFromResource("assets/oneconfig/fonts/minecraft/Minecraft-Bold.otf", "minecraft-bold")
+        // GNU Unifont (for mc font renderer)
+        FontManager.loadFromResource("assets/oneconfig/fonts/unifont/unifont.otf", SkiaFontRenderer.UNIFONT_KEY)
         // Make Poppins the default typeface so PolyText (which uses the default font) renders glyphs;
         // previously nothing was registered for the default key.
         FontManager.setDefault("poppins")

@@ -100,6 +100,7 @@ import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.Theme
 import org.jetbrains.skia.Paint
 import kotlin.math.roundToInt
 
@@ -441,6 +442,13 @@ fun HudDesignStudio() {
     var hudContextMenuTarget by remember { mutableStateOf<Hud?>(null) }
     var hudContextMenuOffset by remember { mutableStateOf(IntOffset.Zero) }
     val keyFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        HudManager.pendingSelection?.let { pending ->
+            HudManager.pendingSelection = null
+            if (pending in HudManager.activeInstances) selectedHud = pending
+        }
+    }
 
     LaunchedEffect(selectedHud) {
         selectedHud?.let { repairHudStaticSize(it) }
@@ -925,6 +933,11 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
     var dragOffsetY by remember { mutableStateOf(0f) }
     var snapGuides by remember { mutableStateOf(SnapGuides.NONE) }
 
+    val densityObj = LocalDensity.current
+    val densityFloat = densityObj.density
+    val actionIconPx = with(densityObj) { 24.dp.toPx() }
+    val actionBarGapPx = with(densityObj) { 8.dp.toPx() }
+
     fun endDrag() {
         Snapshot.withMutableSnapshot {
             isDragging = false
@@ -941,6 +954,14 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                 if (event.changes.any { it.isConsumed }) return@onPointerEvent
                 if (event.buttons.isSecondaryPressed) return@onPointerEvent
                 val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
+                if (!isDragging) {
+                    val actionTarget = hoveredHud
+                    if (actionTarget != null && hitTestHudActionBar(
+                            actionTarget, pos.x, pos.y,
+                            Platform.screen().mcToScreenScale(), actionIconPx, actionBarGapPx,
+                        )
+                    ) return@onPointerEvent
+                }
                 val s = Platform.screen().screenToMcScale()
                 val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
                     ?: return@onPointerEvent
@@ -1044,7 +1065,77 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                     }
                 }
             }
-    )
+    ) {
+        val actionBarTarget = hoveredHud
+        if (actionBarTarget != null && !isDragging) {
+            val mcToScreen = Platform.screen().mcToScreenScale()
+            val bounds = hudBounds(actionBarTarget)
+            val layout = hudActionBarLayout(actionBarTarget, mcToScreen, actionIconPx, actionBarGapPx)
+            // HudDragLayer is composed outside OneConfigInterface's Theme scope, so provide one for
+            // the icons (IconButton reads LocalTheme). Only entered while a HUD is hovered.
+            if (bounds != null && bounds.width > 0f && bounds.height > 0f && layout != null) Theme {
+                val iconSize = 24.dp
+                val settingsX = (layout.settingsX / densityFloat).coerceAtLeast(0f)
+                val visibilityX = (layout.visibilityX / densityFloat).coerceAtLeast(0f)
+                val iconY = (layout.y / densityFloat).coerceAtLeast(0f)
+                val isHidden = actionBarTarget.hidden
+                Box(
+                    modifier = Modifier
+                        .padding(start = settingsX.dp, top = iconY.dp)
+                        .onPointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
+                            if (event.changes.any { it.pressed }) return@onPointerEvent
+                            event.changes.forEach { if (!it.isConsumed) it.consume() }
+                        }
+                        .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+                            if (event.changes.none { it.isConsumed }) {
+                                event.changes.forEach { it.consume() }
+                                UiSounds.play(UiSoundEvent.HUD_SELECT)
+                                HudManager.pendingSelection = actionBarTarget
+                                HudManager.openEditor()
+                            }
+                        },
+                ) {
+                    IconButton(
+                        "settings",
+                        modifier = Modifier.size(iconSize),
+                        foreground = Color.White.copy(0.7f),
+                        hoveredForeground = Color.White,
+                    ) {
+                        HudManager.pendingSelection = actionBarTarget
+                        HudManager.openEditor()
+                    }
+                }
+                Box(
+                    modifier = Modifier
+                        .padding(start = visibilityX.dp, top = iconY.dp)
+                        .onPointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
+                            if (event.changes.any { it.pressed }) return@onPointerEvent
+                            event.changes.forEach { if (!it.isConsumed) it.consume() }
+                        }
+                        .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+                            if (event.changes.none { it.isConsumed }) {
+                                event.changes.forEach { it.consume() }
+                                UiSounds.play(UiSoundEvent.CLICK)
+                                Snapshot.withMutableSnapshot {
+                                    actionBarTarget.hidden = !actionBarTarget.hidden
+                                }
+                            }
+                        },
+                ) {
+                    IconButton(
+                        if (isHidden) "eye-off" else "eye",
+                        modifier = Modifier.size(iconSize),
+                        foreground = Color.White.copy(0.7f),
+                        hoveredForeground = Color.White,
+                    ) {
+                        Snapshot.withMutableSnapshot {
+                            actionBarTarget.hidden = !actionBarTarget.hidden
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable

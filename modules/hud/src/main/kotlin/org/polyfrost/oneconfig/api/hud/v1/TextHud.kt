@@ -70,7 +70,7 @@ abstract class TextHud(
         padRight = 4f
         padTop = 4f
         padBottom = 4f
-        staticWidth = true
+        staticWidth = false
         staticW = UNMEASURED
         staticH = UNMEASURED
     }

@@ -59,6 +59,9 @@ object HudManager {
 
     @Volatile @JvmField var overrideShowInScreens: Boolean = false
 
+    @ApiStatus.Internal
+    @Volatile @JvmField var pendingSelection: Hud? = null
+
     private val lastUpdates = HashMap<Hud, Long>()
 
     /**
