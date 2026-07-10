@@ -167,6 +167,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static field isGuiScreenOpen Z
 	public static field isTabListVisible Z
 	public static field overrideShowInScreens Z
+	public static field pendingSelection Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public final fun closeEditor ()V
 	public final fun getActiveInstances ()Ljava/util/ArrayList;
 	public final fun getHudsOfType (Ljava/lang/Class;)Ljava/util/ArrayList;
