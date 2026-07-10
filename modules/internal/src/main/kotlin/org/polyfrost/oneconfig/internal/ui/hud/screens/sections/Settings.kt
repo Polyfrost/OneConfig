@@ -103,7 +103,7 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
                                     0.25f,
                                     4f,
                                     0.25f,
-                                    width = 128.dp
+                                    width = 176.dp
                                 )
                             }
                         }
