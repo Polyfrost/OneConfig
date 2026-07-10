@@ -128,6 +128,9 @@ private const val HUD_SIZE_BADGE_HEIGHT = 16f
 private const val HUD_SIZE_BADGE_GAP = 9f
 private val selectionBlue = Color(SELECTION_BLUE_ARGB)
 
+private val idleHudBoxColor = Color.White.copy(0.2f)
+private val hoveredHudBoxColor = Color.White.copy(0.5f)
+
 private const val SNAP_DISTANCE_PX = 6f
 private val snapGuideColor = Color(176, 47, 31)
 
@@ -734,9 +737,9 @@ fun HudDesignStudio() {
                             drawSelectedHudBounds(bounds, mcToScreen, resizable)
                         } else if (isSelected) {
                             drawSelectedHudBounds(bounds, mcToScreen, resizable)
-                        } else if (isHovered) {
+                        } else {
                             drawRect(
-                                color = Color.White.copy(0.5f),
+                                color = if (isHovered) hoveredHudBoxColor else idleHudBoxColor,
                                 topLeft = Offset(sx, sy),
                                 size = Size(sw, sh),
                                 style = Stroke(width = 1f)
@@ -1055,9 +1058,9 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                             size = Size(sw, sh),
                         )
                         drawSelectedHudBounds(bounds, mcToScreen, showHandles = false)
-                    } else if (isHovered) {
+                    } else {
                         drawRect(
-                            color = Color.White.copy(0.5f),
+                            color = if (isHovered) hoveredHudBoxColor else idleHudBoxColor,
                             topLeft = Offset(sx, sy),
                             size = Size(sw, sh),
                             style = Stroke(width = 1f)
