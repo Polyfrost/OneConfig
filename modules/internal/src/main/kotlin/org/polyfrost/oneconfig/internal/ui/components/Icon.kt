@@ -19,7 +19,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.loadImageBitmap
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -68,7 +67,8 @@ fun Icon(
                 else BitmapPainter(
                     IconBitmapCache.load(iconName, file.lastModified()) {
                         file.inputStream().buffered().use(::loadImageBitmap)
-                    }
+                    },
+                    filterQuality = FilterQuality.Medium
                 )
             }.getOrNull()
         }
@@ -86,10 +86,7 @@ fun Icon(
                 painter = painter,
                 contentDescription = null,
                 modifier = clippedModifier,
-                colorFilter = if (isSvg) ColorFilter.tint(resolvedColor) else null,
-                // Raster mod icons ship larger than the 48dp card and get minified; the default
-                // FilterQuality.Low has no mipmaps and softens/aliases them (SVGs stay crisp).
-                filterQuality = if (isSvg) FilterQuality.Low else FilterQuality.Medium
+                colorFilter = if (isSvg) ColorFilter.tint(resolvedColor) else null
             )
             return
         }
@@ -109,14 +106,13 @@ fun Icon(
     val painter = if (isSvg) {
         rememberIconSvgPainter(path) ?: return
     } else {
-        painterResource(path)
+        rememberIconRasterPainter(path) ?: return
     }
     Image(
         painter = painter,
         contentDescription = null,
         modifier = clippedResourceModifier,
-        colorFilter = if (isSvg) ColorFilter.tint(resolvedColor) else null,
-        filterQuality = if (isSvg) FilterQuality.Low else FilterQuality.Medium
+        colorFilter = if (isSvg) ColorFilter.tint(resolvedColor) else null
     )
 }
 
@@ -125,6 +121,23 @@ private fun rememberIconSvgPainter(path: String): Painter? {
     val over = LocalUiOversample.current
     return remember(path, over) {
         readIconResourceBytes(path)?.let { OversampledSvgPainter(it, over) }
+    }
+}
+
+@Composable
+fun rememberSvgResourcePainter(path: String): Painter? {
+    val over = LocalUiOversample.current
+    return remember(path, over) {
+        readIconResourceBytes(path)?.let { OversampledSvgPainter(it, over) }
+    }
+}
+
+@Composable
+private fun rememberIconRasterPainter(path: String): Painter? {
+    return remember(path) {
+        readIconResourceBytes(path)?.let {
+            BitmapPainter(loadImageBitmap(it.inputStream()), filterQuality = FilterQuality.Medium)
+        }
     }
 }
 

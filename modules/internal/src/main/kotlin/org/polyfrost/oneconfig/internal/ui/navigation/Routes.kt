@@ -4,6 +4,7 @@ import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ChangeLogGraph
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.CreditsGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.FeedbackGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.KeybindsGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
@@ -65,6 +66,11 @@ val NavigationGroups = listOf(
             id = "feedback",
             icon = "text",
             route = FeedbackGraph
+        ),
+        NavigationRoute(
+            id = "credits",
+            icon = "star",
+            route = CreditsGraph
         ),
     )
 )

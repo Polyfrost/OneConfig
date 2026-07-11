@@ -120,7 +120,7 @@ val PolyGlassLight = UITheme(
 
     Color(0x4DA3A3A3),
     Color.Black,
-    Color(0xFF78818D),
+    Color(0xFF4E5661),
     Color(0xFFD5DBFF),
 
     Color(0xFF000000),
@@ -199,7 +199,7 @@ val MinecraftLight = UITheme(
 
     Color(0x4DA3A3A3),
     Color.Black,
-    Color(0xFF78818D),
+    Color(0xFF4E5661),
     Color(0xFFD5DBFF),
 
     Color(0xFF000000),

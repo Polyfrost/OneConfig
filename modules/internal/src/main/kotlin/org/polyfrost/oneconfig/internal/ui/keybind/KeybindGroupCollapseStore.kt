@@ -12,10 +12,14 @@ object KeybindGroupCollapseStore {
     private val LOGGER = LoggerFactory.getLogger("OneConfig/KeybindCollapse")
     private const val FILE_NAME = "keybind-collapsed"
 
-    private val collapsed = mutableStateMapOf<String, Boolean>()
+    private const val MINECRAFT_PREFIX = "minecraft-keybinds."
+
+    private val explicit = mutableStateMapOf<String, Boolean>()
     private var loaded = false
 
     private fun file(): Path = ConfigManager.internal().folder.resolve(FILE_NAME)
+
+    private fun defaultCollapsed(modId: String): Boolean = modId.startsWith(MINECRAFT_PREFIX)
 
     private fun ensureLoaded() {
         if (loaded) return
@@ -24,8 +28,12 @@ object KeybindGroupCollapseStore {
             val path = file()
             if (Files.exists(path)) {
                 Files.readAllLines(path, StandardCharsets.UTF_8).forEach { line ->
-                    val id = line.trim()
-                    if (id.isNotEmpty()) collapsed[id] = true
+                    val trimmed = line.trim()
+                    if (trimmed.isEmpty()) return@forEach
+                    val sep = trimmed.lastIndexOf('=')
+                    val id = if (sep >= 0) trimmed.substring(0, sep) else trimmed
+                    val collapsed = if (sep >= 0) trimmed.substring(sep + 1).toBooleanStrictOrNull() ?: true else true
+                    if (id.isNotEmpty() && collapsed != defaultCollapsed(id)) explicit[id] = collapsed
                 }
             }
         } catch (e: Exception) {
@@ -35,12 +43,12 @@ object KeybindGroupCollapseStore {
 
     fun isCollapsed(modId: String): Boolean {
         ensureLoaded()
-        return collapsed[modId] == true
+        return explicit[modId] ?: defaultCollapsed(modId)
     }
 
     fun setCollapsed(modId: String, value: Boolean) {
         ensureLoaded()
-        if (value) collapsed[modId] = true else collapsed.remove(modId)
+        if (value == defaultCollapsed(modId)) explicit.remove(modId) else explicit[modId] = value
         persist()
     }
 
@@ -48,7 +56,7 @@ object KeybindGroupCollapseStore {
         try {
             val path = file()
             Files.createDirectories(path.parent)
-            val out = collapsed.keys.joinToString("\n")
+            val out = explicit.entries.joinToString("\n") { "${it.key}=${it.value}" }
             Files.write(
                 path,
                 out.toByteArray(StandardCharsets.UTF_8),

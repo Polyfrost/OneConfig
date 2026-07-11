@@ -27,7 +27,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -78,9 +77,9 @@ private fun Navigation() {
 
 @Composable
 private fun Branding() {
+    val logo = rememberSvgResourcePainter(LocalTheme.current.branding.logoPath) ?: return
     Image(
-        // TODO: migrate to resources api or something else
-        painter = painterResource(LocalTheme.current.branding.logoPath),
+        painter = logo,
         contentDescription = null,
         modifier = Modifier.size(167.dp, 19.dp)
     )
