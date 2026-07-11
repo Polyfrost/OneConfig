@@ -122,12 +122,8 @@ object ExternalSounds {
         Files.write(meta, PACK_META.toByteArray(Charsets.UTF_8))
     }
 
-    // pack_format is deliberately a fixed 64 (the highest value that does NOT trip the "newer than 64 requires
-    // min_format/max_format" parser rule introduced in 26.1) so a single mcmeta parses on every supported MC
-    // version regardless of mappings. The resulting compatibility mismatch is irrelevant: OneConfigSoundPackSource
-    // marks the pack as required, and PackRepository always selects required packs without checking compatibility.
     private const val PACK_META =
-        """{"pack":{"description":"OneConfig downloaded sounds","pack_format":64}}"""
+        """{"pack":{"description":"OneConfig downloaded sounds","pack_format":64,"supported_formats":{"min_inclusive":0,"max_inclusive":2147483647},"min_format":0,"max_format":2147483647}}"""
 
     private fun sha1Of(path: Path): String {
         val digest = MessageDigest.getInstance("SHA-1")

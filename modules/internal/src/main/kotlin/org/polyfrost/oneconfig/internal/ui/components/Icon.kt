@@ -14,6 +14,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
@@ -85,7 +86,10 @@ fun Icon(
                 painter = painter,
                 contentDescription = null,
                 modifier = clippedModifier,
-                colorFilter = if (isSvg) ColorFilter.tint(resolvedColor) else null
+                colorFilter = if (isSvg) ColorFilter.tint(resolvedColor) else null,
+                // Raster mod icons ship larger than the 48dp card and get minified; the default
+                // FilterQuality.Low has no mipmaps and softens/aliases them (SVGs stay crisp).
+                filterQuality = if (isSvg) FilterQuality.Low else FilterQuality.Medium
             )
             return
         }
@@ -111,7 +115,8 @@ fun Icon(
         painter = painter,
         contentDescription = null,
         modifier = clippedResourceModifier,
-        colorFilter = if (isSvg) ColorFilter.tint(resolvedColor) else null
+        colorFilter = if (isSvg) ColorFilter.tint(resolvedColor) else null,
+        filterQuality = if (isSvg) FilterQuality.Low else FilterQuality.Medium
     )
 }
 

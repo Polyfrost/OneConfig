@@ -73,7 +73,7 @@ public final class OneConfigSoundPackSource implements RepositorySource {
                 return new PathPackResources(info, PACK_ROOT);
             }
         };
-        PackSelectionConfig selection = new PackSelectionConfig(true, Pack.Position.TOP, true);
+        PackSelectionConfig selection = new PackSelectionConfig(true, Pack.Position.BOTTOM, false);
 
         Pack pack = Pack.readMetaAndCreate(location, resources, PackType.CLIENT_RESOURCES, selection);
         if (pack != null) {

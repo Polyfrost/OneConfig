@@ -49,10 +49,19 @@ public abstract class Backend {
      * They are tracked in memory but never loaded from or written to backend storage.
      */
     public static final String UI_ONLY_METADATA = "ui_only";
+    public static final String CUSTOM_SAVE_TRACKED_METADATA = "custom_save_tracked";
+    public static final String CUSTOM_SAVE_DIRTY_METADATA = "custom_save_dirty";
     private final Map<String, Tree> trees = new HashMap<>();
 
     private static boolean isUiOnly(@NotNull Tree tree) {
         return Boolean.TRUE.equals(tree.getMetadata(UI_ONLY_METADATA));
+    }
+
+    private static void runCustomSave(@NotNull Tree tree, @NotNull Runnable customSave) {
+        boolean tracked = Boolean.TRUE.equals(tree.getMetadata(CUSTOM_SAVE_TRACKED_METADATA));
+        if (tracked && !Boolean.TRUE.equals(tree.getMetadata(CUSTOM_SAVE_DIRTY_METADATA))) return;
+        customSave.run();
+        if (tracked) tree.removeMetadata(CUSTOM_SAVE_DIRTY_METADATA);
     }
 
     /**
@@ -180,7 +189,7 @@ public abstract class Backend {
             Object customSave = tree.getMetadata("custom_save");
             if (customSave != null) {
                 if (customSave instanceof Runnable) {
-                    ((Runnable) customSave).run();
+                    runCustomSave(tree, (Runnable) customSave);
                 }
                 return true;
             }
@@ -229,8 +238,8 @@ public abstract class Backend {
         try {
             Object customSave = tree.getMetadata("custom_save");
             if (customSave != null) {
-                if (customSave instanceof  Runnable) {
-                    ((Runnable) customSave).run();
+                if (customSave instanceof Runnable) {
+                    runCustomSave(tree, (Runnable) customSave);
                 }
                 return true;
             }

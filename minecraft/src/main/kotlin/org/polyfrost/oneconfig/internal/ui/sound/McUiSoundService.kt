@@ -87,6 +87,7 @@ class McUiSoundService : UiSoundService {
         try {
             val current = ambience
             if (current != null && !current.isStopped && current.theme == theme && mc.soundManager.isActive(current)) {
+                current.updateTargetVolume(ambienceVolumeFor(theme, volume))
                 current.cancelFadeOut()
                 UiSoundDucking.setActive(true)
                 driveAmbienceLoop()
@@ -228,7 +229,7 @@ class McUiSoundService : UiSoundService {
     private inner class FadingLoopSoundInstance(
         event: SoundEvent,
         source: SoundSource,
-        val targetVolume: Float,
+        @Volatile var targetVolume: Float,
         val theme: UiSoundTheme,
         private val nativeLoop: Boolean,
     ) : AbstractTickableSoundInstance(event, source, random) {
@@ -255,6 +256,11 @@ class McUiSoundService : UiSoundService {
         fun cancelFadeOut() {
             fadingOut = false
             volume = targetVolume
+        }
+
+        fun updateTargetVolume(newTarget: Float) {
+            targetVolume = newTarget
+            if (!fadingOut) volume = newTarget
         }
 
         override fun tick() {

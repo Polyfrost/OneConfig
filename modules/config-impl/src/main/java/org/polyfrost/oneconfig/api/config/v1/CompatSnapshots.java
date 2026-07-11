@@ -27,6 +27,7 @@
 package org.polyfrost.oneconfig.api.config.v1;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
 import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
 
 import java.util.Collections;
@@ -67,6 +68,9 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     private Tree register0(Tree tree) {
         Tree reg = ConfigManager.active().register(tree).get();
         reg.addMetadata(TAG, Boolean.TRUE);
+        if (reg.getMetadata("custom_save") != null) {
+            reg.addMetadata(Backend.CUSTOM_SAVE_TRACKED_METADATA, Boolean.TRUE);
+        }
         known.put(reg.getID(), reg);
         String profile = ConfigManager.activeProfile();
         if (currentProfile == null) currentProfile = profile;
@@ -186,6 +190,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
             Property<Object> prop = (Property<Object>) p;
             prop.addCallback(value -> {
                 if (applying.contains(p)) return false;
+                tree.addMetadata(Backend.CUSTOM_SAVE_DIRTY_METADATA, Boolean.TRUE);
                 Object serialized = trySerialize(value);
                 if (serialized != null) {
                     store.putValue(ConfigManager.activeProfile(), treeId, key, serialized);
