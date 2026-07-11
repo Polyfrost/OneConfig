@@ -38,10 +38,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 final class LwjglTinyFd implements TinyFdApi {
     static final LwjglTinyFd INSTANCE = new LwjglTinyFd();
     private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/TinyFD");
+
+    private static final boolean WINDOWS = System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win");
+
+    private static final String SHELL_METACHARACTERS = "'\"`$\\\r\0";
 
     private LwjglTinyFd() {
     }
@@ -50,7 +55,7 @@ final class LwjglTinyFd implements TinyFdApi {
     @Override
     public Path openFileSelector(@Nullable String title, @Nullable String defaultFilePath, String[] filterPatterns, @Nullable String filterDescription) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            String result = TinyFileDialogs.tinyfd_openFileDialog(title, defaultFilePath, filters(stack, filterPatterns), filterDescription, false);
+            String result = TinyFileDialogs.tinyfd_openFileDialog(sanitizeText(title), sanitizePath(defaultFilePath), filters(stack, filterPatterns), sanitizeText(filterDescription), false);
             return firstPath(result);
         } catch (Throwable t) {
             LOGGER.error("Failed to open file selector", t);
@@ -61,7 +66,7 @@ final class LwjglTinyFd implements TinyFdApi {
     @Override
     public Path openSaveSelector(@Nullable String title, @Nullable String defaultFilePath, String[] filterPatterns, @Nullable String filterDescription) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            String result = TinyFileDialogs.tinyfd_saveFileDialog(title, defaultFilePath, filters(stack, filterPatterns), filterDescription);
+            String result = TinyFileDialogs.tinyfd_saveFileDialog(sanitizeText(title), sanitizePath(defaultFilePath), filters(stack, filterPatterns), sanitizeText(filterDescription));
             return firstPath(result);
         } catch (Throwable t) {
             LOGGER.error("Failed to open save selector", t);
@@ -72,7 +77,7 @@ final class LwjglTinyFd implements TinyFdApi {
     @Override
     public Path[] openMultiFileSelector(@Nullable String title, @Nullable String defaultFilePath, String[] filterPatterns, @Nullable String filterDescription) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            String result = TinyFileDialogs.tinyfd_openFileDialog(title, defaultFilePath, filters(stack, filterPatterns), filterDescription, true);
+            String result = TinyFileDialogs.tinyfd_openFileDialog(sanitizeText(title), sanitizePath(defaultFilePath), filters(stack, filterPatterns), sanitizeText(filterDescription), true);
             if (result == null) return new Path[0];
             String[] parts = result.split("\\|");
             List<Path> paths = new ArrayList<>(parts.length);
@@ -90,7 +95,7 @@ final class LwjglTinyFd implements TinyFdApi {
     @Override
     public Path openFolderSelector(@Nullable String title, @Nullable String defaultFolderPath) {
         try {
-            String result = TinyFileDialogs.tinyfd_selectFolderDialog(title, defaultFolderPath);
+            String result = TinyFileDialogs.tinyfd_selectFolderDialog(sanitizeText(title), sanitizePath(defaultFolderPath));
             return firstPath(result);
         } catch (Throwable t) {
             LOGGER.error("Failed to open folder selector", t);
@@ -101,7 +106,7 @@ final class LwjglTinyFd implements TinyFdApi {
     @Override
     public boolean showMessageBox(String title, String message, @NotNull String dialog, String icon, boolean defaultValue) {
         try {
-            return TinyFileDialogs.tinyfd_messageBox(title, message, dialog, icon, defaultValue);
+            return TinyFileDialogs.tinyfd_messageBox(sanitizeText(title), sanitizeText(message), dialog, icon, defaultValue);
         } catch (Throwable t) {
             LOGGER.error("Failed to show message box", t);
             return defaultValue;
@@ -111,7 +116,7 @@ final class LwjglTinyFd implements TinyFdApi {
     @Override
     public int showNotification(String title, String message, String icon) {
         try {
-            return TinyFileDialogs.tinyfd_notifyPopup(title, message, icon) == 1 ? 0 : 1;
+            return TinyFileDialogs.tinyfd_notifyPopup(sanitizeText(title), sanitizeText(message), icon) == 1 ? 0 : 1;
         } catch (Throwable t) {
             LOGGER.error("Failed to show notification", t);
             return 1;
@@ -129,9 +134,35 @@ final class LwjglTinyFd implements TinyFdApi {
         if (patterns == null || patterns.length == 0) return null;
         PointerBuffer buffer = stack.mallocPointer(patterns.length);
         for (String pattern : patterns) {
-            buffer.put(stack.UTF8(pattern));
+            buffer.put(stack.UTF8(sanitizeText(pattern)));
         }
         buffer.flip();
         return buffer;
+    }
+
+    @Nullable
+    private static String sanitizeText(@Nullable String input) {
+        return strip(input);
+    }
+
+    @Nullable
+    private static String sanitizePath(@Nullable String input) {
+        if (WINDOWS) return input;
+        return strip(input);
+    }
+
+    @Nullable
+    static String strip(@Nullable String input) {
+        if (input == null || input.isEmpty()) return input;
+        StringBuilder sb = null;
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if (SHELL_METACHARACTERS.indexOf(c) >= 0) {
+                if (sb == null) sb = new StringBuilder(input.length()).append(input, 0, i);
+            } else if (sb != null) {
+                sb.append(c);
+            }
+        }
+        return sb == null ? input : sb.toString();
     }
 }
