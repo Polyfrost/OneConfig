@@ -78,6 +78,18 @@ private fun textProp(id: String, title: String, desc: String, value: String, pla
         placeholder?.let { p.addMetadata("placeholder", it) }
     }
 
+private fun fileProp(
+    id: String, title: String, desc: String, value: String,
+    types: Array<String> = emptyArray(), filterName: String? = null, directory: Boolean = false,
+) =
+    Properties.simple(id, title, desc, value, String::class.java).also { p ->
+        p.addMetadata("visualizer", Visualizer.FileVisualizer::class.java)
+        p.addMetadata("placeholder", if (directory) "Select a folder..." else "Select a file...")
+        if (types.isNotEmpty()) p.addMetadata("types", types)
+        filterName?.let { p.addMetadata("filterName", it) }
+        if (directory) p.addMetadata("directory", true)
+    }
+
 private fun <E : Enum<E>> dropdownProp(id: String, title: String, desc: String, value: E) =
     Properties.simple(id, title, desc, value, value::class.java as Class<E>?).also { p ->
         p.addMetadata("visualizer", Visualizer.DropdownVisualizer::class.java)
@@ -185,6 +197,8 @@ private fun testControlsTree(): Tree {
     val text = Tree("text", "Text", null, null).also { it.addMetadata("icon", "paintbrush") }
     text.put(textProp("username", "Username", "Display name override", "Player", "Enter a name..."))
     text.put(textProp("prefix", "Chat Prefix", "Prefix added to chat messages", ""))
+    text.put(fileProp("image", "Image", "Pick an image file", "", arrayOf(".png", ".jpg"), "Images"))
+    text.put(fileProp("folder", "Directory", "Pick a folder", "", directory = true))
 
     val selectors = Tree("selectors", "Selectors", null, null).also { it.addMetadata("icon", "profiles") }
     selectors.put(dropdownProp("theme", "Theme", "UI colour theme", Theme.Dark))

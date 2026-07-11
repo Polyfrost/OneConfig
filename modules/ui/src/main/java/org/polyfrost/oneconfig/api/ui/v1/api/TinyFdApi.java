@@ -40,6 +40,10 @@ import java.nio.file.Path;
  */
 @SuppressWarnings("unused")
 public interface TinyFdApi {
+    static TinyFdApi getInstance() {
+        return LwjglTinyFd.INSTANCE;
+    }
+
     String QUESTION_ICON = "question";
     String ERROR_ICON = "error";
     String WARNING_ICON = "warning";

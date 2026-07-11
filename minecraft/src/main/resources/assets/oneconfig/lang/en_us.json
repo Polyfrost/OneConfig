@@ -108,5 +108,10 @@
   "oneconfig.preferences.show_first_launch_message.description": "Show the welcome message the first time OneConfig is launched.",
 
   "oneconfig.notification.first_launch.title": "Welcome to OneConfig!",
-  "oneconfig.notification.first_launch.message": "Press '%s' to open OneConfig and access all your mod settings in one place."
+  "oneconfig.notification.first_launch.message": "Press '%s' to open OneConfig and access all your mod settings in one place.",
+
+  "oneconfig.textinput.placeholder": "Enter text...",
+  "oneconfig.numberinput.placeholder": "Enter a number...",
+  "oneconfig.filepicker.placeholder": "Select a file...",
+  "oneconfig.filepicker.browse": "Browse"
 }

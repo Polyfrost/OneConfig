@@ -48,6 +48,31 @@ class TextOptionData(prop: Property<*>) : OptionData(prop) {
     val strProp: Property<String> get() = prop as Property<String>
 }
 
+class FileOptionData(prop: Property<*>) : OptionData(prop) {
+    val placeholder: String? get() = localizedString(prop.getMetadata("placeholderKey"), prop.getMetadata<String>("placeholder")).takeIf { it.isNotBlank() }
+    val directory: Boolean get() = prop.getMetadata("directory") ?: false
+    val filterName: String? get() = prop.getMetadata<String>("filterName")?.takeIf { it.isNotBlank() }
+
+    val dialogTitle: String get() = title.asRenderText()
+
+    val filterPatterns: Array<String>
+        get() {
+            if (directory) return emptyArray()
+            val raw = prop.getMetadata<Array<String>>("types") ?: return emptyArray()
+            return raw.mapNotNull { it.trim().takeIf(String::isNotEmpty)?.toFilterPattern() }.toTypedArray()
+        }
+
+    @Suppress("UNCHECKED_CAST")
+    val strProp: Property<String> get() = prop as Property<String>
+
+    private fun String.toFilterPattern(): String = when {
+        startsWith("*.") -> this
+        this == "*" -> this
+        startsWith(".") -> "*$this"
+        else -> "*.$this"
+    }
+}
+
 class DropdownOptionData(prop: Property<*>) : OptionData(prop) {
     val options: List<Any>? get() = prop.optionLabels()
     val optionValues: List<Any>? get() = prop.optionValues()

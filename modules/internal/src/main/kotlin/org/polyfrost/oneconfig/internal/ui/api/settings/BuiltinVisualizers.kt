@@ -6,6 +6,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.ButtonOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.ColorOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.DraggableListOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.DropdownOption
+import org.polyfrost.oneconfig.internal.ui.components.settings.FileOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.InfoOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.MultiSelectDropdownOption
@@ -30,6 +31,9 @@ internal object BuiltinVisualizers {
         })
         Visualizer.register(Visualizer.TextVisualizer::class.java, Visualizer { prop ->
             TextOption(TextOptionData(prop))
+        })
+        Visualizer.register(Visualizer.FileVisualizer::class.java, Visualizer { prop ->
+            FileOption(FileOptionData(prop))
         })
         Visualizer.register(Visualizer.DropdownVisualizer::class.java, Visualizer { prop ->
             DropdownOption(DropdownOptionData(prop))

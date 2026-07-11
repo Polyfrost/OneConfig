@@ -1,0 +1,137 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021~2024 Polyfrost.
+ *   <https://polyfrost.org> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.org/legal/oneconfig/additional-terms>
+ */
+
+package org.polyfrost.oneconfig.api.ui.v1.api;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.util.tinyfd.TinyFileDialogs;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+
+final class LwjglTinyFd implements TinyFdApi {
+    static final LwjglTinyFd INSTANCE = new LwjglTinyFd();
+    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/TinyFD");
+
+    private LwjglTinyFd() {
+    }
+
+    @Nullable
+    @Override
+    public Path openFileSelector(@Nullable String title, @Nullable String defaultFilePath, String[] filterPatterns, @Nullable String filterDescription) {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            String result = TinyFileDialogs.tinyfd_openFileDialog(title, defaultFilePath, filters(stack, filterPatterns), filterDescription, false);
+            return firstPath(result);
+        } catch (Throwable t) {
+            LOGGER.error("Failed to open file selector", t);
+            return null;
+        }
+    }
+
+    @Override
+    public Path openSaveSelector(@Nullable String title, @Nullable String defaultFilePath, String[] filterPatterns, @Nullable String filterDescription) {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            String result = TinyFileDialogs.tinyfd_saveFileDialog(title, defaultFilePath, filters(stack, filterPatterns), filterDescription);
+            return firstPath(result);
+        } catch (Throwable t) {
+            LOGGER.error("Failed to open save selector", t);
+            return null;
+        }
+    }
+
+    @Override
+    public Path[] openMultiFileSelector(@Nullable String title, @Nullable String defaultFilePath, String[] filterPatterns, @Nullable String filterDescription) {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            String result = TinyFileDialogs.tinyfd_openFileDialog(title, defaultFilePath, filters(stack, filterPatterns), filterDescription, true);
+            if (result == null) return new Path[0];
+            String[] parts = result.split("\\|");
+            List<Path> paths = new ArrayList<>(parts.length);
+            for (String part : parts) {
+                if (!part.isEmpty()) paths.add(Paths.get(part));
+            }
+            return paths.toArray(new Path[0]);
+        } catch (Throwable t) {
+            LOGGER.error("Failed to open multi file selector", t);
+            return new Path[0];
+        }
+    }
+
+    @Nullable
+    @Override
+    public Path openFolderSelector(@Nullable String title, @Nullable String defaultFolderPath) {
+        try {
+            String result = TinyFileDialogs.tinyfd_selectFolderDialog(title, defaultFolderPath);
+            return firstPath(result);
+        } catch (Throwable t) {
+            LOGGER.error("Failed to open folder selector", t);
+            return null;
+        }
+    }
+
+    @Override
+    public boolean showMessageBox(String title, String message, @NotNull String dialog, String icon, boolean defaultValue) {
+        try {
+            return TinyFileDialogs.tinyfd_messageBox(title, message, dialog, icon, defaultValue);
+        } catch (Throwable t) {
+            LOGGER.error("Failed to show message box", t);
+            return defaultValue;
+        }
+    }
+
+    @Override
+    public int showNotification(String title, String message, String icon) {
+        try {
+            return TinyFileDialogs.tinyfd_notifyPopup(title, message, icon) == 1 ? 0 : 1;
+        } catch (Throwable t) {
+            LOGGER.error("Failed to show notification", t);
+            return 1;
+        }
+    }
+
+    @Nullable
+    private static Path firstPath(@Nullable String result) {
+        if (result == null || result.isEmpty()) return null;
+        return Paths.get(result);
+    }
+
+    @Nullable
+    private static PointerBuffer filters(MemoryStack stack, String[] patterns) {
+        if (patterns == null || patterns.length == 0) return null;
+        PointerBuffer buffer = stack.mallocPointer(patterns.length);
+        for (String pattern : patterns) {
+            buffer.put(stack.UTF8(pattern));
+        }
+        buffer.flip();
+        return buffer;
+    }
+}
