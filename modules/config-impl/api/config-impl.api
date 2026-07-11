@@ -200,6 +200,12 @@ public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$DropdownVisu
 	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;Landroidx/compose/runtime/Composer;I)V
 }
 
+public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$FileVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;Landroidx/compose/runtime/Composer;I)V
+}
+
 public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$InfoVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
 	public static final field $stable I
 	public fun <init> ()V
@@ -357,6 +363,28 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun title ()Ljava/lang/String;
 	public abstract fun titleKey ()Ljava/lang/String;
 	public abstract fun titleTranslation ()Z
+}
+
+public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/File : java/lang/annotation/Annotation {
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun categoryKey ()Ljava/lang/String;
+	public abstract fun categoryTranslation ()Z
+	public abstract fun description ()Ljava/lang/String;
+	public abstract fun descriptionKey ()Ljava/lang/String;
+	public abstract fun descriptionTranslation ()Z
+	public abstract fun directory ()Z
+	public abstract fun filterName ()Ljava/lang/String;
+	public abstract fun icon ()Ljava/lang/String;
+	public abstract fun placeholder ()Ljava/lang/String;
+	public abstract fun placeholderKey ()Ljava/lang/String;
+	public abstract fun placeholderTranslation ()Z
+	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun subcategoryKey ()Ljava/lang/String;
+	public abstract fun subcategoryTranslation ()Z
+	public abstract fun title ()Ljava/lang/String;
+	public abstract fun titleKey ()Ljava/lang/String;
+	public abstract fun titleTranslation ()Z
+	public abstract fun types ()[Ljava/lang/String;
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Include : java/lang/annotation/Annotation {
