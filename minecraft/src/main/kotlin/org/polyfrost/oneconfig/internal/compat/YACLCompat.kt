@@ -220,6 +220,7 @@ object YACLCompat {
             is Enum<*> -> {
                 val constants = currentValue::class.java.enumConstants
                 property.addMetadata("options", constants?.map { it.toString() } ?: emptyList<String>())
+                resolveEnumLabels(option, constants)?.let { property.addMetadata("optionLabels", it) }
             }
             is Int, is Float, is Double, is Long -> {
                 val range = resolveSliderRange(option)
@@ -232,14 +233,45 @@ object YACLCompat {
         root.put(property)
     }
 
-    private fun resolveSliderRange(option: Any): Triple<Float, Float, Float?>? {
+    private fun resolveController(option: Any): Any? {
         val controllerMethod = option::class.java.methods.firstOrNull {
             it.name == "controller" && it.parameterCount == 0
         } ?: return null
         // controller() returns a supplier-bound Controller; some YACL versions wrap it in a Supplier.
         var controller = runCatching { controllerMethod.invoke(option) }.getOrNull() ?: return null
         (controller as? java.util.function.Supplier<*>)?.let { controller = it.get() ?: return null }
+        return controller
+    }
 
+    private fun resolveEnumLabels(option: Any, constants: Array<out Any>?): List<String>? {
+        if (constants.isNullOrEmpty()) return null
+        val controller = resolveController(option) ?: return null
+        val (formatter, formatMethod) = resolveValueFormatter(controller) ?: return null
+        return constants.map {
+            runCatching { resolveComponent(formatMethod.invoke(formatter, it)) }
+                .getOrNull()?.nonBlankOrNull() ?: it.toString()
+        }
+    }
+
+    private fun resolveValueFormatter(controller: Any): Pair<Any, java.lang.reflect.Method>? {
+        var cls: Class<*>? = controller::class.java
+        while (cls != null && cls != Any::class.java) {
+            val field = cls.declaredFields.firstOrNull { it.type.name.endsWith("ValueFormatter") }
+            if (field != null) {
+                val formatter = runCatching { field.apply { isAccessible = true }.get(controller) }.getOrNull()
+                val format = formatter?.let {
+                    field.type.methods.firstOrNull { m -> m.name == "format" && m.parameterCount == 1 }
+                        ?.apply { isAccessible = true }
+                }
+                if (formatter != null && format != null) return formatter to format
+            }
+            cls = cls.superclass
+        }
+        return null
+    }
+
+    private fun resolveSliderRange(option: Any): Triple<Float, Float, Float?>? {
+        val controller = resolveController(option) ?: return null
         val c = controller
         val min = invokeNumber(c, "min") ?: return null
         val max = invokeNumber(c, "max") ?: return null
