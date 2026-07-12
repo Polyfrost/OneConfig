@@ -203,20 +203,28 @@ object SkiaFontRenderer : PreparableReloadListener {
     private fun read(rm: ResourceManager, id: Identifier): ByteArray? =
         runCatching { rm.getResource(id).getOrNull()?.open()?.use { it.readBytes() } }.getOrNull()
 
+    private fun readStack(rm: ResourceManager, id: Identifier): List<ByteArray> =
+        runCatching {
+            rm.getResourceStack(id).asReversed().mapNotNull { res ->
+                runCatching { res.open().use { it.readBytes() } }.getOrNull()
+            }
+        }.getOrNull() ?: emptyList()
+
     private fun splitId(id: String): Pair<String, String> =
         if (':' in id) id.substringBefore(':') to id.substringAfter(':') else "minecraft" to id
 
     private fun collectProviders(rm: ResourceManager, id: String, out: MutableList<JsonObject>, visited: MutableSet<String>) {
         if (!visited.add(id)) return
         val (ns, path) = splitId(id)
-        val bytes = read(rm, Identifier.fromNamespaceAndPath(ns, "font/$path.json")) ?: return
-        val root = runCatching { JsonParser.parseString(String(bytes, Charsets.UTF_8)).asJsonObject }.getOrNull() ?: return
-        val providers = root.getAsJsonArray("providers") ?: return
-        for (element in providers) {
-            val provider = element.asJsonObject
-            when (provider.get("type")?.asString) {
-                "reference" -> provider.get("id")?.asString?.let { collectProviders(rm, it, out, visited) }
-                else -> out.add(provider)
+        for (bytes in readStack(rm, Identifier.fromNamespaceAndPath(ns, "font/$path.json"))) {
+            val root = runCatching { JsonParser.parseString(String(bytes, Charsets.UTF_8)).asJsonObject }.getOrNull() ?: continue
+            val providers = root.getAsJsonArray("providers") ?: continue
+            for (element in providers) {
+                val provider = element.asJsonObject
+                when (provider.get("type")?.asString) {
+                    "reference" -> provider.get("id")?.asString?.let { collectProviders(rm, it, out, visited) }
+                    else -> out.add(provider)
+                }
             }
         }
     }
