@@ -24,6 +24,7 @@ import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
+import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.dsl.category
@@ -35,6 +36,11 @@ import java.util.*
 
 internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/RconfigCompat") {
 
+    private val registeredConfigs = LinkedHashMap<String, ResourcefulConfig>()
+
+    @JvmStatic
+    fun registeredConfigs(): Collection<ResourcefulConfig> = registeredConfigs.values
+
     @JvmStatic
     fun enable() {
         info("Detected rconfig, enabling compat layer!")
@@ -42,6 +48,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
 
     @JvmStatic
     fun addConfig(config: ResourcefulConfig) {
+        registeredConfigs[config.id()] = config
         val mod = CompatLoader.findFirstMod()
         info("Preparing config wrapper for ${config.id()}!")
         CompatLoader.requireTranslations {
@@ -188,6 +195,28 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         tree.put(objectEntry)
     }
     *///? }
+
+    @JvmStatic
+    fun buildProperties(entry: ResourcefulConfigObjectEntry): List<Property<*>> {
+        val tmp = Tree.tree()
+        //? >= 1.21.8 {
+        parseAny(entry.elements(), tmp)
+        //? } else {
+        /*parseAny(entry.entries().values, tmp)
+        *///? }
+        val out = ArrayList<Property<*>>()
+        collectProperties(tmp, out)
+        return out
+    }
+
+    private fun collectProperties(tree: Tree, out: MutableList<Property<*>>) {
+        tree.map.values.forEach { node ->
+            when (node) {
+                is Property<*> -> out.add(node)
+                is Tree -> collectProperties(node, out)
+            }
+        }
+    }
 
     private fun buildAndAdd(entry: ResourcefulConfigValueEntry, tree: Tree) {
         val builder = RConfigPropertyBuilder(entry)

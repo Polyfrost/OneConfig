@@ -9,6 +9,7 @@ import io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor
 import io.github.notenoughupdates.moulconfig.processor.ProcessedCategory
 import io.github.notenoughupdates.moulconfig.processor.ProcessedOption
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
+import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.Visualizer.*
@@ -104,8 +105,10 @@ data object MoulConfigCompat {
                 val method = compatClass.methods.firstOrNull {
                     it.name == "parseMoulconfigFromEditor" && it.parameterCount == 2
                 } ?: error("parseMoulconfigFromEditor not found on $fqcn")
-                CompatLoader.withForcedModId(forcedModId) {
-                    method.invoke(null, categories, config)
+                CompatLoader.requireTranslations(skip = true) {
+                    CompatLoader.withForcedModId(forcedModId) {
+                        method.invoke(null, categories, config)
+                    }
                 }
                 return
             }
@@ -164,26 +167,45 @@ data object MoulConfigCompat {
         root: Tree,
         accordionMap: MutableMap<Int, Tree>,
     ) {
+        val editor = children.editor
+        if (editor is GuiOptionEditorAccordion) {
+            val accordionTree = Tree.tree()
+            accordionTree.id = UUID.randomUUID().toString()
+            accordionTree.title = MoulPropertyBuilder(children).name?.takeIf { it.isNotBlank() } ?: "Section"
+            accordionTree.category = categoryName
+            accordionTree.subcategory = subcategoryName
+
+            val parentTarget = if (children.accordionId >= 0) {
+                accordionMap[children.accordionId] ?: root
+            } else {
+                root
+            }
+            parentTarget.put(accordionTree)
+            accordionMap[editor.accordionId] = accordionTree
+            return
+        }
+
+        val built = buildOptionProperty(config, children, categoryName, subcategoryName) ?: return
+
+        val parentTarget = if (children.accordionId >= 0) {
+            accordionMap[children.accordionId] ?: root
+        } else {
+            root
+        }
+        parentTarget.put(built)
+    }
+
+    private fun buildOptionProperty(
+        config: MoulConfig,
+        children: ProcessedOption,
+        categoryName: String,
+        subcategoryName: String,
+    ): Property<*>? {
         val property = MoulPropertyBuilder(children)
 
         @Suppress("DEPRECATION")
         val visualizer: Class<out Visualizer> = when (val editor = children.editor) {
-            is GuiOptionEditorAccordion -> {
-                val accordionTree = Tree.tree()
-                accordionTree.id = UUID.randomUUID().toString()
-                accordionTree.title = property.name?.takeIf { it.isNotBlank() } ?: "Section"
-                accordionTree.category = categoryName
-                accordionTree.subcategory = subcategoryName
-
-                val parentTarget = if (children.accordionId >= 0) {
-                    accordionMap[children.accordionId] ?: root
-                } else {
-                    root
-                }
-                parentTarget.put(accordionTree)
-                accordionMap[editor.accordionId] = accordionTree
-                return
-            }
+            is GuiOptionEditorAccordion -> return null
 
             is GuiOptionEditorBoolean -> SwitchVisualizer::class.java
             is GuiOptionEditorButton -> {
@@ -297,12 +319,12 @@ data object MoulConfigCompat {
                 KeybindVisualizer::class.java
             }
 
-            is GuiOptionEditorInfoText -> return
+            is GuiOptionEditorInfoText -> return null
             is GuiOptionEditorText -> TextVisualizer::class.java
-            is GuiOptionEditorDraggableList -> return
+            is GuiOptionEditorDraggableList -> return null
             else -> {
                 println("Skipping ${children.path} - ${editor::class.java}")
-                return
+                return null
             }
         }
 
@@ -310,13 +332,47 @@ data object MoulConfigCompat {
         val built = property.build()
         built.category = categoryName
         built.subcategory = subcategoryName
+        return built
+    }
 
-        val parentTarget = if (children.accordionId >= 0) {
-            accordionMap[children.accordionId] ?: root
-        } else {
-            root
+    @JvmStatic
+    fun buildPropertiesForClass(
+        processor: MoulConfigProcessor<*>,
+        config: MoulConfig,
+        declaringClass: Class<*>,
+        category: String? = null,
+        subcategory: String? = null,
+    ): List<Property<*>> {
+        val out = ArrayList<Property<*>>()
+        runCatching {
+            processor.allCategories.values.forEach { processed ->
+                val catName = category ?: resolveDisplayName(processed)
+                val subName = subcategory ?: catName
+                processed.options.forEach { option ->
+                    if (MoulPropertyBuilder(option).declaringClass != declaringClass) return@forEach
+                    buildOptionProperty(config, option, catName, subName)?.let(out::add)
+                }
+            }
+        }.onFailure {
+            LOGGER.error("Failed to build properties for ${declaringClass.name}: $it")
         }
-        parentTarget.put(built)
+        return out
+    }
+
+    @JvmStatic
+    fun buildPropertiesForOptions(
+        config: MoulConfig,
+        options: List<ProcessedOption>,
+        category: String,
+        subcategory: String,
+    ): List<Property<*>> {
+        val out = ArrayList<Property<*>>()
+        options.forEach { option ->
+            runCatching { buildOptionProperty(config, option, category, subcategory) }
+                .onFailure { LOGGER.error("Failed to build property for ${option.path}: $it") }
+                .getOrNull()?.let(out::add)
+        }
+        return out
     }
 
     private fun resolveDisplayName(category: ProcessedCategory): String {

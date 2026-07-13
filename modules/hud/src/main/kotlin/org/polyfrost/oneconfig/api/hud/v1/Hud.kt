@@ -321,10 +321,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var padRight: Float get() = _padRight.value; set(v) { _padRight.value = v }
 
     private var _staticW: MutableState<Float> = mutableStateOf(200f)
-    var staticW: Float get() = _staticW.value; set(v) { _staticW.value = v }
+    open var staticW: Float get() = _staticW.value; set(v) { _staticW.value = v }
 
     private var _staticH: MutableState<Float> = mutableStateOf(48f)
-    var staticH: Float get() = _staticH.value; set(v) { _staticH.value = v }
+    open var staticH: Float get() = _staticH.value; set(v) { _staticH.value = v }
 
     private var _font: MutableState<Font> = mutableStateOf(Font.Minecraft)
     var font: Font get() = _font.value; set(v) { _font.value = v }
@@ -354,7 +354,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var useGuiScale: Boolean get() = _useGuiScale.value; set(v) { _useGuiScale.value = v }
 
     private var _customScale: MutableState<Float> = mutableStateOf(1f)
-    var customScale: Float get() = _customScale.value; set(v) { _customScale.value = v }
+    open var customScale: Float get() = _customScale.value; set(v) { _customScale.value = v }
 
     val effectiveScale: Float
         get() {

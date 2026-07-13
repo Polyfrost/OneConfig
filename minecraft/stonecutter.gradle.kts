@@ -21,6 +21,8 @@ stonecutter {
             this["modmenu_compat"] = catalogue.has("modmenu")
             this["rconfig_compat"] = catalogue.has("rconfig")
             this["dandelion_compat"] = catalogue.has("dandelion")
+            this["odin_compat"] = current.project.endsWith("-fabric") && catalogue.has("odin")
+            this["skycubed_compat"] = current.project.endsWith("-fabric") && catalogue.has("skycubed")
             this["tr7zw_compat"] = true
             this["cinnabar"] = catalogue.has("cinnabar") && rootProject.hasProperty("minecraft.vulkan")
             this["vulkanmod"] = current.project.endsWith("-fabric") && catalogue.has("vulkanmod")

@@ -171,6 +171,45 @@ object HudManager {
         if (delete) ConfigManager.active().delete(hud.tree.id)
     }
 
+    private fun screenBounds(hud: Hud): FloatArray? {
+        val scale = hud.effectiveScale
+        val w = if (hud.staticWidth) {
+            hud.staticW.takeIf { it > 0f }?.times(scale)
+        } else {
+            hud.renderedW.takeIf { it > 0f } ?: hud.staticW.takeIf { it > 0f }?.times(scale)
+        } ?: return null
+        val h = if (hud.staticWidth) {
+            hud.staticH.takeIf { it > 0f }?.times(scale)
+        } else {
+            hud.renderedH.takeIf { it > 0f } ?: hud.staticH.takeIf { it > 0f }?.times(scale)
+        } ?: return null
+        return floatArrayOf(hud.x, hud.y, w, h)
+    }
+
+    private fun encloses(outer: FloatArray, inner: FloatArray): Boolean =
+        inner[0] >= outer[0] && inner[1] >= outer[1] &&
+            inner[0] + inner[2] <= outer[0] + outer[2] &&
+            inner[1] + inner[3] <= outer[1] + outer[3]
+
+    @ApiStatus.Internal
+    fun zOrderedInstances(bounds: (Hud) -> FloatArray? = ::screenBounds): List<Hud> {
+        val list = activeInstances
+        val n = list.size
+        if (n <= 1) return list
+        val b = arrayOfNulls<FloatArray>(n)
+        for (i in 0 until n) b[i] = bounds(list[i])
+        val depth = IntArray(n)
+        for (i in 0 until n) {
+            val bi = b[i] ?: continue
+            for (j in 0 until n) {
+                if (i == j) continue
+                val bj = b[j] ?: continue
+                if (encloses(bj, bi) && (!encloses(bi, bj) || j < i)) depth[i]++
+            }
+        }
+        return list.indices.sortedBy { depth[it] }.map { list[it] }
+    }
+
     @ApiStatus.Internal
     fun render(ctx: RenderContext, screenWidth: Float, screenHeight: Float) {
         val scale = Platform.compatibility().options().guiScale
@@ -180,7 +219,7 @@ object HudManager {
         ctx.save()
         ctx.scale(scale, scale)
 
-        for (hud in activeInstances) {
+        for (hud in zOrderedInstances()) {
             if (hud is LegacyHudMarker) continue
             if (hud.hidden && !isEditing) continue
             if (isDebugScreenVisible && !hud.showInF3) continue
@@ -256,6 +295,7 @@ object HudManager {
             try {
                 val clsName = data.getProp("hudClass").get() as? String
                     ?: throw IllegalArgumentException("hud tree ${data.id} is missing class name")
+                if (clsName.endsWith(".OneConfigHudCompat")) return@forEach
                 val cls = Class.forName(clsName, true, loader) as? Class<Hud>
                     ?: throw IllegalArgumentException("$clsName is not a subclass of Hud")
                 val h = hudProviders[cls] ?: MHUtils.instantiate(cls, true).getOrThrow()
@@ -291,6 +331,7 @@ object HudManager {
 
         hudProviders.forEach { (cls, h) ->
             if (cls in used) return@forEach
+            if (h.isReal) return@forEach
             val (dx, dy) = h.defaultPosition()
             if (dx <= 0f && dy <= 0f) return@forEach
             val hud = h.make()

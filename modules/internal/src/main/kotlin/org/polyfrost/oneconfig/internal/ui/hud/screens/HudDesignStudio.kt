@@ -232,6 +232,10 @@ private fun hudBounds(hud: Hud): HudBounds? {
     return HudBounds(hud.x, hud.y, width, height)
 }
 
+private fun orderedInstances(): List<Hud> = HudManager.zOrderedInstances { hud ->
+    hudBounds(hud)?.let { floatArrayOf(it.x, it.y, it.width, it.height) }
+}
+
 private fun hitTestHud(hud: Hud, screenX: Float, screenY: Float): Boolean {
     val s = Platform.screen().screenToMcScale()
     val mcX = screenX * s
@@ -524,7 +528,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             // Same for the HUD library / mod-select chrome: overlapping HUDs must not steal clicks.
             if (inLibraryChrome(pos.x, pos.y, size.width.toFloat(), size.height.toFloat())) return@onPointerEvent
             if (event.buttons.isSecondaryPressed) {
-                val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
+                val hit = orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }
                 if (hit != null) {
                     event.changes.forEach { it.consume() }
                     Snapshot.withMutableSnapshot {
@@ -566,7 +570,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 }
             }
             val s = Platform.screen().screenToMcScale()
-            val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
+            val hit = orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }
             if (hit != null) UiSounds.play(UiSoundEvent.HUD_DRAG_START)
             if (hit != null) event.changes.forEach { it.consume() }
             Snapshot.withMutableSnapshot {
@@ -645,7 +649,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     hoveredHud = null
                     return@onPointerEvent
                 }
-                val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
+                val hit = orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }
                 val mcToScreen = Platform.screen().mcToScreenScale()
                 val overActionBar = (selectedHud ?: hoveredHud)?.let { hh ->
                     hitTestHudActionBar(hh, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx)
@@ -696,7 +700,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                         return@onPointerEvent
                     }
                 }
-                val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
+                val hit = orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }
                 if (hit != null) {
                     if (hit !== selectedHud) UiSounds.play(UiSoundEvent.HUD_SELECT)
                     Snapshot.withMutableSnapshot {
@@ -927,12 +931,15 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             }
         }
 
+        Box(
+            modifier = Modifier.align(Alignment.CenterEnd)
+                .graphicsLayer { alpha = chromeAlpha }
+        ) {
         AnimatedVisibility(
             visible = selectedHud != null,
             enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
             exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
-            modifier = Modifier.align(Alignment.CenterEnd)
-                .graphicsLayer { alpha = chromeAlpha }
+            modifier = Modifier
                 .onSizeChanged { panelAreaWidth = maxOf(panelAreaWidth, it.width.toFloat()) }
         ) {
             Box(
@@ -956,11 +963,15 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 )
             }
         }
+        }
 
+        Box(
+            modifier = Modifier.align(Alignment.CenterEnd)
+                .graphicsLayer { alpha = chromeAlpha }
+        ) {
         if (libraryChromeVisible) {
             Row(
-                modifier = Modifier.align(Alignment.CenterEnd)
-                    .graphicsLayer { alpha = chromeAlpha }
+                modifier = Modifier
                     .onSizeChanged {
                         libraryChromeWidth = it.width.toFloat()
                         libraryChromeHeight = it.height.toFloat()
@@ -1029,6 +1040,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 }
             }
         }
+        }
 
         HudCanvasResetMenu(
             hud = hudContextMenuTarget,
@@ -1087,7 +1099,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                     ) return@onPointerEvent
                 }
                 val s = Platform.screen().screenToMcScale()
-                val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
+                val hit = orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }
                     ?: return@onPointerEvent
                 UiSounds.play(UiSoundEvent.HUD_DRAG_START)
                 Snapshot.withMutableSnapshot {
@@ -1126,7 +1138,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                         }
                     }
                 } else {
-                    val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
+                    val hit = orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }
                     if (hit !== hoveredHud) hoveredHud = hit
                 }
             }

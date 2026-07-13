@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.api.hud.v1
 
 import androidx.compose.runtime.Composable
+import org.polyfrost.oneconfig.api.config.v1.Property
 
 private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
     Hud(wrapper.id, wrapper.name, Category.COMPAT), LegacyHudMarker {
@@ -17,6 +18,8 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
     override var relativeX: Float by wrapper::x
     override var relativeY: Float by wrapper::y
 
+    override var customScale: Float by wrapper::scale
+
     override val scaledWidth: Float get() = wrapper.scaledWidth
     override val scaledHeight: Float get() = wrapper.scaledHeight
 
@@ -24,6 +27,13 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
         get() = wrapper.scaledWidth
         set(_) {}
     override var renderedH: Float
+        get() = wrapper.scaledHeight
+        set(_) {}
+
+    override var staticW: Float
+        get() = wrapper.scaledWidth
+        set(_) {}
+    override var staticH: Float
         get() = wrapper.scaledHeight
         set(_) {}
 
@@ -37,14 +47,24 @@ interface OneConfigHudWrapper {
 
     var x: Float
     var y: Float
+
+    var scale: Float
+
     var scaledWidth: Float
     var scaledHeight: Float
+
+    fun linkedProperties(): List<Property<*>> = emptyList()
 
     fun register() {
         val hud = OneConfigHudCompat(this)
         HudManager.register(hud)
+        hud.make()
         HudManager.activeInstances.add(hud)
         hud.setup()
+        val tree = hud.tree
+        if (tree != null) {
+            for (prop in linkedProperties()) tree.put(prop)
+        }
         hud.captureStaticSizeDefaults()
         hud.capturePositionDefaults()
     }

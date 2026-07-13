@@ -233,6 +233,7 @@ public class OneConfig
                     org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProfiles.init();
                     ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
                     org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar.register();
+                    org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat.register();
                     org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry.INSTANCE.loadFromConfig();
                 });
         EventManager.register(WorldEvent.Load.class, e -> showFirstLaunchNotification());

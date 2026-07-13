@@ -80,6 +80,9 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? dandelion_compat
         //mixins.add("compat.DandelionScreenImplMixin");
 
+        //? odin_compat
+        mixins.add("compat.odin.Mixin_OdinModuleManager");
+
         //? rconfig_compat
         mixins.add("compat.rconfig.Mixin_Configurations");
 
@@ -92,6 +95,15 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
         //? tr7zw_compat
         mixins.add("compat.tr7zw.Mixin_AbstractConfigScreen");
+
+        //? skycubed_compat {
+        mixins.add("compat.skycubed.Mixin_SkyCubed");
+        mixins.add("compat.skycubed.Mixin_SkyCubedOverlays");
+        //? }
+
+        mixins.add("compat.firmament.Mixin_FirmamentHudMeta");
+        //? >= 1.21.8
+        mixins.add("compat.firmament.Mixin_FirmamentContentCapture");
 
         // mixins.add("compat.rconfig.Mixin_Configurations");
 

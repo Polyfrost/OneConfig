@@ -27,6 +27,7 @@ object CompatLoader {
         "java.lang",
         "net.fabric",
         "net.azureaaron.dandelion",
+        "com.odtheking.odin",
         "moe.nea.firmament.deps.moulconfig",
         "dev.tr7zw.trender",
         "dev.tr7zw.transition",

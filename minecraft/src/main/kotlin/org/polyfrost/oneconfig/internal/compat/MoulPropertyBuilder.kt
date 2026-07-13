@@ -18,7 +18,9 @@ class MoulPropertyBuilder internal constructor(option: ProcessedOption) {
 
     val metadata: MutableMap<String, Any> = mutableMapOf()
 
-    private val backingField: Field? = resolveBackingField(option)
+    val backingField: Field? = resolveBackingField(option)
+
+    val declaringClass: Class<*>? get() = backingField?.declaringClass
 
     private val snapshotKey: String? = backingField?.let { "${it.declaringClass.name}#${it.name}" }
 
