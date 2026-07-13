@@ -108,7 +108,7 @@ fun FileOption(data: FileOptionData) {
         cursorBrush = SolidColor(theme.textColor),
         visualTransformation = pathTransformation,
         modifier = Modifier
-            .width(300.dp)
+            .width(LocalOptionWidth.current)
             .background(theme.modCardBackground, theme.sideBarNavigationEntryShape)
             .border(1.dp, borderColor, theme.sideBarNavigationEntryShape)
             .padding(start = 12.dp, end = 6.dp, top = 5.dp, bottom = 5.dp),

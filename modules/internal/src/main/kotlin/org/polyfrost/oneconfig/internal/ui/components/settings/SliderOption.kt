@@ -51,7 +51,7 @@ fun SliderOption(data: SliderOptionData) {
     ) {
         Box(
             modifier = Modifier
-                .width(300.dp)
+                .width(LocalOptionWidth.current)
                 .height(19.dp)
                 .onSizeChanged { trackWidthPx = it.width.toFloat() }
                 .pointerInput(data.min, data.max, data.step) {

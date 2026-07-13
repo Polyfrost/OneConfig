@@ -48,6 +48,9 @@
   "oneconfig.preferences.show_option_action_buttons.title": "Show Option Action Buttons",
   "oneconfig.preferences.show_option_action_buttons.description": "Shows a more actions button on active option rows. Right-click options still opens the same menu.",
 
+  "oneconfig.preferences.flip_top_option_order.title": "Flip Top Option Order",
+  "oneconfig.preferences.flip_top_option_order.description": "Moves the Edit HUD and Global Search buttons to the bottom of the sidebar, above your account.",
+
   "oneconfig.preferences.time_before_reset.title": "Time before reset",
   "oneconfig.preferences.time_before_reset.description": "Seconds of inactivity before the smart reset returns to the default page.",
 

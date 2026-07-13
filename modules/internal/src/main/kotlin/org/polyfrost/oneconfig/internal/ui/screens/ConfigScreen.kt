@@ -11,10 +11,11 @@ import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.FlowRowScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -40,6 +41,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.center
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
@@ -47,7 +49,10 @@ import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -70,6 +75,7 @@ import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.searchMatches
+import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidth
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
@@ -444,15 +450,7 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
                     )
                     .padding(vertical = 12.dp)
             ) {
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    maxItemsInEachRow = if (compact) 1 else 2,
-                ) {
-                    node.body.forEach { prop ->
-                        AccordionSettingRow(prop, compact = compact)
-                    }
-                }
+                AccordionOptionsGrid(node.body, compact = compact)
             }
         }
     }
@@ -497,14 +495,107 @@ fun SettingRow(prop: Property<*>, compact: Boolean = false) {
 }
 
 @Composable
-private fun FlowRowScope.AccordionSettingRow(prop: Property<*>, compact: Boolean = false) {
-    val display = rememberDisplay(prop)
-    if (display == Property.Display.HIDDEN) {
+private fun AccordionSettingRow(prop: Property<*>, display: Property.Display, modifier: Modifier, compact: Boolean = false) {
+    Box(modifier.alpha(displayAlpha(display))) {
+        SettingContent(prop, nested = true, compact = compact)
+    }
+}
+
+@Composable
+private fun rememberVisibleOptions(body: List<Property<*>>): List<kotlin.Pair<Property<*>, Property.Display>> {
+    val visible = ArrayList<kotlin.Pair<Property<*>, Property.Display>>(body.size)
+    for (prop in body) {
+        val display = rememberDisplay(prop)
+        if (display != Property.Display.HIDDEN) visible += prop to display
+    }
+    return visible
+}
+
+private val OPTION_ROW_GAP = 8.dp
+
+private val OPTION_CHROME_WIDTH = 108.dp
+private val OPTION_ICON_WIDTH = 44.dp
+
+private sealed interface OptionRow {
+    data class Pair(val first: Property<*>, val second: Property<*>) : OptionRow
+    data class Single(val prop: Property<*>, val wide: Boolean) : OptionRow
+}
+
+private inline fun buildOptionRows(body: List<Property<*>>, isWide: (Property<*>) -> Boolean): List<OptionRow> {
+    val rows = ArrayList<OptionRow>(body.size)
+    var pending: Property<*>? = null
+    for (prop in body) {
+        if (isWide(prop)) {
+            pending?.let { rows += OptionRow.Single(it, wide = false); pending = null }
+            rows += OptionRow.Single(prop, wide = true)
+        } else if (pending == null) {
+            pending = prop
+        } else {
+            rows += OptionRow.Pair(pending, prop)
+            pending = null
+        }
+    }
+    pending?.let { rows += OptionRow.Single(it, wide = false) }
+    return rows
+}
+
+@Composable
+private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
+    val visible = rememberVisibleOptions(body)
+    val displays = remember(visible) { visible.toMap() }
+    val visibleProps = remember(visible) { visible.map { it.first } }
+
+    if (compact) {
+        Column(verticalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
+            visible.forEach { (prop, display) ->
+                AccordionSettingRow(prop, display, Modifier.fillMaxWidth(), compact = true)
+            }
+        }
         return
     }
 
-    Box(Modifier.weight(1f).alpha(displayAlpha(display))) {
-        SettingContent(prop, nested = true, compact = compact)
+    val theme = LocalTheme.current
+    val density = LocalDensity.current
+    val measurer = rememberTextMeasurer()
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val columnWidthPx = with(density) { ((maxWidth - OPTION_ROW_GAP) / 2).toPx() }
+        val chromePx = with(density) { OPTION_CHROME_WIDTH.toPx() }
+        val iconPx = with(density) { OPTION_ICON_WIDTH.toPx() }
+        val titleStyle = remember(theme) {
+            TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Medium, fontFamily = theme.typography.family)
+        }
+        val rows = remember(visibleProps, columnWidthPx, titleStyle) {
+            buildOptionRows(visibleProps) { prop ->
+                val titleWidth = measurer.measure(
+                    prop.localizedTitle().asRenderText(),
+                    style = titleStyle,
+                    softWrap = false,
+                    maxLines = 1,
+                ).size.width.toFloat()
+                val reserved = chromePx + (if (prop.getMetadata<String>("icon") != null) iconPx else 0f)
+                titleWidth + reserved > columnWidthPx
+            }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
+            rows.forEach { row ->
+                when (row) {
+                    is OptionRow.Single -> {
+                        if (row.wide) {
+                            AccordionSettingRow(row.prop, displays.getValue(row.prop), Modifier.fillMaxWidth())
+                        } else {
+                            Row(horizontalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
+                                AccordionSettingRow(row.prop, displays.getValue(row.prop), Modifier.weight(1f))
+                                Spacer(Modifier.weight(1f))
+                            }
+                        }
+                    }
+                    is OptionRow.Pair -> Row(horizontalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
+                        AccordionSettingRow(row.first, displays.getValue(row.first), Modifier.weight(1f))
+                        AccordionSettingRow(row.second, displays.getValue(row.second), Modifier.weight(1f))
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -687,6 +778,7 @@ fun HudConfigScreen(tree: Tree, initialCategory: String? = null) {
         )
     }
 
+    CompositionLocalProvider(LocalOptionWidth provides 220.dp) {
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
         if (localSearchQuery.isBlank() && categories.size > 1) {
             FlowRow(
@@ -733,6 +825,7 @@ fun HudConfigScreen(tree: Tree, initialCategory: String? = null) {
                 }
             }
         }
+    }
     }
 }
 

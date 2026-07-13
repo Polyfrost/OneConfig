@@ -122,7 +122,9 @@ class HudEditorUIScreen : ComposeScreen() {
                     LocalViewModelStoreOwner provides OCViewModelStoreOwner
                 ) {
                     Theme {
-                        HudDesignStudio()
+                        HudDesignStudio(
+                            onReturnToOneConfig = { Platform.screen().display(OneConfigUIScreen()) }
+                        )
                     }
                 }
             }

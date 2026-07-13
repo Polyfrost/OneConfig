@@ -229,6 +229,8 @@ fun HudSettingsContent(hud: Hud, content: @Composable () -> Unit) {
     }
 }
 
+private val DeleteMenuColor = androidx.compose.ui.graphics.Color(0xFFE5484D)
+
 /** Right-click menu on a HUD element in the design studio canvas. */
 @Composable
 fun HudCanvasResetMenu(
@@ -236,10 +238,12 @@ fun HudCanvasResetMenu(
     expanded: Boolean,
     offset: IntOffset,
     onDismiss: () -> Unit,
+    onDelete: (Hud) -> Unit = {},
 ) {
     if (hud == null || !expanded) return
     val theme = LocalTheme.current
     val enabled = hudHasResettableDefaults(hud)
+    val deletable = hud.deletable()
     Popup(
         alignment = Alignment.TopStart,
         offset = offset,
@@ -273,6 +277,24 @@ fun HudCanvasResetMenu(
             ) {
                 Icon("refresh", color = color, modifier = Modifier.size(14.dp))
                 Text("Reset all to default", color = color, fontSize = 13.sp)
+            }
+            if (deletable) {
+                val deleteInteraction = rememberInteractionSource()
+                Row(
+                    modifier = Modifier
+                        .clip(theme.sideBarNavigationEntryShape)
+                        .onClick(deleteInteraction) {
+                            onDelete(hud)
+                            onDismiss()
+                        }
+                        .pointerHoverIcon(PointerIcon.Hand)
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Icon("trash", color = DeleteMenuColor, modifier = Modifier.size(14.dp))
+                    Text("Delete HUD", color = DeleteMenuColor, fontSize = 13.sp)
+                }
             }
         }
     }

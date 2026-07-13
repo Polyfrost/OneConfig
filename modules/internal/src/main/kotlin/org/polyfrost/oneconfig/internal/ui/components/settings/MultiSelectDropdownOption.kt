@@ -119,7 +119,7 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
     Box {
         Row(
             modifier = Modifier
-                .width(300.dp)
+                .width(LocalOptionWidth.current)
                 .height(32.dp)
                 .onSizeChanged { triggerHeightPx = it.height }
                 .background(backgroundColor, DropdownShape)
@@ -150,7 +150,7 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
                     val scrollState = rememberScrollState()
                     Column(
                         modifier = Modifier
-                            .width(300.dp)
+                            .width(LocalOptionWidth.current)
                             .clip(DropdownShape)
                             .background(theme.componentBackground, DropdownShape)
                             .border(1.dp, theme.borderColor, DropdownShape)

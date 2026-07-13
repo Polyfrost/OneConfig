@@ -137,7 +137,7 @@ class McUiSoundService : UiSoundService {
     private fun playAmbienceInstance(theme: UiSoundTheme, targetVolume: Float): FadingLoopSoundInstance {
         val soundIds = ambienceSoundIds(theme)
         val event = SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath("oneconfig", nextAmbienceSoundId(theme, soundIds)))
-        val instance = FadingLoopSoundInstance(event, SoundSource.MASTER, targetVolume, theme, soundIds.size == 1)
+        val instance = FadingLoopSoundInstance(event, SoundSource.UI, targetVolume, theme, soundIds.size == 1)
         ambience = instance
         mc.soundManager.play(instance)
         return instance

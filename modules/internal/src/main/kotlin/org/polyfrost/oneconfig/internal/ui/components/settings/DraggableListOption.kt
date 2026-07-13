@@ -122,7 +122,7 @@ fun DraggableListOption(data: DraggableListOptionData) {
 
     Box(
         modifier = Modifier
-            .width(300.dp)
+            .width(LocalOptionWidth.current)
             .clip(ListContainerShape)
             .background(theme.componentBackground, ListContainerShape)
             .border(1.dp, theme.borderColor, ListContainerShape)

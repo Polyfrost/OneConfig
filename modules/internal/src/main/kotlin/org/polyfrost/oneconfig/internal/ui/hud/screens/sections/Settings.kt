@@ -93,19 +93,17 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
                                 Text("Use Minecraft GUI Scale", color = LocalTheme.current.textColor, fontSize = 14.sp)
                             }
                         }
-                        if (!useGuiScale) {
-                            HudSettingTarget(hud, "customScale") {
-                                NumberSpinner(
-                                    "Custom Scale",
-                                    "x",
-                                    customScale,
-                                    { Snapshot.withMutableSnapshot { customScale = it; hud.customScale = it } },
-                                    0.25f,
-                                    4f,
-                                    0.25f,
-                                    width = 176.dp
-                                )
-                            }
+                        HudSettingTarget(hud, "customScale") {
+                            NumberSpinner(
+                                "Custom Scale",
+                                "x",
+                                customScale,
+                                { Snapshot.withMutableSnapshot { customScale = it; hud.customScale = it } },
+                                0.25f,
+                                4f,
+                                0.25f,
+                                width = 176.dp
+                            )
                         }
                     }
                 }

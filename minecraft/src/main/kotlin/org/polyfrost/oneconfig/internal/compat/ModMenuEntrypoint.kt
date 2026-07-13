@@ -9,6 +9,7 @@ import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 internal object ModMenuEntrypoint : ModMenuApi {
 
     override fun getModConfigScreenFactory(): ConfigScreenFactory<*>? {
+        if (CompatLoader.hasMod(BOOTSTRAP_MOD_ID)) return null
         return { it -> OneConfigUIScreen() }
     }
 

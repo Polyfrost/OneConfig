@@ -50,6 +50,7 @@ import java.util.Locale.getDefault
 
 @Composable
 fun Sidebar() {
+    val flipTopOrder = ShellState.flipTopOptionOrder
     Column(
         modifier = Modifier.fillMaxHeight()
             .width(264.dp)
@@ -57,13 +58,23 @@ fun Sidebar() {
             .rightBorder(LocalTheme.current.borderColor, 1f),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Navigation()
-        Account()
+        Navigation(showTopOptions = !flipTopOrder)
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            if (flipTopOrder) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 18.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    TopOptionsSection(flipped = true)
+                }
+            }
+            Account()
+        }
     }
 }
 
 @Composable
-private fun Navigation() {
+private fun Navigation(showTopOptions: Boolean) {
     Column(
         modifier = Modifier.fillMaxWidth()
             .padding(top = 28.dp),
@@ -71,7 +82,7 @@ private fun Navigation() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Branding()
-        NavigationEntries()
+        NavigationEntries(showTopOptions)
     }
 }
 
@@ -86,31 +97,49 @@ private fun Branding() {
 }
 
 @Composable
-private fun NavigationEntries() {
+private fun TopOptionsSection(flipped: Boolean = false) {
+    val editHud: @Composable () -> Unit = {
+        NavigationEntry(
+            "hud",
+            "Edit HUD",
+        ) {
+            HudManager.openEditor()
+        }
+    }
+    val globalSearch: @Composable () -> Unit = {
+        NavigationEntry(
+            "search",
+            "Global Search",
+        ) {
+            ShellState.globalSearchActive = true
+            if (ShellState.searchQuery.isBlank()) {
+                ShellState.searchQuery = ""
+            }
+            ShellState.showSearchField = true
+            ShellState.focusSearchField = true
+        }
+    }
+    NavigationSection {
+        if (flipped) {
+            globalSearch()
+            editHud()
+        } else {
+            editHud()
+            globalSearch()
+        }
+    }
+}
+
+@Composable
+private fun NavigationEntries(showTopOptions: Boolean) {
     val controller = LocalNavController.current
 
     Column(
         verticalArrangement = Arrangement.spacedBy(18.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        NavigationSection {
-            NavigationEntry(
-                "hud",
-                "Edit HUD",
-            ) {
-                HudManager.openEditor()
-            }
-            NavigationEntry(
-                "search",
-                "Global Search",
-            ) {
-                ShellState.globalSearchActive = true
-                if (ShellState.searchQuery.isBlank()) {
-                    ShellState.searchQuery = ""
-                }
-                ShellState.showSearchField = true
-                ShellState.focusSearchField = true
-            }
+        if (showTopOptions) {
+            TopOptionsSection()
         }
 
         NavigationGroups.forEach {

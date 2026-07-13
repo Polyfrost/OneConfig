@@ -171,6 +171,16 @@ public class OneConfigConfig extends Config {
     )
     public static boolean showOptionActionButtons = true;
 
+    @Switch(
+        title = "oneconfig.preferences.flip_top_option_order.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.gui",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.flip_top_option_order.description",
+        descriptionTranslation = true
+    )
+    public static boolean flipTopOptionOrder = false;
+
     @Slider(
         title = "oneconfig.preferences.time_before_reset.title",
         titleTranslation = true,
@@ -409,6 +419,12 @@ public class OneConfigConfig extends Config {
             "uiAmbienceVolume",
             "UI Ambience",
             () -> enableUIAmbience ? Property.Display.SHOWN : Property.Display.DISABLED);
+        org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setFlipTopOptionOrder(flipTopOptionOrder);
+        addCallback(
+            "flipTopOptionOrder", (Boolean v) -> {
+                org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setFlipTopOptionOrder(v);
+                return false;
+            });
         addCallback(
             "enableUIAmbience", (Boolean v) -> {
                 org.polyfrost.oneconfig.internal.ui.sound.UiSounds.refreshAmbience();

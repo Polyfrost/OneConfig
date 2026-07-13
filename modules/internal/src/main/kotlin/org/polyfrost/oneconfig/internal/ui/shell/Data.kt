@@ -39,6 +39,8 @@ object ShellState {
 
     var hudDragging by mutableStateOf(false)
 
+    var flipTopOptionOrder by mutableStateOf(false)
+
     /** Last top-level route navigated to, used by the "Previous page" / "Smart reset" opening behaviors. */
     var lastRoute: Any? = null
 

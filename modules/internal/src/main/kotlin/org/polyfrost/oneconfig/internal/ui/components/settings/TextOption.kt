@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,6 +31,8 @@ import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+
+val LocalOptionWidth = compositionLocalOf { 300.dp }
 
 @Composable
 fun TextOption(data: TextOptionData) {
@@ -62,7 +65,7 @@ fun TextOption(data: TextOptionData) {
         interactionSource = interactionSource,
         cursorBrush = SolidColor(theme.textColor),
         modifier = Modifier
-            .width(300.dp)
+            .width(LocalOptionWidth.current)
             .then(if (data.multiline) Modifier.heightIn(min = 96.dp) else Modifier)
             .background(theme.modCardBackground, LocalTheme.current.sideBarNavigationEntryShape)
             .border(1.dp, theme.borderColor, LocalTheme.current.sideBarNavigationEntryShape)

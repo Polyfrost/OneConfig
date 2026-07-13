@@ -110,7 +110,7 @@ fun DropdownOption(data: DropdownOptionData) {
     Box {
         Row(
             modifier = Modifier
-                .width(300.dp)
+                .width(LocalOptionWidth.current)
                 .height(32.dp)
                 .onSizeChanged { triggerHeightPx = it.height }
                 .background(backgroundColor, DropdownShape)
@@ -145,7 +145,7 @@ fun DropdownOption(data: DropdownOptionData) {
                     val scrollState = rememberScrollState()
                     Box(
                         modifier = Modifier
-                            .width(300.dp)
+                            .width(LocalOptionWidth.current)
                             .clip(theme.sideBarNavigationEntryShape)
                             .background(theme.componentBackground, theme.sideBarNavigationEntryShape)
                             .border(1.dp, theme.borderColor, theme.sideBarNavigationEntryShape)

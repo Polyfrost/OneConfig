@@ -15,6 +15,8 @@ import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -42,6 +44,7 @@ import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -49,6 +52,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -70,6 +74,8 @@ import androidx.compose.ui.input.pointer.isShiftPressed
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -130,6 +136,10 @@ private val selectionBlue = Color(SELECTION_BLUE_ARGB)
 
 private val idleHudBoxColor = Color.White.copy(0.2f)
 private val hoveredHudBoxColor = Color.White.copy(0.5f)
+private val hiddenHudBoxColor = Color.White.copy(0.4f)
+private val hiddenHudDashEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 3f), 0f)
+
+private val hiddenLegacyScrimColor = Color.Black.copy(0.45f)
 
 private const val SNAP_DISTANCE_PX = 6f
 private val snapGuideColor = Color(176, 47, 31)
@@ -309,6 +319,7 @@ private fun resizeHud(
     corner: ResizeCorner,
     startBounds: HudBounds,
     startTextScale: Float,
+    startScale: Float,
     startStaticW: Float,
     startStaticH: Float,
     mouseX: Float,
@@ -319,6 +330,27 @@ private fun resizeHud(
     val anchorY = if (corner.isTop) startBounds.y + startBounds.height else startBounds.y
     val targetWidth = (if (corner.isLeft) anchorX - mouseX else mouseX - anchorX).coerceAtLeast(1f)
     val targetHeight = (if (corner.isTop) anchorY - mouseY else mouseY - anchorY).coerceAtLeast(1f)
+
+    if (hud is LegacyHud) {
+        val cornerVecX = if (corner.isLeft) -startBounds.width else startBounds.width
+        val cornerVecY = if (corner.isTop) -startBounds.height else startBounds.height
+        val mouseVecX = mouseX - anchorX
+        val mouseVecY = mouseY - anchorY
+        val diagLenSq = cornerVecX * cornerVecX + cornerVecY * cornerVecY
+        val rawFactor = if (diagLenSq > 0f) {
+            (mouseVecX * cornerVecX + mouseVecY * cornerVecY) / diagLenSq
+        } else 1f
+        val baseScale = startScale.coerceAtLeast(0.001f)
+        val newScale = (baseScale * rawFactor).coerceIn(0.25f, 4f)
+        val factor = newScale / baseScale
+        val newWidth = startBounds.width * factor
+        val newHeight = startBounds.height * factor
+        val newX = if (corner.isLeft) anchorX - newWidth else anchorX
+        val newY = if (corner.isTop) anchorY - newHeight else anchorY
+        hud.customScale = newScale
+        hud.setAbsolutePosition(newX, newY)
+        return
+    }
 
     if (freeResize) {
         val effectiveScale = hud.effectiveScale.coerceAtLeast(0.001f)
@@ -421,7 +453,7 @@ private fun DrawScope.drawHudSizeBadge(label: String, centerX: Float, topY: Floa
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun HudDesignStudio() {
+fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     var activeCategory by remember { mutableStateOf(StudioCategory.Settings) }
     var selectedHud by remember { mutableStateOf<Hud?>(null) }
     var hoveredHud by remember { mutableStateOf<Hud?>(null) }
@@ -435,6 +467,7 @@ fun HudDesignStudio() {
     var resizeCorner by remember { mutableStateOf<ResizeCorner?>(null) }
     var resizeStartBounds by remember { mutableStateOf<HudBounds?>(null) }
     var resizeStartTextScale by remember { mutableStateOf(1f) }
+    var resizeStartScale by remember { mutableStateOf(1f) }
     var resizeStartStaticW by remember { mutableStateOf(0f) }
     var resizeStartStaticH by remember { mutableStateOf(0f) }
     var libraryVisible by remember { mutableStateOf(false) }
@@ -442,6 +475,7 @@ fun HudDesignStudio() {
     var searchText by remember { mutableStateOf("") }
     var panelAreaWidth by remember { mutableStateOf(0f) }
     var libraryChromeWidth by remember { mutableStateOf(0f) }
+    var libraryChromeHeight by remember { mutableStateOf(0f) }
     var hudContextMenuTarget by remember { mutableStateOf<Hud?>(null) }
     var hudContextMenuOffset by remember { mutableStateOf(IntOffset.Zero) }
     val keyFocusRequester = remember { FocusRequester() }
@@ -470,6 +504,14 @@ fun HudDesignStudio() {
     val actionBarGapPx = with(densityObj) { 8.dp.toPx() }
     val libraryChromeVisible = modIds.isNotEmpty() && selectedHud == null
 
+    fun inLibraryChrome(px: Float, py: Float, surfaceW: Float, surfaceH: Float): Boolean {
+        if (!libraryChromeVisible || libraryChromeWidth <= 0f) return false
+        if (px <= surfaceW - libraryChromeWidth) return false
+        if (libraryChromeHeight <= 0f) return true // height unknown yet: fall back to blocking the strip
+        val top = (surfaceH - libraryChromeHeight) / 2f
+        return py >= top && py <= top + libraryChromeHeight
+    }
+
     // Unified pointer modifier: drag any HUD, click to select, hover to show action bar
     val pointerModifier = Modifier
         .onPointerEvent(PointerEventType.Press) { event ->
@@ -480,7 +522,7 @@ fun HudDesignStudio() {
             // swallowing clicks after the panel closes, making HUDs there un-selectable/un-editable.
             if (selectedHud != null && panelAreaWidth > 0f && pos.x > size.width - panelAreaWidth) return@onPointerEvent
             // Same for the HUD library / mod-select chrome: overlapping HUDs must not steal clicks.
-            if (libraryChromeVisible && libraryChromeWidth > 0f && pos.x > size.width - libraryChromeWidth) return@onPointerEvent
+            if (inLibraryChrome(pos.x, pos.y, size.width.toFloat(), size.height.toFloat())) return@onPointerEvent
             if (event.buttons.isSecondaryPressed) {
                 val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
                 if (hit != null) {
@@ -496,7 +538,7 @@ fun HudDesignStudio() {
             }
             val mcToScreen = Platform.screen().mcToScreenScale()
             val selected = selectedHud
-            if (selected != null && selected !is LegacyHud) {
+            if (selected != null) {
                 val handle = hitTestResizeHandle(selected, pos.x, pos.y, mcToScreen)
                 val bounds = hudBounds(selected)
                 if (handle != null && bounds != null) {
@@ -508,6 +550,7 @@ fun HudDesignStudio() {
                         resizeCorner = handle
                         resizeStartBounds = bounds
                         resizeStartTextScale = selected.textScale
+                        resizeStartScale = selected.customScale
                         resizeStartStaticW = selected.staticW
                         resizeStartStaticH = selected.staticH
                         hoveredHud = selected
@@ -525,6 +568,7 @@ fun HudDesignStudio() {
             val s = Platform.screen().screenToMcScale()
             val hit = HudManager.activeInstances.lastOrNull { hitTestHud(it, pos.x, pos.y) }
             if (hit != null) UiSounds.play(UiSoundEvent.HUD_DRAG_START)
+            if (hit != null) event.changes.forEach { it.consume() }
             Snapshot.withMutableSnapshot {
                 if (hit != null) {
                     dragOffsetX = pos.x * s - hit.x
@@ -560,6 +604,7 @@ fun HudDesignStudio() {
                         corner = corner,
                         startBounds = bounds,
                         startTextScale = resizeStartTextScale,
+                        startScale = resizeStartScale,
                         startStaticW = resizeStartStaticW,
                         startStaticH = resizeStartStaticH,
                         mouseX = pos.x * s,
@@ -596,7 +641,7 @@ fun HudDesignStudio() {
                     }
                 }
             } else {
-                if (libraryChromeVisible && libraryChromeWidth > 0f && pos.x > size.width - libraryChromeWidth) {
+                if (inLibraryChrome(pos.x, pos.y, size.width.toFloat(), size.height.toFloat())) {
                     hoveredHud = null
                     return@onPointerEvent
                 }
@@ -641,7 +686,7 @@ fun HudDesignStudio() {
             }
             if (!wasDragging || wasDraggedHud == null) {
                 val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
-                if (libraryChromeVisible && libraryChromeWidth > 0f && pos.x > size.width - libraryChromeWidth) {
+                if (inLibraryChrome(pos.x, pos.y, size.width.toFloat(), size.height.toFloat())) {
                     return@onPointerEvent
                 }
                 val currentActionBarTarget = selectedHud ?: hoveredHud
@@ -701,6 +746,57 @@ fun HudDesignStudio() {
             }
             .then(pointerModifier)
     ) {
+        if (onReturnToOneConfig != null) {
+            val theme = LocalTheme.current
+            val returnKeyName = OneConfigConfig.oneConfigKeybind.displayName()
+            val returnInteraction = remember { MutableInteractionSource() }
+            val returnHovered by returnInteraction.collectIsHoveredAsState()
+            val returnBackground by animateColorAsState(
+                if (returnHovered) Accent else Color.Black.copy(alpha = 0.55f),
+                animationSpec = tween(120),
+                label = "returnChipBackground"
+            )
+            Column(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(start = 12.dp)
+                    .graphicsLayer { alpha = chromeAlpha }
+                    .clip(theme.buttonShape)
+                    .background(returnBackground, theme.buttonShape)
+                    .hoverable(returnInteraction)
+                    .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+                        if (event.changes.none { it.isConsumed }) {
+                            event.changes.forEach { it.consume() }
+                            UiSounds.play(UiSoundEvent.CLICK)
+                            onReturnToOneConfig()
+                        }
+                    }
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    "left-arrow",
+                    color = Color.White,
+                    modifier = Modifier.size(18.dp),
+                )
+                Text(
+                    "Return to\nOneConfig",
+                    color = Color.White,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    "($returnKeyName)",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Normal,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -719,7 +815,7 @@ fun HudDesignStudio() {
                     }
                     for (hud in HudManager.activeInstances) {
                         val bounds = hudBounds(hud) ?: continue
-                        val resizable = hud !is LegacyHud
+                        val resizable = true
                         val sx = bounds.x * mcToScreen
                         val sy = bounds.y * mcToScreen
                         val sw = bounds.width * mcToScreen
@@ -737,6 +833,20 @@ fun HudDesignStudio() {
                             drawSelectedHudBounds(bounds, mcToScreen, resizable)
                         } else if (isSelected) {
                             drawSelectedHudBounds(bounds, mcToScreen, resizable)
+                        } else if (hud.hidden) {
+                            if (hud is LegacyHud) {
+                                drawRect(
+                                    color = hiddenLegacyScrimColor,
+                                    topLeft = Offset(sx, sy),
+                                    size = Size(sw, sh),
+                                )
+                            }
+                            drawRect(
+                                color = if (isHovered) hoveredHudBoxColor else hiddenHudBoxColor,
+                                topLeft = Offset(sx, sy),
+                                size = Size(sw, sh),
+                                style = Stroke(width = 1f, pathEffect = hiddenHudDashEffect)
+                            )
                         } else {
                             drawRect(
                                 color = if (isHovered) hoveredHudBoxColor else idleHudBoxColor,
@@ -849,9 +959,12 @@ fun HudDesignStudio() {
 
         if (libraryChromeVisible) {
             Row(
-                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
+                modifier = Modifier.align(Alignment.CenterEnd)
                     .graphicsLayer { alpha = chromeAlpha }
-                    .onSizeChanged { libraryChromeWidth = it.width.toFloat() }
+                    .onSizeChanged {
+                        libraryChromeWidth = it.width.toFloat()
+                        libraryChromeHeight = it.height.toFloat()
+                    }
                     .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
                         event.changes.forEach { if (!it.isConsumed) it.consume() }
                     }
@@ -922,6 +1035,14 @@ fun HudDesignStudio() {
             expanded = hudContextMenuTarget != null,
             offset = hudContextMenuOffset,
             onDismiss = { hudContextMenuTarget = null },
+            onDelete = { hud ->
+                Snapshot.withMutableSnapshot {
+                    if (selectedHud === hud) selectedHud = null
+                    if (hoveredHud === hud) hoveredHud = null
+                    HudManager.removeHud(hud, delete = true)
+                }
+                UiSounds.play(UiSoundEvent.CLICK)
+            },
         )
     }
 }
@@ -1058,6 +1179,20 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                             size = Size(sw, sh),
                         )
                         drawSelectedHudBounds(bounds, mcToScreen, showHandles = false)
+                    } else if (hud.hidden) {
+                        if (hud is LegacyHud) {
+                            drawRect(
+                                color = hiddenLegacyScrimColor,
+                                topLeft = Offset(sx, sy),
+                                size = Size(sw, sh),
+                            )
+                        }
+                        drawRect(
+                            color = if (isHovered) hoveredHudBoxColor else hiddenHudBoxColor,
+                            topLeft = Offset(sx, sy),
+                            size = Size(sw, sh),
+                            style = Stroke(width = 1f, pathEffect = hiddenHudDashEffect)
+                        )
                     } else {
                         drawRect(
                             color = if (isHovered) hoveredHudBoxColor else idleHudBoxColor,

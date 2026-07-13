@@ -44,6 +44,7 @@ import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
 import org.polyfrost.oneconfig.api.hud.v1.HudManager.LOGGER
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 
 enum class Font {
     Minecraft,
@@ -355,7 +356,12 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     private var _customScale: MutableState<Float> = mutableStateOf(1f)
     var customScale: Float get() = _customScale.value; set(v) { _customScale.value = v }
 
-    val effectiveScale: Float get() = if (useGuiScale) 1f else customScale
+    val effectiveScale: Float
+        get() {
+            if (useGuiScale) return customScale
+            val gui = Platform.compatibility().options().guiScale
+            return if (gui > 0f) customScale / gui else customScale
+        }
 
     fun getPoppinsFontName(): String {
         val base = when {
