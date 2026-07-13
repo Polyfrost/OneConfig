@@ -277,20 +277,22 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         val gridW = sw / GRID_SIZE
         val gridH = sh / GRID_SIZE
 
+        val centerX = absX + scaledWidth / 2f
+        val centerY = absY + scaledHeight / 2f
         section = when {
-            absX < gridW -> when {
-                absY > 2 * gridH -> Section.BottomLeft
-                absY > gridH -> Section.CenterLeft
+            centerX < gridW -> when {
+                centerY > 2 * gridH -> Section.BottomLeft
+                centerY > gridH -> Section.CenterLeft
                 else -> Section.TopLeft
             }
-            absX < 2 * gridW -> when {
-                absY > 2 * gridH -> Section.BottomCenter
-                absY > gridH -> Section.Center
+            centerX < 2 * gridW -> when {
+                centerY > 2 * gridH -> Section.BottomCenter
+                centerY > gridH -> Section.Center
                 else -> Section.TopCenter
             }
             else -> when {
-                absY > 2 * gridH -> Section.BottomRight
-                absY > gridH -> Section.CenterRight
+                centerY > 2 * gridH -> Section.BottomRight
+                centerY > gridH -> Section.CenterRight
                 else -> Section.TopRight
             }
         }
