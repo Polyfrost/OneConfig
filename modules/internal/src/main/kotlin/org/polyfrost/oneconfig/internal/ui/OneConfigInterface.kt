@@ -1,8 +1,10 @@
 package org.polyfrost.oneconfig.internal.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -150,8 +153,16 @@ fun OneConfigInterface(
                             enter = enter,
                             exit = exit,
                         ) {
-                            Box(modifier = Modifier.graphicsLayer { alpha = dragAlpha }) {
-                                Shell(windowWidth, windowHeight, shellBackdrop)
+                            val contentAlpha by transition.animateFloat(
+                                transitionSpec = { tween(animMs, easing = EaseOutExpo) },
+                                label = "oneconfigContentAlpha",
+                            ) { state -> if (state == EnterExitState.Visible) 1f else 0f }
+                            CompositionLocalProvider(
+                                LocalOneConfigContentAlpha provides (contentAlpha * dragAlpha),
+                            ) {
+                                Box(modifier = Modifier.graphicsLayer { alpha = dragAlpha }) {
+                                    Shell(windowWidth, windowHeight, shellBackdrop)
+                                }
                             }
                         }
                     }
@@ -168,3 +179,5 @@ private const val EDGE_MARGIN_FRACTION = 0.9f
 private val EaseOutExpo = Easing { x -> if (x >= 1f) 1f else 1f - 2f.pow(-10f * x) }
 
 val LocalCloseRequest = staticCompositionLocalOf { {} }
+
+val LocalOneConfigContentAlpha = compositionLocalOf { 1f }
