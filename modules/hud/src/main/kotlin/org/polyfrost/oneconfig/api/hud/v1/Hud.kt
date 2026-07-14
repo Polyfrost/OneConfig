@@ -78,8 +78,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             if (!wasStatic && v) {
                 val (minW, minH) = minimumSize()
                 if (renderedW > 0f || renderedH > 0f) {
-                    staticW = maxOf(renderedW, minW)
-                    staticH = maxOf(renderedH, minH)
+                    val scale = effectiveScale
+                    staticW = maxOf(renderedW / scale, minW)
+                    staticH = maxOf(renderedH / scale, minH)
                 } else {
                     val natural = measureNaturalContentSize()
                     if (natural != null) {
@@ -92,8 +93,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
                 // static values so the HUD doesn't collapse to 0×0 until the render loop
                 // recalculates the natural content size.
                 val (minW, minH) = minimumSize()
-                renderedW = maxOf(staticW, minW)
-                renderedH = maxOf(staticH, minH)
+                val scale = effectiveScale
+                renderedW = maxOf(staticW, minW) * scale
+                renderedH = maxOf(staticH, minH) * scale
             }
         }
 
@@ -217,15 +219,17 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var renderedH: Float get() = _renderedH.value; set(v) { _renderedH.value = v }
 
     val scaledWidth: Float get() {
-        val w = if (staticWidth) staticW else renderedW
+        val scale = effectiveScale
+        val w = if (staticWidth || renderedW <= 0f) staticW * scale else renderedW
         val (minW, _) = minimumSize()
-        return maxOf(w, minW).coerceAtLeast(1f)
+        return maxOf(w, minW * scale).coerceAtLeast(1f)
     }
 
     val scaledHeight: Float get() {
-        val h = if (staticWidth) staticH else renderedH
+        val scale = effectiveScale
+        val h = if (staticWidth || renderedH <= 0f) staticH * scale else renderedH
         val (_, minH) = minimumSize()
-        return maxOf(h, minH).coerceAtLeast(1f)
+        return maxOf(h, minH * scale).coerceAtLeast(1f)
     }
 
     var x: Float

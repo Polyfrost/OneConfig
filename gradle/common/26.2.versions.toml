@@ -5,8 +5,10 @@ minecraft-end = "26.2"
 # so the dependency range must use the normalized form or resolution fails.
 minecraft-range = "26.2.x"
 
-# No 26.2 build of resourcefulconfig yet -> rconfig_compat disabled.
+rconfig = "5.0.0"
 
 [libraries]
+rconfig = { module = "com.teamresourceful.resourcefulconfig:resourcefulconfig-common-26.2", version.ref = "rconfig"}
 
 [bundles]
+common-compat = ["rconfig"]

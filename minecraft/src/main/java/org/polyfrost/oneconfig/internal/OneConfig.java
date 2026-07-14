@@ -217,7 +217,7 @@ public class OneConfig
         // reset the editing flag. Null screen opens are ignored because commands close chat before deferred screens open.
         EventManager.register(
                 org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent.class, e -> {
-                    if (HudManager.INSTANCE.isEditing() && e.getScreen() != null && !(e.getScreen() instanceof HudEditorUIScreen)) {
+                    if (HudManager.INSTANCE.isEditorOpen() && e.getScreen() != null && !(e.getScreen() instanceof HudEditorUIScreen)) {
                         HudManager.INSTANCE.closeEditor();
                     }
                 });

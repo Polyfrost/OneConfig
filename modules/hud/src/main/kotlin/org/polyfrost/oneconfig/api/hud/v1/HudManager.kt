@@ -46,9 +46,21 @@ object HudManager {
     private var init = false
     private val hiddenHudPaint = org.jetbrains.skia.Paint().apply { setAlphaf(0.35f) }
 
+    /**
+     * `true` while HUDs are being shown for editing/preview purposes, i.e. while either the HUD editor
+     * or the main OneConfig UI is open. HUDs should render example/preview content when this is set.
+     */
     @get:JvmName("isEditing")
-    var isEditing = false
+    val isEditing: Boolean get() = isEditorOpen || isConfigUiOpen
+
+    /** `true` only while the HUD editor screen itself is open. */
+    @ApiStatus.Internal
+    @Volatile var isEditorOpen = false
         private set
+
+    /** Set by the OneConfig UI screen while it is open, so HUDs behind it still render as previews. */
+    @ApiStatus.Internal
+    @Volatile @JvmField var isConfigUiOpen = false
 
     @Volatile @JvmField var guiScreenWidth: Float = 960f
     @Volatile @JvmField var guiScreenHeight: Float = 540f
@@ -215,29 +227,29 @@ object HudManager {
 
     @ApiStatus.Internal
     fun toggleEditor() {
-        if (isEditing) closeEditor() else openEditor()
+        if (isEditorOpen) closeEditor() else openEditor()
     }
 
     @ApiStatus.Internal
     fun openEditor() {
-        // Always (re)assert editing and post OPEN, even if [isEditing] is already true: the flag can
+        // Always (re)assert editing and post OPEN, even if [isEditorOpen] is already true: the flag can
         // get stuck (e.g. the editor screen closed without closeEditor() running), and an early return
         // here would make the "Edit HUD" button silently do nothing. The OPEN handler is responsible
         // for not opening a duplicate editor screen.
-        isEditing = true
+        isEditorOpen = true
         EventManager.INSTANCE.post(HudEditorToggleEvent.OPEN)
     }
 
     @ApiStatus.Internal
     fun closeEditor() {
-        if (!isEditing) return
-        isEditing = false
+        if (!isEditorOpen) return
+        isEditorOpen = false
         EventManager.INSTANCE.post(HudEditorToggleEvent.CLOSE)
     }
 
     @ApiStatus.Internal
     fun onEditorScreenRemoved() {
-        isEditing = false
+        isEditorOpen = false
     }
 
     @Suppress("UNCHECKED_CAST")

@@ -48,7 +48,7 @@ class HudEditorUIScreen : ComposeScreen() {
     }
 
     override fun removed() {
-        if (HudManager.isEditing) {
+        if (HudManager.isEditorOpen) {
             HudManager.onEditorScreenRemoved()
         }
         UiSounds.releaseAmbience()
@@ -97,7 +97,7 @@ class HudEditorUIScreen : ComposeScreen() {
     override fun compose() {
         DisposableEffect(Unit) {
             onDispose {
-                if (HudManager.isEditing) {
+                if (HudManager.isEditorOpen) {
                     HudManager.onEditorScreenRemoved()
                 }
             }
