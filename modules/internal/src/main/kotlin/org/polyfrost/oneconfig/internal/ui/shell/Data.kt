@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.ui.shell
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Rect
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.ViewModelStore
@@ -38,6 +39,8 @@ object ShellState {
     var showSearchField by mutableStateOf(false)
 
     var hudDragging by mutableStateOf(false)
+
+    var shellBounds by mutableStateOf<Rect?>(null)
 
     var flipTopOptionOrder by mutableStateOf(false)
 

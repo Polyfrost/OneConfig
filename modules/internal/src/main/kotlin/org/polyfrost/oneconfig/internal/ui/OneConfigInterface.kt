@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -31,6 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -157,10 +160,15 @@ fun OneConfigInterface(
                                 transitionSpec = { tween(animMs, easing = EaseOutExpo) },
                                 label = "oneconfigContentAlpha",
                             ) { state -> if (state == EnterExitState.Visible) 1f else 0f }
+                            DisposableEffect(Unit) { onDispose { ShellState.shellBounds = null } }
                             CompositionLocalProvider(
                                 LocalOneConfigContentAlpha provides (contentAlpha * dragAlpha),
                             ) {
-                                Box(modifier = Modifier.graphicsLayer { alpha = dragAlpha }) {
+                                Box(
+                                    modifier = Modifier
+                                        .onGloballyPositioned { ShellState.shellBounds = it.boundsInRoot() }
+                                        .graphicsLayer { alpha = dragAlpha }
+                                ) {
                                     Shell(windowWidth, windowHeight, shellBackdrop)
                                 }
                             }

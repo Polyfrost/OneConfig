@@ -35,8 +35,10 @@ import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -50,6 +52,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
@@ -76,7 +79,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -143,6 +147,9 @@ private val hiddenLegacyScrimColor = Color.Black.copy(0.45f)
 
 private const val SNAP_DISTANCE_PX = 6f
 private val snapGuideColor = Color(176, 47, 31)
+
+private const val CHROME_SETTINGS_PANEL = "settings-panel"
+private const val CHROME_LIBRARY = "library"
 
 private data class SnapGuides(val vertical: Float?, val horizontal: Float?) {
     companion object {
@@ -477,9 +484,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     var libraryVisible by remember { mutableStateOf(false) }
     var filterModId by remember { mutableStateOf<String?>(null) }
     var searchText by remember { mutableStateOf("") }
-    var panelAreaWidth by remember { mutableStateOf(0f) }
-    var libraryChromeWidth by remember { mutableStateOf(0f) }
-    var libraryChromeHeight by remember { mutableStateOf(0f) }
+    val chromeRects = remember { mutableStateMapOf<String, Rect>() }
     var hudContextMenuTarget by remember { mutableStateOf<Hud?>(null) }
     var hudContextMenuOffset by remember { mutableStateOf(IntOffset.Zero) }
     val keyFocusRequester = remember { FocusRequester() }
@@ -508,12 +513,11 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     val actionBarGapPx = with(densityObj) { 8.dp.toPx() }
     val libraryChromeVisible = modIds.isNotEmpty() && selectedHud == null
 
-    fun inLibraryChrome(px: Float, py: Float, surfaceW: Float, surfaceH: Float): Boolean {
-        if (!libraryChromeVisible || libraryChromeWidth <= 0f) return false
-        if (px <= surfaceW - libraryChromeWidth) return false
-        if (libraryChromeHeight <= 0f) return true // height unknown yet: fall back to blocking the strip
-        val top = (surfaceH - libraryChromeHeight) / 2f
-        return py >= top && py <= top + libraryChromeHeight
+    fun Modifier.chromeRegion(key: String) = onGloballyPositioned { chromeRects[key] = it.boundsInRoot() }
+
+    fun inChrome(px: Float, py: Float): Boolean {
+        val point = Offset(px, py)
+        return chromeRects.values.any { it.contains(point) }
     }
 
     // Unified pointer modifier: drag any HUD, click to select, hover to show action bar
@@ -521,12 +525,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
         .onPointerEvent(PointerEventType.Press) { event ->
             if (event.changes.any { it.isConsumed }) return@onPointerEvent
             val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
-            // Only treat the right strip as the settings panel area while the panel is actually shown.
-            // panelAreaWidth never shrinks (it's a maxOf), so without this guard the strip would keep
-            // swallowing clicks after the panel closes, making HUDs there un-selectable/un-editable.
-            if (selectedHud != null && panelAreaWidth > 0f && pos.x > size.width - panelAreaWidth) return@onPointerEvent
-            // Same for the HUD library / mod-select chrome: overlapping HUDs must not steal clicks.
-            if (inLibraryChrome(pos.x, pos.y, size.width.toFloat(), size.height.toFloat())) return@onPointerEvent
+            if (inChrome(pos.x, pos.y)) return@onPointerEvent
             if (event.buttons.isSecondaryPressed) {
                 val hit = orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }
                 if (hit != null) {
@@ -645,7 +644,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     }
                 }
             } else {
-                if (inLibraryChrome(pos.x, pos.y, size.width.toFloat(), size.height.toFloat())) {
+                if (inChrome(pos.x, pos.y)) {
                     hoveredHud = null
                     return@onPointerEvent
                 }
@@ -690,9 +689,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             }
             if (!wasDragging || wasDraggedHud == null) {
                 val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
-                if (inLibraryChrome(pos.x, pos.y, size.width.toFloat(), size.height.toFloat())) {
-                    return@onPointerEvent
-                }
+                if (inChrome(pos.x, pos.y)) return@onPointerEvent
                 val currentActionBarTarget = selectedHud ?: hoveredHud
                 if (currentActionBarTarget != null) {
                     val mcToScreen = Platform.screen().mcToScreenScale()
@@ -939,11 +936,11 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             visible = selectedHud != null,
             enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
             exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
-            modifier = Modifier
-                .onSizeChanged { panelAreaWidth = maxOf(panelAreaWidth, it.width.toFloat()) }
         ) {
+            DisposableEffect(Unit) { onDispose { chromeRects.remove(CHROME_SETTINGS_PANEL) } }
             Box(
                 modifier = Modifier
+                    .chromeRegion(CHROME_SETTINGS_PANEL)
                     .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
                         event.changes.forEach { if (!it.isConsumed) it.consume() }
                     }
@@ -970,12 +967,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 .graphicsLayer { alpha = chromeAlpha }
         ) {
         if (libraryChromeVisible) {
+            DisposableEffect(Unit) { onDispose { chromeRects.remove(CHROME_LIBRARY) } }
             Row(
                 modifier = Modifier
-                    .onSizeChanged {
-                        libraryChromeWidth = it.width.toFloat()
-                        libraryChromeHeight = it.height.toFloat()
-                    }
+                    .chromeRegion(CHROME_LIBRARY)
                     .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
                         event.changes.forEach { if (!it.isConsumed) it.consume() }
                     }
@@ -1083,6 +1078,8 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
         }
     }
 
+    fun overShell(px: Float, py: Float) = ShellState.shellBounds?.contains(Offset(px, py)) == true
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -1090,6 +1087,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                 if (event.changes.any { it.isConsumed }) return@onPointerEvent
                 if (event.buttons.isSecondaryPressed) return@onPointerEvent
                 val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
+                if (overShell(pos.x, pos.y)) return@onPointerEvent
                 if (!isDragging) {
                     val actionTarget = hoveredHud
                     if (actionTarget != null && hitTestHudActionBar(
@@ -1138,7 +1136,8 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                         }
                     }
                 } else {
-                    val hit = orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }
+                    val hit = if (overShell(pos.x, pos.y)) null
+                        else orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }
                     if (hit !== hoveredHud) hoveredHud = hit
                 }
             }
