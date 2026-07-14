@@ -10,7 +10,6 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.noCache
 import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
-import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
 import java.util.*
 
 object YACLCompat {
@@ -96,7 +95,13 @@ object YACLCompat {
         val groupClass = group::class.java
 
         val nameMethod = groupClass.methods.firstOrNull { it.name == "name" && it.parameterCount == 0 }
-        val groupName = nameMethod?.let { resolveComponent(it.invoke(group)) }?.nonBlankOrNull() ?: categoryName
+        val groupName = nameMethod?.let { resolveComponent(it.invoke(group)) }?.nonBlankOrNull()
+        val isRoot = groupClass.methods.firstOrNull {
+            it.name == "isRoot" &&
+                it.parameterCount == 0 &&
+                (it.returnType == Boolean::class.java || it.returnType == Boolean::class.javaPrimitiveType)
+        }?.let { runCatching { it.invoke(group) as? Boolean }.getOrNull() } ?: false
+        val subcategoryName = if (isRoot) null else groupName
 
         val optionsMethod = groupClass.methods.firstOrNull {
             it.name == "options" && it.parameterCount == 0
@@ -106,47 +111,14 @@ object YACLCompat {
         val options = optionsMethod?.invoke(group) as? Collection<*> ?: return
         if (options.isEmpty()) return
 
-        // Resolve description
-        val descMethod = groupClass.methods.firstOrNull { it.name == "description" && it.parameterCount == 0 }
-        val groupDesc = descMethod?.let {
-            runCatching {
-                val descResult = it.invoke(group)
-                val textMethod = descResult?.javaClass?.methods?.firstOrNull { m -> m.name == "text" && m.parameterCount == 0 }
-                textMethod?.let { tm -> resolveComponent(tm.invoke(descResult)) }?.nonBlankOrNull()
-            }.getOrNull()
-        }
-
-        // Resolve collapsed
-        val collapsedMethod = groupClass.methods.firstOrNull {
-            (it.name == "isCollapsed" || it.name == "collapsed" || it.name == "isCollapsedByDefault" || it.name == "collapsedByDefault") &&
-            it.parameterCount == 0 &&
-            (it.returnType == Boolean::class.java || it.returnType == Boolean::class.javaPrimitiveType)
-        }
-        val isCollapsed = collapsedMethod?.let {
-            runCatching { it.invoke(group) as? Boolean }.getOrNull()
-        } ?: false
-
-        val groupTree = Tree.tree(UUID.randomUUID().toString())
-        groupTree.title = groupName
-        groupTree.description = groupDesc
-        groupTree.addMetadata("category", categoryName)
-        groupTree.addMetadata("subcategory", ConfigVisualizer.DEFAULT_SUBCATEGORY)
-        if (isCollapsed) {
-            groupTree.addMetadata("collapsed", true)
-        }
-
         for (option in options) {
             if (option == null) continue
-            runCatching { parseOption(option, categoryName, groupName, groupTree) }
+            runCatching { parseOption(option, categoryName, subcategoryName, root) }
                 .onFailure { LOGGER.warn("Failed to parse YACL option", it) }
-        }
-
-        if (groupTree.map.isNotEmpty()) {
-            root.put(groupTree)
         }
     }
 
-    private fun parseOption(option: Any, categoryName: String, subcategoryName: String, root: Tree) {
+    private fun parseOption(option: Any, categoryName: String, subcategoryName: String?, root: Tree) {
         val optionClass = option::class.java
 
         val nameMethod = optionClass.methods.firstOrNull { it.name == "name" && it.parameterCount == 0 }

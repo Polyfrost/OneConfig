@@ -66,6 +66,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     }
 
     private Tree register0(Tree tree) {
+        tree.addMetadata(Backend.UI_ONLY_METADATA, Boolean.TRUE);
         Tree reg = ConfigManager.active().register(tree).get();
         reg.addMetadata(TAG, Boolean.TRUE);
         if (reg.getMetadata("custom_save") != null) {
