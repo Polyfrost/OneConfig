@@ -15,6 +15,7 @@ import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -75,12 +77,15 @@ import androidx.compose.ui.input.pointer.isAltPressed
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.isShiftPressed
 import androidx.compose.ui.input.pointer.onPointerEvent
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -485,6 +490,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     var filterModId by remember { mutableStateOf<String?>(null) }
     var searchText by remember { mutableStateOf("") }
     val chromeRects = remember { mutableStateMapOf<String, Rect>() }
+    var panelOffset by remember { mutableStateOf(Offset.Zero) }
+    var rootSize by remember { mutableStateOf(IntSize.Zero) }
     var hudContextMenuTarget by remember { mutableStateOf<Hud?>(null) }
     var hudContextMenuOffset by remember { mutableStateOf(IntOffset.Zero) }
     val keyFocusRequester = remember { FocusRequester() }
@@ -518,6 +525,17 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     fun inChrome(px: Float, py: Float): Boolean {
         val point = Offset(px, py)
         return chromeRects.values.any { it.contains(point) }
+    }
+
+    fun movePanel(delta: Offset) {
+        val rect = chromeRects[CHROME_SETTINGS_PANEL]
+        if (rect == null || rootSize.width <= 0 || rootSize.height <= 0) {
+            panelOffset += delta
+            return
+        }
+        val dx = delta.x.coerceIn(minOf(-rect.left, 0f), maxOf(rootSize.width - rect.right, 0f))
+        val dy = delta.y.coerceIn(minOf(-rect.top, 0f), maxOf(rootSize.height - rect.bottom, 0f))
+        panelOffset += Offset(dx, dy)
     }
 
     // Unified pointer modifier: drag any HUD, click to select, hover to show action bar
@@ -727,6 +745,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .onSizeChanged { rootSize = it }
             .focusRequester(keyFocusRequester)
             .focusable()
             .onKeyEvent { keyEvent ->
@@ -930,6 +949,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
 
         Box(
             modifier = Modifier.align(Alignment.CenterEnd)
+                .offset { IntOffset(panelOffset.x.roundToInt(), panelOffset.y.roundToInt()) }
                 .graphicsLayer { alpha = chromeAlpha }
         ) {
         AnimatedVisibility(
@@ -956,7 +976,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     selectedHud = selectedHud,
                     activeCategory = activeCategory,
                     onCategoryChange = { activeCategory = it },
-                    onBack = { Snapshot.withMutableSnapshot { selectedHud = null } }
+                    onBack = { Snapshot.withMutableSnapshot { selectedHud = null } },
+                    onDragPanel = { movePanel(it) },
                 )
             }
         }
@@ -1293,6 +1314,7 @@ private fun DesignStudioPanel(
     activeCategory: StudioCategory,
     onCategoryChange: (StudioCategory) -> Unit,
     onBack: () -> Unit,
+    onDragPanel: (Offset) -> Unit,
 ) {
     val theme = LocalTheme.current
     val isLegacy = selectedHud is LegacyHud
@@ -1324,7 +1346,25 @@ private fun DesignStudioPanel(
                     IconButton("close") { onBack() }
                     SearchBar()
                 }
-                Text("HUD Design Studio", color = theme.textColor, fontSize = 24.sp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                change.consume()
+                                onDragPanel(dragAmount)
+                            }
+                        },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Icon(
+                        "dots-grid",
+                        color = theme.textColor.copy(0.5f),
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Text("HUD Design Studio", color = theme.textColor, fontSize = 24.sp)
+                }
                 if (categories.size > 1) {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         categories.forEach {
