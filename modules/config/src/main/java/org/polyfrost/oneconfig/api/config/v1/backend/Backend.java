@@ -184,7 +184,6 @@ public abstract class Backend {
         if (id == null) throw new NullPointerException("id cannot be null");
         Tree tree = trees.get(id);
         if (tree == null) throw new IllegalArgumentException("no registered tree with ID " + id);
-        if (isUiOnly(tree)) return true;
         try {
             Object customSave = tree.getMetadata("custom_save");
             if (customSave != null) {
@@ -193,6 +192,7 @@ public abstract class Backend {
                 }
                 return true;
             }
+            if (isUiOnly(tree)) return true;
             return save0(tree);
         } catch (Exception e) {
             LOGGER.error("error saving tree with ID {}!", id, e);
@@ -234,7 +234,6 @@ public abstract class Backend {
     public final boolean save(Tree tree) {
         if (tree.getID() == null) throw new IllegalArgumentException("tree must be master (have a valid ID)");
         putSafe(tree);
-        if (isUiOnly(tree)) return true;
         try {
             Object customSave = tree.getMetadata("custom_save");
             if (customSave != null) {
@@ -243,6 +242,7 @@ public abstract class Backend {
                 }
                 return true;
             }
+            if (isUiOnly(tree)) return true;
             return save0(tree);
         } catch (Exception e) {
             LOGGER.error("error saving tree with ID {}!", tree.getID(), e);
