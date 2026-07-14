@@ -29,7 +29,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getCaseType ()I
 	public final fun getCategory ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
 	public final fun getConfigId ()Ljava/lang/String;
-	public final fun getCustomScale ()F
+	public fun getCustomScale ()F
 	public final fun getEffectiveScale ()F
 	public final fun getFont ()Lorg/polyfrost/oneconfig/api/hud/v1/Font;
 	public final fun getHidden ()Z
@@ -38,14 +38,14 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getPadRight ()F
 	public final fun getPadTop ()F
 	public final fun getPoppinsFontName ()Ljava/lang/String;
-	public final fun getRelativeX ()F
-	public final fun getRelativeY ()F
-	public final fun getRenderedH ()F
-	public final fun getRenderedW ()F
+	public fun getRelativeX ()F
+	public fun getRelativeY ()F
+	public fun getRenderedH ()F
+	public fun getRenderedW ()F
 	public final fun getRuntime ()Lorg/polyfrost/compose/runtime/PolyComposeRuntime;
 	public final fun getRuntimeOrNull ()Lorg/polyfrost/compose/runtime/PolyComposeRuntime;
-	public final fun getScaledHeight ()F
-	public final fun getScaledWidth ()F
+	public fun getScaledHeight ()F
+	public fun getScaledWidth ()F
 	public final fun getSection ()Lorg/polyfrost/oneconfig/api/hud/v1/Section;
 	public final fun getShadowChroma ()Z
 	public final fun getShadowChromaSpeed ()F
@@ -58,8 +58,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getShowInTab ()Z
 	public final fun getShowKey ()I
 	public final fun getShowShadow ()Z
-	public final fun getStaticH ()F
-	public final fun getStaticW ()F
+	public fun getStaticH ()F
+	public fun getStaticW ()F
 	public final fun getStaticWidth ()Z
 	public final fun getTextAlign ()I
 	public final fun getTextBold ()Z
@@ -72,8 +72,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getTextWeight ()Lorg/polyfrost/oneconfig/api/hud/v1/Weight;
 	public final fun getToggleKey ()I
 	public final fun getUseGuiScale ()Z
-	public final fun getX ()F
-	public final fun getY ()F
+	public fun getX ()F
+	public fun getY ()F
 	public fun hasBackground ()Z
 	public final fun isReal ()Z
 	public final fun make (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
@@ -93,17 +93,17 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setBgRadius (F)V
 	public final fun setCaseType (I)V
 	public final fun setConfigId (Ljava/lang/String;)V
-	public final fun setCustomScale (F)V
+	public fun setCustomScale (F)V
 	public final fun setFont (Lorg/polyfrost/oneconfig/api/hud/v1/Font;)V
 	public final fun setHidden (Z)V
 	public final fun setPadBottom (F)V
 	public final fun setPadLeft (F)V
 	public final fun setPadRight (F)V
 	public final fun setPadTop (F)V
-	public final fun setRelativeX (F)V
-	public final fun setRelativeY (F)V
-	public final fun setRenderedH (F)V
-	public final fun setRenderedW (F)V
+	public fun setRelativeX (F)V
+	public fun setRelativeY (F)V
+	public fun setRenderedH (F)V
+	public fun setRenderedW (F)V
 	public final fun setSection (Lorg/polyfrost/oneconfig/api/hud/v1/Section;)V
 	public final fun setShadowChroma (Z)V
 	public final fun setShadowChromaSpeed (F)V
@@ -116,8 +116,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setShowInTab (Z)V
 	public final fun setShowKey (I)V
 	public final fun setShowShadow (Z)V
-	public final fun setStaticH (F)V
-	public final fun setStaticW (F)V
+	public fun setStaticH (F)V
+	public fun setStaticW (F)V
 	public final fun setStaticWidth (Z)V
 	public final fun setTextAlign (I)V
 	public final fun setTextBold (Z)V
@@ -130,12 +130,14 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setTextWeight (Lorg/polyfrost/oneconfig/api/hud/v1/Weight;)V
 	public final fun setToggleKey (I)V
 	public final fun setUseGuiScale (Z)V
-	public final fun setX (F)V
-	public final fun setY (F)V
+	public fun setX (F)V
+	public fun setY (F)V
 	public fun setup ()V
 	public abstract fun update ()Z
 	public final fun updateAndRecalculate ()V
 	public fun updateFrequency ()J
+	protected fun updateRelativeX (F)V
+	protected fun updateRelativeY (F)V
 	protected final fun updateWhenChanged (Ljava/lang/String;)V
 }
 
@@ -144,6 +146,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/Hud$Category {
 	public static final field Companion Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category$Companion;
 	public fun <init> (Ljava/lang/String;B)V
 	public static final fun getCOMBAT ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
+	public static final fun getCOMPAT ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
 	public static final fun getINFO ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
 	public final fun getId ()B
 	public final fun getName ()Ljava/lang/String;
@@ -154,6 +157,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/Hud$Category {
 
 public final class org/polyfrost/oneconfig/api/hud/v1/Hud$Category$Companion {
 	public final fun getCOMBAT ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
+	public final fun getCOMPAT ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
 	public final fun getINFO ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
 	public final fun getPLAYER ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
 }
@@ -163,6 +167,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/hud/v1/HudManager;
 	public static field guiScreenHeight F
 	public static field guiScreenWidth F
+	public static field isConfigUiOpen Z
 	public static field isDebugScreenVisible Z
 	public static field isGuiScreenOpen Z
 	public static field isTabListVisible Z
@@ -175,6 +180,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public final fun iconFor (Ljava/lang/String;)Ljava/lang/String;
 	public final fun initialize ()V
 	public final fun isEditing ()Z
+	public final fun isEditorOpen ()Z
 	public final fun onEditorScreenRemoved ()V
 	public final fun openEditor ()V
 	public final fun providers ()Ljava/util/Collection;
@@ -189,9 +195,42 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public final fun toggleEditor ()V
 	public final fun unregister (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;ZZ)Ljava/util/ArrayList;
 	public static synthetic fun unregister$default (Lorg/polyfrost/oneconfig/api/hud/v1/HudManager;Lorg/polyfrost/oneconfig/api/hud/v1/Hud;ZZILjava/lang/Object;)Ljava/util/ArrayList;
+	public final fun zOrderedInstances (Lkotlin/jvm/functions/Function1;)Ljava/util/List;
+	public static synthetic fun zOrderedInstances$default (Lorg/polyfrost/oneconfig/api/hud/v1/HudManager;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ljava/util/List;
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/hud/v1/LegacyHudMarker {
+	public fun getSupportsScale ()Z
+}
+
+public final class org/polyfrost/oneconfig/api/hud/v1/LegacyHudMarker$DefaultImpls {
+	public static fun getSupportsScale (Lorg/polyfrost/oneconfig/api/hud/v1/LegacyHudMarker;)Z
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper {
+	public abstract fun getId ()Ljava/lang/String;
+	public abstract fun getName ()Ljava/lang/String;
+	public abstract fun getScale ()F
+	public abstract fun getScaledHeight ()F
+	public abstract fun getScaledWidth ()F
+	public fun getSupportsScale ()Z
+	public abstract fun getX ()F
+	public abstract fun getY ()F
+	public fun linkedProperties ()Ljava/util/List;
+	public fun register ()V
+	public abstract fun setId (Ljava/lang/String;)V
+	public abstract fun setName (Ljava/lang/String;)V
+	public abstract fun setScale (F)V
+	public abstract fun setScaledHeight (F)V
+	public abstract fun setScaledWidth (F)V
+	public abstract fun setX (F)V
+	public abstract fun setY (F)V
+}
+
+public final class org/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper$DefaultImpls {
+	public static fun getSupportsScale (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)Z
+	public static fun linkedProperties (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)Ljava/util/List;
+	public static fun register (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)V
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/Section : java/lang/Enum {
