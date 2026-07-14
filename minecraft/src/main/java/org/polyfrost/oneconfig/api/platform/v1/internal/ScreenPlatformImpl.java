@@ -40,6 +40,14 @@ import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 public class ScreenPlatformImpl implements ScreenPlatform {
     private final int[] fbWidth = new int[1];
     private final int[] winWidth = new int[1];
+    private volatile float cachedPixelRatio = -1.0f;
+
+    public ScreenPlatformImpl() {
+        org.polyfrost.oneconfig.api.event.v1.EventManager.register(
+                org.polyfrost.oneconfig.api.event.v1.events.ResizeEvent.class,
+                e -> cachedPixelRatio = -1.0f
+        );
+    }
 
     @Override
     public int viewportWidth() {
@@ -68,11 +76,15 @@ public class ScreenPlatformImpl implements ScreenPlatform {
     // See also: https://github.com/glfw/glfw/pull/2457
     @Override
     public float pixelRatio() {
+        float cached = cachedPixelRatio;
+        if (cached > 0.0f) return cached;
         long handle = Platform.compatibility().windowHandle();
         org.lwjgl.glfw.GLFW.glfwGetFramebufferSize(handle, fbWidth, null);
         org.lwjgl.glfw.GLFW.glfwGetWindowSize(handle, winWidth, null);
         if (winWidth[0] > 0) {
-            return (float) fbWidth[0] / winWidth[0];
+            float ratio = (float) fbWidth[0] / winWidth[0];
+            cachedPixelRatio = ratio;
+            return ratio;
         }
         return 1.0f;
     }
