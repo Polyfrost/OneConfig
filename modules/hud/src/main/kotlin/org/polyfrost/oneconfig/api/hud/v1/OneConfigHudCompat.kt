@@ -13,6 +13,8 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
     override fun update(): Boolean = false
     override fun multipleInstancesAllowed(): Boolean = false
 
+    override val supportsScale: Boolean get() = wrapper.supportsScale
+
     override var x: Float by wrapper::x
     override var y: Float by wrapper::y
     override var relativeX: Float by wrapper::x
@@ -52,6 +54,8 @@ interface OneConfigHudWrapper {
 
     var scaledWidth: Float
     var scaledHeight: Float
+
+    val supportsScale: Boolean get() = true
 
     fun linkedProperties(): List<Property<*>> = emptyList()
 

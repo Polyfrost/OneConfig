@@ -80,7 +80,7 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
             }
 
             if (hud is LegacyHudMarker) {
-                item {
+                if (hud.supportsScale) item {
                     Section("Scale") {
                         HudSettingTarget(hud, "customScale") {
                             NumberSpinner(

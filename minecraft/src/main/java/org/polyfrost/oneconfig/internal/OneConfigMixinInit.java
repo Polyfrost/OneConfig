@@ -101,6 +101,14 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("compat.skycubed.Mixin_SkyCubedOverlays");
         //? }
 
+        //? skyblocker_compat
+        mixins.add("compat.skyblocker.Mixin_SkyblockerFancyStatusBars");
+
+        //? apec_compat
+        //mixins.add("compat.apec.Mixin_ApecMenu");
+
+        mixins.add("compat.skyhanni.Mixin_SkyHanniRenderData");
+
         mixins.add("compat.firmament.Mixin_FirmamentHudMeta");
         //? >= 1.21.8
         mixins.add("compat.firmament.Mixin_FirmamentContentCapture");

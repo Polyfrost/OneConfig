@@ -28,6 +28,8 @@ object CompatLoader {
         "net.fabric",
         "net.azureaaron.dandelion",
         "com.odtheking.odin",
+        "de.hysky.skyblocker",
+        "uk.co.hexeption.apec",
         "moe.nea.firmament.deps.moulconfig",
         "dev.tr7zw.trender",
         "dev.tr7zw.transition",
