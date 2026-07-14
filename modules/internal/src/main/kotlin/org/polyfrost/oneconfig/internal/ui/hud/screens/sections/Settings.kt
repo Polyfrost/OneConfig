@@ -79,23 +79,12 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
                 }
             }
 
-            item {
-                Section("GUI Scale") {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        HudSettingTarget(hud, "useGuiScale") {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                SwitchControl(useGuiScale) {
-                                    Snapshot.withMutableSnapshot { useGuiScale = it; hud.useGuiScale = it }
-                                }
-                                Text("Use Minecraft GUI Scale", color = LocalTheme.current.textColor, fontSize = 14.sp)
-                            }
-                        }
+            if (hud is LegacyHudMarker) {
+                if (hud.supportsScale) item {
+                    Section("Scale") {
                         HudSettingTarget(hud, "customScale") {
                             NumberSpinner(
-                                "Custom Scale",
+                                "Scale",
                                 "x",
                                 customScale,
                                 { Snapshot.withMutableSnapshot { customScale = it; hud.customScale = it } },
@@ -104,6 +93,36 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
                                 0.25f,
                                 width = 176.dp
                             )
+                        }
+                    }
+                }
+            } else {
+                item {
+                    Section("GUI Scale") {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            HudSettingTarget(hud, "useGuiScale") {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    SwitchControl(useGuiScale) {
+                                        Snapshot.withMutableSnapshot { useGuiScale = it; hud.useGuiScale = it }
+                                    }
+                                    Text("Use Minecraft GUI Scale", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                                }
+                            }
+                            HudSettingTarget(hud, "customScale") {
+                                NumberSpinner(
+                                    "Custom Scale",
+                                    "x",
+                                    customScale,
+                                    { Snapshot.withMutableSnapshot { customScale = it; hud.customScale = it } },
+                                    0.25f,
+                                    4f,
+                                    0.25f,
+                                    width = 176.dp
+                                )
+                            }
                         }
                     }
                 }
@@ -206,7 +225,6 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
                     }
                 }
             }
-            }
 
             item {
                 Section("Visibility") {
@@ -246,6 +264,7 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
                         }
                     }
                 }
+            }
             }
 
             var tree = hud.tree

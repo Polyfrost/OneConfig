@@ -94,7 +94,7 @@ object LegacyHudOffscreen {
         if (failed) return
         if (java.lang.Boolean.getBoolean("oneconfig.disable.legacyHudOffscreen")) return
         val huds = activeLegacyHuds()
-        if (huds.isEmpty()) return
+        if (huds.isEmpty() && !CompatOverlayRenderer.hasHooks()) return
         if (!SkiaCtx.isReady) return
         val w = client.window.width
         val h = client.window.height
@@ -126,6 +126,8 @@ object LegacyHudOffscreen {
                     LOG.debug("legacy hud render (record) failed", t)
                 }
             }
+
+            if (CompatOverlayRenderer.oneConfigScreenOpen()) CompatOverlayRenderer.render(ext)
 
             val colorTex = rt.colorTexture ?: return
             val encoder = com.mojang.blaze3d.systems.RenderSystem.getDevice().createCommandEncoder()

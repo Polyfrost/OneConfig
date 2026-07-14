@@ -7,6 +7,11 @@ import org.polyfrost.oneconfig.api.hud.v1.LegacyHud
 
 object LegacyHudRenderer {
     fun renderLive(graphics: GuiGraphicsExtractor) {
+        renderLiveHuds(graphics)
+        if (CompatOverlayRenderer.oneConfigScreenOpen()) CompatOverlayRenderer.render(graphics)
+    }
+
+    private fun renderLiveHuds(graphics: GuiGraphicsExtractor) {
         for (hud in HudManager.activeInstances) {
             if (hud !is LegacyHud) continue
             if (hud.hidden && !HudManager.isEditing) continue

@@ -9,8 +9,14 @@ resource-loader-v1 = "2.0.9+d871b99ec3"
 
 modmenu = "18.0.0-beta.1"
 yacl = "3.9.0+26.1-fabric"
+odin = "0.2.2"
+skyblocker = "7OtCaJGB"
 
 vulkanmod = "0.6.8+26.1.2"
+
+skycubed = "zCt0GMWK"
+meowdding-lib = "4.2.5"
+skyblock-api = "4.2.8"
 
 [libraries]
 api-base = { module = "net.fabricmc.fabric-api:fabric-api-base", version.ref = "api-base" }
@@ -23,9 +29,15 @@ resource-loader-v1 = { module = "net.fabricmc.fabric-api:fabric-resource-loader-
 
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
+odin = { module = "maven.modrinth:odin", version.ref = "odin" }
+skyblocker = { module = "maven.modrinth:skyblocker-liap", version.ref = "skyblocker" }
 
 vulkanmod = { module = "maven.modrinth:vulkanmod", version.ref = "vulkanmod" }
 
+skycubed = { module = "maven.modrinth:skycubed", version.ref = "skycubed" }
+meowdding-lib = { module = "me.owdding.meowdding-lib:meowdding-lib", version.ref = "meowdding-lib" }
+skyblock-api = { module = "tech.thatgravyboat:skyblock-api", version.ref = "skyblock-api" }
+
 [bundles]
-compat = ["modmenu", "yacl"]
+compat = ["modmenu", "yacl", "odin", "skyblocker"]
 fabric-api = ["api-base", "lifecycle-events-v1", "transitive-access-wideners-v1", "command-api-v2", "key-mapping-api-v1", "resource-loader-v0", "resource-loader-v1"]

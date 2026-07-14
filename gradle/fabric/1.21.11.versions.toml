@@ -12,6 +12,13 @@ modmenu = "17.0.0-alpha.1"
 yacl = "3.8.0+1.21.9-fabric"
 moulconfig = "3.11.0"
 dandelion = "1.0.0-alpha.15+1.21.11"
+odin = "0.2.1"
+skyblocker = "7MTtY24j"
+apec = "UpS7y8IB"
+
+skycubed = "HK6ybfV8"
+meowdding-lib = "4.1.5"
+skyblock-api = "4.0.8"
 
 vulkanmod = "0.6.8+1.21.11"
 
@@ -28,11 +35,18 @@ resource-loader-v1 = { module = "net.fabricmc.fabric-api:fabric-resource-loader-
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
 dandelion = { module = "net.azureaaron:dandelion", version.ref = "dandelion" }
+odin = { module = "maven.modrinth:odin", version.ref = "odin" }
+skyblocker = { module = "maven.modrinth:skyblocker-liap", version.ref = "skyblocker" }
+apec = { module = "maven.modrinth:apec", version.ref = "apec" }
 
 moulconfig = { module = "org.notenoughupdates.moulconfig:common", version.ref = "moulconfig" }
 
 vulkanmod = { module = "maven.modrinth:vulkanmod", version.ref = "vulkanmod" }
 
+skycubed = { module = "maven.modrinth:skycubed", version.ref = "skycubed" }
+meowdding-lib = { module = "me.owdding.meowdding-lib:meowdding-lib", version.ref = "meowdding-lib" }
+skyblock-api = { module = "tech.thatgravyboat:skyblock-api", version.ref = "skyblock-api" }
+
 [bundles]
-compat = ["modmenu", "yacl", "dandelion"]
+compat = ["modmenu", "yacl", "dandelion", "odin", "skyblocker", "apec"]
 fabric-api = ["api-base", "lifecycle-events-v1", "rendering-v1", "screen-api-v1", "transitive-access-wideners-v1", "command-api-v2", "key-binding-api-v1", "resource-loader-v1"]

@@ -3,14 +3,15 @@ package org.polyfrost.oneconfig.internal.compat
 //? modmenu_compat {
 import com.terraformersmc.modmenu.api.ConfigScreenFactory
 import com.terraformersmc.modmenu.api.ModMenuApi
+import net.minecraft.client.gui.screens.Screen
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 
 internal object ModMenuEntrypoint : ModMenuApi {
 
-    override fun getModConfigScreenFactory(): ConfigScreenFactory<*>? {
-        if (CompatLoader.hasMod(BOOTSTRAP_MOD_ID)) return null
-        return { it -> OneConfigUIScreen() }
+    override fun getModConfigScreenFactory(): ConfigScreenFactory<*> {
+        if (CompatLoader.hasMod(BOOTSTRAP_MOD_ID)) return ConfigScreenFactory<Screen> { null }
+        return ConfigScreenFactory { OneConfigUIScreen() }
     }
 
     override fun getProvidedConfigScreenFactories(): Map<String, ConfigScreenFactory<*>> {

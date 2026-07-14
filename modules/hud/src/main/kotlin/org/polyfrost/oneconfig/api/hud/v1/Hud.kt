@@ -207,32 +207,32 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var section: Section get() = _section.value; set(v) { _section.value = v }
 
     private var _relativeX: MutableState<Float> = mutableStateOf(0f)
-    var relativeX: Float get() = _relativeX.value; set(v) { _relativeX.value = v }
+    open var relativeX: Float get() = _relativeX.value; set(v) { _relativeX.value = v }
 
     private var _relativeY: MutableState<Float> = mutableStateOf(0f)
-    var relativeY: Float get() = _relativeY.value; set(v) { _relativeY.value = v }
+    open var relativeY: Float get() = _relativeY.value; set(v) { _relativeY.value = v }
 
     private var _renderedW: MutableState<Float> = mutableStateOf(0f)
-    var renderedW: Float get() = _renderedW.value; set(v) { _renderedW.value = v }
+    open var renderedW: Float get() = _renderedW.value; set(v) { _renderedW.value = v }
 
     private var _renderedH: MutableState<Float> = mutableStateOf(0f)
-    var renderedH: Float get() = _renderedH.value; set(v) { _renderedH.value = v }
+    open var renderedH: Float get() = _renderedH.value; set(v) { _renderedH.value = v }
 
-    val scaledWidth: Float get() {
+    open val scaledWidth: Float get() {
         val scale = effectiveScale
         val w = if (staticWidth || renderedW <= 0f) staticW * scale else renderedW
         val (minW, _) = minimumSize()
         return maxOf(w, minW * scale).coerceAtLeast(1f)
     }
 
-    val scaledHeight: Float get() {
+    open val scaledHeight: Float get() {
         val scale = effectiveScale
         val h = if (staticWidth || renderedH <= 0f) staticH * scale else renderedH
         val (_, minH) = minimumSize()
         return maxOf(h, minH * scale).coerceAtLeast(1f)
     }
 
-    var x: Float
+    open var x: Float
         get() {
             val sw = HudManager.guiScreenWidth
             val secPos = Math.round(sw / GRID_SIZE * relativeX).toFloat()
@@ -244,7 +244,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         }
         set(v) { updateRelativeX(v) }
 
-    var y: Float
+    open var y: Float
         get() {
             val sh = HudManager.guiScreenHeight
             val secPos = Math.round(sh / GRID_SIZE * relativeY).toFloat()
@@ -256,7 +256,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         }
         set(v) { updateRelativeY(v) }
 
-    private fun updateRelativeX(absX: Float) {
+    protected open fun updateRelativeX(absX: Float) {
         val sw = HudManager.guiScreenWidth
         val gridW = sw / GRID_SIZE
         relativeX = when (section) {
@@ -266,7 +266,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         }.coerceIn(-1f, 2f)
     }
 
-    private fun updateRelativeY(absY: Float) {
+    protected open fun updateRelativeY(absY: Float) {
         val sh = HudManager.guiScreenHeight
         val gridH = sh / GRID_SIZE
         relativeY = when (section) {
@@ -325,10 +325,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var padRight: Float get() = _padRight.value; set(v) { _padRight.value = v }
 
     private var _staticW: MutableState<Float> = mutableStateOf(200f)
-    var staticW: Float get() = _staticW.value; set(v) { _staticW.value = v }
+    open var staticW: Float get() = _staticW.value; set(v) { _staticW.value = v }
 
     private var _staticH: MutableState<Float> = mutableStateOf(48f)
-    var staticH: Float get() = _staticH.value; set(v) { _staticH.value = v }
+    open var staticH: Float get() = _staticH.value; set(v) { _staticH.value = v }
 
     private var _font: MutableState<Font> = mutableStateOf(Font.Minecraft)
     var font: Font get() = _font.value; set(v) { _font.value = v }
@@ -358,7 +358,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var useGuiScale: Boolean get() = _useGuiScale.value; set(v) { _useGuiScale.value = v }
 
     private var _customScale: MutableState<Float> = mutableStateOf(1f)
-    var customScale: Float get() = _customScale.value; set(v) { _customScale.value = v }
+    open var customScale: Float get() = _customScale.value; set(v) { _customScale.value = v }
 
     val effectiveScale: Float
         get() {
@@ -540,7 +540,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
      * hides the delete button so the HUD cannot be removed (it can still be hidden/moved). Useful
      * for HUDs that are intrinsic to a mod and cannot be re-created once deleted.
      */
-    open fun deletable(): Boolean = true
+    open fun deletable(): Boolean = isReal
 
     open fun remove() {}
 
@@ -606,6 +606,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             @JvmStatic val COMBAT = Category("oneconfig.combat", 1)
             @JvmStatic val INFO = Category("oneconfig.info", 2)
             @JvmStatic val PLAYER = Category("oneconfig.player", 3)
+            @JvmStatic val COMPAT = Category("oneconfig.compat", 4)
         }
 
         override fun toString() = name

@@ -45,7 +45,7 @@ repositories {
         content { includeGroupAndSubgroups("com.github") }
     }
     maven("https://maven.teamresourceful.com/repository/maven-public/") {
-        content { includeGroupAndSubgroups("me.owdding"); includeGroup("com.terraformersmc") }
+        content { includeGroupAndSubgroups("me.owdding"); includeGroupAndSubgroups("tech.thatgravyboat"); includeGroup("com.terraformersmc") }
     }
     maven("https://maven.azureaaron.net/releases") {
         content { includeGroup("net.azureaaron") }
@@ -270,6 +270,19 @@ dependencies {
     if (versionedCatalog.has("vulkanmod")) {
         "modCompileOnly"(versionedCatalog["vulkanmod"]) { isTransitive = false }
         compileOnly(versionedCatalog["lwjgl-vulkan"])
+    }
+
+    if (versionedCatalog.has("skycubed")) {
+        val mcVersion = stonecutter.current.version
+        "modCompileOnly"(versionedCatalog["skycubed"]) { isTransitive = false }
+        compileOnly(versionedCatalog["meowdding-lib"]) {
+            isTransitive = false
+            capabilities { requireCapability("me.owdding.meowdding-lib:meowdding-lib-$mcVersion") }
+        }
+        compileOnly(versionedCatalog["skyblock-api"]) {
+            isTransitive = false
+            capabilities { requireCapability("tech.thatgravyboat:skyblock-api-$mcVersion") }
+        }
     }
 
     //if (mcData.isFabric) {
