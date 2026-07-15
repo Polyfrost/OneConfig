@@ -1017,6 +1017,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                         onDragStart = { hud, sx, sy, hudLocalOffX, hudLocalOffY ->
                             try {
                                 val instance = hud.make()
+                                HudManager.markProviderKnown(instance)
                                 val s = Platform.screen().screenToMcScale()
                                 val effScale = instance.effectiveScale
                                 val offX = hudLocalOffX * effScale

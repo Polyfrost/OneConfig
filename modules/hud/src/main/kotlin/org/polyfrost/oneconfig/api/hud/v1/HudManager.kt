@@ -31,9 +31,9 @@ import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+import org.polyfrost.oneconfig.api.config.v1.Properties
+import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.event.v1.EventManager
-import org.polyfrost.oneconfig.api.event.v1.eventHandler
-import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.utils.v1.MHUtils
@@ -44,7 +44,7 @@ object HudManager {
     private val hudProviders = HashMap<Class<out Hud>, Hud>()
     private val hudIcons = HashMap<String, String>()
     private var init = false
-    private val hiddenHudPaint = org.jetbrains.skia.Paint().apply { setAlphaf(0.35f) }
+    private val hiddenHudPaint by lazy { org.jetbrains.skia.Paint().apply { setAlphaf(0.35f) } }
 
     /**
      * `true` while HUDs are being shown for editing/preview purposes, i.e. while either the HUD editor
@@ -75,6 +75,50 @@ object HudManager {
     @Volatile @JvmField var pendingSelection: Hud? = null
 
     private val lastUpdates = HashMap<Hud, Long>()
+
+    private const val REGISTRY_ID = "hud-registry.json"
+    private const val KNOWN_HUDS = "knownHuds"
+
+    private val knownProviders = LinkedHashSet<String>()
+    private var registryTree: Tree? = null
+
+    private fun registryProperty() = Properties.simple(
+        KNOWN_HUDS, "Known HUDs",
+        "HUD providers which have already been given their default instance.",
+        emptyArray<String>(), Array<String>::class.java
+    )
+
+    private fun loadRegistry() {
+        try {
+            val mgr = ConfigManager.active()
+            val t = mgr.trees().firstOrNull { it.id == REGISTRY_ID }
+                ?: mgr.register(Tree.tree(REGISTRY_ID).put(registryProperty())).get()
+            if (t.getProp(KNOWN_HUDS) == null) t.put(registryProperty())
+            t.addMetadata("hidden", true)
+            registryTree = t
+            when (val known = t.getProp(KNOWN_HUDS)?.get()) {
+                is Array<*> -> known.forEach { if (it != null) knownProviders.add(it.toString()) }
+                is Iterable<*> -> known.forEach { if (it != null) knownProviders.add(it.toString()) }
+            }
+        } catch (e: Exception) {
+            LOGGER.error("Failed to load HUD registry, HUD deletions may not persist", e)
+        }
+    }
+
+    private fun saveRegistry() {
+        val t = registryTree ?: return
+        try {
+            t.getProp(KNOWN_HUDS)?.setAs(knownProviders.toTypedArray())
+            ConfigManager.active().save(REGISTRY_ID)
+        } catch (e: Exception) {
+            LOGGER.error("Failed to save HUD registry", e)
+        }
+    }
+
+    @JvmStatic
+    fun markProviderKnown(hud: Hud) {
+        if (knownProviders.add(hud::class.java.name)) saveRegistry()
+    }
 
     /**
      * NOTE: NEVER CALL THIS RAW! THERE ARE CERTAIN THINGS THAT MUST BE DONE TO PROPERLY REGISTER AN ACTIVE HUD!
@@ -303,6 +347,8 @@ object HudManager {
         val failed = HashMap<String, Int>(8)
         var i = 0
 
+        loadRegistry()
+
         ConfigManager.active().gatherAll("huds").forEach { data ->
             try {
                 val clsName = data.getProp("hudClass").get() as? String
@@ -341,11 +387,17 @@ object HudManager {
             failed.forEach { (cls, count) -> LOGGER.warn("  $cls: $count HUDs") }
         }
 
+        var registryChanged = false
+        for (cls in used) registryChanged = knownProviders.add(cls.name) or registryChanged
+
         hudProviders.forEach { (cls, h) ->
             if (cls in used) return@forEach
             if (h.isReal) return@forEach
             val (dx, dy) = h.defaultPosition()
             if (dx <= 0f && dy <= 0f) return@forEach
+            // the user deleted every instance of this HUD; don't resurrect it.
+            if (!knownProviders.add(cls.name)) return@forEach
+            registryChanged = true
             val hud = h.make()
             hud.setAbsolutePosition(dx, dy)
             activeInstances.add(hud)
@@ -355,7 +407,7 @@ object HudManager {
             LOGGER.info("Added HUD ${hud.title} at default position ($dx, $dy)")
         }
 
-        eventHandler { _: ScreenOpenEvent -> }
+        if (registryChanged) saveRegistry()
 
         LOGGER.info("HUD load took {}ms, loaded {} HUDs from {} providers ({} registered)",
             (System.nanoTime() - now) / 1_000_000.0, i, used.size, hudProviders.size)

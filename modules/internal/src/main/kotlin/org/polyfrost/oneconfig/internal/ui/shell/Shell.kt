@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.RememberObserver
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,10 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
@@ -43,9 +42,16 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
+import org.jetbrains.skia.ColorFilter
 import org.jetbrains.skia.FilterTileMode
+import org.jetbrains.skia.Image
 import org.jetbrains.skia.ImageFilter
 import org.jetbrains.skia.Paint
+import org.jetbrains.skia.Rect
+import org.jetbrains.skia.SamplingMode
+import org.jetbrains.skia.Surface
+import org.jetbrains.skia.BlendMode as SkBlendMode
+import kotlin.math.ceil
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.components.Header
 import org.polyfrost.oneconfig.internal.ui.components.Sidebar
@@ -55,6 +61,68 @@ import org.polyfrost.oneconfig.internal.ui.navigation.navigation
 import org.polyfrost.oneconfig.internal.ui.screens.SearchResultsScreen
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.util.cachedDropShadow
+
+private const val GLOW_BAKE_SCALE = .25f
+private const val GLOW_BLUR_SIGMA = 300f
+private const val GLOW_RADIUS = 500f
+private const val GLOW_ALPHA = .25f
+
+private class GlowCache : RememberObserver {
+    private var image: Image? = null
+    private var width = -1
+    private var height = -1
+
+    fun imageFor(widthPx: Int, heightPx: Int): Image? {
+        if (image == null || width != widthPx || height != heightPx) {
+            image?.close()
+            image = bake(widthPx, heightPx)
+            width = widthPx
+            height = heightPx
+        }
+        return image
+    }
+
+    private fun bake(widthPx: Int, heightPx: Int): Image? {
+        val w = ceil(widthPx * GLOW_BAKE_SCALE).toInt()
+        val h = ceil(heightPx * GLOW_BAKE_SCALE).toInt()
+        if (w <= 0 || h <= 0) return null
+
+        val surface = Surface.makeRasterN32Premul(w, h)
+        val sigma = GLOW_BLUR_SIGMA * GLOW_BAKE_SCALE
+        val filter = ImageFilter.makeBlur(sigma, sigma, FilterTileMode.CLAMP)
+        val paint = Paint().apply {
+            imageFilter = filter
+            color = 0xFFFFFFFF.toInt()
+            setAlphaf(GLOW_ALPHA)
+        }
+        try {
+            surface.canvas.apply {
+                scale(GLOW_BAKE_SCALE, GLOW_BAKE_SCALE)
+                drawCircle(147f, -199f, GLOW_RADIUS, paint)
+                drawCircle(893f, 736f, GLOW_RADIUS, paint)
+            }
+            return surface.makeImageSnapshot()
+        } finally {
+            paint.close()
+            filter.close()
+            surface.close()
+        }
+    }
+
+    private fun release() {
+        image?.close()
+        image = null
+        width = -1
+        height = -1
+    }
+
+    override fun onRemembered() {}
+
+    override fun onForgotten() = release()
+
+    override fun onAbandoned() = release()
+}
 
 @Composable
 fun Shell(
@@ -66,15 +134,14 @@ fun Shell(
 
     val theme = LocalTheme.current
 
-    val backgroundShadow = remember(theme.shadowColor, theme.backgroundShape) {
-        Shadow(50.dp, SolidColor(theme.shadowColor), 4.dp, DpOffset(0.dp, 13.dp), .42f, BlendMode.SrcOver)
+    val backgroundShadow = remember(theme.shadowColor) {
+        Shadow(50.dp, theme.shadowColor, 4.dp, DpOffset(0.dp, 13.dp), .42f, BlendMode.SrcOver)
     }
 
+    val glowCache = remember { GlowCache() }
     val glowPaint = remember(Accent) {
         Paint().apply {
-            imageFilter = ImageFilter.makeBlur(300f, 300f, FilterTileMode.CLAMP)
-            color = Accent.toArgb()
-            setAlphaf(.25f)
+            colorFilter = ColorFilter.makeBlend(Accent.copy(alpha = 1f).toArgb(), SkBlendMode.SRC_IN)
         }
     }
 
@@ -85,14 +152,23 @@ fun Shell(
             1391.dp, 700.dp, 1391.dp, 700.dp
         ).clip(theme.backgroundShape)
             .let { mod ->
-                if (theme.shadowEnabled) mod.dropShadow(theme.backgroundShape, backgroundShadow) else mod
+                if (theme.shadowEnabled) mod.cachedDropShadow(theme.backgroundShape, backgroundShadow) else mod
             }
             .border(1.dp, theme.borderColor, theme.backgroundShape)
             .drawBehind {
                 backdrop(windowOffset)
-                drawIntoCanvas {
-                    it.nativeCanvas.drawCircle(147f, -199f, 500f, glowPaint)
-                    it.nativeCanvas.drawCircle(893f, 736f, 500f, glowPaint)
+                val glow = glowCache.imageFor(ceil(size.width).toInt(), ceil(size.height).toInt())
+                if (glow != null) {
+                    drawIntoCanvas {
+                        it.nativeCanvas.drawImageRect(
+                            glow,
+                            Rect.makeWH(glow.width.toFloat(), glow.height.toFloat()),
+                            Rect.makeWH(glow.width / GLOW_BAKE_SCALE, glow.height / GLOW_BAKE_SCALE),
+                            SamplingMode.LINEAR,
+                            glowPaint,
+                            true,
+                        )
+                    }
                 }
             }
     ) {

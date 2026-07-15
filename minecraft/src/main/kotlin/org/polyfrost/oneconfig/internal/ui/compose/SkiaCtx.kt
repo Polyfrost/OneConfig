@@ -440,7 +440,12 @@ object SkiaCtx {
                 GL11.glDisable(GL11.GL_SCISSOR_TEST)
             }
 
+            val profiling = GpuProfiler.enabled && !isVulkanMode
+            val sections = profiling && GpuProfiler.perSection
+            if (profiling) GpuProfiler.frameBegin()
+
             draws.forEach { it() }        // blur backdrop onto the main RT (samples the live world)
+            if (sections) { directContext.flush(); GpuProfiler.mark("blur") }
 
             if (wantCompose) {
                 val cs = resolveComposeSurface()
@@ -454,17 +459,24 @@ object SkiaCtx {
                         composeDirty = false
                         currentSurface = mainSurface
                         GL11.glViewport(0, 0, mainSurface.width, mainSurface.height)
+                        if (sections) { directContext.flush(); GpuProfiler.mark("compose.render") }
                     }
                     cs.draw(mainSurface.canvas, 0, 0, null)
+                    if (sections) { directContext.flush(); GpuProfiler.mark("compose.blit") }
                 }
             }
 
             notifDraws.forEach { it() }
+            if (sections) { directContext.flush(); GpuProfiler.mark("notif") }
 
             if (isVulkanMode) {
                 directContext.flushAndSubmit(mainSurface, false)
             } else {
                 directContext.flush()
+                if (profiling) {
+                    GpuProfiler.mark(if (sections) "flush.tail" else "draw")
+                    GpuProfiler.frameEnd()
+                }
                 GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, savedFbo[0])
                 gl.restore()
             }

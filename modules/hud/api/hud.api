@@ -181,6 +181,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public final fun initialize ()V
 	public final fun isEditing ()Z
 	public final fun isEditorOpen ()Z
+	public static final fun markProviderKnown (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)V
 	public final fun onEditorScreenRemoved ()V
 	public final fun openEditor ()V
 	public final fun providers ()Ljava/util/Collection;

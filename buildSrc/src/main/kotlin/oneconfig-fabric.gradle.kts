@@ -16,6 +16,12 @@ loom.apply {
         runDir = "../../run"
         property("devauth.enabled", "true")
         property("oneconfig.test", "true")
+        if (project.hasProperty("gpuprofile")) {
+            property("oneconfig.debug.gpuprofile", "true")
+            if (project.hasProperty("gpuprofile.sections")) {
+                property("oneconfig.debug.gpuprofile.sections", "true")
+            }
+        }
         //vmArg("-Dfabric.modsFolder=" + '"' + rootProject.projectDir.resolve("run/${mcVersion}Mods").absolutePath + '"')
     }
 }
