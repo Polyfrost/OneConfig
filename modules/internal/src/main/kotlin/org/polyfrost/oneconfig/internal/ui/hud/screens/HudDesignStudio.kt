@@ -503,6 +503,7 @@ private fun DrawScope.drawHudSizeBadge(label: String, centerX: Float, topY: Floa
 fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     var activeCategory by remember { mutableStateOf(StudioCategory.Settings) }
     var selectedHud by remember { mutableStateOf<Hud?>(null) }
+    var panelHud by remember { mutableStateOf<Hud?>(null) }
     var hoveredHud by remember { mutableStateOf<Hud?>(null) }
     var dragOffsetX by remember { mutableStateOf(0f) }
     var dragOffsetY by remember { mutableStateOf(0f) }
@@ -530,12 +531,18 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     LaunchedEffect(Unit) {
         HudManager.pendingSelection?.let { pending ->
             HudManager.pendingSelection = null
-            if (pending in HudManager.activeInstances) selectedHud = pending
+            if (pending in HudManager.activeInstances) {
+                Snapshot.withMutableSnapshot {
+                    selectedHud = pending
+                    panelHud = pending
+                }
+            }
         }
     }
 
     LaunchedEffect(selectedHud) {
         selectedHud?.let { repairHudStaticSize(it) }
+        if (panelHud !== selectedHud) panelHud = null
     }
 
     val providers = remember { HudManager.providers().toList() }
@@ -937,7 +944,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                             if (event.changes.none { it.isConsumed }) {
                                 event.changes.forEach { it.consume() }
                                 UiSounds.play(UiSoundEvent.HUD_SELECT)
-                                Snapshot.withMutableSnapshot { selectedHud = actionBarTarget }
+                                Snapshot.withMutableSnapshot {
+                                    selectedHud = actionBarTarget
+                                    panelHud = actionBarTarget
+                                }
                             }
                         },
                 ) {
@@ -947,7 +957,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                         foreground = Color.White.copy(0.7f),
                         hoveredForeground = Color.White,
                     ) {
-                        Snapshot.withMutableSnapshot { selectedHud = actionBarTarget }
+                        Snapshot.withMutableSnapshot {
+                            selectedHud = actionBarTarget
+                            panelHud = actionBarTarget
+                        }
                     }
                 }
                 Box(
@@ -987,8 +1000,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 .offset { IntOffset(panelOffset.x.roundToInt(), panelOffset.y.roundToInt()) }
                 .graphicsLayer { alpha = chromeAlpha }
         ) {
+        val panelContentHud = remember { mutableStateOf<Hud?>(null) }
+        if (panelHud != null) panelContentHud.value = panelHud
         AnimatedVisibility(
-            visible = selectedHud != null,
+            visible = panelHud != null,
             enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
             exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
         ) {
@@ -1008,10 +1023,15 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     }
             ) {
                 DesignStudioPanel(
-                    selectedHud = selectedHud,
+                    selectedHud = panelContentHud.value,
                     activeCategory = activeCategory,
                     onCategoryChange = { activeCategory = it },
-                    onBack = { Snapshot.withMutableSnapshot { selectedHud = null } },
+                    onBack = {
+                        Snapshot.withMutableSnapshot {
+                            panelHud = null
+                            selectedHud = null
+                        }
+                    },
                     onDragPanel = { movePanel(it) },
                 )
             }
