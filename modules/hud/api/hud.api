@@ -13,6 +13,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	protected fun addCallbacks (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 	protected fun addToInitQueue ()V
 	protected fun addToSerialized (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
+	public fun applyEditorWidth (F)V
 	public fun backgroundColor ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun capturePositionDefaults ()V
 	public final fun captureStaticSizeDefaults (Z)V
@@ -32,7 +33,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun getCustomScale ()F
 	public final fun getEffectiveScale ()F
 	public final fun getFont ()Lorg/polyfrost/oneconfig/api/hud/v1/Font;
-	public final fun getHidden ()Z
+	public fun getHidden ()Z
 	public final fun getPadBottom ()F
 	public final fun getPadLeft ()F
 	public final fun getPadRight ()F
@@ -42,6 +43,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun getRelativeY ()F
 	public fun getRenderedH ()F
 	public fun getRenderedW ()F
+	public fun getResizeAxes ()Lorg/polyfrost/oneconfig/api/hud/v1/HudResize;
 	public final fun getRuntime ()Lorg/polyfrost/compose/runtime/PolyComposeRuntime;
 	public final fun getRuntimeOrNull ()Lorg/polyfrost/compose/runtime/PolyComposeRuntime;
 	public fun getScaledHeight ()F
@@ -81,6 +83,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	protected final fun measureNaturalContentSize ()Lkotlin/Pair;
 	public fun minimumSize ()Lkotlin/Pair;
 	public fun multipleInstancesAllowed ()Z
+	public fun onEditorDragEnd ()V
+	public fun onEditorDragStart ()V
 	public fun remove ()V
 	public final fun reseedStaticHeight ()V
 	public final fun reseedStaticSizeIfNeeded ()V
@@ -95,7 +99,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setConfigId (Ljava/lang/String;)V
 	public fun setCustomScale (F)V
 	public final fun setFont (Lorg/polyfrost/oneconfig/api/hud/v1/Font;)V
-	public final fun setHidden (Z)V
+	public fun setHidden (Z)V
 	public final fun setPadBottom (F)V
 	public final fun setPadLeft (F)V
 	public final fun setPadRight (F)V
@@ -200,6 +204,15 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static synthetic fun zOrderedInstances$default (Lorg/polyfrost/oneconfig/api/hud/v1/HudManager;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ljava/util/List;
 }
 
+public final class org/polyfrost/oneconfig/api/hud/v1/HudResize : java/lang/Enum {
+	public static final field Both Lorg/polyfrost/oneconfig/api/hud/v1/HudResize;
+	public static final field None Lorg/polyfrost/oneconfig/api/hud/v1/HudResize;
+	public static final field Width Lorg/polyfrost/oneconfig/api/hud/v1/HudResize;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/hud/v1/HudResize;
+	public static fun values ()[Lorg/polyfrost/oneconfig/api/hud/v1/HudResize;
+}
+
 public abstract interface class org/polyfrost/oneconfig/api/hud/v1/LegacyHudMarker {
 	public fun getSupportsScale ()Z
 }
@@ -209,8 +222,11 @@ public final class org/polyfrost/oneconfig/api/hud/v1/LegacyHudMarker$DefaultImp
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper {
+	public fun getHidden ()Z
 	public abstract fun getId ()Ljava/lang/String;
+	public fun getModId ()Ljava/lang/String;
 	public abstract fun getName ()Ljava/lang/String;
+	public fun getResizeAxes ()Lorg/polyfrost/oneconfig/api/hud/v1/HudResize;
 	public abstract fun getScale ()F
 	public abstract fun getScaledHeight ()F
 	public abstract fun getScaledWidth ()F
@@ -218,7 +234,10 @@ public abstract interface class org/polyfrost/oneconfig/api/hud/v1/OneConfigHudW
 	public abstract fun getX ()F
 	public abstract fun getY ()F
 	public fun linkedProperties ()Ljava/util/List;
+	public fun onDragEnd ()V
+	public fun onDragStart ()V
 	public fun register ()V
+	public fun setHidden (Z)V
 	public abstract fun setId (Ljava/lang/String;)V
 	public abstract fun setName (Ljava/lang/String;)V
 	public abstract fun setScale (F)V
@@ -229,9 +248,15 @@ public abstract interface class org/polyfrost/oneconfig/api/hud/v1/OneConfigHudW
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper$DefaultImpls {
+	public static fun getHidden (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)Z
+	public static fun getModId (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)Ljava/lang/String;
+	public static fun getResizeAxes (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)Lorg/polyfrost/oneconfig/api/hud/v1/HudResize;
 	public static fun getSupportsScale (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)Z
 	public static fun linkedProperties (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)Ljava/util/List;
+	public static fun onDragEnd (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)V
+	public static fun onDragStart (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)V
 	public static fun register (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)V
+	public static fun setHidden (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;Z)V
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/Section : java/lang/Enum {

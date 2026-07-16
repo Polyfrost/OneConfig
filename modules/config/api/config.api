@@ -133,6 +133,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/backend/Backend {
 	public static final field CUSTOM_SAVE_TRACKED_METADATA Ljava/lang/String;
 	protected static final field LOGGER Lorg/apache/logging/log4j/Logger;
 	public static final field UI_ONLY_METADATA Ljava/lang/String;
+	public static final field UI_PLACEHOLDER_METADATA Ljava/lang/String;
 	public fun <init> ()V
 	public final fun corrupt (Ljava/lang/String;)Z
 	protected abstract fun corrupt0 (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z
