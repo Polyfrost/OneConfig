@@ -13,8 +13,10 @@ import org.jetbrains.skia.*
 import org.polyfrost.compose.mc.McFontQueue
 import org.polyfrost.compose.render.FontManager
 import org.slf4j.LoggerFactory
+import java.io.ByteArrayInputStream
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
+import java.util.zip.ZipInputStream
 import kotlin.jvm.optionals.getOrNull
 
 object SkiaFontRenderer : PreparableReloadListener {
@@ -24,6 +26,12 @@ object SkiaFontRenderer : PreparableReloadListener {
     private const val DEFAULT_BITMAP_HEIGHT = 8
     private const val LINE_HEIGHT = 8f
     private const val MISSING_ADVANCE = 6f
+
+    private const val DEFAULT_OFFSET = 1f
+
+    private const val UNIHEX_HEIGHT = 16
+    private const val UNIHEX_OVERSAMPLE = 2f
+    private const val UNIHEX_OFFSET = 0.5f
 
     const val UNIFONT_KEY = "unifont"
     private const val UNIFONT_SIZE = 8f
@@ -40,11 +48,22 @@ object SkiaFontRenderer : PreparableReloadListener {
         val advance: Float // target-px advance, trailing spacing included
     )
 
+    private class UnihexGlyphs(val cps: IntArray, val lines: IntArray, val bounds: ShortArray) {
+        fun indexOf(cp: Int): Int = cps.binarySearch(cp)
+        fun left(i: Int): Int = (bounds[i].toInt() shr 8).toByte().toInt()
+        fun right(i: Int): Int = bounds[i].toInt().toByte().toInt()
+        fun width(i: Int): Int = right(i) - left(i) + 1
+        fun advance(i: Int): Float = (width(i) / 2 + 1).toFloat()
+    }
+
     @Volatile private var glyphs: Map<Int, Glyph> = emptyMap()
     @Volatile private var spaceAdvances: Map<Int, Float> = mapOf(' '.code to 4f)
     @Volatile private var atlases: List<Image> = emptyList()
+    @Volatile private var unihex: UnihexGlyphs? = null
+    @Volatile private var unihexImages = HashMap<Int, Image>()
 
     @Volatile private var loaded = false
+    @Volatile private var builtOptions = -1
     // Throttle lazy reload retries so a draw happening mid-reload (packs not yet settled)
     // doesn't re-read every frame; it heals once the resource manager settles.
     private var lastLoadAttempt = 0L
@@ -67,8 +86,17 @@ object SkiaFontRenderer : PreparableReloadListener {
         ComposePreloader.preloadGpuWarmup()
     }
 
-    private fun advanceOf(cp: Int): Float =
-        glyphs[cp]?.advance ?: spaceAdvances[cp] ?: unifontAdvance(cp) ?: MISSING_ADVANCE
+    private fun advanceOf(cp: Int, bold: Boolean): Float {
+        glyphs[cp]?.let { return it.advance + if (bold) DEFAULT_OFFSET else 0f }
+        spaceAdvances[cp]?.let { return it + if (bold) DEFAULT_OFFSET else 0f }
+        val hex = unihex
+        if (hex != null) {
+            val i = hex.indexOf(cp)
+            if (i >= 0) return hex.advance(i) + if (bold) UNIHEX_OFFSET else 0f
+        }
+        val fallback = unifontAdvance(cp) ?: MISSING_ADVANCE
+        return fallback + if (bold) DEFAULT_OFFSET else 0f
+    }
 
     private fun unifontAdvance(cp: Int): Float? {
         unifontAdvances[cp]?.let { return it }
@@ -94,8 +122,7 @@ object SkiaFontRenderer : PreparableReloadListener {
                 continue
             }
             val cp = text.codePointAt(i)
-            val advance = advanceOf(cp)
-            w += if (isBold) advance + 1f else advance
+            w += advanceOf(cp, isBold)
             i += Character.charCount(cp)
         }
         return w
@@ -103,16 +130,16 @@ object SkiaFontRenderer : PreparableReloadListener {
 
     fun draw(canvas: Canvas, text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) {
         ensureLoaded()
-        if (glyphs.isEmpty()) return
+        if (glyphs.isEmpty() && unihex == null) return
         text.lines().forEachIndexed { index, line ->
             val lineY = y + index * LINE_HEIGHT * scale
-            if (shadow) drawGlyphs(canvas, line, x + scale, lineY + scale, color, scale, true)
+            if (shadow) drawGlyphs(canvas, line, x, lineY, color, scale, true)
             drawGlyphs(canvas, line, x, lineY, color, scale, false)
         }
     }
 
     private fun ensureLoaded() {
-        if (loaded) return
+        if (loaded && builtOptions == fontOptionsMask()) return
         // Lazy self-heal: read from the *live* resource manager, which reflects the final
         // pack stack only after a reload has fully settled. Throttled so we don't thrash
         // if a draw lands mid-reload (truncated read / packs being swapped).
@@ -149,46 +176,94 @@ object SkiaFontRenderer : PreparableReloadListener {
             val cp = text.codePointAt(i)
             i += Character.charCount(cp)
 
+            val drawColor = if (isShadow) shadowColor(curColor) else curColor
+
             val glyph = glyphs[cp]
-            if (glyph == null) {
-                if (spaceAdvances[cp] == null && unifontAdvance(cp) != null) {
-                    val font = FontManager.getFont(UNIFONT_SIZE * scale, UNIFONT_KEY)
-                    val drawColor = if (isShadow) shadowColor(curColor) else curColor
-                    textPaint.color = drawColor
-                    val str = String(Character.toChars(cp))
-                    val baseline = y + BASELINE * scale
-                    canvas.save()
-                    if (isItalic) canvas.skew(-0.25f, 0f)
-                    canvas.drawString(str, curX, baseline, font, textPaint)
-                    if (isBold) canvas.drawString(str, curX + scale, baseline, font, textPaint)
-                    canvas.restore()
+            if (glyph != null) {
+                val shift = if (isShadow) DEFAULT_OFFSET * scale else 0f
+                if (glyph.srcW > 0f) {
+                    val src = Rect.makeXYWH(glyph.srcX, glyph.srcY, glyph.srcW, glyph.srcH)
+                    val dstW = glyph.srcW * glyph.scale * scale
+                    val dstH = glyph.srcH * glyph.scale * scale
+                    val dstY = y + glyph.top * scale + shift
+                    blit(canvas, glyph.image, src, curX + shift, dstY, dstW, dstH, drawColor, isBold, isItalic, DEFAULT_OFFSET * scale)
                 }
-                curX += (if (isBold) advanceOf(cp) + 1f else advanceOf(cp)) * scale
+                curX += (glyph.advance + if (isBold) DEFAULT_OFFSET else 0f) * scale
                 continue
             }
 
-            if (glyph.srcW > 0f) {
-                val drawColor = if (isShadow) shadowColor(curColor) else curColor
-                paint.colorFilter = colorFilterCache.getOrPut(drawColor) {
-                    ColorFilter.makeBlend(drawColor, BlendMode.MODULATE)
+            if (spaceAdvances[cp] == null) {
+                val hex = unihex
+                val hexIndex = hex?.indexOf(cp) ?: -1
+                if (hex != null && hexIndex >= 0) {
+                    val shift = if (isShadow) UNIHEX_OFFSET * scale else 0f
+                    val image = unihexImage(hex, hexIndex, cp)
+                    if (image != null) {
+                        val w = hex.width(hexIndex)
+                        val src = Rect.makeXYWH(0f, 0f, w.toFloat(), UNIHEX_HEIGHT.toFloat())
+                        val dstW = w / UNIHEX_OVERSAMPLE * scale
+                        val dstH = UNIHEX_HEIGHT / UNIHEX_OVERSAMPLE * scale
+                        blit(canvas, image, src, curX + shift, y + shift, dstW, dstH, drawColor, isBold, isItalic, UNIHEX_OFFSET * scale)
+                    }
+                    curX += (hex.advance(hexIndex) + if (isBold) UNIHEX_OFFSET else 0f) * scale
+                    continue
                 }
-
-                val src = Rect.makeXYWH(glyph.srcX, glyph.srcY, glyph.srcW, glyph.srcH)
-                val dstW = glyph.srcW * glyph.scale * scale
-                val dstH = glyph.srcH * glyph.scale * scale
-                val dstY = y + glyph.top * scale
-
-                canvas.save()
-                if (isItalic) canvas.skew(-0.25f, 0f)
-                canvas.drawImageRect(glyph.image, src, Rect.makeXYWH(curX, dstY, dstW, dstH), SamplingMode.DEFAULT, paint, true)
-                if (isBold) {
-                    canvas.drawImageRect(glyph.image, src, Rect.makeXYWH(curX + scale, dstY, dstW, dstH), SamplingMode.DEFAULT, paint, true)
+                if (unifontAdvance(cp) != null) {
+                    val shift = if (isShadow) DEFAULT_OFFSET * scale else 0f
+                    val font = FontManager.getFont(UNIFONT_SIZE * scale, UNIFONT_KEY)
+                    textPaint.color = drawColor
+                    val str = String(Character.toChars(cp))
+                    val baseline = y + BASELINE * scale + shift
+                    canvas.save()
+                    if (isItalic) canvas.skew(-0.25f, 0f)
+                    canvas.drawString(str, curX + shift, baseline, font, textPaint)
+                    if (isBold) canvas.drawString(str, curX + shift + scale, baseline, font, textPaint)
+                    canvas.restore()
                 }
-                canvas.restore()
             }
-
-            curX += (if (isBold) glyph.advance + 1f else glyph.advance) * scale
+            curX += advanceOf(cp, isBold) * scale
         }
+    }
+
+    private fun blit(
+        canvas: Canvas, image: Image, src: Rect,
+        x: Float, y: Float, w: Float, h: Float,
+        color: Int, bold: Boolean, italic: Boolean, boldOffset: Float
+    ) {
+        paint.colorFilter = colorFilterCache.getOrPut(color) { ColorFilter.makeBlend(color, BlendMode.MODULATE) }
+        canvas.save()
+        if (italic) canvas.skew(-0.25f, 0f)
+        canvas.drawImageRect(image, src, Rect.makeXYWH(x, y, w, h), SamplingMode.DEFAULT, paint, true)
+        if (bold) {
+            canvas.drawImageRect(image, src, Rect.makeXYWH(x + boldOffset, y, w, h), SamplingMode.DEFAULT, paint, true)
+        }
+        canvas.restore()
+    }
+
+    private fun unihexImage(hex: UnihexGlyphs, index: Int, cp: Int): Image? {
+        val cache = unihexImages
+        cache[cp]?.let { return it }
+        val left = hex.left(index)
+        val right = hex.right(index)
+        val w = right - left + 1
+        if (w <= 0) return null
+
+        val pixels = ByteArray(w * UNIHEX_HEIGHT * 4)
+        var p = 0
+        for (row in 0 until UNIHEX_HEIGHT) {
+            val bits = hex.lines[index * UNIHEX_HEIGHT + row]
+            for (bit in left..right) {
+                val on = bit in 0..31 && (bits ushr (31 - bit)) and 1 != 0
+                val value = if (on) 0xFF.toByte() else 0
+                pixels[p++] = value
+                pixels[p++] = value
+                pixels[p++] = value
+                pixels[p++] = value
+            }
+        }
+        val image = Image.makeRaster(ImageInfo.makeN32Premul(w, UNIHEX_HEIGHT), pixels, w * 4)
+        cache[cp] = image
+        return image
     }
 
     private fun shadowColor(color: Int): Int {
@@ -213,7 +288,23 @@ object SkiaFontRenderer : PreparableReloadListener {
     private fun splitId(id: String): Pair<String, String> =
         if (':' in id) id.substringBefore(':') to id.substringAfter(':') else "minecraft" to id
 
-    private fun collectProviders(rm: ResourceManager, id: String, out: MutableList<JsonObject>, visited: MutableSet<String>) {
+    private const val OPTION_UNIFORM = 1
+    private const val OPTION_JP = 2
+
+    private fun fontOptionsMask(): Int {
+        val options = Minecraft.getInstance().options
+        return (if (options.forceUnicodeFont().get()) OPTION_UNIFORM else 0) or
+            (if (options.japaneseGlyphVariants().get()) OPTION_JP else 0)
+    }
+
+    private fun filterPasses(provider: JsonObject, options: Int): Boolean {
+        val filter = provider.getAsJsonObject("filter") ?: return true
+        filter.get("uniform")?.let { if (it.asBoolean != (options and OPTION_UNIFORM != 0)) return false }
+        filter.get("jp")?.let { if (it.asBoolean != (options and OPTION_JP != 0)) return false }
+        return true
+    }
+
+    private fun collectProviders(rm: ResourceManager, id: String, out: MutableList<JsonObject>, visited: MutableSet<String>, options: Int) {
         if (!visited.add(id)) return
         val (ns, path) = splitId(id)
         for (bytes in readStack(rm, Identifier.fromNamespaceAndPath(ns, "font/$path.json"))) {
@@ -221,8 +312,9 @@ object SkiaFontRenderer : PreparableReloadListener {
             val providers = root.getAsJsonArray("providers") ?: continue
             for (element in providers) {
                 val provider = element.asJsonObject
+                if (!filterPasses(provider, options)) continue
                 when (provider.get("type")?.asString) {
-                    "reference" -> provider.get("id")?.asString?.let { collectProviders(rm, it, out, visited) }
+                    "reference" -> provider.get("id")?.asString?.let { collectProviders(rm, it, out, visited, options) }
                     else -> out.add(provider)
                 }
             }
@@ -230,14 +322,16 @@ object SkiaFontRenderer : PreparableReloadListener {
     }
 
     private fun rebuild(rm: ResourceManager): Boolean {
+        val options = fontOptionsMask()
         val providers = ArrayList<JsonObject>()
-        runCatching { collectProviders(rm, ROOT_FONT, providers, HashSet()) }
+        runCatching { collectProviders(rm, ROOT_FONT, providers, HashSet(), options) }
         if (providers.isEmpty()) return false
 
         val newGlyphs = HashMap<Int, Glyph>(4096)
         val newSpace = HashMap<Int, Float>(4)
         val newAtlases = ArrayList<Image>()
         val claimed = HashSet<Int>(4096)
+        val hex = HexAccumulator()
 
         for (provider in providers) {
             when (provider.get("type")?.asString) {
@@ -251,18 +345,188 @@ object SkiaFontRenderer : PreparableReloadListener {
                 }
                 "bitmap" -> runCatching { loadBitmap(rm, provider, newGlyphs, newAtlases, claimed) }
                     .onFailure { LOGGER.warn("Failed to load bitmap font provider, skipping", it) }
+                "unihex" -> runCatching { loadUnihex(rm, provider, hex, claimed) }
+                    .onFailure { LOGGER.warn("Failed to load unihex font provider, skipping", it) }
                 else -> {}
             }
         }
 
-        if (newGlyphs.isEmpty()) return false
+        if (newGlyphs.isEmpty() && hex.size == 0) return false
 
-        val old = atlases
+        val oldAtlases = atlases
+        val oldImages = unihexImages
         glyphs = newGlyphs
         spaceAdvances = if (newSpace.isEmpty()) mapOf(' '.code to 4f) else newSpace
         atlases = newAtlases
+        unihex = hex.build()
+        unihexImages = HashMap()
         colorFilterCache.clear()
-        old.forEach { runCatching { it.close() } }
+        builtOptions = options
+        oldAtlases.forEach { runCatching { it.close() } }
+        oldImages.values.forEach { runCatching { it.close() } }
+        return true
+    }
+
+    private class HexAccumulator {
+        var cps = IntArray(1 shl 12)
+        var lines = IntArray((1 shl 12) * UNIHEX_HEIGHT)
+        var bounds = ShortArray(1 shl 12)
+        var size = 0
+
+        fun add(cp: Int, rows: IntArray, bitWidth: Int) {
+            if (size == cps.size) {
+                cps = cps.copyOf(size * 2)
+                lines = lines.copyOf(size * 2 * UNIHEX_HEIGHT)
+                bounds = bounds.copyOf(size * 2)
+            }
+            cps[size] = cp
+            System.arraycopy(rows, 0, lines, size * UNIHEX_HEIGHT, UNIHEX_HEIGHT)
+            bounds[size] = packBounds(rows, bitWidth)
+            size++
+        }
+
+        fun build(): UnihexGlyphs? {
+            if (size == 0) return null
+            val keys = LongArray(size) { (cps[it].toLong() shl 32) or it.toLong() }
+            keys.sort()
+
+            var distinct = 0
+            for (i in 0 until size) if (i == size - 1 || keys[i] ushr 32 != keys[i + 1] ushr 32) distinct++
+
+            val outCps = IntArray(distinct)
+            val outLines = IntArray(distinct * UNIHEX_HEIGHT)
+            val outBounds = ShortArray(distinct)
+            var out = 0
+            for (i in 0 until size) {
+                if (i != size - 1 && keys[i] ushr 32 == keys[i + 1] ushr 32) continue
+                val src = (keys[i] and 0xFFFFFFFFL).toInt()
+                outCps[out] = (keys[i] ushr 32).toInt()
+                outBounds[out] = bounds[src]
+                System.arraycopy(lines, src * UNIHEX_HEIGHT, outLines, out * UNIHEX_HEIGHT, UNIHEX_HEIGHT)
+                out++
+            }
+            return UnihexGlyphs(outCps, outLines, outBounds)
+        }
+    }
+
+    private fun packBounds(rows: IntArray, bitWidth: Int): Short {
+        var mask = 0
+        for (row in rows) mask = mask or row
+        val left: Int
+        val right: Int
+        if (mask == 0) {
+            left = 0
+            right = bitWidth
+        } else {
+            left = Integer.numberOfLeadingZeros(mask)
+            right = 32 - Integer.numberOfTrailingZeros(mask) - 1
+        }
+        return (((left and 0xFF) shl 8) or (right and 0xFF)).toShort()
+    }
+
+    private fun loadUnihex(rm: ResourceManager, provider: JsonObject, hex: HexAccumulator, claimed: MutableSet<Int>) {
+        val hexRef = provider.get("hex_file")?.asString ?: return
+        val (ns, path) = splitId(hexRef)
+        val zipBytes = read(rm, Identifier.fromNamespaceAndPath(ns, path)) ?: run {
+            LOGGER.warn("unihex font provider references missing file {}", hexRef)
+            return
+        }
+
+        val start = hex.size
+        ZipInputStream(ByteArrayInputStream(zipBytes)).use { zip ->
+            while (true) {
+                val entry = zip.nextEntry ?: break
+                if (!entry.name.endsWith(".hex")) continue
+                readHex(zip.readBytes()) { cp, rows, bitWidth ->
+                    if (cp !in claimed) hex.add(cp, rows, bitWidth)
+                }
+            }
+        }
+
+        applySizeOverrides(provider, hex, start)
+        for (i in start until hex.size) claimed.add(hex.cps[i])
+    }
+
+    private fun applySizeOverrides(provider: JsonObject, hex: HexAccumulator, start: Int) {
+        val overrides = provider.getAsJsonArray("size_overrides") ?: return
+        val ranges = ArrayList<IntArray>(overrides.size())
+        for (element in overrides) {
+            val range = runCatching {
+                val json = element.asJsonObject
+                intArrayOf(
+                    json.get("from").asString.codePointAt(0),
+                    json.get("to").asString.codePointAt(0),
+                    json.get("left").asInt,
+                    json.get("right").asInt
+                )
+            }.getOrNull() ?: continue
+            ranges.add(range)
+        }
+        if (ranges.isEmpty()) return
+
+        for (i in start until hex.size) {
+            val cp = hex.cps[i]
+            for (range in ranges) {
+                if (cp < range[0] || cp > range[1]) continue
+                hex.bounds[i] = (((range[2] and 0xFF) shl 8) or (range[3] and 0xFF)).toShort()
+                break // vanilla removes the codepoint on the first matching range
+            }
+        }
+    }
+
+    private inline fun readHex(bytes: ByteArray, out: (cp: Int, rows: IntArray, bitWidth: Int) -> Unit) {
+        val rows = IntArray(UNIHEX_HEIGHT)
+        var i = 0
+        var skipped = 0
+        while (i < bytes.size) {
+            var end = i
+            while (end < bytes.size && bytes[end] != '\n'.code.toByte()) end++
+            var lineEnd = end
+            if (lineEnd > i && bytes[lineEnd - 1] == '\r'.code.toByte()) lineEnd--
+
+            if (lineEnd > i && !readHexEntry(bytes, i, lineEnd, rows, out)) skipped++
+            i = end + 1
+        }
+        if (skipped > 0) LOGGER.warn("Skipped {} malformed unihex entries", skipped)
+    }
+
+    private inline fun readHexEntry(
+        bytes: ByteArray, start: Int, end: Int, rows: IntArray,
+        out: (cp: Int, rows: IntArray, bitWidth: Int) -> Unit
+    ): Boolean {
+        var colon = start
+        while (colon < end && bytes[colon] != ':'.code.toByte()) colon++
+        if (colon >= end) return false
+
+        val cpDigits = colon - start
+        if (cpDigits !in 4..6) return false
+        var cp = 0
+        for (i in start until colon) {
+            val digit = Character.digit(bytes[i].toInt(), 16)
+            if (digit < 0) return false
+            cp = (cp shl 4) or digit
+        }
+
+        val digits = end - colon - 1
+        val bitWidth = when (digits) {
+            32 -> 8
+            64 -> 16
+            96 -> 24
+            128 -> 32
+            else -> return false
+        }
+        val perRow = digits / UNIHEX_HEIGHT
+        var p = colon + 1
+        for (row in 0 until UNIHEX_HEIGHT) {
+            var value = 0
+            for (q in 0 until perRow) {
+                val digit = Character.digit(bytes[p++].toInt(), 16)
+                if (digit < 0) return false
+                value = (value shl 4) or digit
+            }
+            rows[row] = value shl (32 - bitWidth)
+        }
+        out(cp, rows, bitWidth)
         return true
     }
 

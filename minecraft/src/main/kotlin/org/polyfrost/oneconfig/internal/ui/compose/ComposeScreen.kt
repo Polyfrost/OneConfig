@@ -41,6 +41,8 @@ import java.awt.Component
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 
+private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/Compose")
+
 @Suppress("DEPRECATION")
 private object SystemClipboardManager : androidx.compose.ui.platform.ClipboardManager {
     override fun getText(): AnnotatedString? {
@@ -258,7 +260,8 @@ abstract class ComposeScreen(
                     lastPointer = pointerPosition
                     scene.sendPointerEvent(PointerEventType.Move, pointerPosition)
                 }
-            } catch (_: Throwable) {
+            } catch (e: Throwable) {
+                LOGGER.error("Failed to dispatch mouse move to ${this::class.java.simpleName}", e)
             }
         }
 

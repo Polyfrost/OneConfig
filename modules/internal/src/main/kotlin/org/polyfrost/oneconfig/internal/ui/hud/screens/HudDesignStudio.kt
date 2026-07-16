@@ -22,6 +22,7 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -71,6 +72,8 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
+import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.isAltPressed
@@ -78,6 +81,7 @@ import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.isShiftPressed
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.text.TextStyle
@@ -118,8 +122,27 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.Theme
+import org.apache.logging.log4j.LogManager
 import org.jetbrains.skia.Paint
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.roundToInt
+
+private val LOGGER = LogManager.getLogger("OneConfig/HudDesignStudio")
+
+@OptIn(ExperimentalComposeUiApi::class)
+private fun Modifier.safePointerEvent(
+    eventType: PointerEventType,
+    pass: PointerEventPass = PointerEventPass.Main,
+    onEvent: AwaitPointerEventScope.(event: PointerEvent) -> Unit,
+): Modifier = onPointerEvent(eventType, pass) { event ->
+    try {
+        onEvent(event)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Throwable) {
+        LOGGER.error("Error while handling $eventType in the HUD Design Studio", e)
+    }
+}
 
 enum class StudioCategory(val title: String, val icon: String) {
     Settings("Settings", "qol"),
@@ -548,10 +571,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
 
     // Unified pointer modifier: drag any HUD, click to select, hover to show action bar
     val pointerModifier = Modifier
-        .onPointerEvent(PointerEventType.Press) { event ->
-            if (event.changes.any { it.isConsumed }) return@onPointerEvent
-            val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
-            if (inChrome(pos.x, pos.y)) return@onPointerEvent
+        .safePointerEvent(PointerEventType.Press) { event ->
+            if (event.changes.any { it.isConsumed }) return@safePointerEvent
+            val pos = event.changes.firstOrNull()?.position ?: return@safePointerEvent
+            if (inChrome(pos.x, pos.y)) return@safePointerEvent
             if (event.buttons.isSecondaryPressed) {
                 val hit = orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }
                 if (hit != null) {
@@ -563,7 +586,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                         libraryVisible = false
                     }
                 }
-                return@onPointerEvent
+                return@safePointerEvent
             }
             val mcToScreen = Platform.screen().mcToScreenScale()
             val selected = selectedHud
@@ -585,13 +608,13 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                         hoveredHud = selected
                         libraryVisible = false
                     }
-                    return@onPointerEvent
+                    return@safePointerEvent
                 }
             }
             val currentActionBarTarget = selectedHud ?: hoveredHud
             if (currentActionBarTarget != null) {
                 if (hitTestHudActionBar(currentActionBarTarget, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx)) {
-                    return@onPointerEvent
+                    return@safePointerEvent
                 }
             }
             val s = Platform.screen().screenToMcScale()
@@ -612,8 +635,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 }
             }
         }
-        .onPointerEvent(PointerEventType.Move) { event ->
-            val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
+        .safePointerEvent(PointerEventType.Move) { event ->
+            val pos = event.changes.firstOrNull()?.position ?: return@safePointerEvent
             if (isResizing) {
                 if (event.changes.none { it.pressed }) {
                     Snapshot.withMutableSnapshot {
@@ -622,11 +645,11 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                         resizeCorner = null
                         resizeStartBounds = null
                     }
-                    return@onPointerEvent
+                    return@safePointerEvent
                 }
-                val hit = resizedHud ?: return@onPointerEvent
-                val corner = resizeCorner ?: return@onPointerEvent
-                val bounds = resizeStartBounds ?: return@onPointerEvent
+                val hit = resizedHud ?: return@safePointerEvent
+                val corner = resizeCorner ?: return@safePointerEvent
+                val bounds = resizeStartBounds ?: return@safePointerEvent
                 val s = Platform.screen().screenToMcScale()
                 Snapshot.withMutableSnapshot {
                     resizeHud(
@@ -651,10 +674,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                         snapGuides = SnapGuides.NONE
                     }
                     dropped?.onEditorDragEnd()
-                    return@onPointerEvent
+                    return@safePointerEvent
                 }
                 val s = Platform.screen().screenToMcScale()
-                val hit = draggedHud ?: return@onPointerEvent
+                val hit = draggedHud ?: return@safePointerEvent
                 val rawX = pos.x * s - dragOffsetX
                 val rawY = pos.y * s - dragOffsetY
                 val bounds = hudBounds(hit)
@@ -675,7 +698,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             } else {
                 if (inChrome(pos.x, pos.y)) {
                     hoveredHud = null
-                    return@onPointerEvent
+                    return@safePointerEvent
                 }
                 val hit = orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }
                 val mcToScreen = Platform.screen().mcToScreenScale()
@@ -692,7 +715,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 }
             }
         }
-        .onPointerEvent(PointerEventType.Release) { event ->
+        .safePointerEvent(PointerEventType.Release) { event ->
             val wasResizing = isResizing
             val wasResizedHud = resizedHud
             Snapshot.withMutableSnapshot {
@@ -707,7 +730,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     selectedHud = wasResizedHud
                     libraryVisible = false
                 }
-                return@onPointerEvent
+                return@safePointerEvent
             }
             val wasDragging = isDragging
             val wasDraggedHud = draggedHud
@@ -718,13 +741,13 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             }
             if (wasDragging) wasDraggedHud?.onEditorDragEnd()
             if (!wasDragging || wasDraggedHud == null) {
-                val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
-                if (inChrome(pos.x, pos.y)) return@onPointerEvent
+                val pos = event.changes.firstOrNull()?.position ?: return@safePointerEvent
+                if (inChrome(pos.x, pos.y)) return@safePointerEvent
                 val currentActionBarTarget = selectedHud ?: hoveredHud
                 if (currentActionBarTarget != null) {
                     val mcToScreen = Platform.screen().mcToScreenScale()
                     if (hitTestHudActionBar(currentActionBarTarget, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx)) {
-                        return@onPointerEvent
+                        return@safePointerEvent
                     }
                 }
                 val hit = orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }
@@ -796,7 +819,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     .clip(theme.buttonShape)
                     .background(returnBackground, theme.buttonShape)
                     .hoverable(returnInteraction)
-                    .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+                    .safePointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
                         if (event.changes.none { it.isConsumed }) {
                             event.changes.forEach { it.consume() }
                             UiSounds.play(UiSoundEvent.CLICK)
@@ -906,11 +929,11 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     modifier = Modifier
                         .padding(start = settingsX.dp, top = iconY.dp)
                         .graphicsLayer { alpha = chromeAlpha }
-                        .onPointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
-                            if (event.changes.any { it.pressed }) return@onPointerEvent
+                        .safePointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
+                            if (event.changes.any { it.pressed }) return@safePointerEvent
                             event.changes.forEach { if (!it.isConsumed) it.consume() }
                         }
-                        .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+                        .safePointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
                             if (event.changes.none { it.isConsumed }) {
                                 event.changes.forEach { it.consume() }
                                 UiSounds.play(UiSoundEvent.HUD_SELECT)
@@ -931,11 +954,11 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     modifier = Modifier
                         .padding(start = visibilityX.dp, top = iconY.dp)
                         .graphicsLayer { alpha = chromeAlpha }
-                        .onPointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
-                            if (event.changes.any { it.pressed }) return@onPointerEvent
+                        .safePointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
+                            if (event.changes.any { it.pressed }) return@safePointerEvent
                             event.changes.forEach { if (!it.isConsumed) it.consume() }
                         }
-                        .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+                        .safePointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
                             if (event.changes.none { it.isConsumed }) {
                                 event.changes.forEach { it.consume() }
                                 UiSounds.play(UiSoundEvent.CLICK)
@@ -973,14 +996,14 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             Box(
                 modifier = Modifier
                     .chromeRegion(CHROME_SETTINGS_PANEL)
-                    .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+                    .safePointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
                         event.changes.forEach { if (!it.isConsumed) it.consume() }
                     }
-                    .onPointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
-                        if (event.changes.any { it.pressed }) return@onPointerEvent
+                    .safePointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
+                        if (event.changes.any { it.pressed }) return@safePointerEvent
                         event.changes.forEach { if (!it.isConsumed) it.consume() }
                     }
-                    .onPointerEvent(PointerEventType.Release, PointerEventPass.Final) { event ->
+                    .safePointerEvent(PointerEventType.Release, PointerEventPass.Final) { event ->
                         event.changes.forEach { if (!it.isConsumed) it.consume() }
                     }
             ) {
@@ -1004,14 +1027,14 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             Row(
                 modifier = Modifier
                     .chromeRegion(CHROME_LIBRARY)
-                    .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+                    .safePointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
                         event.changes.forEach { if (!it.isConsumed) it.consume() }
                     }
-                    .onPointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
-                        if (event.changes.any { it.pressed }) return@onPointerEvent
+                    .safePointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
+                        if (event.changes.any { it.pressed }) return@safePointerEvent
                         event.changes.forEach { if (!it.isConsumed) it.consume() }
                     }
-                    .onPointerEvent(PointerEventType.Release, PointerEventPass.Final) { event ->
+                    .safePointerEvent(PointerEventType.Release, PointerEventPass.Final) { event ->
                         event.changes.forEach { if (!it.isConsumed) it.consume() }
                     },
                 verticalAlignment = Alignment.CenterVertically,
@@ -1119,22 +1142,22 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxSize()
-            .onPointerEvent(PointerEventType.Press) { event ->
-                if (event.changes.any { it.isConsumed }) return@onPointerEvent
-                if (event.buttons.isSecondaryPressed) return@onPointerEvent
-                val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
-                if (overShell(pos.x, pos.y)) return@onPointerEvent
+            .safePointerEvent(PointerEventType.Press) { event ->
+                if (event.changes.any { it.isConsumed }) return@safePointerEvent
+                if (event.buttons.isSecondaryPressed) return@safePointerEvent
+                val pos = event.changes.firstOrNull()?.position ?: return@safePointerEvent
+                if (overShell(pos.x, pos.y)) return@safePointerEvent
                 if (!isDragging) {
                     val actionTarget = hoveredHud
                     if (actionTarget != null && hitTestHudActionBar(
                             actionTarget, pos.x, pos.y,
                             Platform.screen().mcToScreenScale(), actionIconPx, actionBarGapPx,
                         )
-                    ) return@onPointerEvent
+                    ) return@safePointerEvent
                 }
                 val s = Platform.screen().screenToMcScale()
                 val hit = orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }
-                    ?: return@onPointerEvent
+                    ?: return@safePointerEvent
                 UiSounds.play(UiSoundEvent.HUD_DRAG_START)
                 hit.onEditorDragStart()
                 Snapshot.withMutableSnapshot {
@@ -1146,15 +1169,15 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                     ShellState.hudDragging = true
                 }
             }
-            .onPointerEvent(PointerEventType.Move) { event ->
-                val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
+            .safePointerEvent(PointerEventType.Move) { event ->
+                val pos = event.changes.firstOrNull()?.position ?: return@safePointerEvent
                 if (isDragging) {
                     if (event.changes.none { it.pressed }) {
                         endDrag()
-                        return@onPointerEvent
+                        return@safePointerEvent
                     }
                     val s = Platform.screen().screenToMcScale()
-                    val hit = draggedHud ?: return@onPointerEvent
+                    val hit = draggedHud ?: return@safePointerEvent
                     val rawX = pos.x * s - dragOffsetX
                     val rawY = pos.y * s - dragOffsetY
                     val bounds = hudBounds(hit)
@@ -1178,7 +1201,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                     if (hit !== hoveredHud) hoveredHud = hit
                 }
             }
-            .onPointerEvent(PointerEventType.Release) {
+            .safePointerEvent(PointerEventType.Release) {
                 if (isDragging) UiSounds.play(UiSoundEvent.HUD_DRAG_END)
                 endDrag()
             }
@@ -1268,11 +1291,11 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                 Box(
                     modifier = Modifier
                         .padding(start = settingsX.dp, top = iconY.dp)
-                        .onPointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
-                            if (event.changes.any { it.pressed }) return@onPointerEvent
+                        .safePointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
+                            if (event.changes.any { it.pressed }) return@safePointerEvent
                             event.changes.forEach { if (!it.isConsumed) it.consume() }
                         }
-                        .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+                        .safePointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
                             if (event.changes.none { it.isConsumed }) {
                                 event.changes.forEach { it.consume() }
                                 UiSounds.play(UiSoundEvent.HUD_SELECT)
@@ -1294,11 +1317,11 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                 Box(
                     modifier = Modifier
                         .padding(start = visibilityX.dp, top = iconY.dp)
-                        .onPointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
-                            if (event.changes.any { it.pressed }) return@onPointerEvent
+                        .safePointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
+                            if (event.changes.any { it.pressed }) return@safePointerEvent
                             event.changes.forEach { if (!it.isConsumed) it.consume() }
                         }
-                        .onPointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+                        .safePointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
                             if (event.changes.none { it.isConsumed }) {
                                 event.changes.forEach { it.consume() }
                                 UiSounds.play(UiSoundEvent.CLICK)
@@ -1482,12 +1505,15 @@ private fun HudLibraryPanel(
                     .verticalScroll(libraryScrollState)
                     .padding(end = 8.dp),
             ) {
-                FlexibleLayout(
-                    horizontalSpacing = 10.dp,
-                    verticalSpacing = 10.dp
-                ) {
-                    filteredProviders.forEach { hud ->
-                        HudPreviewCard(hud, onDragStart)
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                    val maxCardWidth = maxWidth
+                    FlexibleLayout(
+                        horizontalSpacing = 10.dp,
+                        verticalSpacing = 10.dp
+                    ) {
+                        filteredProviders.forEach { hud ->
+                            HudPreviewCard(hud, maxCardWidth, onDragStart)
+                        }
                     }
                 }
             }
@@ -1527,22 +1553,32 @@ private fun ModIconColumn(
 }
 
 private const val PREVIEW_SCALE = 2f
+private val PREVIEW_CARD_PADDING = 12.dp
+private val PREVIEW_MAX_CARD_HEIGHT = 160.dp
+
+private fun previewScaleFor(naturalW: Float, naturalH: Float, maxCardWidth: Dp, density: Float): Float {
+    if (naturalW <= 0f || naturalH <= 0f) return PREVIEW_SCALE
+    val availableW = (maxCardWidth - PREVIEW_CARD_PADDING * 2).value.coerceAtLeast(0f)
+    val availableH = (PREVIEW_MAX_CARD_HEIGHT - PREVIEW_CARD_PADDING * 2).value
+    return minOf(PREVIEW_SCALE, availableW * density / naturalW, availableH * density / naturalH)
+        .coerceAtLeast(0.05f)
+}
 
 @Composable
-private fun HudPreviewCard(hud: Hud, onDragStart: (Hud, Float, Float, Float, Float) -> Unit) {
+private fun HudPreviewCard(hud: Hud, maxCardWidth: Dp, onDragStart: (Hud, Float, Float, Float, Float) -> Unit) {
     // Legacy HUDs have no Compose content tree, so render a sized, titled placeholder tile
     // instead of an empty (zero-size, invisible) preview. The placed instance still renders
     // for real through LegacyHudRenderer once dragged onto the canvas.
     if (hud is LegacyHud) {
-        LegacyHudPreviewCard(hud, onDragStart)
+        LegacyHudPreviewCard(hud, maxCardWidth, onDragStart)
     } else {
-        ComposeHudPreviewCard(hud, onDragStart)
+        ComposeHudPreviewCard(hud, maxCardWidth, onDragStart)
     }
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun LegacyHudPreviewCard(hud: Hud, onDragStart: (Hud, Float, Float, Float, Float) -> Unit) {
+private fun LegacyHudPreviewCard(hud: Hud, maxCardWidth: Dp, onDragStart: (Hud, Float, Float, Float, Float) -> Unit) {
     val (naturalW, naturalH) = hud.minimumSize()
     if (naturalW <= 0f || naturalH <= 0f) return
     val density = LocalDensity.current.density
@@ -1556,46 +1592,49 @@ private fun LegacyHudPreviewCard(hud: Hud, onDragStart: (Hud, Float, Float, Floa
     var pressPos by remember { mutableStateOf<Offset?>(null) }
     var dragStarted by remember { mutableStateOf(false) }
 
-    val cardPadding = 12.dp
+    val cardPadding = PREVIEW_CARD_PADDING
     val minTile = 72.dp
-    val w = ((naturalW * PREVIEW_SCALE / density).dp + cardPadding * 2).coerceAtLeast(minTile)
-    val h = ((naturalH * PREVIEW_SCALE / density).dp + cardPadding * 2).coerceAtLeast(minTile)
+    val previewScale = previewScaleFor(naturalW, naturalH, maxCardWidth, density)
+    val w = ((naturalW * previewScale / density).dp + cardPadding * 2)
+        .coerceAtLeast(minTile)
+        .coerceAtMost(maxCardWidth)
+    val h = ((naturalH * previewScale / density).dp + cardPadding * 2).coerceAtLeast(minTile)
     Box(
         modifier = Modifier
             .size(w, h)
             .background(backgroundColor, theme.buttonShape)
             .border(1.dp, theme.borderColor, theme.buttonShape)
-            .onPointerEvent(PointerEventType.Enter) { isHovered = true }
-            .onPointerEvent(PointerEventType.Exit) {
+            .safePointerEvent(PointerEventType.Enter) { isHovered = true }
+            .safePointerEvent(PointerEventType.Exit) {
                 isHovered = false
                 if (!dragStarted) pressPos = null
             }
-            .onPointerEvent(PointerEventType.Press) { event ->
+            .safePointerEvent(PointerEventType.Press) { event ->
                 val pos = event.changes.firstOrNull()?.position
                 if (pos != null) {
                     pressPos = pos
                     dragStarted = false
                 }
             }
-            .onPointerEvent(PointerEventType.Move) { event ->
-                val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
-                val start = pressPos ?: return@onPointerEvent
+            .safePointerEvent(PointerEventType.Move) { event ->
+                val pos = event.changes.firstOrNull()?.position ?: return@safePointerEvent
+                val start = pressPos ?: return@safePointerEvent
                 if (!dragStarted && event.changes.any { it.pressed }) {
                     val dx = pos.x - start.x
                     val dy = pos.y - start.y
                     val dist = kotlin.math.sqrt(dx * dx + dy * dy)
                     if (dist > 8f) {
                         dragStarted = true
-                        val paddingPx = 12f * density
-                        val hudLocalX = ((start.x - paddingPx) / PREVIEW_SCALE).coerceAtLeast(0f)
-                        val hudLocalY = ((start.y - paddingPx) / PREVIEW_SCALE).coerceAtLeast(0f)
+                        val paddingPx = cardPadding.value * density
+                        val hudLocalX = ((start.x - paddingPx) / previewScale).coerceAtLeast(0f)
+                        val hudLocalY = ((start.y - paddingPx) / previewScale).coerceAtLeast(0f)
                         onDragStart(hud, pos.x, pos.y, hudLocalX, hudLocalY)
                         pressPos = null
                         isHovered = false
                     }
                 }
             }
-            .onPointerEvent(PointerEventType.Release) {
+            .safePointerEvent(PointerEventType.Release) {
                 pressPos = null
                 dragStarted = false
             }
@@ -1612,7 +1651,7 @@ private fun LegacyHudPreviewCard(hud: Hud, onDragStart: (Hud, Float, Float, Floa
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun ComposeHudPreviewCard(hud: Hud, onDragStart: (Hud, Float, Float, Float, Float) -> Unit) {
+private fun ComposeHudPreviewCard(hud: Hud, maxCardWidth: Dp, onDragStart: (Hud, Float, Float, Float, Float) -> Unit) {
     val previewRuntime = remember(hud) {
         hud.update()
         PolyComposeRuntime().also { rt -> rt.setContent { hud.Content() } }
@@ -1646,45 +1685,47 @@ private fun ComposeHudPreviewCard(hud: Hud, onDragStart: (Hud, Float, Float, Flo
     }
 
     if (naturalW > 0f && naturalH > 0f) {
-        val cardPadding = 12.dp
-        val w = (naturalW * PREVIEW_SCALE / density).dp + cardPadding * 2
-        val h = (naturalH * PREVIEW_SCALE / density).dp + cardPadding * 2
+        val cardPadding = PREVIEW_CARD_PADDING
+        val previewScale = previewScaleFor(naturalW, naturalH, maxCardWidth, density)
+        val w = ((naturalW * previewScale / density).dp + cardPadding * 2).coerceAtMost(maxCardWidth)
+        val h = (naturalH * previewScale / density).dp + cardPadding * 2
         Canvas(
             modifier = Modifier
                 .size(w, h)
                 .background(backgroundColor, theme.buttonShape)
                 .border(1.dp, theme.borderColor, theme.buttonShape)
-                .onPointerEvent(PointerEventType.Enter) { isHovered = true }
-                .onPointerEvent(PointerEventType.Exit) {
+                .clip(theme.buttonShape)
+                .safePointerEvent(PointerEventType.Enter) { isHovered = true }
+                .safePointerEvent(PointerEventType.Exit) {
                     isHovered = false
                     if (!dragStarted) pressPos = null
                 }
-                .onPointerEvent(PointerEventType.Press) { event ->
+                .safePointerEvent(PointerEventType.Press) { event ->
                     val pos = event.changes.firstOrNull()?.position
                     if (pos != null) {
                         pressPos = pos
                         dragStarted = false
                     }
                 }
-                .onPointerEvent(PointerEventType.Move) { event ->
-                    val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
-                    val start = pressPos ?: return@onPointerEvent
+                .safePointerEvent(PointerEventType.Move) { event ->
+                    val pos = event.changes.firstOrNull()?.position ?: return@safePointerEvent
+                    val start = pressPos ?: return@safePointerEvent
                     if (!dragStarted && event.changes.any { it.pressed }) {
                         val dx = pos.x - start.x
                         val dy = pos.y - start.y
                         val dist = kotlin.math.sqrt(dx * dx + dy * dy)
                         if (dist > 8f) {
                             dragStarted = true
-                            val paddingPx = 12f * density
-                            val hudLocalX = ((start.x - paddingPx) / PREVIEW_SCALE).coerceAtLeast(0f)
-                            val hudLocalY = ((start.y - paddingPx) / PREVIEW_SCALE).coerceAtLeast(0f)
+                            val paddingPx = cardPadding.value * density
+                            val hudLocalX = ((start.x - paddingPx) / previewScale).coerceAtLeast(0f)
+                            val hudLocalY = ((start.y - paddingPx) / previewScale).coerceAtLeast(0f)
                             onDragStart(hud, pos.x, pos.y, hudLocalX, hudLocalY)
                             pressPos = null
                             isHovered = false
                         }
                     }
                 }
-                .onPointerEvent(PointerEventType.Release) {
+                .safePointerEvent(PointerEventType.Release) {
                     pressPos = null
                     dragStarted = false
                 }
@@ -1693,7 +1734,8 @@ private fun ComposeHudPreviewCard(hud: Hud, onDragStart: (Hud, Float, Float, Flo
             drawIntoCanvas { canvas ->
                 val root = previewRuntime.root
                 canvas.skiaCanvas.save()
-                canvas.skiaCanvas.scale(PREVIEW_SCALE, PREVIEW_SCALE)
+                canvas.skiaCanvas.clipRect(org.jetbrains.skia.Rect.makeWH(size.width, size.height))
+                canvas.skiaCanvas.scale(previewScale, previewScale)
                 root.render(RenderContext(canvas.skiaCanvas))
                 canvas.skiaCanvas.restore()
             }
