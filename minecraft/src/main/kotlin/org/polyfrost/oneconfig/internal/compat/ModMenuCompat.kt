@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.compat
 //? modmenu_compat {
 import com.terraformersmc.modmenu.ModMenu
 import com.terraformersmc.modmenu.util.mod.Mod
+import net.minecraft.client.gui.screens.Screen
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend
@@ -18,8 +19,15 @@ object ModMenuCompat {
 
     val mods: MutableList<Mod> = mutableListOf()
 
+    private val ownModIds = setOf(
+        ModMenuEntrypoint.BOOTSTRAP_MOD_ID,
+        ModMenuEntrypoint.PLATFORM_MOD_ID,
+        "oneconfig",
+    )
+
     fun preLoad() = CompatLoader.requireTranslations(-1000, true) {
         ModMenu.ROOT_MODS.forEach { (_, mod) ->
+            if (mod.id in ownModIds) return@forEach
             // Only record which mods expose a config screen; do NOT build the screen here.
             // getConfigScreen() instantiates the screen's widget tree (e.g. Cloth EditBox), which
             // lazily bakes font glyphs. preLoad runs inside the ResourceFinishedLoading event —
@@ -61,7 +69,11 @@ object ModMenuCompat {
                 }
                 modMenuTree.addMetadata("on_click") {
                     val foreignScreen = runCatching {
-                        ModMenu.getConfigScreen(mod.id, Platform.screen().current())
+                        var screen: Screen? = null
+                        CompatLoader.withForcedModId(mod.id) {
+                            screen = ModMenu.getConfigScreen(mod.id, Platform.screen().current())
+                        }
+                        screen
                     }.getOrNull()
 
                     val nativeTree = runCatching { ConfigManager.active().get(mod.id) }.getOrNull()
@@ -82,6 +94,7 @@ object ModMenuCompat {
                 }
                 // Listed in the mods menu and opened via Mod Menu only — never persisted by OneConfig.
                 modMenuTree.addMetadata(Backend.UI_ONLY_METADATA, true)
+                modMenuTree.addMetadata(Backend.UI_PLACEHOLDER_METADATA, true)
 
                 ConfigManager.active().register(modMenuTree)
                 CompatLoader.markFirstModAsSkip()

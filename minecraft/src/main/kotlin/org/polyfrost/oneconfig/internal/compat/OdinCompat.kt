@@ -80,6 +80,7 @@ private class OdinHudWrapper(private val setting: HUDSetting) : OneConfigHudWrap
 
     override var id: String = buildId(setting)
     override var name: String = setting.name
+    override val modId: String = "odin"
 
     override var x: Float
         get() = element.x / guiScale
@@ -92,6 +93,10 @@ private class OdinHudWrapper(private val setting: HUDSetting) : OneConfigHudWrap
     override var scale: Float
         get() = element.scale
         set(value) { element.scale = value }
+
+    override var hidden: Boolean
+        get() = !element.enabled
+        set(value) { element.enabled = !value }
 
     override var scaledWidth: Float
         get() = if (setting.isEnabled) element.width * element.scale / guiScale else 0f

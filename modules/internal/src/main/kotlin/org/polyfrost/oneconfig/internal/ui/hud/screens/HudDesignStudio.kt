@@ -94,8 +94,10 @@ import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.runtime.PolyComposeRuntime
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
+import org.polyfrost.oneconfig.api.hud.v1.HudResize
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker as LegacyHud
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
@@ -311,6 +313,7 @@ private fun hitTestHudWithActionBar(
 }
 
 private fun hitTestResizeHandle(hud: Hud, screenX: Float, screenY: Float, mcToScreen: Float): ResizeCorner? {
+    if (hud.resizeAxes == HudResize.None) return null
     val bounds = hudBounds(hud) ?: return null
     val sx = bounds.x * mcToScreen
     val sy = bounds.y * mcToScreen
@@ -346,6 +349,11 @@ private fun resizeHud(
     val anchorY = if (corner.isTop) startBounds.y + startBounds.height else startBounds.y
     val targetWidth = (if (corner.isLeft) anchorX - mouseX else mouseX - anchorX).coerceAtLeast(1f)
     val targetHeight = (if (corner.isTop) anchorY - mouseY else mouseY - anchorY).coerceAtLeast(1f)
+
+    if (hud.resizeAxes == HudResize.Width) {
+        hud.applyEditorWidth(targetWidth)
+        return
+    }
 
     if (hud is LegacyHud) {
         val cornerVecX = if (corner.isLeft) -startBounds.width else startBounds.width
@@ -590,6 +598,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             val hit = orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }
             if (hit != null) UiSounds.play(UiSoundEvent.HUD_DRAG_START)
             if (hit != null) event.changes.forEach { it.consume() }
+            hit?.onEditorDragStart()
             Snapshot.withMutableSnapshot {
                 if (hit != null) {
                     dragOffsetX = pos.x * s - hit.x
@@ -635,11 +644,13 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 }
             } else if (isDragging) {
                 if (event.changes.none { it.pressed }) {
+                    val dropped = draggedHud
                     Snapshot.withMutableSnapshot {
                         isDragging = false
                         draggedHud = null
                         snapGuides = SnapGuides.NONE
                     }
+                    dropped?.onEditorDragEnd()
                     return@onPointerEvent
                 }
                 val s = Platform.screen().screenToMcScale()
@@ -705,6 +716,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 draggedHud = null
                 snapGuides = SnapGuides.NONE
             }
+            if (wasDragging) wasDraggedHud?.onEditorDragEnd()
             if (!wasDragging || wasDraggedHud == null) {
                 val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
                 if (inChrome(pos.x, pos.y)) return@onPointerEvent
@@ -835,7 +847,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     }
                     for (hud in HudManager.activeInstances) {
                         val bounds = hudBounds(hud) ?: continue
-                        val resizable = true
+                        val resizable = hud.resizeAxes != HudResize.None
                         val sx = bounds.x * mcToScreen
                         val sy = bounds.y * mcToScreen
                         val sw = bounds.width * mcToScreen
@@ -1092,12 +1104,14 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
     val actionBarGapPx = with(densityObj) { 8.dp.toPx() }
 
     fun endDrag() {
+        val dropped = if (isDragging) draggedHud else null
         Snapshot.withMutableSnapshot {
             isDragging = false
             draggedHud = null
             snapGuides = SnapGuides.NONE
             ShellState.hudDragging = false
         }
+        dropped?.onEditorDragEnd()
     }
 
     fun overShell(px: Float, py: Float) = ShellState.shellBounds?.contains(Offset(px, py)) == true
@@ -1122,6 +1136,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                 val hit = orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }
                     ?: return@onPointerEvent
                 UiSounds.play(UiSoundEvent.HUD_DRAG_START)
+                hit.onEditorDragStart()
                 Snapshot.withMutableSnapshot {
                     dragOffsetX = pos.x * s - hit.x
                     dragOffsetY = pos.y * s - hit.y
@@ -1309,6 +1324,15 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
     }
 }
 
+private fun modNameFor(configId: String): String? {
+    val modId = configId.removeSuffix(".json").substringBefore('/')
+    ModInfo.loadedMods.firstOrNull { it.id == modId }?.name?.let { return it }
+    val config = ConfigRegistry.findById(configId)
+        ?: ConfigRegistry.findById("$configId.json")
+        ?: ConfigRegistry.configs.firstOrNull { it.id.removeSuffix(".json") == modId }
+    return config?.title?.toString()
+}
+
 @Composable
 private fun DesignStudioPanel(
     selectedHud: Hud?,
@@ -1320,6 +1344,13 @@ private fun DesignStudioPanel(
     val theme = LocalTheme.current
     val isLegacy = selectedHud is LegacyHud
     val categories = if (isLegacy) listOf(StudioCategory.Settings) else StudioCategory.entries
+    val subtitle = remember(selectedHud) {
+        selectedHud?.let { hud ->
+            val name = hud.title ?: return@let null
+            val modName = hud.configId?.let(::modNameFor)
+            if (modName != null) "$name / $modName" else name
+        }
+    }
     LaunchedEffect(isLegacy) {
         if (isLegacy && activeCategory != StudioCategory.Settings) onCategoryChange(StudioCategory.Settings)
     }
@@ -1364,7 +1395,12 @@ private fun DesignStudioPanel(
                         color = theme.textColor.copy(0.5f),
                         modifier = Modifier.size(18.dp),
                     )
-                    Text("HUD Design Studio", color = theme.textColor, fontSize = 24.sp)
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text("HUD Design Studio", color = theme.textColor, fontSize = 24.sp)
+                        subtitle?.let {
+                            Text(it, color = theme.textColor.copy(0.5f), fontSize = 14.sp)
+                        }
+                    }
                 }
                 if (categories.size > 1) {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {

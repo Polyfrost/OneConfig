@@ -119,6 +119,8 @@ object SkyCubedCompat {
     }.onFailure { LOGGER.warn("Failed to read SkyCubed overlays from the meowdding registry", it) }
         .getOrDefault(emptyList())
 
+    fun configId(): String? = rootConfig?.id()
+
     private fun resolveConfig() {
         val root = RConfigCompat.registeredConfigs().firstOrNull { it.id().contains("skycubed", ignoreCase = true) }
         rootConfig = root
@@ -160,6 +162,8 @@ class SkyCubedHudWrapper(private val overlay: Overlay) : OneConfigHudWrapper {
 
     override var name: String = overlay.name.string
 
+    override val modId: String? get() = SkyCubedCompat.configId()
+
     override var x: Float
         get() = overlay.position.component1().toFloat()
         set(value) { overlay.setX(value.toInt()) }
@@ -171,6 +175,10 @@ class SkyCubedHudWrapper(private val overlay: Overlay) : OneConfigHudWrapper {
     override var scale: Float
         get() = overlay.position.scale
         set(value) { overlay.setScale(value) }
+
+    override var hidden: Boolean
+        get() = enabledProperty?.get() == false
+        set(value) { enabledProperty?.set(!value) }
 
     override var scaledWidth: Float
         get() {
@@ -188,6 +196,10 @@ class SkyCubedHudWrapper(private val overlay: Overlay) : OneConfigHudWrapper {
         }
         set(_) {}
 
-    override fun linkedProperties(): List<Property<*>> = SkyCubedCompat.buildSettings(overlay)
+    private val cachedProperties: List<Property<*>> by lazy { SkyCubedCompat.buildSettings(overlay) }
+
+    private val enabledProperty: Property<Boolean>? by lazy { CompatHudToggle.find(cachedProperties) }
+
+    override fun linkedProperties(): List<Property<*>> = cachedProperties
 }
 //? }

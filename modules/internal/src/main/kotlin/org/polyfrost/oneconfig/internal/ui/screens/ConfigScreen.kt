@@ -419,11 +419,11 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
             ) {
                 if (node.head != null) {
                     var headChecked by remember(node) { mutableStateOf(node.head.get() == true) }
-                    LaunchedEffect(headChecked) {
-                        node.head.set(headChecked)
-                        expanded = headChecked
+                    SwitchControl(headChecked) {
+                        headChecked = it
+                        node.head.set(it)
+                        expanded = it
                     }
-                    SwitchControl(headChecked) { headChecked = it }
                 }
                 Icon(
                     "up",

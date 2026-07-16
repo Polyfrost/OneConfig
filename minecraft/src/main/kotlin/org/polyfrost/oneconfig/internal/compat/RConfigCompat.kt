@@ -36,6 +36,8 @@ import java.util.*
 
 internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/RconfigCompat") {
 
+    const val RCONFIG_ID = "rconfig_id"
+
     private val registeredConfigs = LinkedHashMap<String, ResourcefulConfig>()
 
     @JvmStatic
@@ -78,7 +80,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         //? >= 1.21.8 {
         parseAny(config.elements(), tree)
         //? } else {
-        /*parseAny(config.entries().values, tree)
+        /*parseAny(config.entries(), tree)
         parseButtons(config.buttons(), tree)
         *///? }
 
@@ -111,7 +113,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         //? >= 1.21.8 {
         parseAny(config.elements(), tree)
         //? } else {
-        /*parseAny(config.entries().values, tree)
+        /*parseAny(config.entries(), tree)
         parseButtons(config.buttons(), tree)
         *///? }
 
@@ -141,10 +143,10 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         }
     }
 
-    private fun parseAny(entry: ResourcefulConfigEntryElement, tree: Tree) {
-        when (val entry = entry.entry()) {
+    private fun parseAny(element: ResourcefulConfigEntryElement, tree: Tree) {
+        when (val entry = element.entry()) {
             is ResourcefulConfigObjectEntry -> parseObject(entry, tree)
-            is ResourcefulConfigValueEntry -> buildAndAdd(entry, tree)
+            is ResourcefulConfigValueEntry -> buildAndAdd(entry, element.id(), tree)
         }
     }
 
@@ -172,10 +174,10 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         tree.put(objectEntry)
     }
     //? } else {
-    /*private fun parseAny(list: Iterable<ResourcefulConfigEntry>, tree: Tree) = list.forEach {
-        when (it) {
-            is ResourcefulConfigObjectEntry -> parseObject(it, tree)
-            is ResourcefulConfigValueEntry -> buildAndAdd(it, tree)
+    /*private fun parseAny(entries: Map<String, ResourcefulConfigEntry>, tree: Tree) = entries.forEach { (id, entry) ->
+        when (entry) {
+            is ResourcefulConfigObjectEntry -> parseObject(entry, tree)
+            is ResourcefulConfigValueEntry -> buildAndAdd(entry, id, tree)
         }
     }
 
@@ -191,7 +193,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         objectEntry.category = tree.category
         objectEntry.subcategory = entry.options().title.toLocalizedString()
         objectEntry.index = -1
-        parseAny(entry.entries().values, objectEntry)
+        parseAny(entry.entries(), objectEntry)
         tree.put(objectEntry)
     }
     *///? }
@@ -202,7 +204,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         //? >= 1.21.8 {
         parseAny(entry.elements(), tmp)
         //? } else {
-        /*parseAny(entry.entries().values, tmp)
+        /*parseAny(entry.entries(), tmp)
         *///? }
         val out = ArrayList<Property<*>>()
         collectProperties(tmp, out)
@@ -218,8 +220,8 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         }
     }
 
-    private fun buildAndAdd(entry: ResourcefulConfigValueEntry, tree: Tree) {
-        val builder = RConfigPropertyBuilder(entry)
+    private fun buildAndAdd(entry: ResourcefulConfigValueEntry, id: String, tree: Tree) {
+        val builder = RConfigPropertyBuilder(entry, id)
         val options = entry.options()
 
         if (entry.isArray) {
@@ -327,7 +329,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         *///? }
     }
 
-    private class RConfigPropertyBuilder constructor(option: ResourcefulConfigValueEntry) {
+    private class RConfigPropertyBuilder constructor(option: ResourcefulConfigValueEntry, val sourceId: String) {
         //? >= 1.21.8 {
         val name = option.options().title.toComponent()
         val description = option.options().comment.toComponent()
@@ -368,6 +370,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
             description = description,
             id = UUID.randomUUID().toString()
         ).apply {
+            addMetadata(RCONFIG_ID, sourceId)
             defaultValue?.let { addMetadata("default", it) }
             this@RConfigPropertyBuilder.metadata.entries.forEach { (key, value) -> addMetadata(key, value) }
         }

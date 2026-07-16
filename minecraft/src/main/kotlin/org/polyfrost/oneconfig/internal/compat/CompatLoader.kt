@@ -33,7 +33,14 @@ object CompatLoader {
         "moe.nea.firmament.deps.moulconfig",
         "dev.tr7zw.trender",
         "dev.tr7zw.transition",
-        "kotlin"
+        "kotlin",
+        "kotlinx",
+        "androidx.compose",
+        "org.jetbrains.compose",
+        "org.jetbrains.skia",
+        "org.jetbrains.skiko",
+        "org.polyfrost.compose",
+        "org.polyfrost.polyui"
     )
 
     fun findFirstMod(): ModInfo? {

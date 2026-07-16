@@ -289,6 +289,8 @@ private class SkyHanniHudWrapper(private val internalName: String) : OneConfigHu
 
     override var name: String = internalName
 
+    override val modId: String = "skyhanni"
+
     override var x: Float
         get() = position?.let { SkyHanniHudCompat.absX(it).toFloat() } ?: 0f
         set(value) = move(value, horizontal = true)
@@ -338,6 +340,12 @@ private class SkyHanniHudWrapper(private val internalName: String) : OneConfigHu
     private val cachedProperties: List<Property<*>> by lazy {
         SkyHanniHudCompat.buildSettings(internalName, name)
     }
+
+    private val enabledProperty: Property<Boolean>? by lazy { CompatHudToggle.find(cachedProperties) }
+
+    override var hidden: Boolean
+        get() = enabledProperty?.get() == false
+        set(value) { enabledProperty?.set(!value) }
 
     override fun linkedProperties(): List<Property<*>> = cachedProperties
 }

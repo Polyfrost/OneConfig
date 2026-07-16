@@ -329,6 +329,7 @@ object FirmamentHudCompat {
 
         override var id: String = (call(initialHudMeta, "getHudId")?.toString() ?: "firmament:hud")
         override var name: String = resolveLabel(call(initialHudMeta, "getLabel")) ?: id
+        override val modId: String = "firmament"
 
         private fun capturedBox(): FloatArray? = capturedBounds[id]
 
@@ -367,6 +368,12 @@ object FirmamentHudCompat {
         private val cachedProperties: List<Property<*>> by lazy {
             buildLinkedProperties(hudMetaOption, owningConfigOptions, name)
         }
+
+        private val enabledProperty: Property<Boolean>? by lazy { CompatHudToggle.find(cachedProperties) }
+
+        override var hidden: Boolean
+            get() = enabledProperty?.get() == false
+            set(value) { enabledProperty?.set(!value) }
 
         override fun linkedProperties(): List<Property<*>> = cachedProperties
 

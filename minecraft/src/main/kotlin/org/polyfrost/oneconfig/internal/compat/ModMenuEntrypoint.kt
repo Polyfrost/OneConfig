@@ -21,7 +21,9 @@ internal object ModMenuEntrypoint : ModMenuApi {
         return factories
     }
 
-    private const val BOOTSTRAP_MOD_ID = "oneconfigbootstrap"
+    internal const val BOOTSTRAP_MOD_ID = "oneconfigbootstrap"
+
+    internal const val PLATFORM_MOD_ID = "oneconfigv1"
 
 }
 //? }

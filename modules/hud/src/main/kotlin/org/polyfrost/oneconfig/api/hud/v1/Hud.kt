@@ -43,6 +43,7 @@ import org.polyfrost.oneconfig.api.config.v1.Properties.simple
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
+import org.polyfrost.oneconfig.api.config.v1.backend.Backend
 import org.polyfrost.oneconfig.api.hud.v1.HudManager.LOGGER
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 
@@ -178,6 +179,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
      */
     fun capturePositionDefaults() {
         val t = tree ?: return
+        if (!persistOwnState) return
         val (dx, dy) = defaultPosition()
         val curSection = section
         val curX = relativeX
@@ -306,8 +308,22 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         updateRelativeY(absY)
     }
 
+    open fun onEditorDragStart() {}
+
+    open fun onEditorDragEnd() {}
+
     private var _hidden: MutableState<Boolean> = mutableStateOf(false)
-    var hidden: Boolean get() = _hidden.value; set(v) { _hidden.value = v }
+    open var hidden: Boolean get() = _hidden.value; set(v) { _hidden.value = v }
+
+    internal open val persistOwnState: Boolean get() = true
+
+    open val resizeAxes: HudResize get() = HudResize.Both
+
+    @ApiStatus.Internal
+    open fun applyEditorWidth(width: Float) {
+        staticWidth = true
+        staticW = width
+    }
 
     private var _alignment: MutableState<PolyAlign> = mutableStateOf(PolyAlign.Center)
     var alignment: PolyAlign get() = _alignment.value; set(v) { _alignment.value = v }
@@ -452,11 +468,14 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             tree.title = title
             tree.addMetadata("category", category)
             tree.addMetadata("hidden", true)
+            if (!out.persistOwnState) tree.addMetadata(Backend.UI_ONLY_METADATA, true)
             val hideFromConfigUi = { Property.Display.HIDDEN }
-            tree["hidden"] = ktProperty(out::hidden).apply { addDisplayCondition(hideFromConfigUi) }
-            tree["section"] = ktProperty(out::section).apply { addDisplayCondition(hideFromConfigUi) }
-            tree["relativeX"] = ktProperty(out::relativeX).apply { addDisplayCondition(hideFromConfigUi) }
-            tree["relativeY"] = ktProperty(out::relativeY).apply { addDisplayCondition(hideFromConfigUi) }
+            if (out.persistOwnState) {
+                tree["hidden"] = ktProperty(out::hidden).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["section"] = ktProperty(out::section).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["relativeX"] = ktProperty(out::relativeX).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["relativeY"] = ktProperty(out::relativeY).apply { addDisplayCondition(hideFromConfigUi) }
+            }
             tree["toggleKey"] = ktProperty(out::toggleKey).apply { addDisplayCondition(hideFromConfigUi) }
             tree["showKey"] = ktProperty(out::showKey).apply { addDisplayCondition(hideFromConfigUi) }
             tree["alignment"] = ktProperty(out::alignment).apply { addDisplayCondition(hideFromConfigUi) }
@@ -468,8 +487,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
                 description = "Keeps this HUD at a fixed width and height. This also enables content alignment inside the HUD box."
                 addDisplayCondition(hideFromConfigUi)
             }
-            tree["staticW"] = ktProperty(out::staticW).apply { addDisplayCondition(hideFromConfigUi) }
-            tree["staticH"] = ktProperty(out::staticH).apply { addDisplayCondition(hideFromConfigUi) }
+            if (out.persistOwnState) {
+                tree["staticW"] = ktProperty(out::staticW).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["staticH"] = ktProperty(out::staticH).apply { addDisplayCondition(hideFromConfigUi) }
+            }
             tree["font"] = ktProperty(out::font).apply { addDisplayCondition(hideFromConfigUi) }
             tree["caseType"] = ktProperty(out::caseType).apply { addDisplayCondition(hideFromConfigUi) }
             tree["textScale"] = ktProperty(out::textScale).apply { addDisplayCondition(hideFromConfigUi) }
@@ -482,7 +503,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
                 description = "Uses Minecraft's current GUI scale for this HUD. Turn this off to use a custom HUD scale."
                 addDisplayCondition(hideFromConfigUi)
             }
-            tree["customScale"] = ktProperty(out::customScale).apply { addDisplayCondition(hideFromConfigUi) }
+            if (out.persistOwnState) {
+                tree["customScale"] = ktProperty(out::customScale).apply { addDisplayCondition(hideFromConfigUi) }
+            }
             tree["showBackground"] = ktProperty(out::showBackground).apply { addDisplayCondition(hideFromConfigUi) }
             tree["bgColor"] = ktProperty(out::bgColor).apply { addDisplayCondition(hideFromConfigUi) }
             tree["bgChroma"] = ktProperty(out::bgChroma).apply { addDisplayCondition(hideFromConfigUi) }

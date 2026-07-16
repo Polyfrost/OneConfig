@@ -174,6 +174,8 @@ private class SkyblockerWidgetWrapper(private val widget: HudWidget) : OneConfig
 
     override var name: String = SkyblockerWidgetCompat.displayName(widget)
 
+    override val modId: String = "skyblocker"
+
     override var x: Float
         get() = widget.x * SkyblockerWidgetCompat.tabHudScale()
         set(value) = move(value, null)
@@ -188,6 +190,14 @@ private class SkyblockerWidgetWrapper(private val widget: HudWidget) : OneConfig
         set(_) {}
 
     override val supportsScale: Boolean get() = false
+
+    override var hidden: Boolean
+        get() = if (widget.availableLocations().isEmpty()) false
+        else runCatching { !widget.isEnabledIn(Utils.getLocation()) }.getOrDefault(false)
+        set(value) {
+            if (widget.availableLocations().isEmpty()) return
+            runCatching { widget.setEnabledIn(Utils.getLocation(), !value) }
+        }
 
     override var scaledWidth: Float
         get() = if (!SkyblockerWidgetCompat.isOnHud(widget)) 0f else widget.width * SkyblockerWidgetCompat.tabHudScale()

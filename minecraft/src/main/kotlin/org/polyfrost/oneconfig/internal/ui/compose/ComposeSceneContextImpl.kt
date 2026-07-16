@@ -8,12 +8,18 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.PointerKeyboardModifiers
 import androidx.compose.ui.platform.PlatformContext
 import androidx.compose.ui.platform.PlatformScreenReader
+//? if >= 26.1
+import androidx.compose.ui.platform.PlatformTextInputMethodRequest
 import androidx.compose.ui.platform.WindowInfo
 import androidx.compose.ui.scene.ComposeSceneContext
 import androidx.compose.ui.unit.IntSize
+//? if >= 26.1
+import kotlinx.coroutines.awaitCancellation
 import net.minecraft.client.Minecraft
 import org.lwjgl.glfw.GLFW.*
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+//? if >= 26.1
+import java.util.concurrent.atomic.AtomicInteger
 
 private class InputModeManagerImpl : InputModeManager {
     override val inputMode: InputMode = InputMode.Keyboard
@@ -91,6 +97,27 @@ private class PlatformImpl : PlatformContext {
         glfwFocusWindow(handle)
         return Minecraft.getInstance().isWindowActive
     }
+
+    //? if >= 26.1 {
+    private val textInputSessions = AtomicInteger()
+
+    override suspend fun startInputMethod(request: PlatformTextInputMethodRequest): Nothing {
+        textInputSessions.incrementAndGet()
+        onClientThread { it.startTextInput() }
+        try {
+            awaitCancellation()
+        } finally {
+            if (textInputSessions.decrementAndGet() == 0) {
+                onClientThread { it.stopTextInput() }
+            }
+        }
+    }
+
+    private fun onClientThread(block: (com.mojang.blaze3d.platform.TextInputManager) -> Unit) {
+        val mc = Minecraft.getInstance()
+        mc.execute { block(mc.textInputManager()) }
+    }
+    //?}
 
     private fun allowCursorChanges(): Boolean {
         //? if >= 1.21.10 {
