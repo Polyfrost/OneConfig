@@ -245,6 +245,7 @@ private fun horizontalSnapLines(dragged: Hud): List<Float> {
 private fun hudBounds(hud: Hud): HudBounds? {
     val scale = hud.effectiveScale
     if (hud is LegacyHud) {
+        if (!HudManager.inWorld) return null
         val (minW, minH) = hud.minimumSize()
         val width = minW.takeIf { it > 0f }?.times(scale)
             ?: hud.renderedW.takeIf { it > 0f }

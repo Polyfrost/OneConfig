@@ -89,6 +89,14 @@ class HudEditorUIScreen : ComposeScreen() {
             Platform.screen().close()
             return
         }
+        HudManager.inWorld = client.level != null
+        if (client.level == null) {
+            val sw = ctx.guiWidth().toFloat()
+            val sh = ctx.guiHeight().toFloat()
+            HudManager.guiScreenWidth = sw
+            HudManager.guiScreenHeight = sh
+            HudManager.prepare(sw, sh)
+        }
         //~ if >= 26.1 'render' -> 'extractRenderState'
         super.extractRenderState(ctx, mouseX, mouseY, tickDelta)
     }

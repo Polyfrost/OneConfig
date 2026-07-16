@@ -171,6 +171,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/hud/v1/HudManager;
 	public static field guiScreenHeight F
 	public static field guiScreenWidth F
+	public static field inWorld Z
 	public static field isConfigUiOpen Z
 	public static field isDebugScreenVisible Z
 	public static field isGuiScreenOpen Z
@@ -188,6 +189,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static final fun markProviderKnown (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)V
 	public final fun onEditorScreenRemoved ()V
 	public final fun openEditor ()V
+	public final fun prepare (FF)V
 	public final fun providers ()Ljava/util/Collection;
 	public static final fun register (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)V
 	public static final fun register (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;)V

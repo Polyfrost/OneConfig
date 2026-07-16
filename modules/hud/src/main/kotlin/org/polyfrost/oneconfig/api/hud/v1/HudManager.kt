@@ -29,6 +29,7 @@ package org.polyfrost.oneconfig.api.hud.v1
 import androidx.compose.runtime.snapshots.Snapshot
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
+import org.polyfrost.compose.node.RootNode
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
@@ -70,6 +71,9 @@ object HudManager {
     @Volatile @JvmField var isGuiScreenOpen: Boolean = false
 
     @Volatile @JvmField var overrideShowInScreens: Boolean = false
+
+    @ApiStatus.Internal
+    @Volatile @JvmField var inWorld: Boolean = true
 
     @ApiStatus.Internal
     @Volatile @JvmField var pendingSelection: Hud? = null
@@ -266,6 +270,33 @@ object HudManager {
         return list.indices.sortedBy { depth[it] }.map { list[it] }
     }
 
+    private fun layout(hud: Hud, screenWidth: Float, screenHeight: Float, scale: Float): RootNode {
+        hud.update()
+        val hudScale = hud.effectiveScale
+        val rt = hud.runtime
+        rt.frame(screenWidth / scale / hudScale, screenHeight / scale / hudScale)
+        val root = rt.root
+        Snapshot.withMutableSnapshot {
+            hud.renderedW = root.width * hudScale
+            hud.renderedH = root.height * hudScale
+        }
+        return root
+    }
+
+    @ApiStatus.Internal
+    fun prepare(screenWidth: Float, screenHeight: Float) {
+        val scale = Platform.compatibility().options().guiScale
+        Snapshot.sendApplyNotifications()
+        for (hud in activeInstances) {
+            if (hud is LegacyHudMarker) continue
+            try {
+                layout(hud, screenWidth, screenHeight, scale)
+            } catch (e: Throwable) {
+                LOGGER.error("Failed to lay out HUD ${hud.title}", e)
+            }
+        }
+    }
+
     @ApiStatus.Internal
     fun render(ctx: RenderContext, screenWidth: Float, screenHeight: Float) {
         val scale = Platform.compatibility().options().guiScale
@@ -282,16 +313,8 @@ object HudManager {
             if (isTabListVisible && !hud.showInTab) continue
             if (isGuiScreenOpen && !hud.showInScreens && !overrideShowInScreens) continue
 
-            hud.update()
-
             val hudScale = hud.effectiveScale
-            val rt = hud.runtime
-            rt.frame(screenWidth / scale / hudScale, screenHeight / scale / hudScale)
-            val root = rt.root
-            Snapshot.withMutableSnapshot {
-                hud.renderedW = root.width * hudScale
-                hud.renderedH = root.height * hudScale
-            }
+            val root = layout(hud, screenWidth, screenHeight, scale)
             ctx.save()
             ctx.translate(hud.x, hud.y)
             if (hudScale != 1f) ctx.scale(hudScale, hudScale)
