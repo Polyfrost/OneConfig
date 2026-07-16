@@ -31,4 +31,6 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.Internal
 public interface HypixelApiInternals {
     void postLocationEvent();
+
+    boolean isOnHypixel();
 }

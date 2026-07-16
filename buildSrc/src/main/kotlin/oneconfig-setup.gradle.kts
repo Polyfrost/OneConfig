@@ -248,8 +248,23 @@ dependencies {
     handleApiDep(versionedCatalog["snakeyaml"])
     handleApiDep(versionedCatalog["isolated-lwjgl3-loader"]) //todo check if needed
     handleApiDep(versionedCatalog["java-objc-bridge"])
-    handleApiDep(versionedCatalog["hypixel-modapi"])
+    val hypixelModApiVersion = if (stonecutter.eval(stonecutter.current.version, ">= 26.1")) "1.0.2" else "1.0.1"
+    handleApiDep("net.hypixel:mod-api:$hypixelModApiVersion")
     handleApiDep(versionedCatalog["hypixel-data"])
+
+    if (loader == "fabric") {
+        val hypixelFabricMod =
+            if (stonecutter.eval(stonecutter.current.version, ">= 26.1")) {
+                "maven.modrinth:hypixel-mod-api:1.0.2+build.1+mc26.1"
+            } else {
+                "maven.modrinth:hypixel-mod-api:1.0.1+build.1+mc1.21"
+            }
+        if (stonecutter.eval(stonecutter.current.version, ">= 26.1")) {
+            "implementation"(hypixelFabricMod) { isTransitive = false }
+        } else {
+            "modImplementation"(hypixelFabricMod) { isTransitive = false }
+        }
+    }
 
     handleApiDep(versionedCatalog["mixin-squared"])
     handleApiDep(versionedCatalog["commonmark"])
@@ -258,6 +273,19 @@ dependencies {
         handleApiDep(versionedCatalog["fabric-language-kotlin"], transitive = true)
         handleApiDep(versionedCatalog["fabric-loader"], isMod = true, transitive = true)
         handleApiDep(versionedCatalog.bundles["fabric-api"], true, transitive = true)
+
+        val fullFabricApiVersion = when {
+            stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "0.155.0+26.2"
+            stonecutter.eval(stonecutter.current.version, ">= 26.1") -> "0.155.0+26.1.2"
+            stonecutter.eval(stonecutter.current.version, ">= 1.21.11") -> "0.141.5+1.21.11"
+            stonecutter.eval(stonecutter.current.version, ">= 1.21.10") -> "0.138.4+1.21.10"
+            stonecutter.eval(stonecutter.current.version, ">= 1.21.8") -> "0.136.1+1.21.8"
+            stonecutter.eval(stonecutter.current.version, ">= 1.21.5") -> "0.128.2+1.21.5"
+            stonecutter.eval(stonecutter.current.version, ">= 1.21.4") -> "0.119.4+1.21.4"
+            else -> "0.116.14+1.21.1"
+        }
+        "modCompileOnly"("net.fabricmc.fabric-api:fabric-api:$fullFabricApiVersion")
+        "modRuntimeOnly"("net.fabricmc.fabric-api:fabric-api:$fullFabricApiVersion")
     }
 
     val libsCatalog = rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs")

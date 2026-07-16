@@ -8,7 +8,7 @@ kotlinx-atomicfu = "0.29.0"
 fabric-language-kotlin = "1.13.8+kotlin.2.3.0"
 google-ksp = "2.3.10"
 annotations = "24.1.0"
-hypixel-modapi = "1.0.1"
+hypixel-modapi = "1.0.1" # modules/utils compile baseline only, the platform selects the runtime version per target
 hypixel-data = "0.2.0" # Dep of hypixel-modapi
 
 # Not in risk of needing to be relaunched / bumped by JiJ

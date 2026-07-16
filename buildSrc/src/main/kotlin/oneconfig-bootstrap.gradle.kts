@@ -20,6 +20,9 @@ repositories {
         content { includeGroupAndSubgroups("dev.deftu") }
     }
     maven("https://nexus.prsm.wtf/repository/maven-public/maven-repo/releases/")
+    maven("https://api.modrinth.com/maven") {
+        content { includeGroup("maven.modrinth") }
+    }
     maven("https://maven.fabricmc.net/") {
         content { includeGroupAndSubgroups("net.fabricmc") }
     }
@@ -89,8 +92,13 @@ afterEvaluate {
             group.startsWith("org.jetbrains.androidx")
     }
 
+    fun isHypixelProvidedElsewhere(group: String?, name: String) =
+        (group == "net.hypixel" && name == "mod-api") ||
+            (group == "maven.modrinth" && name == "hypixel-mod-api")
+
     fun includeExternal(dep: ExternalModuleDependency) {
         if (isExcluded(dep.group, dep.name)) return
+        if (isHypixelProvidedElsewhere(dep.group, dep.name)) return
         if (isShadedInComposeBundle(dep.group)) return
         val coord = "${dep.group}:${dep.name}:${dep.version}"
         if (!seen.add(coord)) return
@@ -119,6 +127,13 @@ afterEvaluate {
 
     (dependencies.add("include", dependencies.project(mapOf("path" to platformPath))) as ModuleDependency)
         .isTransitive = false
+
+    val hypixelFabricMod = if (versionedCatalog.versions["minecraft"].requiredVersion.startsWith("26")) {
+        "maven.modrinth:hypixel-mod-api:1.0.2+build.1+mc26.1"
+    } else {
+        "maven.modrinth:hypixel-mod-api:1.0.1+build.1+mc1.21"
+    }
+    (dependencies.add("include", hypixelFabricMod) as ExternalModuleDependency).isTransitive = false
 }
 
 base.archivesName.set("OneConfig-${project.name}")

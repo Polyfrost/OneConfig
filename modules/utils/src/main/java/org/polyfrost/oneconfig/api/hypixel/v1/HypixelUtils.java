@@ -71,13 +71,8 @@ public final class HypixelUtils {
     private HypixelUtils() {
     }
 
-    @SuppressWarnings("deprecation")
     public static boolean isHypixel() {
-        // todo use hypixel mod api for this??
-        //String brand = OmniClientServers.getServerBrand();
-        //if (brand == null) return false;
-        //return brand.toLowerCase().contains("hypixel");
-        return false;
+        return internals.isOnHypixel();
     }
 
     public static PlayerInfo getPlayerInfo() {

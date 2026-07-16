@@ -49,6 +49,7 @@ import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.WorldEvent;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent;
+import org.polyfrost.oneconfig.api.hypixel.v1.HypixelUtils;
 import org.polyfrost.oneconfig.api.notifications.v1.Notification;
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationType;
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
@@ -341,6 +342,8 @@ public class OneConfig
         BlurHandler.init();
         McFontService.INSTANCE.init();
         ThirdPartyModCategories.INSTANCE.init();
+        // Force class-load of HypixelUtils so its hello/disconnect handlers are armed before joining any server.
+        HypixelUtils.isHypixel();
         org.polyfrost.oneconfig.internal.ui.sound.ExternalSounds.INSTANCE.ensureDownloaded();
 
         KeybindProviderRegistry.INSTANCE.register(MinecraftKeybindProvider.INSTANCE);
