@@ -14,7 +14,7 @@ publishMods {
 
     displayName = "Compose Multiplatform ${project.version}"
     version = "v${project.version}"
-    type = RELEASE
+    type = STABLE
 
     modLoaders.add("fabric")
 
