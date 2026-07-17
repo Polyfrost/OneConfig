@@ -270,6 +270,23 @@ private fun hudBounds(hud: Hud): HudBounds? {
     return HudBounds(hud.x, hud.y, width, height)
 }
 
+private fun drawHudContents(sk: org.jetbrains.skia.Canvas, mcToScreen: Float) {
+    for (hud in HudManager.activeInstances) {
+        if (hud is LegacyHud) continue
+        val root = hud.runtimeOrNull?.root ?: continue
+        val bounds = hudBounds(hud) ?: continue
+        val contentScale = hud.effectiveScale * mcToScreen
+        sk.save()
+        sk.translate(bounds.x * mcToScreen, bounds.y * mcToScreen)
+        if (contentScale != 1f) sk.scale(contentScale, contentScale)
+        if (hud.hidden) sk.saveLayer(null, hiddenHudPaint)
+        try { root.render(RenderContext(sk)) } catch (_: Throwable) {}
+        if (hud.hidden) sk.restore()
+        sk.restore()
+    }
+    LegacyHudOverlayBridge.painter?.invoke(sk)
+}
+
 private fun orderedInstances(): List<Hud> = HudManager.zOrderedInstances { hud ->
     hudBounds(hud)?.let { floatArrayOf(it.x, it.y, it.width, it.height) }
 }
@@ -866,6 +883,9 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 .drawWithContent {
                     drawContent()
                     val mcToScreen = Platform.screen().mcToScreenScale()
+                    if (!HudManager.inWorld) {
+                        drawIntoCanvas { canvas -> drawHudContents(canvas.skiaCanvas, mcToScreen) }
+                    }
                     if (isDragging) {
                         snapGuides.vertical?.let { lineX ->
                             val sx = lineX * mcToScreen
@@ -1229,23 +1249,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
             .drawWithContent {
                 drawContent()
                 val mcToScreen = Platform.screen().mcToScreenScale()
-                drawIntoCanvas { canvas ->
-                    val sk = canvas.skiaCanvas
-                    for (hud in HudManager.activeInstances) {
-                        if (hud is LegacyHud) continue
-                        val root = hud.runtimeOrNull?.root ?: continue
-                        val bounds = hudBounds(hud) ?: continue
-                        val contentScale = hud.effectiveScale * mcToScreen
-                        sk.save()
-                        sk.translate(bounds.x * mcToScreen, bounds.y * mcToScreen)
-                        if (contentScale != 1f) sk.scale(contentScale, contentScale)
-                        if (hud.hidden) sk.saveLayer(null, hiddenHudPaint)
-                        try { root.render(RenderContext(sk)) } catch (_: Throwable) {}
-                        if (hud.hidden) sk.restore()
-                        sk.restore()
-                    }
-                    LegacyHudOverlayBridge.painter?.invoke(sk)
-                }
+                drawIntoCanvas { canvas -> drawHudContents(canvas.skiaCanvas, mcToScreen) }
                 if (isDragging) {
                     snapGuides.vertical?.let { lineX ->
                         val sx = lineX * mcToScreen
