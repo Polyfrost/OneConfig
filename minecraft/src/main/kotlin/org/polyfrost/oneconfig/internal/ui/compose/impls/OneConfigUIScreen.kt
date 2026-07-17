@@ -143,8 +143,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
             Platform.screen().close()
             return
         }
-        HudManager.inWorld = client.level != null
         if (client.level == null) {
+            HudManager.inWorld = false
             val sw = ctx.guiWidth().toFloat()
             val sh = ctx.guiHeight().toFloat()
             HudManager.guiScreenWidth = sw

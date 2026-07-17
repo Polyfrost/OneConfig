@@ -177,6 +177,7 @@ public class OneConfig
         HudManager.isDebugScreenVisible = Minecraft.getInstance().getDebugOverlay().showDebugScreen();
         HudManager.isTabListVisible = Minecraft.getInstance().options.keyPlayerList.isDown();
         HudManager.isGuiScreenOpen = Platform.screen().current() != null;
+        HudManager.inWorld = true;
 
         if (!SkiaCtx.INSTANCE.suppressInGameHudRender) {
             LegacyHudRenderer.INSTANCE.renderLive(graphics);
