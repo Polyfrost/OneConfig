@@ -43,7 +43,8 @@ import java.util.function.Consumer;
 public final class CompatSnapshots implements ConfigManager.ProfileChangeListener {
     public static final CompatSnapshots INSTANCE = new CompatSnapshots();
 
-    private static final String TAG = "oc_compat_snapshot";
+    public static final String SNAPSHOT_METADATA = "oc_compat_snapshot";
+    private static final String TAG = SNAPSHOT_METADATA;
 
     private final CompatSnapshotStore store = new CompatSnapshotStore();
     private final CompatSnapshotStore baselineStore = new CompatSnapshotStore("compat-baseline.json");
