@@ -4,6 +4,7 @@ package org.polyfrost.oneconfig.internal.compat
 import com.terraformersmc.modmenu.ModMenu
 import com.terraformersmc.modmenu.util.mod.Mod
 import net.minecraft.client.gui.screens.Screen
+import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend
@@ -81,14 +82,21 @@ object ModMenuCompat {
                         nativeTree !== modMenuTree &&
                         nativeTree.getMetadata<Boolean>(Backend.UI_ONLY_METADATA) != true
 
-                    if (hasNative && nativeTree != null) {
-                        ConfigRegistry.registerTree(nativeTree, ConfigSource.OC)
+                    val compatTree = nativeTree?.takeIf {
+                        it !== modMenuTree &&
+                            it.getMetadata<Boolean>(CompatSnapshots.SNAPSHOT_METADATA) == true
+                    }
+                    val showOc = hasNative || compatTree != null
+
+                    val ocTree = if (hasNative) nativeTree else compatTree
+                    if (showOc && ocTree != null) {
+                        ConfigRegistry.registerTree(ocTree, ConfigSource.OC)
                     }
 
                     when {
-                        hasNative && LocalNavController.isReady ->
+                        showOc && LocalNavController.isReady ->
                             LocalNavController.wrapper.navigate(ModConfigRoute(mod.id))
-                        hasNative -> Platform.screen().display(OneConfigUIScreen(initialTreeId = mod.id))
+                        showOc -> Platform.screen().display(OneConfigUIScreen(initialTreeId = mod.id))
                         foreignScreen != null -> Platform.screen().display(foreignScreen)
                     }
                 }
