@@ -1,5 +1,4 @@
-1.0.1 changelogs:
+1.0.2 changelogs:
 
-- Fix HUD rendering out of world in the edit HUD menu
-- Remove feedback page
-- Fix legacy HUDs not rendering in OneConfig UI
+- Optimize layout performance further
+- Fix YACL config compat not working half the time
