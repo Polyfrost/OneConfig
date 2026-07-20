@@ -10,6 +10,7 @@ public final class org/polyfrost/oneconfig/api/config/v1/CompatSnapshotStore {
 public final class org/polyfrost/oneconfig/api/config/v1/CompatSnapshots : org/polyfrost/oneconfig/api/config/v1/ConfigManager$ProfileChangeListener {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/config/v1/CompatSnapshots;
 	public static final field NO_SNAPSHOT_META Ljava/lang/String;
+	public static final field SNAPSHOT_METADATA Ljava/lang/String;
 	public fun onProfileChanged (Ljava/lang/String;)V
 	public static fun register (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public static fun setDispatcher (Ljava/util/function/Consumer;)V

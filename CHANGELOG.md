@@ -1,4 +1,4 @@
-1.0.2 changelogs:
+1.0.3 changelogs:
 
-- Optimize layout performance further
-- Fix YACL config compat not working half the time
+- Fix crash when F3 + T in UI
+- Fix window padding not working on small GUI scales
