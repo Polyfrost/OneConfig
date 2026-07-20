@@ -12,7 +12,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -112,7 +111,7 @@ fun OneConfigInterface(
     }
 
     CompositionLocalProvider(LocalCloseRequest provides requestClose) {
-        BoxWithConstraints(
+        Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
@@ -123,8 +122,8 @@ fun OneConfigInterface(
                 val designWidthPx  = DESIGN_WIDTH_DP  * currentDensity.density
                 val designHeightPx = DESIGN_HEIGHT_DP * currentDensity.density
                 minOf(
-                    (constraints.maxWidth.toFloat()  * EDGE_MARGIN_FRACTION) / designWidthPx,
-                    (constraints.maxHeight.toFloat() * EDGE_MARGIN_FRACTION) / designHeightPx,
+                    (windowWidth  * EDGE_MARGIN_FRACTION) / designWidthPx,
+                    (windowHeight * EDGE_MARGIN_FRACTION) / designHeightPx,
                     1f
                 ).coerceAtLeast(0.25f)
             }
@@ -167,7 +166,7 @@ fun OneConfigInterface(
                                 Box(
                                     modifier = Modifier
                                         .onGloballyPositioned { ShellState.shellBounds = it.boundsInRoot() }
-                                        .graphicsLayer { alpha = dragAlpha }
+                                        .then(if (dragAlpha < 1f) Modifier.graphicsLayer { alpha = dragAlpha } else Modifier)
                                 ) {
                                     Shell(windowWidth, windowHeight, shellBackdrop)
                                 }

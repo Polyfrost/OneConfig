@@ -123,6 +123,8 @@ abstract class ComposeScreen(
     private var sceneDirty = true
 
     private var lastPointer: Offset? = null
+    private var lastSceneW = -1
+    private var lastSceneH = -1
 
     protected val client get() = Minecraft.getInstance()
     private val contentScaleX = FloatArray(1)
@@ -192,6 +194,8 @@ abstract class ComposeScreen(
         lastPointer = null
 
         syncSceneMetrics()
+        lastSceneW = -1
+        lastSceneH = -1
 
         scene.setContent {
             @Suppress("DEPRECATION")
@@ -250,7 +254,7 @@ abstract class ComposeScreen(
     //~ if >= 26.1 'render' -> 'extractRenderState'
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
         if (Platform.screen().current<Screen>() !== this) return
-        syncSceneMetrics()
+        val metricsChanged = syncSceneMetrics()
 
         val focused = client.isWindowActive
         if (focused) {
@@ -265,9 +269,11 @@ abstract class ComposeScreen(
             }
         }
 
-        try {
-            scene.invalidatePositionInWindow()
-        } catch (_: Throwable) {
+        if (metricsChanged) {
+            try {
+                scene.invalidatePositionInWindow()
+            } catch (_: Throwable) {
+            }
         }
 
         if (renderMode == RenderMode.ON_DEMAND && !sceneDirty && SkiaCtx.isDeferredComposeBackend) {
@@ -547,13 +553,17 @@ abstract class ComposeScreen(
         else -> KeyEvent.VK_UNDEFINED
     }
 
-    private fun syncSceneMetrics() {
-        if (sceneClosed) return
+    private fun syncSceneMetrics(): Boolean {
+        if (sceneClosed) return false
         val w = client.window.screenWidth
         val h = client.window.screenHeight
-        if (w <= 0 || h <= 0) return
+        if (w <= 0 || h <= 0) return false
         scene.density = Density(sceneDensity())
         scene.size = IntSize(w, h)
+        val changed = w != lastSceneW || h != lastSceneH
+        lastSceneW = w
+        lastSceneH = h
+        return changed
     }
 
     private fun sceneDensity(): Float {
