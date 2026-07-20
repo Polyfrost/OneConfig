@@ -188,6 +188,7 @@ abstract class ComposeScreen(
         if (sceneClosed) {
             scene = createScene()
             sceneClosed = false
+            contentSet = false
         }
 
         sceneDirty = true
@@ -197,6 +198,9 @@ abstract class ComposeScreen(
         lastSceneW = -1
         lastSceneH = -1
 
+        if (contentSet) return
+
+        contentSet = true
         scene.setContent {
             @Suppress("DEPRECATION")
             CompositionLocalProvider(
@@ -229,10 +233,12 @@ abstract class ComposeScreen(
     }
 
     private var sceneClosed = false
+    private var contentSet = false
 
     private fun disposeScene() {
         if (sceneClosed) return
         sceneClosed = true
+        contentSet = false
         SkiaCtx.clearComposeFrame()
         try {
             scene.close()
@@ -560,6 +566,7 @@ abstract class ComposeScreen(
         if (w <= 0 || h <= 0) return false
         scene.density = Density(sceneDensity())
         scene.size = IntSize(w, h)
+        ComposeSceneContextImpl.updateContainerSize(w, h)
         val changed = w != lastSceneW || h != lastSceneH
         lastSceneW = w
         lastSceneH = h

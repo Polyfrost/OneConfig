@@ -1,5 +1,8 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.input.InputMode
@@ -30,10 +33,9 @@ private class InputModeManagerImpl : InputModeManager {
 
 @ExperimentalComposeUiApi
 private class WindowInfoImpl : WindowInfo {
-    override val containerSize: IntSize get() {
-        val mc = Minecraft.getInstance()
-        return IntSize(mc.window.screenWidth, mc.window.screenHeight)
-    }
+    override var containerSize: IntSize by mutableStateOf(
+        Minecraft.getInstance().window.let { IntSize(it.screenWidth, it.screenHeight) }
+    )
 
     private fun isKeyDown(glfwKey: Int): Boolean {
         return glfwGetKey(Platform.compatibility().windowHandle(), glfwKey) == GLFW_PRESS
@@ -127,11 +129,18 @@ private class PlatformImpl : PlatformContext {
     }
 }
 
-@OptIn(InternalComposeUiApi::class)
+@OptIn(InternalComposeUiApi::class, ExperimentalComposeUiApi::class)
 object ComposeSceneContextImpl : ComposeSceneContext {
     override val platformContext: PlatformContext = PlatformImpl()
 
     fun resetPointerIcon() {
         (platformContext as PlatformImpl).resetPointerIcon()
+    }
+
+    fun updateContainerSize(width: Int, height: Int) {
+        val info = platformContext.windowInfo as WindowInfoImpl
+        if (info.containerSize.width != width || info.containerSize.height != height) {
+            info.containerSize = IntSize(width, height)
+        }
     }
 }
