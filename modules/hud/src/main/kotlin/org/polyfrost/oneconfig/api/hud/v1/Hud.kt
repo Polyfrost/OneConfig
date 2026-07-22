@@ -315,6 +315,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     private var _hidden: MutableState<Boolean> = mutableStateOf(false)
     open var hidden: Boolean get() = _hidden.value; set(v) { _hidden.value = v }
 
+    private var _locked: MutableState<Boolean> = mutableStateOf(false)
+    open var locked: Boolean get() = _locked.value; set(v) { _locked.value = v }
+
     internal open val persistOwnState: Boolean get() = true
 
     open val resizeAxes: HudResize get() = HudResize.Both
@@ -472,6 +475,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             val hideFromConfigUi = { Property.Display.HIDDEN }
             if (out.persistOwnState) {
                 tree["hidden"] = ktProperty(out::hidden).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["locked"] = ktProperty(out::locked).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["section"] = ktProperty(out::section).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["relativeX"] = ktProperty(out::relativeX).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["relativeY"] = ktProperty(out::relativeY).apply { addDisplayCondition(hideFromConfigUi) }
@@ -611,6 +615,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         _shadowOffsetX = mutableStateOf(this@Hud.shadowOffsetX)
         _shadowOffsetY = mutableStateOf(this@Hud.shadowOffsetY)
         _hidden = mutableStateOf(this@Hud.hidden)
+        _locked = mutableStateOf(this@Hud.locked)
     }
 
     private companion object {

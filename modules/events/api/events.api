@@ -103,6 +103,15 @@ public class org/polyfrost/oneconfig/api/event/v1/events/KeyInputEvent : org/pol
 	public fun isPressed ()Z
 }
 
+public class org/polyfrost/oneconfig/api/event/v1/events/MainMenuFpsEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
+	public static final field WINDOW_MILLIS J
+	public fun <init> (FIJ)V
+	public fun getAverageFps ()F
+	public fun getDurationMillis ()J
+	public fun getSampleCount ()I
+	public fun isLowFps (F)Z
+}
+
 public class org/polyfrost/oneconfig/api/event/v1/events/MouseInputEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
 	public final field button I
 	public final field state I

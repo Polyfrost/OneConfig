@@ -69,13 +69,27 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
         var showInF3 by remember { mutableStateOf(hud.showInF3) }
         var showInTab by remember { mutableStateOf(hud.showInTab) }
         var showInScreens by remember { mutableStateOf(hud.showInScreens) }
+        var locked by remember { mutableStateOf(hud.locked) }
 
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(22.dp),
         ) {
             item {
                 Section("Position") {
-                    ResetHudPositionButton(hud)
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        ResetHudPositionButton(hud)
+                        HudSettingTarget(hud, "locked") {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                SwitchControl(locked) {
+                                    Snapshot.withMutableSnapshot { locked = it; hud.locked = it }
+                                }
+                                Text("Lock position", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                            }
+                        }
+                    }
                 }
             }
 

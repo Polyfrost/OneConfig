@@ -75,6 +75,25 @@ object SkiaFontRenderer : PreparableReloadListener {
     private val textPaint = Paint().apply { isAntiAlias = false }
     private val colorFilterCache = HashMap<Int, ColorFilter>(64)
 
+    private val retiredImages = ArrayDeque<Pair<Long, List<Image>>>()
+    private const val RETIRE_CLOSE_DELAY_MS = 1000L
+
+    private fun retire(images: List<Image>) {
+        if (images.isEmpty()) return
+        synchronized(retiredImages) {
+            retiredImages.addLast(System.currentTimeMillis() to images)
+        }
+    }
+
+    private fun closeRetired() {
+        val now = System.currentTimeMillis()
+        synchronized(retiredImages) {
+            while (retiredImages.isNotEmpty() && now - retiredImages.first().first >= RETIRE_CLOSE_DELAY_MS) {
+                retiredImages.removeFirst().second.forEach { runCatching { it.close() } }
+            }
+        }
+    }
+
     fun init() {
         McFontQueue.measureWidth = { text, scale -> measureWidth(text) * scale }
         McFontQueue.measureHeight = { scale -> LINE_HEIGHT * scale }
@@ -129,6 +148,7 @@ object SkiaFontRenderer : PreparableReloadListener {
     }
 
     fun draw(canvas: Canvas, text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) {
+        closeRetired()
         ensureLoaded()
         if (glyphs.isEmpty() && unihex == null) return
         text.lines().forEachIndexed { index, line ->
@@ -362,8 +382,7 @@ object SkiaFontRenderer : PreparableReloadListener {
         unihexImages = HashMap()
         colorFilterCache.clear()
         builtOptions = options
-        oldAtlases.forEach { runCatching { it.close() } }
-        oldImages.values.forEach { runCatching { it.close() } }
+        retire(oldAtlases + oldImages.values)
         return true
     }
 

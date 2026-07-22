@@ -41,11 +41,13 @@ import net.minecraft.server.packs.resources.ReloadableResourceManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.glfw.GLFWVidMode;
 import org.polyfrost.compose.render.RenderContext;
 import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
+import org.polyfrost.oneconfig.api.event.v1.events.MainMenuFpsEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.WorldEvent;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
@@ -238,6 +240,13 @@ public class OneConfig
                     org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry.INSTANCE.loadFromConfig();
                 });
         EventManager.register(WorldEvent.Load.class, e -> showFirstLaunchNotification());
+        EventManager.register(MainMenuFpsEvent.class, e -> {
+            if (e.getSampleCount() <= 0) return;
+            int threshold = monitorRefreshRate() + 30;
+            OneConfigConfig.enableWindowBlur = e.getAverageFps() >= threshold;
+            LOGGER.info("Set OneConfig window blur to {}: main-menu average FPS {} vs refresh rate + 30 ({})",
+                    OneConfigConfig.enableWindowBlur, e.getAverageFps(), threshold);
+        });
 //        //#if MC < 1.13
 //        // this is cringe but is better than the alternative of checking every frame in a mixin (that's how vanilla does it lol)
 //        AtomicBoolean active = new AtomicBoolean(false);
@@ -250,6 +259,14 @@ public class OneConfig
 //            }
 //        });
 //        //#endif
+    }
+
+    private static int monitorRefreshRate() {
+        long monitor = GLFW.glfwGetWindowMonitor(Platform.compatibility().windowHandle());
+        if (monitor == 0L) monitor = GLFW.glfwGetPrimaryMonitor();
+        if (monitor == 0L) return 60;
+        GLFWVidMode mode = GLFW.glfwGetVideoMode(monitor);
+        return mode != null ? mode.refreshRate() : 60;
     }
 
     private static Notification firstLaunchToast;
@@ -329,6 +346,7 @@ public class OneConfig
         new ThemeConfig();
         registerCommands();
         registerEventHandlers();
+        MainMenuFpsSampler.init();
         //? fabric
         org.polyfrost.oneconfig.internal.compat.ModMenuShimLoader.enable();
 
