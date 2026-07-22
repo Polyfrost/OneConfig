@@ -18,6 +18,12 @@ interface VulkanService {
      */
     val usesDeferredCompose: Boolean get() = false
 
+    val offscreenNeedsPerFrameRewrap: Boolean get() = false
+
+    fun transitionOffscreenForSampling(target: RenderTarget) {}
+
+    fun restoreMainRTLayout() {}
+
     fun makeDirectContext(): DirectContext
 
     /**
