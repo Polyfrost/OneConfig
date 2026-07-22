@@ -1,4 +1,4 @@
-1.0.3 changelogs:
+1.0.4 changelogs:
 
-- Fix crash when F3 + T in UI
-- Fix window padding not working on small GUI scales
+- Add ability to lock HUDs
+- Add main menu FPS sampling event

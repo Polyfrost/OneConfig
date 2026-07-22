@@ -34,6 +34,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getEffectiveScale ()F
 	public final fun getFont ()Lorg/polyfrost/oneconfig/api/hud/v1/Font;
 	public fun getHidden ()Z
+	public fun getLocked ()Z
 	public final fun getPadBottom ()F
 	public final fun getPadLeft ()F
 	public final fun getPadRight ()F
@@ -100,6 +101,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun setCustomScale (F)V
 	public final fun setFont (Lorg/polyfrost/oneconfig/api/hud/v1/Font;)V
 	public fun setHidden (Z)V
+	public fun setLocked (Z)V
 	public final fun setPadBottom (F)V
 	public final fun setPadLeft (F)V
 	public final fun setPadRight (F)V

@@ -52,6 +52,7 @@ public final class org/polyfrost/oneconfig/api/hypixel/v1/HypixelUtils$PlayerInf
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/CompatibilityPlatform {
 	public fun displayChatMessage (Ljava/lang/String;)V
 	public abstract fun displayChatMessage (Lnet/kyori/adventure/text/Component;)V
+	public abstract fun fps ()I
 	public abstract fun getMods ()Ljava/util/Set;
 	public abstract fun isDevelopment ()Z
 	public abstract fun keys ()Lorg/polyfrost/oneconfig/api/platform/v1/Keys;
