@@ -1,5 +1,5 @@
 //? skycubed_compat {
-package org.polyfrost.oneconfig.internal.compat
+/*package org.polyfrost.oneconfig.internal.compat
 
 import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfig
 import com.teamresourceful.resourcefulconfig.api.types.elements.ResourcefulConfigEntryElement
@@ -202,4 +202,4 @@ class SkyCubedHudWrapper(private val overlay: Overlay) : OneConfigHudWrapper {
 
     override fun linkedProperties(): List<Property<*>> = cachedProperties
 }
-//? }
+*///? }

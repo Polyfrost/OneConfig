@@ -1,5 +1,5 @@
 //? odin_compat {
-package org.polyfrost.oneconfig.internal.compat
+/*package org.polyfrost.oneconfig.internal.compat
 
 import com.odtheking.odin.clickgui.settings.RenderableSetting
 import com.odtheking.odin.clickgui.settings.Setting
@@ -243,4 +243,4 @@ private object OdinSettingsAdapter {
         )
     }
 }
-//? }
+*///? }

@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.services
 
 //? vulkanmod {
-import com.mojang.blaze3d.pipeline.RenderTarget
+/*import com.mojang.blaze3d.pipeline.RenderTarget
 import net.vulkanmod.gl.VkGlTexture
 import net.vulkanmod.vulkan.Renderer
 import net.vulkanmod.vulkan.device.DeviceManager
@@ -240,4 +240,4 @@ class VulkanModVulkanService private constructor(
         }
     }
 }
-//? }
+*///? }

@@ -96,21 +96,21 @@ public class ScreenPlatformImpl implements ScreenPlatform {
             return;
         }
         //? if >= 26.2 {
-        /*// 26.2 removed Minecraft#setScreen. Use Gui#setScreen, not setScreenAndShow (which force-calls
+        // 26.2 removed Minecraft#setScreen. Use Gui#setScreen, not setScreenAndShow (which force-calls
         // renderFrame and re-enters our renderFrame mixin -> nested frame -> 1-frame black flash).
         if (ticks < 1) Minecraft.getInstance().gui.setScreen((Screen) screen);
         else EventDelay.tick(ticks, () -> Minecraft.getInstance().gui.setScreen((Screen) screen));
-        *///?} else {
-        if (ticks < 1) Minecraft.getInstance().setScreen((Screen) screen);
+        //?} else {
+        /*if (ticks < 1) Minecraft.getInstance().setScreen((Screen) screen);
         else EventDelay.tick(ticks, () -> Minecraft.getInstance().setScreen((Screen) screen));
-        //?}
+        *///?}
     }
 
     private void warnUiUnavailable() {
         String reason = SkiaCtx.INSTANCE.unavailableReason();
         if (reason == null) return;
         //~ if >= 26.2 'gui.getChat' -> 'gui.hud.getChat'
-        Minecraft.getInstance().gui.getChat()
+        Minecraft.getInstance().gui.hud.getChat()
                 //~ if >= 26.1 'addMessage' -> 'addClientSystemMessage'
                 .addClientSystemMessage(Component.literal(reason).withStyle(ChatFormatting.RED));
     }
@@ -119,10 +119,10 @@ public class ScreenPlatformImpl implements ScreenPlatform {
     @SuppressWarnings("unchecked" /*, reason = "reduces friction between versions" */)
     public <T> @Nullable T current() {
         //? if >= 26.2 {
-        /*return (T) Minecraft.getInstance().gui.screen();
-        *///?} else {
-        return (T) Minecraft.getInstance().screen;
-        //?}
+        return (T) Minecraft.getInstance().gui.screen();
+        //?} else {
+        /*return (T) Minecraft.getInstance().screen;
+        *///?}
     }
 
 }

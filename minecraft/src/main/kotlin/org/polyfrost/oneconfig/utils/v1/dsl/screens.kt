@@ -86,11 +86,11 @@ fun Config.openUI(initialCategory: String) = Platform.screen().display(createScr
 fun Config.addDefaultCommand(command: String = this.title.lowercase()): LiteralArgumentBuilder<ClientCommandSource> {
     return CommandManager.literal(command).executes { ctx ->
         //? if >= 26.2 {
-        /*Minecraft.getInstance().gui.setScreen(this.createScreen())
-        *///?} else {
-        Minecraft.getInstance().screen?.onClose()
+        Minecraft.getInstance().gui.setScreen(this.createScreen())
+        //?} else {
+        /*Minecraft.getInstance().screen?.onClose()
         Minecraft.getInstance().screen = this.createScreen()
-        //?}
+        *///?}
         1
     }
 }

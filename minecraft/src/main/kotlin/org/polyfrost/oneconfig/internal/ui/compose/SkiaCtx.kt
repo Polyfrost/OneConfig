@@ -249,10 +249,10 @@ object SkiaCtx {
     fun takeWorldSnapshotIfNeeded() {
         if (!this::directContext.isInitialized || !isDeferredComposeBackend) return
         //? if >= 26.2 {
-        /*vulkanService?.takeWorldSnapshot(client.gameRenderer.mainRenderTarget())
-        *///? } else {
-        vulkanService?.takeWorldSnapshot(client.mainRenderTarget)
-        //? }
+        vulkanService?.takeWorldSnapshot(client.gameRenderer.mainRenderTarget())
+        //? } else {
+        /*vulkanService?.takeWorldSnapshot(client.mainRenderTarget)
+        *///? }
     }
 
     fun drawComposeBlit(ctx: GuiGraphicsExtractor, block: Runnable) {
@@ -549,10 +549,10 @@ object SkiaCtx {
         if (rt == null || rt.width != w || rt.height != h) {
             destroyHudTarget()
             //? if >= 26.2 {
-            /*rt = TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
-            *///? } else if >= 1.21.5 {
-            rt = TextureTarget(null, w, h, true)
-            //? } else if >= 1.21.4 {
+            rt = TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
+            //? } else if >= 1.21.5 {
+            /*rt = TextureTarget(null, w, h, true)
+            *///? } else if >= 1.21.4 {
             // rt = TextureTarget(w, h, true)
             //? } else {
             /*rt = TextureTarget(w, h, true, Minecraft.ON_OSX)
@@ -604,10 +604,10 @@ object SkiaCtx {
         if (rt == null || rt.width != w || rt.height != h) {
             destroyComposeTarget()
             //? if >= 26.2 {
-            /*rt = TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
-            *///? } else if >= 1.21.5 {
-            rt = TextureTarget(null, w, h, true)
-            //? } else if >= 1.21.4 {
+            rt = TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
+            //? } else if >= 1.21.5 {
+            /*rt = TextureTarget(null, w, h, true)
+            *///? } else if >= 1.21.4 {
             // rt = TextureTarget(w, h, true)
             //? } else {
             /*rt = TextureTarget(w, h, true, Minecraft.ON_OSX)
@@ -664,10 +664,10 @@ object SkiaCtx {
         // 26.1+: SkiaCtx.draw() runs before RenderTarget.blitToScreen (Mixin_SkiaFramePresent), so compose
         // lands in Minecraft's main render target and is seen by the window blit, screenshots and Tracy captures.
         //? if >= 26.2 {
-        /*val target = client.gameRenderer.mainRenderTarget()
-        *///? } else {
-        val target = client.mainRenderTarget
-        //? }
+        val target = client.gameRenderer.mainRenderTarget()
+        //? } else {
+        /*val target = client.mainRenderTarget
+        *///? }
         val (brt, colorFmt) = svc.makeOffscreenBRT(target, w, h)
         glBrt = brt
         glSurface = Surface.makeFromBackendRenderTarget(
