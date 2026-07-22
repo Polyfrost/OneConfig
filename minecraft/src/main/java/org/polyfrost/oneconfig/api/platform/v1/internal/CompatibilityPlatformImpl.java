@@ -91,6 +91,11 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
     }
 
     @Override
+    public int fps() {
+        return Minecraft.getInstance().getFps();
+    }
+
+    @Override
     public String resolveComponent(Component component) {
         //? if >=1.21.4 {
         var minecraftComponent = MinecraftClientAudiences.of().asNative(component);

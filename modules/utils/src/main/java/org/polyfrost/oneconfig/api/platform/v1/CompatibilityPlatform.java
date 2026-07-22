@@ -19,6 +19,8 @@ public interface CompatibilityPlatform {
 
     long windowHandle();
 
+    int fps();
+
     String resolveComponent(Component component);
     Object wrapPlatformComponent(Object component);
 }

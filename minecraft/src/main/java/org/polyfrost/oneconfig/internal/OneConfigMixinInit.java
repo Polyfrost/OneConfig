@@ -87,6 +87,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("compat.rconfig.Mixin_Configurations");
 
         mixins.add("Mixin_SimpleReloadInstance");
+        mixins.add("Mixin_MainMenuFpsUncap");
         //? yacl_compat
         mixins.add("compat.yacl.Mixin_YetAnotherConfigLib_Builder");
 
