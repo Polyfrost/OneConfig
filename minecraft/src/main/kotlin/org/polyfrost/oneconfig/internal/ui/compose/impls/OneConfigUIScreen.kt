@@ -22,6 +22,7 @@ import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.PreferencesGraph
+import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
 import org.polyfrost.oneconfig.internal.ui.PlayerHeadLoader
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
@@ -152,6 +153,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
             HudManager.guiScreenHeight = sh
             HudManager.prepare(sw, sh)
         }
+        HudEditorViewport.update(Platform.screen().viewportWidth(), Platform.screen().viewportHeight())
         if (OneConfigConfig.enableBackgroundBlur) {
             //? if >= 1.21.10 {
             if (SkiaCtx.isDeferredComposeBackend) {

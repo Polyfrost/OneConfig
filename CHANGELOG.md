@@ -1,3 +1,3 @@
-1.0.5 changelogs:
+1.0.6 changelogs:
 
-- Fix compat with Sodium Extra's Reduce Resolution with Vulkan
+- Fix window size calculations

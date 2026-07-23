@@ -25,6 +25,7 @@ import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignStudio
+import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
 import org.polyfrost.oneconfig.internal.ui.shell.Lifecycle
 import org.polyfrost.oneconfig.internal.ui.shell.OCViewModelStoreOwner
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
@@ -97,6 +98,7 @@ class HudEditorUIScreen : ComposeScreen() {
             HudManager.guiScreenHeight = sh
             HudManager.prepare(sw, sh)
         }
+        HudEditorViewport.update(Platform.screen().viewportWidth(), Platform.screen().viewportHeight())
         //~ if >= 26.1 'render' -> 'extractRenderState'
         super.extractRenderState(ctx, mouseX, mouseY, tickDelta)
     }

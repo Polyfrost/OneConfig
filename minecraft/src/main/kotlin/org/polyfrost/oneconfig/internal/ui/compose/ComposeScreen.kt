@@ -125,6 +125,8 @@ abstract class ComposeScreen(
     private var lastPointer: Offset? = null
     private var lastSceneW = -1
     private var lastSceneH = -1
+    private var lastFbWidth = -1
+    private var settleFrames = 0
     private var cachedSurfaceScale = -1f
 
     protected val client get() = Minecraft.getInstance()
@@ -198,6 +200,7 @@ abstract class ComposeScreen(
         syncSceneMetrics()
         lastSceneW = -1
         lastSceneH = -1
+        lastFbWidth = -1
         cachedSurfaceScale = -1f
 
         if (contentSet) return
@@ -570,9 +573,18 @@ abstract class ComposeScreen(
         scene.size = IntSize(w, h)
         ComposeSceneContextImpl.updateContainerSize(w, h)
         val changed = w != lastSceneW || h != lastSceneH
+        val fbW = client.window.width
+        if (changed || fbW != lastFbWidth) {
+            cachedSurfaceScale = -1f
+            settleFrames = SETTLE_FRAMES
+        }
+        if (settleFrames > 0) {
+            settleFrames--
+            sceneDirty = true
+        }
         lastSceneW = w
         lastSceneH = h
-        if (changed) cachedSurfaceScale = -1f
+        lastFbWidth = fbW
         return changed
     }
 
@@ -601,6 +613,8 @@ abstract class ComposeScreen(
     private val dummyComponent = object : Component() {}
 
     private companion object {
+        const val SETTLE_FRAMES = 4
+
         const val HARDEN_SKSL = """
             uniform shader content;
             uniform float w;

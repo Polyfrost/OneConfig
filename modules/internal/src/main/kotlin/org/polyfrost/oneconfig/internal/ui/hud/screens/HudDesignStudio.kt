@@ -150,6 +150,26 @@ enum class StudioCategory(val title: String, val icon: String) {
     Designer("Designer", "paintbrush");
 }
 
+object HudEditorViewport {
+    var viewportWidth by mutableStateOf(0)
+        private set
+    var viewportHeight by mutableStateOf(0)
+        private set
+
+    fun update(width: Int, height: Int) {
+        if (width == viewportWidth && height == viewportHeight) return
+        Snapshot.withMutableSnapshot {
+            viewportWidth = width
+            viewportHeight = height
+        }
+    }
+
+    fun observe() {
+        @Suppress("UNUSED_EXPRESSION") viewportWidth
+        @Suppress("UNUSED_EXPRESSION") viewportHeight
+    }
+}
+
 private data class HudBounds(val x: Float, val y: Float, val width: Float, val height: Float)
 
 private val hiddenHudPaint = Paint().apply { setAlphaf(0.35f) }
@@ -589,6 +609,7 @@ private fun HudActionBar(
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
+    HudEditorViewport.observe()
     var activeCategory by remember { mutableStateOf(StudioCategory.Settings) }
     var selectedHud by remember { mutableStateOf<Hud?>(null) }
     var panelHud by remember { mutableStateOf<Hud?>(null) }
@@ -1187,6 +1208,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun HudDragLayer(modifier: Modifier = Modifier) {
+    HudEditorViewport.observe()
     var hoveredHud by remember { mutableStateOf<Hud?>(null) }
     var draggedHud by remember { mutableStateOf<Hud?>(null) }
     var isDragging by remember { mutableStateOf(false) }
