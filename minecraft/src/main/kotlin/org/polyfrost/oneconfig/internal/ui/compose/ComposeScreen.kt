@@ -125,6 +125,7 @@ abstract class ComposeScreen(
     private var lastPointer: Offset? = null
     private var lastSceneW = -1
     private var lastSceneH = -1
+    private var cachedSurfaceScale = -1f
 
     protected val client get() = Minecraft.getInstance()
     private val contentScaleX = FloatArray(1)
@@ -197,6 +198,7 @@ abstract class ComposeScreen(
         syncSceneMetrics()
         lastSceneW = -1
         lastSceneH = -1
+        cachedSurfaceScale = -1f
 
         if (contentSet) return
 
@@ -289,7 +291,7 @@ abstract class ComposeScreen(
         val renderBlock = Runnable {
             try {
                 val canvas = SkiaCtx.canvas
-                val pixelRatio = Platform.screen().pixelRatio()
+                val pixelRatio = surfaceScale()
                 val mode = OneConfigConfig.reducedResFilter
                 val amount = OneConfigConfig.uiSharpening
                 val filter = mode != 0 && amount > 0f &&
@@ -570,6 +572,7 @@ abstract class ComposeScreen(
         val changed = w != lastSceneW || h != lastSceneH
         lastSceneW = w
         lastSceneH = h
+        if (changed) cachedSurfaceScale = -1f
         return changed
     }
 
@@ -578,6 +581,15 @@ abstract class ComposeScreen(
         GLFW.glfwGetWindowContentScale(Platform.compatibility().windowHandle(), contentScaleX, contentScaleY)
         val contentScale = maxOf(contentScaleX[0], contentScaleY[0]).coerceAtLeast(1f)
         return (contentScale / pixelRatio).coerceAtLeast(1f)
+    }
+
+    private fun surfaceScale(): Float {
+        cachedSurfaceScale.takeIf { it > 0f }?.let { return it }
+        val screenW = client.window.screenWidth
+        val scale = if (screenW <= 0) Platform.screen().pixelRatio().takeIf { it > 0f } ?: 1f
+        else (client.window.width.toFloat() / screenW).coerceAtLeast(0.01f)
+        cachedSurfaceScale = scale
+        return scale
     }
 
     protected fun pointerPosition(): Offset {
