@@ -183,16 +183,16 @@ class SkyCubedHudWrapper(private val overlay: Overlay) : OneConfigHudWrapper {
     override var scaledWidth: Float
         get() {
             if (!overlay.enabled) return 0f
-            val w = overlay.bounds.first
-            return (if (w > 0) w.toFloat() else FALLBACK_WIDTH) * overlay.position.scale
+            val w = runCatching { overlay.bounds.first }.getOrNull()
+            return (if (w != null && w > 0) w.toFloat() else FALLBACK_WIDTH) * overlay.position.scale
         }
         set(_) {}
 
     override var scaledHeight: Float
         get() {
             if (!overlay.enabled) return 0f
-            val h = overlay.bounds.second
-            return (if (h > 0) h.toFloat() else FALLBACK_HEIGHT) * overlay.position.scale
+            val h = runCatching { overlay.bounds.second }.getOrNull()
+            return (if (h != null && h > 0) h.toFloat() else FALLBACK_HEIGHT) * overlay.position.scale
         }
         set(_) {}
 

@@ -42,13 +42,13 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
     private var lastH = 0f
 
     private fun sizeW(): Float {
-        val live = wrapper.scaledWidth
+        val live = runCatching { wrapper.scaledWidth }.getOrDefault(0f)
         if (live > 0f) lastW = live
         return if (live > 0f) live else lastW
     }
 
     private fun sizeH(): Float {
-        val live = wrapper.scaledHeight
+        val live = runCatching { wrapper.scaledHeight }.getOrDefault(0f)
         if (live > 0f) lastH = live
         return if (live > 0f) live else lastH
     }

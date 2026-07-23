@@ -312,6 +312,8 @@ public class OneConfig
             return;
         }
 
+        SkikoDataPath.redirect();
+
         // To enable RenderDoc, set the following JVM arguments:
         // -Drenderdoc.enabled=true
         // (Windows) -Drenderdoc.path="C:\Program Files\RenderDoc\renderdoc.dll" (or wherever you installed RenderDoc)
