@@ -42,6 +42,11 @@ public interface ScreenPlatform {
         return (float) viewportWidth() / windowWidth();
     }
 
+    default float surfaceRatio() {
+        int win = windowWidth();
+        return win > 0 ? (float) viewportWidth() / win : 1f;
+    }
+
     /**
      * Return a scaling factor from the Minecraft scaled coordinate system to standard <b>window coordinates</b>.
      * <br>
@@ -49,7 +54,7 @@ public interface ScreenPlatform {
      * See the inverse, {@link #screenToMcScale()}.
      */
     default float mcToScreenScale() {
-        return Platform.compatibility().options().getGuiScale() / pixelRatio();
+        return Platform.compatibility().options().getGuiScale() / surfaceRatio();
     }
 
     /**
@@ -60,7 +65,7 @@ public interface ScreenPlatform {
      * @implNote same as {@code 1f / }{@link  #mcToScreenScale()}
      */
     default float screenToMcScale() {
-        return pixelRatio() / Platform.compatibility().options().getGuiScale();
+        return surfaceRatio() / Platform.compatibility().options().getGuiScale();
     }
 
     void display(@Nullable Object screen, int ticks);

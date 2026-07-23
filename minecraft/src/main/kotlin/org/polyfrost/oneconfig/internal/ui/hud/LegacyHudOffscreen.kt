@@ -165,9 +165,9 @@ object LegacyHudOffscreen {
         val s = surface ?: return
         try {
             s.notifyContentWillChange(org.jetbrains.skia.ContentChangeMode.RETAIN)
-            val pixelRatio = Platform.screen().pixelRatio().coerceAtLeast(0.0001f)
+            val surfaceRatio = Platform.screen().surfaceRatio().coerceAtLeast(0.0001f)
             canvas.save()
-            canvas.scale(1f / pixelRatio, 1f / pixelRatio)
+            canvas.scale(1f / surfaceRatio, 1f / surfaceRatio)
             s.draw(canvas, 0, 0, blitPaint)
             canvas.restore()
         } catch (t: Throwable) {
