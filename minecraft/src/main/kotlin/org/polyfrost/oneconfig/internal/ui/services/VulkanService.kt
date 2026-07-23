@@ -22,6 +22,8 @@ interface VulkanService {
 
     fun transitionOffscreenForSampling(target: RenderTarget) {}
 
+    fun transitionOffscreenForRendering(target: RenderTarget) {}
+
     fun restoreMainRTLayout() {}
 
     fun makeDirectContext(): DirectContext

@@ -73,6 +73,9 @@ object SkiaCtx {
     private var hudNeedsSamplingTransition = false
     private var composeNeedsSamplingTransition = false
 
+    private var hudRealIsGeneral = false
+    private var composeRealIsGeneral = false
+
     @Volatile
     private var composeActive = false
     @Volatile
@@ -233,7 +236,9 @@ object SkiaCtx {
         val draws = queuedHudDraws.toList()
         queuedHudDraws.clear()
         if (draws.isEmpty()) return
-        flushToTarget(draws, resolveHudSurface() ?: return)
+        val surface = resolveHudSurface() ?: return
+        if (hudRealIsGeneral) hudTarget?.let { vulkanService?.transitionOffscreenForRendering(it) }
+        flushToTarget(draws, surface)
         hudNeedsSamplingTransition = true
     }
 
@@ -267,7 +272,9 @@ object SkiaCtx {
         val queued = queuedDraws.toList()
         queuedDraws.clear()
         val draws = queued + { block.run() }
-        flushToTarget(draws, resolveComposeSurface() ?: return)
+        val surface = resolveComposeSurface() ?: return
+        if (composeRealIsGeneral) composeTarget?.let { vulkanService?.transitionOffscreenForRendering(it) }
+        flushToTarget(draws, surface)
         composeNeedsSamplingTransition = true
         blitCompose(ctx)
     }
@@ -336,6 +343,7 @@ object SkiaCtx {
         if (hudNeedsSamplingTransition) {
             vulkanService?.transitionOffscreenForSampling(rt)
             hudNeedsSamplingTransition = false
+            hudRealIsGeneral = true
         }
         guiGraphics.pose().pushMatrix()
         guiGraphics.pose().scale(1f / guiScale, 1f / guiScale)
@@ -389,6 +397,7 @@ object SkiaCtx {
         if (composeNeedsSamplingTransition) {
             vulkanService?.transitionOffscreenForSampling(rt)
             composeNeedsSamplingTransition = false
+            composeRealIsGeneral = true
         }
         guiGraphics.pose().pushMatrix()
         guiGraphics.pose().scale(1f / guiScale, 1f / guiScale)
@@ -587,10 +596,10 @@ object SkiaCtx {
             //? }
         }
 
-        val rewrap = vulkanService?.offscreenNeedsPerFrameRewrap == true
-        if (needNewTarget || rewrap || hudSurface == null) {
+        if (needNewTarget || hudSurface == null) {
             hudSurface?.close(); hudSurface = null
             hudBrt?.close(); hudBrt = null
+            hudRealIsGeneral = false
             val svc = vulkanService ?: return null
             val (brt, colorFmt) = svc.makeOffscreenBRT(rt, w, h)
             hudBrt = brt
@@ -649,10 +658,10 @@ object SkiaCtx {
             //? }
         }
 
-        val rewrap = vulkanService?.offscreenNeedsPerFrameRewrap == true
-        if (needNewTarget || rewrap || composeSurface == null) {
+        if (needNewTarget || composeSurface == null) {
             composeSurface?.close(); composeSurface = null
             composeBrt?.close(); composeBrt = null
+            composeRealIsGeneral = false
             val svc = vulkanService ?: return null
             val (brt, colorFmt) = svc.makeOffscreenBRT(rt!!, w, h)
             composeBrt = brt

@@ -91,18 +91,38 @@ class NativeVulkanService private constructor(
     }
 
     override fun restoreMainRTLayout() {
-        restoreToGeneral(
+        transitionImage(
             Minecraft.getInstance().gameRenderer.mainRenderTarget().colorTexture as? VulkanGpuTexture,
+            oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            newLayout = VK_IMAGE_LAYOUT_GENERAL,
+            srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
             dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
             dstAccessMask = VK_ACCESS_MEMORY_READ_BIT or VK_ACCESS_MEMORY_WRITE_BIT,
         )
     }
 
     override fun transitionOffscreenForSampling(target: RenderTarget) {
-        restoreToGeneral(
+        transitionImage(
             target.colorTexture as? VulkanGpuTexture,
+            oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            newLayout = VK_IMAGE_LAYOUT_GENERAL,
+            srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
             dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
             dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+        )
+    }
+
+    override fun transitionOffscreenForRendering(target: RenderTarget) {
+        transitionImage(
+            target.colorTexture as? VulkanGpuTexture,
+            oldLayout = VK_IMAGE_LAYOUT_GENERAL,
+            newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            srcAccessMask = VK_ACCESS_SHADER_READ_BIT,
+            dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT or VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
         )
     }
 
@@ -111,7 +131,12 @@ class NativeVulkanService private constructor(
         RenderSystem.getDevice().createCommandEncoder().submit()
     }
 
-    private fun restoreToGeneral(tex: VulkanGpuTexture?, dstStageMask: Int, dstAccessMask: Int) {
+    private fun transitionImage(
+        tex: VulkanGpuTexture?,
+        oldLayout: Int, newLayout: Int,
+        srcStageMask: Int, dstStageMask: Int,
+        srcAccessMask: Int, dstAccessMask: Int,
+    ) {
         if (tex == null) return
         try {
             val device = (RenderSystem.getDevice() as? GpuDeviceAccessor)?.`oneconfig$getBackend`() as? VulkanDevice ?: return
@@ -121,9 +146,9 @@ class NativeVulkanService private constructor(
                 MemoryStack.stackPush().use { stack ->
                     val barrier = VkImageMemoryBarrier.calloc(1, stack)
                         .sType(VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER)
-                        .oldLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-                        .newLayout(VK_IMAGE_LAYOUT_GENERAL)
-                        .srcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+                        .oldLayout(oldLayout)
+                        .newLayout(newLayout)
+                        .srcAccessMask(srcAccessMask)
                         .dstAccessMask(dstAccessMask)
                         .srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
                         .dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
@@ -132,7 +157,7 @@ class NativeVulkanService private constructor(
                         .aspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
                         .baseMipLevel(0).levelCount(1).baseArrayLayer(0).layerCount(1)
                     vkCmdPipelineBarrier(
-                        cmd, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, dstStageMask, 0,
+                        cmd, srcStageMask, dstStageMask, 0,
                         null, null, barrier,
                     )
                 }
@@ -141,7 +166,7 @@ class NativeVulkanService private constructor(
                 encoder.execute(cmd)
             }
         } catch (e: Exception) {
-            LOG.warn("restoreToGeneral failed", e)
+            LOG.warn("transitionImage failed", e)
         }
     }
 
