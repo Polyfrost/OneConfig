@@ -91,11 +91,19 @@ class NativeVulkanService private constructor(
     }
 
     override fun restoreMainRTLayout() {
-        restoreToGeneral(Minecraft.getInstance().gameRenderer.mainRenderTarget().colorTexture as? VulkanGpuTexture)
+        restoreToGeneral(
+            Minecraft.getInstance().gameRenderer.mainRenderTarget().colorTexture as? VulkanGpuTexture,
+            dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            dstAccessMask = VK_ACCESS_MEMORY_READ_BIT or VK_ACCESS_MEMORY_WRITE_BIT,
+        )
     }
 
     override fun transitionOffscreenForSampling(target: RenderTarget) {
-        restoreToGeneral(target.colorTexture as? VulkanGpuTexture)
+        restoreToGeneral(
+            target.colorTexture as? VulkanGpuTexture,
+            dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+        )
     }
 
     override fun midFrameFlush() {
@@ -103,7 +111,7 @@ class NativeVulkanService private constructor(
         RenderSystem.getDevice().createCommandEncoder().submit()
     }
 
-    private fun restoreToGeneral(tex: VulkanGpuTexture?) {
+    private fun restoreToGeneral(tex: VulkanGpuTexture?, dstStageMask: Int, dstAccessMask: Int) {
         if (tex == null) return
         try {
             val device = (RenderSystem.getDevice() as? GpuDeviceAccessor)?.`oneconfig$getBackend`() as? VulkanDevice ?: return
@@ -116,7 +124,7 @@ class NativeVulkanService private constructor(
                         .oldLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
                         .newLayout(VK_IMAGE_LAYOUT_GENERAL)
                         .srcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-                        .dstAccessMask(VK_ACCESS_MEMORY_READ_BIT or VK_ACCESS_MEMORY_WRITE_BIT)
+                        .dstAccessMask(dstAccessMask)
                         .srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
                         .dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
                         .image(tex.vkImage())
@@ -124,7 +132,7 @@ class NativeVulkanService private constructor(
                         .aspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
                         .baseMipLevel(0).levelCount(1).baseArrayLayer(0).layerCount(1)
                     vkCmdPipelineBarrier(
-                        cmd, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0,
+                        cmd, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, dstStageMask, 0,
                         null, null, barrier,
                     )
                 }

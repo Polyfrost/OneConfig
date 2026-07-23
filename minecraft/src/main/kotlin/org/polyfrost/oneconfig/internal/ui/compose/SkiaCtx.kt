@@ -70,6 +70,9 @@ object SkiaCtx {
     private var composeSurface: Surface? = null
     private var composeBrt: BackendRenderTarget? = null
 
+    private var hudNeedsSamplingTransition = false
+    private var composeNeedsSamplingTransition = false
+
     @Volatile
     private var composeActive = false
     @Volatile
@@ -231,6 +234,7 @@ object SkiaCtx {
         queuedHudDraws.clear()
         if (draws.isEmpty()) return
         flushToTarget(draws, resolveHudSurface() ?: return)
+        hudNeedsSamplingTransition = true
     }
 
     @Volatile
@@ -264,6 +268,7 @@ object SkiaCtx {
         queuedDraws.clear()
         val draws = queued + { block.run() }
         flushToTarget(draws, resolveComposeSurface() ?: return)
+        composeNeedsSamplingTransition = true
         blitCompose(ctx)
     }
 
@@ -328,7 +333,10 @@ object SkiaCtx {
         wrapper.setGpuTexture(colorTex)
         //? >= 1.21.8 {
         wrapper.setGpuTextureView(rt.getColorTextureView())
-        vulkanService?.transitionOffscreenForSampling(rt)
+        if (hudNeedsSamplingTransition) {
+            vulkanService?.transitionOffscreenForSampling(rt)
+            hudNeedsSamplingTransition = false
+        }
         guiGraphics.pose().pushMatrix()
         guiGraphics.pose().scale(1f / guiScale, 1f / guiScale)
         guiGraphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
@@ -378,7 +386,10 @@ object SkiaCtx {
         wrapper.setGpuTexture(colorTex)
         //? >= 1.21.8 {
         wrapper.setGpuTextureView(rt.getColorTextureView())
-        vulkanService?.transitionOffscreenForSampling(rt)
+        if (composeNeedsSamplingTransition) {
+            vulkanService?.transitionOffscreenForSampling(rt)
+            composeNeedsSamplingTransition = false
+        }
         guiGraphics.pose().pushMatrix()
         guiGraphics.pose().scale(1f / guiScale, 1f / guiScale)
         guiGraphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
