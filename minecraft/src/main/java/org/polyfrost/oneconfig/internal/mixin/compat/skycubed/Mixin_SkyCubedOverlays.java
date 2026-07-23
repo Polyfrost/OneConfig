@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.skycubed;
 
 //? skycubed_compat {
-/*import me.owdding.lib.overlays.Overlays;
+import me.owdding.lib.overlays.Overlays;
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -20,4 +20,4 @@ public class Mixin_SkyCubedOverlays {
         }
     }
 }
-*///? }
+//? }

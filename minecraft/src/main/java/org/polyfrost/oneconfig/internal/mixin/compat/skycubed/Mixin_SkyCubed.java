@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.skycubed;
 
 //? skycubed_compat {
-/*import org.polyfrost.oneconfig.internal.compat.SkyCubedCompat;
+import org.polyfrost.oneconfig.internal.compat.SkyCubedCompat;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,4 +18,4 @@ public class Mixin_SkyCubed {
         SkyCubedCompat.initialize();
     }
 }
-*///? }
+//? }

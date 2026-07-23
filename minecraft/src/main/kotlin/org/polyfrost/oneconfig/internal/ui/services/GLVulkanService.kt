@@ -27,7 +27,7 @@ object GLVulkanService : VulkanService {
         width: Int, height: Int,
         vkImageHandle: Long, vkFormat: Int, vkQueueFamily: Int,
     ): BackendRenderTarget {
-        val target = client.gameRenderer.mainRenderTarget()
+        val target = client.mainRenderTarget
         //? >= 1.21.5 {
         val frameBufferId = RenderTargetFbo.getFboId(target)
         //? } else

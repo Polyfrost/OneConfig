@@ -49,10 +49,10 @@ object LegacyHudOffscreen {
         destroy()
         try {
             //? if >= 26.2 {
-            val rt = TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
-            //? } else {
-            /*val rt = TextureTarget(null, w, h, true)
-            *///? }
+            /*val rt = TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
+            *///? } else {
+            val rt = TextureTarget(null, w, h, true)
+            //? }
             target = rt
             val svc = SkiaCtx.vulkanService ?: return false
             if (!SkiaCtx.isVulkanMode) {
@@ -132,22 +132,22 @@ object LegacyHudOffscreen {
             val colorTex = rt.colorTexture ?: return
             val encoder = com.mojang.blaze3d.systems.RenderSystem.getDevice().createCommandEncoder()
             //? if >= 26.2 {
-            encoder.clearColorTexture(colorTex, org.joml.Vector4f(0f, 0f, 0f, 0f))
-            //? } else {
-            /*encoder.clearColorTexture(colorTex, 0)
-            *///? }
+            /*encoder.clearColorTexture(colorTex, org.joml.Vector4f(0f, 0f, 0f, 0f))
+            *///? } else {
+            encoder.clearColorTexture(colorTex, 0)
+            //? }
 
             val prevState = accessor.`oneconfig$getRenderState`()
             redirectTarget = rt
             try {
                 accessor.`oneconfig$setRenderState`(state)
                 //? if >= 26.2 {
-                guiRenderer.render()
-                //? } else {
-                /*val fog = (client.gameRenderer as GameRendererAccessor).`oneconfig$getFogRenderer`()
+                /*guiRenderer.render()
+                *///? } else {
+                val fog = (client.gameRenderer as GameRendererAccessor).`oneconfig$getFogRenderer`()
                     .getBuffer(net.minecraft.client.renderer.fog.FogRenderer.FogMode.NONE)
                 guiRenderer.render(fog)
-                *///? }
+                //? }
             } finally {
                 redirectTarget = null
                 accessor.`oneconfig$setRenderState`(prevState)

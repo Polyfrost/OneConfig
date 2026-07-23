@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.odin;
 
 //? odin_compat {
-/*import com.odtheking.odin.features.ModuleManager;
+import com.odtheking.odin.features.ModuleManager;
 import org.polyfrost.oneconfig.internal.compat.OdinCompat;
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -22,4 +22,4 @@ public class Mixin_OdinModuleManager {
         }
     }
 }
-*///? }
+//? }

@@ -50,7 +50,7 @@ object BlurRenderer {
     fun drawBlur(radius: Float = 8f) {
         if (radius < 0.5f) return
         SkiaCtx.queueDraw {
-            val target = client.gameRenderer.mainRenderTarget()
+            val target = client.mainRenderTarget
             drawRegion(SkiaCtx.canvas, 0f, 0f, target.width.toFloat(), target.height.toFloat(), radius)
         }
     }
@@ -58,7 +58,7 @@ object BlurRenderer {
     fun drawRegion(canvas: Canvas, x: Float, y: Float, width: Float, height: Float, radius: Float) {
         if (width <= 0f || height <= 0f) return
 
-        val target = client.gameRenderer.mainRenderTarget()
+        val target = client.mainRenderTarget
         val srcWidth = target.width
         val srcHeight = target.height
         val sourceSurface = resolveSurface(target, srcWidth, srcHeight) ?: return
