@@ -1,4 +1,3 @@
-1.0.4 changelogs:
+1.0.5 changelogs:
 
-- Add ability to lock HUDs
-- Add main menu FPS sampling event
+- Fix compat with Sodium Extra's Reduce Resolution with Vulkan
