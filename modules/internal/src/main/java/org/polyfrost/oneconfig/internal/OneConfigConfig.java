@@ -30,16 +30,6 @@ public class OneConfigConfig extends Config {
         new OneConfigKeybind(new int[] {344}, null, KeyModifiers.NONE, 0L, pressed -> true);
 
     @Switch(
-        title = "oneconfig.preferences.window_blur.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.window_blur.description",
-        descriptionTranslation = true
-    )
-    public static boolean enableWindowBlur = true;
-
-    @Switch(
         title = "oneconfig.preferences.background_blur.title",
         titleTranslation = true,
         subcategory = "oneconfig.preferences.category.gui",
@@ -61,6 +51,32 @@ public class OneConfigConfig extends Config {
         descriptionTranslation = true
     )
     public static float hudDragUiOpacity = 0.60f;
+
+    @Slider(
+        title = "oneconfig.preferences.page_opacity.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.gui",
+        subcategoryTranslation = true,
+        min = 0f,
+        max = 100f,
+        step = 1f,
+        description = "oneconfig.preferences.page_opacity.description",
+        descriptionTranslation = true
+    )
+    public static float pageOpacity = 88f;
+
+    @Slider(
+        title = "oneconfig.preferences.sidebar_opacity.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.gui",
+        subcategoryTranslation = true,
+        min = 0f,
+        max = 100f,
+        step = 1f,
+        description = "oneconfig.preferences.sidebar_opacity.description",
+        descriptionTranslation = true
+    )
+    public static float sidebarOpacity = 80f;
 
     @Switch(
         title = "oneconfig.preferences.pause_game.title",
@@ -423,6 +439,18 @@ public class OneConfigConfig extends Config {
         addCallback(
             "flipTopOptionOrder", (Boolean v) -> {
                 org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setFlipTopOptionOrder(v);
+                return false;
+            });
+        org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setPageOpacity(pageOpacity);
+        addCallback(
+            "pageOpacity", (java.lang.Number v) -> {
+                org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setPageOpacity(v.floatValue());
+                return false;
+            });
+        org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setSidebarOpacity(sidebarOpacity);
+        addCallback(
+            "sidebarOpacity", (java.lang.Number v) -> {
+                org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setSidebarOpacity(v.floatValue());
                 return false;
             });
         addCallback(

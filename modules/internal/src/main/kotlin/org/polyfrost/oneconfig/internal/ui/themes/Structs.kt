@@ -3,6 +3,11 @@ package org.polyfrost.oneconfig.internal.ui.themes
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontFamily
+import org.polyfrost.oneconfig.internal.OneConfigConfig
+
+/** Sets a panel background color's alpha from an opacity percentage (0-100; 0 = transparent, 100 = opaque). */
+fun Color.withOpacityPercent(percent: Float): Color =
+    copy(alpha = (percent / 100f).coerceIn(0f, 1f))
 
 data class UITheme(
     val previewImage: String,

@@ -41,12 +41,14 @@ oneconfig.preferences.category.animations=Animations
 oneconfig.preferences.category.sounds=Sounds
 oneconfig.preferences.keybind.title=OneConfig Keybind
 oneconfig.preferences.keybind.description=The keybind used to open the OneConfig menu.
-oneconfig.preferences.window_blur.title=Window Blur
-oneconfig.preferences.window_blur.description=Blurs the area behind the OneConfig window.
 oneconfig.preferences.background_blur.title=Background Blur
 oneconfig.preferences.background_blur.description=Blurs the full game background when the OneConfig menu is open.
 oneconfig.preferences.hud_drag_ui_opacity.title=HUD drag opacity
 oneconfig.preferences.hud_drag_ui_opacity.description=How visible the OneConfig menu stays while you drag a HUD. 0 = fully transparent, 1 = no fade.
+oneconfig.preferences.page_opacity.title=Page Opacity
+oneconfig.preferences.page_opacity.description=How opaque the OneConfig content panel background is. 0 = fully transparent, 100 = fully opaque.
+oneconfig.preferences.sidebar_opacity.title=Sidebar Opacity
+oneconfig.preferences.sidebar_opacity.description=How opaque the OneConfig sidebar background is. 0 = fully transparent, 100 = fully opaque.
 oneconfig.preferences.pause_game.title=Pause Game
 oneconfig.preferences.pause_game.description=Pause singleplayer worlds while the OneConfig menu is open.
 oneconfig.preferences.use_custom_scale.title=Use custom GUI scale

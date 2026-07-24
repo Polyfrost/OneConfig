@@ -43,6 +43,7 @@ import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.withOpacityPercent
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import java.util.Locale
@@ -54,7 +55,7 @@ fun Sidebar() {
     Column(
         modifier = Modifier.fillMaxHeight()
             .width(264.dp)
-            .background(LocalTheme.current.sidebarBackground)
+            .background(LocalTheme.current.sidebarBackground.withOpacityPercent(ShellState.sidebarOpacity))
             .rightBorder(LocalTheme.current.borderColor, 1f),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
