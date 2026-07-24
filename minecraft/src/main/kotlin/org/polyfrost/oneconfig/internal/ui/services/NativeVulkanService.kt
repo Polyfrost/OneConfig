@@ -10,8 +10,10 @@ import net.minecraft.client.Minecraft
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.DirectContext
 import org.jetbrains.skia.SurfaceColorFormat
+import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK
 import org.lwjgl.vulkan.VK12.*
+import org.lwjgl.vulkan.VkImageMemoryBarrier
 import org.polyfrost.oneconfig.internal.mixin.blaze3d.GpuDeviceAccessor
 import org.slf4j.LoggerFactory
 
@@ -30,6 +32,8 @@ class NativeVulkanService private constructor(
 ) : VulkanService {
 
     override val isVulkan = true
+
+    override val offscreenNeedsPerFrameRewrap = true
 
     override fun makeDirectContext(): DirectContext {
         val provider = VK.getFunctionProvider()
@@ -51,7 +55,7 @@ class NativeVulkanService private constructor(
         width, height,
         vkImageHandle,
         VK_IMAGE_TILING_OPTIMAL,
-        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        VK_IMAGE_LAYOUT_GENERAL,
         vkFormat,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT or VK_IMAGE_USAGE_TRANSFER_DST_BIT
                 or VK_IMAGE_USAGE_SAMPLED_BIT or VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
@@ -86,9 +90,84 @@ class NativeVulkanService private constructor(
         Triple(0L, 0, 0)
     }
 
+    override fun restoreMainRTLayout() {
+        transitionImage(
+            Minecraft.getInstance().gameRenderer.mainRenderTarget().colorTexture as? VulkanGpuTexture,
+            oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            newLayout = VK_IMAGE_LAYOUT_GENERAL,
+            srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            dstAccessMask = VK_ACCESS_MEMORY_READ_BIT or VK_ACCESS_MEMORY_WRITE_BIT,
+        )
+    }
+
+    override fun transitionOffscreenForSampling(target: RenderTarget) {
+        transitionImage(
+            target.colorTexture as? VulkanGpuTexture,
+            oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            newLayout = VK_IMAGE_LAYOUT_GENERAL,
+            srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+        )
+    }
+
+    override fun transitionOffscreenForRendering(target: RenderTarget) {
+        transitionImage(
+            target.colorTexture as? VulkanGpuTexture,
+            oldLayout = VK_IMAGE_LAYOUT_GENERAL,
+            newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            srcAccessMask = VK_ACCESS_SHADER_READ_BIT,
+            dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT or VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+        )
+    }
+
     override fun midFrameFlush() {
         // Submit MC's pending command buffer so Skia sees a consistent image state.
         RenderSystem.getDevice().createCommandEncoder().submit()
+    }
+
+    private fun transitionImage(
+        tex: VulkanGpuTexture?,
+        oldLayout: Int, newLayout: Int,
+        srcStageMask: Int, dstStageMask: Int,
+        srcAccessMask: Int, dstAccessMask: Int,
+    ) {
+        if (tex == null) return
+        try {
+            val device = (RenderSystem.getDevice() as? GpuDeviceAccessor)?.`oneconfig$getBackend`() as? VulkanDevice ?: return
+            val encoder = device.createCommandEncoder()
+            val cmd = encoder.allocateAndBeginTransientCommandBuffer()
+            try {
+                MemoryStack.stackPush().use { stack ->
+                    val barrier = VkImageMemoryBarrier.calloc(1, stack)
+                        .sType(VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER)
+                        .oldLayout(oldLayout)
+                        .newLayout(newLayout)
+                        .srcAccessMask(srcAccessMask)
+                        .dstAccessMask(dstAccessMask)
+                        .srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+                        .dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+                        .image(tex.vkImage())
+                    barrier.subresourceRange()
+                        .aspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
+                        .baseMipLevel(0).levelCount(1).baseArrayLayer(0).layerCount(1)
+                    vkCmdPipelineBarrier(
+                        cmd, srcStageMask, dstStageMask, 0,
+                        null, null, barrier,
+                    )
+                }
+            } finally {
+                vkEndCommandBuffer(cmd)
+                encoder.execute(cmd)
+            }
+        } catch (e: Exception) {
+            LOG.warn("transitionImage failed", e)
+        }
     }
 
     companion object {

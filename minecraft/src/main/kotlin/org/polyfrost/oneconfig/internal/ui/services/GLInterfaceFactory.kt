@@ -58,29 +58,22 @@ internal object GLInterfaceFactory {
         }
     }
 
-    private class GetProcCallback(
-        private val provider: FunctionProvider,
-    ) : CallbackI {
-
+    @FunctionalInterface
+    private fun interface GetProcCallbackI : CallbackI {
         //? if >=26.1
         override fun getDescriptor(): Callback.Descriptor = DESCRIPTOR
         //? if <26.1
         //override fun getCallInterface(): FFICIF = CALL_INTERFACE
 
         override fun callback(ret: Long, args: Long) {
-            var addr = 0L
-            try {
-                val namePtr = MemoryUtil.memGetAddress(
-                    MemoryUtil.memGetAddress(args + Pointer.POINTER_SIZE.toLong())
-                )
-                if (namePtr != 0L) {
-                    addr = provider.getFunctionAddress(MemoryUtil.memUTF8(namePtr))
-                }
-            } catch (_: Throwable) {
-                addr = 0L
-            }
-            APIUtil.apiClosureRetP(ret, addr)
+            val contextPtr = MemoryUtil.memGetAddress(MemoryUtil.memGetAddress(args))
+            val namePtr = MemoryUtil.memGetAddress(
+                MemoryUtil.memGetAddress(args + Pointer.POINTER_SIZE.toLong())
+            )
+            APIUtil.apiClosureRetP(ret, invoke(contextPtr, namePtr))
         }
+
+        fun invoke(context: Long, name: Long): Long
 
         companion object {
             private val CALL_INTERFACE: FFICIF = APIUtil.apiCreateCIF(
@@ -91,6 +84,17 @@ internal object GLInterfaceFactory {
             )
             //? if >=26.1
             private val DESCRIPTOR: Callback.Descriptor = Callback.Descriptor(MethodHandles.lookup(), CALL_INTERFACE)
+        }
+    }
+
+    private class GetProcCallback(
+        private val provider: FunctionProvider,
+    ) : GetProcCallbackI {
+
+        override fun invoke(context: Long, name: Long): Long = try {
+            if (name != 0L) provider.getFunctionAddress(MemoryUtil.memUTF8(name)) else 0L
+        } catch (_: Throwable) {
+            0L
         }
     }
 }

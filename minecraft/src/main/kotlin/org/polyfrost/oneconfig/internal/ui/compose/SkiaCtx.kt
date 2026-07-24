@@ -70,6 +70,12 @@ object SkiaCtx {
     private var composeSurface: Surface? = null
     private var composeBrt: BackendRenderTarget? = null
 
+    private var hudNeedsSamplingTransition = false
+    private var composeNeedsSamplingTransition = false
+
+    private var hudRealIsGeneral = false
+    private var composeRealIsGeneral = false
+
     @Volatile
     private var composeActive = false
     @Volatile
@@ -230,7 +236,10 @@ object SkiaCtx {
         val draws = queuedHudDraws.toList()
         queuedHudDraws.clear()
         if (draws.isEmpty()) return
-        flushToTarget(draws, resolveHudSurface() ?: return)
+        val surface = resolveHudSurface() ?: return
+        if (hudRealIsGeneral) hudTarget?.let { vulkanService?.transitionOffscreenForRendering(it) }
+        flushToTarget(draws, surface)
+        hudNeedsSamplingTransition = true
     }
 
     @Volatile
@@ -263,7 +272,10 @@ object SkiaCtx {
         val queued = queuedDraws.toList()
         queuedDraws.clear()
         val draws = queued + { block.run() }
-        flushToTarget(draws, resolveComposeSurface() ?: return)
+        val surface = resolveComposeSurface() ?: return
+        if (composeRealIsGeneral) composeTarget?.let { vulkanService?.transitionOffscreenForRendering(it) }
+        flushToTarget(draws, surface)
+        composeNeedsSamplingTransition = true
         blitCompose(ctx)
     }
 
@@ -313,7 +325,7 @@ object SkiaCtx {
 
     fun blitHud(guiGraphics: GuiGraphicsExtractor) {
         val rt = hudTarget ?: return
-        val w = rt.width;
+        val w = rt.width
         val h = rt.height
         val guiScale = client.window.guiScale.toFloat()
 
@@ -328,6 +340,11 @@ object SkiaCtx {
         wrapper.setGpuTexture(colorTex)
         //? >= 1.21.8 {
         wrapper.setGpuTextureView(rt.getColorTextureView())
+        if (hudNeedsSamplingTransition) {
+            vulkanService?.transitionOffscreenForSampling(rt)
+            hudNeedsSamplingTransition = false
+            hudRealIsGeneral = true
+        }
         guiGraphics.pose().pushMatrix()
         guiGraphics.pose().scale(1f / guiScale, 1f / guiScale)
         guiGraphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
@@ -377,6 +394,11 @@ object SkiaCtx {
         wrapper.setGpuTexture(colorTex)
         //? >= 1.21.8 {
         wrapper.setGpuTextureView(rt.getColorTextureView())
+        if (composeNeedsSamplingTransition) {
+            vulkanService?.transitionOffscreenForSampling(rt)
+            composeNeedsSamplingTransition = false
+            composeRealIsGeneral = true
+        }
         guiGraphics.pose().pushMatrix()
         guiGraphics.pose().scale(1f / guiScale, 1f / guiScale)
         guiGraphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
@@ -471,6 +493,7 @@ object SkiaCtx {
 
             if (isVulkanMode) {
                 directContext.flushAndSubmit(mainSurface, false)
+                vulkanService?.restoreMainRTLayout()
             } else {
                 directContext.flush()
 //                if (profiling) {
@@ -546,7 +569,8 @@ object SkiaCtx {
         if (w <= 0 || h <= 0) return null
 
         var rt = hudTarget
-        if (rt == null || rt.width != w || rt.height != h) {
+        val needNewTarget = rt == null || rt.width != w || rt.height != h
+        if (needNewTarget) {
             destroyHudTarget()
             //? if >= 26.2 {
             /*rt = TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
@@ -559,7 +583,6 @@ object SkiaCtx {
             *///? }
             hudTarget = rt
 
-            val svc = vulkanService ?: return null
             //? >= 1.21.5 {
             if (!isVulkanMode) {
                 val fboId = org.polyfrost.oneconfig.internal.ui.RenderTargetFbo.getFboId(rt)
@@ -571,6 +594,13 @@ object SkiaCtx {
                 }
             }
             //? }
+        }
+
+        if (needNewTarget || hudSurface == null) {
+            hudSurface?.close(); hudSurface = null
+            hudBrt?.close(); hudBrt = null
+            hudRealIsGeneral = false
+            val svc = vulkanService ?: return null
             val (brt, colorFmt) = svc.makeOffscreenBRT(rt, w, h)
             hudBrt = brt
             hudSurface = Surface.makeFromBackendRenderTarget(
@@ -601,7 +631,8 @@ object SkiaCtx {
         if (w <= 0 || h <= 0) return null
 
         var rt = composeTarget
-        if (rt == null || rt.width != w || rt.height != h) {
+        val needNewTarget = rt == null || rt.width != w || rt.height != h
+        if (needNewTarget) {
             destroyComposeTarget()
             //? if >= 26.2 {
             /*rt = TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
@@ -614,7 +645,6 @@ object SkiaCtx {
             *///? }
             composeTarget = rt
 
-            val svc = vulkanService ?: return null
             //? >= 1.21.5 {
             if (!isVulkanMode) {
                 val fboId = org.polyfrost.oneconfig.internal.ui.RenderTargetFbo.getFboId(rt)
@@ -626,7 +656,14 @@ object SkiaCtx {
                 }
             }
             //? }
-            val (brt, colorFmt) = svc.makeOffscreenBRT(rt, w, h)
+        }
+
+        if (needNewTarget || composeSurface == null) {
+            composeSurface?.close(); composeSurface = null
+            composeBrt?.close(); composeBrt = null
+            composeRealIsGeneral = false
+            val svc = vulkanService ?: return null
+            val (brt, colorFmt) = svc.makeOffscreenBRT(rt!!, w, h)
             composeBrt = brt
             val composeOrigin = if (isVulkanMode) SurfaceOrigin.TOP_LEFT else SurfaceOrigin.BOTTOM_LEFT
             composeSurface = Surface.makeFromBackendRenderTarget(
@@ -701,7 +738,7 @@ object SkiaCtx {
         val h = client.window.height
         if (w <= 0 || h <= 0) return null
 
-        if (w != vkSurfaceWidth || h != vkSurfaceHeight) {
+        if (w != vkSurfaceWidth || h != vkSurfaceHeight || svc.offscreenNeedsPerFrameRewrap) {
             invalidateVkSurfaces()
             vkSurfaceWidth = w
             vkSurfaceHeight = h
