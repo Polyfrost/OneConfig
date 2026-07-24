@@ -10,7 +10,6 @@ resource-loader-v0 = "3.1.11+946bf4c3f3"
 
 modmenu = "15.0.0-beta.3"
 yacl = "3.7.1+1.21.6-fabric"
-malilib = "0.25.7"
 moulconfig = "3.11.0"
 
 [libraries]
@@ -25,9 +24,8 @@ resource-loader-v0 = { module = "net.fabricmc.fabric-api:fabric-resource-loader-
 
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
-malilib = { module = "fi.dy.masa.malilib:malilib-fabric-1.21.8", version.ref = "malilib" }
 moulconfig = { module = "org.notenoughupdates.moulconfig:common", version.ref = "moulconfig" }
 
 [bundles]
-compat = ["modmenu", "yacl", "malilib"]
+compat = ["modmenu", "yacl"]
 fabric-api = ["api-base", "lifecycle-events-v1", "rendering-v1", "screen-api-v1", "transitive-access-wideners-v1", "command-api-v2", "key-binding-api-v1", "resource-loader-v0"]

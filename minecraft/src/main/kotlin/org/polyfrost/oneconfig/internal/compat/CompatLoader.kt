@@ -22,7 +22,6 @@ object CompatLoader {
         "com.teamresourceful.resourcefulconfig",
         "com.teamresourceful.resourcefulconfigkt",
         "dev.isxander.yacl3",
-        "fi.dy.masa",
         "me.shedaniel",
         "org.polyfrost.oneconfig",
         "java.lang",

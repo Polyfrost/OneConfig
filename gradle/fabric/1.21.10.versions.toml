@@ -11,7 +11,6 @@ resource-loader-v1 = "1.0.2+225bca4068"
 
 modmenu = "16.0.0-rc.1"
 yacl = "3.8.0+1.21.9-fabric"
-malilib = "0.26.7"
 moulconfig = "3.11.0"
 
 vulkanmod = "jkDMvvWU"
@@ -29,11 +28,10 @@ resource-loader-v1 = { module = "net.fabricmc.fabric-api:fabric-resource-loader-
 
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
-malilib = { module = "fi.dy.masa.malilib:malilib-fabric-1.21.10", version.ref = "malilib" }
 moulconfig = { module = "org.notenoughupdates.moulconfig:common", version.ref = "moulconfig" }
 
 vulkanmod = { module = "maven.modrinth:vulkanmod", version.ref = "vulkanmod" }
 
 [bundles]
-compat = ["modmenu", "yacl", "malilib"]
+compat = ["modmenu", "yacl"]
 fabric-api = ["api-base", "lifecycle-events-v1", "rendering-v1", "screen-api-v1", "transitive-access-wideners-v1", "command-api-v2", "key-binding-api-v1", "resource-loader-v0", "resource-loader-v1"]

@@ -38,9 +38,6 @@ repositories {
     maven("https://maven.isxander.dev/releases") {
         content { includeGroup("dev.isxander") }
     }
-    maven("https://masa.dy.fi/maven/sakura-ryoko") {
-        content { includeGroupAndSubgroups("fi.dy.masa") }
-    }
     maven("https://api.modrinth.com/maven") {
         content { includeGroup("maven.modrinth") } // for some reason yacl versions exist that aren't on the official repo???
     }

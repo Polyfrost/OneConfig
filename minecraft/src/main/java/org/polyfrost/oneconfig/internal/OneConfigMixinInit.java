@@ -91,9 +91,6 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? yacl_compat
         mixins.add("compat.yacl.Mixin_YetAnotherConfigLib_Builder");
 
-        //? malilib_compat
-        mixins.add("compat.malilib.Mixin_GuiConfigsBase");
-
         //? clothconfig_compat
         mixins.add("compat.cloth.Mixin_ConfigBuilderImpl");
 
