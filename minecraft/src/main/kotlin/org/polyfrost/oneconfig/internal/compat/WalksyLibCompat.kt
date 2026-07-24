@@ -11,6 +11,7 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.noCache
 import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
+import net.minecraft.client.Minecraft
 import java.util.UUID
 
 object WalksyLibCompat {
@@ -92,13 +93,17 @@ object WalksyLibCompat {
             return parseColor(option, type, name, description, categoryName, subcategoryName, tree)
         }
 
+        if (type.name == SPRITE_CLASS) {
+            return parseSprite(option, type, name, description, categoryName, subcategoryName, tree)
+        }
+
         val visualizer: Class<out Visualizer> = when {
             type == java.lang.Boolean::class.java -> Visualizer.SwitchVisualizer::class.java
             type == Integer::class.java || type == java.lang.Double::class.java || type == java.lang.Float::class.java ->
                 Visualizer.SliderVisualizer::class.java
             type == String::class.java -> Visualizer.TextVisualizer::class.java
             Enum::class.java.isAssignableFrom(type) -> Visualizer.DropdownVisualizer::class.java
-            else -> return false // sprite, pixel grid, string list and other WalksyLib-only types
+            else -> return false // pixel grid, string list and other WalksyLib-only types
         }
 
         val getValueM = optionClass.methods.firstOrNull { it.name == "getValue" && it.parameterCount == 0 }
@@ -206,6 +211,94 @@ object WalksyLibCompat {
 
     private fun colorMethod(colorClass: Class<*>, name: String): java.lang.reflect.Method? =
         colorClass.methods.firstOrNull { it.name == name && it.parameterCount == 0 }?.apply { isAccessible = true }
+
+    private const val SPRITE_CLASS = "main.walksy.lib.core.utils.IdentifierWrapper"
+    private const val CONFIG_MANAGER_CLASS = "main.walksy.lib.core.manager.WalksyLibConfigManager"
+    private val SPRITE_TYPES = arrayOf("png")
+
+    private fun parseSprite(
+        option: Any,
+        wrapperClass: Class<*>,
+        name: String,
+        description: String?,
+        categoryName: String,
+        subcategoryName: String?,
+        tree: Tree,
+    ): Boolean {
+        val optionClass = option::class.java
+        val getValueM = optionClass.methods.firstOrNull { it.name == "getValue" && it.parameterCount == 0 }
+            ?.apply { isAccessible = true } ?: return false
+        val setValueM = optionClass.methods.firstOrNull { it.name == "setValue" && it.parameterCount == 1 }
+            ?.apply { isAccessible = true } ?: return false
+
+        val getFileName = wrapperClass.methods.firstOrNull { it.name == "getFileName" && it.parameterCount == 0 }
+            ?.apply { isAccessible = true } ?: return false
+        val wrapperCtor = wrapperClass.constructors.firstOrNull {
+            it.parameterCount == 2 && it.parameterTypes[1] == String::class.java
+        }?.apply { isAccessible = true } ?: return false
+
+        val managerClass = runCatching { Class.forName(CONFIG_MANAGER_CLASS, false, wrapperClass.classLoader) }
+            .getOrNull() ?: return false
+        val cachedImageDirM = managerClass.methods.firstOrNull { it.name == "getCachedImageDir" && it.parameterCount == 0 }
+            ?.apply { isAccessible = true } ?: return false
+        val loadTextureM = managerClass.methods.firstOrNull {
+            it.name == "loadTextureFromCache" && it.parameterCount == 1
+        }?.apply { isAccessible = true } ?: return false
+
+        fun cachedDir(): java.nio.file.Path? = runCatching { cachedImageDirM.invoke(null) as? java.nio.file.Path }.getOrNull()
+
+        val defaultWrapper = invoke(option, "getDefaultValue")
+        val defaultString = defaultWrapper?.let { runCatching { getFileName.invoke(it) as? String }.getOrNull() }
+            ?.takeIf { it.isNotBlank() }?.let { cachedDir()?.resolve(it)?.toString() } ?: ""
+
+        val property = Properties.functional(
+            {
+                runCatching {
+                    val fileName = getFileName.invoke(getValueM.invoke(option)) as? String
+                    fileName?.takeIf { it.isNotBlank() }?.let { cachedDir()?.resolve(it)?.toString() } ?: ""
+                }.getOrNull() ?: ""
+            },
+            { value ->
+                runCatching {
+                    val path = value.takeIf { it.isNotBlank() }
+                    if (path == null || (defaultWrapper != null && path == defaultString)) {
+                        if (defaultWrapper != null) {
+                            runCatching { setValueM.invoke(option, defaultWrapper) }
+                                .onFailure { LOGGER.warn("Failed to reset WalksyLib sprite value", it) }
+                        }
+                        return@runCatching
+                    }
+                    val source = java.io.File(path)
+                    if (!source.isFile) return@runCatching
+                    val fileName = source.name
+                    val dest = cachedDir()?.resolve(fileName)
+                    if (dest != null && source.toPath().toAbsolutePath() != dest.toAbsolutePath()) {
+                        java.nio.file.Files.copy(source.toPath(), dest, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+                    }
+                    Minecraft.getInstance().execute {
+                        runCatching {
+                            val identifier = loadTextureM.invoke(null, fileName) ?: return@execute
+                            setValueM.invoke(option, wrapperCtor.newInstance(identifier, fileName))
+                        }.onFailure { LOGGER.warn("Failed to apply WalksyLib sprite value", it) }
+                    }
+                }.onFailure { LOGGER.warn("Failed to set WalksyLib sprite value", it) }
+            },
+            UUID.randomUUID().toString(),
+            name,
+            description,
+            String::class.java,
+        )
+
+        property.addMetadata("visualizer", Visualizer.FileVisualizer::class.java)
+        property.addMetadata("types", SPRITE_TYPES)
+        property.addMetadata("filterName", "PNG Image")
+        property.addMetadata("placeholder", "Select a .png texture")
+        if (defaultWrapper != null) property.addMetadata("default", defaultString)
+        property.category = categoryName
+        property.subcategory = subcategoryName
+        tree.put(property)
+        return true
+    }
 
     private fun parseButton(
         option: Any,
