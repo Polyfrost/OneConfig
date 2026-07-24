@@ -61,6 +61,7 @@ import org.polyfrost.oneconfig.internal.ui.navigation.navigation
 import org.polyfrost.oneconfig.internal.ui.screens.SearchResultsScreen
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.withOpacityPercent
 import org.polyfrost.oneconfig.internal.ui.util.cachedDropShadow
 
 private const val GLOW_BAKE_SCALE = .25f
@@ -177,7 +178,7 @@ fun Shell(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .background(theme.pageBackground),
+                .background(theme.pageBackground.withOpacityPercent(ShellState.pageOpacity)),
         ) {
             val backStackEntry by LocalNavController.current.currentBackStackEntryAsState()
             val isModsMenu = backStackEntry?.destination?.hasRoute(ModsRoute::class) == true

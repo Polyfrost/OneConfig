@@ -37,7 +37,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
 ) : ComposeScreen() {
     private companion object {
         private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/UI")
-        const val SHELL_BLUR_RADIUS = 48f
         const val FULLSCREEN_BLUR_RADIUS = 8f
         const val OPEN_ANIMATION_MS = 250L
         const val CLOSE_ANIMATION_MS = 300L
@@ -225,19 +224,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
             onCloseReady = { closeRequest ->
                 requestCloseCallback = closeRequest
             },
-        ) { windowOffset ->
-            if (OneConfigConfig.enableWindowBlur) {
-                drawIntoCanvas { canvas ->
-                    BlurRenderer.drawRegion(
-                        canvas.skiaCanvas,
-                        windowOffset.x,
-                        windowOffset.y,
-                        size.width,
-                        size.height,
-                        SHELL_BLUR_RADIUS
-                    )
-                }
-            }
-        }
+        ) { }
     }
 }

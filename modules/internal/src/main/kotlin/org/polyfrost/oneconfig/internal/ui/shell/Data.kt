@@ -44,6 +44,12 @@ object ShellState {
 
     var flipTopOptionOrder by mutableStateOf(false)
 
+    /** Content-panel background opacity (0-100), mirrored from config so slider changes apply live. */
+    var pageOpacity by mutableStateOf(88f)
+
+    /** Sidebar background opacity (0-100), mirrored from config so slider changes apply live. */
+    var sidebarOpacity by mutableStateOf(80f)
+
     /** Last top-level route navigated to, used by the "Previous page" / "Smart reset" opening behaviors. */
     var lastRoute: Any? = null
 
