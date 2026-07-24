@@ -1,3 +1,5 @@
-1.0.6 changelogs:
+1.0.7 changelogs:
 
-- Fix window size calculations
+- Fix obscure Vulkan GPU corruption
+- Fix rendering with Wayland
+- Remove window blur to improve performance
