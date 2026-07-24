@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.components
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -32,6 +33,8 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
@@ -55,7 +58,9 @@ import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import net.kyori.adventure.text.ComponentLike
+import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -102,8 +107,40 @@ fun Header() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(26.dp)
         ) {
+            ShellState.openOriginalScreen?.let { OpenOriginalScreenButton(it) }
             GlobalSearchBar()
             IconButton("close") { closeRequest() }
+        }
+    }
+}
+
+@Composable
+private fun OpenOriginalScreenButton(runnable: Runnable) {
+    val theme = LocalTheme.current
+    val interactionSource = rememberInteractionSource()
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    val bgColor by animateColorAsState(if (isHovered) Accent.copy(alpha = 0.75f) else Accent)
+
+    Tooltip(
+        text = {
+            Text(
+                "Opening the original screen may show options that OneConfig doesn't.",
+                color = theme.textColor,
+                fontSize = 13.sp,
+            )
+        },
+        modifier = Modifier.widthIn(max = 260.dp),
+        anchor = Alignment.BottomCenter,
+    ) {
+        Box(
+            modifier = Modifier
+                .pointerHoverIcon(PointerIcon.Hand)
+                .background(bgColor, theme.buttonShape)
+                .onClick(interactionSource) { runnable.run() }
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("Open original screen", color = theme.accentTextColor, fontSize = 13.sp)
         }
     }
 }

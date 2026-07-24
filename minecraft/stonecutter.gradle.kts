@@ -17,7 +17,10 @@ stonecutter {
                 eval(current.version, "> 1.21.10") &&
                 catalogue.has("moulconfig")
             this["yacl_compat"] = catalogue.has("yacl")
+            this["malilib_compat"] = current.project.endsWith("-fabric") && catalogue.has("malilib")
             this["clothconfig_compat"] = catalogue.has("clothconfig")
+            this["midnightlib_compat"] = catalogue.has("midnightlib")
+            this["walksylib_compat"] = catalogue.has("walksylib")
             this["modmenu_compat"] = catalogue.has("modmenu")
             this["rconfig_compat"] = catalogue.has("rconfig")
             this["dandelion_compat"] = catalogue.has("dandelion")

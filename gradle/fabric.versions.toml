@@ -5,6 +5,8 @@ loader = "0.19.2"
 [libraries]
 fabric-loader = { module = "net.fabricmc:fabric-loader", version.ref = "loader" }
 clothconfig = { module = "me.shedaniel.cloth:cloth-config-fabric", version = "0" }
+midnightlib = { module = "eu.midnightdust:midnightlib", version = "0" }
+walksylib = { module = "maven.modrinth:walksylib", version = "0" }
 
 [plugins]
 loom-remap = {id = "net.fabricmc.fabric-loom-remap", version.ref = "loom"}

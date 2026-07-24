@@ -23,6 +23,8 @@ object ShellState {
     var titleAuthors by mutableStateOf<String?>(null)
     var titleCredits by mutableStateOf<String?>(null)
 
+    var openOriginalScreen by mutableStateOf<Runnable?>(null)
+
     var playerName by mutableStateOf("Player")
 
     /** PNG bytes for the local player's head avatar, or null until loaded. */
