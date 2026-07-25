@@ -86,6 +86,14 @@ fun interface Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[SliderVisualizer::class.java]?.visualize(prop) }
     }
 
+    /**
+     * A slider with two thumbs, backed by a single property holding a start/end pair — a two-element numeric
+     * array or list. Writes both ends at once, keeping start below end.
+     */
+    class RangeSliderVisualizer : Visualizer {
+        @Composable override fun visualize(prop: Property<*>) { Visualizer[RangeSliderVisualizer::class.java]?.visualize(prop) }
+    }
+
     class SwitchVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[SwitchVisualizer::class.java]?.visualize(prop) }
     }

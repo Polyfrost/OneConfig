@@ -5,6 +5,8 @@ import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedString
 import org.polyfrost.oneconfig.internal.ui.components.localizedText
+import org.polyfrost.oneconfig.internal.ui.components.settings.toNumberType
+import kotlin.math.roundToInt
 import java.lang.reflect.Array as ReflectArray
 
 sealed class OptionData(val prop: Property<*>) {
@@ -27,6 +29,55 @@ class SliderOptionData(prop: Property<*>) : OptionData(prop) {
 
     @Suppress("UNCHECKED_CAST")
     val numProp: Property<Number> get() = prop as Property<Number>
+}
+
+/**
+ * A start/end pair held in a single property, as a two-element numeric array or list. Both ends are written
+ * together and in the container shape the property already holds, so the backing field's type is preserved.
+ */
+class RangeSliderOptionData(prop: Property<*>) : OptionData(prop) {
+    val min: Float get() = prop.getMetadata("min") ?: 0f
+    val max: Float get() = prop.getMetadata("max") ?: 100f
+    val step: Float get() = prop.getMetadata("step") ?: 0f
+
+    /** The current `start to end`, or null when the property does not hold a two-element numeric pair. */
+    fun read(): Pair<Float, Float>? {
+        val values = when (val value = prop.get()) {
+            is FloatArray -> value.toList()
+            is DoubleArray -> value.map { it.toFloat() }
+            is IntArray -> value.map { it.toFloat() }
+            is LongArray -> value.map { it.toFloat() }
+            is Array<*> -> value.map { (it as? Number)?.toFloat() ?: return null }
+            is Iterable<*> -> value.map { (it as? Number)?.toFloat() ?: return null }
+            else -> return null
+        }
+        if (values.size < 2) return null
+        return values[0] to values[1]
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun write(start: Float, end: Float) {
+        val current = prop.get()
+        val written: Any = when (current) {
+            is FloatArray -> floatArrayOf(start, end)
+            is DoubleArray -> doubleArrayOf(start.toDouble(), end.toDouble())
+            is IntArray -> intArrayOf(start.roundToInt(), end.roundToInt())
+            is LongArray -> longArrayOf(start.toLong(), end.toLong())
+            is Array<*> -> {
+                val component = current.javaClass.componentType
+                java.lang.reflect.Array.newInstance(component, 2).also {
+                    java.lang.reflect.Array.set(it, 0, start.toNumberType(component))
+                    java.lang.reflect.Array.set(it, 1, end.toNumberType(component))
+                }
+            }
+            is List<*> -> {
+                val component = (current.firstOrNull() ?: 0f).javaClass
+                listOf(start.toNumberType(component), end.toNumberType(component))
+            }
+            else -> return
+        }
+        (prop as Property<Any>).set(written)
+    }
 }
 
 class NumberOptionData(prop: Property<*>) : OptionData(prop) {

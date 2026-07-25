@@ -15,6 +15,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.MultiSelectDropdo
 import org.polyfrost.oneconfig.internal.ui.components.settings.NumberListOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.NumberOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.RadioButtonOption
+import org.polyfrost.oneconfig.internal.ui.components.settings.RangeSliderOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.SliderOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.TextListOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.TextOption
@@ -29,6 +30,9 @@ internal object BuiltinVisualizers {
         })
         Visualizer.register(Visualizer.SliderVisualizer::class.java, Visualizer { prop ->
             SliderOption(SliderOptionData(prop))
+        })
+        Visualizer.register(Visualizer.RangeSliderVisualizer::class.java, Visualizer { prop ->
+            RangeSliderOption(RangeSliderOptionData(prop))
         })
         Visualizer.register(Visualizer.NumberVisualizer::class.java, Visualizer { prop ->
             NumberOption(NumberOptionData(prop))
