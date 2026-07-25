@@ -15,7 +15,8 @@ public abstract class Mixin_ResizeEvent {
 
     @Shadow
     public abstract com.mojang.blaze3d.platform.Window getWindow();
-    @Inject(method = "resizeDisplay", at = @At("TAIL"))
+    //~ if >= 26.1 'resizeDisplay' -> 'resizeGui'
+    @Inject(method = "resizeGui", at = @At("TAIL"))
     private void resizeCallback(CallbackInfo ci) {
         int[] w = new int[1];
         int[] h = new int[1];
