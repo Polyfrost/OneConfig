@@ -108,6 +108,16 @@ fun interface Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[InheritableSliderVisualizer::class.java]?.visualize(prop) }
     }
 
+    /**
+     * An ordered, editable chain of numbers held in one property as a numeric array or list — reorder, edit in
+     * place, remove, or append. `lockedLeading` metadata fixes that many entries at the front, `maxEntries`
+     * caps the length, and `entryLabel`/`nextValue` (both `java.util.function.Function`s) control how an entry
+     * reads and what "add" appends.
+     */
+    class NumberChainVisualizer : Visualizer {
+        @Composable override fun visualize(prop: Property<*>) { Visualizer[NumberChainVisualizer::class.java]?.visualize(prop) }
+    }
+
     class SwitchVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[SwitchVisualizer::class.java]?.visualize(prop) }
     }

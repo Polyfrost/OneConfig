@@ -5,7 +5,9 @@ import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedString
 import org.polyfrost.oneconfig.internal.ui.components.localizedText
+import org.polyfrost.oneconfig.internal.ui.components.settings.formatSpinnerValue
 import org.polyfrost.oneconfig.internal.ui.components.settings.toNumberType
+import java.util.function.Function
 import java.util.function.Supplier
 import kotlin.math.roundToInt
 import java.lang.reflect.Array as ReflectArray
@@ -43,42 +45,80 @@ class RangeSliderOptionData(prop: Property<*>) : OptionData(prop) {
 
     /** The current `start to end`, or null when the property does not hold a two-element numeric pair. */
     fun read(): Pair<Float, Float>? {
-        val values = when (val value = prop.get()) {
-            is FloatArray -> value.toList()
-            is DoubleArray -> value.map { it.toFloat() }
-            is IntArray -> value.map { it.toFloat() }
-            is LongArray -> value.map { it.toFloat() }
-            is Array<*> -> value.map { (it as? Number)?.toFloat() ?: return null }
-            is Iterable<*> -> value.map { (it as? Number)?.toFloat() ?: return null }
-            else -> return null
-        }
+        val values = prop.readNumbers() ?: return null
         if (values.size < 2) return null
         return values[0] to values[1]
     }
 
-    @Suppress("UNCHECKED_CAST")
-    fun write(start: Float, end: Float) {
-        val current = prop.get()
-        val written: Any = when (current) {
-            is FloatArray -> floatArrayOf(start, end)
-            is DoubleArray -> doubleArrayOf(start.toDouble(), end.toDouble())
-            is IntArray -> intArrayOf(start.roundToInt(), end.roundToInt())
-            is LongArray -> longArrayOf(start.toLong(), end.toLong())
-            is Array<*> -> {
-                val component = current.javaClass.componentType
-                java.lang.reflect.Array.newInstance(component, 2).also {
-                    java.lang.reflect.Array.set(it, 0, start.toNumberType(component))
-                    java.lang.reflect.Array.set(it, 1, end.toNumberType(component))
-                }
-            }
-            is List<*> -> {
-                val component = (current.firstOrNull() ?: 0f).javaClass
-                listOf(start.toNumberType(component), end.toNumberType(component))
-            }
-            else -> return
-        }
-        (prop as Property<Any>).set(written)
+    fun write(start: Float, end: Float) = prop.writeNumbers(listOf(start, end))
+}
+
+/**
+ * An ordered, editable chain of numbers held in a single property, as a numeric array or list — reorder,
+ * edit a value in place, remove an entry, or append the next one.
+ *
+ * [lockedLeading] entries at the front are fixed: they cannot be moved, edited or removed, which suits chains
+ * that always begin from a known state. Whatever the widget writes still goes through the property's setter, so
+ * a backing config is free to normalize further (dedupe, clamp, enforce a minimum length).
+ */
+class NumberChainOptionData(prop: Property<*>) : OptionData(prop) {
+    val min: Float get() = prop.getMetadata("min") ?: 0f
+    val max: Float get() = prop.getMetadata("max") ?: 100f
+    val maxEntries: Int get() = prop.getMetadata("maxEntries") ?: Int.MAX_VALUE
+    val lockedLeading: Int get() = prop.getMetadata("lockedLeading") ?: 0
+
+    /** Drawn after the number while an entry is being edited. [label] is expected to include it already. */
+    val unit: String? get() = localizedString(prop.getMetadata("unitKey"), prop.getMetadata<String>("unit")).takeIf { it.isNotBlank() }
+
+    /** Renders one entry as a chip label. Falls back to the bare number. */
+    fun label(value: Float): String {
+        val labeller = prop.getMetadata<Function<Number, String>>("entryLabel")
+            ?: return formatSpinnerValue(value)
+        return runCatching { labeller.apply(value) }.getOrElse { formatSpinnerValue(value) }
     }
+
+    /** The value "add" appends. Defaults to [max] when the property does not supply one. */
+    fun nextValue(current: List<Float>): Float {
+        val next = prop.getMetadata<Function<List<Number>, Number>>("nextValue") ?: return max
+        return runCatching { next.apply(current).toFloat() }.getOrElse { max }
+    }
+
+    fun read(): List<Float> = prop.readNumbers() ?: emptyList()
+
+    fun write(values: List<Float>) = prop.writeNumbers(values)
+}
+
+private fun Property<*>.readNumbers(): List<Float>? = when (val value = get()) {
+    is FloatArray -> value.toList()
+    is DoubleArray -> value.map { it.toFloat() }
+    is IntArray -> value.map { it.toFloat() }
+    is LongArray -> value.map { it.toFloat() }
+    is Array<*> -> value.map { (it as? Number)?.toFloat() ?: return null }
+    is Iterable<*> -> value.map { (it as? Number)?.toFloat() ?: return null }
+    else -> null
+}
+
+/** Writes [values] back in whatever container shape the property already holds. */
+@Suppress("UNCHECKED_CAST")
+private fun Property<*>.writeNumbers(values: List<Float>) {
+    val written: Any = when (val current = get()) {
+        is FloatArray -> values.toFloatArray()
+        is DoubleArray -> values.map { it.toDouble() }.toDoubleArray()
+        is IntArray -> values.map { it.roundToInt() }.toIntArray()
+        is LongArray -> values.map { it.toLong() }.toLongArray()
+        is Array<*> -> {
+            val component = current.javaClass.componentType
+            ReflectArray.newInstance(component, values.size).also { array ->
+                values.forEachIndexed { index, value -> ReflectArray.set(array, index, value.toNumberType(component)) }
+            }
+        }
+        is List<*> -> {
+            val component = (current.firstOrNull() ?: 0f).javaClass
+            values.map { it.toNumberType(component) }
+        }
+        else -> return
+    }
+    (this as Property<Any>).set(written)
 }
 
 /**

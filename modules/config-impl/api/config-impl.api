@@ -243,6 +243,12 @@ public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$MultiSelectD
 	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;Landroidx/compose/runtime/Composer;I)V
 }
 
+public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$NumberChainVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;Landroidx/compose/runtime/Composer;I)V
+}
+
 public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$NumberListVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
 	public static final field $stable I
 	public fun <init> ()V
