@@ -94,6 +94,20 @@ fun interface Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[RangeSliderVisualizer::class.java]?.visualize(prop) }
     }
 
+    /**
+     * A slider with a third, "inherited" state for overrides that fall back to a broader setting when unset.
+     * The property stores a sentinel while inheriting — `null`, or the value of the `inheritSentinel` metadata —
+     * and the inherited value itself comes from the `inheritedValue` metadata, either a number or a
+     * `java.util.function.Supplier` of one so it can track a live global.
+     *
+     * Prefer a numeric sentinel over `null` where the backing type allows it: [CompatSnapshots] cannot record a
+     * null, so on a foreign-backed config a null-sentinel property must opt out of snapshots with
+     * [CompatSnapshots.NO_SNAPSHOT_META] or an older value will resurrect itself and undo "inherit".
+     */
+    class InheritableSliderVisualizer : Visualizer {
+        @Composable override fun visualize(prop: Property<*>) { Visualizer[InheritableSliderVisualizer::class.java]?.visualize(prop) }
+    }
+
     class SwitchVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[SwitchVisualizer::class.java]?.visualize(prop) }
     }

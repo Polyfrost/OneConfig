@@ -6,6 +6,7 @@ import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedString
 import org.polyfrost.oneconfig.internal.ui.components.localizedText
 import org.polyfrost.oneconfig.internal.ui.components.settings.toNumberType
+import java.util.function.Supplier
 import kotlin.math.roundToInt
 import java.lang.reflect.Array as ReflectArray
 
@@ -78,6 +79,47 @@ class RangeSliderOptionData(prop: Property<*>) : OptionData(prop) {
         }
         (prop as Property<Any>).set(written)
     }
+}
+
+/**
+ * A slider whose value may instead be "inherited" from a broader setting.
+ *
+ * While inheriting, the property holds [inheritSentinel] (`null` unless the metadata says otherwise) and the
+ * slider shows [inheritedValue] greyed out. Picking a value writes it normally; clearing goes back to the
+ * sentinel. [inheritedValue] may be given as a `Supplier` so it tracks whatever it inherits from.
+ */
+class InheritableSliderOptionData(prop: Property<*>) : OptionData(prop) {
+    val min: Float get() = prop.getMetadata("min") ?: 0f
+    val max: Float get() = prop.getMetadata("max") ?: 100f
+    val step: Float get() = prop.getMetadata("step") ?: 0f
+    val inheritLabel: String
+        get() = localizedString(prop.getMetadata("inheritLabelKey"), prop.getMetadata<String>("inheritLabel"))
+            .takeIf { it.isNotBlank() } ?: "Inherit"
+
+    private val inheritSentinel: Any? get() = prop.getMetadata("inheritSentinel")
+
+    val inheritedValue: Float
+        get() = when (val inherited = prop.getMetadata<Any>("inheritedValue")) {
+            is Number -> inherited.toFloat()
+            is Supplier<*> -> (inherited.get() as? Number)?.toFloat() ?: min
+            else -> min
+        }
+
+    val isInherited: Boolean
+        get() {
+            val value = prop.get() ?: return true
+            val sentinel = inheritSentinel ?: return false
+            return value is Number && sentinel is Number && value.toDouble() == sentinel.toDouble()
+        }
+
+    /** The value the slider should show: the explicit one, or what it inherits while unset. */
+    val shownValue: Float get() = if (isInherited) inheritedValue else (prop.get() as? Number)?.toFloat() ?: inheritedValue
+
+    @Suppress("UNCHECKED_CAST")
+    fun set(value: Float) = (prop as Property<Any>).set(value.toNumberType(prop.type))
+
+    @Suppress("UNCHECKED_CAST")
+    fun inherit() = (prop as Property<Any?>).set(inheritSentinel?.let { (it as? Number)?.toFloat()?.toNumberType(prop.type) })
 }
 
 class NumberOptionData(prop: Property<*>) : OptionData(prop) {
