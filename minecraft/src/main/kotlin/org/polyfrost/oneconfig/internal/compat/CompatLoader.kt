@@ -84,6 +84,30 @@ object CompatLoader {
 
     fun hasMod(id: String): Boolean = ModInfo.loadedMods.any { it.id == id }
 
+    private const val MOD_MENU_CLASS = "com.terraformersmc.modmenu.ModMenu"
+
+    fun originalScreenOpener(modId: String): Runnable? {
+        val hasScreen = runCatching {
+            Class.forName(MOD_MENU_CLASS)
+                .getMethod("hasConfigScreen", String::class.java)
+                .invoke(null, modId) as? Boolean
+        }.getOrNull() ?: false
+        if (!hasScreen) return null
+        return Runnable {
+            runCatching {
+                val parent = Platform.screen().current<Any?>()
+                val method = Class.forName(MOD_MENU_CLASS).methods.firstOrNull {
+                    it.name == "getConfigScreen" && it.parameterCount == 2
+                } ?: return@runCatching
+                var screen: Any? = null
+                withForcedModId(modId) {
+                    screen = method.invoke(null, modId, parent)
+                }
+                screen?.let { Platform.screen().display(it) }
+            }
+        }
+    }
+
     private val list: MutableList<Pair<Int, () -> Unit>> = mutableListOf()
 
     init {

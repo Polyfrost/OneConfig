@@ -19,6 +19,7 @@ object ConfigRegistry {
         "badoptimizations",
         "respackopts",
         "midnightlib",
+        "walksylib",
         "ukulib",
         "modernconfig",
         "collective",

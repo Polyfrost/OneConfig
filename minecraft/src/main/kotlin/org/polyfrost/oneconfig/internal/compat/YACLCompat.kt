@@ -10,6 +10,7 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.noCache
 import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import java.util.*
 
 object YACLCompat {
@@ -62,6 +63,9 @@ object YACLCompat {
         // YACL exposes no icon, so fall back to the mod's icon (same source Mod Menu uses).
         mod?.extractIconFile()?.let {
             tree.addMetadata("icon_path", it)
+        }
+        mod?.id?.let { id ->
+            CompatLoader.originalScreenOpener(id)?.let { tree.addMetadata("open_original_screen", it) }
         }
 
         for (category in categories) {
@@ -133,6 +137,13 @@ object YACLCompat {
             }.getOrNull()
         }
 
+        // ButtonOption exposes no readable value (its binding throws), so handle it before the
+        // binding logic. Detect it by its interface name and render it as a clickable button.
+        if (isButtonOption(optionClass)) {
+            parseButtonOption(option, name, desc, categoryName, subcategoryName, root)
+            return
+        }
+
         // Older YACL exposes a Binding (getValue/setValue/defaultValue). Newer YACL uses a state
         // manager and throws UnsupportedOperationException from binding(), so fall back to the
         // Option-level pendingValue()/requestSet(T) accessors in that case.
@@ -199,6 +210,64 @@ object YACLCompat {
                 property.addMetadata("min", range?.first ?: 0f)
                 property.addMetadata("max", range?.second ?: 100f)
                 range?.third?.let { property.addMetadata("step", it) }
+            }
+        }
+
+        root.put(property)
+    }
+
+    private fun isButtonOption(optionClass: Class<*>): Boolean {
+        var cls: Class<*>? = optionClass
+        while (cls != null && cls != Any::class.java) {
+            if (cls.simpleName == "ButtonOption") return true
+            if (cls.interfaces.any { isButtonOption(it) }) return true
+            cls = cls.superclass
+        }
+        return false
+    }
+
+    private fun parseButtonOption(
+        option: Any,
+        name: String,
+        desc: String?,
+        categoryName: String,
+        subcategoryName: String?,
+        root: Tree,
+    ) {
+        val optionClass = option::class.java
+
+        val label = optionClass.methods.firstOrNull { it.name == "text" && it.parameterCount == 0 }
+            ?.let { runCatching { resolveComponent(it.invoke(option)) }.getOrNull() }
+            ?.nonBlankOrNull() ?: name
+
+        val actionMethod = optionClass.methods.firstOrNull { it.name == "action" && it.parameterCount == 0 }
+        val action = actionMethod?.let { runCatching { it.invoke(option) }.getOrNull() }
+
+        val property = Properties.dummy(
+            id = UUID.randomUUID().toString(),
+            name = name,
+            description = desc,
+        )
+        property.addMetadata("visualizer", Visualizer.ButtonVisualizer::class.java)
+        property.addMetadata("textKey", label)
+        property.category = categoryName
+        property.subcategory = subcategoryName
+
+        if (action != null) {
+            val acceptMethod = action::class.java.methods.firstOrNull {
+                it.name == "accept" && (it.parameterCount == 1 || it.parameterCount == 2)
+            }?.apply { isAccessible = true }
+            if (acceptMethod != null) {
+                property.metadata?.put("runnable", Runnable {
+                    runCatching {
+                        val screen = Platform.screen().current<Any>()
+                        if (acceptMethod.parameterCount == 2) {
+                            acceptMethod.invoke(action, screen, option)
+                        } else {
+                            acceptMethod.invoke(action, screen)
+                        }
+                    }.onFailure { LOGGER.warn("Failed to run YACL button action", it) }
+                })
             }
         }
 
