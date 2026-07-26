@@ -49,12 +49,13 @@ public final class JsonUtils {
     }
 
     @NotNull
-    public static JsonElement parse(String json) throws JsonSyntaxException {
+    public static JsonElement parse(@NotNull String json) throws JsonSyntaxException {
         return Streams.parse(new JsonReader(new StringReader(json)));
     }
 
     @Nullable
-    public static JsonElement parseOrNull(String json) {
+    public static JsonElement parseOrNull(@Nullable String json) {
+        if (json == null) return null;
         try {
             return parse(json);
         } catch (JsonParseException e) {
@@ -62,7 +63,7 @@ public final class JsonUtils {
         }
     }
 
-    public static void parse(String json, Consumer<@NotNull JsonElement> action) {
+    public static void parse(@Nullable String json, Consumer<@NotNull JsonElement> action) {
         JsonElement res = parseOrNull(json);
         if (res != null) action.accept(res);
     }

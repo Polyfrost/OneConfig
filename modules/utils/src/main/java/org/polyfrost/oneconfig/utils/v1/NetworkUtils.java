@@ -28,6 +28,7 @@ package org.polyfrost.oneconfig.utils.v1;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper;
 
 import java.io.BufferedInputStream;
@@ -60,8 +61,9 @@ public final class NetworkUtils {
      * @param userAgent The user agent to use.
      * @param timeout   The timeout in milliseconds.
      * @param useCaches Whether to use caches.
-     * @return The contents of the URL.
+     * @return The contents of the URL, or {@code null} if the request failed.
      */
+    @Nullable
     public static String getString(String url, String userAgent, int timeout, boolean useCaches) {
         StringBuilder sb = new StringBuilder();
         try (BufferedReader input = new BufferedReader(new InputStreamReader(setupConnection(url, userAgent, timeout, useCaches), StandardCharsets.UTF_8))) {
@@ -80,9 +82,10 @@ public final class NetworkUtils {
      * Gets the contents of a URL as a String.
      *
      * @param url The URL to read.
-     * @return The contents of the URL.
+     * @return The contents of the URL, or {@code null} if the request failed.
      * @see NetworkUtils#getString(String, String, int, boolean)
      */
+    @Nullable
     public static String getString(String url) {
         return getString(url, DEF_AGENT, 5000, false);
     }
