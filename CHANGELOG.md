@@ -1,5 +1,5 @@
-1.0.7 changelogs:
+1.0.8 changelogs:
 
-- Fix obscure Vulkan GPU corruption
-- Fix rendering with Wayland
-- Remove window blur to improve performance
+- Support for WalksyLib and MidnightLib
+- Fix compat with Gnetum
+- Fix crash with null tree ids with Mod Menu
