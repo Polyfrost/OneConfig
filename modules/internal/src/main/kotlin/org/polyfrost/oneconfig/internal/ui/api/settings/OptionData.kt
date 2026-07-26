@@ -48,6 +48,17 @@ class TextOptionData(prop: Property<*>) : OptionData(prop) {
     val strProp: Property<String> get() = prop as Property<String>
 }
 
+class TextListOptionData(prop: Property<*>) : OptionData(prop) {
+    val placeholder: String? get() = localizedString(prop.getMetadata("placeholderKey"), prop.getMetadata<String>("placeholder")).takeIf { it.isNotBlank() }
+    val regex: String? get() = prop.getMetadata<String>("regex")?.takeIf { it.isNotBlank() }
+
+    val maxEntries: Int get() = prop.getMetadata<Int>("maxEntries") ?: 0
+    val reorderable: Boolean get() = prop.getMetadata("reorderable") ?: true
+    val addText: Any get() = localizedText(prop.getMetadata("addTextKey"), prop.getMetadata<String>("addText")?.takeIf { it.isNotBlank() } ?: "Add")
+
+    val isList: Boolean get() = java.util.List::class.java.isAssignableFrom(prop.type)
+}
+
 class FileOptionData(prop: Property<*>) : OptionData(prop) {
     val placeholder: String? get() = localizedString(prop.getMetadata("placeholderKey"), prop.getMetadata<String>("placeholder")).takeIf { it.isNotBlank() }
     val directory: Boolean get() = prop.getMetadata("directory") ?: false

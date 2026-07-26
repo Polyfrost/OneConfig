@@ -97,13 +97,17 @@ object WalksyLibCompat {
             return parseSprite(option, type, name, description, categoryName, subcategoryName, tree)
         }
 
+        if (java.util.List::class.java.isAssignableFrom(type)) {
+            return parseStringList(option, name, description, categoryName, subcategoryName, tree)
+        }
+
         val visualizer: Class<out Visualizer> = when {
             type == java.lang.Boolean::class.java -> Visualizer.SwitchVisualizer::class.java
             type == Integer::class.java || type == java.lang.Double::class.java || type == java.lang.Float::class.java ->
                 Visualizer.SliderVisualizer::class.java
             type == String::class.java -> Visualizer.TextVisualizer::class.java
             Enum::class.java.isAssignableFrom(type) -> Visualizer.DropdownVisualizer::class.java
-            else -> return false // pixel grid, string list and other WalksyLib-only types
+            else -> return false // pixel grid and other WalksyLib-only types
         }
 
         val getValueM = optionClass.methods.firstOrNull { it.name == "getValue" && it.parameterCount == 0 }
@@ -300,6 +304,45 @@ object WalksyLibCompat {
         return true
     }
 
+    private fun parseStringList(
+        option: Any,
+        name: String,
+        description: String?,
+        categoryName: String,
+        subcategoryName: String?,
+        tree: Tree,
+    ): Boolean {
+        val optionClass = option::class.java
+        val getValueM = optionClass.methods.firstOrNull { it.name == "getValue" && it.parameterCount == 0 }
+            ?.apply { isAccessible = true } ?: return false
+        val setValueM = optionClass.methods.firstOrNull { it.name == "setValue" && it.parameterCount == 1 }
+            ?.apply { isAccessible = true } ?: return false
+
+        fun stringsOf(value: Any?): ArrayList<String> =
+            ArrayList((value as? Collection<*>)?.filterIsInstance<String>() ?: emptyList())
+
+        @Suppress("UNCHECKED_CAST")
+        val property = Properties.functional(
+            { runCatching { stringsOf(getValueM.invoke(option)) }.getOrDefault(ArrayList()) },
+            { value ->
+                runCatching { setValueM.invoke(option, stringsOf(value)) }
+                    .onFailure { LOGGER.warn("Failed to set WalksyLib string list value", it) }
+            },
+            UUID.randomUUID().toString(),
+            name,
+            description,
+            java.util.List::class.java as Class<List<String>>,
+        )
+
+        property.addMetadata("visualizer", Visualizer.TextListVisualizer::class.java)
+        invoke(option, "getDefaultValue")?.let { property.addMetadata("default", stringsOf(it)) }
+        property.addMetadata("placeholder", "Enter a value...")
+        property.category = categoryName
+        property.subcategory = subcategoryName
+        tree.put(property)
+        return true
+    }
+
     private fun parseButton(
         option: Any,
         name: String,
@@ -335,11 +378,23 @@ object WalksyLibCompat {
     }.getOrNull()
 
     private fun buildSaveFunction(config: Any): Runnable? {
-        val hasCallback = runCatching { invoke(config, "saveCallback") != null }.getOrDefault(false)
-        val method = config.javaClass.methods.firstOrNull {
-            it.name == (if (hasCallback) "runSave" else "onSave") && it.parameterCount == 0
-        }?.apply { isAccessible = true } ?: return null
-        return Runnable { runCatching { method.invoke(config) } }
+        fun method(name: String) = config.javaClass.methods
+            .firstOrNull { it.name == name && it.parameterCount == 0 }
+            ?.apply { isAccessible = true }
+
+        val persist = method("onSave")
+        val notify = method("runSave")
+        if (persist == null && notify == null) return null
+        return Runnable {
+            persist?.let {
+                runCatching { it.invoke(config) }
+                    .onFailure { e -> LOGGER.warn("Failed to write WalksyLib config", e) }
+            }
+            notify?.let {
+                runCatching { it.invoke(config) }
+                    .onFailure { e -> LOGGER.warn("WalksyLib save callback failed", e) }
+            }
+        }
     }
 
     private fun invoke(target: Any, method: String): Any? =

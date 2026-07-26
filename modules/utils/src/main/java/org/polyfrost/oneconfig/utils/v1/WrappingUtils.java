@@ -117,7 +117,8 @@ public final class WrappingUtils {
                 } else {
                     throw new IllegalArgumentException("cannot convert non-array/collection type " + cls.getName() + " to array type " + target.getName());
                 }
-            } else if (Array.getLength(in) == 0) return (T) Array.newInstance(tType, 0);
+            }
+            if (Array.getLength(in) == 0) return (T) Array.newInstance(tType, 0);
             if (cType == Object.class) {
                 Object[] arr = (Object[]) in;
                 if (arr.length > 0) cType = arr[0].getClass();

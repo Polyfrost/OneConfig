@@ -251,10 +251,27 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
 
     private static Object trySerialize(Object value) {
         try {
-            return ObjectSerializer.INSTANCE.serialize(value, false, false);
+            return normalize(ObjectSerializer.INSTANCE.serialize(value, false, false));
         } catch (Throwable t) {
             return null;
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object normalize(Object value) {
+        if (value instanceof List) {
+            List<Object> in = (List<Object>) value;
+            List<Object> out = new java.util.ArrayList<>(in.size());
+            for (Object o : in) out.add(normalize(o));
+            return out;
+        }
+        if (value != null && value.getClass().isArray()) {
+            int len = java.lang.reflect.Array.getLength(value);
+            List<Object> out = new java.util.ArrayList<>(len);
+            for (int i = 0; i < len; i++) out.add(normalize(java.lang.reflect.Array.get(value, i)));
+            return out;
+        }
+        return value;
     }
 
     @SuppressWarnings("unchecked")

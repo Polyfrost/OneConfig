@@ -190,13 +190,20 @@ public class OneConfig
             var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
             HudManager.INSTANCE.render(ctx, sw, sh);
         });
-        SkiaCtx.INSTANCE.queueNotifDraw(() -> {
-            var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
-            NotificationsRenderer.render(ctx, sw, sh);
-        });
         // Render Skia HUDs into the offscreen TextureTarget.
         // The mixin blits the texture onto MC's render target afterwards.
         SkiaCtx.INSTANCE.drawNow();
+    }
+
+    private static void installNotificationRenderer() {
+        SkiaCtx.INSTANCE.setNotifRenderer(() -> {
+            var window = Minecraft.getInstance().getWindow();
+            float sw = window.getGuiScaledWidth();
+            float sh = window.getGuiScaledHeight();
+            if (sw <= 0f || sh <= 0f) return;
+            var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
+            NotificationsRenderer.render(ctx, sw, sh);
+        });
     }
 
     private static void registerEventHandlers() {
@@ -330,6 +337,7 @@ public class OneConfig
         new ThemeConfig();
         registerCommands();
         registerEventHandlers();
+        installNotificationRenderer();
         MainMenuFpsSampler.init();
         //? fabric
         org.polyfrost.oneconfig.internal.compat.ModMenuShimLoader.enable();

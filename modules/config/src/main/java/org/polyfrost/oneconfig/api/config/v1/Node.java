@@ -99,9 +99,12 @@ public abstract class Node {
     }
 
     public void setTitle(Object title) {
-        if (this.title != null) throw new IllegalArgumentException("title is already set");
         title = strv(title);
         if (title == null) throw new IllegalArgumentException("title cannot be null or empty");
+        if (this.title != null) {
+            if (this.title.equals(title)) return;
+            throw new IllegalArgumentException("title is already set");
+        }
         this.title = title;
     }
 

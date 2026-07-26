@@ -108,6 +108,23 @@ private fun draggableListProp(id: String, title: String, desc: String, vararg op
         if (checkable) p.addMetadata("checkable", true)
     }
 
+private fun textListProp(
+    id: String,
+    title: String,
+    desc: String,
+    vararg entries: String,
+    placeholder: String? = null,
+    regex: String? = null,
+    maxEntries: Int = 0,
+    reorderable: Boolean = true,
+) = Properties.simple(id, title, desc, entries.toList().toTypedArray(), Array<String>::class.java).also { p ->
+    p.addMetadata("visualizer", Visualizer.TextListVisualizer::class.java)
+    if (placeholder != null) p.addMetadata("placeholder", placeholder)
+    if (regex != null) p.addMetadata("regex", regex)
+    if (maxEntries > 0) p.addMetadata("maxEntries", maxEntries)
+    if (!reorderable) p.addMetadata("reorderable", false)
+}
+
 private fun multiSelectProp(id: String, title: String, desc: String, vararg options: String, checkable: Boolean = true) =
     Properties.simple(id, title, desc, BooleanArray(options.size), BooleanArray::class.java).also { p ->
         p.addMetadata("visualizer", Visualizer.MultiSelectDropdownVisualizer::class.java)
@@ -211,6 +228,8 @@ private fun testControlsTree(): Tree {
     lists.put(draggableListProp("drag-check", "Drag & Select", "Drag to reorder, check to enable", "Alpha", "Beta", "Gamma", "Delta", "Epsilon", checkable = true))
     lists.put(multiSelectProp("multi-check", "Multi-Select", "Checkbox multi-select dropdown", "Apples", "Bananas", "Cherries", "Dates", "Elderberries"))
     lists.put(multiSelectProp("multi-plain", "List Picker", "Single-select list dropdown", "Easy", "Normal", "Hard", "Extreme", checkable = false))
+    lists.put(textListProp("text-list", "Ignored Players", "Type entries, add and remove rows", "Notch", "Herobrine", placeholder = "Enter a name..."))
+    lists.put(textListProp("text-list-regex", "Allowed Servers", "Validated, max 3 entries", "hypixel.net", placeholder = "example.com", regex = "^[\\w.-]+\\.[a-z]{2,}$", maxEntries = 3, reorderable = false))
 
     val actions = Tree("actions", "Actions & Info", null, null).also { it.addMetadata("icon", "cog") }
     actions.put(infoProp("info-tip", "Tip", "This is an informational option with no control."))

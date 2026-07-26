@@ -13,6 +13,7 @@ import org.jetbrains.skia.SurfaceColorFormat
 import org.jetbrains.skia.SurfaceOrigin
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL30
+import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.internal.ui.compose.opengl.StoredGLState
 import org.polyfrost.oneconfig.internal.ui.services.VulkanService
@@ -56,7 +57,6 @@ object SkiaCtx {
     }
 
     private val queuedHudDraws = CopyOnWriteArrayList<() -> Unit>()
-    private val queuedNotifDraws = CopyOnWriteArrayList<() -> Unit>()
     private val queuedDraws = CopyOnWriteArrayList<() -> Unit>()
     private val queuedWarmups = CopyOnWriteArrayList<() -> Unit>()
 
@@ -180,9 +180,12 @@ object SkiaCtx {
         queuedHudDraws.add { block.run() }
     }
 
-    fun queueNotifDraw(block: Runnable) {
-        queuedNotifDraws.add { block.run() }
+    fun setNotifRenderer(block: Runnable?) {
+        notifRender = block?.let { r -> { r.run() } }
     }
+
+    @Volatile
+    private var notifRender: (() -> Unit)? = null
 
     fun queueDraw(block: () -> Unit) {
         queuedDraws.add(block)
@@ -436,10 +439,9 @@ object SkiaCtx {
         runWarmups()
         val draws = queuedDraws.toList()
         queuedDraws.clear()
-        val notifDraws = queuedNotifDraws.toList()
-        queuedNotifDraws.clear()
+        val notifDraw = if (NotificationsManager.count > 0) notifRender else null
         val wantCompose = composeActive && !isVulkanMode
-        if (draws.isEmpty() && notifDraws.isEmpty() && !wantCompose) return
+        if (draws.isEmpty() && notifDraw == null && !wantCompose) return
 
         val mainSurface = if (isVulkanMode) resolveVkSurface() else resolveGLSurface()
         if (mainSurface == null) return
@@ -488,7 +490,7 @@ object SkiaCtx {
                 }
             }
 
-            notifDraws.forEach { it() }
+            notifDraw?.invoke()
 //            if (sections) { directContext.flush(); GpuProfiler.mark("notif") }
 
             if (isVulkanMode) {

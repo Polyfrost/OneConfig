@@ -98,6 +98,10 @@ fun interface Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[TextVisualizer::class.java]?.visualize(prop) }
     }
 
+    class TextListVisualizer : Visualizer {
+        @Composable override fun visualize(prop: Property<*>) { Visualizer[TextListVisualizer::class.java]?.visualize(prop) }
+    }
+
     class FileVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[FileVisualizer::class.java]?.visualize(prop) }
     }

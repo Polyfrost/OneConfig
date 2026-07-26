@@ -283,7 +283,11 @@ public abstract class Backend {
     }
 
     public final Tree get(String id) {
-        return trees.computeIfAbsent(id, this::load);
+        return trees.computeIfAbsent(id, key -> {
+            Tree t = load(key);
+            if (t != null && t.getID() == null) t.setID(key);
+            return t;
+        });
     }
 
     @UnmodifiableView

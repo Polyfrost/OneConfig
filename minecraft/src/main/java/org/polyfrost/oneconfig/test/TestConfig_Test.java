@@ -147,6 +147,37 @@ public class TestConfig_Test extends Config {
     )
     public static int singleSelectList = 0;
 
+    @TextList(
+            title = "Text List",
+            description = "Type each entry. Add, remove and drag to reorder.",
+            category = "Lists",
+            subcategory = "Text List",
+            placeholder = "Enter a name..."
+    )
+    public static String[] textList = {"Notch", "Herobrine"};
+
+    // TextList: validated entries, capped, no reordering
+    @TextList(
+            title = "Text List (validated)",
+            description = "Must look like a domain. Max 3 entries, no reordering.",
+            category = "Lists",
+            subcategory = "Text List",
+            placeholder = "example.com",
+            regex = "^[\\w.-]+\\.[a-z]{2,}$",
+            maxEntries = 3,
+            reorderable = false,
+            addText = "Add server"
+    )
+    public static String[] textListValidated = {"hypixel.net"};
+
+    @TextList(
+            title = "Text List (empty)",
+            description = "Starts with no entries.",
+            category = "Lists",
+            subcategory = "Text List"
+    )
+    public static String[] textListEmpty = {};
+
     @Info(
             title = "Info",
             description = "This is an info message that may be useful to the player!",
