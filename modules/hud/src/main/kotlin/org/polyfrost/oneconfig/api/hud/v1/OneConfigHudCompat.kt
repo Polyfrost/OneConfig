@@ -29,6 +29,8 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
     override fun update(): Boolean = false
     override fun multipleInstancesAllowed(): Boolean = false
 
+    override fun deletable(): Boolean = false
+
     override val supportsScale: Boolean get() = wrapper.supportsScale
 
     override var x: Float by wrapper::x
