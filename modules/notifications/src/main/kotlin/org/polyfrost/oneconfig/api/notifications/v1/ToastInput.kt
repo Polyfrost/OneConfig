@@ -47,6 +47,11 @@ internal object ToastInput {
 
     private val installed = AtomicBoolean(false)
 
+    fun clearHover() {
+        hoverTarget = null
+        hoveredAction = null
+    }
+
     fun install() {
         if (!installed.compareAndSet(false, true)) return
         EventManager.register(MouseInputEvent.Moved::class.java) { e ->

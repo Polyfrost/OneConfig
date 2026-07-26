@@ -100,6 +100,11 @@ object NotificationsRenderer {
     }
 
     internal fun dispatchClick(target: ToastHit?) {
+        if (target == null) return
+        if (!NotificationsManager.contains(target.notification) || target.notification.dismissRequested) {
+            ToastInput.clearHover()
+            return
+        }
         when (target) {
             is ToastHit.Action -> {
                 LOGGER.info("Notification #{} action '{}' clicked", target.notification.id, target.action.label)
@@ -113,7 +118,6 @@ object NotificationsRenderer {
                     .onFailure { LOGGER.error("Notification onClick threw", it) }
                 target.notification.dismissRequested = true
             }
-            null -> {}
         }
     }
 
