@@ -1,6 +1,12 @@
 //? midnightlib_compat {
 package org.polyfrost.oneconfig.internal.compat
 
+import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.components.AbstractSelectionList
+import net.minecraft.client.gui.components.AbstractSliderButton
+import net.minecraft.client.gui.components.AbstractWidget
+import net.minecraft.client.gui.components.EditBox
+import net.minecraft.network.chat.Component
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
@@ -13,6 +19,7 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.internal.mixin.compat.midnightlib.SliderButtonAccessor
 import java.lang.reflect.Field
 import java.util.UUID
 import java.util.function.Supplier
@@ -24,6 +31,8 @@ object MidnightLibCompat {
     private const val MIDNIGHT_CONFIG = "eu.midnightdust.lib.config.MidnightConfig"
     private const val ENTRY_ANNOTATION = "$MIDNIGHT_CONFIG\$Entry"
     private const val COMMENT_ANNOTATION = "$MIDNIGHT_CONFIG\$Comment"
+    private const val CONFIG_SCREEN = "eu.midnightdust.lib.config.MidnightConfigScreen"
+    private const val CONFIG_LIST_WIDGET = "eu.midnightdust.lib.config.MidnightConfigListWidget"
 
     private class Pending(
         val property: Property<*>,
@@ -64,6 +73,8 @@ object MidnightLibCompat {
         val subcategoryByCategory = HashMap<String, String>()
         val propertyByField = HashMap<String, Property<*>>()
         val pending = ArrayList<Pending>()
+        // The raw (untranslated) category ids, which are also the tab ids passed to onTabInit.
+        val rawCategories = LinkedHashSet<String>()
 
         for (entry in entries) {
             if (entry == null) continue
@@ -75,6 +86,7 @@ object MidnightLibCompat {
 
                 val comment = readAnnotation(field, entry, "comment", COMMENT_ANNOTATION)
                 if (comment != null) {
+                    rawCategories += rawCategoryOf(readAnnotationString(comment, "category"))
                     val category = categoryOf(modid, readAnnotationString(comment, "category"))
                     subcategoryByCategory[category] = commentLabel(modid, field.name, comment)
                     return@runCatching
@@ -82,6 +94,7 @@ object MidnightLibCompat {
 
                 val entryAnnotation = readAnnotation(field, entry, "entry", ENTRY_ANNOTATION)
                     ?: return@runCatching
+                rawCategories += rawCategoryOf(readAnnotationString(entryAnnotation, "category"))
 
                 val property = parseEntry(entry, modid, field, entryAnnotation, subcategoryByCategory)
                     ?: return@runCatching
@@ -93,8 +106,97 @@ object MidnightLibCompat {
 
         wireConditions(pending, propertyByField)
 
-        return if (pending.isNotEmpty()) tree else null
+        val custom = parseCustomEntries(modid, config, tree, rawCategories)
+
+        return if (pending.isNotEmpty() || custom > 0) tree else null
     }
+
+    private fun parseCustomEntries(modid: String, config: Class<*>, tree: Tree, rawCategories: Set<String>): Int {
+        val instance = configInstance(config, modid) ?: return 0
+        val onTabInit = instance.javaClass.methods.firstOrNull { it.name == "onTabInit" && it.parameterCount == 3 }
+            ?: return 0
+        if (onTabInit.declaringClass.name == MIDNIGHT_CONFIG) return 0
+
+        val loader = config.classLoader
+        val screenClass = runCatching { Class.forName(CONFIG_SCREEN, false, loader) }.getOrNull() ?: return 0
+        val listClass = runCatching { Class.forName(CONFIG_LIST_WIDGET, false, loader) }.getOrNull() ?: return 0
+        val screenCtor = screenClass.constructors.firstOrNull { it.parameterCount == 2 } ?: return 0
+        val listCtor = listClass.constructors.firstOrNull { it.parameterCount == 5 } ?: return 0
+
+        val seen = HashSet<String>()
+        var added = 0
+
+        for (rawCategory in rawCategories.ifEmpty { setOf("default") }) {
+            runCatching {
+                val screen = screenCtor.newInstance(null, modid)
+                val list = listCtor.newInstance(Minecraft.getInstance(), 0, 0, 0, 0)
+                onTabInit.invoke(instance, rawCategory, list, screen)
+
+                val category = categoryOf(modid, rawCategory)
+                var subcategory: String? = null
+
+                for (row in (list as AbstractSelectionList<*>).children()) {
+                    if (row == null) continue
+                    val title = (readField(row, "text")?.get(row) as? Component)?.string?.takeIf { it.isNotBlank() }
+                    val widgets = (readField(row, "buttons")?.get(row) as? List<*>).orEmpty()
+
+                    if (widgets.isEmpty()) {
+                        title?.let { subcategory = it }
+                        continue
+                    }
+                    if (title == null || !seen.add(title)) continue
+
+                    val property = widgets.filterIsInstance<AbstractWidget>()
+                        .firstNotNullOfOrNull { widgetProperty(it, title) } ?: continue
+                    property.category = category
+                    property.subcategory = subcategory ?: category
+                    tree.put(property)
+                    added++
+                }
+            }.onFailure { LOGGER.warn("Failed to parse custom MidnightLib widgets for {}", modid, it) }
+        }
+
+        return added
+    }
+
+    private fun widgetProperty(widget: AbstractWidget, title: String): Property<*>? {
+        val id = UUID.randomUUID().toString()
+        return when (widget) {
+            is AbstractSliderButton -> {
+                val accessor = widget as SliderButtonAccessor
+                val property = Properties.functional(
+                    getter = { (accessor.`oneconfig$getValue`() * 100.0).toFloat() },
+                    setter = { v: Float -> runCatching { accessor.`oneconfig$setValue`(v / 100.0) } },
+                    id = id, name = title,
+                    type = Float::class.javaObjectType,
+                )
+                property.addMetadata("visualizer", Visualizer.SliderVisualizer::class.java)
+                property.addMetadata("min", 0f)
+                property.addMetadata("max", 100f)
+                property.addMetadata("step", 1f)
+                property
+            }
+
+            is EditBox -> {
+                val property = Properties.functional(
+                    getter = { widget.value ?: "" },
+                    setter = { v: String -> runCatching { widget.value = v } },
+                    id = id, name = title, description = null, type = String::class.java,
+                )
+                property.addMetadata("visualizer", Visualizer.TextVisualizer::class.java)
+                property
+            }
+
+            else -> null
+        }
+    }
+
+    private fun configInstance(config: Class<*>, modid: String): Any? = runCatching {
+        val instances = findField(config, "configInstances")?.apply { isAccessible = true }?.get(null) as? Map<*, *>
+        instances?.get(modid)
+    }.getOrNull()
+
+    private fun rawCategoryOf(raw: String?): String = raw?.takeIf { it.isNotBlank() } ?: "default"
 
     private fun parseEntry(
         entry: Any,
@@ -161,20 +263,54 @@ object MidnightLibCompat {
                 property = functionalField(field, id, name, description)
             }
 
-            currentValue is List<*> && currentValue.all { it is String } -> {
-                visualizer = Visualizer.TextVisualizer::class.java
-                extraMetadata["multiline"] = true
-                property = Properties.functional(
-                    getter = { (field.get(null) as? List<*>)?.joinToString("\n") ?: "" },
-                    setter = { v: String ->
-                        runCatching {
-                            field.set(null, v.split('\n').map(String::trim).filter(String::isNotEmpty).toMutableList())
-                        }
-                    },
-                    id = id, name = name, description = description, type = String::class.java,
-                )
-                @Suppress("UNCHECKED_CAST")
-                defaultValue = (defaultValue as? List<String>)?.joinToString("\n")
+            currentValue is List<*> -> {
+                val element = listElementType(entry, currentValue) ?: return null
+                when {
+                    isColor && element == String::class.java -> {
+                        visualizer = Visualizer.ColorListVisualizer::class.java
+                        extraMetadata["noAlpha"] = true
+                        property = listProperty(
+                            field, id, name, description,
+                            read = { parseColorHex(it as? String) },
+                            write = { formatColorHex((it as? Number)?.toInt() ?: 0) },
+                        )
+                        defaultValue = (defaultValue as? List<*>)?.map { parseColorHex(it as? String) }
+                    }
+
+                    isColor && isNumeric(element) -> {
+                        visualizer = Visualizer.ColorListVisualizer::class.java
+                        property = listProperty(
+                            field, id, name, description,
+                            read = { (it as? Number)?.toInt() ?: 0 },
+                            write = { coerceNumber(it, element) },
+                        )
+                        defaultValue = (defaultValue as? List<*>)?.map { (it as? Number)?.toInt() ?: 0 }
+                    }
+
+                    isNumeric(element) -> {
+                        visualizer = if (isSlider) Visualizer.SliderListVisualizer::class.java else Visualizer.NumberListVisualizer::class.java
+                        extraMetadata["min"] = readAnnotationDouble(entryAnnotation, "min")?.toFloat() ?: 0f
+                        extraMetadata["max"] = readAnnotationDouble(entryAnnotation, "max")?.toFloat() ?: 100f
+                        property = listProperty(
+                            field, id, name, description,
+                            read = { it as? Number ?: 0 },
+                            write = { coerceNumber(it, element) },
+                        )
+                        defaultValue = (defaultValue as? List<*>)?.filterIsInstance<Number>()
+                    }
+
+                    element == String::class.java -> {
+                        visualizer = Visualizer.TextListVisualizer::class.java
+                        property = listProperty(
+                            field, id, name, description,
+                            read = { it?.toString() ?: "" },
+                            write = { it?.toString() ?: "" },
+                        )
+                        defaultValue = defaultValue?.let(::stringsOf)
+                    }
+
+                    else -> return null
+                }
             }
 
             else -> return null // nested objects / unsupported types
@@ -189,6 +325,55 @@ object MidnightLibCompat {
         property.subcategory = subcategoryByCategory[category] ?: category
         return property
     }
+
+    private fun stringsOf(value: Any?): ArrayList<String> =
+        ArrayList((value as? Collection<*>)?.filterIsInstance<String>() ?: emptyList())
+
+    private fun listElementType(entry: Any, current: List<*>): Class<*>? {
+        val declared = readField(entry, "dataType")?.let { runCatching { it.get(entry) as? Class<*> }.getOrNull() }
+        if (declared != null && declared != Any::class.java) return boxed(declared)
+        return current.firstOrNull { it != null }?.javaClass
+    }
+
+    private fun boxed(type: Class<*>): Class<*> = when (type) {
+        Integer.TYPE -> Integer::class.java
+        java.lang.Long.TYPE -> java.lang.Long::class.java
+        java.lang.Float.TYPE -> java.lang.Float::class.java
+        java.lang.Double.TYPE -> java.lang.Double::class.java
+        java.lang.Boolean.TYPE -> java.lang.Boolean::class.java
+        else -> type
+    }
+
+    private fun isNumeric(type: Class<*>): Boolean = Number::class.java.isAssignableFrom(type)
+
+    private fun coerceNumber(value: Any?, type: Class<*>): Any {
+        val number = value as? Number ?: 0
+        return when (type) {
+            Integer::class.java -> number.toInt()
+            java.lang.Long::class.java -> number.toLong()
+            java.lang.Float::class.java -> number.toFloat()
+            java.lang.Double::class.java -> number.toDouble()
+            else -> number
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun listProperty(
+        field: Field,
+        id: String,
+        name: String,
+        description: String?,
+        read: (Any?) -> Any?,
+        write: (Any?) -> Any?,
+    ): Property<*> = Properties.functional(
+        getter = {
+            runCatching { ArrayList((field.get(null) as? List<*> ?: emptyList<Any?>()).map(read)) }
+                .getOrDefault(ArrayList())
+        },
+        setter = { v: List<Any?> -> runCatching { field.set(null, v.mapTo(ArrayList(), write)) } },
+        id = id, name = name, description = description,
+        type = java.util.List::class.java as Class<List<Any?>>,
+    )
 
     private fun functionalField(field: Field, id: String, name: String, description: String?): Property<*> =
         Properties.functional(

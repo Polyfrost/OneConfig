@@ -96,6 +96,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
         //? midnightlib_compat
         mixins.add("compat.midnightlib.Mixin_MidnightConfig");
+        //? midnightlib_compat
+        mixins.add("compat.midnightlib.SliderButtonAccessor");
 
         //? walksylib_compat
         mixins.add("compat.walksylib.Mixin_WalksyLib_ModEntryPointList");

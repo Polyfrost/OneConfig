@@ -107,6 +107,12 @@ object YACLCompat {
         }?.let { runCatching { it.invoke(group) as? Boolean }.getOrNull() } ?: false
         val subcategoryName = if (isRoot) null else groupName
 
+        if (isListOption(groupClass)) {
+            runCatching { parseOption(group, categoryName, null, root) }
+                .onFailure { LOGGER.warn("Failed to parse YACL list option", it) }
+            return
+        }
+
         val optionsMethod = groupClass.methods.firstOrNull {
             it.name == "options" && it.parameterCount == 0
         }
@@ -177,6 +183,11 @@ object YACLCompat {
         // UnsupportedOperationException (EmptyBinderImpl). Skip them instead of logging a warning.
         val currentValue = runCatching { getter() }.getOrNull() ?: return
 
+        if (currentValue is List<*>) {
+            parseListOption(option, currentValue, name, desc, getter, setter, defaultValue, categoryName, subcategoryName, root)
+            return
+        }
+
         val visualizer: Class<out Visualizer> = when (currentValue) {
             is Boolean -> Visualizer.SwitchVisualizer::class.java
             is Int, is Float, is Double, is Long -> Visualizer.SliderVisualizer::class.java
@@ -214,6 +225,107 @@ object YACLCompat {
         }
 
         root.put(property)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun parseListOption(
+        option: Any,
+        currentValue: List<*>,
+        name: String,
+        desc: String?,
+        getter: () -> Any?,
+        setter: (Any?) -> Unit,
+        defaultValue: Any?,
+        categoryName: String,
+        subcategoryName: String?,
+        root: Tree,
+    ) {
+        val element = currentValue.firstOrNull { it != null }?.javaClass ?: String::class.java
+        val numeric = Number::class.java.isAssignableFrom(element)
+        val color = element == java.awt.Color::class.java
+
+        val visualizer: Class<out Visualizer> = when {
+            color -> Visualizer.ColorListVisualizer::class.java
+            numeric -> Visualizer.NumberListVisualizer::class.java
+            element == String::class.java -> Visualizer.TextListVisualizer::class.java
+            else -> return // enum/record entries have no OneConfig list equivalent
+        }
+
+        fun read(value: Any?): Any? = when {
+            color -> (value as? java.awt.Color)?.rgb ?: -1
+            numeric -> value as? Number ?: 0
+            else -> value?.toString() ?: ""
+        }
+
+        fun write(value: Any?): Any? = when {
+            color -> java.awt.Color((value as? Number)?.toInt() ?: -1, true)
+            numeric -> coerceNumber(value, element)
+            else -> value?.toString() ?: ""
+        }
+
+        val property = Properties.functional(
+            getter = {
+                val list = runCatching { getter() as? List<*> }.getOrNull() ?: emptyList<Any?>()
+                ArrayList(list.map(::read))
+            },
+            setter = { value: List<Any?> -> setter(value.mapTo(ArrayList(), ::write)) },
+            id = UUID.randomUUID().toString(),
+            name = name,
+            description = desc,
+            type = List::class.java,
+        )
+
+        property.addMetadata("visualizer", visualizer)
+        (defaultValue as? List<*>)?.let { property.addMetadata("default", ArrayList(it.map(::read))) }
+        maximumNumberOfEntries(option)?.let { property.addMetadata("maxEntries", it) }
+        if (numeric) {
+            val range = resolveEntryRange(option)
+            property.addMetadata("min", range?.first ?: -Float.MAX_VALUE)
+            property.addMetadata("max", range?.second ?: Float.MAX_VALUE)
+            range?.third?.let { property.addMetadata("step", it) }
+        }
+        property.category = categoryName
+        property.subcategory = subcategoryName
+
+        root.put(property)
+    }
+
+    private fun isListOption(optionClass: Class<*>): Boolean {
+        var cls: Class<*>? = optionClass
+        while (cls != null && cls != Any::class.java) {
+            if (cls.simpleName == "ListOption") return true
+            if (cls.interfaces.any { isListOption(it) }) return true
+            cls = cls.superclass
+        }
+        return false
+    }
+
+    private fun maximumNumberOfEntries(option: Any): Int? {
+        val method = option::class.java.methods.firstOrNull {
+            it.name == "maximumNumberOfEntries" && it.parameterCount == 0
+        } ?: return null
+        val max = runCatching { (method.invoke(option) as? Number)?.toInt() }.getOrNull() ?: return null
+        return if (max <= 0 || max == Int.MAX_VALUE) 0 else max
+    }
+
+    private fun resolveEntryRange(option: Any): Triple<Float, Float, Float?>? {
+        val optionsMethod = option::class.java.methods.firstOrNull {
+            it.name == "options" && it.parameterCount == 0
+        } ?: return null
+        val entries = runCatching { optionsMethod.invoke(option) as? Collection<*> }.getOrNull() ?: return null
+        val entry = entries.firstOrNull { it != null } ?: return null
+        return resolveSliderRange(entry)
+    }
+
+    private fun coerceNumber(value: Any?, type: Class<*>): Any {
+        val number = value as? Number ?: 0
+        return when (type) {
+            Integer::class.java -> number.toInt()
+            java.lang.Long::class.java -> number.toLong()
+            java.lang.Float::class.java -> number.toFloat()
+            java.lang.Double::class.java -> number.toDouble()
+            else -> number
+        }
     }
 
     private fun isButtonOption(optionClass: Class<*>): Boolean {

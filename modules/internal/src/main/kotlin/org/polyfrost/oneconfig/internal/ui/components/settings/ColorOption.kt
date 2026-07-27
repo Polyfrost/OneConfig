@@ -100,7 +100,7 @@ private fun hsbToColor(hue: Float, saturation: Float, brightness: Float, alpha: 
     return Color(r + m, g + m, b + m, alpha)
 }
 
-private fun colorToHex(color: Color): String {
+internal fun colorToHex(color: Color): String {
     val argb = color.toArgb()
     val a = (argb shr 24) and 0xFF
     val r = (argb shr 16) and 0xFF

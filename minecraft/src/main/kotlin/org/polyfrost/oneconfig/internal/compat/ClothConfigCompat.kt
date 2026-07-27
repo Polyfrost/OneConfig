@@ -128,6 +128,10 @@ object ClothConfigCompat {
 
         val currentValue = value ?: return false
 
+        if (currentValue is List<*>) {
+            return parseListEntry(entry, currentValue, name, categoryName, subcategoryName, dest)
+        }
+
         val isColor = isColorEntry(entry)
 
         val isNumber = currentValue is Int || currentValue is Float || currentValue is Double || currentValue is Long
@@ -182,6 +186,81 @@ object ClothConfigCompat {
 
         dest.put(property)
         return true
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun parseListEntry(
+        entry: Any,
+        currentValue: List<*>,
+        name: String,
+        categoryName: String,
+        subcategoryName: String,
+        dest: Tree,
+    ): Boolean {
+        val element = listElementType(entry, currentValue) ?: return false
+        val numeric = Number::class.java.isAssignableFrom(element)
+        if (!numeric && element != String::class.java) return false
+
+        val saveCallbackField = findField(entry.javaClass, "saveCallback")?.apply { isAccessible = true }
+
+        val property = Properties.functional(
+            getter = {
+                val list = runCatching { invokeGetValue(entry) as? List<*> }.getOrNull() ?: emptyList<Any?>()
+                ArrayList(list.map { if (numeric) it as? Number ?: 0 else it?.toString() ?: "" })
+            },
+            setter = { v: List<Any?> ->
+                val values = v.mapTo(ArrayList()) { if (numeric) coerceNumber(it, element) else it?.toString() ?: "" }
+                (saveCallbackField?.get(entry) as? Consumer<Any?>)?.accept(values)
+            },
+            id = UUID.randomUUID().toString(),
+            name = name,
+            description = resolveTooltip(entry),
+            type = java.util.List::class.java as Class<List<Any?>>,
+        )
+
+        property.addMetadata(
+            "visualizer",
+            if (numeric) Visualizer.NumberListVisualizer::class.java else Visualizer.TextListVisualizer::class.java,
+        )
+        if (numeric) {
+            property.addMetadata("min", readNumberField(entry, "minimum") ?: 0f)
+            property.addMetadata("max", readNumberField(entry, "maximum") ?: 100f)
+        }
+        runCatching {
+            (entry.javaClass.getMethod("getDefaultValue").invoke(entry) as? Optional<*>)?.orElse(null)
+        }.getOrNull()?.let { property.addMetadata("default", it) }
+        property.category = categoryName
+        property.subcategory = subcategoryName
+
+        dest.put(property)
+        return true
+    }
+
+    /**
+     * The type of a single list entry. Taken from the values already present, falling back to the
+     * Cloth entry class itself so that empty lists still render with the right widget.
+     */
+    private fun listElementType(entry: Any, currentValue: List<*>): Class<*>? {
+        currentValue.firstOrNull { it != null }?.let { return it.javaClass }
+        return when {
+            entryClassMatches(entry, "StringListListEntry") -> String::class.java
+            entryClassMatches(entry, "IntegerListListEntry") -> Integer::class.java
+            entryClassMatches(entry, "LongListListEntry") -> java.lang.Long::class.java
+            entryClassMatches(entry, "FloatListListEntry") -> java.lang.Float::class.java
+            entryClassMatches(entry, "DoubleListListEntry") -> java.lang.Double::class.java
+            else -> null
+        }
+    }
+
+    private fun coerceNumber(value: Any?, type: Class<*>): Any {
+        val number = value as? Number ?: 0
+        return when (type) {
+            Integer::class.java -> number.toInt()
+            java.lang.Long::class.java -> number.toLong()
+            java.lang.Float::class.java -> number.toFloat()
+            java.lang.Double::class.java -> number.toDouble()
+            else -> number
+        }
     }
 
     private fun isExpanded(entry: Any): Boolean {

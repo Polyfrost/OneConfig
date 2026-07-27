@@ -178,6 +178,58 @@ public class TestConfig_Test extends Config {
     )
     public static String[] textListEmpty = {};
 
+    @FileList(
+            title = "File List",
+            description = "Pick several files. Add, remove and drag to reorder.",
+            category = "Lists",
+            subcategory = "Other Lists",
+            types = {".png", ".jpg"},
+            filterName = "Images",
+            addText = "Add image"
+    )
+    public static String[] fileList = {};
+
+    @FileList(
+            title = "Directory List",
+            description = "Folders instead of files, max 3.",
+            category = "Lists",
+            subcategory = "Other Lists",
+            directory = true,
+            maxEntries = 3
+    )
+    public static String[] directoryList = {};
+
+    @ColorList(
+            title = "Color List",
+            description = "Packed ARGB entries, each with its own picker.",
+            category = "Lists",
+            subcategory = "Other Lists",
+            addText = "Add color"
+    )
+    public static int[] colorList = {0xFFFF5555, 0xFF55FF55, 0x8055AAFF};
+
+    @NumberList(
+            title = "Number List",
+            description = "Number inputs with stepper arrows.",
+            category = "Lists",
+            subcategory = "Other Lists",
+            min = 0f,
+            max = 64f
+    )
+    public static int[] numberList = {1, 16, 64};
+
+    @SliderList(
+            title = "Slider List",
+            description = "A slider per entry, no reordering.",
+            category = "Lists",
+            subcategory = "Other Lists",
+            min = 0f,
+            max = 1f,
+            step = 0.05f,
+            reorderable = false
+    )
+    public static float[] sliderList = {0.25f, 0.5f, 1f};
+
     @Info(
             title = "Info",
             description = "This is an info message that may be useful to the player!",

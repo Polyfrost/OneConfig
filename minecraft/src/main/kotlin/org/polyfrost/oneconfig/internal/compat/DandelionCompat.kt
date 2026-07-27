@@ -4,6 +4,7 @@ package org.polyfrost.oneconfig.internal.compat
 /*import net.azureaaron.dandelion.api.ButtonOption
 import net.azureaaron.dandelion.api.ConfigCategory
 import net.azureaaron.dandelion.api.LabelOption
+import net.azureaaron.dandelion.api.ListOption
 import net.azureaaron.dandelion.api.Option
 import net.azureaaron.dandelion.api.OptionGroup
 import net.azureaaron.dandelion.api.OptionListener
@@ -78,6 +79,12 @@ object DandelionCompat {
     }
 
     fun parseGroup(group: OptionGroup, category: ConfigCategory, isRootGroup: Boolean, root: Tree) {
+        if (group is ListOption<*>) {
+            @Suppress("UNCHECKED_CAST")
+            parseOption(group as ListOption<Any>, root, category.name().string, ConfigVisualizer.DEFAULT_SUBCATEGORY)
+            return
+        }
+
         group.options().forEach {
             parseOption(
                 it,
@@ -115,6 +122,16 @@ object DandelionCompat {
                 property.subcategory = subcategory
                 property.visualizer = Visualizer.InfoVisualizer::class.java
                 root.put(property)
+            }
+
+            is ListOption<*> -> {
+                val property = listProperty(option, category, subcategory)
+                if (property == null) {
+                    LOGGER.warn("Unsupported list: ${option.name()} - ${option.entryType().simpleName}")
+                    root.put(unsupportedOptionProperty(option, option.entryController(), category, subcategory))
+                } else {
+                    root.put(property)
+                }
             }
 
             else if controller == null -> {
@@ -185,6 +202,76 @@ object DandelionCompat {
                 }
                 root.put(property)
             }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun listProperty(listOption: ListOption<*>, category: String, subcategory: String): Property<*>? {
+        val option = listOption as ListOption<Any>
+        val entryType = option.entryType()
+        val entryController = runCatching { option.entryController() }.getOrNull()
+        val numeric = Number::class.java.isAssignableFrom(entryType)
+        val colour = entryController as? ColourController
+
+        val visualizer: Class<out Visualizer> = when {
+            colour != null -> Visualizer.ColorListVisualizer::class.java
+            numeric ->
+                if ((entryController as? NumberController<*>)?.slider() == true) Visualizer.SliderListVisualizer::class.java
+                else Visualizer.NumberListVisualizer::class.java
+
+            entryType == String::class.java -> Visualizer.TextListVisualizer::class.java
+            else -> return null
+        }
+
+        fun read(value: Any?): Any? = when {
+            colour != null -> (value as? java.awt.Color)?.rgb ?: -1
+            numeric -> value as? Number ?: 0
+            else -> value?.toString() ?: ""
+        }
+
+        fun write(value: Any?): Any = when {
+            colour != null -> java.awt.Color((value as? Number)?.toInt() ?: -1, colour.hasAlpha())
+            numeric -> coerceNumber(value, entryType)
+            else -> value?.toString() ?: ""
+        }
+
+        val binding = option.binding()
+        val property = Properties.functional(
+            getter = { ArrayList(binding.get().orEmpty().map(::read)) },
+            setter = { values: List<Any?> ->
+                binding.set(values.mapTo(ArrayList(), ::write))
+                option.listeners().forEach { it.onUpdate(option, OptionListener.UpdateType.VALUE_CHANGE) }
+                option.flags().forEach { it.accept(Minecraft.getInstance()) }
+            },
+            id = option.id()?.toString() ?: UUID.randomUUID().toString(),
+            name = option.name(),
+            description = option.description(),
+            type = java.util.List::class.java as Class<List<Any?>>,
+        )
+
+        property.addMetadata("visualizer", visualizer)
+        property.addMetadata("searchTags", option.tags())
+        property.addMetadata("default", ArrayList(binding.defaultValue().orEmpty().map(::read)))
+        if (colour?.hasAlpha() == false) property.addMetadata("noAlpha", Unit)
+        (entryController as? NumberController<*>)?.let {
+            property.addMetadata("min", it.min().toFloat())
+            property.addMetadata("max", it.max().toFloat())
+            property.addMetadata("step", it.step().toFloat())
+        }
+        property.category = category
+        property.subcategory = subcategory
+        property.addDisplayCondition { if (option.modifiable()) Display.SHOWN else Display.DISABLED }
+        return property
+    }
+
+    private fun coerceNumber(value: Any?, type: Class<*>): Any {
+        val number = value as? Number ?: 0
+        return when (type) {
+            Integer::class.java, Integer.TYPE -> number.toInt()
+            java.lang.Long::class.java, java.lang.Long.TYPE -> number.toLong()
+            java.lang.Float::class.java, java.lang.Float.TYPE -> number.toFloat()
+            java.lang.Double::class.java, java.lang.Double.TYPE -> number.toDouble()
+            else -> number
         }
     }
 

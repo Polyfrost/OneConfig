@@ -3,13 +3,16 @@ package org.polyfrost.oneconfig.internal.ui.api.settings
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.internal.ui.components.settings.BooleanOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.ButtonOption
+import org.polyfrost.oneconfig.internal.ui.components.settings.ColorListOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.ColorOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.DraggableListOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.DropdownOption
+import org.polyfrost.oneconfig.internal.ui.components.settings.FileListOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.FileOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.InfoOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.MultiSelectDropdownOption
+import org.polyfrost.oneconfig.internal.ui.components.settings.NumberListOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.NumberOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.RadioButtonOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.SliderOption
@@ -38,6 +41,18 @@ internal object BuiltinVisualizers {
         })
         Visualizer.register(Visualizer.FileVisualizer::class.java, Visualizer { prop ->
             FileOption(FileOptionData(prop))
+        })
+        Visualizer.register(Visualizer.FileListVisualizer::class.java, Visualizer { prop ->
+            FileListOption(FileListOptionData(prop))
+        })
+        Visualizer.register(Visualizer.ColorListVisualizer::class.java, Visualizer { prop ->
+            ColorListOption(ColorListOptionData(prop))
+        })
+        Visualizer.register(Visualizer.NumberListVisualizer::class.java, Visualizer { prop ->
+            NumberListOption(NumberListOptionData(prop, NumberListOptionData.Style.Spinner))
+        })
+        Visualizer.register(Visualizer.SliderListVisualizer::class.java, Visualizer { prop ->
+            NumberListOption(NumberListOptionData(prop, NumberListOptionData.Style.Slider))
         })
         Visualizer.register(Visualizer.DropdownVisualizer::class.java, Visualizer { prop ->
             DropdownOption(DropdownOptionData(prop))

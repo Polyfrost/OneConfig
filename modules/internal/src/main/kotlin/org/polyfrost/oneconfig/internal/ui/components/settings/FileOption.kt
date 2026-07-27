@@ -60,20 +60,7 @@ fun FileOption(data: FileOptionData) {
     }
     val text = value.text
 
-    val pathTransformation = remember(theme.textColor, theme.textColorSecondary) {
-        VisualTransformation { annotated ->
-            val raw = annotated.text
-            val sep = raw.lastIndexOfAny(charArrayOf('/', '\\'))
-            val builder = AnnotatedString.Builder(raw)
-            if (sep >= 0) {
-                builder.addStyle(SpanStyle(color = theme.textColorSecondary), 0, sep + 1)
-                builder.addStyle(SpanStyle(color = theme.textColor), sep + 1, raw.length)
-            } else {
-                builder.addStyle(SpanStyle(color = theme.textColor), 0, raw.length)
-            }
-            TransformedText(builder.toAnnotatedString(), OffsetMapping.Identity)
-        }
-    }
+    val pathTransformation = rememberPathTransformation()
 
     fun setValue(newText: String) {
         value = TextFieldValue(newText, selection = TextRange(newText.length))
@@ -141,6 +128,25 @@ fun FileOption(data: FileOptionData) {
             }
         },
     )
+}
+
+@Composable
+internal fun rememberPathTransformation(): VisualTransformation {
+    val theme = LocalTheme.current
+    return remember(theme.textColor, theme.textColorSecondary) {
+        VisualTransformation { annotated ->
+            val raw = annotated.text
+            val sep = raw.lastIndexOfAny(charArrayOf('/', '\\'))
+            val builder = AnnotatedString.Builder(raw)
+            if (sep >= 0) {
+                builder.addStyle(SpanStyle(color = theme.textColorSecondary), 0, sep + 1)
+                builder.addStyle(SpanStyle(color = theme.textColor), sep + 1, raw.length)
+            } else {
+                builder.addStyle(SpanStyle(color = theme.textColor), 0, raw.length)
+            }
+            TransformedText(builder.toAnnotatedString(), OffsetMapping.Identity)
+        }
+    }
 }
 
 @Composable
