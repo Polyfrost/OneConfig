@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.shell
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Rect
@@ -9,6 +10,7 @@ import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.navigation.NavHostController
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 
 object Lifecycle : LifecycleOwner {
@@ -55,8 +57,8 @@ object ShellState {
     /** Last top-level route navigated to, used by the "Previous page" / "Smart reset" opening behaviors. */
     var lastRoute: Any? = null
 
-    /** Last selected settings category (tab) per mod id, restored when a mod's config is reopened. */
-    val selectedCategories = HashMap<String, String>()
+    /** Last selected settings category (tab) per page key, restored when a page is reopened or navigated back to. */
+    val selectedCategories = mutableStateMapOf<String, String>()
 
     /** Wall-clock time (ms) the menu was last closed, used by the "Smart reset" opening behavior. */
     var lastClosedAt: Long = 0L
@@ -87,34 +89,67 @@ object LocalNavController {
     val wrapper = NavControllerWrapper
 
     object NavControllerWrapper {
-        private val backStack = ArrayDeque<Any>()
-        private val forwardStack = ArrayDeque<Any>()
+        /**
+         * One step of history. [categoryKey] / [category] record the settings tab selected on the page at
+         * that point, so switching tabs inside a page is undoable without touching the nav host.
+         */
+        private data class Entry(
+            val route: Any,
+            val categoryKey: String? = null,
+            val category: String? = null,
+        )
 
-        private var currentRoute: Any = ModsGraph
+        private val backStack = ArrayDeque<Entry>()
+        private val forwardStack = ArrayDeque<Entry>()
+
+        private var currentEntry = Entry(ModsGraph)
 
         fun reset() {
             backStack.clear()
             forwardStack.clear()
-            currentRoute = ModsGraph
+            currentEntry = Entry(ModsGraph)
         }
 
         fun navigate(route: Any) {
             forwardStack.clear()
-            backStack.addLast(currentRoute)
-            currentRoute = route
+            backStack.addLast(currentEntry)
+            currentEntry = Entry(route)
             ShellState.searchQuery = ""
             ShellState.globalSearchActive = false
             ShellState.showSearchField = false
             ShellState.lastRoute = route
+            seedRouteCategory(route)
             current.navigate(route)
         }
 
+        /**
+         * Records an in-page settings tab switch, so back/forward walks tabs the same way it walks pages.
+         * [pageKey] identifies the page whose tab changed (mod id, "preferences", ...).
+         */
+        fun selectCategory(pageKey: String, category: String) {
+            val previous = ShellState.selectedCategories[pageKey]
+            if (previous == category) return
+            forwardStack.clear()
+            backStack.addLast(currentEntry.copy(categoryKey = pageKey, category = previous))
+            currentEntry = currentEntry.copy(categoryKey = pageKey, category = category)
+            ShellState.selectedCategories[pageKey] = category
+        }
+
         fun back() {
-            if (backStack.isEmpty()) return
+            val previous = backStack.lastOrNull() ?: return
+            // Same page, only the tab changed: restore it in place, no screen transition.
+            if (previous.route == currentEntry.route) {
+                backStack.removeLast()
+                forwardStack.addLast(currentEntry)
+                currentEntry = previous
+                applyCategory(previous)
+                return
+            }
             if (current.popBackStack()) {
-                forwardStack.addLast(currentRoute)
-                currentRoute = backStack.removeLast()
-                ShellState.lastRoute = currentRoute
+                forwardStack.addLast(currentEntry)
+                currentEntry = backStack.removeLast()
+                applyCategory(currentEntry)
+                ShellState.lastRoute = currentEntry.route
                 ShellState.globalSearchActive = false
                 ShellState.showSearchField = false
             }
@@ -122,12 +157,30 @@ object LocalNavController {
 
         fun forward() {
             val next = forwardStack.removeLastOrNull() ?: return
-            backStack.addLast(currentRoute)
-            currentRoute = next
-            ShellState.lastRoute = next
+            val samePage = next.route == currentEntry.route
+            backStack.addLast(currentEntry)
+            currentEntry = next
+            if (!samePage) seedRouteCategory(next.route)
+            applyCategory(next)
+            if (samePage) return
+            ShellState.lastRoute = next.route
             ShellState.globalSearchActive = false
             ShellState.showSearchField = false
-            current.navigate(next)
+            current.navigate(next.route)
+        }
+
+        /** A route that names a category (e.g. an external deep link) overrides the remembered tab. */
+        private fun seedRouteCategory(route: Any) {
+            val modConfig = route as? ModConfigRoute ?: return
+            val category = modConfig.category ?: return
+            ShellState.selectedCategories[modConfig.id] = category
+        }
+
+        /** Restores the tab an entry was recorded with; a null category means "page default". */
+        private fun applyCategory(entry: Entry) {
+            val key = entry.categoryKey ?: return
+            if (entry.category == null) ShellState.selectedCategories.remove(key)
+            else ShellState.selectedCategories[key] = entry.category
         }
     }
 }

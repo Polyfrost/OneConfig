@@ -187,6 +187,13 @@ object SkiaCtx {
     @Volatile
     private var notifRender: (() -> Unit)? = null
 
+    fun setPostComposeRenderer(block: Runnable?) {
+        postComposeRender = block?.let { r -> { r.run() } }
+    }
+
+    @Volatile
+    private var postComposeRender: (() -> Unit)? = null
+
     fun queueDraw(block: () -> Unit) {
         queuedDraws.add(block)
     }
@@ -274,7 +281,8 @@ object SkiaCtx {
         *///? }
         val queued = queuedDraws.toList()
         queuedDraws.clear()
-        val draws = queued + { block.run() }
+        val post = postComposeRender
+        val draws = if (post != null) queued + { block.run() } + post else queued + { block.run() }
         val surface = resolveComposeSurface() ?: return
         if (composeRealIsGeneral) composeTarget?.let { vulkanService?.transitionOffscreenForRendering(it) }
         flushToTarget(draws, surface)
@@ -489,6 +497,8 @@ object SkiaCtx {
 //                    if (sections) { directContext.flush(); GpuProfiler.mark("compose.blit") }
                 }
             }
+
+            postComposeRender?.invoke()
 
             notifDraw?.invoke()
 //            if (sections) { directContext.flush(); GpuProfiler.mark("notif") }

@@ -32,6 +32,6 @@ fun Preferences() {
     }
 
     key(revision, tree) {
-        ConfigScreen(tree)
+        ConfigScreen(tree, pageKey = PREFERENCES_ID)
     }
 }

@@ -1,7 +1,6 @@
 //? if >= 26.1 {
 package org.polyfrost.oneconfig.internal.ui.hud
 
-import com.mojang.blaze3d.pipeline.RenderTarget
 import com.mojang.blaze3d.pipeline.TextureTarget
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
@@ -24,10 +23,6 @@ import org.slf4j.LoggerFactory
 object LegacyHudOffscreen {
     private val LOG = LoggerFactory.getLogger("OneConfig/LegacyHudOffscreen")
     private val client get() = Minecraft.getInstance()
-
-    @Volatile
-    @JvmField
-    var redirectTarget: RenderTarget? = null
 
     private var target: TextureTarget? = null
     private var brt: BackendRenderTarget? = null
@@ -138,7 +133,7 @@ object LegacyHudOffscreen {
             //? }
 
             val prevState = accessor.`oneconfig$getRenderState`()
-            redirectTarget = rt
+            GuiTargetRedirect.target = rt
             try {
                 accessor.`oneconfig$setRenderState`(state)
                 //? if >= 26.2 {
@@ -149,14 +144,14 @@ object LegacyHudOffscreen {
                 guiRenderer.render(fog)
                 //? }
             } finally {
-                redirectTarget = null
+                GuiTargetRedirect.target = null
                 accessor.`oneconfig$setRenderState`(prevState)
             }
             hasContent = true
         } catch (t: Throwable) {
             LOG.warn("Legacy HUD offscreen render failed; disabling", t)
             failed = true
-            redirectTarget = null
+            GuiTargetRedirect.target = null
         }
     }
 

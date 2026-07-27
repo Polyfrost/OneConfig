@@ -52,8 +52,9 @@ public class TestLegacyHud_Test extends LegacyHud {
             title = "Really long title, a reference to _One fish, two fish, red fish, blue fish_. A classical piece from Dr. Suess",
             options = { "One", "Two", "Red", "Blue" }
     )
+    public static int testRadio = 0;
 
-    private ItemStack stack;
+    private transient ItemStack stack;
 
     public TestLegacyHud_Test() {
         super("test-legacy-hud", "Item HUD", Category.Companion.getINFO());

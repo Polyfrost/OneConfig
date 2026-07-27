@@ -1,6 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.skia;
 
-//? if >= 26.1 {
+//? if >= 1.21.8 {
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import net.minecraft.client.gui.render.GuiRenderer;
 //? if >= 26.2 {
@@ -8,7 +8,7 @@ import net.minecraft.client.gui.render.GuiRenderer;
 *///? } else {
 import net.minecraft.client.Minecraft;
 //? }
-import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudOffscreen;
+import org.polyfrost.oneconfig.internal.ui.hud.GuiTargetRedirect;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -21,7 +21,7 @@ public class Mixin_GuiRendererLegacyTarget {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GameRenderer;mainRenderTarget()Lcom/mojang/blaze3d/pipeline/RenderTarget;")
     )
     private RenderTarget oneconfig$redirectGuiTarget(GameRenderer instance) {
-        RenderTarget override = LegacyHudOffscreen.INSTANCE.redirectTarget;
+        RenderTarget override = GuiTargetRedirect.INSTANCE.target;
         return override != null ? override : instance.mainRenderTarget();
     }
     *///? } else {
@@ -30,7 +30,7 @@ public class Mixin_GuiRendererLegacyTarget {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;getMainRenderTarget()Lcom/mojang/blaze3d/pipeline/RenderTarget;")
     )
     private RenderTarget oneconfig$redirectGuiTarget(Minecraft instance) {
-        RenderTarget override = LegacyHudOffscreen.INSTANCE.redirectTarget;
+        RenderTarget override = GuiTargetRedirect.INSTANCE.target;
         return override != null ? override : instance.getMainRenderTarget();
     }
     //? }

@@ -80,6 +80,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
+import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -105,33 +106,16 @@ private sealed interface ConfigListEntry {
 }
 
 @Composable
-fun ConfigScreen(tree: Tree, initialCategory: String? = null, modId: String? = null) {
+fun ConfigScreen(tree: Tree, initialCategory: String? = null, pageKey: String) {
     val categories = remember(tree) { buildCategories(tree) }
     val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
 
-    fun rememberedCategory(): CategoryGroup? {
-        val saved = modId?.let { ShellState.selectedCategories[it] }
-        return saved?.let { name -> categories.firstOrNull { it.name.equals(name, ignoreCase = true) } }
-    }
-
-    fun resolveInitialCategory(): CategoryGroup? =
-        categories.firstOrNull { it.name.equals(initialCategory, ignoreCase = true) }
-            ?: rememberedCategory()
-            ?: categories.firstOrNull()
-
-    var selectedCategory by remember(tree, initialCategory) {
-        mutableStateOf(resolveInitialCategory())
-    }
+    val savedCategory = ShellState.selectedCategories[pageKey] ?: initialCategory
+    val selectedCategory = categories.firstOrNull { it.name.equals(savedCategory, ignoreCase = true) }
+        ?: categories.firstOrNull()
 
     fun selectCategory(category: CategoryGroup) {
-        selectedCategory = category
-        if (modId != null) ShellState.selectedCategories[modId] = category.name
-    }
-
-    LaunchedEffect(categories, initialCategory) {
-        if (selectedCategory == null || selectedCategory !in categories) {
-            selectedCategory = resolveInitialCategory()
-        }
+        LocalNavController.wrapper.selectCategory(pageKey, category.name)
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
