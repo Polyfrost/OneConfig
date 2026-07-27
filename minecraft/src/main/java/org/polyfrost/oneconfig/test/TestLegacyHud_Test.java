@@ -32,6 +32,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.NotNull;
+import org.polyfrost.oneconfig.api.config.v1.annotations.RadioButton;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHud;
 
@@ -46,6 +47,11 @@ public class TestLegacyHud_Test extends LegacyHud {
             step = 1f
     )
     public static int testSlider = 50;
+
+    @RadioButton(
+            title = "Really long title, a reference to _One fish, two fish, red fish, blue fish_. A classical piece from Dr. Suess",
+            options = { "One", "Two", "Red", "Blue" }
+    )
 
     private ItemStack stack;
 

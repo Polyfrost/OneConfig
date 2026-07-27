@@ -5,23 +5,13 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.ParagraphStyle
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.BaselineShift
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextGeometricTransform
-import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.ComponentLike
-import net.kyori.adventure.text.TextComponent
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.api.TextComponent
@@ -121,11 +111,13 @@ fun Text(
     lineHeight: TextUnit? = null,
     shift: BaselineShift = BaselineShift.None,
     fontWeight: FontWeight = FontWeight.Normal,
-    textAlign: TextAlign = TextAlign.Start
+    textAlign: TextAlign = TextAlign.Start,
+    maxLines: Int = Int.MAX_VALUE,
+    overflow: TextOverflow = TextOverflow.Clip,
 ) {
     when (val comp: Any = Platform.compatibility().wrapPlatformComponent(text)) {
-        is Component -> TextComponent(comp, modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign)
-        is ComponentLike -> TextComponent(comp.asComponent(), modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign)
+        is Component -> TextComponent(comp, modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign, maxLines, overflow)
+        is ComponentLike -> TextComponent(comp.asComponent(), modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign, maxLines, overflow)
         is String -> BasicText(
             if (comp.indexOf(LEGACY_CHAR) >= 0) parseLegacyFormatting(comp, color) else AnnotatedString(comp),
             style = TextStyle(
@@ -135,11 +127,13 @@ fun Text(
                 lineHeight = lineHeight ?: TextStyle.Default.lineHeight,
                 textAlign = textAlign,
             ),
+            maxLines = maxLines,
+            overflow = overflow,
             modifier = modifier
         )
         is Iterable<*> -> {
             Column {
-                comp.forEach { Text(it ?: return@forEach, modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign) }
+                comp.forEach { Text(it ?: return@forEach, modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign, maxLines, overflow) }
             }
         }
 

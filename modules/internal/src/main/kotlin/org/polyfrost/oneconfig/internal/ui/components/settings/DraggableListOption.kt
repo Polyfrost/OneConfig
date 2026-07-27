@@ -34,6 +34,7 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -217,7 +218,14 @@ fun DraggableListOption(data: DraggableListOptionData) {
 
                         data.icon?.takeIf { it.isNotEmpty() }?.let { Icon(it, modifier = Modifier.size(16.dp), color = contentColor) }
 
-                        Text(optionLabels[item.value] ?: item.value, color = contentColor, fontSize = 13.sp)
+                        Text(
+                            optionLabels[item.value] ?: item.value,
+                            modifier = Modifier.weight(1f, fill = false),
+                            color = contentColor,
+                            fontSize = 13.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                     }
                 }
             }
