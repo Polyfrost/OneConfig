@@ -48,15 +48,11 @@ class TextOptionData(prop: Property<*>) : OptionData(prop) {
     val strProp: Property<String> get() = prop as Property<String>
 }
 
-class TextListOptionData(prop: Property<*>) : OptionData(prop) {
+class TextListOptionData(prop: Property<*>) : ListOptionData(prop) {
     val placeholder: String? get() = localizedString(prop.getMetadata("placeholderKey"), prop.getMetadata<String>("placeholder")).takeIf { it.isNotBlank() }
     val regex: String? get() = prop.getMetadata<String>("regex")?.takeIf { it.isNotBlank() }
 
-    val maxEntries: Int get() = prop.getMetadata<Int>("maxEntries") ?: 0
-    val reorderable: Boolean get() = prop.getMetadata("reorderable") ?: true
-    val addText: Any get() = localizedText(prop.getMetadata("addTextKey"), prop.getMetadata<String>("addText")?.takeIf { it.isNotBlank() } ?: "Add")
-
-    val isList: Boolean get() = java.util.List::class.java.isAssignableFrom(prop.type)
+    fun strings(): List<String> = elements().map { it?.toString() ?: "" }
 }
 
 class FileOptionData(prop: Property<*>) : OptionData(prop) {
@@ -66,22 +62,72 @@ class FileOptionData(prop: Property<*>) : OptionData(prop) {
 
     val dialogTitle: String get() = title.asRenderText()
 
-    val filterPatterns: Array<String>
-        get() {
-            if (directory) return emptyArray()
-            val raw = prop.getMetadata<Array<String>>("types") ?: return emptyArray()
-            return raw.mapNotNull { it.trim().takeIf(String::isNotEmpty)?.toFilterPattern() }.toTypedArray()
-        }
+    val filterPatterns: Array<String> get() = prop.filterPatterns(directory)
 
     @Suppress("UNCHECKED_CAST")
     val strProp: Property<String> get() = prop as Property<String>
+}
 
-    private fun String.toFilterPattern(): String = when {
-        startsWith("*.") -> this
-        this == "*" -> this
-        startsWith(".") -> "*$this"
-        else -> "*.$this"
+sealed class ListOptionData(prop: Property<*>) : OptionData(prop) {
+    val maxEntries: Int get() = prop.getMetadata<Int>("maxEntries") ?: 0
+    val reorderable: Boolean get() = prop.getMetadata("reorderable") ?: true
+    val addText: Any get() = localizedText(prop.getMetadata("addTextKey"), prop.getMetadata<String>("addText")?.takeIf { it.isNotBlank() } ?: "Add")
+
+    val isList: Boolean get() = java.util.List::class.java.isAssignableFrom(prop.type)
+
+    fun elements(): List<Any?> = prop.listElements()
+
+    fun setElements(values: List<Any?>) = prop.setListElements(values)
+}
+
+class FileListOptionData(prop: Property<*>) : ListOptionData(prop) {
+    val placeholder: String? get() = localizedString(prop.getMetadata("placeholderKey"), prop.getMetadata<String>("placeholder")).takeIf { it.isNotBlank() }
+    val directory: Boolean get() = prop.getMetadata("directory") ?: false
+    val filterName: String? get() = prop.getMetadata<String>("filterName")?.takeIf { it.isNotBlank() }
+
+    val dialogTitle: String get() = title.asRenderText()
+
+    val filterPatterns: Array<String> get() = prop.filterPatterns(directory)
+
+    fun strings(): List<String> = elements().map { it?.toString() ?: "" }
+}
+
+class ColorListOptionData(prop: Property<*>) : ListOptionData(prop) {
+    val alpha: Boolean get() = prop.getMetadata<Any>("noAlpha") == null
+
+    fun argb(): List<Int> = elements().map {
+        when (it) {
+            is Number -> it.toInt()
+            is java.awt.Color -> it.rgb
+            else -> -1
+        }
     }
+
+    fun setArgb(values: List<Int>) {
+        val component = if (prop.type.isArray) prop.type.componentType else Integer::class.java
+        setElements(
+            if (component == java.awt.Color::class.java) values.map { java.awt.Color(it, true) } else values
+        )
+    }
+}
+
+class NumberListOptionData(prop: Property<*>, val style: Style) : ListOptionData(prop) {
+    enum class Style { Slider, Spinner }
+
+    val min: Float get() = prop.getMetadata("min") ?: 0f
+    val max: Float get() = prop.getMetadata("max") ?: 100f
+    val step: Float get() = prop.getMetadata("step") ?: 0f
+
+    val elementType: Class<*>
+        get() {
+            if (prop.type.isArray) return prop.type.componentType
+            elements().firstOrNull { it is Number }?.let { return it.javaClass }
+            val whole = min == min.toInt().toFloat() && max == max.toInt().toFloat() &&
+                    step == step.toInt().toFloat()
+            return if (whole) Integer::class.java else java.lang.Double::class.java
+        }
+
+    fun floats(): List<Float> = elements().map { (it as? Number)?.toFloat() ?: min }
 }
 
 class DropdownOptionData(prop: Property<*>) : OptionData(prop) {
@@ -150,6 +196,53 @@ class MultiSelectDropdownOptionData(prop: Property<*>) : OptionData(prop) {
     val options: Array<String>? get() = prop.getMetadata<Array<String>>("options")?.takeIf { it.isNotEmpty() }
     val optionLabels: List<Any>? get() = prop.optionLabels()
     val checkable: Boolean get() = prop.getMetadata("checkable") ?: true
+}
+
+private fun Property<*>.filterPatterns(directory: Boolean): Array<String> {
+    if (directory) return emptyArray()
+    val raw = getMetadata<Array<String>>("types") ?: return emptyArray()
+    return raw.mapNotNull { it.trim().takeIf(String::isNotEmpty)?.toFilterPattern() }.toTypedArray()
+}
+
+private fun String.toFilterPattern(): String = when {
+    startsWith("*.") -> this
+    this == "*" -> this
+    startsWith(".") -> "*$this"
+    else -> "*.$this"
+}
+
+private fun Property<*>.listElements(): List<Any?> {
+    val value = get() ?: return emptyList()
+    return when {
+        value.javaClass.isArray -> List(ReflectArray.getLength(value)) { ReflectArray.get(value, it) }
+        value is Iterable<*> -> value.toList()
+        else -> emptyList()
+    }
+}
+
+@Suppress("UNCHECKED_CAST")
+private fun Property<*>.setListElements(values: List<Any?>) {
+    val prop = this as Property<Any>
+    if (!type.isArray) {
+        prop.set(ArrayList(values))
+        return
+    }
+    val component = type.componentType
+    val array = ReflectArray.newInstance(component, values.size)
+    values.forEachIndexed { index, value ->
+        ReflectArray.set(array, index, if (value is Number) value.toComponentType(component) else value)
+    }
+    prop.set(array)
+}
+
+private fun Number.toComponentType(component: Class<*>): Any = when (component) {
+    Integer.TYPE, Integer::class.java -> toInt()
+    java.lang.Long.TYPE, java.lang.Long::class.java -> toLong()
+    java.lang.Double.TYPE, java.lang.Double::class.java -> toDouble()
+    java.lang.Float.TYPE, java.lang.Float::class.java -> toFloat()
+    java.lang.Short.TYPE, java.lang.Short::class.java -> toShort()
+    java.lang.Byte.TYPE, java.lang.Byte::class.java -> toByte()
+    else -> this
 }
 
 private fun Property<*>.optionLabels(): List<Any>? {

@@ -51,6 +51,11 @@ public class ObjectSerializer {
     public static final int FIELD_SKIP_MODIFIERS = Modifier.STATIC | Modifier.TRANSIENT | 0x00001000;
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Config");
     private static final IdentityHashMap<Class<?>, Field[]> CLASS_FIELD_CACHE = new IdentityHashMap<>(32);
+    /**
+     * objects currently being reflectively serialized on this thread, used to break reference cycles
+     * (e.g. Minecraft's Item -> Holder.Reference -> Item), which would otherwise blow the stack.
+     */
+    private static final ThreadLocal<Set<Object>> IN_PROGRESS = ThreadLocal.withInitial(() -> Collections.newSetFromMap(new IdentityHashMap<>()));
 
     static {
         INSTANCE.registerTypeAdapter(new ColorAdapter());
@@ -212,10 +217,18 @@ public class ObjectSerializer {
         }
 
         // we have a complex type with no adapter, amazing.
-        Map<String, Object> cfg = new HashMap<>();
-        cfg.put("class", cls.getName());
-        _serialize(cls, in, cfg, useLists, boxArrays);
-        return cfg;
+        Set<Object> seen = IN_PROGRESS.get();
+        // already serializing this object further up the stack: cyclic reference, drop it
+        if (!seen.add(in)) return null;
+        try {
+            Map<String, Object> cfg = new HashMap<>();
+            cfg.put("class", cls.getName());
+            _serialize(cls, in, cfg, useLists, boxArrays);
+            return cfg;
+        } finally {
+            seen.remove(in);
+            if (seen.isEmpty()) IN_PROGRESS.remove();
+        }
     }
 
     private Object _serializeArray(Object in, Class<?> cType, boolean useLists, boolean boxArrays) {
@@ -285,7 +298,10 @@ public class ObjectSerializer {
                 if (o == value) continue;
                 if (o == null) continue;
                 if (o instanceof Number && ((Number) o).doubleValue() == 0.0) continue;
-                cfg.put(f.getName(), serialize(o, useLists, boxArrays));
+                Object s = serialize(o, useLists, boxArrays);
+                // null means unserializable or a cycle we broke, don't write it out
+                if (s == null) continue;
+                cfg.put(f.getName(), s);
             } catch (Throwable e) {
                 throw new SerializationException("Failed to serialize object " + value + ": no detail message (potential field access issue, try making " + f + " public?)", e);
             }

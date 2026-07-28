@@ -106,6 +106,22 @@ fun interface Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[FileVisualizer::class.java]?.visualize(prop) }
     }
 
+    class FileListVisualizer : Visualizer {
+        @Composable override fun visualize(prop: Property<*>) { Visualizer[FileListVisualizer::class.java]?.visualize(prop) }
+    }
+
+    class ColorListVisualizer : Visualizer {
+        @Composable override fun visualize(prop: Property<*>) { Visualizer[ColorListVisualizer::class.java]?.visualize(prop) }
+    }
+
+    class NumberListVisualizer : Visualizer {
+        @Composable override fun visualize(prop: Property<*>) { Visualizer[NumberListVisualizer::class.java]?.visualize(prop) }
+    }
+
+    class SliderListVisualizer : Visualizer {
+        @Composable override fun visualize(prop: Property<*>) { Visualizer[SliderListVisualizer::class.java]?.visualize(prop) }
+    }
+
     companion object {
         private val registry = HashMap<Class<out Visualizer>, Visualizer>()
 

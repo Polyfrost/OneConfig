@@ -62,7 +62,7 @@ fun Themes() {
             return
         }
         key(revision, tree) {
-            ConfigScreen(tree)
+            ConfigScreen(tree, pageKey = THEMES_ID)
         }
     }
 }

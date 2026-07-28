@@ -125,6 +125,43 @@ private fun textListProp(
     if (!reorderable) p.addMetadata("reorderable", false)
 }
 
+private fun fileListProp(
+    id: String,
+    title: String,
+    desc: String,
+    vararg entries: String,
+    directory: Boolean = false,
+    placeholder: String? = null,
+) = Properties.simple(id, title, desc, entries.toList().toTypedArray(), Array<String>::class.java).also { p ->
+    p.addMetadata("visualizer", Visualizer.FileListVisualizer::class.java)
+    if (directory) p.addMetadata("directory", true)
+    if (placeholder != null) p.addMetadata("placeholder", placeholder)
+}
+
+private fun colorListProp(id: String, title: String, desc: String, vararg entries: Int) =
+    Properties.simple(id, title, desc, entries, IntArray::class.java).also { p ->
+        p.addMetadata("visualizer", Visualizer.ColorListVisualizer::class.java)
+    }
+
+private fun numberListProp(
+    id: String,
+    title: String,
+    desc: String,
+    vararg entries: Float,
+    min: Float = 0f,
+    max: Float = 100f,
+    step: Float = 0f,
+    slider: Boolean = false,
+) = Properties.simple(id, title, desc, entries, FloatArray::class.java).also { p ->
+    p.addMetadata(
+        "visualizer",
+        if (slider) Visualizer.SliderListVisualizer::class.java else Visualizer.NumberListVisualizer::class.java,
+    )
+    p.addMetadata("min", min)
+    p.addMetadata("max", max)
+    if (step > 0f) p.addMetadata("step", step)
+}
+
 private fun multiSelectProp(id: String, title: String, desc: String, vararg options: String, checkable: Boolean = true) =
     Properties.simple(id, title, desc, BooleanArray(options.size), BooleanArray::class.java).also { p ->
         p.addMetadata("visualizer", Visualizer.MultiSelectDropdownVisualizer::class.java)
@@ -230,6 +267,11 @@ private fun testControlsTree(): Tree {
     lists.put(multiSelectProp("multi-plain", "List Picker", "Single-select list dropdown", "Easy", "Normal", "Hard", "Extreme", checkable = false))
     lists.put(textListProp("text-list", "Ignored Players", "Type entries, add and remove rows", "Notch", "Herobrine", placeholder = "Enter a name..."))
     lists.put(textListProp("text-list-regex", "Allowed Servers", "Validated, max 3 entries", "hypixel.net", placeholder = "example.com", regex = "^[\\w.-]+\\.[a-z]{2,}$", maxEntries = 3, reorderable = false))
+    lists.put(fileListProp("file-list", "Resource Packs", "Pick several files", placeholder = "Select a file..."))
+    lists.put(fileListProp("dir-list", "Search Folders", "Pick several folders", directory = true, placeholder = "Select a folder..."))
+    lists.put(colorListProp("color-list", "Palette", "One picker per entry", 0xFFFF5555.toInt(), 0xFF55FF55.toInt(), 0x8055AAFF.toInt()))
+    lists.put(numberListProp("number-list", "Stack Sizes", "Number inputs", 1f, 16f, 64f, min = 0f, max = 64f))
+    lists.put(numberListProp("slider-list", "Layer Opacities", "A slider per entry", 0.25f, 0.5f, 1f, min = 0f, max = 1f, step = 0.05f, slider = true))
 
     val actions = Tree("actions", "Actions & Info", null, null).also { it.addMetadata("icon", "cog") }
     actions.put(infoProp("info-tip", "Tip", "This is an informational option with no control."))

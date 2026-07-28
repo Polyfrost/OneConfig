@@ -225,8 +225,10 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         val options = entry.options()
 
         if (entry.isArray) {
-            // Only enum arrays are supported: a draggable reorderable list, or a multi-select dropdown.
+            // Enum arrays are a fixed set: a draggable reorderable list, or a multi-select dropdown.
+            // String/number arrays are user-editable, so they become the matching list option.
             if (entry.type() == EntryType.ENUM) buildEnumArray(entry, builder, options, tree)
+            else buildValueArray(entry, builder, options, tree)
             return
         }
 
@@ -274,6 +276,66 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
 
         builder["visualizer"] = visualizer
         tree.put(builder.build())
+    }
+
+    private fun buildValueArray(
+        entry: ResourcefulConfigValueEntry,
+        builder: RConfigPropertyBuilder,
+        options: EntryData,
+        tree: Tree,
+    ) {
+        val numeric = when (entry.type()) {
+            EntryType.BYTE, EntryType.SHORT, EntryType.INTEGER, EntryType.LONG, EntryType.FLOAT, EntryType.DOUBLE -> true
+            else -> false
+        }
+        val isColor = numeric && options.hasOption(Option.COLOR)
+
+        val visualizer: Class<out Visualizer> = when {
+            isColor -> Visualizer.ColorListVisualizer::class.java
+            numeric && options.hasOption(Option.SLIDER) -> Visualizer.SliderListVisualizer::class.java
+            numeric -> Visualizer.NumberListVisualizer::class.java
+            entry.type() == EntryType.STRING -> Visualizer.TextListVisualizer::class.java
+            else -> return // boolean arrays and anything else have no list equivalent
+        }
+
+        if (numeric) {
+            val range = options.getOption(Option.RANGE)
+            builder["min"] = range?.min?.toFloat() ?: -Float.MAX_VALUE
+            builder["max"] = range?.max?.toFloat() ?: Float.MAX_VALUE
+        } else if (options.hasOption(Option.REGEX)) {
+            builder["regex"] = options.getOption(Option.REGEX).pattern()
+        }
+
+        val element = entry.objectType()
+        fun read(value: Any?): Any = if (numeric) (value as? Number ?: 0) else value?.toString() ?: ""
+        fun write(value: Any?): Any = if (numeric) coerceNumber(value, element) else value?.toString() ?: ""
+
+        builder.getter = { ArrayList((entry.getArray() ?: emptyArray()).map(::read)) }
+        builder.setter = setter@{ value ->
+            val values = when {
+                value is List<*> -> value
+                value is Array<*> -> value.asList()
+                else -> return@setter
+            }
+            entry.setArray(values.map(::write).toTypedArray())
+        }
+        (entry.defaultValue() as? Array<*>)?.let { builder["default"] = ArrayList(it.map(::read)) }
+
+        builder["visualizer"] = visualizer
+        tree.put(builder.build())
+    }
+
+    private fun coerceNumber(value: Any?, type: Class<*>): Any {
+        val number = value as? Number ?: 0
+        return when (type) {
+            java.lang.Byte::class.java, java.lang.Byte.TYPE -> number.toByte()
+            java.lang.Short::class.java, java.lang.Short.TYPE -> number.toShort()
+            Integer::class.java, Integer.TYPE -> number.toInt()
+            java.lang.Long::class.java, java.lang.Long.TYPE -> number.toLong()
+            java.lang.Float::class.java, java.lang.Float.TYPE -> number.toFloat()
+            java.lang.Double::class.java, java.lang.Double.TYPE -> number.toDouble()
+            else -> number
+        }
     }
 
     // enum arrays render as either a draggable (reorderable) list or a multi-select dropdown,

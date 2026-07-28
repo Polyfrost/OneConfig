@@ -8,6 +8,9 @@ import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.gui.GuiGraphicsExtractor
 //? >= 1.21.10
 import net.minecraft.client.input.KeyEvent
+//? >= 1.21.10
+import net.minecraft.client.input.MouseButtonEvent
+import org.lwjgl.glfw.GLFW
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
@@ -24,6 +27,7 @@ import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.PreferencesGraph
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
 import org.polyfrost.oneconfig.internal.ui.PlayerHeadLoader
+import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
@@ -135,6 +139,34 @@ class OneConfigUIScreen @JvmOverloads constructor(
         return super.keyPressed(event)
         //? } else {
         /*return super.keyPressed(key, scanCode, modifiers)
+        *///? }
+    }
+
+    /** Mouse side buttons navigate the page history, like a browser. */
+    //? >= 1.21.10 {
+    override fun mouseClicked(event: MouseButtonEvent, doubleClick: Boolean): Boolean {
+        val button = event.button()
+        //? } else {
+        /*override fun mouseClicked(x: Double, y: Double, button: Int): Boolean {
+        *///? }
+        if (!closeRequested && LocalNavController.isReady) {
+            when (button) {
+                GLFW.GLFW_MOUSE_BUTTON_4 -> {
+                    UiSounds.play(UiSoundEvent.CLICK)
+                    LocalNavController.wrapper.back()
+                    return true
+                }
+                GLFW.GLFW_MOUSE_BUTTON_5 -> {
+                    UiSounds.play(UiSoundEvent.CLICK)
+                    LocalNavController.wrapper.forward()
+                    return true
+                }
+            }
+        }
+        //? >= 1.21.10 {
+        return super.mouseClicked(event, doubleClick)
+        //? } else {
+        /*return super.mouseClicked(x, y, button)
         *///? }
     }
 

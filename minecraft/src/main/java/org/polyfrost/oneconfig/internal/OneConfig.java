@@ -38,6 +38,8 @@ import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.resources.ReloadableResourceManager;
+import net.minecraft.world.scores.DisplaySlot;
+import net.minecraft.world.scores.Scoreboard;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.compose.render.RenderContext;
@@ -161,6 +163,22 @@ public class OneConfig
         }
     }
 
+    /**
+     * Mirrors vanilla's tab list visibility check, which is not just the keybind being held:
+     * on a single player world with no other listed players and no LIST scoreboard objective,
+     * the tab list stays hidden even while the key is down.
+     */
+    private static boolean isTabListVisible() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (!minecraft.options.keyPlayerList.isDown()) return false;
+        if (minecraft.level == null || minecraft.player == null) return false;
+        if (!minecraft.isLocalServer()) return true;
+
+        Scoreboard scoreboard = minecraft.level.getScoreboard();
+        return minecraft.player.connection.getListedOnlinePlayers().size() > 1
+                || scoreboard.getDisplayObjective(DisplaySlot.LIST) != null;
+    }
+
     public static void render(GuiGraphicsExtractor graphics, float partial) {
         if (!SkiaCtx.INSTANCE.isReady()) {
             return;
@@ -174,7 +192,7 @@ public class OneConfig
 
         // Update HUD visibility state for per-HUD filtering
         HudManager.isDebugScreenVisible = Minecraft.getInstance().getDebugOverlay().showDebugScreen();
-        HudManager.isTabListVisible = Minecraft.getInstance().options.keyPlayerList.isDown();
+        HudManager.isTabListVisible = isTabListVisible();
         HudManager.isGuiScreenOpen = Platform.screen().current() != null;
         HudManager.inWorld = true;
         HudManager.targetPixelWidth = Minecraft.getInstance().getWindow().getWidth();
@@ -188,11 +206,16 @@ public class OneConfig
         //? } else {
         /*else LegacyHudRenderer.INSTANCE.renderLive(graphics);
         *///? }
+        // Records the F3 overlay offscreen so Skia can put it above the Compose UI instead of below the blur.
+        // Blitted through the post-compose renderer, so it must run every frame regardless of the HUD dirty gate.
+        org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen.INSTANCE.render();
         if (HudManager.INSTANCE.beginFrame(sw, sh)) {
             SkiaCtx.INSTANCE.queueHudDraw(() -> {
                 var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
                 HudManager.INSTANCE.render(ctx, sw, sh);
             });
+            // Render Skia HUDs into the offscreen TextureTarget.
+            // The mixin blits the texture onto MC's render target afterwards.
             SkiaCtx.INSTANCE.drawNow();
         }
     }

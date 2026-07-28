@@ -320,6 +320,14 @@ private fun hitTestHud(hud: Hud, screenX: Float, screenY: Float): Boolean {
     return mcX >= bounds.x && mcX <= bounds.x + bounds.width && mcY >= bounds.y && mcY <= bounds.y + bounds.height
 }
 
+private fun pickHudAt(screenX: Float, screenY: Float, current: Hud?): Hud? {
+    val stack = orderedInstances().filter { hitTestHud(it, screenX, screenY) }
+    if (stack.isEmpty()) return null
+    val index = stack.indexOfFirst { it === current }
+    if (index < 0) return stack.last()
+    return stack[(index - 1 + stack.size) % stack.size]
+}
+
 private data class HudActionBarLayout(val settingsX: Float, val visibilityX: Float, val y: Float)
 
 private fun hudActionBarLayout(
@@ -692,7 +700,9 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             val pos = event.changes.firstOrNull()?.position ?: return@safePointerEvent
             if (inChrome(pos.x, pos.y)) return@safePointerEvent
             if (event.buttons.isSecondaryPressed) {
-                val hit = orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }
+                // right click never cycles: keep the current selection if it is under the cursor
+                val hit = selectedHud?.takeIf { hitTestHud(it, pos.x, pos.y) }
+                    ?: orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }
                 if (hit != null) {
                     event.changes.forEach { it.consume() }
                     Snapshot.withMutableSnapshot {
@@ -734,7 +744,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 return@safePointerEvent
             }
             val s = Platform.screen().screenToMcScale()
-            val hit = orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }
+            val hit = pickHudAt(pos.x, pos.y, selectedHud)
             if (hit != null && hit.locked) {
                 event.changes.forEach { it.consume() }
                 if (hit !== selectedHud) UiSounds.play(UiSoundEvent.HUD_SELECT)
@@ -875,7 +885,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 if (actionBarCandidates.any { hitTestHudActionBar(it, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx) }) {
                     return@safePointerEvent
                 }
-                val hit = orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }
+                val hit = pickHudAt(pos.x, pos.y, selectedHud)
                 if (hit != null) {
                     if (hit !== selectedHud) UiSounds.play(UiSoundEvent.HUD_SELECT)
                     Snapshot.withMutableSnapshot {

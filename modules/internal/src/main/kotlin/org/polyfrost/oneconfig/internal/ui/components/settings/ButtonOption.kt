@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -28,6 +29,7 @@ fun ButtonOption(data: ButtonOptionData) {
 
     Box(
         modifier = Modifier
+            .widthIn(max = LocalOptionWidth.current)
             .pointerHoverIcon(PointerIcon.Hand)
             .background(bgColor, LocalTheme.current.buttonShape)
             .onClick(interactionSource) { data.runnable?.run() }

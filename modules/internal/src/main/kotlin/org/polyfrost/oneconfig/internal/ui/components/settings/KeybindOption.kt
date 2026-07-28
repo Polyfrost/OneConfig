@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -187,6 +188,8 @@ fun KeybindOption(data: KeybindOptionData) {
 
     Row(
         modifier = Modifier
+            // long key combos wrap instead of squeezing the setting's label
+            .widthIn(max = LocalOptionWidth.current)
             .onKeyEvent { event ->
                 if (!recording) return@onKeyEvent false
                 if (event.awtKeyEventId() == java.awt.event.KeyEvent.KEY_TYPED) return@onKeyEvent true

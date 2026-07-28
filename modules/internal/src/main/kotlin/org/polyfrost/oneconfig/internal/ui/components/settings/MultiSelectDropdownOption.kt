@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -131,7 +132,14 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(triggerLabel, color = textColor, fontSize = 13.sp)
+            Text(
+                triggerLabel,
+                modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp),
+                color = textColor,
+                fontSize = 13.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
             Icon("up", modifier = Modifier.rotate(chevronRotation), color = textColor)
         }
 

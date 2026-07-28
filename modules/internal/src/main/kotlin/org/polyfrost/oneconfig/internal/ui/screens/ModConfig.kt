@@ -50,7 +50,7 @@ fun ModConfig(id: String, initialCategory: String? = null) {
             Text("This mod manages its own configuration.", color = LocalTheme.current.textColorSecondary)
         }
         else -> key(revision, tree) {
-            ConfigScreen(tree, initialCategory, modId = id)
+            ConfigScreen(tree, initialCategory, pageKey = id)
         }
     }
 }
