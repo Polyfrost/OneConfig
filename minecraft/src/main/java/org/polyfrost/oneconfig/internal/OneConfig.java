@@ -45,6 +45,9 @@ import org.apache.logging.log4j.Logger;
 import org.polyfrost.compose.render.RenderContext;
 import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
+import org.polyfrost.oneconfig.api.config.v1.Properties;
+import org.polyfrost.oneconfig.api.config.v1.Property;
+import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
@@ -71,6 +74,13 @@ import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry;
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProvider;
 import org.polyfrost.oneconfig.test.TestMod_Test;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
+import static org.polyfrost.oneconfig.api.config.v1.Tree.tree;
+
 /**
  * The main class of OneConfig.
  */
@@ -81,6 +91,8 @@ public class OneConfig
         implements net.fabricmc.api.ClientModInitializer {
     public static final OneConfig INSTANCE = new OneConfig();
     private static final Logger LOGGER = LogManager.getLogger("OneConfig");
+    private static final String KEYBIND_STATE_FILE = "keybind-conflicts.json";
+    private static final String CHECKED_KEYBINDS = "checkedKeybinds";
     private boolean initialized = false;
 
     private static void registerCommands() {
@@ -142,25 +154,63 @@ public class OneConfig
         });
     }
 
-    private static void unbindRightShiftMinecraftKeybindsOnFirstRun() {
-        if (!ConfigManager.isFirstRun()) return;
+    /**
+     * Unbinds Minecraft keybinds that would conflict with OneConfig's own Right Shift keybind.
+     * <br>
+     * Each keybind is only ever considered once, on the launch it is first seen, and the names of the keybinds that
+     * have been considered are remembered across launches. That way a mod installed long after OneConfig still has its
+     * Right Shift bind cleared when it first shows up, while a bind the user has since moved onto Right Shift
+     * themselves is left alone. OneConfig's own mirrors of its keybinds are never touched.
+     */
+    private static void unbindRightShiftMinecraftKeybinds() {
+        Tree state = ConfigManager.internal().register(
+                tree(KEYBIND_STATE_FILE).put(
+                        Properties.simple(CHECKED_KEYBINDS, "Checked Keybinds",
+                                "Minecraft keybinds which have already been checked against OneConfig's keybind.",
+                                new String[0], String[].class)
+                )
+        ).get();
+        Property<?> prop = state.getProp(CHECKED_KEYBINDS);
+        Set<String> checked = checkedKeybinds(prop);
 
         Minecraft minecraft = Minecraft.getInstance();
         String rightShift = InputConstants.Type.KEYSYM.getOrCreate(InputConstants.KEY_RSHIFT).getName();
-        int unbound = 0;
+        List<String> unbound = new ArrayList<>();
+        boolean anyNew = false;
 
-        for (KeyMapping keyMapping : minecraft.options.keyMappings) {
+        for (KeyMapping keyMapping : MinecraftKeybindProvider.INSTANCE.managedMappings()) {
+            if (!checked.add(keyMapping.getName())) continue;
+            anyNew = true;
             if (rightShift.equals(keyMapping.saveString())) {
                 keyMapping.setKey(InputConstants.UNKNOWN);
-                unbound++;
+                unbound.add(keyMapping.getName());
             }
         }
 
-        if (unbound > 0) {
+        if (!unbound.isEmpty()) {
             KeyMapping.resetMapping();
             minecraft.options.save();
-            LOGGER.info("Unbound {} Minecraft keybind(s) using Right Shift on first launch", unbound);
+            LOGGER.info("Unbound {} Minecraft keybind(s) using Right Shift: {}", unbound.size(), unbound);
         }
+        if (anyNew) {
+            prop.setAs(checked.toArray(new String[0]));
+            ConfigManager.internal().save(KEYBIND_STATE_FILE);
+        }
+    }
+
+    private static Set<String> checkedKeybinds(Property<?> prop) {
+        Object stored = prop.get();
+        Set<String> out = new LinkedHashSet<>();
+        if (stored instanceof Object[]) {
+            for (Object name : (Object[]) stored) {
+                if (name != null) out.add(name.toString());
+            }
+        } else if (stored instanceof Iterable<?>) {
+            for (Object name : (Iterable<?>) stored) {
+                if (name != null) out.add(name.toString());
+            }
+        }
+        return out;
     }
 
     /**
@@ -258,7 +308,7 @@ public class OneConfig
         EventManager.register(
                 InitializationEvent.class, e -> {
                     ConfigManager.initialize();
-                    unbindRightShiftMinecraftKeybindsOnFirstRun();
+                    unbindRightShiftMinecraftKeybinds();
                     org.polyfrost.oneconfig.api.config.v1.CompatSnapshots.setDispatcher(r -> {
                         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
                         if (mc != null) mc.execute(r);
