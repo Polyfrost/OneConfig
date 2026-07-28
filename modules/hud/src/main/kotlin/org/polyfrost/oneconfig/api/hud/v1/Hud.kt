@@ -28,9 +28,7 @@ package org.polyfrost.oneconfig.api.hud.v1
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.polyfrost.compose.layout.PolyAlign
@@ -152,26 +150,24 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     }
 
     /**
-     * Stores the current valid [staticW]/[staticH] as reset defaults (the size after first layout).
-     * [TextHud]'s unmeasured {@code -1f} sentinel is never stored.
+     * Stores reset defaults for [staticW]/[staticH]. The default is the *natural* content size, never
+     * the current one: this runs after stored values have been loaded, so recording [staticW] directly
+     * would capture whatever size the user last resized to and make "reset to default" a no-op.
+     * When the content cannot be measured yet no default is stored, and resetting falls back to
+     * re-measuring at that point (see `reseedStaticWidth`).
      */
     fun captureStaticSizeDefaults(force: Boolean = false) {
         val t = tree ?: return
         if (!staticWidth) return
-        if (staticW > 0f) {
-            t.getProp("staticW")?.let { prop ->
-                if (force || prop.getMetadata<Any?>("default") == null) {
-                    prop.addMetadata("default", staticW)
-                }
-            }
-        }
-        if (staticH > 0f) {
-            t.getProp("staticH")?.let { prop ->
-                if (force || prop.getMetadata<Any?>("default") == null) {
-                    prop.addMetadata("default", staticH)
-                }
-            }
-        }
+        val wProp = t.getProp("staticW")
+        val hProp = t.getProp("staticH")
+        val needW = wProp != null && (force || wProp.getMetadata<Any?>("default") == null)
+        val needH = hProp != null && (force || hProp.getMetadata<Any?>("default") == null)
+        if (!needW && !needH) return
+        val (naturalW, naturalH) = measureNaturalContentSize() ?: return
+        val (minW, minH) = minimumSize()
+        if (needW && naturalW > 0f) wProp!!.addMetadata("default", maxOf(naturalW, minW))
+        if (needH && naturalH > 0f) hProp!!.addMetadata("default", maxOf(naturalH, minH))
     }
 
     /**

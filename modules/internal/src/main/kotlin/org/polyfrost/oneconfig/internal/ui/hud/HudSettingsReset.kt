@@ -84,8 +84,17 @@ private fun treeHasResettableDefaults(tree: Tree): Boolean {
 
 fun resetAllHudProperties(hud: Hud) {
     val tree = hud.tree ?: return
+    resetHudStaticSize(hud)
     resetTreeDefaults(hud, tree)
     finishHudReset(hud)
+}
+
+private fun resetHudStaticSize(hud: Hud) {
+    if (!hud.staticWidth) return
+    for (id in STATIC_SIZE_OPTIONS) {
+        val prop = hudProperty(hud, id) ?: continue
+        performHudOptionReset(hud, prop, id)
+    }
 }
 
 fun hudHasPositionDefaults(hud: Hud): Boolean =
@@ -135,7 +144,7 @@ private fun performHudOptionReset(hud: Hud, prop: Property<*>, optionId: String)
 fun repairHudStaticSize(hud: Hud) {
     if (!hud.staticWidth) return
     if (hud.staticW > 0f && hud.staticH > 0f) {
-        hud.captureStaticSizeDefaults(force = true)
+        hud.captureStaticSizeDefaults()
         return
     }
     hud.reseedStaticSizeIfNeeded()
@@ -148,11 +157,7 @@ private fun resetTreeDefaults(hud: Hud, tree: Tree) {
         when (node) {
             is Property<*> -> {
                 val optionId = node.id ?: node.getID()
-                if (optionId in STATIC_SIZE_OPTIONS && hud.staticWidth) {
-                    performHudOptionReset(hud, node, optionId)
-                } else if (optionHasDefault(node)) {
-                    resetOption(node)
-                }
+                if (optionId !in STATIC_SIZE_OPTIONS && optionHasDefault(node)) resetOption(node)
             }
             is Tree -> resetTreeDefaults(hud, node)
         }
