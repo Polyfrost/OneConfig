@@ -577,6 +577,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     abstract fun update(): Boolean
     open fun updateFrequency(): Long = -1L
     open fun defaultPosition(): Pair<Float, Float> = 10f to 10f
+
+    open fun showByDefault(): Boolean = false
     open fun hasBackground(): Boolean = true
     open fun backgroundColor(): PolyColor? = null
     open fun multipleInstancesAllowed(): Boolean = true

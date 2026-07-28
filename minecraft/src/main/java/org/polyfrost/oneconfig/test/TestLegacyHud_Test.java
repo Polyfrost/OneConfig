@@ -82,6 +82,11 @@ public class TestLegacyHud_Test extends LegacyHud {
     }
 
     @Override
+    public boolean showByDefault() {
+        return true;
+    }
+
+    @Override
     public void render(@NotNull GuiGraphicsExtractor graphics) {
         if (stack == null) stack = new ItemStack(Items.DIAMOND_SWORD);
 

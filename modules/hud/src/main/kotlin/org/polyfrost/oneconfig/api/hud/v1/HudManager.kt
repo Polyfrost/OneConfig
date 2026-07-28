@@ -163,15 +163,11 @@ object HudManager {
     init {
         Snapshot.registerApplyObserver { _, _ -> contentDirty = true }
 
-        register(object : TextHud.DateTime("Date:", "yyyy-MM-dd") {
-            override fun defaultPosition() = 0f to 0f
-        })
-        register(object : TextHud.DateTime("Time:", "HH:mm:ss") {
-            override fun defaultPosition() = 0f to 0f
-        })
+        // WHY ARE THESE HERE
+        register(object : TextHud.DateTime("Date:", "yyyy-MM-dd") {})
+        register(object : TextHud.DateTime("Time:", "HH:mm:ss") {})
         if (java.lang.Boolean.getBoolean("oneconfig.test")) {
             register(object : TextHud("test", "test", Category.COMBAT, "") {
-                override fun defaultPosition() = 0f to 0f
                 override fun getText(): String = "mmrp\nmeow"
             })
         }
@@ -594,8 +590,8 @@ object HudManager {
         hudProviders.forEach { (cls, h) ->
             if (cls in used) return@forEach
             if (h.isReal) return@forEach
+            if (!h.showByDefault()) return@forEach
             val (dx, dy) = h.defaultPosition()
-            if (dx <= 0f && dy <= 0f) return@forEach
             // the user deleted every instance of this HUD; don't resurrect it.
             if (!knownProviders.add(cls.name)) return@forEach
             registryChanged = true

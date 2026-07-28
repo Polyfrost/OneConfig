@@ -170,6 +170,11 @@ class HudDeletionPersistenceTest {
         }
 
         @Override
+        public boolean showByDefault() {
+            return true;
+        }
+
+        @Override
         public String getText() {
             return "test";
         }

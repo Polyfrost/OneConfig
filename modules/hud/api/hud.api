@@ -142,6 +142,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun setX (F)V
 	public fun setY (F)V
 	public fun setup ()V
+	public fun showByDefault ()Z
 	public abstract fun update ()Z
 	public final fun updateAndRecalculate ()V
 	public fun updateFrequency ()J
