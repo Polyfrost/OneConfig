@@ -163,10 +163,9 @@ object HudManager {
     init {
         Snapshot.registerApplyObserver { _, _ -> contentDirty = true }
 
-        // WHY ARE THESE HERE
-        register(object : TextHud.DateTime("Date:", "yyyy-MM-dd") {})
-        register(object : TextHud.DateTime("Time:", "HH:mm:ss") {})
         if (java.lang.Boolean.getBoolean("oneconfig.test")) {
+            register(object : TextHud.DateTime("Date:", "yyyy-MM-dd") {})
+            register(object : TextHud.DateTime("Time:", "HH:mm:ss") {})
             register(object : TextHud("test", "test", Category.COMBAT, "") {
                 override fun getText(): String = "mmrp\nmeow"
             })
