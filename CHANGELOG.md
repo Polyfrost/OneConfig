@@ -1,3 +1,3 @@
-1.0.9 changelogs:
+1.0.10 changelogs:
 
-- Stop notification click always firing
+- Significantly improve HUD / font performance
