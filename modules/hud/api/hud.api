@@ -59,6 +59,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getShadowOffsetX ()F
 	public final fun getShadowOffsetY ()F
 	public final fun getShowBackground ()Z
+	public final fun getShowInChat ()Z
 	public final fun getShowInF3 ()Z
 	public final fun getShowInScreens ()Z
 	public final fun getShowInTab ()Z
@@ -120,6 +121,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setShadowOffsetX (F)V
 	public final fun setShadowOffsetY (F)V
 	public final fun setShowBackground (Z)V
+	public final fun setShowInChat (Z)V
 	public final fun setShowInF3 (Z)V
 	public final fun setShowInScreens (Z)V
 	public final fun setShowInTab (Z)V
@@ -178,6 +180,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static field guiScreenHeight F
 	public static field guiScreenWidth F
 	public static field inWorld Z
+	public static field isChatScreenOpen Z
 	public static field isConfigUiOpen Z
 	public static field isDebugScreenVisible Z
 	public static field isGuiScreenOpen Z
