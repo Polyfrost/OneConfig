@@ -673,7 +673,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     val densityFloat = densityObj.density
     val actionIconPx = with(densityObj) { 24.dp.toPx() }
     val actionBarGapPx = with(densityObj) { 8.dp.toPx() }
-    val libraryChromeVisible = modIds.isNotEmpty() && selectedHud == null
+    val libraryChromeVisible = modIds.isNotEmpty() && selectedHud == null && !isDragging
 
     fun Modifier.chromeRegion(key: String) = onGloballyPositioned { chromeRects[key] = it.boundsInRoot() }
 
@@ -947,11 +947,15 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 animationSpec = tween(120),
                 label = "returnChipBackground"
             )
+            AnimatedVisibility(
+                visible = selectedHud == null && !isDragging,
+                modifier = Modifier.align(Alignment.CenterStart),
+                enter = slideInHorizontally(initialOffsetX = { -it }),
+                exit = slideOutHorizontally(targetOffsetX = { -it }),
+            ) {
             Column(
                 modifier = Modifier
-                    .align(Alignment.CenterStart)
                     .padding(start = 12.dp)
-                    .graphicsLayer { alpha = chromeAlpha }
                     .clip(theme.buttonShape)
                     .background(returnBackground, theme.buttonShape)
                     .hoverable(returnInteraction)
@@ -985,6 +989,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     fontWeight = FontWeight.Normal,
                     textAlign = TextAlign.Center,
                 )
+            }
             }
         }
 
@@ -1122,11 +1127,12 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
         }
         }
 
-        Box(
-            modifier = Modifier.align(Alignment.CenterEnd)
-                .graphicsLayer { alpha = chromeAlpha }
+        AnimatedVisibility(
+            visible = libraryChromeVisible,
+            modifier = Modifier.align(Alignment.CenterEnd),
+            enter = slideInHorizontally(initialOffsetX = { it }),
+            exit = slideOutHorizontally(targetOffsetX = { it }),
         ) {
-        if (libraryChromeVisible) {
             DisposableEffect(Unit) { onDispose { chromeRects.remove(CHROME_LIBRARY) } }
             Row(
                 modifier = Modifier
@@ -1195,7 +1201,6 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     }
                 }
             }
-        }
         }
 
         HudCanvasResetMenu(
