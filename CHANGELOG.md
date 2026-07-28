@@ -1,3 +1,4 @@
-1.0.10 changelogs:
+1.0.11 changelogs:
 
-- Significantly improve HUD / font performance
+- Use new DataStorage repo for 3rd party mod categorization
+- Make main menu FPS sampler not account for unfocused FPS
