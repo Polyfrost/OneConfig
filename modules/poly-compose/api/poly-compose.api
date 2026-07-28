@@ -554,6 +554,13 @@ public final class org/polyfrost/compose/runtime/PolyApplier : androidx/compose/
 	public fun remove (II)V
 }
 
+public final class org/polyfrost/compose/runtime/PolyComposeHost {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/compose/runtime/PolyComposeHost;
+	public final fun frame (J)V
+	public static synthetic fun frame$default (Lorg/polyfrost/compose/runtime/PolyComposeHost;JILjava/lang/Object;)V
+}
+
 public final class org/polyfrost/compose/runtime/PolyComposeRuntime {
 	public static final field $stable I
 	public fun <init> ()V
@@ -561,6 +568,7 @@ public final class org/polyfrost/compose/runtime/PolyComposeRuntime {
 	public final fun frame (FFJ)V
 	public static synthetic fun frame$default (Lorg/polyfrost/compose/runtime/PolyComposeRuntime;FFJILjava/lang/Object;)V
 	public final fun getRoot ()Lorg/polyfrost/compose/node/RootNode;
+	public final fun layout (FF)V
 	public final fun setContent (Lkotlin/jvm/functions/Function2;)V
 }
 

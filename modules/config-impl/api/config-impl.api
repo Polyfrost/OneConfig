@@ -178,6 +178,12 @@ public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$CheckboxVisu
 	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;Landroidx/compose/runtime/Composer;I)V
 }
 
+public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$ColorListVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;Landroidx/compose/runtime/Composer;I)V
+}
+
 public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$ColorVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
 	public static final field $stable I
 	public fun <init> ()V
@@ -196,6 +202,12 @@ public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$DraggableLis
 }
 
 public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$DropdownVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;Landroidx/compose/runtime/Composer;I)V
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$FileListVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
 	public static final field $stable I
 	public fun <init> ()V
 	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;Landroidx/compose/runtime/Composer;I)V
@@ -225,6 +237,12 @@ public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$MultiSelectD
 	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;Landroidx/compose/runtime/Composer;I)V
 }
 
+public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$NumberListVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;Landroidx/compose/runtime/Composer;I)V
+}
+
 public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$NumberVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
 	public static final field $stable I
 	public fun <init> ()V
@@ -237,6 +255,12 @@ public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$RadioVisuali
 	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;Landroidx/compose/runtime/Composer;I)V
 }
 
+public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$SliderListVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;Landroidx/compose/runtime/Composer;I)V
+}
+
 public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$SliderVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
 	public static final field $stable I
 	public fun <init> ()V
@@ -244,6 +268,12 @@ public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$SliderVisual
 }
 
 public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$SwitchVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;Landroidx/compose/runtime/Composer;I)V
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$TextListVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
 	public static final field $stable I
 	public fun <init> ()V
 	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;Landroidx/compose/runtime/Composer;I)V
@@ -323,6 +353,23 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun titleTranslation ()Z
 }
 
+public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/ColorList : java/lang/annotation/Annotation {
+	public abstract fun addText ()Ljava/lang/String;
+	public abstract fun addTextTranslation ()Z
+	public abstract fun alpha ()Z
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun categoryTranslation ()Z
+	public abstract fun description ()Ljava/lang/String;
+	public abstract fun descriptionTranslation ()Z
+	public abstract fun icon ()Ljava/lang/String;
+	public abstract fun maxEntries ()I
+	public abstract fun reorderable ()Z
+	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun subcategoryTranslation ()Z
+	public abstract fun title ()Ljava/lang/String;
+	public abstract fun titleTranslation ()Z
+}
+
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/DependsOn : java/lang/annotation/Annotation {
 	public abstract fun value ()[Ljava/lang/String;
 }
@@ -384,6 +431,27 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun subcategoryTranslation ()Z
 	public abstract fun title ()Ljava/lang/String;
 	public abstract fun titleKey ()Ljava/lang/String;
+	public abstract fun titleTranslation ()Z
+	public abstract fun types ()[Ljava/lang/String;
+}
+
+public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/FileList : java/lang/annotation/Annotation {
+	public abstract fun addText ()Ljava/lang/String;
+	public abstract fun addTextTranslation ()Z
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun categoryTranslation ()Z
+	public abstract fun description ()Ljava/lang/String;
+	public abstract fun descriptionTranslation ()Z
+	public abstract fun directory ()Z
+	public abstract fun filterName ()Ljava/lang/String;
+	public abstract fun icon ()Ljava/lang/String;
+	public abstract fun maxEntries ()I
+	public abstract fun placeholder ()Ljava/lang/String;
+	public abstract fun placeholderTranslation ()Z
+	public abstract fun reorderable ()Z
+	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun subcategoryTranslation ()Z
+	public abstract fun title ()Ljava/lang/String;
 	public abstract fun titleTranslation ()Z
 	public abstract fun types ()[Ljava/lang/String;
 }
@@ -467,6 +535,25 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun unitTranslation ()Z
 }
 
+public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/NumberList : java/lang/annotation/Annotation {
+	public abstract fun addText ()Ljava/lang/String;
+	public abstract fun addTextTranslation ()Z
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun categoryTranslation ()Z
+	public abstract fun description ()Ljava/lang/String;
+	public abstract fun descriptionTranslation ()Z
+	public abstract fun icon ()Ljava/lang/String;
+	public abstract fun max ()F
+	public abstract fun maxEntries ()I
+	public abstract fun min ()F
+	public abstract fun reorderable ()Z
+	public abstract fun step ()F
+	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun subcategoryTranslation ()Z
+	public abstract fun title ()Ljava/lang/String;
+	public abstract fun titleTranslation ()Z
+}
+
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Option : java/lang/annotation/Annotation {
 	public abstract fun display ()Ljava/lang/Class;
 }
@@ -513,6 +600,25 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun titleTranslation ()Z
 }
 
+public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/SliderList : java/lang/annotation/Annotation {
+	public abstract fun addText ()Ljava/lang/String;
+	public abstract fun addTextTranslation ()Z
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun categoryTranslation ()Z
+	public abstract fun description ()Ljava/lang/String;
+	public abstract fun descriptionTranslation ()Z
+	public abstract fun icon ()Ljava/lang/String;
+	public abstract fun max ()F
+	public abstract fun maxEntries ()I
+	public abstract fun min ()F
+	public abstract fun reorderable ()Z
+	public abstract fun step ()F
+	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun subcategoryTranslation ()Z
+	public abstract fun title ()Ljava/lang/String;
+	public abstract fun titleTranslation ()Z
+}
+
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Switch : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
 	public abstract fun categoryKey ()Ljava/lang/String;
@@ -546,6 +652,25 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun subcategoryKey ()Ljava/lang/String;
 	public abstract fun title ()Ljava/lang/String;
 	public abstract fun titleKey ()Ljava/lang/String;
+	public abstract fun titleTranslation ()Z
+}
+
+public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/TextList : java/lang/annotation/Annotation {
+	public abstract fun addText ()Ljava/lang/String;
+	public abstract fun addTextTranslation ()Z
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun categoryTranslation ()Z
+	public abstract fun description ()Ljava/lang/String;
+	public abstract fun descriptionTranslation ()Z
+	public abstract fun icon ()Ljava/lang/String;
+	public abstract fun maxEntries ()I
+	public abstract fun placeholder ()Ljava/lang/String;
+	public abstract fun placeholderTranslation ()Z
+	public abstract fun regex ()Ljava/lang/String;
+	public abstract fun reorderable ()Z
+	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun subcategoryTranslation ()Z
+	public abstract fun title ()Ljava/lang/String;
 	public abstract fun titleTranslation ()Z
 }
 
