@@ -12,9 +12,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 //? if >=1.21.4 {
-@Mixin(value = FramerateLimitTracker.class, priority = 1500)
+@Mixin(value = FramerateLimitTracker.class, priority = Integer.MAX_VALUE)
 //?} else {
-/*@Mixin(value = Minecraft.class, priority = 1500)
+/*@Mixin(value = Minecraft.class, priority = Integer.MAX_VALUE)
 *///?}
 public class Mixin_MainMenuFpsUncap {
     @Inject(method = "getFramerateLimit", at = @At("HEAD"), cancellable = true)

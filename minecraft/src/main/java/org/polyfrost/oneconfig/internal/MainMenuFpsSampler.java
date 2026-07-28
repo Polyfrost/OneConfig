@@ -39,10 +39,13 @@ import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen;
 public final class MainMenuFpsSampler {
     private static final String POLYPLUS_PACKAGE = "org.polyfrost.polyplus.";
 
+    private static final long MAX_TICK_GAP_NANOS = 250L * 1_000_000L;
+
     private static volatile boolean sampling = false;
 
     private boolean started = false;
-    private long startNanos = 0L;
+    private long lastTickNanos = 0L;
+    private long elapsedNanos = 0L;
     private long fpsSum = 0L;
     private int sampleCount = 0;
 
@@ -60,16 +63,32 @@ public final class MainMenuFpsSampler {
 
     private boolean tick() {
         Object screen = Platform.screen().current();
+        Minecraft mc = Minecraft.getInstance();
+        long now = System.nanoTime();
+        long gap = Math.min(now - lastTickNanos, MAX_TICK_GAP_NANOS);
+        lastTickNanos = now;
+
+        if (started && mc.level != null) {
+            finish();
+            return true;
+        }
+
+        if (!mc.isWindowActive()) {
+            sampling = false; // don't fight power saving while nobody is looking
+            elapsedNanos = 0L;
+            fpsSum = 0L;
+            sampleCount = 0;
+            return false;
+        }
 
         if (!started) {
             if (!(screen instanceof TitleScreen)) return false;
             started = true;
-            sampling = true; // lift the menu FPS cap for the duration of the window
-            startNanos = System.nanoTime();
-        } else if (Minecraft.getInstance().level != null) {
-            finish();
-            return true;
+            elapsedNanos = 0L;
+            gap = 0L;
         }
+        sampling = true; // lift the menu FPS cap for the duration of the window
+        elapsedNanos += gap;
 
         boolean representative = !(screen instanceof LevelLoadingScreen)
                 && (!(screen instanceof ComposeScreen) || screen.getClass().getName().startsWith(POLYPLUS_PACKAGE));
@@ -78,8 +97,7 @@ public final class MainMenuFpsSampler {
             sampleCount++;
         }
 
-        long elapsedMillis = (System.nanoTime() - startNanos) / 1_000_000L;
-        if (elapsedMillis >= MainMenuFpsEvent.WINDOW_MILLIS) {
+        if (elapsedNanos / 1_000_000L >= MainMenuFpsEvent.WINDOW_MILLIS) {
             finish();
             return true;
         }
@@ -88,8 +106,7 @@ public final class MainMenuFpsSampler {
 
     private void finish() {
         sampling = false; // restore the normal menu FPS cap
-        long elapsedMillis = (System.nanoTime() - startNanos) / 1_000_000L;
         float average = sampleCount > 0 ? (float) fpsSum / sampleCount : 0f;
-        EventManager.INSTANCE.post(new MainMenuFpsEvent(average, sampleCount, elapsedMillis));
+        EventManager.INSTANCE.post(new MainMenuFpsEvent(average, sampleCount, elapsedNanos / 1_000_000L));
     }
 }
