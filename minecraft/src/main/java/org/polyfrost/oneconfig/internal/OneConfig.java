@@ -194,6 +194,7 @@ public class OneConfig
         HudManager.isDebugScreenVisible = Minecraft.getInstance().getDebugOverlay().showDebugScreen();
         HudManager.isTabListVisible = isTabListVisible();
         HudManager.isGuiScreenOpen = Platform.screen().current() != null;
+        //~ if >= 26.2 'screen' -> 'gui.screen()'
         HudManager.isChatScreenOpen = Minecraft.getInstance().screen instanceof ChatScreen;
         HudManager.inWorld = true;
         HudManager.targetPixelWidth = Minecraft.getInstance().getWindow().getWidth();
