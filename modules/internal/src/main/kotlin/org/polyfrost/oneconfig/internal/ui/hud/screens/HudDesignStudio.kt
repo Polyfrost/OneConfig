@@ -320,8 +320,19 @@ private fun hitTestHud(hud: Hud, screenX: Float, screenY: Float): Boolean {
     return mcX >= bounds.x && mcX <= bounds.x + bounds.width && mcY >= bounds.y && mcY <= bounds.y + bounds.height
 }
 
-private fun pickHudAt(screenX: Float, screenY: Float, current: Hud?): Hud? {
+/**
+ * Huds under the cursor, topmost last. Locked huds never sit in front of unlocked ones: they are
+ * only considered when nothing unlocked is under the cursor.
+ */
+private fun hudStackAt(screenX: Float, screenY: Float): List<Hud> {
     val stack = orderedInstances().filter { hitTestHud(it, screenX, screenY) }
+    return stack.filter { !it.locked }.ifEmpty { stack }
+}
+
+private fun topHudAt(screenX: Float, screenY: Float): Hud? = hudStackAt(screenX, screenY).lastOrNull()
+
+private fun pickHudAt(screenX: Float, screenY: Float, current: Hud?): Hud? {
+    val stack = hudStackAt(screenX, screenY)
     if (stack.isEmpty()) return null
     val index = stack.indexOfFirst { it === current }
     if (index < 0) return stack.last()
@@ -702,7 +713,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             if (event.buttons.isSecondaryPressed) {
                 // right click never cycles: keep the current selection if it is under the cursor
                 val hit = selectedHud?.takeIf { hitTestHud(it, pos.x, pos.y) }
-                    ?: orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }
+                    ?: topHudAt(pos.x, pos.y)
                 if (hit != null) {
                     event.changes.forEach { it.consume() }
                     Snapshot.withMutableSnapshot {
@@ -739,7 +750,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             }
             val actionBarCandidates = LinkedHashSet<Hud>()
             (selectedHud ?: hoveredHud)?.let { actionBarCandidates.add(it) }
-            for (h in HudManager.activeInstances) if (h.locked) actionBarCandidates.add(h)
+            // locked huds always show an action bar; it must not swallow clicks aimed at an unlocked hud
+            if (hudStackAt(pos.x, pos.y).none { !it.locked }) {
+                for (h in HudManager.activeInstances) if (h.locked) actionBarCandidates.add(h)
+            }
             if (actionBarCandidates.any { hitTestHudActionBar(it, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx) }) {
                 return@safePointerEvent
             }
@@ -835,7 +849,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     hoveredHud = null
                     return@safePointerEvent
                 }
-                val hit = orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }
+                val hit = topHudAt(pos.x, pos.y)
                 val mcToScreen = Platform.screen().mcToScreenScale()
                 val overActionBar = (selectedHud ?: hoveredHud)?.let { hh ->
                     hitTestHudActionBar(hh, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx)
@@ -881,7 +895,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 val mcToScreen = Platform.screen().mcToScreenScale()
                 val actionBarCandidates = LinkedHashSet<Hud>()
                 (selectedHud ?: hoveredHud)?.let { actionBarCandidates.add(it) }
-                for (h in HudManager.activeInstances) if (h.locked) actionBarCandidates.add(h)
+                // locked huds always show an action bar; it must not swallow clicks aimed at an unlocked hud
+                if (hudStackAt(pos.x, pos.y).none { !it.locked }) {
+                    for (h in HudManager.activeInstances) if (h.locked) actionBarCandidates.add(h)
+                }
                 if (actionBarCandidates.any { hitTestHudActionBar(it, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx) }) {
                     return@safePointerEvent
                 }
