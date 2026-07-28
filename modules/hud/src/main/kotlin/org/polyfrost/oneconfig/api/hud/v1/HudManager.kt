@@ -350,7 +350,7 @@ object HudManager {
         if (hud.hidden && !isEditing) return false
         if (isDebugScreenVisible && !hud.showInF3) return false
         if (isTabListVisible && !hud.showInTab) return false
-        if (isGuiScreenOpen && !hud.showInScreens && !overrideShowInScreens) return false
+        if (isGuiScreenOpen && !hud.showInScreens && !overrideShowInScreens && !isEditing) return false
         return true
     }
 
