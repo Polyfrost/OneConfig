@@ -11,7 +11,7 @@ import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.utils.v1.JsonUtils
 
 object ThirdPartyModCategories {
-    private const val URL = "https://data.polyfrost.org/oneconfig/third-party-mod-categories.json"
+    private const val URL = "https://data-v2.polyfrost.org/oneconfig/third-party-mod-categories.json"
     private val LOGGER = LogManager.getLogger("OneConfig/ThirdPartyModCategories")
 
     @Volatile
