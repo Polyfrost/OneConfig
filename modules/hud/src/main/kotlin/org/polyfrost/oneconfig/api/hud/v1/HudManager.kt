@@ -70,6 +70,7 @@ object HudManager {
     @Volatile @JvmField var isDebugScreenVisible: Boolean = false
     @Volatile @JvmField var isTabListVisible: Boolean = false
     @Volatile @JvmField var isGuiScreenOpen: Boolean = false
+    @Volatile @JvmField var isChatScreenOpen: Boolean = false
 
     @Volatile @JvmField var overrideShowInScreens: Boolean = false
 
@@ -350,7 +351,12 @@ object HudManager {
         if (hud.hidden && !isEditing) return false
         if (isDebugScreenVisible && !hud.showInF3) return false
         if (isTabListVisible && !hud.showInTab) return false
-        if (isGuiScreenOpen && !hud.showInScreens && !overrideShowInScreens && !isEditing) return false
+        if (!overrideShowInScreens && !isEditing) {
+            // chat has its own toggle, so it is never governed by "Show in GUIs"
+            if (isChatScreenOpen) {
+                if (!hud.showInChat) return false
+            } else if (isGuiScreenOpen && !hud.showInScreens) return false
+        }
         return true
     }
 
@@ -401,6 +407,7 @@ object HudManager {
         key = key * 31L + (if (isDebugScreenVisible) 1 else 0)
         key = key * 31L + (if (isTabListVisible) 1 else 0)
         key = key * 31L + (if (isGuiScreenOpen) 1 else 0)
+        key = key * 31L + (if (isChatScreenOpen) 1 else 0)
         key = key * 31L + (if (overrideShowInScreens) 1 else 0)
         key = key * 31L + (if (isEditing) 1 else 0)
         key = key * 31L + (if (inWorld) 1 else 0)

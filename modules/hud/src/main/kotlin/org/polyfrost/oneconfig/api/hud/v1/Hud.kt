@@ -202,6 +202,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @Switch(title = "Show in GUIs")
     var showInScreens = true
 
+    @Switch(title = "Show in Chat")
+    var showInChat = true
+
     var toggleKey: Int = -1
     var showKey: Int = -1
 
@@ -547,6 +550,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             (tree["showInF3"] as? Property<*>)?.addDisplayCondition(hideFromConfigUi)
             (tree["showInTab"] as? Property<*>)?.addDisplayCondition(hideFromConfigUi)
             (tree["showInScreens"] as? Property<*>)?.addDisplayCondition(hideFromConfigUi)
+            (tree["showInChat"] as? Property<*>)?.addDisplayCondition(hideFromConfigUi)
             addToSerialized(tree)
             tree["hudClass"] = simple(value = out::class.java.name).apply {
                 addDisplayCondition { Property.Display.HIDDEN }

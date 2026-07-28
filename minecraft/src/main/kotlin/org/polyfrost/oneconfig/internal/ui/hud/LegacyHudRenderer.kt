@@ -17,7 +17,11 @@ object LegacyHudRenderer {
             if (hud.hidden && !HudManager.isEditing) continue
             if (HudManager.isDebugScreenVisible && !hud.showInF3) continue
             if (HudManager.isTabListVisible && !hud.showInTab) continue
-            if (HudManager.isGuiScreenOpen && !hud.showInScreens && !HudManager.overrideShowInScreens && !HudManager.isEditing) continue
+            if (!HudManager.overrideShowInScreens && !HudManager.isEditing) {
+                if (HudManager.isChatScreenOpen) {
+                    if (!hud.showInChat) continue
+                } else if (HudManager.isGuiScreenOpen && !hud.showInScreens) continue
+            }
             HudManager.updateIfDue(hud)
             val hudScale = hud.effectiveScale
             val (mw, mh) = hud.frameMinimumSize()

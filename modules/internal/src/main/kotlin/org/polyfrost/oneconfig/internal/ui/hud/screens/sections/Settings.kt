@@ -69,6 +69,7 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
         var showInF3 by remember { mutableStateOf(hud.showInF3) }
         var showInTab by remember { mutableStateOf(hud.showInTab) }
         var showInScreens by remember { mutableStateOf(hud.showInScreens) }
+        var showInChat by remember { mutableStateOf(hud.showInChat) }
         var locked by remember { mutableStateOf(hud.locked) }
 
         LazyColumn(
@@ -274,6 +275,17 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
                                     Snapshot.withMutableSnapshot { showInScreens = it; hud.showInScreens = it }
                                 }
                                 Text("Show in GUIs", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                            }
+                        }
+                        HudSettingTarget(hud, "showInChat") {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                SwitchControl(showInChat) {
+                                    Snapshot.withMutableSnapshot { showInChat = it; hud.showInChat = it }
+                                }
+                                Text("Show in Chat", color = LocalTheme.current.textColor, fontSize = 14.sp)
                             }
                         }
                     }
