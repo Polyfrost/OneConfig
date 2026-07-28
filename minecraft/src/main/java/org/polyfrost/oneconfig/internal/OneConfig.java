@@ -177,6 +177,8 @@ public class OneConfig
         HudManager.isTabListVisible = Minecraft.getInstance().options.keyPlayerList.isDown();
         HudManager.isGuiScreenOpen = Platform.screen().current() != null;
         HudManager.inWorld = true;
+        HudManager.targetPixelWidth = Minecraft.getInstance().getWindow().getWidth();
+        HudManager.targetPixelHeight = Minecraft.getInstance().getWindow().getHeight();
 
         if (!SkiaCtx.INSTANCE.suppressInGameHudRender) {
             LegacyHudRenderer.INSTANCE.renderLive(graphics);
@@ -186,13 +188,13 @@ public class OneConfig
         //? } else {
         /*else LegacyHudRenderer.INSTANCE.renderLive(graphics);
         *///? }
-        SkiaCtx.INSTANCE.queueHudDraw(() -> {
-            var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
-            HudManager.INSTANCE.render(ctx, sw, sh);
-        });
-        // Render Skia HUDs into the offscreen TextureTarget.
-        // The mixin blits the texture onto MC's render target afterwards.
-        SkiaCtx.INSTANCE.drawNow();
+        if (HudManager.INSTANCE.beginFrame(sw, sh)) {
+            SkiaCtx.INSTANCE.queueHudDraw(() -> {
+                var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
+                HudManager.INSTANCE.render(ctx, sw, sh);
+            });
+            SkiaCtx.INSTANCE.drawNow();
+        }
     }
 
     private static void installNotificationRenderer() {

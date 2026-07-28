@@ -62,7 +62,6 @@ object NotificationsRenderer {
         ToastViewport.width = viewWidth
         ToastViewport.height = viewHeight
 
-        Snapshot.sendApplyNotifications()
         val rt = runtime()
         rt.frame(viewWidth, viewHeight)
         handleInput(rt.root, scale)

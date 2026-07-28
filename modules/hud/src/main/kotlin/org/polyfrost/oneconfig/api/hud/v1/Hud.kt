@@ -220,17 +220,30 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     private var _renderedH: MutableState<Float> = mutableStateOf(0f)
     open var renderedH: Float get() = _renderedH.value; set(v) { _renderedH.value = v }
 
+    private var minSizeFrame = Long.MIN_VALUE
+    private var minSize: Pair<Float, Float> = 0f to 0f
+
+    @ApiStatus.Internal
+    fun frameMinimumSize(): Pair<Float, Float> {
+        val frame = HudManager.frameId
+        if (minSizeFrame != frame) {
+            minSizeFrame = frame
+            minSize = minimumSize()
+        }
+        return minSize
+    }
+
     open val scaledWidth: Float get() {
         val scale = effectiveScale
         val w = if (staticWidth || renderedW <= 0f) staticW * scale else renderedW
-        val (minW, _) = minimumSize()
+        val (minW, _) = frameMinimumSize()
         return maxOf(w, minW * scale).coerceAtLeast(1f)
     }
 
     open val scaledHeight: Float get() {
         val scale = effectiveScale
         val h = if (staticWidth || renderedH <= 0f) staticH * scale else renderedH
-        val (_, minH) = minimumSize()
+        val (_, minH) = frameMinimumSize()
         return maxOf(h, minH * scale).coerceAtLeast(1f)
     }
 
@@ -438,6 +451,13 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     private var _shadowOffsetY: MutableState<Float> = mutableStateOf(2f)
     var shadowOffsetY: Float get() = _shadowOffsetY.value; set(v) { _shadowOffsetY.value = v }
+
+    open val alwaysRedraw: Boolean
+        get() = bgChroma || textChroma || shadowChroma
+
+    @ApiStatus.Internal
+    @JvmField
+    var lastLayoutFrame: Long = -1L
 
     override fun addToInitQueue() {}
 

@@ -31,6 +31,7 @@ import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.compose.node.RootNode
 import org.polyfrost.compose.render.RenderContext
+import org.polyfrost.compose.runtime.PolyComposeHost
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -73,12 +74,41 @@ object HudManager {
     @Volatile @JvmField var overrideShowInScreens: Boolean = false
 
     @ApiStatus.Internal
+    @Volatile @JvmField var targetPixelWidth: Int = 0
+
+    @ApiStatus.Internal
+    @Volatile @JvmField var targetPixelHeight: Int = 0
+
+    @ApiStatus.Internal
     @Volatile @JvmField var inWorld: Boolean = true
 
     @ApiStatus.Internal
     @Volatile @JvmField var pendingSelection: Hud? = null
 
     private val lastUpdates = HashMap<Hud, Long>()
+
+    private val redrawCacheDisabled = java.lang.Boolean.getBoolean("oneconfig.hud.nocache")
+
+    @Volatile private var contentDirty = true
+
+    @JvmStatic
+    fun invalidate() {
+        contentDirty = true
+    }
+
+    internal var frameId = 0L
+        private set
+    private var preparedFrameValid = false
+    private var lastFrameKey = Long.MIN_VALUE
+    private var lastFrameWidth = Float.NaN
+    private var lastFrameHeight = Float.NaN
+    private var lastFrameScale = Float.NaN
+
+    private val frameOrder = ArrayList<Hud>()
+
+    private var zOrderCache: List<Hud> = emptyList()
+    private var zOrderHuds = arrayOfNulls<Hud>(0)
+    private var zOrderBounds = FloatArray(0)
 
     private const val REGISTRY_ID = "hud-registry.json"
     private const val KNOWN_HUDS = "knownHuds"
@@ -131,6 +161,8 @@ object HudManager {
     val activeInstances = ArrayList<Hud>()
 
     init {
+        Snapshot.registerApplyObserver { _, _ -> contentDirty = true }
+
         register(object : TextHud.DateTime("Date:", "yyyy-MM-dd") {
             override fun defaultPosition() = 0f to 0f
         })
@@ -227,6 +259,7 @@ object HudManager {
         hud._runtime?.dispose()
         hud._runtime = null
         lastUpdates.remove(hud)
+        invalidate()
         try { hud.remove() } catch (_: Throwable) {}
         if (delete) ConfigManager.active().delete(hud.tree.id)
     }
@@ -270,27 +303,165 @@ object HudManager {
         return list.indices.sortedBy { depth[it] }.map { list[it] }
     }
 
+    private fun updateAndAdvance(huds: List<Hud>) {
+        for (hud in huds) {
+            try {
+                updateIfDue(hud)
+            } catch (e: Throwable) {
+                LOGGER.error("Failed to update HUD ${hud.title}", e)
+            }
+        }
+        PolyComposeHost.frame()
+    }
+
     private fun layout(hud: Hud, screenWidth: Float, screenHeight: Float, scale: Float): RootNode {
-        hud.update()
         val hudScale = hud.effectiveScale
         val rt = hud.runtime
-        rt.frame(screenWidth / scale / hudScale, screenHeight / scale / hudScale)
+        rt.layout(screenWidth / scale / hudScale, screenHeight / scale / hudScale)
         val root = rt.root
-        Snapshot.withMutableSnapshot {
-            hud.renderedW = root.width * hudScale
-            hud.renderedH = root.height * hudScale
+        val w = root.width * hudScale
+        val h = root.height * hudScale
+        if (hud.renderedW != w || hud.renderedH != h) {
+            Snapshot.withMutableSnapshot {
+                hud.renderedW = w
+                hud.renderedH = h
+            }
         }
         return root
     }
 
     @ApiStatus.Internal
+    fun updateIfDue(hud: Hud) {
+        val frequency = hud.updateFrequency()
+        if (frequency < 0L || isEditing) {
+            hud.update()
+            return
+        }
+        val now = System.nanoTime()
+        val last = lastUpdates[hud]
+        if (last != null && now - last < frequency) return
+        lastUpdates[hud] = now
+        hud.update()
+    }
+
+    private fun layoutOnce(hud: Hud, screenWidth: Float, screenHeight: Float, scale: Float): RootNode {
+        if (hud.lastLayoutFrame == frameId) return hud.runtime.root
+        hud.lastLayoutFrame = frameId
+        return layout(hud, screenWidth, screenHeight, scale)
+    }
+
+    private fun shouldDraw(hud: Hud): Boolean {
+        if (hud is LegacyHudMarker) return false
+        if (hud.hidden && !isEditing) return false
+        if (isDebugScreenVisible && !hud.showInF3) return false
+        if (isTabListVisible && !hud.showInTab) return false
+        if (isGuiScreenOpen && !hud.showInScreens && !overrideShowInScreens) return false
+        return true
+    }
+
+    @ApiStatus.Internal
+    fun beginFrame(screenWidth: Float, screenHeight: Float): Boolean {
+        val scale = Platform.compatibility().options().guiScale
+
+        frameId++
+
+        Snapshot.sendApplyNotifications()
+
+        frameOrder.clear()
+        var volatileContent = false
+        for (hud in orderedForRender()) {
+            if (!shouldDraw(hud)) continue
+            frameOrder.add(hud)
+            if (hud.alwaysRedraw) volatileContent = true
+        }
+
+        updateAndAdvance(frameOrder)
+
+        for (hud in frameOrder) {
+            try {
+                layoutOnce(hud, screenWidth, screenHeight, scale)
+            } catch (e: Throwable) {
+                LOGGER.error("Failed to lay out HUD ${hud.title}", e)
+            }
+        }
+
+        val key = frameKey()
+        val keyChanged = key != lastFrameKey ||
+            screenWidth != lastFrameWidth || screenHeight != lastFrameHeight || scale != lastFrameScale
+        lastFrameKey = key
+        lastFrameWidth = screenWidth
+        lastFrameHeight = screenHeight
+        lastFrameScale = scale
+
+        val neverCache = redrawCacheDisabled || volatileContent || isEditing
+
+        val dirty = contentDirty || keyChanged || neverCache
+        contentDirty = false
+        preparedFrameValid = dirty
+        return dirty
+    }
+
+    private fun frameKey(): Long {
+        var key = activeInstances.size.toLong() * 31L + frameOrder.size
+        key = key * 31L + (if (isDebugScreenVisible) 1 else 0)
+        key = key * 31L + (if (isTabListVisible) 1 else 0)
+        key = key * 31L + (if (isGuiScreenOpen) 1 else 0)
+        key = key * 31L + (if (overrideShowInScreens) 1 else 0)
+        key = key * 31L + (if (isEditing) 1 else 0)
+        key = key * 31L + (if (inWorld) 1 else 0)
+        key = key * 31L + targetPixelWidth
+        key = key * 31L + targetPixelHeight
+        return key
+    }
+
+    private fun orderedForRender(): List<Hud> {
+        val list = activeInstances
+        val n = list.size
+        if (n <= 1) return list
+        if (zOrderHuds.size < n) {
+            zOrderHuds = arrayOfNulls(n)
+            zOrderBounds = FloatArray(n * 4)
+        }
+        var same = zOrderCache.size == n
+        for (i in 0 until n) {
+            val hud = list[i]
+            val b = screenBounds(hud)
+            val x = b?.get(0) ?: Float.NaN
+            val y = b?.get(1) ?: Float.NaN
+            val w = b?.get(2) ?: Float.NaN
+            val h = b?.get(3) ?: Float.NaN
+            val o = i * 4
+            if (same && (zOrderHuds[i] !== hud ||
+                    !zOrderBounds[o].sameBound(x) || !zOrderBounds[o + 1].sameBound(y) ||
+                    !zOrderBounds[o + 2].sameBound(w) || !zOrderBounds[o + 3].sameBound(h))
+            ) {
+                same = false
+            }
+            zOrderHuds[i] = hud
+            zOrderBounds[o] = x
+            zOrderBounds[o + 1] = y
+            zOrderBounds[o + 2] = w
+            zOrderBounds[o + 3] = h
+        }
+        if (same) return zOrderCache
+        invalidate()
+        zOrderCache = zOrderedInstances()
+        return zOrderCache
+    }
+
+    private fun Float.sameBound(other: Float): Boolean =
+        this == other || (this.isNaN() && other.isNaN())
+
+    @ApiStatus.Internal
     fun prepare(screenWidth: Float, screenHeight: Float) {
         val scale = Platform.compatibility().options().guiScale
         Snapshot.sendApplyNotifications()
-        for (hud in activeInstances) {
-            if (hud is LegacyHudMarker) continue
+        frameId++
+        val huds = activeInstances.filterNot { it is LegacyHudMarker }
+        updateAndAdvance(huds)
+        for (hud in huds) {
             try {
-                layout(hud, screenWidth, screenHeight, scale)
+                layoutOnce(hud, screenWidth, screenHeight, scale)
             } catch (e: Throwable) {
                 LOGGER.error("Failed to lay out HUD ${hud.title}", e)
             }
@@ -301,20 +472,27 @@ object HudManager {
     fun render(ctx: RenderContext, screenWidth: Float, screenHeight: Float) {
         val scale = Platform.compatibility().options().guiScale
 
-        Snapshot.sendApplyNotifications()
+        val prepared = preparedFrameValid
+        preparedFrameValid = false
+        if (!prepared) {
+            Snapshot.sendApplyNotifications()
+            frameId++
+            frameOrder.clear()
+            for (hud in orderedForRender()) if (shouldDraw(hud)) frameOrder.add(hud)
+            updateAndAdvance(frameOrder)
+        }
 
         ctx.save()
         ctx.scale(scale, scale)
 
-        for (hud in zOrderedInstances()) {
-            if (hud is LegacyHudMarker) continue
-            if (hud.hidden && !isEditing) continue
-            if (isDebugScreenVisible && !hud.showInF3) continue
-            if (isTabListVisible && !hud.showInTab) continue
-            if (isGuiScreenOpen && !hud.showInScreens && !overrideShowInScreens) continue
-
+        for (hud in frameOrder) {
             val hudScale = hud.effectiveScale
-            val root = layout(hud, screenWidth, screenHeight, scale)
+            val root = try {
+                layoutOnce(hud, screenWidth, screenHeight, scale)
+            } catch (e: Throwable) {
+                LOGGER.error("Failed to lay out HUD ${hud.title}", e)
+                continue
+            }
             ctx.save()
             ctx.translate(hud.x, hud.y)
             if (hudScale != 1f) ctx.scale(hudScale, hudScale)

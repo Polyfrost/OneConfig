@@ -10,6 +10,7 @@ import net.minecraft.server.packs.resources.ResourceManager
 //? < 1.21.4
 //import net.minecraft.util.profiling.ProfilerFiller
 import org.jetbrains.skia.*
+import org.jetbrains.skia.impl.RefCnt
 import org.polyfrost.compose.mc.McFontQueue
 import org.polyfrost.compose.render.FontManager
 import org.slf4j.LoggerFactory
@@ -57,6 +58,7 @@ object SkiaFontRenderer : PreparableReloadListener {
     }
 
     @Volatile private var glyphs: Map<Int, Glyph> = emptyMap()
+    @Volatile private var glyphFast: Array<Glyph?> = arrayOfNulls(0)
     @Volatile private var spaceAdvances: Map<Int, Float> = mapOf(' '.code to 4f)
     @Volatile private var atlases: List<Image> = emptyList()
     @Volatile private var unihex: UnihexGlyphs? = null
@@ -71,17 +73,36 @@ object SkiaFontRenderer : PreparableReloadListener {
 
     private const val ROOT_FONT = "minecraft:default"
 
-    private val paint = Paint()
     private val textPaint = Paint().apply { isAntiAlias = false }
-    private val colorFilterCache = HashMap<Int, ColorFilter>(64)
 
-    private val retiredImages = ArrayDeque<Pair<Long, List<Image>>>()
+    private const val FAST_GLYPH_LIMIT = 0x1000
+
+    private const val MAX_BATCH_QUADS = 64
+    private const val BATCH_BUCKETS = 7
+    private const val ITALIC_SHEAR = 0.25f
+
+    private val vertexPaint = Paint().apply { isAntiAlias = false }
+    private val batchPositions = FloatArray(MAX_BATCH_QUADS * 8)
+    private val batchTexCoords = FloatArray(MAX_BATCH_QUADS * 8)
+    private val batchColors = IntArray(MAX_BATCH_QUADS * 4)
+    private var batchQuads = 0
+    private var batchImage: Image? = null
+
+    private val bucketPositions = arrayOfNulls<FloatArray>(BATCH_BUCKETS)
+    private val bucketTexCoords = arrayOfNulls<FloatArray>(BATCH_BUCKETS)
+    private val bucketColors = arrayOfNulls<IntArray>(BATCH_BUCKETS)
+    private val bucketIndices = arrayOfNulls<ShortArray>(BATCH_BUCKETS)
+
+    @Volatile private var shaders = HashMap<Image, Shader>()
+    private var shaderImage: Image? = null
+
+    private val retiredImages = ArrayDeque<Pair<Long, List<RefCnt>>>()
     private const val RETIRE_CLOSE_DELAY_MS = 1000L
 
-    private fun retire(images: List<Image>) {
-        if (images.isEmpty()) return
+    private fun retire(objects: List<RefCnt>) {
+        if (objects.isEmpty()) return
         synchronized(retiredImages) {
-            retiredImages.addLast(System.currentTimeMillis() to images)
+            retiredImages.addLast(System.currentTimeMillis() to objects)
         }
     }
 
@@ -105,8 +126,13 @@ object SkiaFontRenderer : PreparableReloadListener {
         ComposePreloader.preloadGpuWarmup()
     }
 
+    private fun glyphOf(cp: Int): Glyph? {
+        val fast = glyphFast
+        return if (cp < fast.size) fast[cp] else glyphs[cp]
+    }
+
     private fun advanceOf(cp: Int, bold: Boolean): Float {
-        glyphs[cp]?.let { return it.advance + if (bold) DEFAULT_OFFSET else 0f }
+        glyphOf(cp)?.let { return it.advance + if (bold) DEFAULT_OFFSET else 0f }
         spaceAdvances[cp]?.let { return it + if (bold) DEFAULT_OFFSET else 0f }
         val hex = unihex
         if (hex != null) {
@@ -198,15 +224,17 @@ object SkiaFontRenderer : PreparableReloadListener {
 
             val drawColor = if (isShadow) shadowColor(curColor) else curColor
 
-            val glyph = glyphs[cp]
+            val glyph = glyphOf(cp)
             if (glyph != null) {
                 val shift = if (isShadow) DEFAULT_OFFSET * scale else 0f
                 if (glyph.srcW > 0f) {
-                    val src = Rect.makeXYWH(glyph.srcX, glyph.srcY, glyph.srcW, glyph.srcH)
                     val dstW = glyph.srcW * glyph.scale * scale
                     val dstH = glyph.srcH * glyph.scale * scale
                     val dstY = y + glyph.top * scale + shift
-                    blit(canvas, glyph.image, src, curX + shift, dstY, dstW, dstH, drawColor, isBold, isItalic, DEFAULT_OFFSET * scale)
+                    blit(
+                        canvas, glyph.image, glyph.srcX, glyph.srcY, glyph.srcW, glyph.srcH,
+                        curX + shift, dstY, dstW, dstH, drawColor, isBold, isItalic, DEFAULT_OFFSET * scale
+                    )
                 }
                 curX += (glyph.advance + if (isBold) DEFAULT_OFFSET else 0f) * scale
                 continue
@@ -220,15 +248,18 @@ object SkiaFontRenderer : PreparableReloadListener {
                     val image = unihexImage(hex, hexIndex, cp)
                     if (image != null) {
                         val w = hex.width(hexIndex)
-                        val src = Rect.makeXYWH(0f, 0f, w.toFloat(), UNIHEX_HEIGHT.toFloat())
                         val dstW = w / UNIHEX_OVERSAMPLE * scale
                         val dstH = UNIHEX_HEIGHT / UNIHEX_OVERSAMPLE * scale
-                        blit(canvas, image, src, curX + shift, y + shift, dstW, dstH, drawColor, isBold, isItalic, UNIHEX_OFFSET * scale)
+                        blit(
+                            canvas, image, 0f, 0f, w.toFloat(), UNIHEX_HEIGHT.toFloat(),
+                            curX + shift, y + shift, dstW, dstH, drawColor, isBold, isItalic, UNIHEX_OFFSET * scale
+                        )
                     }
                     curX += (hex.advance(hexIndex) + if (isBold) UNIHEX_OFFSET else 0f) * scale
                     continue
                 }
                 if (unifontAdvance(cp) != null) {
+                    flushBatch(canvas)
                     val shift = if (isShadow) DEFAULT_OFFSET * scale else 0f
                     val font = FontManager.getFont(UNIFONT_SIZE * scale, UNIFONT_KEY)
                     textPaint.color = drawColor
@@ -243,21 +274,128 @@ object SkiaFontRenderer : PreparableReloadListener {
             }
             curX += advanceOf(cp, isBold) * scale
         }
+        flushBatch(canvas)
     }
 
     private fun blit(
-        canvas: Canvas, image: Image, src: Rect,
+        canvas: Canvas, image: Image,
+        srcX: Float, srcY: Float, srcW: Float, srcH: Float,
         x: Float, y: Float, w: Float, h: Float,
         color: Int, bold: Boolean, italic: Boolean, boldOffset: Float
     ) {
-        paint.colorFilter = colorFilterCache.getOrPut(color) { ColorFilter.makeBlend(color, BlendMode.MODULATE) }
-        canvas.save()
-        if (italic) canvas.skew(-0.25f, 0f)
-        canvas.drawImageRect(image, src, Rect.makeXYWH(x, y, w, h), SamplingMode.DEFAULT, paint, true)
-        if (bold) {
-            canvas.drawImageRect(image, src, Rect.makeXYWH(x + boldOffset, y, w, h), SamplingMode.DEFAULT, paint, true)
+        pushQuad(canvas, image, srcX, srcY, srcW, srcH, x, y, w, h, color, italic)
+        if (bold) pushQuad(canvas, image, srcX, srcY, srcW, srcH, x + boldOffset, y, w, h, color, italic)
+    }
+
+    private fun pushQuad(
+        canvas: Canvas, image: Image,
+        srcX: Float, srcY: Float, srcW: Float, srcH: Float,
+        x: Float, y: Float, w: Float, h: Float,
+        color: Int, italic: Boolean
+    ) {
+        if (batchImage !== image || batchQuads == MAX_BATCH_QUADS) {
+            flushBatch(canvas)
+            batchImage = image
         }
-        canvas.restore()
+
+        val quad = batchQuads
+        val p = quad * 8
+        val positions = batchPositions
+        val texCoords = batchTexCoords
+
+        val x0 = x
+        val x1 = x + w
+        val y0 = y
+        val y1 = y + h
+        val shear0 = if (italic) -ITALIC_SHEAR * y0 else 0f
+        val shear1 = if (italic) -ITALIC_SHEAR * y1 else 0f
+
+        positions[p] = x0 + shear0
+        positions[p + 1] = y0
+        positions[p + 2] = x1 + shear0
+        positions[p + 3] = y0
+        positions[p + 4] = x1 + shear1
+        positions[p + 5] = y1
+        positions[p + 6] = x0 + shear1
+        positions[p + 7] = y1
+
+        val sx1 = srcX + srcW
+        val sy1 = srcY + srcH
+        texCoords[p] = srcX
+        texCoords[p + 1] = srcY
+        texCoords[p + 2] = sx1
+        texCoords[p + 3] = srcY
+        texCoords[p + 4] = sx1
+        texCoords[p + 5] = sy1
+        texCoords[p + 6] = srcX
+        texCoords[p + 7] = sy1
+
+        val c = quad * 4
+        val colors = batchColors
+        colors[c] = color
+        colors[c + 1] = color
+        colors[c + 2] = color
+        colors[c + 3] = color
+
+        batchQuads = quad + 1
+    }
+
+    private fun bucketOf(quads: Int): Int =
+        if (quads <= 1) 0 else 32 - Integer.numberOfLeadingZeros(quads - 1)
+
+    private fun buildIndices(quads: Int): ShortArray {
+        val out = ShortArray(quads * 6)
+        var i = 0
+        var v = 0
+        while (i < out.size) {
+            out[i++] = v.toShort()
+            out[i++] = (v + 1).toShort()
+            out[i++] = (v + 2).toShort()
+            out[i++] = v.toShort()
+            out[i++] = (v + 2).toShort()
+            out[i++] = (v + 3).toShort()
+            v += 4
+        }
+        return out
+    }
+
+    private fun flushBatch(canvas: Canvas) {
+        val quads = batchQuads
+        val image = batchImage
+        batchQuads = 0
+        batchImage = null
+        if (quads == 0 || image == null) return
+
+        val bucket = bucketOf(quads)
+        val capacity = 1 shl bucket
+        val positions = bucketPositions[bucket] ?: FloatArray(capacity * 8).also { bucketPositions[bucket] = it }
+        val texCoords = bucketTexCoords[bucket] ?: FloatArray(capacity * 8).also { bucketTexCoords[bucket] = it }
+        val colors = bucketColors[bucket] ?: IntArray(capacity * 4).also { bucketColors[bucket] = it }
+        val indices = bucketIndices[bucket] ?: buildIndices(capacity).also { bucketIndices[bucket] = it }
+
+        System.arraycopy(batchPositions, 0, positions, 0, quads * 8)
+        System.arraycopy(batchTexCoords, 0, texCoords, 0, quads * 8)
+        System.arraycopy(batchColors, 0, colors, 0, quads * 4)
+        if (quads < capacity) {
+            val px = positions[0]
+            val py = positions[1]
+            var i = quads * 8
+            val end = capacity * 8
+            while (i < end) {
+                positions[i++] = px
+                positions[i++] = py
+            }
+        }
+
+        if (shaderImage !== image) {
+            vertexPaint.shader = shaders.getOrPut(image) {
+                image.makeShader(FilterTileMode.CLAMP, FilterTileMode.CLAMP, SamplingMode.DEFAULT, null)
+            }
+            shaderImage = image
+        }
+        canvas.drawVertices(
+            VertexMode.TRIANGLES, positions, colors, texCoords, indices, BlendMode.MODULATE, vertexPaint
+        )
     }
 
     private fun unihexImage(hex: UnihexGlyphs, index: Int, cp: Int): Image? {
@@ -373,16 +511,26 @@ object SkiaFontRenderer : PreparableReloadListener {
 
         if (newGlyphs.isEmpty() && hex.size == 0) return false
 
+        val newFast = arrayOfNulls<Glyph>(FAST_GLYPH_LIMIT)
+        for ((cp, glyph) in newGlyphs) if (cp in 0 until FAST_GLYPH_LIMIT) newFast[cp] = glyph
+
         val oldAtlases = atlases
         val oldImages = unihexImages
+        val oldShaders = shaders
         glyphs = newGlyphs
+        glyphFast = newFast
         spaceAdvances = if (newSpace.isEmpty()) mapOf(' '.code to 4f) else newSpace
         atlases = newAtlases
         unihex = hex.build()
         unihexImages = HashMap()
-        colorFilterCache.clear()
+        shaders = HashMap()
+        shaderImage = null
         builtOptions = options
-        retire(oldAtlases + oldImages.values)
+        val retiring = ArrayList<RefCnt>(oldAtlases.size + oldImages.size + oldShaders.size)
+        retiring.addAll(oldAtlases)
+        retiring.addAll(oldImages.values)
+        retiring.addAll(oldShaders.values)
+        retire(retiring)
         return true
     }
 
@@ -587,7 +735,7 @@ object SkiaFontRenderer : PreparableReloadListener {
             val rowCps = gridRows[r]
             for (c in rowCps.indices) {
                 val cp = rowCps[c]
-                if (cp == 0) continue          //   = empty cell
+                if (cp == 0) continue          // U+0000 = empty cell
                 if (!claimed.add(cp)) continue
 
                 val sx = c * cellW

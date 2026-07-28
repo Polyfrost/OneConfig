@@ -1736,6 +1736,9 @@ private fun ComposeHudPreviewCard(hud: Hud, maxCardWidth: Dp, onDragStart: (Hud,
         hud.update()
         PolyComposeRuntime().also { rt -> rt.setContent { hud.Content() } }
     }
+    DisposableEffect(previewRuntime) {
+        onDispose { previewRuntime.dispose() }
+    }
     var naturalW by remember(hud) { mutableStateOf(0f) }
     var naturalH by remember(hud) { mutableStateOf(0f) }
     val density = LocalDensity.current.density

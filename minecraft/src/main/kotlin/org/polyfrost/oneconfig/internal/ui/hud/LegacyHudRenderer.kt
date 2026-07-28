@@ -18,11 +18,16 @@ object LegacyHudRenderer {
             if (HudManager.isDebugScreenVisible && !hud.showInF3) continue
             if (HudManager.isTabListVisible && !hud.showInTab) continue
             if (HudManager.isGuiScreenOpen && !hud.showInScreens && !HudManager.overrideShowInScreens) continue
-            hud.update()
+            HudManager.updateIfDue(hud)
             val hudScale = hud.effectiveScale
-            Snapshot.withMutableSnapshot {
-                hud.renderedW = hud.width * hudScale
-                hud.renderedH = hud.height * hudScale
+            val (mw, mh) = hud.frameMinimumSize()
+            val w = mw * hudScale
+            val h = mh * hudScale
+            if (hud.renderedW != w || hud.renderedH != h) {
+                Snapshot.withMutableSnapshot {
+                    hud.renderedW = w
+                    hud.renderedH = h
+                }
             }
             //? >= 1.21.8 {
             val pose = graphics.pose()
