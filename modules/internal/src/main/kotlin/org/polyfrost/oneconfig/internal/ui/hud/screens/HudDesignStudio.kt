@@ -1724,6 +1724,7 @@ private fun ModIconColumn(
 private const val PREVIEW_SCALE = 2f
 private val PREVIEW_CARD_PADDING = 12.dp
 private val PREVIEW_MAX_CARD_HEIGHT = 160.dp
+private const val LEGACY_PREVIEW_FALLBACK_SIZE = 48f
 
 private fun previewScaleFor(naturalW: Float, naturalH: Float, maxCardWidth: Dp, density: Float): Float {
     if (naturalW <= 0f || naturalH <= 0f) return PREVIEW_SCALE
@@ -1748,8 +1749,11 @@ private fun HudPreviewCard(hud: Hud, maxCardWidth: Dp, onDragStart: (Hud, Float,
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun LegacyHudPreviewCard(hud: Hud, maxCardWidth: Dp, onDragStart: (Hud, Float, Float, Float, Float) -> Unit) {
-    val (naturalW, naturalH) = hud.minimumSize()
-    if (naturalW <= 0f || naturalH <= 0f) return
+    // Legacy HUDs that report no minimum size (size only known once they render, or never set)
+    // would otherwise be dropped from the library entirely, so fall back to a square tile.
+    val (minW, minH) = hud.minimumSize()
+    val naturalW = if (minW > 0f) minW else LEGACY_PREVIEW_FALLBACK_SIZE
+    val naturalH = if (minH > 0f) minH else LEGACY_PREVIEW_FALLBACK_SIZE
     val density = LocalDensity.current.density
     val theme = LocalTheme.current
 
