@@ -51,6 +51,7 @@ public class ObjectSerializer {
     public static final int FIELD_SKIP_MODIFIERS = Modifier.STATIC | Modifier.TRANSIENT | 0x00001000;
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Config");
     private static final IdentityHashMap<Class<?>, Field[]> CLASS_FIELD_CACHE = new IdentityHashMap<>(32);
+    private static final IdentityHashMap<Class<?>, Boolean> IMMUTABLE_CACHE = new IdentityHashMap<>(32);
     /**
      * objects currently being reflectively serialized on this thread, used to break reference cycles
      * (e.g. Minecraft's Item -> Holder.Reference -> Item), which would otherwise blow the stack.
@@ -89,6 +90,22 @@ public class ObjectSerializer {
                 current = current.getSuperclass();
             }
             return all.toArray(new Field[0]);
+        });
+    }
+
+    /**
+     * true if no instance field of this class can be assigned, i.e. the class is a value type.
+     * Such objects can only be replaced, never mutated in place.
+     */
+    public static boolean isImmutable(Class<?> cls) {
+        if (cls == null || cls.isArray()) return false;
+        return IMMUTABLE_CACHE.computeIfAbsent(cls, k -> {
+            Field[] fields = getAllFields(k);
+            if (fields.length == 0) return true;
+            for (Field f : fields) {
+                if (!Modifier.isFinal(f.getModifiers())) return false;
+            }
+            return true;
         });
     }
 
@@ -392,6 +409,12 @@ public class ObjectSerializer {
         Class<?> cls = self.getClass();
         if (!cls.isAssignableFrom(input.getClass())) {
             throw new IllegalArgumentException("Cannot merge two objects of different classes: " + cls.getName() + " and " + input.getClass().getName());
+        }
+        if (isImmutable(cls)) {
+            // value types (every instance field final, e.g. PolyColor) must never be mutated in place: they are
+            // commonly shared (constants used as defaults for several options), so writing through the reference
+            // would change every option at once. signal the caller to replace the reference instead.
+            throw new SerializationException("Cannot overwrite immutable type " + cls.getName() + " in place");
         }
         if (cls.isArray()) {
             // arrays have no declared fields to iterate; copy elements in place so the reference is preserved

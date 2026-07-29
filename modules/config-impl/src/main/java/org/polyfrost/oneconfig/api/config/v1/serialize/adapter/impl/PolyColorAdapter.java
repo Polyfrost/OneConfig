@@ -52,10 +52,11 @@ public class PolyColorAdapter extends Adapter<PolyColor, Object> {
 		if (in instanceof Map<?, ?>) {
 			Map<?, ?> map = (Map<?, ?>) in;
 			PolyColor color = deserialize(map.get("rgba"));
-			color.setChroma(Boolean.TRUE.equals(map.get("chroma")));
 			Object speed = map.get("chromaSpeed");
-			if (speed instanceof Number) color.setChromaSpeed(((Number) speed).floatValue());
-			return color;
+			return color.withChroma(
+				Boolean.TRUE.equals(map.get("chroma")),
+				speed instanceof Number ? ((Number) speed).floatValue() : color.getChromaSpeed()
+			);
 		}
 		if (in instanceof int[]) {
 			int[] color = (int[]) in;

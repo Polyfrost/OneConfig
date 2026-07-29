@@ -1,20 +1,19 @@
 package org.polyfrost.compose.render
 
-import org.jetbrains.annotations.ApiStatus
 import kotlin.math.roundToInt
 
+/**
+ * An immutable colour. Every operation returns a new instance, so shared constants such as
+ * [WHITE] can safely be used as config defaults without one option's change leaking into another.
+ */
 class PolyColor @JvmOverloads constructor(
     argb: Int = 0xFFFFFFFF.toInt(),
-    var chroma: Boolean = false,
-    var chromaSpeed: Float = 1f,
+    val chroma: Boolean = false,
+    val chromaSpeed: Float = 1f,
 ) {
-    private var staticArgb: Int = argb
+    private val staticArgb: Int = argb
 
-    var argb: Int
-        get() = if (chroma) chromaArgb(staticArgb, chromaSpeed) else staticArgb
-        set(value) {
-            staticArgb = value
-        }
+    val argb: Int get() = if (chroma) chromaArgb(staticArgb, chromaSpeed) else staticArgb
 
     val rawArgb: Int get() = staticArgb
 
@@ -34,6 +33,9 @@ class PolyColor @JvmOverloads constructor(
     fun withRed(r: Int): PolyColor = PolyColor((argb and 0xFF00FFFF.toInt()) or ((r.coerceIn(0, 255)) shl 16), chroma, chromaSpeed)
     fun withGreen(g: Int): PolyColor = PolyColor((argb and 0xFFFF00FF.toInt()) or ((g.coerceIn(0, 255)) shl 8), chroma, chromaSpeed)
     fun withBlue(b: Int): PolyColor = PolyColor((argb and 0xFFFFFF00.toInt()) or (b.coerceIn(0, 255)), chroma, chromaSpeed)
+
+    @JvmOverloads
+    fun withChroma(chroma: Boolean, speed: Float = chromaSpeed): PolyColor = PolyColor(staticArgb, chroma, speed)
 
     fun multiplyAlpha(factor: Float): PolyColor = withAlpha((alpha * factor).roundToInt().coerceIn(0, 255))
 
@@ -74,24 +76,53 @@ class PolyColor @JvmOverloads constructor(
 
     override fun toString(): String = "PolyColor(#%08X)".format(argb.toLong() and 0xFFFFFFFFL)
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PolyColor) return false
+        return staticArgb == other.staticArgb && chroma == other.chroma && chromaSpeed == other.chromaSpeed
+    }
+
+    override fun hashCode(): Int {
+        var result = staticArgb
+        result = 31 * result + chroma.hashCode()
+        result = 31 * result + chromaSpeed.hashCode()
+        return result
+    }
+
     companion object {
         const val CHROMA_CYCLE_SECONDS = 10.0
 
+        @JvmField
         val TRANSPARENT = PolyColor(0x00000000)
+        @JvmField
         val WHITE = PolyColor(0xFFFFFFFF.toInt())
+        @JvmField
         val BLACK = PolyColor(0xFF000000.toInt())
+        @JvmField
         val RED = PolyColor(0xFFFF4444.toInt())
+        @JvmField
         val GREEN = PolyColor(0xFF44FF44.toInt())
+        @JvmField
         val BLUE = PolyColor(0xFF4488FF.toInt())
+        @JvmField
         val YELLOW = PolyColor(0xFFFFFF44.toInt())
+        @JvmField
         val ORANGE = PolyColor(0xFFFF8844.toInt())
+        @JvmField
         val PURPLE = PolyColor(0xFFAA44FF.toInt())
+        @JvmField
         val CYAN = PolyColor(0xFF44FFFF.toInt())
+        @JvmField
         val PINK = PolyColor(0xFFFF44AA.toInt())
+        @JvmField
         val GRAY = PolyColor(0xFF888888.toInt())
+        @JvmField
         val DARK_GRAY = PolyColor(0xFF444444.toInt())
+        @JvmField
         val DARKER_GRAY = PolyColor(0xFF222222.toInt())
+        @JvmField
         val LIGHT_GRAY = PolyColor(0xFFCCCCCC.toInt())
+        @JvmField
         val LIGHTER_GRAY = PolyColor(0xFFEEEEEE.toInt())
 
         fun rgb(r: Int, g: Int, b: Int) =
