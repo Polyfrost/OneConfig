@@ -53,6 +53,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -500,6 +501,15 @@ private val OPTION_ROW_GAP = 8.dp
 private val OPTION_CHROME_WIDTH = 108.dp
 private val OPTION_ICON_WIDTH = 44.dp
 
+private val OPTION_ROW_CHROME = 32.dp + 16.dp
+
+private val SLIDER_SPINNER_WIDTH = 80.dp + 16.dp
+
+private fun optionReservedWidth(prop: Property<*>, optionWidth: Dp): Dp {
+    val control = if (isWideControl(prop)) optionWidth + SLIDER_SPINNER_WIDTH + OPTION_ROW_CHROME else OPTION_CHROME_WIDTH
+    return control + (if (prop.getMetadata<String>("icon") != null) OPTION_ICON_WIDTH else 0.dp)
+}
+
 private sealed interface OptionRow {
     data class Pair(val first: Property<*>, val second: Property<*>) : OptionRow
     data class Single(val prop: Property<*>, val wide: Boolean) : OptionRow
@@ -541,23 +551,23 @@ private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
     val theme = LocalTheme.current
     val density = LocalDensity.current
     val measurer = rememberTextMeasurer()
+    val optionWidth = LocalOptionWidth.current
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val columnWidthPx = with(density) { ((maxWidth - OPTION_ROW_GAP) / 2).toPx() }
-        val chromePx = with(density) { OPTION_CHROME_WIDTH.toPx() }
-        val iconPx = with(density) { OPTION_ICON_WIDTH.toPx() }
+        val columnWidth = (maxWidth - OPTION_ROW_GAP) / 2
         val titleStyle = remember(theme) {
             TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Medium, fontFamily = theme.typography.family)
         }
-        val rows = remember(visibleProps, columnWidthPx, titleStyle) {
+        val rows = remember(visibleProps, columnWidth, optionWidth, titleStyle) {
             buildOptionRows(visibleProps) { prop ->
-                val titleWidth = measurer.measure(
-                    prop.localizedTitle().asRenderText(),
-                    style = titleStyle,
-                    softWrap = false,
-                    maxLines = 1,
-                ).size.width.toFloat()
-                val reserved = chromePx + (if (prop.getMetadata<String>("icon") != null) iconPx else 0f)
-                titleWidth + reserved > columnWidthPx
+                val titleWidth = with(density) {
+                    measurer.measure(
+                        prop.localizedTitle().asRenderText(),
+                        style = titleStyle,
+                        softWrap = false,
+                        maxLines = 1,
+                    ).size.width.toDp()
+                }
+                titleWidth + optionReservedWidth(prop, optionWidth) > columnWidth
             }
         }
         Column(verticalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
@@ -624,7 +634,14 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
         menuOpen = true
     }
 
-    Box(
+    val density = LocalDensity.current
+    val measurer = rememberTextMeasurer()
+    val optionWidth = LocalOptionWidth.current
+    val titleStyle = remember(theme) {
+        TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Medium, fontFamily = theme.typography.family)
+    }
+
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
             .hoverable(rowInteraction)
@@ -643,7 +660,19 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 }
             }
     ) {
-        if (compact) {
+        val stacked = compact || run {
+            val titleWidth = with(density) {
+                measurer.measure(
+                    prop.localizedTitle().asRenderText(),
+                    style = titleStyle,
+                    softWrap = false,
+                    maxLines = 1,
+                ).size.width.toDp()
+            }
+            titleWidth + optionReservedWidth(prop, optionWidth) > maxWidth
+        }
+
+        if (stacked) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
