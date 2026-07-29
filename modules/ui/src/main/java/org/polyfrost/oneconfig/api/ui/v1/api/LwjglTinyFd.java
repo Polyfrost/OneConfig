@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 import org.slf4j.Logger;
@@ -71,7 +72,7 @@ final class LwjglTinyFd implements TinyFdApi {
             boolean available;
             String backend;
             try {
-                available = TinyFileDialogs.tinyfd_messageBox(QUERY_TITLE, "", OK_DIALOG, INFO_ICON, true);
+                available = messageBox(QUERY_TITLE, "", OK_DIALOG, INFO_ICON, 1) != 0;
                 // the backend the query selected, e.g. "applescript" or "basicinput" for the console
                 // fallback. only meaningful directly after a call.
                 backend = TinyFileDialogs.tinyfd_getGlobalChar("tinyfd_response");
@@ -108,6 +109,26 @@ final class LwjglTinyFd implements TinyFdApi {
             LOGGER.error("Failed to notify about the missing dialog backend", t);
         }
         return true;
+    }
+
+    /**
+     * Goes through tinyfd's unsafe entry point because LWJGL 3.4 changed the public
+     * {@code tinyfd_messageBox} overload from {@code boolean} to {@code int}, whereas
+     * {@code ntinyfd_messageBox} is identical in both. This module is compiled once against a single
+     * LWJGL version but runs against whichever one the game ships.
+     *
+     * @return the index of the button the user picked, 0 for cancel/no.
+     */
+    private static int messageBox(@Nullable String title, @Nullable String message, @Nullable String dialog, @Nullable String icon, int defaultButton) {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            return TinyFileDialogs.ntinyfd_messageBox(
+                    MemoryUtil.memAddressSafe(stack.UTF8Safe(title)),
+                    MemoryUtil.memAddressSafe(stack.UTF8Safe(message)),
+                    MemoryUtil.memAddressSafe(stack.UTF8Safe(dialog)),
+                    MemoryUtil.memAddressSafe(stack.UTF8Safe(icon)),
+                    defaultButton
+            );
+        }
     }
 
     @Nullable
@@ -170,7 +191,7 @@ final class LwjglTinyFd implements TinyFdApi {
     public boolean showMessageBox(String title, String message, @NotNull String dialog, String icon, boolean defaultValue) {
         if (noGraphicalBackend()) return defaultValue;
         try {
-            return TinyFileDialogs.tinyfd_messageBox(sanitizeText(title), sanitizeText(message), dialog, icon, defaultValue);
+            return messageBox(sanitizeText(title), sanitizeText(message), dialog, icon, defaultValue ? 1 : 0) != 0;
         } catch (Throwable t) {
             LOGGER.error("Failed to show message box", t);
             return defaultValue;
