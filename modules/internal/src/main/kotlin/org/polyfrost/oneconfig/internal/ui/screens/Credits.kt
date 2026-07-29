@@ -38,6 +38,7 @@ private val creditSections = listOf(
             "Lunasa - PolyCompose Founding Engineer",
             "Mona - CompatEngine Founding Engineer",
             "Deftu - OneConfig Major Engineer",
+            "ThinkSeal - Major Tester",
             "Pauline - OG Team - OneConfig Utilities",
             "xtrm - OG Team - OneConfig Utilities",
             "MoonTidez - OG Team - Designer (v0)",
