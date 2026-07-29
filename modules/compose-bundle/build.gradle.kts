@@ -86,3 +86,13 @@ tasks.processResources {
 }
 
 apply(plugin = "oneconfig-compose-bundle-publish")
+
+tasks.register("publishComposeBundle") {
+    group = "publishing"
+    description = "Publishes compose-bundle to the Polyfrost maven repositories."
+    dependsOn(tasks.withType<PublishToMavenRepository>())
+}
+
+tasks.named("publish") {
+    setDependsOn(emptyList<Any>())
+}
