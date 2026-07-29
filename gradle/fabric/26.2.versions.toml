@@ -9,6 +9,7 @@ resource-loader-v1 = "2.0.13+9edec1269c"
 # 26.2 uses Minecraft's native Vulkan renderer -> no Cinnabar.
 modmenu = "20.0.0-beta.4"
 yacl = "3.9.4+26.2-fabric"
+moulconfig = "3.11.0"
 skyblocker = "PwRyrygz"
 
 [libraries]
@@ -21,6 +22,7 @@ resource-loader-v1 = { module = "net.fabricmc.fabric-api:fabric-resource-loader-
 
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
+moulconfig = { module = "org.notenoughupdates.moulconfig:common", version.ref = "moulconfig" }
 skyblocker = { module = "maven.modrinth:skyblocker-liap", version.ref = "skyblocker" }
 
 [bundles]

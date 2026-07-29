@@ -66,7 +66,14 @@ internal class KspRelocator : SymbolProcessorProvider, SymbolProcessor {
                         location.extension
                     )
                     val list = files.getOrDefault(target, mutableListOf())
-                    list.add(Relocation(meow, content.replace(sourcePackage, targetPackage), newName, originName))
+                    list.add(
+                        Relocation(
+                            meow,
+                            content.relocatePackage(sourcePackage, targetPackage),
+                            newName,
+                            originName
+                        )
+                    )
                     files.put(target, list)
                 }
 

@@ -1,6 +1,6 @@
 //? if > 1.21.10 && fabric && moul_compat {
 
-/*package org.polyfrost.oneconfig.internal.compat
+package org.polyfrost.oneconfig.internal.compat
 
 import io.github.notenoughupdates.moulconfig.ChromaColour
 import io.github.notenoughupdates.moulconfig.common.KeyboardConstants
@@ -37,80 +37,26 @@ data object MoulConfigCompat {
     @JvmStatic
     fun parseMoulconfig(processor: MoulConfigProcessor<*>, config: MoulConfig) {
         LOGGER.info("Loading compat.")
-        runCatching {
-            val categories = processor.allCategories.values
-            val tree = parseConfigTree(config, categories)
-            CompatSnapshots.register(tree)
-            CompatLoader.markFirstModAsSkip()
-        }.onFailure {
-            LOGGER.error("Failed to load moulconfig compat for $this due to $it")
-        }
+        register(processor.allCategories.values, config, "compat")
     }
 
     @JvmStatic
     fun parseMoulconfigFromEditor(categories: Collection<ProcessedCategory>, config: MoulConfig) {
         LOGGER.info("Loading editor compat.")
-        val mod = CompatLoader.findFirstMod()
-        if (mod != null && CompatLoader.nativeLoadedConfigs.contains(mod.id)) {
-            return
-        }
-        runCatching {
-            val tree = parseConfigTree(config, categories)
-            CompatSnapshots.register(tree)
-            CompatLoader.markFirstModAsSkip()
-        }.onFailure {
-            LOGGER.error("Failed to load moulconfig editor compat for $this due to $it")
-        }
+        register(categories, config, "editor compat")
     }
 
-    @JvmStatic
-    fun parseMoulconfigFromUnknownEditor(categories: Collection<*>, config: Any?) {
-        if (config == null) return
-        val configClass = config::class.java.name
-        val (candidates, forcedModIds) = when {
-            configClass.startsWith("moe.nea.firmament.deps.moulconfig.") ->
-                listOf("MoulConfigCompat_firmament") to listOf("firmament")
-
-            configClass.startsWith("moe.nea.firmament.compat.moulconfig.") ->
-                listOf("MoulConfigCompat_firmament") to listOf("firmament")
-
-            configClass.startsWith("net.azureaaron.dandelion_bp.deps.moulconfig.") ->
-                listOf("MoulConfigCompat_dandelion_bp", "MoulConfigCompat_dandelion") to listOf(
-                    "skyblocker",
-                    "dandelion-bp"
-                )
-
-            configClass.startsWith("net.azureaaron.dandelion_bp.impl.moulconfig.") ->
-                listOf("MoulConfigCompat_dandelion_bp", "MoulConfigCompat_dandelion") to listOf(
-                    "skyblocker",
-                    "dandelion-bp"
-                )
-
-            configClass.startsWith("net.azureaaron.dandelion.deps.moulconfig.") ->
-                listOf("MoulConfigCompat_dandelion") to listOf("skyblocker", "dandelion-bp")
-
-            configClass.startsWith("at.hannibal2.skyhanni.deps.moulconfig.") ->
-                listOf("MoulConfigCompat_skyhanni") to listOf("skyhanni")
-
-            else -> emptyList<String>() to emptyList()
-        }
-        if (candidates.isEmpty()) return
-        val forcedModId = forcedModIds.firstOrNull { CompatLoader.hasMod(it) }
-
-        val basePackage = MoulConfigCompat::class.java.`package`.name
-        for (candidate in candidates) {
-            val fqcn = "$basePackage.$candidate"
+    private fun register(categories: Collection<ProcessedCategory>, config: MoulConfig, what: String) {
+        val mod = CompatLoader.findFirstMod()
+        if (mod != null && CompatLoader.nativeLoadedConfigs.contains(mod.id)) return
+        mod?.id?.let { CompatLoader.nativeLoadedConfigs.add(it) }
+        CompatLoader.requireTranslations(skip = true) {
             runCatching {
-                val compatClass = Class.forName(fqcn)
-                val method = compatClass.methods.firstOrNull {
-                    it.name == "parseMoulconfigFromEditor" && it.parameterCount == 2
-                } ?: error("parseMoulconfigFromEditor not found on $fqcn")
-                CompatLoader.requireTranslations(skip = true) {
-                    CompatLoader.withForcedModId(forcedModId) {
-                        method.invoke(null, categories, config)
-                    }
+                CompatLoader.withForcedModId(mod?.id) {
+                    CompatSnapshots.register(parseConfigTree(config, categories))
                 }
-                return
+            }.onFailure {
+                LOGGER.error("Failed to load moulconfig $what for ${mod?.id ?: "unknown"} due to $it")
             }
         }
     }
@@ -396,4 +342,4 @@ data object MoulConfigCompat {
     }
 
 }
-*///? }
+//? }

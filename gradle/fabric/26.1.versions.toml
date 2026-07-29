@@ -9,6 +9,7 @@ resource-loader-v1 = "2.0.9+d871b99ec3"
 
 modmenu = "18.0.0-beta.1"
 yacl = "3.9.0+26.1-fabric"
+moulconfig = "3.11.0"
 odin = "0.2.2"
 skyblocker = "7OtCaJGB"
 
@@ -31,6 +32,8 @@ modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
 odin = { module = "maven.modrinth:odin", version.ref = "odin" }
 skyblocker = { module = "maven.modrinth:skyblocker-liap", version.ref = "skyblocker" }
+
+moulconfig = { module = "org.notenoughupdates.moulconfig:common", version.ref = "moulconfig" }
 
 vulkanmod = { module = "maven.modrinth:vulkanmod", version.ref = "vulkanmod" }
 

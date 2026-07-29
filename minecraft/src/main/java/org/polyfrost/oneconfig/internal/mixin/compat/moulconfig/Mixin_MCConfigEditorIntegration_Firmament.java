@@ -2,7 +2,7 @@ package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
 //? moul_compat {
 
-/*import org.polyfrost.oneconfig.internal.compat.MoulConfigCompat;
+import org.polyfrost.oneconfig.internal.compat.MoulConfigDispatch;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
@@ -27,9 +27,9 @@ public class Mixin_MCConfigEditorIntegration_Firmament {
             Object configValue = configField.get(this);
 
             if (categoriesValue instanceof Collection<?> && configValue != null) {
-                MoulConfigCompat.parseMoulconfigFromUnknownEditor((Collection<?>) categoriesValue, configValue);
+                MoulConfigDispatch.parseMoulconfigFromUnknownEditor((Collection<?>) categoriesValue, configValue);
             }
         } catch (Throwable ignored) {}
     }
 }
-*///? }
+//? }

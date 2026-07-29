@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
 //? moul_compat {
-/*import org.polyfrost.oneconfig.relocator.annotations.MoulConfig;
+import org.polyfrost.oneconfig.relocator.annotations.MoulConfig;
 import org.polyfrost.oneconfig.relocator.annotations.RelocatedMixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -29,4 +29,4 @@ public class Mixin_PropertyImpl {
         }
     }
 }
-*///? }
+//? }

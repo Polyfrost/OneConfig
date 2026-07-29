@@ -36,3 +36,13 @@ internal object SourceFileHelper {
 
     fun String.replacePatterns(target: String): String = this.replace("/*!target!*/", "_$target")
 }
+
+/**
+ * Rewrites [sourcePackage] to [targetPackage] in both the dotted (imports, references) and the
+ * internal/slash form. The slash form appears inside mixin member descriptors
+ * (e.g. `method = "<init>(Lio/github/notenoughupdates/moulconfig/Config;)V"`); leaving it untouched
+ * makes relocated injections silently fail to bind.
+ */
+internal fun String.relocatePackage(sourcePackage: String, targetPackage: String): String =
+    this.replace(sourcePackage, targetPackage)
+        .replace(sourcePackage.replace('.', '/'), targetPackage.replace('.', '/'))

@@ -2,7 +2,7 @@ package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
 //? moul_compat {
 
-/*import io.github.notenoughupdates.moulconfig.Config;
+import io.github.notenoughupdates.moulconfig.Config;
 import io.github.notenoughupdates.moulconfig.gui.MoulConfigEditor;
 import io.github.notenoughupdates.moulconfig.processor.ProcessedCategory;
 import org.polyfrost.oneconfig.internal.compat.MoulConfigCompat;
@@ -36,4 +36,4 @@ public class Mixin_MoulConfigEditor<T extends Config> {
         MoulConfigCompat.parseMoulconfigFromEditor(this.allCategories.values(), this.configObject);
     }
 }
-*///? }
+//? }

@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
 //? moul_compat {
-/*import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorDropdown;
+import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorDropdown;
 import org.polyfrost.oneconfig.internal.utils.MoulConfigGuiOptionEditorDropdownAccessor;
 import org.polyfrost.oneconfig.relocator.annotations.MoulConfig;
 import org.polyfrost.oneconfig.relocator.annotations.RelocatedMixin;
@@ -72,4 +72,4 @@ public class Mixin_GuiOptionEditorDropdown implements MoulConfigGuiOptionEditorD
     }
 
 }
-*///? }
+//? }

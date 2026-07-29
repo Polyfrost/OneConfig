@@ -32,8 +32,8 @@ import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.tree.ClassNode;
 //todo import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
 //? moul_compat {
-/*import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
-*///? }
+import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
+//? }
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
@@ -67,15 +67,15 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
 
         //? moul_compat {
-        /*RelocatedMixins.INSTANCE.register(e -> {
+        RelocatedMixins.INSTANCE.register(e -> {
             mixins.add(e);
             return Unit.INSTANCE;
         });
-        *///? }
+        //? }
         //? moul_compat {
-        /*mixins.add("compat.moulconfig.Mixin_MCConfigEditorIntegration_Firmament");
+        mixins.add("compat.moulconfig.Mixin_MCConfigEditorIntegration_Firmament");
         mixins.add("compat.moulconfig.Mixin_MoulConfigAdapter_DandelionBp");
-        *///? }
+        //? }
 
         //? dandelion_compat
         //mixins.add("compat.DandelionScreenImplMixin");

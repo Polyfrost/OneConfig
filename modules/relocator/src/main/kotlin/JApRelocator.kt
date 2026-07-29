@@ -48,7 +48,7 @@ internal class JApRelocator : AbstractProcessor() {
                 val className = element.simpleName.toString().substringAfterLast(".")
                 targets.forEach { (target, targetPackage) ->
                     val output = processingEnv.filer.createSourceFile("${element}_$target", element)
-                    val relocated = sourceFile.replace(sourcePackage, targetPackage)
+                    val relocated = sourceFile.relocatePackage(sourcePackage, targetPackage)
 
 
                     val list = create.getOrDefault(target, mutableListOf())
