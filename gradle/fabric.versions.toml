@@ -1,6 +1,6 @@
 [versions]
 loom = "1.17-SNAPSHOT"
-loader = "0.19.2"
+loader = "0.19.3"
 
 [libraries]
 fabric-loader = { module = "net.fabricmc:fabric-loader", version.ref = "loader" }
