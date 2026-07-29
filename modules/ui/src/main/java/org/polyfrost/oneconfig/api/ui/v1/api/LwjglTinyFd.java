@@ -41,6 +41,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.locks.ReentrantLock;
 
 final class LwjglTinyFd implements TinyFdApi {
     static final LwjglTinyFd INSTANCE = new LwjglTinyFd();
@@ -57,45 +58,76 @@ final class LwjglTinyFd implements TinyFdApi {
      */
     private static final String QUERY_TITLE = "tinyfd_query";
 
-    private static final Object BACKEND_LOCK = new Object();
+    /**
+     * tinyfd keeps its state, including the buffers it returns results out of, in globals, so having
+     * two dialogs open at once corrupts them and crashes the JVM inside native code. Every call into
+     * tinyfd is made while holding this lock, so at most one dialog is open at a time and callers
+     * that arrive meanwhile wait their turn.
+     */
+    private static final ReentrantLock DIALOG_LOCK = new ReentrantLock(true);
 
+    /**
+     * Guarded by {@link #DIALOG_LOCK}.
+     */
     @Nullable
     private static Boolean graphicalBackend;
 
     private LwjglTinyFd() {
     }
 
-    private static boolean hasGraphicalBackend() {
-        synchronized (BACKEND_LOCK) {
-            if (graphicalBackend != null) return graphicalBackend;
-
-            boolean available;
-            String backend;
-            try {
-                available = messageBox(QUERY_TITLE, "", OK_DIALOG, INFO_ICON, 1) != 0;
-                // the backend the query selected, e.g. "applescript" or "basicinput" for the console
-                // fallback. only meaningful directly after a call.
-                backend = TinyFileDialogs.tinyfd_getGlobalChar("tinyfd_response");
-            } catch (Throwable t) {
-                LOGGER.error("Failed to query the tinyfd dialog backend", t);
-                available = false;
-                backend = null;
-            }
-
-            if (!available) {
-                LOGGER.error(
-                        "No graphical dialog backend is available, native dialogs are disabled (backend={}, SSH_TTY={})",
-                        backend,
-                        // tinyfd unconditionally falls back to the console when this is set, even if empty
-                        System.getenv("SSH_TTY")
-                );
-            }
-            graphicalBackend = available;
-            return available;
+    /**
+     * Opens a dialog with exclusive access to tinyfd.
+     *
+     * @param description what the dialog does, for logging, e.g. {@code "open file selector"}
+     * @param fallback    returned if no dialog can be shown or it failed
+     */
+    private static <T> T open(String description, T fallback, Dialog<T> dialog) {
+        DIALOG_LOCK.lock();
+        try {
+            if (noGraphicalBackend()) return fallback;
+            return dialog.open();
+        } catch (Throwable t) {
+            LOGGER.error("Failed to {}", description, t);
+            return fallback;
+        } finally {
+            DIALOG_LOCK.unlock();
         }
     }
 
     /**
+     * Must be called while holding {@link #DIALOG_LOCK}.
+     */
+    private static boolean hasGraphicalBackend() {
+        if (graphicalBackend != null) return graphicalBackend;
+
+        boolean available;
+        String backend;
+        try {
+            available = messageBox(QUERY_TITLE, "", OK_DIALOG, INFO_ICON, 1) != 0;
+            // the backend the query selected, e.g. "applescript" or "basicinput" for the console
+            // fallback. only meaningful directly after a call.
+            backend = TinyFileDialogs.tinyfd_getGlobalChar("tinyfd_response");
+        } catch (Throwable t) {
+            LOGGER.error("Failed to query the tinyfd dialog backend", t);
+            available = false;
+            backend = null;
+        }
+
+        if (!available) {
+            LOGGER.error(
+                    "No graphical dialog backend is available, native dialogs are disabled (backend={}, SSH_TTY={})",
+                    backend,
+                    // tinyfd unconditionally falls back to the console when this is set, even if empty
+                    System.getenv("SSH_TTY")
+            );
+        }
+        graphicalBackend = available;
+        return available;
+    }
+
+    /**
+     * Must be called while holding {@link #DIALOG_LOCK}.
+     *
      * @return true if no dialog can be opened, in which case the user has been notified.
      */
     private static boolean noGraphicalBackend() {
@@ -134,79 +166,57 @@ final class LwjglTinyFd implements TinyFdApi {
     @Nullable
     @Override
     public Path openFileSelector(@Nullable String title, @Nullable String defaultFilePath, String[] filterPatterns, @Nullable String filterDescription) {
-        if (noGraphicalBackend()) return null;
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            String result = TinyFileDialogs.tinyfd_openFileDialog(sanitizeText(title), sanitizePath(defaultFilePath), filters(stack, filterPatterns), sanitizeText(filterDescription), false);
-            return firstPath(result);
-        } catch (Throwable t) {
-            LOGGER.error("Failed to open file selector", t);
-            return null;
-        }
+        return open("open file selector", null, () -> {
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                String result = TinyFileDialogs.tinyfd_openFileDialog(sanitizeText(title), sanitizePath(defaultFilePath), filters(stack, filterPatterns), sanitizeText(filterDescription), false);
+                return firstPath(result);
+            }
+        });
     }
 
     @Override
     public Path openSaveSelector(@Nullable String title, @Nullable String defaultFilePath, String[] filterPatterns, @Nullable String filterDescription) {
-        if (noGraphicalBackend()) return null;
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            String result = TinyFileDialogs.tinyfd_saveFileDialog(sanitizeText(title), sanitizePath(defaultFilePath), filters(stack, filterPatterns), sanitizeText(filterDescription));
-            return firstPath(result);
-        } catch (Throwable t) {
-            LOGGER.error("Failed to open save selector", t);
-            return null;
-        }
+        return open("open save selector", null, () -> {
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                String result = TinyFileDialogs.tinyfd_saveFileDialog(sanitizeText(title), sanitizePath(defaultFilePath), filters(stack, filterPatterns), sanitizeText(filterDescription));
+                return firstPath(result);
+            }
+        });
     }
 
     @Override
     public Path[] openMultiFileSelector(@Nullable String title, @Nullable String defaultFilePath, String[] filterPatterns, @Nullable String filterDescription) {
-        if (noGraphicalBackend()) return new Path[0];
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            String result = TinyFileDialogs.tinyfd_openFileDialog(sanitizeText(title), sanitizePath(defaultFilePath), filters(stack, filterPatterns), sanitizeText(filterDescription), true);
-            if (result == null) return new Path[0];
-            String[] parts = result.split("\\|");
-            List<Path> paths = new ArrayList<>(parts.length);
-            for (String part : parts) {
-                if (!part.isEmpty()) paths.add(Paths.get(part));
+        return open("open multi file selector", new Path[0], () -> {
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                String result = TinyFileDialogs.tinyfd_openFileDialog(sanitizeText(title), sanitizePath(defaultFilePath), filters(stack, filterPatterns), sanitizeText(filterDescription), true);
+                if (result == null) return new Path[0];
+                String[] parts = result.split("\\|");
+                List<Path> paths = new ArrayList<>(parts.length);
+                for (String part : parts) {
+                    if (!part.isEmpty()) paths.add(Paths.get(part));
+                }
+                return paths.toArray(new Path[0]);
             }
-            return paths.toArray(new Path[0]);
-        } catch (Throwable t) {
-            LOGGER.error("Failed to open multi file selector", t);
-            return new Path[0];
-        }
+        });
     }
 
     @Nullable
     @Override
     public Path openFolderSelector(@Nullable String title, @Nullable String defaultFolderPath) {
-        if (noGraphicalBackend()) return null;
-        try {
-            String result = TinyFileDialogs.tinyfd_selectFolderDialog(sanitizeText(title), sanitizePath(defaultFolderPath));
-            return firstPath(result);
-        } catch (Throwable t) {
-            LOGGER.error("Failed to open folder selector", t);
-            return null;
-        }
+        return open("open folder selector", null, () ->
+                firstPath(TinyFileDialogs.tinyfd_selectFolderDialog(sanitizeText(title), sanitizePath(defaultFolderPath))));
     }
 
     @Override
     public boolean showMessageBox(String title, String message, @NotNull String dialog, String icon, boolean defaultValue) {
-        if (noGraphicalBackend()) return defaultValue;
-        try {
-            return messageBox(sanitizeText(title), sanitizeText(message), dialog, icon, defaultValue ? 1 : 0) != 0;
-        } catch (Throwable t) {
-            LOGGER.error("Failed to show message box", t);
-            return defaultValue;
-        }
+        return open("show message box", defaultValue, () ->
+                messageBox(sanitizeText(title), sanitizeText(message), dialog, icon, defaultValue ? 1 : 0) != 0);
     }
 
     @Override
     public int showNotification(String title, String message, String icon) {
-        if (noGraphicalBackend()) return 1;
-        try {
-            return TinyFileDialogs.tinyfd_notifyPopup(sanitizeText(title), sanitizeText(message), icon) == 1 ? 0 : 1;
-        } catch (Throwable t) {
-            LOGGER.error("Failed to show notification", t);
-            return 1;
-        }
+        return open("show notification", 1, () ->
+                TinyFileDialogs.tinyfd_notifyPopup(sanitizeText(title), sanitizeText(message), icon) == 1 ? 0 : 1);
     }
 
     @Nullable
@@ -250,5 +260,10 @@ final class LwjglTinyFd implements TinyFdApi {
             }
         }
         return sb == null ? input : sb.toString();
+    }
+
+    @FunctionalInterface
+    private interface Dialog<T> {
+        T open() throws Throwable;
     }
 }

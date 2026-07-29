@@ -5,7 +5,11 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.PointerIcon
@@ -30,18 +34,27 @@ fun FileListOption(data: FileListOptionData) {
         data.setElements(values.filter { it.isNotBlank() })
     }
 
+    // clicks while a dialog is open are ignored rather than queueing up another one
+    var dialogOpen by remember { mutableStateOf(false) }
+
     fun openDialog(id: Int, current: String) {
+        if (dialogOpen) return
+        dialogOpen = true
         scope.launch {
-            val selected = withContext(Dispatchers.IO) {
-                val tinyFd = TinyFdApi.getInstance()
-                val start = current.takeIf { it.isNotBlank() }
-                if (data.directory) {
-                    tinyFd.openFolderSelector(data.dialogTitle, start)
-                } else {
-                    tinyFd.openFileSelector(data.dialogTitle, start, data.filterPatterns, data.filterName)
-                }
-            } ?: return@launch // cancelled: leave the existing entry untouched
-            state.update(id, selected.toString())
+            try {
+                val selected = withContext(Dispatchers.IO) {
+                    val tinyFd = TinyFdApi.getInstance()
+                    val start = current.takeIf { it.isNotBlank() }
+                    if (data.directory) {
+                        tinyFd.openFolderSelector(data.dialogTitle, start)
+                    } else {
+                        tinyFd.openFileSelector(data.dialogTitle, start, data.filterPatterns, data.filterName)
+                    }
+                } ?: return@launch // cancelled: leave the existing entry untouched
+                state.update(id, selected.toString())
+            } finally {
+                dialogOpen = false
+            }
         }
     }
 
