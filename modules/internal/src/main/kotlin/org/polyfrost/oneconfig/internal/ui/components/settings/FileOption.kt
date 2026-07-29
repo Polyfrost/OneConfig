@@ -67,18 +67,27 @@ fun FileOption(data: FileOptionData) {
         data.strProp.set(newText)
     }
 
+    // clicks while the dialog is open are ignored rather than queueing up another one
+    var dialogOpen by remember { mutableStateOf(false) }
+
     fun openDialog() {
+        if (dialogOpen) return
+        dialogOpen = true
         scope.launch {
-            val current = text.takeIf { it.isNotBlank() }
-            val selected = withContext(Dispatchers.IO) {
-                val tinyFd = TinyFdApi.getInstance()
-                if (data.directory) {
-                    tinyFd.openFolderSelector(data.dialogTitle, current)
-                } else {
-                    tinyFd.openFileSelector(data.dialogTitle, current, data.filterPatterns, data.filterName)
-                }
-            } ?: return@launch // cancelled: leave the existing value untouched
-            setValue(selected.toString())
+            try {
+                val current = text.takeIf { it.isNotBlank() }
+                val selected = withContext(Dispatchers.IO) {
+                    val tinyFd = TinyFdApi.getInstance()
+                    if (data.directory) {
+                        tinyFd.openFolderSelector(data.dialogTitle, current)
+                    } else {
+                        tinyFd.openFileSelector(data.dialogTitle, current, data.filterPatterns, data.filterName)
+                    }
+                } ?: return@launch // cancelled: leave the existing value untouched
+                setValue(selected.toString())
+            } finally {
+                dialogOpen = false
+            }
         }
     }
 

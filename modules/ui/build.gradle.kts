@@ -36,6 +36,7 @@ dependencies {
     api(libs.jetbrains.compose.ui.tooling.preview)
     api(libs.jetbrains.compose.ui.util)
     api(project(":modules:events"))
+    implementation(project(":modules:notifications"))
 
     compileOnly(libs.bundles.lwjgl)
 
