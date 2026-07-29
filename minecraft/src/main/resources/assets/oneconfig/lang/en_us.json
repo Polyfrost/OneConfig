@@ -16,6 +16,9 @@
   "oneconfig.preferences.sidebar_opacity.title": "Sidebar Opacity",
   "oneconfig.preferences.sidebar_opacity.description": "How opaque the OneConfig sidebar background is. 0 = fully transparent, 100 = fully opaque.",
 
+  "oneconfig.preferences.glow_opacity.title": "Background Glow Opacity",
+  "oneconfig.preferences.glow_opacity.description": "How strong the accent-coloured glow behind the OneConfig menu is. 0 = hidden, 100 = fully opaque.",
+
   "oneconfig.preferences.pause_game.title": "Pause Game",
   "oneconfig.preferences.pause_game.description": "Pause singleplayer worlds while the OneConfig menu is open.",
 

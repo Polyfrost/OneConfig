@@ -54,6 +54,9 @@ object ShellState {
     /** Sidebar background opacity (0-100), mirrored from config so slider changes apply live. */
     var sidebarOpacity by mutableStateOf(80f)
 
+    /** Accent glow opacity (0-100) for the two blurred circles behind the shell, mirrored from config. */
+    var glowOpacity by mutableStateOf(25f)
+
     /** Last top-level route navigated to, used by the "Previous page" / "Smart reset" opening behaviors. */
     var lastRoute: Any? = null
 

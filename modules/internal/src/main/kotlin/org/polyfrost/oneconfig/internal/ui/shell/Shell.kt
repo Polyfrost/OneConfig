@@ -67,27 +67,28 @@ import org.polyfrost.oneconfig.internal.ui.util.cachedDropShadow
 private const val GLOW_BAKE_SCALE = .25f
 private const val GLOW_BLUR_SIGMA = 300f
 private const val GLOW_RADIUS = 500f
-private const val GLOW_ALPHA = .25f
 
 private class GlowCache : RememberObserver {
     private var image: Image? = null
     private var width = -1
     private var height = -1
+    private var alpha = Float.NaN
 
-    fun imageFor(widthPx: Int, heightPx: Int): Image? {
-        if (image == null || width != widthPx || height != heightPx) {
+    fun imageFor(widthPx: Int, heightPx: Int, alphaF: Float): Image? {
+        if (image == null || width != widthPx || height != heightPx || alpha != alphaF) {
             image?.close()
-            image = bake(widthPx, heightPx)
+            image = bake(widthPx, heightPx, alphaF)
             width = widthPx
             height = heightPx
+            alpha = alphaF
         }
         return image
     }
 
-    private fun bake(widthPx: Int, heightPx: Int): Image? {
+    private fun bake(widthPx: Int, heightPx: Int, alphaF: Float): Image? {
         val w = ceil(widthPx * GLOW_BAKE_SCALE).toInt()
         val h = ceil(heightPx * GLOW_BAKE_SCALE).toInt()
-        if (w <= 0 || h <= 0) return null
+        if (w <= 0 || h <= 0 || alphaF <= 0f) return null
 
         val surface = Surface.makeRasterN32Premul(w, h)
         val sigma = GLOW_BLUR_SIGMA * GLOW_BAKE_SCALE
@@ -95,7 +96,7 @@ private class GlowCache : RememberObserver {
         val paint = Paint().apply {
             imageFilter = filter
             color = 0xFFFFFFFF.toInt()
-            setAlphaf(GLOW_ALPHA)
+            setAlphaf(alphaF)
         }
         try {
             surface.canvas.apply {
@@ -158,7 +159,11 @@ fun Shell(
             .border(1.dp, theme.borderColor, theme.backgroundShape)
             .drawBehind {
                 backdrop(windowOffset)
-                val glow = glowCache.imageFor(ceil(size.width).toInt(), ceil(size.height).toInt())
+                val glow = glowCache.imageFor(
+                    ceil(size.width).toInt(),
+                    ceil(size.height).toInt(),
+                    (ShellState.glowOpacity / 100f).coerceIn(0f, 1f),
+                )
                 if (glow != null) {
                     drawIntoCanvas {
                         it.nativeCanvas.drawImageRect(

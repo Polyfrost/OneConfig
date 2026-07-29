@@ -78,6 +78,19 @@ public class OneConfigConfig extends Config {
     )
     public static float sidebarOpacity = 80f;
 
+    @Slider(
+        title = "oneconfig.preferences.glow_opacity.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.gui",
+        subcategoryTranslation = true,
+        min = 0f,
+        max = 100f,
+        step = 1f,
+        description = "oneconfig.preferences.glow_opacity.description",
+        descriptionTranslation = true
+    )
+    public static float glowOpacity = 25f;
+
     @Switch(
         title = "oneconfig.preferences.pause_game.title",
         titleTranslation = true,
@@ -451,6 +464,12 @@ public class OneConfigConfig extends Config {
         addCallback(
             "sidebarOpacity", (java.lang.Number v) -> {
                 org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setSidebarOpacity(v.floatValue());
+                return false;
+            });
+        org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setGlowOpacity(glowOpacity);
+        addCallback(
+            "glowOpacity", (java.lang.Number v) -> {
+                org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setGlowOpacity(v.floatValue());
                 return false;
             });
         addCallback(
