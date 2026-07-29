@@ -108,7 +108,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
             columns = GridCells.Fixed(4),
             verticalArrangement = Arrangement.spacedBy(19.dp),
             horizontalArrangement = Arrangement.spacedBy(19.dp),
-            modifier = Modifier.padding(end = 8.dp),
+            modifier = Modifier.padding(end = 16.dp),
         ) {
             items(filtered) { ModCard(it) }
         }

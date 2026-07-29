@@ -59,7 +59,7 @@ fun SearchResultsScreen(query: String) {
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize().padding(end = 10.dp),
+            modifier = Modifier.fillMaxSize().padding(end = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (matchingMods.isNotEmpty()) {

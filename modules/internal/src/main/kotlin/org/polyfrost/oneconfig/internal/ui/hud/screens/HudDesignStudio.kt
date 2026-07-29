@@ -1586,7 +1586,7 @@ private fun DesignStudioPanel(
                                 Column(
                                     modifier = Modifier.fillMaxSize()
                                         .verticalScroll(panelScrollState)
-                                        .padding(end = 8.dp),
+                                        .padding(end = 16.dp),
                                     verticalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
                                     Designer(selectedHud)
@@ -1643,10 +1643,10 @@ private fun HudLibraryPanel(
         }
         Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                val maxCardWidth = maxWidth - 8.dp
+                val maxCardWidth = maxWidth - 16.dp
                 LazyColumn(
                     state = listState,
-                    modifier = Modifier.fillMaxSize().padding(end = 8.dp),
+                    modifier = Modifier.fillMaxSize().padding(end = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     if (sections.isEmpty()) {

@@ -248,7 +248,7 @@ fun Changelog() {
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             state = lazyListState,
-            modifier = Modifier.fillMaxSize().padding(end = 8.dp),
+            modifier = Modifier.fillMaxSize().padding(end = 16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             visibleSections.forEach { (index, section) ->
@@ -284,7 +284,7 @@ fun Changelog(index: Int) {
     val scrollState = rememberScrollState()
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(end = 8.dp)) {
+        Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(end = 16.dp)) {
             data.headerImageUrl?.let { url ->
                 Box(
                     modifier = Modifier.fillMaxWidth().height(221.dp)

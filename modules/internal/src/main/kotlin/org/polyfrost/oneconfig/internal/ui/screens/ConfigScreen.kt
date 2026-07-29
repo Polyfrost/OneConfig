@@ -160,7 +160,7 @@ fun ConfigScreen(tree: Tree, initialCategory: String? = null, pageKey: String) {
             LazyColumn(
                 state = lazyListState,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(end = 8.dp)
+                modifier = Modifier.padding(end = 16.dp)
             ) {
                 items(entries) { entry ->
                     when (entry) {

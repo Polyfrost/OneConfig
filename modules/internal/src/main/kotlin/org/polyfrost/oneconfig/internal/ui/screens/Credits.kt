@@ -75,7 +75,7 @@ fun Credits() {
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(end = 8.dp)
+            modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(end = 16.dp)
         ) {
             rememberSvgResourcePainter(theme.branding.logoPath)?.let { logo ->
                 Image(
