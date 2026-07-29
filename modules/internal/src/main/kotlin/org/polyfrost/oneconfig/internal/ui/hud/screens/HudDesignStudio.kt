@@ -33,6 +33,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.text.BasicTextField
@@ -646,9 +650,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     var resizeStartScale by remember { mutableStateOf(1f) }
     var resizeStartStaticW by remember { mutableStateOf(0f) }
     var resizeStartStaticH by remember { mutableStateOf(0f) }
-    var libraryVisible by remember { mutableStateOf(false) }
-    var filterModId by remember { mutableStateOf<String?>(null) }
+    var libraryVisible by remember { mutableStateOf(true) }
     var searchText by remember { mutableStateOf("") }
+    var pendingLibraryScroll by remember { mutableStateOf<String?>(null) }
+    val libraryListState = rememberLazyListState()
     val chromeRects = remember { mutableStateMapOf<String, Rect>() }
     var panelOffset by remember { mutableStateOf(Offset.Zero) }
     var rootSize by remember { mutableStateOf(IntSize.Zero) }
@@ -675,11 +680,28 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
 
     val providers = remember { HudManager.providers().toList() }
     val modIds = remember(providers) { providers.mapNotNull { it.configId }.distinct() }
-    val filteredProviders = providers.filter { hud ->
-        (filterModId == null || hud.configId == filterModId) &&
+    val modNames = remember(modIds) { modIds.associateWith { modNameFor(it) ?: it } }
+    val librarySections = providers
+        .filter { hud ->
             (searchText.isEmpty() || hud.title?.contains(searchText, ignoreCase = true) == true) &&
-            (hud.multipleInstancesAllowed() || HudManager.getHudsOfType(hud::class.java).isEmpty())
+                (hud.multipleInstancesAllowed() || HudManager.getHudsOfType(hud::class.java).isEmpty())
+        }
+        .groupBy { it.configId }
+        .map { (modId, huds) -> HudLibrarySection(modId, modId?.let { modNames[it] } ?: "Other", huds) }
+    val librarySectionIds = librarySections.map { it.modId }
+    val activeLibraryMod = librarySections.getOrNull(libraryListState.firstVisibleItemIndex)?.modId
+
+    LaunchedEffect(pendingLibraryScroll, librarySectionIds) {
+        val target = pendingLibraryScroll ?: return@LaunchedEffect
+        val index = librarySectionIds.indexOf(target)
+        if (index >= 0) {
+            libraryListState.animateScrollToItem(index)
+            pendingLibraryScroll = null
+        } else if (searchText.isEmpty()) {
+            pendingLibraryScroll = null
+        }
     }
+
     val densityObj = LocalDensity.current
     val densityFloat = densityObj.density
     val actionIconPx = with(densityObj) { 24.dp.toPx() }
@@ -1175,7 +1197,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     HudLibraryPanel(
                         searchText = searchText,
                         onSearchChange = { searchText = it },
-                        filteredProviders = filteredProviders,
+                        sections = librarySections,
+                        listState = libraryListState,
                         onDragStart = { hud, sx, sy, hudLocalOffX, hudLocalOffY ->
                             try {
                                 val instance = hud.make()
@@ -1205,15 +1228,16 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 }
                 ModIconColumn(
                     modIds = modIds,
-                    filterModId = filterModId,
+                    activeModId = activeLibraryMod,
                     libraryVisible = libraryVisible,
                 ) { modId ->
                     Snapshot.withMutableSnapshot {
-                        if (filterModId == modId && libraryVisible) {
+                        if (activeLibraryMod == modId && libraryVisible) {
                             libraryVisible = false
                         } else {
-                            filterModId = modId
+                            if (librarySectionIds.none { it == modId }) searchText = ""
                             libraryVisible = true
+                            pendingLibraryScroll = modId
                         }
                     }
                 }
@@ -1585,11 +1609,18 @@ private fun DesignStudioPanel(
     }
 }
 
+/** One mod's worth of addable HUDs, as shown in the continuous library list. */
+private class HudLibrarySection(val modId: String?, val title: String, val huds: List<Hud>)
+
+private fun libraryIconFor(modId: String?): String =
+    modId?.let { HudManager.iconFor(it) ?: ConfigRegistry.findById(it)?.icon } ?: "qol"
+
 @Composable
 private fun HudLibraryPanel(
     searchText: String,
     onSearchChange: (String) -> Unit,
-    filteredProviders: List<Hud>,
+    sections: List<HudLibrarySection>,
+    listState: LazyListState,
     onDragStart: (Hud, Float, Float, Float, Float) -> Unit = { _, _, _, _, _ -> },
 ) {
     val theme = LocalTheme.current
@@ -1610,27 +1641,54 @@ private fun HudLibraryPanel(
             Text("HUDs", color = theme.textColor, fontSize = 18.sp)
             LibrarySearchBar(searchText, onSearchChange)
         }
-        val libraryScrollState = rememberScrollState()
         Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
-            Column(
-                modifier = Modifier.fillMaxWidth()
-                    .verticalScroll(libraryScrollState)
-                    .padding(end = 8.dp),
-            ) {
-                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                    val maxCardWidth = maxWidth
-                    FlexibleLayout(
-                        horizontalSpacing = 10.dp,
-                        verticalSpacing = 10.dp
-                    ) {
-                        filteredProviders.forEach { hud ->
-                            HudPreviewCard(hud, maxCardWidth, onDragStart)
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                val maxCardWidth = maxWidth - 8.dp
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize().padding(end = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    if (sections.isEmpty()) {
+                        item {
+                            Text(
+                                "No HUDs found",
+                                color = theme.textColorSecondary,
+                                fontSize = 14.sp,
+                            )
+                        }
+                    }
+                    items(sections, key = { it.modId ?: "" }) { section ->
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                Icon(
+                                    libraryIconFor(section.modId),
+                                    modifier = Modifier.size(16.dp),
+                                    color = theme.textColorSecondary,
+                                )
+                                Text(
+                                    section.title.uppercase(),
+                                    color = theme.textColorSecondary,
+                                    fontSize = 12.sp,
+                                )
+                            }
+                            FlexibleLayout(
+                                horizontalSpacing = 10.dp,
+                                verticalSpacing = 10.dp
+                            ) {
+                                section.huds.forEach { hud ->
+                                    HudPreviewCard(hud, maxCardWidth, onDragStart)
+                                }
+                            }
                         }
                     }
                 }
             }
             VerticalScrollbar(
-                adapter = rememberScrollbarAdapter(libraryScrollState),
+                adapter = rememberScrollbarAdapter(listState),
                 modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
             )
         }
@@ -1640,7 +1698,7 @@ private fun HudLibraryPanel(
 @Composable
 private fun ModIconColumn(
     modIds: List<String>,
-    filterModId: String?,
+    activeModId: String?,
     libraryVisible: Boolean,
     onModClick: (String) -> Unit,
 ) {
@@ -1655,10 +1713,9 @@ private fun ModIconColumn(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         modIds.forEach { modId ->
-            val icon = HudManager.iconFor(modId) ?: ConfigRegistry.findById(modId)?.icon ?: "qol"
             ModFilterIcon(
-                iconName = icon,
-                selected = filterModId == modId && libraryVisible,
+                iconName = libraryIconFor(modId),
+                selected = activeModId == modId && libraryVisible,
             ) { onModClick(modId) }
         }
     }
