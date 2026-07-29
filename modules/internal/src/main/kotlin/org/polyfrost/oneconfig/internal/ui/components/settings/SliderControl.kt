@@ -97,7 +97,7 @@ fun SliderControl(
                 .fillMaxWidth().height(trackHeight)
                 .align(Alignment.CenterStart)
                 .clip(theme.checkBoxShape)
-                .background(theme.chipBackground)
+                .background(theme.controlTrackColor)
         )
         Box(
             Modifier

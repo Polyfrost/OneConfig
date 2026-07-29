@@ -16,6 +16,8 @@ data class UITheme(
     val pageBackground: Color,
     val sidebarBackground: Color,
     val chipBackground: Color,
+    /** Unfilled track of a slider or switch; needs ~3:1 against the panel it sits on. */
+    val controlTrackColor: Color,
     val modCardBackground: Color,
     val componentBackground: Color,
     val popupBackground: Color,

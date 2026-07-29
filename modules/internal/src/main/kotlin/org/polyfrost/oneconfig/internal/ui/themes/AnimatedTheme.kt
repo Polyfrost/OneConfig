@@ -29,6 +29,7 @@ fun animateTheme(target: UITheme): UITheme {
     val pageBackground by animateColorAsState(target.pageBackground, colorSpec, label = "pageBackground")
     val sidebarBackground by animateColorAsState(target.sidebarBackground, colorSpec, label = "sidebarBackground")
     val chipBackground by animateColorAsState(target.chipBackground, colorSpec, label = "chipBackground")
+    val controlTrackColor by animateColorAsState(target.controlTrackColor, colorSpec, label = "controlTrackColor")
     val modCardBackground by animateColorAsState(target.modCardBackground, colorSpec, label = "modCardBackground")
     val componentBackground by animateColorAsState(target.componentBackground, colorSpec, label = "componentBackground")
     val popupBackground by animateColorAsState(target.popupBackground, colorSpec, label = "popupBackground")
@@ -52,6 +53,7 @@ fun animateTheme(target: UITheme): UITheme {
         pageBackground = pageBackground,
         sidebarBackground = sidebarBackground,
         chipBackground = chipBackground,
+        controlTrackColor = controlTrackColor,
         modCardBackground = modCardBackground,
         componentBackground = componentBackground,
         popupBackground = popupBackground,
