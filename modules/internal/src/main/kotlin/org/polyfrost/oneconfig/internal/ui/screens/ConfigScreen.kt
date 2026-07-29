@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.function.Consumer
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.config.v1.Property
@@ -136,11 +137,12 @@ fun ConfigScreen(tree: Tree, initialCategory: String? = null, pageKey: String) {
             }
         }
 
-        val entries = remember(categories, selectedCategory, localSearchQuery) {
+        val revision = rememberDisplayRevision(categories)
+        val entries = remember(categories, selectedCategory, localSearchQuery, revision) {
             if (localSearchQuery.isBlank()) {
-                selectedCategory?.let(::flattenEntries).orEmpty()
+                selectedCategory?.let(::filterHiddenNodes)?.let(::flattenEntries).orEmpty()
             } else {
-                flattenSearchEntries(filterCategories(categories, localSearchQuery))
+                flattenSearchEntries(filterCategories(categories, localSearchQuery).mapNotNull(::filterHiddenNodes))
             }
         }
 
@@ -203,6 +205,55 @@ private fun flattenSearchEntries(categories: List<CategoryGroup>): List<ConfigLi
             addAll(flattenEntries(category))
         }
     }
+}
+
+/**
+ * Drop nodes which are currently hidden by an unmet dependency, so that they never occupy an entry in the
+ * (lazy) setting list. Emitting a zero-height row for them instead leaves stray gaps and empty headers, and the
+ * row cannot observe its own display state while it is scrolled out of composition.
+ */
+private fun filterHiddenNodes(category: CategoryGroup): CategoryGroup? {
+    val subcategories = category.subcategories.mapNotNull { subcategory ->
+        val nodes = subcategory.nodes.filter { node ->
+            when (node) {
+                is SettingNode.Leaf -> !node.prop.isHidden()
+                is SettingNode.Accordion -> node.head?.isHidden() == false || node.body.any { !it.isHidden() }
+            }
+        }
+        if (nodes.isEmpty()) null else subcategory.copy(nodes = nodes)
+    }
+    return if (subcategories.isEmpty()) null else category.copy(subcategories = subcategories)
+}
+
+private fun Property<*>.isHidden(): Boolean = display == Property.Display.HIDDEN
+
+private fun categoryProperties(categories: List<CategoryGroup>): List<Property<*>> {
+    return categories.flatMap { category ->
+        category.subcategories.flatMap { subcategory ->
+            subcategory.nodes.flatMap { node ->
+                when (node) {
+                    is SettingNode.Leaf -> listOf(node.prop)
+                    is SettingNode.Accordion -> node.body + listOfNotNull(node.head)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Returns a counter which increments whenever any property in [categories] changes its display state, so that the
+ * entry list can be rebuilt.
+ */
+@Composable
+private fun rememberDisplayRevision(categories: List<CategoryGroup>): Int {
+    val props = remember(categories) { categoryProperties(categories) }
+    var revision by remember(props) { mutableStateOf(0) }
+    DisposableEffect(props) {
+        val listener = Consumer<Property.Display> { revision++ }
+        props.forEach { it.addDisplayListener(listener) }
+        onDispose { props.forEach { it.removeDisplayListener(listener) } }
+    }
+    return revision
 }
 
 private fun filterCategories(categories: List<CategoryGroup>, query: String): List<CategoryGroup> {
@@ -595,13 +646,12 @@ private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
 
 @Composable
 private fun rememberDisplay(prop: Property<*>): Property.Display {
-    var display by remember(prop) {
-        mutableStateOf(if (prop.canDisplay()) Property.Display.SHOWN else Property.Display.HIDDEN)
-    }
+    var display by remember(prop) { mutableStateOf(prop.display) }
 
     DisposableEffect(prop) {
-        prop.onDisplayChange { display = it }
-        onDispose { prop.onDisplayChange(null) }
+        val listener = Consumer<Property.Display> { display = it }
+        prop.addDisplayListener(listener)
+        onDispose { prop.removeDisplayListener(listener) }
     }
 
     return display
@@ -809,11 +859,12 @@ fun HudConfigScreen(tree: Tree, initialCategory: String? = null) {
             }
         }
 
-        val entries = remember(categories, selectedCategory, localSearchQuery) {
+        val revision = rememberDisplayRevision(categories)
+        val entries = remember(categories, selectedCategory, localSearchQuery, revision) {
             if (localSearchQuery.isBlank()) {
-                selectedCategory?.let(::flattenEntries).orEmpty()
+                selectedCategory?.let(::filterHiddenNodes)?.let(::flattenEntries).orEmpty()
             } else {
-                flattenSearchEntries(filterCategories(categories, localSearchQuery))
+                flattenSearchEntries(filterCategories(categories, localSearchQuery).mapNotNull(::filterHiddenNodes))
             }
         }
 

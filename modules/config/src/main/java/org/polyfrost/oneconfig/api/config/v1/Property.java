@@ -57,6 +57,7 @@ public abstract class Property<T> extends Node implements Serializable {
     public transient final Class<?> type;
     protected transient List<@NotNull Predicate<@Nullable T>> callbacks = null;
     private transient Consumer<Display> displayCallback = null;
+    private transient List<Consumer<Display>> displayListeners = null;
     private transient Display display = Display.SHOWN;
     private transient List<Supplier<Display>> conditions = null;
 
@@ -79,9 +80,36 @@ public abstract class Property<T> extends Node implements Serializable {
         return display == Display.SHOWN;
     }
 
+    /**
+     * Return the current display state of this property, which is controlled by {@link #conditions}.
+     *
+     * @see #addDisplayCondition(Supplier)
+     */
+    @NotNull
+    public final Display getDisplay() {
+        return display;
+    }
+
     public void onDisplayChange(Consumer<Display> callback) {
         this.displayCallback = callback;
         if (callback != null && display != Display.SHOWN) callback.accept(display);
+    }
+
+    /**
+     * Add a listener which is called whenever the display state of this property changes.
+     * <br>
+     * Unlike {@link #onDisplayChange(Consumer)}, any amount of listeners can be registered at once.
+     * Remember to {@link #removeDisplayListener(Consumer) remove} the listener when it is no longer needed.
+     */
+    public final void addDisplayListener(@NotNull Consumer<Display> listener) {
+        if (displayListeners == null) displayListeners = new ArrayList<>(2);
+        displayListeners.add(listener);
+        if (display != Display.SHOWN) listener.accept(display);
+    }
+
+    public final boolean removeDisplayListener(@NotNull Consumer<Display> listener) {
+        if (displayListeners == null) return false;
+        return displayListeners.remove(listener);
     }
 
     /**
@@ -141,8 +169,12 @@ public abstract class Property<T> extends Node implements Serializable {
             }
         }
         if (d != display) {
-            if (displayCallback != null) displayCallback.accept(d);
+            // asm: assign before dispatching, so listeners which read canDisplay()/getDisplay() see the new state
             display = d;
+            if (displayCallback != null) displayCallback.accept(d);
+            if (displayListeners != null) {
+                for (Consumer<Display> l : new ArrayList<>(displayListeners)) l.accept(d);
+            }
         }
     }
 
