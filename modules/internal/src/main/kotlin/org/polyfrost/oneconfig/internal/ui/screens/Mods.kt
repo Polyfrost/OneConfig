@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,6 +21,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Size
@@ -43,6 +46,7 @@ import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
+import org.polyfrost.oneconfig.internal.ui.api.ModFavorites
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
@@ -94,13 +98,17 @@ fun Mods() {
 fun ColumnScope.ModsGrid(category: ModCategory) {
     val registryRevision = ConfigRegistry.revision
     val categoryRevision = ThirdPartyModCategories.revision
-    val filtered = remember(registryRevision, category, categoryRevision) {
+    val favoriteRevision = ModFavorites.revision
+    val filtered = remember(registryRevision, category, categoryRevision, favoriteRevision) {
         ConfigRegistry.modCardConfigs
             .let { items ->
                 if (category.configCategory == null) items
                 else items.filter { it.category == category.configCategory }
             }
-            .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.title.asRenderText() })
+            .sortedWith(
+                compareByDescending<ConfigData> { ModFavorites.isFavorite(it.id) }
+                    .thenBy(String.CASE_INSENSITIVE_ORDER) { it.title.asRenderText() }
+            )
     }
 
     val gridState = rememberLazyGridState()
@@ -212,5 +220,39 @@ fun ModCard(mod: ConfigData) {
                 }
             )
         }
+
+        FavoriteStar(
+            mod = mod,
+            cardHovered = interactionSource.collectIsHoveredAsState().value,
+            modifier = Modifier.align(Alignment.TopEnd),
+        )
+    }
+}
+
+@Composable
+private fun FavoriteStar(mod: ConfigData, cardHovered: Boolean, modifier: Modifier = Modifier) {
+    val theme = LocalTheme.current
+    val favorite = ModFavorites.isFavorite(mod.id)
+    val interactionSource = rememberInteractionSource()
+    val hovered by interactionSource.collectIsHoveredAsState()
+    val alpha by animateFloatAsState(
+        when {
+            favorite || hovered -> 1f
+            cardHovered -> 0.6f
+            else -> 0f
+        }
+    )
+    val color by animateColorAsState(if (favorite) Accent else theme.textColor)
+
+    Box(
+        modifier = modifier
+            .padding(4.dp)
+            .size(24.dp)
+            .alpha(alpha)
+            .onClick(interactionSource) { ModFavorites.toggle(mod.id) }
+            .pointerHoverIcon(PointerIcon.Hand),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(if (favorite) "star-filled" else "star", color = color, modifier = Modifier.size(18.dp))
     }
 }
