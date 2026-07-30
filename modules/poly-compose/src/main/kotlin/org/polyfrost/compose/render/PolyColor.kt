@@ -3,17 +3,21 @@ package org.polyfrost.compose.render
 import kotlin.math.roundToInt
 
 /**
- * An immutable colour. Every operation returns a new instance, so shared constants such as
- * [WHITE] can safely be used as config defaults without one option's change leaking into another.
+ * A colour. Named colours such as [WHITE] hand out a fresh instance on every access, so they can
+ * safely be used as config defaults without one option's change leaking into another.
  */
 class PolyColor @JvmOverloads constructor(
     argb: Int = 0xFFFFFFFF.toInt(),
-    val chroma: Boolean = false,
-    val chromaSpeed: Float = 1f,
+    var chroma: Boolean = false,
+    var chromaSpeed: Float = 1f,
 ) {
-    private val staticArgb: Int = argb
+    private var staticArgb: Int = argb
 
-    val argb: Int get() = if (chroma) chromaArgb(staticArgb, chromaSpeed) else staticArgb
+    var argb: Int
+        get() = if (chroma) chromaArgb(staticArgb, chromaSpeed) else staticArgb
+        set(value) {
+            staticArgb = value
+        }
 
     val rawArgb: Int get() = staticArgb
 
@@ -92,38 +96,24 @@ class PolyColor @JvmOverloads constructor(
     companion object {
         const val CHROMA_CYCLE_SECONDS = 10.0
 
-        @JvmField
-        val TRANSPARENT = PolyColor(0x00000000)
-        @JvmField
-        val WHITE = PolyColor(0xFFFFFFFF.toInt())
-        @JvmField
-        val BLACK = PolyColor(0xFF000000.toInt())
-        @JvmField
-        val RED = PolyColor(0xFFFF4444.toInt())
-        @JvmField
-        val GREEN = PolyColor(0xFF44FF44.toInt())
-        @JvmField
-        val BLUE = PolyColor(0xFF4488FF.toInt())
-        @JvmField
-        val YELLOW = PolyColor(0xFFFFFF44.toInt())
-        @JvmField
-        val ORANGE = PolyColor(0xFFFF8844.toInt())
-        @JvmField
-        val PURPLE = PolyColor(0xFFAA44FF.toInt())
-        @JvmField
-        val CYAN = PolyColor(0xFF44FFFF.toInt())
-        @JvmField
-        val PINK = PolyColor(0xFFFF44AA.toInt())
-        @JvmField
-        val GRAY = PolyColor(0xFF888888.toInt())
-        @JvmField
-        val DARK_GRAY = PolyColor(0xFF444444.toInt())
-        @JvmField
-        val DARKER_GRAY = PolyColor(0xFF222222.toInt())
-        @JvmField
-        val LIGHT_GRAY = PolyColor(0xFFCCCCCC.toInt())
-        @JvmField
-        val LIGHTER_GRAY = PolyColor(0xFFEEEEEE.toInt())
+        // These hand out a new instance on every access: they are commonly used as the default of
+        // several options at once, and a shared instance would let a change to one leak into the rest.
+        val TRANSPARENT get() = PolyColor(0x00000000)
+        val WHITE get() = PolyColor(0xFFFFFFFF.toInt())
+        val BLACK get() = PolyColor(0xFF000000.toInt())
+        val RED get() = PolyColor(0xFFFF4444.toInt())
+        val GREEN get() = PolyColor(0xFF44FF44.toInt())
+        val BLUE get() = PolyColor(0xFF4488FF.toInt())
+        val YELLOW get() = PolyColor(0xFFFFFF44.toInt())
+        val ORANGE get() = PolyColor(0xFFFF8844.toInt())
+        val PURPLE get() = PolyColor(0xFFAA44FF.toInt())
+        val CYAN get() = PolyColor(0xFF44FFFF.toInt())
+        val PINK get() = PolyColor(0xFFFF44AA.toInt())
+        val GRAY get() = PolyColor(0xFF888888.toInt())
+        val DARK_GRAY get() = PolyColor(0xFF444444.toInt())
+        val DARKER_GRAY get() = PolyColor(0xFF222222.toInt())
+        val LIGHT_GRAY get() = PolyColor(0xFFCCCCCC.toInt())
+        val LIGHTER_GRAY get() = PolyColor(0xFFEEEEEE.toInt())
 
         fun rgb(r: Int, g: Int, b: Int) =
             PolyColor(0xFF000000.toInt() or ((r and 0xFF) shl 16) or ((g and 0xFF) shl 8) or (b and 0xFF))

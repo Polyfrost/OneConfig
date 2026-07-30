@@ -372,6 +372,7 @@ public final class org/polyfrost/compose/render/PolyColor {
 	public fun <init> (IZF)V
 	public synthetic fun <init> (IZFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun darken (F)Lorg/polyfrost/compose/render/PolyColor;
+	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAlpha ()I
 	public final fun getAlphaF ()F
 	public final fun getArgb ()I
@@ -384,6 +385,7 @@ public final class org/polyfrost/compose/render/PolyColor {
 	public final fun getRawArgb ()I
 	public final fun getRed ()I
 	public final fun getRedF ()F
+	public fun hashCode ()I
 	public final fun invert ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun lerp (Lorg/polyfrost/compose/render/PolyColor;F)Lorg/polyfrost/compose/render/PolyColor;
 	public final fun lighten (F)Lorg/polyfrost/compose/render/PolyColor;
@@ -396,6 +398,9 @@ public final class org/polyfrost/compose/render/PolyColor {
 	public final fun withAlpha (F)Lorg/polyfrost/compose/render/PolyColor;
 	public final fun withAlpha (I)Lorg/polyfrost/compose/render/PolyColor;
 	public final fun withBlue (I)Lorg/polyfrost/compose/render/PolyColor;
+	public final fun withChroma (Z)Lorg/polyfrost/compose/render/PolyColor;
+	public final fun withChroma (ZF)Lorg/polyfrost/compose/render/PolyColor;
+	public static synthetic fun withChroma$default (Lorg/polyfrost/compose/render/PolyColor;ZFILjava/lang/Object;)Lorg/polyfrost/compose/render/PolyColor;
 	public final fun withGreen (I)Lorg/polyfrost/compose/render/PolyColor;
 	public final fun withRed (I)Lorg/polyfrost/compose/render/PolyColor;
 }

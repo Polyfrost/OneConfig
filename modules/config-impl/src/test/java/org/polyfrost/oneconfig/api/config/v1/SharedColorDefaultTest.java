@@ -32,15 +32,15 @@ import org.polyfrost.compose.render.PolyColor;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * PolyColor constants are shared instances. Using the same constant as the default of several
- * options must not make a change to one option leak into the others: {@code Property.Field#set0}
- * mutates complex values in place, so immutable value types must be replaced by reference instead.
+ * {@code Property.Field#set0} mutates complex values in place, so using the same PolyColor constant
+ * as the default of several options must not make a change to one option leak into the others:
+ * every access to a named colour hands out its own instance.
  */
 public class SharedColorDefaultTest {
 
     static class Bean {
-        public PolyColor first = PolyColor.WHITE;
-        public PolyColor second = PolyColor.WHITE;
+        public PolyColor first = PolyColor.Companion.getWHITE();
+        public PolyColor second = PolyColor.Companion.getWHITE();
     }
 
     @Test
@@ -52,18 +52,23 @@ public class SharedColorDefaultTest {
 
         assertEquals(0xFFFF0000, b.first.getRawArgb());
         assertEquals(0xFFFFFFFF, b.second.getRawArgb());
-        assertEquals(0xFFFFFFFF, PolyColor.WHITE.getRawArgb());
+        assertEquals(0xFFFFFFFF, PolyColor.Companion.getWHITE().getRawArgb());
     }
 
     @Test
-    void chromaFlagIsNotLeakedOntoTheSharedConstant() throws Exception {
+    void chromaFlagIsNotLeakedOntoSiblingsSharingTheSameDefault() throws Exception {
         Bean b = new Bean();
         Property<?> first = Properties.field("first", null, Bean.class.getDeclaredField("first"), b);
 
-        first.setAs(PolyColor.WHITE.withChroma(true, 2f));
+        first.setAs(PolyColor.Companion.getWHITE().withChroma(true, 2f));
 
         assertTrue(b.first.getChroma());
         assertFalse(b.second.getChroma());
-        assertFalse(PolyColor.WHITE.getChroma());
+        assertFalse(PolyColor.Companion.getWHITE().getChroma());
+    }
+
+    @Test
+    void namedColoursHandOutTheirOwnInstance() {
+        assertNotSame(PolyColor.Companion.getWHITE(), PolyColor.Companion.getWHITE());
     }
 }

@@ -411,9 +411,8 @@ public class ObjectSerializer {
             throw new IllegalArgumentException("Cannot merge two objects of different classes: " + cls.getName() + " and " + input.getClass().getName());
         }
         if (isImmutable(cls)) {
-            // value types (every instance field final, e.g. PolyColor) must never be mutated in place: they are
-            // commonly shared (constants used as defaults for several options), so writing through the reference
-            // would change every option at once. signal the caller to replace the reference instead.
+            // Value types (every instance field final) cannot be written through; signal the caller
+            // (e.g. Property.Field#set0) to replace the reference instead.
             throw new SerializationException("Cannot overwrite immutable type " + cls.getName() + " in place");
         }
         if (cls.isArray()) {
