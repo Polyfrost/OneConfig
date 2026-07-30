@@ -95,10 +95,12 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
     val registryRevision = ConfigRegistry.revision
     val categoryRevision = ThirdPartyModCategories.revision
     val filtered = remember(registryRevision, category, categoryRevision) {
-        ConfigRegistry.modCardConfigs.let { items ->
-            if (category.configCategory == null) items
-            else items.filter { it.category == category.configCategory }
-        }
+        ConfigRegistry.modCardConfigs
+            .let { items ->
+                if (category.configCategory == null) items
+                else items.filter { it.category == category.configCategory }
+            }
+            .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.title.asRenderText() })
     }
 
     val gridState = rememberLazyGridState()
