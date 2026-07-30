@@ -40,7 +40,6 @@ fun SliderOption(data: SliderOptionData) {
             min = data.min,
             max = data.max,
             step = if (data.step > 0f) data.step else 1f,
-            width = 80.dp,
         )
     }
 }

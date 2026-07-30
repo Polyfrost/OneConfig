@@ -6,13 +6,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.foundation.shape.CornerBasedShape
+import androidx.compose.ui.unit.dp
 
 private const val THEME_ANIM_MS = 350
 
@@ -72,23 +69,14 @@ fun animateTheme(target: UITheme): UITheme {
     )
 }
 
-// large reference size so dp-based corners resolve independently of layout size
-private val REF_SIZE = Size(1_000_000f, 1_000_000f)
-
 /**
- * Animates the corner radius (in px) of a [RoundedCornerShape]-style target. Percent-based
- * corners (e.g. CircleShape) resolve to large values at [REF_SIZE]; those are left untouched
- * so circles stay circular.
+ * Animates the corner radius of a [RoundedCornerShape]-style target. Shapes without a fixed
+ * radius (percent-based corners such as `CircleShape`) are left untouched so circles stay
+ * circular.
  */
 @Composable
 private fun animateCornerShape(target: Shape, spec: androidx.compose.animation.core.AnimationSpec<Float>): Shape {
-    if (target !is CornerBasedShape) return target
-    val density = LocalDensity.current
-    val targetPx = remember(target, density) {
-        runCatching { target.topStart.toPx(REF_SIZE, density) }.getOrDefault(Float.NaN)
-    }
-    // percent/circle corners scale with size -> huge at REF_SIZE; don't animate, keep as-is
-    if (targetPx.isNaN() || targetPx >= REF_SIZE.minDimension / 2f) return target
-    val animatedPx by animateFloatAsState(targetPx, spec, label = "cornerRadius")
-    return RoundedCornerShape(animatedPx)
+    val targetRadius = target.cornerRadiusOrNull() ?: return target
+    val animated by animateFloatAsState(targetRadius.value, spec, label = "cornerRadius")
+    return RoundedCornerShape(animated.dp)
 }

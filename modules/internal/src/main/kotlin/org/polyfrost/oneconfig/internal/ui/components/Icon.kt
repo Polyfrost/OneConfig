@@ -18,30 +18,52 @@ import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
+import javax.imageio.ImageIO
 import kotlin.math.sqrt
 
 private object IconResourceMarker
 private const val DefaultIconSize = 18f
 private val DefaultRasterIconShape = RoundedCornerShape(8.dp)
 
+/**
+ * A decoded raster icon plus the filter quality it should be scaled with — pixel art is
+ * upscaled with nearest neighbour so it stays crisp instead of turning into mush.
+ */
+private class RasterIcon(val bitmap: ImageBitmap, val filterQuality: FilterQuality)
+
 private object IconBitmapCache {
-    private class Entry(val lastModified: Long, val bitmap: ImageBitmap)
+    private class Entry(val lastModified: Long, val icon: RasterIcon)
 
     private val cache = ConcurrentHashMap<String, Entry>()
 
-    fun load(path: String, lastModified: Long, decode: () -> ImageBitmap): ImageBitmap {
-        cache[path]?.let { if (it.lastModified == lastModified) return it.bitmap }
-        val bitmap = decode()
-        cache[path] = Entry(lastModified, bitmap)
-        return bitmap
+    fun load(path: String, lastModified: Long, decode: () -> RasterIcon): RasterIcon {
+        cache[path]?.let { if (it.lastModified == lastModified) return it.icon }
+        val icon = decode()
+        cache[path] = Entry(lastModified, icon)
+        return icon
     }
 }
+
+/**
+ * Decodes raster icon [bytes], picking nearest neighbour filtering when the image looks like
+ * pixel art. Falls back to Compose's own decoder if AWT can't read the format.
+ */
+private fun decodeRasterIcon(bytes: ByteArray): RasterIcon {
+    val buffered = runCatching { ImageIO.read(ByteArrayInputStream(bytes)) }.getOrNull()
+        ?: return RasterIcon(loadImageBitmap(ByteArrayInputStream(bytes)), FilterQuality.Medium)
+    val quality = if (buffered.isPixelArt()) FilterQuality.None else FilterQuality.Medium
+    return RasterIcon(buffered.toComposeImageBitmap(), quality)
+}
+
+private fun rasterPainter(icon: RasterIcon) = BitmapPainter(icon.bitmap, filterQuality = icon.filterQuality)
 
 @Composable
 fun Icon(
@@ -64,11 +86,10 @@ fun Icon(
         val painter = remember(iconName, file.lastModified(), over) {
             runCatching {
                 if (isSvg) OversampledSvgPainter(file.readBytes(), over)
-                else BitmapPainter(
+                else rasterPainter(
                     IconBitmapCache.load(iconName, file.lastModified()) {
-                        file.inputStream().buffered().use(::loadImageBitmap)
-                    },
-                    filterQuality = FilterQuality.Medium
+                        decodeRasterIcon(file.readBytes())
+                    }
                 )
             }.getOrNull()
         }
@@ -135,9 +156,7 @@ fun rememberSvgResourcePainter(path: String): Painter? {
 @Composable
 private fun rememberIconRasterPainter(path: String): Painter? {
     return remember(path) {
-        readIconResourceBytes(path)?.let {
-            BitmapPainter(loadImageBitmap(it.inputStream()), filterQuality = FilterQuality.Medium)
-        }
+        readIconResourceBytes(path)?.let { rasterPainter(decodeRasterIcon(it)) }
     }
 }
 

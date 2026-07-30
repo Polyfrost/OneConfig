@@ -27,9 +27,11 @@ import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.concentric
 
+private val RadioPadding = 3.dp
 private val RadioShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
-private val RadioItemShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
+private val RadioItemShape @Composable get() = RadioShape.concentric(RadioPadding)
 private val RadioItemMinHeight = 32.dp
 
 @Composable
@@ -83,7 +85,7 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
             .background(theme.componentBackground),
     ) {
         Box(
-            modifier = Modifier.padding(3.dp)
+            modifier = Modifier.padding(RadioPadding)
         ) {
             // sliding indicator
             Box(

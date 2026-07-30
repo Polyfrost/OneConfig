@@ -28,8 +28,11 @@ import org.polyfrost.oneconfig.internal.ui.api.settings.DropdownOptionData
 import org.polyfrost.oneconfig.internal.ui.components.*
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.concentric
 
+private val MenuPadding = 4.dp
 private val DropdownShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
+private val MenuItemShape @Composable get() = DropdownShape.concentric(MenuPadding)
 
 @Composable
 fun DropdownOption(data: DropdownOptionData) {
@@ -131,16 +134,17 @@ fun DropdownOption(data: DropdownOptionData) {
                     Box(
                         modifier = Modifier
                             .width(LocalOptionWidth.current)
-                            .clip(theme.sideBarNavigationEntryShape)
-                            .background(theme.componentBackground, theme.sideBarNavigationEntryShape)
-                            .border(1.dp, theme.borderColor, theme.sideBarNavigationEntryShape)
+                            .clip(DropdownShape)
+                            .background(theme.componentBackground, DropdownShape)
+                            .border(1.dp, theme.borderColor, DropdownShape)
                     ) {
+                        val itemShape = MenuItemShape
                         Column(
                             modifier = Modifier
                                 .heightIn(max = 280.dp)
                                 .fadingEdges(scrollState, theme.componentBackground)
                                 .verticalScroll(scrollState)
-                                .padding(4.dp)
+                                .padding(MenuPadding)
                                 .fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
@@ -158,7 +162,7 @@ fun DropdownOption(data: DropdownOptionData) {
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(backgroundColor, theme.sideBarNavigationEntryShape)
+                                        .background(backgroundColor, itemShape)
                                         .onClick(optionSource) {
                                             selectedIdx = index
                                             @Suppress("UNCHECKED_CAST")

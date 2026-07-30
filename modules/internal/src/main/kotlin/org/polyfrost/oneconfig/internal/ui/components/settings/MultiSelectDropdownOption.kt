@@ -49,9 +49,11 @@ import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.concentric
 
+private val MenuPadding = 4.dp
 private val DropdownShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
-private val ItemShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
+private val ItemShape @Composable get() = DropdownShape.concentric(MenuPadding)
 
 @Suppress("UNCHECKED_CAST")
 @Composable
@@ -165,7 +167,7 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
                             .heightIn(max = 280.dp)
                             .fadingEdges(scrollState, theme.componentBackground)
                             .verticalScroll(scrollState)
-                            .padding(4.dp),
+                            .padding(MenuPadding),
                         verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         options.forEachIndexed { index, option ->

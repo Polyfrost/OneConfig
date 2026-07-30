@@ -39,12 +39,15 @@ import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.concentric
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.optionHasDefault
 import org.polyfrost.oneconfig.internal.ui.components.settings.resetOption
+
+private val MenuPadding = 4.dp
 
 private val hudUiEpochs = mutableStateMapOf<Hud, Int>()
 
@@ -259,13 +262,13 @@ fun HudCanvasResetMenu(
             modifier = Modifier
                 .background(theme.popupBackground, theme.popupShape)
                 .border(1.dp, theme.borderColor, theme.popupShape)
-                .padding(4.dp),
+                .padding(MenuPadding),
         ) {
             val interactionSource = rememberInteractionSource()
             val color = if (enabled) theme.textColor else theme.textColorSecondary
             Row(
                 modifier = Modifier
-                    .clip(theme.sideBarNavigationEntryShape)
+                    .clip(theme.popupShape.concentric(MenuPadding))
                     .then(
                         if (enabled) {
                             Modifier.onClick(interactionSource) {
@@ -287,7 +290,7 @@ fun HudCanvasResetMenu(
                 val deleteInteraction = rememberInteractionSource()
                 Row(
                     modifier = Modifier
-                        .clip(theme.sideBarNavigationEntryShape)
+                        .clip(theme.popupShape.concentric(MenuPadding))
                         .onClick(deleteInteraction) {
                             onDelete(hud)
                             onDismiss()

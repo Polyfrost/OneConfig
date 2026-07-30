@@ -38,7 +38,10 @@ import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.concentric
 import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
+
+private val ContextMenuPadding = 4.dp
 
 /**
  * Per-property reset counters. Bumping a property's counter forces its visualizer subtree to
@@ -167,7 +170,7 @@ fun OptionContextMenu(
             modifier = Modifier
                 .background(theme.popupBackground, theme.popupShape)
                 .border(1.dp, theme.borderColor, theme.popupShape)
-                .padding(4.dp),
+                .padding(ContextMenuPadding),
         ) {
             ContextMenuItem("refresh", "Reset to default", enabled = resetEnabled) {
                 if (effectiveReset != null) effectiveReset() else resetOption(prop)
@@ -190,7 +193,7 @@ private fun ContextMenuItem(icon: String, label: String, enabled: Boolean, onCli
     val color = if (enabled) theme.textColor else theme.textColorSecondary
     Row(
         modifier = Modifier
-            .clip(theme.sideBarNavigationEntryShape)
+            .clip(theme.popupShape.concentric(ContextMenuPadding))
             .then(if (enabled) Modifier.onClick(interactionSource, onClick).pointerHoverIcon(PointerIcon.Hand) else Modifier)
             .padding(horizontal = 10.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,

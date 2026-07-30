@@ -52,6 +52,7 @@ import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.concentric
 import kotlin.math.roundToInt
 
 /**
@@ -64,8 +65,9 @@ internal val ListEntryHeight = 34.dp
 internal val ListEntrySpacing = 8.dp
 internal val ListInvalidColor = Color(0xFFFF4444)
 
-private val ContainerShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
-private val EntryShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
+private val ContainerPadding = 8.dp
+private val ContainerShape @Composable get() = LocalTheme.current.modCardShape
+private val EntryShape @Composable get() = ContainerShape.concentric(ContainerPadding)
 
 internal data class ListRowEntry<T>(val id: Int, val value: T)
 
@@ -158,7 +160,7 @@ internal fun <T> ListOptionContainer(
             .clip(ContainerShape)
             .background(theme.componentBackground, ContainerShape)
             .border(1.dp, theme.borderColor, ContainerShape)
-            .padding(15.dp),
+            .padding(ContainerPadding),
         verticalArrangement = Arrangement.spacedBy(ListEntrySpacing),
     ) {
         if (entries.isNotEmpty()) {

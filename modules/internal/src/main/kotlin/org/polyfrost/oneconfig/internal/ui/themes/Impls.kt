@@ -86,12 +86,12 @@ val PolyGlassDark = UITheme(
 
     true,
 
-    RoundedCornerShape(16.dp),
-    RoundedCornerShape(7.dp),
-    RoundedCornerShape(12.dp),
-    RoundedCornerShape(3.dp),
-    RoundedCornerShape(6.dp),
-    RoundedCornerShape(12.dp),
+    RoundedCornerShape(Radii.LG),
+    RoundedCornerShape(Radii.SM),
+    RoundedCornerShape(Radii.MD),
+    RoundedCornerShape(Radii.XS),
+    RoundedCornerShape(Radii.SM),
+    RoundedCornerShape(Radii.MD),
     CircleShape,
 
     UIBranding("assets/oneconfig/brand/oneconfig.svg"),
@@ -130,12 +130,12 @@ val PolyGlassLight = UITheme(
 
     true,
 
-    RoundedCornerShape(16.dp),
-    RoundedCornerShape(7.dp),
-    RoundedCornerShape(12.dp),
-    RoundedCornerShape(3.dp),
-    RoundedCornerShape(6.dp),
-    RoundedCornerShape(12.dp),
+    RoundedCornerShape(Radii.LG),
+    RoundedCornerShape(Radii.SM),
+    RoundedCornerShape(Radii.MD),
+    RoundedCornerShape(Radii.XS),
+    RoundedCornerShape(Radii.SM),
+    RoundedCornerShape(Radii.MD),
     CircleShape,
 
     UIBranding("assets/oneconfig/brand/oneconfig-light.svg"),
