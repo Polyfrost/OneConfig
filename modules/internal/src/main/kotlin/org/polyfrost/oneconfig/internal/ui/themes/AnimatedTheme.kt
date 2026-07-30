@@ -50,7 +50,6 @@ fun animateTheme(target: UITheme): UITheme {
         pageBackground = pageBackground,
         sidebarBackground = sidebarBackground,
         chipBackground = chipBackground,
-        controlTrackColor = controlTrackColor,
         modCardBackground = modCardBackground,
         componentBackground = componentBackground,
         popupBackground = popupBackground,
@@ -66,7 +65,7 @@ fun animateTheme(target: UITheme): UITheme {
         checkBoxShape = checkBoxShape,
         buttonShape = buttonShape,
         popupShape = popupShape,
-    )
+    ).withControlTrackColor(controlTrackColor)
 }
 
 /**

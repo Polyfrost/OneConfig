@@ -16,8 +16,6 @@ data class UITheme(
     val pageBackground: Color,
     val sidebarBackground: Color,
     val chipBackground: Color,
-    /** Unfilled track of a slider or switch; needs ~3:1 against the panel it sits on. */
-    val controlTrackColor: Color,
     val modCardBackground: Color,
     val componentBackground: Color,
     val popupBackground: Color,
@@ -43,7 +41,17 @@ data class UITheme(
     val branding: UIBranding,
     val typography: UITypography,
     val iconOverrides: Map<String, String> = emptyMap(),
-)
+) {
+    var controlTrackColor: Color = DefaultControlTrackColor
+        private set
+
+    fun withControlTrackColor(color: Color): UITheme =
+        copy().also { it.controlTrackColor = color }
+
+    companion object {
+        val DefaultControlTrackColor = Color(0xFF74777F)
+    }
+}
 
 data class UIBranding(
     val logoPath: String
