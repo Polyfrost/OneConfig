@@ -61,6 +61,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Property : org/polyf
 	public final fun addDisplayCondition (Ljava/util/function/Supplier;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public final fun addDisplayCondition (Lorg/polyfrost/oneconfig/api/config/v1/Property;Z)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public final fun addDisplayCondition ([Ljava/util/function/Supplier;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
+	public final fun addDisplayListener (Ljava/util/function/Consumer;)V
 	public final fun canDisplay ()Z
 	protected final fun clearCallbacks ()V
 	protected final fun clearDisplayConditions ()V
@@ -68,12 +69,14 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Property : org/polyf
 	public final fun equals (Ljava/lang/Object;)Z
 	public abstract fun get ()Ljava/lang/Object;
 	public final fun getAs ()Ljava/lang/Object;
+	public final fun getDisplay ()Lorg/polyfrost/oneconfig/api/config/v1/Property$Display;
 	public final fun isArray ()Z
 	public final fun isPrimitive ()Z
 	public fun onDisplayChange (Ljava/util/function/Consumer;)V
 	public fun overwrite (Lorg/polyfrost/oneconfig/api/config/v1/Node;ZZLorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 	public static fun recast (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public final fun removeCallback (Ljava/util/function/Predicate;)Z
+	public final fun removeDisplayListener (Ljava/util/function/Consumer;)Z
 	public fun revaluateDisplay ()V
 	public final fun set (Ljava/lang/Object;)Z
 	protected abstract fun set0 (Ljava/lang/Object;)V
@@ -181,6 +184,7 @@ public class org/polyfrost/oneconfig/api/config/v1/serialize/ObjectSerializer {
 	public static fun fieldStream (Ljava/lang/Class;)Ljava/util/stream/Stream;
 	public fun getAdapter (Ljava/lang/Class;)Lorg/polyfrost/oneconfig/api/config/v1/serialize/adapter/Adapter;
 	public static fun getAllFields (Ljava/lang/Class;)[Ljava/lang/reflect/Field;
+	public static fun isImmutable (Ljava/lang/Class;)Z
 	public static fun isSerializable (Ljava/lang/Object;)Z
 	public static fun overwrite (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun registerTypeAdapter (Lorg/polyfrost/oneconfig/api/config/v1/serialize/adapter/Adapter;)V
