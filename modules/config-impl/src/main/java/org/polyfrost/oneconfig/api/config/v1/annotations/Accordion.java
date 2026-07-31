@@ -34,12 +34,20 @@ import java.lang.annotation.*;
 public @interface Accordion {
     String title() default "";
 
+    /**
+     * @deprecated translation keys will be translated by default.
+     */
+    @Deprecated
     boolean titleTranslation() default false;
 
     String titleKey() default "";
 
     String description() default "";
 
+    /**
+     * @deprecated translation keys will be translated by default.
+     */
+    @Deprecated
     boolean descriptionTranslation() default false;
 
     @Deprecated
@@ -49,6 +57,10 @@ public @interface Accordion {
 
     String category() default "General";
 
+    /**
+     * @deprecated translation keys will be translated by default.
+     */
+    @Deprecated
     boolean categoryTranslation() default false;
 
     @Deprecated
@@ -56,6 +68,10 @@ public @interface Accordion {
 
     String subcategory() default "General";
 
+    /**
+     * @deprecated translation keys will be translated by default.
+     */
+    @Deprecated
     boolean subcategoryTranslation() default false;
 
     @Deprecated

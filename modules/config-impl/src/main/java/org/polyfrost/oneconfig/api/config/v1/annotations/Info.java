@@ -43,6 +43,12 @@ public @interface Info {
 	@TranslatedDefault("polyui.info")
 	String title() default "polyui.info";
 
+	/**
+	 * @deprecated No longer needed. OneConfig now checks whether the given title is a translation
+	 * key present in the active language, and translates it automatically when it is. Pass the
+	 * translation key directly as the title and remove this flag.
+	 */
+	@Deprecated
 	boolean titleTranslation() default false;
 
 	@Deprecated
@@ -50,6 +56,12 @@ public @interface Info {
 
 	String description() default "";
 
+	/**
+	 * @deprecated No longer needed. OneConfig now checks whether the given description is a translation
+	 * key present in the active language, and translates it automatically when it is. Pass the
+	 * translation key directly as the description and remove this flag.
+	 */
+	@Deprecated
 	boolean descriptionTranslation() default false;
 
 	@Deprecated
@@ -60,6 +72,12 @@ public @interface Info {
 
 	String category() default "General";
 
+	/**
+	 * @deprecated No longer needed. OneConfig now checks whether the given category is a translation
+	 * key present in the active language, and translates it automatically when it is. Pass the
+	 * translation key directly as the category and remove this flag.
+	 */
+	@Deprecated
 	boolean categoryTranslation() default false;
 
 	@Deprecated
@@ -67,6 +85,12 @@ public @interface Info {
 
 	String subcategory() default "General";
 
+	/**
+	 * @deprecated No longer needed. OneConfig now checks whether the given subcategory is a translation
+	 * key present in the active language, and translates it automatically when it is. Pass the
+	 * translation key directly as the subcategory and remove this flag.
+	 */
+	@Deprecated
 	boolean subcategoryTranslation() default false;
 
 	@Deprecated

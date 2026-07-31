@@ -37,6 +37,12 @@ import java.lang.annotation.*;
 public @interface Text {
     String title();
 
+    /**
+     * @deprecated No longer needed. OneConfig now checks whether the given title is a translation
+     * key present in the active language, and translates it automatically when it is. Pass the
+     * translation key directly as the title and remove this flag.
+     */
+    @Deprecated
     boolean titleTranslation() default false;
 
     @Deprecated
@@ -44,6 +50,12 @@ public @interface Text {
 
     String description() default "";
 
+    /**
+     * @deprecated No longer needed. OneConfig now checks whether the given description is a translation
+     * key present in the active language, and translates it automatically when it is. Pass the
+     * translation key directly as the description and remove this flag.
+     */
+    @Deprecated
     boolean descriptionTranslation() default false;
 
     @Deprecated
@@ -67,6 +79,12 @@ public @interface Text {
     @Deprecated
     String categoryKey() default "";
 
+    /**
+     * @deprecated No longer needed. OneConfig now checks whether the given category is a translation
+     * key present in the active language, and translates it automatically when it is. Pass the
+     * translation key directly as the category and remove this flag.
+     */
+    @Deprecated
     boolean categoryTranslation() default false;
 
     String subcategory() default "General";
@@ -77,6 +95,12 @@ public @interface Text {
     @TranslatedDefault("oneconfig.textinput.placeholder")
     String placeholder() default "oneconfig.textinput.placeholder";
 
+    /**
+     * @deprecated No longer needed. OneConfig now checks whether the given placeholder is a translation
+     * key present in the active language, and translates it automatically when it is. Pass the
+     * translation key directly as the placeholder and remove this flag.
+     */
+    @Deprecated
     boolean placeholderTranslation() default false;
 
     @Deprecated

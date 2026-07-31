@@ -43,25 +43,53 @@ import java.lang.annotation.*;
 public @interface TextList {
     String title();
 
+    /**
+     * @deprecated No longer needed. OneConfig now checks whether the given title is a translation
+     * key present in the active language, and translates it automatically when it is. Pass the
+     * translation key directly as the title and remove this flag.
+     */
+    @Deprecated
     boolean titleTranslation() default false;
 
     String description() default "";
 
+    /**
+     * @deprecated No longer needed. OneConfig now checks whether the given description is a translation
+     * key present in the active language, and translates it automatically when it is. Pass the
+     * translation key directly as the description and remove this flag.
+     */
+    @Deprecated
     boolean descriptionTranslation() default false;
 
     String icon() default "";
 
     String category() default "General";
 
+    /**
+     * @deprecated No longer needed. OneConfig now checks whether the given category is a translation
+     * key present in the active language, and translates it automatically when it is. Pass the
+     * translation key directly as the category and remove this flag.
+     */
+    @Deprecated
     boolean categoryTranslation() default false;
 
     String subcategory() default "General";
 
+    /**
+     * @deprecated translation keys will be translated by default.
+     */
+    @Deprecated
     boolean subcategoryTranslation() default false;
 
     @TranslatedDefault("oneconfig.textinput.placeholder")
     String placeholder() default "oneconfig.textinput.placeholder";
 
+    /**
+     * @deprecated No longer needed. OneConfig now checks whether the given placeholder is a translation
+     * key present in the active language, and translates it automatically when it is. Pass the
+     * translation key directly as the placeholder and remove this flag.
+     */
+    @Deprecated
     boolean placeholderTranslation() default false;
 
     /**
@@ -79,5 +107,11 @@ public @interface TextList {
     /** Label of the button that appends a new entry. */
     String addText() default "Add";
 
+    /**
+     * @deprecated No longer needed. OneConfig now checks whether the given addText is a translation
+     * key present in the active language, and translates it automatically when it is. Pass the
+     * translation key directly as the addText and remove this flag.
+     */
+    @Deprecated
     boolean addTextTranslation() default false;
 }
