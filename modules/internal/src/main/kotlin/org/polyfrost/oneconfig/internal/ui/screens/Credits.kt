@@ -19,9 +19,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.rememberSvgResourcePainter
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+
+private val oneConfigVersion: String? by lazy {
+    runCatching {
+        ModInfo.loadedMods.firstOrNull { it.id == "oneconfigv1" }?.version
+    }.getOrNull()?.trim()?.takeIf { it.isNotEmpty() }
+}
 
 private data class CreditSection(val title: String, val entries: List<String>)
 
@@ -77,12 +84,25 @@ fun Credits() {
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(end = 16.dp)
         ) {
-            rememberSvgResourcePainter(theme.branding.logoPath)?.let { logo ->
-                Image(
-                    painter = logo,
-                    contentDescription = null,
-                    modifier = Modifier.padding(top = 16.dp, bottom = 8.dp).size(474.dp, 54.dp)
-                )
+            Row(
+                verticalAlignment = Alignment.Bottom,
+                modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+            ) {
+                rememberSvgResourcePainter(theme.branding.logoPath)?.let { logo ->
+                    Image(
+                        painter = logo,
+                        contentDescription = null,
+                        modifier = Modifier.size(474.dp, 54.dp)
+                    )
+                }
+                oneConfigVersion?.let { version ->
+                    Text(
+                        "v$version",
+                        color = theme.textColorSecondary,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(start = 8.dp, bottom = 6.dp)
+                    )
+                }
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
