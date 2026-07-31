@@ -27,7 +27,9 @@ import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignStudio
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
 import org.polyfrost.oneconfig.internal.ui.shell.Lifecycle
+import org.polyfrost.oneconfig.internal.ui.shell.HudEditorRoute
 import org.polyfrost.oneconfig.internal.ui.shell.OCViewModelStoreOwner
+import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Theme
@@ -41,6 +43,8 @@ class HudEditorUIScreen : ComposeScreen() {
     @Volatile private var closeRequested = false
     @Volatile private var closeRequestedAt = 0L
 
+    @Volatile private var returningToOneConfig = false
+
     private var requestCloseCallback: (() -> Unit)? = null
 
     override fun init() {
@@ -49,6 +53,10 @@ class HudEditorUIScreen : ComposeScreen() {
     }
 
     override fun removed() {
+        if (!returningToOneConfig) {
+            ShellState.lastRoute = HudEditorRoute
+            ShellState.lastClosedAt = System.currentTimeMillis()
+        }
         if (HudManager.isEditorOpen) {
             HudManager.onEditorScreenRemoved()
         }
@@ -74,6 +82,7 @@ class HudEditorUIScreen : ComposeScreen() {
         }
         val toggleKey = OneConfigConfig.oneConfigKeybind.keyCodes?.firstOrNull()
         if (toggleKey != null && key == toggleKey && !KeybindRecordingBus.isRecording) {
+            returningToOneConfig = true
             Platform.screen().display(OneConfigUIScreen())
             return true
         }
@@ -133,7 +142,10 @@ class HudEditorUIScreen : ComposeScreen() {
                 ) {
                     Theme {
                         HudDesignStudio(
-                            onReturnToOneConfig = { Platform.screen().display(OneConfigUIScreen()) }
+                            onReturnToOneConfig = {
+                                returningToOneConfig = true
+                                Platform.screen().display(OneConfigUIScreen())
+                            }
                         )
                     }
                 }

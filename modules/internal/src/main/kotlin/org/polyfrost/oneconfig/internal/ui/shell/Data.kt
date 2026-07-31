@@ -13,6 +13,8 @@ import androidx.navigation.NavHostController
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 
+object HudEditorRoute
+
 object Lifecycle : LifecycleOwner {
     override val lifecycle = LifecycleRegistry(this)
 }

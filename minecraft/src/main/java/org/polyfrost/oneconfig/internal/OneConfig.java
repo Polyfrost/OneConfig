@@ -33,7 +33,6 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ChatScreen;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.resources.ReloadableResourceManager;
 import net.minecraft.world.scores.DisplaySlot;
@@ -83,7 +82,10 @@ public class OneConfig
     private boolean initialized = false;
 
     private static void registerCommands() {
-        Command<FabricClientCommandSource> executor = (c) -> OneConfig.INSTANCE.openScreen(new OneConfigUIScreen());
+        Command<FabricClientCommandSource> executor = (c) -> {
+            OneConfigUIScreen.openLastSession();
+            return Command.SINGLE_SUCCESS;
+        };
 
         var node = CommandManager.literal("oneconfig")
                 .executes(executor)
@@ -127,7 +129,7 @@ public class OneConfig
                 return true;
             }
             try {
-                Platform.screen().display(new OneConfigUIScreen());
+                OneConfigUIScreen.openLastSession();
             } catch (Throwable t) {
                 //~ if >= 26.2 'gui.getChat' -> 'gui.hud.getChat'
                 Minecraft.getInstance().gui.getChat()
@@ -280,7 +282,7 @@ public class OneConfig
                 Notifications.icon("/assets/oneconfig/brand/oneconfig-icon.svg", 64),
                 -1f,
                 null,
-                () -> Platform.screen().display(new OneConfigUIScreen()));
+                OneConfigUIScreen::openLastSession);
     }
 
     public static void dismissFirstLaunchToast() {
@@ -351,8 +353,4 @@ public class OneConfig
         LOGGER.info("OneConfig initialization took {}ms", (System.nanoTime() - t1) / 1_000_000.0);
     }
 
-    private int openScreen(Screen screen) {
-        Platform.screen().display(screen);
-        return Command.SINGLE_SUCCESS;
-    }
 }

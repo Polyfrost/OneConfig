@@ -25,8 +25,10 @@ import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.PreferencesGraph
+import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
 import org.polyfrost.oneconfig.internal.ui.PlayerHeadLoader
+import org.polyfrost.oneconfig.internal.ui.shell.HudEditorRoute
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
@@ -39,11 +41,33 @@ class OneConfigUIScreen @JvmOverloads constructor(
     private val initialCategory: String? = null,
     private val initialTree: Tree? = null,
 ) : ComposeScreen() {
-    private companion object {
+    companion object {
         private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/UI")
-        const val FULLSCREEN_BLUR_RADIUS = 8f
-        const val OPEN_ANIMATION_MS = 250L
-        const val CLOSE_ANIMATION_MS = 300L
+        private const val FULLSCREEN_BLUR_RADIUS = 8f
+        private const val OPEN_ANIMATION_MS = 250L
+        private const val CLOSE_ANIMATION_MS = 300L
+
+        private fun resolveOpeningBehaviorRoute(): Any = when (OneConfigConfig.openingBehavior) {
+            0 -> ModsGraph
+            1 -> PreferencesGraph
+            2 -> ShellState.lastRoute ?: ModsGraph
+            3 -> {
+                val last = ShellState.lastClosedAt
+                val route = ShellState.lastRoute
+                // the HUD editor stays restorable for longer than a config page
+                val window = if (route === HudEditorRoute) HudDesignSession.restoreWindowMillis()
+                    else (OneConfigConfig.timeBeforeReset * 1000f).toLong()
+                val withinWindow = last > 0L && System.currentTimeMillis() - last <= window
+                if (withinWindow) route ?: ModsGraph else ModsGraph
+            }
+            else -> ModsGraph
+        }
+
+        @JvmStatic
+        fun openLastSession() {
+            if (resolveOpeningBehaviorRoute() === HudEditorRoute) HudManager.openEditor()
+            else Platform.screen().display(OneConfigUIScreen())
+        }
     }
 
     @Volatile private var closeRequested = false
@@ -213,23 +237,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
         return if (progress >= 1f) 1f else 1f - 2f.pow(-10f * progress)
     }
 
-    /**
-     * Resolves the route to open based on the "Opening Behavior" preference:
-     * 0 = Mods, 1 = Preferences, 2 = Previous page, 3 = Smart reset (previous page unless idle past "Time before reset").
-     */
-    private fun resolveOpeningBehaviorRoute(): Any = when (OneConfigConfig.openingBehavior) {
-        0 -> ModsGraph
-        1 -> PreferencesGraph
-        2 -> ShellState.lastRoute ?: ModsGraph
-        3 -> {
-            val last = ShellState.lastClosedAt
-            val withinWindow = last > 0L &&
-                    System.currentTimeMillis() - last <= (OneConfigConfig.timeBeforeReset * 1000f).toLong()
-            if (withinWindow) ShellState.lastRoute ?: ModsGraph else ModsGraph
-        }
-        else -> ModsGraph
-    }
-
     /** Holds a reference to the close-animation trigger from Compose */
     private var requestCloseCallback: (() -> Unit)? = null
 
@@ -237,7 +244,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
     override fun compose() {
         val initialRoute = when {
             initialTreeId != null -> ModConfigRoute(initialTreeId, initialCategory)
-            else -> resolveOpeningBehaviorRoute()
+            else -> resolveOpeningBehaviorRoute().takeIf { it !== HudEditorRoute } ?: ModsGraph
         }
 
         val containerSize = LocalWindowInfo.current.containerSize

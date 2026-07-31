@@ -684,15 +684,28 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     val keyFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
-        HudManager.pendingSelection?.let { pending ->
-            HudManager.pendingSelection = null
+        val pending = HudManager.pendingSelection
+        HudManager.pendingSelection = null
+        if (pending != null) {
             if (pending in HudManager.activeInstances) {
                 Snapshot.withMutableSnapshot {
                     selectedHud = pending
                     panelHud = pending
                 }
             }
+        } else {
+            HudDesignSession.restoreSelection()?.let { restored ->
+                Snapshot.withMutableSnapshot {
+                    selectedHud = restored
+                    if (HudDesignSession.restorePanelOpen()) panelHud = restored
+                    activeCategory = HudDesignSession.restoreCategory()
+                }
+            }
         }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose { HudDesignSession.save(selectedHud, panelHud != null, activeCategory) }
     }
 
     LaunchedEffect(selectedHud) {
@@ -1276,6 +1289,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     if (selectedHud === hud) selectedHud = null
                     if (hoveredHud === hud) hoveredHud = null
                     HudManager.removeHud(hud, delete = true)
+                    HudDesignSession.forget(hud)
                 }
                 UiSounds.play(UiSoundEvent.CLICK)
             },
