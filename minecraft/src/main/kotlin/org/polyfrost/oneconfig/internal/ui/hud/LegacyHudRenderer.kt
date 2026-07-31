@@ -6,12 +6,19 @@ import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHud
 
 object LegacyHudRenderer {
+    /**
+     * Reused across frames to hold the HUDs drawn this frame. HUD update/render callbacks may add to or
+     * remove from [HudManager.activeInstances], so that list is never iterated while they run.
+     */
+    private val frame = ArrayList<LegacyHud>()
+
     fun renderLive(graphics: GuiGraphicsExtractor) {
         renderLiveHuds(graphics)
         if (CompatOverlayRenderer.oneConfigScreenOpen()) CompatOverlayRenderer.render(graphics)
     }
 
     private fun renderLiveHuds(graphics: GuiGraphicsExtractor) {
+        frame.clear()
         for (hud in HudManager.activeInstances) {
             if (hud !is LegacyHud) continue
             if (hud.hidden && !HudManager.isEditing) continue
@@ -22,6 +29,9 @@ object LegacyHudRenderer {
                     if (!hud.showInChat) continue
                 } else if (HudManager.isGuiScreenOpen && !hud.showInScreens) continue
             }
+            frame.add(hud)
+        }
+        for (hud in frame) {
             HudManager.updateIfDue(hud)
             val hudScale = hud.effectiveScale
             val (mw, mh) = hud.frameMinimumSize()
@@ -49,5 +59,6 @@ object LegacyHudRenderer {
             pose.popPose()
             *///? }
         }
+        frame.clear()
     }
 }
