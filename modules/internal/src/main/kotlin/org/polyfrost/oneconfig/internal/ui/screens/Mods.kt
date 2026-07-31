@@ -37,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.input.pointer.PointerIcon
@@ -270,7 +269,7 @@ fun ModCard(mod: ConfigData, modifier: Modifier = Modifier) {
 
             Box(
                 Modifier.align(Alignment.BottomCenter).height(50.dp).fillMaxWidth().drawWithCache {
-                    onDrawBehind { drawRect(gradient, size = Size(size.width, 50f)) }
+                    onDrawBehind { drawRect(gradient) }
                 }
             )
         }
