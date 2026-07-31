@@ -348,6 +348,7 @@ public class OneConfig
         MainMenuFpsSampler.init();
         //? fabric
         org.polyfrost.oneconfig.internal.compat.ModMenuShimLoader.enable();
+        org.polyfrost.oneconfig.internal.compat.KaleidoCompat.enable();
 
         initialized = true;
         LOGGER.info("OneConfig initialization took {}ms", (System.nanoTime() - t1) / 1_000_000.0);
