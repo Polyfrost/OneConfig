@@ -355,8 +355,30 @@ private fun hudActionBarLayout(
     val sx = bounds.x * mcToScreen
     val sy = bounds.y * mcToScreen
     val sw = bounds.width * mcToScreen
-    val pad = 4f
-    return HudActionBarLayout(sx + pad, sx + sw - iconPx - pad, sy + pad)
+    val sh = bounds.height * mcToScreen
+
+    // The bar lives outside the HUD box: small HUDs used to swallow both icons (or overlap them
+    // on top of each other) when the buttons were laid out inside the bounds.
+    val screenW = HudEditorViewport.viewportWidth.toFloat()
+        .takeIf { it > 0f } ?: (HudManager.guiScreenWidth * mcToScreen)
+    val screenH = HudEditorViewport.viewportHeight.toFloat()
+        .takeIf { it > 0f } ?: (HudManager.guiScreenHeight * mcToScreen)
+
+    val barWidth = iconPx * 2f + gapPx
+    val maxLeft = (screenW - barWidth).coerceAtLeast(0f)
+    val left = (sx + (sw - barWidth) / 2f).coerceIn(0f, maxLeft)
+
+    val below = sy + sh + gapPx
+    // keep clear of the size badge that is drawn above the selection box
+    val above = sy - gapPx - iconPx - (HUD_SIZE_BADGE_GAP + HUD_SIZE_BADGE_HEIGHT)
+    val y = when {
+        below + iconPx <= screenH -> below
+        above >= 0f -> above
+        // no room either side: sit on the bottom edge of the HUD, clamped to the screen
+        else -> (sy + sh - iconPx).coerceIn(0f, (screenH - iconPx).coerceAtLeast(0f))
+    }
+
+    return HudActionBarLayout(left, left + iconPx + gapPx, y)
 }
 
 private fun hitTestActionButton(
