@@ -26,6 +26,7 @@ object ShellState {
     var titleInfoForTitle by mutableStateOf<String?>(null)
     var titleAuthors by mutableStateOf<String?>(null)
     var titleCredits by mutableStateOf<String?>(null)
+    var titleVersion by mutableStateOf<String?>(null)
 
     var openOriginalScreen by mutableStateOf<Runnable?>(null)
 

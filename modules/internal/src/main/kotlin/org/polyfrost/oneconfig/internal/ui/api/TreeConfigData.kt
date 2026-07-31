@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.ui.api
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
+import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 
 class TreeConfigData(
     val tree: Tree,
@@ -44,6 +45,10 @@ class TreeConfigData(
         get() = tree.getMetadata<String>("mod_card_credits")?.nonBlankOrNull()
             ?: modInfo?.credits?.nonBlankOrNull()
 
+    override val version: String?
+        get() = tree.getMetadata<String>("mod_card_version")?.nonBlankOrNull()
+            ?: modInfo?.version?.nonBlankOrNull()
+
     override val category: Config.Category
         get() {
             val explicit = tree.getMetadata<Config.Category>("category")
@@ -52,8 +57,18 @@ class TreeConfigData(
         }
 
     private val modInfo: ModInfo?
-        get() = id.takeIf { it.isNotBlank() }?.let { modId ->
-            ModInfo.loadedMods.firstOrNull { it.id == modId }
+        get() {
+            val mods = ModInfo.loadedMods
+            if (mods.isEmpty()) return null
+            val ids = listOfNotNull(
+                id.nonBlankOrNull(),
+                id.substringBeforeLast('.').nonBlankOrNull()?.takeIf { it != id },
+            )
+            for (modId in ids) {
+                mods.firstOrNull { it.id == modId }?.let { return it }
+            }
+            val name = title.asRenderText().nonBlankOrNull() ?: return null
+            return mods.firstOrNull { it.name.equals(name, ignoreCase = true) }
         }
 
     private fun String.nonBlankOrNull(): String? = trim().takeIf { it.isNotEmpty() }

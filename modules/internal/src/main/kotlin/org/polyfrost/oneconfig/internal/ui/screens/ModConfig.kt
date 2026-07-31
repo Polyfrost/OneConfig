@@ -19,17 +19,19 @@ fun ModConfig(id: String, initialCategory: String? = null) {
     val config = ConfigRegistry.findById(id)
     val tree = ConfigRegistry.findTree(id)
 
-    DisposableEffect(id, config?.title, config?.authors, config?.credits, tree) {
+    DisposableEffect(id, config?.title, config?.authors, config?.credits, config?.version, tree) {
         val title = config?.title?.asRenderText()
         ShellState.title = title
         ShellState.titleInfoForTitle = title
         ShellState.titleAuthors = config?.authors
         ShellState.titleCredits = config?.credits
+        ShellState.titleVersion = config?.version
         ShellState.openOriginalScreen = tree?.getMetadata<Runnable>("open_original_screen")
         onDispose {
             ShellState.titleInfoForTitle = null
             ShellState.titleAuthors = null
             ShellState.titleCredits = null
+            ShellState.titleVersion = null
             ShellState.openOriginalScreen = null
         }
     }

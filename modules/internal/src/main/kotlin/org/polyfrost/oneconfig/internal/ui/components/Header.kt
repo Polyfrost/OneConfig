@@ -172,9 +172,10 @@ private fun String.authorByline(): String? {
 @Composable
 private fun TitleInfoTooltip(title: String) {
     if (ShellState.titleInfoForTitle != title) return
+    val version = ShellState.titleVersion
     val authors = ShellState.titleAuthors
     val credits = ShellState.titleCredits
-    if (authors == null && credits == null) return
+    if (version == null && authors == null && credits == null) return
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
     val density = LocalDensity.current
@@ -206,6 +207,9 @@ private fun TitleInfoTooltip(title: String) {
                     }
                     if (credits != null) {
                         Text("Credits: $credits", color = LocalTheme.current.textColor, fontSize = 12.sp)
+                    }
+                    if (version != null) {
+                        Text("Version: $version", color = LocalTheme.current.textColor, fontSize = 12.sp)
                     }
                 }
             }

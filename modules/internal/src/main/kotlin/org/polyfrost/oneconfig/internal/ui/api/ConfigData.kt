@@ -14,6 +14,7 @@ interface ConfigData {
     val icon: String?
     val authors: String? get() = null
     val credits: String? get() = null
+    val version: String? get() = null
     val source: ConfigSource
     val category: Config.Category
     val onOpen: (() -> Unit)? get() = null
