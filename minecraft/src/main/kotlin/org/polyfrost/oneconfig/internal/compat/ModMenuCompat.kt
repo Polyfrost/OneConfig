@@ -8,6 +8,8 @@ import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend
+import org.polyfrost.oneconfig.api.event.v1.EventManager
+import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
@@ -15,8 +17,11 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
+import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.atomic.AtomicBoolean
 
 object ModMenuCompat {
+    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/ModMenu-Compat")
 
     val mods: MutableList<Mod> = mutableListOf()
 
@@ -54,11 +59,13 @@ object ModMenuCompat {
             mod.id
         }.toSet()
 
-        mods.filterNot {
+        val foundMods = mods.filterNot {
             CompatLoader.nativeLoadedConfigs.contains(it.id) ||
                 it.id in nativeCoveredMods ||
                 hasNativeOcConfig(it.id)
         }
+
+        foundMods
             .forEach { mod ->
                 val modMenuTree = Tree.tree()
 
@@ -107,6 +114,31 @@ object ModMenuCompat {
                 ConfigManager.active().register(modMenuTree)
                 CompatLoader.markFirstModAsSkip()
             }
+
+        scheduleWarmup(foundMods)
+    }
+
+    // Some compat layers can only load when a config UI is opened,
+    // this has to be done when the render thread is available.
+    // Do this one per frame to prevent a huge lag spike
+    private val warmupQueue = ConcurrentLinkedDeque<Mod>()
+    private val warmupScheduled = AtomicBoolean(false)
+
+    private fun scheduleWarmup(mods: List<Mod>) {
+        if (mods.isEmpty()) return
+        warmupQueue.addAll(mods)
+        if (!warmupScheduled.compareAndSet(false, true)) return
+        EventManager.register(FramebufferRenderEvent.End::class.java) { _ -> warmupNext() }
+    }
+
+    private fun warmupNext() {
+        val mod = warmupQueue.poll() ?: return
+        runCatching {
+            CompatLoader.withForcedModId(mod.id) {
+                // The screen is thrown away; building it is what makes the compat mixins fire.
+                ModMenu.getConfigScreen(mod.id, Platform.screen().current())
+            }
+        }.onFailure { LOGGER.warn("Failed to warm up config screen for '{}'", mod.id, it) }
     }
 
     // A mod can ship BOTH a native OneConfig config and a Mod Menu entrypoint. The native config
