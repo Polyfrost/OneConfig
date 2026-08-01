@@ -68,7 +68,6 @@ private class PlatformImpl : PlatformContext {
     override val screenReader: PlatformScreenReader = PlatformScreenReaderImpl()
     override val inputModeManager: InputModeManager = InputModeManagerImpl()
 
-    private val defaultCursor = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)
     private val handCursor = glfwCreateStandardCursor(GLFW_HAND_CURSOR)
     private val textCursor = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR)
     private val moveCursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR)
@@ -88,7 +87,7 @@ private class PlatformImpl : PlatformContext {
 
     private fun applyPointerIcon(pointerIcon: PointerIcon) {
         when (pointerIcon) {
-            PointerIcon.Default -> glfwSetCursor(handle, defaultCursor)
+            PointerIcon.Default -> glfwSetCursor(handle, 0L)
             PointerIcon.Hand -> glfwSetCursor(handle, handCursor)
             PointerIcon.Text -> glfwSetCursor(handle, textCursor)
             PointerIcon.Crosshair -> glfwSetCursor(handle, moveCursor)
