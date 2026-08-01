@@ -171,6 +171,11 @@ public class OneConfig
         HudManager.guiScreenHeight = sh;
 
         // Update HUD visibility state for per-HUD filtering
+        //? if >= 26.2 {
+        /*HudManager.isGuiHidden = Minecraft.getInstance().gui.hud.isHidden();
+        *///? } else {
+        HudManager.isGuiHidden = Minecraft.getInstance().options.hideGui;
+        //? }
         HudManager.isDebugScreenVisible = Minecraft.getInstance().getDebugOverlay().showDebugScreen();
         HudManager.isTabListVisible = isTabListVisible();
         HudManager.isGuiScreenOpen = Platform.screen().current() != null;

@@ -64,6 +64,41 @@ enum class Section {
     BottomLeft, BottomCenter, BottomRight
 }
 
+enum class HudAnchor {
+    Auto,
+    TopLeft, Top, TopRight,
+    Left, Center, Right,
+    BottomLeft, Bottom, BottomRight;
+
+    fun toAlign(): PolyAlign? = when (this) {
+        Auto -> null
+        TopLeft -> PolyAlign.TopLeft
+        Top -> PolyAlign.Top
+        TopRight -> PolyAlign.TopRight
+        Left -> PolyAlign.Left
+        Center -> PolyAlign.Center
+        Right -> PolyAlign.Right
+        BottomLeft -> PolyAlign.BottomLeft
+        Bottom -> PolyAlign.Bottom
+        BottomRight -> PolyAlign.BottomRight
+    }
+
+    companion object {
+        @JvmStatic
+        fun of(align: PolyAlign): HudAnchor = when (align) {
+            PolyAlign.TopLeft -> TopLeft
+            PolyAlign.Top -> Top
+            PolyAlign.TopRight -> TopRight
+            PolyAlign.Left -> Left
+            PolyAlign.Center -> Center
+            PolyAlign.Right -> Right
+            PolyAlign.BottomLeft -> BottomLeft
+            PolyAlign.Bottom -> Bottom
+            PolyAlign.BottomRight -> BottomRight
+        }
+    }
+}
+
 private const val GRID_SIZE = 3
 
 @Suppress("EqualsOrHashCode", "UnstableApiUsage")
@@ -246,48 +281,76 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         return maxOf(h, minH * scale).coerceAtLeast(1f)
     }
 
-    open var x: Float
-        get() {
-            val sw = HudManager.guiScreenWidth
-            val secPos = Math.round(sw / GRID_SIZE * relativeX).toFloat()
-            return when (section) {
-                Section.TopLeft, Section.CenterLeft, Section.BottomLeft -> secPos
-                Section.TopCenter, Section.Center, Section.BottomCenter -> (sw - scaledWidth) / 2f + secPos
-                Section.TopRight, Section.CenterRight, Section.BottomRight -> sw - scaledWidth - secPos
-            }
+    private val anchorFracX: Float get() = when (growthAnchor) {
+        HudAnchor.Auto -> when (section) {
+            Section.TopLeft, Section.CenterLeft, Section.BottomLeft -> 0f
+            Section.TopCenter, Section.Center, Section.BottomCenter -> 0.5f
+            Section.TopRight, Section.CenterRight, Section.BottomRight -> 1f
         }
+        HudAnchor.TopLeft, HudAnchor.Left, HudAnchor.BottomLeft -> 0f
+        HudAnchor.Top, HudAnchor.Center, HudAnchor.Bottom -> 0.5f
+        HudAnchor.TopRight, HudAnchor.Right, HudAnchor.BottomRight -> 1f
+    }
+
+    private val anchorFracY: Float get() = when (growthAnchor) {
+        HudAnchor.Auto -> when (section) {
+            Section.TopLeft, Section.TopCenter, Section.TopRight -> 0f
+            Section.CenterLeft, Section.Center, Section.CenterRight -> 0.5f
+            Section.BottomLeft, Section.BottomCenter, Section.BottomRight -> 1f
+        }
+        HudAnchor.TopLeft, HudAnchor.Top, HudAnchor.TopRight -> 0f
+        HudAnchor.Left, HudAnchor.Center, HudAnchor.Right -> 0.5f
+        HudAnchor.BottomLeft, HudAnchor.Bottom, HudAnchor.BottomRight -> 1f
+    }
+
+    private val anchorScreenX: Float get() {
+        val sw = HudManager.guiScreenWidth
+        val secPos = Math.round(sw / GRID_SIZE * relativeX).toFloat()
+        return when (section) {
+            Section.TopLeft, Section.CenterLeft, Section.BottomLeft -> secPos
+            Section.TopCenter, Section.Center, Section.BottomCenter -> sw / 2f + secPos
+            Section.TopRight, Section.CenterRight, Section.BottomRight -> sw - secPos
+        }
+    }
+
+    private val anchorScreenY: Float get() {
+        val sh = HudManager.guiScreenHeight
+        val secPos = Math.round(sh / GRID_SIZE * relativeY).toFloat()
+        return when (section) {
+            Section.TopLeft, Section.TopCenter, Section.TopRight -> secPos
+            Section.CenterLeft, Section.Center, Section.CenterRight -> sh / 2f + secPos
+            Section.BottomLeft, Section.BottomCenter, Section.BottomRight -> sh - secPos
+        }
+    }
+
+    open var x: Float
+        get() = anchorScreenX - anchorFracX * scaledWidth
         set(v) { updateRelativeX(v) }
 
     open var y: Float
-        get() {
-            val sh = HudManager.guiScreenHeight
-            val secPos = Math.round(sh / GRID_SIZE * relativeY).toFloat()
-            return when (section) {
-                Section.TopLeft, Section.TopCenter, Section.TopRight -> secPos
-                Section.CenterLeft, Section.Center, Section.CenterRight -> (sh - scaledHeight) / 2f + secPos
-                Section.BottomLeft, Section.BottomCenter, Section.BottomRight -> sh - scaledHeight - secPos
-            }
-        }
+        get() = anchorScreenY - anchorFracY * scaledHeight
         set(v) { updateRelativeY(v) }
 
     protected open fun updateRelativeX(absX: Float) {
         val sw = HudManager.guiScreenWidth
         val gridW = sw / GRID_SIZE
+        val anchor = absX + anchorFracX * scaledWidth
         relativeX = when (section) {
-            Section.TopLeft, Section.CenterLeft, Section.BottomLeft -> absX / gridW
-            Section.TopCenter, Section.Center, Section.BottomCenter -> (absX - (sw - scaledWidth) / 2f) / gridW
-            else -> (sw - scaledWidth - absX) / gridW
-        }.coerceIn(-1f, 2f)
+            Section.TopLeft, Section.CenterLeft, Section.BottomLeft -> anchor
+            Section.TopCenter, Section.Center, Section.BottomCenter -> anchor - sw / 2f
+            else -> sw - anchor
+        }.div(gridW).coerceIn(-1f, 2f)
     }
 
     protected open fun updateRelativeY(absY: Float) {
         val sh = HudManager.guiScreenHeight
         val gridH = sh / GRID_SIZE
+        val anchor = absY + anchorFracY * scaledHeight
         relativeY = when (section) {
-            Section.TopLeft, Section.TopCenter, Section.TopRight -> absY / gridH
-            Section.CenterLeft, Section.Center, Section.CenterRight -> (absY - (sh - scaledHeight) / 2f) / gridH
-            else -> (sh - scaledHeight - absY) / gridH
-        }.coerceIn(-1f, 2f)
+            Section.TopLeft, Section.TopCenter, Section.TopRight -> anchor
+            Section.CenterLeft, Section.Center, Section.CenterRight -> anchor - sh / 2f
+            else -> sh - anchor
+        }.div(gridH).coerceIn(-1f, 2f)
     }
 
     fun setAbsolutePosition(absX: Float, absY: Float) {
@@ -342,6 +405,27 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     private var _alignment: MutableState<PolyAlign> = mutableStateOf(PolyAlign.Center)
     var alignment: PolyAlign get() = _alignment.value; set(v) { _alignment.value = v }
+
+    private var _growthAnchor: MutableState<HudAnchor> = mutableStateOf(HudAnchor.Auto)
+    var growthAnchor: HudAnchor get() = _growthAnchor.value; set(v) { _growthAnchor.value = v }
+
+    val effectiveGrowthAnchor: HudAnchor get() {
+        val fx = anchorFracX
+        val fy = anchorFracY
+        return when {
+            fy == 0f -> when (fx) { 0f -> HudAnchor.TopLeft; 0.5f -> HudAnchor.Top; else -> HudAnchor.TopRight }
+            fy == 0.5f -> when (fx) { 0f -> HudAnchor.Left; 0.5f -> HudAnchor.Center; else -> HudAnchor.Right }
+            else -> when (fx) { 0f -> HudAnchor.BottomLeft; 0.5f -> HudAnchor.Bottom; else -> HudAnchor.BottomRight }
+        }
+    }
+
+    fun setGrowthAnchorKeepingPosition(anchor: HudAnchor) {
+        val absX = x
+        val absY = y
+        growthAnchor = anchor
+        updateRelativeX(absX)
+        updateRelativeY(absY)
+    }
 
     private var _padTop: MutableState<Float> = mutableStateOf(0f)
     var padTop: Float get() = _padTop.value; set(v) { _padTop.value = v }
@@ -502,6 +586,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             tree["toggleKey"] = ktProperty(out::toggleKey).apply { addDisplayCondition(hideFromConfigUi) }
             tree["showKey"] = ktProperty(out::showKey).apply { addDisplayCondition(hideFromConfigUi) }
             tree["alignment"] = ktProperty(out::alignment).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["growthAnchor"] = ktProperty(out::growthAnchor).apply {
+                description = "The point this HUD stays pinned to when its size changes, so it only ever grows away from that point."
+                addDisplayCondition(hideFromConfigUi)
+            }
             tree["padTop"] = ktProperty(out::padTop).apply { addDisplayCondition(hideFromConfigUi) }
             tree["padBottom"] = ktProperty(out::padBottom).apply { addDisplayCondition(hideFromConfigUi) }
             tree["padLeft"] = ktProperty(out::padLeft).apply { addDisplayCondition(hideFromConfigUi) }
@@ -606,6 +694,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         _renderedW = mutableStateOf(0f)
         _renderedH = mutableStateOf(0f)
         _alignment = mutableStateOf(this@Hud.alignment)
+        _growthAnchor = mutableStateOf(this@Hud.growthAnchor)
         _padTop = mutableStateOf(this@Hud.padTop)
         _padBottom = mutableStateOf(this@Hud.padBottom)
         _padLeft = mutableStateOf(this@Hud.padLeft)

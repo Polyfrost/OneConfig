@@ -21,7 +21,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
@@ -38,7 +37,9 @@ import androidx.compose.ui.window.PopupProperties
 import org.polyfrost.compose.mc.McFontQueue
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.layout.PolyAlign
 import org.polyfrost.oneconfig.api.hud.v1.Font
+import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.Weight
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
@@ -91,6 +92,8 @@ fun Designer(hud: Hud? = null) {
     var staticW by remember { mutableStateOf(hud.staticW) }
     var staticH by remember { mutableStateOf(hud.staticH) }
     var alignment by remember { mutableStateOf(hud.alignment) }
+    var growthAnchor by remember { mutableStateOf(hud.effectiveGrowthAnchor) }
+    val growthAlign = growthAnchor.toAlign() ?: PolyAlign.Center
     var padLeft by remember { mutableStateOf(hud.padLeft) }
     var padRight by remember { mutableStateOf(hud.padRight) }
     var padTop by remember { mutableStateOf(hud.padTop) }
@@ -162,23 +165,28 @@ fun Designer(hud: Hud? = null) {
                     }
                 }
 
-                HudSettingTarget(hud, "alignment") {
+                HudSettingTarget(hud, if (staticWidth) "alignment" else "growthAnchor") {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Box(modifier = Modifier.alpha(if (staticWidth) 1f else 0.35f)) {
-                        AlignmentPicker(alignment) {
-                            if (staticWidth) Snapshot.withMutableSnapshot { alignment = it; hud.alignment = it }
+                    AlignmentPicker(if (staticWidth) alignment else growthAlign) {
+                        Snapshot.withMutableSnapshot {
+                            if (staticWidth) {
+                                alignment = it
+                                hud.alignment = it
+                            } else {
+                                growthAnchor = HudAnchor.of(it)
+                                hud.setGrowthAnchorKeepingPosition(growthAnchor)
+                            }
                         }
                     }
-                    if (!staticWidth) {
-                        Text(
-                            "Enable Static Size\nto use alignment",
-                            color = LocalTheme.current.textColorSecondary,
-                            fontSize = 12.sp
-                        )
-                    }
+                    Text(
+                        if (staticWidth) "Aligns the content inside the fixed box"
+                        else "Pins this corner or edge in place;\nthe HUD only grows away from it",
+                        color = LocalTheme.current.textColorSecondary,
+                        fontSize = 12.sp
+                    )
                 }
                 }
             }

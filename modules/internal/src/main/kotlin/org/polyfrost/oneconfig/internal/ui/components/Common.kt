@@ -7,6 +7,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 
@@ -21,3 +24,19 @@ fun Modifier.onClick(interactionSource: MutableInteractionSource, onClick: () ->
         onClick()
     }
 )
+
+/**
+ * Swallows press/release events before children see them, so anything below this modifier cannot be clicked,
+ * dragged or focused. Hover, move and scroll events are left alone so tooltips and page scrolling keep working.
+ */
+fun Modifier.blockInteraction(blocked: Boolean = true): Modifier =
+    if (!blocked) this else pointerInput(Unit) {
+        awaitPointerEventScope {
+            while (true) {
+                val event = awaitPointerEvent(PointerEventPass.Initial)
+                if (event.type == PointerEventType.Press || event.type == PointerEventType.Release) {
+                    event.changes.forEach { it.consume() }
+                }
+            }
+        }
+    }

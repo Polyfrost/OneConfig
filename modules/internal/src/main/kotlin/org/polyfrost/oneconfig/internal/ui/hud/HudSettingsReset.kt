@@ -5,9 +5,13 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -16,9 +20,11 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -38,6 +44,9 @@ import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
+import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
+import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.concentric
 import org.polyfrost.oneconfig.api.config.v1.Property
@@ -239,19 +248,54 @@ fun HudSettingsContent(hud: Hud, content: @Composable () -> Unit) {
 
 private val DeleteMenuColor = androidx.compose.ui.graphics.Color(0xFFE5484D)
 
-/** Right-click menu on a HUD element in the design studio canvas. */
+@Composable
+private fun HudMenuItem(
+    icon: String,
+    label: String,
+    color: Color,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    val theme = LocalTheme.current
+    val interactionSource = rememberInteractionSource()
+    Row(
+        modifier = Modifier
+            .clip(theme.popupShape.concentric(MenuPadding))
+            .then(
+                if (enabled) {
+                    Modifier.onClick(interactionSource) { onClick() }.pointerHoverIcon(PointerIcon.Hand)
+                } else {
+                    Modifier
+                },
+            )
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Icon(icon, color = color, modifier = Modifier.size(14.dp))
+        Text(label, color = color, fontSize = 13.sp)
+    }
+}
+
+/**
+ * Right-click menu on a HUD element in the design studio canvas. Mirrors the hover action bar so the
+ * buttons stay reachable when HUDs are packed too tightly for the bar to be aimed at.
+ */
 @Composable
 fun HudCanvasResetMenu(
     hud: Hud?,
     expanded: Boolean,
     offset: IntOffset,
     onDismiss: () -> Unit,
+    onSettings: (Hud) -> Unit = {},
     onDelete: (Hud) -> Unit = {},
 ) {
     if (hud == null || !expanded) return
     val theme = LocalTheme.current
     val enabled = hudHasResettableDefaults(hud)
     val deletable = hud.deletable()
+    val isHidden = hud.hidden
+    val isLocked = hud.locked
     Popup(
         alignment = Alignment.TopStart,
         offset = offset,
@@ -259,49 +303,57 @@ fun HudCanvasResetMenu(
         properties = PopupProperties(focusable = true),
     ) {
         Column(
+            // without this the separator's fillMaxWidth stretches the menu to the popup constraints,
+            // which are the whole screen
             modifier = Modifier
+                .width(IntrinsicSize.Max)
                 .background(theme.popupBackground, theme.popupShape)
                 .border(1.dp, theme.borderColor, theme.popupShape)
                 .padding(MenuPadding),
         ) {
-            val interactionSource = rememberInteractionSource()
-            val color = if (enabled) theme.textColor else theme.textColorSecondary
-            Row(
-                modifier = Modifier
-                    .clip(theme.popupShape.concentric(MenuPadding))
-                    .then(
-                        if (enabled) {
-                            Modifier.onClick(interactionSource) {
-                                resetAllHudProperties(hud)
-                                onDismiss()
-                            }.pointerHoverIcon(PointerIcon.Hand)
-                        } else {
-                            Modifier
-                        },
-                    )
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            HudMenuItem("settings", "Settings", theme.textColor) {
+                UiSounds.play(UiSoundEvent.HUD_SELECT)
+                onSettings(hud)
+                onDismiss()
+            }
+            HudMenuItem(
+                if (isHidden) "eye-off" else "eye",
+                if (isHidden) "Show HUD" else "Hide HUD",
+                theme.textColor,
             ) {
-                Icon("refresh", color = color, modifier = Modifier.size(14.dp))
-                Text("Reset all to default", color = color, fontSize = 13.sp)
+                UiSounds.play(UiSoundEvent.CLICK)
+                Snapshot.withMutableSnapshot { hud.hidden = !hud.hidden }
+                onDismiss()
+            }
+            HudMenuItem(
+                if (isLocked) "lock" else "unlock",
+                if (isLocked) "Unlock HUD" else "Lock HUD",
+                if (isLocked) Accent else theme.textColor,
+            ) {
+                UiSounds.play(UiSoundEvent.CLICK)
+                Snapshot.withMutableSnapshot { hud.locked = !hud.locked }
+                onDismiss()
+            }
+            Box(
+                modifier = Modifier
+                    .padding(vertical = MenuPadding)
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(theme.borderColor),
+            )
+            HudMenuItem(
+                "refresh",
+                "Reset all to default",
+                if (enabled) theme.textColor else theme.textColorSecondary,
+                enabled = enabled,
+            ) {
+                resetAllHudProperties(hud)
+                onDismiss()
             }
             if (deletable) {
-                val deleteInteraction = rememberInteractionSource()
-                Row(
-                    modifier = Modifier
-                        .clip(theme.popupShape.concentric(MenuPadding))
-                        .onClick(deleteInteraction) {
-                            onDelete(hud)
-                            onDismiss()
-                        }
-                        .pointerHoverIcon(PointerIcon.Hand)
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Icon("trash", color = DeleteMenuColor, modifier = Modifier.size(14.dp))
-                    Text("Delete HUD", color = DeleteMenuColor, fontSize = 13.sp)
+                HudMenuItem("trash", "Delete HUD", DeleteMenuColor) {
+                    onDelete(hud)
+                    onDismiss()
                 }
             }
         }

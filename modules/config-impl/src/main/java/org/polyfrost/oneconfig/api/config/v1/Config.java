@@ -46,6 +46,8 @@ import java.util.function.Supplier;
 
 public abstract class Config {
     protected Tree tree;
+    /** code-defined defaults captured at first initialization, keyed by dot-separated property path. */
+    private Map<String, Object> defaultSnapshot;
 
     public final String id, title, iconPath;
     public final Category category;
@@ -109,7 +111,12 @@ public abstract class Config {
             }
             // capture the code-defined default of every property before register() loads stored values over them,
             // so the UI can offer a "reset to default" action. stored as transient metadata, so it is never persisted.
-            captureDefaults(tree);
+            if (defaultSnapshot == null) {
+                defaultSnapshot = new HashMap<>();
+                captureDefaults(tree, "", defaultSnapshot);
+            } else {
+                applyDefaultSnapshot(tree, "", defaultSnapshot);
+            }
             Tree.beginFailureCollection();
             List<String> resetOptions;
             try {
@@ -134,14 +141,34 @@ public abstract class Config {
      */
     @ApiStatus.Internal
     public static void captureDefaults(Tree tree) {
-        for (Node node : tree.map.values()) {
+        captureDefaults(tree, null, null);
+    }
+
+    private static void captureDefaults(Tree tree, String prefix, Map<String, Object> out) {
+        for (Map.Entry<String, Node> entry : tree.map.entrySet()) {
+            Node node = entry.getValue();
             if (node instanceof Property) {
                 Property<?> p = (Property<?>) node;
                 Object value = p.get();
                 if (value == null) continue;
-                p.getOrPutMetadata("default", () -> copyDefault(p.type, value));
+                Object def = p.getOrPutMetadata("default", () -> copyDefault(p.type, value));
+                if (out != null) out.put(prefix + entry.getKey(), def);
             } else if (node instanceof Tree) {
-                captureDefaults((Tree) node);
+                captureDefaults((Tree) node, out == null ? null : prefix + entry.getKey() + ".", out);
+            }
+        }
+    }
+
+    private static void applyDefaultSnapshot(Tree tree, String prefix, Map<String, Object> snapshot) {
+        for (Map.Entry<String, Node> entry : tree.map.entrySet()) {
+            Node node = entry.getValue();
+            if (node instanceof Property) {
+                Property<?> p = (Property<?>) node;
+                Object def = snapshot.get(prefix + entry.getKey());
+                if (def == null) continue;
+                p.addMetadata("default", copyDefault(p.type, def));
+            } else if (node instanceof Tree) {
+                applyDefaultSnapshot((Tree) node, prefix + entry.getKey() + ".", snapshot);
             }
         }
     }
