@@ -91,8 +91,8 @@ object LegacyHudOffscreen {
         val huds = activeLegacyHuds()
         if (huds.isEmpty() && !CompatOverlayRenderer.hasHooks()) return
         if (!SkiaCtx.isReady) return
-        val w = client.window.width
-        val h = client.window.height
+        val w = Platform.screen().viewportWidth()
+        val h = Platform.screen().viewportHeight()
         if (w <= 0 || h <= 0) return
 
         try {
@@ -101,8 +101,8 @@ object LegacyHudOffscreen {
             val guiRenderer = (client.gameRenderer as GameRendererAccessor).`oneconfig$getGuiRenderer`()
             val accessor = guiRenderer as GuiRendererAccessor
 
-            val guiW = client.window.guiScaledWidth
-            val guiH = client.window.guiScaledHeight
+            val guiW = Platform.screen().guiWidth()
+            val guiH = Platform.screen().guiHeight()
 
             val state = GuiRenderState()
             val ext = GuiGraphicsExtractor(client, state, guiW, guiH)

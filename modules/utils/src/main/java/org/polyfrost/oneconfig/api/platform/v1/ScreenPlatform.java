@@ -38,6 +38,10 @@ public interface ScreenPlatform {
 
     int windowHeight();
 
+    int guiWidth();
+
+    int guiHeight();
+
     default float pixelRatio() {
         return (float) viewportWidth() / windowWidth();
     }

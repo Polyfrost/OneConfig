@@ -101,8 +101,8 @@ class HudEditorUIScreen : ComposeScreen() {
         }
         if (client.level == null) {
             HudManager.inWorld = false
-            val sw = ctx.guiWidth().toFloat()
-            val sh = ctx.guiHeight().toFloat()
+            val sw = Platform.screen().guiWidth().toFloat()
+            val sh = Platform.screen().guiHeight().toFloat()
             HudManager.guiScreenWidth = sw
             HudManager.guiScreenHeight = sh
             HudManager.prepare(sw, sh)

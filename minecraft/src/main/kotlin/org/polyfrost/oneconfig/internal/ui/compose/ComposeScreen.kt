@@ -567,14 +567,14 @@ abstract class ComposeScreen(
 
     private fun syncSceneMetrics(): Boolean {
         if (sceneClosed) return false
-        val w = client.window.screenWidth
-        val h = client.window.screenHeight
+        val w = Platform.screen().windowWidth()
+        val h = Platform.screen().windowHeight()
         if (w <= 0 || h <= 0) return false
         scene.density = Density(sceneDensity())
         scene.size = IntSize(w, h)
         ComposeSceneContextImpl.updateContainerSize(w, h)
         val changed = w != lastSceneW || h != lastSceneH
-        val fbW = client.window.width
+        val fbW = Platform.screen().viewportWidth()
         if (changed || fbW != lastFbWidth) {
             cachedSurfaceScale = -1f
             settleFrames = SETTLE_FRAMES
@@ -598,9 +598,9 @@ abstract class ComposeScreen(
 
     private fun surfaceScale(): Float {
         cachedSurfaceScale.takeIf { it > 0f }?.let { return it }
-        val screenW = client.window.screenWidth
+        val screenW = Platform.screen().windowWidth()
         val scale = if (screenW <= 0) Platform.screen().pixelRatio().takeIf { it > 0f } ?: 1f
-        else (client.window.width.toFloat() / screenW).coerceAtLeast(0.01f)
+        else (Platform.screen().viewportWidth().toFloat() / screenW).coerceAtLeast(0.01f)
         cachedSurfaceScale = scale
         return scale
     }

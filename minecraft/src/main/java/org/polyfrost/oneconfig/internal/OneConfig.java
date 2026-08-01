@@ -108,11 +108,7 @@ public class OneConfig
     }
 
     public static boolean isInChatScreen() {
-        //? if >= 26.2 {
-        /*return Minecraft.getInstance().gui.screen() instanceof ChatScreen;
-        *///?} else {
-        return Minecraft.getInstance().screen instanceof ChatScreen;
-        //?}
+        return Platform.screen().current() instanceof ChatScreen;
     }
 
     private static void registerKeybinds() {
@@ -164,8 +160,8 @@ public class OneConfig
             return;
         }
 
-        float sw = graphics.guiWidth();
-        float sh = graphics.guiHeight();
+        float sw = Platform.screen().guiWidth();
+        float sh = Platform.screen().guiHeight();
         // guiWidth()/guiHeight() are already GUI-scaled (== Screen dimensions), do not divide by guiScale again.
         HudManager.guiScreenWidth = sw;
         HudManager.guiScreenHeight = sh;
@@ -179,11 +175,10 @@ public class OneConfig
         HudManager.isDebugScreenVisible = Minecraft.getInstance().getDebugOverlay().showDebugScreen();
         HudManager.isTabListVisible = isTabListVisible();
         HudManager.isGuiScreenOpen = Platform.screen().current() != null;
-        //~ if >= 26.2 'screen' -> 'gui.screen()'
-        HudManager.isChatScreenOpen = Minecraft.getInstance().screen instanceof ChatScreen;
+        HudManager.isChatScreenOpen = Platform.screen().current() instanceof ChatScreen;
         HudManager.inWorld = true;
-        HudManager.targetPixelWidth = Minecraft.getInstance().getWindow().getWidth();
-        HudManager.targetPixelHeight = Minecraft.getInstance().getWindow().getHeight();
+        HudManager.targetPixelWidth = Platform.screen().viewportWidth();
+        HudManager.targetPixelHeight = Platform.screen().viewportHeight();
 
         if (!SkiaCtx.INSTANCE.suppressInGameHudRender) {
             LegacyHudRenderer.INSTANCE.renderLive(graphics);
@@ -209,9 +204,8 @@ public class OneConfig
 
     private static void installNotificationRenderer() {
         SkiaCtx.INSTANCE.setNotifRenderer(() -> {
-            var window = Minecraft.getInstance().getWindow();
-            float sw = window.getGuiScaledWidth();
-            float sh = window.getGuiScaledHeight();
+            float sw = Platform.screen().guiWidth();
+            float sh = Platform.screen().guiHeight();
             if (sw <= 0f || sh <= 0f) return;
             var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
             NotificationsRenderer.render(ctx, sw, sh);
