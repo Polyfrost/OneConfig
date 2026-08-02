@@ -78,6 +78,13 @@ object ShellState {
     /** Consumed once per open so the first page transition can be treated specially. */
     var initialTransitionConsumed: Boolean = false
 
+    /**
+     * True while the menu is composed but has not yet navigated to the page it is opening on. The nav host has
+     * to be composed before it can be navigated, so it briefly holds the mod grid; this keeps that placeholder
+     * from being drawn.
+     */
+    var awaitingInitialRoute by mutableStateOf(false)
+
     var openingTransitionTarget: String? = null
 }
 object LocalNavController {
