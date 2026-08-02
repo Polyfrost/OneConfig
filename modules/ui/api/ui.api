@@ -1,3 +1,19 @@
+public final class org/polyfrost/oneconfig/api/ui/v1/OneConfigUI {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/OneConfigUI;
+	public static final fun createScreen ()Ljava/lang/Object;
+	public static final fun createScreen (Ljava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun createScreen$default (Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun open ()V
+	public static final fun open (Ljava/lang/Object;)V
+	public static synthetic fun open$default (Ljava/lang/Object;ILjava/lang/Object;)V
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/ui/v1/OneConfigUIBridge {
+	public abstract fun createScreen (Ljava/lang/Object;)Ljava/lang/Object;
+	public abstract fun open (Ljava/lang/Object;)V
+}
+
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/NanoSvgApi {
 	public abstract fun delete (J)V
 	public abstract fun parse (Ljava/nio/ByteBuffer;)Lorg/polyfrost/oneconfig/api/ui/v1/api/NanoSvgApi$SVG;

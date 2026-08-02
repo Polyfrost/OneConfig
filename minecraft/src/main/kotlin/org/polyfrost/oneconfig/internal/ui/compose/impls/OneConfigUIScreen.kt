@@ -40,6 +40,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
     private val initialTreeId: String? = null,
     private val initialCategory: String? = null,
     private val initialTree: Tree? = null,
+    private val initialRoute: Any? = null,
 ) : ComposeScreen() {
     companion object {
         private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/UI")
@@ -96,12 +97,14 @@ class OneConfigUIScreen @JvmOverloads constructor(
         initialTree?.let { ConfigRegistry.registerTree(it, ConfigSource.OC) }
 
         if (route == null) {
-            if (initialTreeId != null) {
-                route = ModConfigRoute(initialTreeId, initialCategory)
-            } else {
-                val opening = resolveOpeningBehaviorRoute()
-                route = opening.route.takeIf { it !== HudEditorRoute } ?: ModsGraph
-                restoring = opening.restored && route === opening.route
+            when {
+                initialRoute != null -> route = initialRoute
+                initialTreeId != null -> route = ModConfigRoute(initialTreeId, initialCategory)
+                else -> {
+                    val opening = resolveOpeningBehaviorRoute()
+                    route = opening.route.takeIf { it !== HudEditorRoute } ?: ModsGraph
+                    restoring = opening.restored && route === opening.route
+                }
             }
             ShellState.lastRoute = route
         }

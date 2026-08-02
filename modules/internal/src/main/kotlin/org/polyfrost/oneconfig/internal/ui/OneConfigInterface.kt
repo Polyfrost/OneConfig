@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.Density
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.compose.rememberNavController
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDragLayer
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
@@ -49,6 +50,8 @@ import org.polyfrost.oneconfig.internal.ui.shell.Shell
 import org.polyfrost.oneconfig.internal.ui.themes.Theme
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
 import kotlin.math.pow
+
+private val LOGGER = LogManager.getLogger("OneConfig/UI")
 
 @Composable
 fun OneConfigInterface(
@@ -93,7 +96,12 @@ fun OneConfigInterface(
                 if (ready) break
                 withFrameNanos { }
             }
-            LocalNavController.wrapper.navigate(initialRoute, clearSearch = !resuming)
+            try {
+                LocalNavController.wrapper.navigate(initialRoute, clearSearch = !resuming)
+            } catch (t: Throwable) {
+                LOGGER.error("Failed to open the OneConfig UI on {}, falling back to the mods page", initialRoute, t)
+                runCatching { LocalNavController.wrapper.navigate(ModsGraph, clearSearch = !resuming) }
+            }
             ShellState.awaitingInitialRoute = false
         } else {
             // no initial navigation, so the first user-driven transition should use the normal setting
