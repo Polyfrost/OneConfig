@@ -55,6 +55,8 @@ fun OneConfigInterface(
     windowWidth: Float,
     windowHeight: Float,
     initialRoute: Any = ModsGraph,
+    /** Set when the scene is being rebuilt for a session already in progress, so its search survives. */
+    resuming: Boolean = false,
     onCloseRequest: () -> Unit = {},
     onCloseReady: ((requestClose: () -> Unit) -> Unit)? = null,
     shellBackdrop: DrawScope.(Offset) -> Unit = {}
@@ -64,9 +66,11 @@ fun OneConfigInterface(
     LocalNavController.current = rememberNavController()
 
     LaunchedEffect(initialRoute) {
-        ShellState.globalSearchActive = false
-        ShellState.searchQuery = ""
-        ShellState.showSearchField = false
+        if (!resuming) {
+            ShellState.globalSearchActive = false
+            ShellState.searchQuery = ""
+            ShellState.showSearchField = false
+        }
 
         ShellState.openingTransitionTarget = null
         if (initialRoute != ModsGraph) {
@@ -85,7 +89,7 @@ fun OneConfigInterface(
                 if (ready) break
                 withFrameNanos { }
             }
-            LocalNavController.wrapper.navigate(initialRoute)
+            LocalNavController.wrapper.navigate(initialRoute, clearSearch = !resuming)
         } else {
             // no initial navigation, so the first user-driven transition should use the normal setting
             ShellState.initialTransitionConsumed = true

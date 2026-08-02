@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -85,6 +84,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private sealed interface SettingNode {
@@ -156,7 +156,7 @@ fun ConfigScreen(tree: Tree, initialCategory: String? = null, pageKey: String) {
             return@Column
         }
 
-        val lazyListState = rememberLazyListState()
+        val lazyListState = rememberRestorableLazyListState(pageKey)
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
                 state = lazyListState,

@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -25,6 +24,7 @@ import org.polyfrost.oneconfig.internal.ui.components.ModResult
 import org.polyfrost.oneconfig.internal.ui.components.OptionResult
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.performSearch
+import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.api.config.v1.Property
 
@@ -55,7 +55,7 @@ fun SearchResultsScreen(query: String) {
         return
     }
 
-    val listState = rememberLazyListState()
+    val listState = rememberRestorableLazyListState("global-search")
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,
