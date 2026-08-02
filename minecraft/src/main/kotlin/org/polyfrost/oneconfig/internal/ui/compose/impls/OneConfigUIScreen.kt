@@ -118,8 +118,10 @@ class OneConfigUIScreen @JvmOverloads constructor(
         ShellState.focusSearchField = OneConfigConfig.instantSearch
         val client = net.minecraft.client.Minecraft.getInstance()
         Thread {
-            val head = PlayerHeadLoader.loadLocalPlayerHeadPng() ?: return@Thread
-            client.execute { ShellState.playerHeadPng = head }
+            runCatching {
+                val head = PlayerHeadLoader.loadLocalPlayerHeadPng(client) ?: return@runCatching
+                client.execute { ShellState.playerHeadPng = head }
+            }.onFailure { LOGGER.warn("Failed to load player head", it) }
         }.apply {
             isDaemon = true
             name = "OneConfig-PlayerHead"
