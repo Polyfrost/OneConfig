@@ -72,6 +72,8 @@ object HudManager {
     @Volatile @JvmField var isGuiScreenOpen: Boolean = false
     @Volatile @JvmField var isChatScreenOpen: Boolean = false
 
+    @Volatile @JvmField var masterHudEnabled: Boolean = true
+
     /** Mirrors MC's `options.hideGui` (F1). Hides every HUD unless the editor is open. */
     @Volatile @JvmField var isGuiHidden: Boolean = false
 
@@ -359,6 +361,7 @@ object HudManager {
     }
 
     private fun shouldDraw(hud: Hud): Boolean {
+        if (!masterHudEnabled && !isEditing) return false
         if (hud is LegacyHudMarker) return false
         if (hud.hidden && !isEditing) return false
         if (isGuiHidden && !isEditing) return false
