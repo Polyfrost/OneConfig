@@ -76,12 +76,12 @@ import org.polyfrost.oneconfig.internal.ui.components.localizedGroup
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.components.searchMatches
 import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidth
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
+import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme

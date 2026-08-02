@@ -21,17 +21,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
-import org.polyfrost.oneconfig.internal.ui.components.ModResult
-import org.polyfrost.oneconfig.internal.ui.components.OptionResult
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.performSearch
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
+import org.polyfrost.oneconfig.internal.ui.search.ModResult
+import org.polyfrost.oneconfig.internal.ui.search.OptionResult
+import org.polyfrost.oneconfig.internal.ui.search.SearchProviderRegistry
 
 @Composable
 fun SearchResultsScreen(query: String) {
     val theme = LocalTheme.current
-    val results by remember(query) { derivedStateOf { performSearch(query) } }
+    val results by remember(query) {
+        derivedStateOf {
+            SearchProviderRegistry.get().performSearch(
+                query = query,
+                configs = ConfigRegistry.modCardConfigs.filter { ConfigRegistry.shouldShowInSearch(it) },
+                searchMods = true
+            )
+        }
+    }
 
     val matchingMods: List<ConfigData> = remember(results) {
         results.values.flatten().filterIsInstance<ModResult>().map { it.config }

@@ -56,7 +56,6 @@ import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.components.searchMatches
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindConflicts
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
@@ -66,6 +65,7 @@ import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroup
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroupCollapseStore
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry
 import org.polyfrost.oneconfig.internal.ui.keybind.collectAllKeybindGroups
+import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
