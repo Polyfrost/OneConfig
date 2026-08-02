@@ -5,6 +5,11 @@ import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedString
 import org.polyfrost.oneconfig.internal.ui.components.localizedText
+import org.polyfrost.oneconfig.internal.ui.components.settings.formatSpinnerValue
+import org.polyfrost.oneconfig.internal.ui.components.settings.toNumberType
+import java.util.function.Function
+import java.util.function.Supplier
+import kotlin.math.roundToInt
 import java.lang.reflect.Array as ReflectArray
 
 sealed class OptionData(val prop: Property<*>) {
@@ -27,6 +32,134 @@ class SliderOptionData(prop: Property<*>) : OptionData(prop) {
 
     @Suppress("UNCHECKED_CAST")
     val numProp: Property<Number> get() = prop as Property<Number>
+}
+
+/**
+ * A start/end pair held in a single property, as a two-element numeric array or list. Both ends are written
+ * together and in the container shape the property already holds, so the backing field's type is preserved.
+ */
+class RangeSliderOptionData(prop: Property<*>) : OptionData(prop) {
+    val min: Float get() = prop.getMetadata("min") ?: 0f
+    val max: Float get() = prop.getMetadata("max") ?: 100f
+    val step: Float get() = prop.getMetadata("step") ?: 0f
+
+    /** The current `start to end`, or null when the property does not hold a two-element numeric pair. */
+    fun read(): Pair<Float, Float>? {
+        val values = prop.readNumbers() ?: return null
+        if (values.size < 2) return null
+        return values[0] to values[1]
+    }
+
+    fun write(start: Float, end: Float) = prop.writeNumbers(listOf(start, end))
+}
+
+/**
+ * An ordered, editable chain of numbers held in a single property, as a numeric array or list — reorder,
+ * edit a value in place, remove an entry, or append the next one.
+ *
+ * [lockedLeading] entries at the front are fixed: they cannot be moved, edited or removed, which suits chains
+ * that always begin from a known state. Whatever the widget writes still goes through the property's setter, so
+ * a backing config is free to normalize further (dedupe, clamp, enforce a minimum length).
+ */
+class NumberChainOptionData(prop: Property<*>) : OptionData(prop) {
+    val min: Float get() = prop.getMetadata("min") ?: 0f
+    val max: Float get() = prop.getMetadata("max") ?: 100f
+    val maxEntries: Int get() = prop.getMetadata("maxEntries") ?: Int.MAX_VALUE
+    val lockedLeading: Int get() = prop.getMetadata("lockedLeading") ?: 0
+
+    /** Drawn after the number while an entry is being edited. [label] is expected to include it already. */
+    val unit: String? get() = localizedString(prop.getMetadata("unitKey"), prop.getMetadata<String>("unit")).takeIf { it.isNotBlank() }
+
+    /** Renders one entry as a chip label. Falls back to the bare number. */
+    fun label(value: Float): String {
+        val labeller = prop.getMetadata<Function<Number, String>>("entryLabel")
+            ?: return formatSpinnerValue(value)
+        return runCatching { labeller.apply(value) }.getOrElse { formatSpinnerValue(value) }
+    }
+
+    /** The value "add" appends. Defaults to [max] when the property does not supply one. */
+    fun nextValue(current: List<Float>): Float {
+        val next = prop.getMetadata<Function<List<Number>, Number>>("nextValue") ?: return max
+        return runCatching { next.apply(current).toFloat() }.getOrElse { max }
+    }
+
+    fun read(): List<Float> = prop.readNumbers() ?: emptyList()
+
+    fun write(values: List<Float>) = prop.writeNumbers(values)
+}
+
+private fun Property<*>.readNumbers(): List<Float>? = when (val value = get()) {
+    is FloatArray -> value.toList()
+    is DoubleArray -> value.map { it.toFloat() }
+    is IntArray -> value.map { it.toFloat() }
+    is LongArray -> value.map { it.toFloat() }
+    is Array<*> -> value.map { (it as? Number)?.toFloat() ?: return null }
+    is Iterable<*> -> value.map { (it as? Number)?.toFloat() ?: return null }
+    else -> null
+}
+
+/** Writes [values] back in whatever container shape the property already holds. */
+@Suppress("UNCHECKED_CAST")
+private fun Property<*>.writeNumbers(values: List<Float>) {
+    val written: Any = when (val current = get()) {
+        is FloatArray -> values.toFloatArray()
+        is DoubleArray -> values.map { it.toDouble() }.toDoubleArray()
+        is IntArray -> values.map { it.roundToInt() }.toIntArray()
+        is LongArray -> values.map { it.toLong() }.toLongArray()
+        is Array<*> -> {
+            val component = current.javaClass.componentType
+            ReflectArray.newInstance(component, values.size).also { array ->
+                values.forEachIndexed { index, value -> ReflectArray.set(array, index, value.toNumberType(component)) }
+            }
+        }
+        is List<*> -> {
+            val component = (current.firstOrNull() ?: 0f).javaClass
+            values.map { it.toNumberType(component) }
+        }
+        else -> return
+    }
+    (this as Property<Any>).set(written)
+}
+
+/**
+ * A slider whose value may instead be "inherited" from a broader setting.
+ *
+ * While inheriting, the property holds [inheritSentinel] (`null` unless the metadata says otherwise) and the
+ * slider shows [inheritedValue] greyed out. Picking a value writes it normally; clearing goes back to the
+ * sentinel. [inheritedValue] may be given as a `Supplier` so it tracks whatever it inherits from.
+ */
+class InheritableSliderOptionData(prop: Property<*>) : OptionData(prop) {
+    val min: Float get() = prop.getMetadata("min") ?: 0f
+    val max: Float get() = prop.getMetadata("max") ?: 100f
+    val step: Float get() = prop.getMetadata("step") ?: 0f
+    val inheritLabel: String
+        get() = localizedString(prop.getMetadata("inheritLabelKey"), prop.getMetadata<String>("inheritLabel"))
+            .takeIf { it.isNotBlank() } ?: "Inherit"
+
+    private val inheritSentinel: Any? get() = prop.getMetadata("inheritSentinel")
+
+    val inheritedValue: Float
+        get() = when (val inherited = prop.getMetadata<Any>("inheritedValue")) {
+            is Number -> inherited.toFloat()
+            is Supplier<*> -> (inherited.get() as? Number)?.toFloat() ?: min
+            else -> min
+        }
+
+    val isInherited: Boolean
+        get() {
+            val value = prop.get() ?: return true
+            val sentinel = inheritSentinel ?: return false
+            return value is Number && sentinel is Number && value.toDouble() == sentinel.toDouble()
+        }
+
+    /** The value the slider should show: the explicit one, or what it inherits while unset. */
+    val shownValue: Float get() = if (isInherited) inheritedValue else (prop.get() as? Number)?.toFloat() ?: inheritedValue
+
+    @Suppress("UNCHECKED_CAST")
+    fun set(value: Float) = (prop as Property<Any>).set(value.toNumberType(prop.type))
+
+    @Suppress("UNCHECKED_CAST")
+    fun inherit() = (prop as Property<Any?>).set(inheritSentinel?.let { (it as? Number)?.toFloat()?.toNumberType(prop.type) })
 }
 
 class NumberOptionData(prop: Property<*>) : OptionData(prop) {

@@ -55,6 +55,10 @@ fun OneConfigInterface(
     windowWidth: Float,
     windowHeight: Float,
     initialRoute: Any = ModsGraph,
+    /** Set when the scene is being rebuilt for a session already in progress, so its search survives. */
+    resuming: Boolean = false,
+    /** Set when [initialRoute] is a page the user was already on, which is put back without a transition. */
+    restoring: Boolean = false,
     onCloseRequest: () -> Unit = {},
     onCloseReady: ((requestClose: () -> Unit) -> Unit)? = null,
     shellBackdrop: DrawScope.(Offset) -> Unit = {}
@@ -64,15 +68,19 @@ fun OneConfigInterface(
     LocalNavController.current = rememberNavController()
 
     LaunchedEffect(initialRoute) {
-        ShellState.globalSearchActive = false
-        ShellState.searchQuery = ""
-        ShellState.showSearchField = false
+        if (!resuming) {
+            ShellState.globalSearchActive = false
+            ShellState.searchQuery = ""
+            ShellState.showSearchField = false
+        }
 
         ShellState.openingTransitionTarget = null
+        ShellState.awaitingInitialRoute = initialRoute != ModsGraph
         if (initialRoute != ModsGraph) {
-            // an initial navigation will fire a page transition; let "Show opening page animation" gate it
+            // an initial navigation will fire a page transition; let "Show opening page animation" gate it,
+            // except when the page is only being put back, which should look like it was never left
             ShellState.initialTransitionConsumed = false
-            ShellState.animateOpeningPage = OneConfigConfig.showOpeningPageAnimation
+            ShellState.animateOpeningPage = !restoring && OneConfigConfig.showOpeningPageAnimation
             // the NavHost only sets its graph once the Shell is composed (after `visible` flips true);
             // wait for it so navigate() doesn't crash with "must call setGraph() before getGraph()".
             var attempts = 0
@@ -85,7 +93,8 @@ fun OneConfigInterface(
                 if (ready) break
                 withFrameNanos { }
             }
-            LocalNavController.wrapper.navigate(initialRoute)
+            LocalNavController.wrapper.navigate(initialRoute, clearSearch = !resuming)
+            ShellState.awaitingInitialRoute = false
         } else {
             // no initial navigation, so the first user-driven transition should use the normal setting
             ShellState.initialTransitionConsumed = true

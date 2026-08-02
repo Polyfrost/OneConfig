@@ -25,6 +25,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
@@ -195,13 +196,21 @@ fun Shell(
                 verticalArrangement = Arrangement.spacedBy(if (isSearching) 0.dp else 19.dp)
             ) {
                 Header()
-                Box(modifier = Modifier.weight(1f).fillMaxSize().clipToBounds()) {
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxSize().clipToBounds()
+                        .alpha(if (ShellState.awaitingInitialRoute) 0f else 1f)
+                ) {
                     if (isSearching) {
                         SearchResultsScreen(searchQuery)
                     } else {
                         // The first transition after the menu opens follows "Show opening page animation";
                         // all subsequent page transitions follow "Show Page Animations".
                         fun resolvePageAnimate(targetId: String): Boolean {
+                            // AnimatedContent resolves its transition once as it first composes, before the
+                            // opening navigation can happen, so that first call describes the placeholder start
+                            // destination. Letting it claim the opening transition below would push the real one
+                            // onto the ordinary page-animation setting.
+                            if (ShellState.awaitingInitialRoute) return false
                             if (ShellState.initialTransitionConsumed) return OneConfigConfig.showPageAnimations
                             val openingId = ShellState.openingTransitionTarget
                             if (openingId == null) {

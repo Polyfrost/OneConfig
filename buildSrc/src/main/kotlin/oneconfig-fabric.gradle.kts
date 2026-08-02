@@ -14,7 +14,8 @@ loom.apply {
     runConfigs["client"].apply {
         ideConfigGenerated(true)
         runDir = "../../run"
-        property("devauth.enabled", "true")
+        // -Pdevauth=false launches offline, for runs that do not need a real account.
+        property("devauth.enabled", (project.findProperty("devauth") ?: "true").toString())
         property("oneconfig.test", "true")
 //        if (project.hasProperty("gpuprofile")) {
 //            property("oneconfig.debug.gpuprofile", "true")

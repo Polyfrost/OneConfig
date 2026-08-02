@@ -47,10 +47,13 @@ class OneConfigUIScreen @JvmOverloads constructor(
         private const val OPEN_ANIMATION_MS = 250L
         private const val CLOSE_ANIMATION_MS = 300L
 
-        private fun resolveOpeningBehaviorRoute(): Any = when (OneConfigConfig.openingBehavior) {
-            0 -> ModsGraph
-            1 -> PreferencesGraph
-            2 -> ShellState.lastRoute ?: ModsGraph
+        /** [restored] marks a route that puts the user back where they were rather than opening a fixed page. */
+        private data class OpeningRoute(val route: Any, val restored: Boolean = false)
+
+        private fun resolveOpeningBehaviorRoute(): OpeningRoute = when (OneConfigConfig.openingBehavior) {
+            0 -> OpeningRoute(ModsGraph)
+            1 -> OpeningRoute(PreferencesGraph)
+            2 -> ShellState.lastRoute?.let { OpeningRoute(it, restored = true) } ?: OpeningRoute(ModsGraph)
             3 -> {
                 val last = ShellState.lastClosedAt
                 val route = ShellState.lastRoute
@@ -58,14 +61,14 @@ class OneConfigUIScreen @JvmOverloads constructor(
                 val window = if (route === HudEditorRoute) HudDesignSession.restoreWindowMillis()
                     else (OneConfigConfig.timeBeforeReset * 1000f).toLong()
                 val withinWindow = last > 0L && System.currentTimeMillis() - last <= window
-                if (withinWindow) route ?: ModsGraph else ModsGraph
+                if (withinWindow && route != null) OpeningRoute(route, restored = true) else OpeningRoute(ModsGraph)
             }
-            else -> ModsGraph
+            else -> OpeningRoute(ModsGraph)
         }
 
         @JvmStatic
         fun openLastSession() {
-            if (resolveOpeningBehaviorRoute() === HudEditorRoute) HudManager.openEditor()
+            if (resolveOpeningBehaviorRoute().route === HudEditorRoute) HudManager.openEditor()
             else Platform.screen().display(OneConfigUIScreen())
         }
     }
@@ -73,6 +76,15 @@ class OneConfigUIScreen @JvmOverloads constructor(
     @Volatile private var closeRequested = false
     @Volatile private var closeRequestedAt = 0L
     @Volatile private var openedAt = 0L
+
+    /** The page this screen is showing. Survives the scene being disposed and rebuilt. */
+    private var route: Any? = null
+
+    /** True once this screen has been displaced by another and is being shown again. */
+    private var resuming = false
+
+    /** True when [route] is a page being put back rather than a page being opened. */
+    private var restoring = false
 
     private fun markClosed() {
         ShellState.lastClosedAt = System.currentTimeMillis()
@@ -82,6 +94,17 @@ class OneConfigUIScreen @JvmOverloads constructor(
         org.polyfrost.oneconfig.internal.OneConfig.dismissFirstLaunchToast()
         ConfigRegistry.loadFrom(ConfigManager.active(), ConfigSource.OC)
         initialTree?.let { ConfigRegistry.registerTree(it, ConfigSource.OC) }
+
+        if (route == null) {
+            if (initialTreeId != null) {
+                route = ModConfigRoute(initialTreeId, initialCategory)
+            } else {
+                val opening = resolveOpeningBehaviorRoute()
+                route = opening.route.takeIf { it !== HudEditorRoute } ?: ModsGraph
+                restoring = opening.restored && route === opening.route
+            }
+            ShellState.lastRoute = route
+        }
 
         try {
             ShellState.playerName = net.minecraft.client.Minecraft.getInstance().user.name
@@ -122,6 +145,11 @@ class OneConfigUIScreen @JvmOverloads constructor(
     }
 
     override fun removed() {
+        // A screen opened over this one removes it and hands it back when it closes, and the scene is rebuilt
+        // from scratch in between, so the page has to be carried across by hand.
+        ShellState.lastRoute?.takeIf { it !== HudEditorRoute }?.let { route = it }
+        resuming = true
+        restoring = true
         SkiaCtx.suppressInGameHudRender = false
         HudManager.overrideShowInScreens = false
         HudManager.isConfigUiOpen = false
@@ -242,16 +270,15 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     @Composable
     override fun compose() {
-        val initialRoute = when {
-            initialTreeId != null -> ModConfigRoute(initialTreeId, initialCategory)
-            else -> resolveOpeningBehaviorRoute().takeIf { it !== HudEditorRoute } ?: ModsGraph
-        }
+        val initialRoute = route ?: ModsGraph
 
         val containerSize = LocalWindowInfo.current.containerSize
         OneConfigInterface(
             containerSize.width.toFloat(),
             containerSize.height.toFloat(),
             initialRoute = initialRoute,
+            resuming = resuming,
+            restoring = restoring,
             onCloseRequest = {
                 if (!closeRequested) {
                     closeRequested = true
