@@ -114,6 +114,8 @@ import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
+import org.polyfrost.oneconfig.internal.ui.components.asRenderText
+import org.polyfrost.oneconfig.internal.ui.components.localizedLabel
 import org.polyfrost.oneconfig.internal.ui.components.IconButton
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
@@ -830,7 +832,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     val modNames = remember(modIds) { modIds.associateWith { modNameFor(it) ?: it } }
     val librarySections = providers
         .filter { hud ->
-            (searchText.isEmpty() || hud.title?.contains(searchText, ignoreCase = true) == true) &&
+            (searchText.isEmpty() || localizedLabel(hud.title)?.contains(searchText, ignoreCase = true) == true) &&
                 (hud.multipleInstancesAllowed() || HudManager.getHudsOfType(hud::class.java).isEmpty())
         }
         .groupBy { it.configId }
@@ -1669,7 +1671,7 @@ private fun modNameFor(configId: String): String? {
     val config = ConfigRegistry.findById(configId)
         ?: ConfigRegistry.findById("$configId.json")
         ?: ConfigRegistry.configs.firstOrNull { it.id.removeSuffix(".json") == modId }
-    return config?.title?.toString()
+    return config?.title?.asRenderText()
 }
 
 @Composable
@@ -1685,7 +1687,7 @@ private fun DesignStudioPanel(
     val categories = if (isLegacy) listOf(StudioCategory.Settings) else StudioCategory.entries
     val subtitle = remember(selectedHud) {
         selectedHud?.let { hud ->
-            val name = hud.title ?: return@let null
+            val name = localizedLabel(hud.title) ?: return@let null
             val modName = hud.configId?.let(::modNameFor)
             if (modName != null) "$name / $modName" else name
         }
@@ -1995,7 +1997,7 @@ private fun LegacyHudPreviewCard(hud: Hud, maxCardWidth: Dp, onDragStart: (Hud, 
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            hud.title ?: "Legacy HUD",
+            localizedLabel(hud.title) ?: "Legacy HUD",
             color = theme.textColor.copy(0.85f),
             fontSize = 12.sp,
         )

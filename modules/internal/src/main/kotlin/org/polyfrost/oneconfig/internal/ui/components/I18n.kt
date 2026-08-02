@@ -3,7 +3,7 @@ package org.polyfrost.oneconfig.internal.ui.components
 import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 
-private fun translationKeyOrNull(value: Any?): String? {
+internal fun translationKeyOrNull(value: Any?): String? {
     val text = (value as? String)?.trim()?.takeIf { it.isNotEmpty() } ?: return null
     if (text.indexOf('.') < 0 || text.any { it.isWhitespace() }) return null
     return if (Platform.i18n().hasTranslation(text)) text else null
@@ -23,6 +23,17 @@ fun localizedString(key: String?, fallback: Any?): String {
     translationKeyOrNull(fallback)?.let { return Platform.i18n().translateString(it) }
     return fallback?.asRenderText() ?: translationKey.orEmpty()
 }
+
+/**
+ * Translates [value] when it is a bare translation key (`some.mod.option`), otherwise returns it as-is.
+ * Use at any display site which reads a raw string that mods may have filled with a translation key.
+ */
+fun localizedValue(value: Any?): Any? =
+    translationKeyOrNull(value)?.let { Platform.i18n().translate(it) } ?: value
+
+/** [localizedValue] for sites which need a plain string. */
+fun localizedLabel(text: String?): String? =
+    translationKeyOrNull(text)?.let { Platform.i18n().translateString(it) } ?: text
 
 fun Node.localizedTitle(): Any = localizedText(getMetadata("titleKey"), title ?: id ?: "")
 

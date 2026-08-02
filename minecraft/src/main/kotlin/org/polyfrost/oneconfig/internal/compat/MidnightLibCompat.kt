@@ -88,7 +88,7 @@ object MidnightLibCompat {
                 if (comment != null) {
                     rawCategories += rawCategoryOf(readAnnotationString(comment, "category"))
                     val category = categoryOf(modid, readAnnotationString(comment, "category"))
-                    subcategoryByCategory[category] = commentLabel(modid, field.name, comment)
+                    subcategoryByCategory[category] = commentLabel(modid, entry, field.name, comment)
                     return@runCatching
                 }
 
@@ -212,8 +212,11 @@ object MidnightLibCompat {
         val isNumber = currentValue is Int || currentValue is Long || currentValue is Float || currentValue is Double
 
         val fieldName = field.name
-        val name = translateOrNull("$modid.midnightconfig.$fieldName") ?: prettify(fieldName)
-        val description = translateOrNull("$modid.midnightconfig.$fieldName.tooltip")
+        // MidnightLib renders Component.translatable(EntryInfo.translationKey), which is @Entry#name when set,
+        // and "<modid>.midnightconfig.<fieldName>" otherwise.
+        val translationKey = translationKeyOf(entry, entryAnnotation, "$modid.midnightconfig.$fieldName")
+        val name = labelOf(translationKey) ?: prettify(fieldName)
+        val description = translateOrNull("$translationKey.tooltip")
         val id = UUID.randomUUID().toString()
 
         val property: Property<*>
@@ -407,14 +410,31 @@ object MidnightLibCompat {
 
     private fun categoryOf(modid: String, raw: String?): String {
         val cat = raw?.takeIf { it.isNotBlank() && it != "default" } ?: return "General"
-        return translateOrNull("$modid.midnightconfig.category.$cat") ?: prettify(cat)
+        // MidnightLib itself uses "<modid>.midnightconfig.<category>"; the ".category." form is also
+        // common in the wild, so accept both.
+        return translateOrNull("$modid.midnightconfig.$cat")
+            ?: translateOrNull("$modid.midnightconfig.category.$cat")
+            ?: prettify(cat)
     }
 
-    private fun commentLabel(modid: String, fieldName: String, comment: Any): String {
-        readAnnotationString(comment, "name")?.takeIf { it.isNotBlank() }?.let { return it }
-        return translateOrNull("$modid.midnightconfig.$fieldName")
-            ?: prettify(fieldName.trimStart('_'))
+    private fun commentLabel(modid: String, entry: Any, fieldName: String, comment: Any): String {
+        val key = translationKeyOf(entry, comment, "$modid.midnightconfig.$fieldName")
+        return labelOf(key) ?: prettify(fieldName.trimStart('_'))
     }
+
+    /**
+     * The key MidnightLib would render for this entry: [EntryInfo.translationKey] if the field is present,
+     * else the annotation's `name`, else [fallbackKey].
+     */
+    private fun translationKeyOf(entry: Any?, annotation: Any, fallbackKey: String): String {
+        entry?.let { readString(it, "translationKey") }?.takeIf { it.isNotBlank() }?.let { return it }
+        readAnnotationString(annotation, "name")?.takeIf { it.isNotBlank() }?.let { return it }
+        return fallbackKey
+    }
+
+    /** Translates [key], or returns it verbatim when mods pass a literal label instead of a key. */
+    private fun labelOf(key: String): String? =
+        translateOrNull(key) ?: key.takeIf { it.any(Char::isWhitespace) || !it.contains('.') }
 
     private fun enumLabel(modid: String, enumClass: Class<*>, constant: String): String =
         translateOrNull("$modid.midnightconfig.enum.${enumClass.simpleName}.$constant") ?: prettify(constant)

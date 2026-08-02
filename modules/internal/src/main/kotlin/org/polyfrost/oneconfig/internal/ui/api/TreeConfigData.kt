@@ -4,6 +4,7 @@ import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
+import org.polyfrost.oneconfig.internal.ui.components.localizedValue
 
 class TreeConfigData(
     val tree: Tree,
@@ -11,7 +12,8 @@ class TreeConfigData(
     private val explicitOnOpen: (() -> Unit)? = null,
 ) : ConfigData {
     override val id: String get() = tree.id ?: ""
-    override val title: Any get() = tree.getMetadata<Any>("mod_card_title") ?: tree.title ?: id
+    override val title: Any
+        get() = localizedValue(tree.getMetadata<Any>("mod_card_title") ?: tree.title ?: id) ?: id
 
     /**
      * Explicit open handler, or the tree's "on_click" metadata (e.g. Mod Menu compat entries
