@@ -107,10 +107,6 @@ public class OneConfig
         CommandManager.INSTANCE.register(CommandManager.literal("ocfg").executes(executor).redirect(node));
     }
 
-    public static boolean isInChatScreen() {
-        return Platform.screen().current() instanceof ChatScreen;
-    }
-
     private static void registerKeybinds() {
         // Supply the open-GUI action to the config-backed OneConfig keybind. The action lives here (not on the
         // keybind itself) because it references platform classes and is lost when the keybind is deserialized.
