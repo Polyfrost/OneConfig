@@ -16,6 +16,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	protected fun addToSerialized (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 	public fun applyEditorWidth (F)V
 	public fun backgroundColor ()Lorg/polyfrost/compose/render/PolyColor;
+	public final fun canDelete ()Z
 	public final fun capturePositionDefaults ()V
 	public final fun captureStaticSizeDefaults (Z)V
 	public static synthetic fun captureStaticSizeDefaults$default (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;ZILjava/lang/Object;)V
