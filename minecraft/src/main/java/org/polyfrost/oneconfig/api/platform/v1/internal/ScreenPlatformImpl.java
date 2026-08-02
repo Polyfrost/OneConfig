@@ -69,6 +69,16 @@ public class ScreenPlatformImpl implements ScreenPlatform {
         return Minecraft.getInstance().getWindow().getScreenHeight();
     }
 
+    @Override
+    public int guiWidth() {
+        return Minecraft.getInstance().getWindow().getGuiScaledWidth();
+    }
+
+    @Override
+    public int guiHeight() {
+        return Minecraft.getInstance().getWindow().getGuiScaledHeight();
+    }
+
     // On macOS, glfwGetWindowContentScale == framebufferSize / windowSize (e.g. 2.0 on Retina).
     // On Windows, they differ: framebuffer == window (ratio 1.0), but contentScale reflects DPI (e.g. 1.5).
     // Using contentScale as pixelRatio on Windows caused the UI to be rendered at the wrong size (#478).
@@ -118,11 +128,8 @@ public class ScreenPlatformImpl implements ScreenPlatform {
     @Override
     @SuppressWarnings("unchecked" /*, reason = "reduces friction between versions" */)
     public <T> @Nullable T current() {
-        //? if >= 26.2 {
-        /*return (T) Minecraft.getInstance().gui.screen();
-        *///?} else {
+        //~ if >= 26.2 '.screen' -> '.gui.screen()'
         return (T) Minecraft.getInstance().screen;
-        //?}
     }
 
 }

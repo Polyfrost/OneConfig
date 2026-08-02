@@ -34,7 +34,7 @@ private class InputModeManagerImpl : InputModeManager {
 @ExperimentalComposeUiApi
 private class WindowInfoImpl : WindowInfo {
     override var containerSize: IntSize by mutableStateOf(
-        Minecraft.getInstance().window.let { IntSize(it.screenWidth, it.screenHeight) }
+        Platform.screen().let { IntSize(it.windowWidth(), it.windowHeight()) }
     )
 
     private fun isKeyDown(glfwKey: Int): Boolean {

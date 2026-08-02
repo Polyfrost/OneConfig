@@ -63,8 +63,8 @@ object DebugOverlayOffscreen {
     fun render() {
         hasContent = false
         if (!active()) return
-        val w = client.window.width
-        val h = client.window.height
+        val w = Platform.screen().viewportWidth()
+        val h = Platform.screen().viewportHeight()
         if (w <= 0 || h <= 0) return
 
         try {
@@ -94,7 +94,7 @@ object DebugOverlayOffscreen {
 
         val state = GuiRenderState()
         //? if >= 1.21.11 {
-        val ext = GuiGraphicsExtractor(client, state, client.window.guiScaledWidth, client.window.guiScaledHeight)
+        val ext = GuiGraphicsExtractor(client, state, Platform.screen().guiWidth(), Platform.screen().guiHeight())
         //? } else
         /*val ext = GuiGraphicsExtractor(client, state)*/
         capturing = true
