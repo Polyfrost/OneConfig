@@ -12,9 +12,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -28,18 +32,23 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.search.ModResult
 import org.polyfrost.oneconfig.internal.ui.search.OptionResult
 import org.polyfrost.oneconfig.internal.ui.search.SearchProviderRegistry
+import org.polyfrost.oneconfig.internal.ui.search.SearchResult
 
 @Composable
 fun SearchResultsScreen(query: String) {
     val theme = LocalTheme.current
-    val results by remember(query) {
-        derivedStateOf {
-            SearchProviderRegistry.get().performSearch(
-                query = query,
-                configs = ConfigRegistry.modCardConfigs.filter { ConfigRegistry.shouldShowInSearch(it) },
-                searchMods = true
-            )
+
+    // Run search asynchronously
+    var searchedQuery by remember { mutableStateOf<String?>(null) }
+    var results by remember { mutableStateOf<Map<String, List<SearchResult>>>(emptyMap()) }
+    LaunchedEffect(query) {
+        val configs = ConfigRegistry.modCardConfigs.filter { ConfigRegistry.shouldShowInSearch(it) }
+        val provider = SearchProviderRegistry.get()
+        val found = withContext(Dispatchers.Default) {
+            provider.performSearch(query = query, configs = configs, searchMods = true)
         }
+        results = found
+        searchedQuery = query
     }
 
     val matchingMods: List<ConfigData> = remember(results) {
@@ -59,7 +68,10 @@ fun SearchResultsScreen(query: String) {
 
     if (matchingMods.isEmpty() && groupedOptions.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No results for \"$query\"", color = theme.textColorSecondary, fontSize = 15.sp)
+            // Nothing to say until the first search comes back.
+            searchedQuery?.also {
+                Text("No results for \"$it\"", color = theme.textColorSecondary, fontSize = 15.sp)
+            } ?: Text("Searching...", color = theme.textColorSecondary, fontSize = 15.sp)
         }
         return
     }
