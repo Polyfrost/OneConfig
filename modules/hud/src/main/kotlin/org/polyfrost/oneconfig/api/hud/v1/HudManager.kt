@@ -260,7 +260,16 @@ object HudManager {
         lastUpdates.remove(hud)
         invalidate()
         try { hud.remove() } catch (_: Throwable) {}
-        if (delete) ConfigManager.active().delete(hud.tree.id)
+        val treeId = hud.tree?.id
+        // a HUD which cannot be deleted by the user must never lose its config: without this an
+        // errant unregister(delete = true) wipes it from disk and it can never be restored.
+        if (delete && !hud.deletable()) {
+            LOGGER.warn("refusing to delete the config of ${hud.title}, which is marked as not user-deletable")
+        } else if (delete && treeId != null) {
+            ConfigManager.active().delete(treeId)
+        }
+        // back to being a plain provider, so a single-instance HUD can be made again later
+        hud.detachTree()
     }
 
     private fun screenBounds(hud: Hud): FloatArray? {
@@ -565,7 +574,6 @@ object HudManager {
                 val cls = Class.forName(clsName, true, loader) as? Class<Hud>
                     ?: throw IllegalArgumentException("$clsName is not a subclass of Hud")
                 val h = hudProviders[cls] ?: MHUtils.instantiate(cls, true).getOrThrow()
-                used.add(cls)
                 val hud = h.make(data)
                 val sec = data.getProp("section")?.getAs<Section?>()
                 if (sec != null) {
@@ -578,6 +586,10 @@ object HudManager {
                     hud.setAbsolutePosition(absX, absY)
                 }
                 activeInstances.add(hud)
+                // only once the instance actually exists: marking the class used on a failed load
+                // would both suppress the default instance below and mark the provider known,
+                // permanently "deleting" a HUD because of a transient load error.
+                used.add(cls)
                 hud.setup()
                 hud.captureStaticSizeDefaults()
                 hud.capturePositionDefaults()
@@ -601,11 +613,22 @@ object HudManager {
         hudProviders.forEach { (cls, h) ->
             if (cls in used) return@forEach
             if (h.isReal) return@forEach
-            if (!h.showByDefault()) return@forEach
+            val known = cls.name in knownProviders
+            // A HUD the user cannot delete has no legitimate "deleted" state, so a missing instance
+            // always means its config was lost (failed/incomplete write, corrupt file, a launch
+            // without the mod, ...). Restore it instead of leaving it stranded in the HUD library.
+            val restore = if (h.deletable()) {
+                // the user deleted every instance of this HUD; don't resurrect it.
+                h.showByDefault() && !known
+            } else {
+                h.showByDefault() || known
+            }
+            if (!restore) return@forEach
+            if (known && !h.deletable()) {
+                LOGGER.warn("HUD ${h.title} cannot be deleted but had no instance; restoring it")
+            }
             val (dx, dy) = h.defaultPosition()
-            // the user deleted every instance of this HUD; don't resurrect it.
-            if (!knownProviders.add(cls.name)) return@forEach
-            registryChanged = true
+            registryChanged = knownProviders.add(cls.name) or registryChanged
             val hud = h.make()
             hud.setAbsolutePosition(dx, dy)
             activeInstances.add(hud)

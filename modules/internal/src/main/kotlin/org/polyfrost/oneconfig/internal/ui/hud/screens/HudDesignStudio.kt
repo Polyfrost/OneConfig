@@ -1334,7 +1334,9 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                         listState = libraryListState,
                         onDragStart = { hud, sx, sy, hudLocalOffX, hudLocalOffY ->
                             try {
-                                val instance = hud.make()
+                                // a single-instance provider *is* its instance, so one that is real
+                                // but no longer active is re-used rather than made a second time
+                                val instance = if (hud.isReal) hud else hud.make()
                                 HudManager.markProviderKnown(instance)
                                 val s = Platform.screen().screenToMcScale()
                                 val effScale = instance.effectiveScale
@@ -1354,7 +1356,9 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                                     isDragging = true
                                     draggedHud = instance
                                 }
-                            } catch (_: Throwable) {}
+                            } catch (e: Throwable) {
+                                LOGGER.error("Failed to add HUD ${hud.title} from the library", e)
+                            }
                         },
                     )
                 }

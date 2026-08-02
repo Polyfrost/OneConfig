@@ -293,7 +293,7 @@ fun HudCanvasResetMenu(
     if (hud == null || !expanded) return
     val theme = LocalTheme.current
     val enabled = hudHasResettableDefaults(hud)
-    val deletable = hud.deletable()
+    val deletable = hud.canDelete()
     val isHidden = hud.hidden
     val isLocked = hud.locked
     Popup(

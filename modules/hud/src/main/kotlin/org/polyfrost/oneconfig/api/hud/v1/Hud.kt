@@ -673,11 +673,30 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     open fun minimumSize(): Pair<Float, Float> = 0f to 0f
 
     /**
-     * Whether this HUD may be deleted from the HUD design studio. When `false`, the settings panel
-     * hides the delete button so the HUD cannot be removed (it can still be hidden/moved). Useful
-     * for HUDs that are intrinsic to a mod and cannot be re-created once deleted.
+     * Whether the user is ever allowed to delete this HUD. When `false`, the settings panel and the
+     * canvas context menu hide the delete button so the HUD cannot be removed (it can still be
+     * hidden/moved). Useful for HUDs that are intrinsic to a mod and cannot be re-created once
+     * deleted.
+
+     * Use [canDelete] to ask whether a *particular* HUD can be deleted right now.
      */
-    open fun deletable(): Boolean = isReal
+    open fun deletable(): Boolean = true
+
+    /**
+     * Whether this exact HUD can be deleted right now: it must be a real instance (providers have
+     * nothing to delete) of a type the user is allowed to delete ([deletable]).
+     */
+    fun canDelete(): Boolean = isReal && deletable()
+
+    /**
+     * Drops this instance's config tree reference, turning it back into a provider. Called when the
+     * instance is removed, so that a single-instance HUD (whose provider *is* its instance) can be
+     * made again instead of throwing "HUD is already made" forever.
+     */
+    @ApiStatus.Internal
+    internal fun detachTree() {
+        tree = null
+    }
 
     open fun remove() {}
 
