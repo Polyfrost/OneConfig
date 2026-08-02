@@ -299,7 +299,7 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
                     HudConfigScreen(tree)
                 }
 
-            if (hud.deletable()) {
+            if (hud.canDelete()) {
                 item {
                     DeleteHudButton(hud, onDeleted)
                 }
