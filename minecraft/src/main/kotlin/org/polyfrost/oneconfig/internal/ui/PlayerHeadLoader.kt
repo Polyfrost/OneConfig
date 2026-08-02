@@ -4,6 +4,8 @@ import com.mojang.blaze3d.platform.NativeImage
 import net.minecraft.client.Minecraft
 import org.polyfrost.oneconfig.utils.v1.NetworkUtils
 import java.nio.file.Files
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 
@@ -11,9 +13,29 @@ object PlayerHeadLoader {
     private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/PlayerHead")
     private const val CLIENT_THREAD_TIMEOUT_MS = 5_000L
 
-    /** Must not be called on the client thread: awaiting the skin and the web fallback both block. */
-    fun loadLocalPlayerHeadPng(mc: Minecraft): ByteArray? =
-        loadFromCachedSkin(mc) ?: loadFromWeb(mc)
+    private val cache = ConcurrentHashMap<UUID, ByteArray>()
+    private val inFlight = ConcurrentHashMap.newKeySet<UUID>()
+
+    /** The head already loaded for this account, if any. Safe to call from any thread. */
+    fun cachedLocalPlayerHeadPng(mc: Minecraft): ByteArray? = profileId(mc)?.let { cache[it] }
+
+    /**
+     * Must not be called on the client thread: awaiting the skin and the web fallback both block.
+     *
+     * @return null when the head could not be loaded, or when another thread is already loading it
+     */
+    fun loadLocalPlayerHeadPng(mc: Minecraft): ByteArray? {
+        val id = profileId(mc) ?: return loadFromCachedSkin(mc)
+        cache[id]?.let { return it }
+        if (!inFlight.add(id)) return null
+        return try {
+            (loadFromCachedSkin(mc) ?: loadFromWeb(id))?.also { cache[id] = it }
+        } finally {
+            inFlight.remove(id)
+        }
+    }
+
+    private fun profileId(mc: Minecraft): UUID? = runCatching { mc.user.profileId }.getOrNull()
 
     private fun loadFromCachedSkin(mc: Minecraft): ByteArray? {
         val head = onClientThread(mc, PlayerHeadSkinAccess.localPlayerHeadTask(mc))
@@ -55,8 +77,8 @@ object PlayerHeadLoader {
         }
     }
 
-    private fun loadFromWeb(mc: Minecraft): ByteArray? {
-        val uuid = mc.user.profileId.toString().replace("-", "")
+    private fun loadFromWeb(profileId: UUID): ByteArray? {
+        val uuid = profileId.toString().replace("-", "")
         val url = "https://mc-heads.net/avatar/$uuid/32.png"
         return runCatching {
             NetworkUtils.setupConnection(url).use { it.readBytes() }
