@@ -34,8 +34,10 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getCategory ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
 	public final fun getConfigId ()Ljava/lang/String;
 	public fun getCustomScale ()F
+	public final fun getEffectiveGrowthAnchor ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public final fun getEffectiveScale ()F
 	public final fun getFont ()Lorg/polyfrost/oneconfig/api/hud/v1/Font;
+	public final fun getGrowthAnchor ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public fun getHidden ()Z
 	public fun getLocked ()Z
 	public final fun getPadBottom ()F
@@ -104,6 +106,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setConfigId (Ljava/lang/String;)V
 	public fun setCustomScale (F)V
 	public final fun setFont (Lorg/polyfrost/oneconfig/api/hud/v1/Font;)V
+	public final fun setGrowthAnchor (Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)V
+	public final fun setGrowthAnchorKeepingPosition (Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)V
 	public fun setHidden (Z)V
 	public fun setLocked (Z)V
 	public final fun setPadBottom (F)V
@@ -174,6 +178,29 @@ public final class org/polyfrost/oneconfig/api/hud/v1/Hud$Category$Companion {
 	public final fun getPLAYER ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
 }
 
+public final class org/polyfrost/oneconfig/api/hud/v1/HudAnchor : java/lang/Enum {
+	public static final field Auto Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
+	public static final field Bottom Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
+	public static final field BottomLeft Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
+	public static final field BottomRight Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
+	public static final field Center Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
+	public static final field Companion Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor$Companion;
+	public static final field Left Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
+	public static final field Right Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
+	public static final field Top Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
+	public static final field TopLeft Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
+	public static final field TopRight Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static final fun of (Lorg/polyfrost/compose/layout/PolyAlign;)Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
+	public final fun toAlign ()Lorg/polyfrost/compose/layout/PolyAlign;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
+	public static fun values ()[Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
+}
+
+public final class org/polyfrost/oneconfig/api/hud/v1/HudAnchor$Companion {
+	public final fun of (Lorg/polyfrost/compose/layout/PolyAlign;)Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
+}
+
 public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/hud/v1/HudManager;
@@ -183,6 +210,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static field isChatScreenOpen Z
 	public static field isConfigUiOpen Z
 	public static field isDebugScreenVisible Z
+	public static field isGuiHidden Z
 	public static field isGuiScreenOpen Z
 	public static field isTabListVisible Z
 	public static field overrideShowInScreens Z
