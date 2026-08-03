@@ -9,3 +9,9 @@
 - Fixed OneConfig menus showing through other mods' screens
 - Fixed see-through HUDs on 1.21.11 and below
 - The menu is faster to open and smoother to use
+
+Public API:
+
+- Added `HudManager.masterHudEnabled` for globally toggling HUD rendering
+- Added `TextHud.brackets`, wrapping the finished line with brackets
+- Added `KeybindUtils` with `getActionModifier` and `isActionModifierPressed`
