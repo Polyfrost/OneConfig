@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.skia.Paint
 import org.polyfrost.compose.render.FontManager
@@ -885,7 +884,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     OneConfigConfig.INSTANCE.save()
                 }
             }
-            delay(100)
+            withFrameNanos { _ -> }
         }
     }
 
@@ -1816,7 +1815,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
 }
 
 internal fun canDuplicateHud(hud: Hud?): Boolean =
-    hud != null && (HudManager.getProvider(hud::class.java)?.multipleInstancesAllowed() == true)
+    hud != null && hud.isReal && (HudManager.getProvider(hud::class.java)?.multipleInstancesAllowed() == true)
 
 internal fun duplicateHud(
     copied: Hud?,
@@ -1871,9 +1870,11 @@ internal fun duplicateHudGroup(
     mcPosition: Offset? = null,
 ): List<Hud> {
     if (clipboard.isEmpty()) return emptyList()
+    val viable = clipboard.filter(::canDuplicateHud)
+    if (viable.isEmpty()) return emptyList()
     val sw = HudManager.guiScreenWidth
     val sh = HudManager.guiScreenHeight
-    val groupBounds = clipboard.mapNotNull { hud -> hudBounds(hud) }
+    val groupBounds = viable.mapNotNull { hud -> hudBounds(hud) }
     if (groupBounds.isEmpty()) return emptyList()
     var minX = Float.MAX_VALUE
     var minY = Float.MAX_VALUE
@@ -1896,7 +1897,7 @@ internal fun duplicateHudGroup(
         Offset(minX + 32f, minY + 32f)
     }
     val pasted = mutableListOf<Hud>()
-    for (hud in clipboard) {
+    for (hud in viable) {
         if (!canDuplicateHud(hud)) continue
         val bounds = hudBounds(hud) ?: continue
         val dx = bounds.x - minX
