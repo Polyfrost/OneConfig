@@ -2043,7 +2043,8 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                 endDrag()
             }
             .drawWithContent {
-                drawContent()
+                // HUD contents and their boxes go under the children: the action bar is a child of
+                // this Box, so drawing it first would put it behind every HUD painted here.
                 val mcToScreen = Platform.screen().mcToScreenScale()
                 drawIntoCanvas { canvas -> drawHudContents(canvas.skiaCanvas, mcToScreen) }
                 if (isDragging) {
@@ -2105,6 +2106,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                         )
                     }
                 }
+                drawContent()
             }
     ) {
         val actionBarTarget = hoveredHud
