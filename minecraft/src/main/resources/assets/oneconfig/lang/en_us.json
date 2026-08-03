@@ -75,6 +75,9 @@
   "oneconfig.preferences.opening_behavior.previous_page": "Previous page",
   "oneconfig.preferences.opening_behavior.smart_reset": "Smart reset",
 
+  "oneconfig.preferences.restore_hud_editor.title": "Reopen HUD editor",
+  "oneconfig.preferences.restore_hud_editor.description": "Reopens the HUD editor instead of the OneConfig menu when the HUD editor was the last page you closed.",
+
   "oneconfig.preferences.show_opening_page_animation.title": "Show opening page animation",
   "oneconfig.preferences.show_opening_page_animation.description": "Plays the page animation when the menu is first opened.",
 
