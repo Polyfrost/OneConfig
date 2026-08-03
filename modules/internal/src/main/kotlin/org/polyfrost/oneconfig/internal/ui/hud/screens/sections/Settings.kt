@@ -59,6 +59,8 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
         var bgChroma by remember { mutableStateOf(hud.bgChroma) }
         var bgChromaSpeed by remember { mutableStateOf(hud.bgChromaSpeed) }
         var bgRadius by remember { mutableStateOf(hud.bgRadius) }
+        var mergeBackground by remember { mutableStateOf(hud.mergeBackground) }
+        var mergeDiagonally by remember { mutableStateOf(hud.mergeDiagonally) }
         var textColor by remember { mutableStateOf(Color(hud.textColor)) }
         var textChroma by remember { mutableStateOf(hud.textChroma) }
         var textChromaSpeed by remember { mutableStateOf(hud.textChromaSpeed) }
@@ -184,6 +186,30 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
                                         bgRadius, { Snapshot.withMutableSnapshot { bgRadius = it; hud.bgRadius = it } },
                                         0f, 32f, 1f, width = 100.dp
                                     )
+                                }
+                            }
+                            HudSettingTarget(hud, "mergeBackground") {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    SwitchControl(mergeBackground) {
+                                        Snapshot.withMutableSnapshot { mergeBackground = it; hud.mergeBackground = it }
+                                    }
+                                    Text("Merge With Neighbours", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                                }
+                            }
+                            if (mergeBackground) {
+                                HudSettingTarget(hud, "mergeDiagonally") {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    ) {
+                                        SwitchControl(mergeDiagonally) {
+                                            Snapshot.withMutableSnapshot { mergeDiagonally = it; hud.mergeDiagonally = it }
+                                        }
+                                        Text("Merge Diagonally", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                                    }
                                 }
                             }
                         }

@@ -112,6 +112,9 @@ object HudManager {
 
     private val frameOrder = ArrayList<Hud>()
 
+    private var frameGroups: List<HudBackgroundMerge.Group> = emptyList()
+    private var lastMergeKey: Int? = null
+
     private var zOrderCache: List<Hud> = emptyList()
     private var zOrderHuds = arrayOfNulls<Hud>(0)
     private var zOrderBounds = FloatArray(0)
@@ -394,13 +397,8 @@ object HudManager {
 
         updateAndAdvance(frameOrder)
 
-        for (hud in frameOrder) {
-            try {
-                layoutOnce(hud, screenWidth, screenHeight, scale)
-            } catch (e: Throwable) {
-                LOGGER.error("Failed to lay out HUD ${hud.title}", e)
-            }
-        }
+        layoutAll(frameOrder, screenWidth, screenHeight, scale)
+        updateBackgroundGroups(screenWidth, screenHeight, scale)
 
         val key = frameKey()
         val keyChanged = key != lastFrameKey ||
@@ -416,6 +414,51 @@ object HudManager {
         contentDirty = false
         preparedFrameValid = dirty
         return dirty
+    }
+
+    private fun layoutAll(huds: List<Hud>, screenWidth: Float, screenHeight: Float, scale: Float) {
+        for (hud in huds) {
+            try {
+                layoutOnce(hud, screenWidth, screenHeight, scale)
+            } catch (e: Throwable) {
+                LOGGER.error("Failed to lay out HUD ${hud.title}", e)
+            }
+        }
+    }
+
+    /**
+     * Rebuilds the fused background shapes for HUDs which sit against each other, and tells the HUDs
+     * in a fused shape to stop drawing their own background. Cheap on frames where nothing moved:
+     * the shapes are only re-traced when a position, size or background style actually changed.
+     */
+    private fun updateBackgroundGroups(screenWidth: Float, screenHeight: Float, scale: Float) {
+        val key = HudBackgroundMerge.layoutKey(frameOrder)
+        if (key == lastMergeKey) return
+        lastMergeKey = key
+
+        frameGroups = HudBackgroundMerge.computeGroups(frameOrder)
+        val merged = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Hud, Boolean>())
+        for (group in frameGroups) merged.addAll(group.huds)
+
+        var changed = false
+        for (hud in activeInstances) {
+            if (hud.bgMerged != (hud in merged)) {
+                changed = true
+                break
+            }
+        }
+        if (!changed) return
+
+        Snapshot.withMutableSnapshot {
+            for (hud in activeInstances) hud.bgMerged = hud in merged
+        }
+        // the flag is read during composition, so recompose and re-lay out now instead of letting the
+        // change land a frame late, which would show a doubled or missing background for one frame
+        Snapshot.sendApplyNotifications()
+        PolyComposeHost.frame()
+        for (hud in frameOrder) hud.lastLayoutFrame = -1L
+        layoutAll(frameOrder, screenWidth, screenHeight, scale)
+        invalidate()
     }
 
     private fun frameKey(): Long {
@@ -499,10 +542,20 @@ object HudManager {
             frameOrder.clear()
             for (hud in orderedForRender()) if (shouldDraw(hud)) frameOrder.add(hud)
             updateAndAdvance(frameOrder)
+            layoutAll(frameOrder, screenWidth, screenHeight, scale)
+            updateBackgroundGroups(screenWidth, screenHeight, scale)
         }
 
         ctx.save()
         ctx.scale(scale, scale)
+
+        for (group in frameGroups) {
+            try {
+                group.draw(ctx)
+            } catch (e: Throwable) {
+                LOGGER.error("Failed to draw merged HUD background", e)
+            }
+        }
 
         for (hud in frameOrder) {
             val hudScale = hud.effectiveScale

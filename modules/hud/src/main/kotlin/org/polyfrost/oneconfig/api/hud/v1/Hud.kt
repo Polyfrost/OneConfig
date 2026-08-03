@@ -508,6 +508,21 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     private var _bgRadius: MutableState<Float> = mutableStateOf(4f)
     var bgRadius: Float get() = _bgRadius.value; set(v) { _bgRadius.value = v }
 
+    private var _mergeBackground: MutableState<Boolean> = mutableStateOf(true)
+
+    var mergeBackground: Boolean get() = _mergeBackground.value; set(v) { _mergeBackground.value = v }
+
+    private var _mergeDiagonally: MutableState<Boolean> = mutableStateOf(false)
+
+    var mergeDiagonally: Boolean get() = _mergeDiagonally.value; set(v) { _mergeDiagonally.value = v }
+
+    internal var bgMerged: Boolean
+        get() = _bgMerged.value
+        set(v) { _bgMerged.value = v }
+
+    @Transient
+    private var _bgMerged: MutableState<Boolean> = mutableStateOf(false)
+
     private var _textColor: MutableState<Int> = mutableStateOf(0xFFFFFFFF.toInt())
     var textColor: Int get() = _textColor.value; set(v) { _textColor.value = v }
 
@@ -622,6 +637,18 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             tree["bgChroma"] = ktProperty(out::bgChroma).apply { addDisplayCondition(hideFromConfigUi) }
             tree["bgChromaSpeed"] = ktProperty(out::bgChromaSpeed).apply { addDisplayCondition(hideFromConfigUi) }
             tree["bgRadius"] = ktProperty(out::bgRadius).apply { addDisplayCondition(hideFromConfigUi) }
+            // legacy HUDs draw their own background through the compat bridge, so there is nothing
+            // for OneConfig to fuse and no reason to persist the settings for them
+            if (out !is LegacyHudMarker) {
+                tree["mergeBackground"] = ktProperty(out::mergeBackground).apply {
+                    description = "Fuses this HUD's background with the background of HUDs it touches, so they draw as one shape."
+                    addDisplayCondition(hideFromConfigUi)
+                }
+                tree["mergeDiagonally"] = ktProperty(out::mergeDiagonally).apply {
+                    description = "Also fuses backgrounds with HUDs sitting diagonally from this one, which meet it at a corner or only partly along an edge."
+                    addDisplayCondition(hideFromConfigUi)
+                }
+            }
             tree["textColor"] = ktProperty(out::textColor).apply { addDisplayCondition(hideFromConfigUi) }
             tree["textChroma"] = ktProperty(out::textChroma).apply { addDisplayCondition(hideFromConfigUi) }
             tree["textChromaSpeed"] = ktProperty(out::textChromaSpeed).apply { addDisplayCondition(hideFromConfigUi) }
@@ -735,6 +762,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         _bgChroma = mutableStateOf(this@Hud.bgChroma)
         _bgChromaSpeed = mutableStateOf(this@Hud.bgChromaSpeed)
         _bgRadius = mutableStateOf(this@Hud.bgRadius)
+        _mergeBackground = mutableStateOf(this@Hud.mergeBackground)
+        _mergeDiagonally = mutableStateOf(this@Hud.mergeDiagonally)
+        _bgMerged = mutableStateOf(false)
         _textColor = mutableStateOf(this@Hud.textColor)
         _textChroma = mutableStateOf(this@Hud.textChroma)
         _textChromaSpeed = mutableStateOf(this@Hud.textChromaSpeed)

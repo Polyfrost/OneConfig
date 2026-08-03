@@ -102,7 +102,8 @@ abstract class TextHud(
 
         val isStaticValid = staticWidth && staticW > 0f && staticH > 0f
 
-        val outerModifier = if (showBackground) {
+        // when merged, HudManager draws this HUD's background as part of the fused neighbour shape
+        val outerModifier = if (showBackground && !bgMerged) {
             val bgModifier = PolyModifier.background(PolyColor(bgColor, bgChroma, bgChromaSpeed), bgRadius)
             if (isStaticValid) bgModifier.size(staticW, staticH).padding(padInsets)
             else bgModifier.padding(padInsets)
