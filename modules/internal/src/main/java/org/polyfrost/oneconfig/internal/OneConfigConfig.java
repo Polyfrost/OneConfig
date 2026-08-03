@@ -9,11 +9,15 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers;
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
 
 import kotlin.jvm.functions.Function1;
+import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession;
 
 public class OneConfigConfig extends Config {
+    private static final byte HUD_ACTION_MODS = KeybindUtils.getActionModifier();
+
     // Keybinds store GLFW key codes (the space the KeybindManager matches against; KeybindOption translates the UI's
     // AWT capture into GLFW). 344 == GLFW_KEY_RIGHT_SHIFT, declared as a literal to avoid a GLFW dependency here. The
     // action that opens the GUI is supplied by the minecraft module via setOpenAction (it cannot be serialized, so it
@@ -28,6 +32,159 @@ public class OneConfigConfig extends Config {
     )
     public static OneConfigKeybind oneConfigKeybind =
         new OneConfigKeybind(new int[] {344}, null, KeyModifiers.NONE, 0L, pressed -> true);
+
+    @Switch(
+        title = "oneconfig.preferences.master_hud_enabled.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.master_hud_enabled.description",
+        descriptionTranslation = true
+    )
+    public static boolean masterHudEnabled = true;
+
+    @Keybind(
+        title = "oneconfig.preferences.hud_settings_keybind.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.hud_settings_keybind.description",
+        descriptionTranslation = true
+    )
+    public static OneConfigKeybind hudSettingsKeybind =
+        new OneConfigKeybind(new int[] {69}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+
+    @Keybind(
+        title = "oneconfig.preferences.hud_visibility_keybind.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.hud_visibility_keybind.description",
+        descriptionTranslation = true
+    )
+    public static OneConfigKeybind hudVisibilityKeybind =
+        new OneConfigKeybind(new int[] {72}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+
+    @Keybind(
+        title = "oneconfig.preferences.hud_lock_keybind.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.hud_lock_keybind.description",
+        descriptionTranslation = true
+    )
+    public static OneConfigKeybind hudLockKeybind =
+        new OneConfigKeybind(new int[] {76}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+
+    @Keybind(
+        title = "oneconfig.preferences.hud_copy_keybind.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.hud_copy_keybind.description",
+        descriptionTranslation = true
+    )
+    public static OneConfigKeybind hudCopyKeybind =
+        new OneConfigKeybind(new int[] {67}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+
+    @Keybind(
+        title = "oneconfig.preferences.hud_cut_keybind.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.hud_cut_keybind.description",
+        descriptionTranslation = true
+    )
+    public static OneConfigKeybind hudCutKeybind =
+        new OneConfigKeybind(new int[] {88}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+
+    @Keybind(
+        title = "oneconfig.preferences.hud_paste_keybind.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.hud_paste_keybind.description",
+        descriptionTranslation = true
+    )
+    public static OneConfigKeybind hudPasteKeybind =
+        new OneConfigKeybind(new int[] {86}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+
+    @Keybind(
+        title = "oneconfig.preferences.hud_duplicate_keybind.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.hud_duplicate_keybind.description",
+        descriptionTranslation = true
+    )
+    public static OneConfigKeybind hudDuplicateKeybind =
+        new OneConfigKeybind(new int[] {68}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+
+    @Keybind(
+        title = "oneconfig.preferences.hud_reset_keybind.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.hud_reset_keybind.description",
+        descriptionTranslation = true
+    )
+    public static OneConfigKeybind hudResetKeybind =
+        new OneConfigKeybind(new int[] {82}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+
+    @Keybind(
+        title = "oneconfig.preferences.hud_delete_keybind.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.hud_delete_keybind.description",
+        descriptionTranslation = true
+    )
+    public static OneConfigKeybind hudDeleteKeybind =
+        new OneConfigKeybind(new int[] {261}, null, KeyModifiers.NONE, 0L, pressed -> true);
+
+    @Keybind(
+        title = "oneconfig.preferences.hud_select_all_keybind.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.hud_select_all_keybind.description",
+        descriptionTranslation = true
+    )
+    public static OneConfigKeybind hudSelectAllKeybind =
+        new OneConfigKeybind(new int[] {65}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+
+    @Switch(
+        title = "oneconfig.preferences.hud_show_keybind_hints.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.hud_show_keybind_hints.description",
+        descriptionTranslation = true
+    )
+    public static boolean showKeybindHints = true;
+
+    @Switch(
+        title = "oneconfig.preferences.hud_marquee_anim.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.hud_marquee_anim.description",
+        descriptionTranslation = true
+    )
+    public static boolean marqueeSelectionAnim = true;
+
+    @Slider(
+        title = "oneconfig.preferences.hud_marquee_anim_duration.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        subcategoryTranslation = true,
+        min = 50f,
+        max = 500f,
+        step = 10f,
+        description = "oneconfig.preferences.hud_marquee_anim_duration.description",
+        descriptionTranslation = true
+    )
+    public static float marqueeSelectionAnimDuration = 150f;
 
     @Switch(
         title = "oneconfig.preferences.background_blur.title",
@@ -413,6 +570,35 @@ public class OneConfigConfig extends Config {
      */
     private static OneConfigKeybind registeredKeybind;
 
+    /**
+     * The keybind currently registered with the {@link KeybindManager} for duplicating the selected HUD in the
+     * design studio, rebuilt whenever the keys or the config value change.
+     */
+    private static OneConfigKeybind registeredHudDuplicateKeybind;
+
+    /**
+     * The keybinds currently registered with the {@link KeybindManager} for the other HUD editor actions (open
+     * settings, toggle visibility, reset to default), rebuilt whenever the keys or the config values change.
+     */
+    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
+        registeredHudSettingsKeybind = new java.util.concurrent.atomic.AtomicReference<>();
+    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
+        registeredHudVisibilityKeybind = new java.util.concurrent.atomic.AtomicReference<>();
+    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
+        registeredHudResetKeybind = new java.util.concurrent.atomic.AtomicReference<>();
+    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
+        registeredHudCopyKeybind = new java.util.concurrent.atomic.AtomicReference<>();
+    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
+        registeredHudCutKeybind = new java.util.concurrent.atomic.AtomicReference<>();
+    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
+        registeredHudPasteKeybind = new java.util.concurrent.atomic.AtomicReference<>();
+    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
+        registeredHudDeleteKeybind = new java.util.concurrent.atomic.AtomicReference<>();
+    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
+        registeredHudSelectAllKeybind = new java.util.concurrent.atomic.AtomicReference<>();
+    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
+        registeredHudLockKeybind = new java.util.concurrent.atomic.AtomicReference<>();
+
     public OneConfigConfig() {
         super("oneconfig.json", "assets/oneconfig/brand/oneconfig-icon.svg", "OneConfig", Category.QOL);
         INSTANCE = this;
@@ -495,6 +681,72 @@ public class OneConfigConfig extends Config {
                 return false;
             });
         refreshKeybind(oneConfigKeybind);
+        addCallback(
+            "hudDuplicateKeybind", (OneConfigKeybind kb) -> {
+                refreshHudDuplicateKeybind();
+                return false;
+            });
+        refreshHudDuplicateKeybind();
+        addCallback(
+            "hudSettingsKeybind", (OneConfigKeybind kb) -> {
+                refreshHudSettingsKeybind();
+                return false;
+            });
+        refreshHudSettingsKeybind();
+        addCallback(
+            "hudVisibilityKeybind", (OneConfigKeybind kb) -> {
+                refreshHudVisibilityKeybind();
+                return false;
+            });
+        refreshHudVisibilityKeybind();
+        addCallback(
+            "hudResetKeybind", (OneConfigKeybind kb) -> {
+                refreshHudResetKeybind();
+                return false;
+            });
+        refreshHudResetKeybind();
+        addCallback(
+            "hudCopyKeybind", (OneConfigKeybind kb) -> {
+                refreshHudCopyKeybind();
+                return false;
+            });
+        refreshHudCopyKeybind();
+        addCallback(
+            "hudCutKeybind", (OneConfigKeybind kb) -> {
+                refreshHudCutKeybind();
+                return false;
+            });
+        refreshHudCutKeybind();
+        addCallback(
+            "hudPasteKeybind", (OneConfigKeybind kb) -> {
+                refreshHudPasteKeybind();
+                return false;
+            });
+        refreshHudPasteKeybind();
+        addCallback(
+            "hudDeleteKeybind", (OneConfigKeybind kb) -> {
+                refreshHudDeleteKeybind();
+                return false;
+            });
+        refreshHudDeleteKeybind();
+        addCallback(
+            "hudSelectAllKeybind", (OneConfigKeybind kb) -> {
+                refreshHudSelectAllKeybind();
+                return false;
+            });
+        refreshHudSelectAllKeybind();
+        addCallback(
+            "hudLockKeybind", (OneConfigKeybind kb) -> {
+                refreshHudLockKeybind();
+                return false;
+            });
+        refreshHudLockKeybind();
+        addCallback(
+            "masterHudEnabled", (Boolean v) -> {
+                org.polyfrost.oneconfig.api.hud.v1.HudManager.masterHudEnabled = v;
+                return false;
+            });
+        org.polyfrost.oneconfig.api.hud.v1.HudManager.masterHudEnabled = masterHudEnabled;
     }
 
     /**
@@ -525,6 +777,118 @@ public class OneConfigConfig extends Config {
             src.getDurationNanos(),
             openAction);
         KeybindManager.register(registeredKeybind);
+    }
+
+    /**
+     * Rebuilds the registered duplicate-HUD keybind from {@code hudDuplicateKeybind}'s (GLFW) keys, re-registering it
+     * with the {@link KeybindManager}. The action is resolved from the config field's keys rather than stored on the
+     * keybind itself so it survives deserialization.
+     */
+    private static void refreshHudDuplicateKeybind() {
+        if (registeredHudDuplicateKeybind != null) {
+            KeybindManager.unregister(registeredHudDuplicateKeybind);
+            registeredHudDuplicateKeybind = null;
+        }
+        OneConfigKeybind src = hudDuplicateKeybind;
+        if (src == null || !src.isBound()) {
+            return;
+        }
+        registeredHudDuplicateKeybind = new OneConfigKeybind(
+            src.getKeyCodes(),
+            src.getMouseBtns(),
+            src.getMods(),
+            src.getDurationNanos(),
+            HudDesignSession::handleDuplicate);
+        KeybindManager.register(registeredHudDuplicateKeybind);
+    }
+
+    /**
+     * Rebuilds one of the additional HUD editor keybinds from its config field's (GLFW) keys, re-registering it
+     * with the {@link KeybindManager}. The action is resolved from the config field's keys rather than stored on the
+     * keybind itself so it survives deserialization.
+     */
+    private static void refreshHudEditorKeybind(
+        OneConfigKeybind src,
+        java.util.concurrent.atomic.AtomicReference<OneConfigKeybind> slot,
+        Function1<Boolean, Boolean> action) {
+        OneConfigKeybind old = slot.getAndSet(null);
+        if (old != null) {
+            KeybindManager.unregister(old);
+        }
+        if (src == null || !src.isBound()) {
+            return;
+        }
+        OneConfigKeybind keybind = new OneConfigKeybind(
+            src.getKeyCodes(),
+            src.getMouseBtns(),
+            src.getMods(),
+            src.getDurationNanos(),
+            action);
+        KeybindManager.register(keybind);
+        slot.set(keybind);
+    }
+
+    private static void refreshHudSettingsKeybind() {
+        refreshHudEditorKeybind(
+            hudSettingsKeybind,
+            registeredHudSettingsKeybind,
+            HudDesignSession::handleOpenSettings);
+    }
+
+    private static void refreshHudVisibilityKeybind() {
+        refreshHudEditorKeybind(
+            hudVisibilityKeybind,
+            registeredHudVisibilityKeybind,
+            HudDesignSession::handleToggleVisibility);
+    }
+
+    private static void refreshHudResetKeybind() {
+        refreshHudEditorKeybind(
+            hudResetKeybind,
+            registeredHudResetKeybind,
+            HudDesignSession::handleReset);
+    }
+
+    private static void refreshHudCopyKeybind() {
+        refreshHudEditorKeybind(
+            hudCopyKeybind,
+            registeredHudCopyKeybind,
+            HudDesignSession::handleCopy);
+    }
+
+    private static void refreshHudCutKeybind() {
+        refreshHudEditorKeybind(
+            hudCutKeybind,
+            registeredHudCutKeybind,
+            HudDesignSession::handleCut);
+    }
+
+    private static void refreshHudPasteKeybind() {
+        refreshHudEditorKeybind(
+            hudPasteKeybind,
+            registeredHudPasteKeybind,
+            HudDesignSession::handlePaste);
+    }
+
+    private static void refreshHudDeleteKeybind() {
+        refreshHudEditorKeybind(
+            hudDeleteKeybind,
+            registeredHudDeleteKeybind,
+            HudDesignSession::handleDelete);
+    }
+
+    private static void refreshHudSelectAllKeybind() {
+        refreshHudEditorKeybind(
+            hudSelectAllKeybind,
+            registeredHudSelectAllKeybind,
+            HudDesignSession::handleSelectAll);
+    }
+
+    private static void refreshHudLockKeybind() {
+        refreshHudEditorKeybind(
+            hudLockKeybind,
+            registeredHudLockKeybind,
+                HudDesignSession::handleLock);
     }
 
     /**
