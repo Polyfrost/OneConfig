@@ -86,6 +86,7 @@ import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.util.LayoutRef
 
 private sealed interface SettingNode {
     data class Leaf(val prop: Property<*>) : SettingNode
@@ -675,14 +676,14 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
 
     var menuOpen by remember(prop) { mutableStateOf(false) }
     var menuOffset by remember(prop) { mutableStateOf(IntOffset.Zero) }
-    var rowOrigin by remember(prop) { mutableStateOf(Offset.Zero) }
-    var actionMenuOffset by remember(prop) { mutableStateOf(IntOffset.Zero) }
+    val rowOrigin = remember(prop) { LayoutRef(Offset.Zero) }
+    val actionMenuOffset = remember(prop) { LayoutRef(IntOffset.Zero) }
     val rowInteraction = rememberInteractionSource()
     val isRowHovered by rowInteraction.collectIsHoveredAsState()
     val showActionButton = OneConfigConfig.showOptionActionButtons && enabled
     LaunchedEffect(enabled) { if (!enabled) menuOpen = false }
     fun openMenuFromActionButton() {
-        menuOffset = actionMenuOffset
+        menuOffset = actionMenuOffset.value
         menuOpen = true
     }
 
@@ -697,7 +698,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
         modifier = Modifier
             .fillMaxWidth()
             .hoverable(rowInteraction)
-            .onGloballyPositioned { rowOrigin = it.positionInRoot() }
+            .onGloballyPositioned { rowOrigin.value = it.positionInRoot() }
             .pointerInput(prop, enabled) {
                 if (!enabled) return@pointerInput
                 awaitPointerEventScope {
@@ -743,8 +744,8 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                         OptionActionButton(
                             visible = isRowHovered || menuOpen,
                             modifier = Modifier.onGloballyPositioned {
-                                val pos = it.positionInRoot() - rowOrigin
-                                actionMenuOffset = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
+                                val pos = it.positionInRoot() - rowOrigin.value
+                                actionMenuOffset.value = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
                             },
                             onClick = ::openMenuFromActionButton,
                         )
@@ -771,8 +772,8 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                     OptionActionButton(
                         visible = isRowHovered || menuOpen,
                         modifier = Modifier.onGloballyPositioned {
-                            val pos = it.positionInRoot() - rowOrigin
-                            actionMenuOffset = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
+                            val pos = it.positionInRoot() - rowOrigin.value
+                            actionMenuOffset.value = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
                         },
                         onClick = ::openMenuFromActionButton,
                     )

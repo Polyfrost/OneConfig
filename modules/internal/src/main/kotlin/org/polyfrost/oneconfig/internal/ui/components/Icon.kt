@@ -179,9 +179,11 @@ fun canRenderIcon(iconName: String): Boolean {
 private fun String.toIconResourcePath(): String =
     if (contains('/') || contains('.')) this else "/assets/oneconfig/ico/$this.svg"
 
-private fun iconResourceExists(path: String): Boolean {
+private val iconResourceExistsCache = ConcurrentHashMap<String, Boolean>()
+
+private fun iconResourceExists(path: String): Boolean = iconResourceExistsCache.getOrPut(path) {
     val normalized = path.removePrefix("/")
-    return Thread.currentThread().contextClassLoader?.getResource(normalized) != null ||
+    Thread.currentThread().contextClassLoader?.getResource(normalized) != null ||
         IconResourceMarker::class.java.classLoader?.getResource(normalized) != null
 }
 
