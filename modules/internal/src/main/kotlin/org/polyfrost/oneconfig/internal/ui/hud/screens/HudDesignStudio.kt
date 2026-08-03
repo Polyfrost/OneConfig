@@ -51,6 +51,7 @@ import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.runtime.PolyComposeRuntime
 import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.HudResize
 import org.polyfrost.oneconfig.api.notifications.v1.Notification
@@ -75,6 +76,7 @@ import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.*
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.abs
+import kotlin.math.hypot
 import kotlin.math.roundToInt
 import kotlin.ranges.coerceAtLeast
 import kotlin.ranges.coerceAtMost
@@ -269,6 +271,67 @@ private fun hudBounds(hud: Hud): HudBounds? {
         hud.renderedH.takeIf { it > 0f } ?: hud.staticH.takeIf { it > 0f }?.times(scale)
     } ?: return null
     return HudBounds(hud.x, hud.y, width, height)
+}
+
+/** The nine points of a HUD box the user can pin another HUD to, in reading order. */
+private val ANCHOR_POINTS = listOf(
+    HudAnchor.TopLeft, HudAnchor.Top, HudAnchor.TopRight,
+    HudAnchor.Left, HudAnchor.Center, HudAnchor.Right,
+    HudAnchor.BottomLeft, HudAnchor.Bottom, HudAnchor.BottomRight,
+)
+
+private const val ANCHOR_DOT_RADIUS_PX = 5f
+private const val ANCHOR_HIT_RADIUS_PX = 10f
+private val anchorLineColor = Color(0xFF0D99FF)
+private val anchorLineDashEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 4f), 0f)
+private val anchorPickScrimColor = Color.Black.copy(0.25f)
+
+private fun anchorFractions(hud: Hud, point: HudAnchor): Pair<Float, Float> {
+    val resolved = if (point == HudAnchor.Auto) hud.effectiveGrowthAnchor else point
+    val fx = when (resolved) {
+        HudAnchor.TopLeft, HudAnchor.Left, HudAnchor.BottomLeft -> 0f
+        HudAnchor.Top, HudAnchor.Center, HudAnchor.Bottom -> 0.5f
+        else -> 1f
+    }
+    val fy = when (resolved) {
+        HudAnchor.TopLeft, HudAnchor.Top, HudAnchor.TopRight -> 0f
+        HudAnchor.Left, HudAnchor.Center, HudAnchor.Right -> 0.5f
+        else -> 1f
+    }
+    return fx to fy
+}
+
+/** Where [point] sits on [hud]'s box, in gui coordinates. */
+private fun anchorPointOf(hud: Hud, point: HudAnchor): Offset? {
+    val b = hudBounds(hud) ?: return null
+    val (fx, fy) = anchorFractions(hud, point)
+    return Offset(b.x + fx * b.width, b.y + fy * b.height)
+}
+
+/** Every HUD [sources] may be anchored to: not one of them, and not already hanging off one. */
+private fun anchorTargetsFor(sources: List<Hud>): List<Hud> =
+    HudManager.activeInstances.filter { candidate ->
+        sources.none { it === candidate || candidate.anchorChainContains(it) }
+    }
+
+private fun hitTestAnchorPoint(
+    sources: List<Hud>,
+    screenX: Float,
+    screenY: Float,
+    mcToScreen: Float,
+): Pair<Hud, HudAnchor>? {
+    var best: Pair<Hud, HudAnchor>? = null
+    var bestDist = ANCHOR_HIT_RADIUS_PX
+    for (target in anchorTargetsFor(sources)) {
+        for (point in ANCHOR_POINTS) {
+            val p = anchorPointOf(target, point) ?: continue
+            val d = hypot(p.x * mcToScreen - screenX, p.y * mcToScreen - screenY)
+            if (d >= bestDist) continue
+            bestDist = d
+            best = target to point
+        }
+    }
+    return best
 }
 
 private fun drawHudContents(sk: org.jetbrains.skia.Canvas, mcToScreen: Float) {
@@ -756,6 +819,9 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     var marqueeAdditive by remember { mutableStateOf(false) }
     var pressWasSecondary by remember { mutableStateOf(false) }
     val lastPointerPos = remember { FloatArray(2) }
+    // HUDs waiting for the user to pick an anchor point. Non-empty while the picker overlay is up.
+    var anchorPickSources by remember { mutableStateOf<List<Hud>>(emptyList()) }
+    var hoveredAnchor by remember { mutableStateOf<Pair<Hud, HudAnchor>?>(null) }
 
     // The "active" HUD of a selection, the panel target if it is still selected, otherwise the
     // most recently added member. Drives the settings panel, resize handles, action bar and keybinds.
@@ -961,6 +1027,30 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             if (event.changes.any { it.isConsumed }) return@safePointerEvent
             val pos = event.changes.firstOrNull()?.position ?: return@safePointerEvent
             if (inChrome(pos.x, pos.y)) return@safePointerEvent
+            // While picking an anchor the canvas does nothing else: a left click takes the point
+            // under the cursor (or cancels if there is none), a right click drops the anchor.
+            if (anchorPickSources.isNotEmpty()) {
+                val sources = anchorPickSources
+                val secondary = event.buttons.isSecondaryPressed
+                event.changes.forEach { it.consume() }
+                val picked = if (secondary) {
+                    null
+                } else {
+                    hitTestAnchorPoint(sources, pos.x, pos.y, Platform.screen().mcToScreenScale())
+                }
+                Snapshot.withMutableSnapshot {
+                    when {
+                        secondary -> sources.forEach { it.clearAnchor() }
+                        picked != null -> sources.forEach { it.anchorTo(picked.first, picked.second) }
+                    }
+                    anchorPickSources = emptyList()
+                    hoveredAnchor = null
+                    // swallows the release that follows, so it can't fall through to selection
+                    pressWasSecondary = true
+                }
+                if (secondary || picked != null) UiSounds.play(UiSoundEvent.CLICK)
+                return@safePointerEvent
+            }
             if (event.buttons.isSecondaryPressed) {
                 val hit = primaryHud()?.takeIf { hitTestHud(it, pos.x, pos.y) }
                     ?: topHudAt(pos.x, pos.y)
@@ -1070,6 +1160,12 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             val pos = event.changes.firstOrNull()?.position ?: return@safePointerEvent
             lastPointerPos[0] = pos.x
             lastPointerPos[1] = pos.y
+            if (anchorPickSources.isNotEmpty()) {
+                val mcToScreen = Platform.screen().mcToScreenScale()
+                val hit = hitTestAnchorPoint(anchorPickSources, pos.x, pos.y, mcToScreen)
+                if (hit != hoveredAnchor) hoveredAnchor = hit
+                return@safePointerEvent
+            }
             if (isResizing) {
                 if (event.changes.none { it.pressed }) {
                     Snapshot.withMutableSnapshot {
@@ -1298,6 +1394,13 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             .focusable()
             .onKeyEvent { keyEvent ->
                 if (keyEvent.type != KeyEventType.KeyDown) return@onKeyEvent false
+                if (keyEvent.key == Key.Escape && anchorPickSources.isNotEmpty()) {
+                    Snapshot.withMutableSnapshot {
+                        anchorPickSources = emptyList()
+                        hoveredAnchor = null
+                    }
+                    return@onKeyEvent true
+                }
                 if (keyEvent.key == Key.Escape && (selectedHuds.isNotEmpty() || panelHud != null)) {
                     Snapshot.withMutableSnapshot {
                         selectedHuds = emptySet()
@@ -1472,6 +1575,49 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                             )
                         }
                     }
+                    // Hovering an anchored HUD traces the link back to the point it hangs off.
+                    hoveredHud?.let { hovered ->
+                        val parent = hovered.anchorParent
+                        val from = if (parent == null) null else anchorPointOf(hovered, hovered.effectiveGrowthAnchor)
+                        val to = if (parent == null) null else anchorPointOf(parent, hovered.anchorPoint)
+                        if (from != null && to != null) {
+                            drawLine(
+                                color = anchorLineColor,
+                                start = from * mcToScreen,
+                                end = to * mcToScreen,
+                                strokeWidth = 1.5f,
+                                pathEffect = anchorLineDashEffect,
+                            )
+                            drawCircle(anchorLineColor, radius = ANCHOR_DOT_RADIUS_PX, center = to * mcToScreen)
+                        }
+                    }
+
+                    if (anchorPickSources.isNotEmpty()) {
+                        drawRect(color = anchorPickScrimColor, size = size)
+                        val hotAnchor = hoveredAnchor
+                        for (target in anchorTargetsFor(anchorPickSources)) {
+                            val b = hudBounds(target) ?: continue
+                            drawRect(
+                                color = anchorLineColor.copy(alpha = 0.5f),
+                                topLeft = Offset(b.x * mcToScreen, b.y * mcToScreen),
+                                size = Size(b.width * mcToScreen, b.height * mcToScreen),
+                                style = Stroke(width = 1f),
+                            )
+                            for (point in ANCHOR_POINTS) {
+                                val p = anchorPointOf(target, point) ?: continue
+                                val center = p * mcToScreen
+                                val hot = hotAnchor?.first === target && hotAnchor.second == point
+                                val radius = if (hot) ANCHOR_DOT_RADIUS_PX + 2f else ANCHOR_DOT_RADIUS_PX
+                                drawCircle(Color.White, radius = radius, center = center)
+                                drawCircle(
+                                    color = if (hot) Accent else anchorLineColor,
+                                    radius = radius - 2f,
+                                    center = center,
+                                )
+                            }
+                        }
+                    }
+
                     val renderStart = if (marqueeActive) marqueeStart else lastMarqueeStart
                     val renderCurrent = if (marqueeActive) marqueeCurrent else lastMarqueeCurrent
                     if (marqueeAlpha > 0f && renderStart != null && renderCurrent != null) {
@@ -1782,6 +1928,16 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 UiSounds.play(UiSoundEvent.CLICK)
             },
             duplicateEnabled = contextMenuTargets.any(::canDuplicateHud),
+            onAnchor = { _ ->
+                Snapshot.withMutableSnapshot {
+                    anchorPickSources = contextMenuTargets
+                    hoveredAnchor = null
+                    hoveredHud = null
+                    libraryVisible = false
+                }
+            },
+            anchorEnabled = contextMenuTargets.isNotEmpty() &&
+                anchorTargetsFor(contextMenuTargets).isNotEmpty(),
             onDelete = { _ -> deleteHuds(contextMenuTargets) },
         )
 

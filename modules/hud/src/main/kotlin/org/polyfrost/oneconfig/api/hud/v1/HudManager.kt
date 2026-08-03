@@ -246,6 +246,14 @@ object HudManager {
 
     fun getProvider(hudClass: Class<out Hud>): Hud? = hudProviders[hudClass]
 
+    /** The live HUD whose config tree has this [id], used to resolve [Hud.anchorTargetId]. */
+    fun instanceById(id: String): Hud? {
+        for (it in activeInstances) {
+            if (it.tree?.id == id) return it
+        }
+        return null
+    }
+
     fun toggleAllHuds(hud: Hud, hidden: Boolean) {
         hudProviders[hud::class.java]?.hidden = hidden
         for (it in activeInstances) {
@@ -263,6 +271,13 @@ object HudManager {
         hud._runtime?.dispose()
         hud._runtime = null
         lastUpdates.remove(hud)
+        // anything hanging off this HUD goes back to being positioned against the screen, staying
+        // where it is: the relative position it keeps alongside the anchor is already up to date
+        hud.tree?.id?.let { gone ->
+            for (it in activeInstances) {
+                if (it.anchorTargetId == gone) it.clearAnchor()
+            }
+        }
         invalidate()
         try { hud.remove() } catch (_: Throwable) {}
         val treeId = hud.tree?.id

@@ -269,11 +269,14 @@ fun HudCanvasResetMenu(
     pasteEnabled: Boolean = false,
     onDuplicate: (Hud) -> Unit = {},
     duplicateEnabled: Boolean = true,
+    onAnchor: (Hud) -> Unit = {},
+    anchorEnabled: Boolean = true,
     onDelete: (Hud) -> Unit = {},
 ) {
     if (hud == null || !expanded) return
     val theme = LocalTheme.current
     val actionTargets = targets.ifEmpty { listOf(hud) }
+    val anyAnchored = actionTargets.any { it.isAnchored }
     val resetEnabled = actionTargets.any { hudHasResettableDefaults(it) }
     val deletable = actionTargets.any { it.canDelete() }
     val allHidden = actionTargets.all { it.hidden }
@@ -334,6 +337,22 @@ fun HudCanvasResetMenu(
                     actionTargets.forEach { it.locked = lock }
                 }
                 onDismiss()
+            }
+            HudMenuRow(
+                icon = "align",
+                text = "Anchor",
+                enabled = anchorEnabled,
+            ) {
+                onAnchor(hud)
+                onDismiss()
+            }
+            if (anyAnchored) {
+                HudMenuRow(icon = "x-circle", text = "Remove anchor") {
+                    Snapshot.withMutableSnapshot {
+                        actionTargets.forEach { it.clearAnchor() }
+                    }
+                    onDismiss()
+                }
             }
             HudMenuDivider()
             HudMenuRow(icon = "copy", text = "Copy", hint = copyHint) {
