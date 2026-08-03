@@ -804,11 +804,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
         onDispose {
             HudDesignSession.save(emptyList(), false, activeCategory)
             HudDesignSession.activeSelection = emptyList()
-            HudDesignSession.pendingSelection = emptyList()
-            HudDesignSession.pendingCopy = false
-            HudDesignSession.pendingCut = false
-            HudDesignSession.pendingPaste = false
-            HudDesignSession.pendingDelete = false
+            HudDesignSession.clearCommands()
         }
     }
 
@@ -820,71 +816,70 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     }
 
     LaunchedEffect(Unit) {
-        while (true) {
-            val pending = HudDesignSession.pendingSelection
-            HudDesignSession.pendingSelection = emptyList()
-            if (pending.isNotEmpty() && pending.all { it in HudManager.activeInstances }) {
-                Snapshot.withMutableSnapshot { selectedHuds = pending.toSet() }
-            }
-            if (HudDesignSession.pendingSettingsPanel) {
-                HudDesignSession.pendingSettingsPanel = false
-                val primary = primaryHud()
-                if (primary != null) {
-                    Snapshot.withMutableSnapshot {
-                        panelHud = primary
-                        activeCategory = StudioCategory.Settings
+        HudDesignSession.clearCommands()
+        for (command in HudDesignSession.commands) {
+            when (command) {
+                is StudioCommand.Select -> {
+                    val huds = command.huds
+                    if (huds.isNotEmpty() && huds.all { it in HudManager.activeInstances }) {
+                        Snapshot.withMutableSnapshot { selectedHuds = huds.toSet() }
                     }
                 }
-            }
-            if (HudDesignSession.pendingCopy) {
-                HudDesignSession.pendingCopy = false
-                Snapshot.withMutableSnapshot { hudClipboard = selectedHuds.toList() }
-                UiSounds.play(UiSoundEvent.CLICK)
-            }
-            if (HudDesignSession.pendingCut) {
-                HudDesignSession.pendingCut = false
-                Snapshot.withMutableSnapshot { hudClipboard = selectedHuds.toList() }
-                deleteHuds(selectedHuds)
-            }
-            if (HudDesignSession.pendingPaste) {
-                HudDesignSession.pendingPaste = false
-                if (hudClipboard.isNotEmpty()) {
-                    val s = Platform.screen().screenToMcScale()
-                    val pasted = duplicateHudGroup(
-                        hudClipboard,
-                        Offset(lastPointerPos[0] * s, lastPointerPos[1] * s),
-                    )
-                    if (pasted.isNotEmpty()) {
+
+                StudioCommand.OpenSettings -> {
+                    val primary = primaryHud()
+                    if (primary != null) {
                         Snapshot.withMutableSnapshot {
-                            selectedHuds = pasted.toSet()
-                            pasteMenuOffset = null
+                            panelHud = primary
+                            activeCategory = StudioCategory.Settings
                         }
                     }
+                }
+
+                StudioCommand.Copy -> {
+                    Snapshot.withMutableSnapshot { hudClipboard = selectedHuds.toList() }
                     UiSounds.play(UiSoundEvent.CLICK)
                 }
-            }
-            if (HudDesignSession.pendingDelete) {
-                HudDesignSession.pendingDelete = false
-                deleteHuds(selectedHuds)
-            }
-            if (HudDesignSession.pendingSelectAll) {
-                HudDesignSession.pendingSelectAll = false
-                Snapshot.withMutableSnapshot {
+
+                StudioCommand.Cut -> {
+                    Snapshot.withMutableSnapshot { hudClipboard = selectedHuds.toList() }
+                    deleteHuds(selectedHuds)
+                }
+
+                StudioCommand.Paste -> {
+                    if (hudClipboard.isNotEmpty()) {
+                        val s = Platform.screen().screenToMcScale()
+                        val pasted = duplicateHudGroup(
+                            hudClipboard,
+                            Offset(lastPointerPos[0] * s, lastPointerPos[1] * s),
+                        )
+                        if (pasted.isNotEmpty()) {
+                            Snapshot.withMutableSnapshot {
+                                selectedHuds = pasted.toSet()
+                                pasteMenuOffset = null
+                            }
+                        }
+                        UiSounds.play(UiSoundEvent.CLICK)
+                    }
+                }
+
+                StudioCommand.Delete -> deleteHuds(selectedHuds)
+
+                StudioCommand.SelectAll -> Snapshot.withMutableSnapshot {
                     selectedHuds = HudManager.activeInstances.filter { !it.locked }.toSet()
                 }
-            }
-            if (HudDesignSession.pendingLock) {
-                HudDesignSession.pendingLock = false
-                val targets = selectedHuds.toList()
-                if (targets.isNotEmpty()) {
-                    val lock = targets.any { !it.locked }
-                    Snapshot.withMutableSnapshot {
-                        targets.forEach { it.locked = lock }
+
+                StudioCommand.Lock -> {
+                    val targets = selectedHuds.toList()
+                    if (targets.isNotEmpty()) {
+                        val lock = targets.any { !it.locked }
+                        Snapshot.withMutableSnapshot {
+                            targets.forEach { it.locked = lock }
+                        }
+                        OneConfigConfig.INSTANCE.save()
                     }
-                    OneConfigConfig.INSTANCE.save()
                 }
             }
-            withFrameNanos { _ -> }
         }
     }
 

@@ -1,10 +1,30 @@
 package org.polyfrost.oneconfig.internal.ui.hud.screens
 
 import androidx.compose.runtime.snapshots.Snapshot
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.hud.resetAllHudProperties
+
+internal sealed interface StudioCommand {
+    data class Select(val huds: List<Hud>) : StudioCommand
+
+    data object OpenSettings : StudioCommand
+
+    data object Copy : StudioCommand
+
+    data object Cut : StudioCommand
+
+    data object Paste : StudioCommand
+
+    data object Delete : StudioCommand
+
+    data object SelectAll : StudioCommand
+
+    data object Lock : StudioCommand
+}
 
 object HudDesignSession {
     private const val RESTORE_WINDOW_MULTIPLIER = 4f
@@ -28,61 +48,25 @@ object HudDesignSession {
     @Volatile
     var activeSelection: List<Hud> = emptyList()
 
-    /**
-     * HUDs the studio should select, requested from outside the compose tree (e.g. by a keybind
-     * action). The studio polls and consumes this.
-     */
-    @Volatile
-    var pendingSelection: List<Hud> = emptyList()
+    private val commandQueue = Channel<StudioCommand>(Channel.UNLIMITED)
 
     /**
-     * Whether the studio should open the settings panel for its current selection, requested from
-     * outside the compose tree (e.g. by a keybind action). The studio polls and consumes this.
+     * Commands waiting for the design studio. The studio suspends on this while it is open, so a
+     * posted command is handled the moment it arrives rather than on the next frame.
      */
-    @Volatile
-    var pendingSettingsPanel = false
+    internal val commands: ReceiveChannel<StudioCommand> get() = commandQueue
+
+    private fun post(command: StudioCommand) {
+        commandQueue.trySend(command)
+    }
 
     /**
-     * Whether the studio should copy its current selection to the clipboard, requested from outside
-     * the compose tree (e.g. by a keybind action). The studio polls and consumes this.
+     * Drops commands that were never consumed, e.g. ones posted while the studio was closing. They
+     * are stale by the time it opens again.
      */
-    @Volatile
-    var pendingCopy = false
-
-    /**
-     * Whether the studio should cut its current selection (copy then delete), requested from outside
-     * the compose tree (e.g. by a keybind action). The studio polls and consumes this.
-     */
-    @Volatile
-    var pendingCut = false
-
-    /**
-     * Whether the studio should paste its clipboard at the last pointer position, requested from
-     * outside the compose tree (e.g. by a keybind action). The studio polls and consumes this.
-     */
-    @Volatile
-    var pendingPaste = false
-
-    /**
-     * Whether the studio should delete its current selection, requested from outside the compose
-     * tree (e.g. by a keybind action). The studio polls and consumes this.
-     */
-    @Volatile
-    var pendingDelete = false
-
-    /**
-     * Whether the studio should select all unlocked HUDs, requested from outside the compose
-     * tree (e.g. by a keybind action). The studio polls and consumes this.
-     */
-    @Volatile
-    var pendingSelectAll = false
-
-    /**
-     * Whether the studio should toggle the lock state of its current selection, requested from
-     * outside the compose tree (e.g. by a keybind action). The studio polls and consumes this.
-     */
-    @Volatile
-    var pendingLock = false
+    internal fun clearCommands() {
+        while (commandQueue.tryReceive().isSuccess) { /* drain */ }
+    }
 
     /**
      * Action for the "Duplicate HUD" keybind. Returns `true` if a duplicate was created.
@@ -97,7 +81,7 @@ object HudDesignSession {
         if (huds.none(::canDuplicateHud)) return false
         val dups = duplicateHudGroup(huds)
         if (dups.isEmpty()) return false
-        pendingSelection = dups
+        post(StudioCommand.Select(dups))
         return true
     }
 
@@ -111,7 +95,7 @@ object HudDesignSession {
         val huds = activeSelection
         if (huds.size != 1) return false
         if (huds.first().locked) return false
-        pendingSettingsPanel = true
+        post(StudioCommand.OpenSettings)
         return true
     }
 
@@ -152,7 +136,7 @@ object HudDesignSession {
         if (!pressed) return false
         if (!HudManager.isEditorOpen) return false
         if (activeSelection.isEmpty()) return false
-        pendingCopy = true
+        post(StudioCommand.Copy)
         return true
     }
 
@@ -164,7 +148,7 @@ object HudDesignSession {
         if (!pressed) return false
         if (!HudManager.isEditorOpen) return false
         if (activeSelection.isEmpty()) return false
-        pendingCut = true
+        post(StudioCommand.Cut)
         return true
     }
 
@@ -175,7 +159,7 @@ object HudDesignSession {
     fun handlePaste(pressed: Boolean): Boolean {
         if (!pressed) return false
         if (!HudManager.isEditorOpen) return false
-        pendingPaste = true
+        post(StudioCommand.Paste)
         return true
     }
 
@@ -187,7 +171,7 @@ object HudDesignSession {
         if (!pressed) return false
         if (!HudManager.isEditorOpen) return false
         if (activeSelection.isEmpty()) return false
-        pendingDelete = true
+        post(StudioCommand.Delete)
         return true
     }
 
@@ -198,7 +182,7 @@ object HudDesignSession {
     fun handleSelectAll(pressed: Boolean): Boolean {
         if (!pressed) return false
         if (!HudManager.isEditorOpen) return false
-        pendingSelectAll = true
+        post(StudioCommand.SelectAll)
         return true
     }
 
@@ -210,7 +194,7 @@ object HudDesignSession {
         if (!pressed) return false
         if (!HudManager.isEditorOpen) return false
         if (activeSelection.isEmpty()) return false
-        pendingLock = true
+        post(StudioCommand.Lock)
         return true
     }
 
