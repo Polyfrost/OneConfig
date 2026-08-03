@@ -151,6 +151,13 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindManager {
 	public static final fun unregister (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
 }
 
+public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindUtils {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindUtils;
+	public static final fun getActionModifier ()B
+	public final fun isActionModifierPressed-5xRPYO0 (I)Z
+}
+
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/keybind/MinecraftKeybindBridge {
 	public abstract fun register (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
 	public abstract fun sync (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
