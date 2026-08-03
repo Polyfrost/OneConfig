@@ -49,6 +49,7 @@ import org.polyfrost.compose.layout.PolyInsets
 import org.polyfrost.compose.layout.PolySize
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text as TextAnnotation
@@ -64,6 +65,9 @@ abstract class TextHud(
     companion object {
         private const val UNMEASURED = -1f
     }
+
+    @Switch(title = "Brackets")
+    var brackets: Boolean = false
 
     init {
         padLeft = 4f
@@ -197,8 +201,12 @@ abstract class TextHud(
         ).fastFilterNotNull().fastJoinToString(concatString)
     }
 
+    /** Wraps the finished line in square brackets when [brackets] is on. Empty lines stay empty. */
+    protected fun decorate(text: String): String =
+        if (brackets && text.isNotEmpty()) "[$text]" else text
+
     override fun update(): Boolean {
-        displayText = concat(prefix, getText(), suffix)
+        displayText = decorate(concat(prefix, getText(), suffix))
         return true
     }
 
@@ -210,6 +218,7 @@ abstract class TextHud(
         if (isReal) {
             updateWhenChanged("prefix")
             updateWhenChanged("suffix")
+            updateWhenChanged("brackets")
         }
         update()
         reseedStaticSizeIfNeeded()

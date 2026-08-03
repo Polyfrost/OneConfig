@@ -35,6 +35,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.FormattedCharSequence;
 import org.polyfrost.oneconfig.api.platform.v1.I18nPlatform;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.internal.ComponentUtil;
 
 public class I18nPlatformImpl implements I18nPlatform {
@@ -71,6 +72,7 @@ public class I18nPlatformImpl implements I18nPlatform {
                 sequence.accept(componentUtil.getFirst());
                 yield componentUtil.getSecond().invoke().getString();
             }
+            case net.kyori.adventure.text.Component adventure -> Platform.compatibility().resolveComponent(adventure);
             default -> component.toString();
         };
         return ChatFormatting.stripFormatting(s);

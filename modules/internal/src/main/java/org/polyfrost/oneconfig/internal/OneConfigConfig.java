@@ -328,6 +328,16 @@ public class OneConfigConfig extends Config {
     public static int openingBehavior = 3;
 
     @Switch(
+        title = "oneconfig.preferences.restore_hud_editor.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.gui",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.restore_hud_editor.description",
+        descriptionTranslation = true
+    )
+    public static boolean restoreHudEditor = false;
+
+    @Switch(
         title = "oneconfig.preferences.show_opening_page_animation.title",
         titleTranslation = true,
         subcategory = "oneconfig.preferences.category.gui",
@@ -621,6 +631,11 @@ public class OneConfigConfig extends Config {
             "timeBeforeReset",
             "Opening Behavior",
             () -> openingBehavior == 3 ? Property.Display.SHOWN : Property.Display.HIDDEN);
+        // Reopening the HUD editor only makes sense for the behaviors that restore the previous page (2, 3).
+        addDependency(
+            "restoreHudEditor",
+            "Opening Behavior",
+            () -> openingBehavior >= 2 ? Property.Display.SHOWN : Property.Display.HIDDEN);
         addDependency("enableUIMenuSounds", "enableUISounds");
         addDependency("enableUIClickSounds", "enableUISounds");
         addDependency("enableUISliderSounds", "enableUISounds");

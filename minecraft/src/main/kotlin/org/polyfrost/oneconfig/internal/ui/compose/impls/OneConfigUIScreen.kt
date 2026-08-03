@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.skiaCanvas
 import androidx.compose.ui.platform.LocalWindowInfo
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.client.gui.screens.Screen
 //? >= 1.21.10
 import net.minecraft.client.input.KeyEvent
 //? >= 1.21.10
@@ -51,7 +52,12 @@ class OneConfigUIScreen @JvmOverloads constructor(
         /** [restored] marks a route that puts the user back where they were rather than opening a fixed page. */
         private data class OpeningRoute(val route: Any, val restored: Boolean = false)
 
-        private fun resolveOpeningBehaviorRoute(): OpeningRoute = when (OneConfigConfig.openingBehavior) {
+        private fun resolveOpeningBehaviorRoute(): OpeningRoute = resolveRoute().let {
+            // "Reopen HUD editor" is off by default, in which case the editor is never restored as a page.
+            if (it.route === HudEditorRoute && !OneConfigConfig.restoreHudEditor) OpeningRoute(ModsGraph) else it
+        }
+
+        private fun resolveRoute(): OpeningRoute = when (OneConfigConfig.openingBehavior) {
             0 -> OpeningRoute(ModsGraph)
             1 -> OpeningRoute(PreferencesGraph)
             2 -> ShellState.lastRoute?.let { OpeningRoute(it, restored = true) } ?: OpeningRoute(ModsGraph)
@@ -233,6 +239,11 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     //~ if >= 26.1 'render' -> 'extractRenderState'
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
+        // Some foreign config screens (Better Statistics Screen, other tcdcommons-based UIs) draw as a popup
+        // over their parent and render that parent by hand every frame. When the parent is this screen that
+        // would queue a fullscreen blur into the Skia pass, which runs after vanilla GUI drawing and so smears
+        // the popup on top of it. Nothing here may run unless we are the screen actually being shown.
+        if (Platform.screen().current<Screen>() !== this) return
         if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= CLOSE_ANIMATION_MS) {
             Platform.screen().close()
             return

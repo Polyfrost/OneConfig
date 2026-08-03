@@ -64,6 +64,27 @@ public class TextHudTest {
         assertEquals("Label Clone", displayText(clone));
     }
 
+    @Test
+    void bracketsWrapTheWholeLine() throws Exception {
+        TestMutableTextHud hud = new TestMutableTextHud("Value");
+        hud.update();
+        assertEquals("Label Value", displayText(hud));
+
+        hud.setBrackets(true);
+        hud.update();
+        assertEquals("[Label Value]", displayText(hud));
+    }
+
+    @Test
+    void bracketsLeaveAnEmptyLineEmpty() throws Exception {
+        TestDateTimeHud hud = new TestDateTimeHud("yyyy-MM-ddd");
+        hud.setPrefix("");
+        hud.setBrackets(true);
+        hud.update();
+
+        assertEquals("", displayText(hud));
+    }
+
     @SuppressWarnings("unchecked")
     private static String displayText(TextHud hud) throws Exception {
         Field field = TextHud.class.getDeclaredField("displayTextState");

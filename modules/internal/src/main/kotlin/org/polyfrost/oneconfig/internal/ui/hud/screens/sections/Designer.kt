@@ -41,6 +41,7 @@ import org.polyfrost.compose.layout.PolyAlign
 import org.polyfrost.oneconfig.api.hud.v1.Font
 import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
 import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.api.hud.v1.TextHud
 import org.polyfrost.oneconfig.api.hud.v1.Weight
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
@@ -233,7 +234,8 @@ fun Designer(hud: Hud? = null) {
                 contentAlignment = Alignment.Center
             ) {
                 val previewText = run {
-                    val raw = "Hello, OneConfig!"
+                    val base = "Hello, OneConfig!"
+                    val raw = if ((hud as? TextHud)?.brackets == true) "[$base]" else base
                     when (caseType.ordinal) {
                         1 -> raw.uppercase()
                         2 -> raw.lowercase()
