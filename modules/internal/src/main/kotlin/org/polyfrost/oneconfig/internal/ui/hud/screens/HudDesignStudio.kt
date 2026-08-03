@@ -59,6 +59,7 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.*
@@ -1020,14 +1021,14 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 return@safePointerEvent
             }
             val s = Platform.screen().screenToMcScale()
-            val ctrl = event.keyboardModifiers.isCtrlPressed
+            val actionPressed = KeybindUtils.isActionModifierPressed(event.keyboardModifiers)
             val shift = event.keyboardModifiers.isShiftPressed
             val hit = pickHudAt(pos.x, pos.y, primaryHud())
             if (hit != null && hit.locked) {
                 event.changes.forEach { it.consume() }
                 if (hit !in selectedHuds) UiSounds.play(UiSoundEvent.HUD_SELECT)
                 Snapshot.withMutableSnapshot {
-                    selectedHuds = if (ctrl) selectedHuds + hit else setOf(hit)
+                    selectedHuds = if (actionPressed) selectedHuds + hit else setOf(hit)
                     libraryVisible = false
                     lockedPressHud = hit
                     lockedPressOrigin = pos
@@ -1040,7 +1041,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 if (hit != null) {
                     val wasSelected = hit in selectedHuds
                     val newSelection = when {
-                        ctrl -> if (wasSelected) selectedHuds - hit else selectedHuds + hit
+                        actionPressed -> if (wasSelected) selectedHuds - hit else selectedHuds + hit
                         shift -> if (wasSelected) selectedHuds else selectedHuds + hit
                         else -> if (wasSelected) selectedHuds else setOf(hit)
                     }
@@ -1062,11 +1063,11 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                         dragStarts = emptyMap()
                     }
                 } else {
-                    selectedHuds = if (ctrl || shift) selectedHuds else emptySet()
+                    selectedHuds = if (actionPressed || shift) selectedHuds else emptySet()
                     marqueeStart = pos
                     marqueeCurrent = pos
                     marqueeActive = true
-                    marqueeAdditive = ctrl || shift
+                    marqueeAdditive = actionPressed || shift
                     pasteMenuOffset = null
                 }
             }
