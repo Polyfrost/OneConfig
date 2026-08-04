@@ -32,6 +32,7 @@
         "events.Mixin_WorldUnloadEvent",
         "fixes.Mixin_FixScoreboardErrorSpam",
         "keybind.KeyMappingAccessor",
+        "keybind.KeyMappingRegistryAccessor",
         "keybind.OptionsAccessor",
         "keybind.Mixin_ControllingComboDisplay",
         "keybind.Mixin_ControllingKeyRecord",
