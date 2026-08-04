@@ -34,7 +34,9 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.visualizer
 import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-import java.util.UUID
+import org.polyfrost.oneconfig.internal.compat.CompatIds.componentKey
+import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
+import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
 import java.util.function.Function
 import java.util.function.Supplier
 
@@ -68,21 +70,43 @@ object DandelionCompat {
             tree.addMetadata("icon_path", it)
         }
 
-        categories.forEach { parseCategory(it, tree) }
+        val usedIds = HashSet<String>()
+        categories.forEach { parseCategory(it, tree, usedIds) }
 
         return tree
     }
 
-    fun parseCategory(category: ConfigCategory, root: Tree) {
-        category.rootGroup()?.let { parseGroup(it, category, true, root) }
-        category.groups().forEach { parseGroup(it, category, false, root) }
+    fun parseCategory(category: ConfigCategory, root: Tree, usedIds: MutableSet<String>) {
+        val categoryPath = idPart(componentKey(category.name()) ?: category.name().string, "general")
+        category.rootGroup()?.let { parseGroup(it, category, true, root, categoryPath, usedIds) }
+        category.groups().forEach { parseGroup(it, category, false, root, categoryPath, usedIds) }
     }
 
-    fun parseGroup(group: OptionGroup, category: ConfigCategory, isRootGroup: Boolean, root: Tree) {
+    fun parseGroup(
+        group: OptionGroup,
+        category: ConfigCategory,
+        isRootGroup: Boolean,
+        root: Tree,
+        categoryPath: String,
+        usedIds: MutableSet<String>,
+    ) {
         if (group is ListOption<*>) {
             @Suppress("UNCHECKED_CAST")
-            parseOption(group as ListOption<Any>, root, category.name().string, ConfigVisualizer.DEFAULT_SUBCATEGORY)
+            parseOption(
+                group as ListOption<Any>,
+                root,
+                category.name().string,
+                ConfigVisualizer.DEFAULT_SUBCATEGORY,
+                categoryPath,
+                usedIds,
+            )
             return
+        }
+
+        val groupPath = if (isRootGroup) {
+            categoryPath
+        } else {
+            "$categoryPath/${idPart(componentKey(group.name()) ?: group.name().string, "group")}"
         }
 
         group.options().forEach {
@@ -90,18 +114,30 @@ object DandelionCompat {
                 it,
                 root,
                 category.name().string,
-                if (isRootGroup) ConfigVisualizer.DEFAULT_SUBCATEGORY else group.name().string
+                if (isRootGroup) ConfigVisualizer.DEFAULT_SUBCATEGORY else group.name().string,
+                groupPath,
+                usedIds,
             )
         }
     }
 
-    fun <T : Any> parseOption(option: Option<T>, root: Tree, category: String, subcategory: String) = runCatching {
+    fun <T : Any> parseOption(
+        option: Option<T>,
+        root: Tree,
+        category: String,
+        subcategory: String,
+        groupPath: String,
+        usedIds: MutableSet<String>,
+    ) = runCatching {
 
         val controller = runCatching { option.controller() }.getOrNull()
+        // Dandelion options usually carry their own id; fall back to the option's place in the config.
+        val optionId = option.id()?.toString()
+            ?: uniqueId(usedIds, "$groupPath/${idPart(componentKey(option.name()) ?: option.name().string, "option")}")
 
         when (option) {
             is ButtonOption -> {
-                val property = Properties.dummy(id = option.id()?.toString() ?: UUID.randomUUID().toString())
+                val property = Properties.dummy(id = optionId)
                 property.title = option.name()
                 property.description = option.description()
                 property.visualizer = Visualizer.ButtonVisualizer::class.java
@@ -115,7 +151,7 @@ object DandelionCompat {
             }
 
             is LabelOption -> {
-                val property = Properties.dummy(id = option.id()?.toString() ?: UUID.randomUUID().toString())
+                val property = Properties.dummy(id = optionId)
                 property.title = option.name()
                 property.description = option.description()
                 property.category = category
@@ -125,17 +161,17 @@ object DandelionCompat {
             }
 
             is ListOption<*> -> {
-                val property = listProperty(option, category, subcategory)
+                val property = listProperty(option, optionId, category, subcategory)
                 if (property == null) {
                     LOGGER.warn("Unsupported list: ${option.name()} - ${option.entryType().simpleName}")
-                    root.put(unsupportedOptionProperty(option, option.entryController(), category, subcategory))
+                    root.put(unsupportedOptionProperty(option, optionId, option.entryController(), category, subcategory))
                 } else {
                     root.put(property)
                 }
             }
 
             else if controller == null -> {
-                val property = Properties.dummy(id = option.id()?.toString() ?: UUID.randomUUID().toString())
+                val property = Properties.dummy(id = optionId)
                 property.title = option.name()
                 property.description =
                     Component.literal("Failed to create compat entry for option! ").append(option.name())
@@ -163,7 +199,7 @@ object DandelionCompat {
                 val property = Properties.functional(
                     getter = { getter() },
                     setter = { value -> setter(value) },
-                    id = UUID.randomUUID().toString(),
+                    id = optionId,
                     name = option.name(),
                     description = option.description(),
                 )
@@ -196,7 +232,7 @@ object DandelionCompat {
                     is StringController -> property.visualizer = Visualizer.TextVisualizer::class.java
                     else -> {
                         LOGGER.warn("Unsupported: ${option.name()} - ${controller.javaClass.simpleName}")
-                        root.put(unsupportedOptionProperty(option, controller, category, subcategory))
+                        root.put(unsupportedOptionProperty(option, optionId, controller, category, subcategory))
                         return@runCatching
                     }
                 }
@@ -206,7 +242,7 @@ object DandelionCompat {
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun listProperty(listOption: ListOption<*>, category: String, subcategory: String): Property<*>? {
+    private fun listProperty(listOption: ListOption<*>, id: String, category: String, subcategory: String): Property<*>? {
         val option = listOption as ListOption<Any>
         val entryType = option.entryType()
         val entryController = runCatching { option.entryController() }.getOrNull()
@@ -243,7 +279,7 @@ object DandelionCompat {
                 option.listeners().forEach { it.onUpdate(option, OptionListener.UpdateType.VALUE_CHANGE) }
                 option.flags().forEach { it.accept(Minecraft.getInstance()) }
             },
-            id = option.id()?.toString() ?: UUID.randomUUID().toString(),
+            id = id,
             name = option.name(),
             description = option.description(),
             type = java.util.List::class.java as Class<List<Any?>>,
@@ -277,11 +313,12 @@ object DandelionCompat {
 
     private fun <T : Any> unsupportedOptionProperty(
         option: Option<T>,
+        id: String,
         controller: Any,
         category: String,
         subcategory: String
     ): Property<Void> {
-        val property = Properties.dummy(id = option.id()?.toString() ?: UUID.randomUUID().toString())
+        val property = Properties.dummy(id = id)
         property.title = option.name()
         property.description =
             Component.literal("Option currently not supported by OneConfig")

@@ -19,10 +19,10 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
+import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.utils.MoulConfigGuiOptionEditorDropdownAccessor
 import java.awt.Color
 import java.lang.reflect.Type
-import java.util.*
 import kotlin.reflect.KClass
 // do not remove the im
 import org.polyfrost.oneconfig.internal.compat.MoulPropertyBuilder
@@ -98,7 +98,7 @@ data object MoulConfigCompat {
         }
 
         return Tree.tree().apply {
-            id = UUID.randomUUID().toString()
+            id = idPart(category.identifier, "category")
             this.category = categoryName
             this.title = displayName
             this.subcategory = displayName
@@ -115,9 +115,10 @@ data object MoulConfigCompat {
     ) {
         val editor = children.editor
         if (editor is GuiOptionEditorAccordion) {
+            val builder = MoulPropertyBuilder(children)
             val accordionTree = Tree.tree()
-            accordionTree.id = UUID.randomUUID().toString()
-            accordionTree.title = MoulPropertyBuilder(children).name?.takeIf { it.isNotBlank() } ?: "Section"
+            accordionTree.id = idPart(builder.path ?: builder.name, "section")
+            accordionTree.title = builder.name?.takeIf { it.isNotBlank() } ?: "Section"
             accordionTree.category = categoryName
             accordionTree.subcategory = subcategoryName
 

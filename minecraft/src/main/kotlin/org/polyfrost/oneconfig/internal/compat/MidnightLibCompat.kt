@@ -19,9 +19,11 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.internal.compat.CompatIds.componentKey
+import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
+import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
 import org.polyfrost.oneconfig.internal.mixin.compat.midnightlib.SliderButtonAccessor
 import java.lang.reflect.Field
-import java.util.UUID
 import java.util.function.Supplier
 
 object MidnightLibCompat {
@@ -75,6 +77,7 @@ object MidnightLibCompat {
         val pending = ArrayList<Pending>()
         // The raw (untranslated) category ids, which are also the tab ids passed to onTabInit.
         val rawCategories = LinkedHashSet<String>()
+        val usedIds = HashSet<String>()
 
         for (entry in entries) {
             if (entry == null) continue
@@ -96,7 +99,7 @@ object MidnightLibCompat {
                     ?: return@runCatching
                 rawCategories += rawCategoryOf(readAnnotationString(entryAnnotation, "category"))
 
-                val property = parseEntry(entry, modid, field, entryAnnotation, subcategoryByCategory)
+                val property = parseEntry(entry, modid, field, entryAnnotation, subcategoryByCategory, usedIds)
                     ?: return@runCatching
                 tree.put(property)
                 propertyByField[field.name] = property
@@ -106,12 +109,18 @@ object MidnightLibCompat {
 
         wireConditions(pending, propertyByField)
 
-        val custom = parseCustomEntries(modid, config, tree, rawCategories)
+        val custom = parseCustomEntries(modid, config, tree, rawCategories, usedIds)
 
         return if (pending.isNotEmpty() || custom > 0) tree else null
     }
 
-    private fun parseCustomEntries(modid: String, config: Class<*>, tree: Tree, rawCategories: Set<String>): Int {
+    private fun parseCustomEntries(
+        modid: String,
+        config: Class<*>,
+        tree: Tree,
+        rawCategories: Set<String>,
+        usedIds: MutableSet<String>,
+    ): Int {
         val instance = configInstance(config, modid) ?: return 0
         val onTabInit = instance.javaClass.methods.firstOrNull { it.name == "onTabInit" && it.parameterCount == 3 }
             ?: return 0
@@ -137,7 +146,8 @@ object MidnightLibCompat {
 
                 for (row in (list as AbstractSelectionList<*>).children()) {
                     if (row == null) continue
-                    val title = (readField(row, "text")?.get(row) as? Component)?.string?.takeIf { it.isNotBlank() }
+                    val titleComponent = readField(row, "text")?.get(row) as? Component
+                    val title = titleComponent?.string?.takeIf { it.isNotBlank() }
                     val widgets = (readField(row, "buttons")?.get(row) as? List<*>).orEmpty()
 
                     if (widgets.isEmpty()) {
@@ -146,8 +156,9 @@ object MidnightLibCompat {
                     }
                     if (title == null || !seen.add(title)) continue
 
+                    val path = "${idPart(rawCategory, "general")}/${idPart(componentKey(titleComponent) ?: title, "widget")}"
                     val property = widgets.filterIsInstance<AbstractWidget>()
-                        .firstNotNullOfOrNull { widgetProperty(it, title) } ?: continue
+                        .firstNotNullOfOrNull { widgetProperty(it, title, uniqueId(usedIds, path)) } ?: continue
                     property.category = category
                     property.subcategory = subcategory ?: category
                     tree.put(property)
@@ -159,8 +170,7 @@ object MidnightLibCompat {
         return added
     }
 
-    private fun widgetProperty(widget: AbstractWidget, title: String): Property<*>? {
-        val id = UUID.randomUUID().toString()
+    private fun widgetProperty(widget: AbstractWidget, title: String, id: String): Property<*>? {
         return when (widget) {
             is AbstractSliderButton -> {
                 val accessor = widget as SliderButtonAccessor
@@ -204,6 +214,7 @@ object MidnightLibCompat {
         field: Field,
         entryAnnotation: Any,
         subcategoryByCategory: Map<String, String>,
+        usedIds: MutableSet<String>,
     ): Property<*>? {
         val currentValue = runCatching { field.get(null) }.getOrNull()
 
@@ -214,7 +225,8 @@ object MidnightLibCompat {
         val fieldName = field.name
         val name = translateOrNull("$modid.midnightconfig.$fieldName") ?: prettify(fieldName)
         val description = translateOrNull("$modid.midnightconfig.$fieldName.tooltip")
-        val id = UUID.randomUUID().toString()
+        // Field names are unique within the config class, so no category prefix
+        val id = uniqueId(usedIds, idPart(fieldName, "entry"))
 
         val property: Property<*>
         val visualizer: Class<out Visualizer>

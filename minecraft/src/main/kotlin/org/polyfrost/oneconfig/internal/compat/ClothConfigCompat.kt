@@ -11,6 +11,9 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.noCache
 import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
+import org.polyfrost.oneconfig.internal.compat.CompatIds.componentKey
+import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
+import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
 import java.lang.reflect.Field
 import java.util.*
 import java.util.function.Consumer
@@ -67,12 +70,15 @@ object ClothConfigCompat {
         }
 
         var added = false
+        val usedIds = HashSet<String>()
         for (category in categoryMap.values) {
             if (category == null) continue
-            val rawCategoryName = runCatching {
-                resolveComponent(category.javaClass.getMethod("getCategoryKey").invoke(category))
-            }.getOrNull()?.takeIf { it.isNotBlank() }
+            val categoryKey = runCatching {
+                category.javaClass.getMethod("getCategoryKey").invoke(category)
+            }.getOrNull()
+            val rawCategoryName = resolveComponent(categoryKey)?.takeIf { it.isNotBlank() }
             val categoryName = cleanName(rawCategoryName, "General")
+            val categoryId = idPart(componentKey(categoryKey) ?: rawCategoryName, "general")
 
             @Suppress("UNCHECKED_CAST")
             val entries = runCatching {
@@ -82,7 +88,7 @@ object ClothConfigCompat {
             for (entry in entries) {
                 if (entry == null) continue
                 runCatching {
-                    if (parseEntry(entry, categoryName, categoryName, tree, tree)) added = true
+                    if (parseEntry(entry, categoryName, categoryName, categoryId, tree, tree, usedIds)) added = true
                 }.onFailure { LOGGER.warn("Failed to parse Cloth entry", it) }
             }
         }
@@ -90,22 +96,32 @@ object ClothConfigCompat {
         return if (added) tree else null
     }
 
-    private fun parseEntry(entry: Any, categoryName: String, subcategoryName: String, dest: Tree, root: Tree): Boolean {
-        val name = runCatching {
-            resolveComponent(entry.javaClass.getMethod("getFieldName").invoke(entry))
-        }.getOrNull() ?: return false
+    private fun parseEntry(
+        entry: Any,
+        categoryName: String,
+        subcategoryName: String,
+        idPath: String,
+        dest: Tree,
+        root: Tree,
+        usedIds: MutableSet<String>,
+    ): Boolean {
+        val nameComponent = runCatching { entry.javaClass.getMethod("getFieldName").invoke(entry) }.getOrNull()
+        val name = resolveComponent(nameComponent) ?: return false
+        val entryPath = "$idPath/${idPart(componentKey(nameComponent) ?: name, "entry")}"
 
         val value = runCatching { invokeGetValue(entry) }.getOrNull()
 
         if (isSubCategory(entry, value)) {
             val children = value as? Collection<*> ?: return false
-            val rawSubName = runCatching {
-                resolveComponent(entry.javaClass.getMethod("getCategoryName").invoke(entry))
-            }.getOrNull()?.takeIf { it.isNotBlank() }
+            val subNameComponent = runCatching {
+                entry.javaClass.getMethod("getCategoryName").invoke(entry)
+            }.getOrNull()
+            val rawSubName = resolveComponent(subNameComponent)?.takeIf { it.isNotBlank() }
             val subName = cleanName(rawSubName, name)
+            val subPath = componentKey(subNameComponent)?.let { "$idPath/${idPart(it, "entry")}" } ?: entryPath
 
             val accordion = if (dest === root) {
-                Tree.tree(UUID.randomUUID().toString()).also {
+                Tree.tree(uniqueId(usedIds, subPath)).also {
                     it.title = subName
                     it.addMetadata("category", categoryName)
                     if (!isExpanded(entry)) it.addMetadata("collapsed", true)
@@ -118,7 +134,7 @@ object ClothConfigCompat {
             for (child in children) {
                 if (child == null) continue
                 runCatching {
-                    if (parseEntry(child, categoryName, subName, accordion, root)) added = true
+                    if (parseEntry(child, categoryName, subName, subPath, accordion, root, usedIds)) added = true
                 }.onFailure { LOGGER.warn("Failed to parse Cloth sub-entry", it) }
             }
 
@@ -129,7 +145,15 @@ object ClothConfigCompat {
         val currentValue = value ?: return false
 
         if (currentValue is List<*>) {
-            return parseListEntry(entry, currentValue, name, categoryName, subcategoryName, dest)
+            return parseListEntry(
+                entry,
+                currentValue,
+                name,
+                uniqueId(usedIds, entryPath),
+                categoryName,
+                subcategoryName,
+                dest,
+            )
         }
 
         val isColor = isColorEntry(entry)
@@ -156,7 +180,7 @@ object ClothConfigCompat {
                 @Suppress("UNCHECKED_CAST")
                 (saveCallbackField?.get(entry) as? Consumer<Any?>)?.accept(v)
             },
-            id = UUID.randomUUID().toString(),
+            id = uniqueId(usedIds, entryPath),
             name = name,
             description = resolveTooltip(entry),
         )
@@ -193,6 +217,7 @@ object ClothConfigCompat {
         entry: Any,
         currentValue: List<*>,
         name: String,
+        id: String,
         categoryName: String,
         subcategoryName: String,
         dest: Tree,
@@ -212,7 +237,7 @@ object ClothConfigCompat {
                 val values = v.mapTo(ArrayList()) { if (numeric) coerceNumber(it, element) else it?.toString() ?: "" }
                 (saveCallbackField?.get(entry) as? Consumer<Any?>)?.accept(values)
             },
-            id = UUID.randomUUID().toString(),
+            id = id,
             name = name,
             description = resolveTooltip(entry),
             type = java.util.List::class.java as Class<List<Any?>>,

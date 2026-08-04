@@ -11,7 +11,9 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-import java.util.*
+import org.polyfrost.oneconfig.internal.compat.CompatIds.componentKey
+import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
+import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
 
 object YACLCompat {
 
@@ -68,19 +70,22 @@ object YACLCompat {
             CompatLoader.originalScreenOpener(id)?.let { tree.addMetadata("open_original_screen", it) }
         }
 
+        val usedIds = HashSet<String>()
         for (category in categories) {
             if (category == null) continue
-            parseCategory(category, tree)
+            parseCategory(category, tree, usedIds)
         }
 
         return tree
     }
 
-    private fun parseCategory(category: Any, root: Tree) {
+    private fun parseCategory(category: Any, root: Tree, usedIds: MutableSet<String>) {
         val categoryClass = category::class.java
 
         val nameMethod = categoryClass.methods.firstOrNull { it.name == "name" && it.parameterCount == 0 }
-        val categoryName = nameMethod?.let { resolveComponent(it.invoke(category)) }?.nonBlankOrNull() ?: "General"
+        val nameComponent = nameMethod?.let { runCatching { it.invoke(category) }.getOrNull() }
+        val categoryName = resolveComponent(nameComponent)?.nonBlankOrNull() ?: "General"
+        val categoryPath = idPart(componentKey(nameComponent) ?: categoryName, "general")
 
         val groupsMethod = categoryClass.methods.firstOrNull {
             it.name == "groups" && it.parameterCount == 0
@@ -91,15 +96,22 @@ object YACLCompat {
 
         for (group in groups) {
             if (group == null) continue
-            parseGroup(group, categoryName, root)
+            parseGroup(group, categoryName, categoryPath, root, usedIds)
         }
     }
 
-    private fun parseGroup(group: Any, categoryName: String, root: Tree) {
+    private fun parseGroup(
+        group: Any,
+        categoryName: String,
+        categoryPath: String,
+        root: Tree,
+        usedIds: MutableSet<String>,
+    ) {
         val groupClass = group::class.java
 
         val nameMethod = groupClass.methods.firstOrNull { it.name == "name" && it.parameterCount == 0 }
-        val groupName = nameMethod?.let { resolveComponent(it.invoke(group)) }?.nonBlankOrNull()
+        val nameComponent = nameMethod?.let { runCatching { it.invoke(group) }.getOrNull() }
+        val groupName = resolveComponent(nameComponent)?.nonBlankOrNull()
         val isRoot = groupClass.methods.firstOrNull {
             it.name == "isRoot" &&
                 it.parameterCount == 0 &&
@@ -108,9 +120,16 @@ object YACLCompat {
         val subcategoryName = if (isRoot) null else groupName
 
         if (isListOption(groupClass)) {
-            runCatching { parseOption(group, categoryName, null, root) }
+            // The group is the option itself, so it keeps the category's path rather than nesting under itself.
+            runCatching { parseOption(group, categoryName, null, categoryPath, root, usedIds) }
                 .onFailure { LOGGER.warn("Failed to parse YACL list option", it) }
             return
+        }
+
+        val groupPath = if (isRoot) {
+            categoryPath
+        } else {
+            "$categoryPath/${idPart(componentKey(nameComponent) ?: groupName, "group")}"
         }
 
         val optionsMethod = groupClass.methods.firstOrNull {
@@ -123,17 +142,27 @@ object YACLCompat {
 
         for (option in options) {
             if (option == null) continue
-            runCatching { parseOption(option, categoryName, subcategoryName, root) }
+            runCatching { parseOption(option, categoryName, subcategoryName, groupPath, root, usedIds) }
                 .onFailure { LOGGER.warn("Failed to parse YACL option", it) }
         }
     }
 
-    private fun parseOption(option: Any, categoryName: String, subcategoryName: String?, root: Tree) {
+    private fun parseOption(
+        option: Any,
+        categoryName: String,
+        subcategoryName: String?,
+        groupPath: String,
+        root: Tree,
+        usedIds: MutableSet<String>,
+    ) {
         val optionClass = option::class.java
 
         val nameMethod = optionClass.methods.firstOrNull { it.name == "name" && it.parameterCount == 0 }
         val descMethod = optionClass.methods.firstOrNull { it.name == "description" && it.parameterCount == 0 }
-        val name = nameMethod?.let { resolveComponent(it.invoke(option)) }?.nonBlankOrNull() ?: return
+        val nameComponent = nameMethod?.let { runCatching { it.invoke(option) }.getOrNull() }
+        val name = resolveComponent(nameComponent)?.nonBlankOrNull() ?: return
+        // Claimed only once a property is actually built, so skipped options do not shift the suffixes.
+        val optionPath = "$groupPath/${idPart(componentKey(nameComponent) ?: name, "option")}"
         val desc = descMethod?.let {
             runCatching {
                 val descResult = it.invoke(option)
@@ -146,7 +175,7 @@ object YACLCompat {
         // ButtonOption exposes no readable value (its binding throws), so handle it before the
         // binding logic. Detect it by its interface name and render it as a clickable button.
         if (isButtonOption(optionClass)) {
-            parseButtonOption(option, name, desc, categoryName, subcategoryName, root)
+            parseButtonOption(option, name, desc, uniqueId(usedIds, optionPath), categoryName, subcategoryName, root)
             return
         }
 
@@ -184,7 +213,19 @@ object YACLCompat {
         val currentValue = runCatching { getter() }.getOrNull() ?: return
 
         if (currentValue is List<*>) {
-            parseListOption(option, currentValue, name, desc, getter, setter, defaultValue, categoryName, subcategoryName, root)
+            parseListOption(
+                option,
+                currentValue,
+                name,
+                desc,
+                uniqueId(usedIds, optionPath),
+                getter,
+                setter,
+                defaultValue,
+                categoryName,
+                subcategoryName,
+                root,
+            )
             return
         }
 
@@ -200,7 +241,7 @@ object YACLCompat {
         val property = Properties.functional(
             getter = { getter() },
             setter = { value -> setter(value) },
-            id = UUID.randomUUID().toString(),
+            id = uniqueId(usedIds, optionPath),
             name = name,
             description = desc,
         )
@@ -233,6 +274,7 @@ object YACLCompat {
         currentValue: List<*>,
         name: String,
         desc: String?,
+        id: String,
         getter: () -> Any?,
         setter: (Any?) -> Unit,
         defaultValue: Any?,
@@ -269,7 +311,7 @@ object YACLCompat {
                 ArrayList(list.map(::read))
             },
             setter = { value: List<Any?> -> setter(value.mapTo(ArrayList(), ::write)) },
-            id = UUID.randomUUID().toString(),
+            id = id,
             name = name,
             description = desc,
             type = List::class.java,
@@ -342,6 +384,7 @@ object YACLCompat {
         option: Any,
         name: String,
         desc: String?,
+        id: String,
         categoryName: String,
         subcategoryName: String?,
         root: Tree,
@@ -356,7 +399,7 @@ object YACLCompat {
         val action = actionMethod?.let { runCatching { it.invoke(option) }.getOrNull() }
 
         val property = Properties.dummy(
-            id = UUID.randomUUID().toString(),
+            id = id,
             name = name,
             description = desc,
         )

@@ -4,12 +4,13 @@ package org.polyfrost.oneconfig.internal.compat
 import io.github.notenoughupdates.moulconfig.processor.ProcessedOption
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
+import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.relocator.annotations.MoulConfig
 import java.lang.reflect.Field
-import java.util.*
 
 @MoulConfig
 class MoulPropertyBuilder internal constructor(option: ProcessedOption) {
+    val path: String? = runCatching { option.path }.getOrNull()?.takeIf { it.isNotBlank() }
     val name: String? = resolveTextGetter(option, "getName")
     val description: String? = resolveTextGetter(option, "getDescription")
 
@@ -25,7 +26,7 @@ class MoulPropertyBuilder internal constructor(option: ProcessedOption) {
     private val snapshotKey: String? = backingField?.let { "${it.declaringClass.name}#${it.name}" }
 
     fun build() = Properties.functional(
-        id = UUID.randomUUID().toString(),
+        id = idPart(path ?: snapshotKey ?: name, "option"),
         getter = getter,
         setter = setter,
         name = name,
