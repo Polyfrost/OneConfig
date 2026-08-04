@@ -72,6 +72,11 @@ object HudManager {
     @Volatile @JvmField var isGuiScreenOpen: Boolean = false
     @Volatile @JvmField var isChatScreenOpen: Boolean = false
 
+    @Volatile @JvmField var masterHudEnabled: Boolean = true
+
+    /** Mirrors MC's `options.hideGui` (F1). Hides every HUD unless the editor is open. */
+    @Volatile @JvmField var isGuiHidden: Boolean = false
+
     @Volatile @JvmField var overrideShowInScreens: Boolean = false
 
     @ApiStatus.Internal
@@ -106,6 +111,9 @@ object HudManager {
     private var lastFrameScale = Float.NaN
 
     private val frameOrder = ArrayList<Hud>()
+
+    private var frameGroups: List<HudBackgroundMerge.Group> = emptyList()
+    private var lastMergeKey: Int? = null
 
     private var zOrderCache: List<Hud> = emptyList()
     private var zOrderHuds = arrayOfNulls<Hud>(0)
@@ -238,6 +246,14 @@ object HudManager {
 
     fun getProvider(hudClass: Class<out Hud>): Hud? = hudProviders[hudClass]
 
+    /** The live HUD whose config tree has this [id], used to resolve [Hud.anchorTargetId]. */
+    fun instanceById(id: String): Hud? {
+        for (it in activeInstances) {
+            if (it.tree?.id == id) return it
+        }
+        return null
+    }
+
     fun toggleAllHuds(hud: Hud, hidden: Boolean) {
         hudProviders[hud::class.java]?.hidden = hidden
         for (it in activeInstances) {
@@ -255,9 +271,25 @@ object HudManager {
         hud._runtime?.dispose()
         hud._runtime = null
         lastUpdates.remove(hud)
+        // anything hanging off this HUD goes back to being positioned against the screen, staying
+        // where it is: the relative position it keeps alongside the anchor is already up to date
+        hud.tree?.id?.let { gone ->
+            for (it in activeInstances) {
+                if (it.anchorTargetId == gone) it.clearAnchor()
+            }
+        }
         invalidate()
         try { hud.remove() } catch (_: Throwable) {}
-        if (delete) ConfigManager.active().delete(hud.tree.id)
+        val treeId = hud.tree?.id
+        // a HUD which cannot be deleted by the user must never lose its config: without this an
+        // errant unregister(delete = true) wipes it from disk and it can never be restored.
+        if (delete && !hud.deletable()) {
+            LOGGER.warn("refusing to delete the config of ${hud.title}, which is marked as not user-deletable")
+        } else if (delete && treeId != null) {
+            ConfigManager.active().delete(treeId)
+        }
+        // back to being a plain provider, so a single-instance HUD can be made again later
+        hud.detachTree()
     }
 
     private fun screenBounds(hud: Hud): FloatArray? {
@@ -347,8 +379,10 @@ object HudManager {
     }
 
     private fun shouldDraw(hud: Hud): Boolean {
+        if (!masterHudEnabled && !isEditing) return false
         if (hud is LegacyHudMarker) return false
         if (hud.hidden && !isEditing) return false
+        if (isGuiHidden && !isEditing) return false
         if (isDebugScreenVisible && !hud.showInF3) return false
         if (isTabListVisible && !hud.showInTab) return false
         if (!overrideShowInScreens && !isEditing) {
@@ -378,13 +412,8 @@ object HudManager {
 
         updateAndAdvance(frameOrder)
 
-        for (hud in frameOrder) {
-            try {
-                layoutOnce(hud, screenWidth, screenHeight, scale)
-            } catch (e: Throwable) {
-                LOGGER.error("Failed to lay out HUD ${hud.title}", e)
-            }
-        }
+        layoutAll(frameOrder, screenWidth, screenHeight, scale)
+        updateBackgroundGroups(screenWidth, screenHeight, scale)
 
         val key = frameKey()
         val keyChanged = key != lastFrameKey ||
@@ -402,12 +431,58 @@ object HudManager {
         return dirty
     }
 
+    private fun layoutAll(huds: List<Hud>, screenWidth: Float, screenHeight: Float, scale: Float) {
+        for (hud in huds) {
+            try {
+                layoutOnce(hud, screenWidth, screenHeight, scale)
+            } catch (e: Throwable) {
+                LOGGER.error("Failed to lay out HUD ${hud.title}", e)
+            }
+        }
+    }
+
+    /**
+     * Rebuilds the fused background shapes for HUDs which sit against each other, and tells the HUDs
+     * in a fused shape to stop drawing their own background. Cheap on frames where nothing moved:
+     * the shapes are only re-traced when a position, size or background style actually changed.
+     */
+    private fun updateBackgroundGroups(screenWidth: Float, screenHeight: Float, scale: Float) {
+        val key = HudBackgroundMerge.layoutKey(frameOrder)
+        if (key == lastMergeKey) return
+        lastMergeKey = key
+
+        frameGroups = HudBackgroundMerge.computeGroups(frameOrder)
+        val merged = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Hud, Boolean>())
+        for (group in frameGroups) merged.addAll(group.huds)
+
+        var changed = false
+        for (hud in activeInstances) {
+            if (hud.bgMerged != (hud in merged)) {
+                changed = true
+                break
+            }
+        }
+        if (!changed) return
+
+        Snapshot.withMutableSnapshot {
+            for (hud in activeInstances) hud.bgMerged = hud in merged
+        }
+        // the flag is read during composition, so recompose and re-lay out now instead of letting the
+        // change land a frame late, which would show a doubled or missing background for one frame
+        Snapshot.sendApplyNotifications()
+        PolyComposeHost.frame()
+        for (hud in frameOrder) hud.lastLayoutFrame = -1L
+        layoutAll(frameOrder, screenWidth, screenHeight, scale)
+        invalidate()
+    }
+
     private fun frameKey(): Long {
         var key = activeInstances.size.toLong() * 31L + frameOrder.size
         key = key * 31L + (if (isDebugScreenVisible) 1 else 0)
         key = key * 31L + (if (isTabListVisible) 1 else 0)
         key = key * 31L + (if (isGuiScreenOpen) 1 else 0)
         key = key * 31L + (if (isChatScreenOpen) 1 else 0)
+        key = key * 31L + (if (isGuiHidden) 1 else 0)
         key = key * 31L + (if (overrideShowInScreens) 1 else 0)
         key = key * 31L + (if (isEditing) 1 else 0)
         key = key * 31L + (if (inWorld) 1 else 0)
@@ -482,10 +557,20 @@ object HudManager {
             frameOrder.clear()
             for (hud in orderedForRender()) if (shouldDraw(hud)) frameOrder.add(hud)
             updateAndAdvance(frameOrder)
+            layoutAll(frameOrder, screenWidth, screenHeight, scale)
+            updateBackgroundGroups(screenWidth, screenHeight, scale)
         }
 
         ctx.save()
         ctx.scale(scale, scale)
+
+        for (group in frameGroups) {
+            try {
+                group.draw(ctx)
+            } catch (e: Throwable) {
+                LOGGER.error("Failed to draw merged HUD background", e)
+            }
+        }
 
         for (hud in frameOrder) {
             val hudScale = hud.effectiveScale
@@ -560,7 +645,6 @@ object HudManager {
                 val cls = Class.forName(clsName, true, loader) as? Class<Hud>
                     ?: throw IllegalArgumentException("$clsName is not a subclass of Hud")
                 val h = hudProviders[cls] ?: MHUtils.instantiate(cls, true).getOrThrow()
-                used.add(cls)
                 val hud = h.make(data)
                 val sec = data.getProp("section")?.getAs<Section?>()
                 if (sec != null) {
@@ -573,6 +657,10 @@ object HudManager {
                     hud.setAbsolutePosition(absX, absY)
                 }
                 activeInstances.add(hud)
+                // only once the instance actually exists: marking the class used on a failed load
+                // would both suppress the default instance below and mark the provider known,
+                // permanently "deleting" a HUD because of a transient load error.
+                used.add(cls)
                 hud.setup()
                 hud.captureStaticSizeDefaults()
                 hud.capturePositionDefaults()
@@ -596,11 +684,22 @@ object HudManager {
         hudProviders.forEach { (cls, h) ->
             if (cls in used) return@forEach
             if (h.isReal) return@forEach
-            if (!h.showByDefault()) return@forEach
+            val known = cls.name in knownProviders
+            // A HUD the user cannot delete has no legitimate "deleted" state, so a missing instance
+            // always means its config was lost (failed/incomplete write, corrupt file, a launch
+            // without the mod, ...). Restore it instead of leaving it stranded in the HUD library.
+            val restore = if (h.deletable()) {
+                // the user deleted every instance of this HUD; don't resurrect it.
+                h.showByDefault() && !known
+            } else {
+                h.showByDefault() || known
+            }
+            if (!restore) return@forEach
+            if (known && !h.deletable()) {
+                LOGGER.warn("HUD ${h.title} cannot be deleted but had no instance; restoring it")
+            }
             val (dx, dy) = h.defaultPosition()
-            // the user deleted every instance of this HUD; don't resurrect it.
-            if (!knownProviders.add(cls.name)) return@forEach
-            registryChanged = true
+            registryChanged = knownProviders.add(cls.name) or registryChanged
             val hud = h.make()
             hud.setAbsolutePosition(dx, dy)
             activeInstances.add(hud)

@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Mirrors {@link OneConfigKeybind}s into Minecraft's native Controls menu.
  */
 public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge {
+    private static final org.apache.logging.log4j.Logger LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/Keybinds");
     private static volatile MinecraftKeybindBridgeImpl instance;
 
     //? if >=1.21.10 {
@@ -101,7 +102,12 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         });
         OneConfigKeybind def = bind.getDefaultKeybind();
         OneConfigKeybind defSrc = def != null ? def : bind;
-        KeyMapping mapping = new KeyMapping(bind.getName(), defSrc.isMousePrimary() ? InputConstants.Type.MOUSE : InputConstants.Type.KEYSYM, defSrc.getBoundCode(), categoryFor(bind.getCategory()));
+        InputConstants.Type type = defSrc.isMousePrimary() ? InputConstants.Type.MOUSE : InputConstants.Type.KEYSYM;
+        KeyMapping mapping = detached(
+            bind.getName(),
+            type.getOrCreate(defSrc.getBoundCode()),
+            () -> new KeyMapping(bind.getName(), type, defSrc.getBoundCode(), categoryFor(bind.getCategory()))
+        );
         applyKeyTo(mapping, bind);
         mappings.put(bind, mapping);
         reverse.put(mapping, bind);
@@ -122,6 +128,42 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         spliced.addAll(mappings.values());
         ((org.polyfrost.oneconfig.internal.mixin.keybind.OptionsAccessor) (Object) mc.options)
             .oneconfig$setKeyMappings(rebuilt.toArray(new KeyMapping[0]));
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static KeyMapping detached(String name, InputConstants.Key defaultKey, java.util.function.Supplier<KeyMapping> constructor) {
+        Map all;
+        Map map;
+        Object priorNamed;
+        Object priorBound;
+        try {
+            all = org.polyfrost.oneconfig.internal.mixin.keybind.KeyMappingRegistryAccessor.oneconfig$all();
+            map = org.polyfrost.oneconfig.internal.mixin.keybind.KeyMappingRegistryAccessor.oneconfig$map();
+            priorNamed = all.get(name);
+            priorBound = map.get(defaultKey);
+        } catch (Throwable t) {
+            LOGGER.warn("Cannot reach Minecraft's keybind registries; OneConfig keybinds may shadow Minecraft ones", t);
+            return constructor.get();
+        }
+
+        KeyMapping mapping = constructor.get();
+        try {
+            if (all.get(name) == mapping) {
+                if (priorNamed != null) all.put(name, priorNamed);
+                else all.remove(name);
+            }
+            Object bound = map.get(defaultKey);
+            if (bound == mapping) {
+                if (priorBound != null) map.put(defaultKey, priorBound);
+                else map.remove(defaultKey);
+            } else if (bound instanceof List) {
+                ((List) bound).remove(mapping);
+                if (((List) bound).isEmpty()) map.remove(defaultKey);
+            }
+        } catch (Throwable t) {
+            LOGGER.warn("Failed to detach the mirror of '{}' from Minecraft's keybind registries", name, t);
+        }
+        return mapping;
     }
 
     private static String identity(OneConfigKeybind bind) {

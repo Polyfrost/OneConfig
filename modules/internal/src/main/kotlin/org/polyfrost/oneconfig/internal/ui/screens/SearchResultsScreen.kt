@@ -3,7 +3,6 @@ package org.polyfrost.oneconfig.internal.ui.screens
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,6 +21,7 @@ import org.polyfrost.oneconfig.internal.ui.search.SearchRow
 import org.polyfrost.oneconfig.internal.ui.search.SearchScope
 import org.polyfrost.oneconfig.internal.ui.search.SettingNode
 import org.polyfrost.oneconfig.internal.ui.search.searchNode
+import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -64,7 +64,7 @@ fun SearchResultsScreen(query: String) {
         return
     }
 
-    val listState = rememberLazyListState()
+    val listState = rememberRestorableLazyListState("global-search")
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,

@@ -109,19 +109,16 @@ public class OneConfig
         CommandManager.INSTANCE.register(CommandManager.literal("ocfg").executes(executor).redirect(node));
     }
 
-    public static boolean isInChatScreen() {
-        //? if >= 26.2 {
-        /*return Minecraft.getInstance().gui.screen() instanceof ChatScreen;
-        *///?} else {
-        return Minecraft.getInstance().screen instanceof ChatScreen;
-        //?}
-    }
-
     private static void registerKeybinds() {
         // Supply the open-GUI action to the config-backed OneConfig keybind. The action lives here (not on the
         // keybind itself) because it references platform classes and is lost when the keybind is deserialized.
         OneConfigConfig.setOpenAction(pressed -> {
             if (!pressed) {
+                return true;
+            }
+            // The screen may have closed itself on this very press (see notifyKeybindClosedGui), in which case
+            // reopening it here would make the keybind look like it does nothing.
+            if (OneConfigConfig.consumeKeybindClose()) {
                 return true;
             }
             if (Platform.screen().current() != null) {
@@ -166,21 +163,25 @@ public class OneConfig
             return;
         }
 
-        float sw = graphics.guiWidth();
-        float sh = graphics.guiHeight();
+        float sw = Platform.screen().guiWidth();
+        float sh = Platform.screen().guiHeight();
         // guiWidth()/guiHeight() are already GUI-scaled (== Screen dimensions), do not divide by guiScale again.
         HudManager.guiScreenWidth = sw;
         HudManager.guiScreenHeight = sh;
 
         // Update HUD visibility state for per-HUD filtering
+        //? if >= 26.2 {
+        /*HudManager.isGuiHidden = Minecraft.getInstance().gui.hud.isHidden();
+        *///? } else {
+        HudManager.isGuiHidden = Minecraft.getInstance().options.hideGui;
+        //? }
         HudManager.isDebugScreenVisible = Minecraft.getInstance().getDebugOverlay().showDebugScreen();
         HudManager.isTabListVisible = isTabListVisible();
         HudManager.isGuiScreenOpen = Platform.screen().current() != null;
-        //~ if >= 26.2 'screen' -> 'gui.screen()'
-        HudManager.isChatScreenOpen = Minecraft.getInstance().screen instanceof ChatScreen;
+        HudManager.isChatScreenOpen = Platform.screen().current() instanceof ChatScreen;
         HudManager.inWorld = true;
-        HudManager.targetPixelWidth = Minecraft.getInstance().getWindow().getWidth();
-        HudManager.targetPixelHeight = Minecraft.getInstance().getWindow().getHeight();
+        HudManager.targetPixelWidth = Platform.screen().viewportWidth();
+        HudManager.targetPixelHeight = Platform.screen().viewportHeight();
 
         if (!SkiaCtx.INSTANCE.suppressInGameHudRender) {
             LegacyHudRenderer.INSTANCE.renderLive(graphics);
@@ -206,9 +207,8 @@ public class OneConfig
 
     private static void installNotificationRenderer() {
         SkiaCtx.INSTANCE.setNotifRenderer(() -> {
-            var window = Minecraft.getInstance().getWindow();
-            float sw = window.getGuiScaledWidth();
-            float sh = window.getGuiScaledHeight();
+            float sw = Platform.screen().guiWidth();
+            float sh = Platform.screen().guiHeight();
             if (sw <= 0f || sh <= 0f) return;
             var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
             NotificationsRenderer.render(ctx, sw, sh);
@@ -250,6 +250,7 @@ public class OneConfig
                     ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
                     org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar.register();
                     org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat.register();
+                    org.polyfrost.oneconfig.internal.compat.WWaypointsCompat.register();
                     org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry.INSTANCE.loadFromConfig();
                 });
         EventManager.register(WorldEvent.Load.class, e -> showFirstLaunchNotification());

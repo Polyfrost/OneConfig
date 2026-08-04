@@ -86,6 +86,38 @@ fun interface Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[SliderVisualizer::class.java]?.visualize(prop) }
     }
 
+    /**
+     * A slider with two thumbs, backed by a single property holding a start/end pair — a two-element numeric
+     * array or list. Writes both ends at once, keeping start below end.
+     */
+    class RangeSliderVisualizer : Visualizer {
+        @Composable override fun visualize(prop: Property<*>) { Visualizer[RangeSliderVisualizer::class.java]?.visualize(prop) }
+    }
+
+    /**
+     * A slider with a third, "inherited" state for overrides that fall back to a broader setting when unset.
+     * The property stores a sentinel while inheriting — `null`, or the value of the `inheritSentinel` metadata —
+     * and the inherited value itself comes from the `inheritedValue` metadata, either a number or a
+     * `java.util.function.Supplier` of one so it can track a live global.
+     *
+     * Prefer a numeric sentinel over `null` where the backing type allows it: [CompatSnapshots] cannot record a
+     * null, so on a foreign-backed config a null-sentinel property must opt out of snapshots with
+     * [CompatSnapshots.NO_SNAPSHOT_META] or an older value will resurrect itself and undo "inherit".
+     */
+    class InheritableSliderVisualizer : Visualizer {
+        @Composable override fun visualize(prop: Property<*>) { Visualizer[InheritableSliderVisualizer::class.java]?.visualize(prop) }
+    }
+
+    /**
+     * An ordered, editable chain of numbers held in one property as a numeric array or list — reorder, edit in
+     * place, remove, or append. `lockedLeading` metadata fixes that many entries at the front, `maxEntries`
+     * caps the length, and `entryLabel`/`nextValue` (both `java.util.function.Function`s) control how an entry
+     * reads and what "add" appends.
+     */
+    class NumberChainVisualizer : Visualizer {
+        @Composable override fun visualize(prop: Property<*>) { Visualizer[NumberChainVisualizer::class.java]?.visualize(prop) }
+    }
+
     class SwitchVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[SwitchVisualizer::class.java]?.visualize(prop) }
     }

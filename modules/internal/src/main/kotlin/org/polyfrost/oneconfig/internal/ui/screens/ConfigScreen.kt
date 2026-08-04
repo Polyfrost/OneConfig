@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -71,6 +70,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
+import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
@@ -98,7 +98,9 @@ import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.search.searchNode
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.util.LayoutRef
 
 @Composable
 fun ConfigScreen(tree: Tree, initialCategory: String? = null, pageKey: String) {
@@ -154,7 +156,7 @@ fun ConfigScreen(tree: Tree, initialCategory: String? = null, pageKey: String) {
             return@Column
         }
 
-        val lazyListState = rememberLazyListState()
+        val lazyListState = rememberRestorableLazyListState(pageKey)
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
                 state = lazyListState,
@@ -466,14 +468,14 @@ fun SettingRow(prop: Property<*>, compact: Boolean = false) {
                 onDrawBehind { drawRect(gradient) }
             }
         )
-        SettingContent(prop, compact = compact)
+        SettingContent(prop, compact = compact, enabled = display != Property.Display.DISABLED)
     }
 }
 
 @Composable
 private fun AccordionSettingRow(prop: Property<*>, display: Property.Display, modifier: Modifier, compact: Boolean = false) {
     Box(modifier.alpha(displayAlpha(display))) {
-        SettingContent(prop, nested = true, compact = compact)
+        SettingContent(prop, nested = true, compact = compact, enabled = display != Property.Display.DISABLED)
     }
 }
 
@@ -602,11 +604,11 @@ private fun displayAlpha(display: Property.Display): Float {
 }
 
 @Composable
-private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: Boolean = false) {
+private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: Boolean = false, enabled: Boolean = true) {
     val theme = LocalTheme.current
 
     if (prop.getMetadata<Any?>("visualizer") == Visualizer.InfoVisualizer::class.java) {
-        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+        Row(modifier = Modifier.fillMaxWidth().blockInteraction(!enabled).padding(horizontal = 16.dp, vertical = 12.dp)) {
             Option(prop)
         }
         return
@@ -614,13 +616,14 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
 
     var menuOpen by remember(prop) { mutableStateOf(false) }
     var menuOffset by remember(prop) { mutableStateOf(IntOffset.Zero) }
-    var rowOrigin by remember(prop) { mutableStateOf(Offset.Zero) }
-    var actionMenuOffset by remember(prop) { mutableStateOf(IntOffset.Zero) }
+    val rowOrigin = remember(prop) { LayoutRef(Offset.Zero) }
+    val actionMenuOffset = remember(prop) { LayoutRef(IntOffset.Zero) }
     val rowInteraction = rememberInteractionSource()
     val isRowHovered by rowInteraction.collectIsHoveredAsState()
-    val showActionButton = OneConfigConfig.showOptionActionButtons
+    val showActionButton = OneConfigConfig.showOptionActionButtons && enabled
+    LaunchedEffect(enabled) { if (!enabled) menuOpen = false }
     fun openMenuFromActionButton() {
-        menuOffset = actionMenuOffset
+        menuOffset = actionMenuOffset.value
         menuOpen = true
     }
 
@@ -635,8 +638,9 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
         modifier = Modifier
             .fillMaxWidth()
             .hoverable(rowInteraction)
-            .onGloballyPositioned { rowOrigin = it.positionInRoot() }
-            .pointerInput(prop) {
+            .onGloballyPositioned { rowOrigin.value = it.positionInRoot() }
+            .pointerInput(prop, enabled) {
+                if (!enabled) return@pointerInput
                 awaitPointerEventScope {
                     while (true) {
                         val event = awaitPointerEvent(PointerEventPass.Initial)
@@ -666,6 +670,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .blockInteraction(!enabled)
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
@@ -679,8 +684,8 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                         OptionActionButton(
                             visible = isRowHovered || menuOpen,
                             modifier = Modifier.onGloballyPositioned {
-                                val pos = it.positionInRoot() - rowOrigin
-                                actionMenuOffset = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
+                                val pos = it.positionInRoot() - rowOrigin.value
+                                actionMenuOffset.value = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
                             },
                             onClick = ::openMenuFromActionButton,
                         )
@@ -692,6 +697,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .blockInteraction(!enabled)
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -706,8 +712,8 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                     OptionActionButton(
                         visible = isRowHovered || menuOpen,
                         modifier = Modifier.onGloballyPositioned {
-                            val pos = it.positionInRoot() - rowOrigin
-                            actionMenuOffset = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
+                            val pos = it.positionInRoot() - rowOrigin.value
+                            actionMenuOffset.value = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
                         },
                         onClick = ::openMenuFromActionButton,
                     )

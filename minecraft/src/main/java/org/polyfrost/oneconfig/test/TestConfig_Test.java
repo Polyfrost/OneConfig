@@ -27,9 +27,14 @@
 package org.polyfrost.oneconfig.test;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.config.v1.Config;
+import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.config.v1.annotations.*;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
@@ -230,6 +235,63 @@ public class TestConfig_Test extends Config {
     )
     public static float[] sliderList = {0.25f, 0.5f, 1f};
 
+    // --- Dependencies: everything below is DISABLED (not hidden) while the master switch is off,
+    // so it can be checked that disabled options really are non-interactable (including right click / kebab menu).
+    @Switch(
+            title = "Master switch",
+            description = "Turn off to disable every option in this subcategory.",
+            category = "Dependencies",
+            subcategory = "Disabled when off"
+    )
+    public static boolean dependencyMaster = true;
+
+    @Switch(title = "Dependent switch", category = "Dependencies", subcategory = "Disabled when off")
+    @DependsOn("dependencyMaster")
+    public static boolean dependentSwitch = false;
+
+    @Checkbox(title = "Dependent checkbox", category = "Dependencies", subcategory = "Disabled when off")
+    @DependsOn("dependencyMaster")
+    public static boolean dependentCheckbox = false;
+
+    @Slider(title = "Dependent slider", min = 0f, max = 100f, category = "Dependencies", subcategory = "Disabled when off")
+    @DependsOn("dependencyMaster")
+    public static float dependentSlider = 25f;
+
+    @Number(title = "Dependent number", unit = "px", category = "Dependencies", subcategory = "Disabled when off")
+    @DependsOn("dependencyMaster")
+    public static int dependentNumber = 10;
+
+    @Text(title = "Dependent text", category = "Dependencies", subcategory = "Disabled when off")
+    @DependsOn("dependencyMaster")
+    public static String dependentText = "Cannot type here while disabled";
+
+    @Dropdown(title = "Dependent dropdown", options = {"A", "B", "C"}, category = "Dependencies", subcategory = "Disabled when off")
+    @DependsOn("dependencyMaster")
+    public static int dependentDropdown = 0;
+
+    @RadioButton(title = "Dependent radio", options = {"Option A", "Option B"}, category = "Dependencies", subcategory = "Disabled when off")
+    @DependsOn("dependencyMaster")
+    public static int dependentRadio = 0;
+
+    @Color(title = "Dependent color", category = "Dependencies", subcategory = "Disabled when off")
+    @DependsOn("dependencyMaster")
+    public static int dependentColor = 0xFF00AAFF;
+
+    @Keybind(title = "Dependent keybind", category = "Dependencies", subcategory = "Disabled when off")
+    @DependsOn("dependencyMaster")
+    public static OneConfigKeybind dependentBind = KeybindHelper.builder().key(InputConstants.KEY_K).register();
+
+    @TextList(title = "Dependent text list", category = "Dependencies", subcategory = "Disabled when off")
+    @DependsOn("dependencyMaster")
+    public static String[] dependentTextList = {"Entry"};
+
+    // Second, independent condition: disabled only while BOTH switches are on, via addDependency in the constructor.
+    @Switch(title = "Second condition", category = "Dependencies", subcategory = "Multiple conditions")
+    public static boolean dependencySecond = false;
+
+    @Switch(title = "Disabled when both are on", category = "Dependencies", subcategory = "Multiple conditions")
+    public static boolean dependentBoth = false;
+
     @Info(
             title = "Info",
             description = "This is an info message that may be useful to the player!",
@@ -242,6 +304,8 @@ public class TestConfig_Test extends Config {
         super("test_mod.json", "Test Mod", Category.QOL);
         addDependency("c3ow", "c2ow");
         hideIf("c5ow", "c4ow");
+        addDependency("dependentBoth", "both switches on",
+                () -> dependencyMaster && dependencySecond ? Property.Display.DISABLED : Property.Display.SHOWN);
     }
 
     @Button(title = "Test")

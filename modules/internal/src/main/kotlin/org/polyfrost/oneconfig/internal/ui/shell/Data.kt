@@ -63,6 +63,9 @@ object ShellState {
     /** Last top-level route navigated to, used by the "Previous page" / "Smart reset" opening behaviors. */
     var lastRoute: Any? = null
 
+    /** Where each scrollable page was left, by page key. See [rememberRestorableLazyListState]. */
+    val scrollAnchors = mutableMapOf<String, ScrollAnchor>()
+
     /** Last selected settings category (tab) per page key, restored when a page is reopened or navigated back to. */
     val selectedCategories = mutableStateMapOf<String, String>()
 
@@ -74,6 +77,13 @@ object ShellState {
 
     /** Consumed once per open so the first page transition can be treated specially. */
     var initialTransitionConsumed: Boolean = false
+
+    /**
+     * True while the menu is composed but has not yet navigated to the page it is opening on. The nav host has
+     * to be composed before it can be navigated, so it briefly holds the mod grid; this keeps that placeholder
+     * from being drawn.
+     */
+    var awaitingInitialRoute by mutableStateOf(false)
 
     var openingTransitionTarget: String? = null
 }
@@ -116,13 +126,16 @@ object LocalNavController {
             currentEntry = Entry(ModsGraph)
         }
 
-        fun navigate(route: Any) {
+        /** [clearSearch] is off when the navigation only restores a page the user was already on. */
+        fun navigate(route: Any, clearSearch: Boolean = true) {
             forwardStack.clear()
             backStack.addLast(currentEntry)
             currentEntry = Entry(route)
-            ShellState.searchQuery = ""
-            ShellState.globalSearchActive = false
-            ShellState.showSearchField = false
+            if (clearSearch) {
+                ShellState.searchQuery = ""
+                ShellState.globalSearchActive = false
+                ShellState.showSearchField = false
+            }
             ShellState.lastRoute = route
             seedRouteCategory(route)
             current.navigate(route)

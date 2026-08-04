@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.skiaCanvas
 import androidx.compose.ui.platform.LocalWindowInfo
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.client.gui.screens.Screen
 //? >= 1.21.10
 import net.minecraft.client.input.KeyEvent
 //? >= 1.21.10
@@ -19,6 +20,7 @@ import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
+import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
 import org.polyfrost.oneconfig.internal.ui.compose.BlurRenderer
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
@@ -40,17 +42,30 @@ class OneConfigUIScreen @JvmOverloads constructor(
     private val initialTreeId: String? = null,
     private val initialCategory: String? = null,
     private val initialTree: Tree? = null,
+    private val initialRoute: Any? = null,
 ) : ComposeScreen() {
     companion object {
         private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/UI")
         private const val FULLSCREEN_BLUR_RADIUS = 8f
         private const val OPEN_ANIMATION_MS = 250L
-        private const val CLOSE_ANIMATION_MS = 300L
 
-        private fun resolveOpeningBehaviorRoute(): Any = when (OneConfigConfig.openingBehavior) {
-            0 -> ModsGraph
-            1 -> PreferencesGraph
-            2 -> ShellState.lastRoute ?: ModsGraph
+        /** Serialized so two closes in quick succession can't write the same files at once. */
+        private val SAVE_EXECUTOR = java.util.concurrent.Executors.newSingleThreadExecutor { r ->
+            Thread(r, "OneConfig-ConfigSave").apply { isDaemon = true }
+        }
+
+        /** [restored] marks a route that puts the user back where they were rather than opening a fixed page. */
+        private data class OpeningRoute(val route: Any, val restored: Boolean = false)
+
+        private fun resolveOpeningBehaviorRoute(): OpeningRoute = resolveRoute().let {
+            // "Reopen HUD editor" is off by default, in which case the editor is never restored as a page.
+            if (it.route === HudEditorRoute && !OneConfigConfig.restoreHudEditor) OpeningRoute(ModsGraph) else it
+        }
+
+        private fun resolveRoute(): OpeningRoute = when (OneConfigConfig.openingBehavior) {
+            0 -> OpeningRoute(ModsGraph)
+            1 -> OpeningRoute(PreferencesGraph)
+            2 -> ShellState.lastRoute?.let { OpeningRoute(it, restored = true) } ?: OpeningRoute(ModsGraph)
             3 -> {
                 val last = ShellState.lastClosedAt
                 val route = ShellState.lastRoute
@@ -58,21 +73,40 @@ class OneConfigUIScreen @JvmOverloads constructor(
                 val window = if (route === HudEditorRoute) HudDesignSession.restoreWindowMillis()
                     else (OneConfigConfig.timeBeforeReset * 1000f).toLong()
                 val withinWindow = last > 0L && System.currentTimeMillis() - last <= window
-                if (withinWindow) route ?: ModsGraph else ModsGraph
+                if (withinWindow && route != null) OpeningRoute(route, restored = true) else OpeningRoute(ModsGraph)
             }
-            else -> ModsGraph
+            else -> OpeningRoute(ModsGraph)
         }
 
         @JvmStatic
         fun openLastSession() {
-            if (resolveOpeningBehaviorRoute() === HudEditorRoute) HudManager.openEditor()
+            if (resolveOpeningBehaviorRoute().route === HudEditorRoute) HudManager.openEditor()
             else Platform.screen().display(OneConfigUIScreen())
         }
     }
 
     @Volatile private var closeRequested = false
     @Volatile private var closeRequestedAt = 0L
+    @Volatile private var closeAnimationMs = 0L
     @Volatile private var openedAt = 0L
+
+    private fun beginClose() {
+        if (closeRequested) return
+        closeRequested = true
+        closeRequestedAt = System.currentTimeMillis()
+        closeAnimationMs = guiCloseAnimationMillis()
+        markClosed()
+        UiSounds.play(UiSoundEvent.CLOSE)
+    }
+
+    /** The page this screen is showing. Survives the scene being disposed and rebuilt. */
+    private var route: Any? = null
+
+    /** True once this screen has been displaced by another and is being shown again. */
+    private var resuming = false
+
+    /** True when [route] is a page being put back rather than a page being opened. */
+    private var restoring = false
 
     private fun markClosed() {
         ShellState.lastClosedAt = System.currentTimeMillis()
@@ -83,21 +117,40 @@ class OneConfigUIScreen @JvmOverloads constructor(
         ConfigRegistry.loadFrom(ConfigManager.active(), ConfigSource.OC)
         initialTree?.let { ConfigRegistry.registerTree(it, ConfigSource.OC) }
 
+        if (route == null) {
+            when {
+                initialRoute != null -> route = initialRoute
+                initialTreeId != null -> route = ModConfigRoute(initialTreeId, initialCategory)
+                else -> {
+                    val opening = resolveOpeningBehaviorRoute()
+                    route = opening.route.takeIf { it !== HudEditorRoute } ?: ModsGraph
+                    restoring = opening.restored && route === opening.route
+                }
+            }
+            ShellState.lastRoute = route
+        }
+
         try {
             ShellState.playerName = net.minecraft.client.Minecraft.getInstance().user.name
         } catch (_: Throwable) {
             ShellState.playerName = "Player"
         }
-        ShellState.playerHeadPng = null
         ShellState.focusSearchField = OneConfigConfig.instantSearch
         val client = net.minecraft.client.Minecraft.getInstance()
-        Thread {
-            val head = PlayerHeadLoader.loadLocalPlayerHeadPng() ?: return@Thread
-            client.execute { ShellState.playerHeadPng = head }
-        }.apply {
-            isDaemon = true
-            name = "OneConfig-PlayerHead"
-            start()
+        val cachedHead = PlayerHeadLoader.cachedLocalPlayerHeadPng(client)
+        if (cachedHead != null) {
+            ShellState.playerHeadPng = cachedHead
+        } else {
+            Thread {
+                runCatching {
+                    val head = PlayerHeadLoader.loadLocalPlayerHeadPng(client) ?: return@runCatching
+                    client.execute { ShellState.playerHeadPng = head }
+                }.onFailure { LOGGER.warn("Failed to load player head", it) }
+            }.apply {
+                isDaemon = true
+                name = "OneConfig-PlayerHead"
+                start()
+            }
         }
         try {
             val loaderStr = Platform.loader().loaderString
@@ -122,14 +175,23 @@ class OneConfigUIScreen @JvmOverloads constructor(
     }
 
     override fun removed() {
+        // A screen opened over this one removes it and hands it back when it closes, and the scene is rebuilt
+        // from scratch in between, so the page has to be carried across by hand.
+        ShellState.lastRoute?.takeIf { it !== HudEditorRoute }?.let { route = it }
+        resuming = true
+        restoring = true
         SkiaCtx.suppressInGameHudRender = false
         HudManager.overrideShowInScreens = false
         HudManager.isConfigUiOpen = false
         UiSounds.releaseAmbience()
-        try {
-            ConfigManager.active().saveAll()
-        } catch (t: Throwable) {
-            LOGGER.error("Failed to save configs on OneConfig UI close", t)
+        // Writing every registered tree takes long enough to be felt as a hitch, and Minecraft only re-grabs the
+        // cursor once this returns, so the crosshair would sit under a free mouse for the whole write.
+        SAVE_EXECUTOR.execute {
+            try {
+                ConfigManager.active().saveAll()
+            } catch (t: Throwable) {
+                LOGGER.error("Failed to save configs on OneConfig UI close", t)
+            }
         }
         super.removed()
     }
@@ -146,17 +208,22 @@ class OneConfigUIScreen @JvmOverloads constructor(
         if (key == InputConstants.KEY_ESCAPE) {
             if (KeybindRecordingBus.consumeEscape()) return true
             if (!closeRequested) {
-                closeRequested = true
-                closeRequestedAt = System.currentTimeMillis()
-                markClosed()
-                UiSounds.play(UiSoundEvent.CLOSE)
+                beginClose()
                 requestCloseCallback?.invoke()
             }
             return true
         }
         val toggleKey = OneConfigConfig.oneConfigKeybind.keyCodes?.firstOrNull()
         if (toggleKey != null && key == toggleKey && !KeybindRecordingBus.isRecording) {
-            HudManager.openEditor()
+            if (OneConfigConfig.keybindClosesGui) {
+                if (!closeRequested) {
+                    OneConfigConfig.notifyKeybindClosedGui()
+                    beginClose()
+                    requestCloseCallback?.invoke()
+                }
+            } else {
+                HudManager.openEditor()
+            }
             return true
         }
         //? >= 1.21.10 {
@@ -196,14 +263,19 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     //~ if >= 26.1 'render' -> 'extractRenderState'
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
-        if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= CLOSE_ANIMATION_MS) {
+        // Some foreign config screens (Better Statistics Screen, other tcdcommons-based UIs) draw as a popup
+        // over their parent and render that parent by hand every frame. When the parent is this screen that
+        // would queue a fullscreen blur into the Skia pass, which runs after vanilla GUI drawing and so smears
+        // the popup on top of it. Nothing here may run unless we are the screen actually being shown.
+        if (Platform.screen().current<Screen>() !== this) return
+        if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= closeAnimationMs) {
             Platform.screen().close()
             return
         }
         if (client.level == null) {
             HudManager.inWorld = false
-            val sw = ctx.guiWidth().toFloat()
-            val sh = ctx.guiHeight().toFloat()
+            val sw = Platform.screen().guiWidth().toFloat()
+            val sh = Platform.screen().guiHeight().toFloat()
             HudManager.guiScreenWidth = sw
             HudManager.guiScreenHeight = sh
             HudManager.prepare(sw, sh)
@@ -226,7 +298,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
     private fun fullscreenBlurRadius(): Float {
         val now = System.currentTimeMillis()
         val progress = if (closeRequested) {
-            1f - easeOutExpo((now - closeRequestedAt).toFloat() / CLOSE_ANIMATION_MS)
+            if (closeAnimationMs <= 0L) 0f
+            else 1f - easeOutExpo((now - closeRequestedAt).toFloat() / closeAnimationMs)
         } else {
             (now - openedAt).toFloat() / OPEN_ANIMATION_MS
         }
@@ -242,24 +315,16 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     @Composable
     override fun compose() {
-        val initialRoute = when {
-            initialTreeId != null -> ModConfigRoute(initialTreeId, initialCategory)
-            else -> resolveOpeningBehaviorRoute().takeIf { it !== HudEditorRoute } ?: ModsGraph
-        }
+        val initialRoute = route ?: ModsGraph
 
         val containerSize = LocalWindowInfo.current.containerSize
         OneConfigInterface(
             containerSize.width.toFloat(),
             containerSize.height.toFloat(),
             initialRoute = initialRoute,
-            onCloseRequest = {
-                if (!closeRequested) {
-                    closeRequested = true
-                    closeRequestedAt = System.currentTimeMillis()
-                    markClosed()
-                    UiSounds.play(UiSoundEvent.CLOSE)
-                }
-            },
+            resuming = resuming,
+            restoring = restoring,
+            onCloseRequest = { beginClose() },
             onCloseReady = { closeRequest ->
                 requestCloseCallback = closeRequest
             },

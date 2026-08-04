@@ -23,7 +23,11 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
 
     @Override
     public void displayChatMessage(Component text) {
-
+        //? if >=1.21.4 {
+        MinecraftClientAudiences.of().audience().sendMessage(text);
+        //?} else {
+        /*FabricClientAudiences.of().audience().sendMessage(text);
+        *///?}
     }
 
     @Override

@@ -15,6 +15,7 @@ import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL30
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.compose.opengl.StoredGLState
 import org.polyfrost.oneconfig.internal.ui.services.VulkanService
 import org.slf4j.LoggerFactory
@@ -308,7 +309,7 @@ object SkiaCtx {
         //? if < 26.1 {
         /*if (!this::directContext.isInitialized) return
         if (isVulkanMode) return
-        if (client.screen !is ComposeScreen) return
+        if (Platform.screen().current<Any>() !is ComposeScreen) return
         val w = target.width
         val h = target.height
         if (w <= 0 || h <= 0) return
@@ -576,8 +577,8 @@ object SkiaCtx {
     }
 
     private fun resolveHudSurface(): Surface? {
-        val w = client.window.width
-        val h = client.window.height
+        val w = Platform.screen().viewportWidth()
+        val h = Platform.screen().viewportHeight()
         if (w <= 0 || h <= 0) return null
 
         var rt = hudTarget
@@ -638,8 +639,8 @@ object SkiaCtx {
     }
 
     private fun resolveComposeSurface(): Surface? {
-        val w = client.window.width
-        val h = client.window.height
+        val w = Platform.screen().viewportWidth()
+        val h = Platform.screen().viewportHeight()
         if (w <= 0 || h <= 0) return null
 
         var rt = composeTarget
@@ -702,8 +703,8 @@ object SkiaCtx {
 
     private fun resolveGLSurface(): Surface? {
         val svc = vulkanService ?: return null
-        val w = client.window.width
-        val h = client.window.height
+        val w = Platform.screen().viewportWidth()
+        val h = Platform.screen().viewportHeight()
         if (w <= 0 || h <= 0) return null
         val existing = glSurface
         if (existing != null && existing.width == w && existing.height == h) return existing
@@ -746,8 +747,8 @@ object SkiaCtx {
         val (vkImg, vkFmt, queueFamily) = svc.getMainColorImageInfo()
         if (vkImg == 0L) return null
 
-        val w = client.window.width
-        val h = client.window.height
+        val w = Platform.screen().viewportWidth()
+        val h = Platform.screen().viewportHeight()
         if (w <= 0 || h <= 0) return null
 
         if (w != vkSurfaceWidth || h != vkSurfaceHeight || svc.offscreenNeedsPerFrameRewrap) {

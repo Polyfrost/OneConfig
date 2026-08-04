@@ -309,14 +309,38 @@ private fun CreateProfileCard(
         modifier = Modifier
             .fillMaxWidth()
             .height(ProfileCardHeight)
-            .background(theme.modCardBackground.copy(alpha = 0.72f), shape)
-            .border(1.dp, borderColor, shape)
+            .background(theme.modCardBackground, shape)
+            .border(
+                1.dp, Brush.verticalGradient(
+                    listOf(borderColor, borderColor.copy(0f))
+                ), shape
+            )
             .onClick(interactionSource) {
                 if (!creating) creating = true
             }
             .clip(shape)
             .pointerHoverIcon(PointerIcon.Hand)
     ) {
+        val vignetteColor = theme.textColor
+        Box(
+            Modifier
+                .fillMaxSize()
+                .drawWithCache {
+                    val gradient = Brush.radialGradient(
+                        colors = listOf(
+                            vignetteColor.copy(alpha = 0f),
+                            vignetteColor.copy(alpha = 0.02f),
+                            vignetteColor.copy(alpha = 0.05f)
+                        ),
+                        center = size.center,
+                        radius = size.minDimension * 0.9f
+                    )
+                    onDrawBehind {
+                        drawRect(gradient)
+                    }
+                }
+        )
+
         if (creating) {
             Row(
                 modifier = Modifier
@@ -456,7 +480,7 @@ private fun ProfileCard(
                 }
             }
             ActionIcon(
-                icon = "star",
+                icon = if (profile.favorite) "star-filled" else "star",
                 tint = if (profile.favorite) Color(0xFFFFD700) else theme.textColor.copy(0.5f),
                 onClick = onFavorite,
             )

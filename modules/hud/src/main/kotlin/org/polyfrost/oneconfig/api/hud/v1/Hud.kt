@@ -64,7 +64,45 @@ enum class Section {
     BottomLeft, BottomCenter, BottomRight
 }
 
+enum class HudAnchor {
+    Auto,
+    TopLeft, Top, TopRight,
+    Left, Center, Right,
+    BottomLeft, Bottom, BottomRight;
+
+    fun toAlign(): PolyAlign? = when (this) {
+        Auto -> null
+        TopLeft -> PolyAlign.TopLeft
+        Top -> PolyAlign.Top
+        TopRight -> PolyAlign.TopRight
+        Left -> PolyAlign.Left
+        Center -> PolyAlign.Center
+        Right -> PolyAlign.Right
+        BottomLeft -> PolyAlign.BottomLeft
+        Bottom -> PolyAlign.Bottom
+        BottomRight -> PolyAlign.BottomRight
+    }
+
+    companion object {
+        @JvmStatic
+        fun of(align: PolyAlign): HudAnchor = when (align) {
+            PolyAlign.TopLeft -> TopLeft
+            PolyAlign.Top -> Top
+            PolyAlign.TopRight -> TopRight
+            PolyAlign.Left -> Left
+            PolyAlign.Center -> Center
+            PolyAlign.Right -> Right
+            PolyAlign.BottomLeft -> BottomLeft
+            PolyAlign.Bottom -> Bottom
+            PolyAlign.BottomRight -> BottomRight
+        }
+    }
+}
+
 private const val GRID_SIZE = 3
+
+/** Backstop for walking a chain of HUDs anchored to one another. */
+private const val MAX_ANCHOR_DEPTH = 16
 
 @Suppress("EqualsOrHashCode", "UnstableApiUsage")
 abstract class Hud(id: String, title: String, val category: Category) : Cloneable, Config(id, null, title, null) {
@@ -246,48 +284,120 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         return maxOf(h, minH * scale).coerceAtLeast(1f)
     }
 
-    open var x: Float
-        get() {
-            val sw = HudManager.guiScreenWidth
-            val secPos = Math.round(sw / GRID_SIZE * relativeX).toFloat()
-            return when (section) {
-                Section.TopLeft, Section.CenterLeft, Section.BottomLeft -> secPos
-                Section.TopCenter, Section.Center, Section.BottomCenter -> (sw - scaledWidth) / 2f + secPos
-                Section.TopRight, Section.CenterRight, Section.BottomRight -> sw - scaledWidth - secPos
+    private fun fracX(anchor: HudAnchor): Float = when (anchor) {
+        HudAnchor.Auto -> when (section) {
+            Section.TopLeft, Section.CenterLeft, Section.BottomLeft -> 0f
+            Section.TopCenter, Section.Center, Section.BottomCenter -> 0.5f
+            Section.TopRight, Section.CenterRight, Section.BottomRight -> 1f
+        }
+        HudAnchor.TopLeft, HudAnchor.Left, HudAnchor.BottomLeft -> 0f
+        HudAnchor.Top, HudAnchor.Center, HudAnchor.Bottom -> 0.5f
+        HudAnchor.TopRight, HudAnchor.Right, HudAnchor.BottomRight -> 1f
+    }
+
+    private fun fracY(anchor: HudAnchor): Float = when (anchor) {
+        HudAnchor.Auto -> when (section) {
+            Section.TopLeft, Section.TopCenter, Section.TopRight -> 0f
+            Section.CenterLeft, Section.Center, Section.CenterRight -> 0.5f
+            Section.BottomLeft, Section.BottomCenter, Section.BottomRight -> 1f
+        }
+        HudAnchor.TopLeft, HudAnchor.Top, HudAnchor.TopRight -> 0f
+        HudAnchor.Left, HudAnchor.Center, HudAnchor.Right -> 0.5f
+        HudAnchor.BottomLeft, HudAnchor.Bottom, HudAnchor.BottomRight -> 1f
+    }
+
+    private val anchorFracX: Float get() = fracX(growthAnchor)
+
+    private val anchorFracY: Float get() = fracY(growthAnchor)
+
+    /** Screen-space X of [point] on this HUD's box, e.g. the middle of its right edge. */
+    fun anchorPointX(point: HudAnchor): Float = x + fracX(point) * scaledWidth
+
+    /** Screen-space Y of [point] on this HUD's box. */
+    fun anchorPointY(point: HudAnchor): Float = y + fracY(point) * scaledHeight
+
+    private val anchorScreenX: Float get() {
+        anchorParent?.let { parent ->
+            resolvingAnchor = true
+            try {
+                return parent.anchorPointX(anchorPoint) + anchorOffsetX
+            } finally {
+                resolvingAnchor = false
             }
         }
+        val sw = HudManager.guiScreenWidth
+        val secPos = Math.round(sw / GRID_SIZE * relativeX).toFloat()
+        return when (section) {
+            Section.TopLeft, Section.CenterLeft, Section.BottomLeft -> secPos
+            Section.TopCenter, Section.Center, Section.BottomCenter -> sw / 2f + secPos
+            Section.TopRight, Section.CenterRight, Section.BottomRight -> sw - secPos
+        }
+    }
+
+    private val anchorScreenY: Float get() {
+        anchorParent?.let { parent ->
+            resolvingAnchor = true
+            try {
+                return parent.anchorPointY(anchorPoint) + anchorOffsetY
+            } finally {
+                resolvingAnchor = false
+            }
+        }
+        val sh = HudManager.guiScreenHeight
+        val secPos = Math.round(sh / GRID_SIZE * relativeY).toFloat()
+        return when (section) {
+            Section.TopLeft, Section.TopCenter, Section.TopRight -> secPos
+            Section.CenterLeft, Section.Center, Section.CenterRight -> sh / 2f + secPos
+            Section.BottomLeft, Section.BottomCenter, Section.BottomRight -> sh - secPos
+        }
+    }
+
+    open var x: Float
+        get() = anchorScreenX - anchorFracX * scaledWidth
         set(v) { updateRelativeX(v) }
 
     open var y: Float
-        get() {
-            val sh = HudManager.guiScreenHeight
-            val secPos = Math.round(sh / GRID_SIZE * relativeY).toFloat()
-            return when (section) {
-                Section.TopLeft, Section.TopCenter, Section.TopRight -> secPos
-                Section.CenterLeft, Section.Center, Section.CenterRight -> (sh - scaledHeight) / 2f + secPos
-                Section.BottomLeft, Section.BottomCenter, Section.BottomRight -> sh - scaledHeight - secPos
-            }
-        }
+        get() = anchorScreenY - anchorFracY * scaledHeight
         set(v) { updateRelativeY(v) }
 
     protected open fun updateRelativeX(absX: Float) {
         val sw = HudManager.guiScreenWidth
         val gridW = sw / GRID_SIZE
+        val anchor = absX + anchorFracX * scaledWidth
+        anchorParent?.let { parent ->
+            resolvingAnchor = true
+            try {
+                anchorOffsetX = anchor - parent.anchorPointX(anchorPoint)
+            } finally {
+                resolvingAnchor = false
+            }
+        }
+        // kept up to date even while anchored, so dropping the anchor (or losing the target HUD)
+        // leaves the HUD exactly where it was instead of jumping back to a stale screen position
         relativeX = when (section) {
-            Section.TopLeft, Section.CenterLeft, Section.BottomLeft -> absX / gridW
-            Section.TopCenter, Section.Center, Section.BottomCenter -> (absX - (sw - scaledWidth) / 2f) / gridW
-            else -> (sw - scaledWidth - absX) / gridW
-        }.coerceIn(-1f, 2f)
+            Section.TopLeft, Section.CenterLeft, Section.BottomLeft -> anchor
+            Section.TopCenter, Section.Center, Section.BottomCenter -> anchor - sw / 2f
+            else -> sw - anchor
+        }.div(gridW).coerceIn(-1f, 2f)
     }
 
     protected open fun updateRelativeY(absY: Float) {
         val sh = HudManager.guiScreenHeight
         val gridH = sh / GRID_SIZE
+        val anchor = absY + anchorFracY * scaledHeight
+        anchorParent?.let { parent ->
+            resolvingAnchor = true
+            try {
+                anchorOffsetY = anchor - parent.anchorPointY(anchorPoint)
+            } finally {
+                resolvingAnchor = false
+            }
+        }
         relativeY = when (section) {
-            Section.TopLeft, Section.TopCenter, Section.TopRight -> absY / gridH
-            Section.CenterLeft, Section.Center, Section.CenterRight -> (absY - (sh - scaledHeight) / 2f) / gridH
-            else -> (sh - scaledHeight - absY) / gridH
-        }.coerceIn(-1f, 2f)
+            Section.TopLeft, Section.TopCenter, Section.TopRight -> anchor
+            Section.CenterLeft, Section.Center, Section.CenterRight -> anchor - sh / 2f
+            else -> sh - anchor
+        }.div(gridH).coerceIn(-1f, 2f)
     }
 
     fun setAbsolutePosition(absX: Float, absY: Float) {
@@ -342,6 +452,104 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     private var _alignment: MutableState<PolyAlign> = mutableStateOf(PolyAlign.Center)
     var alignment: PolyAlign get() = _alignment.value; set(v) { _alignment.value = v }
+
+    private var _growthAnchor: MutableState<HudAnchor> = mutableStateOf(HudAnchor.Auto)
+    var growthAnchor: HudAnchor get() = _growthAnchor.value; set(v) { _growthAnchor.value = v }
+
+    val effectiveGrowthAnchor: HudAnchor get() {
+        val fx = anchorFracX
+        val fy = anchorFracY
+        return when {
+            fy == 0f -> when (fx) { 0f -> HudAnchor.TopLeft; 0.5f -> HudAnchor.Top; else -> HudAnchor.TopRight }
+            fy == 0.5f -> when (fx) { 0f -> HudAnchor.Left; 0.5f -> HudAnchor.Center; else -> HudAnchor.Right }
+            else -> when (fx) { 0f -> HudAnchor.BottomLeft; 0.5f -> HudAnchor.Bottom; else -> HudAnchor.BottomRight }
+        }
+    }
+
+    fun setGrowthAnchorKeepingPosition(anchor: HudAnchor) {
+        val absX = x
+        val absY = y
+        growthAnchor = anchor
+        updateRelativeX(absX)
+        updateRelativeY(absY)
+    }
+
+    private var _anchorTargetId: MutableState<String> = mutableStateOf("")
+
+    /**
+     * Config tree id of the HUD this one hangs off, or empty when it is positioned against the
+     * screen. Prefer [anchorTo] and [clearAnchor] over setting this directly.
+     */
+    var anchorTargetId: String get() = _anchorTargetId.value; set(v) { _anchorTargetId.value = v }
+
+    private var _anchorPoint: MutableState<HudAnchor> = mutableStateOf(HudAnchor.TopLeft)
+
+    /** Which of the nine points on the target HUD's box this HUD is pinned to. */
+    var anchorPoint: HudAnchor get() = _anchorPoint.value; set(v) { _anchorPoint.value = v }
+
+    private var _anchorOffsetX: MutableState<Float> = mutableStateOf(0f)
+
+    /** Distance from the target's anchor point to this HUD's own growth anchor, along X. */
+    var anchorOffsetX: Float get() = _anchorOffsetX.value; set(v) { _anchorOffsetX.value = v }
+
+    private var _anchorOffsetY: MutableState<Float> = mutableStateOf(0f)
+
+    /** Distance from the target's anchor point to this HUD's own growth anchor, along Y. */
+    var anchorOffsetY: Float get() = _anchorOffsetY.value; set(v) { _anchorOffsetY.value = v }
+
+    // set while this HUD is asking its target where it is, so a chain that loops back here falls
+    // through to the screen-relative position instead of recursing forever
+    @Transient
+    private var resolvingAnchor = false
+
+    /** The HUD this one is anchored to, or `null` when it is not anchored or the target is gone. */
+    val anchorParent: Hud? get() {
+        if (resolvingAnchor) return null
+        val id = anchorTargetId
+        if (id.isEmpty()) return null
+        return HudManager.instanceById(id)?.takeUnless { it === this }
+    }
+
+    val isAnchored: Boolean get() = anchorParent != null
+
+    /**
+     * Pins this HUD to [point] on [target] without moving it: from here on it follows the target
+     * when the target moves or resizes, instead of following the screen. Does nothing if that would
+     * make a loop of anchors.
+     */
+    fun anchorTo(target: Hud, point: HudAnchor) {
+        if (target === this) return
+        val id = target.tree?.id ?: return
+        if (target.anchorChainContains(this)) return
+        val absX = x
+        val absY = y
+        anchorTargetId = id
+        anchorPoint = point
+        setAbsolutePosition(absX, absY)
+    }
+
+    /** Drops the anchor, leaving the HUD where it currently sits on screen. */
+    fun clearAnchor() {
+        if (anchorTargetId.isEmpty()) return
+        val absX = x
+        val absY = y
+        anchorTargetId = ""
+        anchorOffsetX = 0f
+        anchorOffsetY = 0f
+        setAbsolutePosition(absX, absY)
+    }
+
+    /** Whether [hud] is this HUD's anchor target, or the target of one of its targets. */
+    fun anchorChainContains(hud: Hud): Boolean {
+        var current = anchorParent
+        var depth = 0
+        while (current != null && depth < MAX_ANCHOR_DEPTH) {
+            if (current === hud) return true
+            current = current.anchorParent
+            depth++
+        }
+        return false
+    }
 
     private var _padTop: MutableState<Float> = mutableStateOf(0f)
     var padTop: Float get() = _padTop.value; set(v) { _padTop.value = v }
@@ -424,6 +632,21 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     private var _bgRadius: MutableState<Float> = mutableStateOf(4f)
     var bgRadius: Float get() = _bgRadius.value; set(v) { _bgRadius.value = v }
 
+    private var _mergeBackground: MutableState<Boolean> = mutableStateOf(true)
+
+    var mergeBackground: Boolean get() = _mergeBackground.value; set(v) { _mergeBackground.value = v }
+
+    private var _mergeDiagonally: MutableState<Boolean> = mutableStateOf(false)
+
+    var mergeDiagonally: Boolean get() = _mergeDiagonally.value; set(v) { _mergeDiagonally.value = v }
+
+    internal var bgMerged: Boolean
+        get() = _bgMerged.value
+        set(v) { _bgMerged.value = v }
+
+    @Transient
+    private var _bgMerged: MutableState<Boolean> = mutableStateOf(false)
+
     private var _textColor: MutableState<Int> = mutableStateOf(0xFFFFFFFF.toInt())
     var textColor: Int get() = _textColor.value; set(v) { _textColor.value = v }
 
@@ -498,10 +721,18 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
                 tree["section"] = ktProperty(out::section).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["relativeX"] = ktProperty(out::relativeX).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["relativeY"] = ktProperty(out::relativeY).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["anchorTargetId"] = ktProperty(out::anchorTargetId).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["anchorPoint"] = ktProperty(out::anchorPoint).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["anchorOffsetX"] = ktProperty(out::anchorOffsetX).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["anchorOffsetY"] = ktProperty(out::anchorOffsetY).apply { addDisplayCondition(hideFromConfigUi) }
             }
             tree["toggleKey"] = ktProperty(out::toggleKey).apply { addDisplayCondition(hideFromConfigUi) }
             tree["showKey"] = ktProperty(out::showKey).apply { addDisplayCondition(hideFromConfigUi) }
             tree["alignment"] = ktProperty(out::alignment).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["growthAnchor"] = ktProperty(out::growthAnchor).apply {
+                description = "The point this HUD stays pinned to when its size changes, so it only ever grows away from that point."
+                addDisplayCondition(hideFromConfigUi)
+            }
             tree["padTop"] = ktProperty(out::padTop).apply { addDisplayCondition(hideFromConfigUi) }
             tree["padBottom"] = ktProperty(out::padBottom).apply { addDisplayCondition(hideFromConfigUi) }
             tree["padLeft"] = ktProperty(out::padLeft).apply { addDisplayCondition(hideFromConfigUi) }
@@ -534,6 +765,18 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             tree["bgChroma"] = ktProperty(out::bgChroma).apply { addDisplayCondition(hideFromConfigUi) }
             tree["bgChromaSpeed"] = ktProperty(out::bgChromaSpeed).apply { addDisplayCondition(hideFromConfigUi) }
             tree["bgRadius"] = ktProperty(out::bgRadius).apply { addDisplayCondition(hideFromConfigUi) }
+            // legacy HUDs draw their own background through the compat bridge, so there is nothing
+            // for OneConfig to fuse and no reason to persist the settings for them
+            if (out !is LegacyHudMarker) {
+                tree["mergeBackground"] = ktProperty(out::mergeBackground).apply {
+                    description = "Fuses this HUD's background with the background of HUDs it touches, so they draw as one shape."
+                    addDisplayCondition(hideFromConfigUi)
+                }
+                tree["mergeDiagonally"] = ktProperty(out::mergeDiagonally).apply {
+                    description = "Also fuses backgrounds with HUDs sitting diagonally from this one, which meet it at a corner or only partly along an edge."
+                    addDisplayCondition(hideFromConfigUi)
+                }
+            }
             tree["textColor"] = ktProperty(out::textColor).apply { addDisplayCondition(hideFromConfigUi) }
             tree["textChroma"] = ktProperty(out::textChroma).apply { addDisplayCondition(hideFromConfigUi) }
             tree["textChromaSpeed"] = ktProperty(out::textChromaSpeed).apply { addDisplayCondition(hideFromConfigUi) }
@@ -585,11 +828,30 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     open fun minimumSize(): Pair<Float, Float> = 0f to 0f
 
     /**
-     * Whether this HUD may be deleted from the HUD design studio. When `false`, the settings panel
-     * hides the delete button so the HUD cannot be removed (it can still be hidden/moved). Useful
-     * for HUDs that are intrinsic to a mod and cannot be re-created once deleted.
+     * Whether the user is ever allowed to delete this HUD. When `false`, the settings panel and the
+     * canvas context menu hide the delete button so the HUD cannot be removed (it can still be
+     * hidden/moved). Useful for HUDs that are intrinsic to a mod and cannot be re-created once
+     * deleted.
+
+     * Use [canDelete] to ask whether a *particular* HUD can be deleted right now.
      */
-    open fun deletable(): Boolean = isReal
+    open fun deletable(): Boolean = true
+
+    /**
+     * Whether this exact HUD can be deleted right now: it must be a real instance (providers have
+     * nothing to delete) of a type the user is allowed to delete ([deletable]).
+     */
+    fun canDelete(): Boolean = isReal && deletable()
+
+    /**
+     * Drops this instance's config tree reference, turning it back into a provider. Called when the
+     * instance is removed, so that a single-instance HUD (whose provider *is* its instance) can be
+     * made again instead of throwing "HUD is already made" forever.
+     */
+    @ApiStatus.Internal
+    internal fun detachTree() {
+        tree = null
+    }
 
     open fun remove() {}
 
@@ -606,6 +868,11 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         _renderedW = mutableStateOf(0f)
         _renderedH = mutableStateOf(0f)
         _alignment = mutableStateOf(this@Hud.alignment)
+        _growthAnchor = mutableStateOf(this@Hud.growthAnchor)
+        _anchorTargetId = mutableStateOf(this@Hud.anchorTargetId)
+        _anchorPoint = mutableStateOf(this@Hud.anchorPoint)
+        _anchorOffsetX = mutableStateOf(this@Hud.anchorOffsetX)
+        _anchorOffsetY = mutableStateOf(this@Hud.anchorOffsetY)
         _padTop = mutableStateOf(this@Hud.padTop)
         _padBottom = mutableStateOf(this@Hud.padBottom)
         _padLeft = mutableStateOf(this@Hud.padLeft)
@@ -627,6 +894,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         _bgChroma = mutableStateOf(this@Hud.bgChroma)
         _bgChromaSpeed = mutableStateOf(this@Hud.bgChromaSpeed)
         _bgRadius = mutableStateOf(this@Hud.bgRadius)
+        _mergeBackground = mutableStateOf(this@Hud.mergeBackground)
+        _mergeDiagonally = mutableStateOf(this@Hud.mergeDiagonally)
+        _bgMerged = mutableStateOf(false)
         _textColor = mutableStateOf(this@Hud.textColor)
         _textChroma = mutableStateOf(this@Hud.textChroma)
         _textChromaSpeed = mutableStateOf(this@Hud.textChromaSpeed)

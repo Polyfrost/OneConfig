@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindRegistrar
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 
@@ -62,10 +63,10 @@ object ConfigRegistry {
     }
 
     fun shouldShowModCard(config: ConfigData): Boolean =
-        config.id.lowercase() !in hiddenModCardIds && config.title.toString().lowercase() !in hiddenModCardTitles
+        config.id.lowercase() !in hiddenModCardIds && config.title.asRenderText().lowercase() !in hiddenModCardTitles
 
     fun shouldShowInSearch(config: ConfigData): Boolean =
-        config.id.lowercase() !in hiddenSearchIds && config.title.toString().lowercase() !in hiddenModCardTitles
+        config.id.lowercase() !in hiddenSearchIds && config.title.asRenderText().lowercase() !in hiddenModCardTitles
 
     /**
      * Loads all trees from the given [ConfigManager] as [source] entries.

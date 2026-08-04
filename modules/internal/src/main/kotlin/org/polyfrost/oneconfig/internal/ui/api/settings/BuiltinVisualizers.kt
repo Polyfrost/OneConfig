@@ -10,11 +10,14 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.DropdownOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.FileListOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.FileOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.InfoOption
+import org.polyfrost.oneconfig.internal.ui.components.settings.InheritableSliderOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.MultiSelectDropdownOption
+import org.polyfrost.oneconfig.internal.ui.components.settings.NumberChainOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.NumberListOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.NumberOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.RadioButtonOption
+import org.polyfrost.oneconfig.internal.ui.components.settings.RangeSliderOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.SliderOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.TextListOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.TextOption
@@ -29,6 +32,15 @@ internal object BuiltinVisualizers {
         })
         Visualizer.register(Visualizer.SliderVisualizer::class.java, Visualizer { prop ->
             SliderOption(SliderOptionData(prop))
+        })
+        Visualizer.register(Visualizer.RangeSliderVisualizer::class.java, Visualizer { prop ->
+            RangeSliderOption(RangeSliderOptionData(prop))
+        })
+        Visualizer.register(Visualizer.InheritableSliderVisualizer::class.java, Visualizer { prop ->
+            InheritableSliderOption(InheritableSliderOptionData(prop))
+        })
+        Visualizer.register(Visualizer.NumberChainVisualizer::class.java, Visualizer { prop ->
+            NumberChainOption(NumberChainOptionData(prop))
         })
         Visualizer.register(Visualizer.NumberVisualizer::class.java, Visualizer { prop ->
             NumberOption(NumberOptionData(prop))

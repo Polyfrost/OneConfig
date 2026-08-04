@@ -75,6 +75,7 @@ import org.polyfrost.oneconfig.internal.ui.search.SearchScope
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.util.LayoutRef
 
 private val CONFLICT_COLOR = Color(0xFFE0524F)
 
@@ -218,13 +219,13 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
     val prop = entry.prop
     var menuOpen by remember(prop) { mutableStateOf(false) }
     var menuOffset by remember(prop) { mutableStateOf(IntOffset.Zero) }
-    var rowOrigin by remember(prop) { mutableStateOf(Offset.Zero) }
-    var actionMenuOffset by remember(prop) { mutableStateOf(IntOffset.Zero) }
+    val rowOrigin = remember(prop) { LayoutRef(Offset.Zero) }
+    val actionMenuOffset = remember(prop) { LayoutRef(IntOffset.Zero) }
     val rowInteraction = rememberInteractionSource()
     val isRowHovered by rowInteraction.collectIsHoveredAsState()
     val showActionButton = OneConfigConfig.showOptionActionButtons
     fun openMenuFromActionButton() {
-        menuOffset = actionMenuOffset
+        menuOffset = actionMenuOffset.value
         menuOpen = true
     }
 
@@ -232,7 +233,7 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
         modifier = Modifier
             .fillMaxWidth()
             .hoverable(rowInteraction)
-            .onGloballyPositioned { rowOrigin = it.positionInRoot() }
+            .onGloballyPositioned { rowOrigin.value = it.positionInRoot() }
             .pointerInput(prop) {
                 awaitPointerEventScope {
                     while (true) {
@@ -316,8 +317,8 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
                 OptionActionButton(
                     visible = isRowHovered || menuOpen,
                     modifier = Modifier.onGloballyPositioned {
-                        val pos = it.positionInRoot() - rowOrigin
-                        actionMenuOffset = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
+                        val pos = it.positionInRoot() - rowOrigin.value
+                        actionMenuOffset.value = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
                     },
                     onClick = ::openMenuFromActionButton,
                 )

@@ -33,8 +33,12 @@ class KeybindHelper {
     fun action(fn: Runnable) = apply { action = { b -> if (b) fn.run(); true } }
     fun action(fn: java.util.function.Consumer<Boolean>) = apply { action = { b -> fn.accept(b); true } }
 
+    /**
+     * Builds the keybind. An action is optional: config-backed (`@Keybind`) binds exist only to be bound by the user
+     * and are polled by the owning code, so they build with a no-op action.
+     */
     fun build(): OneConfigKeybind {
-        val fn = requireNotNull(action) { "KeybindHelper: action must be set before build()" }
+        val fn = action ?: NO_OP
         val keys = keyCodes.toIntArray().takeIf { it.isNotEmpty() }
         val mouse = mouseBtns.toIntArray().takeIf { it.isNotEmpty() }
         val bind = if (inScreens) OneConfigKeybind(keys, mouse, mods, durationNanos, fn)
@@ -47,6 +51,8 @@ class KeybindHelper {
     fun register(): OneConfigKeybind = KeybindManager.register(build())
 
     companion object {
+        private val NO_OP: (Boolean) -> Boolean = { true }
+
         @JvmStatic
         fun builder() = KeybindHelper()
     }

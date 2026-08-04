@@ -7,9 +7,9 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.scene.CanvasLayersComposeScene
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
-import net.minecraft.client.Minecraft
 import org.jetbrains.skia.ImageInfo
 import org.jetbrains.skia.Surface
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
 import org.slf4j.LoggerFactory
 
@@ -28,9 +28,8 @@ object ComposePreloader {
         gpuWarmed = true
         SkiaCtx.queueWarmup {
             val startNanos = System.nanoTime()
-            val mc = Minecraft.getInstance()
-            val w = mc.window.screenWidth.takeIf { it > 0 } ?: 1280
-            val h = mc.window.screenHeight.takeIf { it > 0 } ?: 720
+            val w = Platform.screen().windowWidth().takeIf { it > 0 } ?: 1280
+            val h = Platform.screen().windowHeight().takeIf { it > 0 } ?: 720
             // Mirror ComposeScreen: created and rendered on the render thread, default coroutineContext.
             val scene = CanvasLayersComposeScene(
                 platformContext = ComposeSceneContextImpl.platformContext,

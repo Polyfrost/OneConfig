@@ -54,6 +54,8 @@ class HudDeletionPersistenceTest {
     @AfterEach
     void tearDown() throws Exception {
         HudManager.INSTANCE.unregister(new TestHud(), true, false);
+        HudManager.INSTANCE.unregister(new UndeletableHud(), true, false);
+        HudManager.INSTANCE.unregister(new SingleInstanceHud(), true, false);
         wipeHudState();
     }
 
@@ -83,6 +85,54 @@ class HudDeletionPersistenceTest {
         assertEquals(1, instancesOfTestHud(), "an existing HUD should be loaded back from disk");
     }
 
+    @Test
+    void undeletableHudIsRestoredWhenItsConfigGoesMissing() throws Exception {
+        HudManager.register(new UndeletableHud());
+
+        launch();
+        assertEquals(1, instancesOf(UndeletableHud.class));
+
+        // simulate a lost config (interrupted write, corrupt file, a launch without the mod): the
+        // tree is gone, but the registry still remembers the provider was given its instance.
+        Hud instance = HudManager.INSTANCE.getHudsOfType(UndeletableHud.class).get(0);
+        ConfigManager.active().delete(instance.getTree().getID());
+
+        launch();
+        assertEquals(1, instancesOf(UndeletableHud.class),
+                "a HUD the user cannot delete must be restored, not left in the HUD library");
+    }
+
+    @Test
+    void undeletableHudKeepsItsConfigWhenDeletionIsRequested() throws Exception {
+        HudManager.register(new UndeletableHud());
+
+        launch();
+        Hud instance = HudManager.INSTANCE.getHudsOfType(UndeletableHud.class).get(0);
+        String id = instance.getTree().getID();
+        HudManager.INSTANCE.removeHud(instance, true);
+
+        assertEquals(true, Files.exists(ConfigManager.active().getFolder().resolve(id)),
+                "the config of a HUD the user cannot delete must survive a delete request");
+    }
+
+    @Test
+    void deletedSingleInstanceHudCanBeAddedAgainWithoutRestarting() throws Exception {
+        HudManager.register(new SingleInstanceHud());
+
+        launch();
+        Hud instance = HudManager.INSTANCE.getHudsOfType(SingleInstanceHud.class).get(0);
+        HudManager.INSTANCE.removeHud(instance, true);
+        assertEquals(0, instancesOf(SingleInstanceHud.class));
+
+        // a single-instance provider *is* its instance, so deleting it must hand the provider back
+        // to the HUD library in a state where it can be made again.
+        Hud provider = HudManager.INSTANCE.getProvider(SingleInstanceHud.class);
+        Hud remade = provider.make(null);
+        HudManager.INSTANCE.getActiveInstances().add(remade);
+        assertEquals(1, instancesOf(SingleInstanceHud.class),
+                "a deleted single-instance HUD must be re-creatable from the HUD library");
+    }
+
     /**
      * Simulates a game restart: everything HudManager holds in memory is dropped, so the next
      * initialize() sees only what was persisted to disk.
@@ -99,7 +149,11 @@ class HudDeletionPersistenceTest {
     }
 
     private static int instancesOfTestHud() {
-        return HudManager.INSTANCE.getHudsOfType(TestHud.class).size();
+        return instancesOf(TestHud.class);
+    }
+
+    private static int instancesOf(Class<? extends Hud> cls) {
+        return HudManager.INSTANCE.getHudsOfType(cls).size();
     }
 
     private static void wipeHudState() throws Exception {
@@ -172,6 +226,63 @@ class HudDeletionPersistenceTest {
         @Override
         public boolean showByDefault() {
             return true;
+        }
+
+        @Override
+        public String getText() {
+            return "test";
+        }
+    }
+
+    static class UndeletableHud extends TextHud {
+        UndeletableHud() {
+            super("test-undeletable", "Test Undeletable HUD", Hud.Category.getINFO(), "", "");
+        }
+
+        @Override
+        public Pair<Float, Float> defaultPosition() {
+            return new Pair<>(10f, 10f);
+        }
+
+        @Override
+        public boolean showByDefault() {
+            return true;
+        }
+
+        @Override
+        public boolean multipleInstancesAllowed() {
+            return false;
+        }
+
+        @Override
+        public boolean deletable() {
+            return false;
+        }
+
+        @Override
+        public String getText() {
+            return "test";
+        }
+    }
+
+    static class SingleInstanceHud extends TextHud {
+        SingleInstanceHud() {
+            super("test-single-instance", "Test Single Instance HUD", Hud.Category.getINFO(), "", "");
+        }
+
+        @Override
+        public Pair<Float, Float> defaultPosition() {
+            return new Pair<>(10f, 10f);
+        }
+
+        @Override
+        public boolean showByDefault() {
+            return true;
+        }
+
+        @Override
+        public boolean multipleInstancesAllowed() {
+            return false;
         }
 
         @Override

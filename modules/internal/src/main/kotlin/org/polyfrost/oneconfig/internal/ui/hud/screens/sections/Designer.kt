@@ -21,7 +21,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
@@ -38,8 +37,11 @@ import androidx.compose.ui.window.PopupProperties
 import org.polyfrost.compose.mc.McFontQueue
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.layout.PolyAlign
 import org.polyfrost.oneconfig.api.hud.v1.Font
+import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
 import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.api.hud.v1.TextHud
 import org.polyfrost.oneconfig.api.hud.v1.Weight
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
@@ -91,6 +93,8 @@ fun Designer(hud: Hud? = null) {
     var staticW by remember { mutableStateOf(hud.staticW) }
     var staticH by remember { mutableStateOf(hud.staticH) }
     var alignment by remember { mutableStateOf(hud.alignment) }
+    var growthAnchor by remember { mutableStateOf(hud.effectiveGrowthAnchor) }
+    val growthAlign = growthAnchor.toAlign() ?: PolyAlign.Center
     var padLeft by remember { mutableStateOf(hud.padLeft) }
     var padRight by remember { mutableStateOf(hud.padRight) }
     var padTop by remember { mutableStateOf(hud.padTop) }
@@ -162,23 +166,28 @@ fun Designer(hud: Hud? = null) {
                     }
                 }
 
-                HudSettingTarget(hud, "alignment") {
+                HudSettingTarget(hud, if (staticWidth) "alignment" else "growthAnchor") {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Box(modifier = Modifier.alpha(if (staticWidth) 1f else 0.35f)) {
-                        AlignmentPicker(alignment) {
-                            if (staticWidth) Snapshot.withMutableSnapshot { alignment = it; hud.alignment = it }
+                    AlignmentPicker(if (staticWidth) alignment else growthAlign) {
+                        Snapshot.withMutableSnapshot {
+                            if (staticWidth) {
+                                alignment = it
+                                hud.alignment = it
+                            } else {
+                                growthAnchor = HudAnchor.of(it)
+                                hud.setGrowthAnchorKeepingPosition(growthAnchor)
+                            }
                         }
                     }
-                    if (!staticWidth) {
-                        Text(
-                            "Enable Static Size\nto use alignment",
-                            color = LocalTheme.current.textColorSecondary,
-                            fontSize = 12.sp
-                        )
-                    }
+                    Text(
+                        if (staticWidth) "Aligns the content inside the fixed box"
+                        else "Pins this corner or edge in place;\nthe HUD only grows away from it",
+                        color = LocalTheme.current.textColorSecondary,
+                        fontSize = 12.sp
+                    )
                 }
                 }
             }
@@ -190,25 +199,25 @@ fun Designer(hud: Hud? = null) {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     HudSettingTarget(hud, "padLeft") {
                         NumberSpinnerWithIcon(
-                            "align", "px",
+                            "pad-left", "px",
                             padLeft, { Snapshot.withMutableSnapshot { padLeft = it; hud.padLeft = it } }, 0f, 100f, 1f
                         )
                     }
                     HudSettingTarget(hud, "padRight") {
                         NumberSpinnerWithIcon(
-                            "align", "px",
+                            "pad-right", "px",
                             padRight, { Snapshot.withMutableSnapshot { padRight = it; hud.padRight = it } }, 0f, 100f, 1f
                         )
                     }
                     HudSettingTarget(hud, "padTop") {
                         NumberSpinnerWithIcon(
-                            "align", "px",
+                            "pad-top", "px",
                             padTop, { Snapshot.withMutableSnapshot { padTop = it; hud.padTop = it } }, 0f, 100f, 1f
                         )
                     }
                     HudSettingTarget(hud, "padBottom") {
                         NumberSpinnerWithIcon(
-                            "align", "px",
+                            "pad-bottom", "px",
                             padBottom, { Snapshot.withMutableSnapshot { padBottom = it; hud.padBottom = it } }, 0f, 100f, 1f
                         )
                     }
@@ -225,7 +234,8 @@ fun Designer(hud: Hud? = null) {
                 contentAlignment = Alignment.Center
             ) {
                 val previewText = run {
-                    val raw = "Hello, OneConfig!"
+                    val base = "Hello, OneConfig!"
+                    val raw = if ((hud as? TextHud)?.brackets == true) "[$base]" else base
                     when (caseType.ordinal) {
                         1 -> raw.uppercase()
                         2 -> raw.lowercase()

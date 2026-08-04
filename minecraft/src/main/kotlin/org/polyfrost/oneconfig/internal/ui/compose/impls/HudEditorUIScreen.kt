@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.compose.impls
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.EaseIn
 import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.tween
@@ -17,12 +18,14 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.client.gui.screens.Screen
 //? >= 1.21.10
 import net.minecraft.client.input.KeyEvent
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
+import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignStudio
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
@@ -36,16 +39,23 @@ import org.polyfrost.oneconfig.internal.ui.themes.Theme
 
 @OptIn(InternalComposeUiApi::class)
 class HudEditorUIScreen : ComposeScreen() {
-    private companion object {
-        const val CLOSE_ANIMATION_MS = 220L
-    }
-
     @Volatile private var closeRequested = false
     @Volatile private var closeRequestedAt = 0L
+    @Volatile private var closeAnimationMs = 0L
+
+    private fun beginClose() {
+        if (closeRequested) return
+        closeRequested = true
+        closeRequestedAt = System.currentTimeMillis()
+        closeAnimationMs = guiCloseAnimationMillis()
+        UiSounds.play(UiSoundEvent.CLOSE)
+    }
 
     @Volatile private var returningToOneConfig = false
 
     private var requestCloseCallback: (() -> Unit)? = null
+
+    override val scrollSpeed: Float get() = 0.5f
 
     override fun init() {
         UiSounds.acquireAmbience()
@@ -54,7 +64,9 @@ class HudEditorUIScreen : ComposeScreen() {
 
     override fun removed() {
         if (!returningToOneConfig) {
-            ShellState.lastRoute = HudEditorRoute
+            // Off by default: closing the editor leaves the last config page as the route to come back to,
+            // so the toggle key opens the OneConfig menu rather than the editor again.
+            if (OneConfigConfig.restoreHudEditor) ShellState.lastRoute = HudEditorRoute
             ShellState.lastClosedAt = System.currentTimeMillis()
         }
         if (HudManager.isEditorOpen) {
@@ -73,17 +85,23 @@ class HudEditorUIScreen : ComposeScreen() {
         if (key == InputConstants.KEY_ESCAPE) {
             if (KeybindRecordingBus.consumeEscape()) return true
             if (!closeRequested) {
-                closeRequested = true
-                closeRequestedAt = System.currentTimeMillis()
-                UiSounds.play(UiSoundEvent.CLOSE)
+                beginClose()
                 requestCloseCallback?.invoke()
             }
             return true
         }
         val toggleKey = OneConfigConfig.oneConfigKeybind.keyCodes?.firstOrNull()
         if (toggleKey != null && key == toggleKey && !KeybindRecordingBus.isRecording) {
-            returningToOneConfig = true
-            Platform.screen().display(OneConfigUIScreen())
+            if (OneConfigConfig.keybindClosesGui) {
+                if (!closeRequested) {
+                    OneConfigConfig.notifyKeybindClosedGui()
+                    beginClose()
+                    requestCloseCallback?.invoke()
+                }
+            } else {
+                returningToOneConfig = true
+                Platform.screen().display(OneConfigUIScreen())
+            }
             return true
         }
         //? >= 1.21.10 {
@@ -95,14 +113,17 @@ class HudEditorUIScreen : ComposeScreen() {
 
     //~ if >= 26.1 'render' -> 'extractRenderState'
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
-        if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= CLOSE_ANIMATION_MS) {
+        // A screen drawn over this one may render it as its parent; don't act on that pass (it would close
+        // the screen on top of us, among other things).
+        if (Platform.screen().current<Screen>() !== this) return
+        if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= closeAnimationMs) {
             Platform.screen().close()
             return
         }
         if (client.level == null) {
             HudManager.inWorld = false
-            val sw = ctx.guiWidth().toFloat()
-            val sh = ctx.guiHeight().toFloat()
+            val sw = Platform.screen().guiWidth().toFloat()
+            val sh = Platform.screen().guiHeight().toFloat()
             HudManager.guiScreenWidth = sw
             HudManager.guiScreenHeight = sh
             HudManager.prepare(sw, sh)
@@ -130,10 +151,13 @@ class HudEditorUIScreen : ComposeScreen() {
             requestCloseCallback = requestClose
         }
 
+        val exitMs = guiCloseAnimationMillis().toInt()
         AnimatedVisibility(
             visible = visible,
             enter = fadeIn(tween(200, easing = EaseOutCubic)) + scaleIn(tween(200, easing = EaseOutCubic), initialScale = 0.92f),
-            exit = fadeOut(tween(200, easing = EaseIn)) + scaleOut(tween(200, easing = EaseIn), targetScale = 0.92f),
+            exit = if (exitMs > 0)
+                fadeOut(tween(exitMs, easing = EaseIn)) + scaleOut(tween(exitMs, easing = EaseIn), targetScale = 0.92f)
+            else ExitTransition.None,
         ) {
             Box(Modifier.fillMaxSize()) {
                 CompositionLocalProvider(

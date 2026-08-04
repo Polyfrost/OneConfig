@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -38,6 +39,7 @@ import androidx.compose.ui.unit.Density
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.compose.rememberNavController
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDragLayer
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
@@ -50,11 +52,23 @@ import org.polyfrost.oneconfig.internal.ui.themes.Theme
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
 import kotlin.math.pow
 
+private val LOGGER = LogManager.getLogger("OneConfig/UI")
+
+fun guiCloseAnimationMillis(): Long =
+    if (!OneConfigConfig.guiClosingAnimation) 0L
+    else (OneConfigConfig.animationTime * 1000f).toLong().coerceIn(1L, MAX_CLOSE_ANIMATION_MS)
+
+private const val MAX_CLOSE_ANIMATION_MS = 160L
+
 @Composable
 fun OneConfigInterface(
     windowWidth: Float,
     windowHeight: Float,
     initialRoute: Any = ModsGraph,
+    /** Set when the scene is being rebuilt for a session already in progress, so its search survives. */
+    resuming: Boolean = false,
+    /** Set when [initialRoute] is a page the user was already on, which is put back without a transition. */
+    restoring: Boolean = false,
     onCloseRequest: () -> Unit = {},
     onCloseReady: ((requestClose: () -> Unit) -> Unit)? = null,
     shellBackdrop: DrawScope.(Offset) -> Unit = {}
@@ -64,15 +78,19 @@ fun OneConfigInterface(
     LocalNavController.current = rememberNavController()
 
     LaunchedEffect(initialRoute) {
-        ShellState.globalSearchActive = false
-        ShellState.searchQuery = ""
-        ShellState.showSearchField = false
+        if (!resuming) {
+            ShellState.globalSearchActive = false
+            ShellState.searchQuery = ""
+            ShellState.showSearchField = false
+        }
 
         ShellState.openingTransitionTarget = null
+        ShellState.awaitingInitialRoute = initialRoute != ModsGraph
         if (initialRoute != ModsGraph) {
-            // an initial navigation will fire a page transition; let "Show opening page animation" gate it
+            // an initial navigation will fire a page transition; let "Show opening page animation" gate it,
+            // except when the page is only being put back, which should look like it was never left
             ShellState.initialTransitionConsumed = false
-            ShellState.animateOpeningPage = OneConfigConfig.showOpeningPageAnimation
+            ShellState.animateOpeningPage = !restoring && OneConfigConfig.showOpeningPageAnimation
             // the NavHost only sets its graph once the Shell is composed (after `visible` flips true);
             // wait for it so navigate() doesn't crash with "must call setGraph() before getGraph()".
             var attempts = 0
@@ -85,7 +103,13 @@ fun OneConfigInterface(
                 if (ready) break
                 withFrameNanos { }
             }
-            LocalNavController.wrapper.navigate(initialRoute)
+            try {
+                LocalNavController.wrapper.navigate(initialRoute, clearSearch = !resuming)
+            } catch (t: Throwable) {
+                LOGGER.error("Failed to open the OneConfig UI on {}, falling back to the mods page", initialRoute, t)
+                runCatching { LocalNavController.wrapper.navigate(ModsGraph, clearSearch = !resuming) }
+            }
+            ShellState.awaitingInitialRoute = false
         } else {
             // no initial navigation, so the first user-driven transition should use the normal setting
             ShellState.initialTransitionConsumed = true
@@ -139,11 +163,12 @@ fun OneConfigInterface(
                 ) {
                     Theme {
                         val animMs = (OneConfigConfig.animationTime * 1000f).toInt().coerceAtLeast(1)
+                        val exitMs = guiCloseAnimationMillis().toInt()
                         val enter = if (OneConfigConfig.guiOpenAnimation)
                             fadeIn(tween(animMs, easing = EaseOutExpo)) + scaleIn(tween(animMs, easing = EaseOutExpo), initialScale = 0.9f)
                         else EnterTransition.None
-                        val exit = if (OneConfigConfig.guiClosingAnimation)
-                            fadeOut(tween(animMs, easing = EaseOutExpo)) + scaleOut(tween(animMs, easing = EaseOutExpo), targetScale = 0.9f)
+                        val exit = if (exitMs > 0)
+                            fadeOut(tween(exitMs, easing = EaseOutCubic)) + scaleOut(tween(exitMs, easing = EaseOutCubic), targetScale = 0.9f)
                         else ExitTransition.None
                         val dragAlpha by animateFloatAsState(
                             targetValue = if (ShellState.hudDragging) OneConfigConfig.hudDragUiOpacity.coerceIn(0f, 1f) else 1f,
@@ -156,7 +181,10 @@ fun OneConfigInterface(
                             exit = exit,
                         ) {
                             val contentAlpha by transition.animateFloat(
-                                transitionSpec = { tween(animMs, easing = EaseOutExpo) },
+                                transitionSpec = {
+                                    if (targetState == EnterExitState.Visible) tween(animMs, easing = EaseOutExpo)
+                                    else tween(exitMs.coerceAtLeast(1), easing = EaseOutCubic)
+                                },
                                 label = "oneconfigContentAlpha",
                             ) { state -> if (state == EnterExitState.Visible) 1f else 0f }
                             DisposableEffect(Unit) { onDispose { ShellState.shellBounds = null } }

@@ -22,6 +22,7 @@ object LegacyHudRenderer {
         for (hud in HudManager.activeInstances) {
             if (hud !is LegacyHud) continue
             if (hud.hidden && !HudManager.isEditing) continue
+            if (HudManager.isGuiHidden && !HudManager.isEditing) continue
             if (HudManager.isDebugScreenVisible && !hud.showInF3) continue
             if (HudManager.isTabListVisible && !hud.showInTab) continue
             if (!HudManager.overrideShowInScreens && !HudManager.isEditing) {

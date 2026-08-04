@@ -9,6 +9,13 @@ import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
 import java.util.WeakHashMap
 
 object MinecraftKeybindRegistrar {
+    /**
+     * Set on a keybind property to keep it out of Minecraft's Controls menu. Use it when the property is a view
+     * onto a [net.minecraft.client.KeyMapping] the owning mod already registered — mirroring it would splice in a
+     * duplicate mapping alongside the real one.
+     */
+    const val NO_MIRROR_METADATA = "oc_no_mc_mirror"
+
     private val propByBind = WeakHashMap<OneConfigKeybind, Property<*>>()
     private val wiredProps = WeakHashMap<Property<*>, Boolean>()
     private var listenerInstalled = false
@@ -46,6 +53,7 @@ object MinecraftKeybindRegistrar {
     }
 
     private fun wire(prop: Property<*>, category: String) {
+        if (prop.getMetadata<Any?>(NO_MIRROR_METADATA) != null) return
         val bind = prop.get() as? OneConfigKeybind ?: return
         bind.name = resolveName(prop)
         bind.category = category

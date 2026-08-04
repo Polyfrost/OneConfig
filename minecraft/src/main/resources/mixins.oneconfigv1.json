@@ -9,6 +9,7 @@
     "verbose": true,
     "client": [
         "Mixin_PackRepository",
+        "events.Mixin_ChatReceiveEvent",
         "events.Mixin_ChatSendEvent",
         "events.Mixin_DebugOpenEvent",
         "events.Mixin_FramebufferRenderEvent",
@@ -31,6 +32,7 @@
         "events.Mixin_WorldUnloadEvent",
         "fixes.Mixin_FixScoreboardErrorSpam",
         "keybind.KeyMappingAccessor",
+        "keybind.KeyMappingRegistryAccessor",
         "keybind.OptionsAccessor",
         "keybind.Mixin_ControllingComboDisplay",
         "keybind.Mixin_ControllingKeyRecord",

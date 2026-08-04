@@ -1,53 +1,77 @@
 package org.polyfrost.oneconfig.internal.ui;
 
 import com.mojang.authlib.GameProfile;
+import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
 //~if >= 1.21.11 'ResourceLocation;' -> 'Identifier;'
 import net.minecraft.resources.Identifier;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
+/**
+ * Resolves the local player's head out of the skin texture the game already has loaded.
+ * <p>
+ * The tasks returned here touch the texture manager and a live {@link NativeImage}, so they have to run on the client
+ * thread; resolving the skin can block, so that part must not.
+ * <p>
+ * Before 1.21.4 skins are registered as {@code HttpTexture}, a {@code SimpleTexture} with no readable pixel buffer, so
+ * extraction always yields null there and callers fall through to their own fallback.
+ */
 public final class PlayerHeadSkinAccess {
     private PlayerHeadSkinAccess() {
     }
 
-    public static com.mojang.blaze3d.platform.NativeImage loadSkinImage(Minecraft mc) {
-        //~if >= 1.21.11 'ResourceLocation' -> 'Identifier'
-        Identifier textureId = resolveBodyTextureId(mc);
-        if (textureId == null) {
+    /** Client-thread task: reads the skin the local player is rendering with. Never blocks. */
+    public static Supplier<NativeImage> localPlayerHeadTask(Minecraft mc) {
+        return () -> {
+            var player = mc.player;
+            if (player == null) {
+                return null;
+            }
+            //~if >= 1.21.10 'texture()' -> 'body().texturePath()'
+            return extractHead(mc, player.getSkin().body().texturePath());
+        };
+    }
+
+    /**
+     * Awaits the profile's skin, then returns a client-thread task producing a detached 32x32 head.
+     * Blocks for up to two seconds, so this must not run on the client thread.
+     *
+     * @return null when the skin could not be resolved
+     */
+    public static @Nullable Supplier<NativeImage> profileHeadTask(Minecraft mc) {
+        GameProfile profile = mc.getGameProfile();
+
+        try {
+            var skin = mc
+                    .getSkinManager()
+                     //~if >= 1.21.10 '.getOrLoad(profile)' -> '.get(profile)'
+                    .get(profile)
+                    .get(2, TimeUnit.SECONDS)
+                    //?if >= 1.21.4 {
+                     .orElse(null);
+                    //?} else {
+                    /*;
+                    *///?}
+            if (skin == null) {
+                return null;
+            }
+            //~if >= 1.21.10 'texture();' -> 'body().texturePath();'
+            var textureId = skin.body().texturePath();
+            return () -> extractHead(mc, textureId);
+        } catch (Exception ignored) {
             return null;
         }
-        return PlayerHeadTextureAccess.readPixels(mc.getTextureManager().getTexture(textureId));
     }
 
     //~if >= 1.21.11 'ResourceLocation' -> 'Identifier'
-    private static Identifier resolveBodyTextureId(Minecraft mc) {
-        GameProfile profile = mc.getGameProfile();
-
-        var skin = mc.player != null ? mc.player.getSkin() : null;
-
-        if (skin == null) {
-            try {
-                skin = mc
-                        .getSkinManager()
-                         //~if >= 1.21.10 '.getOrLoad(profile)' -> '.get(profile)'
-                        .get(profile)
-                        .get(2, TimeUnit.SECONDS)
-                        //?if >= 1.21.4 {
-                         .orElse(null);
-                        //?} else {
-                        /*;
-                        *///?}
-            } catch (Exception ignored) {
-                return null;
-            }
+    private static @Nullable NativeImage extractHead(Minecraft mc, Identifier textureId) {
+        NativeImage pixels = PlayerHeadTextureAccess.readPixels(mc.getTextureManager().getTexture(textureId));
+        if (pixels == null) {
+            return null;
         }
-
-        if (skin == null) {
-            skin = net.minecraft.client.resources.DefaultPlayerSkin.get(profile);
-        }
-
-        //~if >= 1.21.10 'texture();' -> 'body().texturePath();'
-        return skin.body().texturePath();
+        return PlayerHeadBlit.extractHead(pixels);
     }
 }

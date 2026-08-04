@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
+import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
 import org.polyfrost.oneconfig.internal.ui.keybind.collectAllKeybindGroups
 
 internal object KeybindConflicts {
@@ -49,7 +50,7 @@ internal object KeybindConflicts {
     fun conflictingProps(): Set<Property<*>> = conflictMap().keys
 
     fun displayName(prop: Property<*>): String =
-        prop.title?.asRenderText()?.takeIf { it.isNotEmpty() } ?: prop.id ?: "Unknown"
+        prop.localizedTitle().asRenderText().takeIf { it.isNotEmpty() } ?: prop.id ?: "Unknown"
 
     private fun OneConfigKeybind.hasConflictBinding(): Boolean {
         val hasKey = keyCodes?.any { it > 0 } == true
