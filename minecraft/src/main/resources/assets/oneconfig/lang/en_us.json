@@ -3,6 +3,8 @@
 
   "oneconfig.preferences.keybind.title": "OneConfig Keybind",
   "oneconfig.preferences.keybind.description": "The keybind used to open the OneConfig menu.",
+  "oneconfig.preferences.keybind_closes_gui.title": "Keybind Closes Menu",
+  "oneconfig.preferences.keybind_closes_gui.description": "Pressing the OneConfig keybind while the menu or HUD editor is open closes it, instead of switching between the two.",
 
   "oneconfig.preferences.category.hud_editor": "HUD Editor",
   "oneconfig.preferences.master_hud_enabled.title": "Enable HUD Overlay",

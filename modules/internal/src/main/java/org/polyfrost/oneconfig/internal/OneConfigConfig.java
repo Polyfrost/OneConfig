@@ -34,6 +34,16 @@ public class OneConfigConfig extends Config {
         new OneConfigKeybind(new int[] {344}, null, KeyModifiers.NONE, 0L, pressed -> true);
 
     @Switch(
+        title = "oneconfig.preferences.keybind_closes_gui.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.gui",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.keybind_closes_gui.description",
+        descriptionTranslation = true
+    )
+    public static boolean keybindClosesGui = false;
+
+    @Switch(
         title = "oneconfig.preferences.master_hud_enabled.title",
         titleTranslation = true,
         subcategory = "oneconfig.preferences.category.hud_editor",

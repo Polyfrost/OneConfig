@@ -199,7 +199,17 @@ class OneConfigUIScreen @JvmOverloads constructor(
         }
         val toggleKey = OneConfigConfig.oneConfigKeybind.keyCodes?.firstOrNull()
         if (toggleKey != null && key == toggleKey && !KeybindRecordingBus.isRecording) {
-            HudManager.openEditor()
+            if (OneConfigConfig.keybindClosesGui) {
+                if (!closeRequested) {
+                    closeRequested = true
+                    closeRequestedAt = System.currentTimeMillis()
+                    markClosed()
+                    UiSounds.play(UiSoundEvent.CLOSE)
+                    requestCloseCallback?.invoke()
+                }
+            } else {
+                HudManager.openEditor()
+            }
             return true
         }
         //? >= 1.21.10 {

@@ -87,8 +87,17 @@ class HudEditorUIScreen : ComposeScreen() {
         }
         val toggleKey = OneConfigConfig.oneConfigKeybind.keyCodes?.firstOrNull()
         if (toggleKey != null && key == toggleKey && !KeybindRecordingBus.isRecording) {
-            returningToOneConfig = true
-            Platform.screen().display(OneConfigUIScreen())
+            if (OneConfigConfig.keybindClosesGui) {
+                if (!closeRequested) {
+                    closeRequested = true
+                    closeRequestedAt = System.currentTimeMillis()
+                    UiSounds.play(UiSoundEvent.CLOSE)
+                    requestCloseCallback?.invoke()
+                }
+            } else {
+                returningToOneConfig = true
+                Platform.screen().display(OneConfigUIScreen())
+            }
             return true
         }
         //? >= 1.21.10 {
