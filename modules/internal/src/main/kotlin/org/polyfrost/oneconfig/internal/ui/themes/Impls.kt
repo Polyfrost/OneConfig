@@ -8,6 +8,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
 
+private const val MinecraftFontScale = 0.85f
+
 private val MinecraftIconOverrides = mapOf(
     "cog" to "/assets/oneconfig/ico/minecraft/cog.svg",
     "alert-circle" to "/assets/oneconfig/ico/minecraft/alert-circle.svg",
@@ -191,7 +193,8 @@ val MinecraftDark = UITheme(
         family = FontFamily(
             Font("assets/oneconfig/fonts/minecraft/Minecraft-Bold.otf", FontWeight.Bold),
             Font("assets/oneconfig/fonts/minecraft/Minecraft-Regular.otf", FontWeight.Normal)
-        )
+        ),
+        scale = MinecraftFontScale
     ),
     MinecraftIconOverrides
 )
@@ -228,7 +231,8 @@ val MinecraftLight = UITheme(
         family = FontFamily(
             Font("assets/oneconfig/fonts/minecraft/Minecraft-Bold.otf", FontWeight.Bold),
             Font("assets/oneconfig/fonts/minecraft/Minecraft-Regular.otf", FontWeight.Normal)
-        )
+        ),
+        scale = MinecraftFontScale
     ),
     MinecraftIconOverrides
 )
