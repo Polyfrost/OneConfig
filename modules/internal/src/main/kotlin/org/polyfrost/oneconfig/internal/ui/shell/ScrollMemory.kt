@@ -30,6 +30,22 @@ fun rememberRestorableLazyListState(key: String): LazyListState {
     return state
 }
 
+/**
+ * Jumps [state] back to the top whenever [key] changes.
+ */
+@Composable
+fun ScrollToTopOnChange(state: LazyListState, key: Any?) {
+    val previous = remember(state) { LastKey(key) }
+    LaunchedEffect(state, key) {
+        if (previous.value != key) {
+            previous.value = key
+            state.scrollToItem(0)
+        }
+    }
+}
+
+private class LastKey(var value: Any?)
+
 /** [rememberRestorableLazyListState] for a grid. */
 @Composable
 fun rememberRestorableLazyGridState(key: String): LazyGridState {

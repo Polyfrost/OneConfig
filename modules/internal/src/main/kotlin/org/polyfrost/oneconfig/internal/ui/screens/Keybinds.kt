@@ -73,6 +73,7 @@ import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 import org.polyfrost.oneconfig.internal.ui.search.SearchDocument
 import org.polyfrost.oneconfig.internal.ui.search.SearchScope
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
+import org.polyfrost.oneconfig.internal.ui.shell.ScrollToTopOnChange
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.util.LayoutRef
@@ -95,6 +96,9 @@ fun Keybinds() {
     val searchResults = rememberKeybindSearchResults(groups, localSearchQuery)
     val visibleGroups = if (localSearchQuery.isBlank()) groups else searchResults.orEmpty()
 
+    val listState = rememberLazyListState()
+    ScrollToTopOnChange(listState, localSearchQuery)
+
     if (visibleGroups.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             val message = when {
@@ -114,7 +118,6 @@ fun Keybinds() {
 
     val searching = localSearchQuery.isNotBlank()
 
-    val listState = rememberLazyListState()
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,

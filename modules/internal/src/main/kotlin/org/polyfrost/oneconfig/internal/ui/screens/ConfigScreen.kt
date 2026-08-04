@@ -97,6 +97,7 @@ import org.polyfrost.oneconfig.internal.ui.search.flattenSearchEntries
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.search.searchNode
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
+import org.polyfrost.oneconfig.internal.ui.shell.ScrollToTopOnChange
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -144,6 +145,9 @@ fun ConfigScreen(tree: Tree, initialCategory: String? = null, pageKey: String) {
             }
         }
 
+        val lazyListState = rememberRestorableLazyListState(pageKey)
+        ScrollToTopOnChange(lazyListState, localSearchQuery)
+
         if (entries.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 val message = when {
@@ -156,7 +160,6 @@ fun ConfigScreen(tree: Tree, initialCategory: String? = null, pageKey: String) {
             return@Column
         }
 
-        val lazyListState = rememberRestorableLazyListState(pageKey)
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
                 state = lazyListState,
