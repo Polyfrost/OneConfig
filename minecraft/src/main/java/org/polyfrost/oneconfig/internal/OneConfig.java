@@ -114,6 +114,11 @@ public class OneConfig
             if (!pressed) {
                 return true;
             }
+            // The screen may have closed itself on this very press (see notifyKeybindClosedGui), in which case
+            // reopening it here would make the keybind look like it does nothing.
+            if (OneConfigConfig.consumeKeybindClose()) {
+                return true;
+            }
             if (Platform.screen().current() != null) {
                 return true;
             }

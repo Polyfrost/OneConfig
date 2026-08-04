@@ -774,6 +774,33 @@ public class OneConfigConfig extends Config {
         org.polyfrost.oneconfig.api.hud.v1.HudManager.masterHudEnabled = masterHudEnabled;
     }
 
+    /** When the OneConfig keybind last closed the GUI, so the same press cannot immediately reopen it. */
+    private static volatile long keybindClosedAt = 0L;
+
+    /** How long a keybind-driven close blocks the open action for. Longer than a frame, shorter than a re-press. */
+    private static final long KEYBIND_CLOSE_GRACE_MS = 300L;
+
+    /**
+     * Records that the OneConfig keybind just closed the GUI. The keybind manager evaluates presses at the end of a
+     * frame, after the screen has been drawn, so with the closing animation disabled the screen is already gone by
+     * the time the press that closed it is checked and the open action would reopen it. See
+     * {@link #consumeKeybindClose()}.
+     */
+    public static void notifyKeybindClosedGui() {
+        keybindClosedAt = System.currentTimeMillis();
+    }
+
+    /**
+     * True if the press being handled is the one that just closed the GUI, in which case it must not reopen it.
+     * Consumes the mark, so only the first press after a close is dropped.
+     */
+    public static boolean consumeKeybindClose() {
+        long at = keybindClosedAt;
+        if (at == 0L) return false;
+        keybindClosedAt = 0L;
+        return System.currentTimeMillis() - at <= KEYBIND_CLOSE_GRACE_MS;
+    }
+
     /**
      * Supplies the action run when the OneConfig keybind is pressed. Called by the minecraft module, as the action
      * references platform classes this module cannot depend on. See {@link #openAction}.

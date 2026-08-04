@@ -217,6 +217,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         if (toggleKey != null && key == toggleKey && !KeybindRecordingBus.isRecording) {
             if (OneConfigConfig.keybindClosesGui) {
                 if (!closeRequested) {
+                    OneConfigConfig.notifyKeybindClosedGui()
                     beginClose()
                     requestCloseCallback?.invoke()
                 }

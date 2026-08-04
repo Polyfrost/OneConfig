@@ -94,6 +94,7 @@ class HudEditorUIScreen : ComposeScreen() {
         if (toggleKey != null && key == toggleKey && !KeybindRecordingBus.isRecording) {
             if (OneConfigConfig.keybindClosesGui) {
                 if (!closeRequested) {
+                    OneConfigConfig.notifyKeybindClosedGui()
                     beginClose()
                     requestCloseCallback?.invoke()
                 }
