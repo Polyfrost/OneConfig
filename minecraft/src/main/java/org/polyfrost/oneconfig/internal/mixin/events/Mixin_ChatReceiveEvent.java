@@ -26,6 +26,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ChatComponent.class)
 public abstract class Mixin_ChatReceiveEvent {
     @Unique private ChatEvent.Receive ocfg$chatEvent;
+    @Unique private Component ocfg$nativeMessage;
+    @Unique private net.kyori.adventure.text.Component ocfg$postedMessage;
 
     //? if >= 26.1 {
     @Inject(
@@ -73,21 +75,52 @@ public abstract class Mixin_ChatReceiveEvent {
 
     @Unique
     private boolean ocfg$post(Component message) {
-        ocfg$chatEvent = new ChatEvent.Receive(ocfg$toAdventure(message));
+        ocfg$chatEvent = null;
+        ocfg$nativeMessage = message;
+        ocfg$postedMessage = null;
+
+        net.kyori.adventure.text.Component adventure;
+        try {
+            adventure = ocfg$toAdventure(message);
+        } catch (Throwable t) {
+            ocfg$logger().warn("Failed to convert a chat message for ChatEvent.Receive; passing it through unchanged", t);
+            return false;
+        }
+
+        ocfg$postedMessage = adventure;
+        ocfg$chatEvent = new ChatEvent.Receive(adventure);
         EventManager.INSTANCE.post(ocfg$chatEvent);
         return ocfg$chatEvent.cancelled;
     }
 
     /**
-     * Applies the message the listeners left behind, then drops the reference so a
+     * Applies the message the listeners left behind, then drops the references so a
      * later call can never pick up a stale event if the two HEAD injectors are
      * applied in the opposite order.
      */
     @Unique
     private Component ocfg$consume(Component message) {
         ChatEvent.Receive event = ocfg$chatEvent;
+        net.kyori.adventure.text.Component posted = ocfg$postedMessage;
+        Component original = ocfg$nativeMessage;
         ocfg$chatEvent = null;
-        return event != null ? ocfg$toNative(event.getMessage()) : message;
+        ocfg$postedMessage = null;
+        ocfg$nativeMessage = null;
+
+        if (event == null) return message;
+        net.kyori.adventure.text.Component result = event.getMessage();
+        if (result == posted || result.equals(posted)) return original != null ? original : message;
+        try {
+            return ocfg$toNative(result);
+        } catch (Throwable t) {
+            ocfg$logger().warn("Failed to convert a chat message edited by a ChatEvent.Receive listener", t);
+            return original != null ? original : message;
+        }
+    }
+
+    @Unique
+    private static org.apache.logging.log4j.Logger ocfg$logger() {
+        return org.apache.logging.log4j.LogManager.getLogger("OneConfig/Chat");
     }
 
     @Unique
