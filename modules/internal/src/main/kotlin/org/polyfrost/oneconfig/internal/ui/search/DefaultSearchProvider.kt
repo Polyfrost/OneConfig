@@ -1,95 +1,50 @@
 package org.polyfrost.oneconfig.internal.ui.search
 
-import net.kyori.adventure.text.ComponentLike
-import org.polyfrost.oneconfig.api.config.v1.Property
-import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.internal.OneConfigConfig
-import org.polyfrost.oneconfig.internal.ui.api.ConfigData
-import org.polyfrost.oneconfig.internal.ui.api.TreeConfigData
-import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 
 internal object DefaultSearchProvider : SearchProvider {
     override val priority: Int = 0 // Low priority
 
     override fun isAvailable(): Boolean = true
 
-    override fun performSearch(
+    override fun search(
         query: String,
-        configs: List<ConfigData>,
-        searchMods: Boolean
-    ): Map<String, List<SearchResult>> {
-        if (query.isBlank()) return emptyMap()
+        scopes: Set<SearchScope>
+    ): List<SearchDocument<*>> {
+        val corpus = SearchCorpus.corpus
         val q = query.trim().lowercase()
-        val results = LinkedHashMap<String, MutableList<SearchResult>>()
-
-        val matchingMods = configs.filter { searchMatches(it.title.asRenderText(), q) }
-        if (matchingMods.isNotEmpty()) {
-            results["Mods"] = matchingMods.map { ModResult(it) }.toMutableList()
-        }
-
-        for (configData in configs) {
-            val tree = (configData as? TreeConfigData)?.tree ?: continue
-            val matchingOptions = mutableListOf<SearchResult>()
-            tree.map.values.forEach { node ->
-                val descriptionMatches = node.description?.asRenderText()?.let { searchMatches(it, q) } == true
-                val searchTags = node.metadata?.get("searchTags")?.let {
-                    if (it is Iterable<*>) it.mapNotNull {
-                        if (it !is String && it !is ComponentLike) return@mapNotNull null
-                        it.asRenderText()
-                    } else if (it is String) listOf(it) else listOf()
-                }?.any { searchMatches(it, q) } == true
-                when (node) {
-                    is Property<*> -> {
-                        val title = node.title ?: return@forEach
-                        if (searchMatches(title.asRenderText(), q) || descriptionMatches || searchTags) {
-                            val cat = node.getMetadata<String>("category")
-                            matchingOptions += OptionResult(
-                                configData.id,
-                                configData.title,
-                                title,
-                                cat,
-                                configData.icon,
-                                node
-                            )
-                        }
-                    }
-
-                    is Tree -> {
-                        val subTitle = node.title
-                        if (subTitle != null && searchMatches(subTitle.asRenderText(), q)) {
-                            val cat = node.getMetadata<String>("category")
-                            matchingOptions += OptionResult(
-                                configData.id,
-                                configData.title,
-                                subTitle,
-                                cat,
-                                configData.icon,
-                                null
-                            )
-                        }
-                        node.map.values.filterIsInstance<Property<*>>().forEach { prop ->
-                            val pt = prop.title ?: return@forEach
-                            if (searchMatches(pt.asRenderText(), q) || descriptionMatches || searchTags) {
-                                val cat = prop.getMetadata<String>("category")
-                                matchingOptions += OptionResult(
-                                    configData.id,
-                                    configData.title,
-                                    pt,
-                                    cat,
-                                    configData.icon,
-                                    prop
-                                )
-                            }
-                        }
-                    }
-                }
+        return corpus.values.filter {
+            if (it.scopes.intersect(scopes).isEmpty()) return@filter false
+            if (it.scopes.contains(SearchScope.Mods)) {
+                return@filter it.metadata.title != null && searchMatches(it.metadata.title, q)
             }
-            if (matchingOptions.isNotEmpty()) {
-                results[configData.title.asRenderText()] = matchingOptions
-            }
+            if (listOfNotNull(it.metadata.title, it.metadata.description).any { p ->
+                    searchMatches(p, q)
+                } || it.metadata.tags.any { t -> searchMatches(t, q) }) return@filter true
+            // Match old search for keybinds
+            if (scopes.contains(SearchScope.Keybinds) && listOfNotNull(
+                    it.metadata.category,
+                    it.metadata.distinctSubcategory,
+                    it.metadata.id, it.metadata.path
+                ).any { k -> searchMatches(k, q) }
+            ) return@filter true
+            false
         }
+    }
 
-        return results
+    override fun <T> searchGrouped(
+        query: String,
+        scopes: Set<SearchScope>,
+        grouper: (SearchDocument<*>) -> T
+    ): Map<T, List<SearchDocument<*>>> {
+        return search(query, scopes).groupBy(grouper)
+    }
+
+    override suspend fun onCorpusUpdate(
+        added: List<SearchDocument<*>>,
+        removed: Set<String>
+    ) {
+        // No-op, we just use the corpus directly
     }
 }
 

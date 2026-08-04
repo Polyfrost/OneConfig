@@ -21,14 +21,20 @@ interface SearchProvider {
      * Perform the search on the configs
      *
      * @param query The search query
-     * @param configs The configs to search in
-     * @param searchMods Whether to search include full mods as result, used by global search
-     * @return A map of mod name (or if searching mods, "Mods") to search results
+     * @param scopes The scopes to search in
+     * @return A list of search results
      */
-    fun performSearch(
+    fun search(
         query: String,
-        configs: List<ConfigData>,
-        searchMods: Boolean = false
-    ): Map<String, List<SearchResult>>
+        scopes: Set<SearchScope>
+    ): List<SearchDocument<*>>
+
+    fun <T> searchGrouped(
+        query: String,
+        scopes: Set<SearchScope>,
+        grouper: (SearchDocument<*>) -> T
+    ): Map<T, List<SearchDocument<*>>>
+
+    suspend fun onCorpusUpdate(added: List<SearchDocument<*>>, removed: Set<String>)
 }
 

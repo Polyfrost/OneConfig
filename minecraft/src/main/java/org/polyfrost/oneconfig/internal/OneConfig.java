@@ -44,6 +44,7 @@ import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
+import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading;
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.WorldEvent;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
@@ -67,6 +68,7 @@ import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudRenderer;
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry;
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProvider;
 import org.polyfrost.oneconfig.internal.ui.keybind.RightShiftConflicts;
+import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus;
 import org.polyfrost.oneconfig.test.TestMod_Test;
 
 /**
@@ -251,6 +253,8 @@ public class OneConfig
                     org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry.INSTANCE.loadFromConfig();
                 });
         EventManager.register(WorldEvent.Load.class, e -> showFirstLaunchNotification());
+        // Initialize search corpus after loading is finished (and translation keys are available)
+        EventManager.register(ResourceFinishedLoading.class, e -> SearchCorpus.INSTANCE.init());
 //        //#if MC < 1.13
 //        // this is cringe but is better than the alternative of checking every frame in a mixin (that's how vanilla does it lol)
 //        AtomicBoolean active = new AtomicBoolean(false);

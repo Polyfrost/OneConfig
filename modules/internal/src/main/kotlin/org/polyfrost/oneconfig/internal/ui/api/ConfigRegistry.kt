@@ -8,11 +8,13 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindRegistrar
+import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 
 object ConfigRegistry {
     private val hiddenModCardIds = setOf(
         "oneconfig.json",
         "themes.json",
+        "oneconfig.builtin", // built-in huds
         "minecraft",
         "resourcefulconfig",
         "modmenu",
@@ -54,6 +56,11 @@ object ConfigRegistry {
     var revision by mutableIntStateOf(0)
         private set
 
+    init {
+        // Index configs as they come in (compat layers etc...)
+        ConfigManager.addTreeRegistrationListener { tree -> registerTree(tree, ConfigSource.OC) }
+    }
+
     fun shouldShowModCard(config: ConfigData): Boolean =
         config.id.lowercase() !in hiddenModCardIds && config.title.toString().lowercase() !in hiddenModCardTitles
 
@@ -66,21 +73,30 @@ object ConfigRegistry {
      */
     fun loadFrom(manager: ConfigManager, source: ConfigSource) {
         val seenIds = HashSet<String>()
+        var changed = false
         manager.trees().forEach { tree ->
             tree.id?.let(seenIds::add)
             MinecraftKeybindRegistrar.scan(tree)
-            registerTree(tree, source, bumpRevision = false)
+            if (registerTree(tree, source, bumpRevision = false)) changed = true
         }
-        configs.removeAll { it.source == source && it.id !in seenIds }
+        if (configs.removeAll { it.source == source && it.id !in seenIds }) changed = true
+        if (!changed) return
+        SearchCorpus.invalidate()
         revision++
     }
 
+    /** Returns whether the registry actually changed. */
     @JvmOverloads
-    fun registerTree(tree: Tree, source: ConfigSource, onOpen: (() -> Unit)? = null, bumpRevision: Boolean = true) {
+    fun registerTree(
+        tree: Tree,
+        source: ConfigSource,
+        onOpen: (() -> Unit)? = null,
+        bumpRevision: Boolean = true
+    ): Boolean {
         MinecraftKeybindRegistrar.scan(tree)
-        if (tree.id == null || tree.title == null) return
-        if (tree.getMetadata<Any?>("hidden") != null) return
-        upsert(TreeConfigData(tree, source, onOpen), bumpRevision)
+        if (tree.id == null || tree.title == null) return false
+        if (tree.getMetadata<Any?>("hidden") != null) return false
+        return upsert(TreeConfigData(tree, source, onOpen), bumpRevision)
     }
 
     fun register(data: ConfigData) {
@@ -89,6 +105,7 @@ object ConfigRegistry {
 
     fun unregister(id: String) {
         if (configs.removeAll { it.id == id }) {
+            SearchCorpus.invalidate()
             revision++
         }
     }
@@ -97,15 +114,27 @@ object ConfigRegistry {
 
     fun findTree(id: String): Tree? = (findById(id) as? TreeConfigData)?.tree
 
-    private fun upsert(data: ConfigData, bumpRevision: Boolean) {
+    private fun upsert(data: ConfigData, bumpRevision: Boolean): Boolean {
         val index = configs.indexOfFirst { it.id == data.id }
         if (index >= 0) {
+            if (configs[index].wraps(data)) return false
             configs[index] = data
         } else {
             configs.add(data)
         }
+        SearchCorpus.invalidate()
         if (bumpRevision) {
             revision++
         }
+        return true
+    }
+
+    /**
+     * Quick check to see if 2 config data instances provide the same (tree) information
+     */
+    private fun ConfigData.wraps(other: ConfigData): Boolean {
+        if (this === other) return true
+        if (this !is TreeConfigData || other !is TreeConfigData) return false
+        return tree === other.tree && source == other.source && explicitOnOpen === other.explicitOnOpen
     }
 }

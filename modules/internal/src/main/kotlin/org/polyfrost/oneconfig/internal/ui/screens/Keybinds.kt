@@ -21,6 +21,7 @@ import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -44,7 +45,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.IdentityHashMap
 import kotlin.math.roundToInt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
@@ -65,6 +69,9 @@ import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroup
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroupCollapseStore
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry
 import org.polyfrost.oneconfig.internal.ui.keybind.collectAllKeybindGroups
+import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
+import org.polyfrost.oneconfig.internal.ui.search.SearchDocument
+import org.polyfrost.oneconfig.internal.ui.search.SearchScope
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -84,14 +91,17 @@ fun Keybinds() {
     val providerRevision = KeybindProviderRegistry.revision.intValue
     val groups = remember(revision, providerRevision, configs) { collectAllKeybindGroups() }
     val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
-    val visibleGroups = remember(groups, localSearchQuery) {
-        if (localSearchQuery.isBlank()) groups else filterKeybindGroups(groups, localSearchQuery)
-    }
+    val searchResults = rememberKeybindSearchResults(groups, localSearchQuery)
+    val visibleGroups = if (localSearchQuery.isBlank()) groups else searchResults.orEmpty()
 
     if (visibleGroups.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            val message = if (localSearchQuery.isBlank()) "No keybinds available."
-            else "No keybinds match \"$localSearchQuery\""
+            val message = when {
+                localSearchQuery.isBlank() -> "No keybinds available."
+                // Nothing to say until the first search comes back.
+                searchResults == null -> "Searching..."
+                else -> "No keybinds match \"$localSearchQuery\""
+            }
             Text(message, color = LocalTheme.current.textColorSecondary, fontSize = 15.sp)
         }
         return
@@ -139,19 +149,36 @@ fun Keybinds() {
     }
 }
 
-private fun filterKeybindGroups(groups: List<KeybindGroup>, query: String): List<KeybindGroup> {
-    val q = query.lowercase()
-    return groups.mapNotNull { group ->
-        val groupMatches = searchMatches(group.modTitle.asRenderText(), q) || searchMatches(group.modId, q)
-        val entries = if (groupMatches) group.entries else group.entries.filter { it.matchesSearch(q) }
-        if (entries.isEmpty()) null else group.copy(entries = entries)
+/** The group and entry one keybind property renders as, for resolving corpus hits back to rows. */
+private class KeybindOwner(val group: KeybindGroup, val entry: KeybindEntry)
+
+@Composable
+private fun rememberKeybindSearchResults(groups: List<KeybindGroup>, query: String): List<KeybindGroup>? {
+    var results by remember { mutableStateOf<List<KeybindGroup>?>(null) }
+    LaunchedEffect(groups, query) {
+        results = if (query.isBlank()) null
+        else withContext(Dispatchers.Default) { searchKeybindGroups(groups, query) }
     }
+    return results
 }
 
-private fun KeybindEntry.matchesSearch(query: String): Boolean {
-    val prop = this.prop
-    return listOfNotNull(path, category, subcategory, prop.title, prop.id, prop.description)
-        .any { searchMatches(it.asRenderText(), query) }
+private fun searchKeybindGroups(groups: List<KeybindGroup>, query: String): List<KeybindGroup> {
+    val owners = IdentityHashMap<Property<*>, KeybindOwner>()
+    groups.forEach { group -> group.entries.forEach { owners[it.prop] = KeybindOwner(group, it) } }
+    fun ownerOf(document: SearchDocument<*>) = (document.payload as? Property<*>)?.let(owners::get)
+
+    val hits = SearchCorpus.searchGrouped(query, setOf(SearchScope.Keybinds)) { ownerOf(it)?.group?.modId }
+        .mapNotNull { (modId, documents) ->
+            if (modId == null) return@mapNotNull null
+            modId to documents.mapNotNull { ownerOf(it)?.entry }
+        }.toMap()
+
+    // Group headers are not corpus documents, so surface them here explicitly
+    val q = query.lowercase()
+    return groups.mapNotNull { group ->
+        if (searchMatches(group.modTitle.asRenderText(), q) || searchMatches(group.modId, q)) return@mapNotNull group
+        hits[group.modId]?.takeIf { it.isNotEmpty() }?.let { group.copy(entries = it) }
+    }
 }
 
 @Composable
