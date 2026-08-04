@@ -1,17 +1,19 @@
-1.1.0 changelogs:
-- You can now select multiple HUDs at once, either by holding shift or by dragging a box around them
-- Added copy, cut, paste, duplicate, select all, lock, reset and delete to the HUD editor, with keybinds you can change
-- Added a setting to hide every HUD at once without turning them off individually
-- The HUD editor menus now show the keybind for each action, which you can turn off
-- Text HUDs can now be wrapped in square brackets
-- OneConfig can now reopen the HUD editor instead of the main menu if that's where you left off
-- Fixed chat messages not being picked up by mods that listen for them
-- Fixed OneConfig menus showing through other mods' screens
-- Fixed see-through HUDs on 1.21.11 and below
-- The menu is faster to open and smoother to use
+1.1.1 changelogs:
+- HUDs can now be anchored to points on other HUDs, so they move together
+- Neighbouring HUDs can now merge their backgrounds into one, optionally diagonally
+- Added a favorites category to the mods list
+- Padding options now have icons showing which side they affect
+- The OneConfig screen can now be closed with the keybind that opens it
+- Fixed the HUD bar being drawn underneath HUD contents
+- Fixed OneConfig keybinds also firing their vanilla Minecraft action
+- Fixed the keybind editor not closing when close animations are turned off
+- Fixed the HUD library scrollbar changing size as you scroll
+- Fixed chat messages being dropped when they could not be converted for listeners
+- The menu now closes promptly and gives the cursor back sooner
 
 Public API:
 
-- Added `HudManager.masterHudEnabled` for globally toggling HUD rendering
-- Added `TextHud.brackets`, wrapping the finished line with brackets
-- Added `KeybindUtils` with `getActionModifier` and `isActionModifierPressed`
+- Added HUD anchoring on `Hud`: `anchorTo`, `clearAnchor`, `isAnchored`, `anchorChainContains`, `anchorPointX`/`anchorPointY`, and the `anchorParent`, `anchorTargetId`, `anchorPoint`, `anchorOffsetX`/`anchorOffsetY` accessors
+- Added `Hud.mergeBackground` and `Hud.mergeDiagonally` for merging backgrounds with neighbouring HUDs
+- Added `HudManager.instanceById` for looking up a HUD instance by its id
+- Added `TextHud.decorate` for applying prefix, suffix and brackets to a line
