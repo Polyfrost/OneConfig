@@ -188,27 +188,31 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
                                     )
                                 }
                             }
-                            HudSettingTarget(hud, "mergeBackground") {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                ) {
-                                    SwitchControl(mergeBackground) {
-                                        Snapshot.withMutableSnapshot { mergeBackground = it; hud.mergeBackground = it }
-                                    }
-                                    Text("Merge With Neighbours", color = LocalTheme.current.textColor, fontSize = 14.sp)
-                                }
-                            }
-                            if (mergeBackground) {
-                                HudSettingTarget(hud, "mergeDiagonally") {
+                            // HUDs which draw their own background opt out of merging entirely, so
+                            // there is nothing for these switches to control
+                            if (hud.canMergeBackground()) {
+                                HudSettingTarget(hud, "mergeBackground") {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                                     ) {
-                                        SwitchControl(mergeDiagonally) {
-                                            Snapshot.withMutableSnapshot { mergeDiagonally = it; hud.mergeDiagonally = it }
+                                        SwitchControl(mergeBackground) {
+                                            Snapshot.withMutableSnapshot { mergeBackground = it; hud.mergeBackground = it }
                                         }
-                                        Text("Merge Diagonally", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                                        Text("Merge With Neighbours", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                                    }
+                                }
+                                if (mergeBackground) {
+                                    HudSettingTarget(hud, "mergeDiagonally") {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        ) {
+                                            SwitchControl(mergeDiagonally) {
+                                                Snapshot.withMutableSnapshot { mergeDiagonally = it; hud.mergeDiagonally = it }
+                                            }
+                                            Text("Merge Diagonally", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                                        }
                                     }
                                 }
                             }

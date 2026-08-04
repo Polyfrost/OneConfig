@@ -77,6 +77,7 @@ internal object HudBackgroundMerge {
         val items = ArrayList<Item>(huds.size)
         for (hud in huds) {
             if (hud is LegacyHudMarker) continue
+            if (!hud.canMergeBackground()) continue
             if (!hud.showBackground || !hud.mergeBackground || !hud.hasBackground() || hud.hidden) continue
             val w = hud.renderedW
             val h = hud.renderedH
