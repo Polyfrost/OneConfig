@@ -20,6 +20,7 @@ import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
+import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
 import org.polyfrost.oneconfig.internal.ui.compose.BlurRenderer
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
@@ -47,7 +48,11 @@ class OneConfigUIScreen @JvmOverloads constructor(
         private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/UI")
         private const val FULLSCREEN_BLUR_RADIUS = 8f
         private const val OPEN_ANIMATION_MS = 250L
-        private const val CLOSE_ANIMATION_MS = 300L
+
+        /** Serialized so two closes in quick succession can't write the same files at once. */
+        private val SAVE_EXECUTOR = java.util.concurrent.Executors.newSingleThreadExecutor { r ->
+            Thread(r, "OneConfig-ConfigSave").apply { isDaemon = true }
+        }
 
         /** [restored] marks a route that puts the user back where they were rather than opening a fixed page. */
         private data class OpeningRoute(val route: Any, val restored: Boolean = false)
@@ -82,7 +87,17 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     @Volatile private var closeRequested = false
     @Volatile private var closeRequestedAt = 0L
+    @Volatile private var closeAnimationMs = 0L
     @Volatile private var openedAt = 0L
+
+    private fun beginClose() {
+        if (closeRequested) return
+        closeRequested = true
+        closeRequestedAt = System.currentTimeMillis()
+        closeAnimationMs = guiCloseAnimationMillis()
+        markClosed()
+        UiSounds.play(UiSoundEvent.CLOSE)
+    }
 
     /** The page this screen is showing. Survives the scene being disposed and rebuilt. */
     private var route: Any? = null
@@ -169,10 +184,14 @@ class OneConfigUIScreen @JvmOverloads constructor(
         HudManager.overrideShowInScreens = false
         HudManager.isConfigUiOpen = false
         UiSounds.releaseAmbience()
-        try {
-            ConfigManager.active().saveAll()
-        } catch (t: Throwable) {
-            LOGGER.error("Failed to save configs on OneConfig UI close", t)
+        // Writing every registered tree takes long enough to be felt as a hitch, and Minecraft only re-grabs the
+        // cursor once this returns, so the crosshair would sit under a free mouse for the whole write.
+        SAVE_EXECUTOR.execute {
+            try {
+                ConfigManager.active().saveAll()
+            } catch (t: Throwable) {
+                LOGGER.error("Failed to save configs on OneConfig UI close", t)
+            }
         }
         super.removed()
     }
@@ -189,10 +208,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         if (key == InputConstants.KEY_ESCAPE) {
             if (KeybindRecordingBus.consumeEscape()) return true
             if (!closeRequested) {
-                closeRequested = true
-                closeRequestedAt = System.currentTimeMillis()
-                markClosed()
-                UiSounds.play(UiSoundEvent.CLOSE)
+                beginClose()
                 requestCloseCallback?.invoke()
             }
             return true
@@ -201,10 +217,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         if (toggleKey != null && key == toggleKey && !KeybindRecordingBus.isRecording) {
             if (OneConfigConfig.keybindClosesGui) {
                 if (!closeRequested) {
-                    closeRequested = true
-                    closeRequestedAt = System.currentTimeMillis()
-                    markClosed()
-                    UiSounds.play(UiSoundEvent.CLOSE)
+                    beginClose()
                     requestCloseCallback?.invoke()
                 }
             } else {
@@ -254,7 +267,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         // would queue a fullscreen blur into the Skia pass, which runs after vanilla GUI drawing and so smears
         // the popup on top of it. Nothing here may run unless we are the screen actually being shown.
         if (Platform.screen().current<Screen>() !== this) return
-        if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= CLOSE_ANIMATION_MS) {
+        if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= closeAnimationMs) {
             Platform.screen().close()
             return
         }
@@ -284,7 +297,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
     private fun fullscreenBlurRadius(): Float {
         val now = System.currentTimeMillis()
         val progress = if (closeRequested) {
-            1f - easeOutExpo((now - closeRequestedAt).toFloat() / CLOSE_ANIMATION_MS)
+            if (closeAnimationMs <= 0L) 0f
+            else 1f - easeOutExpo((now - closeRequestedAt).toFloat() / closeAnimationMs)
         } else {
             (now - openedAt).toFloat() / OPEN_ANIMATION_MS
         }
@@ -309,14 +323,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
             initialRoute = initialRoute,
             resuming = resuming,
             restoring = restoring,
-            onCloseRequest = {
-                if (!closeRequested) {
-                    closeRequested = true
-                    closeRequestedAt = System.currentTimeMillis()
-                    markClosed()
-                    UiSounds.play(UiSoundEvent.CLOSE)
-                }
-            },
+            onCloseRequest = { beginClose() },
             onCloseReady = { closeRequest ->
                 requestCloseCallback = closeRequest
             },

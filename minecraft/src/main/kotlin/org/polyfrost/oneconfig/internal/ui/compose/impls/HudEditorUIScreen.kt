@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.compose.impls
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.EaseIn
 import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.tween
@@ -24,6 +25,7 @@ import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
+import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignStudio
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
@@ -37,12 +39,17 @@ import org.polyfrost.oneconfig.internal.ui.themes.Theme
 
 @OptIn(InternalComposeUiApi::class)
 class HudEditorUIScreen : ComposeScreen() {
-    private companion object {
-        const val CLOSE_ANIMATION_MS = 220L
-    }
-
     @Volatile private var closeRequested = false
     @Volatile private var closeRequestedAt = 0L
+    @Volatile private var closeAnimationMs = 0L
+
+    private fun beginClose() {
+        if (closeRequested) return
+        closeRequested = true
+        closeRequestedAt = System.currentTimeMillis()
+        closeAnimationMs = guiCloseAnimationMillis()
+        UiSounds.play(UiSoundEvent.CLOSE)
+    }
 
     @Volatile private var returningToOneConfig = false
 
@@ -78,9 +85,7 @@ class HudEditorUIScreen : ComposeScreen() {
         if (key == InputConstants.KEY_ESCAPE) {
             if (KeybindRecordingBus.consumeEscape()) return true
             if (!closeRequested) {
-                closeRequested = true
-                closeRequestedAt = System.currentTimeMillis()
-                UiSounds.play(UiSoundEvent.CLOSE)
+                beginClose()
                 requestCloseCallback?.invoke()
             }
             return true
@@ -89,9 +94,7 @@ class HudEditorUIScreen : ComposeScreen() {
         if (toggleKey != null && key == toggleKey && !KeybindRecordingBus.isRecording) {
             if (OneConfigConfig.keybindClosesGui) {
                 if (!closeRequested) {
-                    closeRequested = true
-                    closeRequestedAt = System.currentTimeMillis()
-                    UiSounds.play(UiSoundEvent.CLOSE)
+                    beginClose()
                     requestCloseCallback?.invoke()
                 }
             } else {
@@ -112,7 +115,7 @@ class HudEditorUIScreen : ComposeScreen() {
         // A screen drawn over this one may render it as its parent; don't act on that pass (it would close
         // the screen on top of us, among other things).
         if (Platform.screen().current<Screen>() !== this) return
-        if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= CLOSE_ANIMATION_MS) {
+        if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= closeAnimationMs) {
             Platform.screen().close()
             return
         }
@@ -147,10 +150,13 @@ class HudEditorUIScreen : ComposeScreen() {
             requestCloseCallback = requestClose
         }
 
+        val exitMs = guiCloseAnimationMillis().toInt()
         AnimatedVisibility(
             visible = visible,
             enter = fadeIn(tween(200, easing = EaseOutCubic)) + scaleIn(tween(200, easing = EaseOutCubic), initialScale = 0.92f),
-            exit = fadeOut(tween(200, easing = EaseIn)) + scaleOut(tween(200, easing = EaseIn), targetScale = 0.92f),
+            exit = if (exitMs > 0)
+                fadeOut(tween(exitMs, easing = EaseIn)) + scaleOut(tween(exitMs, easing = EaseIn), targetScale = 0.92f)
+            else ExitTransition.None,
         ) {
             Box(Modifier.fillMaxSize()) {
                 CompositionLocalProvider(
