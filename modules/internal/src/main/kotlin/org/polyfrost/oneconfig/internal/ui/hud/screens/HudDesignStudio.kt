@@ -9,10 +9,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.Snapshot
@@ -36,6 +32,7 @@ import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -45,6 +42,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.skia.Paint
 import org.polyfrost.compose.render.FontManager
@@ -800,7 +799,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     // section because the list clamps at its end: the final sections can never become the first
     // visible item, and a mod whose HUDs are all placed has no section to scroll to at all.
     var libraryModIntent by remember { mutableStateOf<String?>(null) }
-    val libraryListState = rememberLazyListState()
+    val libraryScrollState = rememberScrollState()
+    // Content-relative top of each section, keyed by section id. Reported by the panel as it lays
+    // out, and used both to scroll to a mod and to tell which section the user is looking at.
+    val librarySectionOffsets = remember { mutableStateMapOf<String, Int>() }
     val chromeRects = remember { mutableStateMapOf<String, Rect>() }
     var panelOffset by remember { mutableStateOf(Offset.Zero) }
     var rootSize by remember { mutableStateOf(IntSize.Zero) }
@@ -960,24 +962,31 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
         .groupBy { it.configId }
         .map { (modId, huds) -> HudLibrarySection(modId, modId?.let { modNames[it] } ?: "Other", huds) }
     val librarySectionIds = librarySections.map { it.modId }
-    val scrolledLibraryMod = librarySections.getOrNull(libraryListState.firstVisibleItemIndex)?.modId
+    val scrolledLibraryMod = librarySections
+        .lastOrNull { section ->
+            val top = librarySectionOffsets[librarySectionKey(section.modId)]
+            top != null && top <= libraryScrollState.value + 1
+        }
+        ?.modId ?: librarySections.firstOrNull()?.modId
     val activeLibraryMod = libraryModIntent ?: scrolledLibraryMod
 
     // A manual scroll takes the highlight back off the clicked icon and hands it to the list.
-    LaunchedEffect(libraryListState) {
-        snapshotFlow { libraryListState.isScrollInProgress }
+    LaunchedEffect(libraryScrollState) {
+        snapshotFlow { libraryScrollState.isScrollInProgress }
             .collect { scrolling -> if (scrolling && pendingLibraryScroll == null) libraryModIntent = null }
     }
 
     LaunchedEffect(pendingLibraryScroll, librarySectionIds) {
         val target = pendingLibraryScroll ?: return@LaunchedEffect
-        val index = librarySectionIds.indexOf(target)
-        if (index >= 0) {
-            libraryListState.animateScrollToItem(index)
-            pendingLibraryScroll = null
-        } else if (searchText.isEmpty()) {
-            pendingLibraryScroll = null
+        if (target !in librarySectionIds) {
+            if (searchText.isEmpty()) pendingLibraryScroll = null
+            return@LaunchedEffect
         }
+        val top = snapshotFlow { librarySectionOffsets[librarySectionKey(target)] }
+            .filterNotNull()
+            .first()
+        libraryScrollState.animateScrollTo(top)
+        pendingLibraryScroll = null
     }
 
     val densityObj = LocalDensity.current
@@ -1743,7 +1752,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                         searchText = searchText,
                         onSearchChange = { searchText = it },
                         sections = librarySections,
-                        listState = libraryListState,
+                        scrollState = libraryScrollState,
+                        onSectionMeasured = { key, top -> librarySectionOffsets[key] = top },
                         onDragStart = { hud, sx, sy, hudLocalOffX, hudLocalOffY ->
                             try {
                                 // a single-instance provider *is* its instance, so one that is real
@@ -2419,6 +2429,9 @@ private fun DesignStudioPanel(
 /** One mod's worth of addable HUDs, as shown in the continuous library list. */
 private class HudLibrarySection(val modId: String?, val title: String, val huds: List<Hud>)
 
+/** Map key for a section, since the catch-all section has no mod id. */
+private fun librarySectionKey(modId: String?): String = modId ?: ""
+
 private fun libraryIconFor(modId: String?): String =
     modId?.let { HudManager.iconFor(it) ?: ConfigRegistry.findById(it)?.icon } ?: "qol"
 
@@ -2427,7 +2440,8 @@ private fun HudLibraryPanel(
     searchText: String,
     onSearchChange: (String) -> Unit,
     sections: List<HudLibrarySection>,
-    listState: LazyListState,
+    scrollState: ScrollState,
+    onSectionMeasured: (String, Int) -> Unit,
     onDragStart: (Hud, Float, Float, Float, Float) -> Unit = { _, _, _, _, _ -> },
     onCardClick: (Hud) -> Unit = {},
 ) {
@@ -2450,45 +2464,61 @@ private fun HudLibraryPanel(
             LibrarySearchBar(searchText, onSearchChange)
         }
         Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
-            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            var viewportTop by remember { mutableStateOf(0f) }
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .onGloballyPositioned { viewportTop = it.positionInRoot().y }
+            ) {
                 val maxCardWidth = maxWidth - 16.dp
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxSize().padding(end = 16.dp),
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
+                        .padding(end = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     if (sections.isEmpty()) {
-                        item {
-                            Text(
-                                "No HUDs found",
-                                color = theme.textColorSecondary,
-                                fontSize = 14.sp,
-                            )
-                        }
+                        Text(
+                            "No HUDs found",
+                            color = theme.textColorSecondary,
+                            fontSize = 14.sp,
+                        )
                     }
-                    items(sections, key = { it.modId ?: "" }) { section ->
-                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    sections.forEach { section ->
+                        key(librarySectionKey(section.modId)) {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.onGloballyPositioned {
+                                    val top = it.positionInRoot().y - viewportTop + scrollState.value
+                                    onSectionMeasured(
+                                        librarySectionKey(section.modId),
+                                        top.roundToInt().coerceAtLeast(0),
+                                    )
+                                },
                             ) {
-                                Icon(
-                                    libraryIconFor(section.modId),
-                                    modifier = Modifier.size(16.dp),
-                                    color = theme.textColorSecondary,
-                                )
-                                Text(
-                                    section.title.uppercase(),
-                                    color = theme.textColorSecondary,
-                                    fontSize = 12.sp,
-                                )
-                            }
-                            FlexibleLayout(
-                                horizontalSpacing = 10.dp,
-                                verticalSpacing = 10.dp
-                            ) {
-                                section.huds.forEach { hud ->
-                                    HudPreviewCard(hud, maxCardWidth, onDragStart, onCardClick)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    Icon(
+                                        libraryIconFor(section.modId),
+                                        modifier = Modifier.size(16.dp),
+                                        color = theme.textColorSecondary,
+                                    )
+                                    Text(
+                                        section.title.uppercase(),
+                                        color = theme.textColorSecondary,
+                                        fontSize = 12.sp,
+                                    )
+                                }
+                                FlexibleLayout(
+                                    horizontalSpacing = 10.dp,
+                                    verticalSpacing = 10.dp
+                                ) {
+                                    section.huds.forEach { hud ->
+                                        HudPreviewCard(hud, maxCardWidth, onDragStart, onCardClick)
+                                    }
                                 }
                             }
                         }
@@ -2496,7 +2526,7 @@ private fun HudLibraryPanel(
                 }
             }
             VerticalScrollbar(
-                adapter = rememberScrollbarAdapter(listState),
+                adapter = rememberScrollbarAdapter(scrollState),
                 modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
             )
         }
