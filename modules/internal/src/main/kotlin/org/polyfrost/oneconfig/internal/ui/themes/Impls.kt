@@ -59,6 +59,7 @@ private val MinecraftIconOverrides = mapOf(
     "shuffle" to "/assets/oneconfig/ico/minecraft/shuffle.svg",
     "spanner" to "/assets/oneconfig/ico/minecraft/spanner.svg",
     "star" to "/assets/oneconfig/ico/minecraft/star.svg",
+    "star-filled" to "/assets/oneconfig/ico/minecraft/star-filled.svg",
     "strikethrough" to "/assets/oneconfig/ico/minecraft/strikethrough.svg",
     "sun" to "/assets/oneconfig/ico/minecraft/sun.svg",
     "text" to "/assets/oneconfig/ico/minecraft/text.svg",

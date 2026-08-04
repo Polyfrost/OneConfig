@@ -48,6 +48,8 @@ class HudEditorUIScreen : ComposeScreen() {
 
     private var requestCloseCallback: (() -> Unit)? = null
 
+    override val scrollSpeed: Float get() = 0.5f
+
     override fun init() {
         UiSounds.acquireAmbience()
         super.init()

@@ -199,25 +199,25 @@ fun Designer(hud: Hud? = null) {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     HudSettingTarget(hud, "padLeft") {
                         NumberSpinnerWithIcon(
-                            "align", "px",
+                            "pad-left", "px",
                             padLeft, { Snapshot.withMutableSnapshot { padLeft = it; hud.padLeft = it } }, 0f, 100f, 1f
                         )
                     }
                     HudSettingTarget(hud, "padRight") {
                         NumberSpinnerWithIcon(
-                            "align", "px",
+                            "pad-right", "px",
                             padRight, { Snapshot.withMutableSnapshot { padRight = it; hud.padRight = it } }, 0f, 100f, 1f
                         )
                     }
                     HudSettingTarget(hud, "padTop") {
                         NumberSpinnerWithIcon(
-                            "align", "px",
+                            "pad-top", "px",
                             padTop, { Snapshot.withMutableSnapshot { padTop = it; hud.padTop = it } }, 0f, 100f, 1f
                         )
                     }
                     HudSettingTarget(hud, "padBottom") {
                         NumberSpinnerWithIcon(
-                            "align", "px",
+                            "pad-bottom", "px",
                             padBottom, { Snapshot.withMutableSnapshot { padBottom = it; hud.padBottom = it } }, 0f, 100f, 1f
                         )
                     }

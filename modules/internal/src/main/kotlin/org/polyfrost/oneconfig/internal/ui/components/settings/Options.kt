@@ -1,14 +1,20 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -167,7 +173,10 @@ fun OptionContextMenu(
         properties = PopupProperties(focusable = true),
     ) {
         Column(
+            // intrinsic width keeps the menu content-sized while letting rows fillMaxWidth, so hover
+            // backgrounds span the whole menu instead of each row's own text width
             modifier = Modifier
+                .width(IntrinsicSize.Max)
                 .background(theme.popupBackground, theme.popupShape)
                 .border(1.dp, theme.borderColor, theme.popupShape)
                 .padding(ContextMenuPadding),
@@ -190,11 +199,28 @@ fun OptionContextMenu(
 private fun ContextMenuItem(icon: String, label: String, enabled: Boolean, onClick: () -> Unit) {
     val theme = LocalTheme.current
     val interactionSource = rememberInteractionSource()
+    val isHovered by interactionSource.collectIsHoveredAsState()
     val color = if (enabled) theme.textColor else theme.textColorSecondary
+    val hoverBgColor by animateColorAsState(
+        targetValue = theme.textColor.copy(alpha = if (enabled && isHovered) 0.10f else 0f),
+        animationSpec = tween(120),
+        label = "contextMenuItemHover",
+    )
+    val itemShape = theme.popupShape.concentric(ContextMenuPadding)
     Row(
         modifier = Modifier
-            .clip(theme.popupShape.concentric(ContextMenuPadding))
-            .then(if (enabled) Modifier.onClick(interactionSource, onClick).pointerHoverIcon(PointerIcon.Hand) else Modifier)
+            .fillMaxWidth()
+            .clip(itemShape)
+            .background(hoverBgColor, itemShape)
+            .then(
+                if (enabled) {
+                    Modifier.onClick(interactionSource, onClick)
+                        .hoverable(interactionSource)
+                        .pointerHoverIcon(PointerIcon.Hand)
+                } else {
+                    Modifier
+                },
+            )
             .padding(horizontal = 10.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),

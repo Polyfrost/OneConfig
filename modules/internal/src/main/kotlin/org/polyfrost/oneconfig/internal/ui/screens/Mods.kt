@@ -38,6 +38,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.IntOffset
@@ -71,9 +72,11 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 enum class ModCategory(
     val title: String,
     val icon: String?,
-    val configCategory: Config.Category?
+    val configCategory: Config.Category?,
+    val favoritesOnly: Boolean = false,
 ) {
     All("All", null, null),
+    Favorited("Favorites", "star", null, favoritesOnly = true),
     Hypixel("Hypixel", "hypixel", Config.Category.HYPIXEL),
     Performance("Performance", "lightning-01", Config.Category.PERFORMANCE),
     Visuals("Visuals", "paintbrush", Config.Category.VISUALS),
@@ -114,7 +117,18 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
                 if (category.configCategory == null) items
                 else items.filter { it.category == category.configCategory }
             }
+            .let { items ->
+                if (category.favoritesOnly) items.filter { ModFavorites.isFavorite(it.id) }
+                else items
+            }
             .sortedWith(ModCardOrder)
+    }
+
+    if (filtered.isEmpty() && category.favoritesOnly) {
+        Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("No favorite mods.", color = LocalTheme.current.textColorSecondary)
+        }
+        return
     }
 
     // Mutated live while dragging so the grid re-lays out under the pointer; the drop is what
@@ -183,6 +197,8 @@ private fun commitDrop(mods: List<ConfigData>, index: Int) {
 }
 
 private val ModCardFooterHeight = 36.dp
+
+private val FavoriteStarColor = Color(0xFFFFD700)
 
 @Composable
 fun ModCard(mod: ConfigData, modifier: Modifier = Modifier) {
@@ -295,7 +311,7 @@ private fun FavoriteStar(mod: ConfigData, cardHovered: Boolean, modifier: Modifi
             else -> 0f
         }
     )
-    val color by animateColorAsState(if (favorite) Accent else theme.textColor)
+    val color by animateColorAsState(if (favorite) FavoriteStarColor else theme.textColor)
 
     Box(
         modifier = modifier
