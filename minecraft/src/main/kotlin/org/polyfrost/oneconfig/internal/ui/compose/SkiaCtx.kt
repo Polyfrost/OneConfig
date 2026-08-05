@@ -215,7 +215,6 @@ object SkiaCtx {
         val savedFbo = IntArray(1)
         try {
             if (isVulkanMode) {
-                vulkanService?.midFrameFlush()
                 directContext.resetAll()
             } else {
                 gl.capture()

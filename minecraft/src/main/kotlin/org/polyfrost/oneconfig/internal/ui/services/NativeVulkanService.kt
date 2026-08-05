@@ -4,6 +4,7 @@ package org.polyfrost.oneconfig.internal.ui.services
 /*import com.mojang.blaze3d.GpuFormat
 import com.mojang.blaze3d.pipeline.RenderTarget
 import com.mojang.blaze3d.systems.RenderSystem
+import com.mojang.blaze3d.vulkan.VulkanCommandEncoder
 import com.mojang.blaze3d.vulkan.VulkanDevice
 import com.mojang.blaze3d.vulkan.VulkanGpuTexture
 import net.minecraft.client.Minecraft
@@ -128,6 +129,26 @@ class NativeVulkanService private constructor(
 
     override fun midFrameFlush() {
         // Submit MC's pending command buffer so Skia sees a consistent image state.
+        val device = (RenderSystem.getDevice() as? GpuDeviceAccessor)?.`oneconfig$getBackend`() as? VulkanDevice
+        if (device == null) {
+            LOG.warn("midFrameFlush: GpuDevice backend is not Vulkan, skipping flush")
+            return
+        }
+        try {
+            val encoder = device.createCommandEncoder()
+            val cmd = encoder.allocateAndBeginTransientCommandBuffer()
+            try {
+                MemoryStack.stackPush().use { stack ->
+                    VulkanCommandEncoder.memoryBarrier(cmd, stack)
+                }
+            } finally {
+                vkEndCommandBuffer(cmd)
+                encoder.execute(cmd)
+            }
+        } catch (e: Exception) {
+            LOG.warn("midFrameFlush: failed to record the flush barrier, skipping submit", e)
+            return
+        }
         RenderSystem.getDevice().createCommandEncoder().submit()
     }
 
