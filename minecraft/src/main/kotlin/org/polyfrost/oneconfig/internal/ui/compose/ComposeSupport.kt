@@ -1,6 +1,8 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
 import org.slf4j.LoggerFactory
+import java.util.Collections
+import java.util.IdentityHashMap
 
 object ComposeSupport {
     private val LOG = LoggerFactory.getLogger(ComposeSupport::class.java)
@@ -27,7 +29,7 @@ object ComposeSupport {
 
     private fun describe(error: Throwable): String? {
         var e: Throwable? = error
-        val seen = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Throwable, Boolean>())
+        val seen = Collections.newSetFromMap(IdentityHashMap<Throwable, Boolean>())
         while (e != null && seen.add(e)) {
             val message = e.message.orEmpty()
             when {

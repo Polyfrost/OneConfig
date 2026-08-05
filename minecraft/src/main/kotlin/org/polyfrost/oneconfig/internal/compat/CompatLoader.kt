@@ -6,6 +6,8 @@ import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import java.net.URI
+import java.util.concurrent.ConcurrentHashMap
+import java.util.Optional
 
 object CompatLoader {
     private val forcedModId = ThreadLocal<String?>()
@@ -43,7 +45,7 @@ object CompatLoader {
         "org.polyfrost.polyui"
     )
 
-    private val ownerByClassName = java.util.concurrent.ConcurrentHashMap<String, java.util.Optional<ModInfo>>()
+    private val ownerByClassName = ConcurrentHashMap<String, Optional<ModInfo>>()
 
     fun findFirstMod(): ModInfo? {
         forcedModId.get()?.let { forcedId ->
@@ -52,7 +54,7 @@ object CompatLoader {
         }
         val callerClass = callerClassName() ?: return null
         return ownerByClassName
-            .computeIfAbsent(callerClass) { java.util.Optional.ofNullable(resolveOwner(it)) }
+            .computeIfAbsent(callerClass) { Optional.ofNullable(resolveOwner(it)) }
             .orElse(null)
     }
 

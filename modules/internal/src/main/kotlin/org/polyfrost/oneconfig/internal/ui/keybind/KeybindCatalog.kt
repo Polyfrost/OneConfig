@@ -54,8 +54,7 @@ private fun List<KeybindGroup>.withUniqueModIds(): List<KeybindGroup> {
         var suffix = 2
         var candidate = "${group.modId}~$suffix"
         while (!seen.add(candidate)) {
-            suffix++
-            candidate = "${group.modId}~$suffix"
+            candidate = "${group.modId}~${++suffix}"
         }
         group.copy(modId = candidate)
     }
