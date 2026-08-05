@@ -351,7 +351,7 @@ private fun ItemPreview(
     ) {
         if (bitmap != null) {
             Image(
-                painter = BitmapPainter(bitmap, filterQuality = FilterQuality.Medium),
+                painter = BitmapPainter(bitmap, filterQuality = FilterQuality.Low),
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize().padding(if (framed) 2.dp else 1.dp),
                 alpha = alpha,

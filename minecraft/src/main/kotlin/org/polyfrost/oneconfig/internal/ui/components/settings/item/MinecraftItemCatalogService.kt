@@ -24,6 +24,7 @@ import org.polyfrost.oneconfig.internal.mixin.render.GameRendererAccessor
 import org.polyfrost.oneconfig.internal.mixin.render.GuiRendererAccessor
 *///? }
 import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.network.chat.Component
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
@@ -33,8 +34,10 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.hud.GuiTargetRedirect
 import org.slf4j.LoggerFactory
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.Collections
 import java.util.concurrent.CompletableFuture
+import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -75,7 +78,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
         catalogCache?.let { return it }
         return synchronized(requestLock) {
             catalogCache ?: entries.map { entry ->
-                ItemDescriptor(entry.id, ItemStack(entry.item).hoverName.string)
+                ItemDescriptor(entry.id, Component.translatable(entry.item.descriptionId).string)
             }.also { catalogCache = it }
         }
     }
@@ -118,26 +121,51 @@ class MinecraftItemCatalogService : ItemCatalogService {
     private fun renderPendingBatch() {
         val guiWidth = Platform.screen().guiWidth()
         val guiHeight = Platform.screen().guiHeight()
+        val windowWidth = Platform.screen().windowWidth()
+        val windowHeight = Platform.screen().windowHeight()
         val viewportWidth = Platform.screen().viewportWidth()
         val viewportHeight = Platform.screen().viewportHeight()
-        if (guiWidth <= 0 || guiHeight <= 0 || viewportWidth <= 0 || viewportHeight <= 0) {
+        if (
+            guiWidth <= 0 || guiHeight <= 0 ||
+            windowWidth <= 0 || windowHeight <= 0 ||
+            viewportWidth <= 0 || viewportHeight <= 0
+        ) {
             completeBatch(currentBatch(), emptyMap())
             return
         }
 
-        val columns = (guiWidth / CELL_SIZE).coerceAtLeast(1)
-        val rows = (guiHeight / CELL_SIZE).coerceAtLeast(1)
+        val scaleX = viewportWidth.toDouble() / guiWidth.toDouble()
+        val scaleY = viewportHeight.toDouble() / guiHeight.toDouble()
+        val pixelRatio = maxOf(
+            viewportWidth.toDouble() / windowWidth.toDouble(),
+            viewportHeight.toDouble() / windowHeight.toDouble(),
+        )
+        val iconPixelSize = (ICON_SIZE * pixelRatio).roundToInt().coerceIn(ICON_SIZE, MAX_ICON_PIXEL_SIZE)
+        val columns = min(
+            MAX_BATCH_COLUMNS,
+            floor(MAX_TARGET_SIZE / (CELL_SIZE * scaleX)).toInt().coerceAtLeast(1),
+        )
+        val rows = min(
+            MAX_BATCH_ROWS,
+            floor(MAX_TARGET_SIZE / (CELL_SIZE * scaleY)).toInt().coerceAtLeast(1),
+        )
         val batch = currentBatch(columns * rows)
         if (batch.ids.isEmpty()) {
             markRenderFinished()
             return
         }
 
+        val usedColumns = min(columns, batch.ids.size)
+        val usedRows = (batch.ids.size + usedColumns - 1) / usedColumns
+        val renderGuiWidth = usedColumns * CELL_SIZE
+        val renderGuiHeight = usedRows * CELL_SIZE
+        val targetWidth = ceil(renderGuiWidth * scaleX).toInt().coerceIn(1, MAX_TARGET_SIZE)
+        val targetHeight = ceil(renderGuiHeight * scaleY).toInt().coerceIn(1, MAX_TARGET_SIZE)
         val placements = batch.ids.mapIndexed { index, id ->
-            Placement(id, index % columns * CELL_SIZE, index / columns * CELL_SIZE)
+            Placement(id, index % usedColumns * CELL_SIZE, index / usedColumns * CELL_SIZE)
         }
         val target = try {
-            createTarget(viewportWidth, viewportHeight)
+            createTarget(targetWidth, targetHeight)
         } catch (throwable: Throwable) {
             LOG.warn("Failed to create the item icon render target", throwable)
             completeBatch(batch, emptyMap())
@@ -145,8 +173,8 @@ class MinecraftItemCatalogService : ItemCatalogService {
         }
 
         try {
-            renderItems(target, placements, guiWidth, guiHeight)
-            readTarget(target, placements, guiWidth, guiHeight, batch)
+            renderItems(target, placements, renderGuiWidth, renderGuiHeight)
+            readTarget(target, placements, renderGuiWidth, renderGuiHeight, iconPixelSize, batch)
         } catch (throwable: Throwable) {
             LOG.warn("Failed to render item selector icons", throwable)
             target.destroyBuffers()
@@ -292,6 +320,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
         placements: List<Placement>,
         guiWidth: Int,
         guiHeight: Int,
+        iconSize: Int,
         batch: RenderBatch,
     ) {
         //? if >= 1.21.5 {
@@ -336,6 +365,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
                         width,
                         height,
                         pixelSize,
+                        iconSize,
                         view.data(),
                         batch,
                     )
@@ -349,6 +379,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
                         width,
                         height,
                         pixelSize,
+                        iconSize,
                         view.data(),
                         batch,
                     )
@@ -362,6 +393,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
                         width,
                         height,
                         pixelSize,
+                        iconSize,
                         view.data(),
                         batch,
                     )
@@ -386,6 +418,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
         }
         //? } else {
         /*val image = NativeImage(target.width, target.height, false)
+        val previousTexture = RenderSystem.getShaderTexture(0)
         try {
             RenderSystem.bindTexture(target.colorTextureId)
             image.downloadTexture(0, false)
@@ -396,6 +429,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
                 guiHeight,
                 image.width,
                 image.height,
+                iconSize,
             ) { x, y ->
                 //? if >= 1.21.4 {
                 image.getPixel(x, y)
@@ -404,6 +438,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
             }
             completeBatch(batch, icons)
         } finally {
+            RenderSystem.bindTexture(previousTexture)
             image.close()
             target.destroyBuffers()
         }
@@ -417,12 +452,14 @@ class MinecraftItemCatalogService : ItemCatalogService {
         width: Int,
         height: Int,
         pixelSize: Int,
+        iconSize: Int,
         data: ByteBuffer,
         batch: RenderBatch,
     ) {
-        val icons = extractIcons(placements, guiWidth, guiHeight, width, height) { x, y ->
+        val nativeData = data.order(ByteOrder.nativeOrder())
+        val icons = extractIcons(placements, guiWidth, guiHeight, width, height, iconSize) { x, y ->
             val sourceY = height - y - 1
-            val raw = data.getInt((x + sourceY * width) * pixelSize)
+            val raw = nativeData.getInt((x + sourceY * width) * pixelSize)
             abgrToArgb(raw)
         }
         completeBatch(batch, icons)
@@ -434,24 +471,25 @@ class MinecraftItemCatalogService : ItemCatalogService {
         guiHeight: Int,
         imageWidth: Int,
         imageHeight: Int,
+        iconSize: Int,
         pixel: (Int, Int) -> Int,
     ): Map<String, ItemIconData> {
         val scaleX = imageWidth.toDouble() / guiWidth.toDouble()
         val scaleY = imageHeight.toDouble() / guiHeight.toDouble()
         return placements.associate { placement ->
-            val pixels = IntArray(ICON_SIZE * ICON_SIZE)
-            for (y in 0 until ICON_SIZE) {
-                val logicalY = placement.y + (y + 0.5) * CELL_SIZE / ICON_SIZE
+            val pixels = IntArray(iconSize * iconSize)
+            for (y in 0 until iconSize) {
+                val logicalY = placement.y + ITEM_PADDING + (y + 0.5) * ITEM_RENDER_SIZE / iconSize
                 val sourceY = logicalY * scaleY - 0.5
-                for (x in 0 until ICON_SIZE) {
-                    val logicalX = placement.x + (x + 0.5) * CELL_SIZE / ICON_SIZE
+                for (x in 0 until iconSize) {
+                    val logicalX = placement.x + ITEM_PADDING + (x + 0.5) * ITEM_RENDER_SIZE / iconSize
                     val sourceX = logicalX * scaleX - 0.5
-                    pixels[y * ICON_SIZE + x] = unpremultiply(
+                    pixels[y * iconSize + x] = unpremultiply(
                         sampleBilinear(sourceX, sourceY, imageWidth, imageHeight, pixel),
                     )
                 }
             }
-            placement.id to ItemIconData(ICON_SIZE, ICON_SIZE, pixels)
+            placement.id to ItemIconData(iconSize, iconSize, pixels)
         }
     }
 
@@ -554,7 +592,12 @@ class MinecraftItemCatalogService : ItemCatalogService {
         val LOG = LoggerFactory.getLogger("OneConfig/ItemList")
         const val CELL_SIZE = 20
         const val ITEM_PADDING = 2
-        const val ICON_SIZE = 64
-        const val MAX_CACHED_ICONS = 2048
+        const val ITEM_RENDER_SIZE = CELL_SIZE - ITEM_PADDING * 2
+        const val ICON_SIZE = 32
+        const val MAX_ICON_PIXEL_SIZE = 64
+        const val MAX_CACHED_ICONS = 512
+        const val MAX_BATCH_COLUMNS = 8
+        const val MAX_BATCH_ROWS = 8
+        const val MAX_TARGET_SIZE = 512
     }
 }

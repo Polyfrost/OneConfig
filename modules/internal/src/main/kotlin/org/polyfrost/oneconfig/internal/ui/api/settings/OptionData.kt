@@ -193,7 +193,7 @@ class ItemListOptionData(prop: Property<*>) : ListOptionData(prop) {
         elements().mapNotNull { it as? String }
     )
 
-    fun setIds(values: List<String>) = setElements(
+    fun setIds(values: List<String>) = prop.setItemListElements(
         org.polyfrost.oneconfig.internal.ui.components.settings.item.normalizeItemIds(values)
     )
 }
@@ -367,7 +367,7 @@ private fun Property<*>.listElements(): List<Any?> {
 private fun Property<*>.setListElements(values: List<Any?>) {
     val prop = this as Property<Any>
     if (!type.isArray) {
-        prop.set(createCompatibleList(values))
+        prop.set(ArrayList(values))
         return
     }
     val component = type.componentType
@@ -379,8 +379,17 @@ private fun Property<*>.setListElements(values: List<Any?>) {
 }
 
 @Suppress("UNCHECKED_CAST")
-private fun Property<*>.createCompatibleList(values: List<Any?>): List<Any?> {
-    ArrayList(values).takeIf(type::isInstance)?.let { return it }
+private fun Property<*>.setItemListElements(values: List<String>) {
+    if (type.isArray) {
+        (this as Property<Any>).set(values.toTypedArray())
+        return
+    }
+
+    val replacement = ArrayList(values)
+    if (type.isInstance(replacement)) {
+        (this as Property<Any>).set(replacement)
+        return
+    }
 
     val candidates = listOfNotNull(get()?.javaClass, type).distinct()
     for (candidate in candidates) {
@@ -388,14 +397,20 @@ private fun Property<*>.createCompatibleList(values: List<Any?>): List<Any?> {
 
         runCatching {
             candidate.getConstructor(Collection::class.java).newInstance(values)
-        }.getOrNull()?.let { if (it is List<*>) return it }
+        }.getOrNull()?.let { instance ->
+            if (instance is List<*>) {
+                (this as Property<Any>).set(instance)
+                return
+            }
+        }
 
         runCatching {
             candidate.getConstructor().newInstance()
         }.getOrNull()?.let { instance ->
             if (instance is MutableList<*>) {
                 (instance as MutableList<Any?>).addAll(values)
-                return instance
+                (this as Property<Any>).set(instance)
+                return
             }
         }
     }
