@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import org.jetbrains.skia.ImageInfo
 import org.jetbrains.skia.Surface
+import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
 import org.slf4j.LoggerFactory
@@ -26,6 +27,7 @@ object ComposePreloader {
     fun preloadGpuWarmup() {
         if (gpuWarmed) return
         gpuWarmed = true
+        NotificationsManager.ensureInitialized()
         SkiaCtx.queueWarmup {
             val startNanos = System.nanoTime()
             val w = Platform.screen().windowWidth().takeIf { it > 0 } ?: 1280

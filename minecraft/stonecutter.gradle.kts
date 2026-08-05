@@ -63,6 +63,10 @@ stonecutter {
                     "import net.minecraft.resources.Identifier",
                 )
             }
+
+            string(eval(current.version, "< 1.21.2")) {
+                replace("Minecraft.getInstance().schedule(", "Minecraft.getInstance().tell(")
+            }
         }
     }
 }

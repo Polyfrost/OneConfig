@@ -72,6 +72,9 @@ public interface ScreenPlatform {
         return surfaceRatio() / Platform.compatibility().options().getGuiScale();
     }
 
+    default void showMessage(String message) {
+    }
+
     void display(@Nullable Object screen, int ticks);
 
     default void display(Object screen) {

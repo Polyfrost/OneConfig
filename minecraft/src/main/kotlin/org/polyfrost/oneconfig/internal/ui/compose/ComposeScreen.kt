@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.scene.CanvasLayersComposeScene
+import androidx.compose.ui.scene.ComposeScene
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
@@ -111,8 +112,72 @@ abstract class ComposeScreen(
 //    }
 
 
-    protected var scene = createScene()
-        private set
+    private var sceneOrNull: ComposeScene? = null
+
+    private var scenePoisoned = false
+
+    private var sceneRebuilds = 0
+
+    private var sceneBusy = false
+
+    private var contentSet = false
+
+    private fun liveScene(): ComposeScene? {
+        if (scenePoisoned || sceneBusy) return null
+        return sceneOrNull
+    }
+
+    private inline fun <T> withScene(block: (ComposeScene) -> T): T? {
+        val scene = liveScene() ?: return null
+        sceneBusy = true
+        return try {
+            block(scene)
+        } catch (t: Throwable) {
+            poisonScene(t)
+            null
+        } finally {
+            sceneBusy = false
+        }
+    }
+
+    private fun poisonScene(cause: Throwable) {
+        if (scenePoisoned) return
+        scenePoisoned = true
+        SkiaCtx.clearComposeFrame()
+        LOGGER.error(
+            "Compose scene for ${this::class.java.simpleName} failed and has been discarded; " +
+                "it will be rebuilt on the next frame.",
+            cause,
+        )
+    }
+
+    private fun ensureScene(): ComposeScene? {
+        if (scenePoisoned) closeSceneQuietly()
+        sceneOrNull?.let { return it }
+        if (!ComposeSupport.isAvailable) return null
+        val created = try {
+            createScene()
+        } catch (t: Throwable) {
+            ComposeSupport.recordSceneFailure(t)
+            return null
+        }
+        sceneOrNull = created
+        scenePoisoned = false
+        contentSet = false
+        return created
+    }
+
+    private fun closeSceneQuietly() {
+        val scene = sceneOrNull ?: return
+        sceneOrNull = null
+        contentSet = false
+        scenePoisoned = false
+        try {
+            scene.close()
+        } catch (t: Throwable) {
+            LOGGER.debug("Ignoring failure while closing a Compose scene", t)
+        }
+    }
 
     private fun createScene() = CanvasLayersComposeScene(
         platformContext = ComposeSceneContextImpl.platformContext,
@@ -188,10 +253,10 @@ abstract class ComposeScreen(
 //            composeRenderer.initialize(width, height)
         }
 
-        if (sceneClosed) {
-            scene = createScene()
-            sceneClosed = false
-            contentSet = false
+        val scene = ensureScene()
+        if (scene == null) {
+            reportUnavailableAndClose()
+            return
         }
 
         sceneDirty = true
@@ -203,9 +268,19 @@ abstract class ComposeScreen(
         lastFbWidth = -1
         cachedSurfaceScale = -1f
 
-        if (contentSet) return
+        if (!bindContent(scene)) {
+            closeWithMessage("OneConfig's UI failed to start. Please check your logs and report this.")
+        }
+    }
 
+    private fun bindContent(scene: ComposeScene): Boolean {
+        if (contentSet) return true
+        withScene { setContentOn(it) } ?: return false
         contentSet = true
+        return true
+    }
+
+    private fun setContentOn(scene: ComposeScene) {
         scene.setContent {
             @Suppress("DEPRECATION")
             CompositionLocalProvider(
@@ -215,6 +290,20 @@ abstract class ComposeScreen(
             ) {
                 compose()
             }
+        }
+    }
+
+    private fun reportUnavailableAndClose() {
+        val reason = ComposeSupport.unavailableReason()
+            ?: "OneConfig's UI failed to start. Please check your logs and report this."
+        LOGGER.error("Refusing to open ${this::class.java.simpleName}: {}", reason)
+        closeWithMessage(reason)
+    }
+
+    private fun closeWithMessage(reason: String) {
+        client.execute {
+            if (Platform.screen().current<Screen>() === this) Platform.screen().close()
+            Platform.screen().showMessage(reason)
         }
     }
 
@@ -237,18 +326,9 @@ abstract class ComposeScreen(
         }
     }
 
-    private var sceneClosed = false
-    private var contentSet = false
-
     private fun disposeScene() {
-        if (sceneClosed) return
-        sceneClosed = true
-        contentSet = false
         SkiaCtx.clearComposeFrame()
-        try {
-            scene.close()
-        } catch (_: Throwable) {
-        }
+        closeSceneQuietly()
     }
 
     override fun onClose() {
@@ -265,26 +345,42 @@ abstract class ComposeScreen(
     //~ if >= 26.1 'render' -> 'extractRenderState'
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
         if (Platform.screen().current<Screen>() !== this) return
+        if (scenePoisoned) {
+            if (sceneRebuilds >= MAX_SCENE_REBUILDS) {
+                LOGGER.error(
+                    "Compose scene for {} failed {} times without a good frame in between; closing it.",
+                    this::class.java.simpleName, sceneRebuilds,
+                )
+                closeSceneQuietly()
+                closeWithMessage("OneConfig's UI hit a rendering error and had to close.")
+                return
+            }
+            sceneRebuilds++
+            val rebuilt = ensureScene()
+            if (rebuilt == null || !bindContent(rebuilt)) {
+                closeSceneQuietly()
+                closeWithMessage(
+                    ComposeSupport.unavailableReason()
+                        ?: "OneConfig's UI hit a rendering error and had to close."
+                )
+                return
+            }
+            sceneDirty = true
+            lastPointer = null
+        }
         val metricsChanged = syncSceneMetrics()
 
         val focused = client.isWindowActive
         if (focused) {
-            try {
-                val pointerPosition = pointerPosition()
-                if (pointerPosition != lastPointer) {
-                    lastPointer = pointerPosition
-                    scene.sendPointerEvent(PointerEventType.Move, pointerPosition)
-                }
-            } catch (e: Throwable) {
-                LOGGER.error("Failed to dispatch mouse move to ${this::class.java.simpleName}", e)
+            val pointerPosition = pointerPosition()
+            if (pointerPosition != lastPointer) {
+                lastPointer = pointerPosition
+                withScene { it.sendPointerEvent(PointerEventType.Move, pointerPosition) }
             }
         }
 
         if (metricsChanged) {
-            try {
-                scene.invalidatePositionInWindow()
-            } catch (_: Throwable) {
-            }
+            withScene { it.invalidatePositionInWindow() }
         }
 
         val debugOverlayOnTop = org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen.shouldSuppressVanilla()
@@ -292,24 +388,24 @@ abstract class ComposeScreen(
             if (SkiaCtx.blitComposeCached(ctx)) return
         }
 
+        if (liveScene() == null) return
+
         val renderBlock = Runnable {
-            try {
-                val canvas = SkiaCtx.canvas
-                val pixelRatio = surfaceScale()
-                val mode = OneConfigConfig.reducedResFilter
-                val amount = OneConfigConfig.uiSharpening
-                val filter = mode != 0 && amount > 0f &&
-                    DesktopHelper.isMac && osUpscaleFactor() > 1.05f
-                canvas.save()
-                if (filter) canvas.saveLayer(null, filterPaint(mode, amount))
-                if (pixelRatio != 1f) {
-                    canvas.scale(pixelRatio, pixelRatio)
-                }
-                scene.render(canvas.asComposeCanvas(), System.nanoTime())
-                if (filter) canvas.restore()
-                canvas.restore()
-            } catch (_: Throwable) {
+            val canvas = SkiaCtx.canvas
+            val pixelRatio = surfaceScale()
+            val mode = OneConfigConfig.reducedResFilter
+            val amount = OneConfigConfig.uiSharpening
+            val filter = mode != 0 && amount > 0f &&
+                DesktopHelper.isMac && osUpscaleFactor() > 1.05f
+            val depth = canvas.save()
+            if (filter) canvas.saveLayer(null, filterPaint(mode, amount))
+            if (pixelRatio != 1f) {
+                canvas.scale(pixelRatio, pixelRatio)
             }
+            if (withScene { it.render(canvas.asComposeCanvas(), System.nanoTime()) } != null) {
+                sceneRebuilds = 0
+            }
+            canvas.restoreToCount(depth)
         }
 
         val wasDirty = sceneDirty
@@ -327,15 +423,17 @@ abstract class ComposeScreen(
     //? } else {
     /*override fun mouseClicked(x: Double, y: Double, button: Int): Boolean {
     *///? }
-        scene.sendPointerEvent(
-            PointerEventType.Press,
-            button = when (button) {
-                GLFW.GLFW_MOUSE_BUTTON_LEFT -> PointerButton.Primary
-                GLFW.GLFW_MOUSE_BUTTON_RIGHT -> PointerButton.Secondary
-                else -> null
-            },
-            position = pointerPosition()
-        )
+        withScene {
+            it.sendPointerEvent(
+                PointerEventType.Press,
+                button = when (button) {
+                    GLFW.GLFW_MOUSE_BUTTON_LEFT -> PointerButton.Primary
+                    GLFW.GLFW_MOUSE_BUTTON_RIGHT -> PointerButton.Secondary
+                    else -> null
+                },
+                position = pointerPosition()
+            )
+        }
         //? >= 1.21.10 {
         return super.mouseClicked(event, doubleClick)
         //? } else {
@@ -349,15 +447,17 @@ abstract class ComposeScreen(
     //? } else {
     /*override fun mouseReleased(x: Double, y: Double, button: Int): Boolean {
     *///? }
-        scene.sendPointerEvent(
-            PointerEventType.Release,
-            button = when (button) {
-                GLFW.GLFW_MOUSE_BUTTON_LEFT -> PointerButton.Primary
-                GLFW.GLFW_MOUSE_BUTTON_RIGHT -> PointerButton.Secondary
-                else -> null
-            },
-            position = pointerPosition()
-        )
+        withScene {
+            it.sendPointerEvent(
+                PointerEventType.Release,
+                button = when (button) {
+                    GLFW.GLFW_MOUSE_BUTTON_LEFT -> PointerButton.Primary
+                    GLFW.GLFW_MOUSE_BUTTON_RIGHT -> PointerButton.Secondary
+                    else -> null
+                },
+                position = pointerPosition()
+            )
+        }
 
         //? >= 1.21.10 {
         return super.mouseReleased(event)
@@ -371,12 +471,14 @@ abstract class ComposeScreen(
     override fun mouseScrolled(x: Double, y: Double, scrollX: Double, scrollY: Double): Boolean {
         val scrollScale = (if (DesktopHelper.isMac) 2f else 8f) * scrollSpeed
         val position = pointerPosition()
-        scene.sendPointerEvent(PointerEventType.Move, position)
-        scene.sendPointerEvent(
-            eventType = PointerEventType.Scroll,
-            position = position,
-            scrollDelta = Offset((-scrollX * scrollScale).toFloat(), (-scrollY * scrollScale).toFloat()),
-        )
+        withScene {
+            it.sendPointerEvent(PointerEventType.Move, position)
+            it.sendPointerEvent(
+                eventType = PointerEventType.Scroll,
+                position = position,
+                scrollDelta = Offset((-scrollX * scrollScale).toFloat(), (-scrollY * scrollScale).toFloat()),
+            )
+        }
         return super.mouseScrolled(x, y, scrollX, scrollY)
     }
 
@@ -419,7 +521,7 @@ abstract class ComposeScreen(
             )
         )
 
-        val handled = scene.sendKeyEvent(composeEvent)
+        val handled = withScene { it.sendKeyEvent(composeEvent) } ?: false
         //? >= 1.21.10 {
         return handled || super.charTyped(event)
         //? } else {
@@ -469,7 +571,7 @@ abstract class ComposeScreen(
             )
         )
 
-        val handled = scene.sendKeyEvent(composeEvent)
+        val handled = withScene { it.sendKeyEvent(composeEvent) } ?: false
         //? >= 1.21.10 {
         return handled || super.keyPressed(event)
         //? } else {
@@ -507,7 +609,7 @@ abstract class ComposeScreen(
             )
         )
 
-        val handled = scene.sendKeyEvent(composeEvent)
+        val handled = withScene { it.sendKeyEvent(composeEvent) } ?: false
         //? >= 1.21.10 {
         return handled || super.keyReleased(event)
         //? } else {
@@ -568,12 +670,14 @@ abstract class ComposeScreen(
     }
 
     private fun syncSceneMetrics(): Boolean {
-        if (sceneClosed) return false
         val w = Platform.screen().windowWidth()
         val h = Platform.screen().windowHeight()
         if (w <= 0 || h <= 0) return false
-        scene.density = Density(sceneDensity())
-        scene.size = IntSize(w, h)
+        val applied = withScene {
+            it.density = Density(sceneDensity())
+            it.size = IntSize(w, h)
+        }
+        if (applied == null) return false
         ComposeSceneContextImpl.updateContainerSize(w, h)
         val changed = w != lastSceneW || h != lastSceneH
         val fbW = Platform.screen().viewportWidth()
@@ -613,10 +717,12 @@ abstract class ComposeScreen(
     }
 
     // Dummy component needed for constructing AWT key events
-    private val dummyComponent = object : Component() {}
+    private val dummyComponent by lazy { object : Component() {} }
 
     private companion object {
         const val SETTLE_FRAMES = 4
+
+        const val MAX_SCENE_REBUILDS = 3
 
         const val HARDEN_SKSL = """
             uniform shader content;

@@ -6,7 +6,7 @@ import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 
 class OneConfigUIBridgeImpl : OneConfigUIBridge {
-    override fun createScreen(route: Any?): Any = OneConfigUIScreen(initialRoute = route)
+    override fun createScreen(route: Any?): Any = OneConfigUIScreen.forRoute(route)
 
     override fun open(route: Any?) {
         if (route == null) {
@@ -17,7 +17,7 @@ class OneConfigUIBridgeImpl : OneConfigUIBridge {
         if (LocalNavController.isReady && Platform.screen().current<Any?>() is OneConfigUIScreen) {
             LocalNavController.wrapper.navigate(route)
         } else {
-            Platform.screen().display(OneConfigUIScreen(initialRoute = route))
+            Platform.screen().display(OneConfigUIScreen.forRoute(route))
         }
     }
 }

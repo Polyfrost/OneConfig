@@ -42,10 +42,15 @@ class OneConfigUIScreen @JvmOverloads constructor(
     private val initialTreeId: String? = null,
     private val initialCategory: String? = null,
     private val initialTree: Tree? = null,
-    private val initialRoute: Any? = null,
 ) : ComposeScreen() {
+    private var initialRoute: Any? = null
+
     companion object {
         private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/UI")
+
+        @JvmStatic
+        fun forRoute(route: Any?): OneConfigUIScreen =
+            OneConfigUIScreen().also { it.initialRoute = route }
         private const val FULLSCREEN_BLUR_RADIUS = 8f
         private const val OPEN_ANIMATION_MS = 250L
 
