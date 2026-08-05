@@ -8,11 +8,13 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
+import org.polyfrost.oneconfig.internal.ui.hud.hudModCardConfigs
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindRegistrar
 
 object ConfigRegistry {
     private val hiddenModCardIds = setOf(
         "oneconfig.json",
+        "oneconfig.builtin",
         "themes.json",
         "minecraft",
         "resourcefulconfig",
@@ -50,7 +52,7 @@ object ConfigRegistry {
 
     val configs: SnapshotStateList<ConfigData> = mutableStateListOf()
     val modCardConfigs: List<ConfigData>
-        get() = configs.filter(::shouldShowModCard)
+        get() = configs.filter(::shouldShowModCard) + hudModCardConfigs()
 
     var revision by mutableIntStateOf(0)
         private set
