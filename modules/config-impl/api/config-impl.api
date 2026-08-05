@@ -231,6 +231,12 @@ public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$InheritableS
 	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;Landroidx/compose/runtime/Composer;I)V
 }
 
+public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$ItemListVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;Landroidx/compose/runtime/Composer;I)V
+}
+
 public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$KeybindVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
 	public static final field $stable I
 	public fun <init> ()V
@@ -490,6 +496,22 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun subcategoryTranslation ()Z
 	public abstract fun title ()Ljava/lang/String;
 	public abstract fun titleKey ()Ljava/lang/String;
+	public abstract fun titleTranslation ()Z
+}
+
+public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/ItemList : java/lang/annotation/Annotation {
+	public abstract fun addText ()Ljava/lang/String;
+	public abstract fun addTextTranslation ()Z
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun categoryTranslation ()Z
+	public abstract fun description ()Ljava/lang/String;
+	public abstract fun descriptionTranslation ()Z
+	public abstract fun icon ()Ljava/lang/String;
+	public abstract fun maxEntries ()I
+	public abstract fun reorderable ()Z
+	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun subcategoryTranslation ()Z
+	public abstract fun title ()Ljava/lang/String;
 	public abstract fun titleTranslation ()Z
 }
 

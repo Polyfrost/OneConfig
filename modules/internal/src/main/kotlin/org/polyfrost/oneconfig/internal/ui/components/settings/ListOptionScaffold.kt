@@ -97,6 +97,16 @@ internal class ListEntriesState<T>(initial: List<T>, private val onCommit: (List
         apply(list)
     }
 
+    fun replace(values: List<T>) {
+        val existing = HashMap<T, java.util.ArrayDeque<ListRowEntry<T>>>()
+        entries.forEach { entry ->
+            existing.getOrPut(entry.value) { java.util.ArrayDeque() }.addLast(entry)
+        }
+        apply(values.map { value ->
+            existing[value]?.pollFirst() ?: ListRowEntry(nextId++, value)
+        })
+    }
+
     private fun apply(list: List<ListRowEntry<T>>) {
         entries = list
         onCommit(list.map { it.value })
@@ -121,6 +131,7 @@ internal fun <T> ListOptionContainer(
     maxEntries: Int,
     addText: Any,
     onAdd: () -> Unit,
+    showAddWhenFull: Boolean = false,
     entryHeight: Dp = ListEntryHeight,
     maxHeight: Dp = 280.dp,
     invalid: (T) -> Boolean = { false },
@@ -220,7 +231,7 @@ internal fun <T> ListOptionContainer(
             }
         }
 
-        if (maxEntries <= 0 || entries.size < maxEntries) {
+        if (showAddWhenFull || maxEntries <= 0 || entries.size < maxEntries) {
             AddEntryButton(addText, entryHeight, onAdd)
         }
     }
