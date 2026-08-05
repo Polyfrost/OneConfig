@@ -191,6 +191,7 @@ abstract class ComposeScreen(
     private var lastSceneW = -1
     private var lastSceneH = -1
     private var lastFbWidth = -1
+    private var lastFbHeight = -1
     private var settleFrames = 0
     private var cachedSurfaceScale = -1f
 
@@ -266,6 +267,7 @@ abstract class ComposeScreen(
         lastSceneW = -1
         lastSceneH = -1
         lastFbWidth = -1
+        lastFbHeight = -1
         cachedSurfaceScale = -1f
 
         if (!bindContent(scene)) {
@@ -681,9 +683,11 @@ abstract class ComposeScreen(
         ComposeSceneContextImpl.updateContainerSize(w, h)
         val changed = w != lastSceneW || h != lastSceneH
         val fbW = Platform.screen().viewportWidth()
-        if (changed || fbW != lastFbWidth) {
+        val fbH = Platform.screen().viewportHeight()
+        if (changed || fbW != lastFbWidth || fbH != lastFbHeight) {
             cachedSurfaceScale = -1f
             settleFrames = SETTLE_FRAMES
+            sceneDirty = true
         }
         if (settleFrames > 0) {
             settleFrames--
@@ -692,6 +696,7 @@ abstract class ComposeScreen(
         lastSceneW = w
         lastSceneH = h
         lastFbWidth = fbW
+        lastFbHeight = fbH
         return changed
     }
 

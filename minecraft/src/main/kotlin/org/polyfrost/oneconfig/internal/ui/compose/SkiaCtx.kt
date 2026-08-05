@@ -292,7 +292,11 @@ object SkiaCtx {
 
     fun blitComposeCached(ctx: GuiGraphicsExtractor): Boolean {
         if (!this::directContext.isInitialized) return false
-        if (composeTarget == null || composeSurface == null) return false
+        val rt = composeTarget ?: return false
+        if (composeSurface == null) return false
+        if (rt.width != Platform.screen().viewportWidth() || rt.height != Platform.screen().viewportHeight()) {
+            return false
+        }
         blitCompose(ctx)
         return true
     }
@@ -733,6 +737,10 @@ object SkiaCtx {
         composeBrt?.close(); composeBrt = null
         composeTarget?.destroyBuffers()
         composeTarget = null
+        // Whatever replaces this target starts out blank, so the cached "clean" frame is gone. Without this the
+        // GL path would blit an uninitialised target (blank/garbage) until something else happened to dirty the
+        // scene - recreateSurface() drops the target on every framebuffer callback, not only on real size changes.
+        composeDirty = true
     }
 
     private fun resolveGLSurface(): Surface? {

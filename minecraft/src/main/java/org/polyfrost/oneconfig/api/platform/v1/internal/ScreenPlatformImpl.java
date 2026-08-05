@@ -32,24 +32,12 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.event.v1.EventDelay;
-import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeSupport;
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 
 public class ScreenPlatformImpl implements ScreenPlatform {
-    private final int[] fbWidth = new int[1];
-    private final int[] winWidth = new int[1];
-    private volatile float cachedPixelRatio = -1.0f;
-
-    public ScreenPlatformImpl() {
-        org.polyfrost.oneconfig.api.event.v1.EventManager.register(
-                org.polyfrost.oneconfig.api.event.v1.events.ResizeEvent.class,
-                e -> cachedPixelRatio = -1.0f
-        );
-    }
-
     @Override
     public int viewportWidth() {
         return Minecraft.getInstance().getWindow().getWidth();
@@ -83,20 +71,12 @@ public class ScreenPlatformImpl implements ScreenPlatform {
     // On macOS, glfwGetWindowContentScale == framebufferSize / windowSize (e.g. 2.0 on Retina).
     // On Windows, they differ: framebuffer == window (ratio 1.0), but contentScale reflects DPI (e.g. 1.5).
     // Using contentScale as pixelRatio on Windows caused the UI to be rendered at the wrong size (#478).
-    // Fix: compute the actual framebuffer-to-window ratio directly from GLFW, which is correct on all platforms.
+    // Fix: compute the actual framebuffer-to-window ratio directly, which is correct on all platforms.
     // See also: https://github.com/glfw/glfw/pull/2457
     @Override
     public float pixelRatio() {
-        float cached = cachedPixelRatio;
-        if (cached > 0.0f) return cached;
-        long handle = Platform.compatibility().windowHandle();
-        org.lwjgl.glfw.GLFW.glfwGetFramebufferSize(handle, fbWidth, null);
-        org.lwjgl.glfw.GLFW.glfwGetWindowSize(handle, winWidth, null);
-        if (winWidth[0] > 0) {
-            float ratio = (float) fbWidth[0] / winWidth[0];
-            cachedPixelRatio = ratio;
-            return ratio;
-        }
+        int win = windowWidth();
+        if (win > 0) return (float) viewportWidth() / win;
         return 1.0f;
     }
 
