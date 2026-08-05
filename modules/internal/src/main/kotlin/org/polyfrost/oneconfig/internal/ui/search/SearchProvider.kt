@@ -18,7 +18,7 @@ interface SearchProvider {
     fun isAvailable(): Boolean
 
     /**
-     * Perform the search on the configs
+     * Perform the search on all options/mods within a scope
      *
      * @param query The search query
      * @param scopes The scopes to search in
@@ -29,12 +29,24 @@ interface SearchProvider {
         scopes: Set<SearchScope>
     ): List<SearchDocument<*>>
 
+    /**
+     * Perform the search on all options/mods within a scope, and then group by the grouper.
+     *
+     * @param query The search query
+     * @param scopes The scopes to search in
+     * @param grouper The grouper
+     * @return A list of search results
+     */
     fun <T> searchGrouped(
         query: String,
         scopes: Set<SearchScope>,
         grouper: (SearchDocument<*>) -> T
     ): Map<T, List<SearchDocument<*>>>
 
+    /**
+     * Function that is called every time the search corpus updates,
+     * with the new/updated documents, and the removed document ids
+     */
     suspend fun onCorpusUpdate(added: List<SearchDocument<*>>, removed: Set<String>)
 }
 

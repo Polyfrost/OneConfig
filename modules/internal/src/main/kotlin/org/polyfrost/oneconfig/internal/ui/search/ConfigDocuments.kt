@@ -38,6 +38,7 @@ object ConfigDocumentSource : SearchDocumentSource {
                 tree = tree,
                 ownerId = config.id,
                 modTitle = config.title.asRenderText(),
+                modDescription = config.description?.asRenderText(),
                 scopes = scopes,
             )
         }
@@ -94,6 +95,7 @@ private fun treeDocuments(
     tree: Tree,
     ownerId: String,
     modTitle: String?,
+    modDescription: String?,
     scopes: Set<SearchScope>,
     include: (Node) -> Boolean = { true },
 ): List<SearchDocument<Node>> {
@@ -126,6 +128,7 @@ private fun treeDocuments(
                 category = nodeCategory.takeIf { it.isNotBlank() },
                 subcategory = nodeSubcategory.takeIf { it.isNotBlank() },
                 modTitle = modTitle?.takeIf { it.isNotBlank() },
+                modDescription = modDescription?.takeIf { it.isNotBlank() },
                 tags = searchTags,
             ),
             payload = node,

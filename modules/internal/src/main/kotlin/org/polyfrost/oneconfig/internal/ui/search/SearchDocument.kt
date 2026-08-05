@@ -28,6 +28,7 @@ data class SearchMetadata(
     val tags: List<String> = emptyList(),
     /** Data about the mod/config owning this option */
     val modTitle: String? = null,
+    val modDescription: String? = null,
     val path: String? = null,
 ) {
     /**
