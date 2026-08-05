@@ -2,6 +2,8 @@ package org.polyfrost.oneconfig.internal.ui.components.settings.item
 
 import com.mojang.blaze3d.pipeline.TextureTarget
 import com.mojang.blaze3d.systems.RenderSystem
+//? if >= 1.21.4 && < 1.21.8
+//import com.mojang.blaze3d.ProjectionType
 //? if >= 1.21.8 {
 import com.mojang.blaze3d.buffers.GpuBuffer
 //? } else if >= 1.21.5 {
@@ -28,7 +30,6 @@ import net.minecraft.world.item.Items
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-//? if >= 1.21.5
 import org.polyfrost.oneconfig.internal.ui.hud.GuiTargetRedirect
 import org.slf4j.LoggerFactory
 import java.nio.ByteBuffer
@@ -37,6 +38,8 @@ import java.util.concurrent.CompletableFuture
 import kotlin.math.floor
 import kotlin.math.min
 import kotlin.math.roundToInt
+//? if < 1.21.8
+//import org.joml.Matrix4f
 
 class MinecraftItemCatalogService : ItemCatalogService {
     private data class RegistryEntry(val item: Item, val id: String)
@@ -205,31 +208,69 @@ class MinecraftItemCatalogService : ItemCatalogService {
         //? } else if >= 1.21.5 {
         /*val client = Minecraft.getInstance()
         val graphics = GuiGraphicsExtractor(client, client.renderBuffers().bufferSource())
-        GuiTargetRedirect.target = target
-        try {
-            placements.forEach { placement ->
-                val item = entriesById[placement.id]?.item ?: return@forEach
-                graphics.renderFakeItem(ItemStack(item), placement.x + ITEM_PADDING, placement.y + ITEM_PADDING)
+        withGuiProjection(guiWidth, guiHeight) {
+            GuiTargetRedirect.target = target
+            try {
+                placements.forEach { placement ->
+                    val item = entriesById[placement.id]?.item ?: return@forEach
+                    graphics.renderFakeItem(ItemStack(item), placement.x + ITEM_PADDING, placement.y + ITEM_PADDING)
+                }
+                graphics.flush()
+            } finally {
+                GuiTargetRedirect.target = null
             }
-            graphics.flush()
-        } finally {
-            GuiTargetRedirect.target = null
         }
         *///? } else {
         /*val client = Minecraft.getInstance()
         val graphics = GuiGraphicsExtractor(client, client.renderBuffers().bufferSource())
-        target.bindWrite(true)
-        try {
-            placements.forEach { placement ->
-                val item = entriesById[placement.id]?.item ?: return@forEach
-                graphics.renderFakeItem(ItemStack(item), placement.x + ITEM_PADDING, placement.y + ITEM_PADDING)
+        withGuiProjection(guiWidth, guiHeight) {
+            GuiTargetRedirect.target = target
+            target.bindWrite(true)
+            try {
+                placements.forEach { placement ->
+                    val item = entriesById[placement.id]?.item ?: return@forEach
+                    graphics.renderFakeItem(ItemStack(item), placement.x + ITEM_PADDING, placement.y + ITEM_PADDING)
+                }
+                graphics.flush()
+            } finally {
+                GuiTargetRedirect.target = null
+                client.mainRenderTarget.bindWrite(true)
             }
-            graphics.flush()
-        } finally {
-            client.mainRenderTarget.bindWrite(true)
         }
         *///? }
     }
+
+    //? if < 1.21.8 {
+    /*private inline fun withGuiProjection(guiWidth: Int, guiHeight: Int, render: () -> Unit) {
+        RenderSystem.backupProjectionMatrix()
+        val modelView = RenderSystem.getModelViewStack()
+        modelView.pushMatrix()
+        try {
+            val projection = Matrix4f().setOrtho(
+                0f,
+                guiWidth.toFloat(),
+                guiHeight.toFloat(),
+                0f,
+                1000f,
+                21000f,
+            )
+            //? if >= 1.21.4 {
+            RenderSystem.setProjectionMatrix(projection, ProjectionType.ORTHOGRAPHIC)
+            //? } else {
+            /*RenderSystem.setProjectionMatrix(projection, com.mojang.blaze3d.vertex.VertexSorting.ORTHOGRAPHIC_Z)
+            *///? }
+            modelView.translation(0f, 0f, -11000f)
+            //? if < 1.21.4
+            //RenderSystem.applyModelViewMatrix()
+            render()
+        } finally {
+            modelView.popMatrix()
+            //? if < 1.21.4
+            //RenderSystem.applyModelViewMatrix()
+            RenderSystem.restoreProjectionMatrix()
+        }
+    }
+    *///? }
 
     private fun clearTarget(target: TextureTarget) {
         //? if >= 26.2 {

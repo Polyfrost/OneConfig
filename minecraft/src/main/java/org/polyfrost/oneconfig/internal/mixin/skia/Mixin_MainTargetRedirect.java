@@ -1,6 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.skia;
 
-//? if >= 1.21.5 && < 1.21.8 {
+//? if < 1.21.8 {
 /*import com.mojang.blaze3d.pipeline.RenderTarget;
 import net.minecraft.client.Minecraft;
 import org.polyfrost.oneconfig.internal.ui.hud.GuiTargetRedirect;
