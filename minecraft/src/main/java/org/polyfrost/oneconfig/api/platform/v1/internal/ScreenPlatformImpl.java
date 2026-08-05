@@ -114,7 +114,7 @@ public class ScreenPlatformImpl implements ScreenPlatform {
             }
         }
         if (!Minecraft.getInstance().isSameThread()) {
-            Minecraft.getInstance().execute(() -> display(screen, ticks));
+            Minecraft.getInstance().schedule(() -> display(screen, ticks));
             return;
         }
         //? if >= 26.2 {
@@ -132,7 +132,7 @@ public class ScreenPlatformImpl implements ScreenPlatform {
     public void showMessage(@Nullable String message) {
         if (message == null || message.isEmpty()) return;
         if (!Minecraft.getInstance().isSameThread()) {
-            Minecraft.getInstance().execute(() -> showMessage(message));
+            Minecraft.getInstance().schedule(() -> showMessage(message));
             return;
         }
         if (Minecraft.getInstance().gui == null) return;
