@@ -21,6 +21,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun applyEditorWidth (F)V
 	public fun backgroundColor ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun canDelete ()Z
+	public fun canMergeBackground ()Z
 	public final fun capturePositionDefaults ()V
 	public final fun captureStaticSizeDefaults (Z)V
 	public static synthetic fun captureStaticSizeDefaults$default (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;ZILjava/lang/Object;)V
@@ -40,6 +41,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getBgChroma ()Z
 	public final fun getBgChromaSpeed ()F
 	public final fun getBgColor ()I
+	public final fun getBgMerged ()Z
 	public final fun getBgRadius ()F
 	public final fun getCaseType ()I
 	public final fun getCategory ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
@@ -97,6 +99,9 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun getX ()F
 	public fun getY ()F
 	public fun hasBackground ()Z
+	public final fun hudBackground ()Lorg/polyfrost/compose/composables/PolyModifier;
+	public final fun hudBackground (Lorg/polyfrost/compose/composables/PolyModifier;)Lorg/polyfrost/compose/composables/PolyModifier;
+	public static synthetic fun hudBackground$default (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Lorg/polyfrost/compose/composables/PolyModifier;ILjava/lang/Object;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public final fun isAnchored ()Z
 	public final fun isReal ()Z
 	public final fun make (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud;

@@ -146,8 +146,12 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
         return "$category ($ownerName)"
     }
 
-    private fun sanitizeId(value: String): String =
-        value.lowercase().replace(Regex("[^a-z0-9._-]"), "_")
+    private fun sanitizeId(value: String): String {
+        val lowered = value.lowercase()
+        val sanitized = lowered.replace(Regex("[^a-z0-9._-]"), "_")
+        if (sanitized == lowered) return sanitized
+        return sanitized + "-" + Integer.toHexString(lowered.hashCode())
+    }
 
     private fun KeyMapping.toOneConfigKeybind(): OneConfigKeybind {
         val key = runCatching { InputConstants.getKey(saveString()) }.getOrDefault(InputConstants.UNKNOWN)

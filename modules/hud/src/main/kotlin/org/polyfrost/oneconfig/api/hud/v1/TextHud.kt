@@ -41,7 +41,6 @@ import org.polyfrost.compose.composables.PolyCanvas
 import org.polyfrost.compose.composables.PolyMcText
 import org.polyfrost.compose.composables.PolyModifier
 import org.polyfrost.compose.composables.align
-import org.polyfrost.compose.composables.background
 import org.polyfrost.compose.composables.padding
 import org.polyfrost.compose.composables.size
 import org.polyfrost.compose.layout.PolyAlign
@@ -102,15 +101,12 @@ abstract class TextHud(
 
         val isStaticValid = staticWidth && staticW > 0f && staticH > 0f
 
-        // when merged, HudManager draws this HUD's background as part of the fused neighbour shape
-        val outerModifier = if (showBackground && !bgMerged) {
-            val bgModifier = PolyModifier.background(PolyColor(bgColor, bgChroma, bgChromaSpeed), bgRadius)
+        // when merged, HudManager draws this HUD's background as part of the fused neighbour shape,
+        // which hudBackground() accounts for
+        val bgModifier = hudBackground()
+        val outerModifier =
             if (isStaticValid) bgModifier.size(staticW, staticH).padding(padInsets)
             else bgModifier.padding(padInsets)
-        } else {
-            if (isStaticValid) PolyModifier.size(staticW, staticH).padding(padInsets)
-            else PolyModifier.padding(padInsets)
-        }
 
         PolyBox(modifier = outerModifier) {
             if (font == Font.Poppins) {

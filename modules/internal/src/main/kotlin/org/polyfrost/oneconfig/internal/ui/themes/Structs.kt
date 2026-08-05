@@ -3,7 +3,7 @@ package org.polyfrost.oneconfig.internal.ui.themes
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontFamily
-import org.polyfrost.oneconfig.internal.OneConfigConfig
+import kotlin.math.round
 
 /** Sets a panel background color's alpha from an opacity percentage (0-100; 0 = transparent, 100 = opaque). */
 fun Color.withOpacityPercent(percent: Float): Color =
@@ -58,5 +58,14 @@ data class UIBranding(
 )
 
 data class UITypography(
-    val family: FontFamily
-)
+    val family: FontFamily,
+    val scale: Float = 1f,
+) {
+    val fontScale: Float = (round(scale / SCALE_STEP) * SCALE_STEP).coerceIn(MIN_SCALE, MAX_SCALE)
+
+    companion object {
+        const val SCALE_STEP = 0.05f
+        const val MIN_SCALE = 0.5f
+        const val MAX_SCALE = 2f
+    }
+}

@@ -6,7 +6,6 @@ import androidx.compose.ui.graphics.skiaCanvas
 import androidx.compose.ui.platform.LocalWindowInfo
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.gui.GuiGraphicsExtractor
-import net.minecraft.client.gui.screens.Screen
 //? >= 1.21.10
 import net.minecraft.client.input.KeyEvent
 //? >= 1.21.10
@@ -42,10 +41,15 @@ class OneConfigUIScreen @JvmOverloads constructor(
     private val initialTreeId: String? = null,
     private val initialCategory: String? = null,
     private val initialTree: Tree? = null,
-    private val initialRoute: Any? = null,
 ) : ComposeScreen() {
+    private var initialRoute: Any? = null
+
     companion object {
         private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/UI")
+
+        @JvmStatic
+        fun forRoute(route: Any?): OneConfigUIScreen =
+            OneConfigUIScreen().also { it.initialRoute = route }
         private const val FULLSCREEN_BLUR_RADIUS = 8f
         private const val OPEN_ANIMATION_MS = 250L
 
@@ -267,7 +271,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         // over their parent and render that parent by hand every frame. When the parent is this screen that
         // would queue a fullscreen blur into the Skia pass, which runs after vanilla GUI drawing and so smears
         // the popup on top of it. Nothing here may run unless we are the screen actually being shown.
-        if (Platform.screen().current<Screen>() !== this) return
+        if (Platform.screen().current<Any?>() !== this) return
         if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= closeAnimationMs) {
             Platform.screen().close()
             return

@@ -100,7 +100,7 @@ object LocalNavController {
         }
 
     /** True once a nav host is attached, i.e. the OC UI is open and navigable. */
-    val isReady: Boolean get() = _current != null
+    val isReady: Boolean get() = _current?.currentDestination != null
 
     val wrapper = NavControllerWrapper
 
@@ -126,8 +126,11 @@ object LocalNavController {
             currentEntry = Entry(ModsGraph)
         }
 
+        private fun host(): NavHostController? = if (isReady) current else null
+
         /** [clearSearch] is off when the navigation only restores a page the user was already on. */
         fun navigate(route: Any, clearSearch: Boolean = true) {
+            val host = host() ?: return
             forwardStack.clear()
             backStack.addLast(currentEntry)
             currentEntry = Entry(route)
@@ -138,7 +141,7 @@ object LocalNavController {
             }
             ShellState.lastRoute = route
             seedRouteCategory(route)
-            current.navigate(route)
+            host.navigate(route)
         }
 
         /**
@@ -164,7 +167,8 @@ object LocalNavController {
                 applyCategory(previous)
                 return
             }
-            if (current.popBackStack()) {
+            val host = host() ?: return
+            if (host.popBackStack()) {
                 forwardStack.addLast(currentEntry)
                 currentEntry = backStack.removeLast()
                 applyCategory(currentEntry)
@@ -175,17 +179,19 @@ object LocalNavController {
         }
 
         fun forward() {
-            val next = forwardStack.removeLastOrNull() ?: return
+            val next = forwardStack.lastOrNull() ?: return
             val samePage = next.route == currentEntry.route
+            val host = if (samePage) null else (host() ?: return)
+            forwardStack.removeLast()
             backStack.addLast(currentEntry)
             currentEntry = next
-            if (!samePage) seedRouteCategory(next.route)
+            if (host != null) seedRouteCategory(next.route)
             applyCategory(next)
-            if (samePage) return
+            if (host == null) return
             ShellState.lastRoute = next.route
             ShellState.globalSearchActive = false
             ShellState.showSearchField = false
-            current.navigate(next.route)
+            host.navigate(next.route)
         }
 
         /** A route that names a category (e.g. an external deep link) overrides the remembered tab. */

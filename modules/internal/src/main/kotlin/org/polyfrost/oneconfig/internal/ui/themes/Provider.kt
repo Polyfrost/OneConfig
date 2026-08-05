@@ -7,9 +7,12 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import kotlinx.coroutines.delay
 import androidx.compose.ui.graphics.toArgb
 import org.polyfrost.compose.render.PolyColor
@@ -44,8 +47,15 @@ fun Theme(content: @Composable () -> Unit) {
 
     SideEffect { syncNotificationTheme(animated) }
 
+    val density = LocalDensity.current
+    val scaled = animated.typography.fontScale
+    val themedDensity = remember(density, scaled) {
+        if (scaled == 1f) density else Density(density.density, density.fontScale * scaled)
+    }
+
     CompositionLocalProvider(
         LocalTheme provides animated,
+        LocalDensity provides themedDensity,
         content = content
     )
 }

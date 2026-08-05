@@ -27,6 +27,7 @@
 package org.polyfrost.oneconfig.api.notifications.v1
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.snapshots.Snapshot
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -37,6 +38,15 @@ object NotificationsManager {
 
     private val _active = mutableStateListOf<Notification>()
     private val _history = mutableStateListOf<Notification>()
+
+    @JvmStatic
+    fun ensureInitialized() {
+        if (_active.size < 0 || _history.size < 0) error("unreachable")
+    }
+
+    private fun mutate(block: () -> Unit) {
+        if (Snapshot.current.readOnly) block() else Snapshot.withMutableSnapshot(block)
+    }
 
     /**
      * The notifications currently on screen, oldest first.
@@ -55,44 +65,60 @@ object NotificationsManager {
      * in the [history] so it remains visible in the notifications center after the toast dismisses.
      */
     fun push(notification: Notification) {
-        _active.add(notification)
-        _history.add(0, notification)
-        while (_history.size > MAX_HISTORY) _history.removeAt(_history.lastIndex)
+        mutate {
+            _active.add(notification)
+            _history.add(0, notification)
+            while (_history.size > MAX_HISTORY) _history.removeAt(_history.lastIndex)
+        }
     }
 
     fun markAllRead() {
-        for (notification in _history) notification.read = true
+        mutate {
+            for (notification in _history) notification.read = true
+        }
     }
 
     fun removeFromHistory(notification: Notification) {
-        _history.remove(notification)
+        mutate {
+            _history.remove(notification)
+        }
     }
 
     /**
      * Fully kills/retires [notification] (drop from history + dismiss)
      */
     fun remove(notification: Notification) {
-        notification.dismissRequested = true
-        _history.remove(notification)
+        mutate {
+            notification.dismissRequested = true
+            _history.remove(notification)
+        }
     }
 
     fun clearHistory() {
-        _history.clear()
+        mutate {
+            _history.clear()
+        }
     }
 
     /**
      * Removes [notification] immediately, skipping any exit animation.
      */
     fun dismiss(notification: Notification) {
-        _active.remove(notification)
+        mutate {
+            _active.remove(notification)
+        }
     }
 
     fun dismiss(id: Long) {
-        _active.removeAll { it.id == id }
+        mutate {
+            _active.removeAll { it.id == id }
+        }
     }
 
     fun clearAll() {
-        _active.clear()
+        mutate {
+            _active.clear()
+        }
     }
 
     val count: Int get() = _active.size

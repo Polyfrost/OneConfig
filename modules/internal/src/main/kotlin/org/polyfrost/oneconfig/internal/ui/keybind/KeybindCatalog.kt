@@ -46,7 +46,20 @@ object KeybindProviderRegistry {
 
 fun collectAllKeybindGroups(): List<KeybindGroup> {
     val configGroups = collectKeybindGroups(ConfigRegistry.configs.filterIsInstance<TreeConfigData>())
-    return configGroups + KeybindProviderRegistry.groups()
+    return (configGroups + KeybindProviderRegistry.groups()).withUniqueModIds()
+}
+
+private fun List<KeybindGroup>.withUniqueModIds(): List<KeybindGroup> {
+    val seen = HashSet<String>(size)
+    return map { group ->
+        if (seen.add(group.modId)) return@map group
+        var suffix = 2
+        var candidate = "${group.modId}~$suffix"
+        while (!seen.add(candidate)) {
+            candidate = "${group.modId}~${++suffix}"
+        }
+        group.copy(modId = candidate)
+    }
 }
 
 private fun collectKeybindGroups(configs: List<TreeConfigData>): List<KeybindGroup> {

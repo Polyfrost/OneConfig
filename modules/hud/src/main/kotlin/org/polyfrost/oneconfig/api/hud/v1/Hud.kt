@@ -31,6 +31,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
+import org.polyfrost.compose.composables.PolyModifier
+import org.polyfrost.compose.composables.background
 import org.polyfrost.compose.layout.PolyAlign
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.runtime.PolyComposeRuntime
@@ -640,9 +642,16 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     var mergeDiagonally: Boolean get() = _mergeDiagonally.value; set(v) { _mergeDiagonally.value = v }
 
-    internal var bgMerged: Boolean
+    /**
+     * `true` while this HUD's background is being drawn as part of a fused neighbour shape by
+     * [HudManager]. A HUD which draws its own background **must** skip it while this is set, or the
+     * background ends up drawn twice, once by the fused shape and once by the HUD itself.
+     *
+     * Prefer [hudBackground], which already accounts for this.
+     */
+    var bgMerged: Boolean
         get() = _bgMerged.value
-        set(v) { _bgMerged.value = v }
+        internal set(v) { _bgMerged.value = v }
 
     @Transient
     private var _bgMerged: MutableState<Boolean> = mutableStateOf(false)
@@ -766,8 +775,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             tree["bgChromaSpeed"] = ktProperty(out::bgChromaSpeed).apply { addDisplayCondition(hideFromConfigUi) }
             tree["bgRadius"] = ktProperty(out::bgRadius).apply { addDisplayCondition(hideFromConfigUi) }
             // legacy HUDs draw their own background through the compat bridge, so there is nothing
-            // for OneConfig to fuse and no reason to persist the settings for them
-            if (out !is LegacyHudMarker) {
+            // for OneConfig to fuse and no reason to persist the settings for them; the same goes
+            // for HUDs which opted out of merging
+            if (out !is LegacyHudMarker && out.canMergeBackground()) {
                 tree["mergeBackground"] = ktProperty(out::mergeBackground).apply {
                     description = "Fuses this HUD's background with the background of HUDs it touches, so they draw as one shape."
                     addDisplayCondition(hideFromConfigUi)
@@ -823,6 +833,33 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     open fun showByDefault(): Boolean = false
     open fun hasBackground(): Boolean = true
+
+    /**
+     * Whether this HUD's background may be fused with the backgrounds of the HUDs it touches.
+     *
+     * Fusing only works when the HUD leaves its own background to OneConfig while [bgMerged] is set:
+     * a HUD which unconditionally draws its own background would have it drawn twice, once by itself
+     * and once by the fused shape, which reads as a doubled (darker) background. So this defaults to
+     * `true` only for [TextHud], which already does that; anything drawing its own content should
+     * override it to `true` *and* apply its background through [hudBackground] (or check [bgMerged]
+     * by hand), or leave it `false` to opt out of merging entirely.
+     *
+     * When `false` the merge settings are hidden from the HUD settings panel and not persisted.
+     */
+    open fun canMergeBackground(): Boolean = this is TextHud
+
+    /**
+     * Applies this HUD's background to [modifier], unless the background is turned off or is
+     * currently being drawn as part of a fused neighbour shape (see [bgMerged]).
+     */
+    @JvmOverloads
+    fun hudBackground(modifier: PolyModifier = PolyModifier): PolyModifier =
+        if (showBackground && hasBackground() && !bgMerged) {
+            modifier.background(PolyColor(bgColor, bgChroma, bgChromaSpeed), bgRadius)
+        } else {
+            modifier
+        }
+
     open fun backgroundColor(): PolyColor? = null
     open fun multipleInstancesAllowed(): Boolean = true
     open fun minimumSize(): Pair<Float, Float> = 0f to 0f

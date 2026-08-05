@@ -18,7 +18,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.gui.GuiGraphicsExtractor
-import net.minecraft.client.gui.screens.Screen
 //? >= 1.21.10
 import net.minecraft.client.input.KeyEvent
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
@@ -115,7 +114,7 @@ class HudEditorUIScreen : ComposeScreen() {
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
         // A screen drawn over this one may render it as its parent; don't act on that pass (it would close
         // the screen on top of us, among other things).
-        if (Platform.screen().current<Screen>() !== this) return
+        if (Platform.screen().current<Any?>() !== this) return
         if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= closeAnimationMs) {
             Platform.screen().close()
             return

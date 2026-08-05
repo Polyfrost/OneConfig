@@ -36,6 +36,7 @@ import org.polyfrost.oneconfig.api.config.v1.Node;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A backend is a storage system for ConfigTrees.
@@ -52,7 +53,7 @@ public abstract class Backend {
     public static final String UI_PLACEHOLDER_METADATA = "ui_placeholder";
     public static final String CUSTOM_SAVE_TRACKED_METADATA = "custom_save_tracked";
     public static final String CUSTOM_SAVE_DIRTY_METADATA = "custom_save_dirty";
-    private final Map<String, Tree> trees = new HashMap<>();
+    private final Map<String, Tree> trees = new ConcurrentHashMap<>();
 
     private static boolean isUiOnly(@NotNull Tree tree) {
         return Boolean.TRUE.equals(tree.getMetadata(UI_ONLY_METADATA));
@@ -279,10 +280,12 @@ public abstract class Backend {
     }
 
     public boolean exists(String id) {
+        if (id == null) return false;
         return trees.containsKey(id);
     }
 
     public final Tree get(String id) {
+        if (id == null) return null;
         return trees.computeIfAbsent(id, key -> {
             Tree t = load(key);
             if (t != null && t.getID() == null) t.setID(key);
