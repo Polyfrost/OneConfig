@@ -116,6 +116,9 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("compat.skyblocker.Mixin_SkyblockerScreenBuilder");
         //? }
 
+        //? stella_compat
+        mixins.add("compat.stella.Mixin_Stella");
+
         //? apec_compat
         //mixins.add("compat.apec.Mixin_ApecMenu");
 

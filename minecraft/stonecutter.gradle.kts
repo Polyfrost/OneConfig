@@ -26,6 +26,7 @@ stonecutter {
             this["odin_compat"] = current.project.endsWith("-fabric") && catalogue.has("odin")
             this["skycubed_compat"] = current.project.endsWith("-fabric") && catalogue.has("skycubed")
             this["skyblocker_compat"] = current.project.endsWith("-fabric") && catalogue.has("skyblocker")
+            this["stella_compat"] = current.project.endsWith("-fabric") && catalogue.has("stella")
             this["apec_compat"] = current.project.endsWith("-fabric") && catalogue.has("apec")
             this["tr7zw_compat"] = true
             this["wwaypoints_compat"] = true

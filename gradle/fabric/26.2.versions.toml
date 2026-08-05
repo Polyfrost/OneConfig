@@ -11,6 +11,7 @@ modmenu = "20.0.0-beta.4"
 yacl = "3.9.4+26.2-fabric"
 moulconfig = "3.11.0"
 skyblocker = "PwRyrygz"
+stella = "hhLUIC3p"
 
 [libraries]
 api-base = { module = "net.fabricmc.fabric-api:fabric-api-base", version.ref = "api-base" }
@@ -24,7 +25,8 @@ modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
 moulconfig = { module = "org.notenoughupdates.moulconfig:common", version.ref = "moulconfig" }
 skyblocker = { module = "maven.modrinth:skyblocker-liap", version.ref = "skyblocker" }
+stella = { module = "maven.modrinth:stella", version.ref = "stella"}
 
 [bundles]
-compat = ["modmenu", "yacl", "skyblocker"]
+compat = ["modmenu", "yacl", "skyblocker", "stella"]
 fabric-api = ["api-base", "lifecycle-events-v1", "transitive-access-wideners-v1", "command-api-v2", "key-mapping-api-v1", "resource-loader-v1"]
