@@ -3,7 +3,6 @@ package org.polyfrost.oneconfig.internal.ui.hud
 import com.mojang.blaze3d.pipeline.TextureTarget
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
-import net.minecraft.client.gui.screens.Screen
 //? if >= 26.1 {
 import net.minecraft.client.renderer.state.gui.GuiRenderState
 import org.polyfrost.oneconfig.internal.mixin.render.GameRendererAccessor
@@ -54,7 +53,7 @@ object DebugOverlayOffscreen {
     private fun active(): Boolean =
         !failed &&
             SkiaCtx.isReady &&
-            Platform.screen().current<Screen>() is ComposeScreen &&
+            Platform.screen().current<Any?>() is ComposeScreen &&
             client.debugOverlay.showDebugScreen()
 
     /** Called from the debug overlay mixin: hide the vanilla (under-UI, blurred) copy. */

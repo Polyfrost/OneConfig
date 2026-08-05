@@ -302,7 +302,7 @@ abstract class ComposeScreen(
 
     private fun closeWithMessage(reason: String) {
         client.execute {
-            if (Platform.screen().current<Screen>() === this) Platform.screen().close()
+            if (Platform.screen().current<Any?>() === this) Platform.screen().close()
             Platform.screen().showMessage(reason)
         }
     }
@@ -344,7 +344,7 @@ abstract class ComposeScreen(
 
     //~ if >= 26.1 'render' -> 'extractRenderState'
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
-        if (Platform.screen().current<Screen>() !== this) return
+        if (Platform.screen().current<Any?>() !== this) return
         if (scenePoisoned) {
             if (sceneRebuilds >= MAX_SCENE_REBUILDS) {
                 LOGGER.error(
