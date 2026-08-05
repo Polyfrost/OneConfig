@@ -638,6 +638,11 @@ object SkiaCtx {
         hudTarget = null
     }
 
+    private var composeAllocFailedAt = 0L
+    private var composeAllocReported = false
+
+    private const val ALLOC_RETRY_COOLDOWN_MS = 2000L
+
     private fun resolveComposeSurface(): Surface? {
         val w = Platform.screen().viewportWidth()
         val h = Platform.screen().viewportHeight()
@@ -646,16 +651,22 @@ object SkiaCtx {
         var rt = composeTarget
         val needNewTarget = rt == null || rt.width != w || rt.height != h
         if (needNewTarget) {
+            if (System.currentTimeMillis() - composeAllocFailedAt < ALLOC_RETRY_COOLDOWN_MS) return null
             destroyComposeTarget()
-            //? if >= 26.2 {
-            /*rt = TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
-            *///? } else if >= 1.21.5 {
-            rt = TextureTarget(null, w, h, true)
-            //? } else if >= 1.21.4 {
-            // rt = TextureTarget(w, h, true)
-            //? } else {
-            /*rt = TextureTarget(w, h, true, Minecraft.ON_OSX)
-            *///? }
+            rt = try {
+                //? if >= 26.2 {
+                /*TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
+                *///? } else if >= 1.21.5 {
+                TextureTarget(null, w, h, true)
+                //? } else if >= 1.21.4 {
+                // TextureTarget(w, h, true)
+                //? } else {
+                /*TextureTarget(w, h, true, Minecraft.ON_OSX)
+                *///? }
+            } catch (e: Throwable) {
+                onComposeAllocFailure(w, h, e)
+                return null
+            }
             composeTarget = rt
 
             //? >= 1.21.5 {
@@ -676,22 +687,46 @@ object SkiaCtx {
             composeBrt?.close(); composeBrt = null
             composeRealIsGeneral = false
             val svc = vulkanService ?: return null
-            val (brt, colorFmt) = svc.makeOffscreenBRT(rt!!, w, h)
-            composeBrt = brt
+            val brt = try {
+                svc.makeOffscreenBRT(rt!!, w, h)
+            } catch (e: Throwable) {
+                destroyComposeTarget()
+                onComposeAllocFailure(w, h, e)
+                return null
+            }
+            composeBrt = brt.first
             val composeOrigin = if (isVulkanMode) SurfaceOrigin.TOP_LEFT else SurfaceOrigin.BOTTOM_LEFT
             composeSurface = Surface.makeFromBackendRenderTarget(
-                directContext, brt,
+                directContext, brt.first,
                 composeOrigin,
-                colorFmt,
+                brt.second,
                 ColorSpace.sRGB,
                 null,
             )
             if (composeSurface == null) {
                 LOG.warn("SkiaCtx: composeSurface is null (w={} h={} vk={})", w, h, isVulkanMode)
-                brt.close(); composeBrt = null
+                brt.first.close(); composeBrt = null
             }
         }
         return composeSurface
+    }
+
+    private fun onComposeAllocFailure(w: Int, h: Int, error: Throwable) {
+        composeAllocFailedAt = System.currentTimeMillis()
+        destroyComposeTarget()
+        destroyHudTarget()
+        if (isVulkanMode) invalidateVkSurfaces()
+        runCatching { directContext.flush() }
+        LOG.error("SkiaCtx: failed to allocate the {}x{} compose target; skipping compose frames", w, h, error)
+        if (!composeAllocReported) {
+            composeAllocReported = true
+            runCatching {
+                Platform.screen().showMessage(
+                    "OneConfig couldn't allocate GPU memory for its UI (${w}x$h). " +
+                        "Lower your resolution or render scale, or close other GPU-heavy programs."
+                )
+            }
+        }
     }
 
     private fun destroyComposeTarget() {

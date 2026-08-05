@@ -44,8 +44,11 @@ repositories {
     maven("https://jitpack.io") {
         content { includeGroupAndSubgroups("com.github") }
     }
+    maven("https://maven.terraformersmc.com/releases") {
+        content { includeGroup("com.terraformersmc") }
+    }
     maven("https://maven.teamresourceful.com/repository/maven-public/") {
-        content { includeGroupAndSubgroups("me.owdding"); includeGroupAndSubgroups("tech.thatgravyboat"); includeGroup("com.terraformersmc") }
+        content { includeGroupAndSubgroups("me.owdding"); includeGroupAndSubgroups("tech.thatgravyboat") }
     }
     maven("https://maven.azureaaron.net/releases") {
         content { includeGroup("net.azureaaron") }

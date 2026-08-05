@@ -43,20 +43,30 @@ object CompatLoader {
         "org.polyfrost.polyui"
     )
 
+    private val ownerByClassName = java.util.concurrent.ConcurrentHashMap<String, java.util.Optional<ModInfo>>()
+
     fun findFirstMod(): ModInfo? {
         forcedModId.get()?.let { forcedId ->
             val forcedMod = Platform.compatibility().mods.firstOrNull { it.id == forcedId }
             if (forcedMod != null) return forcedMod
         }
-        Thread.currentThread().stackTrace.firstOrNull {
-            illegalPaths.none { path -> it.className.startsWith(path) }
-        }?.let { element ->
-            pathFactory.entries.forEach { (key, uri) ->
-                val uri = uri(element.className.replace(".", "/") + ".class")
-                runCatching {
-                    URI.create(uri).toURL().openStream().use {} // throws if unable to open connection
-                    return key
-                }
+        val callerClass = callerClassName() ?: return null
+        return ownerByClassName
+            .computeIfAbsent(callerClass) { java.util.Optional.ofNullable(resolveOwner(it)) }
+            .orElse(null)
+    }
+
+    private fun callerClassName(): String? =
+        Thread.currentThread().stackTrace.firstOrNull { element ->
+            illegalPaths.none { path -> element.className.startsWith(path) }
+        }?.className
+
+    private fun resolveOwner(className: String): ModInfo? {
+        val resourcePath = className.replace(".", "/") + ".class"
+        pathFactory.entries.forEach { (mod, uri) ->
+            runCatching {
+                URI.create(uri(resourcePath)).toURL().openStream().use {} // throws if unable to open
+                return mod
             }
         }
         return null

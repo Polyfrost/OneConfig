@@ -35,6 +35,7 @@ import org.polyfrost.oneconfig.api.event.v1.EventDelay;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen;
+import org.polyfrost.oneconfig.internal.ui.compose.ComposeSupport;
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 
 public class ScreenPlatformImpl implements ScreenPlatform {
@@ -101,8 +102,19 @@ public class ScreenPlatformImpl implements ScreenPlatform {
 
     @Override
     public void display(@Nullable Object screen, int ticks) {
-        if (screen instanceof ComposeScreen && !SkiaCtx.INSTANCE.isReady()) {
-            warnUiUnavailable();
+        if (screen instanceof ComposeScreen) {
+            String unavailable = ComposeSupport.INSTANCE.unavailableReason();
+            if (unavailable != null) {
+                showMessage(unavailable);
+                return;
+            }
+            if (!SkiaCtx.INSTANCE.isReady()) {
+                showMessage(SkiaCtx.INSTANCE.unavailableReason());
+                return;
+            }
+        }
+        if (!Minecraft.getInstance().isSameThread()) {
+            Minecraft.getInstance().execute(() -> display(screen, ticks));
             return;
         }
         //? if >= 26.2 {
@@ -116,13 +128,19 @@ public class ScreenPlatformImpl implements ScreenPlatform {
         //?}
     }
 
-    private void warnUiUnavailable() {
-        String reason = SkiaCtx.INSTANCE.unavailableReason();
-        if (reason == null) return;
+    @Override
+    public void showMessage(@Nullable String message) {
+        if (message == null || message.isEmpty()) return;
+        if (!Minecraft.getInstance().isSameThread()) {
+            Minecraft.getInstance().execute(() -> showMessage(message));
+            return;
+        }
+        if (Minecraft.getInstance().gui == null) return;
         //~ if >= 26.2 'gui.getChat' -> 'gui.hud.getChat'
-        Minecraft.getInstance().gui.getChat()
-                //~ if >= 26.1 'addMessage' -> 'addClientSystemMessage'
-                .addClientSystemMessage(Component.literal(reason).withStyle(ChatFormatting.RED));
+        var chat = Minecraft.getInstance().gui.getChat();
+        if (chat == null) return;
+        //~ if >= 26.1 'addMessage' -> 'addClientSystemMessage'
+        chat.addClientSystemMessage(Component.literal(message).withStyle(ChatFormatting.RED));
     }
 
     @Override
