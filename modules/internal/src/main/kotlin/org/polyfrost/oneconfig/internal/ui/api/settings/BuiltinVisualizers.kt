@@ -11,6 +11,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.FileListOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.FileOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.InfoOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.InheritableSliderOption
+import org.polyfrost.oneconfig.internal.ui.components.settings.ItemListOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.MultiSelectDropdownOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.NumberChainOption
@@ -50,6 +51,9 @@ internal object BuiltinVisualizers {
         })
         Visualizer.register(Visualizer.TextListVisualizer::class.java, Visualizer { prop ->
             TextListOption(TextListOptionData(prop))
+        })
+        Visualizer.register(Visualizer.ItemListVisualizer::class.java, Visualizer { prop ->
+            ItemListOption(ItemListOptionData(prop))
         })
         Visualizer.register(Visualizer.FileVisualizer::class.java, Visualizer { prop ->
             FileOption(FileOptionData(prop))

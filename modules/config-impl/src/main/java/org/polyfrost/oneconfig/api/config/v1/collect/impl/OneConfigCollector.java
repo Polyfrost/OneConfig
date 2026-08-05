@@ -41,7 +41,10 @@ import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.HashMap;
+import java.util.List;
 
 import static org.polyfrost.oneconfig.api.config.v1.Node.strv;
 
@@ -186,6 +189,7 @@ public class OneConfigCollector extends ReflectiveCollector {
             case ColorList color -> {
                 if (!color.alpha()) property.addMetadata("noAlpha", Unit.INSTANCE);
             }
+            case ItemList itemList -> validateItemListField(field, itemList);
             default -> {}
         }
 
@@ -198,6 +202,30 @@ public class OneConfigCollector extends ReflectiveCollector {
                 map.put(s, property.getID());
             }
         }
+    }
+
+    private void validateItemListField(Field field, ItemList annotation) {
+        Class<?> type = field.getType();
+        boolean stringArray = type.isArray() && type.getComponentType() == String.class;
+        boolean stringList = List.class.isAssignableFrom(type) && hasStringListElements(field.getGenericType());
+        if (!stringArray && !stringList) {
+            throw new IllegalArgumentException(String.format(
+                "@ItemList field '%s' must be a String[] or List<String>, but was %s.",
+                field.getName(), field.getGenericType().getTypeName()
+            ));
+        }
+        if (annotation.maxEntries() < 0) {
+            throw new IllegalArgumentException(String.format(
+                "@ItemList field '%s' has a negative maxEntries value (%s).",
+                field.getName(), annotation.maxEntries()
+            ));
+        }
+    }
+
+    private boolean hasStringListElements(Type type) {
+        if (!(type instanceof ParameterizedType parameterized)) return false;
+        Type[] arguments = parameterized.getActualTypeArguments();
+        return arguments.length == 1 && arguments[0] == String.class;
     }
 
     private boolean isIsDefaultTranslation(@NonNull Annotation annotation, String key, Object value) {
