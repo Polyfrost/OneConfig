@@ -4,6 +4,7 @@ package org.polyfrost.oneconfig.internal.compat
 import com.terraformersmc.modmenu.api.ConfigScreenFactory
 import com.terraformersmc.modmenu.api.ModMenuApi
 import net.minecraft.client.gui.screens.Screen
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 
@@ -41,7 +42,7 @@ internal object ModMenuEntrypoint : ModMenuApi {
         )
     }
 
-    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/ModMenu")
+    private val LOGGER = LogManager.getLogger("OneConfig/ModMenu")
 
     internal const val BOOTSTRAP_MOD_ID = "oneconfigbootstrap"
 

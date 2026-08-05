@@ -6,8 +6,8 @@ import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import java.net.URI
-import java.util.concurrent.ConcurrentHashMap
 import java.util.Optional
+import java.util.concurrent.ConcurrentHashMap
 
 object CompatLoader {
     private val forcedModId = ThreadLocal<String?>()
