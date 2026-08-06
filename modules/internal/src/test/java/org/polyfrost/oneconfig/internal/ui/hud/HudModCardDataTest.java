@@ -60,15 +60,18 @@ class HudModCardDataTest {
 
     private final TestHud hud = new TestHud();
     private final SecondTestHud secondHud = new SecondTestHud();
+    private final SuffixedTestHud suffixedHud = new SuffixedTestHud();
     private final CompatTestHud compatHud = new CompatTestHud();
 
     @AfterEach
     void cleanUp() {
         HudManager.INSTANCE.unregister(hud, false, false);
         HudManager.INSTANCE.unregister(secondHud, false, false);
+        HudManager.INSTANCE.unregister(suffixedHud, false, false);
         HudManager.INSTANCE.unregister(compatHud, false, false);
         hud.setConfigId(null);
         secondHud.setConfigId(null);
+        suffixedHud.setConfigId(null);
         compatHud.setConfigId(null);
         ConfigRegistry.INSTANCE.unregister(BuiltinHudConfigKt.BUILTIN_HUD_CONFIG_ID);
         ConfigRegistry.INSTANCE.unregister(FALLBACK_OWNER_ID + ".json");
@@ -82,7 +85,7 @@ class HudModCardDataTest {
 
         ConfigData card = registryCardFor(TestHud.class);
 
-        assertEquals("HUD Card Test", card.getTitle());
+        assertEquals("HUD Card Test HUD", card.getTitle());
         assertEquals("combat", card.getIcon());
         assertEquals(Config.Category.HUD, card.getCategory());
         assertEquals(
@@ -90,6 +93,13 @@ class HudModCardDataTest {
                 card.getId()
         );
         assertNotNull(card.getOnOpen());
+    }
+
+    @Test
+    void hudTitleAlreadyEndingInHudKeepsASingleSuffix() {
+        HudManager.register(suffixedHud, OWNER_ID, "combat");
+
+        assertEquals("Coords HUD", registryCardFor(SuffixedTestHud.class).getTitle());
     }
 
     @Test
@@ -260,6 +270,17 @@ class HudModCardDataTest {
     private static final class SecondTestHud extends TextHud {
         private SecondTestHud() {
             super(HUD_ID, "Second HUD Card Test", Hud.Category.Companion.getINFO(), "Test", "");
+        }
+
+        @Override
+        protected String getText() {
+            return "HUD";
+        }
+    }
+
+    private static final class SuffixedTestHud extends TextHud {
+        private SuffixedTestHud() {
+            super("hud-card-test-suffixed", "Coords HUD", Hud.Category.Companion.getINFO(), "Test", "");
         }
 
         @Override
