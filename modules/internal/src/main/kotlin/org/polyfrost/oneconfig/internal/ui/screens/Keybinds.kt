@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.runtime.Composable
@@ -73,7 +72,7 @@ import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 import org.polyfrost.oneconfig.internal.ui.search.SearchDocument
 import org.polyfrost.oneconfig.internal.ui.search.SearchScope
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
-import org.polyfrost.oneconfig.internal.ui.shell.ScrollToTopOnChange
+import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.util.LayoutRef
@@ -96,8 +95,7 @@ fun Keybinds() {
     val searchResults = rememberKeybindSearchResults(groups, localSearchQuery)
     val visibleGroups = if (localSearchQuery.isBlank()) groups else searchResults.orEmpty()
 
-    val listState = rememberLazyListState()
-    ScrollToTopOnChange(listState, localSearchQuery)
+    val listState = rememberRestorableLazyListState("keybinds", localSearchQuery)
 
     if (visibleGroups.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

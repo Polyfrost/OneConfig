@@ -21,7 +21,6 @@ import org.polyfrost.oneconfig.internal.ui.search.SearchRow
 import org.polyfrost.oneconfig.internal.ui.search.SearchScope
 import org.polyfrost.oneconfig.internal.ui.search.SettingNode
 import org.polyfrost.oneconfig.internal.ui.search.searchNode
-import org.polyfrost.oneconfig.internal.ui.shell.ScrollToTopOnChange
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -56,8 +55,7 @@ fun SearchResultsScreen(query: String) {
         byGroup
     }
 
-    val listState = rememberRestorableLazyListState("global-search")
-    ScrollToTopOnChange(listState, query)
+    val listState = rememberRestorableLazyListState("global-search", query)
 
     if (matchingMods.isEmpty() && groupedOptions.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
