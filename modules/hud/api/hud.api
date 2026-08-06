@@ -249,6 +249,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static field isTabListVisible Z
 	public static field masterHudEnabled Z
 	public static field overrideShowInScreens Z
+	public static field pendingAdd Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public static field pendingSelection Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public static field targetPixelHeight I
 	public static field targetPixelWidth I
@@ -259,6 +260,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public final fun getActiveInstances ()Ljava/util/ArrayList;
 	public final fun getHudsOfType (Ljava/lang/Class;)Ljava/util/ArrayList;
 	public final fun getProvider (Ljava/lang/Class;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
+	public final fun getRevision ()I
 	public final fun iconFor (Ljava/lang/String;)Ljava/lang/String;
 	public final fun initialize ()V
 	public final fun instanceById (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
@@ -386,8 +388,10 @@ public final class org/polyfrost/oneconfig/api/hud/v1/TextHud$Companion {
 
 public class org/polyfrost/oneconfig/api/hud/v1/TextHud$DateTime : org/polyfrost/oneconfig/api/hud/v1/TextHud {
 	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun clone ()Ljava/lang/Object;
 	public fun clone ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public final fun getTemplate ()Ljava/lang/String;

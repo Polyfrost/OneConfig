@@ -20,7 +20,7 @@ public class Mixin_VulkanModBlurSnapshot {
         if (SkiaCtx.INSTANCE.consumeBlurSnapshotRequest()) {
             SkiaCtx.INSTANCE.takeWorldSnapshotIfNeeded();
         } else {
-            original.call();
+            original.call(instance);
         }
     }
 }

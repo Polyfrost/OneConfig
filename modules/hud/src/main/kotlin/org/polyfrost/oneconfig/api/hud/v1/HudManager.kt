@@ -26,6 +26,9 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
@@ -47,6 +50,10 @@ object HudManager {
     private val hudProviders = HashMap<Class<out Hud>, Hud>()
     private val hudIcons = HashMap<String, String>()
     private val registrationListeners = CopyOnWriteArrayList<Runnable>()
+
+    var revision by mutableIntStateOf(0)
+        private set
+
     private var init = false
     private val hiddenHudPaint by lazy { org.jetbrains.skia.Paint().apply { setAlphaf(0.35f) } }
 
@@ -92,6 +99,9 @@ object HudManager {
 
     @ApiStatus.Internal
     @Volatile @JvmField var pendingSelection: Hud? = null
+
+    @ApiStatus.Internal
+    @Volatile @JvmField var pendingAdd: Hud? = null
 
     private val lastUpdates = HashMap<Hud, Long>()
 
@@ -171,15 +181,21 @@ object HudManager {
     @ApiStatus.Internal
     val activeInstances = ArrayList<Hud>()
 
+    private class DateTestHud : TextHud.DateTime("Date:", "yyyy-MM-dd", title = "Date")
+
+    private class TimeTestHud : TextHud.DateTime("Time:", "HH:mm:ss", title = "Time")
+
+    private class TextTestHud : TextHud("test", "test", Category.COMBAT, "") {
+        override fun getText(): String = "mmrp\nmeow"
+    }
+
     init {
         Snapshot.registerApplyObserver { _, _ -> contentDirty = true }
 
         if (java.lang.Boolean.getBoolean("oneconfig.test")) {
-            register(object : TextHud.DateTime("Date:", "yyyy-MM-dd") {})
-            register(object : TextHud.DateTime("Time:", "HH:mm:ss") {})
-            register(object : TextHud("test", "test", Category.COMBAT, "") {
-                override fun getText(): String = "mmrp\nmeow"
-            })
+            register(DateTestHud())
+            register(TimeTestHud())
+            register(TextTestHud())
         }
     }
 
@@ -196,6 +212,7 @@ object HudManager {
     @JvmStatic
     fun register(hud: Hud) {
         hudProviders[hud::class.java] = hud
+        revision++
         if (hud.updateFrequency() == 0L) LOGGER.warn("update of HUD ${hud.title} is 0, this is not recommended!")
         notifyRegistrationChanged()
     }
@@ -231,6 +248,7 @@ object HudManager {
 
     fun <T : Hud> unregister(hud: T, removeActiveInstances: Boolean = false, delete: Boolean = false): ArrayList<T>? {
         hudProviders.remove(hud::class.java)
+        if (hudProviders.remove(hud::class.java) != null) revision++
         notifyRegistrationChanged()
         if (!removeActiveInstances) return null
         val out = ArrayList<T>(10.coerceAtMost(activeInstances.size))
@@ -293,7 +311,7 @@ object HudManager {
             }
         }
         for (it in activeInstances) {
-            if (it.mergeLink?.parent === hud) it.clearMergeLink()
+            if (it.mergeLinkX?.parent === hud || it.mergeLinkY?.parent === hud) it.clearMergeLink()
         }
         lastMergeKey = null
         invalidate()
@@ -527,16 +545,17 @@ object HudManager {
      * does: a HUD which stops being merged is let go and stays where it was left.
      */
     private fun updateMergeLinks() {
-        val linked = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Hud, Boolean>())
+        val linkedX = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Hud, Boolean>())
+        val linkedY = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Hud, Boolean>())
         Snapshot.withMutableSnapshot {
             for (group in frameGroups) {
                 for (link in group.links) {
-                    link.child.applyMergeLink(link.parent, link.childPoint, link.parentPoint)
-                    linked.add(link.child)
+                    link.child.applyMergeLink(link.parent, link.childPoint, link.parentPoint, link.axis)
+                    (if (link.axis == MergeAxis.X) linkedX else linkedY).add(link.child)
                 }
             }
             for (hud in activeInstances) {
-                if (hud !in linked) hud.clearMergeLink()
+                hud.clearMergeLinks(clearX = hud !in linkedX, clearY = hud !in linkedY)
             }
         }
     }

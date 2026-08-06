@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -36,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -47,17 +49,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Config
+import org.polyfrost.oneconfig.api.hud.v1.HudManager
+import org.polyfrost.oneconfig.api.ui.v1.ModCardTypes
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
+import org.polyfrost.oneconfig.internal.ui.api.ModCardTypeCollapseStore
 import org.polyfrost.oneconfig.internal.ui.api.ModFavorites
+import org.polyfrost.oneconfig.internal.ui.api.ModGridEntry
 import org.polyfrost.oneconfig.internal.ui.api.ModOrder
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories
+import org.polyfrost.oneconfig.internal.ui.api.buildModGridEntries
+import org.polyfrost.oneconfig.internal.ui.api.modCardOrder
+import org.polyfrost.oneconfig.internal.ui.api.modGroupBounds
+import org.polyfrost.oneconfig.internal.ui.api.sameModGroup
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.canRenderIcon
+import org.polyfrost.oneconfig.internal.ui.components.localizedLabel
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberGridReorderState
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
@@ -108,10 +119,15 @@ fun Mods() {
 @Composable
 fun ColumnScope.ModsGrid(category: ModCategory) {
     val registryRevision = ConfigRegistry.revision
+    val hudRevision = HudManager.revision
     val categoryRevision = ThirdPartyModCategories.revision
     val favoriteRevision = ModFavorites.revision
     val orderRevision = ModOrder.revision
-    val filtered = remember(registryRevision, category, categoryRevision, favoriteRevision, orderRevision) {
+    val typeRevision = ModCardTypes.revision
+    val collapseRevision = ModCardTypeCollapseStore.revision
+    val filtered = remember(
+        registryRevision, hudRevision, category, categoryRevision, favoriteRevision, orderRevision, typeRevision,
+    ) {
         ConfigRegistry.modCardConfigs
             .let { items ->
                 if (category.configCategory == null) items
@@ -121,7 +137,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
                 if (category.favoritesOnly) items.filter { ModFavorites.isFavorite(it.id) }
                 else items
             }
-            .sortedWith(ModCardOrder)
+            .sortedWith(modCardOrder())
     }
 
     if (filtered.isEmpty() && category.favoritesOnly) {
@@ -132,14 +148,17 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
     }
 
     // Mutated live while dragging so the grid re-lays out under the pointer; the drop is what
-    // actually persists the new arrangement.
-    val mods = remember(filtered) { filtered.toMutableStateList() }
+    val flat = remember(filtered, collapseRevision) {
+        buildModGridEntries(filtered, ModCardTypeCollapseStore::isCollapsed)
+    }
+    val entries = remember(flat) { flat.toMutableStateList() }
 
     val gridState = rememberRestorableLazyGridState("mods")
     val reorderState = rememberGridReorderState(
         gridState = gridState,
-        onMove = { from, to -> mods.add(to, mods.removeAt(from)) },
-        onDrop = { index -> commitDrop(mods, index) },
+        onMove = { from, to -> entries.add(to, entries.removeAt(from)) },
+        onDrop = { index -> commitDrop(entries, index) },
+        canSwap = { from, to -> sameModGroup(entries, from, to) },
     )
 
     Box(modifier = Modifier.weight(1f)) {
@@ -150,15 +169,29 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
             horizontalArrangement = Arrangement.spacedBy(19.dp),
             modifier = Modifier.padding(end = 16.dp),
         ) {
-            items(mods, key = { it.id }) { mod ->
-                val dragging = reorderState.draggingKey == mod.id
-                ModCard(
-                    mod,
-                    modifier = Modifier
-                        // The dragged card is positioned by hand, so only its neighbours slide.
-                        .animateItem(placementSpec = if (dragging) null else ModCardPlacementSpec)
-                        .reorderableItem(reorderState, mod.id),
-                )
+            items(
+                entries,
+                key = { it.key },
+                span = { if (it is ModGridEntry.Header) GridItemSpan(maxLineSpan) else GridItemSpan(1) },
+            ) { entry ->
+                when (entry) {
+                    is ModGridEntry.Header -> ModTypeHeader(
+                        entry,
+                        modifier = Modifier.animateItem(placementSpec = ModCardPlacementSpec),
+                        onToggle = { ModCardTypeCollapseStore.toggle(entry.type.id) },
+                    )
+
+                    is ModGridEntry.Card -> {
+                        val mod = entry.data
+                        val dragging = reorderState.draggingKey == mod.id
+                        ModCard(
+                            mod,
+                            modifier = Modifier
+                                .animateItem(placementSpec = if (dragging) null else ModCardPlacementSpec)
+                                .reorderableItem(reorderState, mod.id),
+                        )
+                    }
+                }
             }
         }
         VerticalScrollbar(
@@ -168,9 +201,52 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
 
         // Drawn outside the grid so the card isn't clipped when dragged past a viewport edge.
         val draggedId = reorderState.overlayKey
-        val dragged = remember(mods, draggedId) { mods.firstOrNull { it.id == draggedId } }
+        val dragged = remember(entries, draggedId) {
+            entries.firstNotNullOfOrNull { (it as? ModGridEntry.Card)?.data?.takeIf { mod -> mod.id == draggedId } }
+        }
         if (dragged != null) ModCard(dragged, modifier = Modifier.reorderOverlay(reorderState))
     }
+}
+
+@Composable
+private fun ModTypeHeader(entry: ModGridEntry.Header, modifier: Modifier = Modifier, onToggle: () -> Unit) {
+    val theme = LocalTheme.current
+    val interactionSource = rememberInteractionSource()
+    val chevronRotation by animateFloatAsState(if (entry.expanded) 180f else 90f)
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .onClick(interactionSource, onClick = onToggle)
+            .pointerHoverIcon(PointerIcon.Hand),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Rule(Modifier.weight(1f))
+        entry.type.icon?.takeIf(::canRenderIcon)?.let { icon ->
+            Icon(icon, color = theme.textColorSecondary, modifier = Modifier.size(14.dp))
+        }
+        Text(
+            localizedLabel(entry.type.title) ?: entry.type.title,
+            color = theme.textColorSecondary,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+        )
+        if (!entry.expanded && entry.cardCount > 0) {
+            Text("(${entry.cardCount})", color = theme.textColorSecondary, fontSize = 11.sp)
+        }
+        Icon(
+            "up",
+            color = theme.textColorSecondary,
+            modifier = Modifier.size(12.dp).rotate(chevronRotation),
+        )
+        Rule(Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun Rule(modifier: Modifier) {
+    Box(modifier.height(1.dp).background(LocalTheme.current.borderColor))
 }
 
 private val ModCardPlacementSpec = spring(
@@ -179,21 +255,21 @@ private val ModCardPlacementSpec = spring(
     visibilityThreshold = IntOffset.VisibilityThreshold,
 )
 
-/** Favourites pinned first, then the user's dragged order, then anything never dragged. */
-private val ModCardOrder: Comparator<ConfigData> =
-    compareByDescending<ConfigData> { ModFavorites.isFavorite(it.id) }
-        .thenBy { ModOrder.indexOf(it.id) }
-        .thenBy(String.CASE_INSENSITIVE_ORDER) { it.title.asRenderText() }
-
 /**
  * Persists the arrangement after a card is dropped at [index]. Dropping a card inside the
  * favourites block favourites it, and dragging one out of the block clears it again.
  */
-private fun commitDrop(mods: List<ConfigData>, index: Int) {
-    val dropped = mods.getOrNull(index) ?: return
-    val favoritesElsewhere = mods.filterIndexed { i, _ -> i != index }.count { ModFavorites.isFavorite(it.id) }
-    if ((index < favoritesElsewhere) != ModFavorites.isFavorite(dropped.id)) ModFavorites.toggle(dropped.id)
-    ModOrder.reorder(mods.map { it.id }, ConfigRegistry.modCardConfigs.sortedWith(ModCardOrder).map { it.id })
+private fun commitDrop(entries: List<ModGridEntry>, index: Int) {
+    val dropped = (entries.getOrNull(index) as? ModGridEntry.Card)?.data ?: return
+    val bounds = modGroupBounds(entries, index)
+    val group = entries.slice(bounds).filterIsInstance<ModGridEntry.Card>().map { it.data }
+    val position = index - bounds.first
+    val favoritesElsewhere = group.filterIndexed { i, _ -> i != position }.count { ModFavorites.isFavorite(it.id) }
+    if ((position < favoritesElsewhere) != ModFavorites.isFavorite(dropped.id)) ModFavorites.toggle(dropped.id)
+    ModOrder.reorder(
+        group.map { it.id },
+        ConfigRegistry.modCardConfigs.sortedWith(modCardOrder()).map { it.id },
+    )
 }
 
 private val ModCardFooterHeight = 36.dp
@@ -228,8 +304,11 @@ fun ModCard(mod: ConfigData, modifier: Modifier = Modifier) {
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
+                val preview = mod.preview
                 val icon = mod.icon?.takeIf(::canRenderIcon)
-                if (icon != null) {
+                if (preview != null) {
+                    preview(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp))
+                } else if (icon != null) {
                     Icon(icon, color = theme.textColor, modifier = Modifier.size(48.dp))
                 } else {
                     Text(

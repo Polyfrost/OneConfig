@@ -340,10 +340,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     open var x: Float
         get() {
-            resolvedAnchor?.let { a ->
+            resolvedAnchorX?.let { a ->
                 resolvingAnchor = true
                 try {
-                    return a.parent.anchorPointX(a.targetPoint) + a.offsetX - fracX(a.selfPoint) * scaledWidth
+                    return a.parent.anchorPointX(a.targetPoint) + a.offset - fracX(a.selfPoint) * scaledWidth
                 } finally {
                     resolvingAnchor = false
                 }
@@ -354,10 +354,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     open var y: Float
         get() {
-            resolvedAnchor?.let { a ->
+            resolvedAnchorY?.let { a ->
                 resolvingAnchor = true
                 try {
-                    return a.parent.anchorPointY(a.targetPoint) + a.offsetY - fracY(a.selfPoint) * scaledHeight
+                    return a.parent.anchorPointY(a.targetPoint) + a.offset - fracY(a.selfPoint) * scaledHeight
                 } finally {
                     resolvingAnchor = false
                 }
@@ -369,13 +369,13 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     protected open fun updateRelativeX(absX: Float) {
         val sw = HudManager.guiScreenWidth
         val gridW = sw / GRID_SIZE
-        resolvedAnchor?.let { a ->
+        resolvedAnchorX?.let { a ->
             val pin = absX + fracX(a.selfPoint) * scaledWidth
             resolvingAnchor = true
             try {
                 val offset = pin - a.parent.anchorPointX(a.targetPoint)
-                val link = mergeLink
-                if (a.fromMerge && link != null) mergeLink = link.withOffsets(offset, link.offsetY)
+                val link = mergeLinkX
+                if (a.fromMerge && link != null) mergeLinkX = link.withOffset(offset)
                 else anchorOffsetX = offset
             } finally {
                 resolvingAnchor = false
@@ -394,13 +394,13 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     protected open fun updateRelativeY(absY: Float) {
         val sh = HudManager.guiScreenHeight
         val gridH = sh / GRID_SIZE
-        resolvedAnchor?.let { a ->
+        resolvedAnchorY?.let { a ->
             val pin = absY + fracY(a.selfPoint) * scaledHeight
             resolvingAnchor = true
             try {
                 val offset = pin - a.parent.anchorPointY(a.targetPoint)
-                val link = mergeLink
-                if (a.fromMerge && link != null) mergeLink = link.withOffsets(link.offsetX, offset)
+                val link = mergeLinkY
+                if (a.fromMerge && link != null) mergeLinkY = link.withOffset(offset)
                 else anchorOffsetY = offset
             } finally {
                 resolvingAnchor = false
@@ -513,7 +513,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     /** [selfAnchorPoint] with [HudAnchor.Auto] resolved, and the merge link taking priority. */
     val effectiveSelfAnchorPoint: HudAnchor get() = when {
         isAnchored -> selfAnchorPoint.takeUnless { it == HudAnchor.Auto } ?: effectiveGrowthAnchor
-        else -> mergeLink?.selfPoint ?: selfAnchorPoint.takeUnless { it == HudAnchor.Auto } ?: effectiveGrowthAnchor
+        else -> (mergeLinkX ?: mergeLinkY)?.selfPoint
+            ?: selfAnchorPoint.takeUnless { it == HudAnchor.Auto } ?: effectiveGrowthAnchor
     }
 
     /** Moves this HUD's own anchor point to [point] without moving the HUD on screen. */
@@ -551,81 +552,102 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     val isAnchored: Boolean get() = anchorParent != null
 
     /**
-     * A HUD held against a neighbour because their backgrounds are fused. Rebuilt from the merge
-     * groups every time the layout changes and never persisted: unmerging the HUDs drops it again.
+     * A HUD held against a neighbour on one axis because their backgrounds are fused. Rebuilt from
+     * the merge groups every time the layout changes and never persisted: unmerging the HUDs drops
+     * it again.
      */
     internal class MergeLink(
         val parent: Hud,
         val selfPoint: HudAnchor,
         val targetPoint: HudAnchor,
-        val offsetX: Float,
-        val offsetY: Float,
+        val offset: Float,
     ) {
-        fun withOffsets(x: Float, y: Float) = MergeLink(parent, selfPoint, targetPoint, x, y)
+        fun withOffset(offset: Float) = MergeLink(parent, selfPoint, targetPoint, offset)
     }
 
     @Transient
-    private var _mergeLink: MutableState<MergeLink?> = mutableStateOf(null)
+    private var _mergeLinkX: MutableState<MergeLink?> = mutableStateOf(null)
 
-    internal var mergeLink: MergeLink?
-        get() = _mergeLink.value
-        private set(v) { _mergeLink.value = v }
+    internal var mergeLinkX: MergeLink?
+        get() = _mergeLinkX.value
+        private set(v) { _mergeLinkX.value = v }
 
-    /** The anchor this HUD's position is actually resolved against, the user's own one first. */
-    private val resolvedAnchor: ResolvedAnchor? get() {
+    @Transient
+    private var _mergeLinkY: MutableState<MergeLink?> = mutableStateOf(null)
+
+    internal var mergeLinkY: MergeLink?
+        get() = _mergeLinkY.value
+        private set(v) { _mergeLinkY.value = v }
+
+    private fun mergeLink(axis: MergeAxis) = if (axis == MergeAxis.X) mergeLinkX else mergeLinkY
+
+    private val resolvedAnchorX: ResolvedAnchor? get() = resolvedAnchor(MergeAxis.X)
+
+    private val resolvedAnchorY: ResolvedAnchor? get() = resolvedAnchor(MergeAxis.Y)
+
+    private fun resolvedAnchor(axis: MergeAxis): ResolvedAnchor? {
         if (resolvingAnchor) return null
         anchorParent?.let { parent ->
             val self = selfAnchorPoint.takeUnless { it == HudAnchor.Auto } ?: effectiveGrowthAnchor
-            return ResolvedAnchor(parent, anchorPoint, self, anchorOffsetX, anchorOffsetY, false)
+            val offset = if (axis == MergeAxis.X) anchorOffsetX else anchorOffsetY
+            return ResolvedAnchor(parent, anchorPoint, self, offset, false)
         }
-        val link = mergeLink ?: return null
+        val link = mergeLink(axis) ?: return null
         if (link.parent === this) return null
-        return ResolvedAnchor(link.parent, link.targetPoint, link.selfPoint, link.offsetX, link.offsetY, true)
+        return ResolvedAnchor(link.parent, link.targetPoint, link.selfPoint, link.offset, true)
     }
 
     private class ResolvedAnchor(
         val parent: Hud,
         val targetPoint: HudAnchor,
         val selfPoint: HudAnchor,
-        val offsetX: Float,
-        val offsetY: Float,
+        val offset: Float,
         val fromMerge: Boolean,
     )
 
     /** The HUD this one is held against right now, whether by its own anchor or by a merge. */
-    val effectiveAnchorParent: Hud? get() = anchorParent ?: mergeLink?.parent
+    val effectiveAnchorParent: Hud? get() = anchorParent ?: (mergeLinkX ?: mergeLinkY)?.parent
 
     /** The point on [effectiveAnchorParent] this HUD hangs off. */
-    val effectiveAnchorPoint: HudAnchor get() = if (isAnchored) anchorPoint else mergeLink?.targetPoint ?: anchorPoint
+    val effectiveAnchorPoint: HudAnchor get() =
+        if (isAnchored) anchorPoint else (mergeLinkX ?: mergeLinkY)?.targetPoint ?: anchorPoint
 
     /** `true` while this HUD is held against a neighbour because their backgrounds are fused. */
-    val isMergeAnchored: Boolean get() = mergeLink != null
+    val isMergeAnchored: Boolean get() = mergeLinkX != null || mergeLinkY != null
 
     /**
-     * Holds this HUD against [parent], with [selfPoint] on its own box sitting on [targetPoint] of
-     * the parent's, for as long as the two stay merged. Keeps the HUD exactly where it is now.
+     * Holds this HUD against [parent] on [axis], with [selfPoint] on its own box sitting on
+     * [targetPoint] of the parent's, for as long as the two stay merged. Keeps the HUD exactly where
+     * it is now.
      */
-    internal fun applyMergeLink(parent: Hud, selfPoint: HudAnchor, targetPoint: HudAnchor) {
+    internal fun applyMergeLink(parent: Hud, selfPoint: HudAnchor, targetPoint: HudAnchor, axis: MergeAxis) {
         if (parent === this) return
         // an anchor the user set by hand outranks a merge, and a merge must never loop back into one
         if (isAnchored || parent.anchorChainContains(this)) return
-        val existing = mergeLink
+        val existing = mergeLink(axis)
         if (existing != null && existing.parent === parent &&
             existing.selfPoint == selfPoint && existing.targetPoint == targetPoint
         ) return
-        val absX = x
-        val absY = y
-        val offsetX = absX + fracX(selfPoint) * scaledWidth - parent.anchorPointX(targetPoint)
-        val offsetY = absY + fracY(selfPoint) * scaledHeight - parent.anchorPointY(targetPoint)
-        mergeLink = MergeLink(parent, selfPoint, targetPoint, offsetX, offsetY)
+        if (axis == MergeAxis.X) {
+            val offset = x + fracX(selfPoint) * scaledWidth - parent.anchorPointX(targetPoint)
+            mergeLinkX = MergeLink(parent, selfPoint, targetPoint, offset)
+        } else {
+            val offset = y + fracY(selfPoint) * scaledHeight - parent.anchorPointY(targetPoint)
+            mergeLinkY = MergeLink(parent, selfPoint, targetPoint, offset)
+        }
     }
 
-    /** Drops the merge link, leaving the HUD where it currently sits on screen. */
-    internal fun clearMergeLink() {
-        if (mergeLink == null) return
+    internal fun clearMergeLink() = clearMergeLinks(clearX = true, clearY = true)
+
+    /** Drops the merge link on the given axes, leaving the HUD where it currently sits on screen. */
+    internal fun clearMergeLinks(clearX: Boolean, clearY: Boolean) {
+        val dropX = clearX && mergeLinkX != null
+        val dropY = clearY && mergeLinkY != null
+        if (!dropX && !dropY) return
         val absX = x
         val absY = y
-        mergeLink = null
+        if (dropX) mergeLinkX = null
+        if (dropY) mergeLinkY = null
         setAbsolutePosition(absX, absY)
     }
 
@@ -642,7 +664,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         val absX = x
         val absY = y
         // the HUD is the user's to place now: a merge no longer gets to move it around
-        mergeLink = null
+        mergeLinkX = null
+        mergeLinkY = null
         anchorTargetId = id
         anchorPoint = point
         selfAnchorPoint = self
@@ -1030,7 +1053,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         _anchorTargetId = mutableStateOf(this@Hud.anchorTargetId)
         _anchorPoint = mutableStateOf(this@Hud.anchorPoint)
         _selfAnchorPoint = mutableStateOf(this@Hud.selfAnchorPoint)
-        _mergeLink = mutableStateOf(null)
+        _mergeLinkX = mutableStateOf(null)
+        _mergeLinkY = mutableStateOf(null)
         _anchorOffsetX = mutableStateOf(this@Hud.anchorOffsetX)
         _anchorOffsetY = mutableStateOf(this@Hud.anchorOffsetY)
         _padTop = mutableStateOf(this@Hud.padTop)

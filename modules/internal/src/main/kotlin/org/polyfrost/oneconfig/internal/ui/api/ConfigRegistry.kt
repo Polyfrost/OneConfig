@@ -8,6 +8,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
+import org.polyfrost.oneconfig.internal.ui.hud.hudModCardConfigs
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindRegistrar
 import org.polyfrost.oneconfig.internal.ui.search.ConfigDocumentSource
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
@@ -15,6 +16,7 @@ import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 object ConfigRegistry {
     private val hiddenModCardIds = setOf(
         "oneconfig.json",
+        "oneconfig.builtin",
         "themes.json",
         "oneconfig.builtin", // built-in huds
         "minecraft",
@@ -53,7 +55,7 @@ object ConfigRegistry {
 
     val configs: SnapshotStateList<ConfigData> = mutableStateListOf()
     val modCardConfigs: List<ConfigData>
-        get() = configs.filter(::shouldShowModCard)
+        get() = configs.filter(::shouldShowModCard) + hudModCardConfigs()
 
     var revision by mutableIntStateOf(0)
         private set
@@ -65,6 +67,11 @@ object ConfigRegistry {
 
     fun shouldShowModCard(config: ConfigData): Boolean =
         config.id.lowercase() !in hiddenModCardIds && config.title.asRenderText().lowercase() !in hiddenModCardTitles
+
+    fun shouldShowModCardId(id: String): Boolean {
+        val lower = id.lowercase()
+        return lower !in hiddenModCardIds && lower.removeSuffix(".json") !in hiddenModCardIds
+    }
 
     fun shouldShowInSearch(config: ConfigData): Boolean =
         config.id.lowercase() !in hiddenSearchIds && config.title.asRenderText().lowercase() !in hiddenModCardTitles

@@ -50,7 +50,6 @@ import org.apache.logging.log4j.LogManager
 import org.jetbrains.skia.Paint
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.RenderContext
-import org.polyfrost.compose.runtime.PolyComposeRuntime
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
@@ -68,6 +67,8 @@ import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasPasteMenu
 import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasResetMenu
 import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudOverlayBridge
 import org.polyfrost.oneconfig.internal.ui.hud.modNameFor
+import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreviewCanvas
+import org.polyfrost.oneconfig.internal.ui.hud.components.rememberHudPreview
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Designer
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Settings
@@ -179,6 +180,7 @@ private val hiddenLegacyScrimColor = Color.Black.copy(0.45f)
 // Backdrop for the per-HUD action bar, so the icons stay readable over any HUD content.
 private val hudActionBarBackground = Color.Black.copy(0.55f)
 private val hudActionBarBorder = Color.White.copy(0.12f)
+private val hudActionBarDeleteColor = Color(0xFFE5484D)
 
 private const val SNAP_DISTANCE_PX = 6f
 private val snapGuideColor = Color(176, 47, 31)
@@ -464,6 +466,9 @@ private data class HudActionBarLayout(
 
 private const val HUD_ACTION_BAR_ICONS = 3
 
+private fun hudActionBarIcons(hud: Hud) =
+    if (hud.canDelete()) HUD_ACTION_BAR_ICONS + 1 else HUD_ACTION_BAR_ICONS
+
 /** Inset between the backdrop edge and the icons. */
 private fun actionBarPadding(gapPx: Float) = gapPx / 2f
 
@@ -487,7 +492,8 @@ private fun hudActionBarLayout(
         .takeIf { it > 0f } ?: (HudManager.guiScreenHeight * mcToScreen)
 
     val padPx = actionBarPadding(gapPx)
-    val barWidth = iconPx * HUD_ACTION_BAR_ICONS + gapPx * (HUD_ACTION_BAR_ICONS - 1) + padPx * 2f
+    val icons = hudActionBarIcons(hud)
+    val barWidth = iconPx * icons + gapPx * (icons - 1) + padPx * 2f
     val barHeight = iconPx + padPx * 2f
     val maxLeft = (screenW - barWidth).coerceAtLeast(0f)
     val left = (sx + (sw - barWidth) / 2f).coerceIn(0f, maxLeft)
@@ -788,6 +794,7 @@ private fun HudActionBar(
     actionIconPx: Float,
     actionBarGapPx: Float,
     chromeAlpha: Float,
+    onDelete: () -> Unit,
     onSettings: () -> Unit,
 ) {
     val bounds = hudBounds(hud) ?: return
@@ -836,7 +843,47 @@ private fun HudActionBar(
         ) {
             Snapshot.withMutableSnapshot { hud.locked = !hud.locked }
         }
+        if (hud.canDelete()) {
+            HudActionButton(
+                "trash",
+                iconSize,
+                foreground = hudActionBarDeleteColor.copy(alpha = 0.7f),
+                hoveredForeground = hudActionBarDeleteColor,
+                sound = UiSoundEvent.CLICK,
+                onClick = onDelete,
+            )
+        }
     }
+}
+
+private fun placeHudCentered(provider: Hud): Hud? = try {
+    val instance = if (provider.isReal) provider else provider.make()
+    HudManager.markProviderKnown(instance)
+    val screenW = HudManager.guiScreenWidth
+    val screenH = HudManager.guiScreenHeight
+    val scale = instance.effectiveScale
+    val (minW, minH) = instance.minimumSize()
+    val w = if (instance.staticWidth) {
+        instance.staticW.takeIf { it > 0f }?.times(scale)
+    } else {
+        instance.renderedW.takeIf { it > 0f } ?: minW.takeIf { it > 0f }?.times(scale) ?: instance.staticW.takeIf { it > 0f }?.times(scale)
+    } ?: 60f
+    val h = if (instance.staticWidth) {
+        instance.staticH.takeIf { it > 0f }?.times(scale)
+    } else {
+        instance.renderedH.takeIf { it > 0f } ?: minH.takeIf { it > 0f }?.times(scale) ?: instance.staticH.takeIf { it > 0f }?.times(scale)
+    } ?: 20f
+    instance.setAbsolutePosition((screenW - w) / 2f, (screenH - h) / 2f)
+    if (instance !in HudManager.activeInstances) {
+        HudManager.activeInstances.add(instance)
+        instance.setup()
+        instance.captureStaticSizeDefaults()
+        instance.capturePositionDefaults()
+    }
+    instance
+} catch (e: Throwable) {
+    LOGGER.error("Failed to place HUD ${provider.title}", e)
+    null
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -922,8 +969,20 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
 
     LaunchedEffect(Unit) {
         val pending = HudManager.pendingSelection
+        val pendingAdd = HudManager.pendingAdd
         HudManager.pendingSelection = null
-        if (pending != null) {
+        HudManager.pendingAdd = null
+        if (pendingAdd != null) {
+            snapshotFlow { HudEditorViewport.viewportWidth }.first { it > 0 }
+            val instance = placeHudCentered(pendingAdd)
+            if (instance != null) {
+                Snapshot.withMutableSnapshot {
+                    selectedHuds = setOf(instance)
+                    panelHud = instance
+                    libraryVisible = false
+                }
+            }
+        } else if (pending != null) {
             if (pending in HudManager.activeInstances) {
                 Snapshot.withMutableSnapshot {
                     selectedHuds = setOf(pending)
@@ -1815,6 +1874,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     actionIconPx = actionIconPx,
                     actionBarGapPx = actionBarGapPx,
                     chromeAlpha = chromeAlpha,
+                    onDelete = { deleteHuds(listOf(actionBarTarget)) },
                 ) {
                     Snapshot.withMutableSnapshot {
                         selectedHuds = setOf(actionBarTarget)
@@ -1996,40 +2056,14 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                             } catch (_: Throwable) {}
                         },
                         onCardClick = { hud ->
-                            try {
-                                val instance = hud.make()
-                                HudManager.markProviderKnown(instance)
-                                val screenW = HudManager.guiScreenWidth
-                                val screenH = HudManager.guiScreenHeight
-                                val scale = instance.effectiveScale
-                                val (minW, minH) = instance.minimumSize()
-                                val w = if (instance.staticWidth) {
-                                    instance.staticW.takeIf { it > 0f }?.times(scale)
-                                } else {
-                                    instance.renderedW.takeIf { it > 0f } ?: minW.takeIf { it > 0f }?.times(scale) ?: instance.staticW.takeIf { it > 0f }?.times(scale)
-                                } ?: 60f
-                                val h = if (instance.staticWidth) {
-                                    instance.staticH.takeIf { it > 0f }?.times(scale)
-                                } else {
-                                    instance.renderedH.takeIf { it > 0f } ?: minH.takeIf { it > 0f }?.times(scale) ?: instance.staticH.takeIf { it > 0f }?.times(scale)
-                                } ?: 20f
-                                val centerX = (screenW - w) / 2f
-                                val centerY = (screenH - h) / 2f
-                                instance.setAbsolutePosition(centerX, centerY)
-                                if (instance !in HudManager.activeInstances) {
-                                    HudManager.activeInstances.add(instance)
-                                    instance.setup()
-                                    instance.captureStaticSizeDefaults()
-                                    instance.capturePositionDefaults()
-                                }
+                            val instance = placeHudCentered(hud)
+                            if (instance != null) {
                                 UiSounds.play(UiSoundEvent.HUD_SELECT)
                                 Snapshot.withMutableSnapshot {
                                     selectedHuds = setOf(instance)
                                     panelHud = instance
                                     libraryVisible = false
                                 }
-                            } catch (e: Throwable) {
-                                LOGGER.error("Failed to add HUD ${hud.title} from the library", e)
                             }
                         },
                     )
@@ -2498,6 +2532,20 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                     actionIconPx = actionIconPx,
                     actionBarGapPx = actionBarGapPx,
                     chromeAlpha = 1f,
+                    onDelete = {
+                        if (actionBarTarget.deletable()) {
+                            Snapshot.withMutableSnapshot {
+                                hoveredHud = null
+                                if (draggedHud === actionBarTarget) {
+                                    draggedHud = null
+                                    isDragging = false
+                                    ShellState.hudDragging = false
+                                }
+                                HudManager.removeHud(actionBarTarget, delete = true)
+                                HudDesignSession.forget(actionBarTarget)
+                            }
+                        }
+                    },
                 ) {
                     HudManager.pendingSelection = actionBarTarget
                     HudManager.openEditor()
@@ -2679,6 +2727,11 @@ private fun HudLibraryPanel(
             Text("HUDs", color = theme.textColor, fontSize = 18.sp)
             LibrarySearchBar(searchText, onSearchChange)
         }
+        Text(
+            "Click to add  ·  Drag to place it yourself",
+            color = theme.textColorSecondary,
+            fontSize = 11.sp,
+        )
         Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
             var viewportTop by remember { mutableStateOf(0f) }
             BoxWithConstraints(
@@ -2775,6 +2828,25 @@ private fun ModIconColumn(
 }
 
 private const val PREVIEW_SCALE = 2f
+private val hudCardOverlayScrim = Color.Black.copy(0.4f)
+
+@Composable
+private fun BoxScope.HudCardAddOverlay(visible: Boolean) {
+    AnimatedVisibility(
+        visible = visible,
+        modifier = Modifier.matchParentSize(),
+        enter = fadeIn(tween(150)),
+        exit = fadeOut(tween(150)),
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize().background(hudCardOverlayScrim),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon("plus", modifier = Modifier.size(20.dp), color = Color.White)
+        }
+    }
+}
+
 private val PREVIEW_CARD_PADDING = 12.dp
 private val PREVIEW_MAX_CARD_HEIGHT = 160.dp
 private const val LEGACY_PREVIEW_FALLBACK_SIZE = 48f
@@ -2840,6 +2912,7 @@ private fun LegacyHudPreviewCard(
             .size(w, h)
             .background(backgroundColor, theme.buttonShape)
             .border(1.dp, theme.borderColor, theme.buttonShape)
+            .clip(theme.buttonShape)
             .safePointerEvent(PointerEventType.Enter) { isHovered = true }
             .safePointerEvent(PointerEventType.Exit) {
                 isHovered = false
@@ -2876,15 +2949,16 @@ private fun LegacyHudPreviewCard(
                 }
                 pressPos = null
                 dragStarted = false
-            }
-            .padding(cardPadding),
+            },
         contentAlignment = Alignment.Center,
     ) {
         Text(
             localizedLabel(hud.title) ?: "Legacy HUD",
             color = theme.textColor.copy(0.85f),
             fontSize = 12.sp,
+            modifier = Modifier.padding(cardPadding),
         )
+        HudCardAddOverlay(isHovered)
     }
 }
 
@@ -2896,15 +2970,9 @@ private fun ComposeHudPreviewCard(
     onDragStart: (Hud, Float, Float, Float, Float) -> Unit,
     onCardClick: (Hud) -> Unit,
 ) {
-    val previewRuntime = remember(hud) {
-        hud.update()
-        PolyComposeRuntime().also { rt -> rt.setContent { hud.Content() } }
-    }
-    DisposableEffect(previewRuntime) {
-        onDispose { previewRuntime.dispose() }
-    }
-    var naturalW by remember(hud) { mutableStateOf(0f) }
-    var naturalH by remember(hud) { mutableStateOf(0f) }
+    val preview = rememberHudPreview(hud)
+    val naturalW = preview.naturalWidth
+    val naturalH = preview.naturalHeight
     val density = LocalDensity.current.density
     val theme = LocalTheme.current
 
@@ -2918,25 +2986,12 @@ private fun ComposeHudPreviewCard(
     var pressPos by remember { mutableStateOf<Offset?>(null) }
     var dragStarted by remember { mutableStateOf(false) }
 
-    LaunchedEffect(hud) {
-        hud.update()
-        if (hud.staticWidth && hud.staticW > 0f && hud.staticH > 0f) {
-            previewRuntime.frame(hud.staticW, hud.staticH)
-            naturalW = hud.staticW
-            naturalH = hud.staticH
-        } else {
-            previewRuntime.frame(2000f, 2000f)
-            naturalW = previewRuntime.root.width
-            naturalH = previewRuntime.root.height
-        }
-    }
-
     if (naturalW > 0f && naturalH > 0f) {
         val cardPadding = PREVIEW_CARD_PADDING
         val previewScale = previewScaleFor(naturalW, naturalH, maxCardWidth, density)
         val w = ((naturalW * previewScale / density).dp + cardPadding * 2).coerceAtMost(maxCardWidth)
         val h = (naturalH * previewScale / density).dp + cardPadding * 2
-        Canvas(
+        Box(
             modifier = Modifier
                 .size(w, h)
                 .background(backgroundColor, theme.buttonShape)
@@ -2979,16 +3034,13 @@ private fun ComposeHudPreviewCard(
                     pressPos = null
                     dragStarted = false
                 }
-                .padding(cardPadding)
         ) {
-            drawIntoCanvas { canvas ->
-                val root = previewRuntime.root
-                canvas.skiaCanvas.save()
-                canvas.skiaCanvas.clipRect(org.jetbrains.skia.Rect.makeWH(size.width, size.height))
-                canvas.skiaCanvas.scale(previewScale, previewScale)
-                root.render(RenderContext(canvas.skiaCanvas))
-                canvas.skiaCanvas.restore()
-            }
+            HudPreviewCanvas(
+                preview,
+                previewScale,
+                modifier = Modifier.fillMaxSize().padding(cardPadding),
+            )
+            HudCardAddOverlay(isHovered)
         }
     }
 }
