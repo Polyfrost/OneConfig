@@ -48,7 +48,6 @@ import org.apache.logging.log4j.LogManager
 import org.jetbrains.skia.Paint
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.RenderContext
-import org.polyfrost.compose.runtime.PolyComposeRuntime
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
@@ -66,6 +65,8 @@ import org.polyfrost.oneconfig.internal.ui.components.layout.FlexibleLayout
 import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasPasteMenu
 import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasResetMenu
 import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudOverlayBridge
+import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreviewCanvas
+import org.polyfrost.oneconfig.internal.ui.hud.components.rememberHudPreview
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Designer
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Settings
@@ -175,6 +176,7 @@ private val hiddenLegacyScrimColor = Color.Black.copy(0.45f)
 // Backdrop for the per-HUD action bar, so the icons stay readable over any HUD content.
 private val hudActionBarBackground = Color.Black.copy(0.55f)
 private val hudActionBarBorder = Color.White.copy(0.12f)
+private val hudActionBarDeleteColor = Color(0xFFE5484D)
 
 private const val SNAP_DISTANCE_PX = 6f
 private val snapGuideColor = Color(176, 47, 31)
@@ -460,6 +462,9 @@ private data class HudActionBarLayout(
 
 private const val HUD_ACTION_BAR_ICONS = 3
 
+private fun hudActionBarIcons(hud: Hud) =
+    if (hud.canDelete()) HUD_ACTION_BAR_ICONS + 1 else HUD_ACTION_BAR_ICONS
+
 /** Inset between the backdrop edge and the icons. */
 private fun actionBarPadding(gapPx: Float) = gapPx / 2f
 
@@ -483,7 +488,8 @@ private fun hudActionBarLayout(
         .takeIf { it > 0f } ?: (HudManager.guiScreenHeight * mcToScreen)
 
     val padPx = actionBarPadding(gapPx)
-    val barWidth = iconPx * HUD_ACTION_BAR_ICONS + gapPx * (HUD_ACTION_BAR_ICONS - 1) + padPx * 2f
+    val icons = hudActionBarIcons(hud)
+    val barWidth = iconPx * icons + gapPx * (icons - 1) + padPx * 2f
     val barHeight = iconPx + padPx * 2f
     val maxLeft = (screenW - barWidth).coerceAtLeast(0f)
     val left = (sx + (sw - barWidth) / 2f).coerceIn(0f, maxLeft)
@@ -784,6 +790,7 @@ private fun HudActionBar(
     actionIconPx: Float,
     actionBarGapPx: Float,
     chromeAlpha: Float,
+    onDelete: () -> Unit,
     onSettings: () -> Unit,
 ) {
     val bounds = hudBounds(hud) ?: return
@@ -831,6 +838,16 @@ private fun HudActionBar(
             sound = UiSoundEvent.CLICK,
         ) {
             Snapshot.withMutableSnapshot { hud.locked = !hud.locked }
+        }
+        if (hud.canDelete()) {
+            HudActionButton(
+                "trash",
+                iconSize,
+                foreground = hudActionBarDeleteColor.copy(alpha = 0.7f),
+                hoveredForeground = hudActionBarDeleteColor,
+                sound = UiSoundEvent.CLICK,
+                onClick = onDelete,
+            )
         }
     }
 }
@@ -1811,6 +1828,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     actionIconPx = actionIconPx,
                     actionBarGapPx = actionBarGapPx,
                     chromeAlpha = chromeAlpha,
+                    onDelete = { deleteHuds(listOf(actionBarTarget)) },
                 ) {
                     Snapshot.withMutableSnapshot {
                         selectedHuds = setOf(actionBarTarget)
@@ -2494,6 +2512,20 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                     actionIconPx = actionIconPx,
                     actionBarGapPx = actionBarGapPx,
                     chromeAlpha = 1f,
+                    onDelete = {
+                        if (actionBarTarget.deletable()) {
+                            Snapshot.withMutableSnapshot {
+                                hoveredHud = null
+                                if (draggedHud === actionBarTarget) {
+                                    draggedHud = null
+                                    isDragging = false
+                                    ShellState.hudDragging = false
+                                }
+                                HudManager.removeHud(actionBarTarget, delete = true)
+                                HudDesignSession.forget(actionBarTarget)
+                            }
+                        }
+                    },
                 ) {
                     HudManager.pendingSelection = actionBarTarget
                     HudManager.openEditor()
@@ -2884,15 +2916,9 @@ private fun ComposeHudPreviewCard(
     onDragStart: (Hud, Float, Float, Float, Float) -> Unit,
     onCardClick: (Hud) -> Unit,
 ) {
-    val previewRuntime = remember(hud) {
-        hud.update()
-        PolyComposeRuntime().also { rt -> rt.setContent { hud.Content() } }
-    }
-    DisposableEffect(previewRuntime) {
-        onDispose { previewRuntime.dispose() }
-    }
-    var naturalW by remember(hud) { mutableStateOf(0f) }
-    var naturalH by remember(hud) { mutableStateOf(0f) }
+    val preview = rememberHudPreview(hud)
+    val naturalW = preview.naturalWidth
+    val naturalH = preview.naturalHeight
     val density = LocalDensity.current.density
     val theme = LocalTheme.current
 
@@ -2906,25 +2932,14 @@ private fun ComposeHudPreviewCard(
     var pressPos by remember { mutableStateOf<Offset?>(null) }
     var dragStarted by remember { mutableStateOf(false) }
 
-    LaunchedEffect(hud) {
-        hud.update()
-        if (hud.staticWidth && hud.staticW > 0f && hud.staticH > 0f) {
-            previewRuntime.frame(hud.staticW, hud.staticH)
-            naturalW = hud.staticW
-            naturalH = hud.staticH
-        } else {
-            previewRuntime.frame(2000f, 2000f)
-            naturalW = previewRuntime.root.width
-            naturalH = previewRuntime.root.height
-        }
-    }
-
     if (naturalW > 0f && naturalH > 0f) {
         val cardPadding = PREVIEW_CARD_PADDING
         val previewScale = previewScaleFor(naturalW, naturalH, maxCardWidth, density)
         val w = ((naturalW * previewScale / density).dp + cardPadding * 2).coerceAtMost(maxCardWidth)
         val h = (naturalH * previewScale / density).dp + cardPadding * 2
-        Canvas(
+        HudPreviewCanvas(
+            preview,
+            previewScale,
             modifier = Modifier
                 .size(w, h)
                 .background(backgroundColor, theme.buttonShape)
@@ -2968,16 +2983,7 @@ private fun ComposeHudPreviewCard(
                     dragStarted = false
                 }
                 .padding(cardPadding)
-        ) {
-            drawIntoCanvas { canvas ->
-                val root = previewRuntime.root
-                canvas.skiaCanvas.save()
-                canvas.skiaCanvas.clipRect(org.jetbrains.skia.Rect.makeWH(size.width, size.height))
-                canvas.skiaCanvas.scale(previewScale, previewScale)
-                root.render(RenderContext(canvas.skiaCanvas))
-                canvas.skiaCanvas.restore()
-            }
-        }
+        )
     }
 }
 

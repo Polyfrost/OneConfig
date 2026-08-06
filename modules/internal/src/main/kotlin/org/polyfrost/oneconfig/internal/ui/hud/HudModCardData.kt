@@ -1,12 +1,17 @@
 package org.polyfrost.oneconfig.internal.ui.hud
 
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
+import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
+import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.localizedValue
+import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreview
 
 private const val HUD_CARD_ID_PREFIX = "oneconfig.hud:"
 
@@ -16,6 +21,13 @@ private fun hudCardId(hud: Hud, ownerId: String) =
     "$HUD_CARD_ID_PREFIX$ownerId:${hud.id}:${hud::class.java.name}"
 
 private fun isCompatHud(hud: Hud) = hud.category.id == Hud.Category.COMPAT.id
+
+internal fun isHudModCard(id: String) = id.startsWith(HUD_CARD_ID_PREFIX)
+
+private fun withHudSuffix(title: Any): Any {
+    val text = title.asRenderText().trimEnd()
+    return if (text.endsWith("HUD", ignoreCase = true)) title else "$text HUD"
+}
 
 private fun findOwner(ownerId: String): ConfigData? =
     ConfigRegistry.findById(ownerId)
@@ -52,11 +64,16 @@ private class HudModCardData(
     override val id: String,
 ) : ConfigData {
     override val title: Any
-        get() = localizedValue(hud.title) ?: hud.title
+        get() = withHudSuffix(localizedValue(hud.title) ?: hud.title)
 
-    override val icon: String? = HudManager.iconFor(ownerId)
-        ?: owner?.icon
-        ?: if (ownerId == BUILTIN_HUD_CONFIG_ID) BUILTIN_HUD_ICON else "hud"
+    override val icon: String? = if (hud is LegacyHudMarker) null else {
+        HudManager.iconFor(ownerId)
+            ?: owner?.icon
+            ?: if (ownerId == BUILTIN_HUD_CONFIG_ID) BUILTIN_HUD_ICON else "hud"
+    }
+
+    override val preview: (@Composable (Modifier) -> Unit)? =
+        if (hud is LegacyHudMarker) null else ({ modifier -> HudPreview(hud, modifier) })
 
     override val authors: String? = owner?.authors
 
