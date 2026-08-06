@@ -46,13 +46,14 @@ fun SearchResultsScreen(query: String) {
     // Grouped by owning mod, in order of first appearance, so a mod is only headed once while keeping its best hit's
     // rank. Accordions collapse into one row per accordion rather than one per matching option inside it.
     val groupedOptions: Map<String, List<SettingNode>> = remember(results) {
-        val byMod = LinkedHashMap<String, MutableList<SettingNode>>()
+        val byGroup = LinkedHashMap<String, MutableList<SettingNode>>()
         results.forEach { (row, documents) ->
             if (row == null || documents.isEmpty()) return@forEach
             val node = searchNode(row.node, documents) ?: return@forEach
-            byMod.getOrPut(row.modTitle ?: "Other") { ArrayList() } += node
+            val mod = row.modTitle ?: "Other"
+            byGroup.getOrPut(row.groupLabel?.let { "$mod / $it" } ?: mod) { ArrayList() } += node
         }
-        byMod
+        byGroup
     }
 
     val listState = rememberRestorableLazyListState("global-search")

@@ -141,6 +141,11 @@ internal class SearchRow(
     val modTitle: String?,
     val category: String,
     val subcategory: String,
+    /**
+     * How this row should be headed inside its mod: the category, or the subcategory when the config only has one
+     * category, or null when the config only has 1 category and subcategory.
+     */
+    val groupLabel: String?,
     val node: SettingNode,
 )
 
@@ -149,10 +154,16 @@ internal class SearchRow(
  */
 internal fun buildSearchIndex(categories: List<CategoryGroup>, modTitle: String? = null): Map<Node, SearchRow> {
     val owners = IdentityHashMap<Node, SearchRow>()
+    val singleCategory = categories.size == 1
     categories.forEach { category ->
         category.subcategories.forEach { subcategory ->
+            val groupLabel = when {
+                !singleCategory -> category.name
+                category.subcategories.size > 1 -> subcategory.name
+                else -> null
+            }
             subcategory.nodes.forEach { node ->
-                val row = SearchRow(modTitle, category.name, subcategory.name, node)
+                val row = SearchRow(modTitle, category.name, subcategory.name, groupLabel, node)
                 when (node) {
                     is SettingNode.Leaf -> owners[node.prop] = row
                     is SettingNode.Accordion -> {
