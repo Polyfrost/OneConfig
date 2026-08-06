@@ -26,6 +26,9 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
@@ -45,6 +48,10 @@ object HudManager {
 
     private val hudProviders = HashMap<Class<out Hud>, Hud>()
     private val hudIcons = HashMap<String, String>()
+
+    var revision by mutableIntStateOf(0)
+        private set
+
     private var init = false
     private val hiddenHudPaint by lazy { org.jetbrains.skia.Paint().apply { setAlphaf(0.35f) } }
 
@@ -90,6 +97,9 @@ object HudManager {
 
     @ApiStatus.Internal
     @Volatile @JvmField var pendingSelection: Hud? = null
+
+    @ApiStatus.Internal
+    @Volatile @JvmField var pendingAdd: Hud? = null
 
     private val lastUpdates = HashMap<Hud, Long>()
 
@@ -169,21 +179,28 @@ object HudManager {
     @ApiStatus.Internal
     val activeInstances = ArrayList<Hud>()
 
+    private class DateTestHud : TextHud.DateTime("Date:", "yyyy-MM-dd", title = "Date")
+
+    private class TimeTestHud : TextHud.DateTime("Time:", "HH:mm:ss", title = "Time")
+
+    private class TextTestHud : TextHud("test", "test", Category.COMBAT, "") {
+        override fun getText(): String = "mmrp\nmeow"
+    }
+
     init {
         Snapshot.registerApplyObserver { _, _ -> contentDirty = true }
 
         if (java.lang.Boolean.getBoolean("oneconfig.test")) {
-            register(object : TextHud.DateTime("Date:", "yyyy-MM-dd") {})
-            register(object : TextHud.DateTime("Time:", "HH:mm:ss") {})
-            register(object : TextHud("test", "test", Category.COMBAT, "") {
-                override fun getText(): String = "mmrp\nmeow"
-            })
+            register(DateTestHud())
+            register(TimeTestHud())
+            register(TextTestHud())
         }
     }
 
     @JvmStatic
     fun register(hud: Hud) {
         hudProviders[hud::class.java] = hud
+        revision++
         if (hud.updateFrequency() == 0L) LOGGER.warn("update of HUD ${hud.title} is 0, this is not recommended!")
     }
 
@@ -217,7 +234,7 @@ object HudManager {
     fun providers(): Collection<Hud> = hudProviders.values
 
     fun <T : Hud> unregister(hud: T, removeActiveInstances: Boolean = false, delete: Boolean = false): ArrayList<T>? {
-        hudProviders.remove(hud::class.java)
+        if (hudProviders.remove(hud::class.java) != null) revision++
         if (!removeActiveInstances) return null
         val out = ArrayList<T>(10.coerceAtMost(activeInstances.size))
         val iter = activeInstances.iterator()

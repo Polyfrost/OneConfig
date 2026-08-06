@@ -236,11 +236,12 @@ abstract class TextHud(
     }
 
     @ApiStatus.Internal
-    open class DateTime(
+    open class DateTime @JvmOverloads constructor(
         header: String,
         @TextAnnotation(title = "Time template") var template: String,
         suffix: String = "",
-    ) : TextHud("date_time_hud.yml", "Date/Time Hud", Category.INFO, header, suffix) {
+        title: String = "Date/Time Hud",
+    ) : TextHud("date_time_hud.yml", title, Category.INFO, header, suffix) {
 
         private var _formatter: DateTimeFormatter? = null
         private var _formatterTemplate: String? = null
