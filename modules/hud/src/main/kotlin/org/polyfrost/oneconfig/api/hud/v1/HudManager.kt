@@ -279,7 +279,7 @@ object HudManager {
             }
         }
         for (it in activeInstances) {
-            if (it.mergeLink?.parent === hud) it.clearMergeLink()
+            if (it.mergeLinkX?.parent === hud || it.mergeLinkY?.parent === hud) it.clearMergeLink()
         }
         lastMergeKey = null
         invalidate()
@@ -513,16 +513,17 @@ object HudManager {
      * does: a HUD which stops being merged is let go and stays where it was left.
      */
     private fun updateMergeLinks() {
-        val linked = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Hud, Boolean>())
+        val linkedX = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Hud, Boolean>())
+        val linkedY = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Hud, Boolean>())
         Snapshot.withMutableSnapshot {
             for (group in frameGroups) {
                 for (link in group.links) {
-                    link.child.applyMergeLink(link.parent, link.childPoint, link.parentPoint)
-                    linked.add(link.child)
+                    link.child.applyMergeLink(link.parent, link.childPoint, link.parentPoint, link.axis)
+                    (if (link.axis == MergeAxis.X) linkedX else linkedY).add(link.child)
                 }
             }
             for (hud in activeInstances) {
-                if (hud !in linked) hud.clearMergeLink()
+                hud.clearMergeLinks(clearX = hud !in linkedX, clearY = hud !in linkedY)
             }
         }
     }
