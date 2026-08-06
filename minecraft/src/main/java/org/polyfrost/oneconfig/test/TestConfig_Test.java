@@ -183,6 +183,25 @@ public class TestConfig_Test extends Config {
     )
     public static String[] textListEmpty = {};
 
+    @ItemList(
+            title = "Item List",
+            description = "Search registered items and add several of them to an ordered list.",
+            category = "Lists",
+            subcategory = "Item List",
+            maxEntries = 8
+    )
+    public static String[] itemList = {"minecraft:diamond_sword", "minecraft:golden_apple"};
+
+    @ItemList(
+            title = "Single Item",
+            description = "The same picker limited to one selected item.",
+            category = "Lists",
+            subcategory = "Item List",
+            maxEntries = 1,
+            reorderable = false
+    )
+    public static String[] singleItem = {"minecraft:ender_pearl"};
+
     @FileList(
             title = "File List",
             description = "Pick several files. Add, remove and drag to reorder.",

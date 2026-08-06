@@ -17,3 +17,25 @@ take properties and turn them into PolyUI drawable elements, and then this is ha
 with callbacks so the tree is updated accordingly.
 
 todo add some pictures here
+
+## Item lists
+
+`@ItemList` provides a searchable selector for items registered by Minecraft or another mod. The
+backing value stores namespaced registry IDs, which keeps configuration files independent of
+localized item names and Minecraft implementation classes.
+
+```java
+@ItemList(
+    title = "Tracked items",
+    description = "Items shown by the tracker",
+    maxEntries = 8
+)
+public List<String> trackedItems = new ArrayList<>(List.of(
+    "minecraft:diamond",
+    "minecraft:golden_apple"
+));
+```
+
+Both `String[]` and `List<String>` fields are supported. Set `maxEntries = 1` to use the control as
+a single-item selector. Unknown IDs remain in the configuration and can still be removed, so a
+temporarily missing content mod does not silently destroy the user's selection.
