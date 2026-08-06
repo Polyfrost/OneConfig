@@ -167,8 +167,10 @@ object HudDocumentSource : SearchDocumentSource {
             scopes = setOf(SearchScope.Huds),
             metadata = SearchMetadata(
                 title = localizedLabel(hud.title)?.takeIf { it.isNotBlank() },
+                description = localizedLabel(hud.description)?.takeIf { it.isNotBlank() },
                 id = hud.id.takeIf { it.isNotBlank() },
                 category = localizedLabel(hud.category.name)?.takeIf { it.isNotBlank() },
+                tags = hud.searchTags.mapNotNull { localizedLabel(it)?.takeIf { l -> l.isNotEmpty() } },
                 modTitle = hud.configId?.let { modNameFor(it) ?: it }?.takeIf { it.isNotBlank() },
                 modDescription = config?.description?.asRenderText()?.takeIf { it.isNotBlank() },
             ),

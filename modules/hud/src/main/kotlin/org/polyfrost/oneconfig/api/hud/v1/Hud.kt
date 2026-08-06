@@ -108,6 +108,16 @@ private const val MAX_ANCHOR_DEPTH = 16
 
 @Suppress("EqualsOrHashCode", "UnstableApiUsage")
 abstract class Hud(id: String, title: String, val category: Category) : Cloneable, Config(id, null, title, null) {
+    /**
+     * Description of the HUD
+     */
+    open val description: String? = null
+
+    /**
+     * Search tags, like synonyms, what your users might search for
+     */
+    open val searchTags: List<String> = emptyList()
+
     private var _staticWidth: MutableState<Boolean> = mutableStateOf(false)
     var staticWidth: Boolean
         get() = _staticWidth.value
