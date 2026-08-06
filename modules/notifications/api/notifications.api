@@ -141,6 +141,7 @@ public final class org/polyfrost/oneconfig/api/notifications/v1/NotificationsMan
 	public final fun contains (Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;)Z
 	public final fun dismiss (J)V
 	public final fun dismiss (Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;)V
+	public static final fun ensureInitialized ()V
 	public final fun getActive ()Ljava/util/List;
 	public final fun getCount ()I
 	public final fun getHistory ()Ljava/util/List;
