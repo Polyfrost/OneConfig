@@ -13,12 +13,17 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
+import org.polyfrost.oneconfig.internal.ui.components.settings.item.ItemCatalog
+import org.polyfrost.oneconfig.internal.ui.components.settings.item.ItemCatalogService
+import org.polyfrost.oneconfig.internal.ui.components.settings.item.ItemDescriptor
+import org.polyfrost.oneconfig.internal.ui.components.settings.item.ItemIconData
 import org.polyfrost.oneconfig.internal.ui.screens.PREFERENCES_ID
 
 private enum class Theme { Dark, Light, System }
 private enum class Difficulty { Easy, Normal, Hard, Extreme }
 
 fun main() {
+    installPreviewItemCatalog()
     seedRegistry()
 
     singleWindowApplication(
@@ -33,6 +38,27 @@ fun main() {
         )
         OneConfigInterface(window.width.toFloat(), window.height.toFloat())
     }
+}
+
+private fun installPreviewItemCatalog() {
+    val items = listOf(
+        ItemDescriptor("minecraft:diamond_sword", "Diamond Sword"),
+        ItemDescriptor("minecraft:golden_apple", "Golden Apple"),
+        ItemDescriptor("minecraft:ender_pearl", "Ender Pearl"),
+        ItemDescriptor("minecraft:oak_log", "Oak Log"),
+        ItemDescriptor("minecraft:redstone", "Redstone Dust"),
+        ItemDescriptor("example:blue_gem", "Azure Crystal"),
+    )
+    ItemCatalog.installOverride(object : ItemCatalogService {
+        override fun items() = items
+
+        override fun icon(id: String): ItemIconData {
+            val base = 0xFF000000.toInt() or (id.hashCode() and 0x00FFFFFF)
+            return ItemIconData(16, 16, IntArray(16 * 16) { index ->
+                if ((index / 16 + index % 16) % 2 == 0) base else base xor 0x00202020
+            })
+        }
+    })
 }
 
 private fun seedRegistry() {
@@ -123,6 +149,18 @@ private fun textListProp(
     if (regex != null) p.addMetadata("regex", regex)
     if (maxEntries > 0) p.addMetadata("maxEntries", maxEntries)
     if (!reorderable) p.addMetadata("reorderable", false)
+}
+
+private fun itemListProp(
+    id: String,
+    title: String,
+    desc: String,
+    vararg entries: String,
+    maxEntries: Int = 0,
+) = Properties.simple(id, title, desc, entries.toList().toTypedArray(), Array<String>::class.java).also { p ->
+    p.addMetadata("visualizer", Visualizer.ItemListVisualizer::class.java)
+    p.addMetadata("addText", "Choose items")
+    if (maxEntries > 0) p.addMetadata("maxEntries", maxEntries)
 }
 
 private fun fileListProp(
@@ -267,6 +305,8 @@ private fun testControlsTree(): Tree {
     lists.put(multiSelectProp("multi-plain", "List Picker", "Single-select list dropdown", "Easy", "Normal", "Hard", "Extreme", checkable = false))
     lists.put(textListProp("text-list", "Ignored Players", "Type entries, add and remove rows", "Notch", "Herobrine", placeholder = "Enter a name..."))
     lists.put(textListProp("text-list-regex", "Allowed Servers", "Validated, max 3 entries", "hypixel.net", placeholder = "example.com", regex = "^[\\w.-]+\\.[a-z]{2,}$", maxEntries = 3, reorderable = false))
+    lists.put(itemListProp("item-list", "Tracked Items", "Search and select several Minecraft items", "minecraft:diamond_sword", "minecraft:golden_apple"))
+    lists.put(itemListProp("single-item", "Primary Item", "A single-item selector", "minecraft:ender_pearl", maxEntries = 1))
     lists.put(fileListProp("file-list", "Resource Packs", "Pick several files", placeholder = "Select a file..."))
     lists.put(fileListProp("dir-list", "Search Folders", "Pick several folders", directory = true, placeholder = "Select a folder..."))
     lists.put(colorListProp("color-list", "Palette", "One picker per entry", 0xFFFF5555.toInt(), 0xFF55FF55.toInt(), 0x8055AAFF.toInt()))
