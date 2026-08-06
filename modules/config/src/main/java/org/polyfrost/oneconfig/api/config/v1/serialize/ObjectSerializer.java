@@ -402,6 +402,7 @@ public class ObjectSerializer {
     }
 
 
+    @SuppressWarnings("unchecked")
     public static <T> T overwrite(T self, T input) {
         if (self == null) return null;
         if (input == null) return self;
@@ -424,6 +425,30 @@ public class ObjectSerializer {
             }
             //noinspection SuspiciousSystemArraycopy
             System.arraycopy(input, 0, self, 0, len);
+            return self;
+        }
+        if (self instanceof Collection) {
+            Collection<Object> target = (Collection<Object>) self;
+            Collection<Object> source = (Collection<Object>) input;
+            List<Object> copy = new ArrayList<>(source);
+            try {
+                target.clear();
+                target.addAll(copy);
+            } catch (UnsupportedOperationException e) {
+                throw new SerializationException("Cannot overwrite unmodifiable collection " + cls.getName() + " in place", e);
+            }
+            return self;
+        }
+        if (self instanceof Map) {
+            Map<Object, Object> target = (Map<Object, Object>) self;
+            Map<Object, Object> source = (Map<Object, Object>) input;
+            Map<Object, Object> copy = new LinkedHashMap<>(source);
+            try {
+                target.clear();
+                target.putAll(copy);
+            } catch (UnsupportedOperationException e) {
+                throw new SerializationException("Cannot overwrite unmodifiable map " + cls.getName() + " in place", e);
+            }
             return self;
         }
         fieldStream(cls).forEach(f -> {

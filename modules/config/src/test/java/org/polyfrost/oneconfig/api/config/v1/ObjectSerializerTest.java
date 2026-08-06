@@ -213,6 +213,31 @@ public class ObjectSerializerTest {
         assertNull(deserializedNull);
     }
 
+    @Test
+    public void testOverwriteList() {
+        java.util.List<String> self = new java.util.ArrayList<>(Arrays.asList("a", "b"));
+        java.util.List<String> input = new java.util.ArrayList<>(Arrays.asList("c", "d", "e"));
+
+        assertSame(self, ObjectSerializer.overwrite(self, input));
+        assertEquals(input, self);
+        assertFalse(self.contains(null));
+
+        ObjectSerializer.overwrite(self, new java.util.ArrayList<>(List.of("f")));
+        assertEquals(List.of("f"), self);
+    }
+
+    @Test
+    public void testOverwriteMap() {
+        Map<String, String> self = new HashMap<>();
+        self.put("a", "1");
+        Map<String, String> input = new HashMap<>();
+        input.put("b", "2");
+        input.put("c", "3");
+
+        assertSame(self, ObjectSerializer.overwrite(self, input));
+        assertEquals(input, self);
+    }
+
     enum TestEnum {
         TEST1
     }
