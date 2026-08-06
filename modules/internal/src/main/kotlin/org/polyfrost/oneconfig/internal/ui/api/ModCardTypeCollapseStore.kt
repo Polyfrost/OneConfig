@@ -2,9 +2,10 @@ package org.polyfrost.oneconfig.internal.ui.api
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateSetOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.setValue
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+import org.polyfrost.oneconfig.api.ui.v1.ModCardTypes
 import org.slf4j.LoggerFactory
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -15,7 +16,7 @@ object ModCardTypeCollapseStore {
     private val LOGGER = LoggerFactory.getLogger("OneConfig/ModCardTypes")
     private const val FILE_NAME = "mod-card-type-collapsed"
 
-    private val collapsed = mutableStateSetOf<String>()
+    private val overrides = mutableStateMapOf<String, Boolean>()
     private var loaded = false
 
     var revision by mutableIntStateOf(0)
@@ -32,21 +33,32 @@ object ModCardTypeCollapseStore {
                 Files.readAllLines(path, StandardCharsets.UTF_8)
                     .map(String::trim)
                     .filter(String::isNotEmpty)
-                    .forEach(collapsed::add)
+                    .forEach { line ->
+                        val id = line.substringBefore('=').trim()
+                        if (id.isEmpty()) return@forEach
+                        val value = if ('=' in line) line.substringAfter('=').trim().toBoolean() else true
+                        overrides[id] = value
+                    }
             }
         } catch (e: Exception) {
             LOGGER.error("Failed to load collapsed mod card types", e)
         }
     }
 
+    private fun defaultCollapsed(typeId: String) = ModCardTypes.byId(typeId)?.collapsedByDefault ?: false
+
     fun isCollapsed(typeId: String): Boolean {
         ensureLoaded()
-        return typeId in collapsed
+        return overrides[typeId] ?: defaultCollapsed(typeId)
     }
 
     fun setCollapsed(typeId: String, value: Boolean) {
         ensureLoaded()
-        val changed = if (value) collapsed.add(typeId) else collapsed.remove(typeId)
+        val changed = if (value == defaultCollapsed(typeId)) {
+            overrides.remove(typeId) != null
+        } else {
+            overrides.put(typeId, value) != value
+        }
         if (!changed) return
         revision++
         persist()
@@ -60,7 +72,7 @@ object ModCardTypeCollapseStore {
             Files.createDirectories(path.parent)
             Files.write(
                 path,
-                collapsed.joinToString("\n").toByteArray(StandardCharsets.UTF_8),
+                overrides.entries.joinToString("\n") { "${it.key}=${it.value}" }.toByteArray(StandardCharsets.UTF_8),
                 StandardOpenOption.CREATE,
                 StandardOpenOption.TRUNCATE_EXISTING,
                 StandardOpenOption.WRITE,
