@@ -243,6 +243,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static field pendingSelection Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public static field targetPixelHeight I
 	public static field targetPixelWidth I
+	public final fun addRegistrationListener (Ljava/lang/Runnable;)V
 	public final fun beginFrame (FF)Z
 	public final fun closeEditor ()V
 	public final fun getActiveInstances ()Ljava/util/ArrayList;

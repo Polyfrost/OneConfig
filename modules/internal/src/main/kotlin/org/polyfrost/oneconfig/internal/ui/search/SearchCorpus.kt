@@ -38,6 +38,7 @@ object SearchCorpus {
     init {
         registerSource(ConfigDocumentSource)
         registerSource(KeybindDocumentSource)
+        registerSource(HudDocumentSource)
     }
 
     fun registerSource(source: SearchDocumentSource) {

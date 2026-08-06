@@ -39,12 +39,14 @@ import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.utils.v1.MHUtils
+import java.util.concurrent.CopyOnWriteArrayList
 
 object HudManager {
     internal val LOGGER = LogManager.getLogger("OneConfig/HUD")
 
     private val hudProviders = HashMap<Class<out Hud>, Hud>()
     private val hudIcons = HashMap<String, String>()
+    private val registrationListeners = CopyOnWriteArrayList<Runnable>()
     private var init = false
     private val hiddenHudPaint by lazy { org.jetbrains.skia.Paint().apply { setAlphaf(0.35f) } }
 
@@ -181,10 +183,21 @@ object HudManager {
         }
     }
 
+    /**
+     * Adds a listener that is run when a new Hud is registered
+     */
+    @ApiStatus.Internal
+    fun addRegistrationListener(listener: Runnable) {
+        registrationListeners.add(listener)
+    }
+
+    private fun notifyRegistrationChanged() = registrationListeners.forEach(Runnable::run)
+
     @JvmStatic
     fun register(hud: Hud) {
         hudProviders[hud::class.java] = hud
         if (hud.updateFrequency() == 0L) LOGGER.warn("update of HUD ${hud.title} is 0, this is not recommended!")
+        notifyRegistrationChanged()
     }
 
     @JvmStatic
@@ -218,6 +231,7 @@ object HudManager {
 
     fun <T : Hud> unregister(hud: T, removeActiveInstances: Boolean = false, delete: Boolean = false): ArrayList<T>? {
         hudProviders.remove(hud::class.java)
+        notifyRegistrationChanged()
         if (!removeActiveInstances) return null
         val out = ArrayList<T>(10.coerceAtMost(activeInstances.size))
         val iter = activeInstances.iterator()

@@ -13,6 +13,9 @@ sealed interface SearchScope {
     /** Keybinds in keybind screen */
     data object Keybinds : SearchScope
 
+    /** HUD providers in the HUD editor's library */
+    data object Huds : SearchScope
+
     /** Every option in a specific mod's config */
     data class Config(val id: String) : SearchScope
 }

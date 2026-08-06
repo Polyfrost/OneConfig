@@ -6,13 +6,18 @@ import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
+import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.TreeConfigData
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedGroup
+import org.polyfrost.oneconfig.internal.ui.components.localizedLabel
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
+import org.polyfrost.oneconfig.internal.ui.hud.configForHud
+import org.polyfrost.oneconfig.internal.ui.hud.modNameFor
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry
 import org.polyfrost.oneconfig.internal.ui.keybind.isKeybindProperty
 
@@ -84,7 +89,7 @@ private fun modDocument(config: ConfigData): SearchDocument<ConfigData> {
             title = config.title.asRenderText().takeIf { it.isNotBlank() },
             id = config.id,
             description = config.description?.asRenderText()?.takeIf { it.isNotBlank() },
-            category = config.category.asRenderText().takeIf { it.isNotBlank() },
+            category = localizedLabel(config.category.name)?.takeIf { it.isNotBlank() },
             subcategory = tree?.subcategory?.asRenderText()?.takeIf { it.isNotBlank() },
         ),
         payload = config,
@@ -145,4 +150,26 @@ private fun treeDocuments(
         walk(node, id, ConfigVisualizer.DEFAULT_CATEGORY, ConfigVisualizer.DEFAULT_SUBCATEGORY, null)
     }
     return documents
+}
+
+object HudDocumentSource : SearchDocumentSource {
+    init {
+        HudManager.addRegistrationListener { SearchCorpus.invalidate() }
+    }
+
+    override fun documents(): List<SearchDocument<Hud>> = HudManager.providers().toList().map { hud ->
+        val config = hud.configId?.let(::configForHud)
+        return@map SearchDocument(
+            id = "hud$ID_SEPARATOR${hud::class.java.name}$ID_SEPARATOR${hud.id}",
+            scopes = setOf(SearchScope.Huds),
+            metadata = SearchMetadata(
+                title = localizedLabel(hud.title)?.takeIf { it.isNotBlank() },
+                id = hud.id.takeIf { it.isNotBlank() },
+                category = localizedLabel(hud.category.name)?.takeIf { it.isNotBlank() },
+                modTitle = hud.configId?.let { modNameFor(it) ?: it }?.takeIf { it.isNotBlank() },
+                modDescription = config?.description?.asRenderText()?.takeIf { it.isNotBlank() },
+            ),
+            payload = hud,
+        )
+    }
 }

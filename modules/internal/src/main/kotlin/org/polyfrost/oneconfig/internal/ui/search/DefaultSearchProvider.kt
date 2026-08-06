@@ -21,6 +21,12 @@ internal object DefaultSearchProvider : SearchProvider {
             if (listOfNotNull(it.metadata.title, it.metadata.description).any { p ->
                     searchMatches(p, q)
                 } || it.metadata.tags.any { t -> searchMatches(t, q) }) return@filter true
+            // Hud specific
+            if (it.scopes.contains(SearchScope.Huds) && listOfNotNull(
+                    it.metadata.category, it.metadata.distinctSubcategory,
+                    it.metadata.id, it.metadata.modTitle
+                ).any { k -> searchMatches(k, q) }
+            ) return@filter true
             // Match old search for keybinds
             if (scopes.contains(SearchScope.Keybinds) && listOfNotNull(
                     it.metadata.category,
