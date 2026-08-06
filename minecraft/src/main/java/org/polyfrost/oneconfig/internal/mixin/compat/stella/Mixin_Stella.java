@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class Mixin_Stella {
     @Inject(method = "onInitializeClient", at = @At("TAIL"), require = 0)
     private void oneconfig$registerStella(CallbackInfo ci) {
-        StellaCompat.ensureRegistered();
+        StellaCompat.initialize();
     }
 }
 //? }

@@ -12,29 +12,66 @@ import co.stellarskys.stella.utils.render.Render2D.height
 import co.stellarskys.stella.utils.render.Render2D.width
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.apache.logging.log4j.LogManager
-import org.polyfrost.oneconfig.api.config.v1.*
+import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
+import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+import org.polyfrost.oneconfig.api.config.v1.Properties
+import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.api.config.v1.Visualizer
+import org.polyfrost.oneconfig.api.config.v1.backend.Backend
 import org.polyfrost.oneconfig.api.config.v1.dsl.category
+import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.config.v1.dsl.visualizer
+import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.hud.v1.OneConfigHudWrapper
+import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer
 import java.awt.Color
+import java.util.function.Consumer
 
 object StellaCompat {
     private val LOGGER = LogManager.getLogger("OneConfig/Stella-Compat")
+    private val hudProperties = mutableMapOf<String, Property<*>>()
     private val tree = Tree.tree()
+    private var initialized = false
 
     @JvmStatic
+    fun initialize() {
+        CompatLoader.requireTranslations(skip = true) {
+            ensureRegistered()
+        }
+    }
+
     fun ensureRegistered() {
-        addConfigTree()
-        addHuds()
+        if (initialized) return
+        initialized = true
+
+        try {
+            addConfigTree()
+            addHuds()
+        } catch (_: Throwable) {
+            fallbackTree()
+            return
+        }
 
         config.registerListener { _, _ ->
             for (node in tree.map.values) {
                 (node as? Property<*>)?.revaluateDisplay()
             }
+            for (property in hudProperties.values) {
+                property.revaluateDisplay()
+            }
         }
+
+        EventManager.register(HudEditorToggleEvent::class.java, Consumer { event ->
+            HUDManager.shouldRenderHuds = !event.open
+            if (!event.open) runCatching { HUDManager.saveAllLayouts() }
+                .onFailure { LOGGER.warn("Failed to save Stella HUD layouts", it) }
+        })
     }
 
     // Settings
@@ -43,6 +80,7 @@ object StellaCompat {
 
         tree.id = Stella.NAMESPACE
         tree.title = "Stella"
+        tree.saveFunction = { config.save() }
         info?.extractIconFile()?.let { tree.addMetadata("icon_path", it) }
 
         for ((catName, category) in config.categories) {
@@ -67,7 +105,20 @@ object StellaCompat {
         CompatSnapshots.register(tree)
     }
 
+    fun fallbackTree() {
+        val fallback = Tree.tree()
+        fallback.id = Stella.NAMESPACE
+        fallback.title = "Stella"
+        ModInfo.loadedMods.firstOrNull { it.id == "stella" }?.extractIconFile()?.let { fallback.addMetadata("icon_path", it) }
+        fallback.addMetadata("on_click") { runCatching { config.open() } }
+        fallback.addMetadata(Backend.UI_ONLY_METADATA, true)
+        fallback.addMetadata(Backend.UI_PLACEHOLDER_METADATA, true)
+        ConfigManager.active().register(fallback)
+    }
+
     private fun buildProperty(key: String, element: ConfigElement): Property<*>? {
+        if (element.configName.isBlank()) return null
+
         val name = element.name
         val desc = element.description
 
@@ -78,15 +129,11 @@ object StellaCompat {
                 id = key, name = name, description = desc, type = Boolean::class.javaPrimitiveType
             ).apply { visualizer = Visualizer.SwitchVisualizer::class.java }
 
-            is ConfigSubcategory -> {
-                if (element.configName.isNotBlank()) {
-                    Properties.functional<Boolean>(
-                        getter = { element.value as Boolean },
-                        setter = { element.value = it },
-                        id = key, name = "Enable", description = desc, type = Boolean::class.javaPrimitiveType
-                    ).apply { visualizer = Visualizer.SwitchVisualizer::class.java }
-                } else null
-            }
+            is ConfigSubcategory -> Properties.functional<Boolean>(
+                getter = { element.value as Boolean },
+                setter = { element.value = it },
+                id = key, name = "Enable", description = desc, type = Boolean::class.javaPrimitiveType
+            ).apply { visualizer = Visualizer.SwitchVisualizer::class.java }
 
             is StepSlider -> Properties.functional(
                 getter = { element.value as Int },
@@ -138,7 +185,17 @@ object StellaCompat {
             is TextParagraph -> Properties.dummy(id = key, name = name, description = desc)
                 .apply { visualizer = Visualizer.InfoVisualizer::class.java }
 
-            is Keybind -> null
+            is Keybind -> {
+                val handler = element.value as Keybind.Handler
+                Properties.functional(
+                    getter = {
+                        val code = handler.keyCode()
+                        OneConfigKeybind(if (code > 0) intArrayOf(code) else null, null, KeyModifiers.NONE, 0L) { false }
+                    },
+                    setter = { kb -> handler.setCode(kb.keyCodes?.firstOrNull() ?: 0) },
+                    id = key, name = name, description = desc, type = OneConfigKeybind::class.java,
+                ).apply { visualizer = Visualizer.KeybindVisualizer::class.java }
+            }
             else -> null
         }
     }
@@ -152,8 +209,10 @@ object StellaCompat {
 
     // Hud
     private class StellaHudWrapper(private val element: HUDElement): OneConfigHudWrapper {
-        override var id: String = element.id
-        override var name: String = element.id
+        private val confElement: ConfigElement? get() =  config.elementMap[element.configKey]
+
+        override var id: String = "stella/${element.id}"
+        override var name: String = confElement?.name ?: element.id
         override var modId: String = Stella.NAMESPACE
 
         override var x: Float
@@ -170,10 +229,7 @@ object StellaCompat {
 
         override var hidden: Boolean
             get() = !element.isEnabled()
-            set(value) {
-                val key = element.configKey ?: return
-                config.elementMap[key]?.value = !value
-            }
+            set(value) { confElement?.value = !value }
 
         override var scaledWidth: Float
             get() = element.width * element.scale
@@ -182,6 +238,8 @@ object StellaCompat {
         override var scaledHeight: Float
             get() = element.height * element.scale
             set(_) {}
+
+        override fun linkedProperties(): List<Property<*>> = buildHudProperties(element)
     }
 
     private fun addHuds() {
@@ -214,6 +272,22 @@ object StellaCompat {
 
             ctx.pose().popMatrix()
         }
+    }
+
+    private fun buildHudProperties(element: HUDElement): List<Property<*>> {
+        val dynamic = element.dynamicVisibility
+        val toggle = element.configKey?.let { buildOrGetProp(it, dynamic) }
+        val related = element.related.mapNotNull { buildOrGetProp(it, dynamic) }
+        return listOfNotNull(toggle) + related
+    }
+
+    private fun buildOrGetProp(key: String, dynamic: Boolean): Property<*>? {
+        hudProperties[key]?.let { return it }
+        val element = config.elementMap[key] ?: return null
+        val property = buildProperty(key, element) ?: return null
+        if (dynamic) hookShouldShow(property, element)
+        hudProperties[key] = property
+        return property
     }
 }
 //? }
