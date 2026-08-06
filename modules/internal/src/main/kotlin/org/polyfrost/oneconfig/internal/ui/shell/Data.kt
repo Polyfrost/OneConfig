@@ -43,6 +43,12 @@ object ShellState {
 
     var focusSearchField by mutableStateOf(false)
 
+    /**
+     * Whether the search field currently holds focus. Mirrored here so a discarded composition
+     * can recover the state.
+     */
+    var searchFieldFocused: Boolean = false
+
     var showSearchField by mutableStateOf(false)
 
     var hudDragging by mutableStateOf(false)

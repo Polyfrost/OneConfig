@@ -224,6 +224,7 @@ fun GlobalSearchBar() {
 
     LaunchedEffect(searchText) { ShellState.searchQuery = searchText }
     LaunchedEffect(ShellState.searchQuery) { if (ShellState.searchQuery != searchText) searchText = ShellState.searchQuery }
+    LaunchedEffect(isFocused) { ShellState.searchFieldFocused = isFocused }
 
     LaunchedEffect(ShellState.focusSearchField) {
         if (ShellState.focusSearchField) {
