@@ -98,6 +98,9 @@ object HudManager {
     @ApiStatus.Internal
     @Volatile @JvmField var pendingSelection: Hud? = null
 
+    @ApiStatus.Internal
+    @Volatile @JvmField var pendingAdd: Hud? = null
+
     private val lastUpdates = HashMap<Hud, Long>()
 
     private val redrawCacheDisabled = java.lang.Boolean.getBoolean("oneconfig.hud.nocache")

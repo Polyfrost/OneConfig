@@ -86,7 +86,9 @@ private class HudModCardData(
     override val category: Config.Category = Config.Category.HUD
 
     override val onOpen: () -> Unit = {
-        HudManager.pendingSelection = HudManager.getHudsOfType(hud::class.java).singleOrNull()
+        val existing = HudManager.getHudsOfType(hud::class.java)
+        HudManager.pendingSelection = existing.firstOrNull()
+        HudManager.pendingAdd = if (existing.isEmpty()) hud else null
         HudManager.openEditor()
     }
 }
