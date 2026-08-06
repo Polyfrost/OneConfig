@@ -14,14 +14,14 @@ import com.mojang.blaze3d.buffers.BufferUsage
 /*import com.mojang.blaze3d.platform.NativeImage*/
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
+//? if >= 1.21.8
+import net.minecraft.client.gui.render.GuiRenderer
 //? if >= 26.1 {
 import net.minecraft.client.renderer.state.gui.GuiRenderState
 import org.polyfrost.oneconfig.internal.mixin.render.GameRendererAccessor
-import org.polyfrost.oneconfig.internal.mixin.render.GuiRendererAccessor
 //? } else if >= 1.21.8 {
 /*import net.minecraft.client.gui.render.state.GuiRenderState
 import org.polyfrost.oneconfig.internal.mixin.render.GameRendererAccessor
-import org.polyfrost.oneconfig.internal.mixin.render.GuiRendererAccessor
 *///? }
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.chat.Component
@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.Collections
-import java.util.concurrent.CompletableFuture
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.min
@@ -112,10 +111,8 @@ class MinecraftItemCatalogService : ItemCatalogService {
     }
 
     private fun scheduleRender() {
-        // Defer until the current Compose frame has completed before touching Minecraft's GUI renderer.
-        CompletableFuture.runAsync {
-            Minecraft.getInstance().execute(::renderPendingBatch)
-        }
+        // Always queue the batch so the current Compose frame can finish before native GUI rendering starts.
+        Minecraft.getInstance().schedule(::renderPendingBatch)
     }
 
     private fun renderPendingBatch() {
@@ -172,11 +169,13 @@ class MinecraftItemCatalogService : ItemCatalogService {
             return
         }
 
+        var renderResource: AutoCloseable? = null
         try {
-            renderItems(target, placements, renderGuiWidth, renderGuiHeight)
-            readTarget(target, placements, renderGuiWidth, renderGuiHeight, iconPixelSize, batch)
+            renderResource = renderItems(target, placements, renderGuiWidth, renderGuiHeight)
+            readTarget(target, placements, renderGuiWidth, renderGuiHeight, iconPixelSize, batch, renderResource)
         } catch (throwable: Throwable) {
             LOG.warn("Failed to render item selector icons", throwable)
+            closeRenderResource(renderResource)
             target.destroyBuffers()
             completeBatch(batch, emptyMap())
         }
@@ -199,7 +198,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
         placements: List<Placement>,
         guiWidth: Int,
         guiHeight: Int,
-    ) {
+    ): AutoCloseable? {
         clearTarget(target)
         //? if >= 1.21.8 {
         val state = GuiRenderState()
@@ -216,12 +215,10 @@ class MinecraftItemCatalogService : ItemCatalogService {
         }
 
         val client = Minecraft.getInstance()
-        val guiRenderer = (client.gameRenderer as GameRendererAccessor).`oneconfig$getGuiRenderer`()
-        val accessor = guiRenderer as GuiRendererAccessor
-        val previousState = accessor.`oneconfig$getRenderState`()
+        val guiRenderer = createItemGuiRenderer(client, state)
+        val previousTarget = GuiTargetRedirect.target
         GuiTargetRedirect.target = target
         try {
-            accessor.`oneconfig$setRenderState`(state)
             //? if >= 26.2 {
             /*guiRenderer.render()
             *///? } else {
@@ -229,13 +226,17 @@ class MinecraftItemCatalogService : ItemCatalogService {
                 .getBuffer(net.minecraft.client.renderer.fog.FogRenderer.FogMode.NONE)
             guiRenderer.render(fog)
             //? }
+        } catch (throwable: Throwable) {
+            guiRenderer.close()
+            throw throwable
         } finally {
-            GuiTargetRedirect.target = null
-            accessor.`oneconfig$setRenderState`(previousState)
+            GuiTargetRedirect.target = previousTarget
         }
+        return guiRenderer
         //? } else if >= 1.21.5 {
         /*val client = Minecraft.getInstance()
         val graphics = GuiGraphicsExtractor(client, client.renderBuffers().bufferSource())
+        val previousTarget = GuiTargetRedirect.target
         withGuiProjection(guiWidth, guiHeight) {
             GuiTargetRedirect.target = target
             try {
@@ -245,12 +246,14 @@ class MinecraftItemCatalogService : ItemCatalogService {
                 }
                 graphics.flush()
             } finally {
-                GuiTargetRedirect.target = null
+                GuiTargetRedirect.target = previousTarget
             }
         }
+        return null
         *///? } else {
         /*val client = Minecraft.getInstance()
         val graphics = GuiGraphicsExtractor(client, client.renderBuffers().bufferSource())
+        val previousTarget = GuiTargetRedirect.target
         withGuiProjection(guiWidth, guiHeight) {
             GuiTargetRedirect.target = target
             target.bindWrite(true)
@@ -261,12 +264,33 @@ class MinecraftItemCatalogService : ItemCatalogService {
                 }
                 graphics.flush()
             } finally {
-                GuiTargetRedirect.target = null
-                client.mainRenderTarget.bindWrite(true)
+                GuiTargetRedirect.target = previousTarget
+                (previousTarget ?: client.mainRenderTarget).bindWrite(true)
             }
         }
+        return null
         *///? }
     }
+
+    //? if >= 1.21.8 {
+    private fun createItemGuiRenderer(client: Minecraft, state: GuiRenderState): GuiRenderer {
+        // Keep this asynchronous icon batch separate from the active frame's render state and
+        // item atlas. Reusing the game's renderer would mix two independently-lived frames.
+        //? if >= 26.2 {
+        /*return GuiRenderer(state, client.gameRenderer.featureRenderDispatcher(), emptyList())
+        *///? } else if >= 1.21.10 {
+        return GuiRenderer(
+            state,
+            client.renderBuffers().bufferSource(),
+            client.gameRenderer.getSubmitNodeStorage(),
+            client.gameRenderer.getFeatureRenderDispatcher(),
+            emptyList(),
+        )
+        //? } else {
+        /*return GuiRenderer(state, client.renderBuffers().bufferSource(), emptyList())
+        *///? }
+    }
+    //? }
 
     //? if < 1.21.8 {
     /*private inline fun withGuiProjection(guiWidth: Int, guiHeight: Int, render: () -> Unit) {
@@ -302,12 +326,13 @@ class MinecraftItemCatalogService : ItemCatalogService {
 
     private fun clearTarget(target: TextureTarget) {
         //? if >= 26.2 {
-        /*val color = target.colorTexture ?: return
-        RenderSystem.getDevice().createCommandEncoder()
-            .clearColorTexture(color, org.joml.Vector4f(0f, 0f, 0f, 0f))
+        /*val encoder = RenderSystem.getDevice().createCommandEncoder()
+        target.colorTexture?.let { encoder.clearColorTexture(it, org.joml.Vector4f(0f, 0f, 0f, 0f)) }
+        target.depthTexture?.let { encoder.clearDepthTexture(it, 1.0) }
         *///? } else if >= 1.21.5 {
-        val color = target.colorTexture ?: return
-        RenderSystem.getDevice().createCommandEncoder().clearColorTexture(color, 0)
+        val encoder = RenderSystem.getDevice().createCommandEncoder()
+        target.colorTexture?.let { encoder.clearColorTexture(it, 0) }
+        target.depthTexture?.let { encoder.clearDepthTexture(it, 1.0) }
         //? } else if >= 1.21.4 {
         /*target.clear()
         *///? } else {
@@ -322,6 +347,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
         guiHeight: Int,
         iconSize: Int,
         batch: RenderBatch,
+        renderResource: AutoCloseable?,
     ) {
         //? if >= 1.21.5 {
         val texture = target.colorTexture ?: error("Item icon render target has no color texture")
@@ -404,6 +430,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
                 completeBatch(batch, emptyMap())
             } finally {
                 buffer.close()
+                closeRenderResource(renderResource)
                 target.destroyBuffers()
             }
         }
@@ -440,9 +467,15 @@ class MinecraftItemCatalogService : ItemCatalogService {
         } finally {
             RenderSystem.bindTexture(previousTexture)
             image.close()
+            closeRenderResource(renderResource)
             target.destroyBuffers()
         }
         *///? }
+    }
+
+    private fun closeRenderResource(resource: AutoCloseable?) {
+        runCatching { resource?.close() }
+            .onFailure { LOG.warn("Failed to release item selector render resources", it) }
     }
 
     private fun completeReadback(
