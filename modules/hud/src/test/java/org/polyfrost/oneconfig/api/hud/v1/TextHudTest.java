@@ -60,19 +60,19 @@ public class TextHudTest {
         clone.setText("Clone");
         clone.update();
 
-        assertEquals("Label Provider", displayText(provider));
-        assertEquals("Label Clone", displayText(clone));
+        assertEquals("LabelProvider", displayText(provider));
+        assertEquals("LabelClone", displayText(clone));
     }
 
     @Test
     void bracketsWrapTheWholeLine() throws Exception {
         TestMutableTextHud hud = new TestMutableTextHud("Value");
         hud.update();
-        assertEquals("Label Value", displayText(hud));
+        assertEquals("LabelValue", displayText(hud));
 
         hud.setBrackets(true);
         hud.update();
-        assertEquals("[Label Value]", displayText(hud));
+        assertEquals("[LabelValue]", displayText(hud));
     }
 
     @Test

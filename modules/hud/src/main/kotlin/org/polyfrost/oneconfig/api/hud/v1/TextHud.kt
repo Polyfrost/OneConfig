@@ -32,10 +32,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.util.fastFilterNotNull
 import androidx.compose.ui.util.fastJoinToString
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.skia.paragraph.Direction
-import org.jetbrains.skia.paragraph.ParagraphBuilder
-import org.jetbrains.skia.paragraph.ParagraphStyle
-import org.jetbrains.skia.paragraph.TextBox
 import org.polyfrost.compose.composables.PolyBox
 import org.polyfrost.compose.composables.PolyCanvas
 import org.polyfrost.compose.composables.PolyMcText
@@ -43,9 +39,7 @@ import org.polyfrost.compose.composables.PolyModifier
 import org.polyfrost.compose.composables.align
 import org.polyfrost.compose.composables.padding
 import org.polyfrost.compose.composables.size
-import org.polyfrost.compose.layout.PolyAlign
 import org.polyfrost.compose.layout.PolyInsets
-import org.polyfrost.compose.layout.PolySize
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
@@ -188,7 +182,7 @@ abstract class TextHud(
         }
     }
 
-    open val concatString: String get() = " "
+    open val concatString: String get() = ""
 
     open fun concat(prefix: String, value: String?, suffix: String): String {
         return arrayListOf(

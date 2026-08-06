@@ -248,6 +248,47 @@ private fun horizontalSnapLines(dragged: Hud): List<Float> {
     return lines
 }
 
+/**
+ * Places the canvas hint where it covers the least: HUDs live anywhere on screen, so a hint pinned
+ * to the bottom edge sooner or later sits right on top of the one being worked on. Every edge and
+ * corner is scored by how much of it a HUD or a panel would cover, and the clearest one wins; ties
+ * go to the earlier, more natural, spot.
+ */
+private fun pickHintSlot(root: IntSize, hint: IntSize, margin: Float, obstacles: List<Rect>): Offset {
+    val w = hint.width.toFloat()
+    val h = hint.height.toFloat()
+    val centerX = (root.width - w) / 2f
+    val left = margin
+    val right = root.width - w - margin
+    val top = margin
+    val bottom = root.height - h - margin
+    val slots = listOf(
+        Offset(centerX, bottom),
+        Offset(centerX, top),
+        Offset(left, bottom),
+        Offset(right, bottom),
+        Offset(left, top),
+        Offset(right, top),
+    )
+    var best = slots[0]
+    var bestScore = Float.MAX_VALUE
+    for ((i, slot) in slots.withIndex()) {
+        var score = i.toFloat()
+        for (o in obstacles) {
+            val overlapX = minOf(slot.x + w, o.right) - maxOf(slot.x, o.left)
+            if (overlapX <= 0f) continue
+            val overlapY = minOf(slot.y + h, o.bottom) - maxOf(slot.y, o.top)
+            if (overlapY <= 0f) continue
+            score += overlapX * overlapY
+        }
+        if (score < bestScore) {
+            bestScore = score
+            best = slot
+        }
+    }
+    return best
+}
+
 private fun hudBounds(hud: Hud): HudBounds? {
     val scale = hud.effectiveScale
     if (hud is LegacyHud) {
@@ -317,6 +358,25 @@ private fun anchorTargetsFor(sources: List<Hud>): List<Hud> =
         sources.none { it === candidate || candidate.anchorChainContains(it) }
     }
 
+/** The point on [source]'s own box under the cursor, while picking which point gets anchored. */
+private fun hitTestSelfAnchorPoint(
+    source: Hud,
+    screenX: Float,
+    screenY: Float,
+    mcToScreen: Float,
+): HudAnchor? {
+    var best: HudAnchor? = null
+    var bestDist = ANCHOR_HIT_RADIUS_PX
+    for (point in ANCHOR_POINTS) {
+        val p = anchorPointOf(source, point) ?: continue
+        val d = hypot(p.x * mcToScreen - screenX, p.y * mcToScreen - screenY)
+        if (d >= bestDist) continue
+        bestDist = d
+        best = point
+    }
+    return best
+}
+
 private fun hitTestAnchorPoint(
     sources: List<Hud>,
     screenX: Float,
@@ -338,6 +398,12 @@ private fun hitTestAnchorPoint(
 }
 
 private fun drawHudContents(sk: org.jetbrains.skia.Canvas, mcToScreen: Float) {
+    // HUDs whose backgrounds are fused with a neighbour do not paint their own, so the merged shapes
+    // have to be laid down here first, exactly like the in-game HUD pass does.
+    sk.save()
+    if (mcToScreen != 1f) sk.scale(mcToScreen, mcToScreen)
+    HudManager.drawMergedBackgrounds(RenderContext(sk))
+    sk.restore()
     for (hud in HudManager.activeInstances) {
         if (hud is LegacyHud) continue
         val root = hud.runtimeOrNull?.root ?: continue
@@ -787,6 +853,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     var draggedHud by remember { mutableStateOf<Hud?>(null) }
     var draggedGroup by remember { mutableStateOf<Set<Hud>>(emptySet()) }
     var dragStarts by remember { mutableStateOf<Map<Hud, Pair<Float, Float>>>(emptyMap()) }
+    // set while the current drag grabbed a whole fused shape rather than the selection itself
+    var dragTookWholeMerge by remember { mutableStateOf(false) }
     var snapGuides by remember { mutableStateOf(SnapGuides.NONE) }
     var isResizing by remember { mutableStateOf(false) }
     var resizedHud by remember { mutableStateOf<Hud?>(null) }
@@ -828,6 +896,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     // HUDs waiting for the user to pick an anchor point. Non-empty while the picker overlay is up.
     var anchorPickSources by remember { mutableStateOf<List<Hud>>(emptyList()) }
     var hoveredAnchor by remember { mutableStateOf<Pair<Hud, HudAnchor>?>(null) }
+    // null while the first click is still choosing which point of the HUD being anchored is pinned
+    var anchorPickSelf by remember { mutableStateOf<HudAnchor?>(null) }
 
     // The "active" HUD of a selection, the panel target if it is still selected, otherwise the
     // most recently added member. Drives the settings panel, resize handles, action bar and keybinds.
@@ -1045,18 +1115,34 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             if (anchorPickSources.isNotEmpty()) {
                 val sources = anchorPickSources
                 val secondary = event.buttons.isSecondaryPressed
+                val mcToScreen = Platform.screen().mcToScreenScale()
                 event.changes.forEach { it.consume() }
-                val picked = if (secondary) {
-                    null
-                } else {
-                    hitTestAnchorPoint(sources, pos.x, pos.y, Platform.screen().mcToScreenScale())
+                // first click picks the point on the HUD being anchored, second the point it hangs off
+                val self = anchorPickSelf
+                if (!secondary && self == null) {
+                    val pickedSelf = hitTestSelfAnchorPoint(sources[0], pos.x, pos.y, mcToScreen)
+                    Snapshot.withMutableSnapshot {
+                        if (pickedSelf != null) {
+                            anchorPickSelf = pickedSelf
+                        } else {
+                            anchorPickSources = emptyList()
+                        }
+                        hoveredAnchor = null
+                        pressWasSecondary = true
+                    }
+                    if (pickedSelf != null) UiSounds.play(UiSoundEvent.CLICK)
+                    return@safePointerEvent
                 }
+                val picked = if (secondary) null else hitTestAnchorPoint(sources, pos.x, pos.y, mcToScreen)
                 Snapshot.withMutableSnapshot {
                     when {
                         secondary -> sources.forEach { it.clearAnchor() }
-                        picked != null -> sources.forEach { it.anchorTo(picked.first, picked.second) }
+                        picked != null -> sources.forEach {
+                            it.anchorTo(picked.first, picked.second, self ?: HudAnchor.Auto)
+                        }
                     }
                     anchorPickSources = emptyList()
+                    anchorPickSelf = null
                     hoveredAnchor = null
                     // swallows the release that follows, so it can't fall through to selection
                     pressWasSecondary = true
@@ -1145,13 +1231,24 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     selectedHuds = newSelection
                     libraryVisible = false
                     if (newSelection.isNotEmpty()) {
+                        // Grabbing a HUD you had not selected drags the whole shape it is fused into,
+                        // so merged HUDs move as one. Grabbing one that is already selected pulls it
+                        // out of that shape instead, which is how they come apart again.
+                        val detach = wasSelected
+                        val dragSet = if (detach) {
+                            newSelection
+                        } else {
+                            newSelection + HudManager.mergeGroupOf(hit).filter { !it.locked }
+                        }
+                        HudManager.setMergeExclusions(if (detach) dragSet else emptySet())
+                        dragTookWholeMerge = !detach && dragSet.size > newSelection.size
                         hit.onEditorDragStart()
                         dragOffsetX = pos.x * s - hit.x
                         dragOffsetY = pos.y * s - hit.y
                         isDragging = true
                         draggedHud = hit
-                        draggedGroup = newSelection
-                        dragStarts = newSelection.associateWith { it.x to it.y }
+                        draggedGroup = dragSet
+                        dragStarts = dragSet.associateWith { it.x to it.y }
                         hoveredHud = hit
                     } else {
                         isDragging = false
@@ -1175,7 +1272,12 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             lastPointerPos[1] = pos.y
             if (anchorPickSources.isNotEmpty()) {
                 val mcToScreen = Platform.screen().mcToScreenScale()
-                val hit = hitTestAnchorPoint(anchorPickSources, pos.x, pos.y, mcToScreen)
+                val source = anchorPickSources[0]
+                val hit = if (anchorPickSelf == null) {
+                    hitTestSelfAnchorPoint(source, pos.x, pos.y, mcToScreen)?.let { source to it }
+                } else {
+                    hitTestAnchorPoint(anchorPickSources, pos.x, pos.y, mcToScreen)
+                }
                 if (hit != hoveredAnchor) hoveredAnchor = hit
                 return@safePointerEvent
             }
@@ -1210,11 +1312,13 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             } else if (isDragging) {
                 if (event.changes.none { it.pressed }) {
                     val dropped = draggedHud
+                    HudManager.setMergeExclusions(emptySet())
                     Snapshot.withMutableSnapshot {
                         isDragging = false
                         draggedHud = null
                         draggedGroup = emptySet()
                         dragStarts = emptyMap()
+                        dragTookWholeMerge = false
                         snapGuides = SnapGuides.NONE
                     }
                     dropped?.onEditorDragEnd()
@@ -1272,8 +1376,9 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     if (event.changes.none { it.pressed }) {
                         lockedPressHud = null
                     } else if ((pos - lockedPressOrigin).getDistance() > LOCKED_DRAG_SLOP_PX) {
+                        // no toast here: the pointer is on the HUD, so the canvas hint is already
+                        // saying the same thing right under it
                         lockedPressHud = null
-                        notifyHudLocked()
                     }
                 }
                 if (inChrome(pos.x, pos.y)) {
@@ -1328,11 +1433,14 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             val wasDragging = isDragging
             val wasDraggedHud = draggedHud
             val wasDraggedGroup = draggedGroup
+            val wasCluster = dragTookWholeMerge
+            HudManager.setMergeExclusions(emptySet())
             Snapshot.withMutableSnapshot {
                 isDragging = false
                 draggedHud = null
                 draggedGroup = emptySet()
                 dragStarts = emptyMap()
+                dragTookWholeMerge = false
                 snapGuides = SnapGuides.NONE
             }
             if (wasDragging) wasDraggedHud?.onEditorDragEnd()
@@ -1356,7 +1464,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             } else {
                 UiSounds.play(UiSoundEvent.HUD_DRAG_END)
                 Snapshot.withMutableSnapshot {
-                    if (wasDraggedGroup.isNotEmpty()) selectedHuds = wasDraggedGroup
+                    // a shape dragged as a whole leaves only the grabbed HUD selected, so grabbing it
+                    // again pulls that one out instead of moving the shape a second time
+                    if (wasCluster) selectedHuds = setOf(wasDraggedHud)
+                    else if (wasDraggedGroup.isNotEmpty()) selectedHuds = wasDraggedGroup
                     libraryVisible = false
                 }
             }
@@ -1409,7 +1520,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 if (keyEvent.type != KeyEventType.KeyDown) return@onKeyEvent false
                 if (keyEvent.key == Key.Escape && anchorPickSources.isNotEmpty()) {
                     Snapshot.withMutableSnapshot {
-                        anchorPickSources = emptyList()
+                        // step back to picking the point on the HUD before dropping the pick entirely
+                        if (anchorPickSelf != null) anchorPickSelf = null else anchorPickSources = emptyList()
                         hoveredAnchor = null
                     }
                     return@onKeyEvent true
@@ -1535,7 +1647,9 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                         val isSelected = hud in selectedHuds
                         val isPrimary = hud === primaryHud()
                         val isHovered = hud === hoveredHud
-                        val isBeingDragged = hud === draggedHud && isDragging
+                        // every HUD carried along by the drag reads as being dragged, so grabbing a
+                        // fused shape shows the whole shape moving rather than one HUD of it
+                        val isBeingDragged = isDragging && (hud === draggedHud || hud in draggedGroup)
                         val singleSelection = selectedHuds.size == 1
 
                         if (hud.locked) {
@@ -1590,9 +1704,9 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     }
                     // Hovering an anchored HUD traces the link back to the point it hangs off.
                     hoveredHud?.let { hovered ->
-                        val parent = hovered.anchorParent
-                        val from = if (parent == null) null else anchorPointOf(hovered, hovered.effectiveGrowthAnchor)
-                        val to = if (parent == null) null else anchorPointOf(parent, hovered.anchorPoint)
+                        val parent = hovered.effectiveAnchorParent
+                        val from = if (parent == null) null else anchorPointOf(hovered, hovered.effectiveSelfAnchorPoint)
+                        val to = if (parent == null) null else anchorPointOf(parent, hovered.effectiveAnchorPoint)
                         if (from != null && to != null) {
                             drawLine(
                                 color = anchorLineColor,
@@ -1608,7 +1722,37 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     if (anchorPickSources.isNotEmpty()) {
                         drawRect(color = anchorPickScrimColor, size = size)
                         val hotAnchor = hoveredAnchor
-                        for (target in anchorTargetsFor(anchorPickSources)) {
+                        val self = anchorPickSelf
+                        val source = anchorPickSources[0]
+                        // step one: the points on the HUD being anchored. step two: its chosen point,
+                        // kept on screen so it is clear what is about to be pinned where.
+                        if (self == null || anchorPickSources.size == 1) {
+                            val b = hudBounds(source)
+                            if (b != null) {
+                                drawRect(
+                                    color = Accent.copy(alpha = 0.5f),
+                                    topLeft = Offset(b.x * mcToScreen, b.y * mcToScreen),
+                                    size = Size(b.width * mcToScreen, b.height * mcToScreen),
+                                    style = Stroke(width = 1f),
+                                )
+                            }
+                            for (point in ANCHOR_POINTS) {
+                                if (self != null && point != self) continue
+                                val p = anchorPointOf(source, point) ?: continue
+                                val center = p * mcToScreen
+                                val hot = self == point ||
+                                    (hotAnchor?.first === source && hotAnchor.second == point)
+                                val radius = if (hot) ANCHOR_DOT_RADIUS_PX + 2f else ANCHOR_DOT_RADIUS_PX
+                                drawCircle(Color.White, radius = radius, center = center)
+                                drawCircle(
+                                    color = if (hot) Accent else anchorLineColor,
+                                    radius = radius - 2f,
+                                    center = center,
+                                )
+                            }
+                        }
+                        val targets = if (self == null) emptyList() else anchorTargetsFor(anchorPickSources)
+                        for (target in targets) {
                             val b = hudBounds(target) ?: continue
                             drawRect(
                                 color = anchorLineColor.copy(alpha = 0.5f),
@@ -1677,6 +1821,63 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                         panelHud = actionBarTarget
                     }
                 }
+            }
+        }
+
+        // One line of guidance for the gestures the canvas cannot show on its own: which click does
+        // what while anchoring, and how a HUD comes back out of a shape it was merged into.
+        val hintText = when {
+            anchorPickSources.isNotEmpty() && anchorPickSelf == null ->
+                "Click the point on this HUD that gets anchored  ·  Esc to cancel"
+            anchorPickSources.isNotEmpty() ->
+                "Click the point to anchor it to  ·  Right click to remove the anchor  ·  Esc to go back"
+            isDragging -> null
+            lockedPressHud != null || hoveredHud?.locked == true ->
+                "This HUD is locked  ·  Use the lock button above it to move or resize it"
+            hoveredHud?.let { it.bgMerged && !it.locked } == true ->
+                "Drag to move the merged HUDs together  ·  Click it first, then drag, to pull it out"
+            else -> null
+        }
+        var lastHint by remember { mutableStateOf("") }
+        if (hintText != null) lastHint = hintText
+        var hintSize by remember { mutableStateOf(IntSize.Zero) }
+        var hintSlot by remember { mutableStateOf(Offset.Zero) }
+        // no slide the first time round, when the hint has nowhere to slide from
+        val hintPlaced = hintSlot != Offset.Zero
+        val hintMargin = with(densityObj) { 16.dp.toPx() }
+        // the action bar floats above the hovered HUD, so keep that strip clear as well
+        val actionBarStrip = with(densityObj) { 40.dp.toPx() }
+        if (hintText != null && rootSize.width > 0 && hintSize.width > 0) {
+            val mcToScreen = Platform.screen().mcToScreenScale()
+            val obstacles = ArrayList<Rect>(HudManager.activeInstances.size + chromeRects.size)
+            for (hud in HudManager.activeInstances) {
+                val b = hudBounds(hud) ?: continue
+                val top = b.y * mcToScreen - if (hud === hoveredHud) actionBarStrip else 0f
+                obstacles.add(
+                    Rect(b.x * mcToScreen, top, (b.x + b.width) * mcToScreen, (b.y + b.height) * mcToScreen)
+                )
+            }
+            obstacles.addAll(chromeRects.values)
+            hintSlot = pickHintSlot(rootSize, hintSize, hintMargin, obstacles)
+        }
+        val hintSpec = tween<Float>(durationMillis = if (hintPlaced) 160 else 0)
+        val hintX by animateFloatAsState(hintSlot.x, hintSpec, label = "hintX")
+        val hintY by animateFloatAsState(hintSlot.y, hintSpec, label = "hintY")
+        AnimatedVisibility(
+            visible = hintText != null,
+            modifier = Modifier.align(Alignment.TopStart)
+                .offset { IntOffset(hintX.roundToInt(), hintY.roundToInt()) },
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
+            Box(
+                modifier = Modifier
+                    .onSizeChanged { hintSize = it }
+                    .background(theme.popupBackground, theme.backgroundShape)
+                    .border(1.dp, theme.borderColor, theme.backgroundShape)
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Text(lastHint, color = theme.textColorSecondary, fontSize = 12.sp)
             }
         }
 
@@ -1945,6 +2146,9 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             onAnchor = { _ ->
                 Snapshot.withMutableSnapshot {
                     anchorPickSources = contextMenuTargets
+                    // one HUD gets to choose which of its own points is pinned; a multi-selection
+                    // has no single box to pick on, so each keeps using its growth anchor
+                    anchorPickSelf = if (contextMenuTargets.size == 1) null else HudAnchor.Auto
                     hoveredAnchor = null
                     hoveredHud = null
                     libraryVisible = false

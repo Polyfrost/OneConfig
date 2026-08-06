@@ -292,6 +292,10 @@ object HudManager {
                 if (it.anchorTargetId == gone) it.clearAnchor()
             }
         }
+        for (it in activeInstances) {
+            if (it.mergeLink?.parent === hud) it.clearMergeLink()
+        }
+        lastMergeKey = null
         invalidate()
         try { hud.remove() } catch (_: Throwable) {}
         val treeId = hud.tree?.id
@@ -427,7 +431,7 @@ object HudManager {
         updateAndAdvance(frameOrder)
 
         layoutAll(frameOrder, screenWidth, screenHeight, scale)
-        updateBackgroundGroups(screenWidth, screenHeight, scale)
+        updateBackgroundGroups(frameOrder, screenWidth, screenHeight, scale)
 
         val key = frameKey()
         val keyChanged = key != lastFrameKey ||
@@ -460,14 +464,16 @@ object HudManager {
      * in a fused shape to stop drawing their own background. Cheap on frames where nothing moved:
      * the shapes are only re-traced when a position, size or background style actually changed.
      */
-    private fun updateBackgroundGroups(screenWidth: Float, screenHeight: Float, scale: Float) {
-        val key = HudBackgroundMerge.layoutKey(frameOrder)
+    private fun updateBackgroundGroups(huds: List<Hud>, screenWidth: Float, screenHeight: Float, scale: Float) {
+        val key = HudBackgroundMerge.layoutKey(huds)
         if (key == lastMergeKey) return
         lastMergeKey = key
 
-        frameGroups = HudBackgroundMerge.computeGroups(frameOrder)
+        val mergeable = if (mergeExclusions.isEmpty()) huds else huds.filter { hud -> !isMergeExcluded(hud) }
+        frameGroups = HudBackgroundMerge.computeGroups(mergeable)
         val merged = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Hud, Boolean>())
         for (group in frameGroups) merged.addAll(group.huds)
+        updateMergeLinks()
 
         var changed = false
         for (hud in activeInstances) {
@@ -485,9 +491,70 @@ object HudManager {
         // change land a frame late, which would show a doubled or missing background for one frame
         Snapshot.sendApplyNotifications()
         PolyComposeHost.frame()
-        for (hud in frameOrder) hud.lastLayoutFrame = -1L
-        layoutAll(frameOrder, screenWidth, screenHeight, scale)
+        for (hud in huds) hud.lastLayoutFrame = -1L
+        layoutAll(huds, screenWidth, screenHeight, scale)
         invalidate()
+    }
+
+    private var mergeExclusions: List<Hud> = emptyList()
+
+    /**
+     * HUDs kept out of merging for now, used by the editor while the user pulls one out of a fused
+     * shape: an excluded HUD draws its own background again and stops dragging its neighbours along,
+     * so it comes away cleanly and re-merges wherever it is dropped.
+     */
+    @ApiStatus.Internal
+    @JvmStatic
+    fun setMergeExclusions(huds: Collection<Hud>) {
+        val next = huds.toList()
+        if (next.size == mergeExclusions.size && next.indices.all { next[it] === mergeExclusions[it] }) return
+        mergeExclusions = next
+        lastMergeKey = null
+        invalidate()
+    }
+
+    private fun isMergeExcluded(hud: Hud): Boolean = mergeExclusions.any { it === hud }
+
+    /** Every HUD fused into the same background shape as [hud], including [hud] itself. */
+    @ApiStatus.Internal
+    @JvmStatic
+    fun mergeGroupOf(hud: Hud): List<Hud> =
+        frameGroups.firstOrNull { group -> group.huds.any { it === hud } }?.huds ?: listOf(hud)
+
+    /**
+     * Holds every HUD in a fused shape against the neighbour it touches, at the point where the two
+     * meet, so a HUD which grows keeps the shape flush. These links live only as long as the merge
+     * does: a HUD which stops being merged is let go and stays where it was left.
+     */
+    private fun updateMergeLinks() {
+        val linked = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Hud, Boolean>())
+        Snapshot.withMutableSnapshot {
+            for (group in frameGroups) {
+                for (link in group.links) {
+                    link.child.applyMergeLink(link.parent, link.childPoint, link.parentPoint)
+                    linked.add(link.child)
+                }
+            }
+            for (hud in activeInstances) {
+                if (hud !in linked) hud.clearMergeLink()
+            }
+        }
+    }
+
+    /**
+     * Paints the fused backgrounds of merged HUDs, in gui units. Used by renderers which draw the HUD
+     * trees themselves (the editor viewport) instead of going through [render]: the HUDs in a fused
+     * shape do not draw their own background, so without this they would show up bare.
+     */
+    @ApiStatus.Internal
+    fun drawMergedBackgrounds(ctx: RenderContext) {
+        for (group in frameGroups) {
+            try {
+                group.draw(ctx)
+            } catch (e: Throwable) {
+                LOGGER.error("Failed to draw merged HUD background", e)
+            }
+        }
     }
 
     private fun frameKey(): Long {
@@ -557,6 +624,7 @@ object HudManager {
                 LOGGER.error("Failed to lay out HUD ${hud.title}", e)
             }
         }
+        updateBackgroundGroups(huds, screenWidth, screenHeight, scale)
     }
 
     @ApiStatus.Internal
@@ -572,19 +640,13 @@ object HudManager {
             for (hud in orderedForRender()) if (shouldDraw(hud)) frameOrder.add(hud)
             updateAndAdvance(frameOrder)
             layoutAll(frameOrder, screenWidth, screenHeight, scale)
-            updateBackgroundGroups(screenWidth, screenHeight, scale)
+            updateBackgroundGroups(frameOrder, screenWidth, screenHeight, scale)
         }
 
         ctx.save()
         ctx.scale(scale, scale)
 
-        for (group in frameGroups) {
-            try {
-                group.draw(ctx)
-            } catch (e: Throwable) {
-                LOGGER.error("Failed to draw merged HUD background", e)
-            }
-        }
+        drawMergedBackgrounds(ctx)
 
         for (hud in frameOrder) {
             val hudScale = hud.effectiveScale
@@ -635,6 +697,8 @@ object HudManager {
     @ApiStatus.Internal
     fun onEditorScreenRemoved() {
         isEditorOpen = false
+        // a drag interrupted by the editor closing must not leave a HUD unable to merge
+        setMergeExclusions(emptyList())
     }
 
     @Suppress("UNCHECKED_CAST")

@@ -169,5 +169,12 @@
   "oneconfig.textinput.placeholder": "Enter text...",
   "oneconfig.numberinput.placeholder": "Enter a number...",
   "oneconfig.filepicker.placeholder": "Select a file...",
-  "oneconfig.filepicker.browse": "Browse"
+  "oneconfig.filepicker.browse": "Browse",
+
+  "oneconfig.itemlist.add": "Choose items",
+  "oneconfig.itemlist.title": "Select items",
+  "oneconfig.itemlist.search": "Search by name or ID",
+  "oneconfig.itemlist.empty": "No matching items",
+  "oneconfig.itemlist.unavailable": "Unavailable item",
+  "oneconfig.itemlist.catalog_unavailable": "The Minecraft item catalog is unavailable"
 }

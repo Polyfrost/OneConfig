@@ -52,8 +52,19 @@ internal object HudBackgroundMerge {
 
     private const val EPS = 0.01f
 
+    /** Backstop for walking anchors set by hand while checking a link would not close a loop. */
+    private const val MAX_LINK_DEPTH = 16
+
+    /**
+     * A HUD in a fused shape held against the neighbour it touches: [childPoint] on the child's box
+     * is the corner or edge midpoint that meets [parentPoint] on the parent's.
+     */
+    class Link(val child: Hud, val parent: Hud, val childPoint: HudAnchor, val parentPoint: HudAnchor)
+
     class Group(
         val huds: List<Hud>,
+        /** Spanning tree over the group's contacts, so every HUD follows the one it is fused to. */
+        val links: List<Link>,
         private val bgColor: Int,
         private val chroma: Boolean,
         private val chromaSpeed: Float,
@@ -87,27 +98,156 @@ internal object HudBackgroundMerge {
         if (items.size < 2) return emptyList()
 
         val parent = IntArray(items.size) { it }
+        val neighbours = HashMap<Int, MutableList<Int>>()
         for (i in items.indices) {
             for (j in i + 1 until items.size) {
                 val a = items[i]
                 val b = items[j]
                 if (!a.sameStyle(b) || !touching(a, b)) continue
                 union(parent, i, j)
+                neighbours.getOrPut(i) { ArrayList(2) }.add(j)
+                neighbours.getOrPut(j) { ArrayList(2) }.add(i)
             }
         }
 
-        val components = LinkedHashMap<Int, MutableList<Item>>()
-        for (i in items.indices) components.getOrPut(find(parent, i)) { ArrayList() }.add(items[i])
+        val components = LinkedHashMap<Int, MutableList<Int>>()
+        for (i in items.indices) components.getOrPut(find(parent, i)) { ArrayList() }.add(i)
 
         val out = ArrayList<Group>(components.size)
         for (component in components.values) {
             if (component.size < 2) continue
-            val loops = outlines(component.map { floatArrayOf(it.x, it.y, it.w, it.h) })
+            val members = component.map { items[it] }
+            val loops = outlines(members.map { floatArrayOf(it.x, it.y, it.w, it.h) })
             if (loops.isEmpty()) continue
-            val first = component[0]
-            out.add(Group(component.map { it.hud }, first.hud.bgColor, first.hud.bgChroma, first.hud.bgChromaSpeed, first.radius, loops))
+            val first = members[0]
+            out.add(
+                Group(
+                    members.map { it.hud },
+                    spanningLinks(items, component, neighbours),
+                    first.hud.bgColor, first.hud.bgChroma, first.hud.bgChromaSpeed, first.radius, loops,
+                )
+            )
         }
         return out
+    }
+
+    /**
+     * Walks the group out from its first member, linking each HUD to the neighbour it was reached
+     * from. Growing a tree (rather than linking everything to one root) means each HUD hangs off a
+     * neighbour it actually touches, and keeps the links free of cycles.
+     *
+     * A HUD the user anchored by hand is left alone: its own anchor already decides where it sits,
+     * and a merge link on top of it would either fight that anchor or close a loop with it, both of
+     * which throw the positions around. Such a HUD still makes a fine parent for its neighbours.
+     */
+    private fun spanningLinks(
+        items: List<Item>,
+        component: List<Int>,
+        neighbours: Map<Int, List<Int>>,
+    ): List<Link> {
+        val out = ArrayList<Link>(component.size - 1)
+        val index = java.util.IdentityHashMap<Hud, Int>(component.size * 2)
+        for (i in component) index[items[i].hud] = i
+        val parentOf = HashMap<Int, Int>(component.size * 2)
+
+        // whether following [from] up its parents - the links being built here, then anchors set by
+        // hand - ever arrives back at [target], which is what a link must never close
+        fun reaches(from: Int, target: Hud): Boolean {
+            var hud: Hud? = items[from].hud
+            var depth = 0
+            while (hud != null && depth < component.size + MAX_LINK_DEPTH) {
+                if (hud === target) return true
+                val idx = index[hud]
+                val linked = if (idx == null) null else parentOf[idx]
+                hud = if (linked != null) items[linked].hud else hud.anchorParent
+                depth++
+            }
+            return false
+        }
+
+        val seen = HashSet<Int>(component.size * 2)
+        val queue = ArrayDeque<Int>()
+        for (start in component) {
+            if (!seen.add(start)) continue
+            queue.add(start)
+            while (queue.isNotEmpty()) {
+                val cur = queue.removeFirst()
+                for (n in neighbours[cur].orEmpty()) {
+                    if (n in seen) continue
+                    if (items[n].hud.isAnchored || reaches(cur, items[n].hud)) continue
+                    seen.add(n)
+                    parentOf[n] = cur
+                    queue.add(n)
+                    val (childPoint, parentPoint) = contactPoints(items[n], items[cur])
+                    out.add(Link(items[n].hud, items[cur].hud, childPoint, parentPoint))
+                }
+            }
+        }
+        return out
+    }
+
+    /**
+     * The pair of box points where [child] meets [parent]: the edges that touch decide one axis, and
+     * the edges that line up along the shared edge decide the other, so a HUD stacked flush under
+     * another links its top-left to the parent's bottom-left.
+     */
+    private fun contactPoints(child: Item, parent: Item): Pair<HudAnchor, HudAnchor> {
+        var childFx = Float.NaN
+        var parentFx = Float.NaN
+        var childFy = Float.NaN
+        var parentFy = Float.NaN
+
+        if (abs(child.y - parent.bottom) <= TOUCH_TOLERANCE) {
+            childFy = 0f
+            parentFy = 1f
+        } else if (abs(child.bottom - parent.y) <= TOUCH_TOLERANCE) {
+            childFy = 1f
+            parentFy = 0f
+        }
+        if (abs(child.x - parent.right) <= TOUCH_TOLERANCE) {
+            childFx = 0f
+            parentFx = 1f
+        } else if (abs(child.right - parent.x) <= TOUCH_TOLERANCE) {
+            childFx = 1f
+            parentFx = 0f
+        }
+
+        if (childFx.isNaN()) {
+            // stacked: line the link up with whichever side edges are flush, else their middles
+            val side = alignedSide(child.x, child.right, parent.x, parent.right)
+            childFx = side
+            parentFx = side
+        }
+        if (childFy.isNaN()) {
+            val side = alignedSide(child.y, child.bottom, parent.y, parent.bottom)
+            childFy = side
+            parentFy = side
+        }
+        return anchorAt(childFx, childFy) to anchorAt(parentFx, parentFy)
+    }
+
+    private fun alignedSide(aMin: Float, aMax: Float, bMin: Float, bMax: Float): Float = when {
+        abs(aMin - bMin) <= TOUCH_TOLERANCE -> 0f
+        abs(aMax - bMax) <= TOUCH_TOLERANCE -> 1f
+        else -> 0.5f
+    }
+
+    private fun anchorAt(fx: Float, fy: Float): HudAnchor = when (fy) {
+        0f -> when (fx) {
+            0f -> HudAnchor.TopLeft
+            0.5f -> HudAnchor.Top
+            else -> HudAnchor.TopRight
+        }
+        0.5f -> when (fx) {
+            0f -> HudAnchor.Left
+            0.5f -> HudAnchor.Center
+            else -> HudAnchor.Right
+        }
+        else -> when (fx) {
+            0f -> HudAnchor.BottomLeft
+            0.5f -> HudAnchor.Bottom
+            else -> HudAnchor.BottomRight
+        }
     }
 
     private class Item(val hud: Hud, var x: Float, var y: Float, var w: Float, var h: Float, val radius: Float) {
