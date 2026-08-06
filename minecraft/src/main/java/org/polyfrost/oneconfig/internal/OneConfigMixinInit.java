@@ -81,7 +81,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //mixins.add("compat.DandelionScreenImplMixin");
 
         //? odin_compat
-        mixins.add("compat.odin.Mixin_OdinModuleManager");
+        //mixins.add("compat.odin.Mixin_OdinModuleManager");
 
         //? rconfig_compat
         mixins.add("compat.rconfig.Mixin_Configurations");
@@ -106,9 +106,9 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("compat.tr7zw.Mixin_AbstractConfigScreen");
 
         //? skycubed_compat {
-        mixins.add("compat.skycubed.Mixin_SkyCubed");
+        /*mixins.add("compat.skycubed.Mixin_SkyCubed");
         mixins.add("compat.skycubed.Mixin_SkyCubedOverlays");
-        //? }
+        *///? }
 
         //? skyblocker_compat {
         mixins.add("compat.skyblocker.Mixin_SkyblockerFancyStatusBars");
@@ -124,7 +124,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("compat.firmament.Mixin_FirmamentHudMeta");
         // Firmament has no stable release for 26.2, so there is nothing to be compatible with there yet.
         //? >= 1.21.8 && < 26.2
-        mixins.add("compat.firmament.Mixin_FirmamentContentCapture");
+        //mixins.add("compat.firmament.Mixin_FirmamentContentCapture");
 
         // mixins.add("compat.rconfig.Mixin_Configurations");
 

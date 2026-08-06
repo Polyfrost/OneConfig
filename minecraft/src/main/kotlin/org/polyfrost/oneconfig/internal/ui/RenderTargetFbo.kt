@@ -6,8 +6,8 @@ import org.polyfrost.oneconfig.internal.mixin.blaze3d.GlDeviceAccessor
 import org.polyfrost.oneconfig.internal.mixin.blaze3d.GpuDeviceAccessor
 //? }
 //? if >= 26.2 {
-/*import com.mojang.blaze3d.opengl.FrameBufferAttachment
-*///? }
+import com.mojang.blaze3d.opengl.FrameBufferAttachment
+//? }
 import com.mojang.blaze3d.pipeline.RenderTarget
 //? if >= 1.21.5 {
 import com.mojang.blaze3d.systems.RenderSystem
@@ -19,7 +19,7 @@ import com.mojang.blaze3d.systems.RenderSystem
  */
 object RenderTargetFbo {
     //? if >= 26.2 {
-    /*fun getFboId(frameBuffer: RenderTarget): Int {
+    fun getFboId(frameBuffer: RenderTarget): Int {
         val device = RenderSystem.getDevice()
         val backend = (device as GpuDeviceAccessor).`oneconfig$getBackend`()
         if (backend !is GlDeviceAccessor) return -1
@@ -28,8 +28,8 @@ object RenderTargetFbo {
         val depth = frameBuffer.depthTexture as? GlTexture
         return backend.`oneconfig$getFrameBufferCache`().getFbo(dsa, listOf<FrameBufferAttachment>(color), depth)
     }
-    *///? } else if >= 26.1 {
-    fun getFboId(frameBuffer: RenderTarget): Int {
+    //? } else if >= 26.1 {
+    /*fun getFboId(frameBuffer: RenderTarget): Int {
         val device = RenderSystem.getDevice()
         val backend = (device as GpuDeviceAccessor).`oneconfig$getBackend`()
         if (backend !is GlDeviceAccessor) return -1
@@ -37,7 +37,7 @@ object RenderTargetFbo {
         val texture = frameBuffer.colorTexture as? GlTexture ?: return -1
         return texture.getFbo(dsa, frameBuffer.depthTexture)
     }
-    //? } else if >= 1.21.5 {
+    *///? } else if >= 1.21.5 {
     /*fun getFboId(frameBuffer: RenderTarget): Int {
         val device = RenderSystem.getDevice()
         if (device !is com.mojang.blaze3d.opengl.GlDevice) {

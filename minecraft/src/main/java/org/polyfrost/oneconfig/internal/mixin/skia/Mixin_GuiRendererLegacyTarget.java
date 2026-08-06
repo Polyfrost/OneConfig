@@ -7,10 +7,10 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import net.minecraft.client.gui.render.GuiRenderer;
 //? if >= 26.2 {
-/*import net.minecraft.client.renderer.GameRenderer;
-*///? } else {
-import net.minecraft.client.Minecraft;
-//? }
+import net.minecraft.client.renderer.GameRenderer;
+//? } else {
+/*import net.minecraft.client.Minecraft;
+*///? }
 import org.objectweb.asm.Opcodes;
 import org.polyfrost.oneconfig.internal.ui.hud.GuiTargetRedirect;
 import org.spongepowered.asm.mixin.Mixin;
@@ -66,7 +66,7 @@ public class Mixin_GuiRendererLegacyTarget {
     *///? }
 
     //? if >= 26.2 {
-    /*@WrapOperation(
+    @WrapOperation(
             method = "draw",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GameRenderer;mainRenderTarget()Lcom/mojang/blaze3d/pipeline/RenderTarget;")
     )
@@ -74,8 +74,8 @@ public class Mixin_GuiRendererLegacyTarget {
         RenderTarget override = GuiTargetRedirect.INSTANCE.target;
         return override != null ? override : original.call(instance);
     }
-    *///? } else {
-    @WrapOperation(
+    //? } else {
+    /*@WrapOperation(
             method = "draw",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;getMainRenderTarget()Lcom/mojang/blaze3d/pipeline/RenderTarget;")
     )
@@ -83,6 +83,6 @@ public class Mixin_GuiRendererLegacyTarget {
         RenderTarget override = GuiTargetRedirect.INSTANCE.target;
         return override != null ? override : original.call(instance);
     }
-    //? }
+    *///? }
 }
 //? }

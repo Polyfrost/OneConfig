@@ -129,7 +129,7 @@ public class OneConfig
                 OneConfigUIScreen.openLastSession();
             } catch (Throwable t) {
                 //~ if >= 26.2 'gui.getChat' -> 'gui.hud.getChat'
-                Minecraft.getInstance().gui.getChat()
+                Minecraft.getInstance().gui.hud.getChat()
                         //~ if >= 26.1 'addMessage' -> 'addClientSystemMessage'
                         .addClientSystemMessage(Component.literal("Failed to open OneConfig UI: " + t.getMessage() + ". Please report this!")
                                 .withStyle(
@@ -169,10 +169,10 @@ public class OneConfig
 
         // Update HUD visibility state for per-HUD filtering
         //? if >= 26.2 {
-        /*HudManager.isGuiHidden = Minecraft.getInstance().gui.hud.isHidden();
-        *///? } else {
-        HudManager.isGuiHidden = Minecraft.getInstance().options.hideGui;
-        //? }
+        HudManager.isGuiHidden = Minecraft.getInstance().gui.hud.isHidden();
+        //? } else {
+        /*HudManager.isGuiHidden = Minecraft.getInstance().options.hideGui;
+        *///? }
         HudManager.isDebugScreenVisible = Minecraft.getInstance().getDebugOverlay().showDebugScreen();
         HudManager.isTabListVisible = isTabListVisible();
         HudManager.isGuiScreenOpen = Platform.screen().current() != null;

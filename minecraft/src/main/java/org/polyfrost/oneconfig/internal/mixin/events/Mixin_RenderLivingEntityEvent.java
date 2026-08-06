@@ -3,8 +3,8 @@ package org.polyfrost.oneconfig.internal.mixin.events;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 //? < 26.2 {
-import net.minecraft.client.renderer.MultiBufferSource;
-//? }
+/*import net.minecraft.client.renderer.MultiBufferSource;
+*///? }
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.world.entity.LivingEntity;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;

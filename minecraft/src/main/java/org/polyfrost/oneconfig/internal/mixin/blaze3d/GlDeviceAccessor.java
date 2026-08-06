@@ -5,8 +5,8 @@ import com.mojang.blaze3d.opengl.DirectStateAccess;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 //? >= 26.2 {
-/*import com.mojang.blaze3d.opengl.FrameBufferCache;
-*///? }
+import com.mojang.blaze3d.opengl.FrameBufferCache;
+//? }
 
 @Mixin(targets = "com.mojang.blaze3d.opengl.GlDevice")
 public interface GlDeviceAccessor {
@@ -14,8 +14,8 @@ public interface GlDeviceAccessor {
     DirectStateAccess oneconfig$getDirectStateAccess();
 
     //? >= 26.2 {
-    /*@Invoker("frameBufferCache")
+    @Invoker("frameBufferCache")
     FrameBufferCache oneconfig$getFrameBufferCache();
-    *///? }
+    //? }
 }
 //? }

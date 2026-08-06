@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 //? if >= 26.2 {
-/*// 26.2 removed RenderSystem.flipFrame. The frame is now presented in Minecraft.renderFrame:
+// 26.2 removed RenderSystem.flipFrame. The frame is now presented in Minecraft.renderFrame:
 // GameRenderer.render -> GpuSurface.blitFromTexture(mainRenderTarget) -> GpuSurface.present().
 // Flush queued Compose/Skia draws into the main render target before the blit so screenshots include them.
 @Mixin(Minecraft.class)
@@ -21,9 +21,9 @@ public class Mixin_SkiaFramePresent {
         SkiaCtx.INSTANCE.draw();
     }
 }
-*///? } else {
+//? } else {
 
-// 26.1 removed Window.updateDisplay, which is where Mixin_SkiaFrame used to flush the GL Skia surface.
+/*// 26.1 removed Window.updateDisplay, which is where Mixin_SkiaFrame used to flush the GL Skia surface.
 // Flush into the main render target before RenderTarget.blitToScreen (in renderFrame) so queued Compose/Skia
 // draws are included by screenshots and by the window blit.
 @Mixin(Minecraft.class)
@@ -35,5 +35,5 @@ public class Mixin_SkiaFramePresent {
         SkiaCtx.INSTANCE.draw();
     }
 }
-//? }
+*///? }
 //? }
