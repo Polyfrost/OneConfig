@@ -10,8 +10,13 @@ import org.polyfrost.oneconfig.internal.ui.components.localizedValue
 
 private const val HUD_CARD_ID_PREFIX = "oneconfig.hud:"
 
+private fun hudCardId(hud: Hud): String {
+    val ownerId = hud.configId ?: BUILTIN_HUD_CONFIG_ID
+    return "$HUD_CARD_ID_PREFIX$ownerId:${hud.id}:${hud::class.java.name}"
+}
+
 internal fun hudModCardConfigs(): List<ConfigData> =
-    HudManager.providers().map(::HudModCardData)
+    HudManager.providers().distinctBy(::hudCardId).map(::HudModCardData)
 
 private class HudModCardData(private val hud: Hud) : ConfigData {
     private val ownerId: String
@@ -29,7 +34,7 @@ private class HudModCardData(private val hud: Hud) : ConfigData {
         }
 
     override val id: String
-        get() = "$HUD_CARD_ID_PREFIX$ownerId:${hud.id}:${hud::class.java.name}"
+        get() = hudCardId(hud)
 
     override val title: Any
         get() = localizedValue(hud.title) ?: hud.title

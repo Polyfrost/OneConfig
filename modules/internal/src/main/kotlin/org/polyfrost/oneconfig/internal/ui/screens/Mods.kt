@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Config
+import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
@@ -108,10 +109,11 @@ fun Mods() {
 @Composable
 fun ColumnScope.ModsGrid(category: ModCategory) {
     val registryRevision = ConfigRegistry.revision
+    val hudProviders = HudManager.providers().toList()
     val categoryRevision = ThirdPartyModCategories.revision
     val favoriteRevision = ModFavorites.revision
     val orderRevision = ModOrder.revision
-    val filtered = remember(registryRevision, category, categoryRevision, favoriteRevision, orderRevision) {
+    val filtered = remember(registryRevision, hudProviders, category, categoryRevision, favoriteRevision, orderRevision) {
         ConfigRegistry.modCardConfigs
             .let { items ->
                 if (category.configCategory == null) items

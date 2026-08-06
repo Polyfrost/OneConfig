@@ -26,6 +26,9 @@
 
 package org.polyfrost.oneconfig.internal.ui.hud;
 
+import androidx.compose.runtime.snapshots.Snapshot;
+import androidx.compose.runtime.snapshots.SnapshotStateObserver;
+import kotlin.Unit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.Config;
@@ -36,10 +39,13 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigData;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HudModCardDataTest {
     private static final String OWNER_ID = "hud-card-test";
@@ -49,11 +55,14 @@ class HudModCardDataTest {
 
     private final TestHud hud = new TestHud();
     private final SecondTestHud secondHud = new SecondTestHud();
+    private final SameClassHud firstCompatHud = new SameClassHud("compat-first", "Compat First");
+    private final SameClassHud secondCompatHud = new SameClassHud("compat-second", "Compat Second");
 
     @AfterEach
     void cleanUp() {
         HudManager.INSTANCE.unregister(hud, false, false);
         HudManager.INSTANCE.unregister(secondHud, false, false);
+        HudManager.INSTANCE.unregister(firstCompatHud, false, false);
         ConfigRegistry.INSTANCE.unregister("oneconfig.builtin");
         ConfigRegistry.INSTANCE.unregister(FALLBACK_OWNER_ID + ".json");
     }
@@ -72,6 +81,33 @@ class HudModCardDataTest {
                 card.getId()
         );
         assertNotNull(card.getOnOpen());
+    }
+
+    @Test
+    void providerRegistrationInvalidatesSnapshotReaders() {
+        AtomicBoolean invalidated = new AtomicBoolean();
+        SnapshotStateObserver observer = new SnapshotStateObserver(command -> {
+            command.invoke();
+            return Unit.INSTANCE;
+        });
+
+        try {
+            observer.start();
+            observer.observeReads(this, ignored -> {
+                invalidated.set(true);
+                return Unit.INSTANCE;
+            }, () -> {
+                HudManager.INSTANCE.providers().toArray();
+                return Unit.INSTANCE;
+            });
+
+            HudManager.register(hud, OWNER_ID, "combat");
+            Snapshot.Companion.sendApplyNotifications();
+
+            assertTrue(invalidated.get());
+        } finally {
+            observer.stop();
+        }
     }
 
     @Test
@@ -123,6 +159,62 @@ class HudModCardDataTest {
     }
 
     @Test
+    void compatHudsSharingProviderClassAllGetCards() {
+        HudManager.register(firstCompatHud, OWNER_ID);
+        HudManager.register(secondCompatHud, OWNER_ID);
+
+        long cards = HudModCardDataKt.hudModCardConfigs().stream()
+                .filter(card -> card.getId().endsWith(":" + SameClassHud.class.getName()))
+                .count();
+
+        assertEquals(2, cards);
+        assertTrue(HudModCardDataKt.hudModCardConfigs().stream()
+                .anyMatch(card -> card.getId().contains(":compat-first:")));
+        assertTrue(HudModCardDataKt.hudModCardConfigs().stream()
+                .anyMatch(card -> card.getId().contains(":compat-second:")));
+    }
+
+    @Test
+    void unregisteringSharedProviderClassRemovesAllOfItsCards() {
+        HudManager.register(firstCompatHud, OWNER_ID);
+        HudManager.register(secondCompatHud, OWNER_ID);
+
+        HudManager.INSTANCE.unregister(firstCompatHud, false, false);
+
+        assertFalse(HudModCardDataKt.hudModCardConfigs().stream()
+                .anyMatch(card -> card.getId().endsWith(":" + SameClassHud.class.getName())));
+    }
+
+    @Test
+    void reRegisteringSameLogicalProviderReplacesItsCard() {
+        SameClassHud replacement = new SameClassHud("compat-first", "Compat First Updated");
+        HudManager.register(firstCompatHud, OWNER_ID);
+        HudManager.register(replacement, OWNER_ID);
+
+        var cards = HudModCardDataKt.hudModCardConfigs().stream()
+                .filter(card -> card.getId().contains(":" + OWNER_ID + ":compat-first:"))
+                .toList();
+
+        assertEquals(1, cards.size());
+        assertEquals("Compat First Updated", cards.get(0).getTitle());
+    }
+
+    @Test
+    void reRegistrationReplacesAProviderWhoseOwnerWasAssignedAfterRegistration() {
+        SameClassHud replacement = new SameClassHud("compat-first", "Compat First Updated");
+        HudManager.register(firstCompatHud);
+        firstCompatHud.setConfigId(OWNER_ID);
+        HudManager.register(replacement, OWNER_ID);
+
+        var cards = HudModCardDataKt.hudModCardConfigs().stream()
+                .filter(card -> card.getId().contains(":" + OWNER_ID + ":compat-first:"))
+                .toList();
+
+        assertEquals(1, cards.size());
+        assertEquals("Compat First Updated", cards.get(0).getTitle());
+    }
+
+    @Test
     void builtinMetadataEntryIsNotShownAsAnotherCard() {
         BuiltinHudRegistrar.register();
 
@@ -158,6 +250,17 @@ class HudModCardDataTest {
     private static final class SecondTestHud extends TextHud {
         private SecondTestHud() {
             super(HUD_ID, "Second HUD Card Test", Hud.Category.Companion.getINFO(), "Test", "");
+        }
+
+        @Override
+        protected String getText() {
+            return "HUD";
+        }
+    }
+
+    private static final class SameClassHud extends TextHud {
+        private SameClassHud(String id, String title) {
+            super(id, title, Hud.Category.Companion.getINFO(), "Test", "");
         }
 
         @Override
