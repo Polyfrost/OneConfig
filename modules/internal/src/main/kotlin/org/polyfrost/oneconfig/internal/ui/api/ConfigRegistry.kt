@@ -60,6 +60,11 @@ object ConfigRegistry {
     fun shouldShowModCard(config: ConfigData): Boolean =
         config.id.lowercase() !in hiddenModCardIds && config.title.asRenderText().lowercase() !in hiddenModCardTitles
 
+    fun shouldShowModCardId(id: String): Boolean {
+        val lower = id.lowercase()
+        return lower !in hiddenModCardIds && lower.removeSuffix(".json") !in hiddenModCardIds
+    }
+
     fun shouldShowInSearch(config: ConfigData): Boolean =
         config.id.lowercase() !in hiddenSearchIds && config.title.asRenderText().lowercase() !in hiddenModCardTitles
 

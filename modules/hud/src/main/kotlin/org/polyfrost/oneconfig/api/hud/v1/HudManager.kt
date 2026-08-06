@@ -26,7 +26,9 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
-import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
@@ -44,20 +46,11 @@ import org.polyfrost.oneconfig.utils.v1.MHUtils
 object HudManager {
     internal val LOGGER = LogManager.getLogger("OneConfig/HUD")
 
-    private data class ProviderId(
-        val configId: String?,
-        val hudId: String,
-        val hudClass: Class<out Hud>,
-    )
-
-    private fun providerId(hud: Hud) = ProviderId(hud.configId, hud.id, hud::class.java)
-
-    // Hud instances are still created from one canonical provider per class. The second map keeps
-    // every logical registration for discovery: compatibility wrappers intentionally share one
-    // implementation class while representing different HUDs.
     private val hudProviders = HashMap<Class<out Hud>, Hud>()
-    private val registeredHudProviders = mutableStateMapOf<ProviderId, Hud>()
-    private val hudIcons = mutableStateMapOf<String, String>()
+    private val hudIcons = HashMap<String, String>()
+
+    var revision by mutableIntStateOf(0)
+        private set
 
     private var init = false
     private val hiddenHudPaint by lazy { org.jetbrains.skia.Paint().apply { setAlphaf(0.35f) } }
@@ -183,29 +176,28 @@ object HudManager {
     @ApiStatus.Internal
     val activeInstances = ArrayList<Hud>()
 
+    private class DateTestHud : TextHud.DateTime("Date:", "yyyy-MM-dd", title = "Date")
+
+    private class TimeTestHud : TextHud.DateTime("Time:", "HH:mm:ss", title = "Time")
+
+    private class TextTestHud : TextHud("test", "test", Category.COMBAT, "") {
+        override fun getText(): String = "mmrp\nmeow"
+    }
+
     init {
         Snapshot.registerApplyObserver { _, _ -> contentDirty = true }
 
         if (java.lang.Boolean.getBoolean("oneconfig.test")) {
-            register(object : TextHud.DateTime("Date:", "yyyy-MM-dd") {})
-            register(object : TextHud.DateTime("Time:", "HH:mm:ss") {})
-            register(object : TextHud("test", "test", Category.COMBAT, "") {
-                override fun getText(): String = "mmrp\nmeow"
-            })
+            register(DateTestHud())
+            register(TimeTestHud())
+            register(TextTestHud())
         }
     }
 
     @JvmStatic
     fun register(hud: Hud) {
-        val key = providerId(hud)
-        registeredHudProviders.entries
-            .filter { (registeredKey, registeredHud) ->
-                registeredKey != key && (registeredHud === hud || providerId(registeredHud) == key)
-            }
-            .map { it.key }
-            .forEach(registeredHudProviders::remove)
-        registeredHudProviders[key] = hud
         hudProviders[hud::class.java] = hud
+        revision++
         if (hud.updateFrequency() == 0L) LOGGER.warn("update of HUD ${hud.title} is 0, this is not recommended!")
     }
 
@@ -236,15 +228,10 @@ object HudManager {
         for (hud in huds) register(hud)
     }
 
-    /** Every distinct HUD provider registered with [register]. */
-    fun providers(): Collection<Hud> = registeredHudProviders.values
+    fun providers(): Collection<Hud> = hudProviders.values
 
     fun <T : Hud> unregister(hud: T, removeActiveInstances: Boolean = false, delete: Boolean = false): ArrayList<T>? {
-        val hudClass = hud::class.java
-        hudProviders.remove(hudClass)
-        registeredHudProviders.keys
-            .filter { it.hudClass == hudClass }
-            .forEach(registeredHudProviders::remove)
+        if (hudProviders.remove(hud::class.java) != null) revision++
         if (!removeActiveInstances) return null
         val out = ArrayList<T>(10.coerceAtMost(activeInstances.size))
         val iter = activeInstances.iterator()

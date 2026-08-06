@@ -39,32 +39,41 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigData;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HudModCardDataTest {
     private static final String OWNER_ID = "hud-card-test";
     private static final String FALLBACK_OWNER_ID = "hud-card-fallback";
     private static final String UNKNOWN_OWNER_ID = "hud-card-unknown";
+    private static final String NAMESPACED_OWNER_ID = "hud-card-namespaced";
+    /** Present in ConfigRegistry's hidden mod card list. */
+    private static final String HIDDEN_OWNER_ID = "walksylib";
     private static final String HUD_ID = "hud-card-test-provider";
 
     private final TestHud hud = new TestHud();
     private final SecondTestHud secondHud = new SecondTestHud();
-    private final SameClassHud firstCompatHud = new SameClassHud("compat-first", "Compat First");
-    private final SameClassHud secondCompatHud = new SameClassHud("compat-second", "Compat Second");
+    private final CompatTestHud compatHud = new CompatTestHud();
 
     @AfterEach
     void cleanUp() {
         HudManager.INSTANCE.unregister(hud, false, false);
         HudManager.INSTANCE.unregister(secondHud, false, false);
-        HudManager.INSTANCE.unregister(firstCompatHud, false, false);
-        ConfigRegistry.INSTANCE.unregister("oneconfig.builtin");
+        HudManager.INSTANCE.unregister(compatHud, false, false);
+        hud.setConfigId(null);
+        secondHud.setConfigId(null);
+        compatHud.setConfigId(null);
+        ConfigRegistry.INSTANCE.unregister(BuiltinHudConfigKt.BUILTIN_HUD_CONFIG_ID);
         ConfigRegistry.INSTANCE.unregister(FALLBACK_OWNER_ID + ".json");
+        ConfigRegistry.INSTANCE.unregister(NAMESPACED_OWNER_ID + "/main.json");
+        ConfigRegistry.INSTANCE.unregister(UNKNOWN_OWNER_ID + "/other.json");
     }
 
     @Test
@@ -84,7 +93,7 @@ class HudModCardDataTest {
     }
 
     @Test
-    void providerRegistrationInvalidatesSnapshotReaders() {
+    void registrationInvalidatesSnapshotReadersOfTheCardList() {
         AtomicBoolean invalidated = new AtomicBoolean();
         SnapshotStateObserver observer = new SnapshotStateObserver(command -> {
             command.invoke();
@@ -97,7 +106,7 @@ class HudModCardDataTest {
                 invalidated.set(true);
                 return Unit.INSTANCE;
             }, () -> {
-                HudManager.INSTANCE.providers().toArray();
+                HudModCardDataKt.hudModCardConfigs();
                 return Unit.INSTANCE;
             });
 
@@ -135,6 +144,33 @@ class HudModCardDataTest {
     }
 
     @Test
+    void hudCardResolvesAnOwnerStoredUnderItsModNamespace() {
+        ConfigRegistry.INSTANCE.register(new TestConfigData(
+                NAMESPACED_OWNER_ID + "/main.json",
+                "Namespaced Owner",
+                "/assets/namespaced/icon.svg"
+        ));
+        HudManager.register(hud, NAMESPACED_OWNER_ID);
+
+        assertEquals("/assets/namespaced/icon.svg", generatedCardFor(TestHud.class).getIcon());
+    }
+
+    @Test
+    void hudCardDoesNotAdoptAnUnrelatedConfigFromTheSameNamespace() {
+        ConfigRegistry.INSTANCE.register(new TestConfigData(
+                UNKNOWN_OWNER_ID + "/other.json",
+                "Unrelated Neighbour",
+                "/assets/unrelated/icon.svg"
+        ));
+        HudManager.register(hud, UNKNOWN_OWNER_ID + "/hud");
+
+        ConfigData card = generatedCardFor(TestHud.class);
+
+        assertEquals("hud", card.getIcon());
+        assertNull(card.getAuthors());
+    }
+
+    @Test
     void hudCardWithoutOwnerMetadataUsesHudIcon() {
         HudManager.register(hud, UNKNOWN_OWNER_ID);
 
@@ -154,64 +190,22 @@ class HudModCardDataTest {
 
         HudManager.INSTANCE.unregister(hud, false, false);
 
-        assertFalse(HudModCardDataKt.hudModCardConfigs().stream()
-                .anyMatch(card -> card.getId().endsWith(":" + TestHud.class.getName())));
+        assertTrue(cardsFor(TestHud.class).isEmpty());
     }
 
     @Test
-    void compatHudsSharingProviderClassAllGetCards() {
-        HudManager.register(firstCompatHud, OWNER_ID);
-        HudManager.register(secondCompatHud, OWNER_ID);
+    void compatHudsAreNotShownAsModCards() {
+        HudManager.register(compatHud, OWNER_ID, "combat");
 
-        long cards = HudModCardDataKt.hudModCardConfigs().stream()
-                .filter(card -> card.getId().endsWith(":" + SameClassHud.class.getName()))
-                .count();
-
-        assertEquals(2, cards);
-        assertTrue(HudModCardDataKt.hudModCardConfigs().stream()
-                .anyMatch(card -> card.getId().contains(":compat-first:")));
-        assertTrue(HudModCardDataKt.hudModCardConfigs().stream()
-                .anyMatch(card -> card.getId().contains(":compat-second:")));
+        assertTrue(HudManager.INSTANCE.providers().contains(compatHud));
+        assertTrue(cardsFor(CompatTestHud.class).isEmpty());
     }
 
     @Test
-    void unregisteringSharedProviderClassRemovesAllOfItsCards() {
-        HudManager.register(firstCompatHud, OWNER_ID);
-        HudManager.register(secondCompatHud, OWNER_ID);
+    void hudsOwnedByAHiddenModAreNotShownAsModCards() {
+        HudManager.register(hud, HIDDEN_OWNER_ID);
 
-        HudManager.INSTANCE.unregister(firstCompatHud, false, false);
-
-        assertFalse(HudModCardDataKt.hudModCardConfigs().stream()
-                .anyMatch(card -> card.getId().endsWith(":" + SameClassHud.class.getName())));
-    }
-
-    @Test
-    void reRegisteringSameLogicalProviderReplacesItsCard() {
-        SameClassHud replacement = new SameClassHud("compat-first", "Compat First Updated");
-        HudManager.register(firstCompatHud, OWNER_ID);
-        HudManager.register(replacement, OWNER_ID);
-
-        var cards = HudModCardDataKt.hudModCardConfigs().stream()
-                .filter(card -> card.getId().contains(":" + OWNER_ID + ":compat-first:"))
-                .toList();
-
-        assertEquals(1, cards.size());
-        assertEquals("Compat First Updated", cards.get(0).getTitle());
-    }
-
-    @Test
-    void reRegistrationReplacesAProviderWhoseOwnerWasAssignedAfterRegistration() {
-        SameClassHud replacement = new SameClassHud("compat-first", "Compat First Updated");
-        HudManager.register(firstCompatHud);
-        firstCompatHud.setConfigId(OWNER_ID);
-        HudManager.register(replacement, OWNER_ID);
-
-        var cards = HudModCardDataKt.hudModCardConfigs().stream()
-                .filter(card -> card.getId().contains(":" + OWNER_ID + ":compat-first:"))
-                .toList();
-
-        assertEquals(1, cards.size());
-        assertEquals("Compat First Updated", cards.get(0).getTitle());
+        assertTrue(cardsFor(TestHud.class).isEmpty());
     }
 
     @Test
@@ -219,7 +213,26 @@ class HudModCardDataTest {
         BuiltinHudRegistrar.register();
 
         assertFalse(ConfigRegistry.INSTANCE.getModCardConfigs().stream()
-                .anyMatch(card -> card.getId().equals("oneconfig.builtin")));
+                .anyMatch(card -> card.getId().equals(BuiltinHudConfigKt.BUILTIN_HUD_CONFIG_ID)));
+    }
+
+    @Test
+    void builtinHudsStillGetCardsAlthoughTheirOwnerIsHiddenAsACard() {
+        HudManager.register(hud);
+        BuiltinHudRegistrar.register();
+
+        ConfigData card = registryCardFor(TestHud.class);
+
+        assertEquals(
+                "oneconfig.hud:" + BuiltinHudConfigKt.BUILTIN_HUD_CONFIG_ID + ":" + HUD_ID + ":" + TestHud.class.getName(),
+                card.getId()
+        );
+    }
+
+    private static List<ConfigData> cardsFor(Class<? extends Hud> providerClass) {
+        return HudModCardDataKt.hudModCardConfigs().stream()
+                .filter(card -> card.getId().endsWith(":" + providerClass.getName()))
+                .toList();
     }
 
     private static ConfigData registryCardFor(Class<? extends Hud> providerClass) {
@@ -230,10 +243,7 @@ class HudModCardDataTest {
     }
 
     private static ConfigData generatedCardFor(Class<? extends Hud> providerClass) {
-        return HudModCardDataKt.hudModCardConfigs().stream()
-                .filter(card -> card.getId().endsWith(":" + providerClass.getName()))
-                .findFirst()
-                .orElseThrow();
+        return cardsFor(providerClass).stream().findFirst().orElseThrow();
     }
 
     private static final class TestHud extends TextHud {
@@ -258,9 +268,9 @@ class HudModCardDataTest {
         }
     }
 
-    private static final class SameClassHud extends TextHud {
-        private SameClassHud(String id, String title) {
-            super(id, title, Hud.Category.Companion.getINFO(), "Test", "");
+    private static final class CompatTestHud extends TextHud {
+        private CompatTestHud() {
+            super("compat-hud-card-test", "Compat HUD Card Test", Hud.Category.Companion.getCOMPAT(), "Test", "");
         }
 
         @Override

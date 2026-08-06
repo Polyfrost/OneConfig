@@ -109,11 +109,11 @@ fun Mods() {
 @Composable
 fun ColumnScope.ModsGrid(category: ModCategory) {
     val registryRevision = ConfigRegistry.revision
-    val hudProviders = HudManager.providers().toList()
+    val hudRevision = HudManager.revision
     val categoryRevision = ThirdPartyModCategories.revision
     val favoriteRevision = ModFavorites.revision
     val orderRevision = ModOrder.revision
-    val filtered = remember(registryRevision, hudProviders, category, categoryRevision, favoriteRevision, orderRevision) {
+    val filtered = remember(registryRevision, hudRevision, category, categoryRevision, favoriteRevision, orderRevision) {
         ConfigRegistry.modCardConfigs
             .let { items ->
                 if (category.configCategory == null) items
