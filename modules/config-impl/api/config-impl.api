@@ -67,6 +67,7 @@ public final class org/polyfrost/oneconfig/api/config/v1/Config$Category {
 
 public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public static final field PROFILES_DIR Ljava/nio/file/Path;
+	public static final field PROFILE_LOCAL_METADATA Ljava/lang/String;
 	public static fun active ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
 	public static fun activeProfile ()Ljava/lang/String;
 	public static fun addProfileChangeListener (Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager$ProfileChangeListener;)V
