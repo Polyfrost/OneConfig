@@ -26,6 +26,8 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
 
     override val persistOwnState: Boolean get() = false
 
+    override val profileLocalTree: Boolean get() = false
+
     override fun update(): Boolean = false
     override fun multipleInstancesAllowed(): Boolean = false
 

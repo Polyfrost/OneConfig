@@ -70,6 +70,8 @@ public final class ConfigManager {
     private static boolean rebindingProfiles = false;
     private static final java.util.concurrent.CopyOnWriteArrayList<ProfileChangeListener> profileListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
 
+    public static final String PROFILE_LOCAL_METADATA = "profileLocal";
+
     public interface ProfileChangeListener {
         void onProfileChanged(String newProfile);
     }
@@ -283,7 +285,9 @@ public final class ConfigManager {
         if (active != null) {
             for (Tree t : active.trees()) {
                 String id = t.getID();
-                if (id != null && !initializedConfigs.containsKey(id)) externalTrees.add(t);
+                if (id == null || initializedConfigs.containsKey(id)) continue;
+                if (Boolean.TRUE.equals(t.getMetadata(PROFILE_LOCAL_METADATA))) continue;
+                externalTrees.add(t);
             }
             if (saveCurrent) active.saveAll();
             active.close();

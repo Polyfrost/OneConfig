@@ -865,6 +865,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             tree.title = title
             tree.addMetadata("category", category)
             tree.addMetadata("hidden", true)
+            if (out.profileLocalTree) tree.addMetadata(ConfigManager.PROFILE_LOCAL_METADATA, true)
             if (!out.persistOwnState) tree.addMetadata(Backend.UI_ONLY_METADATA, true)
             val hideFromConfigUi = { Property.Display.HIDDEN }
             if (out.persistOwnState) {
@@ -1023,6 +1024,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
      * nothing to delete) of a type the user is allowed to delete ([deletable]).
      */
     fun canDelete(): Boolean = isReal && deletable()
+
+    internal open val profileLocalTree: Boolean get() = true
 
     /**
      * Drops this instance's config tree reference, turning it back into a provider. Called when the

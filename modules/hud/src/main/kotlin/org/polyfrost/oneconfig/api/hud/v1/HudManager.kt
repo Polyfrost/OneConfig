@@ -148,6 +148,7 @@ object HudManager {
                 ?: mgr.register(Tree.tree(REGISTRY_ID).put(registryProperty())).get()
             if (t.getProp(KNOWN_HUDS) == null) t.put(registryProperty())
             t.addMetadata("hidden", true)
+            t.addMetadata(ConfigManager.PROFILE_LOCAL_METADATA, true)
             registryTree = t
             when (val known = t.getProp(KNOWN_HUDS)?.get()) {
                 is Array<*> -> known.forEach { if (it != null) knownProviders.add(it.toString()) }
@@ -417,6 +418,7 @@ object HudManager {
 
     @ApiStatus.Internal
     fun beginFrame(screenWidth: Float, screenHeight: Float): Boolean {
+        drainProfileReload()
         val scale = Platform.compatibility().options().guiScale
 
         frameId++
@@ -616,6 +618,7 @@ object HudManager {
 
     @ApiStatus.Internal
     fun prepare(screenWidth: Float, screenHeight: Float) {
+        drainProfileReload()
         val scale = Platform.compatibility().options().guiScale
         Snapshot.sendApplyNotifications()
         frameId++
@@ -705,12 +708,50 @@ object HudManager {
         setMergeExclusions(emptyList())
     }
 
-    @Suppress("UNCHECKED_CAST")
     @ApiStatus.Internal
     fun initialize() {
         if (init) throw IllegalStateException("HudManager.initialize() called twice!")
         init = true
+        ConfigManager.addProfileChangeListener { profile -> pendingProfileReload = profile }
         LOGGER.info("Initializing HUD...")
+        loadFromActiveProfile()
+    }
+
+    @Volatile private var pendingProfileReload: String? = null
+
+    private fun reloadForProfile(profile: String) {
+        val kept = ArrayList<Hud>(activeInstances.size)
+        for (hud in ArrayList(activeInstances)) {
+            if (!hud.profileLocalTree) {
+                kept.add(hud)
+                continue
+            }
+            activeInstances.remove(hud)
+            disposeHud(hud, delete = false)
+        }
+        knownProviders.clear()
+        registryTree = null
+        zOrderCache = emptyList()
+        lastMergeKey = null
+        frameOrder.clear()
+        LOGGER.info("Reloading HUDs for profile '{}' ({} wrapped HUDs kept)", profile, kept.size)
+        loadFromActiveProfile()
+        revision++
+        invalidate()
+    }
+
+    private fun drainProfileReload() {
+        val profile = pendingProfileReload ?: return
+        pendingProfileReload = null
+        try {
+            reloadForProfile(profile)
+        } catch (e: Throwable) {
+            LOGGER.error("Failed to reload HUDs for profile '{}'", profile, e)
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun loadFromActiveProfile() {
         val now = System.nanoTime()
         val loader = HudManager::class.java.classLoader
         val used = HashSet<Class<Hud>>(hudProviders.size)
