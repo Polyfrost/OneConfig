@@ -1,10 +1,12 @@
 package org.polyfrost.oneconfig.internal.ui.search
 
+import java.util.concurrent.CopyOnWriteArrayList
+
 /**
  * Object storing all search providers
  */
 object SearchProviderRegistry {
-    private val providers: MutableList<SearchProvider> = mutableListOf()
+    private val providers: CopyOnWriteArrayList<SearchProvider> = CopyOnWriteArrayList()
 
     /**
      * Register a new search provider

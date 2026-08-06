@@ -15,7 +15,7 @@ internal object DefaultSearchProvider : SearchProvider {
         if (q.isEmpty()) return emptyList()
         val searchingKeybinds = SearchScope.Keybinds in scopes
         return SearchCorpus.corpus.values.filter {
-            if (it.scopes.intersect(scopes).isEmpty()) {
+            if (scopes.none { s -> s in it.scopes }) {
                 return@filter false
             }
 

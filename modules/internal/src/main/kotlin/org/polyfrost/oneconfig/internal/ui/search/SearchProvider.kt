@@ -1,7 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.search
 
-import org.polyfrost.oneconfig.internal.ui.api.ConfigData
-
 
 /**
  * A class responsible for searching configs

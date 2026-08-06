@@ -4,12 +4,13 @@ package org.polyfrost.oneconfig.internal.compat
  * Create stable ids for a mod
  */
 internal object CompatIds {
+    private val notAllowedIdRegex = Regex("[^a-z0-9._-]+")
 
     /**
      * Take a string and turn it into something allowed in a node id
      */
     fun idPart(raw: String?, fallback: String): String {
-        val cleaned = raw?.trim()?.lowercase()?.replace(Regex("[^a-z0-9._-]+"), "_")?.trim('_')
+        val cleaned = raw?.trim()?.lowercase()?.replace(notAllowedIdRegex, "_")?.trim('_')
         return cleaned?.takeIf { it.isNotEmpty() } ?: fallback
     }
 

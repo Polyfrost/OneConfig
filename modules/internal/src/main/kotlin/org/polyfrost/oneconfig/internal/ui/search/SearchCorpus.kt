@@ -160,7 +160,6 @@ object SearchCorpus {
             snapshot = sources.toList()
             synchronized(dirtySources) {
                 dirty = expandDirty(dirtySources, snapshot)
-                dirtySources.clear()
             }
         }
 
@@ -209,6 +208,9 @@ object SearchCorpus {
         // Swap to new corpus, non-cancellable to prevent desyncs with search providers
         withContext(NonCancellable) {
             corpus = documents
+            // Update sources that are no longer dirty
+            dirtySources -= dirty
+
             if (ConfigDocumentSource in dirty) GlobalSettingIndex.rebuild()
             LOGGER.info(
                 "Rebuilt corpus from $asked/${snapshot.size} sources, " +
