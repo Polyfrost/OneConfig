@@ -47,6 +47,6 @@ interface SearchProvider {
      * Function that is called every time the search corpus updates,
      * with the new/updated documents, and the removed document ids
      */
-    suspend fun onCorpusUpdate(added: List<SearchDocument<*>>, removed: Set<String>)
+    suspend fun onCorpusUpdate(added: List<SearchDocument<*>>, removed: Set<String>) {}
 }
 

@@ -5,6 +5,7 @@ import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
+import org.polyfrost.oneconfig.internal.ui.search.HudDocumentSource
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 
 private object BuiltinHudConfigData : ConfigData {
@@ -22,6 +23,6 @@ object BuiltinHudRegistrar {
         HudManager.providers().forEach { hud ->
             if (hud.configId == null) hud.configId = "oneconfig.builtin"
         }
-        SearchCorpus.invalidate()
+        SearchCorpus.invalidate(HudDocumentSource)
     }
 }

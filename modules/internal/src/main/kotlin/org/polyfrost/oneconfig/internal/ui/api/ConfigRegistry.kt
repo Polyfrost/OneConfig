@@ -9,6 +9,7 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindRegistrar
+import org.polyfrost.oneconfig.internal.ui.search.ConfigDocumentSource
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 
 object ConfigRegistry {
@@ -80,9 +81,10 @@ object ConfigRegistry {
             MinecraftKeybindRegistrar.scan(tree)
             if (registerTree(tree, source, bumpRevision = false)) changed = true
         }
-        if (configs.removeAll { it.source == source && it.id !in seenIds }) changed = true
+        // Only prune what this manager owns
+        if (configs.removeAll { it.source == source && it is TreeConfigData && it.id !in seenIds }) changed = true
         if (!changed) return
-        SearchCorpus.invalidate()
+        SearchCorpus.invalidate(ConfigDocumentSource)
         revision++
     }
 
@@ -106,7 +108,7 @@ object ConfigRegistry {
 
     fun unregister(id: String) {
         if (configs.removeAll { it.id == id }) {
-            SearchCorpus.invalidate()
+            SearchCorpus.invalidate(ConfigDocumentSource)
             revision++
         }
     }
@@ -123,7 +125,7 @@ object ConfigRegistry {
         } else {
             configs.add(data)
         }
-        SearchCorpus.invalidate()
+        SearchCorpus.invalidate(ConfigDocumentSource)
         if (bumpRevision) {
             revision++
         }

@@ -58,14 +58,25 @@ class SearchDocument<T>(
     fun contentEquals(other: SearchDocument<*>): Boolean =
         id == other.id && scopes == other.scopes && metadata == other.metadata
 
+    /**
+     * Whether this entry is equivalent to another entry, and can safely be replaced by it without breaking anything
+     */
+    fun equivalentTo(other: SearchDocument<*>): Boolean = contentEquals(other) && payload === other.payload
+
     override fun toString(): String {
         return "SearchDocument(id=$id, scopes=$scopes, metadata=$metadata, payload=$payload)"
     }
 }
 
 /**
- * Produces part of the searchable corpus. Called async when the
+ * Produces part of the searchable corpus. Called async when the corpus rebuilds..
  */
 fun interface SearchDocumentSource {
     fun documents(): List<SearchDocument<*>>
+
+    /**
+     * Sources whose data this one reads. Invalidating any of them should invalidate this source as well.
+     */
+    val dependencies: Set<SearchDocumentSource>
+        get() = emptySet()
 }

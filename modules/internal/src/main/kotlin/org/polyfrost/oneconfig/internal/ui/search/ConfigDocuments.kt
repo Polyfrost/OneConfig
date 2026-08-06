@@ -70,8 +70,8 @@ object KeybindDocumentSource : SearchDocumentSource {
                         section = null,
                         category = entry.category.asRenderText().takeIf { it.isNotBlank() },
                         subcategory = entry.subcategory.asRenderText().takeIf { it.isNotBlank() },
-                        modTitle = modTitle.asRenderText().takeIf { it.isNotBlank() },
-                        path = entry.path.asRenderText().takeIf { it.isNotBlank() },
+                        modTitle = modTitle.takeIf { it.isNotBlank() },
+                        path = entry.path.takeIf { it.isNotBlank() },
                     ),
                     payload = entry.prop,
                 )
@@ -153,8 +153,11 @@ private fun treeDocuments(
 }
 
 object HudDocumentSource : SearchDocumentSource {
+    /** Hud documents use the title and description of the config owning the hud */
+    override val dependencies = setOf<SearchDocumentSource>(ConfigDocumentSource)
+
     init {
-        HudManager.addRegistrationListener { SearchCorpus.invalidate() }
+        HudManager.addRegistrationListener { SearchCorpus.invalidate(HudDocumentSource) }
     }
 
     override fun documents(): List<SearchDocument<Hud>> = HudManager.providers().toList().map { hud ->

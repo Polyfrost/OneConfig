@@ -11,28 +11,29 @@ internal object DefaultSearchProvider : SearchProvider {
         query: String,
         scopes: Set<SearchScope>
     ): List<SearchDocument<*>> {
-        val corpus = SearchCorpus.corpus
-        val q = query.trim().lowercase()
-        return corpus.values.filter {
-            if (it.scopes.intersect(scopes).isEmpty()) return@filter false
-            if (it.scopes.contains(SearchScope.Mods)) {
-                return@filter it.metadata.title != null && searchMatches(it.metadata.title, q)
+        val q = query.trim()
+        if (q.isEmpty()) return emptyList()
+        val searchingKeybinds = SearchScope.Keybinds in scopes
+        return SearchCorpus.corpus.values.filter {
+            if (it.scopes.intersect(scopes).isEmpty()) {
+                return@filter false
             }
-            if (listOfNotNull(it.metadata.title, it.metadata.description).any { p ->
-                    searchMatches(p, q)
-                } || it.metadata.tags.any { t -> searchMatches(t, q) }) return@filter true
+
+            val meta = it.metadata
+            if (it.scopes.contains(SearchScope.Mods)) return@filter meta.title.matches(q)
+            if (meta.title.matches(q) || meta.description.matches(q)) return@filter true
+            if (meta.tags.any { t -> t.matches(q) }) return@filter true
             // Hud specific
-            if (it.scopes.contains(SearchScope.Huds) && listOfNotNull(
-                    it.metadata.category, it.metadata.distinctSubcategory,
-                    it.metadata.id, it.metadata.modTitle
-                ).any { k -> searchMatches(k, q) }
+            if (SearchScope.Huds in it.scopes && (
+                        meta.category.matches(q) || meta.subcategory.matches(q) ||
+                                meta.id.matches(q) || meta.modTitle.matches(q)
+                        )
             ) return@filter true
             // Match old search for keybinds
-            if (scopes.contains(SearchScope.Keybinds) && listOfNotNull(
-                    it.metadata.category,
-                    it.metadata.distinctSubcategory,
-                    it.metadata.id, it.metadata.path
-                ).any { k -> searchMatches(k, q) }
+            if (searchingKeybinds && (
+                        meta.category.matches(q) || meta.subcategory.matches(q) ||
+                                meta.id.matches(q) || meta.path.matches(q)
+                        )
             ) return@filter true
             false
         }
@@ -46,12 +47,7 @@ internal object DefaultSearchProvider : SearchProvider {
         return search(query, scopes).groupBy(grouper)
     }
 
-    override suspend fun onCorpusUpdate(
-        added: List<SearchDocument<*>>,
-        removed: Set<String>
-    ) {
-        // No-op, we just use the corpus directly
-    }
+    private fun String?.matches(query: String): Boolean = this != null && searchMatches(this, query)
 }
 
 /**
@@ -79,10 +75,11 @@ private fun levenshtein(a: String, b: String, max: Int): Int {
 }
 
 /**
- * Returns true if [text] matches [q] either as a substring or, when "Search Distance" > 0, by a fuzzy
- * (Levenshtein) match against the whole string or any of its words. [q] is expected to be lowercase.
+ * Returns true if [text] matches [query] either as a substring or, when "Search Distance" > 0, by a fuzzy
+ * (Levenshtein) match against the whole string or any of its words.
  */
-internal fun searchMatches(text: String, q: String): Boolean {
+internal fun searchMatches(text: String, query: String): Boolean {
+    val q = query.lowercase()
     val t = text.lowercase()
     if (t.contains(q)) return true
     val dist = OneConfigConfig.searchDistance
