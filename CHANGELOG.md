@@ -1,14 +1,13 @@
-1.1.3 changelogs:
-- Merged HUDs now move as a single group
-- Fixed a rare JVM crash with Vulkan
-- Fixed Compose rendering breaking on window resize
-- Fixed the extra space between a text HUD's prefix, value, and suffix
-- Fixed several crashes around screen handling, mod compatibility, and config loading
+1.1.4 changelogs:
+- Added an item list config option for picking and reordering items.
+- HUDs now show up as mod cards, grouped by type with collapsible sections.
+- Merged HUDs now keep rows flush when a HUD resizes.
+- Fixed HUDs not being isolated per profile.
+- Fixed mixins related crashes.
 
 Public API:
 
-- Added `Hud.selfAnchorPoint` (with `setSelfAnchorPointKeepingPosition`) and an `anchorTo` overload that takes the anchored HUD's own anchor point
-- Added `Hud.effectiveAnchorParent`, `Hud.effectiveAnchorPoint`, `Hud.effectiveSelfAnchorPoint`, and `Hud.isMergeAnchored` for reading resolved anchoring state
-- Added `HudManager.mergeGroupOf`, `HudManager.setMergeExclusions`, and `HudManager.drawMergedBackgrounds` for working with merged HUD groups
-- Added `NotificationsManager.ensureInitialized`
-- Added `ScreenPlatform.showMessage`
+- Added the `@ItemList` config annotation and `Visualizer.ItemListVisualizer`
+- Added `ModCardType`, `ModCardTypes`, and `ModCardTypeResolver` for registering and resolving mod card categories
+- Added `HudManager.pendingAdd` and `HudManager.getRevision`
+- Added `TextHud.DateTime` constructor overloads taking an explicit id
