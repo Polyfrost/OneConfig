@@ -188,6 +188,16 @@ class TextListOptionData(prop: Property<*>) : ListOptionData(prop) {
     fun strings(): List<String> = elements().map { it?.toString() ?: "" }
 }
 
+class ItemListOptionData(prop: Property<*>) : ListOptionData(prop) {
+    fun ids(): List<String> = org.polyfrost.oneconfig.internal.ui.components.item.normalizeItemIds(
+        elements().mapNotNull { it as? String }
+    )
+
+    fun setIds(values: List<String>) = prop.setItemListElements(
+        org.polyfrost.oneconfig.internal.ui.components.item.normalizeItemIds(values)
+    )
+}
+
 class FileOptionData(prop: Property<*>) : OptionData(prop) {
     val placeholder: String? get() = localizedString(prop.getMetadata("placeholderKey"), prop.getMetadata<String>("placeholder")).takeIf { it.isNotBlank() }
     val directory: Boolean get() = prop.getMetadata("directory") ?: false
@@ -366,6 +376,46 @@ private fun Property<*>.setListElements(values: List<Any?>) {
         ReflectArray.set(array, index, if (value is Number) value.toComponentType(component) else value)
     }
     prop.set(array)
+}
+
+@Suppress("UNCHECKED_CAST")
+private fun Property<*>.setItemListElements(values: List<String>) {
+    if (type.isArray) {
+        (this as Property<Any>).set(values.toTypedArray())
+        return
+    }
+
+    val replacement = ArrayList(values)
+    if (type.isInstance(replacement)) {
+        (this as Property<Any>).set(replacement)
+        return
+    }
+
+    val candidates = listOfNotNull(get()?.javaClass, type).distinct()
+    for (candidate in candidates) {
+        if (!type.isAssignableFrom(candidate)) continue
+
+        runCatching {
+            candidate.getConstructor(Collection::class.java).newInstance(values)
+        }.getOrNull()?.let { instance ->
+            if (instance is List<*>) {
+                (this as Property<Any>).set(instance)
+                return
+            }
+        }
+
+        runCatching {
+            candidate.getConstructor().newInstance()
+        }.getOrNull()?.let { instance ->
+            if (instance is MutableList<*>) {
+                (instance as MutableList<Any?>).addAll(values)
+                (this as Property<Any>).set(instance)
+                return
+            }
+        }
+    }
+
+    throw IllegalArgumentException("List property type ${type.name} cannot be replaced with an editable list")
 }
 
 private fun Number.toComponentType(component: Class<*>): Any = when (component) {

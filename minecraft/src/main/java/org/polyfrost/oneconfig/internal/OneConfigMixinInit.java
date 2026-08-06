@@ -158,9 +158,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("render.GameRendererAccessor");
         mixins.add("render.GuiRendererAccessor");
         //? }
-        //? if >= 1.21.5 && < 1.21.8 {
-        /*mixins.add("skia.Mixin_MainTargetRedirect");
-        *///? }
+        //? if < 1.21.8
+        //mixins.add("skia.Mixin_MainTargetRedirect");
         mixins.add("skia.Mixin_DebugOverlayAboveUi");
         //? < 26.1 {
         /*mixins.add("skia.Mixin_ScreenshotComposite");

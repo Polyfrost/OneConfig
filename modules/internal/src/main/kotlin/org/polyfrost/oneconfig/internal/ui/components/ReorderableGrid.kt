@@ -64,6 +64,7 @@ class GridReorderState internal constructor(
     private val scope: CoroutineScope,
     private val onMove: (from: Int, to: Int) -> Unit,
     private val onDrop: (index: Int) -> Unit,
+    private val canSwap: (from: Int, to: Int) -> Boolean,
 ) {
     var draggingKey by mutableStateOf<Any?>(null)
         private set
@@ -154,6 +155,7 @@ class GridReorderState internal constructor(
         var bestOverlap = dragged.overlap(Rect(info.offset.toOffset(), info.size.toSize()))
         gridState.layoutInfo.visibleItemsInfo.forEach { other ->
             if (other.index == draggingIndex) return@forEach
+            if (!canSwap(draggingIndex, other.index)) return@forEach
             val overlap = dragged.overlap(Rect(other.offset.toOffset(), other.size.toSize()))
             if (overlap > bestOverlap) {
                 best = other
@@ -189,16 +191,19 @@ fun rememberGridReorderState(
     gridState: LazyGridState,
     onMove: (from: Int, to: Int) -> Unit,
     onDrop: (index: Int) -> Unit,
+    canSwap: (from: Int, to: Int) -> Boolean = { _, _ -> true },
 ): GridReorderState {
     val scope = rememberCoroutineScope()
     val currentOnMove by rememberUpdatedState(onMove)
     val currentOnDrop by rememberUpdatedState(onDrop)
+    val currentCanSwap by rememberUpdatedState(canSwap)
     return remember(gridState, scope) {
         GridReorderState(
             gridState = gridState,
             scope = scope,
             onMove = { from, to -> currentOnMove(from, to) },
             onDrop = { index -> currentOnDrop(index) },
+            canSwap = { from, to -> currentCanSwap(from, to) },
         )
     }
 }

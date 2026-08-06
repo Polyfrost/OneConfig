@@ -26,6 +26,9 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
@@ -45,6 +48,10 @@ object HudManager {
 
     private val hudProviders = HashMap<Class<out Hud>, Hud>()
     private val hudIcons = HashMap<String, String>()
+
+    var revision by mutableIntStateOf(0)
+        private set
+
     private var init = false
     private val hiddenHudPaint by lazy { org.jetbrains.skia.Paint().apply { setAlphaf(0.35f) } }
 
@@ -90,6 +97,9 @@ object HudManager {
 
     @ApiStatus.Internal
     @Volatile @JvmField var pendingSelection: Hud? = null
+
+    @ApiStatus.Internal
+    @Volatile @JvmField var pendingAdd: Hud? = null
 
     private val lastUpdates = HashMap<Hud, Long>()
 
@@ -138,6 +148,7 @@ object HudManager {
                 ?: mgr.register(Tree.tree(REGISTRY_ID).put(registryProperty())).get()
             if (t.getProp(KNOWN_HUDS) == null) t.put(registryProperty())
             t.addMetadata("hidden", true)
+            t.addMetadata(ConfigManager.PROFILE_LOCAL_METADATA, true)
             registryTree = t
             when (val known = t.getProp(KNOWN_HUDS)?.get()) {
                 is Array<*> -> known.forEach { if (it != null) knownProviders.add(it.toString()) }
@@ -169,21 +180,28 @@ object HudManager {
     @ApiStatus.Internal
     val activeInstances = ArrayList<Hud>()
 
+    private class DateTestHud : TextHud.DateTime("Date:", "yyyy-MM-dd", title = "Date")
+
+    private class TimeTestHud : TextHud.DateTime("Time:", "HH:mm:ss", title = "Time")
+
+    private class TextTestHud : TextHud("test", "test", Category.COMBAT, "") {
+        override fun getText(): String = "mmrp\nmeow"
+    }
+
     init {
         Snapshot.registerApplyObserver { _, _ -> contentDirty = true }
 
         if (java.lang.Boolean.getBoolean("oneconfig.test")) {
-            register(object : TextHud.DateTime("Date:", "yyyy-MM-dd") {})
-            register(object : TextHud.DateTime("Time:", "HH:mm:ss") {})
-            register(object : TextHud("test", "test", Category.COMBAT, "") {
-                override fun getText(): String = "mmrp\nmeow"
-            })
+            register(DateTestHud())
+            register(TimeTestHud())
+            register(TextTestHud())
         }
     }
 
     @JvmStatic
     fun register(hud: Hud) {
         hudProviders[hud::class.java] = hud
+        revision++
         if (hud.updateFrequency() == 0L) LOGGER.warn("update of HUD ${hud.title} is 0, this is not recommended!")
     }
 
@@ -217,7 +235,7 @@ object HudManager {
     fun providers(): Collection<Hud> = hudProviders.values
 
     fun <T : Hud> unregister(hud: T, removeActiveInstances: Boolean = false, delete: Boolean = false): ArrayList<T>? {
-        hudProviders.remove(hud::class.java)
+        if (hudProviders.remove(hud::class.java) != null) revision++
         if (!removeActiveInstances) return null
         val out = ArrayList<T>(10.coerceAtMost(activeInstances.size))
         val iter = activeInstances.iterator()
@@ -278,6 +296,10 @@ object HudManager {
                 if (it.anchorTargetId == gone) it.clearAnchor()
             }
         }
+        for (it in activeInstances) {
+            if (it.mergeLinkX?.parent === hud || it.mergeLinkY?.parent === hud) it.clearMergeLink()
+        }
+        lastMergeKey = null
         invalidate()
         try { hud.remove() } catch (_: Throwable) {}
         val treeId = hud.tree?.id
@@ -396,6 +418,7 @@ object HudManager {
 
     @ApiStatus.Internal
     fun beginFrame(screenWidth: Float, screenHeight: Float): Boolean {
+        drainProfileReload()
         val scale = Platform.compatibility().options().guiScale
 
         frameId++
@@ -413,7 +436,7 @@ object HudManager {
         updateAndAdvance(frameOrder)
 
         layoutAll(frameOrder, screenWidth, screenHeight, scale)
-        updateBackgroundGroups(screenWidth, screenHeight, scale)
+        updateBackgroundGroups(frameOrder, screenWidth, screenHeight, scale)
 
         val key = frameKey()
         val keyChanged = key != lastFrameKey ||
@@ -446,14 +469,16 @@ object HudManager {
      * in a fused shape to stop drawing their own background. Cheap on frames where nothing moved:
      * the shapes are only re-traced when a position, size or background style actually changed.
      */
-    private fun updateBackgroundGroups(screenWidth: Float, screenHeight: Float, scale: Float) {
-        val key = HudBackgroundMerge.layoutKey(frameOrder)
+    private fun updateBackgroundGroups(huds: List<Hud>, screenWidth: Float, screenHeight: Float, scale: Float) {
+        val key = HudBackgroundMerge.layoutKey(huds)
         if (key == lastMergeKey) return
         lastMergeKey = key
 
-        frameGroups = HudBackgroundMerge.computeGroups(frameOrder)
+        val mergeable = if (mergeExclusions.isEmpty()) huds else huds.filter { hud -> !isMergeExcluded(hud) }
+        frameGroups = HudBackgroundMerge.computeGroups(mergeable)
         val merged = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Hud, Boolean>())
         for (group in frameGroups) merged.addAll(group.huds)
+        updateMergeLinks()
 
         var changed = false
         for (hud in activeInstances) {
@@ -471,9 +496,71 @@ object HudManager {
         // change land a frame late, which would show a doubled or missing background for one frame
         Snapshot.sendApplyNotifications()
         PolyComposeHost.frame()
-        for (hud in frameOrder) hud.lastLayoutFrame = -1L
-        layoutAll(frameOrder, screenWidth, screenHeight, scale)
+        for (hud in huds) hud.lastLayoutFrame = -1L
+        layoutAll(huds, screenWidth, screenHeight, scale)
         invalidate()
+    }
+
+    private var mergeExclusions: List<Hud> = emptyList()
+
+    /**
+     * HUDs kept out of merging for now, used by the editor while the user pulls one out of a fused
+     * shape: an excluded HUD draws its own background again and stops dragging its neighbours along,
+     * so it comes away cleanly and re-merges wherever it is dropped.
+     */
+    @ApiStatus.Internal
+    @JvmStatic
+    fun setMergeExclusions(huds: Collection<Hud>) {
+        val next = huds.toList()
+        if (next.size == mergeExclusions.size && next.indices.all { next[it] === mergeExclusions[it] }) return
+        mergeExclusions = next
+        lastMergeKey = null
+        invalidate()
+    }
+
+    private fun isMergeExcluded(hud: Hud): Boolean = mergeExclusions.any { it === hud }
+
+    /** Every HUD fused into the same background shape as [hud], including [hud] itself. */
+    @ApiStatus.Internal
+    @JvmStatic
+    fun mergeGroupOf(hud: Hud): List<Hud> =
+        frameGroups.firstOrNull { group -> group.huds.any { it === hud } }?.huds ?: listOf(hud)
+
+    /**
+     * Holds every HUD in a fused shape against the neighbour it touches, at the point where the two
+     * meet, so a HUD which grows keeps the shape flush. These links live only as long as the merge
+     * does: a HUD which stops being merged is let go and stays where it was left.
+     */
+    private fun updateMergeLinks() {
+        val linkedX = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Hud, Boolean>())
+        val linkedY = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Hud, Boolean>())
+        Snapshot.withMutableSnapshot {
+            for (group in frameGroups) {
+                for (link in group.links) {
+                    link.child.applyMergeLink(link.parent, link.childPoint, link.parentPoint, link.axis)
+                    (if (link.axis == MergeAxis.X) linkedX else linkedY).add(link.child)
+                }
+            }
+            for (hud in activeInstances) {
+                hud.clearMergeLinks(clearX = hud !in linkedX, clearY = hud !in linkedY)
+            }
+        }
+    }
+
+    /**
+     * Paints the fused backgrounds of merged HUDs, in gui units. Used by renderers which draw the HUD
+     * trees themselves (the editor viewport) instead of going through [render]: the HUDs in a fused
+     * shape do not draw their own background, so without this they would show up bare.
+     */
+    @ApiStatus.Internal
+    fun drawMergedBackgrounds(ctx: RenderContext) {
+        for (group in frameGroups) {
+            try {
+                group.draw(ctx)
+            } catch (e: Throwable) {
+                LOGGER.error("Failed to draw merged HUD background", e)
+            }
+        }
     }
 
     private fun frameKey(): Long {
@@ -531,6 +618,7 @@ object HudManager {
 
     @ApiStatus.Internal
     fun prepare(screenWidth: Float, screenHeight: Float) {
+        drainProfileReload()
         val scale = Platform.compatibility().options().guiScale
         Snapshot.sendApplyNotifications()
         frameId++
@@ -543,6 +631,7 @@ object HudManager {
                 LOGGER.error("Failed to lay out HUD ${hud.title}", e)
             }
         }
+        updateBackgroundGroups(huds, screenWidth, screenHeight, scale)
     }
 
     @ApiStatus.Internal
@@ -558,19 +647,13 @@ object HudManager {
             for (hud in orderedForRender()) if (shouldDraw(hud)) frameOrder.add(hud)
             updateAndAdvance(frameOrder)
             layoutAll(frameOrder, screenWidth, screenHeight, scale)
-            updateBackgroundGroups(screenWidth, screenHeight, scale)
+            updateBackgroundGroups(frameOrder, screenWidth, screenHeight, scale)
         }
 
         ctx.save()
         ctx.scale(scale, scale)
 
-        for (group in frameGroups) {
-            try {
-                group.draw(ctx)
-            } catch (e: Throwable) {
-                LOGGER.error("Failed to draw merged HUD background", e)
-            }
-        }
+        drawMergedBackgrounds(ctx)
 
         for (hud in frameOrder) {
             val hudScale = hud.effectiveScale
@@ -621,14 +704,54 @@ object HudManager {
     @ApiStatus.Internal
     fun onEditorScreenRemoved() {
         isEditorOpen = false
+        // a drag interrupted by the editor closing must not leave a HUD unable to merge
+        setMergeExclusions(emptyList())
     }
 
-    @Suppress("UNCHECKED_CAST")
     @ApiStatus.Internal
     fun initialize() {
         if (init) throw IllegalStateException("HudManager.initialize() called twice!")
         init = true
+        ConfigManager.addProfileChangeListener { profile -> pendingProfileReload = profile }
         LOGGER.info("Initializing HUD...")
+        loadFromActiveProfile()
+    }
+
+    @Volatile private var pendingProfileReload: String? = null
+
+    private fun reloadForProfile(profile: String) {
+        val kept = ArrayList<Hud>(activeInstances.size)
+        for (hud in ArrayList(activeInstances)) {
+            if (!hud.profileLocalTree) {
+                kept.add(hud)
+                continue
+            }
+            activeInstances.remove(hud)
+            disposeHud(hud, delete = false)
+        }
+        knownProviders.clear()
+        registryTree = null
+        zOrderCache = emptyList()
+        lastMergeKey = null
+        frameOrder.clear()
+        LOGGER.info("Reloading HUDs for profile '{}' ({} wrapped HUDs kept)", profile, kept.size)
+        loadFromActiveProfile()
+        revision++
+        invalidate()
+    }
+
+    private fun drainProfileReload() {
+        val profile = pendingProfileReload ?: return
+        pendingProfileReload = null
+        try {
+            reloadForProfile(profile)
+        } catch (e: Throwable) {
+            LOGGER.error("Failed to reload HUDs for profile '{}'", profile, e)
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun loadFromActiveProfile() {
         val now = System.nanoTime()
         val loader = HudManager::class.java.classLoader
         val used = HashSet<Class<Hud>>(hudProviders.size)

@@ -191,6 +191,7 @@ abstract class ComposeScreen(
     private var lastSceneW = -1
     private var lastSceneH = -1
     private var lastFbWidth = -1
+    private var lastFbHeight = -1
     private var settleFrames = 0
     private var cachedSurfaceScale = -1f
 
@@ -266,6 +267,7 @@ abstract class ComposeScreen(
         lastSceneW = -1
         lastSceneH = -1
         lastFbWidth = -1
+        lastFbHeight = -1
         cachedSurfaceScale = -1f
 
         if (!bindContent(scene)) {
@@ -302,7 +304,7 @@ abstract class ComposeScreen(
 
     private fun closeWithMessage(reason: String) {
         client.execute {
-            if (Platform.screen().current<Screen>() === this) Platform.screen().close()
+            if (Platform.screen().current<Any?>() === this) Platform.screen().close()
             Platform.screen().showMessage(reason)
         }
     }
@@ -344,7 +346,7 @@ abstract class ComposeScreen(
 
     //~ if >= 26.1 'render' -> 'extractRenderState'
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
-        if (Platform.screen().current<Screen>() !== this) return
+        if (Platform.screen().current<Any?>() !== this) return
         if (scenePoisoned) {
             if (sceneRebuilds >= MAX_SCENE_REBUILDS) {
                 LOGGER.error(
@@ -681,9 +683,11 @@ abstract class ComposeScreen(
         ComposeSceneContextImpl.updateContainerSize(w, h)
         val changed = w != lastSceneW || h != lastSceneH
         val fbW = Platform.screen().viewportWidth()
-        if (changed || fbW != lastFbWidth) {
+        val fbH = Platform.screen().viewportHeight()
+        if (changed || fbW != lastFbWidth || fbH != lastFbHeight) {
             cachedSurfaceScale = -1f
             settleFrames = SETTLE_FRAMES
+            sceneDirty = true
         }
         if (settleFrames > 0) {
             settleFrames--
@@ -692,6 +696,7 @@ abstract class ComposeScreen(
         lastSceneW = w
         lastSceneH = h
         lastFbWidth = fbW
+        lastFbHeight = fbH
         return changed
     }
 

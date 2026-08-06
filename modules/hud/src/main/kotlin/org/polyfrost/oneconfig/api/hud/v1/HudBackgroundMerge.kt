@@ -35,6 +35,9 @@ import kotlin.math.hypot
 import kotlin.math.min
 import kotlin.math.roundToInt
 
+
+internal enum class MergeAxis { X, Y }
+
 /**
  * Fuses the backgrounds of HUDs which sit right next to each other into a single shape, so that a
  * column of HUDs reads as one panel instead of a stack of separate cards: shared edges lose their
@@ -52,8 +55,29 @@ internal object HudBackgroundMerge {
 
     private const val EPS = 0.01f
 
+    /** Backstop for walking anchors set by hand while checking a link would not close a loop. */
+    private const val MAX_LINK_DEPTH = 16
+
+    private const val PIN_X = 1
+
+    private const val PIN_Y = 2
+
+    /**
+     * A HUD in a fused shape held against the neighbour it touches, on one [axis]: [childPoint] on
+     * the child's box is the corner or edge midpoint that meets [parentPoint] on the parent's.
+     */
+    class Link(
+        val child: Hud,
+        val parent: Hud,
+        val childPoint: HudAnchor,
+        val parentPoint: HudAnchor,
+        val axis: MergeAxis,
+    )
+
     class Group(
         val huds: List<Hud>,
+        /** Spanning trees over the group's contacts, so every HUD follows the one it is fused to. */
+        val links: List<Link>,
         private val bgColor: Int,
         private val chroma: Boolean,
         private val chromaSpeed: Float,
@@ -87,27 +111,165 @@ internal object HudBackgroundMerge {
         if (items.size < 2) return emptyList()
 
         val parent = IntArray(items.size) { it }
+        val neighbours = HashMap<Int, MutableList<Contact>>()
         for (i in items.indices) {
             for (j in i + 1 until items.size) {
                 val a = items[i]
                 val b = items[j]
-                if (!a.sameStyle(b) || !touching(a, b)) continue
+                if (!a.sameStyle(b)) continue
+                val pins = contactPins(a, b)
+                if (pins == 0) continue
                 union(parent, i, j)
+                neighbours.getOrPut(i) { ArrayList(2) }.add(Contact(j, pins))
+                neighbours.getOrPut(j) { ArrayList(2) }.add(Contact(i, pins))
             }
         }
 
-        val components = LinkedHashMap<Int, MutableList<Item>>()
-        for (i in items.indices) components.getOrPut(find(parent, i)) { ArrayList() }.add(items[i])
+        val components = LinkedHashMap<Int, MutableList<Int>>()
+        for (i in items.indices) components.getOrPut(find(parent, i)) { ArrayList() }.add(i)
 
         val out = ArrayList<Group>(components.size)
         for (component in components.values) {
             if (component.size < 2) continue
-            val loops = outlines(component.map { floatArrayOf(it.x, it.y, it.w, it.h) })
+            val members = component.map { items[it] }
+            val loops = outlines(members.map { floatArrayOf(it.x, it.y, it.w, it.h) })
             if (loops.isEmpty()) continue
-            val first = component[0]
-            out.add(Group(component.map { it.hud }, first.hud.bgColor, first.hud.bgChroma, first.hud.bgChromaSpeed, first.radius, loops))
+            val first = members[0]
+            out.add(
+                Group(
+                    members.map { it.hud },
+                    axisLinks(items, component, neighbours, MergeAxis.X) +
+                        axisLinks(items, component, neighbours, MergeAxis.Y),
+                    first.hud.bgColor, first.hud.bgChroma, first.hud.bgChromaSpeed, first.radius, loops,
+                )
+            )
         }
         return out
+    }
+
+    private class Contact(val other: Int, val pins: Int)
+
+    private fun axisLinks(
+        items: List<Item>,
+        component: List<Int>,
+        neighbours: Map<Int, List<Contact>>,
+        axis: MergeAxis,
+    ): List<Link> {
+        val pin = if (axis == MergeAxis.X) PIN_X else PIN_Y
+        val out = ArrayList<Link>(component.size - 1)
+        val index = java.util.IdentityHashMap<Hud, Int>(component.size * 2)
+        for (i in component) index[items[i].hud] = i
+        val parentOf = HashMap<Int, Int>(component.size * 2)
+
+        // whether following [from] up its parents - the links being built here, then anchors set by
+        // hand - ever arrives back at [target], which is what a link must never close
+        fun reaches(from: Int, target: Hud): Boolean {
+            var hud: Hud? = items[from].hud
+            var depth = 0
+            while (hud != null && depth < component.size + MAX_LINK_DEPTH) {
+                if (hud === target) return true
+                val idx = index[hud]
+                val linked = if (idx == null) null else parentOf[idx]
+                hud = if (linked != null) items[linked].hud else hud.anchorParent
+                depth++
+            }
+            return false
+        }
+
+        val seen = HashSet<Int>(component.size * 2)
+        for (i in component) if (items[i].hud.isAnchored) seen.add(i)
+
+        while (true) {
+            var bestParent = -1
+            var bestChild = -1
+            var bestPinned = false
+            for (cur in seen) {
+                for (contact in neighbours[cur].orEmpty()) {
+                    val n = contact.other
+                    if (n in seen) continue
+                    val pinned = contact.pins and pin != 0
+                    if (bestChild != -1 && (bestPinned || !pinned)) continue
+                    if (reaches(cur, items[n].hud)) continue
+                    bestParent = cur
+                    bestChild = n
+                    bestPinned = pinned
+                }
+            }
+            if (bestChild == -1) {
+                val next = component.firstOrNull { it !in seen } ?: break
+                seen.add(next)
+                continue
+            }
+            seen.add(bestChild)
+            parentOf[bestChild] = bestParent
+            val (childPoint, parentPoint) = contactPoints(items[bestChild], items[bestParent])
+            out.add(Link(items[bestChild].hud, items[bestParent].hud, childPoint, parentPoint, axis))
+        }
+        return out
+    }
+
+    /**
+     * The pair of box points where [child] meets [parent]: the edges that touch decide one axis, and
+     * the edges that line up along the shared edge decide the other, so a HUD stacked flush under
+     * another links its top-left to the parent's bottom-left.
+     */
+    private fun contactPoints(child: Item, parent: Item): Pair<HudAnchor, HudAnchor> {
+        var childFx = Float.NaN
+        var parentFx = Float.NaN
+        var childFy = Float.NaN
+        var parentFy = Float.NaN
+
+        if (abs(child.y - parent.bottom) <= TOUCH_TOLERANCE) {
+            childFy = 0f
+            parentFy = 1f
+        } else if (abs(child.bottom - parent.y) <= TOUCH_TOLERANCE) {
+            childFy = 1f
+            parentFy = 0f
+        }
+        if (abs(child.x - parent.right) <= TOUCH_TOLERANCE) {
+            childFx = 0f
+            parentFx = 1f
+        } else if (abs(child.right - parent.x) <= TOUCH_TOLERANCE) {
+            childFx = 1f
+            parentFx = 0f
+        }
+
+        if (childFx.isNaN()) {
+            // stacked: line the link up with whichever side edges are flush, else their middles
+            val side = alignedSide(child.x, child.right, parent.x, parent.right)
+            childFx = side
+            parentFx = side
+        }
+        if (childFy.isNaN()) {
+            val side = alignedSide(child.y, child.bottom, parent.y, parent.bottom)
+            childFy = side
+            parentFy = side
+        }
+        return anchorAt(childFx, childFy) to anchorAt(parentFx, parentFy)
+    }
+
+    private fun alignedSide(aMin: Float, aMax: Float, bMin: Float, bMax: Float): Float = when {
+        abs(aMin - bMin) <= TOUCH_TOLERANCE -> 0f
+        abs(aMax - bMax) <= TOUCH_TOLERANCE -> 1f
+        else -> 0.5f
+    }
+
+    private fun anchorAt(fx: Float, fy: Float): HudAnchor = when (fy) {
+        0f -> when (fx) {
+            0f -> HudAnchor.TopLeft
+            0.5f -> HudAnchor.Top
+            else -> HudAnchor.TopRight
+        }
+        0.5f -> when (fx) {
+            0f -> HudAnchor.Left
+            0.5f -> HudAnchor.Center
+            else -> HudAnchor.Right
+        }
+        else -> when (fx) {
+            0f -> HudAnchor.BottomLeft
+            0.5f -> HudAnchor.Bottom
+            else -> HudAnchor.BottomRight
+        }
     }
 
     private class Item(val hud: Hud, var x: Float, var y: Float, var w: Float, var h: Float, val radius: Float) {
@@ -120,21 +282,20 @@ internal object HudBackgroundMerge {
                 abs(radius - other.radius) <= EPS
     }
 
-    private fun touching(a: Item, b: Item): Boolean {
+    private fun contactPins(a: Item, b: Item): Int {
         val sharesRow = overlap(a.y, a.bottom, b.y, b.bottom) >= MIN_OVERLAP
         val sharesColumn = overlap(a.x, a.right, b.x, b.right) >= MIN_OVERLAP
         val stacked = abs(a.bottom - b.y) <= TOUCH_TOLERANCE || abs(b.bottom - a.y) <= TOUCH_TOLERANCE
         val sideBySide = abs(a.right - b.x) <= TOUCH_TOLERANCE || abs(b.right - a.x) <= TOUCH_TOLERANCE
         val stackedOnTop = stacked && sharesColumn
         val rowNeighbours = sideBySide && sharesRow
-        val squareOn = when {
-            stackedOnTop -> nests(a.x, a.right, b.x, b.right)
-            rowNeighbours -> nests(a.y, a.bottom, b.y, b.bottom)
-            else -> false
+        when {
+            stackedOnTop -> if (nests(a.x, a.right, b.x, b.right)) return PIN_Y
+            rowNeighbours -> if (nests(a.y, a.bottom, b.y, b.bottom)) return PIN_X
         }
-        if (squareOn) return true
-        if (!stackedOnTop && !rowNeighbours && !(stacked && sideBySide)) return false
-        return a.hud.mergeDiagonally && b.hud.mergeDiagonally
+        if (!stackedOnTop && !rowNeighbours && !(stacked && sideBySide)) return 0
+        if (!a.hud.mergeDiagonally || !b.hud.mergeDiagonally) return 0
+        return PIN_X or PIN_Y
     }
 
     private fun nests(aMin: Float, aMax: Float, bMin: Float, bMax: Float): Boolean =
