@@ -1,4 +1,4 @@
-package org.polyfrost.oneconfig.internal.ui.components.settings.item
+package org.polyfrost.oneconfig.internal.ui.components.item
 
 import com.mojang.blaze3d.pipeline.TextureTarget
 import com.mojang.blaze3d.systems.RenderSystem

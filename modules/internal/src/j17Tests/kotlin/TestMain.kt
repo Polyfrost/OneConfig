@@ -13,10 +13,10 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
-import org.polyfrost.oneconfig.internal.ui.components.settings.item.ItemCatalog
-import org.polyfrost.oneconfig.internal.ui.components.settings.item.ItemCatalogService
-import org.polyfrost.oneconfig.internal.ui.components.settings.item.ItemDescriptor
-import org.polyfrost.oneconfig.internal.ui.components.settings.item.ItemIconData
+import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
+import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalogService
+import org.polyfrost.oneconfig.internal.ui.components.item.ItemDescriptor
+import org.polyfrost.oneconfig.internal.ui.components.item.ItemIconData
 import org.polyfrost.oneconfig.internal.ui.screens.PREFERENCES_ID
 
 private enum class Theme { Dark, Light, System }

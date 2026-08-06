@@ -189,12 +189,12 @@ class TextListOptionData(prop: Property<*>) : ListOptionData(prop) {
 }
 
 class ItemListOptionData(prop: Property<*>) : ListOptionData(prop) {
-    fun ids(): List<String> = org.polyfrost.oneconfig.internal.ui.components.settings.item.normalizeItemIds(
+    fun ids(): List<String> = org.polyfrost.oneconfig.internal.ui.components.item.normalizeItemIds(
         elements().mapNotNull { it as? String }
     )
 
     fun setIds(values: List<String>) = prop.setItemListElements(
-        org.polyfrost.oneconfig.internal.ui.components.settings.item.normalizeItemIds(values)
+        org.polyfrost.oneconfig.internal.ui.components.item.normalizeItemIds(values)
     )
 }
 
