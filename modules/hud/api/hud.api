@@ -18,6 +18,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun anchorPointX (Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)F
 	public final fun anchorPointY (Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)F
 	public final fun anchorTo (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)V
+	public final fun anchorTo (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)V
+	public static synthetic fun anchorTo$default (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;ILjava/lang/Object;)V
 	public fun applyEditorWidth (F)V
 	public fun backgroundColor ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun canDelete ()Z
@@ -47,8 +49,11 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getCategory ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
 	public final fun getConfigId ()Ljava/lang/String;
 	public fun getCustomScale ()F
+	public final fun getEffectiveAnchorParent ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
+	public final fun getEffectiveAnchorPoint ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public final fun getEffectiveGrowthAnchor ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public final fun getEffectiveScale ()F
+	public final fun getEffectiveSelfAnchorPoint ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public final fun getFont ()Lorg/polyfrost/oneconfig/api/hud/v1/Font;
 	public final fun getGrowthAnchor ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public fun getHidden ()Z
@@ -70,6 +75,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun getScaledHeight ()F
 	public fun getScaledWidth ()F
 	public final fun getSection ()Lorg/polyfrost/oneconfig/api/hud/v1/Section;
+	public final fun getSelfAnchorPoint ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public final fun getShadowChroma ()Z
 	public final fun getShadowChromaSpeed ()F
 	public final fun getShadowColor ()I
@@ -103,6 +109,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun hudBackground (Lorg/polyfrost/compose/composables/PolyModifier;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static synthetic fun hudBackground$default (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Lorg/polyfrost/compose/composables/PolyModifier;ILjava/lang/Object;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public final fun isAnchored ()Z
+	public final fun isMergeAnchored ()Z
 	public final fun isReal ()Z
 	public final fun make (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public static synthetic fun make$default (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Lorg/polyfrost/oneconfig/api/config/v1/Tree;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
@@ -144,6 +151,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun setRenderedH (F)V
 	public fun setRenderedW (F)V
 	public final fun setSection (Lorg/polyfrost/oneconfig/api/hud/v1/Section;)V
+	public final fun setSelfAnchorPoint (Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)V
+	public final fun setSelfAnchorPointKeepingPosition (Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)V
 	public final fun setShadowChroma (Z)V
 	public final fun setShadowChromaSpeed (F)V
 	public final fun setShadowColor (I)V
@@ -245,6 +254,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static field targetPixelWidth I
 	public final fun beginFrame (FF)Z
 	public final fun closeEditor ()V
+	public final fun drawMergedBackgrounds (Lorg/polyfrost/compose/render/RenderContext;)V
 	public final fun getActiveInstances ()Ljava/util/ArrayList;
 	public final fun getHudsOfType (Ljava/lang/Class;)Ljava/util/ArrayList;
 	public final fun getProvider (Ljava/lang/Class;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
@@ -255,6 +265,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public final fun isEditing ()Z
 	public final fun isEditorOpen ()Z
 	public static final fun markProviderKnown (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)V
+	public static final fun mergeGroupOf (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Ljava/util/List;
 	public final fun onEditorScreenRemoved ()V
 	public final fun openEditor ()V
 	public final fun prepare (FF)V
@@ -266,6 +277,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public final fun removeHud (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Z)V
 	public static synthetic fun removeHud$default (Lorg/polyfrost/oneconfig/api/hud/v1/HudManager;Lorg/polyfrost/oneconfig/api/hud/v1/Hud;ZILjava/lang/Object;)V
 	public final fun render (Lorg/polyfrost/compose/render/RenderContext;FF)V
+	public static final fun setMergeExclusions (Ljava/util/Collection;)V
 	public final fun toggleAllHuds (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Z)V
 	public final fun toggleEditor ()V
 	public final fun unregister (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;ZZ)Ljava/util/ArrayList;
