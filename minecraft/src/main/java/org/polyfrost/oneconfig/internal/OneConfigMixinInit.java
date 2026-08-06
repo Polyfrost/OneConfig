@@ -124,7 +124,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("compat.firmament.Mixin_FirmamentHudMeta");
         // Firmament has no stable release for 26.2, so there is nothing to be compatible with there yet.
         //? >= 1.21.8 && < 26.2
-        //mixins.add("compat.firmament.Mixin_FirmamentContentCapture");
+        mixins.add("compat.firmament.Mixin_FirmamentContentCapture");
 
         // mixins.add("compat.rconfig.Mixin_Configurations");
 
