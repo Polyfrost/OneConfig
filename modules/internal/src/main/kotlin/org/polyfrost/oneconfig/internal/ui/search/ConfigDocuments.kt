@@ -16,7 +16,9 @@ import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedGroup
 import org.polyfrost.oneconfig.internal.ui.components.localizedLabel
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
+import org.polyfrost.oneconfig.internal.ui.hud.HudModCardData
 import org.polyfrost.oneconfig.internal.ui.hud.configForHud
+import org.polyfrost.oneconfig.internal.ui.hud.hudModCardConfigs
 import org.polyfrost.oneconfig.internal.ui.hud.modNameFor
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry
 import org.polyfrost.oneconfig.internal.ui.keybind.isKeybindProperty
@@ -175,6 +177,35 @@ object HudDocumentSource : SearchDocumentSource {
                 modDescription = config?.description?.asRenderText()?.takeIf { it.isNotBlank() },
             ),
             payload = hud,
+        )
+    }
+}
+
+/**
+ * The HUDs shown as mod cards on the config screen
+ */
+object HudModCardDocumentSource : SearchDocumentSource {
+    override val dependencies = setOf<SearchDocumentSource>(ConfigDocumentSource)
+
+    init {
+        HudManager.addRegistrationListener { SearchCorpus.invalidate(HudModCardDocumentSource) }
+    }
+
+    override fun documents(): List<SearchDocument<ConfigData>> = hudModCardConfigs().mapNotNull { card ->
+        val hud = (card as? HudModCardData)?.hud ?: return@mapNotNull null
+        SearchDocument(
+            id = "mod$ID_SEPARATOR${card.id}",
+            scopes = setOf(SearchScope.Mods),
+            metadata = SearchMetadata(
+                title = card.title.asRenderText().takeIf { it.isNotBlank() },
+                id = hud.id.takeIf { it.isNotBlank() },
+                description = localizedLabel(hud.description)?.takeIf { it.isNotBlank() },
+                category = localizedLabel(hud.category.name)?.takeIf { it.isNotBlank() },
+                tags = hud.searchTags.mapNotNull { localizedLabel(it)?.takeIf { l -> l.isNotBlank() } },
+                modTitle = hud.configId?.let { modNameFor(it) ?: it }?.takeIf { it.isNotBlank() },
+                modDescription = card.owner?.description?.asRenderText()?.takeIf { it.isNotBlank() },
+            ),
+            payload = card,
         )
     }
 }

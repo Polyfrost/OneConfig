@@ -20,7 +20,9 @@ internal object DefaultSearchProvider : SearchProvider {
             }
 
             val meta = it.metadata
-            if (it.scopes.contains(SearchScope.Mods)) return@filter meta.title.matches(q)
+            if (it.scopes.contains(SearchScope.Mods)) {
+                return@filter meta.title.matches(q) || meta.tags.any { t -> t.matches(q) }
+            }
             if (meta.title.matches(q) || meta.description.matches(q)) return@filter true
             if (meta.tags.any { t -> t.matches(q) }) return@filter true
             // Hud specific

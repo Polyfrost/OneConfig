@@ -40,7 +40,12 @@ private fun ownerVisible(ownerId: String, owner: ConfigData?): Boolean {
         (owner == null || ConfigRegistry.shouldShowModCardId(owner.id))
 }
 
-internal fun hudModCardConfigs(): List<ConfigData> {
+/**
+ * Cache so the search corpus can keep using the same mod cards
+ */
+private val cardCache = HashMap<String, HudModCardData>()
+
+internal fun hudModCardConfigs(): List<ConfigData> = synchronized(cardCache) {
     @Suppress("UNUSED_VARIABLE")
     val revision = HudManager.revision
 
@@ -52,19 +57,24 @@ internal fun hudModCardConfigs(): List<ConfigData> {
         val owner = findOwner(ownerId)
         if (!ownerVisible(ownerId, owner)) continue
         val id = hudCardId(hud, ownerId)
-        if (seen.add(id)) out.add(HudModCardData(hud, ownerId, owner, id))
+        if (!seen.add(id)) continue
+        val cached = cardCache[id]?.takeIf { it.hud === hud && it.owner === owner }
+        out.add(cached ?: HudModCardData(hud, ownerId, owner, id).also { cardCache[id] = it })
     }
+    cardCache.keys.retainAll(seen)
     return out
 }
 
-private class HudModCardData(
-    private val hud: Hud,
+internal class HudModCardData(
+    val hud: Hud,
     ownerId: String,
-    owner: ConfigData?,
+    val owner: ConfigData?,
     override val id: String,
 ) : ConfigData {
     override val title: Any
         get() = withHudSuffix(localizedValue(hud.title) ?: hud.title)
+
+    override val description: String? = hud.description
 
     override val icon: String? = if (hud is LegacyHudMarker) null else {
         HudManager.iconFor(ownerId)

@@ -9,6 +9,7 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.search.HudDocumentSource
+import org.polyfrost.oneconfig.internal.ui.search.HudModCardDocumentSource
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 
 internal const val BUILTIN_HUD_CONFIG_ID = "oneconfig.builtin"
@@ -34,7 +35,7 @@ object BuiltinHudRegistrar {
         HudManager.providers().forEach { hud ->
             if (hud.configId == null) hud.configId = BUILTIN_HUD_CONFIG_ID
         }
-        SearchCorpus.invalidate(HudDocumentSource)
+        SearchCorpus.invalidate(HudDocumentSource, HudModCardDocumentSource)
         ModCardTypes.register(ModCardType(HUD_MOD_CARD_TYPE_ID, "HUDs", "hud", priority = 100))
         ModCardTypes.registerResolver(hudTypeResolver)
     }

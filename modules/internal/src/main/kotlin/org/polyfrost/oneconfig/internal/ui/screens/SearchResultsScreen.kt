@@ -24,6 +24,9 @@ import org.polyfrost.oneconfig.internal.ui.search.searchNode
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
+/** Cards per row, matching the mods screen grid. */
+private const val MOD_COLUMNS = 4
+
 @Composable
 fun SearchResultsScreen(query: String) {
     val theme = LocalTheme.current
@@ -84,20 +87,22 @@ fun SearchResultsScreen(query: String) {
                     )
                 }
                 item(key = "mods-grid") {
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(19.dp),
-                        verticalArrangement = Arrangement.spacedBy(19.dp),
-                        modifier = Modifier.fillMaxWidth(),
-                        maxItemsInEachRow = 4,
-                    ) {
-                        matchingMods.forEach { mod ->
-                            Box(Modifier.weight(1f)) {
-                                ModCard(mod)
+                    // Use fixed width or HUD mod card dies when rendering
+                    Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
+                        matchingMods.chunked(MOD_COLUMNS).forEach { row ->
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(19.dp),
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                row.forEach { mod ->
+                                    Box(Modifier.weight(1f)) {
+                                        ModCard(mod)
+                                    }
+                                }
+                                repeat(MOD_COLUMNS - row.size) {
+                                    Box(Modifier.weight(1f))
+                                }
                             }
-                        }
-                        val remainder = (4 - matchingMods.size % 4) % 4
-                        repeat(remainder) {
-                            Box(Modifier.weight(1f))
                         }
                     }
                 }

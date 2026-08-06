@@ -47,6 +47,7 @@ object SearchCorpus {
         registerSource(ConfigDocumentSource)
         registerSource(KeybindDocumentSource)
         registerSource(HudDocumentSource)
+        registerSource(HudModCardDocumentSource)
     }
 
     fun registerSource(source: SearchDocumentSource) {
