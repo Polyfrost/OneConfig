@@ -154,7 +154,11 @@ abstract class ComposeScreen(
     private fun poisonScene(cause: Throwable) {
         if (scenePoisoned) return
         scenePoisoned = true
-        SkiaCtx.clearComposeFrame()
+        try {
+            SkiaCtx.clearComposeFrame()
+        } catch (t: Throwable) {
+            cause.addSuppressed(t)
+        }
         LOGGER.error(
             "Compose scene for ${this::class.java.simpleName} failed and has been discarded; " +
                 "it will be rebuilt on the next frame.",
@@ -403,22 +407,29 @@ abstract class ComposeScreen(
 
         if (liveScene() == null) return
 
-        val renderBlock = Runnable {
-            val canvas = SkiaCtx.canvas
-            val pixelRatio = surfaceScale()
-            val mode = OneConfigConfig.reducedResFilter
-            val amount = OneConfigConfig.uiSharpening
-            val filter = mode != 0 && amount > 0f &&
-                DesktopHelper.isMac && osUpscaleFactor() > 1.05f
-            val depth = canvas.save()
-            if (filter) canvas.saveLayer(null, filterPaint(mode, amount))
-            if (pixelRatio != 1f) {
-                canvas.scale(pixelRatio, pixelRatio)
+       val renderBlock = Runnable {
+            try {
+                val canvas = SkiaCtx.canvas
+                val pixelRatio = surfaceScale()
+                val mode = OneConfigConfig.reducedResFilter
+                val amount = OneConfigConfig.uiSharpening
+                val filter = mode != 0 && amount > 0f &&
+                    DesktopHelper.isMac && osUpscaleFactor() > 1.05f
+                val depth = canvas.save()
+                try {
+                    if (filter) canvas.saveLayer(null, filterPaint(mode, amount))
+                    if (pixelRatio != 1f) {
+                        canvas.scale(pixelRatio, pixelRatio)
+                    }
+                    if (withScene { it.render(canvas.asComposeCanvas(), System.nanoTime()) } != null) {
+                        sceneRebuilds = 0
+                    }
+                } finally {
+                    canvas.restoreToCount(depth)
+                }
+            } catch (t: Throwable) {
+                poisonScene(t)
             }
-            if (withScene { it.render(canvas.asComposeCanvas(), System.nanoTime()) } != null) {
-                sceneRebuilds = 0
-            }
-            canvas.restoreToCount(depth)
         }
 
         val wasDirty = sceneDirty
