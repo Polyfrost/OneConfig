@@ -861,6 +861,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @Transient
     internal var _runtime: PolyComposeRuntime? = null
 
+    @Transient
+    private var capturedDefaults: Tree? = null
+
     /** Returns the runtime only if it has already been created; null otherwise. */
     val runtimeOrNull: PolyComposeRuntime? get() = _runtime
 
@@ -975,6 +978,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             if (with == null) LOGGER.info("generated new HUD config for $title -> ${tree.id}")
             Config.captureDefaults(tree)
             sanitizeHudCapturedDefaults(tree)
+            if (out.capturedDefaults == null) out.capturedDefaults = tree
             ConfigManager.active().register(tree)
             this.tree = tree
         }
@@ -1057,6 +1061,11 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @ApiStatus.Internal
     internal fun detachTree() {
         tree = null
+    }
+
+    @ApiStatus.Internal
+    internal fun restoreCapturedDefaults() {
+        capturedDefaults?.let(Config::restoreCapturedDefaults)
     }
 
     open fun remove() {}

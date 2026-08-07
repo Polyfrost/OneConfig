@@ -285,6 +285,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static synthetic fun removeHud$default (Lorg/polyfrost/oneconfig/api/hud/v1/HudManager;Lorg/polyfrost/oneconfig/api/hud/v1/Hud;ZILjava/lang/Object;)V
 	public final fun render (Lorg/polyfrost/compose/render/RenderContext;FF)V
 	public static final fun setMergeExclusions (Ljava/util/Collection;)V
+	public final fun setProfileReloadDispatcher (Ljava/util/function/Consumer;)V
 	public final fun toggleAllHuds (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Z)V
 	public final fun toggleEditor ()V
 	public final fun unregister (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;ZZ)Ljava/util/ArrayList;

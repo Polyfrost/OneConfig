@@ -172,6 +172,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
         mixins.add("keybind.Mixin_OneConfigKeybindRebind");
         mixins.add("keybind.Mixin_KeyMappingResetDetect");
+        mixins.add("keybind.Mixin_OptionsSaveDetect");
 
         //? cinnabar
         //mixins.add("skia.Mixin_CinnabarSkiaFlush");
