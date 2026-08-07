@@ -67,6 +67,7 @@ public final class org/polyfrost/oneconfig/api/config/v1/Config$Category {
 
 public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public static final field PROFILES_DIR Ljava/nio/file/Path;
+	public static final field PROFILE_LOCAL_METADATA Ljava/lang/String;
 	public static fun active ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
 	public static fun activeProfile ()Ljava/lang/String;
 	public static fun addProfileChangeListener (Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager$ProfileChangeListener;)V
@@ -624,6 +625,17 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun title ()Ljava/lang/String;
 	public abstract fun titleKey ()Ljava/lang/String;
 	public abstract fun titleTranslation ()Z
+}
+
+public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/RangeSlider : java/lang/annotation/Annotation {
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun description ()Ljava/lang/String;
+	public abstract fun icon ()Ljava/lang/String;
+	public abstract fun max ()F
+	public abstract fun min ()F
+	public abstract fun step ()F
+	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun title ()Ljava/lang/String;
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Slider : java/lang/annotation/Annotation {

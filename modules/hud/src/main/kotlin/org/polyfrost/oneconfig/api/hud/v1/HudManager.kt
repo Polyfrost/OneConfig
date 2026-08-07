@@ -124,6 +124,9 @@ object HudManager {
 
     private val frameOrder = ArrayList<Hud>()
 
+    /** [frameOrder] plus the hidden HUDs which still contribute their background to a fused shape. */
+    private val layoutOrder = ArrayList<Hud>()
+
     private var frameGroups: List<HudBackgroundMerge.Group> = emptyList()
     private var lastMergeKey: Int? = null
 
@@ -150,6 +153,7 @@ object HudManager {
                 ?: mgr.register(Tree.tree(REGISTRY_ID).put(registryProperty())).get()
             if (t.getProp(KNOWN_HUDS) == null) t.put(registryProperty())
             t.addMetadata("hidden", true)
+            t.addMetadata(ConfigManager.PROFILE_LOCAL_METADATA, true)
             registryTree = t
             when (val known = t.getProp(KNOWN_HUDS)?.get()) {
                 is Array<*> -> known.forEach { if (it != null) knownProviders.add(it.toString()) }
@@ -414,9 +418,17 @@ object HudManager {
     }
 
     private fun shouldDraw(hud: Hud): Boolean {
+        if (hud.hidden && !isEditing) return false
+        return isShown(hud)
+    }
+
+    private fun keepsBackgroundOnly(hud: Hud): Boolean =
+        hud.hidden && !isEditing && hud.keepsHiddenBackground && isShown(hud)
+
+    /** Everything [shouldDraw] checks apart from the HUD's own hidden flag. */
+    private fun isShown(hud: Hud): Boolean {
         if (!masterHudEnabled && !isEditing) return false
         if (hud is LegacyHudMarker) return false
-        if (hud.hidden && !isEditing) return false
         if (isGuiHidden && !isEditing) return false
         if (isDebugScreenVisible && !hud.showInF3) return false
         if (isTabListVisible && !hud.showInTab) return false
@@ -429,26 +441,38 @@ object HudManager {
         return true
     }
 
+    private fun collectFrameOrder(): Boolean {
+        frameOrder.clear()
+        layoutOrder.clear()
+        var volatileContent = false
+        for (hud in orderedForRender()) {
+            if (shouldDraw(hud)) {
+                frameOrder.add(hud)
+                if (hud.alwaysRedraw) volatileContent = true
+            } else if (keepsBackgroundOnly(hud)) {
+                layoutOrder.add(hud)
+                if (hud.bgChroma) volatileContent = true
+            }
+        }
+        layoutOrder.addAll(0, frameOrder)
+        return volatileContent
+    }
+
     @ApiStatus.Internal
     fun beginFrame(screenWidth: Float, screenHeight: Float): Boolean {
+        drainProfileReload()
         val scale = Platform.compatibility().options().guiScale
 
         frameId++
 
         Snapshot.sendApplyNotifications()
 
-        frameOrder.clear()
-        var volatileContent = false
-        for (hud in orderedForRender()) {
-            if (!shouldDraw(hud)) continue
-            frameOrder.add(hud)
-            if (hud.alwaysRedraw) volatileContent = true
-        }
+        val volatileContent = collectFrameOrder()
 
-        updateAndAdvance(frameOrder)
+        updateAndAdvance(layoutOrder)
 
-        layoutAll(frameOrder, screenWidth, screenHeight, scale)
-        updateBackgroundGroups(frameOrder, screenWidth, screenHeight, scale)
+        layoutAll(layoutOrder, screenWidth, screenHeight, scale)
+        updateBackgroundGroups(layoutOrder, screenWidth, screenHeight, scale)
 
         val key = frameKey()
         val keyChanged = key != lastFrameKey ||
@@ -485,6 +509,9 @@ object HudManager {
         val key = HudBackgroundMerge.layoutKey(huds)
         if (key == lastMergeKey) return
         lastMergeKey = key
+        // the fused outline can change without anything else asking for a redraw, e.g. when a hidden
+        // HUD which keeps its background resizes, so the cached frame is no longer good
+        invalidate()
 
         val mergeable = if (mergeExclusions.isEmpty()) huds else huds.filter { hud -> !isMergeExcluded(hud) }
         frameGroups = HudBackgroundMerge.computeGroups(mergeable)
@@ -577,6 +604,7 @@ object HudManager {
 
     private fun frameKey(): Long {
         var key = activeInstances.size.toLong() * 31L + frameOrder.size
+        key = key * 31L + layoutOrder.size
         key = key * 31L + (if (isDebugScreenVisible) 1 else 0)
         key = key * 31L + (if (isTabListVisible) 1 else 0)
         key = key * 31L + (if (isGuiScreenOpen) 1 else 0)
@@ -630,6 +658,7 @@ object HudManager {
 
     @ApiStatus.Internal
     fun prepare(screenWidth: Float, screenHeight: Float) {
+        drainProfileReload()
         val scale = Platform.compatibility().options().guiScale
         Snapshot.sendApplyNotifications()
         frameId++
@@ -654,11 +683,10 @@ object HudManager {
         if (!prepared) {
             Snapshot.sendApplyNotifications()
             frameId++
-            frameOrder.clear()
-            for (hud in orderedForRender()) if (shouldDraw(hud)) frameOrder.add(hud)
-            updateAndAdvance(frameOrder)
-            layoutAll(frameOrder, screenWidth, screenHeight, scale)
-            updateBackgroundGroups(frameOrder, screenWidth, screenHeight, scale)
+            collectFrameOrder()
+            updateAndAdvance(layoutOrder)
+            layoutAll(layoutOrder, screenWidth, screenHeight, scale)
+            updateBackgroundGroups(layoutOrder, screenWidth, screenHeight, scale)
         }
 
         ctx.save()
@@ -719,12 +747,50 @@ object HudManager {
         setMergeExclusions(emptyList())
     }
 
-    @Suppress("UNCHECKED_CAST")
     @ApiStatus.Internal
     fun initialize() {
         if (init) throw IllegalStateException("HudManager.initialize() called twice!")
         init = true
+        ConfigManager.addProfileChangeListener { profile -> pendingProfileReload = profile }
         LOGGER.info("Initializing HUD...")
+        loadFromActiveProfile()
+    }
+
+    @Volatile private var pendingProfileReload: String? = null
+
+    private fun reloadForProfile(profile: String) {
+        val kept = ArrayList<Hud>(activeInstances.size)
+        for (hud in ArrayList(activeInstances)) {
+            if (!hud.profileLocalTree) {
+                kept.add(hud)
+                continue
+            }
+            activeInstances.remove(hud)
+            disposeHud(hud, delete = false)
+        }
+        knownProviders.clear()
+        registryTree = null
+        zOrderCache = emptyList()
+        lastMergeKey = null
+        frameOrder.clear()
+        LOGGER.info("Reloading HUDs for profile '{}' ({} wrapped HUDs kept)", profile, kept.size)
+        loadFromActiveProfile()
+        revision++
+        invalidate()
+    }
+
+    private fun drainProfileReload() {
+        val profile = pendingProfileReload ?: return
+        pendingProfileReload = null
+        try {
+            reloadForProfile(profile)
+        } catch (e: Throwable) {
+            LOGGER.error("Failed to reload HUDs for profile '{}'", profile, e)
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun loadFromActiveProfile() {
         val now = System.nanoTime()
         val loader = HudManager::class.java.classLoader
         val used = HashSet<Class<Hud>>(hudProviders.size)

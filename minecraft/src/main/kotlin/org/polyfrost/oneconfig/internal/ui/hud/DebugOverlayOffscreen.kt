@@ -111,12 +111,12 @@ object DebugOverlayOffscreen {
         try {
             accessor.`oneconfig$setRenderState`(state)
             //? if >= 26.2 {
-            /*guiRenderer.render()
-            *///? } else {
-            val fog = (client.gameRenderer as GameRendererAccessor).`oneconfig$getFogRenderer`()
+            guiRenderer.render()
+            //? } else {
+            /*val fog = (client.gameRenderer as GameRendererAccessor).`oneconfig$getFogRenderer`()
                 .getBuffer(net.minecraft.client.renderer.fog.FogRenderer.FogMode.NONE)
             guiRenderer.render(fog)
-            //? }
+            *///? }
         } finally {
             GuiTargetRedirect.target = null
             accessor.`oneconfig$setRenderState`(prevState)
@@ -158,14 +158,14 @@ object DebugOverlayOffscreen {
 
     private fun clearTarget(rt: TextureTarget) {
         //? if >= 26.2 {
-        /*val colorTex = rt.colorTexture ?: return
-        com.mojang.blaze3d.systems.RenderSystem.getDevice().createCommandEncoder()
-            .clearColorTexture(colorTex, org.joml.Vector4f(0f, 0f, 0f, 0f))
-        *///? } else if >= 1.21.5 {
         val colorTex = rt.colorTexture ?: return
         com.mojang.blaze3d.systems.RenderSystem.getDevice().createCommandEncoder()
+            .clearColorTexture(colorTex, org.joml.Vector4f(0f, 0f, 0f, 0f))
+        //? } else if >= 1.21.5 {
+        /*val colorTex = rt.colorTexture ?: return
+        com.mojang.blaze3d.systems.RenderSystem.getDevice().createCommandEncoder()
             .clearColorTexture(colorTex, 0)
-        //? } else if >= 1.21.4 {
+        *///? } else if >= 1.21.4 {
         /*rt.clear()
         *///? } else {
         /*rt.clear(Minecraft.ON_OSX)
@@ -177,10 +177,10 @@ object DebugOverlayOffscreen {
         destroy()
         try {
             //? if >= 26.2 {
-            /*val rt = TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
-            *///? } else if >= 1.21.5 {
-            val rt = TextureTarget(null, w, h, true)
-            //? } else if >= 1.21.4 {
+            val rt = TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
+            //? } else if >= 1.21.5 {
+            /*val rt = TextureTarget(null, w, h, true)
+            *///? } else if >= 1.21.4 {
             /*val rt = TextureTarget(w, h, true)
             *///? } else {
             /*val rt = TextureTarget(w, h, true, Minecraft.ON_OSX)

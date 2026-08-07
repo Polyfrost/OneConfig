@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.services
 
 //? if >= 26.2 {
-/*import com.mojang.blaze3d.GpuFormat
+import com.mojang.blaze3d.GpuFormat
 import com.mojang.blaze3d.pipeline.RenderTarget
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vulkan.VulkanCommandEncoder
@@ -232,4 +232,4 @@ class NativeVulkanService private constructor(
         }
     }
 }
-*///? }
+//? }

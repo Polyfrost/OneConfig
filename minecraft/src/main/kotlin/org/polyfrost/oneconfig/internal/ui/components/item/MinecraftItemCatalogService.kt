@@ -1,4 +1,4 @@
-package org.polyfrost.oneconfig.internal.ui.components.settings.item
+package org.polyfrost.oneconfig.internal.ui.components.item
 
 import com.mojang.blaze3d.pipeline.TextureTarget
 import com.mojang.blaze3d.systems.RenderSystem
@@ -183,10 +183,10 @@ class MinecraftItemCatalogService : ItemCatalogService {
 
     private fun createTarget(width: Int, height: Int): TextureTarget {
         //? if >= 26.2 {
-        /*return TextureTarget(null, width, height, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
-        *///? } else if >= 1.21.5 {
-        return TextureTarget(null, width, height, true)
-        //? } else if >= 1.21.4 {
+        return TextureTarget(null, width, height, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
+        //? } else if >= 1.21.5 {
+        /*return TextureTarget(null, width, height, true)
+        *///? } else if >= 1.21.4 {
         /*return TextureTarget(width, height, true).also { it.setClearColor(0f, 0f, 0f, 0f) }
         *///? } else {
         /*return TextureTarget(width, height, true, Minecraft.ON_OSX).also { it.setClearColor(0f, 0f, 0f, 0f) }
@@ -220,12 +220,12 @@ class MinecraftItemCatalogService : ItemCatalogService {
         GuiTargetRedirect.target = target
         try {
             //? if >= 26.2 {
-            /*guiRenderer.render()
-            *///? } else {
-            val fog = (client.gameRenderer as GameRendererAccessor).`oneconfig$getFogRenderer`()
+            guiRenderer.render()
+            //? } else {
+            /*val fog = (client.gameRenderer as GameRendererAccessor).`oneconfig$getFogRenderer`()
                 .getBuffer(net.minecraft.client.renderer.fog.FogRenderer.FogMode.NONE)
             guiRenderer.render(fog)
-            //? }
+            *///? }
         } catch (throwable: Throwable) {
             guiRenderer.close()
             throw throwable
@@ -277,16 +277,16 @@ class MinecraftItemCatalogService : ItemCatalogService {
         // Keep this asynchronous icon batch separate from the active frame's render state and
         // item atlas. Reusing the game's renderer would mix two independently-lived frames.
         //? if >= 26.2 {
-        /*return GuiRenderer(state, client.gameRenderer.featureRenderDispatcher(), emptyList())
-        *///? } else if >= 1.21.10 {
-        return GuiRenderer(
+        return GuiRenderer(state, client.gameRenderer.featureRenderDispatcher(), emptyList())
+        //? } else if >= 1.21.10 {
+        /*return GuiRenderer(
             state,
             client.renderBuffers().bufferSource(),
             client.gameRenderer.getSubmitNodeStorage(),
             client.gameRenderer.getFeatureRenderDispatcher(),
             emptyList(),
         )
-        //? } else {
+        *///? } else {
         /*return GuiRenderer(state, client.renderBuffers().bufferSource(), emptyList())
         *///? }
     }
@@ -326,14 +326,14 @@ class MinecraftItemCatalogService : ItemCatalogService {
 
     private fun clearTarget(target: TextureTarget) {
         //? if >= 26.2 {
-        /*val encoder = RenderSystem.getDevice().createCommandEncoder()
+        val encoder = RenderSystem.getDevice().createCommandEncoder()
         target.colorTexture?.let { encoder.clearColorTexture(it, org.joml.Vector4f(0f, 0f, 0f, 0f)) }
         target.depthTexture?.let { encoder.clearDepthTexture(it, 1.0) }
-        *///? } else if >= 1.21.5 {
-        val encoder = RenderSystem.getDevice().createCommandEncoder()
+        //? } else if >= 1.21.5 {
+        /*val encoder = RenderSystem.getDevice().createCommandEncoder()
         target.colorTexture?.let { encoder.clearColorTexture(it, 0) }
         target.depthTexture?.let { encoder.clearDepthTexture(it, 1.0) }
-        //? } else if >= 1.21.4 {
+        *///? } else if >= 1.21.4 {
         /*target.clear()
         *///? } else {
         /*target.clear(Minecraft.ON_OSX)
@@ -354,9 +354,9 @@ class MinecraftItemCatalogService : ItemCatalogService {
         val width = target.width
         val height = target.height
         //? if >= 26.2 {
-        /*val pixelSize = texture.format.blockSize()
-        *///? } else
-        val pixelSize = texture.format.pixelSize()
+        val pixelSize = texture.format.blockSize()
+        //? } else
+        //val pixelSize = texture.format.pixelSize()
         val device = RenderSystem.getDevice()
         //? if >= 1.21.11 {
         val buffer = device.createBuffer(
@@ -379,11 +379,11 @@ class MinecraftItemCatalogService : ItemCatalogService {
         )
         *///? }
         //? if < 26.2
-        val readEncoder = device.createCommandEncoder()
+        //val readEncoder = device.createCommandEncoder()
         val onCopied = Runnable {
             try {
                 //? if >= 26.2 {
-                /*buffer.map(true, false).use { view ->
+                buffer.map(true, false).use { view ->
                     completeReadback(
                         placements,
                         guiWidth,
@@ -396,8 +396,8 @@ class MinecraftItemCatalogService : ItemCatalogService {
                         batch,
                     )
                 }
-                *///? } else if >= 1.21.8 {
-                readEncoder.mapBuffer(buffer, true, false).use { view ->
+                //? } else if >= 1.21.8 {
+                /*readEncoder.mapBuffer(buffer, true, false).use { view ->
                     completeReadback(
                         placements,
                         guiWidth,
@@ -410,7 +410,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
                         batch,
                     )
                 }
-                //? } else {
+                *///? } else {
                 /*readEncoder.readBuffer(buffer).use { view ->
                     completeReadback(
                         placements,

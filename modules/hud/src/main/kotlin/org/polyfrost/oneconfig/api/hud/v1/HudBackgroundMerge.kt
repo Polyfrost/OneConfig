@@ -102,7 +102,8 @@ internal object HudBackgroundMerge {
         for (hud in huds) {
             if (hud is LegacyHudMarker) continue
             if (!hud.canMergeBackground()) continue
-            if (!hud.showBackground || !hud.mergeBackground || !hud.hasBackground() || hud.hidden) continue
+            if (!hud.showBackground || !hud.mergeBackground || !hud.hasBackground()) continue
+            if (hud.hidden && !hud.keepBgWhenHidden) continue
             val w = hud.renderedW
             val h = hud.renderedH
             if (w <= 0f || h <= 0f) continue
@@ -463,6 +464,7 @@ internal object HudBackgroundMerge {
             key = key * 31 + (if (hud.mergeBackground) 1 else 0)
             key = key * 31 + (if (hud.mergeDiagonally) 1 else 0)
             key = key * 31 + (if (hud.hidden) 1 else 0)
+            key = key * 31 + (if (hud.keepBgWhenHidden) 1 else 0)
         }
         return key
     }

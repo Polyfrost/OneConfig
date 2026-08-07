@@ -348,3 +348,8 @@ gradle-app.setting
 # End of https://www.toptal.com/developers/gitignore/api/forgegradle,gradle,intellij,intellij+all,intellij+iml,visualstudiocode,java,kotlin,maven,macos,linux,git
 
 minecraft/versions/*/run
+minecraft/versions/*/.fabric/
+minecraft/versions/*/logs/
+minecraft/versions/*/mods/
+minecraft/versions/*/config/
+minecraft/versions/*/oneconfig/

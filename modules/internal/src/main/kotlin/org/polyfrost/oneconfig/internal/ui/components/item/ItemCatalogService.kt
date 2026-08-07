@@ -1,4 +1,4 @@
-package org.polyfrost.oneconfig.internal.ui.components.settings.item
+package org.polyfrost.oneconfig.internal.ui.components.item
 
 import java.util.Locale
 import java.util.ServiceLoader

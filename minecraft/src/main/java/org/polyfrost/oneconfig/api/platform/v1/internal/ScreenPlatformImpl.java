@@ -98,14 +98,14 @@ public class ScreenPlatformImpl implements ScreenPlatform {
             return;
         }
         //? if >= 26.2 {
-        /*// 26.2 removed Minecraft#setScreen. Use Gui#setScreen, not setScreenAndShow (which force-calls
+        // 26.2 removed Minecraft#setScreen. Use Gui#setScreen, not setScreenAndShow (which force-calls
         // renderFrame and re-enters our renderFrame mixin -> nested frame -> 1-frame black flash).
         if (ticks < 1) Minecraft.getInstance().gui.setScreen((Screen) screen);
         else EventDelay.tick(ticks, () -> Minecraft.getInstance().gui.setScreen((Screen) screen));
-        *///?} else {
-        if (ticks < 1) Minecraft.getInstance().setScreen((Screen) screen);
+        //?} else {
+        /*if (ticks < 1) Minecraft.getInstance().setScreen((Screen) screen);
         else EventDelay.tick(ticks, () -> Minecraft.getInstance().setScreen((Screen) screen));
-        //?}
+        *///?}
     }
 
     @Override
@@ -117,7 +117,7 @@ public class ScreenPlatformImpl implements ScreenPlatform {
         }
         if (Minecraft.getInstance().gui == null) return;
         //~ if >= 26.2 'gui.getChat' -> 'gui.hud.getChat'
-        var chat = Minecraft.getInstance().gui.getChat();
+        var chat = Minecraft.getInstance().gui.hud.getChat();
         if (chat == null) return;
         //~ if >= 26.1 'addMessage' -> 'addClientSystemMessage'
         chat.addClientSystemMessage(Component.literal(message).withStyle(ChatFormatting.RED));
@@ -127,7 +127,7 @@ public class ScreenPlatformImpl implements ScreenPlatform {
     @SuppressWarnings("unchecked" /*, reason = "reduces friction between versions" */)
     public <T> @Nullable T current() {
         //~ if >= 26.2 '.screen' -> '.gui.screen()'
-        return (T) Minecraft.getInstance().screen;
+        return (T) Minecraft.getInstance().gui.screen();
     }
 
 }

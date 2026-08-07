@@ -19,7 +19,11 @@ import org.joml.Vector2f;
 public class Mixin_FirmamentContentCapture {
 
     @Inject(
-        method = "drawString(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;IIIZ)V",
+        //? if >= 26.1 {
+        method = "text(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;IIIZ)V",
+        //?} else {
+        /*method = "drawString(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;IIIZ)V",
+        *///?}
         at = @At("HEAD"),
         require = 0
     )
@@ -31,7 +35,11 @@ public class Mixin_FirmamentContentCapture {
     }
 
     @Inject(
-        method = "drawString(Lnet/minecraft/client/gui/Font;Ljava/lang/String;IIIZ)V",
+        //? if >= 26.1 {
+        method = "text(Lnet/minecraft/client/gui/Font;Ljava/lang/String;IIIZ)V",
+        //?} else {
+        /*method = "drawString(Lnet/minecraft/client/gui/Font;Ljava/lang/String;IIIZ)V",
+        *///?}
         at = @At("HEAD"),
         require = 0
     )

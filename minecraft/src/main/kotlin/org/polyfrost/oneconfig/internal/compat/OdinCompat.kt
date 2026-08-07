@@ -1,5 +1,5 @@
 //? odin_compat {
-package org.polyfrost.oneconfig.internal.compat
+/*package org.polyfrost.oneconfig.internal.compat
 
 import com.mojang.blaze3d.platform.InputConstants
 import com.odtheking.odin.clickgui.settings.RenderableSetting
@@ -287,4 +287,4 @@ private object OdinSettingsAdapter {
         )
     }
 }
-//? }
+*///? }
