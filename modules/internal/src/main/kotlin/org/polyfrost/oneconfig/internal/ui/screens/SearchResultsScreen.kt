@@ -3,11 +3,13 @@ package org.polyfrost.oneconfig.internal.ui.screens
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
@@ -27,6 +29,9 @@ import org.polyfrost.oneconfig.internal.ui.components.performSearch
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.api.config.v1.Property
+
+private const val MOD_GRID_COLUMNS = 4
+private val MOD_GRID_GAP = 19.dp
 
 @Composable
 fun SearchResultsScreen(query: String) {
@@ -73,20 +78,24 @@ fun SearchResultsScreen(query: String) {
                     )
                 }
                 item(key = "mods-grid") {
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(19.dp),
-                        verticalArrangement = Arrangement.spacedBy(19.dp),
-                        modifier = Modifier.fillMaxWidth(),
-                        maxItemsInEachRow = 4,
-                    ) {
-                        matchingMods.forEach { mod ->
-                            Box(Modifier.weight(1f)) {
-                                ModCard(mod)
+                    BoxWithConstraints(Modifier.fillMaxWidth()) {
+                        val cellWidth = (maxWidth - MOD_GRID_GAP * (MOD_GRID_COLUMNS - 1)) / MOD_GRID_COLUMNS
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(MOD_GRID_GAP),
+                            verticalArrangement = Arrangement.spacedBy(MOD_GRID_GAP),
+                            modifier = Modifier.fillMaxWidth(),
+                            maxItemsInEachRow = MOD_GRID_COLUMNS,
+                        ) {
+                            matchingMods.forEach { mod ->
+                                Box(Modifier.width(cellWidth)) {
+                                    ModCard(mod)
+                                }
                             }
-                        }
-                        val remainder = (4 - matchingMods.size % 4) % 4
-                        repeat(remainder) {
-                            Box(Modifier.weight(1f))
+                            val remainder =
+                                (MOD_GRID_COLUMNS - matchingMods.size % MOD_GRID_COLUMNS) % MOD_GRID_COLUMNS
+                            repeat(remainder) {
+                                Box(Modifier.width(cellWidth))
+                            }
                         }
                     }
                 }

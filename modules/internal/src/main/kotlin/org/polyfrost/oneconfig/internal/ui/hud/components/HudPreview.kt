@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.ui.hud.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -14,7 +15,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.skiaCanvas
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -81,26 +90,42 @@ internal fun HudPreviewCanvas(state: HudPreviewState, scale: Float, modifier: Mo
     }
 }
 
+private object IntrinsicSafeMeasurePolicy : MeasurePolicy {
+    override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
+        val placeables = measurables.map { it.measure(constraints) }
+        val width = placeables.maxOfOrNull { it.width } ?: constraints.minWidth
+        val height = placeables.maxOfOrNull { it.height } ?: constraints.minHeight
+        return layout(width, height) { placeables.forEach { it.place(0, 0) } }
+    }
+
+    override fun IntrinsicMeasureScope.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int) = 0
+    override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int) = 0
+    override fun IntrinsicMeasureScope.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int) = 0
+    override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int) = 0
+}
+
 @Composable
 internal fun HudPreview(hud: Hud, modifier: Modifier = Modifier) {
     val state = rememberHudPreview(hud)
     val density = LocalDensity.current.density
 
-    BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
-        val availableW = maxWidth.value * density
-        val availableH = maxHeight.value * density
-        if (!state.ready || availableW <= 0f || availableH <= 0f) {
-            Text(
-                localizedValue(hud.title) ?: hud.title,
-                color = LocalTheme.current.textColor,
-                fontSize = 16.sp,
-                textAlign = TextAlign.Center,
-            )
-            return@BoxWithConstraints
+    Layout(modifier = modifier, measurePolicy = IntrinsicSafeMeasurePolicy, content = {
+        BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            val availableW = maxWidth.value * density
+            val availableH = maxHeight.value * density
+            if (!state.ready || availableW <= 0f || availableH <= 0f) {
+                Text(
+                    localizedValue(hud.title) ?: hud.title,
+                    color = LocalTheme.current.textColor,
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.Center,
+                )
+                return@BoxWithConstraints
+            }
+            val scale = hudPreviewScale(state.naturalWidth, state.naturalHeight, availableW, availableH)
+            val w = (state.naturalWidth * scale / density).dp
+            val h = (state.naturalHeight * scale / density).dp
+            HudPreviewCanvas(state, scale, Modifier.size(w, h))
         }
-        val scale = hudPreviewScale(state.naturalWidth, state.naturalHeight, availableW, availableH)
-        val w = (state.naturalWidth * scale / density).dp
-        val h = (state.naturalHeight * scale / density).dp
-        HudPreviewCanvas(state, scale, Modifier.size(w, h))
-    }
+    })
 }

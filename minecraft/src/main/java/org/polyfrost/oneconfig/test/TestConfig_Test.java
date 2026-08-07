@@ -27,10 +27,6 @@
 package org.polyfrost.oneconfig.test;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.HoverEvent;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.config.v1.Config;
@@ -253,6 +249,13 @@ public class TestConfig_Test extends Config {
             reorderable = false
     )
     public static float[] sliderList = {0.25f, 0.5f, 1f};
+
+    @RangeSlider(
+            title = "Range Slider",
+            description = "Two handles, one field.",
+            step = 5f
+    )
+    public static float[] range = {25f, 75f};
 
     // --- Dependencies: everything below is DISABLED (not hidden) while the master switch is off,
     // so it can be checked that disabled options really are non-interactable (including right click / kebab menu).

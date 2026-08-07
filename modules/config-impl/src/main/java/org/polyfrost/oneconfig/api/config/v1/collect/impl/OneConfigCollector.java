@@ -176,6 +176,13 @@ public class OneConfigCollector extends ReflectiveCollector {
                         field.getName(), slider.step(), slider.min(), slider.max(), range));
                 }
             }
+            case RangeSlider slider -> {
+                float range = slider.max() - slider.min();
+                if (slider.step() > 0f && slider.step() > range) {
+                    throw new IllegalArgumentException(String.format("@RangeSlider field '%s' has step (%s) larger than its range (%s to %s, range=%s). The slider will not function correctly.",
+                        field.getName(), slider.step(), slider.min(), slider.max(), range));
+                }
+            }
             case SliderList slider -> {
                 float range = slider.max() - slider.min();
                 if (slider.step() > 0f && slider.step() > range) {

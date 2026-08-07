@@ -622,6 +622,17 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun titleTranslation ()Z
 }
 
+public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/RangeSlider : java/lang/annotation/Annotation {
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun description ()Ljava/lang/String;
+	public abstract fun icon ()Ljava/lang/String;
+	public abstract fun max ()F
+	public abstract fun min ()F
+	public abstract fun step ()F
+	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun title ()Ljava/lang/String;
+}
+
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Slider : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
 	public abstract fun categoryKey ()Ljava/lang/String;
