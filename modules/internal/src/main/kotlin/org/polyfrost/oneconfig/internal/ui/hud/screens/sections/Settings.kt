@@ -61,6 +61,7 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
         var bgRadius by remember { mutableStateOf(hud.bgRadius) }
         var mergeBackground by remember { mutableStateOf(hud.mergeBackground) }
         var mergeDiagonally by remember { mutableStateOf(hud.mergeDiagonally) }
+        var keepBgWhenHidden by remember { mutableStateOf(hud.keepBgWhenHidden) }
         var textColor by remember { mutableStateOf(Color(hud.textColor)) }
         var textChroma by remember { mutableStateOf(hud.textChroma) }
         var textChromaSpeed by remember { mutableStateOf(hud.textChromaSpeed) }
@@ -212,6 +213,17 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
                                                 Snapshot.withMutableSnapshot { mergeDiagonally = it; hud.mergeDiagonally = it }
                                             }
                                             Text("Merge Diagonally", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                                        }
+                                    }
+                                    HudSettingTarget(hud, "keepBgWhenHidden") {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        ) {
+                                            SwitchControl(keepBgWhenHidden) {
+                                                Snapshot.withMutableSnapshot { keepBgWhenHidden = it; hud.keepBgWhenHidden = it }
+                                            }
+                                            Text("Keep Background When Hidden", color = LocalTheme.current.textColor, fontSize = 14.sp)
                                         }
                                     }
                                 }

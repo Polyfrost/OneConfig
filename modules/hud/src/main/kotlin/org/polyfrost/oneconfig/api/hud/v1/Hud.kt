@@ -785,6 +785,14 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     var mergeDiagonally: Boolean get() = _mergeDiagonally.value; set(v) { _mergeDiagonally.value = v }
 
+    private var _keepBgWhenHidden: MutableState<Boolean> = mutableStateOf(false)
+
+    var keepBgWhenHidden: Boolean get() = _keepBgWhenHidden.value; set(v) { _keepBgWhenHidden.value = v }
+
+    internal val keepsHiddenBackground: Boolean
+        get() = hidden && keepBgWhenHidden && showBackground && mergeBackground &&
+            hasBackground() && canMergeBackground() && this !is LegacyHudMarker
+
     /**
      * `true` while this HUD's background is being drawn as part of a fused neighbour shape by
      * [HudManager]. A HUD which draws its own background **must** skip it while this is set, or the
@@ -929,6 +937,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
                 }
                 tree["mergeDiagonally"] = ktProperty(out::mergeDiagonally).apply {
                     description = "Also fuses backgrounds with HUDs sitting diagonally from this one, which meet it at a corner or only partly along an edge."
+                    addDisplayCondition(hideFromConfigUi)
+                }
+                tree["keepBgWhenHidden"] = ktProperty(out::keepBgWhenHidden).apply {
+                    description = "Keeps this HUD's background in the fused shape while the HUD is hidden, so the shape stays whole instead of losing a piece."
                     addDisplayCondition(hideFromConfigUi)
                 }
             }
@@ -1083,6 +1095,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         _bgRadius = mutableStateOf(this@Hud.bgRadius)
         _mergeBackground = mutableStateOf(this@Hud.mergeBackground)
         _mergeDiagonally = mutableStateOf(this@Hud.mergeDiagonally)
+        _keepBgWhenHidden = mutableStateOf(this@Hud.keepBgWhenHidden)
         _bgMerged = mutableStateOf(false)
         _textColor = mutableStateOf(this@Hud.textColor)
         _textChroma = mutableStateOf(this@Hud.textChroma)

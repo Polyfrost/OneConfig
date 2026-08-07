@@ -122,6 +122,9 @@ object HudManager {
 
     private val frameOrder = ArrayList<Hud>()
 
+    /** [frameOrder] plus the hidden HUDs which still contribute their background to a fused shape. */
+    private val layoutOrder = ArrayList<Hud>()
+
     private var frameGroups: List<HudBackgroundMerge.Group> = emptyList()
     private var lastMergeKey: Int? = null
 
@@ -401,9 +404,17 @@ object HudManager {
     }
 
     private fun shouldDraw(hud: Hud): Boolean {
+        if (hud.hidden && !isEditing) return false
+        return isShown(hud)
+    }
+
+    private fun keepsBackgroundOnly(hud: Hud): Boolean =
+        hud.hidden && !isEditing && hud.keepsHiddenBackground && isShown(hud)
+
+    /** Everything [shouldDraw] checks apart from the HUD's own hidden flag. */
+    private fun isShown(hud: Hud): Boolean {
         if (!masterHudEnabled && !isEditing) return false
         if (hud is LegacyHudMarker) return false
-        if (hud.hidden && !isEditing) return false
         if (isGuiHidden && !isEditing) return false
         if (isDebugScreenVisible && !hud.showInF3) return false
         if (isTabListVisible && !hud.showInTab) return false
@@ -416,6 +427,23 @@ object HudManager {
         return true
     }
 
+    private fun collectFrameOrder(): Boolean {
+        frameOrder.clear()
+        layoutOrder.clear()
+        var volatileContent = false
+        for (hud in orderedForRender()) {
+            if (shouldDraw(hud)) {
+                frameOrder.add(hud)
+                if (hud.alwaysRedraw) volatileContent = true
+            } else if (keepsBackgroundOnly(hud)) {
+                layoutOrder.add(hud)
+                if (hud.bgChroma) volatileContent = true
+            }
+        }
+        layoutOrder.addAll(0, frameOrder)
+        return volatileContent
+    }
+
     @ApiStatus.Internal
     fun beginFrame(screenWidth: Float, screenHeight: Float): Boolean {
         drainProfileReload()
@@ -425,18 +453,12 @@ object HudManager {
 
         Snapshot.sendApplyNotifications()
 
-        frameOrder.clear()
-        var volatileContent = false
-        for (hud in orderedForRender()) {
-            if (!shouldDraw(hud)) continue
-            frameOrder.add(hud)
-            if (hud.alwaysRedraw) volatileContent = true
-        }
+        val volatileContent = collectFrameOrder()
 
-        updateAndAdvance(frameOrder)
+        updateAndAdvance(layoutOrder)
 
-        layoutAll(frameOrder, screenWidth, screenHeight, scale)
-        updateBackgroundGroups(frameOrder, screenWidth, screenHeight, scale)
+        layoutAll(layoutOrder, screenWidth, screenHeight, scale)
+        updateBackgroundGroups(layoutOrder, screenWidth, screenHeight, scale)
 
         val key = frameKey()
         val keyChanged = key != lastFrameKey ||
@@ -473,6 +495,9 @@ object HudManager {
         val key = HudBackgroundMerge.layoutKey(huds)
         if (key == lastMergeKey) return
         lastMergeKey = key
+        // the fused outline can change without anything else asking for a redraw, e.g. when a hidden
+        // HUD which keeps its background resizes, so the cached frame is no longer good
+        invalidate()
 
         val mergeable = if (mergeExclusions.isEmpty()) huds else huds.filter { hud -> !isMergeExcluded(hud) }
         frameGroups = HudBackgroundMerge.computeGroups(mergeable)
@@ -565,6 +590,7 @@ object HudManager {
 
     private fun frameKey(): Long {
         var key = activeInstances.size.toLong() * 31L + frameOrder.size
+        key = key * 31L + layoutOrder.size
         key = key * 31L + (if (isDebugScreenVisible) 1 else 0)
         key = key * 31L + (if (isTabListVisible) 1 else 0)
         key = key * 31L + (if (isGuiScreenOpen) 1 else 0)
@@ -643,11 +669,10 @@ object HudManager {
         if (!prepared) {
             Snapshot.sendApplyNotifications()
             frameId++
-            frameOrder.clear()
-            for (hud in orderedForRender()) if (shouldDraw(hud)) frameOrder.add(hud)
-            updateAndAdvance(frameOrder)
-            layoutAll(frameOrder, screenWidth, screenHeight, scale)
-            updateBackgroundGroups(frameOrder, screenWidth, screenHeight, scale)
+            collectFrameOrder()
+            updateAndAdvance(layoutOrder)
+            layoutAll(layoutOrder, screenWidth, screenHeight, scale)
+            updateBackgroundGroups(layoutOrder, screenWidth, screenHeight, scale)
         }
 
         ctx.save()

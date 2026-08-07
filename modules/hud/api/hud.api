@@ -57,6 +57,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getFont ()Lorg/polyfrost/oneconfig/api/hud/v1/Font;
 	public final fun getGrowthAnchor ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public fun getHidden ()Z
+	public final fun getKeepBgWhenHidden ()Z
 	public fun getLocked ()Z
 	public final fun getMergeBackground ()Z
 	public final fun getMergeDiagonally ()Z
@@ -139,6 +140,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setGrowthAnchor (Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)V
 	public final fun setGrowthAnchorKeepingPosition (Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)V
 	public fun setHidden (Z)V
+	public final fun setKeepBgWhenHidden (Z)V
 	public fun setLocked (Z)V
 	public final fun setMergeBackground (Z)V
 	public final fun setMergeDiagonally (Z)V
