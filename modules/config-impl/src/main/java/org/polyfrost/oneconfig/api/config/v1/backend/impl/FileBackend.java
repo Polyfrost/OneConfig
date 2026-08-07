@@ -247,7 +247,10 @@ public class FileBackend extends Backend {
                 if (serializer == null) continue;
                 try {
                     Tree t = serializer.deserialize(read(p));
-                    t.setID(folder.relativize(p).toString());
+                    String id = folder.relativize(p).toString();
+                    String separator = p.getFileSystem().getSeparator();
+                    if (!"/".equals(separator)) id = id.replace(separator, "/");
+                    t.setID(id);
                     out.add(t);
                 } catch (Exception e) {
                     LOGGER.error("didn't gather tree from {}: {}", p, e.getMessage());

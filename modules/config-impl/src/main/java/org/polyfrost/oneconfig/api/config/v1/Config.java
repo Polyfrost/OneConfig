@@ -144,6 +144,19 @@ public abstract class Config {
         captureDefaults(tree, null, null);
     }
 
+    @ApiStatus.Internal
+    public static void restoreCapturedDefaults(Tree tree) {
+        for (Node node : tree.map.values()) {
+            if (node instanceof Property) {
+                Property<?> property = (Property<?>) node;
+                Object value = property.getMetadata("default");
+                if (value != null) property.setAsReferential(copyDefault(property.type, value));
+            } else if (node instanceof Tree) {
+                restoreCapturedDefaults((Tree) node);
+            }
+        }
+    }
+
     private static void captureDefaults(Tree tree, String prefix, Map<String, Object> out) {
         for (Map.Entry<String, Node> entry : tree.map.entrySet()) {
             Node node = entry.getValue();
@@ -189,7 +202,8 @@ public abstract class Config {
     }
 
     @ApiStatus.Internal
-    void rebindToActiveProfile() {
+    void rebindToActiveProfile(boolean restoreDefaults) {
+        if (restoreDefaults) restoreDefaults();
         tree = null;
         initialize(true);
     }

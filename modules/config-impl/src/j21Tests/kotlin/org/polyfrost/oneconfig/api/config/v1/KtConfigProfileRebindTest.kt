@@ -72,6 +72,7 @@ class KtConfigProfileRebindTest {
         config.save()
 
         ConfigManager.createProfile(PROFILE)
+        assertFalse(config.enabled, "new profile should start from Kotlin config defaults")
         config.enabled = false
         config.save()
 

@@ -43,13 +43,18 @@ import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerialize
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static org.polyfrost.oneconfig.api.config.v1.Tree.tree;
 
@@ -67,7 +72,8 @@ public final class ConfigManager {
 //    public static List<String> newOrUpdatedModIds;
     private static final Queue<Config> pendingInitialization = new ArrayDeque<>();
     private static final Map<String, Config> initializedConfigs = new LinkedHashMap<>();
-    private static boolean rebindingProfiles = false;
+    private static final ReentrantLock PROFILE_LIFECYCLE_LOCK = new ReentrantLock();
+    private static volatile boolean rebindingProfiles = false;
     private static final java.util.concurrent.CopyOnWriteArrayList<ProfileChangeListener> profileListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
     private static final java.util.concurrent.CopyOnWriteArrayList<TreeRegistrationListener> treeListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
 
@@ -75,6 +81,21 @@ public final class ConfigManager {
 
     public interface ProfileChangeListener {
         void onProfileChanged(String newProfile);
+
+        default void onProfileSaving(String profile) {
+        }
+
+        default void onProfileCreated(String profile) {
+        }
+
+        default void onProfileRenamed(String oldProfile, String newProfile) {
+        }
+
+        default void onProfileDeleted(String profile) {
+        }
+
+        default void onProfileSpecificControlsChanged(boolean enabled) {
+        }
     }
 
     public interface TreeRegistrationListener {
@@ -88,6 +109,10 @@ public final class ConfigManager {
     @ApiStatus.Internal
     public static void addTreeRegistrationListener(TreeRegistrationListener listener) {
         treeListeners.add(listener);
+    }
+
+    public static void removeProfileChangeListener(ProfileChangeListener listener) {
+        profileListeners.remove(listener);
     }
 
     public static Path profileDir(String profile) {
@@ -173,7 +198,8 @@ public final class ConfigManager {
         initializedConfigs.put(config.id, config);
     }
 
-    static boolean isRebindingProfiles() {
+    @ApiStatus.Internal
+    public static boolean isRebindingProfiles() {
         return rebindingProfiles;
     }
 
@@ -248,11 +274,18 @@ public final class ConfigManager {
 
     private static synchronized void initProfiles() {
         addProfileChangeListener(CompatSnapshots.INSTANCE);
+        Property<String[]> ownedProfileSubdirs = Properties.simple(
+                "ownedProfileSubdirs", "Owned Profile Subdirectories",
+                "Profile-backed config directories known to OneConfig.", new String[0], String[].class
+        );
+        ownedProfileSubdirs.addMetadata("hidden", true);
         Backend.RegistrationResult result = internal().register(
                 tree("profiles.json").put(
                         Properties.simple("activeProfile", "Active Profile", "The profile which is currently open.", ""),
                         Properties.simple("favoriteProfiles", "Favorite Profiles", "Profiles marked as favorites.", new String[0], String[].class),
-                        Properties.simple("profileIcons", "Profile Icons", "Icon names assigned to profiles.", new String[0], String[].class)
+                        Properties.simple("profileIcons", "Profile Icons", "Icon names assigned to profiles.", new String[0], String[].class),
+                        Properties.simple("profileSpecificControls", "Profile-specific Controls", "Whether Minecraft controls are stored per profile.", true),
+                        ownedProfileSubdirs
                 )
         );
         if (result.state == Backend.RegistrationResult.NEW) {
@@ -268,6 +301,19 @@ public final class ConfigManager {
             result.get().put(Properties.simple("profileIcons", "Profile Icons", "Icon names assigned to profiles.", new String[0], String[].class));
             internal().save("profiles.json");
         }
+        if (result.get().getProp("profileSpecificControls") == null) {
+            result.get().put(Properties.simple("profileSpecificControls", "Profile-specific Controls", "Whether Minecraft controls are stored per profile.", true));
+            internal().save("profiles.json");
+        }
+        if (result.get().getProp("ownedProfileSubdirs") == null) {
+            Property<String[]> property = Properties.simple(
+                    "ownedProfileSubdirs", "Owned Profile Subdirectories",
+                    "Profile-backed config directories known to OneConfig.", new String[0], String[].class
+            );
+            property.addMetadata("hidden", true);
+            result.get().put(property);
+            internal().save("profiles.json");
+        }
         String activeProfile = result.get().getProp("activeProfile").getAs();
         try {
             activeProfile = normalizeProfileName(activeProfile, true);
@@ -279,14 +325,37 @@ public final class ConfigManager {
             LOGGER.warn("Active profile {} does not exist, falling back to root", activeProfile);
             activeProfile = "";
         }
-        openProfile(activeProfile);
+        openProfile(activeProfile, true, false);
+        notifyProfileChanged(activeProfile);
     }
 
-    public static synchronized void openProfile(String profile) {
-        openProfile(profile, true);
+    public static void openProfile(String profile) {
+        runProfileOperation(() -> openProfile0(profile));
     }
 
-    private static void openProfile(String profile, boolean saveCurrent) {
+    private static void openProfile0(String profile) {
+        openProfile0(profile, null);
+    }
+
+    private static void openProfile0(String profile, @Nullable String alreadySavedProfile) {
+        profile = normalizeProfileName(profile, true);
+        String previousProfile;
+        synchronized (ConfigManager.class) {
+            if (!profile.isEmpty() && !Files.isDirectory(profilePath(profile))) {
+                throw new IllegalArgumentException("Profile does not exist: " + profile);
+            }
+            previousProfile = activeProfile();
+        }
+        // Profile listeners own state which is not part of the config backend (for example,
+        // Minecraft controls). Save it while the outgoing profile is still the committed owner.
+        if (!previousProfile.equals(alreadySavedProfile)) saveProfileState(previousProfile);
+        synchronized (ConfigManager.class) {
+            openProfile(profile, false, false);
+        }
+        notifyProfileChanged(profile);
+    }
+
+    private static void openProfile(String profile, boolean saveCurrent, boolean restoreDefaults) {
         profile = normalizeProfileName(profile, true);
         if (!profile.isEmpty() && !Files.isDirectory(profilePath(profile))) {
             throw new IllegalArgumentException("Profile does not exist: " + profile);
@@ -311,20 +380,23 @@ public final class ConfigManager {
             LOGGER.info("opening profile {}", profile);
             active = new ConfigManager(PROFILES_DIR.resolve(profile), core.backend.getSerializers().toArray(new FileSerializer[0])).withHook().withWatcher();
         }
-        rebindInitializedConfigs();
-        for (Tree t : externalTrees) {
-            try {
-                active.register(t);
-            } catch (Throwable ex) {
-                LOGGER.error("Failed to rebind external tree {} onto profile {}", t.getID(), profile, ex);
+        rebindingProfiles = true;
+        try {
+            rebindInitializedConfigs(restoreDefaults);
+            for (Tree t : externalTrees) {
+                try {
+                    if (restoreDefaults
+                            && !Boolean.TRUE.equals(t.getMetadata(CompatSnapshots.SNAPSHOT_METADATA))
+                            && !Boolean.TRUE.equals(t.getMetadata(Backend.UI_ONLY_METADATA))) {
+                        Config.restoreCapturedDefaults(t);
+                    }
+                    active.register(t);
+                } catch (Throwable ex) {
+                    LOGGER.error("Failed to rebind external tree {} onto profile {}", t.getID(), profile, ex);
+                }
             }
-        }
-        for (ProfileChangeListener listener : profileListeners) {
-            try {
-                listener.onProfileChanged(profile);
-            } catch (Throwable t) {
-                LOGGER.error("Profile change listener failed", t);
-            }
+        } finally {
+            rebindingProfiles = false;
         }
     }
 
@@ -353,36 +425,140 @@ public final class ConfigManager {
     }
 
     public static void createProfile(String profile) {
+        runProfileOperation(() -> createProfile0(profile));
+    }
+
+    private static void createProfile0(String profile) {
         String name = normalizeProfileName(profile, false);
         Path path = profilePath(name);
-        Path source;
-        Set<String> ownedSubdirs;
+        String previousProfile;
         synchronized (ConfigManager.class) {
             if (Files.exists(path)) throw new IllegalArgumentException("Profile already exists: " + name);
-            active().saveAll();
-            source = active.getFolder();
-            ownedSubdirs = oneConfigSubdirs(active);
+            previousProfile = activeProfile();
         }
+        saveProfileState(previousProfile);
         try {
-            Files.createDirectories(path);
-            copyProfileFiles(source, path, ownedSubdirs);
+            Files.createDirectories(PROFILES_DIR);
+            Files.createDirectory(path);
+        } catch (FileAlreadyExistsException e) {
+            throw new IllegalArgumentException("Profile already exists: " + name, e);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to create profile: " + name, e);
         }
-        openProfile(name);
+        synchronized (ConfigManager.class) {
+            openProfile(name, false, true);
+        }
+        notifyProfileCreated(name);
+        notifyProfileChanged(name);
     }
 
-    private static Set<String> oneConfigSubdirs(ConfigManager mgr) {
-        Set<String> subdirs = new HashSet<>();
-        for (Tree t : mgr.trees()) {
-            String id = t.getID();
-            if (id == null) continue;
-            int slash = id.indexOf('/');
-            int back = id.indexOf('\\');
-            if (back >= 0 && (slash < 0 || back < slash)) slash = back;
-            if (slash > 0) subdirs.add(id.substring(0, slash));
+    public static void cloneProfile(String profile, String newProfile) {
+        runProfileOperation(() -> cloneProfile0(profile, newProfile));
+    }
+
+    private static void cloneProfile0(String profile, String newProfile) {
+        profile = normalizeProfileName(profile, true);
+        String name = normalizeProfileName(newProfile, false);
+        Path source = profileDir(profile);
+        Path target = profilePath(name);
+        Set<String> ownedSubdirs;
+        String currentProfile;
+        synchronized (ConfigManager.class) {
+            if (!profile.isEmpty() && !Files.isDirectory(source)) {
+                throw new IllegalArgumentException("Profile does not exist: " + profile);
+            }
+            if (Files.exists(target)) throw new IllegalArgumentException("Profile already exists: " + name);
+            ownedSubdirs = profile.isEmpty() ? oneConfigSubdirs() : Collections.emptySet();
+            currentProfile = activeProfile();
         }
+        saveProfileState(profile);
+        if (!profile.equals(currentProfile)) saveProfileState(currentProfile);
+        try {
+            Files.createDirectories(PROFILES_DIR);
+            Files.createDirectory(target);
+        } catch (FileAlreadyExistsException e) {
+            throw new IllegalArgumentException("Profile already exists: " + name, e);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to create cloned profile: " + name, e);
+        }
+        try {
+            if (profile.isEmpty()) {
+                copyProfileFiles(source, target, ownedSubdirs);
+            } else {
+                copyDirectory(source, target);
+            }
+        } catch (IOException e) {
+            try {
+                deleteDirectory(target);
+            } catch (IOException cleanupError) {
+                e.addSuppressed(cleanupError);
+            }
+            throw new IllegalStateException("Failed to clone profile: " + profile, e);
+        }
+        String icon = profileIcon(profile);
+        if (!icon.equals(defaultProfileIcon())) setProfileIcon(name, icon);
+        openProfile0(name, currentProfile);
+    }
+
+    private static Set<String> oneConfigSubdirs() {
+        active();
+        Set<String> subdirs = new HashSet<>();
+        // HUD files belong to OneConfig even when their providing mod is not present in this run,
+        // so they must not disappear from a clone or export of the Default profile.
+        subdirs.add("huds");
+        Property<?> property = internal().get("profiles.json").getProp("ownedProfileSubdirs");
+        if (property != null) addOwnedProfileSubdirs(subdirs, property.get());
         return subdirs;
+    }
+
+    private static void rememberProfileSubdir(@Nullable String id) {
+        String subdir = profileSubdir(id);
+        if (subdir == null) return;
+        synchronized (ConfigManager.class) {
+            Property<?> property = internal().get("profiles.json").getProp("ownedProfileSubdirs");
+            if (property == null) return;
+            Set<String> subdirs = new HashSet<>();
+            addOwnedProfileSubdirs(subdirs, property.get());
+            if (!subdirs.add(subdir)) return;
+            ArrayList<String> sorted = new ArrayList<>(subdirs);
+            sorted.sort(String.CASE_INSENSITIVE_ORDER);
+            property.setAs(sorted.toArray(new String[0]));
+            internal().save("profiles.json");
+        }
+    }
+
+    private static void addOwnedProfileSubdirs(Set<String> out, @Nullable Object value) {
+        if (value instanceof Object[]) {
+            for (Object entry : (Object[]) value) addOwnedProfileSubdir(out, entry);
+        } else if (value instanceof Iterable<?>) {
+            for (Object entry : (Iterable<?>) value) addOwnedProfileSubdir(out, entry);
+        } else {
+            addOwnedProfileSubdir(out, value);
+        }
+    }
+
+    private static void addOwnedProfileSubdir(Set<String> out, @Nullable Object value) {
+        if (value == null) return;
+        String subdir = value.toString();
+        if (isSafeProfileSubdir(subdir)) out.add(subdir);
+    }
+
+    private static @Nullable String profileSubdir(@Nullable String id) {
+        if (id == null) return null;
+        int slash = id.indexOf('/');
+        int backslash = id.indexOf('\\');
+        int separator = slash < 0 ? backslash : backslash < 0 ? slash : Math.min(slash, backslash);
+        if (separator <= 0) return null;
+        String subdir = id.substring(0, separator);
+        return isSafeProfileSubdir(subdir) ? subdir : null;
+    }
+
+    private static boolean isSafeProfileSubdir(String subdir) {
+        return !subdir.isEmpty()
+                && !subdir.equals(".")
+                && !subdir.equals("..")
+                && subdir.indexOf('/') < 0
+                && subdir.indexOf('\\') < 0;
     }
 
     private static void copyProfileFiles(Path source, Path target, Set<String> ownedSubdirs) throws IOException {
@@ -409,45 +585,219 @@ public final class ConfigManager {
         }
     }
 
-    public static synchronized void renameProfile(String profile, String newProfile) {
+    public static void renameProfile(String profile, String newProfile) {
+        runProfileOperation(() -> renameProfile0(profile, newProfile));
+    }
+
+    private static void renameProfile0(String profile, String newProfile) {
         profile = normalizeProfileName(profile, false);
         newProfile = normalizeProfileName(newProfile, false);
         if (profile.equals(newProfile)) return;
         Path oldPath = profilePath(profile);
         Path newPath = profilePath(newProfile);
-        if (!Files.isDirectory(oldPath)) throw new IllegalArgumentException("Profile does not exist: " + profile);
-        if (Files.exists(newPath)) throw new IllegalArgumentException("Profile already exists: " + newProfile);
-        if (activeProfile().equals(profile)) active.saveAll();
-        String icon = profileIcon(profile);
+        synchronized (ConfigManager.class) {
+            if (!Files.isDirectory(oldPath)) throw new IllegalArgumentException("Profile does not exist: " + profile);
+            if (Files.exists(newPath)) throw new IllegalArgumentException("Profile already exists: " + newProfile);
+        }
+        saveProfileState(profile);
+        boolean activeProfile;
+        synchronized (ConfigManager.class) {
+            if (!Files.isDirectory(oldPath)) throw new IllegalArgumentException("Profile does not exist: " + profile);
+            if (Files.exists(newPath)) throw new IllegalArgumentException("Profile already exists: " + newProfile);
+            activeProfile = activeProfile().equals(profile);
+            boolean favorite = isFavoriteProfile(profile);
+            String icon = profileIcon(profile);
+            if (activeProfile) active.saveAll();
+            try {
+                Files.move(oldPath, newPath);
+            } catch (IOException e) {
+                throw new IllegalStateException("Failed to rename profile: " + profile, e);
+            }
+            if (favorite) {
+                setFavoriteProfile(newProfile, true);
+            }
+            if (!icon.equals(defaultProfileIcon())) {
+                setProfileIcon(newProfile, icon);
+            }
+            if (activeProfile) {
+                openProfile(newProfile, false, false);
+            }
+        }
+        notifyProfileRenamed(profile, newProfile);
+        if (activeProfile) notifyProfileChanged(newProfile);
+    }
+
+    public static void deleteProfile(String profile) {
+        runProfileOperation(() -> deleteProfile0(profile));
+    }
+
+    private static void deleteProfile0(String profile) {
+        profile = normalizeProfileName(profile, false);
+        synchronized (ConfigManager.class) {
+            if (!Files.isDirectory(profilePath(profile))) {
+                throw new IllegalArgumentException("Profile does not exist: " + profile);
+            }
+        }
+        saveProfileState(profile);
+        boolean switchedToRoot;
+        IllegalStateException failure = null;
+        synchronized (ConfigManager.class) {
+            Path path = profilePath(profile);
+            if (!Files.isDirectory(path)) throw new IllegalArgumentException("Profile does not exist: " + profile);
+            switchedToRoot = activeProfile().equals(profile);
+            if (switchedToRoot) openProfile("", false, false);
+            try {
+                deleteDirectory(path);
+                setProfileIcon(profile, null);
+                setFavoriteProfile(profile, false);
+            } catch (IOException e) {
+                failure = new IllegalStateException("Failed to delete profile: " + profile, e);
+            }
+        }
+        if (failure != null) {
+            if (switchedToRoot) notifyProfileChanged("");
+            throw failure;
+        }
+        notifyProfileDeleted(profile);
+        if (switchedToRoot) notifyProfileChanged("");
+    }
+
+    public static void exportProfile(String profile, Path destination) {
+        runProfileOperation(() -> exportProfile0(profile, destination));
+    }
+
+    private static void exportProfile0(String profile, Path destination) {
+        profile = normalizeProfileName(profile, true);
+        Objects.requireNonNull(destination, "destination");
+        Path source = profileDir(profile).toAbsolutePath().normalize();
+        Path target = destination.toAbsolutePath().normalize();
+        if (target.getParent() == null) {
+            throw new IllegalArgumentException("Export destination must be a file path");
+        }
+        Set<String> ownedSubdirs;
+        synchronized (ConfigManager.class) {
+            if (!profile.isEmpty() && !Files.isDirectory(source)) {
+                throw new IllegalArgumentException("Profile does not exist: " + profile);
+            }
+            if (target.startsWith(source)) {
+                throw new IllegalArgumentException("Export destination cannot be inside the profile");
+            }
+            ownedSubdirs = profile.isEmpty() ? oneConfigSubdirs() : Collections.emptySet();
+        }
+        saveProfileState(profile);
+        Path temporary = null;
         try {
-            Files.move(oldPath, newPath);
+            Path parent = target.getParent();
+            Files.createDirectories(parent);
+            Path realSource = source.toRealPath();
+            Path realParent = parent.toRealPath();
+            if (realParent.startsWith(realSource)) {
+                throw new IllegalArgumentException("Export destination cannot be inside the profile");
+            }
+            temporary = Files.createTempFile(parent, "oneconfig-profile-", ".zip.tmp");
+            try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(temporary))) {
+                if (profile.isEmpty()) {
+                    if (Files.exists(source)) {
+                        try (DirectoryStream<Path> stream = Files.newDirectoryStream(source)) {
+                            for (Path entry : stream) {
+                                if (Files.isDirectory(entry) && ownedSubdirs.contains(entry.getFileName().toString())) {
+                                    zipDirectory(entry, source, zip);
+                                } else if (Files.isRegularFile(entry, LinkOption.NOFOLLOW_LINKS)) {
+                                    zipFile(entry, source, zip);
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    zipDirectory(source, source, zip);
+                }
+            }
+            try {
+                Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            } catch (java.nio.file.AtomicMoveNotSupportedException ignored) {
+                Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
+            }
+            temporary = null;
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to rename profile: " + profile, e);
-        }
-        if (isFavoriteProfile(profile)) {
-            setFavoriteProfile(profile, false);
-            setFavoriteProfile(newProfile, true);
-        }
-        if (!icon.equals(defaultProfileIcon())) {
-            setProfileIcon(newProfile, icon);
-        }
-        if (activeProfile().equals(profile)) {
-            openProfile(newProfile, false);
+            try {
+                if (temporary != null) Files.deleteIfExists(temporary);
+            } catch (IOException cleanupError) {
+                e.addSuppressed(cleanupError);
+            }
+            throw new IllegalStateException("Failed to export profile: " + profile, e);
         }
     }
 
-    public static synchronized void deleteProfile(String profile) {
-        profile = normalizeProfileName(profile, false);
-        Path path = profilePath(profile);
-        if (!Files.isDirectory(path)) throw new IllegalArgumentException("Profile does not exist: " + profile);
-        if (activeProfile().equals(profile)) openProfile("");
-        setProfileIcon(profile, null);
-        try {
-            deleteDirectory(path);
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to delete profile: " + profile, e);
+    private static void zipDirectory(Path directory, Path root, ZipOutputStream zip) throws IOException {
+        if (!Files.exists(directory)) return;
+        try (Stream<Path> stream = Files.walk(directory)) {
+            Iterator<Path> iterator = stream.iterator();
+            while (iterator.hasNext()) {
+                Path entry = iterator.next();
+                if (Files.isRegularFile(entry, LinkOption.NOFOLLOW_LINKS)) zipFile(entry, root, zip);
+            }
         }
-        setFavoriteProfile(profile, false);
+    }
+
+    private static void zipFile(Path file, Path root, ZipOutputStream zip) throws IOException {
+        String name = root.relativize(file).toString().replace('\\', '/');
+        ZipEntry entry = new ZipEntry(name);
+        zip.putNextEntry(entry);
+        Files.copy(file, zip);
+        zip.closeEntry();
+    }
+
+    private static void saveProfileState(String profile) {
+        synchronized (ConfigManager.class) {
+            if (activeProfile().equals(profile)) active().saveAll();
+        }
+        for (ProfileChangeListener listener : profileListeners) {
+            try {
+                listener.onProfileSaving(profile);
+            } catch (Throwable t) {
+                throw new IllegalStateException("Failed to save profile state: " + profile, t);
+            }
+        }
+    }
+
+    private static void notifyProfileDeleted(String profile) {
+        for (ProfileChangeListener listener : profileListeners) {
+            try {
+                listener.onProfileDeleted(profile);
+            } catch (Throwable t) {
+                LOGGER.error("Profile delete listener failed", t);
+            }
+        }
+    }
+
+    private static void notifyProfileCreated(String profile) {
+        for (ProfileChangeListener listener : profileListeners) {
+            try {
+                listener.onProfileCreated(profile);
+            } catch (Throwable t) {
+                LOGGER.error("Profile create listener failed", t);
+            }
+        }
+    }
+
+    private static void notifyProfileChanged(String profile) {
+        for (ProfileChangeListener listener : profileListeners) {
+            try {
+                listener.onProfileChanged(profile);
+            } catch (Throwable t) {
+                LOGGER.error("Profile change listener failed", t);
+            }
+        }
+    }
+
+    private static void notifyProfileRenamed(String oldProfile, String newProfile) {
+        for (ProfileChangeListener listener : profileListeners) {
+            try {
+                listener.onProfileRenamed(oldProfile, newProfile);
+            } catch (Throwable t) {
+                LOGGER.error("Profile rename listener failed", t);
+            }
+        }
     }
 
     public static synchronized List<String> favoriteProfiles() {
@@ -544,11 +894,11 @@ public final class ConfigManager {
     public static synchronized void setProfileIcon(String profile, @Nullable String icon) {
         profile = normalizeProfileName(profile, true);
         if (profile.isEmpty()) return;
-        if (!Files.isDirectory(profilePath(profile))) {
+        String normalizedIcon = normalizeProfileIcon(icon);
+        if (!normalizedIcon.equals(defaultProfileIcon()) && !Files.isDirectory(profilePath(profile))) {
             throw new IllegalArgumentException("Profile does not exist: " + profile);
         }
         LinkedHashMap<String, String> icons = new LinkedHashMap<>(profileIcons());
-        String normalizedIcon = normalizeProfileIcon(icon);
         if (normalizedIcon.equals(defaultProfileIcon())) {
             icons.remove(profile);
         } else {
@@ -562,24 +912,88 @@ public final class ConfigManager {
         internal().save("profiles.json");
     }
 
+    public static synchronized boolean profileSpecificControls() {
+        active();
+        Object value = internal().get("profiles.json").getProp("profileSpecificControls").get();
+        return !(value instanceof Boolean) || (Boolean) value;
+    }
+
+    public static void setProfileSpecificControls(boolean enabled) {
+        runProfileOperation(() -> setProfileSpecificControls0(enabled));
+    }
+
+    private static void setProfileSpecificControls0(boolean enabled) {
+        boolean previous;
+        synchronized (ConfigManager.class) {
+            active();
+            Property<?> property = internal().get("profiles.json").getProp("profileSpecificControls");
+            if (Objects.equals(property.get(), enabled)) return;
+            previous = !(property.get() instanceof Boolean) || (Boolean) property.get();
+            property.setAs(enabled);
+            if (!internal().save("profiles.json")) {
+                property.setAs(previous);
+                IllegalStateException failure = new IllegalStateException(
+                        "Failed to persist profile-specific controls preference"
+                );
+                if (!internal().save("profiles.json")) {
+                    failure.addSuppressed(new IllegalStateException(
+                            "Failed to restore profile-specific controls preference after save failure"
+                    ));
+                }
+                throw failure;
+            }
+        }
+        ArrayList<ProfileChangeListener> attempted = new ArrayList<>();
+        for (ProfileChangeListener listener : profileListeners) {
+            attempted.add(listener);
+            try {
+                listener.onProfileSpecificControlsChanged(enabled);
+            } catch (Throwable t) {
+                synchronized (ConfigManager.class) {
+                    internal().get("profiles.json").getProp("profileSpecificControls").setAs(previous);
+                    if (!internal().save("profiles.json")) {
+                        t.addSuppressed(new IllegalStateException(
+                                "Failed to persist the rolled-back profile-specific controls preference"
+                        ));
+                    }
+                }
+                Collections.reverse(attempted);
+                for (ProfileChangeListener notified : attempted) {
+                    try {
+                        notified.onProfileSpecificControlsChanged(previous);
+                    } catch (Throwable rollbackFailure) {
+                        t.addSuppressed(rollbackFailure);
+                    }
+                }
+                throw new IllegalStateException("Failed to change profile-specific controls", t);
+            }
+        }
+    }
+
+    private static void runProfileOperation(Runnable operation) {
+        if (PROFILE_LIFECYCLE_LOCK.isHeldByCurrentThread() || !PROFILE_LIFECYCLE_LOCK.tryLock()) {
+            throw new IllegalStateException("Another profile operation is already in progress");
+        }
+        try {
+            operation.run();
+        } finally {
+            PROFILE_LIFECYCLE_LOCK.unlock();
+        }
+    }
+
     private static String defaultProfileIcon() {
         return "profiles";
     }
 
-    private static void rebindInitializedConfigs() {
+    private static void rebindInitializedConfigs(boolean restoreDefaults) {
         if (initializedConfigs.isEmpty()) return;
         ArrayList<Config> configs = new ArrayList<>(initializedConfigs.values());
-        rebindingProfiles = true;
-        try {
-            for (Config config : configs) {
-                try {
-                    config.rebindToActiveProfile();
-                } catch (Throwable ex) {
-                    LOGGER.error("Failed to rebind config {} onto active profile", config.id, ex);
-                }
+        for (Config config : configs) {
+            try {
+                config.rebindToActiveProfile(restoreDefaults);
+            } catch (Throwable ex) {
+                LOGGER.error("Failed to rebind config {} onto active profile", config.id, ex);
             }
-        } finally {
-            rebindingProfiles = false;
         }
     }
 
@@ -715,8 +1129,17 @@ public final class ConfigManager {
     }
 
     public Backend.RegistrationResult register(Tree t) {
+        if (this == active && !Boolean.TRUE.equals(t.getMetadata(CompatSnapshots.SNAPSHOT_METADATA))) {
+            Config.captureDefaults(t);
+        }
         Backend.RegistrationResult result = backend.register(t);
-        if (this == active) notifyTreeRegistered(result.get());
+        if (this == active) {
+            Tree registered = result.get();
+            if (registered != null && registered.getID() != null) {
+                rememberProfileSubdir(registered.getID());
+            }
+            notifyTreeRegistered(registered);
+        }
         return result;
     }
 
@@ -733,6 +1156,12 @@ public final class ConfigManager {
 
     public boolean delete(String id) {
         return backend.delete(id);
+    }
+
+    /** Stops tracking a tree without deleting its file, so it can be rebound to a new owner. */
+    @ApiStatus.Internal
+    public Tree unregister(String id) {
+        return backend.unregister(id);
     }
 
     @ApiStatus.Internal
