@@ -5,8 +5,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.hud.hudModCardConfigs
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindRegistrar
@@ -14,6 +16,8 @@ import org.polyfrost.oneconfig.internal.ui.search.ConfigDocumentSource
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 
 object ConfigRegistry {
+    private val logger = LogManager.getLogger("OneConfig/ConfigRegistry")
+
     private val hiddenModCardIds = setOf(
         "oneconfig.json",
         "themes.json",
@@ -61,7 +65,30 @@ object ConfigRegistry {
 
     init {
         // Index configs as they come in (compat layers etc...)
-        ConfigManager.addTreeRegistrationListener { tree -> registerTree(tree, ConfigSource.OC) }
+        ConfigManager.addTreeRegistrationListener { tree ->
+            if (ConfigManager.isRebindingProfiles()) return@addTreeRegistrationListener
+            // Profile rebinding may register trees from a background worker. Registry state and
+            // Minecraft's key-mapping array both belong to the UI thread.
+            Platform.screen().runOnUiThread {
+                try {
+                    // A queued registration from an older profile must not overwrite the active one.
+                    if (ConfigManager.active().trees().any { it === tree }) {
+                        registerTree(tree, ConfigSource.OC)
+                    }
+                } catch (failure: Throwable) {
+                    logger.error("Failed to register config tree {}", tree.id, failure)
+                }
+            }
+        }
+        ConfigManager.addProfileChangeListener {
+            Platform.screen().runOnUiThread {
+                try {
+                    loadFrom(ConfigManager.active(), ConfigSource.OC)
+                } catch (failure: Throwable) {
+                    logger.error("Failed to reload configs after a profile change", failure)
+                }
+            }
+        }
     }
 
     fun shouldShowModCard(config: ConfigData): Boolean =

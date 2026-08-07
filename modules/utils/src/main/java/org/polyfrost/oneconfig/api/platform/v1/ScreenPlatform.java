@@ -30,6 +30,11 @@ import org.jetbrains.annotations.Nullable;
 
 public interface ScreenPlatform {
 
+    /** Runs an action on the thread which owns the game's UI. */
+    default void runOnUiThread(Runnable action) {
+        action.run();
+    }
+
     int viewportWidth();
 
     int viewportHeight();
