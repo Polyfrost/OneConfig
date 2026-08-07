@@ -26,9 +26,9 @@ object ModMenuCompat {
     val mods: MutableList<Mod> = mutableListOf()
 
     private val ownModIds = setOf(
-        ModMenuEntrypoint.BOOTSTRAP_MOD_ID,
+        ModMenuEntrypoint.ROOT_MOD_ID,
+        ModMenuEntrypoint.LEGACY_BOOTSTRAP_MOD_ID,
         ModMenuEntrypoint.PLATFORM_MOD_ID,
-        "oneconfig",
     )
 
     fun preLoad() = CompatLoader.requireTranslations(-1000, true) {

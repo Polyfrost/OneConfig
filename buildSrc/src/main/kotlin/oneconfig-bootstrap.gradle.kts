@@ -133,7 +133,7 @@ tasks.withType<ProcessResources>().configureEach {
     }
 
     val props = mapOf(
-        "mod_id" to (project.findProperty("mod.id") ?: "oneconfigbootstrap"),
+        "mod_id" to (project.findProperty("mod.id") ?: "oneconfig"),
         "mod_name" to (project.findProperty("mod.name") ?: "OneConfig"),
         "mod_version" to project.version,
         "mod_description" to (project.findProperty("mod.description") ?: "OneConfig bootstrap loader."),

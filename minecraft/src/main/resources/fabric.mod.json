@@ -38,7 +38,7 @@
   },
   "custom": {
     "modmenu": {
-      "parent": "oneconfigbootstrap",
+      "parent": "oneconfig",
       "badges": [ "library" ]
     }
   }
