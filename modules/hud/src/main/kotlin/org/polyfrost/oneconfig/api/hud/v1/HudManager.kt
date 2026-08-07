@@ -251,8 +251,10 @@ object HudManager {
     fun providers(): Collection<Hud> = hudProviders.values
 
     fun <T : Hud> unregister(hud: T, removeActiveInstances: Boolean = false, delete: Boolean = false): ArrayList<T>? {
-        if (hudProviders.remove(hud::class.java) != null) revision++
-        notifyRegistrationChanged()
+        if (hudProviders.remove(hud::class.java) != null) {
+            revision++
+            notifyRegistrationChanged()
+        }
         if (!removeActiveInstances) return null
         val out = ArrayList<T>(10.coerceAtMost(activeInstances.size))
         val iter = activeInstances.iterator()
