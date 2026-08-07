@@ -30,10 +30,14 @@ data class ScrollAnchor(val index: Int, val offset: Int, val token: Any? = null)
  * to the top of the page.
  */
 @Composable
-fun rememberRestorableLazyListState(key: String, resetToken: Any? = null): LazyListState {
+fun rememberRestorableLazyListState(
+    key: String,
+    resetToken: Any? = null,
+    contentToken: Any? = resetToken,
+): LazyListState {
     val anchor = remember(key) { ShellState.scrollAnchors[key]?.takeIf { it.token == resetToken } }
     val state = rememberLazyListState(anchor?.index ?: 0, anchor?.offset ?: 0)
-    ScrollToTopOnChange(state, resetToken)
+    ScrollToTopOnChange(state, contentToken, initial = resetToken)
     // the effect outlives token changes, so read the latest one
     val currentToken by rememberUpdatedState(resetToken)
     LaunchedEffect(state, key) {
@@ -47,9 +51,9 @@ fun rememberRestorableLazyListState(key: String, resetToken: Any? = null): LazyL
  * Jumps [state] back to the top whenever [key] changes.
  */
 @Composable
-fun ScrollToTopOnChange(state: LazyListState, key: Any?) {
-    val previous = remember(state) { LastKey(key) }
-    if (previous.value != key) {
+fun ScrollToTopOnChange(state: LazyListState, key: Any?, initial: Any? = key) {
+    val previous = remember(state) { LastKey(initial) }
+    if (key != null && previous.value != key) {
         previous.value = key
         state.requestScrollToItem(0)
     }

@@ -134,7 +134,8 @@ fun ConfigScreen(tree: Tree, initialCategory: String? = null, pageKey: String) {
 
         val revision = rememberDisplayRevision(categories)
         val index = remember(categories) { buildSearchIndex(categories) }
-        val results = rememberSearchResults(index, localSearchQuery, pageKey)
+        val search = rememberSearchResults(index, localSearchQuery, pageKey)
+        val results = search.results
         val entries = remember(index, selectedCategory, localSearchQuery, revision, results) {
             when {
                 localSearchQuery.isBlank() ->
@@ -144,7 +145,7 @@ fun ConfigScreen(tree: Tree, initialCategory: String? = null, pageKey: String) {
             }
         }
 
-        val lazyListState = rememberRestorableLazyListState(pageKey, localSearchQuery)
+        val lazyListState = rememberRestorableLazyListState(pageKey, localSearchQuery, search.query)
 
         if (entries.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -203,21 +204,28 @@ private fun rememberDisplayRevision(categories: List<CategoryGroup>): Int {
     return revision
 }
 
+private class LocalSearchResults(
+    val results: Map<SearchRow?, List<SearchDocument<*>>>?,
+    val query: String?,
+)
+
 @Composable
 private fun rememberSearchResults(
     index: Map<Node, SearchRow>,
     query: String,
     pageKey: String,
-): Map<SearchRow?, List<SearchDocument<*>>>? {
+): LocalSearchResults {
     var results by remember(pageKey) { mutableStateOf<Map<SearchRow?, List<SearchDocument<*>>>?>(null) }
+    var searchedQuery by remember(pageKey) { mutableStateOf<String?>(null) }
     LaunchedEffect(index, query, pageKey) {
         results = if (query.isBlank()) emptyMap() else withContext(Dispatchers.Default) {
             SearchCorpus.searchGrouped(query, setOf(SearchScope.Config(pageKey))) { document ->
                 (document.payload as? Node)?.let(index::get)
             }
         }
+        searchedQuery = query
     }
-    return results
+    return LocalSearchResults(results, searchedQuery)
 }
 
 /**

@@ -92,10 +92,11 @@ fun Keybinds() {
     val providerRevision = KeybindProviderRegistry.revision.intValue
     val groups = remember(revision, providerRevision, configs) { collectAllKeybindGroups() }
     val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
-    val searchResults = rememberKeybindSearchResults(groups, localSearchQuery)
+    val search = rememberKeybindSearchResults(groups, localSearchQuery)
+    val searchResults = search.groups
     val visibleGroups = if (localSearchQuery.isBlank()) groups else searchResults.orEmpty()
 
-    val listState = rememberRestorableLazyListState("keybinds", localSearchQuery)
+    val listState = rememberRestorableLazyListState("keybinds", localSearchQuery, search.query)
 
     if (visibleGroups.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -154,14 +155,18 @@ fun Keybinds() {
 /** The group and entry one keybind property renders as, for resolving corpus hits back to rows. */
 private class KeybindOwner(val group: KeybindGroup, val entry: KeybindEntry)
 
+private class KeybindSearchResults(val groups: List<KeybindGroup>?, val query: String?)
+
 @Composable
-private fun rememberKeybindSearchResults(groups: List<KeybindGroup>, query: String): List<KeybindGroup>? {
+private fun rememberKeybindSearchResults(groups: List<KeybindGroup>, query: String): KeybindSearchResults {
     var results by remember { mutableStateOf<List<KeybindGroup>?>(null) }
+    var searchedQuery by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(groups, query) {
         results = if (query.isBlank()) null
         else withContext(Dispatchers.Default) { searchKeybindGroups(groups, query) }
+        searchedQuery = query
     }
-    return results
+    return KeybindSearchResults(results, searchedQuery)
 }
 
 private fun searchKeybindGroups(groups: List<KeybindGroup>, query: String): List<KeybindGroup> {

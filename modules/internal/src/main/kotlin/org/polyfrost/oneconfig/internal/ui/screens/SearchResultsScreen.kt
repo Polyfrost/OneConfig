@@ -66,7 +66,7 @@ fun SearchResultsScreen(query: String) {
         byGroup
     }
 
-    val listState = rememberRestorableLazyListState("global-search", query)
+    val listState = rememberRestorableLazyListState("global-search", query, searchedQuery)
 
     if (matchingMods.isEmpty() && groupedOptions.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
