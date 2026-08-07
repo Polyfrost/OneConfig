@@ -58,7 +58,17 @@ object ComposeSupport {
             return "OneConfig's UI can't start on $osLabel: a required library (AWT or Skiko) is " +
                 "missing from this Java runtime. Try a full JDK/JRE."
         }
-        return null
+        return awtInitFailure()
+    }
+
+    private fun awtInitFailure(): String? = try {
+        Class.forName("java.awt.event.KeyEvent", true, ComposeSupport::class.java.classLoader)
+        null
+    } catch (t: Throwable) {
+        LOG.error("AWT failed to initialize on this runtime; the OneConfig UI has been disabled.", t)
+        "OneConfig's UI can't start on $osLabel: this Java runtime has no working AWT support " +
+            "(java.awt.Toolkit failed to initialize). Try a full JDK/JRE rather than a headless " +
+            "or trimmed-down one."
     }
 
     private const val DISABLE_PROPERTY = "oneconfig.ui.disable"
