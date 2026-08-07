@@ -12,6 +12,7 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.localizedValue
 import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreview
+import java.util.concurrent.ConcurrentHashMap
 
 private const val HUD_CARD_ID_PREFIX = "oneconfig.hud:"
 
@@ -43,9 +44,9 @@ private fun ownerVisible(ownerId: String, owner: ConfigData?): Boolean {
 /**
  * Cache so the search corpus can keep using the same mod cards
  */
-private val cardCache = HashMap<String, HudModCardData>()
+private val cardCache = ConcurrentHashMap<String, HudModCardData>()
 
-internal fun hudModCardConfigs(): List<ConfigData> = synchronized(cardCache) {
+internal fun hudModCardConfigs(): List<ConfigData> {
     @Suppress("UNUSED_VARIABLE")
     val revision = HudManager.revision
 
@@ -58,8 +59,11 @@ internal fun hudModCardConfigs(): List<ConfigData> = synchronized(cardCache) {
         if (!ownerVisible(ownerId, owner)) continue
         val id = hudCardId(hud, ownerId)
         if (!seen.add(id)) continue
-        val cached = cardCache[id]?.takeIf { it.hud === hud && it.owner === owner }
-        out.add(cached ?: HudModCardData(hud, ownerId, owner, id).also { cardCache[id] = it })
+        out.add(
+            cardCache.compute(id) { _, cached ->
+                cached?.takeIf { it.hud === hud && it.owner === owner } ?: HudModCardData(hud, ownerId, owner, id)
+            }!!,
+        )
     }
     cardCache.keys.retainAll(seen)
     return out

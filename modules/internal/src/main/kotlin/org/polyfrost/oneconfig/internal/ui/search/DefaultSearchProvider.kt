@@ -14,6 +14,7 @@ internal object DefaultSearchProvider : SearchProvider {
         val q = query.trim()
         if (q.isEmpty()) return emptyList()
         val searchingKeybinds = SearchScope.Keybinds in scopes
+        val searchingConfig = scopes.any { it is SearchScope.Config }
         return SearchCorpus.corpus.values.filter {
             if (scopes.none { s -> s in it.scopes }) {
                 return@filter false
@@ -25,6 +26,11 @@ internal object DefaultSearchProvider : SearchProvider {
             }
             if (meta.title.matches(q) || meta.description.matches(q)) return@filter true
             if (meta.tags.any { t -> t.matches(q) }) return@filter true
+            // Config specific
+            if (searchingConfig && it.scopes.any { s -> s is SearchScope.Config } &&
+                (meta.category.matches(q) || meta.subcategory.matches(q) || meta.id.matches(q))) {
+                return@filter true
+            }
             // Hud specific
             if (SearchScope.Huds in it.scopes && (
                         meta.category.matches(q) || meta.subcategory.matches(q) ||
@@ -32,7 +38,7 @@ internal object DefaultSearchProvider : SearchProvider {
                         )
             ) return@filter true
             // Match old search for keybinds
-            if (searchingKeybinds && (
+            if (searchingKeybinds && SearchScope.Keybinds in it.scopes && (
                         meta.category.matches(q) || meta.subcategory.matches(q) ||
                                 meta.id.matches(q) || meta.path.matches(q)
                         )

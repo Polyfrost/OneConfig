@@ -6,7 +6,9 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 
 /**
@@ -32,9 +34,11 @@ fun rememberRestorableLazyListState(key: String, resetToken: Any? = null): LazyL
     val anchor = remember(key) { ShellState.scrollAnchors[key]?.takeIf { it.token == resetToken } }
     val state = rememberLazyListState(anchor?.index ?: 0, anchor?.offset ?: 0)
     ScrollToTopOnChange(state, resetToken)
+    // the effect outlives token changes, so read the latest one
+    val currentToken by rememberUpdatedState(resetToken)
     LaunchedEffect(state, key) {
         snapshotFlow { ScrollAnchor(state.firstVisibleItemIndex, state.firstVisibleItemScrollOffset) }
-            .collect { ShellState.scrollAnchors[key] = it.copy(token = resetToken) }
+            .collect { ShellState.scrollAnchors[key] = it.copy(token = currentToken) }
     }
     return state
 }

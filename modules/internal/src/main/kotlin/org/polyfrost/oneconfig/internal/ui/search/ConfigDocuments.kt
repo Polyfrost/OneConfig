@@ -137,6 +137,7 @@ private fun treeDocuments(
                 modTitle = modTitle?.takeIf { it.isNotBlank() },
                 modDescription = modDescription?.takeIf { it.isNotBlank() },
                 tags = searchTags,
+                path = path
             ),
             payload = node,
         )

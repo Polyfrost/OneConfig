@@ -16,7 +16,6 @@ import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 object ConfigRegistry {
     private val hiddenModCardIds = setOf(
         "oneconfig.json",
-        "oneconfig.builtin",
         "themes.json",
         "oneconfig.builtin", // built-in huds
         "minecraft",

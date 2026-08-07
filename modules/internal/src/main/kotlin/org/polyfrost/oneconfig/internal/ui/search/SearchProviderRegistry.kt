@@ -23,7 +23,8 @@ object SearchProviderRegistry {
     /**
      * Get the search provider with the highest priority that is currently available
      */
-    internal fun get(): SearchProvider = providers.first { it.isAvailable() }
+    internal fun get(): SearchProvider =
+        providers.firstOrNull { runCatching { it.isAvailable() }.getOrNull() ?: false } ?: DefaultSearchProvider
 
     internal fun all(): List<SearchProvider> = providers.toList()
 

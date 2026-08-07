@@ -49,6 +49,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getCategory ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
 	public final fun getConfigId ()Ljava/lang/String;
 	public fun getCustomScale ()F
+	public fun getDescription ()Ljava/lang/String;
 	public final fun getEffectiveAnchorParent ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public final fun getEffectiveAnchorPoint ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public final fun getEffectiveGrowthAnchor ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
@@ -74,6 +75,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getRuntimeOrNull ()Lorg/polyfrost/compose/runtime/PolyComposeRuntime;
 	public fun getScaledHeight ()F
 	public fun getScaledWidth ()F
+	public fun getSearchTags ()Ljava/util/List;
 	public final fun getSection ()Lorg/polyfrost/oneconfig/api/hud/v1/Section;
 	public final fun getSelfAnchorPoint ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public final fun getShadowChroma ()Z

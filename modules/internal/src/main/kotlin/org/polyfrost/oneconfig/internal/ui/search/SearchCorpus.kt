@@ -32,7 +32,7 @@ object SearchCorpus {
     private val rebuildMutex = Mutex()
     private val sources = ArrayList<SearchDocumentSource>()
 
-    /** Sources which need to be run again on the next rebuild. */
+    /** Sources which need to be run again on the next rebuild, only touched under `synchronized(sources)`. */
     private val dirtySources = HashSet<SearchDocumentSource>()
 
     /** What every source built, only touched under [rebuildMutex]. */
@@ -61,6 +61,7 @@ object SearchCorpus {
     fun unregisterSource(source: SearchDocumentSource) {
         synchronized(sources) {
             if (!sources.remove(source)) return
+            dirtySources -= source
         }
         schedule()
     }
@@ -159,9 +160,7 @@ object SearchCorpus {
         val dirty: Set<SearchDocumentSource>
         synchronized(sources) {
             snapshot = sources.toList()
-            synchronized(dirtySources) {
-                dirty = expandDirty(dirtySources, snapshot)
-            }
+            dirty = expandDirty(dirtySources, snapshot)
         }
 
         val previous = corpus
@@ -172,6 +171,7 @@ object SearchCorpus {
             val cached = produced[source]
             val sourceDocuments = if (cached != null && source !in dirty) cached else {
                 asked++
+                synchronized(sources) { dirtySources -= source }
                 try {
                     // Keep the previous element of the corpus if nothing changed
                     source.documents().map { document ->
@@ -179,6 +179,8 @@ object SearchCorpus {
                     }
                 } catch (e: Throwable) {
                     LOGGER.error("Search document source ${source.javaClass.name} failed", e)
+                    // Add this source as dirty, since it failed
+                    synchronized(sources) { if (source in sources) dirtySources += source }
                     cached ?: continue
                 }
             }
@@ -209,9 +211,6 @@ object SearchCorpus {
         // Swap to new corpus, non-cancellable to prevent desyncs with search providers
         withContext(NonCancellable) {
             corpus = documents
-            // Update sources that are no longer dirty
-            dirtySources -= dirty
-
             if (ConfigDocumentSource in dirty) GlobalSettingIndex.rebuild()
             LOGGER.info(
                 "Rebuilt corpus from $asked/${snapshot.size} sources, " +

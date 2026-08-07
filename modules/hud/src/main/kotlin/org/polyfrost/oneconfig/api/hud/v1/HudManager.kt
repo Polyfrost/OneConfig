@@ -247,7 +247,6 @@ object HudManager {
     fun providers(): Collection<Hud> = hudProviders.values
 
     fun <T : Hud> unregister(hud: T, removeActiveInstances: Boolean = false, delete: Boolean = false): ArrayList<T>? {
-        hudProviders.remove(hud::class.java)
         if (hudProviders.remove(hud::class.java) != null) revision++
         notifyRegistrationChanged()
         if (!removeActiveInstances) return null
