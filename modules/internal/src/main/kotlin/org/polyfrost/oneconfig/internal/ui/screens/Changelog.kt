@@ -66,8 +66,8 @@ import org.commonmark.parser.Parser
 import org.polyfrost.oneconfig.internal.ui.api.ChangelogData
 import org.polyfrost.oneconfig.internal.ui.api.ChangelogSection
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.searchMatches
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ChangeLogEntryRoute
+import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent

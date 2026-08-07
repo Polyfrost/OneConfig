@@ -71,6 +71,7 @@ public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public static fun active ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
 	public static fun activeProfile ()Ljava/lang/String;
 	public static fun addProfileChangeListener (Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager$ProfileChangeListener;)V
+	public static fun addTreeRegistrationListener (Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager$TreeRegistrationListener;)V
 	public static fun backup ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
 	public static fun collect (Ljava/lang/Object;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public static fun core ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
@@ -107,6 +108,10 @@ public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 
 public abstract interface class org/polyfrost/oneconfig/api/config/v1/ConfigManager$ProfileChangeListener {
 	public abstract fun onProfileChanged (Ljava/lang/String;)V
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/config/v1/ConfigManager$TreeRegistrationListener {
+	public abstract fun onTreeRegistered (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 }
 
 public class org/polyfrost/oneconfig/api/config/v1/KtConfig : org/polyfrost/oneconfig/api/config/v1/Config {

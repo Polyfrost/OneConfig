@@ -42,8 +42,10 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.skia.Paint
 import org.polyfrost.compose.render.FontManager
@@ -55,7 +57,6 @@ import org.polyfrost.oneconfig.api.hud.v1.HudResize
 import org.polyfrost.oneconfig.api.notifications.v1.Notification
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
-import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils
 import org.polyfrost.oneconfig.internal.OneConfigConfig
@@ -65,11 +66,14 @@ import org.polyfrost.oneconfig.internal.ui.components.layout.FlexibleLayout
 import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasPasteMenu
 import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasResetMenu
 import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudOverlayBridge
+import org.polyfrost.oneconfig.internal.ui.hud.modNameFor
 import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreviewCanvas
 import org.polyfrost.oneconfig.internal.ui.hud.components.rememberHudPreview
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Designer
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Settings
+import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
+import org.polyfrost.oneconfig.internal.ui.search.SearchScope
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
@@ -1083,13 +1087,13 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     val providers = remember { HudManager.providers().toList() }
     val modIds = remember(providers) { providers.mapNotNull { it.configId }.distinct() }
     val modNames = remember(modIds) { modIds.associateWith { modNameFor(it) ?: it } }
-    val librarySections = providers
-        .filter { hud ->
-            (searchText.isEmpty() || localizedLabel(hud.title)?.contains(searchText, ignoreCase = true) == true) &&
-                (hud.multipleInstancesAllowed() || HudManager.getHudsOfType(hud::class.java).isEmpty())
-        }
-        .groupBy { it.configId }
-        .map { (modId, huds) -> HudLibrarySection(modId, modId?.let { modNames[it] } ?: "Other", huds) }
+    val searchHits = rememberHudSearchResults(providers, searchText)
+    val groupedHuds = searchHits ?: providers.groupBy { it.configId }.map { (modId, huds) -> modId to huds }
+    val librarySections = groupedHuds.mapNotNull { (modId, huds) ->
+        huds.filter { it.multipleInstancesAllowed() || HudManager.getHudsOfType(it::class.java).isEmpty() }
+            .takeIf { it.isNotEmpty() }
+            ?.let { HudLibrarySection(modId, modId?.let { id -> modNames[id] } ?: "Other", it) }
+    }
     val librarySectionIds = librarySections.map { it.modId }
     val scrolledLibraryMod = librarySections
         .lastOrNull { section ->
@@ -2552,15 +2556,6 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
 }
 
 
-private fun modNameFor(configId: String): String? {
-    val modId = configId.removeSuffix(".json").substringBefore('/')
-    ModInfo.loadedMods.firstOrNull { it.id == modId }?.name?.let { return it }
-    val config = ConfigRegistry.findById(configId)
-        ?: ConfigRegistry.findById("$configId.json")
-        ?: ConfigRegistry.configs.firstOrNull { it.id.removeSuffix(".json") == modId }
-    return config?.title?.asRenderText()
-}
-
 @Composable
 private fun DesignStudioPanel(
     selectedHud: Hud?,
@@ -2676,6 +2671,23 @@ private fun DesignStudioPanel(
             }
         }
     }
+}
+
+@Composable
+private fun rememberHudSearchResults(providers: List<Hud>, query: String): List<Pair<String?, List<Hud>>>? {
+    var results by remember { mutableStateOf<List<Pair<String?, List<Hud>>>?>(null) }
+    LaunchedEffect(providers, query) {
+        results = if (query.isBlank()) null
+        else withContext(Dispatchers.Default) {
+            val known = providers.toHashSet()
+            SearchCorpus.searchGrouped(query, setOf(SearchScope.Huds)) { (it.payload as? Hud)?.configId }
+                .map { (modId, documents) ->
+                    modId to documents.mapNotNull { document -> (document.payload as? Hud)?.takeIf { it in known } }
+                }
+                .filter { (_, huds) -> huds.isNotEmpty() }
+        }
+    }
+    return results
 }
 
 /** One mod's worth of addable HUDs, as shown in the continuous library list. */

@@ -58,11 +58,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.function.Consumer
 import kotlin.math.roundToInt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
-import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.components.Chip
@@ -72,42 +73,34 @@ import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
-import org.polyfrost.oneconfig.internal.ui.components.localizedGroup
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.components.searchMatches
 import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidth
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
+import org.polyfrost.oneconfig.internal.ui.search.CategoryGroup
+import org.polyfrost.oneconfig.internal.ui.search.ConfigListEntry
+import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
+import org.polyfrost.oneconfig.internal.ui.search.SearchDocument
+import org.polyfrost.oneconfig.internal.ui.search.SearchRow
+import org.polyfrost.oneconfig.internal.ui.search.SearchScope
+import org.polyfrost.oneconfig.internal.ui.search.SettingNode
+import org.polyfrost.oneconfig.internal.ui.search.SubcategoryGroup
+import org.polyfrost.oneconfig.internal.ui.search.buildCategories
+import org.polyfrost.oneconfig.internal.ui.search.buildSearchIndex
+import org.polyfrost.oneconfig.internal.ui.search.filterHiddenNodes
+import org.polyfrost.oneconfig.internal.ui.search.flattenEntries
+import org.polyfrost.oneconfig.internal.ui.search.flattenSearchEntries
+import org.polyfrost.oneconfig.internal.ui.search.searchMatches
+import org.polyfrost.oneconfig.internal.ui.search.searchNode
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.util.LayoutRef
-
-private sealed interface SettingNode {
-    data class Leaf(val prop: Property<*>) : SettingNode
-    data class Accordion(val tree: Tree, val head: Property<Boolean>?, val body: List<Property<*>>) : SettingNode
-}
-
-private data class CategoryGroup(
-    val name: String,
-    val subcategories: List<SubcategoryGroup>
-)
-
-private data class SubcategoryGroup(
-    val name: String,
-    val nodes: List<SettingNode>
-)
-
-private sealed interface ConfigListEntry {
-    data class CategoryHeader(val title: String) : ConfigListEntry
-    data class SubcategoryHeader(val title: String) : ConfigListEntry
-    data class Item(val node: SettingNode) : ConfigListEntry
-}
 
 @Composable
 fun ConfigScreen(tree: Tree, initialCategory: String? = null, pageKey: String) {
@@ -140,40 +133,39 @@ fun ConfigScreen(tree: Tree, initialCategory: String? = null, pageKey: String) {
         }
 
         val revision = rememberDisplayRevision(categories)
-        val entries = remember(categories, selectedCategory, localSearchQuery, revision) {
-            if (localSearchQuery.isBlank()) {
-                selectedCategory?.let(::filterHiddenNodes)?.let(::flattenEntries).orEmpty()
-            } else {
-                flattenSearchEntries(filterCategories(categories, localSearchQuery).mapNotNull(::filterHiddenNodes))
+        val index = remember(categories) { buildSearchIndex(categories) }
+        val search = rememberSearchResults(index, localSearchQuery, pageKey)
+        val results = search.results
+        val entries = remember(index, selectedCategory, localSearchQuery, revision, results) {
+            when {
+                localSearchQuery.isBlank() ->
+                    selectedCategory?.let(::filterHiddenNodes)?.let(::flattenEntries).orEmpty()
+                results == null -> emptyList()
+                else -> flattenSearchEntries(searchCategories(results))
             }
         }
 
+        val lazyListState = rememberRestorableLazyListState(pageKey, localSearchQuery, search.query)
+
         if (entries.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                val message = if (localSearchQuery.isBlank()) "No settings available."
-                else "No settings match \"$localSearchQuery\""
+                val message = when {
+                    localSearchQuery.isBlank() -> "No settings available."
+                    results == null -> "Searching..."
+                    else -> "No settings match \"$localSearchQuery\""
+                }
                 Text(message, color = LocalTheme.current.textColorSecondary)
             }
             return@Column
         }
 
-        val lazyListState = rememberRestorableLazyListState(pageKey)
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
                 state = lazyListState,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(end = 16.dp)
             ) {
-                items(entries) { entry ->
-                    when (entry) {
-                        is ConfigListEntry.CategoryHeader -> CategoryHeader(entry.title)
-                        is ConfigListEntry.SubcategoryHeader -> SubcategoryHeader(entry.title)
-                        is ConfigListEntry.Item -> when (val node = entry.node) {
-                            is SettingNode.Leaf -> SettingRow(node.prop)
-                            is SettingNode.Accordion -> AccordionRow(node)
-                        }
-                    }
-                }
+                items(entries) { entry -> ConfigListRow(entry) }
             }
             VerticalScrollbar(
                 adapter = rememberScrollbarAdapter(lazyListState),
@@ -182,52 +174,6 @@ fun ConfigScreen(tree: Tree, initialCategory: String? = null, pageKey: String) {
         }
     }
 }
-
-private fun flattenEntries(category: CategoryGroup): List<ConfigListEntry> {
-    val showHeaders = category.subcategories.size > 1 || category.subcategories.any {
-        it.name != ConfigVisualizer.DEFAULT_SUBCATEGORY
-    }
-    return buildList {
-        category.subcategories.forEach { subcategory ->
-            if (showHeaders) {
-                add(ConfigListEntry.SubcategoryHeader(subcategory.name))
-            }
-            subcategory.nodes.forEach { add(ConfigListEntry.Item(it)) }
-        }
-    }
-}
-
-private fun flattenSearchEntries(categories: List<CategoryGroup>): List<ConfigListEntry> {
-    return buildList {
-        val showCategoryHeaders = categories.size > 1
-        categories.forEach { category ->
-            if (showCategoryHeaders) {
-                add(ConfigListEntry.CategoryHeader(category.name))
-            }
-            addAll(flattenEntries(category))
-        }
-    }
-}
-
-/**
- * Drop nodes which are currently hidden by an unmet dependency, so that they never occupy an entry in the
- * (lazy) setting list. Emitting a zero-height row for them instead leaves stray gaps and empty headers, and the
- * row cannot observe its own display state while it is scrolled out of composition.
- */
-private fun filterHiddenNodes(category: CategoryGroup): CategoryGroup? {
-    val subcategories = category.subcategories.mapNotNull { subcategory ->
-        val nodes = subcategory.nodes.filter { node ->
-            when (node) {
-                is SettingNode.Leaf -> !node.prop.isHidden()
-                is SettingNode.Accordion -> node.head?.isHidden() == false || node.body.any { !it.isHidden() }
-            }
-        }
-        if (nodes.isEmpty()) null else subcategory.copy(nodes = nodes)
-    }
-    return if (subcategories.isEmpty()) null else category.copy(subcategories = subcategories)
-}
-
-private fun Property<*>.isHidden(): Boolean = display == Property.Display.HIDDEN
 
 private fun categoryProperties(categories: List<CategoryGroup>): List<Property<*>> {
     return categories.flatMap { category ->
@@ -256,6 +202,45 @@ private fun rememberDisplayRevision(categories: List<CategoryGroup>): Int {
         onDispose { props.forEach { it.removeDisplayListener(listener) } }
     }
     return revision
+}
+
+private class LocalSearchResults(
+    val results: Map<SearchRow?, List<SearchDocument<*>>>?,
+    val query: String?,
+)
+
+@Composable
+private fun rememberSearchResults(
+    index: Map<Node, SearchRow>,
+    query: String,
+    pageKey: String,
+): LocalSearchResults {
+    var results by remember(pageKey) { mutableStateOf<Map<SearchRow?, List<SearchDocument<*>>>?>(null) }
+    var searchedQuery by remember(pageKey) { mutableStateOf<String?>(null) }
+    LaunchedEffect(index, query, pageKey) {
+        results = if (query.isBlank()) emptyMap() else withContext(Dispatchers.Default) {
+            SearchCorpus.searchGrouped(query, setOf(SearchScope.Config(pageKey))) { document ->
+                (document.payload as? Node)?.let(index::get)
+            }
+        }
+        searchedQuery = query
+    }
+    return LocalSearchResults(results, searchedQuery)
+}
+
+/**
+ * Rebuild categories from matched search results
+ */
+private fun searchCategories(grouped: Map<SearchRow?, List<SearchDocument<*>>>): List<CategoryGroup> {
+    val byCategory = LinkedHashMap<String, LinkedHashMap<String, MutableList<SettingNode>>>()
+    grouped.forEach { (row, documents) ->
+        if (row == null || documents.isEmpty()) return@forEach
+        val node = searchNode(row.node, documents) ?: return@forEach
+        byCategory.getOrPut(row.category) { LinkedHashMap() }.getOrPut(row.subcategory) { ArrayList() } += node
+    }
+    return byCategory.map { (category, subcategories) ->
+        CategoryGroup(category, subcategories.map { (name, nodes) -> SubcategoryGroup(name, nodes) })
+    }
 }
 
 private fun filterCategories(categories: List<CategoryGroup>, query: String): List<CategoryGroup> {
@@ -303,60 +288,6 @@ private fun Tree.matchesLocalSearch(category: String, subcategory: String, query
         .any { searchMatches(it.asRenderText(), query) }
 }
 
-private fun buildCategories(tree: Tree): List<CategoryGroup> {
-    val grouped = LinkedHashMap<String, LinkedHashMap<String, MutableList<SettingNode>>>()
-    tree.map.values.forEach { node ->
-        val category = nodeGroup(node, "category", ConfigVisualizer.DEFAULT_CATEGORY)
-        val subcategory = nodeGroup(node, "subcategory", ConfigVisualizer.DEFAULT_SUBCATEGORY)
-        val bucket = grouped.getOrPut(category) { LinkedHashMap() }.getOrPut(subcategory) { ArrayList() }
-
-        when (node) {
-            is Property<*> -> {
-                if (isRenderableProperty(node)) {
-                    bucket += SettingNode.Leaf(node)
-                }
-            }
-            is Tree -> buildAccordionNode(node)?.let(bucket::add)
-        }
-    }
-
-    return grouped.mapNotNull { (category, subcategories) ->
-        val groups = subcategories.mapNotNull { (subcategory, nodes) ->
-            if (nodes.isEmpty()) null else SubcategoryGroup(subcategory, nodes.toList())
-        }
-        if (groups.isEmpty()) null else CategoryGroup(category, groups)
-    }
-}
-
-private fun buildAccordionNode(tree: Tree): SettingNode.Accordion? {
-    val properties = tree.map.values.filterIsInstance<Property<*>>()
-    if (properties.isEmpty()) {
-        return null
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    val head = properties.firstOrNull(::isAccordionToggle) as? Property<Boolean>
-    val body = properties
-        .filter { it !== head }
-        .filter(::isRenderableProperty)
-
-    if (body.isEmpty()) {
-        return null
-    }
-
-    return SettingNode.Accordion(tree, head, body)
-}
-
-private fun isAccordionToggle(prop: Property<*>): Boolean {
-    val isBoolean = prop.type == Boolean::class.java || prop.type == Boolean::class.javaPrimitiveType
-    return isBoolean && prop.getMetadata<Any?>("visualizer") == null
-}
-
-private fun isRenderableProperty(prop: Property<*>): Boolean {
-    if (prop.getMetadata<Any?>("hidden") != null) return false
-    return (prop.getMetadata<Any?>("visualizer") != null) || prop.canDisplay()
-}
-
 private fun isWideControl(prop: Property<*>): Boolean {
     return when (prop.getMetadata<Any?>("visualizer")) {
         Visualizer.SliderVisualizer::class.java -> true
@@ -365,8 +296,26 @@ private fun isWideControl(prop: Property<*>): Boolean {
     }
 }
 
-private fun nodeGroup(node: Node, key: String, default: String): String {
-    return node.localizedGroup(key, "${key}Key", default)
+/**
+ * Renders one entry of a flattened settings list. [compact] decides per node whether its row stacks the label above the
+ * control, which the HUD editor needs for its narrower column.
+ */
+@Composable
+internal fun ConfigListRow(entry: ConfigListEntry, compact: (SettingNode) -> Boolean = { false }) {
+    when (entry) {
+        is ConfigListEntry.CategoryHeader -> CategoryHeader(entry.title)
+        is ConfigListEntry.SubcategoryHeader -> SubcategoryHeader(entry.title)
+        is ConfigListEntry.Item -> SettingEntryRow(entry.node, compact(entry.node))
+    }
+}
+
+/** Renders one settings row */
+@Composable
+internal fun SettingEntryRow(node: SettingNode, compact: Boolean = false) {
+    when (node) {
+        is SettingNode.Leaf -> SettingRow(node.prop, compact = compact)
+        is SettingNode.Accordion -> AccordionRow(node, compact = compact)
+    }
 }
 
 @Composable
@@ -838,7 +787,7 @@ fun HudConfigScreen(tree: Tree, initialCategory: String? = null) {
     val filteredTree = remember(tree) {
         tree
     }
-    val categories = remember(filteredTree) { buildHudCategories(filteredTree) }
+    val categories = remember(filteredTree) { buildCategories(filteredTree) { !isHudInternal(it) } }
     val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
     var selectedCategory by remember(filteredTree, initialCategory) {
         mutableStateOf(
@@ -884,16 +833,7 @@ fun HudConfigScreen(tree: Tree, initialCategory: String? = null) {
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            entries.forEach { entry ->
-                when (entry) {
-                    is ConfigListEntry.CategoryHeader -> CategoryHeader(entry.title)
-                    is ConfigListEntry.SubcategoryHeader -> SubcategoryHeader(entry.title)
-                    is ConfigListEntry.Item -> when (val node = entry.node) {
-                        is SettingNode.Leaf -> SettingRow(node.prop, compact = isWideControl(node.prop))
-                        is SettingNode.Accordion -> AccordionRow(node, compact = node.body.any(::isWideControl))
-                    }
-                }
-            }
+            entries.forEach { entry -> ConfigListRow(entry, ::hasWideControl) }
         }
     }
     }
@@ -903,30 +843,8 @@ private fun isHudInternal(node: Node): Boolean {
     return node.getMetadata<Any?>("hudInternal") != null
 }
 
-private fun buildHudCategories(tree: Tree): List<CategoryGroup> {
-    val grouped = LinkedHashMap<String, LinkedHashMap<String, MutableList<SettingNode>>>()
-    tree.map.values.forEach { node ->
-        // skip hudInternal nodes
-        if (isHudInternal(node)) return@forEach
-
-        val category = nodeGroup(node, "category", ConfigVisualizer.DEFAULT_CATEGORY)
-        val subcategory = nodeGroup(node, "subcategory", ConfigVisualizer.DEFAULT_SUBCATEGORY)
-        val bucket = grouped.getOrPut(category) { LinkedHashMap() }.getOrPut(subcategory) { ArrayList() }
-
-        when (node) {
-            is Property<*> -> {
-                if (isRenderableProperty(node)) {
-                    bucket += SettingNode.Leaf(node)
-                }
-            }
-            is Tree -> buildAccordionNode(node)?.let(bucket::add)
-        }
-    }
-
-    return grouped.mapNotNull { (category, subcategories) ->
-        val groups = subcategories.mapNotNull { (subcategory, nodes) ->
-            if (nodes.isEmpty()) null else SubcategoryGroup(subcategory, nodes.toList())
-        }
-        if (groups.isEmpty()) null else CategoryGroup(category, groups)
-    }
+/** The HUD editor's column is narrow, so any row holding a wide control stacks its label above it. */
+private fun hasWideControl(node: SettingNode): Boolean = when (node) {
+    is SettingNode.Leaf -> isWideControl(node.prop)
+    is SettingNode.Accordion -> node.body.any(::isWideControl)
 }

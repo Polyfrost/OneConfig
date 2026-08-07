@@ -11,8 +11,9 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.noCache
 import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
+import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
+import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
 import java.lang.reflect.Field
-import java.util.UUID
 import java.util.function.Consumer
 import java.util.function.DoubleConsumer
 import java.util.function.DoubleSupplier
@@ -59,23 +60,32 @@ object Tr7zwConfigCompat {
         }
 
         var category = DEFAULT_CATEGORY
+        var categoryPath = idPart(DEFAULT_CATEGORY, "general")
         var added = false
+        val usedIds = HashSet<String>()
         for (option in options) {
             if (option == null) continue
-            val splitLine = readSplitLineName(option)
-            if (splitLine != null) {
-                category = splitLine
+            if (option.javaClass.simpleName == "SplitLine") {
+                val splitKey = readTranslationKey(option)
+                category = splitKey?.let { resolveTranslation(it) ?: cleanKey(it) } ?: DEFAULT_CATEGORY
+                categoryPath = idPart(splitKey, "general")
                 continue
             }
             runCatching {
-                if (parseOption(option, category, tree)) added = true
+                if (parseOption(option, category, categoryPath, tree, usedIds)) added = true
             }.onFailure { LOGGER.warn("Failed to parse tr7zw option", it) }
         }
 
         return if (added) tree else null
     }
 
-    private fun parseOption(option: Any, category: String, root: Tree): Boolean {
+    private fun parseOption(
+        option: Any,
+        category: String,
+        categoryPath: String,
+        root: Tree,
+        usedIds: MutableSet<String>,
+    ): Boolean {
         val key = readTranslationKey(option) ?: return false
         val name = resolveTranslation(key) ?: cleanKey(key)
         val description = resolveTranslation("$key.tooltip")
@@ -91,7 +101,7 @@ object Tr7zwConfigCompat {
         val property = Properties.functional(
             getter = builder.getter,
             setter = builder.setter,
-            id = UUID.randomUUID().toString(),
+            id = uniqueId(usedIds, "$categoryPath/${idPart(key, "option")}"),
             name = name,
             description = description,
         )
@@ -172,12 +182,6 @@ object Tr7zwConfigCompat {
 
     private fun readTranslationKey(option: Any): String? =
         runCatching { recordComponent(option, "translationKey") as? String }.getOrNull()
-
-    private fun readSplitLineName(option: Any): String? {
-        if (option.javaClass.simpleName != "SplitLine") return null
-        val key = readTranslationKey(option) ?: return DEFAULT_CATEGORY
-        return resolveTranslation(key) ?: cleanKey(key)
-    }
 
     private fun readScreenTitle(screen: Any): String? {
         val field = findField(screen.javaClass, "title")?.apply { isAccessible = true } ?: return null

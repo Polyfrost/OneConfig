@@ -13,6 +13,7 @@ data class ModInfo @JvmOverloads constructor(
     val modIconPath: String?,
     val authors: String? = null,
     val credits: String? = null,
+    val description: String? = null,
 ){
     /**
      * Resolves [modIconPath] against this mod's own jar root ([file]) and copies the icon out to a

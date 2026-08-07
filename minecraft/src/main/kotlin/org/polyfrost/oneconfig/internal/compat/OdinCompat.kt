@@ -164,13 +164,13 @@ private object OdinSettingsAdapter {
         val module = hud.module
         val huds = module.settings.values.filterIsInstance<HUDSetting>()
         val out = ArrayList<Property<*>>()
-        for (setting in module.settings.values) {
+        for ((index, setting) in module.settings.values.withIndex()) {
             if (setting !is RenderableSetting<*>) continue
             if (setting is HUDSetting) continue
             if (setting is DropdownSetting) continue
             if (setting is KeybindSetting) continue
             if (!ownedByHud(setting, hud, huds)) continue
-            runCatching { buildProperty(setting) }.getOrNull()?.let(out::add)
+            runCatching { buildProperty(setting, index) }.getOrNull()?.let(out::add)
         }
         return out
     }
@@ -198,8 +198,8 @@ private object OdinSettingsAdapter {
     private fun baseToken(hudName: String): String =
         hudName.trim().removeSuffix("HUD").removeSuffix("Hud").removeSuffix("hud").trim().lowercase()
 
-    private fun buildProperty(setting: RenderableSetting<*>): Property<*>? {
-        val id = settingId(setting)
+    private fun buildProperty(setting: RenderableSetting<*>, index: Int): Property<*>? {
+        val id = settingId(setting, index)
         val prop: Property<*> = when (setting) {
             is BooleanSetting -> Properties.functional<Boolean>(
                 { setting.value }, { setting.value = it },
@@ -260,9 +260,10 @@ private object OdinSettingsAdapter {
         return prop
     }
 
-    private fun settingId(setting: RenderableSetting<*>): String {
+    // Fallback to position in config if name is empty
+    private fun settingId(setting: RenderableSetting<*>, index: Int): String {
         val normalized = setting.name.lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_')
-        return "odin_setting_" + normalized.ifEmpty { System.identityHashCode(setting).toString() }
+        return "odin_setting_" + normalized.ifEmpty { index.toString() }
     }
 
     private fun colorAllowsAlpha(setting: ColorSetting): Boolean = runCatching {

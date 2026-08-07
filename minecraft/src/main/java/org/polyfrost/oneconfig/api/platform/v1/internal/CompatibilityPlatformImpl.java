@@ -50,7 +50,8 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
                         metadata.getContributors().stream()
                                 .map(person -> person.getName())
                                 .filter(name -> !name.isBlank())
-                                .collect(Collectors.joining(", "))
+                                .collect(Collectors.joining(", ")),
+                        metadata.getDescription()
                     );
                 }).collect(Collectors.toSet());
         //? }

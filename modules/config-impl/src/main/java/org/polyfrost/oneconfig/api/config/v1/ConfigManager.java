@@ -69,6 +69,7 @@ public final class ConfigManager {
     private static final Map<String, Config> initializedConfigs = new LinkedHashMap<>();
     private static boolean rebindingProfiles = false;
     private static final java.util.concurrent.CopyOnWriteArrayList<ProfileChangeListener> profileListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
+    private static final java.util.concurrent.CopyOnWriteArrayList<TreeRegistrationListener> treeListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
 
     public static final String PROFILE_LOCAL_METADATA = "profileLocal";
 
@@ -76,8 +77,17 @@ public final class ConfigManager {
         void onProfileChanged(String newProfile);
     }
 
+    public interface TreeRegistrationListener {
+        void onTreeRegistered(@NotNull Tree tree);
+    }
+
     public static void addProfileChangeListener(ProfileChangeListener listener) {
         profileListeners.add(listener);
+    }
+
+    @ApiStatus.Internal
+    public static void addTreeRegistrationListener(TreeRegistrationListener listener) {
+        treeListeners.add(listener);
     }
 
     public static Path profileDir(String profile) {
@@ -705,7 +715,20 @@ public final class ConfigManager {
     }
 
     public Backend.RegistrationResult register(Tree t) {
-        return backend.register(t);
+        Backend.RegistrationResult result = backend.register(t);
+        if (this == active) notifyTreeRegistered(result.get());
+        return result;
+    }
+
+    private static void notifyTreeRegistered(Tree tree) {
+        if (tree == null || tree.getID() == null || treeListeners.isEmpty()) return;
+        for (TreeRegistrationListener listener : treeListeners) {
+            try {
+                listener.onTreeRegistered(tree);
+            } catch (Throwable t) {
+                LOGGER.error("Tree registration listener failed for {}", tree.getID(), t);
+            }
+        }
     }
 
     public boolean delete(String id) {

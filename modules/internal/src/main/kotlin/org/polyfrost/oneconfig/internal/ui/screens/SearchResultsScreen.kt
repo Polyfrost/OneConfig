@@ -12,23 +12,25 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollbarAdapter
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
-import org.polyfrost.oneconfig.internal.ui.components.ModResult
-import org.polyfrost.oneconfig.internal.ui.components.OptionResult
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.performSearch
+import org.polyfrost.oneconfig.internal.ui.search.GlobalSettingIndex
+import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
+import org.polyfrost.oneconfig.internal.ui.search.SearchDocument
+import org.polyfrost.oneconfig.internal.ui.search.SearchRow
+import org.polyfrost.oneconfig.internal.ui.search.SearchScope
+import org.polyfrost.oneconfig.internal.ui.search.SettingNode
+import org.polyfrost.oneconfig.internal.ui.search.searchNode
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-import org.polyfrost.oneconfig.api.config.v1.Property
 
 private const val MOD_GRID_COLUMNS = 4
 private val MOD_GRID_GAP = 19.dp
@@ -36,31 +38,46 @@ private val MOD_GRID_GAP = 19.dp
 @Composable
 fun SearchResultsScreen(query: String) {
     val theme = LocalTheme.current
-    val results by remember(query) { derivedStateOf { performSearch(query) } }
+
+    // Run search asynchronously
+    var searchedQuery by remember { mutableStateOf<String?>(null) }
+    var results by remember { mutableStateOf<Map<SearchRow?, List<SearchDocument<*>>>>(emptyMap()) }
+    LaunchedEffect(query) {
+        val found = withContext(Dispatchers.Default) {
+            SearchCorpus.searchGrouped(query, setOf(SearchScope.Mods, SearchScope.Options), GlobalSettingIndex::rowOf)
+        }
+        results = found
+        searchedQuery = query
+    }
 
     val matchingMods: List<ConfigData> = remember(results) {
-        results.values.flatten().filterIsInstance<ModResult>().map { it.config }
+        results[null].orEmpty().map { it.payload }.filterIsInstance<ConfigData>()
     }
-    val groupedOptions: Map<String, List<Property<*>>> = remember(results) {
-        val map = LinkedHashMap<String, MutableList<Property<*>>>()
-        results.forEach { (group, items) ->
-            items.filterIsInstance<OptionResult>().forEach { opt ->
-                if (opt.prop != null) {
-                    map.getOrPut(group) { mutableListOf() }.add(opt.prop)
-                }
-            }
+    // Grouped by owning mod, in order of first appearance, so a mod is only headed once while keeping its best hit's
+    // rank. Accordions collapse into one row per accordion rather than one per matching option inside it.
+    val groupedOptions: Map<String, List<SettingNode>> = remember(results) {
+        val byGroup = LinkedHashMap<String, MutableList<SettingNode>>()
+        results.forEach { (row, documents) ->
+            if (row == null || documents.isEmpty()) return@forEach
+            val node = searchNode(row.node, documents) ?: return@forEach
+            val mod = row.modTitle ?: "Other"
+            byGroup.getOrPut(row.groupLabel?.let { "$mod / $it" } ?: mod) { ArrayList() } += node
         }
-        map
+        byGroup
     }
+
+    val listState = rememberRestorableLazyListState("global-search", query, searchedQuery)
 
     if (matchingMods.isEmpty() && groupedOptions.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No results for \"$query\"", color = theme.textColorSecondary, fontSize = 15.sp)
+            // Nothing to say until the first search comes back.
+            searchedQuery?.also {
+                Text("No results for \"$it\"", color = theme.textColorSecondary, fontSize = 15.sp)
+            } ?: Text("Searching...", color = theme.textColorSecondary, fontSize = 15.sp)
         }
         return
     }
 
-    val listState = rememberRestorableLazyListState("global-search")
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,
@@ -101,7 +118,7 @@ fun SearchResultsScreen(query: String) {
                 }
             }
 
-            groupedOptions.forEach { (group, props) ->
+            groupedOptions.forEach { (group, nodes) ->
                 item(key = "header:opts:$group") {
                     Text(
                         group.uppercase(),
@@ -111,9 +128,9 @@ fun SearchResultsScreen(query: String) {
                         modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
                     )
                 }
-                props.forEachIndexed { idx, prop ->
-                    item(key = "opt:$group:${prop.id}:$idx") {
-                        SettingRow(prop)
+                nodes.forEachIndexed { idx, node ->
+                    item(key = "opt:$group:$idx") {
+                        SettingEntryRow(node)
                     }
                 }
             }

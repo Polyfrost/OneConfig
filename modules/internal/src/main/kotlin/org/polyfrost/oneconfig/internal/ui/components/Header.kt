@@ -46,18 +46,11 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import org.polyfrost.oneconfig.internal.ui.components.dropdown.DropdownPositionProvider
 import androidx.navigation.compose.currentBackStackEntryAsState
-import org.polyfrost.oneconfig.api.config.v1.Property
-import org.polyfrost.oneconfig.api.config.v1.Tree
-import org.polyfrost.oneconfig.internal.OneConfigConfig
-import org.polyfrost.oneconfig.internal.ui.api.ConfigData
-import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
-import org.polyfrost.oneconfig.internal.ui.api.TreeConfigData
 import org.polyfrost.oneconfig.internal.ui.LocalCloseRequest
 import org.polyfrost.oneconfig.internal.ui.navigation.searchPlaceholder
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import net.kyori.adventure.text.ComponentLike
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
@@ -217,120 +210,6 @@ private fun TitleInfoTooltip(title: String) {
     }
 }
 
-internal sealed interface SearchResult {
-    val displayName: Any
-    val icon: String?
-}
-
-internal data class ModResult(val config: ConfigData) : SearchResult {
-    override val displayName get() = config.title
-    override val icon get() = config.icon
-}
-
-internal data class OptionResult(
-    val modId: String,
-    val modTitle: Any,
-    val optionTitle: Any,
-    val category: String?,
-    override val icon: String?,
-    val prop: Property<*>?,
-) : SearchResult {
-    override val displayName get() = optionTitle
-}
-
-/**
- * Computes the Levenshtein (edit) distance between two strings, capped early once it exceeds [max].
- */
-private fun levenshtein(a: String, b: String, max: Int): Int {
-    if (a == b) return 0
-    if (a.isEmpty()) return b.length
-    if (b.isEmpty()) return a.length
-    if (kotlin.math.abs(a.length - b.length) > max) return max + 1
-    var prev = IntArray(b.length + 1) { it }
-    var curr = IntArray(b.length + 1)
-    for (i in 1..a.length) {
-        curr[0] = i
-        var rowMin = curr[0]
-        for (j in 1..b.length) {
-            val cost = if (a[i - 1] == b[j - 1]) 0 else 1
-            curr[j] = minOf(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost)
-            if (curr[j] < rowMin) rowMin = curr[j]
-        }
-        if (rowMin > max) return max + 1
-        val tmp = prev; prev = curr; curr = tmp
-    }
-    return prev[b.length]
-}
-
-/**
- * Returns true if [text] matches [q] either as a substring or, when "Search Distance" > 0, by a fuzzy
- * (Levenshtein) match against the whole string or any of its words. [q] is expected to be lowercase.
- */
-internal fun searchMatches(text: String, q: String): Boolean {
-    val t = text.lowercase()
-    if (t.contains(q)) return true
-    val dist = OneConfigConfig.searchDistance
-    if (dist <= 0) return false
-    if (levenshtein(t, q, dist) <= dist) return true
-    return t.split(' ', '.', '_', '-', '/').any { it.isNotEmpty() && levenshtein(it, q, dist) <= dist }
-}
-
-internal fun performSearch(query: String): Map<String, List<SearchResult>> {
-    if (query.isBlank()) return emptyMap()
-    val q = query.trim().lowercase()
-    val results = LinkedHashMap<String, MutableList<SearchResult>>()
-
-    val matchingMods = ConfigRegistry.modCardConfigs.filter { searchMatches(it.title.asRenderText(), q) }
-    if (matchingMods.isNotEmpty()) {
-        results["Mods"] = matchingMods.map { ModResult(it) }.toMutableList()
-    }
-
-    for (configData in ConfigRegistry.configs) {
-        if (!ConfigRegistry.shouldShowInSearch(configData)) continue
-        val tree = (configData as? TreeConfigData)?.tree ?: continue
-        val matchingOptions = mutableListOf<SearchResult>()
-        tree.map.values.forEach { node ->
-            val descriptionMatches = node.localizedDescription()?.asRenderText()?.let { searchMatches(it, q) } == true
-            val searchTags = node.metadata?.get("searchTags")?.let {
-                if (it is Iterable<*>) it.mapNotNull {
-                    if (it !is String && it !is ComponentLike) return@mapNotNull null
-                    it.asRenderText()
-                } else if (it is String) listOf(it) else listOf()
-            }?.any { searchMatches(it, q) } == true
-            when (node) {
-                is Property<*> -> {
-                    if (node.title == null) return@forEach
-                    val title = node.localizedTitle()
-                    if (searchMatches(title.asRenderText(), q) || descriptionMatches || searchTags) {
-                        val cat = localizedLabel(node.getMetadata<String>("category"))
-                        matchingOptions += OptionResult(configData.id, configData.title, title, cat, configData.icon, node)
-                    }
-                }
-                is Tree -> {
-                    val subTitle = node.title?.let { node.localizedTitle() }
-                    if (subTitle != null && searchMatches(subTitle.asRenderText(), q) ) {
-                        val cat = localizedLabel(node.getMetadata<String>("category"))
-                        matchingOptions += OptionResult(configData.id, configData.title, subTitle, cat, configData.icon, null)
-                    }
-                    node.map.values.filterIsInstance<Property<*>>().forEach { prop ->
-                        if (prop.title == null) return@forEach
-                        val pt = prop.localizedTitle()
-                        if (searchMatches(pt.asRenderText(), q) || descriptionMatches || searchTags) {
-                            val cat = localizedLabel(prop.getMetadata<String>("category"))
-                            matchingOptions += OptionResult(configData.id, configData.title, pt, cat, configData.icon, prop)
-                        }
-                    }
-                }
-            }
-        }
-        if (matchingOptions.isNotEmpty()) {
-            results[configData.title.asRenderText()] = matchingOptions
-        }
-    }
-
-    return results
-}
-
 @Composable
 fun GlobalSearchBar() {
     val navController = LocalNavController.current
@@ -345,6 +224,7 @@ fun GlobalSearchBar() {
 
     LaunchedEffect(searchText) { ShellState.searchQuery = searchText }
     LaunchedEffect(ShellState.searchQuery) { if (ShellState.searchQuery != searchText) searchText = ShellState.searchQuery }
+    LaunchedEffect(isFocused) { ShellState.searchFieldFocused = isFocused }
 
     LaunchedEffect(ShellState.focusSearchField) {
         if (ShellState.focusSearchField) {

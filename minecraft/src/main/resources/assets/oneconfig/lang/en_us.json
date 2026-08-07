@@ -154,6 +154,18 @@
   "oneconfig.notification.first_launch.title": "Welcome to OneConfig!",
   "oneconfig.notification.first_launch.message": "Press '%s' to open OneConfig and access all your mod settings in one place.",
 
+  "oneconfig.combat": "Combat",
+  "oneconfig.qol": "Quality of Life",
+  "oneconfig.hypixel": "Hypixel",
+  "oneconfig.other": "Other",
+  "oneconfig.performance": "Performance",
+  "oneconfig.visuals": "Visuals",
+  "oneconfig.hud": "HUD",
+  "oneconfig.utility": "Utility",
+  "oneconfig.info": "Info",
+  "oneconfig.player": "Player",
+  "oneconfig.compat": "Compatibility",
+
   "oneconfig.textinput.placeholder": "Enter text...",
   "oneconfig.numberinput.placeholder": "Enter a number...",
   "oneconfig.filepicker.placeholder": "Select a file...",

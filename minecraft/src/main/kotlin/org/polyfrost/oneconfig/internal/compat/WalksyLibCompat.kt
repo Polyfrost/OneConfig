@@ -11,8 +11,9 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.noCache
 import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
+import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
+import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
 import net.minecraft.client.Minecraft
-import java.util.UUID
 
 object WalksyLibCompat {
 
@@ -59,19 +60,22 @@ object WalksyLibCompat {
         CompatLoader.originalScreenOpener(modid)?.let { tree.addMetadata("open_original_screen", it) }
 
         var added = false
+        val usedIds = HashSet<String>()
         for (category in categories) {
             if (category == null) continue
             val categoryName = invoke(category, "name") as? String ?: continue
+            val categoryPath = idPart(categoryName, "general")
 
             (invoke(category, "options") as? Collection<*>)?.forEach { option ->
-                if (option != null && parseOption(option, categoryName, null, tree)) added = true
+                if (option != null && parseOption(option, categoryName, null, categoryPath, tree, usedIds)) added = true
             }
 
             (invoke(category, "optionGroups") as? Collection<*>)?.forEach { group ->
                 if (group == null) return@forEach
                 val groupName = invoke(group, "getName") as? String
+                val groupPath = "$categoryPath/${idPart(groupName, "group")}"
                 (invoke(group, "getOptions") as? Collection<*>)?.forEach { option ->
-                    if (option != null && parseOption(option, categoryName, groupName, tree)) added = true
+                    if (option != null && parseOption(option, categoryName, groupName, groupPath, tree, usedIds)) added = true
                 }
             }
         }
@@ -79,26 +83,34 @@ object WalksyLibCompat {
         return if (added) tree else null
     }
 
-    private fun parseOption(option: Any, categoryName: String, subcategoryName: String?, tree: Tree): Boolean {
+    private fun parseOption(
+        option: Any,
+        categoryName: String,
+        subcategoryName: String?,
+        groupPath: String,
+        tree: Tree,
+        usedIds: MutableSet<String>,
+    ): Boolean {
         val optionClass = option::class.java
         val type = invoke(option, "getType") as? Class<*> ?: return false
         val name = (invoke(option, "getName") as? String)?.takeIf { it.isNotBlank() } ?: return false
         val description = resolveDescription(option)
+        val optionPath = "$groupPath/${idPart(name, "option")}"
 
         if (type == Runnable::class.java) {
-            return parseButton(option, name, description, categoryName, subcategoryName, tree)
+            return parseButton(option, name, description, uniqueId(usedIds, optionPath), categoryName, subcategoryName, tree)
         }
 
         if (type.name == COLOR_CLASS) {
-            return parseColor(option, type, name, description, categoryName, subcategoryName, tree)
+            return parseColor(option, type, name, description, uniqueId(usedIds, optionPath), categoryName, subcategoryName, tree)
         }
 
         if (type.name == SPRITE_CLASS) {
-            return parseSprite(option, type, name, description, categoryName, subcategoryName, tree)
+            return parseSprite(option, type, name, description, uniqueId(usedIds, optionPath), categoryName, subcategoryName, tree)
         }
 
         if (java.util.List::class.java.isAssignableFrom(type)) {
-            return parseStringList(option, name, description, categoryName, subcategoryName, tree)
+            return parseStringList(option, name, description, uniqueId(usedIds, optionPath), categoryName, subcategoryName, tree)
         }
 
         val visualizer: Class<out Visualizer> = when {
@@ -119,7 +131,7 @@ object WalksyLibCompat {
         val property = Properties.functional(
             { runCatching { getValueM.invoke(option) }.getOrNull() },
             { value -> runCatching { setValueM.invoke(option, coerce(value, type)) } },
-            UUID.randomUUID().toString(),
+            uniqueId(usedIds, optionPath),
             name,
             description,
             type as Class<Any?>,
@@ -151,6 +163,7 @@ object WalksyLibCompat {
         colorClass: Class<*>,
         name: String,
         description: String?,
+        id: String,
         categoryName: String,
         subcategoryName: String?,
         tree: Tree,
@@ -199,7 +212,7 @@ object WalksyLibCompat {
                     setValueM.invoke(option, wc)
                 }
             },
-            UUID.randomUUID().toString(),
+            id,
             name,
             description,
             java.awt.Color::class.java,
@@ -225,6 +238,7 @@ object WalksyLibCompat {
         wrapperClass: Class<*>,
         name: String,
         description: String?,
+        id: String,
         categoryName: String,
         subcategoryName: String?,
         tree: Tree,
@@ -287,7 +301,7 @@ object WalksyLibCompat {
                     }
                 }.onFailure { LOGGER.warn("Failed to set WalksyLib sprite value", it) }
             },
-            UUID.randomUUID().toString(),
+            id,
             name,
             description,
             String::class.java,
@@ -308,6 +322,7 @@ object WalksyLibCompat {
         option: Any,
         name: String,
         description: String?,
+        id: String,
         categoryName: String,
         subcategoryName: String?,
         tree: Tree,
@@ -328,7 +343,7 @@ object WalksyLibCompat {
                 runCatching { setValueM.invoke(option, stringsOf(value)) }
                     .onFailure { LOGGER.warn("Failed to set WalksyLib string list value", it) }
             },
-            UUID.randomUUID().toString(),
+            id,
             name,
             description,
             java.util.List::class.java as Class<List<String>>,
@@ -347,12 +362,13 @@ object WalksyLibCompat {
         option: Any,
         name: String,
         description: String?,
+        id: String,
         categoryName: String,
         subcategoryName: String?,
         tree: Tree,
     ): Boolean {
         val action = invoke(option, "getValue") as? Runnable ?: return false
-        val property = Properties.dummy(UUID.randomUUID().toString(), name, description)
+        val property = Properties.dummy(id, name, description)
         property.addMetadata("visualizer", Visualizer.ButtonVisualizer::class.java)
         property.addMetadata("textKey", name)
         property.addMetadata("runnable", Runnable {

@@ -32,7 +32,8 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.index
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.config.v1.dsl.visualizer
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
-import java.util.*
+import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
+import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
 
 internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/RconfigCompat") {
 
@@ -73,15 +74,16 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
             tree.addMetadata("icon_path", it)
         }
 
+        val usedIds = HashSet<String>()
         config.categories().values.forEach {
-            parseCategory(it, config.id(), null, tree)
+            parseCategory(it, config.id(), null, tree, usedIds)
         }
 
         //? >= 1.21.8 {
-        parseAny(config.elements(), tree)
+        parseAny(config.elements(), tree, config.id(), usedIds)
         //? } else {
-        /*parseAny(config.entries(), tree)
-        parseButtons(config.buttons(), tree)
+        /*parseAny(config.entries(), tree, config.id(), usedIds)
+        parseButtons(config.buttons(), tree, config.id(), usedIds)
         *///? }
 
         tree.addMetadata("custom_save", Runnable { config.save() })
@@ -92,7 +94,13 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
 
 
     // 1st layer gets converted to categories, 2nd+ layer to subcategories
-    private fun parseCategory(config: ResourcefulConfig, id: String, category: String?, root: Tree) {
+    private fun parseCategory(
+        config: ResourcefulConfig,
+        id: String,
+        category: String?,
+        root: Tree,
+        usedIds: MutableSet<String>,
+    ) {
         val tree = Tree.tree()
 
         val nestedId = "$id/${config.id()}"
@@ -108,13 +116,13 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         }
 
         for ((_, entry) in config.categories()) {
-            parseCategory(entry, nestedId, category ?: title, root)
+            parseCategory(entry, nestedId, category ?: title, root, usedIds)
         }
         //? >= 1.21.8 {
-        parseAny(config.elements(), tree)
+        parseAny(config.elements(), tree, nestedId, usedIds)
         //? } else {
-        /*parseAny(config.entries(), tree)
-        parseButtons(config.buttons(), tree)
+        /*parseAny(config.entries(), tree, nestedId, usedIds)
+        parseButtons(config.buttons(), tree, nestedId, usedIds)
         *///? }
 
         tree.map.forEach { (_, node) ->
@@ -124,8 +132,8 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         }
     }
 
-    private fun parseButton(button: ResourcefulConfigButton, tree: Tree) {
-        val property = Properties.dummy(id = UUID.randomUUID().toString())
+    private fun parseButton(button: ResourcefulConfigButton, tree: Tree, path: String, usedIds: MutableSet<String>) {
+        val property = Properties.dummy(id = uniqueId(usedIds, "$path/${idPart(button.title(), "button")}"))
         property.title = button.title()?.takeUnless { it.isEmpty() }
             ?: "button" //todo find a better way of doing this, rconfig allows empty names
         property.description = button.description()
@@ -135,65 +143,98 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
     }
 
     //? >= 1.21.8 {
-    private fun parseAny(list: Iterable<ResourcefulConfigElement>, tree: Tree) = list.forEach {
+    private fun parseAny(
+        list: Iterable<ResourcefulConfigElement>,
+        tree: Tree,
+        path: String,
+        usedIds: MutableSet<String>,
+    ) = list.forEach {
         when (it) {
-            is ResourcefulConfigCategory -> parseCategory(it, tree)
-            is ResourcefulConfigEntryElement -> parseAny(it, tree)
-            is ResourcefulConfigButton -> parseButton(it, tree)
+            is ResourcefulConfigCategory -> parseCategory(it, tree, path, usedIds)
+            is ResourcefulConfigEntryElement -> parseAny(it, tree, path, usedIds)
+            is ResourcefulConfigButton -> parseButton(it, tree, path, usedIds)
         }
     }
 
-    private fun parseAny(element: ResourcefulConfigEntryElement, tree: Tree) {
+    private fun parseAny(element: ResourcefulConfigEntryElement, tree: Tree, path: String, usedIds: MutableSet<String>) {
+        val elementPath = "$path/${idPart(element.id(), "entry")}"
         when (val entry = element.entry()) {
-            is ResourcefulConfigObjectEntry -> parseObject(entry, tree)
-            is ResourcefulConfigValueEntry -> buildAndAdd(entry, element.id(), tree)
+            is ResourcefulConfigObjectEntry -> parseObject(entry, tree, elementPath, usedIds)
+            is ResourcefulConfigValueEntry -> buildAndAdd(entry, element.id(), tree, elementPath, usedIds)
         }
     }
 
-    private fun parseCategory(entry: ResourcefulConfigCategory, tree: Tree) {
+    private fun parseCategory(
+        entry: ResourcefulConfigCategory,
+        tree: Tree,
+        path: String,
+        usedIds: MutableSet<String>,
+    ) {
+        val categoryPath = "$path/${idPart(entry.id(), "category")}"
         val category = Tree.tree()
         category.title = entry.info().title().toComponent()
         category.description = entry.info().description().toComponent()
-        category.id = UUID.randomUUID().toString()
+        category.id = uniqueId(usedIds, categoryPath)
         category.category = tree.category
         category.subcategory = entry.info().title().toComponent().string
         category.index = -1
-        parseAny(entry.elements(), category)
+        parseAny(entry.elements(), category, categoryPath, usedIds)
         tree.put(category)
     }
 
-    private fun parseObject(entry: ResourcefulConfigObjectEntry, tree: Tree) {
+    private fun parseObject(
+        entry: ResourcefulConfigObjectEntry,
+        tree: Tree,
+        path: String,
+        usedIds: MutableSet<String>,
+    ) {
         val objectEntry = Tree.tree()
         objectEntry.title = entry.options().title.toComponent()
         objectEntry.description = entry.options().comment.toComponent()
-        objectEntry.id = UUID.randomUUID().toString()
+        objectEntry.id = uniqueId(usedIds, path)
         objectEntry.category = tree.category
         objectEntry.subcategory = entry.options().title.toComponent().string
         objectEntry.index = -1
-        parseAny(entry.elements(), objectEntry)
+        parseAny(entry.elements(), objectEntry, path, usedIds)
         tree.put(objectEntry)
     }
     //? } else {
-    /*private fun parseAny(entries: Map<String, ResourcefulConfigEntry>, tree: Tree) = entries.forEach { (id, entry) ->
+    /*private fun parseAny(
+        entries: Map<String, ResourcefulConfigEntry>,
+        tree: Tree,
+        path: String,
+        usedIds: MutableSet<String>,
+    ) = entries.forEach { (id, entry) ->
+        val entryPath = "$path/${idPart(id, "entry")}"
         when (entry) {
-            is ResourcefulConfigObjectEntry -> parseObject(entry, tree)
-            is ResourcefulConfigValueEntry -> buildAndAdd(entry, id, tree)
+            is ResourcefulConfigObjectEntry -> parseObject(entry, tree, entryPath, usedIds)
+            is ResourcefulConfigValueEntry -> buildAndAdd(entry, id, tree, entryPath, usedIds)
         }
     }
 
-    private fun parseButtons(buttons: List<ResourcefulConfigButton>, tree: Tree) {
-        buttons.forEach { parseButton(it, tree) }
+    private fun parseButtons(
+        buttons: List<ResourcefulConfigButton>,
+        tree: Tree,
+        path: String,
+        usedIds: MutableSet<String>,
+    ) {
+        buttons.forEach { parseButton(it, tree, path, usedIds) }
     }
 
-    private fun parseObject(entry: ResourcefulConfigObjectEntry, tree: Tree) {
+    private fun parseObject(
+        entry: ResourcefulConfigObjectEntry,
+        tree: Tree,
+        path: String,
+        usedIds: MutableSet<String>,
+    ) {
         val objectEntry = Tree.tree()
         objectEntry.title = entry.options().title.toLocalizedString()
         objectEntry.description = entry.options().comment.toLocalizedString()
-        objectEntry.id = UUID.randomUUID().toString()
+        objectEntry.id = uniqueId(usedIds, path)
         objectEntry.category = tree.category
         objectEntry.subcategory = entry.options().title.toLocalizedString()
         objectEntry.index = -1
-        parseAny(entry.entries(), objectEntry)
+        parseAny(entry.entries(), objectEntry, path, usedIds)
         tree.put(objectEntry)
     }
     *///? }
@@ -201,10 +242,11 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
     @JvmStatic
     fun buildProperties(entry: ResourcefulConfigObjectEntry): List<Property<*>> {
         val tmp = Tree.tree()
+        val usedIds = HashSet<String>()
         //? >= 1.21.8 {
-        parseAny(entry.elements(), tmp)
+        parseAny(entry.elements(), tmp, "object", usedIds)
         //? } else {
-        /*parseAny(entry.entries(), tmp)
+        /*parseAny(entry.entries(), tmp, "object", usedIds)
         *///? }
         val out = ArrayList<Property<*>>()
         collectProperties(tmp, out)
@@ -220,8 +262,14 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         }
     }
 
-    private fun buildAndAdd(entry: ResourcefulConfigValueEntry, id: String, tree: Tree) {
-        val builder = RConfigPropertyBuilder(entry, id)
+    private fun buildAndAdd(
+        entry: ResourcefulConfigValueEntry,
+        id: String,
+        tree: Tree,
+        path: String,
+        usedIds: MutableSet<String>,
+    ) {
+        val builder = RConfigPropertyBuilder(entry, id, uniqueId(usedIds, path))
         val options = entry.options()
 
         if (entry.isArray) {
@@ -391,7 +439,11 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         *///? }
     }
 
-    private class RConfigPropertyBuilder constructor(option: ResourcefulConfigValueEntry, val sourceId: String) {
+    private class RConfigPropertyBuilder constructor(
+        option: ResourcefulConfigValueEntry,
+        val sourceId: String,
+        val nodeId: String,
+    ) {
         //? >= 1.21.8 {
         val name = option.options().title.toComponent()
         val description = option.options().comment.toComponent()
@@ -430,7 +482,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
             setter,
             name = name,
             description = description,
-            id = UUID.randomUUID().toString()
+            id = nodeId
         ).apply {
             addMetadata(RCONFIG_ID, sourceId)
             defaultValue?.let { addMetadata("default", it) }

@@ -9,6 +9,8 @@ import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.TreeConfigData
 import org.polyfrost.oneconfig.internal.ui.components.localizedGroup
+import org.polyfrost.oneconfig.internal.ui.search.KeybindDocumentSource
+import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 
 data class KeybindGroup(
     val modId: String,
@@ -36,6 +38,7 @@ object KeybindProviderRegistry {
     fun register(provider: KeybindGroupProvider) {
         if (provider in providers) return
         providers += provider
+        SearchCorpus.invalidate(KeybindDocumentSource)
         revision.intValue++
     }
 

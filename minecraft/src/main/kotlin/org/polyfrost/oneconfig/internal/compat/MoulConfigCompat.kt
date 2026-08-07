@@ -19,10 +19,11 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
+import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
+import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
 import org.polyfrost.oneconfig.internal.utils.MoulConfigGuiOptionEditorDropdownAccessor
 import java.awt.Color
 import java.lang.reflect.Type
-import java.util.*
 import kotlin.reflect.KClass
 // do not remove the im
 import org.polyfrost.oneconfig.internal.compat.MoulPropertyBuilder
@@ -63,6 +64,7 @@ data object MoulConfigCompat {
 
     fun parseConfigTree(config: MoulConfig, children: Iterable<ProcessedCategory>): Tree = Tree.tree().apply {
         val map = mutableMapOf<String?, Tree>()
+        val usedIds = HashSet<String>()
         val mod = CompatLoader.findFirstMod()
         LOGGER.info("Loading for ${mod?.id ?: "unknown"}")
         this.id = mod?.id ?: config.toString()
@@ -75,7 +77,7 @@ data object MoulConfigCompat {
         }
 
         children.forEach {
-            val tree = parseCategory(config, it, this) { parent -> map[parent] ?: this }
+            val tree = parseCategory(config, it, this, usedIds) { parent -> map[parent] ?: this }
             map[it.identifier] = tree
             this.put(tree)
         }
@@ -85,6 +87,7 @@ data object MoulConfigCompat {
         config: MoulConfig,
         category: ProcessedCategory,
         root: Tree,
+        usedIds: MutableSet<String>,
         parentResolver: (String?) -> Tree,
     ): Tree {
         val displayName = resolveDisplayName(category)
@@ -94,11 +97,11 @@ data object MoulConfigCompat {
         val accordionMap = mutableMapOf<Int, Tree>()
 
         category.options.forEach { option ->
-            parseOption(config, option, categoryName, displayName, root, accordionMap)
+            parseOption(config, option, categoryName, displayName, root, accordionMap, usedIds)
         }
 
         return Tree.tree().apply {
-            id = UUID.randomUUID().toString()
+            id = uniqueId(usedIds, idPart(category.identifier, "category"))
             this.category = categoryName
             this.title = displayName
             this.subcategory = displayName
@@ -112,12 +115,14 @@ data object MoulConfigCompat {
         subcategoryName: String,
         root: Tree,
         accordionMap: MutableMap<Int, Tree>,
+        usedIds: MutableSet<String>,
     ) {
         val editor = children.editor
         if (editor is GuiOptionEditorAccordion) {
+            val builder = MoulPropertyBuilder(children)
             val accordionTree = Tree.tree()
-            accordionTree.id = UUID.randomUUID().toString()
-            accordionTree.title = MoulPropertyBuilder(children).name?.takeIf { it.isNotBlank() } ?: "Section"
+            accordionTree.id = uniqueId(usedIds, idPart(builder.path ?: builder.name, "section"))
+            accordionTree.title = builder.name?.takeIf { it.isNotBlank() } ?: "Section"
             accordionTree.category = categoryName
             accordionTree.subcategory = subcategoryName
 
@@ -131,7 +136,7 @@ data object MoulConfigCompat {
             return
         }
 
-        val built = buildOptionProperty(config, children, categoryName, subcategoryName) ?: return
+        val built = buildOptionProperty(config, children, categoryName, subcategoryName, usedIds) ?: return
 
         val parentTarget = if (children.accordionId >= 0) {
             accordionMap[children.accordionId] ?: root
@@ -146,6 +151,7 @@ data object MoulConfigCompat {
         children: ProcessedOption,
         categoryName: String,
         subcategoryName: String,
+        usedIds: MutableSet<String>,
     ): Property<*>? {
         val property = MoulPropertyBuilder(children)
 
@@ -275,7 +281,7 @@ data object MoulConfigCompat {
         }
 
         property.metadata["visualizer"] = visualizer
-        val built = property.build()
+        val built = property.build(usedIds)
         built.category = categoryName
         built.subcategory = subcategoryName
         return built
@@ -290,13 +296,14 @@ data object MoulConfigCompat {
         subcategory: String? = null,
     ): List<Property<*>> {
         val out = ArrayList<Property<*>>()
+        val usedIds = HashSet<String>()
         runCatching {
             processor.allCategories.values.forEach { processed ->
                 val catName = category ?: resolveDisplayName(processed)
                 val subName = subcategory ?: catName
                 processed.options.forEach { option ->
                     if (MoulPropertyBuilder(option).declaringClass != declaringClass) return@forEach
-                    buildOptionProperty(config, option, catName, subName)?.let(out::add)
+                    buildOptionProperty(config, option, catName, subName, usedIds)?.let(out::add)
                 }
             }
         }.onFailure {
@@ -313,8 +320,9 @@ data object MoulConfigCompat {
         subcategory: String,
     ): List<Property<*>> {
         val out = ArrayList<Property<*>>()
+        val usedIds = HashSet<String>()
         options.forEach { option ->
-            runCatching { buildOptionProperty(config, option, category, subcategory) }
+            runCatching { buildOptionProperty(config, option, category, subcategory, usedIds) }
                 .onFailure { LOGGER.error("Failed to build property for ${option.path}: $it") }
                 .getOrNull()?.let(out::add)
         }

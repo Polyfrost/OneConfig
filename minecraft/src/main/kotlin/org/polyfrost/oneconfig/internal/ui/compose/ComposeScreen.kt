@@ -151,6 +151,15 @@ abstract class ComposeScreen(
         )
     }
 
+    /**
+     * Called when a failed scene has been discarded and the screen is about to be rebuilt from scratch.
+     *
+     * The session is still open, but everything the old composition held is gone, so whatever the screen
+     * wants back has to be put somewhere the fresh composition will read it. Runs before the new scene is
+     * given its content.
+     */
+    protected open fun onSceneRebuilding() {}
+
     private fun ensureScene(): ComposeScene? {
         if (scenePoisoned) closeSceneQuietly()
         sceneOrNull?.let { return it }
@@ -358,6 +367,7 @@ abstract class ComposeScreen(
                 return
             }
             sceneRebuilds++
+            onSceneRebuilding()
             val rebuilt = ensureScene()
             if (rebuilt == null || !bindContent(rebuilt)) {
                 closeSceneQuietly()

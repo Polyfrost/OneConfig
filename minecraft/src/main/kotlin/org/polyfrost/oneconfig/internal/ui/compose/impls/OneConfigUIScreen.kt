@@ -140,6 +140,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
             ShellState.playerName = "Player"
         }
         ShellState.focusSearchField = OneConfigConfig.instantSearch
+        ShellState.searchFieldFocused = false
         val client = net.minecraft.client.Minecraft.getInstance()
         val cachedHead = PlayerHeadLoader.cachedLocalPlayerHeadPng(client)
         if (cachedHead != null) {
@@ -176,6 +177,17 @@ class OneConfigUIScreen @JvmOverloads constructor(
         UiSounds.play(UiSoundEvent.OPEN)
         UiSounds.acquireAmbience()
         super.init()
+    }
+
+    /**
+     * A scene that failed mid-frame is thrown away and rebuilt, but the menu never closed.
+     * Treat the rebuild as coming back from another screen, fixes hanging of the GUI.
+     */
+    override fun onSceneRebuilding() {
+        ShellState.lastRoute?.takeIf { it !== HudEditorRoute }?.let { route = it }
+        resuming = true
+        restoring = true
+        if (ShellState.searchFieldFocused) ShellState.focusSearchField = true
     }
 
     override fun removed() {

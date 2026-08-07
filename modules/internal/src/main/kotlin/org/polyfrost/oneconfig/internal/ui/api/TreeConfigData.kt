@@ -9,7 +9,7 @@ import org.polyfrost.oneconfig.internal.ui.components.localizedValue
 class TreeConfigData(
     val tree: Tree,
     override val source: ConfigSource,
-    private val explicitOnOpen: (() -> Unit)? = null,
+    internal val explicitOnOpen: (() -> Unit)? = null,
 ) : ConfigData {
     override val id: String get() = tree.id ?: ""
     override val title: Any
@@ -57,6 +57,10 @@ class TreeConfigData(
             if (explicit != null && explicit != Config.Category.OTHER) return explicit
             return ThirdPartyModCategories.categoryFor(id, modInfo) ?: explicit ?: Config.Category.OTHER
         }
+
+    override val description: String?
+        get() = tree.getMetadata<String>("mod_card_description")?.nonBlankOrNull()
+            ?: modInfo?.description?.nonBlankOrNull()
 
     private val modInfo: ModInfo?
         get() {
