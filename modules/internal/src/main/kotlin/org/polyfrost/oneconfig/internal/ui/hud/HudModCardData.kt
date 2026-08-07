@@ -44,9 +44,9 @@ private fun ownerVisible(ownerId: String, owner: ConfigData?): Boolean {
 /**
  * Cache so the search corpus can keep using the same mod cards
  */
-private val cardCache = ConcurrentHashMap<String, HudModCardData>()
+private val cardCache = HashMap<String, HudModCardData>()
 
-internal fun hudModCardConfigs(): List<ConfigData> {
+internal fun hudModCardConfigs(): List<ConfigData> = synchronized(cardCache) {
     @Suppress("UNUSED_VARIABLE")
     val revision = HudManager.revision
 
@@ -59,11 +59,8 @@ internal fun hudModCardConfigs(): List<ConfigData> {
         if (!ownerVisible(ownerId, owner)) continue
         val id = hudCardId(hud, ownerId)
         if (!seen.add(id)) continue
-        out.add(
-            cardCache.compute(id) { _, cached ->
-                cached?.takeIf { it.hud === hud && it.owner === owner } ?: HudModCardData(hud, ownerId, owner, id)
-            }!!,
-        )
+        val cached = cardCache[id]?.takeIf { it.hud === hud && it.owner === owner }
+        out.add(cached ?: HudModCardData(hud, ownerId, owner, id).also { cardCache[id] = it })
     }
     cardCache.keys.retainAll(seen)
     return out
