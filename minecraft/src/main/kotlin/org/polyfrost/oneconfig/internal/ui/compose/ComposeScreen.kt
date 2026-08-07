@@ -140,6 +140,17 @@ abstract class ComposeScreen(
         }
     }
 
+    private inline fun sendKeyEventSafely(build: () -> androidx.compose.ui.input.key.KeyEvent): Boolean {
+        val event = try {
+            build()
+        } catch (t: Throwable) {
+            ComposeSupport.recordSceneFailure(t)
+            reportUnavailableAndClose()
+            return false
+        }
+        return withScene { it.sendKeyEvent(event) } ?: false
+    }
+
     private fun poisonScene(cause: Throwable) {
         if (scenePoisoned) return
         scenePoisoned = true
@@ -504,26 +515,26 @@ abstract class ComposeScreen(
         val eventLocation = KeyEvent.KEY_LOCATION_UNKNOWN
         val eventCode = 0
 
-        val composeEvent = androidx.compose.ui.input.key.KeyEvent(
-            key = androidx.compose.ui.input.key.Key(awtCode),
-            type = KeyEventType.KeyDown,
-            codePoint = codepoint,
-            isCtrlPressed = modifiers.ctrlDown(),
-            isShiftPressed = modifiers.shiftDown(),
-            isAltPressed = modifiers.altDown(),
-            isMetaPressed = modifiers.superDown(),
-            nativeEvent = KeyEvent(
-                dummyComponent,
-                eventType,
-                System.currentTimeMillis(),
-                modifiersToAwt(modifiers),
-                eventCode,
-                char,
-                eventLocation
+        val handled = sendKeyEventSafely {
+            androidx.compose.ui.input.key.KeyEvent(
+                key = androidx.compose.ui.input.key.Key(awtCode),
+                type = KeyEventType.KeyDown,
+                codePoint = codepoint,
+                isCtrlPressed = modifiers.ctrlDown(),
+                isShiftPressed = modifiers.shiftDown(),
+                isAltPressed = modifiers.altDown(),
+                isMetaPressed = modifiers.superDown(),
+                nativeEvent = KeyEvent(
+                    dummyComponent,
+                    eventType,
+                    System.currentTimeMillis(),
+                    modifiersToAwt(modifiers),
+                    eventCode,
+                    char,
+                    eventLocation
+                )
             )
-        )
-
-        val handled = withScene { it.sendKeyEvent(composeEvent) } ?: false
+        }
         //? >= 1.21.10 {
         return handled || super.charTyped(event)
         //? } else {
@@ -552,28 +563,28 @@ abstract class ComposeScreen(
         val eventType = KeyEvent.KEY_PRESSED
         val eventLocation = glfwKeyLocation(key)
 
-        val composeEvent = androidx.compose.ui.input.key.KeyEvent(
-            key = androidx.compose.ui.input.key.Key(awtCode, eventLocation),
-            type = KeyEventType.KeyDown,
-            // Carry the raw GLFW key code so consumers (e.g. KeybindOption) can recover it losslessly;
-            // the AWT round-trip in the Key collapses unmapped keys to VK_UNDEFINED.
-            codePoint = key,
-            isCtrlPressed = modifiers.ctrlDown(),
-            isShiftPressed = modifiers.shiftDown(),
-            isAltPressed = modifiers.altDown(),
-            isMetaPressed = modifiers.superDown(),
-            nativeEvent = KeyEvent(
-                dummyComponent,
-                eventType,
-                System.currentTimeMillis(),
-                modifiersToAwt(modifiers),
-                awtCode,
-                Char(0),
-                eventLocation
+        val handled = sendKeyEventSafely {
+            androidx.compose.ui.input.key.KeyEvent(
+                key = androidx.compose.ui.input.key.Key(awtCode, eventLocation),
+                type = KeyEventType.KeyDown,
+                // Carry the raw GLFW key code so consumers (e.g. KeybindOption) can recover it losslessly;
+                // the AWT round-trip in the Key collapses unmapped keys to VK_UNDEFINED.
+                codePoint = key,
+                isCtrlPressed = modifiers.ctrlDown(),
+                isShiftPressed = modifiers.shiftDown(),
+                isAltPressed = modifiers.altDown(),
+                isMetaPressed = modifiers.superDown(),
+                nativeEvent = KeyEvent(
+                    dummyComponent,
+                    eventType,
+                    System.currentTimeMillis(),
+                    modifiersToAwt(modifiers),
+                    awtCode,
+                    Char(0),
+                    eventLocation
+                )
             )
-        )
-
-        val handled = withScene { it.sendKeyEvent(composeEvent) } ?: false
+        }
         //? >= 1.21.10 {
         return handled || super.keyPressed(event)
         //? } else {
@@ -592,26 +603,26 @@ abstract class ComposeScreen(
         val awtCode = glfwToAwtKeyCode(key)
         val eventLocation = glfwKeyLocation(key)
 
-        val composeEvent = androidx.compose.ui.input.key.KeyEvent(
-            key = androidx.compose.ui.input.key.Key(awtCode, eventLocation),
-            type = KeyEventType.KeyUp,
-            codePoint = key,
-            isCtrlPressed = modifiers.ctrlDown(),
-            isShiftPressed = modifiers.shiftDown(),
-            isAltPressed = modifiers.altDown(),
-            isMetaPressed = modifiers.superDown(),
-            nativeEvent = KeyEvent(
-                dummyComponent,
-                KeyEvent.KEY_RELEASED,
-                System.currentTimeMillis(),
-                modifiersToAwt(modifiers),
-                awtCode,
-                KeyEvent.CHAR_UNDEFINED,
-                eventLocation
+        val handled = sendKeyEventSafely {
+            androidx.compose.ui.input.key.KeyEvent(
+                key = androidx.compose.ui.input.key.Key(awtCode, eventLocation),
+                type = KeyEventType.KeyUp,
+                codePoint = key,
+                isCtrlPressed = modifiers.ctrlDown(),
+                isShiftPressed = modifiers.shiftDown(),
+                isAltPressed = modifiers.altDown(),
+                isMetaPressed = modifiers.superDown(),
+                nativeEvent = KeyEvent(
+                    dummyComponent,
+                    KeyEvent.KEY_RELEASED,
+                    System.currentTimeMillis(),
+                    modifiersToAwt(modifiers),
+                    awtCode,
+                    KeyEvent.CHAR_UNDEFINED,
+                    eventLocation
+                )
             )
-        )
-
-        val handled = withScene { it.sendKeyEvent(composeEvent) } ?: false
+        }
         //? >= 1.21.10 {
         return handled || super.keyReleased(event)
         //? } else {
