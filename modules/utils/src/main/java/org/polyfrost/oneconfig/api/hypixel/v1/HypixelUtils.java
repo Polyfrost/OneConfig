@@ -56,17 +56,23 @@ import java.util.*;
  * <br><br>
  * This class is a simple wrapper around this functionality, providing a simple way to access the Hypixel API.
  *
- * @implNote the actual registration of the packet handlers is done in HypixelApiInternals. Note that this is lazily initialized,
+ * @implNote the actual registration of the hello/disconnect handlers is done in HypixelApiInternals, and the location event
+ * subscription is set up when this class is initialized. Note that this is lazily initialized,
  * <b>and so this class, or HypixelApiInternals, needs to be referenced in order for the packet handlers to be registered.</b>
  */
 @SuppressWarnings("unused")
 public final class HypixelUtils {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/HypixelUtils");
-    private static final HypixelUtils INSTANCE = new HypixelUtils();
     private static final HypixelApiInternals internals = ServiceLoader.load(HypixelApiInternals.class, HypixelApiInternals.class.getClassLoader()).iterator().next();
+    private static final HypixelUtils INSTANCE = new HypixelUtils();
     private PlayerInfo info;
     private PartyInfo partyInfo;
-    private Location location;
+    /**
+     * This is eagerly initialized because {@link ClientboundLocationPacket} is
+     * event-based, so we have to subscribe before the first location change
+     * rather than on the first call to {@link #getLocation()}.
+     */
+    private final Location location = new Location();
 
     private HypixelUtils() {
     }
@@ -84,7 +90,7 @@ public final class HypixelUtils {
     }
 
     public static Location getLocation() {
-        return INSTANCE.location == null ? INSTANCE.location = new Location() : INSTANCE.location;
+        return INSTANCE.location;
     }
 
     protected static abstract class InfoBase<T extends ClientboundHypixelPacket> {
