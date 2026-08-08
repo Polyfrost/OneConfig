@@ -113,10 +113,13 @@ object LegacyHudOffscreen {
                     hud.renderedH = hud.height * scale
                     val pose = ext.pose()
                     pose.pushMatrix()
-                    pose.translate(hud.x, hud.y)
-                    if (scale != 1f) pose.scale(scale, scale)
-                    hud.render(ext)
-                    pose.popMatrix()
+                    try {
+                        pose.translate(hud.x, hud.y)
+                        if (scale != 1f) pose.scale(scale, scale)
+                        hud.render(ext)
+                    } finally {
+                        pose.popMatrix()
+                    }
                 } catch (t: Throwable) {
                     LOG.debug("legacy hud render (record) failed", t)
                 }
