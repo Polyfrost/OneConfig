@@ -236,7 +236,7 @@ dependencies {
     handleApiDep(versionedCatalog.bundles["nightconfig"])
     handleApiDep(versionedCatalog["snakeyaml"])
     handleApiDep(versionedCatalog["java-objc-bridge"])
-    val hypixelModApiVersion = if (stonecutter.eval(stonecutter.current.version, ">= 26.1")) "1.0.2" else "1.0.1"
+    val hypixelModApiVersion = if (stonecutter.eval(stonecutter.current.version, ">= 26.1") || loader == "ornithe") "1.0.2" else "1.0.1"
     handleApiDep("net.hypixel:mod-api:$hypixelModApiVersion")
     handleApiDep(versionedCatalog["hypixel-data"])
 
@@ -252,6 +252,8 @@ dependencies {
         } else {
             "modImplementation"(hypixelFabricMod) { isTransitive = false }
         }
+    } else if (loader == "ornithe") {
+        "modLocalRuntime"("org.polyfrost:mod-api-fabric:1.0.2+build.1+mc1.8.9") { isTransitive = false }
     }
 
     handleApiDep(versionedCatalog["mixin-squared"])

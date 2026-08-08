@@ -16,6 +16,9 @@ repositories {
     maven("https://repo.hypixel.net/repository/Hypixel/") {
         content { includeGroupAndSubgroups("net.hypixel") }
     }
+    maven("https://maven.axolotlclient.com/releases") {
+        content { includeGroup("io.github.moehreag.hypixel") }
+    }
     maven("https://maven.deftu.dev/releases") {
         content { includeGroupAndSubgroups("dev.deftu") }
     }
@@ -129,8 +132,10 @@ gradle.projectsEvaluated {
 
     val hypixelFabricMod = if (versionedCatalog.versions["minecraft"].requiredVersion.startsWith("26")) {
         "maven.modrinth:hypixel-mod-api:1.0.2+build.1+mc26.1"
-    } else {
+    } else if (versionedCatalog.versions["minecraft"].requiredVersion.startsWith("1.21")) {
         "maven.modrinth:hypixel-mod-api:1.0.1+build.1+mc1.21"
+    } else {
+        "org.polyfrost:mod-api-fabric:1.0.2+build.1+mc1.8.9"
     }
     (dependencies.add("include", hypixelFabricMod) as ExternalModuleDependency).isTransitive = false
 }

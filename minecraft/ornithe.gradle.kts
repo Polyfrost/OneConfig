@@ -14,6 +14,7 @@ repositories {
         content {
             includeGroup("io.github.moehreag")
             includeGroup("io.github.moehreag.legacy-lwjgl3")
+            includeGroup("io.github.moehreag.hypixel")
         }
     }
 }
