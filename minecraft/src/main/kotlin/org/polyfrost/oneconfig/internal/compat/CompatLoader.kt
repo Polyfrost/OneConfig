@@ -31,6 +31,7 @@ object CompatLoader {
         "net.azureaaron.dandelion",
         "com.odtheking.odin",
         "de.hysky.skyblocker",
+        "co.stellarskys.stella",
         "uk.co.hexeption.apec",
         "moe.nea.firmament.deps.moulconfig",
         "dev.tr7zw.trender",
