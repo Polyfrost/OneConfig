@@ -50,6 +50,8 @@ object StellaCompat {
         if (initialized) return
         initialized = true
 
+        CompatLoader.nativeLoadedConfigs.add(Stella.NAMESPACE)
+
         try {
             addConfigTree()
             addHuds()
@@ -58,20 +60,26 @@ object StellaCompat {
             return
         }
 
-        config.registerListener { _, _ ->
-            for (node in tree.map.values) {
-                (node as? Property<*>)?.revaluateDisplay()
-            }
-            for (property in hudProperties.values) {
-                property.revaluateDisplay()
-            }
-        }
+        config.registerListener { _, _ -> revaluateDisplays() }
 
         EventManager.register(HudEditorToggleEvent::class.java, Consumer { event ->
             HUDManager.shouldRenderHuds = !event.open
-            if (!event.open) runCatching { HUDManager.saveAllLayouts() }
-                .onFailure { LOGGER.warn("Failed to save Stella HUD layouts", it) }
+            if (!event.open) {
+                runCatching { HUDManager.saveAllLayouts() }
+                    .onFailure { LOGGER.warn("Failed to save Stella HUD layouts", it) }
+                runCatching { config.save() }
+                    .onFailure { LOGGER.warn("Failed to save Stella config", it) }
+            }
         })
+    }
+
+    private fun revaluateDisplays() {
+        for (node in tree.map.values) {
+            (node as? Property<*>)?.revaluateDisplay()
+        }
+        for (property in hudProperties.values) {
+            property.revaluateDisplay()
+        }
     }
 
     // Settings
@@ -192,7 +200,10 @@ object StellaCompat {
                         val code = handler.keyCode()
                         OneConfigKeybind(if (code > 0) intArrayOf(code) else null, null, KeyModifiers.NONE, 0L) { false }
                     },
-                    setter = { kb -> handler.setCode(kb.keyCodes?.firstOrNull() ?: 0) },
+                    setter = { kb ->
+                        element.value = kb.keyCodes?.firstOrNull() ?: 0
+                        revaluateDisplays()
+                    },
                     id = key, name = name, description = desc, type = OneConfigKeybind::class.java,
                 ).apply { visualizer = Visualizer.KeybindVisualizer::class.java }
             }
