@@ -115,6 +115,7 @@ private fun KeyEvent.awtKeyEventId(): Int? = runCatching {
 @Composable
 fun KeybindOption(data: KeybindOptionData) {
     val theme = LocalTheme.current
+    val singleKey = data.prop.getMetadata<Boolean>("singleKey") == true
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
     var recording by remember(data.prop) { mutableStateOf(false) }
@@ -213,6 +214,11 @@ fun KeybindOption(data: KeybindOptionData) {
                         // would match nothing useful (or, for code 0, match everything).
                         val glfwCode = event.utf16CodePoint
                         if (glfwCode <= 0) return@onKeyEvent true
+                        if (singleKey) {
+                            applyKeybind(intArrayOf(glfwCode), null)
+                            recording = false
+                            return@onKeyEvent true
+                        }
                         if (glfwCode !in recordedKeys) recordedKeys.add(glfwCode)
                         heldKeys.add(glfwCode)
                         return@onKeyEvent true

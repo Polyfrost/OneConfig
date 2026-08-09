@@ -86,6 +86,7 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
             OneConfigKeybind::class.java,
         )
         prop.addMetadata("visualizer", Visualizer.KeybindVisualizer::class.java)
+        prop.addMetadata("singleKey", true)
         prop.addMetadata("category", categoryLabel(mapping))
         prop.addMetadata("subcategory", "Minecraft Controls")
         return prop
