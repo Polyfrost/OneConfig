@@ -18,14 +18,12 @@ import androidx.compose.ui.scene.ComposeScene
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
-import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.Minecraft
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.screens.Screen
 //? >= 1.21.10 {
 import net.minecraft.client.input.CharacterEvent
-import net.minecraft.client.input.InputWithModifiers
 import net.minecraft.client.input.MouseButtonEvent
 import net.minecraft.client.input.KeyEvent as McKeyEvent
 //? }
@@ -93,25 +91,9 @@ private object SystemClipboard : androidx.compose.ui.platform.Clipboard {
 }
 
 @OptIn(InternalComposeUiApi::class)
-abstract class ComposeScreen(
-    protected val renderMode: RenderMode = RenderMode.ON_DEMAND,
-) : Screen(CommonComponents.EMPTY) {
-    enum class RenderMode {
-        CONTINUOUS,
-        ON_DEMAND
-    }
-
+abstract class ComposeScreen : Screen(CommonComponents.EMPTY) {
     @Composable
     abstract fun compose()
-
-    val dispatcher = ComposeDispatcher()
-//
-//    private val frameDispatcher = FrameDispatcher(dispatcher) {
-//        if (renderMode == RenderMode.ON_DEMAND) {
-//            renderScene()
-//        }
-//    }
-
 
     private var sceneOrNull: ComposeScene? = null
 
@@ -270,15 +252,7 @@ abstract class ComposeScreen(
         return (monCS / winCS).coerceAtLeast(1f)
     }
 
-//    private fun renderScene() {
-//        composeRenderer.render { scene.render(this.asComposeCanvas(), System.nanoTime()) }
-//    }
-
     override fun init() {
-        if (renderMode == RenderMode.ON_DEMAND) {
-//            composeRenderer.initialize(width, height)
-        }
-
         val scene = ensureScene()
         if (scene == null) {
             reportUnavailableAndClose()
@@ -295,12 +269,12 @@ abstract class ComposeScreen(
         lastFbHeight = -1
         cachedSurfaceScale = -1f
 
-        if (!bindContent(scene)) {
+        if (!bindContent()) {
             closeWithMessage("OneConfig's UI failed to start. Please check your logs and report this.")
         }
     }
 
-    private fun bindContent(scene: ComposeScene): Boolean {
+    private fun bindContent(): Boolean {
         if (contentSet) return true
         withScene { setContentOn(it) } ?: return false
         contentSet = true
@@ -339,7 +313,6 @@ abstract class ComposeScreen(
         //minecraft: Minecraft,
         width: Int, height: Int
     ) {
-//        composeRenderer.initialize(width, height)
         syncSceneMetrics()
     }
 
@@ -385,7 +358,7 @@ abstract class ComposeScreen(
             sceneRebuilds++
             onSceneRebuilding()
             val rebuilt = ensureScene()
-            if (rebuilt == null || !bindContent(rebuilt)) {
+            if (rebuilt == null || !bindContent()) {
                 closeSceneQuietly()
                 closeWithMessage(
                     ComposeSupport.unavailableReason()
@@ -412,7 +385,7 @@ abstract class ComposeScreen(
         }
 
         val debugOverlayOnTop = org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen.shouldSuppressVanilla()
-        if (renderMode == RenderMode.ON_DEMAND && !sceneDirty && SkiaCtx.isDeferredComposeBackend && !debugOverlayOnTop) {
+        if (!sceneDirty && SkiaCtx.isDeferredComposeBackend && !debugOverlayOnTop) {
             if (SkiaCtx.blitComposeCached(ctx)) return
         }
 
@@ -657,14 +630,6 @@ abstract class ComposeScreen(
                 )
             )
         }
-    }
-
-    private fun Char.isPrintable(): Boolean {
-        val block = Character.UnicodeBlock.of(this)
-        return (!Character.isISOControl(this)) &&
-                this != KeyEvent.CHAR_UNDEFINED &&
-                block != null &&
-                block != Character.UnicodeBlock.SPECIALS
     }
 
     private fun modifiersToAwt(modifiers: Int): Int {
