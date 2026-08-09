@@ -431,7 +431,10 @@ abstract class ComposeScreen : Screen(CommonComponents.EMPTY) {
     //? } else {
     /*override fun mouseClicked(x: Double, y: Double, button: Int): Boolean {
     *///? }
-        if (handleMouseClicked(button)) return true
+        if (handleMouseClicked(button)) {
+            consumedButtons += button
+            return true
+        }
         sendMouseButtonEvent(PointerEventType.Press, button)
 
         //? >= 1.21.10 {
@@ -447,7 +450,7 @@ abstract class ComposeScreen : Screen(CommonComponents.EMPTY) {
     //? } else {
     /*override fun mouseReleased(x: Double, y: Double, button: Int): Boolean {
     *///? }
-        sendMouseButtonEvent(PointerEventType.Release, button)
+        if (!consumedButtons.remove(button)) sendMouseButtonEvent(PointerEventType.Release, button)
 
         //? if >= 1.21.10 {
         return super.mouseReleased(event)
@@ -519,6 +522,9 @@ abstract class ComposeScreen : Screen(CommonComponents.EMPTY) {
 
     protected open fun handleKeyPressed(key: Int, modifiers: Int): Boolean = false
 
+    private val consumedKeys = HashSet<Int>()
+    private val consumedButtons = HashSet<Int>()
+
     //? >= 1.21.10 {
     override fun keyPressed(event: McKeyEvent): Boolean {
         val key = event.key
@@ -541,7 +547,7 @@ abstract class ComposeScreen : Screen(CommonComponents.EMPTY) {
     //?} else {
     /*override fun keyReleased(key: Int, scanCode: Int, modifiers: Int): Boolean {
     *///?}
-        val handled = sendKeyReleasedEvent(key, modifiers)
+        val handled = if (consumedKeys.remove(key)) false else sendKeyReleasedEvent(key, modifiers)
         //? if >= 1.21.10 {
         return handled || super.keyReleased(event)
         //?} else {
@@ -549,10 +555,10 @@ abstract class ComposeScreen : Screen(CommonComponents.EMPTY) {
         *///?}
     }
 
-    private fun dispatchKeyPressed(key: Int, modifiers: Int, isRepeat: Boolean = false): Boolean {
-        if (!isRepeat) {
-            if (key == GLFW.GLFW_KEY_ESCAPE && KeybindRecordingBus.consumeEscape()) return true
-            if (handleKeyPressed(key, modifiers)) return true
+    private fun dispatchKeyPressed(key: Int, modifiers: Int): Boolean {
+        if ((key == GLFW.GLFW_KEY_ESCAPE && KeybindRecordingBus.consumeEscape()) || handleKeyPressed(key, modifiers)) {
+            consumedKeys += key
+            return true
         }
         return sendKeyPressedEvent(key, modifiers)
     }
