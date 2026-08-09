@@ -87,6 +87,7 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
         )
         prop.addMetadata("visualizer", Visualizer.KeybindVisualizer::class.java)
         prop.addMetadata("singleKey", true)
+        prop.addMetadata("default", mapping.defaultKey.toOneConfigKeybind())
         prop.addMetadata("category", categoryLabel(mapping))
         prop.addMetadata("subcategory", "Minecraft Controls")
         return prop
@@ -156,13 +157,17 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
 
     private fun KeyMapping.toOneConfigKeybind(): OneConfigKeybind {
         val key = runCatching { InputConstants.getKey(saveString()) }.getOrDefault(InputConstants.UNKNOWN)
-        return when (key.type) {
+        return key.toOneConfigKeybind()
+    }
+
+    private fun InputConstants.Key.toOneConfigKeybind(): OneConfigKeybind {
+        return when (type) {
             InputConstants.Type.KEYSYM -> {
-                if (key.value > 0) OneConfigKeybind(intArrayOf(key.value), null, KeyModifiers.NONE, 0L) { true }
+                if (value > 0) OneConfigKeybind(intArrayOf(value), null, KeyModifiers.NONE, 0L) { true }
                 else OneConfigKeybind(null, null, KeyModifiers.NONE, 0L) { true }
             }
             InputConstants.Type.MOUSE -> {
-                if (key.value >= 0) OneConfigKeybind(null, intArrayOf(key.value), KeyModifiers.NONE, 0L) { true }
+                if (value >= 0) OneConfigKeybind(null, intArrayOf(value), KeyModifiers.NONE, 0L) { true }
                 else OneConfigKeybind(null, null, KeyModifiers.NONE, 0L) { true }
             }
             else -> OneConfigKeybind(null, null, KeyModifiers.NONE, 0L) { true }
