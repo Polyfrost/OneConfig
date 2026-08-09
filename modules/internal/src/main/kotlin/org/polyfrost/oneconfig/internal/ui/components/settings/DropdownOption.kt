@@ -46,7 +46,7 @@ fun DropdownOption(data: DropdownOptionData) {
         else -> null
     }
     val values: List<Any?> = when {
-        enumClass != null -> enumClass.enumConstants.toList()
+        enumClass != null -> data.optionValues?.takeIf { it.isNotEmpty() } ?: enumClass.enumConstants.toList()
         else -> emptyList()
     }
     val options: List<Any> = when {
@@ -62,7 +62,7 @@ fun DropdownOption(data: DropdownOptionData) {
     var selectedIdx by remember(data.prop) {
         mutableStateOf(
             when (initialValue) {
-                is Enum<*> -> initialValue.ordinal
+                is Enum<*> -> values.indexOf(initialValue).takeIf { it >= 0 } ?: 0
                 is String -> optionValues.indexOf(initialValue).takeIf { it >= 0 } ?: 0
                 else -> initialValue as? Int ?: 0
             }
