@@ -6,10 +6,6 @@ import androidx.compose.ui.graphics.skiaCanvas
 import androidx.compose.ui.platform.LocalWindowInfo
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.gui.GuiGraphicsExtractor
-//? >= 1.21.10
-import net.minecraft.client.input.KeyEvent
-//? >= 1.21.10
-import net.minecraft.client.input.MouseButtonEvent
 import org.lwjgl.glfw.GLFW
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -214,15 +210,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     override fun isPauseScreen(): Boolean = OneConfigConfig.pauseGame
 
-    @Suppress("DuplicatedCode")
-    //? >= 1.21.10 {
-    override fun keyPressed(event: KeyEvent): Boolean {
-        val key = event.key
-        //? } else {
-        /*override fun keyPressed(key: Int, scanCode: Int, modifiers: Int): Boolean {
-        *///? }
+    override fun handleKeyPressed(key: Int, modifiers: Int): Boolean {
         if (key == InputConstants.KEY_ESCAPE) {
-            if (KeybindRecordingBus.consumeEscape()) return true
             if (!closeRequested) {
                 beginClose()
                 requestCloseCallback?.invoke()
@@ -242,20 +231,11 @@ class OneConfigUIScreen @JvmOverloads constructor(
             }
             return true
         }
-        //? >= 1.21.10 {
-        return super.keyPressed(event)
-        //? } else {
-        /*return super.keyPressed(key, scanCode, modifiers)
-        *///? }
+        return false
     }
 
     /** Mouse side buttons navigate the page history, like a browser. */
-    //? >= 1.21.10 {
-    override fun mouseClicked(event: MouseButtonEvent, doubleClick: Boolean): Boolean {
-        val button = event.button()
-        //? } else {
-        /*override fun mouseClicked(x: Double, y: Double, button: Int): Boolean {
-        *///? }
+    override fun handleMouseClicked(button: Int): Boolean {
         if (!closeRequested && LocalNavController.isReady) {
             when (button) {
                 GLFW.GLFW_MOUSE_BUTTON_4 -> {
@@ -270,11 +250,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
                 }
             }
         }
-        //? >= 1.21.10 {
-        return super.mouseClicked(event, doubleClick)
-        //? } else {
-        /*return super.mouseClicked(x, y, button)
-        *///? }
+        return false
     }
 
     //~ if >= 26.1 'render' -> 'extractRenderState'
