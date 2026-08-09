@@ -32,9 +32,6 @@ object SkiaCtx {
     val isReady get() = this::directContext.isInitialized
     val isVulkanMode get() = vulkanService?.isVulkan == true
 
-    /**
-     * True only for backends needing the deferred snapshot/blit compose path (VulkanMod)
-     */
     val isDeferredComposeBackend get() = vulkanService?.usesDeferredCompose == true
 
     val isVulkanModInstalled: Boolean by lazy {
@@ -285,8 +282,9 @@ object SkiaCtx {
         val draws = if (post != null) queued + { block.run() } + post else queued + { block.run() }
         val surface = resolveComposeSurface() ?: return
         if (composeRealIsGeneral) composeTarget?.let { vulkanService?.transitionOffscreenForRendering(it) }
-        flushToTarget(draws, surface)
+        flushToTarget(draws, surface, flipY = composeOrigin == SurfaceOrigin.BOTTOM_LEFT)
         composeNeedsSamplingTransition = true
+        composeDirty = true
         blitCompose(ctx)
     }
 
@@ -301,14 +299,7 @@ object SkiaCtx {
         return true
     }
 
-    /**
-     * Pre-26.1 only: the fullscreen Compose GUI is drawn straight onto the back buffer (see [resolveGLSurface]),
-     * so it never reaches the main render target that screenshots read. Called right before a screenshot reads
-     * the main render target's colour texture; blits the finished back buffer (which already holds the GUI) into
-     * it so the capture matches what is on screen. The HUD is unaffected - it is already blitted into the main RT.
-     */
     fun compositeBackBufferForScreenshot(target: com.mojang.blaze3d.pipeline.RenderTarget) {
-        //26.1+ draws compose into the main render target already, so no compositing is needed here.
         //? if < 26.1 {
         /*if (!this::directContext.isInitialized) return
         if (isVulkanMode) return
@@ -466,10 +457,7 @@ object SkiaCtx {
                 directContext.resetAll()
             } else {
                 gl.capture()
-                // Skia's draw binds our main-RT FBO via raw glBindFramebuffer, bypassing MC's
-                // GlStateManager cache. Save the framebuffer that was bound when the main framebuffer
-                // finished rendering and rebind it after, so the following blitToScreen targets the
-                // correct framebuffer instead of the one Skia left bound (otherwise the screen flickers).
+                // This is done to avoid screen flickering.
                 GL30.glGetIntegerv(GL30.GL_FRAMEBUFFER_BINDING, savedFbo)
                 directContext.resetGLAll()
                 GL11.glViewport(0, 0, mainSurface.width, mainSurface.height)
@@ -543,7 +531,7 @@ object SkiaCtx {
         destroyComposeTarget()
     }
 
-    private fun flushToTarget(draws: List<() -> Unit>, surface: Surface) {
+    private fun flushToTarget(draws: List<() -> Unit>, surface: Surface, flipY: Boolean = false) {
         currentSurface = surface
         val savedFbo = IntArray(1)
         try {
@@ -557,8 +545,18 @@ object SkiaCtx {
                 GL11.glDisable(GL11.GL_SCISSOR_TEST)
             }
 
-            canvas.clear(Color.TRANSPARENT)
-            draws.forEach { it() }
+            val target = canvas
+            target.clear(Color.TRANSPARENT)
+            val depth = target.save()
+            try {
+                if (flipY) {
+                    target.translate(0f, surface.height.toFloat())
+                    target.scale(1f, -1f)
+                }
+                draws.forEach { it() }
+            } finally {
+                target.restoreToCount(depth)
+            }
 
             if (isVulkanMode) {
                 directContext.flushAndSubmit(surface, false)
@@ -646,6 +644,10 @@ object SkiaCtx {
 
     private const val ALLOC_RETRY_COOLDOWN_MS = 2000L
 
+    // This improves draw performance on OpenGL because it allows a plain copy.
+    // Compensated in drawComposeBlit because GuiGraphics always samples top left.
+    private val composeOrigin get() = if (isVulkanMode) SurfaceOrigin.TOP_LEFT else SurfaceOrigin.BOTTOM_LEFT
+
     private fun resolveComposeSurface(): Surface? {
         val w = Platform.screen().viewportWidth()
         val h = Platform.screen().viewportHeight()
@@ -698,7 +700,6 @@ object SkiaCtx {
                 return null
             }
             composeBrt = brt.first
-            val composeOrigin = if (isVulkanMode) SurfaceOrigin.TOP_LEFT else SurfaceOrigin.BOTTOM_LEFT
             composeSurface = Surface.makeFromBackendRenderTarget(
                 directContext, brt.first,
                 composeOrigin,
@@ -737,9 +738,6 @@ object SkiaCtx {
         composeBrt?.close(); composeBrt = null
         composeTarget?.destroyBuffers()
         composeTarget = null
-        // Whatever replaces this target starts out blank, so the cached "clean" frame is gone. Without this the
-        // GL path would blit an uninitialised target (blank/garbage) until something else happened to dirty the
-        // scene - recreateSurface() drops the target on every framebuffer callback, not only on real size changes.
         composeDirty = true
     }
 
@@ -753,8 +751,6 @@ object SkiaCtx {
 
         glSurface?.close(); glBrt?.close()
         //? if >= 26.1 {
-        // 26.1+: SkiaCtx.draw() runs before RenderTarget.blitToScreen (Mixin_SkiaFramePresent), so compose
-        // lands in Minecraft's main render target and is seen by the window blit, screenshots and Tracy captures.
         //? if >= 26.2 {
         val target = client.gameRenderer.mainRenderTarget()
         //? } else {
@@ -770,9 +766,7 @@ object SkiaCtx {
             null,
         )
         //? } else {
-        /*// Pre-26.1: SkiaCtx.draw() runs at Window.updateDisplay, which is after the main render target has
-        // already been blitted to the back buffer. Draw straight onto the back buffer so compose is visible.
-        glBrt = svc.makeBackBufferRenderTarget(w, h)
+        /*glBrt = svc.makeBackBufferRenderTarget(w, h)
         glSurface = Surface.makeFromBackendRenderTarget(
             directContext, glBrt!!,
             SurfaceOrigin.BOTTOM_LEFT,
