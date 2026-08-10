@@ -12,6 +12,7 @@ yacl = "3.9.0+26.1-fabric"
 moulconfig = "3.11.0"
 odin = "0.2.2"
 skyblocker = "7OtCaJGB"
+stella = "d12aec9c69"
 
 vulkanmod = "0.6.8+26.1.2"
 
@@ -32,6 +33,8 @@ modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
 odin = { module = "maven.modrinth:odin", version.ref = "odin" }
 skyblocker = { module = "maven.modrinth:skyblocker-liap", version.ref = "skyblocker" }
+#stella = { module = "maven.modrinth:stella", version.ref = "stella"} I prefer modrinth but needed this to work befor I release
+stella = { module = "com.github.Eclipse-5214.stella:stella-26.1", version.ref = "stella" }
 
 moulconfig = { module = "org.notenoughupdates.moulconfig:common", version.ref = "moulconfig" }
 
@@ -42,5 +45,5 @@ meowdding-lib = { module = "me.owdding.meowdding-lib:meowdding-lib", version.ref
 skyblock-api = { module = "tech.thatgravyboat:skyblock-api", version.ref = "skyblock-api" }
 
 [bundles]
-compat = ["modmenu", "yacl", "odin", "skyblocker"]
+compat = ["modmenu", "yacl", "odin", "skyblocker", "stella"]
 fabric-api = ["api-base", "lifecycle-events-v1", "transitive-access-wideners-v1", "command-api-v2", "key-mapping-api-v1", "resource-loader-v0", "resource-loader-v1"]

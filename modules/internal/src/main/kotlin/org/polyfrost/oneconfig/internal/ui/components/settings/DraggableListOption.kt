@@ -70,12 +70,12 @@ fun DraggableListOption(data: DraggableListOptionData) {
 
     // Current ordered items. When checkable, includes disabled items appended after enabled ones.
     var items by remember(data.prop) {
-        val ordered = propValueList(data.prop).ifEmpty { allOptions }
+        val ordered = propValueList(data.prop)
         val result = if (data.checkable) {
             val enabledSet = ordered.toSet()
             ordered + allOptions.filter { it !in enabledSet }
         } else {
-            ordered
+            ordered.ifEmpty { allOptions }
         }
         mutableStateOf(result.map { ListEntry(idGen[0]++, it) })
     }
@@ -83,7 +83,7 @@ fun DraggableListOption(data: DraggableListOptionData) {
     // Enabled slot ids (checkable only — property value = enabled items in order)
     var enabledIds by remember(data.prop) {
         if (!data.checkable) return@remember mutableStateOf(emptySet<Int>())
-        val enabled = propValueList(data.prop).ifEmpty { allOptions }.toSet()
+        val enabled = propValueList(data.prop).toSet()
         mutableStateOf(items.filter { it.value in enabled }.map { it.id }.toSet())
     }
 

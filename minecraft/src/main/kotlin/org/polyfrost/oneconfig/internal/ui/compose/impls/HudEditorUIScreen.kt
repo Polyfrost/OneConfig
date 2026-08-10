@@ -11,15 +11,11 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.key.KeyEventType
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.gui.GuiGraphicsExtractor
-//? >= 1.21.10
-import net.minecraft.client.input.KeyEvent
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.OneConfigConfig
@@ -36,7 +32,6 @@ import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Theme
 
-@OptIn(InternalComposeUiApi::class)
 class HudEditorUIScreen : ComposeScreen() {
     @Volatile private var closeRequested = false
     @Volatile private var closeRequestedAt = 0L
@@ -75,14 +70,8 @@ class HudEditorUIScreen : ComposeScreen() {
         super.removed()
     }
 
-    //? >= 1.21.10 {
-    override fun keyPressed(event: KeyEvent): Boolean {
-        val key = event.key
-    //? } else {
-    /*override fun keyPressed(key: Int, scanCode: Int, modifiers: Int): Boolean {
-    *///? }
+    override fun handleKeyPressed(key: Int, modifiers: Int): Boolean {
         if (key == InputConstants.KEY_ESCAPE) {
-            if (KeybindRecordingBus.consumeEscape()) return true
             if (!closeRequested) {
                 beginClose()
                 requestCloseCallback?.invoke()
@@ -103,11 +92,7 @@ class HudEditorUIScreen : ComposeScreen() {
             }
             return true
         }
-        //? >= 1.21.10 {
-        return super.keyPressed(event)
-        //? } else {
-        /*return super.keyPressed(key, scanCode, modifiers)
-        *///? }
+        return false
     }
 
     //~ if >= 26.1 'render' -> 'extractRenderState'
