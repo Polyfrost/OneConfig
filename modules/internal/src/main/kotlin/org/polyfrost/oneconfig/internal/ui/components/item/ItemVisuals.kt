@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
@@ -54,6 +55,7 @@ import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.IconButton
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.containVerticalScroll
 import org.polyfrost.oneconfig.internal.ui.components.localizedString
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
@@ -247,9 +249,16 @@ fun ItemGrid(
     spacing: Dp = 6.dp,
     onClick: ((ItemDescriptor) -> Unit)? = null,
 ) {
+    val gridState = rememberLazyGridState()
     LazyVerticalGrid(
         columns = GridCells.Adaptive(cellSize),
-        modifier = modifier.fillMaxWidth().heightIn(max = maxHeight),
+        state = gridState,
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(max = maxHeight)
+            .containVerticalScroll {
+                gridState.canScrollBackward || gridState.canScrollForward
+            },
         horizontalArrangement = Arrangement.spacedBy(spacing),
         verticalArrangement = Arrangement.spacedBy(spacing),
     ) {
