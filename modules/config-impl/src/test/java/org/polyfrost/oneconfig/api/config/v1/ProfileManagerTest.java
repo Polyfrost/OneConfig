@@ -56,6 +56,7 @@ class ProfileManagerTest {
     private static final String ROOT_ORPHAN_HUD = "huds/oc_profile_orphan_hud.json";
     private static final String DIRECT_TREE_CONFIG = "profile_direct_tree_test.json";
     private static final String GLOBAL_UI_TREE_CONFIG = "profile_global_ui_tree_test.json";
+    private static final String SEEDED_CONFIG = "profile_seeded_test.json";
 
     @TempDir
     Path tempDir;
@@ -100,6 +101,36 @@ class ProfileManagerTest {
         ConfigManager.createProfile(PROFILE_A);
 
         assertFalse(config.enabled);
+    }
+
+    @Test
+    void onProfileCreatedCanSeedTheNewProfileAndTheValuesArePersisted() throws IOException {
+        ProfileTestConfig config = new ProfileTestConfig(SEEDED_CONFIG);
+        config.initialize(false);
+        ConfigManager.ProfileChangeListener listener = new ConfigManager.ProfileChangeListener() {
+            @Override
+            public void onProfileChanged(String newProfile) {
+            }
+
+            @Override
+            public void onProfileCreated(String profile) {
+                assertFalse(config.enabled, "the seam must run after configs are reset to defaults");
+                config.enabled = true;
+            }
+        };
+        ConfigManager.addProfileChangeListener(listener);
+        try {
+            ConfigManager.createProfile(PROFILE_A);
+            assertTrue(config.enabled);
+
+            Path file = ConfigManager.profileDir(PROFILE_A).resolve(SEEDED_CONFIG);
+            assertTrue(Files.isRegularFile(file));
+            assertTrue(new String(Files.readAllBytes(file), java.nio.charset.StandardCharsets.UTF_8)
+                            .replace(" ", "").contains("\"enabled\":true"),
+                    "seeded values must be on disk before the profile-changed listeners run");
+        } finally {
+            ConfigManager.removeProfileChangeListener(listener);
+        }
     }
 
     @Test
@@ -440,7 +471,7 @@ class ProfileManagerTest {
     }
 
     @Test
-    void movesSnapshotCacheWithRenamedProfileWithoutLosingNewIdentityUpdates() {
+    void movesSnapshotCacheWithRenamedProfileWithoutLosingNewIdentityUpdates() throws java.io.IOException {
         CompatSnapshotStore store = new CompatSnapshotStore("renamed-profile-state.json");
         ConfigManager.createProfile(PROFILE_A);
         store.putValue(PROFILE_A, "test", "value", "latest");

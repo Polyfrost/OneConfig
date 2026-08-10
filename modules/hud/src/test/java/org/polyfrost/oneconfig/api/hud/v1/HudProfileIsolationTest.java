@@ -44,8 +44,11 @@ import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
+import org.polyfrost.oneconfig.api.config.v1.Tree;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HudProfileIsolationTest {
@@ -88,6 +91,22 @@ class HudProfileIsolationTest {
 
         ConfigManager.openProfile(PROFILE);
         assertFalse(hud().getHidden(), "the blank profile must keep its own HUD settings");
+    }
+
+    @Test
+    void aHudWhoseStaticSizeIsNotKnownYetKeepsItsResetDefaultOpen() throws Exception {
+        UnsizedHud provider = new UnsizedHud();
+        HudManager.register(provider);
+        try {
+            launch();
+            Tree tree = HudManager.INSTANCE.getHudsOfType(UnsizedHud.class).get(0).getTree();
+            assertNull(tree.getProp("staticW").getMetadata("default"),
+                    "a zero staticW must not be recorded as the reset default");
+            assertNull(tree.getProp("staticH").getMetadata("default"),
+                    "a zero staticH must not be recorded as the reset default");
+        } finally {
+            HudManager.INSTANCE.unregister(provider, true, true);
+        }
     }
 
     @Test
@@ -357,6 +376,46 @@ class HudProfileIsolationTest {
         @Override
         public Pair<Float, Float> defaultPosition() {
             return new Pair<>(10f, 10f);
+        }
+
+        @Override
+        public boolean showByDefault() {
+            return true;
+        }
+
+        @Override
+        public boolean multipleInstancesAllowed() {
+            return false;
+        }
+
+        @Override
+        public String getText() {
+            return "test";
+        }
+    }
+
+    /** Stands in for a wrapped external HUD, whose size is not known when its tree is built. */
+    static class UnsizedHud extends TextHud {
+        UnsizedHud() {
+            super("test-unsized", "Test Unsized HUD", Hud.Category.getINFO(), "", "");
+        }
+
+        @Override
+        public float getStaticW() {
+            return 0f;
+        }
+
+        @Override
+        public void setStaticW(float value) {
+        }
+
+        @Override
+        public float getStaticH() {
+            return 0f;
+        }
+
+        @Override
+        public void setStaticH(float value) {
         }
 
         @Override

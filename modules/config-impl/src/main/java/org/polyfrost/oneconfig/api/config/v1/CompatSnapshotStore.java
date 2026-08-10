@@ -104,7 +104,15 @@ public final class CompatSnapshotStore {
     }
 
     public synchronized boolean hasLoadFailure(String profile) {
-        return loadFailures.containsKey(profile);
+        if (loadFailures.containsKey(profile)) return true;
+        if (cache.containsKey(profile)) return false;
+        try {
+            readFromDisk(profile);
+            return false;
+        } catch (IllegalStateException failure) {
+            loadFailures.put(profile, failure);
+            return true;
+        }
     }
 
     public synchronized void putValue(String profile, String treeId, String key, Object serialized) {
@@ -197,7 +205,7 @@ public final class CompatSnapshotStore {
         }
     }
 
-    public synchronized void renameProfile(String oldProfile, String newProfile) {
+    public synchronized void renameProfile(String oldProfile, String newProfile) throws IOException {
         cancelPending(oldProfile);
         cancelPending(newProfile);
         IllegalStateException loadFailure = loadFailures.remove(oldProfile);
@@ -213,7 +221,7 @@ public final class CompatSnapshotStore {
         if (snapshot == null) {
             if (updates != null) {
                 cache.put(newProfile, updates);
-                flush(newProfile);
+                flushOrThrow(newProfile);
             }
             return;
         }
@@ -224,7 +232,7 @@ public final class CompatSnapshotStore {
             }
         }
         cache.put(newProfile, snapshot);
-        flush(newProfile);
+        flushOrThrow(newProfile);
     }
 
     public synchronized void deleteProfile(String profile) {

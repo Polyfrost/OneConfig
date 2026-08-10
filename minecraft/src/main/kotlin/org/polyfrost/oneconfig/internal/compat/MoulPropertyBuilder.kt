@@ -7,7 +7,11 @@ import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
 import org.polyfrost.oneconfig.relocator.annotations.MoulConfig
+import org.polyfrost.oneconfig.utils.v1.WrappingUtils
 import java.lang.reflect.Field
+import java.lang.reflect.Modifier
+import java.util.Optional
+import java.util.concurrent.ConcurrentHashMap
 
 @MoulConfig
 class MoulPropertyBuilder internal constructor(option: ProcessedOption) {
@@ -15,8 +19,14 @@ class MoulPropertyBuilder internal constructor(option: ProcessedOption) {
     val name: String? = resolveTextGetter(option, "getName")
     val description: String? = resolveTextGetter(option, "getDescription")
 
+    private var getterReplaced = false
+
     var setter: (Any) -> Unit = option::set
     var getter: () -> Any = option::get
+        set(value) {
+            field = value
+            getterReplaced = true
+        }
 
     val metadata: MutableMap<String, Any> = mutableMapOf()
 
@@ -35,7 +45,16 @@ class MoulPropertyBuilder internal constructor(option: ProcessedOption) {
     ).apply {
         snapshotKey?.let { addMetadata("oc_snapshot_key", it) }
         if (isRepoConfigField(backingField)) addMetadata(CompatSnapshots.NO_SNAPSHOT_META, true)
+        else codeDefault()?.let { addMetadata("default", it) }
         this@MoulPropertyBuilder.metadata.entries.forEach { (key, value) -> addMetadata(key, value) }
+    }
+
+    private fun codeDefault(): Any? {
+        if (getterReplaced) return null
+        val field = backingField ?: return null
+        if (!WrappingUtils.isSimpleClass(field.type)) return null
+        if (Modifier.isStatic(field.modifiers)) return null
+        return runCatching { field.isAccessible = true; field.get(pristine(field.declaringClass)) }.getOrNull()
     }
 
     private fun resolveBackingField(option: Any): Field? = runCatching {
@@ -68,6 +87,19 @@ class MoulPropertyBuilder internal constructor(option: ProcessedOption) {
             is String -> fromGetText
             else -> fromGetText.toString()
         }
+    }
+
+    private companion object {
+        private val pristines = ConcurrentHashMap<Class<*>, Optional<Any>>()
+
+        fun pristine(cls: Class<*>): Any? = pristines.computeIfAbsent(cls) {
+            Optional.ofNullable(
+                runCatching {
+                    if (it.enclosingClass != null && !Modifier.isStatic(it.modifiers)) null
+                    else it.getDeclaredConstructor().apply { isAccessible = true }.newInstance()
+                }.getOrNull()
+            )
+        }.orElse(null)
     }
 }
 //? }

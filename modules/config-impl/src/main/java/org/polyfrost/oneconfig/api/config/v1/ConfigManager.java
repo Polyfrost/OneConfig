@@ -449,6 +449,9 @@ public final class ConfigManager {
             openProfile(name, false, true);
         }
         notifyProfileCreated(name);
+        synchronized (ConfigManager.class) {
+            active().saveAll();
+        }
         notifyProfileChanged(name);
     }
 

@@ -50,6 +50,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     private final CompatSnapshotStore store = new CompatSnapshotStore();
     private final CompatSnapshotStore baselineStore = new CompatSnapshotStore("compat-baseline.json");
     private static final String BASELINE_BUCKET = "";
+    private static final long DISPATCH_TIMEOUT_SECONDS = 30L;
     private final Map<String, Tree> known = new ConcurrentHashMap<>();
     private final Map<String, Map<String, Object>> defaults = new ConcurrentHashMap<>();
     private final Map<Property<?>, Boolean> wired = Collections.synchronizedMap(new WeakHashMap<>());
@@ -145,7 +146,11 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     @Override
     public void onProfileRenamed(String oldProfile, String newProfile) {
         if (oldProfile.equals(currentProfile)) currentProfile = newProfile;
-        store.renameProfile(oldProfile, newProfile);
+        try {
+            store.renameProfile(oldProfile, newProfile);
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException("Failed to move compat snapshot to profile '" + newProfile + "'", e);
+        }
     }
 
     @Override
@@ -175,7 +180,19 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         } catch (Throwable t) {
             complete.completeExceptionally(t);
         }
-        complete.join();
+        try {
+            complete.get(DISPATCH_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS);
+        } catch (java.util.concurrent.TimeoutException e) {
+            throw new IllegalStateException("Timed out waiting for the compat snapshot dispatcher", e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted waiting for the compat snapshot dispatcher", e);
+        } catch (java.util.concurrent.ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof RuntimeException) throw (RuntimeException) cause;
+            if (cause instanceof Error) throw (Error) cause;
+            throw new IllegalStateException(cause);
+        }
     }
 
     private static void flushForLifecycle(CompatSnapshotStore snapshotStore, String profile) {

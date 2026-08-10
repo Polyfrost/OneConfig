@@ -105,6 +105,28 @@ class CompatSnapshotStoreTest {
     }
 
     @Test
+    void hasLoadFailureReportsACorruptSnapshotBeforeAnythingHasLoadedIt() throws IOException {
+        Path file = profileDirectory.resolve(FILE_NAME);
+        byte[] corrupt = "{ definitely-not-json".getBytes(StandardCharsets.UTF_8);
+        Files.write(file, corrupt);
+        CompatSnapshotStore store = new CompatSnapshotStore(FILE_NAME);
+
+        assertTrue(store.hasLoadFailure(profile));
+        assertArrayEquals(corrupt, Files.readAllBytes(file));
+    }
+
+    @Test
+    void hasLoadFailureDoesNotCacheOrCreateAReadableSnapshot() throws IOException {
+        CompatSnapshotStore store = new CompatSnapshotStore(FILE_NAME);
+
+        assertFalse(store.hasLoadFailure(profile));
+
+        assertFalse(Files.exists(profileDirectory.resolve(FILE_NAME)));
+        assertDoesNotThrow(() -> store.flushOrThrow(profile));
+        assertFalse(Files.exists(profileDirectory.resolve(FILE_NAME)));
+    }
+
+    @Test
     void structurallyInvalidSnapshotIsAlsoPreserved() throws IOException {
         Path file = profileDirectory.resolve(FILE_NAME);
         byte[] corrupt = "{\"controls\":\"not-an-object\"}".getBytes(StandardCharsets.UTF_8);
@@ -115,6 +137,10 @@ class CompatSnapshotStoreTest {
         assertTrue(store.hasLoadFailure(profile));
         assertArrayEquals(corrupt, Files.readAllBytes(file));
 
+        store.deleteProfile(profile);
+        assertTrue(store.hasLoadFailure(profile));
+
+        Files.delete(file);
         store.deleteProfile(profile);
         assertFalse(store.hasLoadFailure(profile));
     }

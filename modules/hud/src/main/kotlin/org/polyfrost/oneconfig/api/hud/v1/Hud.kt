@@ -977,9 +977,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             addCallbacks(tree)
             if (with == null) LOGGER.info("generated new HUD config for $title -> ${tree.id}")
             Config.captureDefaults(tree)
-            sanitizeHudCapturedDefaults(tree)
             if (out.capturedDefaults == null) out.capturedDefaults = tree
             ConfigManager.active().register(tree)
+            sanitizeHudCapturedDefaults(tree)
             this.tree = tree
         }
         return out

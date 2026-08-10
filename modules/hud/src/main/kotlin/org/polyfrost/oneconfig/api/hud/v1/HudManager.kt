@@ -44,6 +44,8 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.utils.v1.MHUtils
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 
@@ -61,6 +63,7 @@ object HudManager {
         private set
 
     private var init = false
+    private const val UI_THREAD_TIMEOUT_SECONDS = 30L
     @Volatile private var profileReloadDispatcher = Consumer<Runnable> { it.run() }
     private data class ProfileReload(
         val profile: String,
@@ -238,7 +241,7 @@ object HudManager {
         // Providers are commonly registered by later InitializationEvent handlers, after the
         // manager has already performed its first load. Coalesce those registrations into one
         // render-thread reload so default and persisted HUD instances appear on the first launch.
-        if (init) {
+        if (init && activeInstances.none { it::class.java == hud::class.java }) {
             pendingProfileReload.compareAndSet(
                 null,
                 ProfileReload(
@@ -292,7 +295,7 @@ object HudManager {
             val it = iter.next()
             if (it::class.java == hud::class.java) {
                 iter.remove()
-                disposeHud(it, delete)
+                disposeHudLogging(it, delete)
                 @Suppress("UNCHECKED_CAST")
                 out.add(it as T)
             }
@@ -331,7 +334,16 @@ object HudManager {
     fun removeHud(hud: Hud, delete: Boolean = false) {
         require(hud.isReal) { "Tried to remove a non-real HUD - use unregister() instead." }
         activeInstances.remove(hud)
-        disposeHud(hud, delete)
+        disposeHudLogging(hud, delete)
+    }
+
+    private fun disposeHudLogging(hud: Hud, delete: Boolean) {
+        try {
+            disposeHud(hud, delete)
+        } catch (failure: Throwable) {
+            if (failure.isFatalHudFailure()) throw failure
+            LOGGER.error("Failed to dispose HUD ${hud.title}", failure)
+        }
     }
 
     private fun disposeHud(hud: Hud, delete: Boolean) {
@@ -888,7 +900,11 @@ object HudManager {
         } catch (failure: Throwable) {
             complete.completeExceptionally(failure)
         }
-        complete.join()
+        try {
+            complete.get(UI_THREAD_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        } catch (timeout: TimeoutException) {
+            throw IllegalStateException("Timed out waiting for the HUD profile reload", timeout)
+        }
     }
 
     @Suppress("UNCHECKED_CAST")

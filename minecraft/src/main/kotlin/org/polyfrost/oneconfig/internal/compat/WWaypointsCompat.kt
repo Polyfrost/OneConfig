@@ -919,6 +919,7 @@ object WWaypointsCompat {
         prop.visualizer = Visualizer.SwitchVisualizer::class.java
         prop.category = "General"
         prop.addMetadata("searchTags", tags)
+        (WWaypointsBridge.configDefault(field) as? Boolean)?.let { prop.addMetadata("default", it) }
         return prop
     }
 
@@ -944,6 +945,7 @@ object WWaypointsCompat {
         prop.addMetadata("step", 1f)
         prop.category = "General"
         prop.addMetadata("searchTags", tags)
+        (WWaypointsBridge.configDefault(field) as? Number)?.let { prop.addMetadata("default", it.toInt()) }
         return prop
     }
 
@@ -970,6 +972,7 @@ object WWaypointsCompat {
         prop.addMetadata("step", step)
         prop.category = "General"
         prop.addMetadata("searchTags", tags)
+        (WWaypointsBridge.configDefault(field) as? Number)?.let { prop.addMetadata("default", it.toFloat()) }
         return prop
     }
 
@@ -1003,6 +1006,7 @@ object WWaypointsCompat {
         prop.addMetadata("options", labels)
         prop.category = "General"
         prop.addMetadata("searchTags", tags)
+        prop.addMetadata("default", WWaypointsBridge.configDefault(field)?.takeIf(enumClass::isInstance) ?: fallbackConstant)
         return prop
     }
 

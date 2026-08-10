@@ -6,10 +6,13 @@ import net.minecraft.client.Minecraft
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshotStore
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 object MinecraftKeybindProfiles : ConfigManager.ProfileChangeListener {
     private const val NAMESPACE = "controls"
     private const val SHARED_NAMESPACE = "shared-controls"
+    private const val CLIENT_THREAD_TIMEOUT_SECONDS = 30L
     private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/MC-Keybind-Profiles")
     private val store = CompatSnapshotStore("minecraft-keybinds.json")
     private val modeTransitions = MinecraftKeybindModeTransitions(
@@ -124,11 +127,9 @@ object MinecraftKeybindProfiles : ConfigManager.ProfileChangeListener {
     @JvmStatic
     fun onOptionsSaved() {
         if (!initialized) return
-        // Options.save() is already a synchronous disk write. Flush this small snapshot alongside
-        // it so a crash cannot leave options.txt newer than the profile which owns those controls.
         val captureSaved: () -> Unit = {
             runCatching {
-                modeTransitions.captureSavedOptions { owner -> captureLiveControls(owner, true) }
+                modeTransitions.captureSavedOptions { owner -> captureLiveControls(owner, false) }
             }
                 .onFailure { LOGGER.warn("Failed to capture saved Minecraft keybinds", it) }
             Unit
@@ -159,7 +160,11 @@ object MinecraftKeybindProfiles : ConfigManager.ProfileChangeListener {
                 .onSuccess { complete.complete(Unit) }
                 .onFailure { complete.completeExceptionally(it) }
         }
-        complete.join()
+        try {
+            complete.get(CLIENT_THREAD_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        } catch (timeout: TimeoutException) {
+            throw IllegalStateException("Timed out waiting for the client thread", timeout)
+        }
     }
 
     private fun capture(profile: String, namespace: String = NAMESPACE) {
