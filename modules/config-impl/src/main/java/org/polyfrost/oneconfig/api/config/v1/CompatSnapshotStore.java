@@ -35,6 +35,7 @@ import com.electronwill.nightconfig.core.io.ConfigWriter;
 import com.electronwill.nightconfig.core.io.ParsingMode;
 import com.electronwill.nightconfig.json.JsonFormat;
 import com.electronwill.nightconfig.json.JsonParser;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -58,6 +59,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @org.jetbrains.annotations.ApiStatus.Internal
 public final class CompatSnapshotStore {
     static final String FILE_NAME = "compat-snapshots.json";
+    static final int MAX_QUARANTINED = 3;
 
     private final String fileName;
     private final ConfigWriter writer = JsonFormat.fancyInstance().createWriter();
@@ -92,14 +94,40 @@ public final class CompatSnapshotStore {
         if (snapshot != null) return snapshot;
         try {
             snapshot = readFromDisk(profile);
-            cache.put(profile, snapshot);
-            return snapshot;
         } catch (IllegalStateException failure) {
-            // A malformed or temporarily unreadable snapshot must not become an empty, writable cache:
-            // doing so would replace the only on-disk copy the next time a value is captured.
-            loadFailures.put(profile, failure);
-            throw failure;
+            snapshot = quarantine(profile, failure);
+            if (snapshot == null) {
+                loadFailures.put(profile, failure);
+                throw failure;
+            }
         }
+        cache.put(profile, snapshot);
+        return snapshot;
+    }
+
+    private @Nullable Map<String, Map<String, Object>> quarantine(String profile, IllegalStateException failure) {
+        if (!(failure instanceof MalformedSnapshotException)) return null;
+        Path file = ConfigManager.profileDir(profile).resolve(fileName);
+        Path corrupt = nextFreeName(file.resolveSibling(fileName + ".corrupt"));
+        try {
+            Files.move(file, corrupt, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException | RuntimeException moveFailure) {
+            failure.addSuppressed(moveFailure);
+            return null;
+        }
+        ConfigManager.LOGGER.error(
+                "Compat snapshot for profile '{}' is unreadable; moved it to {} and started a new one",
+                profile, corrupt, failure
+        );
+        return new ConcurrentHashMap<>();
+    }
+
+    private static Path nextFreeName(Path preferred) {
+        Path candidate = preferred;
+        for (int i = 2; i <= MAX_QUARANTINED && Files.exists(candidate, LinkOption.NOFOLLOW_LINKS); i++) {
+            candidate = preferred.resolveSibling(preferred.getFileName() + "." + i);
+        }
+        return candidate;
     }
 
     public synchronized Object getValue(String profile, String treeId, String key) {
@@ -114,6 +142,7 @@ public final class CompatSnapshotStore {
             readFromDisk(profile);
             return false;
         } catch (IllegalStateException failure) {
+            if (quarantine(profile, failure) != null) return false;
             loadFailures.put(profile, failure);
             return true;
         }
@@ -258,8 +287,13 @@ public final class CompatSnapshotStore {
         if (!Files.isRegularFile(file)) {
             throw new IllegalStateException("Compat snapshot is not a regular file: " + file);
         }
+        final String text;
         try {
-            String text = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+            text = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+        } catch (Exception failure) {
+            throw new IllegalStateException("Failed to read compat snapshot for profile '" + profile + "'", failure);
+        }
+        try {
             if (text.trim().isEmpty()) return out;
             BackedConfig cfg = new BackedConfig(new HashMap<>());
             parser.parse(text, cfg, ParsingMode.MERGE);
@@ -273,9 +307,17 @@ public final class CompatSnapshotStore {
                 out.put(e.getKey(), tree);
             }
         } catch (Exception failure) {
-            throw new IllegalStateException("Failed to read compat snapshot for profile '" + profile + "'", failure);
+            throw new MalformedSnapshotException(
+                    "Failed to parse compat snapshot for profile '" + profile + "'", failure
+            );
         }
         return out;
+    }
+
+    private static final class MalformedSnapshotException extends IllegalStateException {
+        MalformedSnapshotException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 
     private static Config toConfig(Map<String, ?> map) {

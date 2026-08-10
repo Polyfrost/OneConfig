@@ -71,7 +71,6 @@ public final class ConfigManager {
     private static final ConfigManager core = new ConfigManager(Paths.get("config"), NightConfigSerializer.ALL);
     private static final ConfigManager backup = new ConfigManager(Paths.get("oneconfig", "backup"), NightConfigSerializer.ALL);
     private static ConfigManager active;
-    private static volatile String pendingInitialProfile = null;
     private static boolean initialized = false;
     private static boolean isFirstRun = false;
 //    @UnmodifiableView
@@ -82,7 +81,7 @@ public final class ConfigManager {
     private static final long PROFILE_OPERATION_BUDGET_NANOS = java.util.concurrent.TimeUnit.SECONDS.toNanos(30L);
     private static final long MINIMUM_WAIT_NANOS = java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(500L);
     private static final ThreadLocal<Long> PROFILE_OPERATION_DEADLINE = new ThreadLocal<>();
-    private static volatile boolean rebindingProfiles = false;
+    private static final ThreadLocal<Boolean> REBINDING_PROFILES = ThreadLocal.withInitial(() -> Boolean.FALSE);
     private static final java.util.concurrent.CopyOnWriteArrayList<ProfileChangeListener> profileListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
     private static final java.util.concurrent.CopyOnWriteArrayList<TreeRegistrationListener> treeListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
 
@@ -164,29 +163,14 @@ public final class ConfigManager {
     /**
      * Returns a reference to the active config manager, which is mounted to the current active profile.
      */
-    public static ConfigManager active() {
-        ConfigManager opened;
-        synchronized (ConfigManager.class) {
-            opened = activeLocked();
-        }
-        drainInitialNotify();
-        return opened;
+    public static synchronized ConfigManager active() {
+        return activeLocked();
     }
 
     private static ConfigManager activeLocked() {
         if (active != null) return active;
-        pendingInitialProfile = initProfiles();
+        initProfiles();
         return active;
-    }
-
-    private static void drainInitialNotify() {
-        if (pendingInitialProfile == null) return;
-        String profile;
-        synchronized (ConfigManager.class) {
-            profile = pendingInitialProfile;
-            pendingInitialProfile = null;
-        }
-        if (profile != null) notifyProfileChanged(profile);
     }
 
     @ApiStatus.Internal
@@ -229,7 +213,7 @@ public final class ConfigManager {
 
     @ApiStatus.Internal
     public static boolean isRebindingProfiles() {
-        return rebindingProfiles;
+        return REBINDING_PROFILES.get();
     }
 
     /*private static List<String> doModsListScan() {
@@ -301,7 +285,7 @@ public final class ConfigManager {
         }
     }
 
-    private static String initProfiles() {
+    private static void initProfiles() {
         addProfileChangeListener(CompatSnapshots.INSTANCE);
         Property<String[]> ownedProfileSubdirs = Properties.simple(
                 "ownedProfileSubdirs", "Owned Profile Subdirectories",
@@ -355,7 +339,6 @@ public final class ConfigManager {
             activeProfile = "";
         }
         openProfile(activeProfile, false);
-        return activeProfile;
     }
 
     public static void openProfile(String profile) {
@@ -408,7 +391,8 @@ public final class ConfigManager {
             LOGGER.info("opening profile {}", profile);
             active = new ConfigManager(PROFILES_DIR.resolve(profile), core.backend.getSerializers().toArray(new FileSerializer[0])).withHook().withWatcher();
         }
-        rebindingProfiles = true;
+        boolean wasRebinding = REBINDING_PROFILES.get();
+        REBINDING_PROFILES.set(Boolean.TRUE);
         try {
             rebindInitializedConfigs(restoreDefaults);
             for (Tree t : externalTrees) {
@@ -424,7 +408,8 @@ public final class ConfigManager {
                 }
             }
         } finally {
-            rebindingProfiles = false;
+            if (wasRebinding) REBINDING_PROFILES.set(Boolean.TRUE);
+            else REBINDING_PROFILES.remove();
         }
     }
 
@@ -1019,7 +1004,6 @@ public final class ConfigManager {
     }
 
     private static void runProfileOperation(Runnable operation) {
-        drainInitialNotify();
         if (PROFILE_LIFECYCLE_LOCK.isHeldByCurrentThread() || !PROFILE_LIFECYCLE_LOCK.tryLock()) {
             throw new IllegalStateException("Another profile operation is already in progress");
         }

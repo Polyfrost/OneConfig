@@ -198,6 +198,31 @@ fun Profiles() {
         }
     }
 
+    fun <T : Any> runProfileDialog(prompt: () -> T?, action: (T) -> Unit) {
+        Platform.screen().runOnUiThread {
+            if (busy) return@runOnUiThread
+            busy = true
+            scope.launch(start = CoroutineStart.UNDISPATCHED) {
+                withContext(NonCancellable) {
+                    val choice = try {
+                        withContext(Dispatchers.IO) { prompt() }
+                    } catch (failure: Throwable) {
+                        Platform.screen().runOnUiThread {
+                            busy = false
+                            Notifications.error("Profile action failed", failure.messageOrType())
+                        }
+                        return@withContext
+                    }
+                    if (choice == null) {
+                        Platform.screen().runOnUiThread { busy = false }
+                        return@withContext
+                    }
+                    runProfileAction(holdsBusy = true) { action(choice) }
+                }
+            }
+        }
+    }
+
     DisposableEffect(Unit) {
         ShellState.title = "Profiles"
         onDispose { }
@@ -308,65 +333,39 @@ fun Profiles() {
                 runProfileAction(onSuccess, onError) { ConfigManager.setProfileIcon(profile.id, icon) }
             },
             onDelete = { profile ->
-                if (!busy) {
-                    busy = true
-                    scope.launch {
-                        val confirmed = try {
-                            withContext(Dispatchers.IO) {
-                                TinyFdApi.getInstance().showMessageBox(
-                                    "Delete profile",
-                                    "Delete ${profile.name}? This cannot be undone.",
-                                    TinyFdApi.YES_NO_DIALOG,
-                                    TinyFdApi.WARNING_ICON,
-                                    false,
-                                )
-                            }
-                        } catch (failure: Throwable) {
-                            busy = false
-                            Notifications.error("Profile action failed", failure.messageOrType())
-                            return@launch
-                        }
-                        if (confirmed) {
-                            runProfileAction(holdsBusy = true) { ConfigManager.deleteProfile(profile.id) }
-                        } else {
-                            busy = false
-                        }
-                    }
-                }
+                runProfileDialog(
+                    prompt = {
+                        TinyFdApi.getInstance().showMessageBox(
+                            "Delete profile",
+                            "Delete ${profile.name}? This cannot be undone.",
+                            TinyFdApi.YES_NO_DIALOG,
+                            TinyFdApi.WARNING_ICON,
+                            false,
+                        ).takeIf { it }
+                    },
+                    action = { ConfigManager.deleteProfile(profile.id) },
+                )
             },
             onExport = { profile ->
-                if (!busy) {
-                    busy = true
-                    scope.launch {
+                runProfileDialog(
+                    prompt = {
                         val defaultName = profile.name.replace(Regex("[^a-zA-Z0-9._-]"), "_") + ".zip"
-                        val destination = try {
-                            withContext(Dispatchers.IO) {
-                                TinyFdApi.getInstance().openSaveSelector(
-                                    "Export profile",
-                                    defaultName,
-                                    arrayOf("*.zip"),
-                                    "Zip archive",
-                                )
-                            }
-                        } catch (failure: Throwable) {
-                            busy = false
-                            Notifications.error("Profile action failed", failure.messageOrType())
-                            return@launch
-                        }
-                        if (destination == null) {
-                            busy = false
-                            return@launch
-                        }
+                        TinyFdApi.getInstance().openSaveSelector(
+                            "Export profile",
+                            defaultName,
+                            arrayOf("*.zip"),
+                            "Zip archive",
+                        )
+                    },
+                    action = { destination ->
                         val archive = if (destination.fileName.toString().endsWith(".zip", ignoreCase = true)) {
                             destination
                         } else {
                             destination.resolveSibling(destination.fileName.toString() + ".zip")
                         }
-                        runProfileAction(holdsBusy = true) {
-                            ConfigManager.exportProfile(profile.id, archive)
-                        }
-                    }
-                }
+                        ConfigManager.exportProfile(profile.id, archive)
+                    },
+                )
             }
         )
     }

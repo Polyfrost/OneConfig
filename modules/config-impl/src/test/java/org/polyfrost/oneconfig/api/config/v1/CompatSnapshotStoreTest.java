@@ -124,10 +124,28 @@ class CompatSnapshotStoreTest {
     }
 
     @Test
-    void corruptSnapshotCannotBecomeAnEmptyWritableCache() throws IOException {
+    void corruptSnapshotIsMovedAsideAndTheProfileStartsOver() throws IOException {
         Path file = profileDirectory.resolve(FILE_NAME);
+        Path quarantined = profileDirectory.resolve(FILE_NAME + ".corrupt");
         byte[] corrupt = "{ definitely-not-json".getBytes(StandardCharsets.UTF_8);
         Files.write(file, corrupt);
+        CompatSnapshotStore store = new CompatSnapshotStore(FILE_NAME);
+
+        assertTrue(store.load(profile).isEmpty());
+        assertFalse(store.hasLoadFailure(profile));
+        assertArrayEquals(corrupt, Files.readAllBytes(quarantined));
+        assertFalse(Files.exists(file));
+
+        assertDoesNotThrow(() -> store.putValue(profile, "controls", "key.jump", "key.keyboard.space"));
+        assertDoesNotThrow(() -> store.flushOrThrow(profile));
+        assertEquals("key.keyboard.space",
+                new CompatSnapshotStore(FILE_NAME).getValue(profile, "controls", "key.jump"));
+    }
+
+    @Test
+    void snapshotWhichCouldNotBeReadAtAllStaysPoisonedAndUntouched() throws IOException {
+        Path file = profileDirectory.resolve(FILE_NAME);
+        Files.createDirectories(file.resolve("occupied"));
         CompatSnapshotStore store = new CompatSnapshotStore(FILE_NAME);
 
         assertThrows(IllegalStateException.class, () -> store.load(profile));
@@ -136,18 +154,53 @@ class CompatSnapshotStoreTest {
                 () -> store.putValue(profile, "controls", "key.jump", "key.keyboard.space"));
         assertDoesNotThrow(() -> store.flush(profile));
         assertThrows(IllegalStateException.class, () -> store.flushOrThrow(profile));
-        assertArrayEquals(corrupt, Files.readAllBytes(file));
+        assertTrue(Files.isDirectory(file));
+        assertFalse(Files.exists(profileDirectory.resolve(FILE_NAME + ".corrupt")));
     }
 
     @Test
-    void hasLoadFailureReportsACorruptSnapshotBeforeAnythingHasLoadedIt() throws IOException {
+    void aSecondCorruptSnapshotDoesNotOverwriteTheFirstQuarantinedCopy() throws IOException {
         Path file = profileDirectory.resolve(FILE_NAME);
+        byte[] first = "{ definitely-not-json".getBytes(StandardCharsets.UTF_8);
+        Files.write(file, first);
+        assertTrue(new CompatSnapshotStore(FILE_NAME).load(profile).isEmpty());
+
+        byte[] second = "{ also-not-json".getBytes(StandardCharsets.UTF_8);
+        Files.write(file, second);
+        assertTrue(new CompatSnapshotStore(FILE_NAME).load(profile).isEmpty());
+
+        assertArrayEquals(first, Files.readAllBytes(profileDirectory.resolve(FILE_NAME + ".corrupt")));
+        assertArrayEquals(second, Files.readAllBytes(profileDirectory.resolve(FILE_NAME + ".corrupt.2")));
+    }
+
+    @Test
+    void quarantinedCopiesStopAtTheCapAndReuseTheLastSlot() throws IOException {
+        Path file = profileDirectory.resolve(FILE_NAME);
+        byte[] last = null;
+        for (int i = 1; i <= CompatSnapshotStore.MAX_QUARANTINED + 2; i++) {
+            last = ("{ not-json-" + i).getBytes(StandardCharsets.UTF_8);
+            Files.write(file, last);
+            assertTrue(new CompatSnapshotStore(FILE_NAME).load(profile).isEmpty());
+        }
+
+        assertArrayEquals("{ not-json-1".getBytes(StandardCharsets.UTF_8),
+                Files.readAllBytes(profileDirectory.resolve(FILE_NAME + ".corrupt")));
+        assertArrayEquals(last,
+                Files.readAllBytes(profileDirectory.resolve(FILE_NAME + ".corrupt." + CompatSnapshotStore.MAX_QUARANTINED)));
+        assertFalse(Files.exists(profileDirectory.resolve(FILE_NAME + ".corrupt." + (CompatSnapshotStore.MAX_QUARANTINED + 1))));
+    }
+
+    @Test
+    void hasLoadFailureRepairsACorruptSnapshotBeforeAnythingHasLoadedIt() throws IOException {
+        Path file = profileDirectory.resolve(FILE_NAME);
+        Path quarantined = profileDirectory.resolve(FILE_NAME + ".corrupt");
         byte[] corrupt = "{ definitely-not-json".getBytes(StandardCharsets.UTF_8);
         Files.write(file, corrupt);
         CompatSnapshotStore store = new CompatSnapshotStore(FILE_NAME);
 
-        assertTrue(store.hasLoadFailure(profile));
-        assertArrayEquals(corrupt, Files.readAllBytes(file));
+        assertFalse(store.hasLoadFailure(profile));
+        assertArrayEquals(corrupt, Files.readAllBytes(quarantined));
+        assertFalse(Files.exists(file));
     }
 
     @Test
@@ -178,22 +231,16 @@ class CompatSnapshotStoreTest {
     }
 
     @Test
-    void structurallyInvalidSnapshotIsAlsoPreserved() throws IOException {
+    void structurallyInvalidSnapshotIsAlsoMovedAside() throws IOException {
         Path file = profileDirectory.resolve(FILE_NAME);
+        Path quarantined = profileDirectory.resolve(FILE_NAME + ".corrupt");
         byte[] corrupt = "{\"controls\":\"not-an-object\"}".getBytes(StandardCharsets.UTF_8);
         Files.write(file, corrupt);
         CompatSnapshotStore store = new CompatSnapshotStore(FILE_NAME);
 
-        assertThrows(IllegalStateException.class, () -> store.load(profile));
-        assertTrue(store.hasLoadFailure(profile));
-        assertArrayEquals(corrupt, Files.readAllBytes(file));
-
-        store.deleteProfile(profile);
-        assertTrue(store.hasLoadFailure(profile));
-
-        Files.delete(file);
-        store.deleteProfile(profile);
-        assertFalse(store.hasLoadFailure(profile));
+        assertTrue(store.load(profile).isEmpty());
+        assertArrayEquals(corrupt, Files.readAllBytes(quarantined));
+        assertFalse(Files.exists(file));
     }
 
     @Test

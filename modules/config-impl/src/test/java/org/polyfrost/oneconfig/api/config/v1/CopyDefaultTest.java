@@ -65,6 +65,39 @@ public class CopyDefaultTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void copiesEntriesInsideContainers() {
+        List<String> inner = new ArrayList<>(Arrays.asList("one"));
+        List<List<String>> original = new ArrayList<>(Collections.singletonList(inner));
+        List<List<String>> copy = (List<List<String>>) Config.copyDefault(List.class, original);
+        assertNotSame(inner, copy.get(0));
+        inner.add("edited");
+        assertEquals(Collections.singletonList("one"), copy.get(0));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void copiesValuesInsideMaps() {
+        List<String> inner = new ArrayList<>(Arrays.asList("one"));
+        Map<String, List<String>> original = new LinkedHashMap<>();
+        original.put("a", inner);
+        Map<String, List<String>> copy = (Map<String, List<String>>) Config.copyDefault(Map.class, original);
+        assertNotSame(inner, copy.get("a"));
+        inner.add("edited");
+        assertEquals(Collections.singletonList("one"), copy.get("a"));
+    }
+
+    @Test
+    void copiesEntriesInsideObjectArrays() {
+        String[] inner = {"one"};
+        String[][] original = {inner};
+        String[][] copy = (String[][]) Config.copyDefault(String[][].class, original);
+        assertNotSame(inner, copy[0]);
+        inner[0] = "edited";
+        assertEquals("one", copy[0][0]);
+    }
+
+    @Test
     void leavesSimpleValuesAlone() {
         String value = "one";
         assertSame(value, Config.copyDefault(String.class, value));

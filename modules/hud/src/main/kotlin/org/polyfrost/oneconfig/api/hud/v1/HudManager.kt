@@ -806,11 +806,8 @@ object HudManager {
     @ApiStatus.Internal
     fun initialize() {
         if (init) throw IllegalStateException("HudManager.initialize() called twice!")
-        // Profile initialization emits the current profile. Do it before subscribing so the
-        // initial HUD load is not immediately followed by a duplicate reload of the same backend.
         ConfigManager.active()
         init = true
-        ConfigManager.removeProfileChangeListener(profileChangeListener)
         ConfigManager.addProfileChangeListener(profileChangeListener)
         LOGGER.info("Initializing HUD...")
         loadFromActiveProfile()
