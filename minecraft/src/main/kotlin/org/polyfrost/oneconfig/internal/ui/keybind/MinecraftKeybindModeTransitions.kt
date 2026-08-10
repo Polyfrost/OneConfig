@@ -11,13 +11,9 @@ internal class MinecraftKeybindModeTransitions(
     private val saveShared: () -> Unit,
     private val restoreShared: () -> Unit,
 ) {
-    private data class PublishedState(
-        val owner: MinecraftKeybindLiveOwner?,
-        val captureOptionsSaves: Boolean,
-    )
-
     private val stateLock = Any()
-    private var publishedState = PublishedState(null, false)
+    private var owner: MinecraftKeybindLiveOwner? = null
+    private var capturing = false
 
     /**
      * Runs an Options.save capture against one stable owner. Transitions hold the same reentrant
@@ -26,18 +22,15 @@ internal class MinecraftKeybindModeTransitions(
      */
     fun captureSavedOptions(capture: (MinecraftKeybindLiveOwner) -> Unit) {
         synchronized(stateLock) {
-            val state = publishedState
-            if (!state.captureOptionsSaves) return
-            val owner = state.owner ?: return
-            capture(owner)
+            if (capturing) owner?.let(capture)
         }
     }
 
-    fun liveOwner(): MinecraftKeybindLiveOwner? = synchronized(stateLock) { publishedState.owner }
+    fun liveOwner(): MinecraftKeybindLiveOwner? = synchronized(stateLock) { owner }
 
     fun initialize(profile: String, separateControls: Boolean) {
         synchronized(stateLock) {
-            check(publishedState.owner == null) { "Minecraft keybind profiles are already initialized" }
+            check(owner == null) { "Minecraft keybind profiles are already initialized" }
             if (separateControls) {
                 // options.txt already contains the mappings that were live when this profile last ran.
                 // It is also where vanilla persists edits made immediately before shutdown.
@@ -46,10 +39,8 @@ internal class MinecraftKeybindModeTransitions(
                 // While controls are shared, options.txt is the live source of truth.
                 saveShared()
             }
-            publishedState = PublishedState(
-                MinecraftKeybindLiveOwner(profile, separateControls),
-                true,
-            )
+            owner = MinecraftKeybindLiveOwner(profile, separateControls)
+            capturing = true
         }
     }
 
@@ -144,7 +135,7 @@ internal class MinecraftKeybindModeTransitions(
     }
 
     private fun requireOwner(): MinecraftKeybindLiveOwner =
-        synchronized(stateLock) { checkNotNull(publishedState.owner) { "Minecraft keybind profiles are not initialized" } }
+        synchronized(stateLock) { checkNotNull(owner) { "Minecraft keybind profiles are not initialized" } }
 
     private fun transitionTo(
         newOwner: MinecraftKeybindLiveOwner,
@@ -152,34 +143,30 @@ internal class MinecraftKeybindModeTransitions(
         action: (() -> Unit) -> Unit,
     ) {
         synchronized(stateLock) {
-            val previous = publishedState
-            checkNotNull(previous.owner) { "Minecraft keybind profiles are not initialized" }
-            check(previous.captureOptionsSaves) { "Minecraft keybind profile transition is already running" }
-            publishedState = previous.copy(captureOptionsSaves = false)
-            var ownerPublished = false
+            val previousOwner = checkNotNull(owner) { "Minecraft keybind profiles are not initialized" }
+            check(capturing) { "Minecraft keybind profile transition is already running" }
+            capturing = false
+            var published = false
             val publish = {
-                check(!ownerPublished) { "Minecraft keybind live owner was already published" }
-                publishedState = PublishedState(newOwner, false)
-                ownerPublished = true
+                check(!published) { "Minecraft keybind live owner was already published" }
+                owner = newOwner
+                published = true
             }
             try {
                 action(publish)
-                check(ownerPublished) { "Minecraft keybind transition did not publish its live owner" }
-                publishedState = PublishedState(newOwner, true)
+                check(published) { "Minecraft keybind transition did not publish its live owner" }
             } catch (failure: Throwable) {
-                var liveOwner = if (ownerPublished) newOwner else previous.owner
-                if (ownerPublished && rollbackAfterPublish != null) {
+                if (published && rollbackAfterPublish != null) {
                     try {
                         rollbackAfterPublish()
-                        liveOwner = previous.owner
+                        owner = previousOwner
                     } catch (rollbackFailure: Throwable) {
                         failure.addSuppressed(rollbackFailure)
                     }
                 }
-                // If compensation fails, keep routing Options.save to the owner whose mappings are
-                // most likely still live instead of silently writing them into the previous slot.
-                publishedState = PublishedState(liveOwner, true)
                 throw failure
+            } finally {
+                capturing = true
             }
         }
     }

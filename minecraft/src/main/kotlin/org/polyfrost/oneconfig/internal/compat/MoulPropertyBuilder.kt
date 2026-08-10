@@ -1,6 +1,7 @@
 //? if > 1.21.10 && fabric && moul_compat {
 package org.polyfrost.oneconfig.internal.compat
 
+import io.github.notenoughupdates.moulconfig.observer.Property as MoulProperty
 import io.github.notenoughupdates.moulconfig.processor.ProcessedOption
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
@@ -28,16 +29,20 @@ class MoulPropertyBuilder internal constructor(option: ProcessedOption) {
             getterReplaced = true
         }
 
+    var defaultMapper: ((Any) -> Any?)? = null
+
     val metadata: MutableMap<String, Any> = mutableMapOf()
 
     val backingField: Field? = resolveBackingField(option)
 
+    private val foreign: ForeignOption? = if (backingField == null) resolveForeign(option) else null
+
     val declaringClass: Class<*>? get() = backingField?.declaringClass
 
-    private val snapshotKey: String? = backingField?.let { "${it.declaringClass.name}#${it.name}" }
+    private val snapshotKey: String? = backingField?.let { "${it.declaringClass.name}#${it.name}" } ?: foreign?.key
 
     fun build(usedIds: MutableSet<String>) = Properties.functional(
-        id = uniqueId(usedIds, idPart(path ?: snapshotKey ?: name, "option")),
+        id = uniqueId(usedIds, idPart(foreign?.key ?: path ?: snapshotKey ?: name, "option")),
         getter = getter,
         setter = setter,
         name = name,
@@ -50,18 +55,44 @@ class MoulPropertyBuilder internal constructor(option: ProcessedOption) {
     }
 
     private fun codeDefault(): Any? {
+        val raw = rawDefault() ?: return null
+        defaultMapper?.let { return runCatching { it(raw) }.getOrNull() }
         if (getterReplaced) return null
-        val field = backingField ?: return null
-        if (!WrappingUtils.isSimpleClass(field.type)) return null
-        if (Modifier.isStatic(field.modifiers)) return null
-        return runCatching { field.isAccessible = true; field.get(pristine(field.declaringClass)) }.getOrNull()
+        return raw.takeIf(::isSimpleValue)
     }
 
-    private fun resolveBackingField(option: Any): Field? = runCatching {
-        val members = option.javaClass.fields.asSequence() + option.javaClass.declaredFields.asSequence()
-        members
-            .mapNotNull { m -> runCatching { m.isAccessible = true; m.get(option) as? Field }.getOrNull() }
-            .firstOrNull()
+    private fun rawDefault(): Any? {
+        foreign?.let { return runCatching { it.default() }.getOrNull() }
+        val field = backingField ?: return null
+        if (Modifier.isStatic(field.modifiers)) return null
+        return runCatching {
+            field.isAccessible = true
+            when (val value = field.get(pristine(field.declaringClass))) {
+                is MoulProperty<*> -> value.get()
+                else -> value
+            }
+        }.getOrNull()
+    }
+
+    private fun resolveBackingField(option: ProcessedOption): Field? =
+        runCatching { (option as? ProcessedOption.HasField)?.field }.getOrNull()
+            ?: runCatching {
+                val members = option.javaClass.fields.asSequence() + option.javaClass.declaredFields.asSequence()
+                members
+                    .mapNotNull { m -> runCatching { m.isAccessible = true; m.get(option) as? Field }.getOrNull() }
+                    .firstOrNull()
+            }.getOrNull()
+
+    private fun resolveForeign(option: Any): ForeignOption? = runCatching {
+        val managed = readMember(option, "managedOption", "getManagedOption") ?: return null
+        val propertyName = invoke(managed, "getPropertyName") as? String ?: return null
+        val configName = invoke(invoke(managed, "getElement"), "getName") as? String ?: "config"
+        ForeignOption("firmament#$configName.$propertyName") {
+            val default = (invoke(managed, "getDefault") as? Function0<*>)?.invoke() ?: return@ForeignOption null
+            runCatching {
+                option.javaClass.getMethod("fromT", Any::class.java).invoke(option, default)
+            }.getOrNull() ?: default
+        }
     }.getOrNull()
 
     private fun isRepoConfigField(field: Field?): Boolean {
@@ -89,6 +120,8 @@ class MoulPropertyBuilder internal constructor(option: ProcessedOption) {
         }
     }
 
+    private class ForeignOption(val key: String, val default: () -> Any?)
+
     private companion object {
         private val pristines = ConcurrentHashMap<Class<*>, Optional<Any>>()
 
@@ -100,6 +133,25 @@ class MoulPropertyBuilder internal constructor(option: ProcessedOption) {
                 }.getOrNull()
             )
         }.orElse(null)
+
+        fun isSimpleValue(value: Any): Boolean =
+            value is Enum<*> || WrappingUtils.isSimpleClass(value.javaClass)
+
+        fun invoke(target: Any?, method: String): Any? =
+            target?.let { runCatching { it.javaClass.getMethod(method).invoke(it) }.getOrNull() }
+
+        fun readMember(target: Any, fieldName: String, getterName: String): Any? =
+            invoke(target, getterName) ?: runCatching {
+                var cls: Class<*>? = target.javaClass
+                while (cls != null) {
+                    cls.declaredFields.firstOrNull { it.name == fieldName }?.let {
+                        it.isAccessible = true
+                        return@runCatching it.get(target)
+                    }
+                    cls = cls.superclass
+                }
+                null
+            }.getOrNull()
     }
 }
 //? }

@@ -43,9 +43,7 @@ import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.utils.v1.MHUtils
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 
@@ -823,7 +821,7 @@ object HudManager {
         profileReloadDispatcher = dispatcher
     }
 
-    private fun reloadForProfile(profile: String) {
+    private fun teardownForProfile(profile: String) {
         val kept = ArrayList<Hud>(activeInstances.size)
         for (hud in ArrayList(activeInstances)) {
             if (!hud.profileLocalTree) {
@@ -838,18 +836,6 @@ object HudManager {
                 LOGGER.error("Failed to dispose HUD ${hud.title} while switching profiles", failure)
             }
         }
-        // A single-instance provider is also the outgoing live HUD. Dispose it while it still has
-        // the old profile's values, then reset it so make() captures code defaults as metadata; the
-        // selected profile's stored values are applied by the backend immediately afterwards.
-        for (provider in hudProviders.values) {
-            if (!provider.profileLocalTree) continue
-            try {
-                provider.restoreCapturedDefaults()
-            } catch (failure: Throwable) {
-                if (failure.isFatalHudFailure()) throw failure
-                LOGGER.error("Failed to restore defaults for HUD ${provider.title}", failure)
-            }
-        }
         knownProviders.clear()
         registryTree = null
         zOrderCache = emptyList()
@@ -862,22 +848,35 @@ object HudManager {
         pendingSelection = null
         pendingAdd = null
         LOGGER.info("Reloading HUDs for profile '{}' ({} wrapped HUDs kept)", profile, kept.size)
-        loadFromActiveProfile()
-        revision++
-        invalidate()
+    }
+
+    private fun restoreProviderDefaults() {
+        for (provider in hudProviders.values) {
+            if (!provider.profileLocalTree) continue
+            try {
+                provider.restoreCapturedDefaults()
+            } catch (failure: Throwable) {
+                if (failure.isFatalHudFailure()) throw failure
+                LOGGER.error("Failed to restore defaults for HUD ${provider.title}", failure)
+            }
+        }
     }
 
     private fun drainProfileReload() {
         val reload = pendingProfileReload.getAndSet(null) ?: return
         try {
-            // Late provider registration and a profile switch can otherwise race over the same
-            // backend and live HUD objects. Keep the active backend stable for the whole rebuild.
             synchronized(ConfigManager::class.java) {
                 if (reload.saveCurrent && ConfigManager.activeProfile() == reload.profile) {
                     ConfigManager.active().saveAll()
                 }
-                reloadForProfile(reload.profile)
             }
+            teardownForProfile(reload.profile)
+            synchronized(ConfigManager::class.java) {
+                restoreProviderDefaults()
+                loadFromActiveProfile()
+            }
+            revision++
+            invalidate()
         } catch (e: Throwable) {
             if (e.isFatalHudFailure()) throw e
             LOGGER.error("Failed to reload HUDs for profile '{}'", reload.profile, e)
@@ -887,24 +886,12 @@ object HudManager {
     /** Applies a queued profile change on the UI thread and waits for it to finish. */
     private fun applyPendingProfileReload() {
         if (pendingProfileReload.get() == null) return
-        val complete = CompletableFuture<Unit>()
-        try {
-            profileReloadDispatcher.accept {
-                try {
-                    drainProfileReload()
-                    complete.complete(Unit)
-                } catch (failure: Throwable) {
-                    complete.completeExceptionally(failure)
-                }
-            }
-        } catch (failure: Throwable) {
-            complete.completeExceptionally(failure)
-        }
-        try {
-            complete.get(UI_THREAD_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        } catch (timeout: TimeoutException) {
-            throw IllegalStateException("Timed out waiting for the HUD profile reload", timeout)
-        }
+        ConfigManager.dispatchAndWait(
+            profileReloadDispatcher,
+            ::drainProfileReload,
+            TimeUnit.SECONDS.toNanos(UI_THREAD_TIMEOUT_SECONDS),
+            "the HUD profile reload",
+        )
     }
 
     @Suppress("UNCHECKED_CAST")

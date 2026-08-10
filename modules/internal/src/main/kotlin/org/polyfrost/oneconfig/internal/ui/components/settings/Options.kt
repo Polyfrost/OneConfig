@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
@@ -66,7 +67,7 @@ fun bumpResetEpoch(prop: Property<*>) {
 @Suppress("UNCHECKED_CAST")
 fun resetOption(prop: Property<*>) {
     val def = prop.getMetadata<Any?>("default") ?: return
-    (prop as Property<Any?>).setAsReferential(def)
+    (prop as Property<Any?>).setAsReferential(Config.copyDefault(prop.type, def))
     // mirror ColorOption: a PolyColor change must refresh the live accent (otherwise it only
     // updates after the GUI is reopened).
     if (prop.type == PolyColor::class.java) updateAccent()

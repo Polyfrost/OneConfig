@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
@@ -45,6 +44,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     public static final CompatSnapshots INSTANCE = new CompatSnapshots();
 
     public static final String SNAPSHOT_METADATA = "oc_compat_snapshot";
+    public static final String CUSTOM_RESET_METADATA = "custom_reset";
     private static final String TAG = SNAPSHOT_METADATA;
 
     private final CompatSnapshotStore store = new CompatSnapshotStore();
@@ -141,6 +141,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
                 }
             }
         });
+        flushSnapshotThenBaseline(store, profile, baselineStore, BASELINE_BUCKET);
     }
 
     @Override
@@ -167,32 +168,12 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     }
 
     private void dispatchAndWait(Runnable action) {
-        CompletableFuture<Void> complete = new CompletableFuture<>();
-        try {
-            dispatcher.accept(() -> {
-                try {
-                    action.run();
-                    complete.complete(null);
-                } catch (Throwable t) {
-                    complete.completeExceptionally(t);
-                }
-            });
-        } catch (Throwable t) {
-            complete.completeExceptionally(t);
-        }
-        try {
-            complete.get(DISPATCH_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS);
-        } catch (java.util.concurrent.TimeoutException e) {
-            throw new IllegalStateException("Timed out waiting for the compat snapshot dispatcher", e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("Interrupted waiting for the compat snapshot dispatcher", e);
-        } catch (java.util.concurrent.ExecutionException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof RuntimeException) throw (RuntimeException) cause;
-            if (cause instanceof Error) throw (Error) cause;
-            throw new IllegalStateException(cause);
-        }
+        ConfigManager.dispatchAndWait(
+                dispatcher,
+                action,
+                java.util.concurrent.TimeUnit.SECONDS.toNanos(DISPATCH_TIMEOUT_SECONDS),
+                "the compat snapshot dispatcher"
+        );
     }
 
     private static void flushForLifecycle(CompatSnapshotStore snapshotStore, String profile) {
@@ -296,6 +277,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     }
 
     private void restoreDefaults(Tree tree) {
+        if (runCustomReset(tree)) return;
         Map<String, Object> snapshot = defaults.get(tree.getID());
         if (snapshot == null) return;
         boolean[] changed = {false};
@@ -347,6 +329,19 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
                 return false;
             });
         });
+    }
+
+    private boolean runCustomReset(Tree tree) {
+        Object customReset = tree.getMetadata(CUSTOM_RESET_METADATA);
+        if (!(customReset instanceof Runnable)) return false;
+        try {
+            ((Runnable) customReset).run();
+        } catch (Throwable t) {
+            ConfigManager.LOGGER.warn("custom_reset failed for compat tree '{}'", tree.getID(), t);
+            return false;
+        }
+        runSave(tree);
+        return true;
     }
 
     private void runSave(Tree tree) {

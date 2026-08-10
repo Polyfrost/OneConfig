@@ -34,12 +34,17 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
 import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
 import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
 
+import java.lang.reflect.Array;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -186,9 +191,12 @@ public abstract class Config {
         }
     }
 
+    @ApiStatus.Internal
     @SuppressWarnings("unchecked")
-    private static Object copyDefault(Class<?> type, Object value) {
+    public static Object copyDefault(Class<?> type, Object value) {
         if (WrappingUtils.isSimpleClass(type)) return value;
+        Object container = copyContainer(value);
+        if (container != null) return container;
         try {
             Object serialized = ObjectSerializer.INSTANCE.serialize(value, false, false);
             if (serialized instanceof Map) {
@@ -199,6 +207,27 @@ public abstract class Config {
             ConfigManager.LOGGER.warn("failed to deep-copy default for type {}, falling back to reference", type, t);
         }
         return value;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static @Nullable Object copyContainer(@Nullable Object value) {
+        if (value == null) return null;
+        Class<?> cls = value.getClass();
+        try {
+            if (cls.isArray()) {
+                int length = Array.getLength(value);
+                Object copy = Array.newInstance(cls.getComponentType(), length);
+                //noinspection SuspiciousSystemArraycopy
+                System.arraycopy(value, 0, copy, 0, length);
+                return copy;
+            }
+            if (value instanceof Set) return new LinkedHashSet<>((Set<Object>) value);
+            if (value instanceof Collection) return new ArrayList<>((Collection<Object>) value);
+            if (value instanceof Map) return new LinkedHashMap<>((Map<Object, Object>) value);
+        } catch (Throwable t) {
+            ConfigManager.LOGGER.warn("failed to copy default container of type {}", cls, t);
+        }
+        return null;
     }
 
     @ApiStatus.Internal

@@ -104,6 +104,62 @@ class ProfileManagerTest {
     }
 
     @Test
+    void noListenerIsEverNotifiedWhileTheConfigManagerMonitorIsHeld() {
+        List<String> violations = new ArrayList<>();
+        ConfigManager.ProfileChangeListener listener = new ConfigManager.ProfileChangeListener() {
+            private void check(String callback) {
+                if (Thread.holdsLock(ConfigManager.class)) violations.add(callback);
+            }
+
+            @Override
+            public void onProfileChanged(String newProfile) {
+                check("onProfileChanged");
+            }
+
+            @Override
+            public void onProfileSaving(String profile) {
+                check("onProfileSaving");
+            }
+
+            @Override
+            public void onProfileCreated(String profile) {
+                check("onProfileCreated");
+            }
+
+            @Override
+            public void onProfileRenamed(String oldProfile, String newProfile) {
+                check("onProfileRenamed");
+            }
+
+            @Override
+            public void onProfileDeleted(String profile) {
+                check("onProfileDeleted");
+            }
+
+            @Override
+            public void onProfileSpecificControlsChanged(boolean enabled) {
+                check("onProfileSpecificControlsChanged");
+            }
+        };
+        ConfigManager.addProfileChangeListener(listener);
+        boolean controls = ConfigManager.profileSpecificControls();
+        try {
+            ConfigManager.createProfile(PROFILE_A);
+            ConfigManager.cloneProfile(PROFILE_A, PROFILE_B);
+            ConfigManager.renameProfile(PROFILE_B, PROFILE_C);
+            ConfigManager.setProfileSpecificControls(!controls);
+            ConfigManager.openProfile("");
+            ConfigManager.deleteProfile(PROFILE_C);
+            ConfigManager.deleteProfile(PROFILE_A);
+        } finally {
+            ConfigManager.setProfileSpecificControls(controls);
+            ConfigManager.removeProfileChangeListener(listener);
+        }
+
+        assertEquals(List.of(), violations, "notified while holding the ConfigManager monitor");
+    }
+
+    @Test
     void onProfileCreatedCanSeedTheNewProfileAndTheValuesArePersisted() throws IOException {
         ProfileTestConfig config = new ProfileTestConfig(SEEDED_CONFIG);
         config.initialize(false);
@@ -441,6 +497,19 @@ class ProfileManagerTest {
         assertFalse(ConfigManager.profileIcons().containsKey(PROFILE_A));
         assertTrue(ConfigManager.isFavoriteProfile(PROFILE_B));
         assertFalse(ConfigManager.favoriteProfiles().contains(PROFILE_A));
+    }
+
+    @Test
+    void reusingARenamedProfileNameDoesNotInheritItsFavoriteOrIcon() {
+        ConfigManager.createProfile(PROFILE_A);
+        ConfigManager.setProfileIcon(PROFILE_A, "star");
+        ConfigManager.setFavoriteProfile(PROFILE_A, true);
+        ConfigManager.renameProfile(PROFILE_A, PROFILE_B);
+
+        ConfigManager.createProfile(PROFILE_A);
+
+        assertFalse(ConfigManager.isFavoriteProfile(PROFILE_A));
+        assertEquals("profiles", ConfigManager.profileIcon(PROFILE_A));
     }
 
     @Test

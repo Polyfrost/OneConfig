@@ -51,7 +51,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -66,6 +71,7 @@ public final class ConfigManager {
     private static final ConfigManager core = new ConfigManager(Paths.get("config"), NightConfigSerializer.ALL);
     private static final ConfigManager backup = new ConfigManager(Paths.get("oneconfig", "backup"), NightConfigSerializer.ALL);
     private static ConfigManager active;
+    private static volatile String pendingInitialProfile = null;
     private static boolean initialized = false;
     private static boolean isFirstRun = false;
 //    @UnmodifiableView
@@ -73,6 +79,9 @@ public final class ConfigManager {
     private static final Queue<Config> pendingInitialization = new ArrayDeque<>();
     private static final Map<String, Config> initializedConfigs = new LinkedHashMap<>();
     private static final ReentrantLock PROFILE_LIFECYCLE_LOCK = new ReentrantLock();
+    private static final long PROFILE_OPERATION_BUDGET_NANOS = java.util.concurrent.TimeUnit.SECONDS.toNanos(30L);
+    private static final long MINIMUM_WAIT_NANOS = java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(500L);
+    private static final ThreadLocal<Long> PROFILE_OPERATION_DEADLINE = new ThreadLocal<>();
     private static volatile boolean rebindingProfiles = false;
     private static final java.util.concurrent.CopyOnWriteArrayList<ProfileChangeListener> profileListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
     private static final java.util.concurrent.CopyOnWriteArrayList<TreeRegistrationListener> treeListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
@@ -155,9 +164,29 @@ public final class ConfigManager {
     /**
      * Returns a reference to the active config manager, which is mounted to the current active profile.
      */
-    public static synchronized ConfigManager active() {
-        if (active == null) initProfiles();
+    public static ConfigManager active() {
+        ConfigManager opened;
+        synchronized (ConfigManager.class) {
+            opened = activeLocked();
+        }
+        drainInitialNotify();
+        return opened;
+    }
+
+    private static ConfigManager activeLocked() {
+        if (active != null) return active;
+        pendingInitialProfile = initProfiles();
         return active;
+    }
+
+    private static void drainInitialNotify() {
+        if (pendingInitialProfile == null) return;
+        String profile;
+        synchronized (ConfigManager.class) {
+            profile = pendingInitialProfile;
+            pendingInitialProfile = null;
+        }
+        if (profile != null) notifyProfileChanged(profile);
     }
 
     @ApiStatus.Internal
@@ -272,7 +301,7 @@ public final class ConfigManager {
         }
     }
 
-    private static synchronized void initProfiles() {
+    private static String initProfiles() {
         addProfileChangeListener(CompatSnapshots.INSTANCE);
         Property<String[]> ownedProfileSubdirs = Properties.simple(
                 "ownedProfileSubdirs", "Owned Profile Subdirectories",
@@ -325,8 +354,8 @@ public final class ConfigManager {
             LOGGER.warn("Active profile {} does not exist, falling back to root", activeProfile);
             activeProfile = "";
         }
-        openProfile(activeProfile, true, false);
-        notifyProfileChanged(activeProfile);
+        openProfile(activeProfile, false);
+        return activeProfile;
     }
 
     public static void openProfile(String profile) {
@@ -350,12 +379,12 @@ public final class ConfigManager {
         // Minecraft controls). Save it while the outgoing profile is still the committed owner.
         if (!previousProfile.equals(alreadySavedProfile)) saveProfileState(previousProfile);
         synchronized (ConfigManager.class) {
-            openProfile(profile, false, false);
+            openProfile(profile, false);
         }
         notifyProfileChanged(profile);
     }
 
-    private static void openProfile(String profile, boolean saveCurrent, boolean restoreDefaults) {
+    private static void openProfile(String profile, boolean restoreDefaults) {
         profile = normalizeProfileName(profile, true);
         if (!profile.isEmpty() && !Files.isDirectory(profilePath(profile))) {
             throw new IllegalArgumentException("Profile does not exist: " + profile);
@@ -368,7 +397,6 @@ public final class ConfigManager {
                 if (Boolean.TRUE.equals(t.getMetadata(PROFILE_LOCAL_METADATA))) continue;
                 externalTrees.add(t);
             }
-            if (saveCurrent) active.saveAll();
             active.close();
         }
         internal().get("profiles.json").getProp("activeProfile").setAs(profile);
@@ -401,13 +429,13 @@ public final class ConfigManager {
     }
 
     public static synchronized String activeProfile() {
-        active();
+        activeLocked();
         String profile = internal().get("profiles.json").getProp("activeProfile").getAs();
         return profile == null ? "" : profile;
     }
 
     public static synchronized List<String> profiles() {
-        active();
+        activeLocked();
         ArrayList<String> out = new ArrayList<>();
         out.add("");
         try {
@@ -445,12 +473,28 @@ public final class ConfigManager {
         } catch (IOException e) {
             throw new IllegalStateException("Failed to create profile: " + name, e);
         }
-        synchronized (ConfigManager.class) {
-            openProfile(name, false, true);
+        try {
+            synchronized (ConfigManager.class) {
+                openProfile(name, true);
+            }
+        } catch (Throwable failure) {
+            try {
+                synchronized (ConfigManager.class) {
+                    if (!activeProfile().equals(previousProfile)) openProfile(previousProfile, false);
+                }
+            } catch (Throwable restoreFailure) {
+                failure.addSuppressed(restoreFailure);
+            }
+            try {
+                deleteDirectory(path);
+            } catch (IOException cleanupFailure) {
+                failure.addSuppressed(cleanupFailure);
+            }
+            throw failure;
         }
         notifyProfileCreated(name);
         synchronized (ConfigManager.class) {
-            active().saveAll();
+            activeLocked().saveAll();
         }
         notifyProfileChanged(name);
     }
@@ -504,7 +548,7 @@ public final class ConfigManager {
     }
 
     private static Set<String> oneConfigSubdirs() {
-        active();
+        activeLocked();
         Set<String> subdirs = new HashSet<>();
         // HUD files belong to OneConfig even when their providing mod is not present in this run,
         // so they must not disappear from a clone or export of the Default profile.
@@ -617,13 +661,15 @@ public final class ConfigManager {
                 throw new IllegalStateException("Failed to rename profile: " + profile, e);
             }
             if (favorite) {
+                setFavoriteProfile(profile, false);
                 setFavoriteProfile(newProfile, true);
             }
+            setProfileIcon(profile, null);
             if (!icon.equals(defaultProfileIcon())) {
                 setProfileIcon(newProfile, icon);
             }
             if (activeProfile) {
-                openProfile(newProfile, false, false);
+                openProfile(newProfile, false);
             }
         }
         notifyProfileRenamed(profile, newProfile);
@@ -641,14 +687,13 @@ public final class ConfigManager {
                 throw new IllegalArgumentException("Profile does not exist: " + profile);
             }
         }
-        saveProfileState(profile);
         boolean switchedToRoot;
         IllegalStateException failure = null;
         synchronized (ConfigManager.class) {
             Path path = profilePath(profile);
             if (!Files.isDirectory(path)) throw new IllegalArgumentException("Profile does not exist: " + profile);
             switchedToRoot = activeProfile().equals(profile);
-            if (switchedToRoot) openProfile("", false, false);
+            if (switchedToRoot) openProfile("", false);
             try {
                 deleteDirectory(path);
                 setProfileIcon(profile, null);
@@ -752,7 +797,7 @@ public final class ConfigManager {
 
     private static void saveProfileState(String profile) {
         synchronized (ConfigManager.class) {
-            if (activeProfile().equals(profile)) active().saveAll();
+            if (activeProfile().equals(profile)) activeLocked().saveAll();
         }
         for (ProfileChangeListener listener : profileListeners) {
             try {
@@ -804,7 +849,7 @@ public final class ConfigManager {
     }
 
     public static synchronized List<String> favoriteProfiles() {
-        active();
+        activeLocked();
         Object favorites = internal().get("profiles.json").getProp("favoriteProfiles").get();
         if (favorites == null) return Collections.emptyList();
         ArrayList<String> out = new ArrayList<>();
@@ -856,7 +901,7 @@ public final class ConfigManager {
     }
 
     public static synchronized Map<String, String> profileIcons() {
-        active();
+        activeLocked();
         Object icons = internal().get("profiles.json").getProp("profileIcons").get();
         LinkedHashMap<String, String> out = new LinkedHashMap<>();
         if (icons instanceof Object[]) {
@@ -916,7 +961,7 @@ public final class ConfigManager {
     }
 
     public static synchronized boolean profileSpecificControls() {
-        active();
+        activeLocked();
         Object value = internal().get("profiles.json").getProp("profileSpecificControls").get();
         return !(value instanceof Boolean) || (Boolean) value;
     }
@@ -928,7 +973,7 @@ public final class ConfigManager {
     private static void setProfileSpecificControls0(boolean enabled) {
         boolean previous;
         synchronized (ConfigManager.class) {
-            active();
+            activeLocked();
             Property<?> property = internal().get("profiles.json").getProp("profileSpecificControls");
             if (Objects.equals(property.get(), enabled)) return;
             previous = !(property.get() instanceof Boolean) || (Boolean) property.get();
@@ -974,13 +1019,53 @@ public final class ConfigManager {
     }
 
     private static void runProfileOperation(Runnable operation) {
+        drainInitialNotify();
         if (PROFILE_LIFECYCLE_LOCK.isHeldByCurrentThread() || !PROFILE_LIFECYCLE_LOCK.tryLock()) {
             throw new IllegalStateException("Another profile operation is already in progress");
         }
+        PROFILE_OPERATION_DEADLINE.set(System.nanoTime() + PROFILE_OPERATION_BUDGET_NANOS);
         try {
             operation.run();
         } finally {
+            PROFILE_OPERATION_DEADLINE.remove();
             PROFILE_LIFECYCLE_LOCK.unlock();
+        }
+    }
+
+    private static long waitBudgetNanos(long fallbackNanos) {
+        Long deadline = PROFILE_OPERATION_DEADLINE.get();
+        if (deadline == null) return fallbackNanos;
+        return Math.max(MINIMUM_WAIT_NANOS, deadline - System.nanoTime());
+    }
+
+    @ApiStatus.Internal
+    public static void dispatchAndWait(Consumer<Runnable> dispatcher, Runnable action, long fallbackNanos, String what) {
+        CompletableFuture<Void> complete = new CompletableFuture<>();
+        try {
+            dispatcher.accept(() -> {
+                try {
+                    action.run();
+                    complete.complete(null);
+                } catch (Throwable t) {
+                    complete.completeExceptionally(t);
+                }
+            });
+        } catch (Throwable t) {
+            complete.completeExceptionally(t);
+        }
+        try {
+            complete.get(waitBudgetNanos(fallbackNanos), TimeUnit.NANOSECONDS);
+        } catch (TimeoutException e) {
+            throw new IllegalStateException("Timed out waiting for " + what, e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted waiting for " + what, e);
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause == null) throw new IllegalStateException(what + " failed", e);
+            if (cause instanceof RuntimeException) throw (RuntimeException) cause;
+            if (cause instanceof Error) throw (Error) cause;
+            throw new IllegalStateException(cause);
         }
     }
 

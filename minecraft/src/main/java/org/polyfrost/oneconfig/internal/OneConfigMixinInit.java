@@ -74,7 +74,6 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? }
         //? moul_compat {
         mixins.add("compat.moulconfig.Mixin_MCConfigEditorIntegration_Firmament");
-        mixins.add("compat.moulconfig.Mixin_MoulConfigAdapter_DandelionBp");
         //? }
 
         //? dandelion_compat

@@ -33,6 +33,7 @@ import java.lang.reflect.Method;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CompatSnapshotsTest {
     private static final String TREE_ID = "compat_metadata_default_test";
@@ -54,6 +55,31 @@ class CompatSnapshotsTest {
 
             assertEquals(Boolean.FALSE, property.get(),
                     "a blank profile must use the compat adapter's declared default");
+        } finally {
+            defaults().remove(TREE_ID);
+        }
+    }
+
+    @Test
+    void aModsOwnResetHookWinsOverTheCapturedDefaults() throws Exception {
+        Property<Boolean> property = Properties.simple("enabled", "Enabled", "", true);
+        Tree tree = Tree.tree(TREE_ID).put(property);
+        boolean[] reset = {false};
+        tree.addMetadata(CompatSnapshots.CUSTOM_RESET_METADATA, (Runnable) () -> {
+            reset[0] = true;
+            property.setAs(false);
+        });
+
+        Method capture = CompatSnapshots.class.getDeclaredMethod("captureDefaults", Tree.class);
+        Method restore = CompatSnapshots.class.getDeclaredMethod("restoreDefaults", Tree.class);
+        capture.setAccessible(true);
+        restore.setAccessible(true);
+        try {
+            capture.invoke(CompatSnapshots.INSTANCE, tree);
+            restore.invoke(CompatSnapshots.INSTANCE, tree);
+
+            assertTrue(reset[0], "the mod's own reset hook must be used when it declares one");
+            assertEquals(Boolean.FALSE, property.get(), "the captured default must not overwrite the mod's reset");
         } finally {
             defaults().remove(TREE_ID);
         }

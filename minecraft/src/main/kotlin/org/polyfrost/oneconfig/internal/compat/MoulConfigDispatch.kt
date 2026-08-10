@@ -11,6 +11,8 @@ package org.polyfrost.oneconfig.internal.compat
  */
 object MoulConfigDispatch {
 
+    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/MoulConfigDispatch")
+
     private const val COMPAT_PACKAGE = "org.polyfrost.oneconfig.internal.compat"
     private const val COMPAT_PREFIX = "MoulConfigCompat_"
 
@@ -25,23 +27,18 @@ object MoulConfigDispatch {
             configClass.startsWith("moe.nea.firmament.compat.moulconfig.") ->
                 listOf("firmament") to listOf("firmament")
 
-            configClass.startsWith("net.azureaaron.dandelion_bp.deps.moulconfig.") ->
-                listOf("dandelion_bp", "dandelion") to listOf("skyblocker", "dandelion-bp")
-
-            configClass.startsWith("net.azureaaron.dandelion_bp.impl.moulconfig.") ->
-                listOf("dandelion_bp", "dandelion") to listOf("skyblocker", "dandelion-bp")
-
-            configClass.startsWith("net.azureaaron.dandelion.deps.moulconfig.") ->
-                listOf("dandelion") to listOf("skyblocker", "dandelion-bp")
-
             configClass.startsWith("at.hannibal2.skyhanni.deps.moulconfig.") ->
                 listOf("skyhanni") to listOf("skyhanni")
 
             else -> emptyList<String>() to emptyList()
         }
-        if (candidates.isEmpty()) return
+        if (candidates.isEmpty()) {
+            LOGGER.debug("No relocation target known for MoulConfig editor of {}", configClass)
+            return
+        }
         val forcedModId = forcedModIds.firstOrNull { CompatLoader.hasMod(it) }
 
+        var failure: Throwable? = null
         for (target in candidates) {
             val fqcn = "$COMPAT_PACKAGE.$COMPAT_PREFIX$target"
             runCatching {
@@ -53,7 +50,8 @@ object MoulConfigDispatch {
                     method.invoke(null, categories, config)
                 }
                 return
-            }
+            }.onFailure { failure = it }
         }
+        LOGGER.warn("No usable compat class for MoulConfig editor of {} (tried {})", configClass, candidates, failure)
     }
 }

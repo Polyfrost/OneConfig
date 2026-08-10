@@ -35,6 +35,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -62,6 +64,39 @@ class CompatSnapshotStoreTest {
     void tearDown() {
         if (!ConfigManager.activeProfile().isEmpty()) ConfigManager.openProfile("");
         if (Files.isDirectory(profileDirectory)) ConfigManager.deleteProfile(profile);
+    }
+
+    @Test
+    void aBurstOfWritesCoalescesIntoOneScheduledFlushAndLosesNothing() {
+        CompatSnapshotStore store = new CompatSnapshotStore(FILE_NAME);
+        for (int i = 0; i < 200; i++) {
+            store.putValue(profile, "controls", "key." + i, "key.keyboard." + i);
+        }
+
+        Path file = profileDirectory.resolve(FILE_NAME);
+        assertTrue(
+                waitUntil(() -> Files.isRegularFile(file)),
+                "the debounced flush never wrote " + file
+        );
+
+        CompatSnapshotStore reloaded = new CompatSnapshotStore(FILE_NAME);
+        for (int i = 0; i < 200; i++) {
+            assertEquals("key.keyboard." + i, reloaded.getValue(profile, "controls", "key." + i));
+        }
+    }
+
+    private static boolean waitUntil(BooleanSupplier condition) {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (System.nanoTime() < deadline) {
+            if (condition.getAsBoolean()) return true;
+            try {
+                Thread.sleep(20);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+        }
+        return condition.getAsBoolean();
     }
 
     @Test
@@ -113,6 +148,22 @@ class CompatSnapshotStoreTest {
 
         assertTrue(store.hasLoadFailure(profile));
         assertArrayEquals(corrupt, Files.readAllBytes(file));
+    }
+
+    @Test
+    void blankSnapshotIsTreatedAsEmptyRatherThanCorrupt() throws IOException {
+        Path file = profileDirectory.resolve(FILE_NAME);
+        Files.write(file, new byte[0]);
+        CompatSnapshotStore store = new CompatSnapshotStore(FILE_NAME);
+
+        assertFalse(store.hasLoadFailure(profile));
+        assertTrue(store.load(profile).isEmpty());
+        assertDoesNotThrow(() -> store.putValue(profile, "controls", "key.jump", "key.keyboard.space"));
+        assertDoesNotThrow(() -> store.flushOrThrow(profile));
+        assertEquals("key.keyboard.space", store.getValue(profile, "controls", "key.jump"));
+
+        CompatSnapshotStore reopened = new CompatSnapshotStore(FILE_NAME);
+        assertEquals("key.keyboard.space", reopened.getValue(profile, "controls", "key.jump"));
     }
 
     @Test

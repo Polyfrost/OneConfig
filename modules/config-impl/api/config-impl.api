@@ -12,6 +12,7 @@ public final class org/polyfrost/oneconfig/api/config/v1/CompatSnapshotStore {
 }
 
 public final class org/polyfrost/oneconfig/api/config/v1/CompatSnapshots : org/polyfrost/oneconfig/api/config/v1/ConfigManager$ProfileChangeListener {
+	public static final field CUSTOM_RESET_METADATA Ljava/lang/String;
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/config/v1/CompatSnapshots;
 	public static final field NO_SNAPSHOT_META Ljava/lang/String;
 	public static final field SNAPSHOT_METADATA Ljava/lang/String;
@@ -43,6 +44,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
 	protected fun addMigrationEntry (Ljava/lang/String;Ljava/lang/String;)V
 	protected fun addToInitQueue ()V
 	public static fun captureDefaults (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
+	public static fun copyDefault (Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/Object;
 	protected fun getProperty (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	protected static fun getProperty (Lorg/polyfrost/oneconfig/api/config/v1/Tree;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public fun getTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
@@ -88,6 +90,7 @@ public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public static fun createProfile (Ljava/lang/String;)V
 	public fun delete (Ljava/lang/String;)Z
 	public static fun deleteProfile (Ljava/lang/String;)V
+	public static fun dispatchAndWait (Ljava/util/function/Consumer;Ljava/lang/Runnable;JLjava/lang/String;)V
 	public static fun exportProfile (Ljava/lang/String;Ljava/nio/file/Path;)V
 	public static fun favoriteProfiles ()Ljava/util/List;
 	public fun gatherAll (Ljava/lang/String;)Ljava/util/Collection;

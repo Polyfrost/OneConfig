@@ -41,7 +41,7 @@ public class ScreenPlatformImpl implements ScreenPlatform {
     @Override
     public void runOnUiThread(Runnable action) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.isSameThread()) action.run();
+        if (minecraft == null || minecraft.isSameThread()) action.run();
         else minecraft.execute(action);
     }
 

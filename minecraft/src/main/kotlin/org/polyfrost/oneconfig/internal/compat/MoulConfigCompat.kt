@@ -166,17 +166,18 @@ data object MoulConfigCompat {
             }
 
             is GuiOptionEditorColour -> {
-                property.getter = {
+                fun toArgb(value: Any?): Int? {
                     val colour = when (children.type) {
-                        String::class.java -> ChromaColour.forLegacyString(children.get() as String)
-                        ChromaColour::class.java -> children.get() as ChromaColour
+                        String::class.java -> (value as? String)?.let { ChromaColour.forLegacyString(it) }
+                        ChromaColour::class.java -> value as? ChromaColour
                         else -> null
-                    }
-                    colour?.let {
-                        val rgb = Color.HSBtoRGB(it.hue, it.saturation, it.brightness)
-                        (it.alpha shl 24) or (rgb and 0x00FFFFFF)
-                    } ?: 0xFFFFFFFF.toInt()
+                    } ?: return null
+                    val rgb = Color.HSBtoRGB(colour.hue, colour.saturation, colour.brightness)
+                    return (colour.alpha shl 24) or (rgb and 0x00FFFFFF)
                 }
+
+                property.getter = { toArgb(children.get()) ?: 0xFFFFFFFF.toInt() }
+                property.defaultMapper = ::toArgb
                 property.setter = setter@{
                     val argb = it as? Int ?: return@setter
                     val awtColor = Color(argb, true)
@@ -191,8 +192,8 @@ data object MoulConfigCompat {
             }
 
             is MoulConfigGuiOptionEditorDropdownAccessor -> {
-                fun getIndex(): Int {
-                    val selectedObject: Any = children.get() ?: return -1
+                fun indexOf(selectedObject: Any?): Int {
+                    if (selectedObject == null) return -1
 
                     return if (editor.`oneconfig$useOrdinal`()) {
                         selectedObject as Int
@@ -202,6 +203,8 @@ data object MoulConfigCompat {
                         editor.`oneconfig$values`().indexOf(selectedObject)
                     }
                 }
+
+                fun getIndex(): Int = indexOf(children.get())
 
                 fun setIndex(index: Int) {
                     if (editor.`oneconfig$constants`() != null) {
@@ -214,6 +217,7 @@ data object MoulConfigCompat {
                 }
 
                 property.getter = ::getIndex
+                property.defaultMapper = { indexOf(it).takeIf { index -> index >= 0 } }
                 property.setter = setter@{
                     val index = it as? Int ?: return@setter
                     setIndex(index)
@@ -229,6 +233,7 @@ data object MoulConfigCompat {
                 property.metadata["min"] = editor.`oneconfig$minValue`
                 property.metadata["max"] = editor.`oneconfig$maxValue`
                 property.getter = { (children.get() as? Number)?.toFloat() ?: editor.`oneconfig$maxValue` }
+                property.defaultMapper = { (it as? Number)?.toFloat() }
                 property.setter = setter@{ value ->
                     val numberValue = value as? Number ?: return@setter
                     fun isAny(type: Type, numberType: KClass<out Number>): Boolean {
@@ -253,14 +258,14 @@ data object MoulConfigCompat {
                 // MoulConfig stores a keybind as a single int GLFW key code on an int/Integer property; a code <= 0
                 // (GLFW_KEY_UNKNOWN / "none") means unbound. Bridge it to OneConfig's OneConfigKeybind, which carries
                 // an array of key codes. The action is a no-op stub since MoulConfig owns the actual bind firing.
-                property.getter = {
-                    val code = (children.get() as? Number)?.toInt() ?: KeyboardConstants.none
-                    if (code <= 0) {
-                        OneConfigKeybind(null, null, KeyModifiers.NONE, 0L) { true }
-                    } else {
-                        OneConfigKeybind(intArrayOf(code), null, KeyModifiers.NONE, 0L) { true }
-                    }
+                fun keybindOf(code: Int) = if (code <= 0) {
+                    OneConfigKeybind(null, null, KeyModifiers.NONE, 0L) { true }
+                } else {
+                    OneConfigKeybind(intArrayOf(code), null, KeyModifiers.NONE, 0L) { true }
                 }
+
+                property.getter = { keybindOf((children.get() as? Number)?.toInt() ?: KeyboardConstants.none) }
+                property.defaultMapper = { value -> (value as? Number)?.toInt()?.let(::keybindOf) }
                 property.setter = setter@{ value ->
                     val keybind = value as? OneConfigKeybind ?: return@setter
                     val code = keybind.keyCodes?.firstOrNull()

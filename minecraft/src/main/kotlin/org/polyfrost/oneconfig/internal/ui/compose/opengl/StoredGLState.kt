@@ -8,6 +8,14 @@ import com.mojang.blaze3d.opengl.GlStateManager
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL45.*
 
+fun resyncTextureBindCache() {
+    for (unit in 0..7) {
+        GlStateManager._activeTexture(GL_TEXTURE0 + unit)
+        GlStateManager._bindTexture(0)
+    }
+    GlStateManager._activeTexture(GL_TEXTURE0)
+}
+
 class StoredGLState(private val glVersion: Int) {
     private val props = StoredGLStateProps()
 
@@ -99,11 +107,7 @@ class StoredGLState(private val glVersion: Int) {
             }
             glActiveTexture(lastActiveTexture[0])
 
-            for (unit in 0..7) {
-                GlStateManager._activeTexture(GL_TEXTURE0 + unit)
-                GlStateManager._bindTexture(0)
-            }
-            GlStateManager._activeTexture(GL_TEXTURE0)
+            resyncTextureBindCache()
 
             glBindVertexArray(lastVertexArrayObject[0])
             glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer[0])

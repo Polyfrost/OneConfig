@@ -81,9 +81,13 @@ public final class CompatSnapshotStore {
     });
     private final Map<String, ScheduledFuture<?>> pendingFlush = new ConcurrentHashMap<>();
 
+    private static IllegalStateException poisoned(String profile, IllegalStateException cause) {
+        return new IllegalStateException("Compat snapshot for profile '" + profile + "' is unreadable", cause);
+    }
+
     public synchronized Map<String, Map<String, Object>> load(String profile) {
         IllegalStateException previousFailure = loadFailures.get(profile);
-        if (previousFailure != null) throw previousFailure;
+        if (previousFailure != null) throw poisoned(profile, previousFailure);
         Map<String, Map<String, Object>> snapshot = cache.get(profile);
         if (snapshot != null) return snapshot;
         try {
@@ -129,13 +133,13 @@ public final class CompatSnapshotStore {
     }
 
     private synchronized void scheduleFlush(String profile) {
+        if (pendingFlush.containsKey(profile)) return;
         AtomicReference<ScheduledFuture<?>> scheduled = new AtomicReference<>();
         ScheduledFuture<?> next = flusher.schedule(
                 () -> flushScheduled(profile, scheduled.get()), 200, TimeUnit.MILLISECONDS
         );
         scheduled.set(next);
-        ScheduledFuture<?> prev = pendingFlush.put(profile, next);
-        if (prev != null) prev.cancel(false);
+        pendingFlush.put(profile, next);
     }
 
     private synchronized void flushScheduled(String profile, ScheduledFuture<?> expected) {
@@ -162,7 +166,7 @@ public final class CompatSnapshotStore {
     private void flushInternal(String profile, boolean requireProfileDirectory) throws IOException {
         cancelPending(profile);
         IllegalStateException loadFailure = loadFailures.get(profile);
-        if (loadFailure != null) throw loadFailure;
+        if (loadFailure != null) throw poisoned(profile, loadFailure);
         Map<String, Map<String, Object>> snapshot = cache.get(profile);
         if (snapshot == null) return;
         Path profileDir = ConfigManager.profileDir(profile);
@@ -256,7 +260,7 @@ public final class CompatSnapshotStore {
         }
         try {
             String text = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
-            if (text.isEmpty()) throw new IOException("Snapshot file is empty");
+            if (text.trim().isEmpty()) return out;
             BackedConfig cfg = new BackedConfig(new HashMap<>());
             parser.parse(text, cfg, ParsingMode.MERGE);
             Map<String, Object> root = fromConfig(cfg);

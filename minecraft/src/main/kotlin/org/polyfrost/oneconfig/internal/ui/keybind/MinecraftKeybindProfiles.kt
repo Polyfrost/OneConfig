@@ -5,9 +5,7 @@ import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshotStore
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 
 object MinecraftKeybindProfiles : ConfigManager.ProfileChangeListener {
     private const val NAMESPACE = "controls"
@@ -59,41 +57,35 @@ object MinecraftKeybindProfiles : ConfigManager.ProfileChangeListener {
     }
 
     override fun onProfileSaving(profile: String) {
-        runOnClientThreadAndWait {
-            val owner = modeTransitions.liveOwner() ?: return@runOnClientThreadAndWait
-            if (!owner.separateControls) {
-                if (store.hasLoadFailure("")) {
-                    LOGGER.warn("Leaving the shared controls snapshot unreadable instead of overwriting it")
-                } else {
-                    capture("", SHARED_NAMESPACE)
-                    store.flushOrThrow("")
-                }
-                if (profile.isNotEmpty()) {
-                    if (store.hasLoadFailure(profile)) {
-                        LOGGER.warn(
-                            "Leaving profile '{}' without rewriting its unreadable Minecraft controls snapshot",
-                            profile,
-                        )
-                    } else {
-                        store.flushOrThrow(profile)
-                    }
-                }
-                return@runOnClientThreadAndWait
-            }
-            if (store.hasLoadFailure(profile)) {
-                LOGGER.warn(
-                    "Continuing the profile operation without rewriting unreadable Minecraft controls snapshot '{}'",
-                    profile,
-                )
-                return@runOnClientThreadAndWait
-            }
-            if (profile == owner.profile) {
-                capture(profile)
-                store.flushOrThrow(profile)
+        val owner = modeTransitions.liveOwner() ?: return
+        if (!owner.separateControls) {
+            if (store.hasLoadFailure("")) {
+                LOGGER.warn("Leaving the shared controls snapshot unreadable instead of overwriting it")
             } else {
-                store.flushOrThrow(profile)
+                runOnClientThreadAndWait { capture("", SHARED_NAMESPACE) }
+                store.flushOrThrow("")
             }
+            if (profile.isNotEmpty()) {
+                if (store.hasLoadFailure(profile)) {
+                    LOGGER.warn(
+                        "Leaving profile '{}' without rewriting its unreadable Minecraft controls snapshot",
+                        profile,
+                    )
+                } else {
+                    store.flushOrThrow(profile)
+                }
+            }
+            return
         }
+        if (store.hasLoadFailure(profile)) {
+            LOGGER.warn(
+                "Continuing the profile operation without rewriting unreadable Minecraft controls snapshot '{}'",
+                profile,
+            )
+            return
+        }
+        if (profile == owner.profile) runOnClientThreadAndWait { capture(profile) }
+        store.flushOrThrow(profile)
     }
 
     override fun onProfileCreated(profile: String) {
@@ -134,7 +126,7 @@ object MinecraftKeybindProfiles : ConfigManager.ProfileChangeListener {
                 .onFailure { LOGGER.warn("Failed to capture saved Minecraft keybinds", it) }
             Unit
         }
-        val mc = Minecraft.getInstance()
+        val mc = Minecraft.getInstance() ?: return
         if (mc.isSameThread) captureSaved() else mc.execute(captureSaved)
     }
 
@@ -150,21 +142,12 @@ object MinecraftKeybindProfiles : ConfigManager.ProfileChangeListener {
 
     private fun runOnClientThreadAndWait(action: () -> Unit) {
         val mc = Minecraft.getInstance()
-        if (mc.isSameThread) {
-            action()
-            return
-        }
-        val complete = CompletableFuture<Unit>()
-        mc.execute {
-            runCatching(action)
-                .onSuccess { complete.complete(Unit) }
-                .onFailure { complete.completeExceptionally(it) }
-        }
-        try {
-            complete.get(CLIENT_THREAD_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        } catch (timeout: TimeoutException) {
-            throw IllegalStateException("Timed out waiting for the client thread", timeout)
-        }
+        ConfigManager.dispatchAndWait(
+            { task -> if (mc == null || mc.isSameThread) task.run() else mc.execute(task) },
+            action,
+            TimeUnit.SECONDS.toNanos(CLIENT_THREAD_TIMEOUT_SECONDS),
+            "the client thread",
+        )
     }
 
     private fun capture(profile: String, namespace: String = NAMESPACE) {
@@ -190,7 +173,7 @@ object MinecraftKeybindProfiles : ConfigManager.ProfileChangeListener {
             changed = true
         }
         if (changed) {
-            Minecraft.getInstance().options.save()
+            Minecraft.getInstance()?.options?.save()
             runCatching { KeyMapping.resetMapping() }
         }
     }

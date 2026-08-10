@@ -135,19 +135,18 @@ fun Profiles() {
         val loaded = withContext(Dispatchers.IO) {
             loadProfiles() to ConfigManager.profileSpecificControls()
         }
-        Platform.screen().runOnUiThread {
-            profiles = loaded.first
-            profileSpecificControls = loaded.second
-        }
+        profiles = loaded.first
+        profileSpecificControls = loaded.second
     }
 
     fun runProfileAction(
         onSuccess: () -> Unit = {},
         onError: (String) -> Unit = { Notifications.error("Profile action failed", it) },
+        holdsBusy: Boolean = false,
         action: () -> Unit,
     ) {
         Platform.screen().runOnUiThread {
-            if (busy) return@runOnUiThread
+            if (busy && !holdsBusy) return@runOnUiThread
             busy = true
             // A profile operation must finish refreshing the global registry even if this page is
             // closed while its blocking IO is still running. Enter the non-cancellable section
@@ -175,7 +174,7 @@ fun Profiles() {
                             result.failure?.let { failure ->
                                 Notifications.error(
                                     "Profile action failed",
-                                    failure.message ?: failure::class.java.simpleName,
+                                    failure.messageOrType(),
                                 )
                             }
                             return@runOnUiThread
@@ -184,11 +183,11 @@ fun Profiles() {
                             result.profiles?.let { profiles = it }
                             val failure = result.failure
                             if (failure == null) onSuccess()
-                            else onError(failure.message ?: failure::class.java.simpleName)
+                            else onError(failure.messageOrType())
                         } catch (failure: Throwable) {
                             Notifications.error(
                                 "Profile action failed",
-                                failure.message ?: failure::class.java.simpleName,
+                                failure.messageOrType(),
                             )
                         } finally {
                             busy = false
@@ -216,6 +215,7 @@ fun Profiles() {
             if (localSearchQuery.isBlank()) categorizedProfiles
             else categorizedProfiles.filter { it.matchesSearch(localSearchQuery) }
         }
+        val existingProfileIds = remember(profiles) { profiles.mapTo(HashSet()) { it.id.lowercase() } }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -250,8 +250,12 @@ fun Profiles() {
                     icon = "folder",
                     onClick = {
                         scope.launch(Dispatchers.IO) {
-                            Files.createDirectories(ConfigManager.PROFILES_DIR)
-                            DesktopHelper.open(ConfigManager.PROFILES_DIR.toFile())
+                            runCatching {
+                                Files.createDirectories(ConfigManager.PROFILES_DIR)
+                                DesktopHelper.open(ConfigManager.PROFILES_DIR.toFile())
+                            }.onFailure {
+                                Notifications.error("Could not open the profiles folder", it.messageOrType())
+                            }
                         }
                     },
                 )
@@ -260,7 +264,7 @@ fun Profiles() {
 
         ProfilesGrid(
             profiles = visibleProfiles,
-            existingProfileIds = profiles.mapTo(HashSet()) { it.id.lowercase() },
+            existingProfileIds = existingProfileIds,
             showCreateProfile = activeCategory == ProfileCategory.All && localSearchQuery.isBlank(),
             emptyMessage = if (localSearchQuery.isBlank()) "No favorite profiles."
                 else "No profiles match \"$localSearchQuery\"",
@@ -305,40 +309,60 @@ fun Profiles() {
             },
             onDelete = { profile ->
                 if (!busy) {
+                    busy = true
                     scope.launch {
-                        val confirmed = withContext(Dispatchers.IO) {
-                            TinyFdApi.getInstance().showMessageBox(
-                                "Delete profile",
-                                "Delete ${profile.name}? This cannot be undone.",
-                                TinyFdApi.YES_NO_DIALOG,
-                                TinyFdApi.WARNING_ICON,
-                                false,
-                            )
+                        val confirmed = try {
+                            withContext(Dispatchers.IO) {
+                                TinyFdApi.getInstance().showMessageBox(
+                                    "Delete profile",
+                                    "Delete ${profile.name}? This cannot be undone.",
+                                    TinyFdApi.YES_NO_DIALOG,
+                                    TinyFdApi.WARNING_ICON,
+                                    false,
+                                )
+                            }
+                        } catch (failure: Throwable) {
+                            busy = false
+                            Notifications.error("Profile action failed", failure.messageOrType())
+                            return@launch
                         }
                         if (confirmed) {
-                            runProfileAction { ConfigManager.deleteProfile(profile.id) }
+                            runProfileAction(holdsBusy = true) { ConfigManager.deleteProfile(profile.id) }
+                        } else {
+                            busy = false
                         }
                     }
                 }
             },
             onExport = { profile ->
                 if (!busy) {
+                    busy = true
                     scope.launch {
                         val defaultName = profile.name.replace(Regex("[^a-zA-Z0-9._-]"), "_") + ".zip"
-                        val destination = withContext(Dispatchers.IO) {
-                            TinyFdApi.getInstance().openSaveSelector(
-                                "Export profile",
-                                defaultName,
-                                arrayOf("*.zip"),
-                                "Zip archive",
-                            )
-                        } ?: return@launch
+                        val destination = try {
+                            withContext(Dispatchers.IO) {
+                                TinyFdApi.getInstance().openSaveSelector(
+                                    "Export profile",
+                                    defaultName,
+                                    arrayOf("*.zip"),
+                                    "Zip archive",
+                                )
+                            }
+                        } catch (failure: Throwable) {
+                            busy = false
+                            Notifications.error("Profile action failed", failure.messageOrType())
+                            return@launch
+                        }
+                        if (destination == null) {
+                            busy = false
+                            return@launch
+                        }
                         val archive = if (destination.fileName.toString().endsWith(".zip", ignoreCase = true)) {
                             destination
                         } else {
                             destination.resolveSibling(destination.fileName.toString() + ".zip")
                         }
-                        runProfileAction {
+                        runProfileAction(holdsBusy = true) {
                             ConfigManager.exportProfile(profile.id, archive)
                         }
                     }
@@ -347,6 +371,8 @@ fun Profiles() {
         )
     }
 }
+
+private fun Throwable.messageOrType(): String = message ?: this::class.java.simpleName
 
 private fun UiProfile.matchesSearch(query: String): Boolean {
     val q = query.lowercase()
@@ -1073,8 +1099,8 @@ private fun ProfileTextField(
         if (error != null) ProfileError(error, width)
     }
 
-    LaunchedEffect(enabled) {
-        if (enabled) focusRequester.requestFocus()
+    LaunchedEffect(Unit) {
+        runCatching { focusRequester.requestFocus() }
     }
 }
 
