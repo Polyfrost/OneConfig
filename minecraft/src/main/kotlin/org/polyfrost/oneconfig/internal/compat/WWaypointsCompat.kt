@@ -28,14 +28,14 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindRegistrar
 
 /**
- * Renders [wWaypoints](https://modrinth.com/mod/wwaypoints)' options as a native OneConfig page instead of the
- * Mod Menu Compat placeholder card, so its settings take part in OneConfig's global search and profiles.
+ * Renders [wWaypoints](https://modrinth.com/mod/wwaypoints) options as a native OneConfig page instead of the
+ * Mod Menu Compat placeholder card
  *
- * wWaypoints is closed-source and is not a compile-time dependency; everything goes through [WWaypointsBridge].
- * The mod's own screens keep working unchanged — Mod Menu resolves each mod's own factory first, and the mod's
- * `K` keybind never routes through OneConfig — so this only adds a second, native way in.
+ * The mod is closed-source and not a compile-time dependency so everything goes through [WWaypointsBridge]
+ * Its own screens keep working because Mod Menu resolves each mod's own factory first and its `K` keybind
+ * never routes through OneConfig
  *
- * Settings that need a widget OneConfig does not have yet are link-out buttons onto the first-party screen.
+ * Settings needing a widget OneConfig does not have yet become link-out buttons onto the first-party screen
  */
 object WWaypointsCompat {
 
@@ -46,7 +46,7 @@ object WWaypointsCompat {
     @JvmStatic
     fun register() {
         if (!CompatLoader.hasMod(MOD_ID)) return
-        // Priority 0 so this runs before ModMenuCompat.postLoad (1000) and claims the card first.
+        // priority 0 so this runs before ModMenuCompat.postLoad (1000) and claims the card first
         CompatLoader.requireTranslations(priority = 0, skip = true) {
             runCatching {
                 if (!WWaypointsBridge.available) {
@@ -64,7 +64,7 @@ object WWaypointsCompat {
         val tree = Tree.tree()
         tree.id = MOD_ID
         tree.title = "wWaypoints"
-        // The mod writes its config every time a row changes, so OneConfig must never cache values on top of it.
+        // mod writes its config on every row change so OneConfig must never cache values on top of it
         tree.noCache = true
         tree.saveFunction = Runnable { WWaypointsBridge.saveConfig() }
         ModInfo.loadedMods.firstOrNull { it.id == MOD_ID }?.extractIconFile()?.let {
@@ -80,8 +80,6 @@ object WWaypointsCompat {
         return tree
     }
 
-    // region General
-
     private fun buildGeneral(tree: Tree) {
         tree.put(
             switch(
@@ -90,7 +88,7 @@ object WWaypointsCompat {
                 description = "Allows zoom mods to zoom into labels. Uses a fixed FOV baseline.",
                 tags = listOf("zoom", "fov", "field of view", "optifine", "spyglass"),
             ).onChange { enabled ->
-                // Mirrors the first-party row: turning this on pins the baseline to the player's current FOV.
+                // mirrors the first-party row where enabling pins the baseline to the player's current FOV
                 if (enabled == true) currentFovDegrees()?.let { WWaypointsBridge.set("ignoreFovBaselineDeg", it) }
             }
         )
@@ -174,8 +172,8 @@ object WWaypointsCompat {
     }
 
     private fun uiScaleDropdown(): Property<*> {
-        // The mod stores a float and normalizes it on read; OneConfig's dropdown writes back the selected index,
-        // so translate between the two here rather than exposing the raw float.
+        // mod stores a float and normalizes it on read while OneConfig's dropdown writes back the selected
+        // index so translate between the two here rather than exposing the raw float
         val prop = Properties.functional(
             Supplier { uiScaleIndex(WWaypointsBridge.float("waypointMenuGuiScale", 2f)) },
             Consumer<Int> { index -> WWaypointsBridge.set("waypointMenuGuiScale", UI_SCALES.getOrElse(index) { 2f }) },
@@ -196,7 +194,7 @@ object WWaypointsCompat {
 
     private val UI_SCALES = floatArrayOf(1f, 2f, 3f)
 
-    /** Mirrors `UiScale.normalizeMenuReferenceScale`, mapped onto the dropdown's option indices. */
+    /** Mirrors `UiScale.normalizeMenuReferenceScale` mapped onto the dropdown's option indices */
     private fun uiScaleIndex(scale: Float): Int = when {
         !scale.isFinite() -> 1
         scale <= 1.5f -> 0
@@ -208,14 +206,11 @@ object WWaypointsCompat {
         (Minecraft.getInstance()?.options?.fov()?.get() as? Number)?.toFloat()
     }.getOrNull()
 
-    // endregion
-
-    // region Defaults
-
     /**
-     * The mod's Defaults page and the Label section of its composer. 0.7.3 always keeps the single/clump/group
-     * defaults identical (`UNIFIED` mode), so these edit the single-waypoint set and mirror it, exactly as the
-     * first-party page does.
+     * The mod's Defaults page and the Label section of its composer
+     *
+     * 0.7.3 always keeps the single/clump/group defaults identical (`UNIFIED` mode) so these edit the
+     * single-waypoint set and mirror it like the first-party page does
      */
     private fun buildDefaults(tree: Tree) {
         defaultLabelPreset()?.let { tree.put(it.defaults("Label")) }
@@ -280,8 +275,10 @@ object WWaypointsCompat {
     }
 
     /**
-     * The preset new waypoints get, plus the mod's synthetic "Label Off" choice which hides the label instead of
-     * picking a preset. Built from the presets that exist at startup, like the keybind rows.
+     * The preset new waypoints get plus the mod's synthetic "Label Off" choice which hides the label instead of
+     * picking a preset
+     *
+     * Built from the presets that exist at startup like the keybind rows
      */
     private fun defaultLabelPreset(): Property<String>? {
         val presets = WWaypointsBridge.visiblePresets()
@@ -322,7 +319,7 @@ object WWaypointsCompat {
 
     /**
      * `outlineOpacityPercent`/`fillOpacityPercent` on the defaults are `int`s where any negative value means
-     * "inherit", so `-1` is the sentinel and the global field of the same name supplies the inherited value.
+     * inherit so `-1` is the sentinel and the global field of the same name supplies the inherited value
      */
     private fun inheritablePercent(
         field: String,
@@ -350,8 +347,8 @@ object WWaypointsCompat {
     }
 
     /**
-     * `outlineThickness` on the defaults is a boxed `Float` where `null` means "inherit", so this property is
-     * nullable and carries no explicit sentinel — writing null is what hands the value back to the global.
+     * `outlineThickness` on the defaults is a boxed `Float` where `null` means inherit so this property is
+     * nullable and carries no explicit sentinel because writing null hands the value back to the global
      */
     @Suppress("UNCHECKED_CAST")
     private fun inheritableThickness(): Property<Float?> {
@@ -369,9 +366,9 @@ object WWaypointsCompat {
         prop.addMetadata("step", 0.5f)
         prop.addMetadata("inheritedValue", Supplier { WWaypointsBridge.float("outlineThickness", 2f) })
         prop.addMetadata("searchTags", listOf("outline", "width", "border", "thickness", "thick", "thin", "block outline"))
-        // Compat snapshots cannot record a null, so a snapshotted value would resurrect itself the next time a
-        // profile is applied and silently undo "inherit". Keep this row out of snapshots rather than have it
-        // fight the user. The opacity rows are unaffected: their sentinel is -1, which snapshots fine.
+        // compat snapshots cannot record a null so a snapshotted value would resurrect itself on the next
+        // profile apply and undo inherit
+        // the opacity rows are unaffected because their -1 sentinel snapshots fine
         prop.addMetadata(CompatSnapshots.NO_SNAPSHOT_META, true)
         return prop
     }
@@ -391,8 +388,10 @@ object WWaypointsCompat {
     }
 
     /**
-     * The two `labelFade*Blocks` fields as a single start/end pair. They are nullable on disk; the mod reads a
-     * missing end of the range as `0`, so that is what an unset field surfaces as here.
+     * The two `labelFade*Blocks` fields as a single start/end pair
+     *
+     * They are nullable on disk and the mod reads a missing end of the range as `0` so that is what an unset
+     * field surfaces as here
      */
     private fun labelFadeRange(): Property<FloatArray> {
         val prop = Properties.functional(
@@ -418,10 +417,6 @@ object WWaypointsCompat {
         prop.addMetadata("searchTags", listOf("fade", "close", "near", "disappear", "distance", "hide near", "range", "visibility"))
         return prop
     }
-
-    // endregion
-
-    // region Integrations
 
     private fun buildIntegrations(tree: Tree) {
         val hopliteEnabled = switch(
@@ -493,11 +488,10 @@ object WWaypointsCompat {
     }
 
     /**
-     * Native reimplementation of the mod's `ToggleSneakConfigScreen`, which is a plain popup of scalar rows.
+     * Native reimplementation of the mod's `ToggleSneakConfigScreen` which is a plain popup of scalar rows
      *
-     * The two `Boolean` fields are tri-state on disk; the mod normalizes `null` to `true` when it loads the config
-     * and reads them with `Boolean.TRUE.equals` afterwards, so `null` is surfaced as off and only concrete values
-     * are ever written back.
+     * The two `Boolean` fields are tri-state on disk and the mod reads them with `Boolean.TRUE.equals` after
+     * load so `null` is surfaced as off and only concrete values are ever written back
      */
     private fun buildToggleSneak(tree: Tree) {
         tree.put(
@@ -534,15 +528,11 @@ object WWaypointsCompat {
                 description = "Show a persistent \"Toggle Sneak Enabled\" indicator above the hotbar.",
                 tags = SNEAK_TAGS + listOf("indicator", "crawl", "crawling", "hotbar"),
             ).onChange { mode ->
-                // The mod keeps this legacy flag in step with the mode; the crawl renderer still reads it.
+                // mod keeps this legacy flag in step with the mode because the crawl renderer still reads it
                 WWaypointsBridge.set("crawlToggleSneakIndicator", (mode as? Enum<*>)?.name != "OFF")
             }.integrations("Toggle Sneak")
         )
     }
-
-    // endregion
-
-    // region Controls
 
     private fun buildControls(tree: Tree) {
         WWaypointsBridge.syncPresetCreateKeybindings()
@@ -627,9 +617,10 @@ object WWaypointsCompat {
     }
 
     /**
-     * The visibility modes the hide-waypoints keybind steps through. Every edit is round-tripped through the
-     * mod's own `HideWaypointCycle.normalize`, which owns the rules — a fixed leading "Show All", no duplicates,
-     * clamped distances, and a length between two and five.
+     * The visibility modes the hide-waypoints keybind steps through
+     *
+     * Every edit is round-tripped through the mod's own `HideWaypointCycle.normalize` which owns the rules
+     * (fixed leading "Show All" / no duplicates / clamped distances / length between two and five)
      */
     private fun hideWaypointCycle(): Property<IntArray> {
         val prop = Properties.functional(
@@ -645,7 +636,7 @@ object WWaypointsCompat {
         prop.addMetadata("max", WWaypointsBridge.cycleMaxBlocks().toFloat())
         prop.addMetadata("maxEntries", WWaypointsBridge.cycleMaxEntries())
         prop.addMetadata("unit", WWaypointsBridge.CYCLE_UNIT)
-        // Index 0 is always "Show All" and the mod refuses to move, edit or drop it.
+        // index 0 is always "Show All" and the mod refuses to move edit or drop it
         prop.addMetadata("lockedLeading", 1)
         prop.addMetadata("entryLabel", Function<Number, String> { WWaypointsBridge.cycleLabel(it.toInt()) })
         prop.addMetadata("nextValue", Function<List<Number>, Number> { current ->
@@ -657,17 +648,13 @@ object WWaypointsCompat {
         return prop
     }
 
-    // endregion
-
-    // region Data
-
     private fun buildData(tree: Tree) {
         tree.put(
             linkOut(
                 id = "import_export",
                 name = "Import / Export wWaypoints",
-                // Importing needs the mod's merge/override decision flow, and exporting every world needs its
-                // private on-disk layout walk, so both stay on the first-party screen.
+                // importing needs the mod's merge/override decision flow and exporting every world needs its
+                // private on-disk layout walk so both stay on the first-party screen
                 description = "Import wWaypoints data, export every world, or use the clipboard.",
                 text = "Open",
                 tags = TRANSFER_TAGS,
@@ -749,9 +736,9 @@ object WWaypointsCompat {
     }
 
     /**
-     * The mod builds this envelope in a private method, so the row is limited to the current world — the
-     * all-worlds variant would mean duplicating its on-disk layout walk, which is exactly the kind of thing
-     * that breaks silently on an update.
+     * The mod builds this envelope in a private method so the row is limited to the current world
+     *
+     * The all-worlds variant would mean duplicating its on-disk layout walk which breaks silently on updates
      */
     private fun exportCurrentWorld() {
         val json = WWaypointsBridge.exportCurrentWorldJson(System.currentTimeMillis())
@@ -820,17 +807,13 @@ object WWaypointsCompat {
         }
     }
 
-    // endregion
-
-    // region file dialogs
-
     private val WWAYPOINT_FILTER = arrayOf("*.wwaypoint")
     private val WSETTINGS_FILTER = arrayOf("*.wsettings")
     private val WTEMPLATE_FILTER = arrayOf("*.wtemplate")
 
     /**
-     * Button handlers run on the render thread, where a native dialog would freeze the game, so every dialog is
-     * opened from a short-lived worker and the result marshalled back with [onClientThread].
+     * Button handlers run on the render thread where a native dialog would freeze the game so every dialog is
+     * opened from a short-lived worker and the result marshalled back with [onClientThread]
      */
     private fun inBackground(block: () -> Unit) {
         Thread({
@@ -866,10 +849,6 @@ object WWaypointsCompat {
         read(chosen)
     }
 
-    // endregion
-
-    // region Presets
-
     private fun buildPresets(tree: Tree) {
         tree.put(
             linkOut(
@@ -902,10 +881,6 @@ object WWaypointsCompat {
                 .apply { category = "Presets"; subcategory = "Templates" }
         )
     }
-
-    // endregion
-
-    // region property builders
 
     private fun switch(field: String, name: String, description: String, tags: List<String>): Property<Boolean> {
         val prop = Properties.functional(
@@ -974,8 +949,10 @@ object WWaypointsCompat {
     }
 
     /**
-     * A dropdown over one of the mod's nested config enums. [fallback] is the constant the mod substitutes when the
-     * stored value is `null`, and [labels] must be in the enum's declaration order.
+     * A dropdown over one of the mod's nested config enums
+     *
+     * [fallback] is the constant the mod substitutes when the stored value is `null` and [labels] must be in
+     * the enum's declaration order
      */
     private fun enumDropdown(
         field: String,
@@ -1017,7 +994,7 @@ object WWaypointsCompat {
         screen()?.let { Platform.screen().display(it) }
     }
 
-    /** A button row that runs [run] rather than handing off to one of the mod's own screens. */
+    /** A button row that runs [run] rather than handing off to one of the mod's own screens */
     private fun action(
         id: String,
         name: String,
@@ -1051,9 +1028,12 @@ object WWaypointsCompat {
     }
 
     /**
-     * Bridges one of the mod's vanilla [KeyMapping]s onto OneConfig's keybind row. The value never lives in
-     * OneConfig: reads convert the mapping's current key, writes go through the mod's own rebind entry point so
-     * its conflict handling and `options.txt` persistence still run.
+     * Bridges one of the mod's vanilla [KeyMapping]s onto OneConfig's keybind row
+     *
+     * The value never lives in OneConfig
+     *
+     * Reads convert the mapping's current key and writes go through the mod's own rebind entry point so its
+     * conflict handling and `options.txt` persistence still run
      */
     private fun keybind(
         id: String,
@@ -1075,14 +1055,14 @@ object WWaypointsCompat {
         prop.category = "Controls"
         prop.subcategory = subcategory
         prop.addMetadata("searchTags", tags)
-        // The mapping is already a real vanilla keybind, so it must not be mirrored back into the Controls menu,
-        // and Minecraft keybinds are profile-managed by MinecraftKeybindProfiles rather than compat snapshots.
+        // mapping is already a real vanilla keybind so it must not be mirrored back into the Controls menu
+        // and Minecraft keybinds are profile-managed by MinecraftKeybindProfiles rather than compat snapshots
         prop.addMetadata(MinecraftKeybindRegistrar.NO_MIRROR_METADATA, true)
         prop.addMetadata(CompatSnapshots.NO_SNAPSHOT_META, true)
         return prop
     }
 
-    /** Shown when the mod has not registered a mapping yet — it only picks up new preset binds on restart. */
+    /** Shown when the mod has not registered a mapping yet because it only picks up new preset binds on restart */
     private fun unavailableKeybind(
         id: String,
         name: String,
@@ -1111,7 +1091,7 @@ object WWaypointsCompat {
         }
     }
 
-    /** wWaypoints' mappings are single-key, so only the primary input of a combo survives the round trip. */
+    /** wWaypoints mappings are single-key so only the primary input of a combo survives the round trip */
     private fun OneConfigKeybind?.toInputKey(): InputConstants.Key {
         if (this == null || !isBound) return InputConstants.UNKNOWN
         mouseBtns?.firstOrNull { it >= 0 }?.let { return InputConstants.Type.MOUSE.getOrCreate(it) }
@@ -1143,14 +1123,11 @@ object WWaypointsCompat {
         this.subcategory = subcategory
     }
 
-    /** Greys the row out (rather than hiding it) while [condition] is off, matching the first-party screen. */
+    /** Greys the row out rather than hiding it while [condition] is off matching the first-party screen */
     private fun <T> Property<T>.requires(condition: Property<Boolean>): Property<T> =
         apply { addDisplayCondition(condition, false) }
 
-    // endregion
-
-    // region shared search vocabulary, mirroring the mod's own SettingsSearchVocabulary
-
+    // search vocabulary mirroring the mod's own SettingsSearchVocabulary
     private val DEATH_TAGS = listOf(
         "die", "died", "dead", "killed", "grave", "corpse", "death marker",
         "last death", "recover items", "respawn",
@@ -1175,8 +1152,6 @@ object WWaypointsCompat {
         "import", "export", "backup", "restore", "share", "send", "receive",
         "copy", "paste", "clipboard", "file", "transfer", "migrate",
     )
-
-    // endregion
 }
 
 //? }

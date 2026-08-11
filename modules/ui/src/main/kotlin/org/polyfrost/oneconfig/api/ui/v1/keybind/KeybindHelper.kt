@@ -15,11 +15,13 @@ class KeybindHelper {
     fun key(vararg codes: Int) = apply { keyCodes.addAll(codes.asList()) }
     fun mouse(vararg btns: Int) = apply { mouseBtns.addAll(btns.asList()) }
     /**
-     * Name shown for this keybind in Minecraft's Controls menu.
+     * Name shown for this keybind in Minecraft's Controls menu
      */
     fun name(name: String) = apply { this.name = name }
     /**
-     * Category heading for this keybind in Minecraft's Controls menu. Defaults to "OneConfig".
+     * Category heading for this keybind in Minecraft's Controls menu
+     *
+     * Defaults to "OneConfig"
      */
     fun category(category: String) = apply { this.category = category }
     fun shift() = apply { mods = (mods or KeyModifiers.SHIFT).toByte() }
@@ -34,8 +36,12 @@ class KeybindHelper {
     fun action(fn: java.util.function.Consumer<Boolean>) = apply { action = { b -> fn.accept(b); true } }
 
     /**
-     * Builds the keybind. An action is optional: config-backed (`@Keybind`) binds exist only to be bound by the user
-     * and are polled by the owning code, so they build with a no-op action.
+     * Builds the keybind
+     *
+     * An action is optional
+     *
+     * Config-backed (`@Keybind`) binds exist only to be bound by the user and are polled by the owning code
+     * so they build with a no-op action
      */
     fun build(): OneConfigKeybind {
         val fn = action ?: NO_OP

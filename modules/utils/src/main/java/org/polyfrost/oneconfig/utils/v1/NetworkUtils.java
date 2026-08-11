@@ -45,7 +45,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
 /**
- * Utility class for accessing the internet.
+ * Utility class for accessing the internet
  */
 public final class NetworkUtils {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Network");
@@ -55,13 +55,13 @@ public final class NetworkUtils {
     }
 
     /**
-     * Gets the contents of a URL as a String.
+     * Gets the contents of a URL as a String
      *
-     * @param url       The URL to read.
-     * @param userAgent The user agent to use.
-     * @param timeout   The timeout in milliseconds.
-     * @param useCaches Whether to use caches.
-     * @return The contents of the URL, or {@code null} if the request failed.
+     * @param url       The URL to read
+     * @param userAgent The user agent to use
+     * @param timeout   The timeout in milliseconds
+     * @param useCaches Whether to use caches
+     * @return The contents of the URL or {@code null} if the request failed
      */
     @Nullable
     public static String getString(String url, String userAgent, int timeout, boolean useCaches) {
@@ -79,10 +79,10 @@ public final class NetworkUtils {
     }
 
     /**
-     * Gets the contents of a URL as a String.
+     * Gets the contents of a URL as a String
      *
-     * @param url The URL to read.
-     * @return The contents of the URL, or {@code null} if the request failed.
+     * @param url The URL to read
+     * @return The contents of the URL or {@code null} if the request failed
      * @see NetworkUtils#getString(String, String, int, boolean)
      */
     @Nullable
@@ -91,14 +91,14 @@ public final class NetworkUtils {
     }
 
     /**
-     * Downloads a path from a URL.
+     * Downloads a path from a URL
      *
-     * @param url       The URL to download from.
-     * @param path      The path to download to.
-     * @param userAgent The user agent to use.
-     * @param timeout   The timeout in milliseconds.
-     * @param useCaches Whether to use caches.
-     * @return Whether the download was successful.
+     * @param url       The URL to download from
+     * @param path      The path to download to
+     * @param userAgent The user agent to use
+     * @param timeout   The timeout in milliseconds
+     * @param useCaches Whether to use caches
+     * @return Whether the download was successful
      */
     public static boolean downloadFile(String url, Path path, String userAgent, int timeout, boolean useCaches) {
         try (var stream = setupConnection(url, userAgent, timeout, useCaches)) {
@@ -111,11 +111,11 @@ public final class NetworkUtils {
     }
 
     /**
-     * Downloads a file from a URL.
+     * Downloads a file from a URL
      *
-     * @param url  The URL to download from.
-     * @param path The file to download to.
-     * @return Whether the download was successful.
+     * @param url  The URL to download from
+     * @param path The file to download to
+     * @return Whether the download was successful
      * @see NetworkUtils#downloadFile(String, Path, String, int, boolean)
      */
     public static boolean downloadFile(String url, Path path) {
@@ -123,7 +123,7 @@ public final class NetworkUtils {
     }
 
     /**
-     * Launches a URL in the default browser.
+     * Launches a URL in the default browser
      *
      * @param uri The URI to launch
      * @see java.awt.Desktop#browse(URI)

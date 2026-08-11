@@ -46,7 +46,7 @@ object SkiaFontRenderer : PreparableReloadListener {
         val srcH: Float,   // source cell height in px
         val scale: Float,  // provider height / cell height (source px -> target px)
         val top: Float,    // target-px offset from line top to glyph top (BASELINE - ascent)
-        val advance: Float // target-px advance, trailing spacing included
+        val advance: Float // target-px advance including trailing spacing
     )
 
     private class UnihexGlyphs(val cps: IntArray, val lines: IntArray, val bounds: ShortArray) {
@@ -66,8 +66,7 @@ object SkiaFontRenderer : PreparableReloadListener {
 
     @Volatile private var loaded = false
     @Volatile private var builtOptions = -1
-    // Throttle lazy reload retries so a draw happening mid-reload (packs not yet settled)
-    // doesn't re-read every frame; it heals once the resource manager settles.
+    // throttles lazy reload retries so a draw landing mid-reload does not re-read every frame
     private var lastLoadAttempt = 0L
     private const val RETRY_INTERVAL_MS = 200L
 
@@ -186,9 +185,7 @@ object SkiaFontRenderer : PreparableReloadListener {
 
     private fun ensureLoaded() {
         if (loaded && builtOptions == fontOptionsMask()) return
-        // Lazy self-heal: read from the *live* resource manager, which reflects the final
-        // pack stack only after a reload has fully settled. Throttled so we don't thrash
-        // if a draw lands mid-reload (truncated read / packs being swapped).
+        // read the live resource manager because it only reflects the final pack stack once a reload settles
         val now = System.currentTimeMillis()
         if (now - lastLoadAttempt < RETRY_INTERVAL_MS) return
         lastLoadAttempt = now

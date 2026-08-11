@@ -52,20 +52,22 @@ public interface ScreenPlatform {
     }
 
     /**
-     * Return a scaling factor from the Minecraft scaled coordinate system to standard <b>window coordinates</b>.
+     * Return a scaling factor from the Minecraft scaled coordinate system to standard <b>window coordinates</b>
      * <br>
-     * These window/screen coordinates are used by mouse and input, as well as resizing.
-     * See the inverse, {@link #screenToMcScale()}.
+     * These window/screen coordinates are used by mouse and input as well as resizing
+     * <br>
+     * See the inverse {@link #screenToMcScale()}
      */
     default float mcToScreenScale() {
         return Platform.compatibility().options().getGuiScale() / surfaceRatio();
     }
 
     /**
-     * Return a scaling factor from the standard window coordinates to Minecraft scaled coordinate space.
+     * Return a scaling factor from the standard window coordinates to Minecraft scaled coordinate space
      * <br>
-     * These coordinates can be used in Minecraft rendering methods so they render at the correct place.
-     * See the inverse, {@link #mcToScreenScale()}.
+     * These coordinates can be used in Minecraft rendering methods so they render at the correct place
+     * <br>
+     * See the inverse {@link #mcToScreenScale()}
      * @implNote same as {@code 1f / }{@link  #mcToScreenScale()}
      */
     default float screenToMcScale() {

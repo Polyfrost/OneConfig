@@ -31,17 +31,21 @@ import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 
 /**
- * This functional interface represents a 'translator' which will take an object and return a {@link Tree} representing the serializable representation of the object.
+ * This functional interface represents a 'translator' which will take an object and return a {@link Tree} representing the serializable representation of the object
  * <br>
- * Changes to the tree should be reflected in the object, and vice-versa.
+ * Changes to the tree should be reflected in the object and changes to the object in the tree
  */
 @FunctionalInterface
 public interface PropertyCollector {
     /**
-     * Attempt to collect the properties of the given object.
+     * Attempt to collect the properties of the given object
      *
      * @param src the object to collect from
-     * @return the tree, or null if this collector cannot parse it. If null is returned, the next collector will be tried. This operation should be fail-fast.
+     * @return the tree or null if this collector cannot parse it
+     *         <br>
+     *         If null is returned the next collector will be tried
+     *         <br>
+     *         This operation should be fail-fast
      */
     @Nullable
     Tree collect(@NotNull Object src);

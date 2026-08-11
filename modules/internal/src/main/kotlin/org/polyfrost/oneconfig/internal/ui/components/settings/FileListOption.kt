@@ -50,7 +50,7 @@ fun FileListOption(data: FileListOptionData) {
                     } else {
                         tinyFd.openFileSelector(data.dialogTitle, start, data.filterPatterns, data.filterName)
                     }
-                } ?: return@launch // cancelled: leave the existing entry untouched
+                } ?: return@launch // cancelled so leave the existing entry untouched
                 state.update(id, selected.toString())
             } finally {
                 dialogOpen = false

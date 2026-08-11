@@ -9,9 +9,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 //? if >= 26.2 {
-// 26.2 removed RenderSystem.flipFrame. The frame is now presented in Minecraft.renderFrame:
-// GameRenderer.render -> GpuSurface.blitFromTexture(mainRenderTarget) -> GpuSurface.present().
-// Flush queued Compose/Skia draws into the main render target before the blit so screenshots include them.
+// 26.2 removed RenderSystem.flipFrame and presents inside Minecraft.renderFrame via
+// GpuSurface.blitFromTexture so flush queued Compose/Skia draws before that blit or screenshots miss them
 @Mixin(Minecraft.class)
 public class Mixin_SkiaFramePresent {
 

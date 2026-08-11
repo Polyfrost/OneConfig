@@ -121,10 +121,8 @@ class StoredGLState(private val glVersion: Int) {
                 lastColorMask.get(3).toInt() != 0
             )
 
-            // Skia's resetGLAll() changes real GL without updating GlStateManager's cache. If we
-            // restore with raw glEnable/glDisable, the cache can still think the old value is active
-            // and MC will skip the GL call on the next draw (e.g. item culling) until a full device
-            // reset such as a window resize. Toggle through GlStateManager to force cache + GL sync.
+            // Skia's resetGLAll changes real GL without updating GlStateManager's cache and raw
+            // glEnable/glDisable leaves it stale so toggle through GlStateManager to resync both
             //? if >= 26.2 {
             forceToggle(lastEnableBlend, { GlStateManager._enableBlend(0) }, { GlStateManager._disableBlend(0) })
             //?} else {

@@ -1,7 +1,5 @@
 @file:Suppress("UnstableApiUsage")
 
-// Shared build logic between all OneConfig modules to reduce boilerplate.
-
 plugins {
     alias(libs.plugins.kotlinx.api.validator)
     id("org.jetbrains.gradle.plugin.idea-ext")
@@ -81,8 +79,8 @@ subprojects {
         }
     }
 
-    // Tests run via the j21Tests suite (JUnit Jupiter); the default `test` task compiles
-    // sources but does not use the JUnit Platform and fails on Gradle 9+.
+    // tests run via the j21Tests suite because the default test task does not
+    // use the JUnit Platform and fails on Gradle 9+
     tasks.named<Test>("test") {
         enabled = false
     }
@@ -160,7 +158,7 @@ subprojects {
         named<Jar>("jar") {
             manifest {
                 attributes(mapOf(
-                    "Fabric-Loom-Remap" to false // Mark explicitly as not needing remapping
+                    "Fabric-Loom-Remap" to false
                 ))
             }
             archiveBaseName.set(project.name)

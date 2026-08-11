@@ -65,9 +65,9 @@ fun OneConfigInterface(
     windowWidth: Float,
     windowHeight: Float,
     initialRoute: Any = ModsGraph,
-    /** Set when the scene is being rebuilt for a session already in progress, so its search survives. */
+    /** Set when the scene is being rebuilt for a session already in progress so its search survives */
     resuming: Boolean = false,
-    /** Set when [initialRoute] is a page the user was already on, which is put back without a transition. */
+    /** Set when [initialRoute] is a page the user was already on which is put back without a transition */
     restoring: Boolean = false,
     onCloseRequest: () -> Unit = {},
     onCloseReady: ((requestClose: () -> Unit) -> Unit)? = null,
@@ -87,12 +87,12 @@ fun OneConfigInterface(
         ShellState.openingTransitionTarget = null
         ShellState.awaitingInitialRoute = initialRoute != ModsGraph
         if (initialRoute != ModsGraph) {
-            // an initial navigation will fire a page transition; let "Show opening page animation" gate it,
-            // except when the page is only being put back, which should look like it was never left
+            // an initial navigation fires a page transition gated by "Show opening page animation" unless
+            // the page is only being put back which should look like it was never left
             ShellState.initialTransitionConsumed = false
             ShellState.animateOpeningPage = !restoring && OneConfigConfig.showOpeningPageAnimation
-            // the NavHost only sets its graph once the Shell is composed (after `visible` flips true);
-            // wait for it so navigate() doesn't crash with "must call setGraph() before getGraph()".
+            // the NavHost only sets its graph once the Shell is composed so wait for it or navigate()
+            // crashes with "must call setGraph() before getGraph()"
             var attempts = 0
             while (attempts++ < 600) {
                 val ready = try {
@@ -111,7 +111,7 @@ fun OneConfigInterface(
             }
             ShellState.awaitingInitialRoute = false
         } else {
-            // no initial navigation, so the first user-driven transition should use the normal setting
+            // no initial navigation so the first user-driven transition uses the normal setting
             ShellState.initialTransitionConsumed = true
         }
     }

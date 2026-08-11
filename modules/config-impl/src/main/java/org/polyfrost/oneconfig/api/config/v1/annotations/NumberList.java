@@ -31,14 +31,19 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer;
 import java.lang.annotation.*;
 
 /**
- * Renders a user-editable list of numbers, each row being a number input with stepper arrows.
+ * Renders a user-editable list of numbers with each row being a number input with stepper arrows
  * <p>
- * The annotated field must be a numeric array ({@code int[]}, {@code float[]}, {@code double[]},
- * {@code long[]}, ...) or a {@code List} of numbers. Entries are stored in the field's element
- * type; for list fields the type is taken from the entries already present, falling back to
- * {@code Integer} when {@link #min()}/{@link #max()}/{@link #step()} are whole numbers.
+ * The annotated field must be a numeric array such as {@code int[]} or {@code float[]} or
+ * {@code double[]} or {@code long[]} or a {@code List} of numbers
  * <p>
- * This is the list counterpart of {@link Number}; see {@link SliderList} for the slider variant.
+ * Entries are stored in the element type of the field
+ * <p>
+ * For list fields the type is taken from the entries already present and falls back to
+ * {@code Integer} when {@link #min()}/{@link #max()}/{@link #step()} are whole numbers
+ * <p>
+ * This is the list counterpart of {@link Number}
+ * <p>
+ * See {@link SliderList} for the slider variant
  */
 @Option(display = Visualizer.NumberListVisualizer.class)
 @Retention(RetentionPolicy.RUNTIME)
@@ -48,9 +53,7 @@ public @interface NumberList {
     String title();
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given title is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the title and remove this flag.
+     * @deprecated OneConfig auto-translates title values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean titleTranslation() default false;
@@ -58,9 +61,7 @@ public @interface NumberList {
     String description() default "";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given description is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the description and remove this flag.
+     * @deprecated OneConfig auto-translates description values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean descriptionTranslation() default false;
@@ -70,9 +71,7 @@ public @interface NumberList {
     String category() default "General";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given category is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the category and remove this flag.
+     * @deprecated OneConfig auto-translates category values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean categoryTranslation() default false;
@@ -80,7 +79,7 @@ public @interface NumberList {
     String subcategory() default "General";
 
     /**
-     * @deprecated translation keys will be translated by default.
+     * @deprecated translation keys will be translated by default
      */
     @Deprecated
     boolean subcategoryTranslation() default false;
@@ -89,22 +88,20 @@ public @interface NumberList {
 
     float max() default 100f;
 
-    /** Amount each press of the stepper arrows changes the entry by. {@code 0} picks a sensible default. */
+    /** Amount each press of the stepper arrows changes the entry by and {@code 0} picks a sensible default */
     float step() default 0f;
 
-    /** Maximum number of entries the user may add. {@code 0} means unlimited. */
+    /** Maximum number of entries the user may add and {@code 0} means unlimited */
     int maxEntries() default 0;
 
-    /** Allow the user to drag entries to reorder them. */
+    /** Allow the user to drag entries to reorder them */
     boolean reorderable() default true;
 
-    /** Label of the button that appends a new entry. */
+    /** Label of the button that appends a new entry */
     String addText() default "Add";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given addText is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the addText and remove this flag.
+     * @deprecated OneConfig auto-translates addText values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean addTextTranslation() default false;

@@ -31,12 +31,13 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer;
 import java.lang.annotation.*;
 
 /**
- * A slider with two handles, selecting a start/end pair within {@link #min()} and {@link #max()}.
+ * A slider with two handles selecting a start and end pair within {@link #min()} and {@link #max()}
  * <br>
- * The annotated field holds both ends together, as a two-element numeric array or list
- * (for example {@code float[]}, {@code int[]} or {@code List<Integer>}), where index 0 is the
- * start and index 1 is the end. Values are written back in whatever container shape the field
- * already holds, so its type is preserved.
+ * The annotated field holds both ends together as a two-element numeric array or list
+ * such as {@code float[]} or {@code int[]} or {@code List<Integer>} where index 0 is the
+ * start and index 1 is the end
+ * <br>
+ * Values are written back in whatever container shape the field already holds so its type is preserved
  */
 @Option(display = Visualizer.RangeSliderVisualizer.class)
 @Retention(RetentionPolicy.RUNTIME)

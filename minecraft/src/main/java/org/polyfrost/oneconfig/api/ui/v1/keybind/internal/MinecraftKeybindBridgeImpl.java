@@ -27,7 +27,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Mirrors {@link OneConfigKeybind}s into Minecraft's native Controls menu.
+ * Mirrors {@link OneConfigKeybind}s into Minecraft's native Controls menu
  */
 public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge {
     private static final org.apache.logging.log4j.Logger LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/Keybinds");

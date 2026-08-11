@@ -13,7 +13,7 @@ class OneConfigUIBridgeImpl : OneConfigUIBridge {
             OneConfigUIScreen.openLastSession()
             return
         }
-        // isReady stays true after the menu closes, so the screen check is what tells an open menu from a closed one
+        // isReady stays true after the menu closes so the screen check is what tells open from closed
         if (LocalNavController.isReady && Platform.screen().current<Any?>() is OneConfigUIScreen) {
             LocalNavController.wrapper.navigate(route)
         } else {

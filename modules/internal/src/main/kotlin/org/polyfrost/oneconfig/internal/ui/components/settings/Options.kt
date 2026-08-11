@@ -50,25 +50,27 @@ import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
 private val ContextMenuPadding = 4.dp
 
 /**
- * Per-property reset counters. Bumping a property's counter forces its visualizer subtree to
- * recompose with a fresh [key], so controls re-read the (reset) value instead of their cached state.
+ * Per-property reset counters
+ *
+ * Bumping a counter recomposes the visualizer subtree with a fresh [key] so controls re-read the reset
+ * value instead of their cached state
  */
 private val resetEpochs = mutableStateMapOf<Property<*>, Int>()
 
-/** True if [prop] has a captured default value that can be restored. */
+/** True if [prop] has a captured default value that can be restored */
 fun optionHasDefault(prop: Property<*>): Boolean = prop.getMetadata<Any?>("default") != null
 
 fun bumpResetEpoch(prop: Property<*>) {
     resetEpochs[prop] = (resetEpochs[prop] ?: 0) + 1
 }
 
-/** Restore [prop] to the default value captured at config initialization, and refresh its UI. */
+/** Restore [prop] to the default value captured at config initialization and refresh its UI */
 @Suppress("UNCHECKED_CAST")
 fun resetOption(prop: Property<*>) {
     val def = prop.getMetadata<Any?>("default") ?: return
     (prop as Property<Any?>).setAsReferential(def)
-    // mirror ColorOption: a PolyColor change must refresh the live accent (otherwise it only
-    // updates after the GUI is reopened).
+    // like ColorOption a PolyColor change must refresh the live accent or it only updates once the GUI
+    // is reopened
     if (prop.type == PolyColor::class.java) updateAccent()
     resetEpochs[prop] = (resetEpochs[prop] ?: 0) + 1
 }
@@ -89,7 +91,6 @@ fun Option(prop: Property<*>) {
         }
         return
     }
-    // Fallback: render value as text for properties with no visualizer set
     val value = prop.get()
     Text(
         when (value) {
@@ -148,8 +149,8 @@ fun OptionActionButton(
 }
 
 /**
- * Right-click context menu for a single option, anchored at [offset] (pixels, relative to the
- * anchoring layout). Currently offers "Reset to default".
+ * Right-click context menu for a single option anchored at [offset] in pixels relative to the anchoring
+ * layout
  */
 @Composable
 fun OptionContextMenu(
@@ -173,8 +174,8 @@ fun OptionContextMenu(
         properties = PopupProperties(focusable = true),
     ) {
         Column(
-            // intrinsic width keeps the menu content-sized while letting rows fillMaxWidth, so hover
-            // backgrounds span the whole menu instead of each row's own text width
+            // intrinsic width keeps the menu content-sized while rows fillMaxWidth so hover backgrounds
+            // span the whole menu instead of each row's own text width
             modifier = Modifier
                 .width(IntrinsicSize.Max)
                 .background(theme.popupBackground, theme.popupShape)

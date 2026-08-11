@@ -31,14 +31,14 @@ import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 
 /**
- * Runs the given [block] asynchronously.
+ * Runs the given [block] asynchronously
  *
  * @see Multithreading.submit
  */
 fun runAsync(block: () -> Unit) = Multithreading.submit(block)
 
 /**
- * Runs the given [block] asynchronously after the given [delay].
+ * Runs the given [block] asynchronously after the given [delay]
  *
  * @see Multithreading.schedule
  */

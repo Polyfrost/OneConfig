@@ -43,8 +43,9 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
- * A slider with a thumb at each end of a highlighted span. Dragging grabs whichever thumb is nearer to the
- * press, and the two ends are clamped against each other so start never passes end.
+ * A slider with a thumb at each end of a highlighted span
+ *
+ * Dragging grabs whichever thumb is nearer the press and the ends are clamped so start never passes end
  */
 @Composable
 fun RangeSliderOption(data: RangeSliderOptionData) {
@@ -54,7 +55,7 @@ fun RangeSliderOption(data: RangeSliderOptionData) {
     var start by remember(data.prop) { mutableStateOf(initial?.first ?: data.min) }
     var end by remember(data.prop) { mutableStateOf(initial?.second ?: data.max) }
     var trackWidthPx by remember { mutableStateOf(0f) }
-    // Which thumb the in-flight drag grabbed, so it keeps following the pointer past the other thumb.
+    // which thumb the in-flight drag grabbed so it keeps following the pointer past the other thumb
     var draggingEnd by remember { mutableStateOf(false) }
 
     val thumbWidth = 13.dp

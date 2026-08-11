@@ -40,13 +40,11 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Reproduces issue #706 end-to-end through the real file-load path: a config converted from another
- * mod stores a bare int where a {@link PolyColor} is expected (exactly the {@code -65436} form OneConfig
- * itself writes for a color, but without the wrapping object). Loading it used to crash the whole config.
+ * Regression test for issue #706 where a bare int such as {@code -65436} stored where a
+ * {@link PolyColor} is expected used to crash the whole config load
  */
 public class CorruptOptionLoadTest {
 
-    /** Holder whose "col" field is a complex PolyColor and "flag" is a plain boolean. */
     static class Holder {
         public PolyColor col = PolyColor.Companion.rgba(255, 0, 100, 255);
         public boolean flag = false;
@@ -72,7 +70,7 @@ public class CorruptOptionLoadTest {
 
         Holder h = new Holder();
         Tree code = codeTree(h);
-        // no failure collection active -> the incompatible value propagates and aborts the load, as before the fix.
+        // with no failure collection active the incompatible value propagates and aborts the load
         assertThrows(RuntimeException.class, () -> backend(dir).register(code));
     }
 
@@ -90,11 +88,9 @@ public class CorruptOptionLoadTest {
         assertDoesNotThrow(() -> backend(dir).register(code));
         List<String> failures = Tree.endFailureCollection();
 
-        // only the incompatible color option was recorded and reset...
         assertEquals(List.of("col"), failures);
         assertSame(defaultColor, h.col, "color must be left untouched at its default");
         assertEquals(0xFFFF0064, h.col.getRawArgb());
-        // ...while every other option loaded normally.
         assertTrue(h.flag, "the valid sibling option must still load from disk");
     }
 }

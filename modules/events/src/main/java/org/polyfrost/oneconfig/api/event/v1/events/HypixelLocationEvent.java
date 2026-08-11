@@ -29,7 +29,7 @@ package org.polyfrost.oneconfig.api.event.v1.events;
 import org.polyfrost.oneconfig.api.hypixel.v1.HypixelUtils;
 
 /**
- * Event that is fired when the player's location is changed.
+ * Event that is fired when the player's location is changed
  */
 public class HypixelLocationEvent implements Event {
     public static final HypixelLocationEvent INSTANCE = new HypixelLocationEvent();
@@ -40,8 +40,8 @@ public class HypixelLocationEvent implements Event {
     }
 
     /**
-     * Get the location of the player when the event was fired.
-     * @return the same as {@link HypixelUtils#getLocation()}.
+     * Get the location of the player when the event was fired
+     * @return the same as {@link HypixelUtils#getLocation()}
      */
     public HypixelUtils.Location getLocation() {
         return HypixelUtils.getLocation();

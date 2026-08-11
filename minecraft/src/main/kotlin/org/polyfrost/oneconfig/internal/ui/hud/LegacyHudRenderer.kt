@@ -9,14 +9,16 @@ private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/HU
 
 object LegacyHudRenderer {
     /**
-     * Reused across frames to hold the HUDs drawn this frame. HUD update/render callbacks may add to or
-     * remove from [HudManager.activeInstances], so that list is never iterated while they run.
+     * Reused across frames to hold the HUDs drawn this frame because HUD callbacks may add to or remove
+     * from [HudManager.activeInstances] which must never be iterated while they run
      */
     private val frame = ArrayList<LegacyHud>()
 
     /**
-     * HUDs that have already had a failure logged. A HUD that throws usually throws every frame, so only the
-     * first failure is reported to avoid flooding the log at framerate. Weak so a removed HUD can be collected.
+     * HUDs that already logged a failure since a throwing HUD usually throws every frame and would flood
+     * the log at framerate
+     *
+     * Weak so a removed HUD can be collected
      */
     private val reportedFailures =
         java.util.Collections.newSetFromMap(java.util.WeakHashMap<LegacyHud, Boolean>())

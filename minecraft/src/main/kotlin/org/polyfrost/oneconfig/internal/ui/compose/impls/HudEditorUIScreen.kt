@@ -58,8 +58,7 @@ class HudEditorUIScreen : ComposeScreen() {
 
     override fun removed() {
         if (!returningToOneConfig) {
-            // Off by default: closing the editor leaves the last config page as the route to come back to,
-            // so the toggle key opens the OneConfig menu rather than the editor again.
+            // off by default so closing the editor leaves the last config page as the route to come back to
             if (OneConfigConfig.restoreHudEditor) ShellState.lastRoute = HudEditorRoute
             ShellState.lastClosedAt = System.currentTimeMillis()
         }
@@ -97,8 +96,7 @@ class HudEditorUIScreen : ComposeScreen() {
 
     //~ if >= 26.1 'render' -> 'extractRenderState'
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
-        // A screen drawn over this one may render it as its parent; don't act on that pass (it would close
-        // the screen on top of us, among other things).
+        // a screen drawn over this one may render it as its parent so skip that pass or it closes the screen above us
         if (Platform.screen().current<Any?>() !== this) return
         if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= closeAnimationMs) {
             Platform.screen().close()

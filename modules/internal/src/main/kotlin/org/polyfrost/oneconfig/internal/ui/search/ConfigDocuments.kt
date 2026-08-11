@@ -25,9 +25,7 @@ import org.polyfrost.oneconfig.internal.ui.keybind.isKeybindProperty
 
 private const val ID_SEPARATOR = "::"
 
-/**
- * Add all properties of a mod, as well as the mod itself.
- */
+/** Adds all properties of a mod as well as the mod itself */
 object ConfigDocumentSource : SearchDocumentSource {
     override fun documents(): List<SearchDocument<*>> {
         val documents = ArrayList<SearchDocument<*>>()
@@ -39,7 +37,7 @@ object ConfigDocumentSource : SearchDocumentSource {
 
             val tree = (config as? TreeConfigData)?.tree ?: return@forEach
             val scopes = mutableSetOf<SearchScope>(SearchScope.Config(config.id))
-            if (searchable) scopes += SearchScope.Options // Global search
+            if (searchable) scopes += SearchScope.Options // global search
 
             documents += treeDocuments(
                 tree = tree,
@@ -53,9 +51,7 @@ object ConfigDocumentSource : SearchDocumentSource {
     }
 }
 
-/**
- * Keybinds from outside OneConfig, like MC keybinds
- */
+/** Keybinds from outside OneConfig such as MC keybinds */
 object KeybindDocumentSource : SearchDocumentSource {
     override fun documents(): List<SearchDocument<Property<*>>> {
 
@@ -182,9 +178,7 @@ object HudDocumentSource : SearchDocumentSource {
     }
 }
 
-/**
- * The HUDs shown as mod cards on the config screen
- */
+/** The HUDs shown as mod cards on the config screen */
 object HudModCardDocumentSource : SearchDocumentSource {
     override val dependencies = setOf<SearchDocumentSource>(ConfigDocumentSource)
 

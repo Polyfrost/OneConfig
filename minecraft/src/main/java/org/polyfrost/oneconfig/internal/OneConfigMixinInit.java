@@ -125,11 +125,9 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("compat.skyhanni.Mixin_SkyHanniRenderData");
 
         mixins.add("compat.firmament.Mixin_FirmamentHudMeta");
-        // Firmament has no stable release for 26.2, so there is nothing to be compatible with there yet.
+        // Firmament has no stable release for 26.2 yet
         //? >= 1.21.8 && < 26.2
         //mixins.add("compat.firmament.Mixin_FirmamentContentCapture");
-
-        // mixins.add("compat.rconfig.Mixin_Configurations");
 
         //? modmenu_compat
         mixins.add("compat.Mixin_ModMenu");
@@ -142,7 +140,6 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? }
 
         mixins.add("events.Mixin_ModernWindowFocusEvent");
-        // mixins.add("command.Mixin_ModernArgumentTypeEntryAccessor");
 
         mixins.add("skia.Mixin_InitSkia");
         mixins.add("skia.Mixin_SkiaFrame");

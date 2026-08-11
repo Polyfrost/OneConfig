@@ -45,10 +45,12 @@ enum class NotificationType(val accent: PolyColor, val iconName: String) {
 }
 
 /**
- * A labeled button rendered underneath a notification's body. Clicking it runs [onClick].
+ * A labeled button rendered underneath a notification body
+ *
+ * Clicking it runs [onClick]
  *
  * @param label    the text shown on the button
- * @param primary  whether this is the emphasised (accent-coloured) action, as opposed to a subtle one
+ * @param primary  whether this is the emphasised accent-coloured action as opposed to a subtle one
  * @param onClick  invoked when the button is pressed
  */
 class NotificationAction @JvmOverloads constructor(
@@ -58,17 +60,20 @@ class NotificationAction @JvmOverloads constructor(
 )
 
 /**
- * A single notification. Prefer creating these through [Notifications] rather than directly.
+ * A single notification
+ *
+ * Prefer creating these through [Notifications] rather than directly
  *
  * @param title       the bold heading
- * @param message     the supporting body text, wrapped to the notification width
- * @param type        the visual [NotificationType]; defaults to [NotificationType.INFO]
- * @param icon        an optional icon drawn to the left of the text, null for none
- * @param duration    how long, in milliseconds, the toast stays on screen. Values `<= 0` keep it on
- *                    screen until it is dismissed manually or, when a [progress] bar is present, until
- *                    that bar reaches `1`.
- * @param progress    an optional supplier returning `0..1`; when present a progress bar is drawn and
- *                    the toast auto-dismisses once it reports `>= 1`.
+ * @param message     the supporting body text wrapped to the notification width
+ * @param type        the visual [NotificationType] which defaults to [NotificationType.INFO]
+ * @param icon        an optional icon drawn to the left of the text and null for none
+ * @param duration    how long in milliseconds the toast stays on screen
+ *                    Values `<= 0` keep it on screen until it is dismissed manually
+ *                    or when a [progress] bar is present until that bar reaches `1`
+ * @param progress    an optional supplier returning `0..1`
+ *                    When present a progress bar is drawn
+ *                    and the toast auto-dismisses once it reports `>= 1`
  * @param actions     optional action buttons drawn below the body
  * @param onClick     optional callback run when the body of the notification is clicked
  */
@@ -91,7 +96,7 @@ class Notification @JvmOverloads constructor(
     internal var dismissRequested by mutableStateOf(false)
 
     /**
-     * Whether this notification has been seen in the notifications center.
+     * Whether this notification has been seen in the notifications center
      */
     var read by mutableStateOf(false)
         internal set

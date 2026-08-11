@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Allows for easy multithreading.
+ * Allows for easy multithreading
  * <p>
  * Modified from Seraph by Scherso under LGPL-2.1
  * <a href="https://github.com/Scherso/Seraph/blob/master/LICENSE">https://github.com/Scherso/Seraph/blob/master/LICENSE</a>
@@ -53,9 +53,9 @@ public final class Multithreading {
     }
 
     /**
-     * Runs the provided runnables asynchronously.
+     * Runs the provided runnables asynchronously
      *
-     * @param runnables The runnables to run.
+     * @param runnables The runnables to run
      * @see Multithreading#submit(Runnable)
      */
     public static void submit(Runnable... runnables) {
@@ -65,10 +65,10 @@ public final class Multithreading {
     }
 
     /**
-     * Submits the Runnable to the executor, making it run asynchronously.
+     * Submits the Runnable to the executor so it runs asynchronously
      *
-     * @param runnable The runnable to run.
-     * @return The future representing the submitted runnable.
+     * @param runnable The runnable to run
+     * @return The future representing the submitted runnable
      * @see ExecutorService#submit(Runnable)
      */
     public static Future<?> submit(Runnable runnable) {
@@ -76,11 +76,11 @@ public final class Multithreading {
     }
 
     /**
-     * Schedules the runnable to run asynchronously after the specified delay.
+     * Schedules the runnable to run asynchronously after the specified delay
      *
-     * @param runnable The runnable to run.
-     * @param delay    The delay before the runnable is run.
-     * @param timeUnit The {@link TimeUnit} of the delay.
+     * @param runnable The runnable to run
+     * @param delay    The delay before the runnable is run
+     * @param timeUnit The {@link TimeUnit} of the delay
      * @see Multithreading#submitScheduled(Runnable, long, TimeUnit)
      */
     public static void schedule(Runnable runnable, long delay, TimeUnit timeUnit) {
@@ -88,12 +88,12 @@ public final class Multithreading {
     }
 
     /**
-     * Submits the Runnable to the executor after a delay, making it run asynchronously.
+     * Submits the Runnable to the executor after a delay so it runs asynchronously
      *
-     * @param runnable The runnable to run.
-     * @param delay    The delay before the runnable is run.
-     * @param timeUnit The {@link TimeUnit} of the delay.
-     * @return The future representing the submitted runnable.
+     * @param runnable The runnable to run
+     * @param delay    The delay before the runnable is run
+     * @param timeUnit The {@link TimeUnit} of the delay
+     * @return The future representing the submitted runnable
      * @see ScheduledExecutorService#schedule(Runnable, long, TimeUnit)
      */
     public static ScheduledFuture<?> submitScheduled(Runnable runnable, long delay, TimeUnit timeUnit) {

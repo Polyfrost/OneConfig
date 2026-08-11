@@ -81,8 +81,6 @@ private const val ENTER_NANOS = 220_000_000L
 private const val EXIT_NANOS = 220_000_000L
 private const val PROGRESS_LINGER_NANOS = 600_000_000L
 
-// Colors come from NotificationTheme, which tracks the active OneConfig GUI theme.
-
 internal object ToastViewport {
     var width by mutableStateOf(0f)
     var height by mutableStateOf(0f)
@@ -112,7 +110,6 @@ private fun Toast(notification: Notification) {
     var timeFraction by remember { mutableStateOf(1f) }
 
     LaunchedEffect(notification.id) {
-        // Enter
         val enterStart = withFrameNanos { it }
         while (true) {
             val now = withFrameNanos { it }
@@ -122,7 +119,6 @@ private fun Toast(notification: Notification) {
         }
         appear = 1f
 
-        // Wait
         when {
             notification.progress != null -> {
                 while ((notification.progressOrNull() ?: 0f) < 1f && !notification.dismissRequested) withFrameNanos { }
@@ -147,7 +143,6 @@ private fun Toast(notification: Notification) {
             }
         }
 
-        // Exit
         val exitStart = withFrameNanos { it }
         while (true) {
             val now = withFrameNanos { it }

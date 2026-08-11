@@ -10,9 +10,10 @@ import java.util.WeakHashMap
 
 object MinecraftKeybindRegistrar {
     /**
-     * Set on a keybind property to keep it out of Minecraft's Controls menu. Use it when the property is a view
-     * onto a [net.minecraft.client.KeyMapping] the owning mod already registered — mirroring it would splice in a
-     * duplicate mapping alongside the real one.
+     * Set on a keybind property to keep it out of Minecraft's Controls menu
+     *
+     * Use it when the property is a view onto a [net.minecraft.client.KeyMapping] the owning mod already
+     * registered since mirroring it would splice in a duplicate mapping
      */
     const val NO_MIRROR_METADATA = "oc_no_mc_mirror"
 

@@ -64,8 +64,8 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
         data.optionLabels ?: data.options?.toList() ?: emptyList()
     }
 
-    // Checkable (multi-select): property = Array<Boolean> indexed by option
-    // Not checkable (single-select): property = Int (selected index, -1 = none)
+    // checkable means the property is an Array<Boolean> indexed by option
+    // otherwise it is an Int holding the selected index where -1 is none
     var selectedFlags by remember(data.prop) {
         if (data.checkable) {
             val v = data.prop.get()

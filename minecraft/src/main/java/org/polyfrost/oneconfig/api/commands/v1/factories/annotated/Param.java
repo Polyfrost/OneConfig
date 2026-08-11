@@ -32,16 +32,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a parameter of a command executor method as a NAMED command parameter.
+ * Marks a parameter of a command executor method as a NAMED command parameter
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface Param {
 
     /**
-     * Defines an override for the name this parameter.
+     * Overrides the name of this parameter
      * <p>
-     * By default, the name of the parameter is used.
+     * Defaults to the parameter name
      */
     String value() default "";
 

@@ -41,9 +41,7 @@ private fun ownerVisible(ownerId: String, owner: ConfigData?): Boolean {
         (owner == null || ConfigRegistry.shouldShowModCardId(owner.id))
 }
 
-/**
- * Cache so the search corpus can keep using the same mod cards
- */
+/** Cache so the search corpus can keep using the same mod cards */
 private val cardCache = HashMap<String, HudModCardData>()
 
 internal fun hudModCardConfigs(): List<ConfigData> = synchronized(cardCache) {

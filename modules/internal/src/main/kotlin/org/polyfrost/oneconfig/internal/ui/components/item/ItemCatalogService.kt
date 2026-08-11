@@ -3,19 +3,19 @@ package org.polyfrost.oneconfig.internal.ui.components.item
 import java.util.Locale
 import java.util.ServiceLoader
 
-/** A stable item registry ID and the localized name shown to the user. */
+/** A stable item registry ID and the localized name shown to the user */
 data class ItemDescriptor(val id: String, val displayName: String)
 
-/** A small ARGB image supplied by the Minecraft integration for an item preview. */
+/** A small ARGB image supplied by the Minecraft integration for an item preview */
 data class ItemIconData(val width: Int, val height: Int, val argb: IntArray)
 
-/** Supplies item registry data without exposing Minecraft classes to the UI module. */
+/** Supplies item registry data without exposing Minecraft classes to the UI module */
 interface ItemCatalogService {
     fun items(): List<ItemDescriptor>
 
     fun icon(id: String): ItemIconData?
 
-    /** Resolves an icon that may require rendering on the Minecraft render thread. */
+    /** Resolves an icon that may require rendering on the Minecraft render thread */
     fun loadIcon(id: String, onLoaded: (ItemIconData?) -> Unit) {
         onLoaded(icon(id))
     }
@@ -43,7 +43,7 @@ object ItemCatalog {
         service?.loadIcon(id, onLoaded) ?: onLoaded(null)
     }
 
-    /** Installs an in-memory catalog for desktop previews and tests. */
+    /** Installs an in-memory catalog for desktop previews and tests */
     fun installOverride(service: ItemCatalogService?) {
         overrideService = service
     }

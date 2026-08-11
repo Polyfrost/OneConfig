@@ -8,8 +8,9 @@ public final class PlayerHeadTextureAccess {
     }
 
     /**
-     * @return the texture's live image, owned by the render thread and freed when the texture is next uploaded, so it
-     * must be consumed on the client thread before the calling task returns
+     * @return the texture's live image owned by the render thread and freed on the next upload
+     * <p>
+     * It must be consumed on the client thread before the calling task returns
      */
     public static NativeImage readPixels(AbstractTexture texture) {
         if (texture == null) {

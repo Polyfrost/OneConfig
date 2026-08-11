@@ -33,17 +33,19 @@ import java.util.jar.JarOutputStream
 import java.util.zip.ZipEntry
 
 /**
- * Bundles all dependencies from the given [configuration] into a single, dedicated jar and returns a file collection
- * containing that jar.
- * Primarily for use in dependency declarations, so fat jars of certain dependencies (with potentially relocated
- * transitive dependencies) can be created and then depended upon as usual. Compared to simply relocating in a later
- * shadow task, this has the advantage that IDEA will see the relocated dependency rather than the original, which e.g.
- * allows one to use two different versions of the same dependency at dev time.
+ * Bundles all dependencies from the given [configuration] into a single dedicated jar and returns a file collection
+ * containing that jar
+ * Primarily for use in dependency declarations so fat jars of certain dependencies with potentially relocated
+ * transitive dependencies can be created and then depended upon as usual
+ * Compared to simply relocating in a later shadow task this has the advantage that IDEA will see the relocated
+ * dependency rather than the original which for example allows one to use two different versions of the same
+ * dependency at dev time
  *
- * If [jijName] is provided, the fat jar will additionally be wrapped in an outer jar, such that the classes are not
- * actually visible if the file collection is put onto the classpath. This may be useful when the jar is never meant to
- * directly be on the classpath but rather only in a dedicated class loader or JVM.
- * The given [jijName] determines the path+name of the inner jar within the outer jar.
+ * If [jijName] is provided the fat jar will additionally be wrapped in an outer jar so that the classes are not
+ * actually visible if the file collection is put onto the classpath
+ * This may be useful when the jar is never meant to directly be on the classpath but rather only in a dedicated
+ * class loader or JVM
+ * The given [jijName] determines the path+name of the inner jar within the outer jar
  */
 fun Project.prebundle(configuration: Configuration, jijName: String? = null, configure: PatternFilterable.() -> Unit = {}): FileCollection {
     val output = projectDir
@@ -67,7 +69,7 @@ private fun Project.bundle(configuration: Configuration, filter: PatternSet, jij
     val hash = configuration.computeHash().apply {
         update(filter.hashCode().toBigInteger().toByteArray())
         update(jijName?.toByteArray() ?: byteArrayOf())
-        update(byteArrayOf(0, 0, 0, 2)) // code version, incremented with each semantic change
+        update(byteArrayOf(0, 0, 0, 2)) // code version incremented with each semantic change
     }.digest()
     val hashFile = output.resolveSibling(output.name + ".md5")
     if (hashFile.exists() && hashFile.readBytes().contentEquals(hash) && output.exists()) {
@@ -109,7 +111,7 @@ private fun Project.bundle(configuration: Configuration, filter: PatternSet, jij
 private fun Configuration.computeHash(): MessageDigest = files
     .sortedBy { it.name }
     .fold(MessageDigest.getInstance("MD5")) { digest, file ->
-        // if the file path already contains a hash, that's good enough, otherwise we need to read its contents
+        // if the file path already contains a hash that is good enough otherwise we need to read its contents
         digest.update(file.findHashInPath()?.toByteArray() ?: file.readBytes())
         digest
     }

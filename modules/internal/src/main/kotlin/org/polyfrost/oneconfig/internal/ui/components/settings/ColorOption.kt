@@ -365,7 +365,6 @@ internal fun ColorPickerPopup(
                     }
                 }
         ) {
-            // selector circle
             val selectorX = (saturation * sbPaneSize.width).coerceIn(0f, sbPaneSize.width)
             val selectorY = ((1f - brightness) * sbPaneSize.height).coerceIn(0f, sbPaneSize.height)
             Box(
@@ -382,7 +381,6 @@ internal fun ColorPickerPopup(
             )
         }
 
-        // hue bar
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -437,7 +435,6 @@ internal fun ColorPickerPopup(
             )
         }
 
-        // alpha bar
         if (model.alphaEnabled) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -471,7 +468,6 @@ internal fun ColorPickerPopup(
                             listOf(opaqueColor.copy(alpha = 0f), opaqueColor)
                         )
                         onDrawBehind {
-                            // checkerboard background
                             val cellSize = 6f
                             for (row in 0..(size.height / cellSize).toInt()) {
                                 for (col in 0..(size.width / cellSize).toInt()) {
@@ -528,9 +524,8 @@ internal fun ColorPickerPopup(
             }
         }
 
-        // Chroma is only offered when the backing property can actually persist it (a PolyColor).
-        // For Int / java.awt.Color properties there is nowhere to store the chroma flag, so showing
-        // the toggle would be misleading - it would "work" until the screen closed, then freeze.
+        // only PolyColor properties can persist the chroma flag so Int and java.awt.Color ones would
+        // appear to work until the screen closed
         if (chromaCapable) {
             Row(
                 modifier = Modifier.fillMaxWidth(),

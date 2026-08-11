@@ -12,22 +12,23 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 
 /**
- * The first visible item of a scrollable page, and how far it is scrolled past.
+ * The first visible item of a scrollable page and how far it is scrolled past
  *
- * [token] records what the page was showing when the anchor was taken (like a search query).
- * Only remount if the token is the same.
+ * [token] records what the page was showing when the anchor was taken such as a search query and the
+ * anchor only remounts when the token matches
  */
 data class ScrollAnchor(val index: Int, val offset: Int, val token: Any? = null)
 
 /**
- * A [LazyListState] that outlives the Compose scene.
+ * A [LazyListState] that outlives the Compose scene
  *
- * Displaying another screen over the OneConfig UI disposes the scene and rebuilds it on the way back, which
- * loses everything held in composition. Pages that want to come back where they were keep their position in
- * [ShellState.scrollAnchors] under a stable [key] — a mod id, a page name — instead.
+ * Displaying another screen over the OneConfig UI disposes the scene and rebuilds it on the way back which
+ * loses everything held in composition
  *
- * [resetToken] identifies the token being stored, for things like search queries, if this changes it will scroll
- * to the top of the page.
+ * Pages that want to come back where they were keep their position in [ShellState.scrollAnchors] under a
+ * stable [key] such as a mod id or page name
+ *
+ * Changing [resetToken] scrolls back to the top of the page
  */
 @Composable
 fun rememberRestorableLazyListState(
@@ -38,7 +39,7 @@ fun rememberRestorableLazyListState(
     val anchor = remember(key) { ShellState.scrollAnchors[key]?.takeIf { it.token == resetToken } }
     val state = rememberLazyListState(anchor?.index ?: 0, anchor?.offset ?: 0)
     ScrollToTopOnChange(state, contentToken, initial = resetToken)
-    // the effect outlives token changes, so read the latest one
+    // the effect outlives token changes so read the latest one
     val currentToken by rememberUpdatedState(resetToken)
     LaunchedEffect(state, key) {
         snapshotFlow { ScrollAnchor(state.firstVisibleItemIndex, state.firstVisibleItemScrollOffset) }
@@ -47,9 +48,7 @@ fun rememberRestorableLazyListState(
     return state
 }
 
-/**
- * Jumps [state] back to the top whenever [key] changes.
- */
+/** Jumps [state] back to the top whenever [key] changes */
 @Composable
 fun ScrollToTopOnChange(state: LazyListState, key: Any?, initial: Any? = key) {
     val previous = remember(state) { LastKey(initial) }
@@ -61,7 +60,7 @@ fun ScrollToTopOnChange(state: LazyListState, key: Any?, initial: Any? = key) {
 
 private class LastKey(var value: Any?)
 
-/** [rememberRestorableLazyListState] for a grid. */
+/** [rememberRestorableLazyListState] for a grid */
 @Composable
 fun rememberRestorableLazyGridState(key: String): LazyGridState {
     val anchor = remember(key) { ShellState.scrollAnchors[key] }

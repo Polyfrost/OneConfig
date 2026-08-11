@@ -66,7 +66,7 @@ val ItemIconShape = RoundedCornerShape(5.dp)
 
 val ItemTileSize = 44.dp
 
-/** The catalog, deduplicated and sorted by display name so grid positions never jump. */
+/** The catalog deduplicated and sorted by display name so grid positions never jump */
 @Composable
 fun rememberItemCatalog(key: Any? = Unit): List<ItemDescriptor> = remember(key) {
     ItemCatalog.items()
@@ -77,14 +77,17 @@ fun rememberItemCatalog(key: Any? = Unit): List<ItemDescriptor> = remember(key) 
         }
 }
 
-/** [rememberItemCatalog] indexed by registry ID, for resolving stored IDs to descriptors. */
+/** [rememberItemCatalog] indexed by registry ID for resolving stored IDs to descriptors */
 @Composable
 fun rememberItemCatalogById(catalog: List<ItemDescriptor>): Map<String, ItemDescriptor> =
     remember(catalog) { catalog.associateBy(ItemDescriptor::id) }
 
 /**
- * The icon for [id], showing [placeholder] until the catalog resolves it (icons may need the
- * Minecraft render thread) or if the item is unknown. [framed] adds the theme chip background.
+ * The icon for [id] showing [placeholder] until the catalog resolves it or if the item is unknown
+ *
+ * Resolving may need the Minecraft render thread
+ *
+ * [framed] adds the theme chip background
  */
 @Composable
 fun ItemIcon(
@@ -124,7 +127,7 @@ fun ItemIcon(
     }
 }
 
-/** Display name over registry ID; a `null` [item] is not in the catalog, so [id] becomes the name. */
+/** Display name over registry ID where a `null` [item] is not in the catalog so [id] becomes the name */
 @Composable
 fun ItemLabel(
     id: String,
@@ -155,7 +158,7 @@ fun ItemLabel(
     }
 }
 
-/** A square item cell with selection border, tick badge and tooltip. `null` [onClick] = decorative. */
+/** A square item cell with selection border tick badge and tooltip where a `null` [onClick] is decorative */
 @Composable
 fun ItemTile(
     item: ItemDescriptor,
@@ -204,7 +207,7 @@ fun ItemTile(
     }
 }
 
-/** Wraps [content] in the name/ID tooltip, or renders it bare when [enabled] is false. */
+/** Wraps [content] in the name and ID tooltip or renders it bare when [enabled] is false */
 @Composable
 fun ItemTooltip(
     item: ItemDescriptor,
@@ -235,7 +238,7 @@ fun ItemTooltip(
     )
 }
 
-/** Adaptive grid of [ItemTile]s; [selected] and [enabled] are queried per item, so selection rules stay with the caller. */
+/** Adaptive grid of [ItemTile]s where [selected] and [enabled] are queried per item so selection rules stay with the caller */
 @Composable
 fun ItemGrid(
     items: List<ItemDescriptor>,
@@ -265,7 +268,7 @@ fun ItemGrid(
     }
 }
 
-/** Search box for [ItemGrid]. [autoFocus] is off by default, for embedded (non-popup) use. */
+/** Search box for [ItemGrid] where [autoFocus] is off by default for embedded use */
 @Composable
 fun ItemSearchField(
     value: String,
@@ -325,10 +328,13 @@ fun ItemSearchField(
 }
 
 /**
- * Header, search field and result grid: the whole item selector, for any HUD or screen. The
- * [modifier] supplies the chrome, so it fits a dropdown, a HUD editor panel or a full screen;
- * [selected] and [onToggle] leave the selection with the caller. [maxEntries] of `0` or less is
- * unlimited, `1` is radio-style.
+ * Header search field and result grid making up the whole item selector for any HUD or screen
+ *
+ * The [modifier] supplies the chrome so it fits a dropdown a HUD editor panel or a full screen
+ *
+ * [selected] and [onToggle] leave the selection with the caller
+ *
+ * [maxEntries] of `0` or less is unlimited and `1` is radio-style
  */
 @Composable
 fun ItemPicker(
@@ -408,7 +414,7 @@ fun ItemPicker(
     }
 }
 
-/** Centered message for empty/unavailable states. */
+/** Centered message for empty and unavailable states */
 @Composable
 fun ItemMessage(key: String, modifier: Modifier = Modifier, height: Dp = 120.dp) {
     Box(modifier = modifier.fillMaxWidth().height(height), contentAlignment = Alignment.Center) {
@@ -420,7 +426,7 @@ fun ItemMessage(key: String, modifier: Modifier = Modifier, height: Dp = 120.dp)
     }
 }
 
-/** Default translation keys; every composable taking one accepts an override. */
+/** Default translation keys where every composable taking one accepts an override */
 object ItemStrings {
     const val Title = "oneconfig.itemlist.title"
     const val Search = "oneconfig.itemlist.search"
@@ -429,7 +435,7 @@ object ItemStrings {
     const val CatalogUnavailable = "oneconfig.itemlist.catalog_unavailable"
 }
 
-/** Whether [id] can be picked; already-selected items stay clickable so they can be deselected. */
+/** Whether [id] can be picked where already-selected items stay clickable so they can be deselected */
 fun canSelect(selected: List<String>, id: String, maxEntries: Int): Boolean =
     id in selected || maxEntries <= 0 || maxEntries == 1 || selected.size < maxEntries
 

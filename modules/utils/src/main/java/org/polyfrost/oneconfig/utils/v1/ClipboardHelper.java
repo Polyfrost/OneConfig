@@ -47,7 +47,11 @@ import java.nio.file.Path;
 import java.util.Locale;
 
 /**
- * Cross-platform system clipboard access (GLFW/AWT on Windows/Linux, NSPasteboard on macOS).
+ * Cross-platform system clipboard access
+ * <p>
+ * Uses GLFW/AWT on Windows/Linux
+ * <p>
+ * Uses NSPasteboard on macOS
  */
 public final class ClipboardHelper {
 

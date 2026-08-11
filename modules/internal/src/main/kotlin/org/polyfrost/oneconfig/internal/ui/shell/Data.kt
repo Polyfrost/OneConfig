@@ -32,7 +32,7 @@ object ShellState {
 
     var playerName by mutableStateOf("Player")
 
-    /** PNG bytes for the local player's head avatar, or null until loaded. */
+    /** PNG bytes for the local player's head avatar or null until loaded */
     var playerHeadPng by mutableStateOf<ByteArray?>(null)
 
     var versionLabel by mutableStateOf("")
@@ -43,10 +43,7 @@ object ShellState {
 
     var focusSearchField by mutableStateOf(false)
 
-    /**
-     * Whether the search field currently holds focus. Mirrored here so a discarded composition
-     * can recover the state.
-     */
+    /** Whether the search field holds focus mirrored here so a discarded composition can recover it */
     var searchFieldFocused: Boolean = false
 
     var showSearchField by mutableStateOf(false)
@@ -57,37 +54,38 @@ object ShellState {
 
     var flipTopOptionOrder by mutableStateOf(false)
 
-    /** Content-panel background opacity (0-100), mirrored from config so slider changes apply live. */
+    /** Content-panel background opacity from 0 to 100 mirrored from config so slider changes apply live */
     var pageOpacity by mutableStateOf(88f)
 
-    /** Sidebar background opacity (0-100), mirrored from config so slider changes apply live. */
+    /** Sidebar background opacity from 0 to 100 mirrored from config so slider changes apply live */
     var sidebarOpacity by mutableStateOf(80f)
 
-    /** Accent glow opacity (0-100) for the two blurred circles behind the shell, mirrored from config. */
+    /** Accent glow opacity from 0 to 100 for the two blurred circles behind the shell */
     var glowOpacity by mutableStateOf(25f)
 
-    /** Last top-level route navigated to, used by the "Previous page" / "Smart reset" opening behaviors. */
+    /** Last top-level route navigated to used by the "Previous page" and "Smart reset" opening behaviors */
     var lastRoute: Any? = null
 
-    /** Where each scrollable page was left, by page key. See [rememberRestorableLazyListState]. */
+    /** Where each scrollable page was left keyed by page key see [rememberRestorableLazyListState] */
     val scrollAnchors = mutableMapOf<String, ScrollAnchor>()
 
-    /** Last selected settings category (tab) per page key, restored when a page is reopened or navigated back to. */
+    /** Last selected settings tab per page key restored when a page is reopened or navigated back to */
     val selectedCategories = mutableStateMapOf<String, String>()
 
-    /** Wall-clock time (ms) the menu was last closed, used by the "Smart reset" opening behavior. */
+    /** Wall-clock time in ms the menu was last closed used by the "Smart reset" opening behavior */
     var lastClosedAt: Long = 0L
 
-    /** When true, the initial page transition on open is animated (driven by "Show opening page animation"). */
+    /** Whether the initial page transition on open is animated */
     var animateOpeningPage: Boolean = false
 
-    /** Consumed once per open so the first page transition can be treated specially. */
+    /** Consumed once per open so the first page transition can be treated specially */
     var initialTransitionConsumed: Boolean = false
 
     /**
-     * True while the menu is composed but has not yet navigated to the page it is opening on. The nav host has
-     * to be composed before it can be navigated, so it briefly holds the mod grid; this keeps that placeholder
-     * from being drawn.
+     * True while the menu is composed but has not yet navigated to the page it is opening on
+     *
+     * The nav host must be composed before it can be navigated so it briefly holds the mod grid and this
+     * keeps that placeholder from being drawn
      */
     var awaitingInitialRoute by mutableStateOf(false)
 
@@ -105,15 +103,17 @@ object LocalNavController {
             }
         }
 
-    /** True once a nav host is attached, i.e. the OC UI is open and navigable. */
+    /** True once a nav host is attached meaning the OC UI is open and navigable */
     val isReady: Boolean get() = _current?.currentDestination != null
 
     val wrapper = NavControllerWrapper
 
     object NavControllerWrapper {
         /**
-         * One step of history. [categoryKey] / [category] record the settings tab selected on the page at
-         * that point, so switching tabs inside a page is undoable without touching the nav host.
+         * One step of history
+         *
+         * [categoryKey] and [category] record the settings tab selected on the page at that point so
+         * switching tabs inside a page is undoable without touching the nav host
          */
         private data class Entry(
             val route: Any,
@@ -134,7 +134,7 @@ object LocalNavController {
 
         private fun host(): NavHostController? = if (isReady) current else null
 
-        /** [clearSearch] is off when the navigation only restores a page the user was already on. */
+        /** [clearSearch] is off when the navigation only restores a page the user was already on */
         fun navigate(route: Any, clearSearch: Boolean = true) {
             val host = host() ?: return
             forwardStack.clear()
@@ -151,8 +151,9 @@ object LocalNavController {
         }
 
         /**
-         * Records an in-page settings tab switch, so back/forward walks tabs the same way it walks pages.
-         * [pageKey] identifies the page whose tab changed (mod id, "preferences", ...).
+         * Records an in-page settings tab switch so back and forward walk tabs the same way they walk pages
+         *
+         * [pageKey] identifies the page whose tab changed such as a mod id or "preferences"
          */
         fun selectCategory(pageKey: String, category: String) {
             val previous = ShellState.selectedCategories[pageKey]
@@ -165,7 +166,7 @@ object LocalNavController {
 
         fun back() {
             val previous = backStack.lastOrNull() ?: return
-            // Same page, only the tab changed: restore it in place, no screen transition.
+            // same page with only the tab changed so restore it in place with no screen transition
             if (previous.route == currentEntry.route) {
                 backStack.removeLast()
                 forwardStack.addLast(currentEntry)
@@ -200,14 +201,14 @@ object LocalNavController {
             host.navigate(next.route)
         }
 
-        /** A route that names a category (e.g. an external deep link) overrides the remembered tab. */
+        /** A route that names a category such as an external deep link overrides the remembered tab */
         private fun seedRouteCategory(route: Any) {
             val modConfig = route as? ModConfigRoute ?: return
             val category = modConfig.category ?: return
             ShellState.selectedCategories[modConfig.id] = category
         }
 
-        /** Restores the tab an entry was recorded with; a null category means "page default". */
+        /** Restores the tab an entry was recorded with where a null category means the page default */
         private fun applyCategory(entry: Entry) {
             val key = entry.categoryKey ?: return
             if (entry.category == null) ShellState.selectedCategories.remove(key)

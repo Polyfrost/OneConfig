@@ -235,7 +235,6 @@ private fun NotificationBell() {
             .onSizeChanged { bellHeightPx = it.height }
             .onClick(interactionSource) {
                 expanded = !expanded
-                // Clear the unread indicator once the panel closes
                 if (!expanded) NotificationsManager.markAllRead()
             }
             .pointerHoverIcon(PointerIcon.Hand)
@@ -249,7 +248,7 @@ private fun NotificationBell() {
 
         if (expanded) {
             Popup(
-                // Open up and to the right of the bell.
+                // open up and to the right of the bell
                 alignment = Alignment.BottomStart,
                 offset = IntOffset(0, -(bellHeightPx + 12)),
                 onDismissRequest = {

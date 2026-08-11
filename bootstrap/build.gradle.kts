@@ -1,3 +1,2 @@
-// Default node build script for the bootstrap tree. Every node overrides this
-// with `fabric.gradle.kts` / `fabric.obf.gradle.kts` (see settings.gradle.kts),
-// so this file is intentionally empty.
+// intentionally empty as every bootstrap node overrides this with fabric.gradle.kts
+// or fabric.obf.gradle.kts in settings.gradle.kts

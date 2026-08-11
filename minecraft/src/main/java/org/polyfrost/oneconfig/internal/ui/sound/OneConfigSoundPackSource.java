@@ -44,7 +44,7 @@ import java.util.function.Consumer;
 public final class OneConfigSoundPackSource implements RepositorySource {
     public static final OneConfigSoundPackSource INSTANCE = new OneConfigSoundPackSource();
 
-    /** {@code .minecraft/oneconfig/sounds}; laid out as a resource pack ({@code pack.mcmeta} + {@code assets/}). */
+    /** {@code .minecraft/oneconfig/sounds} laid out as a resource pack with {@code pack.mcmeta} and {@code assets/} */
     public static final Path PACK_ROOT = Paths.get("oneconfig", "sounds");
 
     private static final String PACK_ID = "oneconfig_sounds";

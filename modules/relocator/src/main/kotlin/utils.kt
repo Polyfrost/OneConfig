@@ -38,10 +38,10 @@ internal object SourceFileHelper {
 }
 
 /**
- * Rewrites [sourcePackage] to [targetPackage] in both the dotted (imports, references) and the
- * internal/slash form. The slash form appears inside mixin member descriptors
- * (e.g. `method = "<init>(Lio/github/notenoughupdates/moulconfig/Config;)V"`); leaving it untouched
- * makes relocated injections silently fail to bind.
+ * Rewrites [sourcePackage] to [targetPackage] in both the dotted form and the internal/slash form
+ * because the slash form appears inside mixin member descriptors like
+ * `method = "<init>(Lio/github/notenoughupdates/moulconfig/Config;)V"` where leaving it untouched
+ * makes relocated injections silently fail to bind
  */
 internal fun String.relocatePackage(sourcePackage: String, targetPackage: String): String =
     this.replace(sourcePackage, targetPackage)

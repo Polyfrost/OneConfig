@@ -30,8 +30,9 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import kotlin.math.roundToInt
 
 /**
- * The draggable track of a slider, without any surrounding label or value field.
- * Used both by the standalone [SliderOption] and by each row of a slider list.
+ * The draggable track of a slider without any surrounding label or value field
+ *
+ * Used by the standalone [SliderOption] and by each row of a slider list
  */
 @Composable
 fun SliderControl(

@@ -42,17 +42,19 @@ import java.util.jar.JarOutputStream
 import java.util.zip.ZipEntry
 
 /**
- * Relocates packages and single files in an artifact.
+ * Relocates packages and single files in an artifact
  *
- * If a package is relocated, the folder containing it will be relocated as a whole.
- * File renames take priority over package relocations.
+ * If a package is relocated the folder containing it will be relocated as a whole
+ * File renames take priority over package relocations
  *
- * The packages do not have to be part of the artifact, e.g. a completely valid use case would be relocating guava
- * packages in an artifact using guava (for actual use, you'd of course also have to relocate the guava artifact itself,
- * otherwise the classes referred to after the relocation will not exist). This can be used together with [prebundle] to
- * create fat jars which apply at dev time (to e.g. use two different versions of the same library).
+ * The packages do not have to be part of the artifact
+ * For example a completely valid use case would be relocating guava packages in an artifact using guava
+ * For actual use you would of course also have to relocate the guava artifact itself
+ * otherwise the classes referred to after the relocation will not exist
+ * This can be used together with [prebundle] to create fat jars which apply at dev time
+ * for example to use two different versions of the same library
  *
- * To simplify setup, use [registerRelocationAttribute].
+ * To simplify setup use [registerRelocationAttribute]
  */
 abstract class RelocationTransform : TransformAction<RelocationTransform.Parameters> {
     interface Parameters : TransformParameters {
@@ -132,8 +134,8 @@ abstract class RelocationTransform : TransformAction<RelocationTransform.Paramet
 
                 val modifiedBytes = if (entry.name.endsWith(".class")) {
                     val reader = ClassReader(originalBytes)
-                    // Not copying the constant pool cause that leaves references to the old classes which, while any
-                    // lazy tool will never end up resolving them, do get resolved by e.g. proguard.
+                    // Not copying the constant pool cause that leaves references to the old classes
+                    // Any lazy tool will never end up resolving them but proguard does resolve them
                     val writer = ClassWriter(0)
                     reader.accept(ClassRemapper(KotlinMetadataRemappingClassVisitor(remapper, writer), remapper), 0)
                     writer.toByteArray()

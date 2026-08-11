@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 public class Mixin_FixComposeRaceCondition {
     @WrapOperation(remap = false, method = "<init>", at = @At(value = "INVOKE", target = "Landroidx/compose/ui/platform/GlobalSnapshotManager;ensureStarted()V"))
     void impl$redirectEnsureStartup(GlobalSnapshotManager instance, Operation<Void> original) {
-        // This is done to prevent the startup of the GlobalSnapshotManager, which causes
-        // issues when the Compose scene is not built in the AWT thread.
+        // prevents GlobalSnapshotManager startup which breaks when the Compose scene is not
+        // built on the AWT thread
     }
 }

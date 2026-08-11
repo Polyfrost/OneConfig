@@ -11,8 +11,9 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 
 /**
- * User-defined mod card order, persisted one id per line. Mods that were never dragged are
- * unknown here and fall back to alphabetical sorting behind the ones that were.
+ * User-defined mod card order persisted one id per line
+ *
+ * Mods that were never dragged are unknown here and sort alphabetically behind the ones that were
  */
 object ModOrder {
     private val LOGGER = LoggerFactory.getLogger("OneConfig/ModOrder")
@@ -49,9 +50,10 @@ object ModOrder {
     }
 
     /**
-     * Rewrites the order of [visible] (a subset of the mod list, in its new order) while leaving
-     * every other mod where it was. [all] is the full mod list in currently displayed order, and
-     * seeds the stored order the first time a mod that isn't in it yet is dragged.
+     * Rewrites the order of [visible] while leaving every other mod where it was
+     *
+     * [all] is the full mod list in currently displayed order and seeds the stored order the first time an
+     * unknown mod is dragged
      */
     fun reorder(visible: List<String>, all: List<String>) {
         ensureLoaded()

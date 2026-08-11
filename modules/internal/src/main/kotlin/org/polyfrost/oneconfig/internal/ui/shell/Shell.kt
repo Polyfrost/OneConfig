@@ -203,13 +203,11 @@ fun Shell(
                     if (isSearching) {
                         SearchResultsScreen(searchQuery)
                     } else {
-                        // The first transition after the menu opens follows "Show opening page animation";
-                        // all subsequent page transitions follow "Show Page Animations".
+                        // the first transition after the menu opens follows "Show opening page animation"
+                        // and later ones follow "Show Page Animations"
                         fun resolvePageAnimate(targetId: String): Boolean {
-                            // AnimatedContent resolves its transition once as it first composes, before the
-                            // opening navigation can happen, so that first call describes the placeholder start
-                            // destination. Letting it claim the opening transition below would push the real one
-                            // onto the ordinary page-animation setting.
+                            // AnimatedContent resolves its transition on first compose before the opening
+                            // navigation happens so that call describes the placeholder start destination
                             if (ShellState.awaitingInitialRoute) return false
                             if (ShellState.initialTransitionConsumed) return OneConfigConfig.showPageAnimations
                             val openingId = ShellState.openingTransitionTarget

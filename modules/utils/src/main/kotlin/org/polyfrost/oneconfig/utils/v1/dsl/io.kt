@@ -30,7 +30,7 @@ import org.polyfrost.oneconfig.utils.v1.IOUtils
 import java.nio.file.Path
 
 /**
- * Returns the SHA-256 hash of the given [Path].
+ * Returns the SHA-256 hash of the given [Path]
  *
  * @see IOUtils.getFileChecksum
  */

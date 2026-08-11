@@ -10,7 +10,7 @@ import org.polyfrost.oneconfig.internal.ui.api.TreeConfigData
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.localizedGroup
 
-/** One row of a settings list: a single property, or an accordion together with the body it expands to. */
+/** One row of a settings list being a single property or an accordion with the body it expands to */
 internal sealed interface SettingNode {
     data class Leaf(val prop: Property<*>) : SettingNode
     data class Accordion(val tree: Tree, val head: Property<Boolean>?, val body: List<Property<*>>) : SettingNode
@@ -33,8 +33,9 @@ internal sealed interface ConfigListEntry {
 }
 
 /**
- * Splits [tree] into the rows a settings screen renders, grouped by category and subcategory.
- * [include] can filter the elements.
+ * Splits [tree] into the rows a settings screen renders grouped by category and subcategory
+ *
+ * [include] can filter the elements
  */
 internal fun buildCategories(tree: Tree, include: (Node) -> Boolean = { true }): List<CategoryGroup> {
     val grouped = LinkedHashMap<String, LinkedHashMap<String, MutableList<SettingNode>>>()
@@ -142,16 +143,15 @@ internal class SearchRow(
     val category: String,
     val subcategory: String,
     /**
-     * How this row should be headed inside its mod: the category, or the subcategory when the config only has one
-     * category, or null when the config only has 1 category and subcategory.
+     * How this row is headed inside its mod
+     *
+     * The category or the subcategory when the config has one category or null when it has one of each
      */
     val groupLabel: String?,
     val node: SettingNode,
 )
 
-/**
- * Maps every node the corpus can return back to the row which renders it.
- */
+/** Maps every node the corpus can return back to the row which renders it */
 internal fun buildSearchIndex(categories: List<CategoryGroup>, modTitle: String? = null): Map<Node, SearchRow> {
     val owners = IdentityHashMap<Node, SearchRow>()
     val singleCategory = categories.size == 1
@@ -178,9 +178,7 @@ internal fun buildSearchIndex(categories: List<CategoryGroup>, modTitle: String?
     return owners
 }
 
-/**
- * Narrows one row to what its hits matched, handled accordions and hidden options
- */
+/** Narrows one row to what its hits matched handling accordions and hidden options */
 internal fun searchNode(node: SettingNode, documents: List<SearchDocument<*>>): SettingNode? {
     return when (node) {
         is SettingNode.Leaf -> node.takeUnless { it.prop.isHidden() }
@@ -193,14 +191,12 @@ internal fun searchNode(node: SettingNode, documents: List<SearchDocument<*>>): 
     }
 }
 
-/**
- * The node -> row index across every searchable config, for screens which search outside a single config.
- */
+/** The node to row index across every searchable config for screens searching outside a single config */
 internal object GlobalSettingIndex {
     @Volatile
     private var rows: Map<Node, SearchRow> = emptyMap()
 
-    /** The row which renders [document]'s payload, or null. */
+    /** The row which renders [document]'s payload or null */
     fun rowOf(document: SearchDocument<*>): SearchRow? = (document.payload as? Node)?.let(rows::get)
 
     fun rebuild() {

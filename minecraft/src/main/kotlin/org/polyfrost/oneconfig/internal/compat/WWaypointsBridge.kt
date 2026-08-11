@@ -8,9 +8,10 @@ import java.lang.reflect.Field
 import java.lang.reflect.Method
 
 /**
- * Reflective access to wWaypoints. The mod is closed-source and is not a compile-time dependency, so every
- * class, field and method is looked up by name and cached. Any lookup failure leaves [available] false and
- * [WWaypointsCompat] registers nothing.
+ * reflective access to wWaypoints which is closed-source and not a compile-time dependency so every class
+ * field and method is looked up by name and cached
+ *
+ * any lookup failure leaves [available] false and [WWaypointsCompat] registers nothing
  */
 internal object WWaypointsBridge {
 
@@ -52,7 +53,7 @@ internal object WWaypointsBridge {
             .getOrNull()
     }
 
-    /** True when every entry point [WWaypointsCompat] depends on resolved successfully. */
+    /** true when every entry point [WWaypointsCompat] depends on resolved successfully */
     val available: Boolean by lazy {
         cls(CLIENT) != null && cls(CONFIG) != null &&
             method(CLIENT, "getConfig") != null &&
@@ -61,8 +62,6 @@ internal object WWaypointsBridge {
     }
 
     fun config(): Any? = runCatching { method(CLIENT, "getConfig")?.invoke(null) }.getOrNull()
-
-    // region config fields
 
     fun <T> get(name: String): T? {
         val cfg = config() ?: return null
@@ -82,16 +81,12 @@ internal object WWaypointsBridge {
 
     fun float(name: String, fallback: Float = 0f): Float = get<Number>(name)?.toFloat() ?: fallback
 
-    /** The nested `ModConfig$<name>` enum class, or null if it is missing. */
+    /** the nested `ModConfig$<name>` enum class or null if it is missing */
     fun enumClass(name: String): Class<*>? = cls("$CONFIG\$$name")
 
-    /** The constant of nested enum [enumName] named [constant], or null. */
+    /** the constant of nested enum [enumName] named [constant] or null */
     fun enumConstant(enumName: String, constant: String): Any? =
         enumClass(enumName)?.enumConstants?.firstOrNull { (it as Enum<*>).name == constant }
-
-    // endregion
-
-    // region unified type defaults
 
     private fun typeDefaults(which: String): Any? = get<Any>(which)
 
@@ -101,8 +96,8 @@ internal object WWaypointsBridge {
     }.getOrNull()
 
     /**
-     * Writes a field on the single-waypoint defaults and mirrors it into the clump and group defaults, which is
-     * what the mod's own Defaults page does — 0.7.3 always keeps the three in sync under `UNIFIED` mode.
+     * writes a field on the single-waypoint defaults and mirrors it into the clump and group defaults like the
+     * mod's own Defaults page does because 0.7.3 always keeps the three in sync under `UNIFIED` mode
      */
     fun setDefaults(name: String, value: Any?) {
         runCatching {
@@ -116,7 +111,7 @@ internal object WWaypointsBridge {
         }.onFailure { LOGGER.warn("Failed to write wWaypoints default '{}'", name, it) }
     }
 
-    /** The label presets offered for new waypoints, as `id to displayName`. */
+    /** the label presets offered for new waypoints as `id to displayName` */
     fun visiblePresets(): List<Pair<String, String>> = runCatching {
         val presets = method(PRESET_STORE, "visiblePresets")?.invoke(null) as? List<*> ?: return emptyList()
         val presetClass = cls("com.wwaypoints.client.label.preset.LabelPreset") ?: return emptyList()
@@ -129,10 +124,6 @@ internal object WWaypointsBridge {
             id to (displayName?.invoke(null, preset) as? String ?: id)
         }
     }.getOrDefault(emptyList())
-
-    // endregion
-
-    // region lifecycle hooks
 
     fun saveConfig() = invokeClient("saveConfig")
 
@@ -166,14 +157,10 @@ internal object WWaypointsBridge {
             .onFailure { LOGGER.warn("wWaypoints '{}' failed", name, it) }
     }
 
-    // endregion
-
-    // region keybinds
-
     fun keyMapping(accessor: String): KeyMapping? =
         runCatching { method(CLIENT, accessor)?.invoke(null) as? KeyMapping }.getOrNull()
 
-    /** The mod's dynamic per-preset "create waypoint" mapping, or null when it has not been registered yet. */
+    /** the mod's dynamic per-preset "create waypoint" mapping or null when it has not been registered yet */
     fun presetCreateKey(presetId: String): KeyMapping? = runCatching {
         method(CLIENT, "getPresetCreateWaypointKey", String::class.java)?.invoke(null, presetId) as? KeyMapping
     }.getOrNull()
@@ -184,10 +171,6 @@ internal object WWaypointsBridge {
                 ?.invoke(null, mapping, key)
         }.onFailure { LOGGER.warn("wWaypoints rebind failed", it) }
     }
-
-    // endregion
-
-    // region hide-waypoint cycle
 
     private const val HIDE_CYCLE = "com.wwaypoints.client.HideWaypointCycle"
 
@@ -200,7 +183,7 @@ internal object WWaypointsBridge {
 
     private fun legacyThreshold(): Int = int("hideWaypointsDistanceThreshold")
 
-    /** Runs a cycle through the mod's own normalizer, which owns every invariant the editor must respect. */
+    /** runs a cycle through the mod's own normalizer which owns every invariant the editor must respect */
     fun normalizedCycle(raw: IntArray?): IntArray = runCatching {
         method(HIDE_CYCLE, "normalize", IntArray::class.java, Int::class.javaPrimitiveType!!)
             ?.invoke(null, raw, legacyThreshold()) as? IntArray
@@ -209,13 +192,13 @@ internal object WWaypointsBridge {
     fun nextCycleThreshold(current: IntArray): Int = runCatching {
         val next = method(HIDE_CYCLE, "addNextThreshold", IntArray::class.java, Int::class.javaPrimitiveType!!)
             ?.invoke(null, current, legacyThreshold()) as? IntArray ?: return@runCatching null
-        // addNextThreshold returns the whole cycle in its own canonical order, so the new entry is found by
-        // difference rather than by position.
+        // addNextThreshold returns the whole cycle in its own canonical order so the new entry is found by
+        // difference rather than by position
         val existing = current.toHashSet()
         next.firstOrNull { it !in existing }
     }.getOrNull() ?: cycleConstant("DEFAULT_WITHIN_BLOCKS", 100)
 
-    /** The unit the first-party editor draws after a distance. `HideWaypointCycle.label` leaves it off. */
+    /** the unit the first-party editor draws after a distance because `HideWaypointCycle.label` leaves it off */
     const val CYCLE_UNIT = "m"
 
     fun cycleLabel(value: Int): String {
@@ -225,15 +208,11 @@ internal object WWaypointsBridge {
         return if (value > 0) label + CYCLE_UNIT else label
     }
 
-    // endregion
-
-    // region import / export
-
     private const val CONFIG_STORAGE = "com.wwaypoints.client.ConfigStorage"
     private const val IMPORT_EXPORT = "com.wwaypoints.client.screen.ImportExportScreen"
     private const val TEMPLATE_IO = "com.wwaypoints.client.screen.TemplateImportExportService"
 
-    /** Looks up a method the mod does not expose publicly. Package-private statics only, never UI state. */
+    /** looks up a method the mod does not expose publicly using package-private statics only and never UI state */
     private fun internalMethod(owner: String, name: String, vararg params: Class<*>): Method? =
         methods.getOrPut("$owner#$name/${params.size}") {
             runCatching {
@@ -241,12 +220,12 @@ internal object WWaypointsBridge {
             }.onFailure { LOGGER.warn("wWaypoints method '{}#{}' not found", owner, name) }.getOrNull()
         }
 
-    /** The `.wsettings` payload: settings, defaults, pinned icons and label presets. */
+    /** the `.wsettings` payload with settings and defaults and pinned icons and label presets */
     fun settingsJson(): String? = runCatching {
         method(CONFIG_STORAGE, "toSettingsJson", cls(CONFIG)!!)?.invoke(null, config()) as? String
     }.onFailure { LOGGER.warn("Failed to serialize wWaypoints settings", it) }.getOrNull()
 
-    /** Applies a `.wsettings` payload. Note the mod's parser also replaces the stored label presets. */
+    /** applies a `.wsettings` payload and note the mod's parser also replaces the stored label presets */
     fun applySettingsJson(json: String): Boolean = runCatching {
         val parsed = method(CONFIG_STORAGE, "fromJson", String::class.java)?.invoke(null, json) ?: return false
         method(CLIENT, "applyConfig", cls(CONFIG)!!)?.invoke(null, parsed)
@@ -258,9 +237,10 @@ internal object WWaypointsBridge {
             ?.takeIf { it.isNotBlank() }
 
     /**
-     * The current world's waypoints in the mod's own `.wwaypoint` envelope. The per-world object comes from the
-     * mod so the dimension payloads stay authoritative; only the envelope around it is built here, because the
-     * method that would build it is private.
+     * the current world's waypoints in the mod's own `.wwaypoint` envelope
+     *
+     * the per-world object comes from the mod so dimension payloads stay authoritative and only the envelope
+     * around it is built here because the method that would build it is private
      */
     fun exportCurrentWorldJson(exportedAtMillis: Long): String? {
         val worldId = currentWorldId() ?: return null
@@ -271,23 +251,19 @@ internal object WWaypointsBridge {
             """"scope":"CURRENT_WORLD","worlds":[$world]}"""
     }
 
-    /** Imports a `.wtemplate` file, returning the name the template was stored under. */
+    /** imports a `.wtemplate` file and returns the name the template was stored under */
     fun importTemplateFile(path: java.nio.file.Path): String? = runCatching {
         internalMethod(TEMPLATE_IO, "importTemplateFile", java.nio.file.Path::class.java)
             ?.invoke(null, path) as? String
     }.onFailure { LOGGER.warn("Failed to import a wWaypoints template", it) }.getOrNull()
 
-    /** Shows a message through the mod's own toast, so feedback matches its first-party screens. */
+    /** shows a message through the mod's own toast so feedback matches its first-party screens */
     fun toast(message: String) {
         runCatching { method(CLIENT, "toast", String::class.java)?.invoke(null, message) }
             .onFailure { LOGGER.warn("wWaypoints toast failed", it) }
     }
 
-    // endregion
-
-    // region label presets
-
-    /** The user's label presets as `id to displayName`, in store order. */
+    /** the user's label presets as `id to displayName` in store order */
     fun myPresets(): List<Pair<String, String>> = runCatching {
         val presets = method(PRESET_STORE, "myPresets")?.invoke(null) as? List<*> ?: return emptyList()
         val presetClass = cls("com.wwaypoints.client.label.preset.LabelPreset") ?: return emptyList()
@@ -301,17 +277,16 @@ internal object WWaypointsBridge {
         }
     }.getOrDefault(emptyList())
 
-    // endregion
-
-    /** Instantiates one of the mod's own screens, returning to [parent] on close. */
+    /** instantiates one of the mod's own screens returning to [parent] on close */
     fun screen(fqcn: String, parent: Screen?): Screen? = runCatching {
         cls(fqcn)?.getConstructor(Screen::class.java)?.newInstance(parent) as? Screen
     }.onFailure { LOGGER.warn("Failed to open wWaypoints screen '{}'", fqcn, it) }.getOrNull()
 
     /**
-     * The mod's settings screen, opened on the named `SettingsScreen.Page` (and Data sub-tab where relevant).
-     * The page fields are plain assignable fields the mod's own deep-link factories write the same way; if the
-     * shape ever changes, the screen simply opens on its default page.
+     * the mod's settings screen opened on the named `SettingsScreen.Page` and Data sub-tab where relevant
+     *
+     * the page fields are plain assignable fields the mod's own deep-link factories write the same way so if the
+     * shape ever changes the screen simply opens on its default page
      */
     fun settingsScreen(parent: Screen?, page: String, importSubTab: Int = -1): Screen? {
         val screen = screen(SETTINGS_SCREEN, parent) ?: return null
@@ -328,7 +303,7 @@ internal object WWaypointsBridge {
         return screen
     }
 
-    /** The mod's stylist for one of its special waypoint kinds (`SUPPLY_DROP`, `AUTO_PICK`, `DEATH`). */
+    /** the mod's stylist for one of its special waypoint kinds `SUPPLY_DROP` / `AUTO_PICK` / `DEATH` */
     fun specialLabelStylist(kind: String, parent: Screen?): Screen? = runCatching {
         val kindClass = cls("com.wwaypoints.client.screen.HopliteAppearanceScreen\$Kind") ?: return null
         val constant = kindClass.enumConstants?.firstOrNull { (it as Enum<*>).name == kind } ?: return null

@@ -65,16 +65,12 @@ class AnnotationCommandFactory : CommandFactory {
         help: StringBuilder,
         stem: String?,
     ) {
-        // Flag to check if the root help message's formatting has been set up
-        // We do it this way so that it can be conditional, if there are no additional subcommands
+        // deferred so the help header is only emitted once a subcommand actually exists
         var isRootFormattingSetup = false
 
-        // Flag to check if the root @Executor has been set up on the tree itself
-        // This is necessary as the root command is not a subcommand, but rather the main command itself, thus meaning that we cannot define it multiple times
+        // the root command is the tree itself rather than a subcommand so it can only be defined once
         var isRootCommandSetup = false
 
-        // Firstly, iterate through each declared class in our object and find all classes annotated with @Command
-        // Recursively set up their subcommands
         for (clz in obj.javaClass.declaredClasses) {
             val command =
                 clz.getAnnotation<Command?>(Command::class.java) ?: continue
@@ -86,8 +82,6 @@ class AnnotationCommandFactory : CommandFactory {
             setup(false, subTree, MHUtils.instantiate(clz, true), help, "$stem $primaryName")
         }
 
-        // Now, go through the methods of this class and find all methods annotated with @Command
-        // These are their own subcommands executed by the command tree
         for (method in obj.javaClass.declaredMethods) {
             val handler = method.getAnnotation<Handler?>(Handler::class.java) ?: continue
 
@@ -99,7 +93,7 @@ class AnnotationCommandFactory : CommandFactory {
             var isSectionApplied = false
             val currentSection = StringBuilder()
             currentSection.append(stem).append(' ')
-                .append(primaryName) // Append the stem of our command and the primary subcommand name
+                .append(primaryName)
 
             var theMethod: ArgumentBuilder<ClientCommandSource, *>
             if (method.parameterCount > 0) {
@@ -115,12 +109,11 @@ class AnnotationCommandFactory : CommandFactory {
                         "Failed to find argument type for parameter {} of method {} in class {}",
                         paramNames[0], method.getName(), obj.javaClass.getName()
                     )
-                    continue  // Skip this method if we can't find the argument type
+                    continue
                 }
 
                 theMethod = argument(name, argumentType)
 
-                // Start of parameters in help message
                 if (!isRootFormattingSetup && isRoot) {
                     help.append(':').append('\n')
                     isRootFormattingSetup = true
@@ -143,7 +136,7 @@ class AnnotationCommandFactory : CommandFactory {
                             "Failed to find argument type for parameter {} of method {} in class {}",
                             params[i].getName(), method.getName(), obj.javaClass.getName()
                         )
-                        continue  // Skip this parameter if we can't find the argument type
+                        continue
                     }
 
                     val p = params[i]
@@ -179,12 +172,9 @@ class AnnotationCommandFactory : CommandFactory {
                 }
             } else {
                 if (!isRootCommandSetup && aliases.isEmpty()) {
-                    // If this is the root command (no aliases & no parameters), we set it up directly on the tree
+                    isRootCommandSetup = true
 
-
-                    isRootCommandSetup = true // Mark that the root command has been set up
-
-                    // We don't need to append this subtree to the help message, as it is the root command
+                    // the root command gets no help entry of its own
                     tree.executes { ctx: CommandContext<ClientCommandSource> ->
                         try {
                             method.invoke(obj)
@@ -195,7 +185,6 @@ class AnnotationCommandFactory : CommandFactory {
                         }
                     }
                 } else {
-                    // Otherwise, we create a new subcommand (along with aliases) for this method
                     if (!isRootFormattingSetup && isRoot) {
                         help.append(':').append('\n')
                         isRootFormattingSetup = true

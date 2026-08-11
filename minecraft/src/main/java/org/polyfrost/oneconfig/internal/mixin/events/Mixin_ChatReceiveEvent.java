@@ -94,9 +94,8 @@ public abstract class Mixin_ChatReceiveEvent {
     }
 
     /**
-     * Applies the message the listeners left behind, then drops the references so a
-     * later call can never pick up a stale event if the two HEAD injectors are
-     * applied in the opposite order.
+     * Applies the message the listeners left behind then drops the references so a later call cannot
+     * pick up a stale event if the two HEAD injectors apply in the opposite order
      */
     @Unique
     private Component ocfg$consume(Component message) {

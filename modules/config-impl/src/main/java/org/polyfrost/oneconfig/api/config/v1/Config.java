@@ -46,14 +46,14 @@ import java.util.function.Supplier;
 
 public abstract class Config {
     protected Tree tree;
-    /** code-defined defaults captured at first initialization, keyed by dot-separated property path. */
+    /** code-defined defaults captured at first initialization keyed by dot-separated property path */
     private Map<String, Object> defaultSnapshot;
 
     public final String id, title, iconPath;
     public final Category category;
 
     /**
-     * @param iconPath the path to your mod's icon file, must be located within your mod-specific assets folder as to avoid conflicts.
+     * @param iconPath the path to your mod icon file which must be located within your mod-specific assets folder to avoid conflicts
      */
     public Config(@NotNull String id, @Nullable String iconPath, @NotNull String title, @Nullable Category category) {
         this.title = title;
@@ -87,9 +87,9 @@ public abstract class Config {
     }
 
     /**
-     * Use this method to add any initialization logic to your config, for example {@link #hideIf(String, String)}, etc.
+     * Use this method to add any initialization logic to your config for example {@link #hideIf(String, String)}
      * <br>
-     * <b>make sure to call super!</b>
+     * <b>make sure to call super</b>
      */
     @MustBeInvokedByOverriders
     protected void initialize(boolean byConfigManager) {
@@ -109,8 +109,7 @@ public abstract class Config {
             if (!ConfigManager.isRebindingProfiles()) {
                 ConfigManager.backup().backend.save0(tree);
             }
-            // capture the code-defined default of every property before register() loads stored values over them,
-            // so the UI can offer a "reset to default" action. stored as transient metadata, so it is never persisted.
+            // capture code defaults before register() loads stored values over them so the UI can offer a reset action
             if (defaultSnapshot == null) {
                 defaultSnapshot = new HashMap<>();
                 captureDefaults(tree, "", defaultSnapshot);
@@ -132,12 +131,13 @@ public abstract class Config {
     }
 
     /**
-     * Recursively record the current value of every property in [tree] as transient {@code "default"}
-     * metadata. Call before {@link ConfigManager#register(Tree)} so stored profile values do not
-     * overwrite the captured code defaults.
+     * Recursively record the current value of every property in [tree] as transient {@code "default"} metadata
      * <br>
-     * For complex (non-simple) types a deep copy is stored, because {@link Property.Field#set0} mutates such values
-     * in place; storing the live reference would alias the working value and make a reset a no-op.
+     * Call before {@link ConfigManager#register(Tree)} so stored profile values do not overwrite the captured code defaults
+     * <br>
+     * For complex (non-simple) types a deep copy is stored because {@link Property.Field#set0} mutates such values in place
+     * <br>
+     * Storing the live reference would alias the working value and make a reset a no-op
      */
     @ApiStatus.Internal
     public static void captureDefaults(Tree tree) {
@@ -197,9 +197,8 @@ public abstract class Config {
     protected void addDependency(String option, String name, Supplier<Property.Display> condition) {
         Property<?> opt = getProperty(option).addDisplayCondition(condition);
         if (name != null) opt.getOrPutMetadata("dependencyNames", () -> new ArrayList<String>(3)).add(name);
-        // the supplier can read any property in the tree, but unlike the boolean-option variant it has no
-        // reference to a specific parent to subscribe to. re-evaluate this option whenever any sibling property
-        // changes so the display stays in sync (e.g. a dropdown gating a slider).
+        // unlike the boolean-option variant the supplier has no specific parent to subscribe to so re-evaluate
+        // whenever any sibling property changes
         java.lang.ref.WeakReference<Property<?>> ref = new java.lang.ref.WeakReference<>(opt);
         tree.onAllProps((s, p) -> {
             if (p == opt) return;
@@ -217,8 +216,7 @@ public abstract class Config {
     }
 
     protected void restoreProperty(String option) {
-        // first operation will be slow as the tree will have to be loaded from the disc, but this is intended as to not waste memory
-        // once one property is restored/restore all is used, the backup tree will be in memory and so will be fast to restore more
+        // first restore is slow as the backup tree loads from disc but it then stays in memory
         getProperty(option).overwrite(getProperty(ConfigManager.backup().get(tree.getID()), option), false);
     }
 
@@ -235,7 +233,7 @@ public abstract class Config {
     }
 
     /**
-     * Add a dependency on the given option, which will gray out or hide the option unless condition is true.
+     * Add a dependency on the given option which will gray out or hide the option unless condition is true
      *
      * @param option    the option to add the dependency to
      * @param condition the <b>boolean option</b> which provides the dependency
@@ -250,9 +248,9 @@ public abstract class Config {
     }
 
     /**
-     * Add a callback to the specified option path, which is dot-separated for sub-configs.
+     * Add a callback to the specified option path which is dot-separated for sub-configs
      * <br>
-     * The name of the option should be the name of the field.
+     * The name of the option should be the name of the field
      */
     @SuppressWarnings("unchecked")
     @kotlin.OverloadResolutionByLambdaReturnType
@@ -261,9 +259,9 @@ public abstract class Config {
     }
 
     /**
-     * Add a callback to the specified option path, which is dot-separated for sub-configs.
+     * Add a callback to the specified option path which is dot-separated for sub-configs
      * <br>
-     * The name of the option should be the name of the field.
+     * The name of the option should be the name of the field
      */
     protected void addCallback(String option, Runnable callback) {
         getProperty(option).addCallback(t -> {
@@ -277,8 +275,10 @@ public abstract class Config {
     }
 
     /**
-     * Add a migration entry to the config. This should be in the format of oldName -> newName.
-     * <br>To be used in conjunction with {@link #loadFrom(String)} or {@link #loadFrom(Path)} to migrate old configs to new ones.
+     * Add a migration entry to the config
+     * <br>
+     * This should be in the format of oldName -> newName
+     * <br>To be used in conjunction with {@link #loadFrom(String)} or {@link #loadFrom(Path)} to migrate old configs to new ones
      */
     protected void addMigrationEntry(String oldName, String newName) {
         if (tree == null) initialize(false);
@@ -286,8 +286,10 @@ public abstract class Config {
     }
 
     /**
-     * Add multiple migration entries to the config. This should be in the format of pairs, where the first element is the old name and the second element is the new name.
-     * <br>To be used in conjunction with {@link #loadFrom(String)} or {@link #loadFrom(Path)} to migrate old configs to new ones.
+     * Add multiple migration entries to the config
+     * <br>
+     * This should be in the format of pairs where the first element is the old name and the second element is the new name
+     * <br>To be used in conjunction with {@link #loadFrom(String)} or {@link #loadFrom(Path)} to migrate old configs to new ones
      */
     protected void addMigrationEntries(String... entries) {
         if (tree == null) initialize(false);
@@ -328,15 +330,17 @@ public abstract class Config {
     }
 
     public void save() {
-        if (tree == null) return; // not initialized, nothing to save
+        if (tree == null) return;
         ConfigManager.active().save(tree);
     }
 
     /**
-     * If you intend for your Config to be its own self-contained class, you may need to call this method in your mod constructor to ensure that
-     * this class is initialized by Java.
+     * If you intend for your Config to be its own self-contained class you may need to call this method in your mod constructor
+     * to ensure that this class is initialized by Java
      * <br>
-     * If you don't call this method, your config might not appear in the UI. It will still function correctly, and after some code that loads it is called, it will appear.
+     * If you do not call this method your config might not appear in the UI
+     * <br>
+     * It will still function correctly and it will appear once some code that loads it is called
      */
     public void preload() {
         initialize(false);
@@ -344,7 +348,7 @@ public abstract class Config {
 
     private static String validateIconPath(String path) {
         if (path == null || path.isEmpty()) {
-            return null; // no icon
+            return null;
         }
         if (path.startsWith("/")) {
             path = path.substring(1);
@@ -357,9 +361,11 @@ public abstract class Config {
     }
 
     /**
-     * A category for the config, used for sorting in the UI.
+     * A category for the config used for sorting in the UI
      * <br>
-     * IDs start at 1, as 0 is reserved for the default category ("All"). They are also subject to change at any time.
+     * IDs start at 1 because 0 is reserved for the default category ("All")
+     * <br>
+     * They are also subject to change at any time
      * </br>
      */
     public static final class Category {

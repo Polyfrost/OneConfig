@@ -39,9 +39,9 @@ public final class EventDelay {
     }
 
     /**
-     * Schedules a Consumer to be called after a certain amount polls from the given event.
+     * Schedules a Consumer to be called after a certain amount of polls from the given event
      * <p>
-     * If the amount of polls is below 1, the Consumer will be called immediately, with the event being null.
+     * If the amount of polls is below 1 the Consumer is called immediately with a null event
      */
     public static <E extends Event> void of(Class<E> cls, int polls, Consumer<E> function) {
         if (polls < 1) {
@@ -52,7 +52,6 @@ public final class EventDelay {
 
                 @Override
                 public boolean handle(E event) {
-                    // Delay expired
                     if (delay < 1) {
                         function.accept(event);
                         return true;
@@ -71,14 +70,14 @@ public final class EventDelay {
     }
 
     /**
-     * {@link #of(Class, int, Consumer)} with a Runnable.
+     * {@link #of(Class, int, Consumer)} with a Runnable
      */
     public static <E extends Event> void of(Class<E> cls, int polls, Runnable function) {
         of(cls, polls, e -> function.run());
     }
 
     /**
-     * {@link #of(Class, int, Runnable)} with TickEvent.End.
+     * {@link #of(Class, int, Runnable)} with TickEvent.End
      */
     public static void tick(int ticks, Runnable function) {
         of(TickEvent.End.class, ticks, function);

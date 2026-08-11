@@ -40,7 +40,9 @@ import java.util.function.Consumer;
 
 public final class JsonUtils {
     /**
-     * @deprecated The json parser by default accepts non-json compliant formats, this enables parsing invalid json and therefore may cause undesired behaviour.
+     * @deprecated The json parser by default accepts non-json compliant formats
+     * <p>
+     * This allows invalid json to be parsed and may cause undesired behaviour
      */
     @Deprecated
     public static final JsonParser PARSER = new JsonParser();

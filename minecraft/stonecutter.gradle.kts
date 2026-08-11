@@ -48,8 +48,7 @@ stonecutter {
                     "import net.minecraft.client.gui.GuiGraphicsExtractor",
                 )
             }
-            // 26.2 moved the main render target from Minecraft onto GameRenderer.
-            // (segment replacement: client.mainRenderTarget -> client.gameRenderer.mainRenderTarget())
+            // 26.2 moved the main render target from Minecraft onto GameRenderer
             string(eval(current.version, ">= 26.2"), "main_render_target") {
                 replace("mainRenderTarget", "gameRenderer.mainRenderTarget()")
             }

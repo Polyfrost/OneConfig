@@ -44,15 +44,14 @@ import java.util.Set;
 import static org.polyfrost.oneconfig.api.config.v1.Tree.tree;
 
 /**
- * Clears keybinds that would conflict with OneConfig's own Right Shift keybind.
+ * Clears keybinds that would conflict with OneConfig's own Right Shift keybind
  * <br>
- * Each keybind is only ever considered once, on the launch it is first seen, and the identifiers of the keybinds that
- * have been considered are remembered across launches. That way a mod installed long after OneConfig still has its
- * Right Shift bind cleared when it first shows up, while a bind the user has since moved onto Right Shift
- * themselves is left alone. OneConfig's own mirrors of its keybinds are never touched.
+ * Each keybind is considered once on the launch it is first seen and the considered identifiers are
+ * remembered across launches so a mod installed later still gets cleared while a bind the user moved
+ * onto Right Shift themselves is left alone
  * <br>
- * Keybinds that do not go through the vanilla keybind system are handled by the compat layer of the mod that owns
- * them, which reports them here through {@link #isNew(String)} and {@link #save()}.
+ * Keybinds outside the vanilla keybind system are reported here by the owning mod's compat layer
+ * through {@link #isNew(String)} and {@link #save()}
  */
 public final class RightShiftConflicts {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Keybinds");
@@ -67,17 +66,17 @@ public final class RightShiftConflicts {
     }
 
     /**
-     * The key OneConfig's own keybind uses, and which conflicting keybinds are cleared from.
+     * The key OneConfig's own keybind uses and which conflicting keybinds are cleared from
      */
     public static InputConstants.Key key() {
         return InputConstants.Type.KEYSYM.getOrCreate(InputConstants.KEY_RSHIFT);
     }
 
     /**
-     * Records {@code id} as checked, returning whether it had never been checked on a previous launch.
-     * Identifiers of keybinds outside the vanilla keybind system should be prefixed with the owning mod's id.
+     * Records {@code id} as checked and returns whether it had never been checked on a previous launch
      * <br>
-     * Call {@link #save()} once the caller is done to persist the newly recorded identifiers.
+     * Identifiers outside the vanilla keybind system should be prefixed with the owning mod's id and
+     * {@link #save()} must be called once done to persist them
      */
     public static synchronized boolean isNew(String id) {
         load();
@@ -87,7 +86,7 @@ public final class RightShiftConflicts {
     }
 
     /**
-     * Persists the identifiers recorded through {@link #isNew(String)}.
+     * Persists the identifiers recorded through {@link #isNew(String)}
      */
     public static synchronized void save() {
         if (!dirty) return;
@@ -97,7 +96,7 @@ public final class RightShiftConflicts {
     }
 
     /**
-     * Unbinds Minecraft keybinds that conflict with OneConfig's keybind.
+     * Unbinds Minecraft keybinds that conflict with OneConfig's keybind
      */
     public static void unbindMinecraftKeybinds() {
         String rightShift = key().getName();

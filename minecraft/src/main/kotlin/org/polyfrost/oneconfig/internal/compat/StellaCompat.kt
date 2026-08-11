@@ -82,7 +82,6 @@ object StellaCompat {
         }
     }
 
-    // Settings
     private fun addConfigTree() {
         val info = ModInfo.loadedMods.firstOrNull { it.id == "stella" }
 
@@ -218,7 +217,6 @@ object StellaCompat {
         }
     }
 
-    // Hud
     private class StellaHudWrapper(private val element: HUDElement): OneConfigHudWrapper {
         private val confElement: ConfigElement? get() =  config.elementMap[element.configKey]
 

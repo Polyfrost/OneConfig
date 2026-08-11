@@ -61,16 +61,15 @@ public final class BlurHandler {
     }
 
     /**
-     * Activates/deactivates the blur in the current world if
-     * one of many conditions are met, such as no current other shader
-     * is being used, we actually have the blur setting enabled
+     * Activates or deactivates the blur in the current world when no other shader is in use and
+     * the blur setting is enabled
      */
     private boolean reloadBlur(Object gui) {
         return false; // TODO: Fix shader usage in 1.21.1+
     }
 
     private void tryStop() {
-        // no-op: shader API not available in 1.21.1+
+        // no-op because the shader API is not available in 1.21.1+
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")

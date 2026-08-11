@@ -83,7 +83,7 @@ fun FileOption(data: FileOptionData) {
                     } else {
                         tinyFd.openFileSelector(data.dialogTitle, current, data.filterPatterns, data.filterName)
                     }
-                } ?: return@launch // cancelled: leave the existing value untouched
+                } ?: return@launch // cancelled so leave the existing value untouched
                 setValue(selected.toString())
             } finally {
                 dialogOpen = false

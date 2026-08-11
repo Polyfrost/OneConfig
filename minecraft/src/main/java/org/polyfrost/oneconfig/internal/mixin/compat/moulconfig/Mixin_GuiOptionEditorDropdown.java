@@ -27,8 +27,8 @@ public class Mixin_GuiOptionEditorDropdown implements MoulConfigGuiOptionEditorD
     @Unique
     private String[] oneconfig$resolvedValues;
 
-    // MoulConfig 3.x uses String[] for this field, 4.x uses List<StructuredText>.
-    // Reflection avoids the @Shadow descriptor mismatch that breaks mixin application.
+    // MoulConfig 3.x uses String[] for this field and 4.x uses List<StructuredText>
+    // reflection avoids the @Shadow descriptor mismatch that breaks mixin application
     public String[] oneconfig$values() {
         if (oneconfig$resolvedValues != null) return oneconfig$resolvedValues;
         try {

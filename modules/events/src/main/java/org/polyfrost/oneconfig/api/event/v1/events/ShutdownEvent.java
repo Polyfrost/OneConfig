@@ -27,10 +27,13 @@
 package org.polyfrost.oneconfig.api.event.v1.events;
 
 /**
- * Called when the game is shutting down.
- * This is called even when the game crashes (as long as it was initialized in the first place)
- * This can be used if anything needs to be done before the screen itself is fully closed
- * or need to do something before another mod does something via {@link JvmShutdownEvent}.
+ * Called when the game is shutting down
+ * <br>
+ * This is called even when the game crashes as long as it was initialized in the first place
+ * <br>
+ * Use it to do work before the screen itself is fully closed
+ * <br>
+ * Also use it to act before another mod does something via {@link JvmShutdownEvent}
  *
  * @see JvmShutdownEvent
  */

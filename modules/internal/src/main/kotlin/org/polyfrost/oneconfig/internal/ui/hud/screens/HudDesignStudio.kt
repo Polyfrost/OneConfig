@@ -88,14 +88,15 @@ import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker as LegacyHud
 
 private val LOGGER = LogManager.getLogger("OneConfig/HudDesignStudio")
 
-/** How far the cursor must travel while pressing a locked HUD before it counts as a move attempt. */
+/** How far the cursor must travel while pressing a locked HUD before it counts as a move attempt */
 private const val LOCKED_DRAG_SLOP_PX = 3f
 
 private var lockedHudToast: Notification? = null
 
 /**
- * Tells the user why a HUD refused to move. Re-uses the toast while it is still on screen so
- * repeated attempts don't stack the notification centre full of identical entries.
+ * Tells the user why a HUD refused to move
+ *
+ * Re-uses the toast while it is still on screen so repeated attempts do not stack up identical entries
  */
 private fun notifyHudLocked() {
     lockedHudToast?.let { if (NotificationsManager.contains(it)) return }
@@ -170,14 +171,13 @@ private val hoveredHudBoxColor = Color.White.copy(0.5f)
 private val hiddenHudBoxColor = Color.White.copy(0.4f)
 private val hiddenHudDashEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 3f), 0f)
 
-// Locked HUDs get a dashed amber box instead of the plain white one, so "why won't this move?"
-// is answered before the user tries to drag it.
+// locked HUDs get a dashed amber box instead of the plain white one
 private val lockedHudBoxColor = Color(0xFFE0A44C)
 private val lockedHudDashEffect = PathEffect.dashPathEffect(floatArrayOf(2f, 4f), 0f)
 
 private val hiddenLegacyScrimColor = Color.Black.copy(0.45f)
 
-// Backdrop for the per-HUD action bar, so the icons stay readable over any HUD content.
+// backdrop for the per-HUD action bar so the icons stay readable over any HUD content
 private val hudActionBarBackground = Color.Black.copy(0.55f)
 private val hudActionBarBorder = Color.White.copy(0.12f)
 private val hudActionBarDeleteColor = Color(0xFFE5484D)
@@ -251,10 +251,12 @@ private fun horizontalSnapLines(dragged: Hud): List<Float> {
 }
 
 /**
- * Places the canvas hint where it covers the least: HUDs live anywhere on screen, so a hint pinned
- * to the bottom edge sooner or later sits right on top of the one being worked on. Every edge and
- * corner is scored by how much of it a HUD or a panel would cover, and the clearest one wins; ties
- * go to the earlier, more natural, spot.
+ * Places the canvas hint where it covers the least
+ *
+ * HUDs live anywhere on screen so a hint pinned to one edge sooner or later sits on top of the HUD being
+ * worked on
+ *
+ * Every edge and corner is scored by how much a HUD or panel would cover it and the clearest one wins
  */
 private fun pickHintSlot(root: IntSize, hint: IntSize, margin: Float, obstacles: List<Rect>): Offset {
     val w = hint.width.toFloat()
@@ -319,7 +321,7 @@ private fun hudBounds(hud: Hud): HudBounds? {
     return HudBounds(hud.x, hud.y, width, height)
 }
 
-/** The nine points of a HUD box the user can pin another HUD to, in reading order. */
+/** The nine points of a HUD box the user can pin another HUD to in reading order */
 private val ANCHOR_POINTS = listOf(
     HudAnchor.TopLeft, HudAnchor.Top, HudAnchor.TopRight,
     HudAnchor.Left, HudAnchor.Center, HudAnchor.Right,
@@ -347,20 +349,20 @@ private fun anchorFractions(hud: Hud, point: HudAnchor): Pair<Float, Float> {
     return fx to fy
 }
 
-/** Where [point] sits on [hud]'s box, in gui coordinates. */
+/** Where [point] sits on [hud]'s box in gui coordinates */
 private fun anchorPointOf(hud: Hud, point: HudAnchor): Offset? {
     val b = hudBounds(hud) ?: return null
     val (fx, fy) = anchorFractions(hud, point)
     return Offset(b.x + fx * b.width, b.y + fy * b.height)
 }
 
-/** Every HUD [sources] may be anchored to: not one of them, and not already hanging off one. */
+/** Every HUD [sources] may be anchored to excluding themselves and any already hanging off one */
 private fun anchorTargetsFor(sources: List<Hud>): List<Hud> =
     HudManager.activeInstances.filter { candidate ->
         sources.none { it === candidate || candidate.anchorChainContains(it) }
     }
 
-/** The point on [source]'s own box under the cursor, while picking which point gets anchored. */
+/** The point on [source]'s own box under the cursor while picking which point gets anchored */
 private fun hitTestSelfAnchorPoint(
     source: Hud,
     screenX: Float,
@@ -400,8 +402,8 @@ private fun hitTestAnchorPoint(
 }
 
 private fun drawHudContents(sk: org.jetbrains.skia.Canvas, mcToScreen: Float) {
-    // HUDs whose backgrounds are fused with a neighbour do not paint their own, so the merged shapes
-    // have to be laid down here first, exactly like the in-game HUD pass does.
+    // HUDs fused with a neighbour do not paint their own background so the merged shapes are laid down
+    // here first just like the in-game HUD pass
     sk.save()
     if (mcToScreen != 1f) sk.scale(mcToScreen, mcToScreen)
     HudManager.drawMergedBackgrounds(RenderContext(sk))
@@ -435,8 +437,9 @@ private fun hitTestHud(hud: Hud, screenX: Float, screenY: Float): Boolean {
 }
 
 /**
- * Huds under the cursor, topmost last. Locked huds never sit in front of unlocked ones: they are
- * only considered when nothing unlocked is under the cursor.
+ * Huds under the cursor with the topmost last
+ *
+ * Locked huds are only considered when nothing unlocked is under the cursor
  */
 private fun hudStackAt(screenX: Float, screenY: Float): List<Hud> {
     val stack = orderedInstances().filter { hitTestHud(it, screenX, screenY) }
@@ -453,7 +456,7 @@ private fun pickHudAt(screenX: Float, screenY: Float, current: Hud?): Hud? {
     return stack[(index - 1 + stack.size) % stack.size]
 }
 
-/** Screen-space rectangle of the whole action bar, backdrop included. */
+/** Screen-space rectangle of the whole action bar including the backdrop */
 private data class HudActionBarLayout(
     val x: Float,
     val y: Float,
@@ -469,7 +472,7 @@ private const val HUD_ACTION_BAR_ICONS = 3
 private fun hudActionBarIcons(hud: Hud) =
     if (hud.canDelete()) HUD_ACTION_BAR_ICONS + 1 else HUD_ACTION_BAR_ICONS
 
-/** Inset between the backdrop edge and the icons. */
+/** Inset between the backdrop edge and the icons */
 private fun actionBarPadding(gapPx: Float) = gapPx / 2f
 
 private fun hudActionBarLayout(
@@ -484,8 +487,8 @@ private fun hudActionBarLayout(
     val sw = bounds.width * mcToScreen
     val sh = bounds.height * mcToScreen
 
-    // The bar lives outside the HUD box: small HUDs used to swallow both icons (or overlap them
-    // on top of each other) when the buttons were laid out inside the bounds.
+    // the bar lives outside the HUD box because small HUDs swallow or overlap the icons when the
+    // buttons are laid out inside the bounds
     val screenW = HudEditorViewport.viewportWidth.toFloat()
         .takeIf { it > 0f } ?: (HudManager.guiScreenWidth * mcToScreen)
     val screenH = HudEditorViewport.viewportHeight.toFloat()
@@ -504,7 +507,7 @@ private fun hudActionBarLayout(
     val y = when {
         below + barHeight <= screenH -> below
         above >= 0f -> above
-        // no room either side: sit on the bottom edge of the HUD, clamped to the screen
+        // no room either side so sit on the bottom edge of the HUD clamped to the screen
         else -> (sy + sh - barHeight).coerceIn(0f, (screenH - barHeight).coerceAtLeast(0f))
     }
 
@@ -521,10 +524,10 @@ private fun hitTestHudActionBar(
 ): Boolean = hudActionBarLayout(hud, mcToScreen, iconPx, gapPx)?.contains(screenX, screenY) == true
 
 /**
- * The bar plus the thin corridor between it and the HUD box. At small GUI scales HUDs sit packed
- * together, so the gap the cursor has to cross to reach the icons is usually owned by a neighbouring
- * HUD: without claiming it the hover flipped mid-travel and the bar disappeared before it could be
- * clicked.
+ * The bar plus the thin corridor between it and the HUD box
+ *
+ * At small GUI scales the gap the cursor crosses to reach the icons is usually owned by a neighbouring
+ * HUD and without claiming it the hover flips mid-travel
  */
 private fun hitTestHudActionBarZone(
     hud: Hud,
@@ -547,7 +550,7 @@ private fun hitTestHudActionBarZone(
     when {
         bar.y >= hudBottom -> { top = hudBottom; bottom = bar.y }
         bar.y + bar.height <= hudTop -> { top = bar.y + bar.height; bottom = hudTop }
-        // bar overlaps the box (no room either side): there is no corridor to claim
+        // bar overlaps the box so there is no corridor to claim
         else -> return false
     }
     if (screenY < top || screenY > bottom) return false
@@ -555,9 +558,9 @@ private fun hitTestHudActionBarZone(
 }
 
 /**
- * The HUD box unioned with its action bar. The bar sits outside the box with a gap in between, so
- * hover has to survive the whole span: without this the bar vanished the moment the cursor left the
- * HUD on its way to the icons.
+ * The HUD box unioned with its action bar
+ *
+ * The bar sits outside the box with a gap in between so hover has to survive the whole span
  */
 private fun hitTestHudWithActionBar(
     hud: Hud,
@@ -660,9 +663,8 @@ private fun resizeHud(
         return
     }
 
-    // Scale proportionally by projecting the mouse onto the diagonal from the anchor to the
-    // dragged corner. Using the per-axis max-deviation factor amplified small moves on the
-    // short axis into huge uniform jumps and made the corner drift away from the cursor.
+    // scale proportionally by projecting the mouse onto the diagonal from the anchor to the dragged
+    // corner because a per-axis max-deviation factor turns small moves on the short axis into huge jumps
     val cornerVecX = if (corner.isLeft) -startBounds.width else startBounds.width
     val cornerVecY = if (corner.isTop) -startBounds.height else startBounds.height
     val mouseVecX = mouseX - anchorX
@@ -914,21 +916,19 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     var libraryVisible by remember { mutableStateOf(true) }
     var searchText by remember { mutableStateOf("") }
     var pendingLibraryScroll by remember { mutableStateOf<String?>(null) }
-    // The mod the user last picked from the icon column. Kept separate from the scroll-derived
-    // section because the list clamps at its end: the final sections can never become the first
-    // visible item, and a mod whose HUDs are all placed has no section to scroll to at all.
+    // the mod last picked from the icon column kept separate from the scroll-derived section because the
+    // list clamps at its end so the final sections can never become the first visible item
     var libraryModIntent by remember { mutableStateOf<String?>(null) }
     val libraryScrollState = rememberScrollState()
-    // Content-relative top of each section, keyed by section id. Reported by the panel as it lays
-    // out, and used both to scroll to a mod and to tell which section the user is looking at.
+    // content-relative top of each section reported by the panel as it lays out and used to scroll to a
+    // mod and to tell which section the user is looking at
     val librarySectionOffsets = remember { mutableStateMapOf<String, Int>() }
     val chromeRects = remember { mutableStateMapOf<String, Rect>() }
     var panelOffset by remember { mutableStateOf(Offset.Zero) }
     var rootSize by remember { mutableStateOf(IntSize.Zero) }
     var hudContextMenuTarget by remember { mutableStateOf<Hud?>(null) }
     var hudContextMenuOffset by remember { mutableStateOf(IntOffset.Zero) }
-    // A locked HUD that is currently being pressed: once the cursor moves far enough we explain
-    // why it isn't following the mouse instead of silently doing nothing.
+    // a locked HUD currently being pressed so a far enough move can explain why it is not following
     var lockedPressHud by remember { mutableStateOf<Hud?>(null) }
     var lockedPressOrigin by remember { mutableStateOf(Offset.Zero) }
     val keyFocusRequester = remember { FocusRequester() }
@@ -940,14 +940,13 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     var marqueeAdditive by remember { mutableStateOf(false) }
     var pressWasSecondary by remember { mutableStateOf(false) }
     val lastPointerPos = remember { FloatArray(2) }
-    // HUDs waiting for the user to pick an anchor point. Non-empty while the picker overlay is up.
+    // HUDs waiting for the user to pick an anchor point and non-empty while the picker overlay is up
     var anchorPickSources by remember { mutableStateOf<List<Hud>>(emptyList()) }
     var hoveredAnchor by remember { mutableStateOf<Pair<Hud, HudAnchor>?>(null) }
     // null while the first click is still choosing which point of the HUD being anchored is pinned
     var anchorPickSelf by remember { mutableStateOf<HudAnchor?>(null) }
 
-    // The "active" HUD of a selection, the panel target if it is still selected, otherwise the
-    // most recently added member. Drives the settings panel, resize handles, action bar and keybinds.
+    // the active HUD of a selection driving the settings panel resize handles action bar and keybinds
     fun primaryHud(): Hud? = panelHud?.takeIf { it in selectedHuds } ?: selectedHuds.lastOrNull()
 
     val deleteHuds: (Collection<Hud>) -> Unit = { huds ->
@@ -1103,7 +1102,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
         ?.modId ?: librarySections.firstOrNull()?.modId
     val activeLibraryMod = libraryModIntent ?: scrolledLibraryMod
 
-    // A manual scroll takes the highlight back off the clicked icon and hands it to the list.
+    // a manual scroll takes the highlight back off the clicked icon and hands it to the list
     LaunchedEffect(libraryScrollState) {
         snapshotFlow { libraryScrollState.isScrollInProgress }
             .collect { scrolling -> if (scrolling && pendingLibraryScroll == null) libraryModIntent = null }
@@ -1146,7 +1145,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
         panelOffset += Offset(dx, dy)
     }
 
-    /** Recomputes the marquee selection from [marqueeStart]..[marqueeCurrent]. */
+    /** Recomputes the marquee selection from [marqueeStart]..[marqueeCurrent] */
     fun updateMarqueeSelection() {
         val start = marqueeStart ?: return
         val cur = marqueeCurrent ?: return
@@ -1163,20 +1162,19 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
         selectedHuds = if (marqueeAdditive) selectedHuds + intersecting else intersecting
     }
 
-    // Unified pointer modifier: drag any HUD, click to select, hover to show action bar
     val pointerModifier = Modifier
         .safePointerEvent(PointerEventType.Press) { event ->
             if (event.changes.any { it.isConsumed }) return@safePointerEvent
             val pos = event.changes.firstOrNull()?.position ?: return@safePointerEvent
             if (inChrome(pos.x, pos.y)) return@safePointerEvent
-            // While picking an anchor the canvas does nothing else: a left click takes the point
-            // under the cursor (or cancels if there is none), a right click drops the anchor.
+            // while picking an anchor a left click takes the point under the cursor or cancels and a
+            // right click drops the anchor
             if (anchorPickSources.isNotEmpty()) {
                 val sources = anchorPickSources
                 val secondary = event.buttons.isSecondaryPressed
                 val mcToScreen = Platform.screen().mcToScreenScale()
                 event.changes.forEach { it.consume() }
-                // first click picks the point on the HUD being anchored, second the point it hangs off
+                // first click picks the point on the HUD being anchored and second the point it hangs off
                 val self = anchorPickSelf
                 if (!secondary && self == null) {
                     val pickedSelf = hitTestSelfAnchorPoint(sources[0], pos.x, pos.y, mcToScreen)
@@ -1203,7 +1201,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     anchorPickSources = emptyList()
                     anchorPickSelf = null
                     hoveredAnchor = null
-                    // swallows the release that follows, so it can't fall through to selection
+                    // swallows the release that follows so it cannot fall through to selection
                     pressWasSecondary = true
                 }
                 if (secondary || picked != null) UiSounds.play(UiSoundEvent.CLICK)
@@ -1257,7 +1255,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     return@safePointerEvent
                 }
             }
-            // Clicks inside the bar belong to its buttons: never select or drag the HUD behind it.
+            // clicks inside the bar belong to its buttons so never select or drag the HUD behind it
             if (hoveredHud?.let { hitTestHudActionBar(it, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx) } == true) {
                 Snapshot.withMutableSnapshot { pasteMenuOffset = null }
                 return@safePointerEvent
@@ -1290,9 +1288,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     selectedHuds = newSelection
                     libraryVisible = false
                     if (newSelection.isNotEmpty()) {
-                        // Grabbing a HUD you had not selected drags the whole shape it is fused into,
-                        // so merged HUDs move as one. Grabbing one that is already selected pulls it
-                        // out of that shape instead, which is how they come apart again.
+                        // grabbing an unselected HUD drags the whole fused shape while grabbing an already
+                        // selected one pulls it back out of that shape
                         val detach = wasSelected
                         val dragSet = if (detach) {
                             newSelection
@@ -1435,8 +1432,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     if (event.changes.none { it.pressed }) {
                         lockedPressHud = null
                     } else if ((pos - lockedPressOrigin).getDistance() > LOCKED_DRAG_SLOP_PX) {
-                        // no toast here: the pointer is on the HUD, so the canvas hint is already
-                        // saying the same thing right under it
+                        // no toast because the canvas hint already says the same thing under the pointer
                         lockedPressHud = null
                     }
                 }
@@ -1447,8 +1443,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 val hit = topHudAt(pos.x, pos.y)
                 val mcToScreen = Platform.screen().mcToScreenScale()
                 val hovered = hoveredHud
-                // Over the bar (or on the way to it) the hover must stick even if it sits on top of
-                // another HUD, otherwise the icons swap out from under the cursor.
+                // over the bar or on the way to it the hover must stick even over another HUD or the
+                // icons swap out from under the cursor
                 val overActionBar = hovered?.let { hh ->
                     hitTestHudActionBarZone(hh, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx)
                 } == true
@@ -1523,8 +1519,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             } else {
                 UiSounds.play(UiSoundEvent.HUD_DRAG_END)
                 Snapshot.withMutableSnapshot {
-                    // a shape dragged as a whole leaves only the grabbed HUD selected, so grabbing it
-                    // again pulls that one out instead of moving the shape a second time
+                    // a shape dragged as a whole leaves only the grabbed HUD selected so grabbing it again
+                    // pulls that one out instead of moving the shape a second time
                     if (wasCluster) selectedHuds = setOf(wasDraggedHud)
                     else if (wasDraggedGroup.isNotEmpty()) selectedHuds = wasDraggedGroup
                     libraryVisible = false
@@ -1561,8 +1557,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     val theme = LocalTheme.current
     val selectionCornerRadius = theme.buttonShape.cornerRadiusOrNull() ?: Radii.SM
 
-    // The library and the return chip stay on screen while a HUD is selected, dimmed so the
-    // settings panel reads as the focus. They only disappear once the HUD is actually moving.
+    // the library and return chip stay on screen while a HUD is selected but dimmed so the settings
+    // panel reads as the focus
     val sideChromeAlpha by animateFloatAsState(
         targetValue = if (selectedHuds.isNotEmpty()) SIDE_CHROME_DIM_ALPHA else 1f,
         animationSpec = tween(150),
@@ -1706,13 +1702,13 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                         val isSelected = hud in selectedHuds
                         val isPrimary = hud === primaryHud()
                         val isHovered = hud === hoveredHud
-                        // every HUD carried along by the drag reads as being dragged, so grabbing a
-                        // fused shape shows the whole shape moving rather than one HUD of it
+                        // every HUD carried by the drag reads as being dragged so a fused shape shows the
+                        // whole shape moving
                         val isBeingDragged = isDragging && (hud === draggedHud || hud in draggedGroup)
                         val singleSelection = selectedHuds.size == 1
 
                         if (hud.locked) {
-                            // no selection handles: a locked HUD can be neither moved nor resized
+                            // no selection handles because a locked HUD can be neither moved nor resized
                             if (isSelected || isHovered) {
                                 drawRect(
                                     color = lockedHudBoxColor,
@@ -1761,7 +1757,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                             )
                         }
                     }
-                    // Hovering an anchored HUD traces the link back to the point it hangs off.
+                    // hovering an anchored HUD traces the link back to the point it hangs off
                     hoveredHud?.let { hovered ->
                         val parent = hovered.effectiveAnchorParent
                         val from = if (parent == null) null else anchorPointOf(hovered, hovered.effectiveSelfAnchorPoint)
@@ -1783,8 +1779,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                         val hotAnchor = hoveredAnchor
                         val self = anchorPickSelf
                         val source = anchorPickSources[0]
-                        // step one: the points on the HUD being anchored. step two: its chosen point,
-                        // kept on screen so it is clear what is about to be pinned where.
+                        // step one shows the points on the HUD being anchored and step two keeps its chosen
+                        // point on screen so it is clear what gets pinned where
                         if (self == null || anchorPickSources.size == 1) {
                             val b = hudBounds(source)
                             if (b != null) {
@@ -1862,8 +1858,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 }
         )
 
-        // Hover-only: the bar would otherwise clutter the canvas for every locked HUD at once, and
-        // linger over a selected HUD the user has moved on from.
+        // hover-only or the bar would show for every locked HUD at once and linger over a selected HUD
         val actionBarTarget = hoveredHud
         if (actionBarTarget != null) {
             key(actionBarTarget) {
@@ -1884,8 +1879,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             }
         }
 
-        // One line of guidance for the gestures the canvas cannot show on its own: which click does
-        // what while anchoring, and how a HUD comes back out of a shape it was merged into.
+        // one line of guidance for the gestures the canvas cannot show on its own
         val hintText = when {
             anchorPickSources.isNotEmpty() && anchorPickSelf == null ->
                 "Click the point on this HUD that gets anchored  ·  Esc to cancel"
@@ -1902,10 +1896,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
         if (hintText != null) lastHint = hintText
         var hintSize by remember { mutableStateOf(IntSize.Zero) }
         var hintSlot by remember { mutableStateOf(Offset.Zero) }
-        // no slide the first time round, when the hint has nowhere to slide from
+        // no slide the first time round when the hint has nowhere to slide from
         val hintPlaced = hintSlot != Offset.Zero
         val hintMargin = with(densityObj) { 16.dp.toPx() }
-        // the action bar floats above the hovered HUD, so keep that strip clear as well
+        // the action bar floats above the hovered HUD so keep that strip clear as well
         val actionBarStrip = with(densityObj) { 40.dp.toPx() }
         if (hintText != null && rootSize.width > 0 && hintSize.width > 0) {
             val mcToScreen = Platform.screen().mcToScreenScale()
@@ -2021,8 +2015,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                         onSectionMeasured = { key, top -> librarySectionOffsets[key] = top },
                         onDragStart = { hud, sx, sy, hudLocalOffX, hudLocalOffY ->
                             try {
-                                // a single-instance provider *is* its instance, so one that is real
-                                // but no longer active is re-used rather than made a second time
+                                // a single-instance provider is its own instance so a real but inactive one
+                                // is re-used rather than made a second time
                                 val instance = if (hud.isReal) hud else hud.make()
                                 HudManager.markProviderKnown(instance)
                                 val s = Platform.screen().screenToMcScale()
@@ -2180,8 +2174,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             onAnchor = { _ ->
                 Snapshot.withMutableSnapshot {
                     anchorPickSources = contextMenuTargets
-                    // one HUD gets to choose which of its own points is pinned; a multi-selection
-                    // has no single box to pick on, so each keeps using its growth anchor
+                    // one HUD chooses which of its own points is pinned while a multi-selection has no
+                    // single box to pick on so each keeps its growth anchor
                     anchorPickSelf = if (contextMenuTargets.size == 1) null else HudAnchor.Auto
                     hoveredAnchor = null
                     hoveredHud = null
@@ -2424,8 +2418,8 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                             notifyHudLocked()
                         }
                     }
-                    // locked HUDs are hoverable so their action bar (and its lock toggle) is
-                    // reachable, but they never steal the hover from an unlocked HUD
+                    // locked HUDs are hoverable so their lock toggle stays reachable but they never steal
+                    // the hover from an unlocked HUD
                     val hit = if (overShell(pos.x, pos.y)) null else topHudAt(pos.x, pos.y)
                     val hovered = hoveredHud
                     val mcToScreen = Platform.screen().mcToScreenScale()
@@ -2451,8 +2445,8 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                 endDrag()
             }
             .drawWithContent {
-                // HUD contents and their boxes go under the children: the action bar is a child of
-                // this Box, so drawing it first would put it behind every HUD painted here.
+                // HUD contents go under the children because the action bar is a child of this Box and
+                // drawing it first would put it behind every HUD painted here
                 val mcToScreen = Platform.screen().mcToScreenScale()
                 drawIntoCanvas { canvas -> drawHudContents(canvas.skiaCanvas, mcToScreen) }
                 if (isDragging) {
@@ -2522,8 +2516,8 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
             val mcToScreen = Platform.screen().mcToScreenScale()
             val bounds = hudBounds(actionBarTarget)
             val layout = hudActionBarLayout(actionBarTarget, mcToScreen, actionIconPx, actionBarGapPx)
-            // HudDragLayer is composed outside OneConfigInterface's Theme scope, so provide one for
-            // the icons (IconButton reads LocalTheme). Only entered while a HUD is hovered.
+            // HudDragLayer is composed outside OneConfigInterface's Theme scope so provide one for the
+            // icons since IconButton reads LocalTheme
             if (bounds != null && bounds.width > 0f && bounds.height > 0f && layout != null) Theme {
                 HudActionBar(
                     hud = actionBarTarget,
@@ -2690,10 +2684,10 @@ private fun rememberHudSearchResults(providers: List<Hud>, query: String): List<
     return results
 }
 
-/** One mod's worth of addable HUDs, as shown in the continuous library list. */
+/** One mod's worth of addable HUDs as shown in the continuous library list */
 private class HudLibrarySection(val modId: String?, val title: String, val huds: List<Hud>)
 
-/** Map key for a section, since the catch-all section has no mod id. */
+/** Map key for a section since the catch-all section has no mod id */
 private fun librarySectionKey(modId: String?): String = modId ?: ""
 
 private fun libraryIconFor(modId: String?): String =
@@ -2866,9 +2860,8 @@ private fun HudPreviewCard(
     onDragStart: (Hud, Float, Float, Float, Float) -> Unit,
     onCardClick: (Hud) -> Unit,
 ) {
-    // Legacy HUDs have no Compose content tree, so render a sized, titled placeholder tile
-    // instead of an empty (zero-size, invisible) preview. The placed instance still renders
-    // for real through LegacyHudRenderer once dragged onto the canvas.
+    // legacy HUDs have no Compose content tree so render a sized titled placeholder instead of an empty
+    // zero-size preview
     if (hud is LegacyHud) {
         LegacyHudPreviewCard(hud, maxCardWidth, onDragStart, onCardClick)
     } else {
@@ -2884,8 +2877,7 @@ private fun LegacyHudPreviewCard(
     onDragStart: (Hud, Float, Float, Float, Float) -> Unit,
     onCardClick: (Hud) -> Unit,
 ) {
-    // Legacy HUDs that report no minimum size (size only known once they render, or never set)
-    // would otherwise be dropped from the library entirely, so fall back to a square tile.
+    // legacy HUDs reporting no minimum size would be dropped from the library so fall back to a square
     val (minW, minH) = hud.minimumSize()
     val naturalW = if (minW > 0f) minW else LEGACY_PREVIEW_FALLBACK_SIZE
     val naturalH = if (minH > 0f) minH else LEGACY_PREVIEW_FALLBACK_SIZE
@@ -2976,7 +2968,6 @@ private fun ComposeHudPreviewCard(
     val density = LocalDensity.current.density
     val theme = LocalTheme.current
 
-    // Hover state tracked via pointer Enter/Exit
     var isHovered by remember { mutableStateOf(false) }
     val backgroundColor by animateColorAsState(
         if (isHovered) Accent else theme.popupBackground,

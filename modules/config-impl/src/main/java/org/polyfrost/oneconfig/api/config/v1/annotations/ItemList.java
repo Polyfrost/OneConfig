@@ -35,12 +35,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Renders a searchable selector for Minecraft items. The annotated field must be a
- * {@code String[]} or {@code List<String>} containing namespaced item registry IDs,
- * for example {@code minecraft:diamond}.
+ * Renders a searchable selector for Minecraft items
  * <p>
- * Selected entries are ordered, can be removed and may be reordered. Use
- * {@link #maxEntries()} with a value of {@code 1} for a single-item selector.
+ * The annotated field must be a {@code String[]} or {@code List<String>} containing
+ * namespaced item registry IDs for example {@code minecraft:diamond}
+ * <p>
+ * Selected entries are ordered and can be removed and may be reordered
+ * <p>
+ * Use {@link #maxEntries()} with a value of {@code 1} for a single-item selector
  */
 @Option(display = Visualizer.ItemListVisualizer.class)
 @Retention(RetentionPolicy.RUNTIME)
@@ -50,7 +52,7 @@ public @interface ItemList {
     String title();
 
     /**
-     * @deprecated No longer needed. OneConfig translates known keys automatically.
+     * @deprecated No longer needed because OneConfig translates known keys automatically
      */
     @Deprecated
     boolean titleTranslation() default false;
@@ -58,7 +60,7 @@ public @interface ItemList {
     String description() default "";
 
     /**
-     * @deprecated No longer needed. OneConfig translates known keys automatically.
+     * @deprecated No longer needed because OneConfig translates known keys automatically
      */
     @Deprecated
     boolean descriptionTranslation() default false;
@@ -68,7 +70,7 @@ public @interface ItemList {
     String category() default "General";
 
     /**
-     * @deprecated No longer needed. OneConfig translates known keys automatically.
+     * @deprecated No longer needed because OneConfig translates known keys automatically
      */
     @Deprecated
     boolean categoryTranslation() default false;
@@ -76,23 +78,23 @@ public @interface ItemList {
     String subcategory() default "General";
 
     /**
-     * @deprecated No longer needed. OneConfig translates known keys automatically.
+     * @deprecated No longer needed because OneConfig translates known keys automatically
      */
     @Deprecated
     boolean subcategoryTranslation() default false;
 
-    /** Maximum number of selected items. {@code 0} means unlimited. */
+    /** Maximum number of selected items and {@code 0} means unlimited */
     int maxEntries() default 0;
 
-    /** Allow the user to drag selected items into a different order. */
+    /** Allow the user to drag selected items into a different order */
     boolean reorderable() default true;
 
-    /** Label of the button that opens the item selector. */
+    /** Label of the button that opens the item selector */
     @TranslatedDefault("oneconfig.itemlist.add")
     String addText() default "oneconfig.itemlist.add";
 
     /**
-     * @deprecated No longer needed. OneConfig translates known keys automatically.
+     * @deprecated No longer needed because OneConfig translates known keys automatically
      */
     @Deprecated
     boolean addTextTranslation() default false;

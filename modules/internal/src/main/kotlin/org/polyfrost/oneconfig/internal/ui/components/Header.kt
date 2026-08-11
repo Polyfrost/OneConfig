@@ -180,9 +180,8 @@ private fun TitleInfoTooltip(title: String) {
         Icon("info", color = LocalTheme.current.textColorSecondary, modifier = Modifier.size(14.dp))
 
         if (isHovered) {
-            // Render in a Popup overlay so the tooltip doesn't take layout space in the
-            // header Row (which would push the search bar over and hide the close button)
-            // and isn't clipped by the Row's fixed height.
+            // popup so the tooltip takes no layout space in the header Row and is not clipped by its
+            // fixed height
             Popup(
                 popupPositionProvider = DropdownPositionProvider(DpOffset(0.dp, 6.dp), density),
                 properties = PopupProperties(focusable = false)

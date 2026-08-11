@@ -12,9 +12,8 @@ abstract class LegacyHud(id: String, title: String, category: Category) : Hud(id
 
     abstract fun render(mcCtx: GuiGraphicsExtractor)
 
-    // Legacy HUDs are fixed-size and render through GuiGraphics, not a Compose tree.
-    // Surfacing the size here lets the design studio compute bounds and a library preview
-    // without reaching into this minecraft-module type from modules/internal.
+    // legacy HUDs are fixed-size and render through GuiGraphics rather than a Compose tree so
+    // exposing the size here keeps modules/internal from reaching into this minecraft-module type
     override fun minimumSize(): Pair<Float, Float> = width to height
 
     @Composable

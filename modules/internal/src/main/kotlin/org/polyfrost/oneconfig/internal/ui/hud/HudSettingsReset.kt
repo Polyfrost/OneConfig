@@ -65,7 +65,7 @@ private val hudUiEpochs = mutableStateMapOf<Hud, Int>()
 private val STATIC_SIZE_OPTIONS = setOf("staticW", "staticH")
 private val POSITION_OPTIONS = setOf("section", "relativeX", "relativeY")
 
-/** Bumped when any HUD field is reset so bound [remember] state is recreated from the HUD. */
+/** Bumped when any HUD field is reset so bound [remember] state is recreated from the HUD */
 fun hudUiEpoch(hud: Hud): Int = hudUiEpochs[hud] ?: 0
 
 private fun bumpHudUiEpoch(hud: Hud) {
@@ -154,7 +154,7 @@ private fun performHudOptionReset(hud: Hud, prop: Property<*>, optionId: String)
     hud.captureStaticSizeDefaults(force = optionId in STATIC_SIZE_OPTIONS)
 }
 
-/** Fixes invalid static dimensions (e.g. after a bad reset) and refreshes the settings UI. */
+/** Fixes invalid static dimensions such as after a bad reset and refreshes the settings UI */
 fun repairHudStaticSize(hud: Hud) {
     if (!hud.staticWidth) return
     if (hud.staticW > 0f && hud.staticH > 0f) {
@@ -178,9 +178,7 @@ private fun resetTreeDefaults(hud: Hud, tree: Tree) {
     }
 }
 
-/**
- * Wraps a HUD designer/settings control so right-click offers "Reset to default" for [optionId].
- */
+/** Wraps a HUD settings control so right-click offers "Reset to default" for [optionId] */
 @Composable
 fun HudSettingTarget(
     hud: Hud,
@@ -240,7 +238,7 @@ fun HudSettingTarget(
     }
 }
 
-/** Recompose key for HUD panels whose controls use local [remember] copies of HUD fields. */
+/** Recompose key for HUD panels whose controls use local [remember] copies of HUD fields */
 @Composable
 fun HudSettingsContent(hud: Hud, content: @Composable () -> Unit) {
     key(hud, hudUiEpoch(hud)) {
@@ -251,8 +249,10 @@ fun HudSettingsContent(hud: Hud, content: @Composable () -> Unit) {
 private val DeleteMenuColor = androidx.compose.ui.graphics.Color(0xFFE5484D)
 
 /**
- * Right-click menu on a HUD element in the design studio canvas. Mirrors the hover action bar so the
- * buttons stay reachable when HUDs are packed too tightly for the bar to be aimed at.
+ * Right-click menu on a HUD element in the design studio canvas
+ *
+ * Mirrors the hover action bar so the buttons stay reachable when HUDs are packed too tightly for the bar
+ * to be aimed at
  */
 @Composable
 fun HudCanvasResetMenu(
@@ -298,8 +298,7 @@ fun HudCanvasResetMenu(
         properties = PopupProperties(focusable = true),
     ) {
         Column(
-            // without this the separator's fillMaxWidth stretches the menu to the popup constraints,
-            // which are the whole screen
+            // without this the separator's fillMaxWidth stretches the menu out to the whole screen
             modifier = Modifier
                 .widthIn(min = 190.dp, max = 240.dp)
                 .background(theme.popupBackground, theme.popupShape)
@@ -421,7 +420,7 @@ private fun HudMenuDivider() {
 private fun keybindHint(keybind: OneConfigKeybind?): String? =
     keybind?.takeIf { it.isBound }?.displayName()
 
-/** Context popup shown on empty canvas space when there is a HUD in the clipboard. */
+/** Context popup shown on empty canvas space when there is a HUD in the clipboard */
 @Composable
 fun HudCanvasPasteMenu(
     expanded: Boolean,

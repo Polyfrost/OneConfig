@@ -62,15 +62,17 @@ import kotlin.math.roundToInt
 
 private val ChainShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
 
-/** Compose's default text cursor thickness. */
+/** Compose's default text cursor thickness */
 private val CaretWidth = 2.dp
 
-/** One slot in the chain. [id] is stable across reorders so equal values stay distinct rows. */
+/** One slot in the chain where [id] is stable across reorders so equal values stay distinct rows */
 private data class ChainEntry(val id: Int, val value: Float)
 
 /**
- * An ordered chain of numbers: drag the handle to reorder, click a row to edit its value in place, and use the
- * trailing button to append the next entry. Leading entries the property locks are shown but cannot be touched.
+ * An ordered chain of numbers where the handle reorders a row clicking edits its value in place and the
+ * trailing button appends the next entry
+ *
+ * Leading entries the property locks are shown but cannot be touched
  */
 @Composable
 fun NumberChainOption(data: NumberChainOptionData) {
@@ -99,7 +101,7 @@ fun NumberChainOption(data: NumberChainOptionData) {
         (rowHeightPx * entries.size + spacingPx * (entries.size - 1).coerceAtLeast(0)).toDp()
     }
 
-    // The property's setter is free to normalize, so re-read rather than trusting what was written.
+    // the property's setter is free to normalize so re-read rather than trusting what was written
     fun commit(next: List<ChainEntry>) {
         data.write(next.map { it.value })
         entries = data.read().map { ChainEntry(idGen[0]++, it) }
@@ -203,8 +205,8 @@ fun NumberChainOption(data: NumberChainOptionData) {
                                 unit = data.unit,
                                 modifier = Modifier.weight(1f),
                                 onCommit = { value ->
-                                    // Losing focus commits, and that can arrive after another row has already
-                                    // claimed the editor, so only the row still being edited may write.
+                                    // losing focus commits and can arrive after another row claimed the editor
+                                    // so only the row still being edited may write
                                     if (editingId == entry.id) {
                                         editingId = -1
                                         commit(entries.map { if (it.id == entry.id) it.copy(value = value) else it })
@@ -289,8 +291,8 @@ private fun ChainValueEditor(
     val style = remember(theme) {
         TextStyle(color = theme.textColor, fontSize = 13.sp, fontFamily = theme.typography.family)
     }
-    // A text field fills whatever width it is given, so the unit has to sit against a field measured to its text.
-    // The field keeps room for a caret past the last digit, which the unit is then shifted back across.
+    // a text field fills whatever width it is given so the unit sits against a field measured to its text
+    // the field keeps room for a caret past the last digit which the unit is shifted back across
     val fieldWidth = with(density) { measurer.measure(text, style).size.width.toDp() } + CaretWidth
 
     fun commit() = onCommit(text.toFloatOrNull()?.coerceIn(min, max) ?: initial)

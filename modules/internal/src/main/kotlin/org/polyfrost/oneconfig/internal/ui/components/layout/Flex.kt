@@ -24,7 +24,6 @@ fun FlexibleLayout(
 
         val placeables = measurables.map { it.measure(constraints.copy(minWidth = 0, minHeight = 0)) }
 
-        // greedy row packing ~ fit as many items per row as possible
         val rows = mutableListOf<List<Placeable>>()
         var currentRow = mutableListOf<Placeable>()
         var currentRowWidth = 0

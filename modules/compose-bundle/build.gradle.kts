@@ -1,9 +1,8 @@
 import net.fabricmc.loom.build.nesting.NestableJarGenerationTask
 import net.fabricmc.loom.task.NestJarsAction
 
-// compose-bundle ships as a standalone Fabric mod (see src/main/resources/fabric.mod.json)
-// so the shaded Compose/skiko runtime can be published to Modrinth separately. It is
-// therefore excluded from the bootstrap JiJ (see oneconfig-bootstrap.gradle.kts).
+// ships as a standalone Fabric mod so the shaded Compose/skiko runtime can be published to
+// Modrinth separately and is excluded from the bootstrap JiJ in oneconfig-bootstrap.gradle.kts
 group = "${rootProject.group}.compose"
 version = "1.0.2+compose.${libs.versions.compose.asProvider().get()}"
 
