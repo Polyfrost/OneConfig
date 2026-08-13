@@ -205,6 +205,15 @@ public class ObjectSerializerTest {
     }
 
     @Test
+    public void testEnumWithBody() {
+        Object test = objectSerializer.serialize(BodyEnum.WITH_BODY, false, false);
+        assertInstanceOf(HashMap.class, test);
+        assertEquals(BodyEnum.class.getName(), ((HashMap<?, ?>) test).get("class"));
+        assertEquals("WITH_BODY", ((HashMap<?, ?>) test).get("value"));
+        assertEquals(BodyEnum.WITH_BODY, objectSerializer.deserialize((Map<String, Object>) test));
+    }
+
+    @Test
     public void testNull() {
         Object nullTest = objectSerializer.serialize(null, false, false);
         assertNull(nullTest);
@@ -238,7 +247,44 @@ public class ObjectSerializerTest {
         assertEquals(input, self);
     }
 
+    @Test
+    public void testSerializeComplexCollectionFirstElement() {
+        java.util.List<Dimension> in = Arrays.asList(new Dimension(1, 2), new Dimension(3, 4));
+
+        Object[] asArray = (Object[]) objectSerializer.serialize(in, false, false);
+        for (Object element : asArray) {
+            assertInstanceOf(Map.class, element, "every element must be serialized, not just the tail");
+        }
+        assertEquals("java.awt.Dimension", ((Map<?, ?>) asArray[0]).get("class"));
+
+        List<?> asList = (List<?>) objectSerializer.serialize(in, true, false);
+        for (Object element : asList) {
+            assertInstanceOf(Map.class, element, "every element must be serialized, not just the tail");
+        }
+        assertEquals("java.awt.Dimension", ((Map<?, ?>) asList.get(0)).get("class"));
+    }
+
+    @Test
+    public void testDontSerializeLambdas() {
+        assertNull(objectSerializer.serialize((TestCallback) () -> "hi", false, false));
+    }
+
+    interface TestCallback {
+        String call();
+    }
+
     enum TestEnum {
         TEST1
+    }
+
+    enum BodyEnum {
+        WITH_BODY {
+            @Override
+            String describe() {
+                return "body";
+            }
+        };
+
+        abstract String describe();
     }
 }

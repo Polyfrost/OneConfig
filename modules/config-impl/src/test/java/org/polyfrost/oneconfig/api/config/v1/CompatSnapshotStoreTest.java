@@ -244,6 +244,21 @@ class CompatSnapshotStoreTest {
     }
 
     @Test
+    void snapshotOfAnArrayOfObjectsIsWrittenAndReadBackAsAList() throws IOException {
+        CompatSnapshotStore store = new CompatSnapshotStore(FILE_NAME);
+        java.util.Map<String, Object> entry = new java.util.HashMap<>();
+        entry.put("class", "java.awt.Dimension");
+        entry.put("width", 10);
+        store.putValue(profile, "widgets", "sizes", new Object[]{entry});
+
+        store.flushOrThrow(profile);
+
+        CompatSnapshotStore reloaded = new CompatSnapshotStore(FILE_NAME);
+        Object read = reloaded.getValue(profile, "widgets", "sizes");
+        assertEquals(java.util.Collections.singletonList(entry), read);
+    }
+
+    @Test
     void failedSnapshotWriteDoesNotAdvanceItsBaseline() throws IOException {
         String snapshotName = "snapshot-order-" + UUID.randomUUID() + ".json";
         String baselineName = "baseline-order-" + UUID.randomUUID() + ".json";

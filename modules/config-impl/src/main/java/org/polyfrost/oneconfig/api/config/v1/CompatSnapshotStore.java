@@ -337,6 +337,12 @@ public final class CompatSnapshotStore {
             for (Object o : in) out.add(toStorable(o));
             return out;
         }
+        if (value != null && value.getClass().isArray()) {
+            int len = java.lang.reflect.Array.getLength(value);
+            java.util.ArrayList<Object> out = new java.util.ArrayList<>(len);
+            for (int i = 0; i < len; i++) out.add(toStorable(java.lang.reflect.Array.get(value, i)));
+            return out;
+        }
         return value;
     }
 

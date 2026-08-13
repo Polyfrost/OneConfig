@@ -224,7 +224,11 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
             try {
                 value = deserialize(stored);
             } catch (Throwable t) {
-                ConfigManager.LOGGER.warn("Failed to deserialize compat value for '{}'", key, t);
+                ConfigManager.LOGGER.warn("Failed to deserialize compat value for '{}', re-snapshotting from live value", key, t);
+                if (liveSer != null) {
+                    store.putValue(profile, treeId, key, liveSer);
+                    setBaseline(treeId, key, liveSer);
+                }
                 return;
             }
             Object live = p.get();
@@ -394,27 +398,36 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
 
     private static Object trySerialize(Object value) {
         try {
-            return normalize(ObjectSerializer.INSTANCE.serialize(value, false, false));
+            Object serialized = ObjectSerializer.INSTANCE.serialize(value, true, true);
+            return isStorable(serialized) ? serialized : null;
         } catch (Throwable t) {
             return null;
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private static Object normalize(Object value) {
+    private static boolean isStorable(Object value) {
+        if (value == null || value instanceof CharSequence || value instanceof Number
+                || value instanceof Boolean || value instanceof Enum) return true;
         if (value instanceof List) {
-            List<Object> in = (List<Object>) value;
-            List<Object> out = new java.util.ArrayList<>(in.size());
-            for (Object o : in) out.add(normalize(o));
-            return out;
+            for (Object o : (List<?>) value) {
+                if (!isStorable(o)) return false;
+            }
+            return true;
         }
-        if (value != null && value.getClass().isArray()) {
+        if (value.getClass().isArray()) {
             int len = java.lang.reflect.Array.getLength(value);
-            List<Object> out = new java.util.ArrayList<>(len);
-            for (int i = 0; i < len; i++) out.add(normalize(java.lang.reflect.Array.get(value, i)));
-            return out;
+            for (int i = 0; i < len; i++) {
+                if (!isStorable(java.lang.reflect.Array.get(value, i))) return false;
+            }
+            return true;
         }
-        return value;
+        if (value instanceof Map) {
+            for (Map.Entry<?, ?> e : ((Map<?, ?>) value).entrySet()) {
+                if (!(e.getKey() instanceof String) || !isStorable(e.getValue())) return false;
+            }
+            return true;
+        }
+        return false;
     }
 
     @SuppressWarnings("unchecked")
