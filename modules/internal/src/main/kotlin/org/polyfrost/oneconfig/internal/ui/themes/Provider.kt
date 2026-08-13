@@ -12,12 +12,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Density
 import kotlinx.coroutines.delay
 import androidx.compose.ui.graphics.toArgb
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationTheme
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ThemeConfig
+import org.polyfrost.oneconfig.internal.ui.DESIGN_HEIGHT_DP
+import org.polyfrost.oneconfig.internal.ui.DESIGN_WIDTH_DP
+import org.polyfrost.oneconfig.internal.ui.EDGE_MARGIN_FRACTION
+import kotlin.math.ceil
 
 private var _accent by mutableStateOf(Color(ThemeConfig.accentColor.argb))
 
@@ -26,6 +32,35 @@ val Accent: Color get() = _accent
 fun updateAccent() { _accent = Color(ThemeConfig.accentColor.argb) }
 
 val LocalTheme = compositionLocalOf<UITheme> { error("A UI theme is required but was not provided") }
+
+private const val GRID_ANCHOR_SP = 14f
+
+private const val GLYPH_PIXEL_EM = 10f
+
+private val screenPlatform by lazy { runCatching { Platform.screen() }.getOrNull() }
+
+private fun surfaceRatio(): Float = screenPlatform?.surfaceRatio()?.takeIf { it > 0f } ?: 1f
+
+@Composable
+private fun pixelGridDensity(): Density {
+    val density = LocalDensity.current
+    val window = LocalWindowInfo.current.containerSize
+    val headroom = minOf(
+        (window.width  * EDGE_MARGIN_FRACTION) / (DESIGN_WIDTH_DP  * density.density),
+        (window.height * EDGE_MARGIN_FRACTION) / (DESIGN_HEIGHT_DP * density.density),
+    )
+    val anchorPx = GRID_ANCHOR_SP * density.fontScale * density.density * surfaceRatio()
+    val scale = snapScaleToPixelGrid(anchorPx, headroom)
+    return remember(density, scale) {
+        if (scale == 1f) density else Density(density.density * scale, density.fontScale)
+    }
+}
+
+internal fun snapScaleToPixelGrid(anchorPx: Float, max: Float): Float {
+    if (anchorPx <= 0f) return 1f
+    val snapped = ceil(anchorPx / GLYPH_PIXEL_EM).coerceAtLeast(1f) * GLYPH_PIXEL_EM / anchorPx
+    return if (snapped <= max) snapped else 1f
+}
 
 @Composable
 fun Theme(content: @Composable () -> Unit) {
@@ -47,15 +82,9 @@ fun Theme(content: @Composable () -> Unit) {
 
     SideEffect { syncNotificationTheme(animated) }
 
-    val density = LocalDensity.current
-    val scaled = animated.typography.fontScale
-    val themedDensity = remember(density, scaled) {
-        if (scaled == 1f) density else Density(density.density, density.fontScale * scaled)
-    }
-
     CompositionLocalProvider(
         LocalTheme provides animated,
-        LocalDensity provides themedDensity,
+        LocalDensity provides pixelGridDensity(),
         content = content
     )
 }

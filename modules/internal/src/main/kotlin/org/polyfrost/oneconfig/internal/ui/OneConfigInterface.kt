@@ -207,9 +207,9 @@ fun OneConfigInterface(
     }
 }
 
-private const val DESIGN_WIDTH_DP  = 1391f
-private const val DESIGN_HEIGHT_DP = 700f
-private const val EDGE_MARGIN_FRACTION = 0.9f
+internal const val DESIGN_WIDTH_DP  = 1391f
+internal const val DESIGN_HEIGHT_DP = 700f
+internal const val EDGE_MARGIN_FRACTION = 0.9f
 
 private val EaseOutExpo = Easing { x -> if (x >= 1f) 1f else 1f - 2f.pow(-10f * x) }
 
