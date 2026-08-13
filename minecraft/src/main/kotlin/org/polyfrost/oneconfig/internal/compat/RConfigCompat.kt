@@ -93,7 +93,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
     }
 
 
-    // 1st layer gets converted to categories, 2nd+ layer to subcategories
+    // 1st layer becomes categories 2nd+ layer becomes subcategories
     private fun parseCategory(
         config: ResourcefulConfig,
         id: String,
@@ -135,7 +135,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
     private fun parseButton(button: ResourcefulConfigButton, tree: Tree, path: String, usedIds: MutableSet<String>) {
         val property = Properties.dummy(id = uniqueId(usedIds, "$path/${idPart(button.title(), "button")}"))
         property.title = button.title()?.takeUnless { it.isEmpty() }
-            ?: "button" //todo find a better way of doing this, rconfig allows empty names
+            ?: "button" //todo find a better way of doing this because rconfig allows empty names
         property.description = button.description()
         property.visualizer = Visualizer.ButtonVisualizer::class.java
         property.metadata?.put("runnable", Runnable { button.invoke() })
@@ -273,8 +273,8 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         val options = entry.options()
 
         if (entry.isArray) {
-            // Enum arrays are a fixed set: a draggable reorderable list, or a multi-select dropdown.
-            // String/number arrays are user-editable, so they become the matching list option.
+            // enum arrays are a fixed set so a draggable reorderable list or a multi-select dropdown
+            // string/number arrays are user-editable so they become the matching list option
             if (entry.type() == EntryType.ENUM) buildEnumArray(entry, builder, options, tree)
             else buildValueArray(entry, builder, options, tree)
             return
@@ -304,7 +304,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
             }
 
             EntryType.STRING -> {
-                // TODO multiline :pensive:
+                // TODO multiline
                 builder["validate"] =
                     if (options.hasOption(Option.REGEX)) options.getOption(Option.REGEX).pattern() else null
                 Visualizer.TextVisualizer::class.java
@@ -312,8 +312,8 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
 
             EntryType.BOOLEAN -> Visualizer.SwitchVisualizer::class.java
             EntryType.ENUM -> {
-                // Show the same display names rconfig itself renders (Translatable / StringRepresentable /
-                // fallback), positionally aligned to the enum constant order the dropdown iterates.
+                // show the same display names rconfig itself renders (Translatable / StringRepresentable /
+                // fallback) aligned to the enum constant order the dropdown iterates
                 entry.objectType().enumConstants?.filterIsInstance<Enum<*>>()?.takeIf { it.isNotEmpty() }?.let {
                     builder["optionLabels"] = it.map(::enumDisplayName).toTypedArray()
                 }
@@ -386,8 +386,8 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         }
     }
 
-    // enum arrays render as either a draggable (reorderable) list or a multi-select dropdown,
-    // depending on whether the field is annotated @ConfigOption.Draggable.
+    // enum arrays render as a draggable (reorderable) list or a multi-select dropdown
+    // depending on whether the field is annotated @ConfigOption.Draggable
     private fun buildEnumArray(
         entry: ResourcefulConfigValueEntry,
         builder: RConfigPropertyBuilder,
@@ -398,7 +398,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         val names = constants.map { it.name }.toTypedArray()
         val byName = constants.associateBy { it.name }
         builder["options"] = names
-        // "options" stays the enum names (used for state mapping); show rconfig's display names instead.
+        // "options" stays the enum names for state mapping so show rconfig's display names instead
         builder["optionLabels"] = constants.map(::enumDisplayName).toTypedArray()
 
         if (options.hasOption(Option.DRAGGABLE)) {
@@ -425,8 +425,8 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         tree.put(builder.build())
     }
 
-    // Mirror rconfig's own enum label resolution: Translatable key, then StringRepresentable serialized
-    // name, then the raw enum name.
+    // mirror rconfig's own enum label resolution Translatable key then StringRepresentable serialized
+    // name then the raw enum name
     private fun enumDisplayName(value: Enum<*>): String {
         //? >= 1.21.8 {
         return Translatable.toComponent(value).string
@@ -469,8 +469,8 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         }
         var getter: () -> Any = option::get
 
-        // the code-defined default, so the UI can offer "reset to default" (mirrors Config.captureDefaults
-        // for native configs). rconfig exposes this directly, so no pre-load snapshot is needed.
+        // code-defined default so the UI can offer "reset to default"
+        // rconfig exposes it directly so no pre-load snapshot is needed
         val defaultValue: Any? = option.defaultValue()
 
         val metadata: MutableMap<String, Any?> = mutableMapOf()

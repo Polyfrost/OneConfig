@@ -256,7 +256,7 @@ private fun testModTree(id: String, title: String, category: Config.Category): T
     return tree
 }
 
-/** One option of every type, for visual testing. */
+/** One option of every type for visual testing */
 private fun testControlsTree(): Tree {
     val tree = Tree("controls-demo", "Controls Demo", "A demo of the controls", null)
     tree.addMetadata("category", Config.Category.OTHER)

@@ -16,13 +16,17 @@ object PlayerHeadLoader {
     private val cache = ConcurrentHashMap<UUID, ByteArray>()
     private val inFlight = ConcurrentHashMap.newKeySet<UUID>()
 
-    /** The head already loaded for this account, if any. Safe to call from any thread. */
+    /**
+     * The head already loaded for this account if any
+     *
+     * Safe to call from any thread
+     */
     fun cachedLocalPlayerHeadPng(mc: Minecraft): ByteArray? = profileId(mc)?.let { cache[it] }
 
     /**
-     * Must not be called on the client thread: awaiting the skin and the web fallback both block.
+     * Must not be called on the client thread because awaiting the skin and the web fallback both block
      *
-     * @return null when the head could not be loaded, or when another thread is already loading it
+     * @return null when the head could not be loaded or when another thread is already loading it
      */
     fun loadLocalPlayerHeadPng(mc: Minecraft): ByteArray? {
         val id = profileId(mc) ?: return loadFromCachedSkin(mc)
@@ -45,18 +49,20 @@ object PlayerHeadLoader {
     }
 
     /**
-     * Runs [task] on the client thread and waits for the head it produces. `submit(Supplier)` runs the task inline when
-     * already on the client thread, so the wait cannot deadlock there.
+     * Runs [task] on the client thread and waits for the head it produces
+     *
+     * `submit(Supplier)` runs the task inline when already on the client thread so the wait cannot
+     * deadlock there
      */
     private fun onClientThread(mc: Minecraft, task: Supplier<NativeImage>): NativeImage? {
-        // passed as a value, not a lambda: submit(Runnable) and submit(Supplier) are both SAM candidates
+        // passed as a value not a lambda because submit(Runnable) and submit(Supplier) are both SAM candidates
         val future = mc.submit(task)
         return try {
             future.get(CLIENT_THREAD_TIMEOUT_MS, TimeUnit.MILLISECONDS)
         } catch (e: Exception) {
             if (e is InterruptedException) Thread.currentThread().interrupt()
             future.cancel(false)
-            // the task may still run; free its image rather than leaking it off-heap
+            // the task may still run so free its image rather than leaking it off-heap
             future.whenComplete { image, _ -> image?.close() }
             LOGGER.debug("Failed to read the player head on the client thread", e)
             null

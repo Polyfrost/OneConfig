@@ -12,25 +12,33 @@ open class OneConfigKeybind(
     val action: (Boolean) -> Boolean,
 ) : OverwriteMergeable {
     /**
-     * Human-readable name shown for this keybind in Minecraft's Controls menu, or `null` if it should not be
-     * surfaced there. Set automatically for config-backed keybinds (from the `@Keybind` title) and may be set
-     * via [KeybindHelper.name].
+     * Human-readable name shown for this keybind in Minecraft's Controls menu or `null` if it should not be
+     * surfaced there
+     *
+     * Set automatically for config-backed keybinds (from the `@Keybind` title) and may be set
+     * via [KeybindHelper.name]
      */
     @Transient
     var name: String? = null
 
     /**
-     * Category heading this keybind is grouped under in Minecraft's Controls menu. Falls back to `"OneConfig"`
-     * when unset. Set automatically for config-backed keybinds (from the `@Keybind` category) and may be set
-     * via [KeybindHelper.category].
+     * Category heading this keybind is grouped under in Minecraft's Controls menu
+     *
+     * Falls back to `"OneConfig"` when unset
+     *
+     * Set automatically for config-backed keybinds (from the `@Keybind` category) and may be set
+     * via [KeybindHelper.category]
      */
     @Transient
     var category: String? = null
 
     /**
-     * The original (code-default) keybind this one was created from, if any — used so Minecraft's Controls menu can
-     * reset back to the true OneConfig default (keys + modifiers), matching the OneConfig GUI's reset. Set by the
-     * config layer from `"default"` metadata; its action is irrelevant (only keys/mods are read).
+     * The code-default keybind this one was created from so Minecraft's Controls menu resets back to the true
+     * OneConfig default
+     *
+     * Set by the config layer from `"default"` metadata
+     *
+     * Only its keys and modifiers are read
      */
     @Transient
     var defaultKeybind: OneConfigKeybind? = null
@@ -38,17 +46,21 @@ open class OneConfigKeybind(
     val isBound get() = keyCodes?.isNotEmpty() == true || mouseBtns?.isNotEmpty() == true
 
     /**
-     * The single input code Minecraft's Controls menu binds to: the first key code, else the first mouse button, else
-     * `-1` (GLFW_KEY_UNKNOWN). Combos and modifiers can't be represented by a single vanilla mapping; they are shown
-     * via the keybind's display label instead.
+     * The single input code Minecraft's Controls menu binds to
+     *
+     * It is the first key code else the first mouse button else `-1` (GLFW_KEY_UNKNOWN)
+     *
+     * Combos and modifiers cannot be represented by a single vanilla mapping so they are shown
+     * via the keybind's display label instead
      */
     val boundCode get() = keyCodes?.firstOrNull() ?: mouseBtns?.firstOrNull() ?: -1
 
     val isMousePrimary get() = (keyCodes?.isNotEmpty() != true) && (mouseBtns?.isNotEmpty() == true)
 
     /**
-     * Create a copy of this keybind bound to the given keys/modifiers, preserving the action, duration, subtype, and
-     * Controls-menu metadata.
+     * Create a copy of this keybind bound to the given keys/modifiers
+     *
+     * Preserves the action and duration and subtype and Controls-menu metadata
      */
     open fun copyWith(keyCodes: IntArray?, mouseBtns: IntArray?, mods: Byte): OneConfigKeybind =
         OneConfigKeybind(keyCodes, mouseBtns, mods, durationNanos, action).also {
@@ -58,8 +70,9 @@ open class OneConfigKeybind(
         }
 
     /**
-     * Absorb the keys/modifiers of a freshly-loaded keybind into this instance, keeping this instance's transient
-     * action (lost on deserialization) and Controls-menu metadata.
+     * Absorb the keys/modifiers of a freshly-loaded keybind into this instance
+     *
+     * Keeps this instance's transient action (lost on deserialization) and Controls-menu metadata
      */
     override fun mergeOverwrite(incoming: Any): Any {
         if (incoming is OneConfigKeybind && incoming !== this) {
@@ -93,8 +106,11 @@ open class OneConfigKeybind(
     }
 
     /**
-     * Human-readable label for this keybind (e.g. `"Shift + G"` or `"Right Shift"`), suitable for display in UI or
-     * messages. Returns `"None"` when unbound.
+     * Human-readable label for this keybind such as `"Shift + G"` or `"Right Shift"`
+     *
+     * Suitable for display in UI or messages
+     *
+     * Returns `"None"` when unbound
      */
     fun displayName(): String {
         if (!isBound) return "None"
@@ -106,7 +122,7 @@ open class OneConfigKeybind(
     }
 
     companion object {
-        /** Human-readable name for a GLFW key code. */
+        /** Human-readable name for a GLFW key code */
         @JvmStatic
         fun keyName(glfwCode: Int): String = when (glfwCode) {
             -1 -> "None"
@@ -161,8 +177,8 @@ open class OneConfigKeybind(
             348 -> "Menu"
             in 48..57 -> ('0' + (glfwCode - 48)).toString()
             in 65..90 -> ('A' + (glfwCode - 65)).toString()
-            in 290..313 -> "F${glfwCode - 289}"          // F1..F24
-            in 320..329 -> "Numpad ${glfwCode - 320}"    // KP_0..KP_9
+            in 290..313 -> "F${glfwCode - 289}"          // F1 to F24
+            in 320..329 -> "Numpad ${glfwCode - 320}"    // KP_0 to KP_9
             else -> "Key $glfwCode"
         }
 

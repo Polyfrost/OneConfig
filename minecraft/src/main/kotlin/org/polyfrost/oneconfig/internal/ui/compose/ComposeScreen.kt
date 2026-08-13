@@ -150,11 +150,12 @@ abstract class ComposeScreen : Screen(CommonComponents.EMPTY) {
     }
 
     /**
-     * Called when a failed scene has been discarded and the screen is about to be rebuilt from scratch.
+     * Called when a failed scene has been discarded and the screen is about to be rebuilt from scratch
      *
-     * The session is still open, but everything the old composition held is gone, so whatever the screen
-     * wants back has to be put somewhere the fresh composition will read it. Runs before the new scene is
-     * given its content.
+     * Everything the old composition held is gone so state the screen wants back must be stored where
+     * the fresh composition will read it
+     *
+     * Runs before the new scene is given its content
      */
     protected open fun onSceneRebuilding() {}
 
@@ -420,8 +421,8 @@ abstract class ComposeScreen : Screen(CommonComponents.EMPTY) {
         sceneDirty = false
         when {
             SkiaCtx.isDeferredComposeBackend -> SkiaCtx.drawComposeBlit(ctx, renderBlock)
-            SkiaCtx.isVulkanMode -> SkiaCtx.queueDraw(renderBlock) // non-deferred Vulkan: draw straight to the main RT
-            else -> SkiaCtx.submitComposeFrame(wasDirty, renderBlock) // GL: cached FBO, re-render only when dirty
+            SkiaCtx.isVulkanMode -> SkiaCtx.queueDraw(renderBlock) // non-deferred Vulkan draws straight to the main RT
+            else -> SkiaCtx.submitComposeFrame(wasDirty, renderBlock) // GL uses a cached FBO and re-renders only when dirty
         }
     }
 
@@ -500,7 +501,7 @@ abstract class ComposeScreen : Screen(CommonComponents.EMPTY) {
         val char = Char(event.codepoint)
         val codepoint = event.codepoint
         //? >= 26.1 {
-        val modifiers = 0 //they removed them from the event, apparently glfw doesn't pass them anymore.
+        val modifiers = 0 //dropped from the event in 26.1 because glfw no longer passes them
         //? } else
         //val modifiers = event.modifiers
     //? } else {
@@ -570,8 +571,8 @@ abstract class ComposeScreen : Screen(CommonComponents.EMPTY) {
             androidx.compose.ui.input.key.KeyEvent(
                 key = Key(awtCode, eventLocation),
                 type = KeyEventType.KeyDown,
-                // Carry the raw GLFW key code so consumers (e.g. KeybindOption) can recover it losslessly;
-                // the AWT round-trip in the Key collapses unmapped keys to VK_UNDEFINED.
+                // carry the raw GLFW key code so consumers like KeybindOption can recover it losslessly
+                // as the AWT round-trip in the Key collapses unmapped keys to VK_UNDEFINED
                 codePoint = key,
                 isCtrlPressed = modifiers.ctrlDown(),
                 isShiftPressed = modifiers.shiftDown(),
@@ -647,9 +648,8 @@ abstract class ComposeScreen : Screen(CommonComponents.EMPTY) {
         return m
     }
 
-    // AWT collapses left/right modifiers to one key code; preserve the side via key location so Compose can still
-    // tell left shift from right shift in the Key it receives. (Keybinds themselves now read the raw GLFW code
-    // from codePoint, which already distinguishes the sides.)
+    // AWT collapses left/right modifiers to one key code so the side is preserved via key location
+    // and Compose can still tell left shift from right shift
     private fun glfwKeyLocation(glfwKey: Int): Int = when (glfwKey) {
         GLFW.GLFW_KEY_RIGHT_SHIFT, GLFW.GLFW_KEY_RIGHT_CONTROL, GLFW.GLFW_KEY_RIGHT_ALT, GLFW.GLFW_KEY_RIGHT_SUPER -> KeyEvent.KEY_LOCATION_RIGHT
         GLFW.GLFW_KEY_LEFT_SHIFT, GLFW.GLFW_KEY_LEFT_CONTROL, GLFW.GLFW_KEY_LEFT_ALT, GLFW.GLFW_KEY_LEFT_SUPER -> KeyEvent.KEY_LOCATION_LEFT
@@ -733,7 +733,6 @@ abstract class ComposeScreen : Screen(CommonComponents.EMPTY) {
         return Offset(mouse.xpos().toFloat(), mouse.ypos().toFloat())
     }
 
-    // Dummy component needed for constructing AWT key events
     private val dummyComponent by lazy { object : Component() {} }
 
     private companion object {

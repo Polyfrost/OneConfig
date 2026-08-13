@@ -68,11 +68,8 @@ object BlurRenderer {
             drawRegionFullRes(canvas, x, y, width, height, radius, sourceSurface)
         }
 
-        // BlendMode.SRC above copies the source's alpha verbatim. On 1.21.11 and below Minecraft's
-        // main render target leaves that alpha < 1, which is harmless when drawing straight to the
-        // opaque back buffer, but makes the backdrop turn transparent the moment Compose composites
-        // it through an offscreen layer (the open/close fade uses one). Force the region opaque while
-        // preserving its colour so the backdrop survives layer compositing on every version.
+        // BlendMode.SRC copies source alpha verbatim and on 1.21.11 and below that alpha is < 1 so
+        // force the region opaque or the backdrop turns transparent in Compose offscreen layers
         canvas.save()
         canvas.clipRect(Rect.makeXYWH(0f, 0f, width, height))
         canvas.drawRect(Rect.makeXYWH(0f, 0f, width, height), OPAQUE_ALPHA_PAINT)

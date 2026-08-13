@@ -53,21 +53,25 @@ final class LwjglTinyFd implements TinyFdApi {
 
     /**
      * Passing this as the title displays nothing and instead reports whether a graphical backend is
-     * available. Without one, tinyfd falls back to a console prompt that writes to stdout and blocks
-     * on stdin forever.
+     * available
+     * <p>
+     * Without one tinyfd falls back to a console prompt that writes to stdout and blocks on stdin
+     * forever
      */
     private static final String QUERY_TITLE = "tinyfd_query";
 
     /**
-     * tinyfd keeps its state, including the buffers it returns results out of, in globals, so having
-     * two dialogs open at once corrupts them and crashes the JVM inside native code. Every call into
-     * tinyfd is made while holding this lock, so at most one dialog is open at a time and callers
-     * that arrive meanwhile wait their turn.
+     * tinyfd keeps its state in globals including the buffers it returns results out of
+     * <p>
+     * Having two dialogs open at once corrupts them and crashes the JVM inside native code
+     * <p>
+     * Every call into tinyfd is made while holding this lock so at most one dialog is open at a time
+     * and callers that arrive meanwhile wait their turn
      */
     private static final ReentrantLock DIALOG_LOCK = new ReentrantLock(true);
 
     /**
-     * Guarded by {@link #DIALOG_LOCK}.
+     * Guarded by {@link #DIALOG_LOCK}
      */
     @Nullable
     private static Boolean graphicalBackend;
@@ -76,9 +80,9 @@ final class LwjglTinyFd implements TinyFdApi {
     }
 
     /**
-     * Opens a dialog with exclusive access to tinyfd.
+     * Opens a dialog with exclusive access to tinyfd
      *
-     * @param description what the dialog does, for logging, e.g. {@code "open file selector"}
+     * @param description what the dialog does for logging such as {@code "open file selector"}
      * @param fallback    returned if no dialog can be shown or it failed
      */
     private static <T> T open(String description, T fallback, Dialog<T> dialog) {
@@ -95,7 +99,7 @@ final class LwjglTinyFd implements TinyFdApi {
     }
 
     /**
-     * Must be called while holding {@link #DIALOG_LOCK}.
+     * Must be called while holding {@link #DIALOG_LOCK}
      */
     private static boolean hasGraphicalBackend() {
         if (graphicalBackend != null) return graphicalBackend;
@@ -104,8 +108,8 @@ final class LwjglTinyFd implements TinyFdApi {
         String backend;
         try {
             available = messageBox(QUERY_TITLE, "", OK_DIALOG, INFO_ICON, 1) != 0;
-            // the backend the query selected, e.g. "applescript" or "basicinput" for the console
-            // fallback. only meaningful directly after a call.
+            // the backend the query selected such as "applescript" or "basicinput" for the console
+            // fallback and only meaningful directly after a call
             backend = TinyFileDialogs.tinyfd_getGlobalChar("tinyfd_response");
         } catch (Throwable t) {
             LOGGER.error("Failed to query the tinyfd dialog backend", t);
@@ -117,7 +121,7 @@ final class LwjglTinyFd implements TinyFdApi {
             LOGGER.error(
                     "No graphical dialog backend is available, native dialogs are disabled (backend={}, SSH_TTY={})",
                     backend,
-                    // tinyfd unconditionally falls back to the console when this is set, even if empty
+                    // tinyfd unconditionally falls back to the console when this is set even if empty
                     System.getenv("SSH_TTY")
             );
         }
@@ -126,9 +130,9 @@ final class LwjglTinyFd implements TinyFdApi {
     }
 
     /**
-     * Must be called while holding {@link #DIALOG_LOCK}.
+     * Must be called while holding {@link #DIALOG_LOCK}
      *
-     * @return true if no dialog can be opened, in which case the user has been notified.
+     * @return true if no dialog can be opened in which case the user has been notified
      */
     private static boolean noGraphicalBackend() {
         if (hasGraphicalBackend()) return false;
@@ -145,11 +149,13 @@ final class LwjglTinyFd implements TinyFdApi {
 
     /**
      * Goes through tinyfd's unsafe entry point because LWJGL 3.4 changed the public
-     * {@code tinyfd_messageBox} overload from {@code boolean} to {@code int}, whereas
-     * {@code ntinyfd_messageBox} is identical in both. This module is compiled once against a single
-     * LWJGL version but runs against whichever one the game ships.
+     * {@code tinyfd_messageBox} overload from {@code boolean} to {@code int} whereas
+     * {@code ntinyfd_messageBox} is identical in both
+     * <p>
+     * This module is compiled once against a single LWJGL version but runs against whichever one the
+     * game ships
      *
-     * @return the index of the button the user picked, 0 for cancel/no.
+     * @return the index of the button the user picked <br>0 for cancel or no
      */
     private static int messageBox(@Nullable String title, @Nullable String message, @Nullable String dialog, @Nullable String icon, int defaultButton) {
         try (MemoryStack stack = MemoryStack.stackPush()) {

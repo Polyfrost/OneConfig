@@ -21,7 +21,7 @@ object KeybindManager {
     private val activeBinds = HashSet<OneConfigKeybind>()
 
     /**
-     * Bridge into Minecraft's native Controls menu if present.
+     * Bridge into Minecraft's native Controls menu if present
      */
     private val bridge: MinecraftKeybindBridge? by lazy {
         try {
@@ -33,10 +33,10 @@ object KeybindManager {
         }
     }
 
-    /** Listeners notified when a keybind is rebound from Minecraft's Controls menu, with (old, new) instances. */
+    /** Listeners notified when a keybind is rebound from Minecraft's Controls menu with the old and new instances */
     private val rebindListeners = ArrayList<(OneConfigKeybind, OneConfigKeybind) -> Unit>()
 
-    /** Listeners notified when a keybind is edited in-place from Minecraft's Controls menu (same instance). */
+    /** Listeners notified when a keybind is edited in-place from Minecraft's Controls menu (same instance) */
     private val menuEditListeners = ArrayList<(OneConfigKeybind) -> Unit>()
 
     private val downKeys = HashSet<Int>()
@@ -56,9 +56,8 @@ object KeybindManager {
 
     init {
         eventHandler { (key, _, state): KeyInputEvent ->
-            // key == 0 marks a character (text input) event, not a coded key press. These only ever fire
-            // with state == 1 (never released), so adding them to downKeys would leave 0 stuck there and
-            // match any keybind bound to code 0. Ignore them entirely; keybinds only care about key codes.
+            // key == 0 marks a character event not a coded key press and it never reports a release
+            // so tracking it in downKeys would leave 0 stuck and match any keybind bound to code 0
             if (key == 0) return@eventHandler
             if (state == 2) return@eventHandler
             val down = state == 1
@@ -104,8 +103,10 @@ object KeybindManager {
     fun isRegistered(bind: OneConfigKeybind): Boolean = bind in binds
 
     /**
-     * Re-push an already-registered keybind to the Minecraft Controls menu. Use after mutating a keybind's
-     * [OneConfigKeybind.name]/[OneConfigKeybind.category] so the vanilla mapping picks up the new metadata.
+     * Re-push an already-registered keybind to the Minecraft Controls menu
+     *
+     * Use after mutating a keybind's [OneConfigKeybind.name]/[OneConfigKeybind.category] so the vanilla
+     * mapping picks up the new metadata
      */
     @JvmStatic
     fun refreshMinecraftBinding(bind: OneConfigKeybind) {
@@ -113,15 +114,12 @@ object KeybindManager {
     }
 
     /**
-     * Swap a registered keybind for a new one, preserving its registration.
+     * Swap a registered keybind for a new one while preserving its registration
      *
-     * Used by the settings UI when the user rebinds a keybind: setting the config property may either mutate the
-     * existing keybind in place (in which case [old] and [new] are the same instance and it is already registered
-     * with the updated keys) or replace it with a fresh instance (in which case the old, stale instance must be
-     * swapped out of the manager). Handling both here means a mod's keybind keeps working after a rebind without
-     * the mod having to register its own change callback to unregister/re-register.
+     * Setting the config property may either mutate [old] in place (so [old] and [new] are the same instance and
+     * already registered) or hand back a fresh instance in which case the stale one is swapped out here
      *
-     * If [old] was never registered, nothing happens — keybinds the caller chose not to manage are left alone.
+     * Nothing happens if [old] was never registered
      */
     @JvmStatic
     fun replace(old: OneConfigKeybind?, new: OneConfigKeybind): OneConfigKeybind {
@@ -151,8 +149,9 @@ object KeybindManager {
     }
 
     /**
-     * Notify that [bind] was mutated in place by Minecraft's Controls menu (rebind/unbind/reset). Re-syncs the vanilla
-     * mapping and notifies [menuEditListeners]
+     * Notify that [bind] was mutated in place by Minecraft's Controls menu (rebind/unbind/reset)
+     *
+     * Re-syncs the vanilla mapping and notifies [menuEditListeners]
      */
     @JvmStatic
     fun notifyMenuEdit(bind: OneConfigKeybind) {

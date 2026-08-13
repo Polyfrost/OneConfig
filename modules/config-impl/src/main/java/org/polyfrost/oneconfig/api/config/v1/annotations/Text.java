@@ -38,9 +38,7 @@ public @interface Text {
     String title();
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given title is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the title and remove this flag.
+     * @deprecated OneConfig auto-translates title values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean titleTranslation() default false;
@@ -51,9 +49,7 @@ public @interface Text {
     String description() default "";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given description is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the description and remove this flag.
+     * @deprecated OneConfig auto-translates description values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean descriptionTranslation() default false;
@@ -64,13 +60,13 @@ public @interface Text {
     String icon() default "";
 
     /**
-     * Insert a regex expression which will be used to validate the text written in the box.
+     * Insert a regex expression which will be used to validate the text written in the box
      */
     String regex() default "";
 
     /**
-     * Allow the text box to span multiple lines, wrapping long text and accepting line breaks
-     * (the enter key and pasted {@code \n} / {@code \r\n}).
+     * Allow the text box to span multiple lines wrapping long text and accepting line breaks
+     * from the enter key and pasted {@code \n} / {@code \r\n}
      */
     boolean multiline() default false;
 
@@ -80,9 +76,7 @@ public @interface Text {
     String categoryKey() default "";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given category is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the category and remove this flag.
+     * @deprecated OneConfig auto-translates category values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean categoryTranslation() default false;
@@ -96,9 +90,7 @@ public @interface Text {
     String placeholder() default "oneconfig.textinput.placeholder";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given placeholder is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the placeholder and remove this flag.
+     * @deprecated OneConfig auto-translates placeholder values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean placeholderTranslation() default false;

@@ -29,7 +29,7 @@ package org.polyfrost.oneconfig.utils.v1.dsl
 import net.minecraft.client.Minecraft
 
 /**
- * Gets the current [net.minecraft.client.Minecraft] instance.
+ * Gets the current [net.minecraft.client.Minecraft] instance
  */
 @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 @kotlin.internal.InlineOnly

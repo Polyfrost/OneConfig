@@ -21,7 +21,7 @@ internal const val mainMixinPath = "org.polyfrost.oneconfig.internal.mixin"
 
 
 /**
- * The relocator for kotlin source files.
+ * The relocator for kotlin source files
  */
 internal class KspRelocator : SymbolProcessorProvider, SymbolProcessor {
 

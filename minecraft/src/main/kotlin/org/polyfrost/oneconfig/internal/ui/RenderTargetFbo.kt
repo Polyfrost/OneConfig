@@ -14,8 +14,8 @@ import com.mojang.blaze3d.systems.RenderSystem
 //? }
 
 /**
- * Credits: lowercasebtw
- * Taken from: https://discord.com/channels/507304429255393322/807617488313516032/1452333789778018314 (The Fabric Project)
+ * Credits to lowercasebtw and taken from The Fabric Project
+ * https://discord.com/channels/507304429255393322/807617488313516032/1452333789778018314
  */
 object RenderTargetFbo {
     //? if >= 26.2 {

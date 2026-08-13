@@ -65,10 +65,10 @@ fun DraggableListOption(data: DraggableListOptionData) {
     }
     val optionLabels = data.optionLabels
 
-    // Stable per-slot id so duplicate values render and reorder independently.
+    // stable per-slot id so duplicate values render and reorder independently
     val idGen = remember(data.prop) { intArrayOf(0) }
 
-    // Current ordered items. When checkable, includes disabled items appended after enabled ones.
+    // when checkable this includes disabled items appended after the enabled ones
     var items by remember(data.prop) {
         val ordered = propValueList(data.prop)
         val result = if (data.checkable) {
@@ -80,7 +80,6 @@ fun DraggableListOption(data: DraggableListOptionData) {
         mutableStateOf(result.map { ListEntry(idGen[0]++, it) })
     }
 
-    // Enabled slot ids (checkable only — property value = enabled items in order)
     var enabledIds by remember(data.prop) {
         if (!data.checkable) return@remember mutableStateOf(emptySet<Int>())
         val enabled = propValueList(data.prop).toSet()
@@ -234,7 +233,7 @@ fun DraggableListOption(data: DraggableListOptionData) {
     }
 }
 
-/** A single list slot. [id] is stable across reorders so duplicate [value]s stay distinct. */
+/** A single list slot where [id] is stable across reorders so duplicate [value]s stay distinct */
 private data class ListEntry(val id: Int, val value: String)
 
 private fun propValueList(prop: Property<*>): List<String> = when (val v = prop.get()) {

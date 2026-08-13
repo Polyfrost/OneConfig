@@ -103,7 +103,6 @@ public class ObjectSerializerTest {
 
     @Test
     public void testColor() {
-        // Test Serialization
         Color color = new Color(20, 55, 3, 100);
         Object colorTest = objectSerializer.serialize(color, false);
         assertInstanceOf(HashMap.class, colorTest);
@@ -114,16 +113,14 @@ public class ObjectSerializerTest {
         assertEquals("java.awt.Color", ((HashMap<?, ?>) colorTest).get("class"));
         assertArrayEquals(new int[]{20, 55, 3, 100}, (int[]) ((HashMap<?, ?>) colorTest).get("value"));
 
-        // Test Deserialization
         Object deserializedColor = objectSerializer.deserialize((Map<String, Object>) colorTest);
         assertInstanceOf(Color.class, deserializedColor);
         assertEquals(color, deserializedColor);
     }
 
-    // Test serialization and deserialization of a custom object without adapter
+    // custom object with no registered adapter
     @Test
     public void testObject() {
-        // Test Serialization
         Dimension dimension = new Dimension(10, 20);
         Object dimensionTest = objectSerializer.serialize(dimension, false, false);
         assertInstanceOf(HashMap.class, dimensionTest);
@@ -137,7 +134,6 @@ public class ObjectSerializerTest {
         assertInstanceOf(Integer.class, ((HashMap<?, ?>) dimensionTest).get("height"));
         assertEquals(20, ((HashMap<?, ?>) dimensionTest).get("height"));
 
-        // Test Deserialization
         Object deserializedDimension = objectSerializer.deserialize((Map<String, Object>) dimensionTest);
         assertInstanceOf(Dimension.class, deserializedDimension);
         assertEquals(dimension, deserializedDimension);
@@ -156,7 +152,6 @@ public class ObjectSerializerTest {
 
     @Test
     public void testMapSerialization() {
-        // Test Serialization
         Map<String, Object> map = new HashMap<>();
         map.put("dimension", new Dimension(10, 20));
         map.put("color", new Color(20, 30, 40, 50));
@@ -189,7 +184,6 @@ public class ObjectSerializerTest {
 
     @Test
     public void testEnum() {
-        // Test Serialization
         Object enumTest = objectSerializer.serialize(TestEnum.TEST1, false, false);
         assertInstanceOf(HashMap.class, enumTest);
         assertTrue(((HashMap<?, ?>) enumTest).containsKey("value"));
@@ -198,7 +192,6 @@ public class ObjectSerializerTest {
         assertTrue(((HashMap<?, ?>) enumTest).containsKey("class"));
         assertEquals(TestEnum.class.getName(), ((HashMap<?, ?>) enumTest).get("class"));
 
-        // Test Deserialization
         Object deserializedEnum = objectSerializer.deserialize((Map<String, Object>) enumTest);
         assertInstanceOf(TestEnum.class, deserializedEnum);
         assertEquals(TestEnum.TEST1, deserializedEnum);

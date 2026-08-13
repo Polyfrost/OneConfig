@@ -36,7 +36,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * This annotation is for codebase navigation - it indicates that the given class has overwrites for different versions of Minecraft.
+ * This annotation is for codebase navigation
+ * <p>
+ * It marks a class that has overwrites for different versions of Minecraft
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)

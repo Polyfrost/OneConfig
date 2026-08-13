@@ -103,8 +103,9 @@ object ConfigRegistry {
         config.id.lowercase() !in hiddenSearchIds && config.title.asRenderText().lowercase() !in hiddenModCardTitles
 
     /**
-     * Loads all trees from the given [ConfigManager] as [source] entries.
-     * Call this after [ConfigManager.initialize] during OneConfig startup.
+     * Loads all trees from the given [ConfigManager] as [source] entries
+     *
+     * Call this after [ConfigManager.initialize] during OneConfig startup
      */
     fun loadFrom(manager: ConfigManager, source: ConfigSource) {
         val seenIds = HashSet<String>()
@@ -114,14 +115,13 @@ object ConfigRegistry {
             MinecraftKeybindRegistrar.scan(tree)
             if (registerTree(tree, source, bumpRevision = false)) changed = true
         }
-        // Only prune what this manager owns
         if (configs.removeAll { it.source == source && it is TreeConfigData && it.id !in seenIds }) changed = true
         if (!changed) return
         SearchCorpus.invalidate(ConfigDocumentSource)
         revision++
     }
 
-    /** Returns whether the registry actually changed. */
+    /** Returns whether the registry actually changed */
     @JvmOverloads
     fun registerTree(
         tree: Tree,
@@ -165,9 +165,7 @@ object ConfigRegistry {
         return true
     }
 
-    /**
-     * Quick check to see if 2 config data instances provide the same (tree) information
-     */
+    /** Whether two config data instances provide the same tree information */
     private fun ConfigData.wraps(other: ConfigData): Boolean {
         if (this === other) return true
         if (this !is TreeConfigData || other !is TreeConfigData) return false

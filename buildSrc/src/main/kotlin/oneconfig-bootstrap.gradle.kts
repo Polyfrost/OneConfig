@@ -82,9 +82,8 @@ afterEvaluate {
         "net.fabricmc:fabric-language-kotlin"
     )
 
-    // Compose/skiko classes are shipped via the shaded :modules:compose-bundle jar.
-    // The individual *-desktop artifacts are added non-transitively below, so on their
-    // own they are missing the backing androidx.compose.* classes (e.g. SnapshotStateKt).
+    // compose/skiko classes ship inside the shaded :modules:compose-bundle jar
+    // the *-desktop artifacts are added non-transitively so alone they lack androidx.compose.* classes
     fun isShadedInComposeBundle(group: String?): Boolean {
         group ?: return false
         return group.startsWith("org.jetbrains.compose") ||
@@ -106,8 +105,8 @@ afterEvaluate {
         (dependencies.add("include", coord) as ExternalModuleDependency).isTransitive = false
     }
 
-    // compose-bundle ships as its own Fabric mod on Modrinth, so it must NOT be JiJ'd
-    // into the bootstrap. The platform still compiles against it (api dependency).
+    // compose-bundle ships as its own Fabric mod on Modrinth so it must not be JiJ'd
+    // into the bootstrap while the platform still compiles against it
     val excludedProjects = setOf(":modules:compose-bundle")
 
     fun includeProject(path: String) {

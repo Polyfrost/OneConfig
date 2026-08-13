@@ -77,18 +77,21 @@ object HudManager {
     private val hiddenHudPaint by lazy { org.jetbrains.skia.Paint().apply { setAlphaf(0.35f) } }
 
     /**
-     * `true` while HUDs are being shown for editing/preview purposes, i.e. while either the HUD editor
-     * or the main OneConfig UI is open. HUDs should render example/preview content when this is set.
+     * `true` while HUDs are being shown for editing or preview
+     *
+     * That is while either the HUD editor or the main OneConfig UI is open
+     *
+     * HUDs should render example content when this is set
      */
     @get:JvmName("isEditing")
     val isEditing: Boolean get() = isEditorOpen || isConfigUiOpen
 
-    /** `true` only while the HUD editor screen itself is open. */
+    /** `true` only while the HUD editor screen itself is open */
     @ApiStatus.Internal
     @Volatile var isEditorOpen = false
         private set
 
-    /** Set by the OneConfig UI screen while it is open, so HUDs behind it still render as previews. */
+    /** Set by the OneConfig UI screen while it is open so HUDs behind it still render as previews */
     @ApiStatus.Internal
     @Volatile @JvmField var isConfigUiOpen = false
 
@@ -102,7 +105,11 @@ object HudManager {
 
     @Volatile @JvmField var masterHudEnabled: Boolean = true
 
-    /** Mirrors MC's `options.hideGui` (F1). Hides every HUD unless the editor is open. */
+    /**
+     * Mirrors MC's `options.hideGui` (F1)
+     *
+     * Hides every HUD unless the editor is open
+     */
     @Volatile @JvmField var isGuiHidden: Boolean = false
 
     @Volatile @JvmField var overrideShowInScreens: Boolean = false
@@ -143,7 +150,7 @@ object HudManager {
 
     private val frameOrder = ArrayList<Hud>()
 
-    /** [frameOrder] plus the hidden HUDs which still contribute their background to a fused shape. */
+    /** [frameOrder] plus the hidden HUDs which still contribute their background to a fused shape */
     private val layoutOrder = ArrayList<Hud>()
 
     private var frameGroups: List<HudBackgroundMerge.Group> = emptyList()
@@ -199,7 +206,9 @@ object HudManager {
     }
 
     /**
-     * NOTE: NEVER CALL THIS RAW! THERE ARE CERTAIN THINGS THAT MUST BE DONE TO PROPERLY REGISTER AN ACTIVE HUD!
+     * NOTE NEVER CALL THIS RAW
+     *
+     * THERE ARE CERTAIN THINGS THAT MUST BE DONE TO PROPERLY REGISTER AN ACTIVE HUD
      */
     @ApiStatus.Internal
     val activeInstances = ArrayList<Hud>()
@@ -259,11 +268,15 @@ object HudManager {
     }
 
     /**
-     * Registers a HUD under [configId] and associates a menu [icon] with that id, used for the
-     * HUD library's per-mod icon column. [icon] is either an OC icon name (e.g. `"combat"`,
-     * resolved under `assets/oneconfig/ico/`) or a classpath/absolute resource path
-     * (e.g. `"/assets/yourmod/icon.svg"`). Lets HUD-only mods set a menu icon without
-     * registering a matching [org.polyfrost.oneconfig.api.config.v1.Config].
+     * Registers a HUD under [configId] and associates a menu [icon] with that id
+     *
+     * The icon is used for the HUD library per-mod icon column
+     *
+     * [icon] is either an OC icon name such as `"combat"` resolved under `assets/oneconfig/ico/`
+     * or a classpath or absolute resource path such as `"/assets/yourmod/icon.svg"`
+     *
+     * Lets HUD-only mods set a menu icon without registering a matching
+     * [org.polyfrost.oneconfig.api.config.v1.Config]
      */
     @JvmStatic
     fun register(hud: Hud, configId: String, icon: String) {
@@ -271,7 +284,7 @@ object HudManager {
         register(hud, configId)
     }
 
-    /** The menu icon associated with [configId] via [register], or `null` if none was set. */
+    /** The menu icon associated with [configId] via [register] or `null` if none was set */
     fun iconFor(configId: String): String? = hudIcons[configId]
 
     @JvmStatic
@@ -314,7 +327,7 @@ object HudManager {
 
     fun getProvider(hudClass: Class<out Hud>): Hud? = hudProviders[hudClass]
 
-    /** The live HUD whose config tree has this [id], used to resolve [Hud.anchorTargetId]. */
+    /** The live HUD whose config tree has this [id] used to resolve [Hud.anchorTargetId] */
     fun instanceById(id: String): Hud? {
         for (it in activeInstances) {
             if (it.tree?.id == id) return it
@@ -362,8 +375,8 @@ object HudManager {
         cleanup { hud._runtime?.dispose() }
         hud._runtime = null
         lastUpdates.remove(hud)
-        // anything hanging off this HUD goes back to being positioned against the screen, staying
-        // where it is: the relative position it keeps alongside the anchor is already up to date
+        // anything hanging off this HUD goes back to screen positioning and stays where it is
+        // because the relative position kept alongside the anchor is already up to date
         treeId?.let { gone ->
             for (it in activeInstances) {
                 if (it.anchorTargetId == gone) cleanup { it.clearAnchor() }
@@ -375,14 +388,14 @@ object HudManager {
         lastMergeKey = null
         cleanup { invalidate() }
         try { hud.remove() } catch (_: Throwable) {}
-        // a HUD which cannot be deleted by the user must never lose its config: without this an
-        // errant unregister(delete = true) wipes it from disk and it can never be restored.
+        // a HUD the user cannot delete must never lose its config because an errant
+        // unregister(delete = true) would wipe it from disk with no way to restore it
         if (delete && !hud.deletable()) {
             LOGGER.warn("refusing to delete the config of ${hud.title}, which is marked as not user-deletable")
         } else if (delete && treeId != null) {
             cleanup { ConfigManager.active().delete(treeId) }
         }
-        // back to being a plain provider, so a single-instance HUD can be made again later
+        // back to being a plain provider so a single-instance HUD can be made again later
         cleanup { hud.detachTree() }
         failure?.let { throw it }
     }
@@ -481,7 +494,7 @@ object HudManager {
     private fun keepsBackgroundOnly(hud: Hud): Boolean =
         hud.hidden && !isEditing && hud.keepsHiddenBackground && isShown(hud)
 
-    /** Everything [shouldDraw] checks apart from the HUD's own hidden flag. */
+    /** Everything [shouldDraw] checks apart from the HUD's own hidden flag */
     private fun isShown(hud: Hud): Boolean {
         if (!masterHudEnabled && !isEditing) return false
         if (hud is LegacyHudMarker) return false
@@ -489,7 +502,7 @@ object HudManager {
         if (isDebugScreenVisible && !hud.showInF3) return false
         if (isTabListVisible && !hud.showInTab) return false
         if (!overrideShowInScreens && !isEditing) {
-            // chat has its own toggle, so it is never governed by "Show in GUIs"
+            // chat has its own toggle so it is never governed by "Show in GUIs"
             if (isChatScreenOpen) {
                 if (!hud.showInChat) return false
             } else if (isGuiScreenOpen && !hud.showInScreens) return false
@@ -557,16 +570,20 @@ object HudManager {
     }
 
     /**
-     * Rebuilds the fused background shapes for HUDs which sit against each other, and tells the HUDs
-     * in a fused shape to stop drawing their own background. Cheap on frames where nothing moved:
-     * the shapes are only re-traced when a position, size or background style actually changed.
+     * Rebuilds the fused background shapes for HUDs which sit against each other
+     *
+     * Tells the HUDs in a fused shape to stop drawing their own background
+     *
+     * Cheap on frames where nothing moved because the shapes are only re-traced
+     * when a position or size or background style actually changed
      */
     private fun updateBackgroundGroups(huds: List<Hud>, screenWidth: Float, screenHeight: Float, scale: Float) {
         val key = HudBackgroundMerge.layoutKey(huds)
         if (key == lastMergeKey) return
         lastMergeKey = key
-        // the fused outline can change without anything else asking for a redraw, e.g. when a hidden
-        // HUD which keeps its background resizes, so the cached frame is no longer good
+        // the fused outline can change without anything else asking for a redraw
+        // for example when a hidden HUD which keeps its background resizes
+        // so the cached frame is no longer good
         invalidate()
 
         val mergeable = if (mergeExclusions.isEmpty()) huds else huds.filter { hud -> !isMergeExcluded(hud) }
@@ -587,8 +604,9 @@ object HudManager {
         Snapshot.withMutableSnapshot {
             for (hud in activeInstances) hud.bgMerged = hud in merged
         }
-        // the flag is read during composition, so recompose and re-lay out now instead of letting the
-        // change land a frame late, which would show a doubled or missing background for one frame
+        // the flag is read during composition so recompose and re-lay out now
+        // instead of letting the change land a frame late
+        // which would show a doubled or missing background for one frame
         Snapshot.sendApplyNotifications()
         PolyComposeHost.frame()
         for (hud in huds) hud.lastLayoutFrame = -1L
@@ -599,9 +617,12 @@ object HudManager {
     private var mergeExclusions: List<Hud> = emptyList()
 
     /**
-     * HUDs kept out of merging for now, used by the editor while the user pulls one out of a fused
-     * shape: an excluded HUD draws its own background again and stops dragging its neighbours along,
-     * so it comes away cleanly and re-merges wherever it is dropped.
+     * HUDs kept out of merging for now
+     *
+     * Used by the editor while the user pulls one out of a fused shape
+     *
+     * An excluded HUD draws its own background again and stops dragging its neighbours along
+     * so it comes away cleanly and re-merges wherever it is dropped
      */
     @ApiStatus.Internal
     @JvmStatic
@@ -615,16 +636,19 @@ object HudManager {
 
     private fun isMergeExcluded(hud: Hud): Boolean = mergeExclusions.any { it === hud }
 
-    /** Every HUD fused into the same background shape as [hud], including [hud] itself. */
+    /** Every HUD fused into the same background shape as [hud] including [hud] itself */
     @ApiStatus.Internal
     @JvmStatic
     fun mergeGroupOf(hud: Hud): List<Hud> =
         frameGroups.firstOrNull { group -> group.huds.any { it === hud } }?.huds ?: listOf(hud)
 
     /**
-     * Holds every HUD in a fused shape against the neighbour it touches, at the point where the two
-     * meet, so a HUD which grows keeps the shape flush. These links live only as long as the merge
-     * does: a HUD which stops being merged is let go and stays where it was left.
+     * Holds every HUD in a fused shape against the neighbour it touches at the point where the two meet
+     * so a HUD which grows keeps the shape flush
+     *
+     * These links live only as long as the merge does
+     *
+     * A HUD which stops being merged is let go and stays where it was left
      */
     private fun updateMergeLinks() {
         val linkedX = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Hud, Boolean>())
@@ -643,9 +667,13 @@ object HudManager {
     }
 
     /**
-     * Paints the fused backgrounds of merged HUDs, in gui units. Used by renderers which draw the HUD
-     * trees themselves (the editor viewport) instead of going through [render]: the HUDs in a fused
-     * shape do not draw their own background, so without this they would show up bare.
+     * Paints the fused backgrounds of merged HUDs in gui units
+     *
+     * Used by renderers which draw the HUD trees themselves (the editor viewport)
+     * instead of going through [render]
+     *
+     * The HUDs in a fused shape do not draw their own background
+     * so without this they would show up bare
      */
     @ApiStatus.Internal
     fun drawMergedBackgrounds(ctx: RenderContext) {
@@ -781,10 +809,8 @@ object HudManager {
 
     @ApiStatus.Internal
     fun openEditor() {
-        // Always (re)assert editing and post OPEN, even if [isEditorOpen] is already true: the flag can
-        // get stuck (e.g. the editor screen closed without closeEditor() running), and an early return
-        // here would make the "Edit HUD" button silently do nothing. The OPEN handler is responsible
-        // for not opening a duplicate editor screen.
+        // always re-assert editing and post OPEN even when isEditorOpen is already true because
+        // the flag can get stuck and an early return would make the Edit HUD button do nothing
         isEditorOpen = true
         EventManager.INSTANCE.post(HudEditorToggleEvent.OPEN)
     }

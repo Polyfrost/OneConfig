@@ -20,10 +20,11 @@ public abstract class WorldEvent implements Event {
     }
 
     /**
-     * Due to differences across Minecraft versions, this is a Duck method, meaning that it will return the expected type for that minecraft version.
+     * This is a Duck method because Minecraft versions differ
+     * <br> It returns the expected type for that minecraft version
      * <ul>
-     *     <li>For modern forge, this will be a ClientLevel.</li>
-     *     <li>For fabric & forge pre-1.17, this will be a ClientWorld.</li>
+     *     <li>modern forge gives a ClientLevel</li>
+     *     <li>fabric and forge pre-1.17 give a ClientWorld</li>
      * </ul>
      */
     @SuppressWarnings("unchecked")

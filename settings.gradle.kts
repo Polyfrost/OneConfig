@@ -6,7 +6,6 @@ pluginManagement {
 
         mavenLocal()
 
-        // Default
         gradlePluginPortal()
         mavenCentral()
     }
@@ -71,8 +70,7 @@ stonecutter {
         }
     }
 
-    // The bootstrap tree mirrors every Fabric node of the minecraft tree. Each
-    // node JiJ-includes the matching platform jar plus all modules and deps.
+    // mirrors every Fabric node of the minecraft tree
     create("bootstrap") {
         versions.forEach { (version, loaders) ->
             loaders.filter { it == FABRIC }.forEach { loader ->
@@ -145,75 +143,3 @@ listOf(
 ).forEach { module ->
     include(":modules:$module")
 }
-
-/*
-val projectName: String = extra["project.name"]?.toString()
-    ?: throw MissingPropertyException("mod.name has not been set.")
-
-rootProject.name = projectName
-if (rootDir.name != projectName) {
-    logger.error("""
-        Root directory name (${rootDir.absolutePath}) does not match project name ($projectName)! 
-        This may cause issues with indexing and other tools (see https://youtrack.jetbrains.com/issue/IDEA-317606#focus=Comments-27-7257761.0-0 and https://stackoverflow.com/questions/77878944 ). 
-        If you are experiencing issues, please rename the root directory to match the project name, re-import the project, and invalidate caches if you are on IntelliJ.
-    """.trimIndent())
-}
-
-// FOR ALL NEW VERSIONS MAKE SURE TO INCLUDE THEM IN root.gradle.kts !
-include(":minecraft")
-project(":minecraft").buildFileName = "root.gradle.kts"
-/*
-include(":bootstrap")
-project(":bootstrap").buildFileName = "root.gradle.kts"
-listOf(
-    "1.21.1-neoforge",
-    "1.21.1-fabric",
-
-    "1.21.4-neoforge",
-    "1.21.4-fabric",
-
-    "1.21.5-neoforge",
-    "1.21.5-fabric",
-
-    "1.21.8-neoforge",
-    "1.21.8-fabric",
-
-    "1.21.10-neoforge",
-    "1.21.10-fabric",
-
-    "1.21.11-neoforge",
-    "1.21.11-fabric",
-
-    "26.1-fabric"
-).forEach { version ->
-    val proj = ":minecraft:$version"
-    include(proj)
-    project(proj).apply {
-        projectDir = file("minecraft/versions/$version").also {
-            if (!it.exists() && !it.mkdirs()) {
-                throw IllegalStateException("Could not create project directory: ${it.absolutePath}")
-            }
-        }
-        buildFileName = "../../build.gradle.kts"
-    }
-    val bootstrapProj = ":bootstrap:bootstrap-$version"
-    if (listOf(
-            "1.21.1-fabric",
-            "1.21.4-fabric",
-            "1.21.5-fabric",
-            "1.21.8-fabric",
-            "1.21.10-fabric",
-            "1.21.11-fabric",
-//            "26.1-fabric"
-        ).contains(version)) {
-        include(bootstrapProj)
-        project(bootstrapProj).apply {
-            projectDir = file("bootstrap/versions/$version").also {
-                if (!it.exists() && !it.mkdirs()) {
-                    throw IllegalStateException("Could not create project directory: ${it.absolutePath}")
-                }
-            }
-            buildFileName = "../../build.gradle.kts"
-        }
-    }
-}*/

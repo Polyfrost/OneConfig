@@ -1,13 +1,14 @@
 package org.polyfrost.oneconfig.internal.compat
 
 /**
- * Dispatches an editor that was captured without knowing which relocated MoulConfig copy it belongs to,
- * to the matching generated `MoulConfigCompat_<target>` class.
+ * Dispatches an editor captured without knowing which relocated MoulConfig copy it belongs to
+ * to the matching generated `MoulConfigCompat_<target>` class
  *
- * This deliberately lives outside [MoulConfigCompat]: that class is duplicated per relocation target by
- * the relocator, which blanket-renames every occurrence of its own name in the copied source, so the
- * `MoulConfigCompat_<target>` literals below would come out mangled (`MoulConfigCompat_skyhanni_firmament`)
- * in every copy. Nothing here touches MoulConfig types, so it is never relocated.
+ * Lives outside [MoulConfigCompat] because the relocator duplicates that class per target and
+ * blanket-renames every occurrence of its own name so the `MoulConfigCompat_<target>` literals below
+ * would come out mangled in every copy
+ *
+ * Nothing here touches MoulConfig types so it is never relocated
  */
 object MoulConfigDispatch {
 

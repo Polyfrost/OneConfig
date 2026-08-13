@@ -23,11 +23,10 @@ import java.util.function.Consumer
 import kotlin.math.roundToInt
 
 /**
- * Wraps Skyblocker's [WidgetManager] HUD widgets (the tab/HUD widget system, e.g. the Dwarven Mines
- * commissions and powder widgets, the Crystal Hollows map, ...) into the OneConfig HUD editor.
+ * Wraps Skyblocker's [WidgetManager] tab/HUD widgets into the OneConfig HUD editor
  *
- * This is separate from [SkyblockerCompat], which handles the unrelated [de.hysky.skyblocker.skyblock.fancybars]
- * status bars.
+ * Separate from [SkyblockerCompat] which handles the unrelated [de.hysky.skyblocker.skyblock.fancybars]
+ * status bars
  */
 object SkyblockerWidgetCompat {
     private val LOGGER = LogManager.getLogger("OneConfig/Skyblocker-Widget-Compat")
@@ -55,7 +54,7 @@ object SkyblockerWidgetCompat {
     }
 
     private fun register() {
-        // Resource reloads re-run the deferred init, but the HUDs only ever need registering once.
+        // resource reloads re-run the deferred init but the HUDs only need registering once
         if (registered) return
         registered = true
         val seen = HashSet<String>()
@@ -81,9 +80,10 @@ object SkyblockerWidgetCompat {
     }
 
     /**
-     * Widgets that can live on the HUD layer: either they declare locations of their own, or some location
-     * already pins them to the HUD (this is how the tab-sourced widgets, e.g. commissions and powders, end
-     * up on the Dwarven Mines HUD).
+     * Widgets that can live on the HUD layer either declare locations of their own or are already pinned
+     * to the HUD by some location
+     *
+     * That pinning is how tab-sourced widgets like commissions and powders end up on the Dwarven Mines HUD
      */
     private fun editable(widget: HudWidget): Boolean {
         if (widget.availableLocations().isNotEmpty()) return true
@@ -153,7 +153,7 @@ object SkyblockerWidgetCompat {
         runCatching { widget.displayName.string }.getOrNull()?.takeIf { it.isNotBlank() } ?: widget.internalID
 
     internal fun buildSettings(widget: HudWidget): List<Property<*>> {
-        // Tab-sourced widgets have no per-location enable switch of their own.
+        // tab-sourced widgets have no per-location enable switch of their own
         if (widget.availableLocations().isEmpty()) return emptyList()
         val prop = Properties.functional<Boolean>(
             getter = { runCatching { widget.isEnabledIn(Utils.getLocation()) }.getOrDefault(false) },
@@ -184,7 +184,7 @@ private class SkyblockerWidgetWrapper(private val widget: HudWidget) : OneConfig
         get() = widget.y * SkyblockerWidgetCompat.tabHudScale()
         set(value) = move(null, value)
 
-    // Skyblocker scales every widget together via its own 'Tab HUD Scale' option, so there is nothing per-widget to expose.
+    // Skyblocker scales every widget together via its own 'Tab HUD Scale' option so nothing per-widget exists to expose
     override var scale: Float
         get() = 1f
         set(_) {}
@@ -210,14 +210,13 @@ private class SkyblockerWidgetWrapper(private val widget: HudWidget) : OneConfig
     override fun linkedProperties(): List<Property<*>> = SkyblockerWidgetCompat.buildSettings(widget)
 
     /**
-     * Rewrites the widget's [PositionRule] so it lands on the requested screen position, keeping whatever
-     * parent/anchor/layer it already had - moving a parent widget still drags its children along, exactly as
-     * it does in Skyblocker's own editor.
+     * Rewrites the widget's [PositionRule] to the requested screen position keeping its existing
+     * parent/anchor/layer so moving a parent still drags its children along like Skyblocker's own editor
      */
     private fun move(targetX: Float?, targetY: Float?) {
-        // Position rules are per-location, so a write made before the player is on Skyblock (OneConfig
-        // restoring its own saved copy of these HUDs at startup) would pin the widget in Location.UNKNOWN.
-        // Skyblocker owns these positions; only mirror edits back once a real location is known.
+        // position rules are per-location so writing before the player is on Skyblock would pin the widget
+        // in Location.UNKNOWN
+        // Skyblocker owns these positions so only mirror edits back once a real location is known
         if (!Utils.isOnSkyblock()) return
         val scale = SkyblockerWidgetCompat.tabHudScale()
         if (scale <= 0f) return
@@ -238,8 +237,8 @@ private class SkyblockerWidgetWrapper(private val widget: HudWidget) : OneConfig
                 WidgetManager.ScreenLayer.HUD,
             )
         } else {
-            // The widget's live position is the result of applying the current rule, so shifting the rule's
-            // offset by the requested delta works for every parent/anchor combination without re-deriving them.
+            // the live position is the result of applying the current rule so shifting the rule offset by
+            // the requested delta works for every parent/anchor combination without re-deriving them
             PositionRule(
                 current.parent(),
                 current.parentPoint(),
@@ -254,8 +253,8 @@ private class SkyblockerWidgetWrapper(private val widget: HudWidget) : OneConfig
         SkyblockerWidgetCompat.markDirty()
         ScreenBuilder.markDirty()
 
-        // Applying the rule above would land the widget exactly here, so move it now rather than waiting a
-        // frame: it keeps the getters (and hence the delta above) exact for the rest of this frame's edits.
+        // applying the rule above lands the widget exactly here so move it now rather than waiting a frame
+        // which keeps the getters and hence the delta above exact for the rest of this frame's edits
         widget.x = newX
         widget.y = newY
     }

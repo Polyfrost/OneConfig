@@ -150,7 +150,7 @@ final class MixinTargetScanner {
     private static List<String> targetsOf(ClassNode node) {
         List<String> targets = new ArrayList<>();
         List<AnnotationNode> annotations = new ArrayList<>();
-        // @Mixin has CLASS retention, so it lands in invisibleAnnotations
+        // @Mixin has CLASS retention so it lands in invisibleAnnotations
         if (node.invisibleAnnotations != null) {
             annotations.addAll(node.invisibleAnnotations);
         }
@@ -187,7 +187,7 @@ final class MixinTargetScanner {
                     return metadata;
                 }
             } catch (RuntimeException e) {
-                // Another mod's metadata that we cannot parse is not our problem.
+                // another mod's metadata that we cannot parse is not our problem
             }
         }
         throw new IOException("No fabric.mod.json for mod '" + modId + "' on the classpath");

@@ -18,7 +18,7 @@ public class Mixin_KeybindComboDisplay {
         KeyMapping self = (KeyMapping) (Object) this;
         OneConfigKeybind bind = bridge.bindFor(self);
         if (bind == null) return;
-        // While recording, show the live combo as keys are added
+        // while recording show the live combo as keys are added
         Component preview = bridge.previewFor(self);
         if (preview != null) {
             cir.setReturnValue(preview);

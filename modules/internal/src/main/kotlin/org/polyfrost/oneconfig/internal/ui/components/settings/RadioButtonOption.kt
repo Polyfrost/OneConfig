@@ -61,7 +61,7 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
         mutableStateOf(if (initialValue is Enum<*>) initialValue.ordinal else initialValue as? Int ?: 0)
     }
 
-    // measure each item's width so we can slide the indicator
+    // each item's width is measured so the indicator can slide between them
     val itemWidths = remember(options.size) { Array(options.size) { mutableIntStateOf(0) } }
     var rowHeight by remember(options.size) { mutableIntStateOf(0) }
     val indicatorOffset by animateDpAsState(
@@ -87,7 +87,6 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
         Box(
             modifier = Modifier.padding(RadioPadding)
         ) {
-            // sliding indicator
             Box(
                 modifier = Modifier
                     .height(indicatorHeight)

@@ -53,8 +53,8 @@ public class ObjectSerializer {
     private static final IdentityHashMap<Class<?>, Field[]> CLASS_FIELD_CACHE = new IdentityHashMap<>(32);
     private static final IdentityHashMap<Class<?>, Boolean> IMMUTABLE_CACHE = new IdentityHashMap<>(32);
     /**
-     * objects currently being reflectively serialized on this thread, used to break reference cycles
-     * (e.g. Minecraft's Item -> Holder.Reference -> Item), which would otherwise blow the stack.
+     * objects currently being reflectively serialized on this thread used to break reference cycles
+     * such as Minecraft Item -> Holder.Reference -> Item which would otherwise blow the stack
      */
     private static final ThreadLocal<Set<Object>> IN_PROGRESS = ThreadLocal.withInitial(() -> Collections.newSetFromMap(new IdentityHashMap<>()));
 
@@ -70,7 +70,7 @@ public class ObjectSerializer {
     public static boolean isSerializable(Object in) {
         if (in == null) return true;
         Class<?> cls = in.getClass();
-        // these classes are never serializable.
+        // these classes are never serializable
         return !cls.isSynthetic() &&
                 !Runnable.class.isAssignableFrom(cls) &&
                 !Thread.class.isAssignableFrom(cls) &&
@@ -95,8 +95,9 @@ public class ObjectSerializer {
     }
 
     /**
-     * true if no instance field of this class can be assigned, i.e. the class is a value type.
-     * Such objects can only be replaced, never mutated in place.
+     * true if no instance field of this class can be assigned meaning the class is a value type
+     * <br>
+     * Such objects can only be replaced and never mutated in place
      */
     public static boolean isImmutable(Class<?> cls) {
         if (cls == null || cls.isArray()) return false;
@@ -153,12 +154,12 @@ public class ObjectSerializer {
     }
 
     /**
-     * Convert the given object into a series of simple values that should be supported by most backend serializers.
+     * Convert the given object into a series of simple values that should be supported by most backend serializers
      *
      * @param in        the object
      * @param useLists  if your serializer uses lists instead of arrays for collections of items
      * @param boxArrays if your serializer requires boxed primitive arrays
-     * @return the source object, in a simple form
+     * @return the source object in a simple form
      * @see Adapter#serialize(Object)
      */
     @SuppressWarnings("unchecked")
@@ -167,12 +168,11 @@ public class ObjectSerializer {
         Class<?> cls = in.getClass();
         if (!isSerializable(in)) return null;
 
-        // check 1: return Number, CharSequence or Boolean
         if (isSimpleObject(in)) {
             return in;
         }
 
-        // check 2: pack up Enums and return those
+        // instanceof rather than cls.isEnum() so constants with a class body are still packed
         if (in instanceof Enum) {
             Map<String, Object> enumMap = new HashMap<>(2, 1f);
             enumMap.put("class", ((Enum<?>) in).getDeclaringClass().getName());
@@ -180,16 +180,13 @@ public class ObjectSerializer {
             return enumMap;
         }
 
-        // check 3: array
         if (cls.isArray()) {
             return _serializeArray(in, cls.getComponentType(), useLists, boxArrays);
         }
-        // check 4: collection
         if (in instanceof Collection) {
             return _serializeCollection((Collection<?>) in, useLists, boxArrays);
         }
 
-        // check 5: maps
         if (in instanceof Map) {
             Map<?, ?> m = (Map<?, ?>) in;
             if (m.isEmpty()) return Collections.emptyMap();
@@ -216,7 +213,6 @@ public class ObjectSerializer {
             return out;
         }
 
-        // check 6: complex object, do we have an adapter available?
         Adapter<Object, Object> ad = (Adapter<Object, Object>) getAdapter(cls);
         if (ad != null) {
             Object out = ad.serialize(in);
@@ -234,9 +230,8 @@ public class ObjectSerializer {
             return outMap;
         }
 
-        // we have a complex type with no adapter, amazing.
         Set<Object> seen = IN_PROGRESS.get();
-        // already serializing this object further up the stack: cyclic reference, drop it
+        // already serializing this object further up the stack so drop the cyclic reference
         if (!seen.add(in)) return null;
         try {
             Map<String, Object> cfg = new HashMap<>();
@@ -305,19 +300,20 @@ public class ObjectSerializer {
     }
 
     /**
-     * Simple object serializer. Serializes, the object and its parents' classes non-synthetic, non-transient and non-static fields.
+     * Simple object serializer
+     * <br>
+     * Serializes the non-synthetic and non-transient and non-static fields of the object and its parent classes
      */
     private void _serialize(Class<?> cls, Object value, Map<String, Object> cfg, boolean useLists, boolean boxArrays) {
         for (Field f : cls.getDeclaredFields()) {
             if ((f.getModifiers() & FIELD_SKIP_MODIFIERS) != 0) continue;
             try {
                 Object o = MHUtils.setAccessible(f).get(value);
-                // skip self references
                 if (o == value) continue;
                 if (o == null) continue;
                 if (o instanceof Number && ((Number) o).doubleValue() == 0.0) continue;
                 Object s = serialize(o, useLists, boxArrays);
-                // null means unserializable or a cycle we broke, don't write it out
+                // null means unserializable or a cycle we broke so do not write it out
                 if (s == null) continue;
                 cfg.put(f.getName(), s);
             } catch (Throwable e) {
@@ -330,7 +326,9 @@ public class ObjectSerializer {
     }
 
     /**
-     * Deserialize the given complex object map. The map must contain the class field.
+     * Deserialize the given complex object map
+     * <br>
+     * The map must contain the class field
      *
      * @param in the map
      * @return the completed object
@@ -381,8 +379,7 @@ public class ObjectSerializer {
 
     @SuppressWarnings("unchecked")
     private <T> T _deserialize(Map<String, Object> in, @NotNull T theObject, Class<T> cls) {
-        // asm: it is much faster to iterate over every field and use map to get the potential serialized object
-        // than the other way around.
+        // asm: much faster to iterate every field and look it up in the map than the other way around
         fieldStream(cls).forEach(f -> {
             Object value = in.get(f.getName());
             if (value == null) return;
@@ -414,15 +411,14 @@ public class ObjectSerializer {
             throw new IllegalArgumentException("Cannot merge two objects of different classes: " + cls.getName() + " and " + input.getClass().getName());
         }
         if (isImmutable(cls)) {
-            // Value types (every instance field final) cannot be written through; signal the caller
-            // (e.g. Property.Field#set0) to replace the reference instead.
+            // value types cannot be written through so the caller must replace the reference instead
             throw new SerializationException("Cannot overwrite immutable type " + cls.getName() + " in place");
         }
         if (cls.isArray()) {
-            // arrays have no declared fields to iterate; copy elements in place so the reference is preserved
+            // arrays have no declared fields to iterate so copy elements in place to preserve the reference
             int len = java.lang.reflect.Array.getLength(input);
             if (java.lang.reflect.Array.getLength(self) != len) {
-                // cannot resize in place; signal the caller (e.g. Property.Field#set0) to replace the reference
+                // cannot resize in place so the caller must replace the reference
                 throw new SerializationException("Cannot overwrite array of length " + java.lang.reflect.Array.getLength(self) + " with array of length " + len);
             }
             //noinspection SuspiciousSystemArraycopy

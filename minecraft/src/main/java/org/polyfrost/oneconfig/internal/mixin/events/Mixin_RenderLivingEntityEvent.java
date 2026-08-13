@@ -121,6 +121,6 @@ public class Mixin_RenderLivingEntityEvent<
         *///? }
         RenderLivingEvent event = new RenderLivingEvent.Post(entity, partialTicks, x, y, z);
         EventManager.INSTANCE.post(event);
-        // Can't cancel when the method has already returned lol
+        // cannot cancel when the method has already returned
     }
 }

@@ -73,8 +73,6 @@ public final class ConfigManager {
     private static ConfigManager active;
     private static boolean initialized = false;
     private static boolean isFirstRun = false;
-//    @UnmodifiableView
-//    public static List<String> newOrUpdatedModIds;
     private static final Queue<Config> pendingInitialization = new ArrayDeque<>();
     private static final Map<String, Config> initializedConfigs = new LinkedHashMap<>();
     private static final ReentrantLock PROFILE_LIFECYCLE_LOCK = new ReentrantLock();
@@ -143,7 +141,7 @@ public final class ConfigManager {
     }
 
     /**
-     * Returns a reference to the internal config manager, which is mounted onto the ./OneConfig directory.
+     * Returns a reference to the internal config manager which is mounted onto the ./OneConfig directory
      */
     @ApiStatus.Internal
     public static ConfigManager internal() {
@@ -151,9 +149,10 @@ public final class ConfigManager {
     }
 
     /**
-     * Returns a reference to config manager which contains the backup configs, which is mounted onto the ./OneConfig/backup directory.
-     * <b>internal use only!</b>
-     * <br>used for the restore to default buttons.
+     * Returns a reference to config manager which contains the backup configs and is mounted onto the ./OneConfig/backup directory
+     * <br>
+     * <b>internal use only</b>
+     * <br>used for the restore to default buttons
      */
     @ApiStatus.Internal
     public static ConfigManager backup() {
@@ -161,7 +160,7 @@ public final class ConfigManager {
     }
 
     /**
-     * Returns a reference to the active config manager, which is mounted to the current active profile.
+     * Returns a reference to the active config manager which is mounted to the current active profile
      */
     public static synchronized ConfigManager active() {
         return activeLocked();
@@ -186,22 +185,13 @@ public final class ConfigManager {
             Config config = pendingInitialization.poll();
             if (config != null) config.initialize(true);
         }
-        // newOrUpdatedModIds = Collections.unmodifiableList(doModsListScan());
         LOGGER.info("Initialized configs in {}ms", (System.nanoTime() - t1) / 1_000_000.0);
     }
 
     @ApiStatus.Internal
     public static void submitForInitialization(Config config) {
-        // IMPORTANT: never initialize synchronously here. This is called from the Config base
-        // constructor, *before* the subclass's instance-field initializers have run. Initializing
-        // now would make collect(), default-capture and the backup save read uninitialized
-        // (zero/null) instance fields.
-        //
-        // Instead the config is initialized lazily, after construction has completed:
-        //   - configs created before OneConfig startup are drained by initialize() below;
-        //   - configs created afterwards initialize on first access through a `tree == null` guard
-        //     (e.g. preload(), createScreen(), getProperty()), or from their own constructor body
-        //     (which runs after field initializers).
+        // never initialize synchronously here because this runs from the Config base constructor
+        // before subclass field initializers have run so collect() would read uninitialized fields
         if (!initialized) {
             pendingInitialization.add(config);
         }
@@ -215,38 +205,6 @@ public final class ConfigManager {
     public static boolean isRebindingProfiles() {
         return REBINDING_PROFILES.get();
     }
-
-    /*private static List<String> doModsListScan() {
-        List<String> modIds = new ArrayList<>();
-        try {
-            Path listFile = internal().getFolder().resolve("mods-list");
-            HashMap<String, String> oldModToVersion = new HashMap<>();
-            if (Files.exists(listFile)) {
-                List<String> p = Files.readAllLines(internal().getFolder().resolve("mods-list"));
-                for (String s : p) {
-                    int sep = s.indexOf(':');
-                    if (sep == -1) continue;
-                    oldModToVersion.put(s.substring(0, sep), s.substring(sep + 1));
-                }
-            }
-
-            StringBuilder out = new StringBuilder();
-            OmniLoader.getLoadedMods().forEach(info -> {
-                String id = info.getId();
-                String v = oldModToVersion.get(id);
-                if (v == null || !v.equals(info.getVersion())) {
-                    // successfully detected a new or updated mod
-                    modIds.add(id);
-                }
-                out.append(id).append(':').append(info.getVersion()).append('\n');
-            });
-            Files.write(listFile, out.toString().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
-        } catch (Exception e) {
-            LOGGER.error("Failed to scan mods list", e);
-        }
-        LOGGER.info("detected " + modIds.size() + " new or updated mods");
-        return modIds;
-    }*/
 
     static void removePendingInitialization(Config config) {
         pendingInitialization.remove(config);
@@ -266,7 +224,7 @@ public final class ConfigManager {
         } catch (IOException e) {
             LOGGER.error("failed to back up problematic config {}", id, e);
         }
-        // persist the reset (default) values so the incompatible entries are scrubbed from the file.
+        // persist the reset values so the incompatible entries are scrubbed from the file
         mgr.save(id);
         LOGGER.warn("reset {} incompatible option(s) in config {}: {}", options.size(), id, options);
         notifyResetOptions(config, options);
@@ -280,7 +238,7 @@ public final class ConfigManager {
                     : options.size() + " options could not be loaded and were reset to their defaults (" + String.join(", ", options) + "). A backup was saved as " + config.getTree().getID() + ".corrupted.";
             org.polyfrost.oneconfig.api.notifications.v1.Notifications.error(name + ": options reset", message);
         } catch (Throwable t) {
-            // notifications are best-effort and must never break config loading.
+            // notifications are best-effort and must never break config loading
             LOGGER.error("failed to notify about reset options for config {}", config.id, t);
         }
     }
@@ -302,7 +260,6 @@ public final class ConfigManager {
                 )
         );
         if (result.state == Backend.RegistrationResult.NEW) {
-            // asm: first run
             isFirstRun = true;
             LOGGER.info("Welcome to OneConfig!");
         }
@@ -1115,7 +1072,7 @@ public final class ConfigManager {
                         Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
                     } catch (NoSuchFileException ignored) {
                         if (Files.exists(from)) throw ignored;
-                        // The active config folder can change underneath profile creation via file watchers.
+                        // the active config folder can change underneath profile creation via file watchers
                     }
                 }
             }
@@ -1137,8 +1094,9 @@ public final class ConfigManager {
     }
 
     /**
-     * Returns a reference to the core config manager, which is mounted onto the ./config directory.
-     * <b>internal use only!</b>
+     * Returns a reference to the core config manager which is mounted onto the ./config directory
+     * <br>
+     * <b>internal use only</b>
      */
     @ApiStatus.Internal
     public static ConfigManager core() {
@@ -1160,7 +1118,9 @@ public final class ConfigManager {
     }
 
     /**
-     * Register a collector that can be used to collect trees from objects. these are shared between all config managers.
+     * Register a collector that can be used to collect trees from objects
+     * <br>
+     * These are shared between all config managers
      */
     public static void registerCollector(PropertyCollector collector) {
         collectors.add(collector);
@@ -1248,8 +1208,7 @@ public final class ConfigManager {
     }
 
     private ConfigManager withHook() {
-        // two hooks that guarantee that we save lol
-        // seems to improve the reliability of saving when the game crashes
+        // a shutdown hook improves the reliability of saving when the game crashes
         Runtime.getRuntime().addShutdownHook(new Thread(this::onClose));
         return this;
     }

@@ -31,18 +31,8 @@ import java.lang.reflect.Field
 import kotlin.reflect.KMutableProperty0
 
 object Properties {
-//    private val specialMap = HashMap<Class<*>, Supplier<*>>()
-//
-//    fun interface Supplier<T> {
-//        fun create(id: String?, name: String?, description: String?, value: T?): Property<T>
-//    }
-//
-//    fun <T> registerCustomSupplier(cls: Class<T>, supplier: Supplier<T>) {
-//        specialMap[cls] = supplier
-//    }
-
     /**
-     * create a new property which is internally backed by a field.
+     * create a new property which is internally backed by a field
      */
     @JvmStatic
     @JvmOverloads
@@ -55,15 +45,17 @@ object Properties {
     ): Property<T> = Property.Simple(id, name, description, value, cls)
 
     /**
-     * create a property which is internally backed by a field.
+     * create a property which is internally backed by a field
      */
     @JvmStatic
     fun <T> simple(value: T): Property<T> = Property.Simple(null, null, null, value, null)
 
     /**
-     * create a property backed by the given [field]. The [owner] is the object that owns the field.
+     * create a property backed by the given [field]
      *
-     * If the field is static, the owner should be `null`.
+     * The [owner] is the object that owns the field
+     *
+     * If the field is static the owner should be `null`
      */
     @JvmStatic
     @JvmOverloads
@@ -75,7 +67,9 @@ object Properties {
     ): Property<T> = Property.Field(name, description, field, owner)
 
     /**
-     * create a property which has no serializable value. the type is [Void] and the value is always `null`.
+     * create a property which has no serializable value
+     *
+     * the type is [Void] and the value is always `null`
      */
     @JvmStatic
     @JvmOverloads
@@ -86,9 +80,9 @@ object Properties {
     ): Property<Void> = Property.Dummy(id, name, description)
 
     /**
-     * create a property which is backed by the given kotlin property reference, such as `this::foo`.
+     * create a property which is backed by the given kotlin property reference such as `this::foo`
      *
-     * for the inverse, where a property is backed by a property, see `KtConfig`.
+     * for the inverse where a property is backed by a property see `KtConfig`
      */
     @Suppress("DEPRECATION")
     @JvmSynthetic
@@ -99,7 +93,7 @@ object Properties {
     ): Property<T> = Property.KtProperty(name, description, ref, T::class.java)
 
     /**
-     * Return a property which delegates to the given [getter] and [setter].
+     * Return a property which delegates to the given [getter] and [setter]
      */
     @JvmStatic
     @JvmOverloads

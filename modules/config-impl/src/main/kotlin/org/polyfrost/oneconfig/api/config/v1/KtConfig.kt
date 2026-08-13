@@ -36,9 +36,9 @@ import kotlin.reflect.KProperty0
 import kotlin.reflect.KProperty1
 
 /**
- * Kotlin config class. allows to use the `by` keyword to create properties.
+ * Kotlin config class which allows using the `by` keyword to create properties
  *
- * **Do not use in Java sources**.
+ * **Do not use in Java sources**
  */
 open class KtConfig(id: String, title: String, category: Category, icon: String? = null) :
     Config(id, icon, title, category) {
@@ -58,7 +58,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
     final override fun makeTree(): Tree = pendingTree ?: Tree.tree(id)
 
     /**
-     * return the property with the given id by a kotlin property reference.
+     * return the property with the given id by a kotlin property reference
      */
     @Suppress("UNCHECKED_CAST")
     protected val <V> KProperty<V>.property: Property<V>
@@ -67,9 +67,6 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
             return t.getProp(this.name) as Property<V>
         }
 
-    /**
-     * create a new delegate for the given property.
-     */
     @JvmSynthetic
     protected inline fun <reified T : Any> property(
         def: T? = null,
@@ -501,9 +498,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         }) }
     }
 
-    /**
-     * provider for the [PropertyDelegate]. for some reason this has to be a class to avoid having to pass the reference directly.
-     */
+    /** provider for the [PropertyDelegate] which must be a class to avoid passing the reference directly */
     protected class Provider<T : Any>(
         private val def: T?,
         private val name: String?,
@@ -613,9 +608,6 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
 
     }
 
-    /**
-     * The actual delegate property. very simple.
-     */
     private class PropertyDelegate<T : Any>(val property: Property<T>) : ReadWriteProperty<KtConfig, T> {
         override operator fun getValue(thisRef: KtConfig, property: KProperty<*>): T = this.property.get() as T
 

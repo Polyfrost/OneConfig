@@ -16,14 +16,19 @@ data class ModInfo @JvmOverloads constructor(
     val description: String? = null,
 ){
     /**
-     * Resolves [modIconPath] against this mod's own jar root ([file]) and copies the icon out to a
-     * stable temp file, returning its absolute path.
+     * Resolves [modIconPath] against this mod's own jar root ([file])
      *
-     * [modIconPath] is relative to the owning jar, so loading it as a classpath resource resolves
-     * against the whole merged mod classpath and collides with any other mod that uses the same
-     * filename (e.g. "icon.png"). Extracting from [file] keeps each mod's icon distinct.
+     * Copies the icon out to a stable temp file and returns its absolute path
      *
-     * @return absolute path to the extracted icon file, or null if unavailable.
+     * [modIconPath] is relative to the owning jar
+     *
+     * Loading it as a classpath resource would resolve against the whole merged mod classpath
+     *
+     * That collides with any other mod using the same filename such as icon.png
+     *
+     * Extracting from [file] keeps each mod's icon distinct
+     *
+     * @return absolute path to the extracted icon file or null if unavailable
      */
     fun extractIconFile(): String? {
         val iconPath = modIconPath ?: return null

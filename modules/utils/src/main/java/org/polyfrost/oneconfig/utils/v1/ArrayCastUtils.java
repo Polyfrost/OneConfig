@@ -27,7 +27,7 @@
 package org.polyfrost.oneconfig.utils.v1;
 
 /**
- * Utility class for casting between primitive array types.
+ * Utility class for casting between primitive array types
  */
 public final class ArrayCastUtils {
     private ArrayCastUtils() {

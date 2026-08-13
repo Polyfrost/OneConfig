@@ -29,16 +29,17 @@ package org.polyfrost.oneconfig.api.config.v1
 import androidx.compose.runtime.Composable
 
 /**
- * Visualizers are procedures that take a [Property] and create a composable to represent it.
+ * Visualizers are procedures that take a [Property] and create a composable to represent it
  *
- * To create a custom visualizer, implement this interface or pass a lambda:
+ * To create a custom visualizer implement this interface or pass a lambda
  * ```kotlin
  * val myVisualizer = Visualizer { prop -> Text(prop.get().toString()) }
  * ```
  *
- * The built-in visualizer token classes (e.g. [SwitchVisualizer]) delegate their rendering
- * to implementations registered via [register], which are provided by the UI layer.
- * There is no distinction between built-in and third-party visualizers, both use the same API.
+ * The built-in visualizer token classes such as [SwitchVisualizer] delegate their rendering
+ * to implementations registered via [register] which are provided by the UI layer
+ *
+ * There is no distinction between built-in and third-party visualizers because both use the same API
  */
 @Suppress("UNCHECKED_CAST")
 fun interface Visualizer {
@@ -87,32 +88,42 @@ fun interface Visualizer {
     }
 
     /**
-     * A slider with two thumbs, backed by a single property holding a start/end pair — a two-element numeric
-     * array or list. Writes both ends at once, keeping start below end.
+     * A slider with two thumbs backed by a single property holding a start and end pair as a two-element
+     * numeric array or list
+     *
+     * Writes both ends at once keeping start below end
      */
     class RangeSliderVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[RangeSliderVisualizer::class.java]?.visualize(prop) }
     }
 
     /**
-     * A slider with a third, "inherited" state for overrides that fall back to a broader setting when unset.
-     * The property stores a sentinel while inheriting — `null`, or the value of the `inheritSentinel` metadata —
-     * and the inherited value itself comes from the `inheritedValue` metadata, either a number or a
-     * `java.util.function.Supplier` of one so it can track a live global.
+     * A slider with a third "inherited" state for overrides that fall back to a broader setting when unset
      *
-     * Prefer a numeric sentinel over `null` where the backing type allows it: [CompatSnapshots] cannot record a
-     * null, so on a foreign-backed config a null-sentinel property must opt out of snapshots with
-     * [CompatSnapshots.NO_SNAPSHOT_META] or an older value will resurrect itself and undo "inherit".
+     * The property stores a sentinel while inheriting which is either `null` or the value of the `inheritSentinel`
+     * metadata
+     *
+     * The inherited value itself comes from the `inheritedValue` metadata and is either a number or a
+     * `java.util.function.Supplier` of one so it can track a live global
+     *
+     * Prefer a numeric sentinel over `null` where the backing type allows it because [CompatSnapshots] cannot
+     * record a null
+     *
+     * On a foreign-backed config a null-sentinel property must opt out of snapshots with
+     * [CompatSnapshots.NO_SNAPSHOT_META] or an older value will resurrect itself and undo "inherit"
      */
     class InheritableSliderVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[InheritableSliderVisualizer::class.java]?.visualize(prop) }
     }
 
     /**
-     * An ordered, editable chain of numbers held in one property as a numeric array or list — reorder, edit in
-     * place, remove, or append. `lockedLeading` metadata fixes that many entries at the front, `maxEntries`
-     * caps the length, and `entryLabel`/`nextValue` (both `java.util.function.Function`s) control how an entry
-     * reads and what "add" appends.
+     * An ordered chain of numbers held in one property as a numeric array or list
+     *
+     * Entries can be reordered and edited in place and removed or appended
+     *
+     * `lockedLeading` metadata fixes that many entries at the front and `maxEntries` caps the length
+     *
+     * `entryLabel`/`nextValue` are both `java.util.function.Function`s that control how an entry reads and what "add" appends
      */
     class NumberChainVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[NumberChainVisualizer::class.java]?.visualize(prop) }
@@ -136,7 +147,9 @@ fun interface Visualizer {
 
     /**
      * A searchable Minecraft item selector backed by a `String[]` or `List<String>` of
-     * namespaced registry IDs. A `maxEntries` metadata value of one makes it a single selector.
+     * namespaced registry IDs
+     *
+     * A `maxEntries` metadata value of one makes it a single selector
      */
     class ItemListVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[ItemListVisualizer::class.java]?.visualize(prop) }
@@ -166,10 +179,11 @@ fun interface Visualizer {
         private val registry = HashMap<Class<out Visualizer>, Visualizer>()
 
         /**
-         * Register a rendering implementation for a built-in [Visualizer] token class.
-         * Called by the UI layer on startup to wire up the built-in visualizer types.
+         * Register a rendering implementation for a built-in [Visualizer] token class
          *
-         * This will overwrite the existing visualizer if there is one already registered.
+         * Called by the UI layer on startup to wire up the built-in visualizer types
+         *
+         * This will overwrite the existing visualizer if there is one already registered
          */
         fun register(cls: Class<out Visualizer>, impl: Visualizer) {
             registry[cls] = impl

@@ -457,19 +457,14 @@ object SkiaCtx {
                 directContext.resetAll()
             } else {
                 gl.capture()
-                // This is done to avoid screen flickering.
+                // restoring this fbo later avoids screen flickering
                 GL30.glGetIntegerv(GL30.GL_FRAMEBUFFER_BINDING, savedFbo)
                 directContext.resetGLAll()
                 GL11.glViewport(0, 0, mainSurface.width, mainSurface.height)
                 GL11.glDisable(GL11.GL_SCISSOR_TEST)
             }
 
-//            val profiling = GpuProfiler.enabled && !isVulkanMode
-//            val sections = profiling && GpuProfiler.perSection
-//            if (profiling) GpuProfiler.frameBegin()
-
             draws.forEach { it() }        // blur backdrop onto the main RT (samples the live world)
-//            if (sections) { directContext.flush(); GpuProfiler.mark("blur") }
 
             if (wantCompose) {
                 val cs = resolveComposeSurface()
@@ -483,27 +478,20 @@ object SkiaCtx {
                         composeDirty = false
                         currentSurface = mainSurface
                         GL11.glViewport(0, 0, mainSurface.width, mainSurface.height)
-//                        if (sections) { directContext.flush(); GpuProfiler.mark("compose.render") }
                     }
                     cs.draw(mainSurface.canvas, 0, 0, null)
-//                    if (sections) { directContext.flush(); GpuProfiler.mark("compose.blit") }
                 }
             }
 
             postComposeRender?.invoke()
 
             notifDraw?.invoke()
-//            if (sections) { directContext.flush(); GpuProfiler.mark("notif") }
 
             if (isVulkanMode) {
                 directContext.flushAndSubmit(mainSurface, false)
                 vulkanService?.restoreMainRTLayout()
             } else {
                 directContext.flush()
-//                if (profiling) {
-//                    GpuProfiler.mark(if (sections) "flush.tail" else "draw")
-//                    GpuProfiler.frameEnd()
-//                }
                 GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, savedFbo[0])
                 gl.restore()
             }
@@ -644,8 +632,8 @@ object SkiaCtx {
 
     private const val ALLOC_RETRY_COOLDOWN_MS = 2000L
 
-    // This improves draw performance on OpenGL because it allows a plain copy.
-    // Compensated in drawComposeBlit because GuiGraphics always samples top left.
+    // bottom left lets OpenGL do a plain copy which is faster
+    // compensated in drawComposeBlit because GuiGraphics always samples top left
     private val composeOrigin get() = if (isVulkanMode) SurfaceOrigin.TOP_LEFT else SurfaceOrigin.BOTTOM_LEFT
 
     private fun resolveComposeSurface(): Surface? {

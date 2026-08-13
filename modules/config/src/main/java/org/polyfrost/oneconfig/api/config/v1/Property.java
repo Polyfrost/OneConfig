@@ -41,17 +41,15 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
- * Class which represents a property in a tree.
+ * Class which represents a property in a tree
  * <br>
- * <b>to actually create a property, see the {@link Properties} class.</b>
- *
- * @param <T>
+ * <b>to actually create a property see the {@link Properties} class</b>
  */
 @SuppressWarnings("unused")
 public abstract class Property<T> extends Node implements Serializable {
     /**
-     * This is the type of the property, and is used for casting.
-     * <br><b>Note that this is not {@code Class<T>}. this is because it holds the unwrapped type of the stored value.</b>
+     * This is the type of the property and is used for casting
+     * <br><b>Note that this is not {@code Class<T>} because it holds the unwrapped type of the stored value</b>
      */
     @NotNull
     public transient final Class<?> type;
@@ -72,7 +70,7 @@ public abstract class Property<T> extends Node implements Serializable {
     }
 
     /**
-     * This is used by the frontend to know if this property is able to be displayed, which is controlled by {@link #conditions}.
+     * This is used by the frontend to know if this property is able to be displayed which is controlled by {@link #conditions}
      *
      * @see #addDisplayCondition(Supplier)
      */
@@ -81,7 +79,7 @@ public abstract class Property<T> extends Node implements Serializable {
     }
 
     /**
-     * Return the current display state of this property, which is controlled by {@link #conditions}.
+     * Return the current display state of this property which is controlled by {@link #conditions}
      *
      * @see #addDisplayCondition(Supplier)
      */
@@ -96,10 +94,11 @@ public abstract class Property<T> extends Node implements Serializable {
     }
 
     /**
-     * Add a listener which is called whenever the display state of this property changes.
+     * Add a listener which is called whenever the display state of this property changes
      * <br>
-     * Unlike {@link #onDisplayChange(Consumer)}, any amount of listeners can be registered at once.
-     * Remember to {@link #removeDisplayListener(Consumer) remove} the listener when it is no longer needed.
+     * Unlike {@link #onDisplayChange(Consumer)} any amount of listeners can be registered at once
+     * <br>
+     * Remember to {@link #removeDisplayListener(Consumer) remove} the listener when it is no longer needed
      */
     public final void addDisplayListener(@NotNull Consumer<Display> listener) {
         if (displayListeners == null) displayListeners = new ArrayList<>(2);
@@ -112,9 +111,6 @@ public abstract class Property<T> extends Node implements Serializable {
         return displayListeners.remove(listener);
     }
 
-    /**
-     * Add a display condition to this property.
-     */
     public final Property<T> addDisplayCondition(@NotNull Supplier<Display> condition) {
         if (conditions == null) conditions = new ArrayList<>(3);
         conditions.add(condition);
@@ -169,7 +165,7 @@ public abstract class Property<T> extends Node implements Serializable {
             }
         }
         if (d != display) {
-            // asm: assign before dispatching, so listeners which read canDisplay()/getDisplay() see the new state
+            // asm: assign before dispatching so listeners which read canDisplay()/getDisplay() see the new state
             display = d;
             if (displayCallback != null) displayCallback.accept(d);
             if (displayListeners != null) {
@@ -178,18 +174,19 @@ public abstract class Property<T> extends Node implements Serializable {
         }
     }
 
-    /**
-     * Remove all display conditions from this property.
-     */
     protected final void clearDisplayConditions() {
         conditions = null;
         display = Display.SHOWN;
     }
 
     /**
-     * Add a callback to this property, which is called when the value changes.
+     * Add a callback to this property which is called when the value changes
      *
-     * @param callback the callback to add. The new value is passed to the callback. Return true if you wish to cancel the setting of the property.
+     * @param callback the callback to add
+     *                 <br>
+     *                 The new value is passed to the callback
+     *                 <br>
+     *                 Return true if you wish to cancel the setting of the property
      */
     @kotlin.OverloadResolutionByLambdaReturnType
     public final Property<T> addCallback(@NotNull Predicate<T> callback) {
@@ -251,17 +248,14 @@ public abstract class Property<T> extends Node implements Serializable {
         }
     }
 
-    /**
-     * Remove all callbacks.
-     */
     protected final void clearCallbacks() {
         callbacks = null;
     }
 
     /**
-     * Set the value of this property. This will call all callbacks.
+     * Set the value of this property and call all callbacks
      * <br>
-     * The value (and callbacks) are only set/called if the value is different from the previous value (using {@link Objects#equals(Object)}).
+     * The value is only set and the callbacks only called if the value differs from the previous value using {@link Objects#equals(Object)}
      */
     public final boolean set(@Nullable T value) {
         if (Objects.equals(this.get(), value)) return false;
@@ -269,10 +263,11 @@ public abstract class Property<T> extends Node implements Serializable {
     }
 
     /**
-     * Set the value of this property. This will call all callbacks.
+     * Set the value of this property and call all callbacks
      * <br>
-     * Unlike {@link #set(Object)}, <b>this will always set the value</b>, regardless of if it is the same as the previous value.
-     * Use this method with caution.
+     * Unlike {@link #set(Object)} <b>this will always set the value</b> even if it is the same as the previous value
+     * <br>
+     * Use this method with caution
      */
     public boolean setReferential(@Nullable T value) {
         if (callbacks != null) {
@@ -300,15 +295,13 @@ public abstract class Property<T> extends Node implements Serializable {
         return getID() + ": " + get();
     }
 
-    /**
-     * Get the value of this property.
-     */
     @Nullable
     public abstract T get();
 
     /**
-     * Get the value of this property, cast to the specified type.
-     * This method is unsafe, and will throw a {@link ClassCastException} if the value is not of the correct type.
+     * Get the value of this property cast to the specified type
+     * <br>
+     * This method is unsafe and will throw a {@link ClassCastException} if the value is not of the correct type
      */
     @SuppressWarnings("unchecked")
     public final <V> V getAs() {
@@ -316,8 +309,9 @@ public abstract class Property<T> extends Node implements Serializable {
     }
 
     /**
-     * Set the value of this property. This will call all callbacks.
-     * This method is unsafe, and will throw a {@link ClassCastException} if the value is not of the correct type.
+     * Set the value of this property and call all callbacks
+     * <br>
+     * This method is unsafe and will throw a {@link ClassCastException} if the value is not of the correct type
      */
     @SuppressWarnings("unchecked")
     public final <V> boolean setAs(V value) {
@@ -325,10 +319,11 @@ public abstract class Property<T> extends Node implements Serializable {
     }
 
     /**
-     * Set the value of this property. This will call all callbacks.
+     * Set the value of this property and call all callbacks
      * <br>
-     * Unlike {@link #setAs(Object)}, <b>this will always set the value</b>, regardless of if it is the same as the previous value.
-     * Use this method with caution.
+     * Unlike {@link #setAs(Object)} <b>this will always set the value</b> even if it is the same as the previous value
+     * <br>
+     * Use this method with caution
      */
     @SuppressWarnings("unchecked")
     public final <V> boolean setAsReferential(V value) {
@@ -336,9 +331,13 @@ public abstract class Property<T> extends Node implements Serializable {
     }
 
     /**
-     * Deep equals for a property, meaning it will check {@link #equals(Object)} and the value of this property with the given obj.
+     * Deep equals for a property meaning it checks {@link #equals(Object)} and the value of this property against the given obj
      * <br>
-     * In pretty much every case, you should use {@link #equals(Object)} instead. This is used for testing. Note that primitive arrays are not checked.
+     * In pretty much every case you should use {@link #equals(Object)} instead
+     * <br>
+     * This is used for testing
+     * <br>
+     * Note that primitive arrays are not checked
      */
     @Override
     public boolean deepEquals(Object obj) {
@@ -359,15 +358,12 @@ public abstract class Property<T> extends Node implements Serializable {
     }
 
     /**
-     * @return true if the value is a primitive array.
+     * @return true if the value is a primitive array
      */
     public final boolean isPrimitive() {
         return type.isPrimitive() || (type.isArray() && type.getComponentType().isPrimitive());
     }
 
-    /**
-     * @return true if the value is an array.
-     */
     public final boolean isArray() {
         return type.isArray();
     }
@@ -443,7 +439,6 @@ public abstract class Property<T> extends Node implements Serializable {
                 T it = get();
                 if (it != null && complex) {
                     try {
-                        // default behavior will attempt
                         ObjectSerializer.overwrite(it, value);
                     } catch (Throwable ignored) {
                         field.set(owner, value);

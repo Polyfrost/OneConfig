@@ -94,13 +94,6 @@ public class FileBackend extends Backend {
         WatchService service = folder.getFileSystem().newWatchService();
         folder.register(service, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
         watcherService = service;
-//        Files.walkFileTree(folder, new SimpleFileVisitor<Path>() {
-//            @Override
-//            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-//                dir.register(service, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
-//                return FileVisitResult.CONTINUE;
-//            }
-//        });
         hasWatcher = true;
 
         Thread t = new Thread(() -> {
@@ -229,14 +222,14 @@ public class FileBackend extends Backend {
     }
 
     /**
-     * Gather all files in this directory and make trees of them where possible.
+     * Gather all files in this directory and make trees of them where possible
      */
     public Collection<Tree> gatherAll() {
         return gatherAll(null);
     }
 
     /**
-     * Inspect all files in this directory (and optionally the given directory) and make trees of them where possible.
+     * Inspect all files in this directory (and optionally the given directory) and make trees of them where possible
      */
     public Collection<Tree> gatherAll(@Nullable String sub) {
         ArrayList<Tree> out = new ArrayList<>();
@@ -291,7 +284,6 @@ public class FileBackend extends Backend {
         String path = p.toString();
         int i = path.lastIndexOf('.');
         if (i == -1) {
-            //LOGGER.warn("no serializer set for file {}, using YAML", path);
             return serializers.get(".yml");
         }
         return serializers.get(path.substring(i));

@@ -33,14 +33,14 @@ import java.util.concurrent.Callable
 /**
  * Utility for sending notifications
  *
- * Kotlin:
+ * Kotlin
  * ```
  * Notifications.send("Saved", "Your config was saved")
  * Notifications.success("Downloaded!", "All-of-Fabric-6")
  * Notifications.progress("Downloading", "All-of-Fabric-6") { downloadFraction() }
  * ```
  *
- * Java:
+ * Java
  * ```
  * Notifications.INSTANCE.send("Saved", "Your config was saved");
  * Notifications.builder("8 mods have updates", "DamageTint, Hytils, ...")
@@ -54,9 +54,11 @@ object Notifications {
     private val LOGGER = LogManager.getLogger("OneConfig/Notifications")
 
     /**
-     * Sends a fully specified notification. All parameters except [title] and [message] are optional.
+     * Sends a fully specified notification
      *
-     * @return the [Notification] that was pushed, so callers can later [dismiss] it.
+     * All parameters except [title] and [message] are optional
+     *
+     * @return the [Notification] that was pushed so callers can later [dismiss] it
      */
     @JvmStatic
     @JvmOverloads
@@ -92,8 +94,10 @@ object Notifications {
         send(title, message, NotificationType.ERROR, duration = duration)
 
     /**
-     * Sends a [NotificationType.PROGRESS] notification driven by [progress] (a supplier returning
-     * `0..1`). The toast stays up until the supplier reports `>= 1`.
+     * Sends a [NotificationType.PROGRESS] notification driven by [progress]
+     * which is a supplier returning `0..1`
+     *
+     * The toast stays up until the supplier reports `>= 1`
      */
     @JvmStatic
     fun progress(title: String, message: String, progress: Callable<Float>): Notification =
@@ -125,7 +129,7 @@ object Notifications {
         fun duration(duration: Float) = apply { this.duration = duration }
 
         /**
-         * Makes the notification persistent (stays until dismissed or progress completes).
+         * Makes the notification persistent so it stays until dismissed or progress completes
          */
         fun persistent() = apply { this.duration = -1f }
 

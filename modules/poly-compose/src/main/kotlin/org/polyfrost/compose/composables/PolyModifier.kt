@@ -24,10 +24,8 @@ open class PolyModifier internal constructor(internal val block: PolyLayoutStyle
         style.clipToBounds = false
         style.alpha = 1f
         style.tag = null
-        // Restore structural properties
         style.layoutType = lt
         style.gap = g
-        // Apply the modifier chain
         style.block()
     }
 

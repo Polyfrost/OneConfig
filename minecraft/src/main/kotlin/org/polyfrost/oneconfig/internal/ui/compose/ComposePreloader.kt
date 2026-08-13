@@ -15,7 +15,7 @@ import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
 import org.slf4j.LoggerFactory
 
 /**
- * Warms up the Compose UI so the first real screen open doesn't stutter. Renders [OneConfigInterface]
+ * Warms up the Compose UI by rendering [OneConfigInterface] so the first screen open doesn't stutter
  */
 @OptIn(InternalComposeUiApi::class)
 object ComposePreloader {
@@ -32,7 +32,7 @@ object ComposePreloader {
             val startNanos = System.nanoTime()
             val w = Platform.screen().windowWidth().takeIf { it > 0 } ?: 1280
             val h = Platform.screen().windowHeight().takeIf { it > 0 } ?: 720
-            // Mirror ComposeScreen: created and rendered on the render thread, default coroutineContext.
+            // mirror ComposeScreen by creating and rendering on the render thread with the default coroutineContext
             val scene = CanvasLayersComposeScene(
                 platformContext = ComposeSceneContextImpl.platformContext,
             )

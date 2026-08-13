@@ -13,10 +13,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.function.Consumer;
 
 /**
- * Pre-26.1 only (registered for < 26.1 in {@code OneConfigMixinInit}): the fullscreen Compose GUI is drawn
- * onto the back buffer, not the main render target that screenshots read. Right before a screenshot reads the
- * main render target's colour texture, blit the finished back buffer (which already holds the GUI) into it so
- * the captured image matches what is on screen.
+ * Pre-26.1 only where the fullscreen Compose GUI draws onto the back buffer instead of the main
+ * render target that screenshots read
+ * <p>
+ * Blit the back buffer into it before the screenshot reads
  */
 @Mixin(Screenshot.class)
 public class Mixin_ScreenshotComposite {

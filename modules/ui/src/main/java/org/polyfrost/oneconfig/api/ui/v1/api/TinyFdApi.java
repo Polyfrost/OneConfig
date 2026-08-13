@@ -33,8 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 
 /**
- * API for TinyFD, a cross-platform file selection dialog.
- * <p>
+ * API for TinyFD which is a cross-platform file selection dialog
  */
 @SuppressWarnings("unused")
 public interface TinyFdApi {
@@ -53,51 +52,57 @@ public interface TinyFdApi {
     String YES_NO_CANCEL_DIALOG = "yesnocancel";
 
     /**
-     * Open a save file selection prompt.
-     * Same as {@link #openFileSelector(String, String, String[], String)} but says save instead of open.
+     * Open a save file selection prompt
+     * <p>
+     * Same as {@link #openFileSelector(String, String, String[], String)} but says save instead of open
      */
     Path openSaveSelector(@Nullable String title, @Nullable String defaultFilePath, String[] filterPatterns, @Nullable String filterDescription);
 
     /**
-     * Open a file selection prompt.
+     * Open a file selection prompt
      *
      * @param title             the title of the prompt
      * @param defaultFilePath   the path to the default file to select
-     * @param filterPatterns    the file extensions to filter by. e.g. new String[]{"*.png", "*.jpg"}
-     * @param filterDescription the description for said filter. e.g. "Images"
-     * @return the selected file, or null if the user cancelled.
+     * @param filterPatterns    the file extensions to filter by such as new String[]{"*.png", "*.jpg"}
+     * @param filterDescription the description for said filter such as "Images"
+     * @return the selected file or null if the user cancelled
      */
     @Nullable
     Path openFileSelector(@Nullable String title, @Nullable String defaultFilePath, String[] filterPatterns, @Nullable String filterDescription);
 
     /**
-     * Open a multi file selection prompt.
-     * Same as {@link #openFileSelector(String, String, String[], String)} but allows the user to select multiple files.
+     * Open a multi file selection prompt
+     * <p>
+     * Same as {@link #openFileSelector(String, String, String[], String)} but allows the user to select multiple files
      */
     Path[] openMultiFileSelector(@Nullable String title, @Nullable String defaultFilePath, String[] filterPatterns, @Nullable String filterDescription);
 
     /**
-     * Open a folder selection prompt.
-     * Same as {@link #openFileSelector(String, String, String[], String)} but allows the user to select a folder.
+     * Open a folder selection prompt
+     * <p>
+     * Same as {@link #openFileSelector(String, String, String[], String)} but allows the user to select a folder
      */
     Path openFolderSelector(@Nullable String title, @Nullable String defaultFolderPath);
 
     /**
-     * Shows a message box.
+     * Shows a message box
      *
-     * @param message      the message. may contain \n and \t
-     * @param dialog       the type of message box to show. <br>One of: {@link #OK_DIALOG}, {@link #OK_CANCEL_DIALOG}, {@link #YES_NO_DIALOG}, {@link #YES_NO_CANCEL_DIALOG}
-     * @param icon         the icon to use. <br>One of: {@link #QUESTION_ICON}, {@link #ERROR_ICON}, {@link #WARNING_ICON}, {@link #INFO_ICON}
+     * @param message      the message which may contain \n and \t
+     * @param dialog       the type of message box to show
+     *                     <ul><li>{@link #OK_DIALOG}</li><li>{@link #OK_CANCEL_DIALOG}</li><li>{@link #YES_NO_DIALOG}</li><li>{@link #YES_NO_CANCEL_DIALOG}</li></ul>
+     * @param icon         the icon to use
+     *                     <ul><li>{@link #QUESTION_ICON}</li><li>{@link #ERROR_ICON}</li><li>{@link #WARNING_ICON}</li><li>{@link #INFO_ICON}</li></ul>
      * @param defaultValue the default value to return if the user closes the dialog without clicking a button
-     * @return true if the user clicked the "ok" or "yes" button, false for "cancel" or "no"
+     * @return true if the user clicked the "ok" or "yes" button <br>false for "cancel" or "no"
      */
     boolean showMessageBox(String title, String message, @NotNull String dialog, String icon, boolean defaultValue);
 
     /**
-     * Shows a notification.
+     * Shows a notification
      *
-     * @param icon the icon to use. One of: {@link #QUESTION_ICON}, {@link #ERROR_ICON}, {@link #WARNING_ICON}, {@link #INFO_ICON}
-     * @return 0 if the user clicked the "ok" button, 1 for "cancel"
+     * @param icon the icon to use
+     *             <ul><li>{@link #QUESTION_ICON}</li><li>{@link #ERROR_ICON}</li><li>{@link #WARNING_ICON}</li><li>{@link #INFO_ICON}</li></ul>
+     * @return 0 if the user clicked the "ok" button <br>1 for "cancel"
      */
     int showNotification(String title, String message, String icon);
 }

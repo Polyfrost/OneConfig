@@ -32,18 +32,18 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a given class (or inner class) as a command to be registered in the command tree by the annotation-based command factory.
+ * Marks a class or inner class as a command in the command tree
  * <p>
- * <b>Note: This annotation is REQUIRED for the command to be registered, otherwise it will be ignored.</b>
+ * <b>Required for the command to be registered otherwise it is ignored</b>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface Command {
 
     /**
-     * The aliases for this command tree.
+     * Aliases for this command tree
      * <p>
-     * The first alias is used as the primary command name, while the rest are considered additional aliases which this command can be invoked with.
+     * The first is the primary command name and the rest are alternates it can be invoked with
      */
     String[] value() default {};
 

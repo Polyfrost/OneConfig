@@ -31,11 +31,15 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer;
 import java.lang.annotation.*;
 
 /**
- * Renders a user-editable list of file (or directory) pickers. The annotated field must be
- * {@code String[]} or a {@code List<String>}, each entry holding one path.
+ * Renders a user-editable list of file (or directory) pickers
  * <p>
- * This is the list counterpart of {@link File}: rows can be added, removed and dragged into a
- * different order, and the property value is the list of paths in display order.
+ * The annotated field must be {@code String[]} or a {@code List<String>} with each entry holding one path
+ * <p>
+ * This is the list counterpart of {@link File}
+ * <p>
+ * Rows can be added and removed and dragged into a different order
+ * <p>
+ * The property value is the list of paths in display order
  */
 @Option(display = Visualizer.FileListVisualizer.class)
 @Retention(RetentionPolicy.RUNTIME)
@@ -45,9 +49,7 @@ public @interface FileList {
     String title();
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given title is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the title and remove this flag.
+     * @deprecated OneConfig auto-translates title values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean titleTranslation() default false;
@@ -55,9 +57,7 @@ public @interface FileList {
     String description() default "";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given description is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the description and remove this flag.
+     * @deprecated OneConfig auto-translates description values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean descriptionTranslation() default false;
@@ -67,9 +67,7 @@ public @interface FileList {
     String category() default "General";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given category is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the category and remove this flag.
+     * @deprecated OneConfig auto-translates category values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean categoryTranslation() default false;
@@ -77,25 +75,30 @@ public @interface FileList {
     String subcategory() default "General";
 
     /**
-     * @deprecated translation keys will be translated by default.
+     * @deprecated translation keys will be translated by default
      */
     @Deprecated
     boolean subcategoryTranslation() default false;
 
     /**
-     * The file extensions to filter the dialog by, e.g. {@code {".png", ".jpg"}}. Entries may be
-     * written as {@code ".png"}, {@code "png"} or {@code "*.png"}; they are all normalised to the
-     * {@code *.ext} form tinyfd expects. Leave empty to allow any file.
+     * The file extensions to filter the dialog by such as {@code {".png", ".jpg"}}
+     * <p>
+     * Entries may be written as {@code ".png"} or {@code "png"} or {@code "*.png"} and they are all
+     * normalised to the {@code *.ext} form tinyfd expects
+     * <p>
+     * Leave empty to allow any file
      */
     String[] types() default {};
 
     /**
-     * A human-readable description for the {@link #types()} filter, e.g. {@code "Images"}.
+     * A human-readable description for the {@link #types()} filter such as {@code "Images"}
      */
     String filterName() default "";
 
     /**
-     * Select directories instead of files. When {@code true}, {@link #types()} is ignored.
+     * Select directories instead of files
+     * <p>
+     * When {@code true} the {@link #types()} value is ignored
      */
     boolean directory() default false;
 
@@ -103,26 +106,22 @@ public @interface FileList {
     String placeholder() default "oneconfig.filepicker.placeholder";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given placeholder is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the placeholder and remove this flag.
+     * @deprecated OneConfig auto-translates placeholder values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean placeholderTranslation() default false;
 
-    /** Maximum number of entries the user may add. {@code 0} means unlimited. */
+    /** Maximum number of entries the user may add and {@code 0} means unlimited */
     int maxEntries() default 0;
 
-    /** Allow the user to drag entries to reorder them. */
+    /** Allow the user to drag entries to reorder them */
     boolean reorderable() default true;
 
-    /** Label of the button that appends a new entry. */
+    /** Label of the button that appends a new entry */
     String addText() default "Add";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given addText is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the addText and remove this flag.
+     * @deprecated OneConfig auto-translates addText values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean addTextTranslation() default false;

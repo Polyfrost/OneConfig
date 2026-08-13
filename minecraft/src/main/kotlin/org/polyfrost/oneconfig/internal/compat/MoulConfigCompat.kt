@@ -25,7 +25,7 @@ import org.polyfrost.oneconfig.internal.utils.MoulConfigGuiOptionEditorDropdownA
 import java.awt.Color
 import java.lang.reflect.Type
 import kotlin.reflect.KClass
-// do not remove the im
+// do not remove this import even though the IDE marks it redundant
 import org.polyfrost.oneconfig.internal.compat.MoulPropertyBuilder
 import io.github.notenoughupdates.moulconfig.Config as MoulConfig
 import org.polyfrost.oneconfig.relocator.annotations.MoulConfig as Moulconfig
@@ -255,9 +255,8 @@ data object MoulConfigCompat {
             }
 
             is GuiOptionEditorKeybind -> {
-                // MoulConfig stores a keybind as a single int GLFW key code on an int/Integer property; a code <= 0
-                // (GLFW_KEY_UNKNOWN / "none") means unbound. Bridge it to OneConfig's OneConfigKeybind, which carries
-                // an array of key codes. The action is a no-op stub since MoulConfig owns the actual bind firing.
+                // MoulConfig keeps a keybind as one int GLFW key code where a code <= 0 means unbound
+                // the action is a no-op stub because MoulConfig owns the actual bind firing
                 fun keybindOf(code: Int) = if (code <= 0) {
                     OneConfigKeybind(null, null, KeyModifiers.NONE, 0L) { true }
                 } else {

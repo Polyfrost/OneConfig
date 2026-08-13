@@ -6,7 +6,6 @@ public abstract class ComplexAdapter<Type> extends Adapter<Type, Map<String, Obj
     @SuppressWarnings("unchecked")
     @Override
     public final Class<Map<String, Object>> getOutputClass() {
-        // lmao what in the java
         return (Class<Map<String, Object>>) (Class<?>) (Map.class);
     }
 }

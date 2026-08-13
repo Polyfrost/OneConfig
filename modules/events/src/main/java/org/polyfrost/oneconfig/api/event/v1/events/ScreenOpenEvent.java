@@ -29,8 +29,9 @@ package org.polyfrost.oneconfig.api.event.v1.events;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Called when a screen is opened or closed.
- * If the screen is closed, {@link ScreenOpenEvent#screen} will be null.
+ * Called when a screen is opened or closed
+ * <br>
+ * When the screen is closed {@link ScreenOpenEvent#screen} will be null
  */
 public class ScreenOpenEvent extends Event.Cancellable {
     @Nullable
@@ -41,11 +42,12 @@ public class ScreenOpenEvent extends Event.Cancellable {
     }
 
     /**
-     * Due to differences across Minecraft versions, this is a Duck method, meaning that it will return the expected type for that minecraft version.
+     * This is a Duck method because Minecraft versions differ
+     * <br> It returns the expected type for that minecraft version
      * <ul>
-     *     <li>For legacy forge, this will be a GuiScreen.</li>
-     *     <li>For modern forge, this will be a Screen.</li>
-     *     <li>For fabric, this will be a Screen.</li>
+     *     <li>legacy forge gives a GuiScreen</li>
+     *     <li>modern forge gives a Screen</li>
+     *     <li>fabric gives a Screen</li>
      * </ul>
      */
     @SuppressWarnings("unchecked")

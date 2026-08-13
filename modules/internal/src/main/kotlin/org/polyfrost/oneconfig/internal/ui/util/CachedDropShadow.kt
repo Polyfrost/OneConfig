@@ -175,7 +175,7 @@ private class CachedDropShadowNode(
                     path = Path().apply { addRoundRect(roundRect) }
                 }
             }
-            is Outline.Rectangle -> {} // square corners, no path
+            is Outline.Rectangle -> {} // square corners so no path
         }
 
         val bitmap = ImageBitmap(width, height, ImageBitmapConfig.Alpha8)

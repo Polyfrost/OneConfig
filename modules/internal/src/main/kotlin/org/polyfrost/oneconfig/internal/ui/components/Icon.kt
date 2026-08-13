@@ -34,8 +34,9 @@ private const val DefaultIconSize = 18f
 private val DefaultRasterIconShape = RoundedCornerShape(8.dp)
 
 /**
- * A decoded raster icon plus the filter quality it should be scaled with — pixel art is
- * upscaled with nearest neighbour so it stays crisp instead of turning into mush.
+ * A decoded raster icon plus the filter quality it should be scaled with
+ *
+ * Pixel art is upscaled with nearest neighbour so it stays crisp
  */
 private class RasterIcon(val bitmap: ImageBitmap, val filterQuality: FilterQuality)
 
@@ -53,8 +54,9 @@ private object IconBitmapCache {
 }
 
 /**
- * Decodes raster icon [bytes], picking nearest neighbour filtering when the image looks like
- * pixel art. Falls back to Compose's own decoder if AWT can't read the format.
+ * Decodes raster icon [bytes] picking nearest neighbour filtering when the image looks like pixel art
+ *
+ * Falls back to Compose's own decoder if AWT cannot read the format
  */
 private fun decodeRasterIcon(bytes: ByteArray): RasterIcon {
     val buffered = runCatching { ImageIO.read(ByteArrayInputStream(bytes)) }.getOrNull()
@@ -75,8 +77,8 @@ fun Icon(
     val theme = LocalTheme.current
     val resolvedColor = if (color == Color.Unspecified) theme.textColor else color
 
-    // Absolute filesystem path (e.g. a mod icon extracted from its own jar) — load from disk
-    // rather than the classpath so distinct mods can't collide on a shared resource name.
+    // absolute paths load from disk rather than the classpath so distinct mods cannot collide on a
+    // shared resource name
     val file = if (iconName.contains('/') || iconName.contains('.')) {
         File(iconName).takeIf { it.isAbsolute && it.isFile }
     } else null

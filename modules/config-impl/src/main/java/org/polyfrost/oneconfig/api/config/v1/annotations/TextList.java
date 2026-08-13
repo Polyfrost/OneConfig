@@ -31,10 +31,15 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer;
 import java.lang.annotation.*;
 
 /**
- * Renders a user-editable list of text inputs. The annotated field must be {@code String[]}.
+ * Renders a user-editable list of text inputs
  * <p>
- * Unlike {@link DraggableList}, the entries are not a fixed set: the user types each value,
- * and can add and remove rows. The property value is the list of entries in display order.
+ * The annotated field must be {@code String[]}
+ * <p>
+ * Unlike {@link DraggableList} the entries are not a fixed set
+ * <p>
+ * The user types each value and can add and remove rows
+ * <p>
+ * The property value is the list of entries in display order
  */
 @Option(display = Visualizer.TextListVisualizer.class)
 @Retention(RetentionPolicy.RUNTIME)
@@ -44,9 +49,7 @@ public @interface TextList {
     String title();
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given title is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the title and remove this flag.
+     * @deprecated OneConfig auto-translates title values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean titleTranslation() default false;
@@ -54,9 +57,7 @@ public @interface TextList {
     String description() default "";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given description is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the description and remove this flag.
+     * @deprecated OneConfig auto-translates description values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean descriptionTranslation() default false;
@@ -66,9 +67,7 @@ public @interface TextList {
     String category() default "General";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given category is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the category and remove this flag.
+     * @deprecated OneConfig auto-translates category values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean categoryTranslation() default false;
@@ -76,7 +75,7 @@ public @interface TextList {
     String subcategory() default "General";
 
     /**
-     * @deprecated translation keys will be translated by default.
+     * @deprecated translation keys will be translated by default
      */
     @Deprecated
     boolean subcategoryTranslation() default false;
@@ -85,32 +84,29 @@ public @interface TextList {
     String placeholder() default "oneconfig.textinput.placeholder";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given placeholder is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the placeholder and remove this flag.
+     * @deprecated OneConfig auto-translates placeholder values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean placeholderTranslation() default false;
 
     /**
-     * Insert a regex expression which will be used to validate each entry. Entries that do not
-     * match are highlighted and are not written to the property.
+     * Insert a regex expression which will be used to validate each entry
+     * <p>
+     * Entries that do not match are highlighted and are not written to the property
      */
     String regex() default "";
 
-    /** Maximum number of entries the user may add. {@code 0} means unlimited. */
+    /** Maximum number of entries the user may add and {@code 0} means unlimited */
     int maxEntries() default 0;
 
-    /** Allow the user to drag entries to reorder them. */
+    /** Allow the user to drag entries to reorder them */
     boolean reorderable() default true;
 
-    /** Label of the button that appends a new entry. */
+    /** Label of the button that appends a new entry */
     String addText() default "Add";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given addText is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the addText and remove this flag.
+     * @deprecated OneConfig auto-translates addText values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean addTextTranslation() default false;

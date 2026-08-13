@@ -102,7 +102,7 @@ fun Keybinds() {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             val message = when {
                 localSearchQuery.isBlank() -> "No keybinds available."
-                // Nothing to say until the first search comes back.
+                // nothing to say until the first search comes back
                 searchResults == null -> "Searching..."
                 else -> "No keybinds match \"$localSearchQuery\""
             }
@@ -152,7 +152,7 @@ fun Keybinds() {
     }
 }
 
-/** The group and entry one keybind property renders as, for resolving corpus hits back to rows. */
+/** The group and entry one keybind property renders as for resolving corpus hits back to rows */
 private class KeybindOwner(val group: KeybindGroup, val entry: KeybindEntry)
 
 private class KeybindSearchResults(val groups: List<KeybindGroup>?, val query: String?)
@@ -180,7 +180,7 @@ private fun searchKeybindGroups(groups: List<KeybindGroup>, query: String): List
             modId to documents.mapNotNull { ownerOf(it)?.entry }
         }.toMap()
 
-    // Group headers are not corpus documents, so surface them here explicitly
+    // group headers are not corpus documents so surface them here explicitly
     val q = query.lowercase()
     return groups.mapNotNull { group ->
         if (searchMatches(group.modTitle.asRenderText(), q) || searchMatches(group.modId, q)) return@mapNotNull group

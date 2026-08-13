@@ -26,10 +26,10 @@
 
 package org.polyfrost.oneconfig.api.event.v1.events;
 
-// dispatching handled in OneConfig.java for legacy as needs version specific handling heheheheeeeee
+// dispatching handled in OneConfig.java for legacy as it needs version specific handling
 
 /**
- * Events relating to window focus.
+ * Events relating to window focus
  */
 public interface WindowFocusEvent extends Event {
     class Gained implements WindowFocusEvent {

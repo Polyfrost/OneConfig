@@ -49,16 +49,21 @@ import org.polyfrost.oneconfig.api.hypixel.v1.internal.HypixelApiInternals;
 import java.util.*;
 
 /**
- * Hypixel API wrapper for OneConfig.
+ * Hypixel API wrapper for OneConfig
  * <br><br>
- * When this class is first referenced, it will set up the Hypixel API handlers for you. After that, all the methods for sending and receiving packets
- * are available directly from their classes, such as {@link HypixelModAPI#registerHandler(Class, ClientboundPacketHandler)}.
+ * When this class is first referenced it will set up the Hypixel API handlers for you
+ * <p>
+ * After that all the methods for sending and receiving packets
+ * are available directly from their classes such as {@link HypixelModAPI#registerHandler(Class, ClientboundPacketHandler)}
  * <br><br>
- * This class is a simple wrapper around this functionality, providing a simple way to access the Hypixel API.
+ * This class is a simple wrapper around this functionality and gives a simple way to access the Hypixel API
  *
- * @implNote the actual registration of the hello/disconnect handlers is done in HypixelApiInternals, and the location event
- * subscription is set up when this class is initialized. Note that this is lazily initialized,
- * <b>and so this class, or HypixelApiInternals, needs to be referenced in order for the packet handlers to be registered.</b>
+ * @implNote the actual registration of the hello and disconnect handlers is done in HypixelApiInternals
+ * <p>
+ * The location event subscription is set up when this class is initialized
+ * <p>
+ * This is lazily initialized
+ * <b>and so this class or HypixelApiInternals needs to be referenced in order for the packet handlers to be registered</b>
  */
 @SuppressWarnings("unused")
 public final class HypixelUtils {
@@ -69,8 +74,8 @@ public final class HypixelUtils {
     private PartyInfo partyInfo;
     /**
      * This is eagerly initialized because {@link ClientboundLocationPacket} is
-     * event-based, so we have to subscribe before the first location change
-     * rather than on the first call to {@link #getLocation()}.
+     * event based so we have to subscribe before the first location change
+     * rather than on the first call to {@link #getLocation()}
      */
     private final Location location = new Location();
 
@@ -188,7 +193,7 @@ public final class HypixelUtils {
 
         @Override
         public void update() {
-            // no-op as event based
+            // no op as event based
         }
 
         @Override

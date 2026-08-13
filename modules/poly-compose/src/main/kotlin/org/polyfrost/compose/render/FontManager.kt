@@ -8,7 +8,7 @@ import org.jetbrains.skia.Typeface
 
 object FontManager {
     private val typefaces  = HashMap<String, Typeface>()
-    private val fontCache  = HashMap<Long, Font>()        // key: name.hashCode() << 32 | sizeAsInt
+    private val fontCache  = HashMap<Long, Font>()        // key is name.hashCode() << 32 | sizeAsInt
 
     private const val DEFAULT_KEY = "__default__"
 

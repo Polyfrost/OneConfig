@@ -10,9 +10,6 @@ public class ComponentHelper {
 
     private static final String baselineIndent = indent(4);
 
-    /**
-     * Returns a prettified string representation of the given component's toString output.
-     */
     public static String prettyPrint(Component component) {
         if (component == null) {
             return "null";

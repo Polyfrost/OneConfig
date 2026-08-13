@@ -14,8 +14,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class Mixin_SkyblockerWidgetManager {
 
     /**
-     * Widgets are instantiated and their saved positions loaded on client start; this is the first point at
-     * which {@code WidgetManager.widgetInstances} and the position rules are both complete.
+     * First point at which {@code WidgetManager.widgetInstances} and the position rules are both
+     * complete since widgets and their saved positions load on client start
      */
     @Inject(method = "loadConfig", at = @At("TAIL"), require = 0)
     private static void oneconfig$registerHudCompat(CallbackInfo ci) {

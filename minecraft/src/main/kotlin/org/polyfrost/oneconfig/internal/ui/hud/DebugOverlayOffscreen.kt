@@ -23,11 +23,11 @@ import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
 import org.slf4j.LoggerFactory
 
 /**
- * Minecraft draws the F3 debug overlay into the GUI while the OneConfig screen is open, which puts it
- * *underneath* the Compose UI and inside the blur backdrop (the blur samples the main render target).
+ * Minecraft draws the F3 debug overlay into the GUI while the OneConfig screen is open which puts it
+ * *underneath* the Compose UI and inside the blur backdrop
  *
- * To keep F3 legible and on top, the vanilla overlay is cancelled (see Mixin_DebugOverlayAboveUi),
- * recorded into an offscreen target here, and blitted through Skia after the Compose frame.
+ * The vanilla overlay is cancelled in Mixin_DebugOverlayAboveUi then recorded into an offscreen target
+ * here and blitted through Skia after the Compose frame
  */
 object DebugOverlayOffscreen {
     private val LOG = LoggerFactory.getLogger("OneConfig/DebugOverlayOffscreen")
@@ -56,7 +56,7 @@ object DebugOverlayOffscreen {
             Platform.screen().current<Any?>() is ComposeScreen &&
             client.debugOverlay.showDebugScreen()
 
-    /** Called from the debug overlay mixin: hide the vanilla (under-UI, blurred) copy. */
+    /** Called from the debug overlay mixin to hide the vanilla under-UI blurred copy */
     fun shouldSuppressVanilla(): Boolean = !capturing && active()
 
     fun render() {

@@ -47,7 +47,9 @@ public class MouseInputEvent implements Event {
     }
 
     /**
-     * This event is only fired when the mouse is moved inside a screen. The provided coordinates are SCREEN coordinates, not minecraft-specific.
+     * This event is only fired when the mouse is moved inside a screen
+     * <br>
+     * The provided coordinates are SCREEN coordinates and not minecraft-specific ones
      */
     public static final class Moved implements Event {
         private static final Moved INSTANCE = new Moved();

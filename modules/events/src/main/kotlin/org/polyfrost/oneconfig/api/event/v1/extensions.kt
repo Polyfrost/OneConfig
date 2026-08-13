@@ -34,7 +34,9 @@ import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler
 import kotlin.experimental.ExperimentalTypeInference
 
 /**
- * Kotlin specific API for registering of event handlers. Intended usage:
+ * Kotlin specific API for registering event handlers
+ *
+ * Intended usage
  *
  * ```
  * eventHandler { event: KeyInputEvent ->
@@ -52,7 +54,9 @@ inline fun <reified E : Event> eventHandler(crossinline handler: (E) -> Boolean)
 }.register()
 
 /**
- * Kotlin specific API for registering of event handlers. Intended usage:
+ * Kotlin specific API for registering event handlers
+ *
+ * Intended usage
  *
  * ```
  * eventHandler { event: KeyInputEvent ->
@@ -71,6 +75,5 @@ inline fun <reified E : Event> eventHandler(crossinline handler: (E) -> Unit) = 
     override fun getEventClass() = E::class.java
 }.register()
 
-/** makes code colored! */
 @DslMarker
 private annotation class EventHandlerKt

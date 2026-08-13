@@ -28,12 +28,10 @@ object ModMenuCompat {
     fun preLoad() = CompatLoader.requireTranslations(-1000, true) {
         ModMenu.ROOT_MODS.forEach { (_, mod) ->
             if (mod.id in ownModIds) return@forEach
-            // Only record which mods expose a config screen; do NOT build the screen here.
-            // getConfigScreen() instantiates the screen's widget tree (e.g. Cloth EditBox), which
-            // lazily bakes font glyphs. preLoad runs inside the ResourceFinishedLoading event —
-            // off-frame, with the GL texture-bind cache desynced — so baking there corrupts the
-            // vanilla font atlas (garbled glyphs until F3+T). hasConfigScreen() only looks up the
-            // registered factory, so the actual screen is built lazily on open (in a render frame).
+            // never call getConfigScreen here
+            // it builds widgets that bake font glyphs and preLoad runs off-frame during
+            // ResourceFinishedLoading where that corrupts the vanilla font atlas
+            // hasConfigScreen only looks up the factory so the screen is built later in a render frame
             if (runCatching { ModMenu.hasConfigScreen(mod.id) }.getOrDefault(false)) {
                 mods.add(mod)
             }
@@ -101,7 +99,7 @@ object ModMenuCompat {
                         foreignScreen != null -> Platform.screen().display(foreignScreen)
                     }
                 }
-                // Listed in the mods menu and opened via Mod Menu only — never persisted by OneConfig.
+                // listed and opened via Mod Menu only so never persisted by OneConfig
                 modMenuTree.addMetadata(Backend.UI_ONLY_METADATA, true)
                 modMenuTree.addMetadata(Backend.UI_PLACEHOLDER_METADATA, true)
 
@@ -116,18 +114,17 @@ object ModMenuCompat {
         mods.forEach { mod ->
             CompatLoader.queueScreenWarmup {
                 CompatLoader.withForcedModId(mod.id) {
+                    // the screen is thrown away because building it is what makes the compat mixins fire
                     ModMenu.getConfigScreen(mod.id, Platform.screen().current())
                 }
             }
         }
     }
 
-    // A mod can ship BOTH a native OneConfig config and a Mod Menu entrypoint. The native config
-    // registers under its file id (e.g. "legacyskyblock.json") while the Mod Menu mod id is the bare
-    // loader id ("legacyskyblock"), so they have different ConfigRegistry ids and show as two cards.
-    // nativeLoadedConfigs only tracks foreign-compat configs, never native OneConfig ones, so detect
-    // the native tree directly from the config registry (matching the source of truth used by on_click)
-    // and skip building a duplicate Mod Menu Compat card for it.
+    // a mod can ship both a native OneConfig config and a Mod Menu entrypoint
+    // the native one registers under its file id "legacyskyblock.json" while Mod Menu uses the bare
+    // loader id "legacyskyblock" so the differing ids would show as two cards
+    // nativeLoadedConfigs only tracks foreign-compat configs so detect the native tree from the registry
     private fun hasNativeOcConfig(modId: String): Boolean = runCatching {
         ConfigManager.active().trees().any { tree ->
             val id = tree.id ?: return@any false

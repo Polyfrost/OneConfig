@@ -43,14 +43,15 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import kotlin.math.roundToInt
 
 /**
- * A slider that can also sit in an "inherited" state, where it shows the value it falls back to in a muted
- * colour. Touching the track or spinner takes ownership of the value; the trailing chip hands it back.
+ * A slider that can also sit in an inherited state showing the value it falls back to in a muted colour
+ *
+ * Touching the track or spinner takes ownership of the value and the trailing chip hands it back
  */
 @Composable
 fun InheritableSliderOption(data: InheritableSliderOptionData) {
     val theme = LocalTheme.current
 
-    // Bumped on every write so the derived state below re-reads the property.
+    // bumped on every write so the derived state below re-reads the property
     var revision by remember(data.prop) { mutableStateOf(0) }
     val inherited = remember(data.prop, revision) { data.isInherited }
     var value by remember(data.prop, revision) { mutableStateOf(data.shownValue) }

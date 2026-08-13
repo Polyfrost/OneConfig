@@ -5,14 +5,7 @@ plugins {
 }
 
 dependencies {
-    mappings(loom.layered {
-        officialMojangMappings()
-        if (versionedCatalog.has("parchment")) {
-            parchment(variantOf(versionedCatalog["parchment"]) {
-                artifactType("zip")
-            })
-        }
-    })
+    mappings(loom.officialMojangMappings())
 
     modRuntimeOnly(rootProject.fileTree("minecraft/run/extra_mods").include("*.jar"))
 }

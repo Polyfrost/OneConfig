@@ -111,7 +111,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
     }
 
     private fun scheduleRender() {
-        // Always queue the batch so the current Compose frame can finish before native GUI rendering starts.
+        // always queue the batch so the current Compose frame finishes before native GUI rendering starts
         Minecraft.getInstance().schedule(::renderPendingBatch)
     }
 
@@ -274,8 +274,8 @@ class MinecraftItemCatalogService : ItemCatalogService {
 
     //? if >= 1.21.8 {
     private fun createItemGuiRenderer(client: Minecraft, state: GuiRenderState): GuiRenderer {
-        // Keep this asynchronous icon batch separate from the active frame's render state and
-        // item atlas. Reusing the game's renderer would mix two independently-lived frames.
+        // keep this icon batch separate from the active frame's render state and item atlas
+        // because reusing the game's renderer would mix two independently-lived frames
         //? if >= 26.2 {
         return GuiRenderer(state, client.gameRenderer.featureRenderDispatcher(), emptyList())
         //? } else if >= 1.21.10 {
@@ -526,7 +526,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
         }
     }
 
-    /** Smooths model edges while keeping transparent pixels free of dark color fringes. */
+    /** Smooths model edges while keeping transparent pixels free of dark color fringes */
     private fun sampleBilinear(
         x: Double,
         y: Double,

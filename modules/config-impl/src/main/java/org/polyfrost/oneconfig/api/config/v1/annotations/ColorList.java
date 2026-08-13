@@ -31,14 +31,21 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer;
 import java.lang.annotation.*;
 
 /**
- * Renders a user-editable list of colors, each row opening the usual color picker.
+ * Renders a user-editable list of colors with each row opening the usual color picker
  * <p>
- * The annotated field must be {@code int[]} or a {@code List<Integer>} of packed ARGB values.
- * {@code java.awt.Color[]} is also accepted. Chroma is not offered here, as there is nowhere to
- * store the per-entry chroma flag; use a single {@link Color} option for that.
+ * The annotated field must be {@code int[]} or a {@code List<Integer>} of packed ARGB values
  * <p>
- * This is the list counterpart of {@link Color}: rows can be added, removed and dragged into a
- * different order, and the property value is the list of colors in display order.
+ * {@code java.awt.Color[]} is also accepted
+ * <p>
+ * Chroma is not offered here because there is nowhere to store the per-entry chroma flag
+ * <p>
+ * Use a single {@link Color} option for that
+ * <p>
+ * This is the list counterpart of {@link Color}
+ * <p>
+ * Rows can be added and removed and dragged into a different order
+ * <p>
+ * The property value is the list of colors in display order
  */
 @Option(display = Visualizer.ColorListVisualizer.class)
 @Retention(RetentionPolicy.RUNTIME)
@@ -48,9 +55,7 @@ public @interface ColorList {
     String title();
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given title is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the title and remove this flag.
+     * @deprecated OneConfig auto-translates title values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean titleTranslation() default false;
@@ -58,9 +63,7 @@ public @interface ColorList {
     String description() default "";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given description is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the description and remove this flag.
+     * @deprecated OneConfig auto-translates description values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean descriptionTranslation() default false;
@@ -70,9 +73,7 @@ public @interface ColorList {
     String category() default "General";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given category is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the category and remove this flag.
+     * @deprecated OneConfig auto-translates category values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean categoryTranslation() default false;
@@ -80,27 +81,25 @@ public @interface ColorList {
     String subcategory() default "General";
 
     /**
-     * @deprecated translation keys will be translated by default.
+     * @deprecated translation keys will be translated by default
      */
     @Deprecated
     boolean subcategoryTranslation() default false;
 
-    /** Whether the picker exposes an opacity control. */
+    /** Whether the picker exposes an opacity control */
     boolean alpha() default true;
 
-    /** Maximum number of entries the user may add. {@code 0} means unlimited. */
+    /** Maximum number of entries the user may add and {@code 0} means unlimited */
     int maxEntries() default 0;
 
-    /** Allow the user to drag entries to reorder them. */
+    /** Allow the user to drag entries to reorder them */
     boolean reorderable() default true;
 
-    /** Label of the button that appends a new entry. */
+    /** Label of the button that appends a new entry */
     String addText() default "Add";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given addText is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the addText and remove this flag.
+     * @deprecated OneConfig auto-translates addText values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean addTextTranslation() default false;

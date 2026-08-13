@@ -52,7 +52,7 @@ private val KeybindShape @Composable get() = LocalTheme.current.sideBarNavigatio
 
 private val CONFLICT_COLOR = Color(0xFFE0524F)
 
-/** Human-readable name for a GLFW key code. */
+/** Human-readable name for a GLFW key code */
 private fun keyCodeToName(glfwCode: Int): String = OneConfigKeybind.keyName(glfwCode)
 
 private fun modifierBit(glfwCode: Int): Byte? = when (glfwCode) {
@@ -133,10 +133,8 @@ fun KeybindOption(data: KeybindOptionData) {
         !recording && data.prop in KeybindConflicts.conflictingProps()
     }
 
-    // Writes the new keybind to the config property and re-syncs the KeybindManager. Setting the property may either
-    // mutate the existing keybind in place or swap in a fresh instance; KeybindManager.replace handles both so the
-    // bind keeps firing on the new key without the mod registering its own change callback. The action is carried
-    // over from the previous keybind so it survives the rebind.
+    // setting the property may mutate the keybind in place or swap in a fresh instance and
+    // KeybindManager.replace handles both so the bind keeps firing without a mod change callback
     fun applyKeybind(keys: IntArray?, mouse: IntArray?, mods: Byte = KeyModifiers.NONE) {
         val applied = writeKeybind(data.prop, keys, mouse, mods)
         currentKeybind = applied
@@ -208,10 +206,9 @@ fun KeybindOption(data: KeybindOptionData) {
                                 return@onKeyEvent true
                             }
                         }
-                        // ComposeScreen carries the raw GLFW key code in the event's codePoint, so the KeybindManager
-                        // gets the exact code it matches against without a lossy AWT round-trip. A code <= 0 means an
-                        // unknown key (GLFW_KEY_UNKNOWN) or a character event; ignore it instead of storing a bind that
-                        // would match nothing useful (or, for code 0, match everything).
+                        // ComposeScreen carries the raw GLFW key code in the event's codePoint which avoids a lossy
+                        // AWT round-trip
+                        // a code <= 0 is an unknown key or a character event and would match nothing or everything
                         val glfwCode = event.utf16CodePoint
                         if (glfwCode <= 0) return@onKeyEvent true
                         if (singleKey) {

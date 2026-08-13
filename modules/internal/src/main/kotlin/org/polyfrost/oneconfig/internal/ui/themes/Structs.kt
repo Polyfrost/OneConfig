@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontFamily
 import kotlin.math.round
 
-/** Sets a panel background color's alpha from an opacity percentage (0-100; 0 = transparent, 100 = opaque). */
+/** Sets a panel background color's alpha from an opacity percentage between 0 and 100 */
 fun Color.withOpacityPercent(percent: Float): Color =
     copy(alpha = (percent / 100f).coerceIn(0f, 1f))
 

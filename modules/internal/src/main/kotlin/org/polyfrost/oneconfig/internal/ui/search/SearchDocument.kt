@@ -1,8 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.search
 
-/**
- * Scope of a search/where a search document should appear
- */
+/** Where a search document should appear */
 sealed interface SearchScope {
     /** Mod cards */
     data object Mods : SearchScope
@@ -34,9 +32,7 @@ data class SearchMetadata(
     val modDescription: String? = null,
     val path: String? = null,
 ) {
-    /**
-     * Returns subcategory only if it is not the same as category
-     */
+    /** Returns subcategory only if it differs from category */
     val distinctSubcategory: String?
         get() = subcategory?.takeUnless { it == category }
 }
@@ -44,7 +40,7 @@ data class SearchMetadata(
 /**
  * A searchable document
  *
- * [payload] is used by screens to map back to what they need to render.
+ * [payload] is used by screens to map back to what they need to render
  */
 class SearchDocument<T>(
     val id: String,
@@ -52,15 +48,11 @@ class SearchDocument<T>(
     val metadata: SearchMetadata,
     val payload: T,
 ) {
-    /**
-     * Whether this document indexes the same text as [other].
-     */
+    /** Whether this document indexes the same text as [other] */
     fun contentEquals(other: SearchDocument<*>): Boolean =
         id == other.id && scopes == other.scopes && metadata == other.metadata
 
-    /**
-     * Whether this entry is equivalent to another entry, and can safely be replaced by it without breaking anything
-     */
+    /** Whether this entry can safely be replaced by [other] */
     fun equivalentTo(other: SearchDocument<*>): Boolean = contentEquals(other) && payload === other.payload
 
     override fun toString(): String {
@@ -68,15 +60,11 @@ class SearchDocument<T>(
     }
 }
 
-/**
- * Produces part of the searchable corpus. Called async when the corpus rebuilds..
- */
+/** Produces part of the searchable corpus and is called async when the corpus rebuilds */
 fun interface SearchDocumentSource {
     fun documents(): List<SearchDocument<*>>
 
-    /**
-     * Sources whose data this one reads. Invalidating any of them should invalidate this source as well.
-     */
+    /** Sources whose data this one reads so invalidating any of them invalidates this source too */
     val dependencies: Set<SearchDocumentSource>
         get() = emptySet()
 }

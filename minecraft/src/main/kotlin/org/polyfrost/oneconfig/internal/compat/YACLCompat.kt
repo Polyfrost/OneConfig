@@ -137,7 +137,7 @@ object YACLCompat {
             runCatching { saveRunnable?.run() }.onFailure { LOGGER.warn("Failed to save YACL config", it) }
             ctx.runPendingFlags()
         }
-        // YACL exposes no icon, so fall back to the mod's icon (same source Mod Menu uses).
+        // YACL exposes no icon so fall back to the mod icon (same source Mod Menu uses)
         mod?.extractIconFile()?.let {
             tree.addMetadata("icon_path", it)
         }
@@ -255,7 +255,7 @@ object YACLCompat {
         val subcategoryName = if (isRoot) null else groupName
 
         if (isListOption(groupClass)) {
-            // The group is the option itself, so it keeps the category's path rather than nesting under itself.
+            // the group is the option itself so it keeps the category path rather than nesting under itself
             runCatching { parseOption(group, categoryName, null, categoryPath, root, ctx) }
                 .onFailure { LOGGER.warn("Failed to parse YACL list option", it) }
             return
@@ -297,7 +297,7 @@ object YACLCompat {
         val descMethod = optionClass.methods.firstOrNull { it.name == "description" && it.parameterCount == 0 }
         val nameComponent = nameMethod?.let { runCatching { it.invoke(option) }.getOrNull() }
         val name = resolveComponent(nameComponent)?.nonBlankOrNull() ?: return
-        // Claimed only once a property is actually built, so skipped options do not shift the suffixes.
+        // ids are claimed only once a property is built so skipped options do not shift the suffixes
         val optionPath = "$groupPath/${idPart(componentKey(nameComponent) ?: name, "option")}"
         val desc = descMethod?.let {
             runCatching {
@@ -308,8 +308,7 @@ object YACLCompat {
             }.getOrNull()
         }
 
-        // ButtonOption exposes no readable value (its binding throws), so handle it before the
-        // binding logic. Detect it by its interface name and render it as a clickable button.
+        // ButtonOption exposes no readable value (its binding throws) so handle it before the binding logic
         if (isButtonOption(optionClass)) {
             parseButtonOption(
                 option, name, desc, uniqueId(usedIds, optionPath), categoryName, subcategoryName, root, ctx,
@@ -339,7 +338,7 @@ object YACLCompat {
             .firstOrNull { it.name == "applyValue" && it.parameterCount == 0 }?.apply { isAccessible = true }
 
         val getter: () -> Any?
-        /** Writes the value and reports whether it actually changed, which is what gates the flags. */
+        /** Writes the value and reports whether it changed which is what gates the flags */
         val baseSetter: (Any?) -> Boolean
 
         if (pendingMethod != null && requestSetMethod != null) {
@@ -370,8 +369,8 @@ object YACLCompat {
             ctx.revaluateDisplays()
         }
 
-        // ButtonOption and similar value-less options expose a binding whose getValue() throws
-        // UnsupportedOperationException (EmptyBinderImpl). Skip them instead of logging a warning.
+        // value-less options expose a binding whose getValue() throws UnsupportedOperationException
+        // (EmptyBinderImpl) so skip them instead of logging a warning
         val currentValue = runCatching { getter() }.getOrNull() ?: return
 
         if (currentValue is List<*>) {
@@ -444,7 +443,7 @@ object YACLCompat {
             currentValue is String -> Visualizer.TextVisualizer::class.java
             currentValue is Enum<*> -> Visualizer.DropdownVisualizer::class.java
             currentValue is java.awt.Color -> Visualizer.ColorVisualizer::class.java
-            else -> return // Skip unsupported types
+            else -> return
         }
 
         val property = Properties.functional(
@@ -733,7 +732,7 @@ object YACLCompat {
             Integer::class.java -> Integer.MAX_VALUE.toFloat()
             java.lang.Long::class.java -> Long.MAX_VALUE.toFloat()
             java.lang.Float::class.java -> Float.MAX_VALUE
-            else -> Double.MAX_VALUE.toFloat() // infinite, so only a genuinely infinite bound matches
+            else -> Double.MAX_VALUE.toFloat() // infinite so only a genuinely infinite bound matches
         }
         return if (value <= -limit || value >= limit) null else value
     }
@@ -975,7 +974,7 @@ object YACLCompat {
         val controllerMethod = option::class.java.methods.firstOrNull {
             it.name == "controller" && it.parameterCount == 0
         } ?: return null
-        // controller() returns a supplier-bound Controller; some YACL versions wrap it in a Supplier.
+        // some YACL versions wrap the controller in a Supplier
         var controller = runCatching { controllerMethod.invoke(option) }.getOrNull() ?: return null
         (controller as? java.util.function.Supplier<*>)?.let { controller = it.get() ?: return null }
         return controller

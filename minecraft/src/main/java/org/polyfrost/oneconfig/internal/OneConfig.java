@@ -74,9 +74,6 @@ import org.polyfrost.oneconfig.internal.ui.keybind.RightShiftConflicts;
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus;
 import org.polyfrost.oneconfig.test.TestMod_Test;
 
-/**
- * The main class of OneConfig.
- */
 //? neoforge
 //@net.neoforged.fml.common.Mod("oneconfigv1")
 public class OneConfig
@@ -113,14 +110,14 @@ public class OneConfig
     }
 
     private static void registerKeybinds() {
-        // Supply the open-GUI action to the config-backed OneConfig keybind. The action lives here (not on the
-        // keybind itself) because it references platform classes and is lost when the keybind is deserialized.
+        // the action lives here rather than on the keybind because it references platform classes and
+        // is lost when the keybind is deserialized
         OneConfigConfig.setOpenAction(pressed -> {
             if (!pressed) {
                 return true;
             }
-            // The screen may have closed itself on this very press (see notifyKeybindClosedGui), in which case
-            // reopening it here would make the keybind look like it does nothing.
+            // the screen may have closed itself on this very press (see notifyKeybindClosedGui) so
+            // reopening here would make the keybind look like it does nothing
             if (OneConfigConfig.consumeKeybindClose()) {
                 return true;
             }
@@ -146,9 +143,10 @@ public class OneConfig
     }
 
     /**
-     * Mirrors vanilla's tab list visibility check, which is not just the keybind being held:
-     * on a single player world with no other listed players and no LIST scoreboard objective,
-     * the tab list stays hidden even while the key is down.
+     * Mirrors vanilla's tab list visibility check which is more than the keybind being held
+     * <p>
+     * In a single player world with no other listed players and no LIST scoreboard objective the
+     * tab list stays hidden even while the key is down
      */
     private static boolean isTabListVisible() {
         Minecraft minecraft = Minecraft.getInstance();
@@ -168,11 +166,10 @@ public class OneConfig
 
         float sw = Platform.screen().guiWidth();
         float sh = Platform.screen().guiHeight();
-        // guiWidth()/guiHeight() are already GUI-scaled (== Screen dimensions), do not divide by guiScale again.
+        // guiWidth()/guiHeight() are already GUI-scaled so do not divide by guiScale again
         HudManager.guiScreenWidth = sw;
         HudManager.guiScreenHeight = sh;
 
-        // Update HUD visibility state for per-HUD filtering
         //? if >= 26.2 {
         HudManager.isGuiHidden = Minecraft.getInstance().gui.hud.isHidden();
         //? } else {
@@ -194,16 +191,15 @@ public class OneConfig
         //? } else {
         /*else LegacyHudRenderer.INSTANCE.renderLive(graphics);
         *///? }
-        // Records the F3 overlay offscreen so Skia can put it above the Compose UI instead of below the blur.
-        // Blitted through the post-compose renderer, so it must run every frame regardless of the HUD dirty gate.
+        // records the F3 overlay offscreen so Skia can put it above the Compose UI instead of below the
+        // blur and it must run every frame regardless of the HUD dirty gate
         org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen.INSTANCE.render();
         if (HudManager.INSTANCE.beginFrame(sw, sh)) {
             SkiaCtx.INSTANCE.queueHudDraw(() -> {
                 var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
                 HudManager.INSTANCE.render(ctx, sw, sh);
             });
-            // Render Skia HUDs into the offscreen TextureTarget.
-            // The mixin blits the texture onto MC's render target afterwards.
+            // renders into the offscreen TextureTarget which the mixin blits onto MC's render target
             SkiaCtx.INSTANCE.drawNow();
         }
     }
@@ -240,8 +236,8 @@ public class OneConfig
                         }
                     }
                 });
-        // Safety: if another screen replaces the HUD editor without going through HudManager.closeEditor(),
-        // reset the editing flag. Null screen opens are ignored because commands close chat before deferred screens open.
+        // resets the editing flag if another screen replaces the HUD editor without going through
+        // HudManager.closeEditor() and null opens are ignored because commands close chat first
         EventManager.register(
                 org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent.class, e -> {
                     if (HudManager.INSTANCE.isEditorOpen() && e.getScreen() != null && !(e.getScreen() instanceof HudEditorUIScreen)) {
@@ -265,7 +261,7 @@ public class OneConfig
                     org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry.INSTANCE.loadFromConfig();
                 });
         EventManager.register(WorldEvent.Load.class, e -> showFirstLaunchNotification());
-        // Initialize search corpus after loading is finished (and translation keys are available)
+        // after loading finishes so translation keys are available
         EventManager.register(ResourceFinishedLoading.class, e -> SearchCorpus.INSTANCE.init());
 //        //#if MC < 1.13
 //        // this is cringe but is better than the alternative of checking every frame in a mixin (that's how vanilla does it lol)
@@ -326,10 +322,10 @@ public class OneConfig
 
         SkikoDataPath.redirect();
 
-        // To enable RenderDoc, set the following JVM arguments:
+        // to enable RenderDoc set these JVM arguments
         // -Drenderdoc.enabled=true
         // (Windows) -Drenderdoc.path="C:\Program Files\RenderDoc\renderdoc.dll" (or wherever you installed RenderDoc)
-        // (Linux)   Ensure that librenderdoc.so is available in your LD_PRELOAD todo?
+        // (Linux) ensure librenderdoc.so is available in your LD_PRELOAD (TODO)
         //RenderDoc.init();
 
         if (Boolean.getBoolean("oneconfig.test")) {
@@ -352,7 +348,7 @@ public class OneConfig
         BlurHandler.init();
         McFontService.INSTANCE.init();
         ThirdPartyModCategories.INSTANCE.init();
-        // Force class-load of HypixelUtils so its hello/disconnect handlers are armed before joining any server.
+        // force class-load so the hello/disconnect handlers are armed before joining any server
         HypixelUtils.isHypixel();
         org.polyfrost.oneconfig.internal.ui.sound.ExternalSounds.INSTANCE.ensureDownloaded();
 

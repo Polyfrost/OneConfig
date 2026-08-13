@@ -34,8 +34,11 @@ public interface LoaderPlatform {
     void addToClasspath(@NotNull Path path);
 
     /**
-     * return a string representing the loader and the minecraft version of the current instance, as per the preprocessor standard.
-     * for example, if the loader is Forge and the minecraft version is 1.16.5, this will return "1.16.5-forge".
+     * return a string representing the loader and the minecraft version of the current instance
+     * <p>
+     * the format follows the preprocessor standard
+     * <p>
+     * for example with loader Forge and minecraft version 1.16.5 this returns "1.16.5-forge"
      */
     default String getLoaderString() {
         return Platform.compatibility().version() + '-' + Platform.compatibility().loader();

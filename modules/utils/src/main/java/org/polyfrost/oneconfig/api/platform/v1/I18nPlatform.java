@@ -28,32 +28,32 @@ package org.polyfrost.oneconfig.api.platform.v1;
 
 public interface I18nPlatform {
     /**
-     * Return a translatable component-like object for the current platform.
+     * Return a translatable component-like object for the current platform
      */
     default Object translate(String key, Object... args) {
         return translate(key, key, args);
     }
     /**
-     * Return a translatable component-like object for the current platform.
+     * Return a translatable component-like object for the current platform
      */
     Object translate(String key, String fallback, Object... args);
 
     /**
-     * Resolve a translation key using the currently selected language.
+     * Resolve a translation key using the currently selected language
      */
     default String translateString(String key, Object... args) {
         return key;
     }
 
     /**
-     * Return true when the currently loaded language has a value for {@code key}.
+     * Return true when the currently loaded language has a value for {@code key}
      */
     default boolean hasTranslation(String key) {
         return false;
     }
 
     /**
-     * Return the given component with all formatting codes removed.
+     * Return the given component with all formatting codes removed
      */
     String getUnformattedText(Object component);
 }

@@ -37,9 +37,8 @@ import java.nio.file.Paths;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Full-stack test for issue #706: a config with a corrupt on-disk value is loaded through the real
- * {@link Config#initialize} path. The offending option must reset to its code default, every other
- * option must still load from disk, the config must not crash, and the bad file must be backed up.
+ * Regression test for issue #706 where loading a corrupt on-disk value through
+ * {@link Config#initialize} crashed instead of resetting only the offending option
  */
 public class ConfigResetOnCorruptTest {
 
@@ -73,7 +72,7 @@ public class ConfigResetOnCorruptTest {
         Files.deleteIfExists(file);
         Files.deleteIfExists(backup);
 
-        // "broken" is stored as a string, which cannot be applied to the boolean option (the #706 crash).
+        // broken is stored as a string which cannot be applied to the boolean option
         Files.write(file,
                 "{ \"broken\": \"not_a_bool\", \"loadedTrue\": true, \"loadedFalse\": false }"
                         .getBytes(StandardCharsets.UTF_8));
@@ -81,15 +80,11 @@ public class ConfigResetOnCorruptTest {
         ResetConfig config = new ResetConfig();
         assertDoesNotThrow(() -> config.initialize(true));
 
-        // the corrupt option fell back to its code default...
         assertTrue(config.broken, "corrupt option must reset to its default");
-        // ...and the valid options still loaded from disk.
         assertTrue(config.loadedTrue, "valid option must load its stored value");
         assertFalse(config.loadedFalse, "valid option must load its stored value");
 
-        // the problematic file was backed up...
         assertTrue(Files.exists(backup), "a backup of the problematic file must be created");
-        // ...and the live file was re-saved without the bad value.
         String rewritten = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
         assertFalse(rewritten.contains("not_a_bool"), "the bad value must be scrubbed from the live file");
     }

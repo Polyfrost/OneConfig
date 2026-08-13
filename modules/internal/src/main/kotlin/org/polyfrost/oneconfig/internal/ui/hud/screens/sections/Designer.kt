@@ -394,9 +394,8 @@ internal fun ColorButton(
     }
     val theme = LocalTheme.current
 
-    // Live swatch preview. When chroma is enabled, cycle the swatch using the exact same math the
-    // HUD uses at render time (PolyColor.argb) so the preview matches the in-game result. The stored
-    // base colour is never mutated by this animation - it only drives the preview.
+    // the chroma swatch cycles with the same PolyColor.argb math the HUD uses at render time so the
+    // preview matches in-game and the stored base colour is never mutated
     var displayColor by remember { mutableStateOf(color) }
     val baseArgb = color.toArgb()
     LaunchedEffect(pickerModel.chromaEnabled, pickerModel.chromaSpeed, baseArgb) {

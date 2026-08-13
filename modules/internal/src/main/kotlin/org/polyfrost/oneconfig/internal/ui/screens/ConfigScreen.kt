@@ -189,8 +189,8 @@ private fun categoryProperties(categories: List<CategoryGroup>): List<Property<*
 }
 
 /**
- * Returns a counter which increments whenever any property in [categories] changes its display state, so that the
- * entry list can be rebuilt.
+ * A counter incremented whenever any property in [categories] changes its display state so the entry list
+ * can be rebuilt
  */
 @Composable
 private fun rememberDisplayRevision(categories: List<CategoryGroup>): Int {
@@ -228,9 +228,7 @@ private fun rememberSearchResults(
     return LocalSearchResults(results, searchedQuery)
 }
 
-/**
- * Rebuild categories from matched search results
- */
+/** Rebuild categories from matched search results */
 private fun searchCategories(grouped: Map<SearchRow?, List<SearchDocument<*>>>): List<CategoryGroup> {
     val byCategory = LinkedHashMap<String, LinkedHashMap<String, MutableList<SettingNode>>>()
     grouped.forEach { (row, documents) ->
@@ -297,8 +295,9 @@ private fun isWideControl(prop: Property<*>): Boolean {
 }
 
 /**
- * Renders one entry of a flattened settings list. [compact] decides per node whether its row stacks the label above the
- * control, which the HUD editor needs for its narrower column.
+ * Renders one entry of a flattened settings list
+ *
+ * [compact] decides per node whether its row stacks the label above the control which the HUD editor needs
  */
 @Composable
 internal fun ConfigListRow(entry: ConfigListEntry, compact: (SettingNode) -> Boolean = { false }) {
@@ -309,7 +308,6 @@ internal fun ConfigListRow(entry: ConfigListEntry, compact: (SettingNode) -> Boo
     }
 }
 
-/** Renders one settings row */
 @Composable
 internal fun SettingEntryRow(node: SettingNode, compact: Boolean = false) {
     when (node) {
@@ -843,7 +841,7 @@ private fun isHudInternal(node: Node): Boolean {
     return node.getMetadata<Any?>("hudInternal") != null
 }
 
-/** The HUD editor's column is narrow, so any row holding a wide control stacks its label above it. */
+/** The HUD editor's column is narrow so any row holding a wide control stacks its label above it */
 private fun hasWideControl(node: SettingNode): Boolean = when (node) {
     is SettingNode.Leaf -> isWideControl(node.prop)
     is SettingNode.Accordion -> node.body.any(::isWideControl)

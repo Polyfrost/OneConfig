@@ -105,7 +105,7 @@ public final class MainMenuFpsSampler {
     }
 
     private void finish() {
-        sampling = false; // restore the normal menu FPS cap
+        sampling = false;
         float average = sampleCount > 0 ? (float) fpsSum / sampleCount : 0f;
         EventManager.INSTANCE.post(new MainMenuFpsEvent(average, sampleCount, elapsedNanos / 1_000_000L));
     }

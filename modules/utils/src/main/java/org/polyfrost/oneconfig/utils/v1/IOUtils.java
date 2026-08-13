@@ -38,7 +38,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 
 /**
- * Utility class for I/O operations.
+ * Utility class for I/O operations
  */
 public final class IOUtils {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/IO");
@@ -47,10 +47,10 @@ public final class IOUtils {
     }
 
     /**
-     * Gets the SHA-256 hash of a file.
+     * Gets the SHA-256 hash of a file
      *
-     * @param path The file to hash.
-     * @return The SHA-256 hash of the file.
+     * @param path The file to hash
+     * @return The SHA-256 hash of the file
      */
     public static String getFileChecksum(Path path) {
         try (InputStream inputStream = Files.newInputStream(path)) {

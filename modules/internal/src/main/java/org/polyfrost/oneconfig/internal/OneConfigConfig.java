@@ -18,10 +18,9 @@ import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession;
 public class OneConfigConfig extends Config {
     private static final byte HUD_ACTION_MODS = KeybindUtils.getActionModifier();
 
-    // Keybinds store GLFW key codes (the space the KeybindManager matches against; KeybindOption translates the UI's
-    // AWT capture into GLFW). 344 == GLFW_KEY_RIGHT_SHIFT, declared as a literal to avoid a GLFW dependency here. The
-    // action that opens the GUI is supplied by the minecraft module via setOpenAction (it cannot be serialized, so it
-    // lives outside the keybind).
+    // keybinds store GLFW key codes because that is what KeybindManager matches against
+    // 344 == GLFW_KEY_RIGHT_SHIFT written as a literal to avoid a GLFW dependency here
+    // the open action comes from the minecraft module via setOpenAction since it cannot be serialized
     @Keybind(
         title = "oneconfig.preferences.keybind.title",
         titleTranslation = true,
@@ -574,31 +573,29 @@ public class OneConfigConfig extends Config {
     public static boolean showFirstLaunchMessage = true;
 
     /**
-     * The live instance, used to persist programmatic changes (e.g. {@link #markFirstLaunchShown()}).
+     * The live instance used to persist programmatic changes such as {@link #markFirstLaunchShown()}
      */
     public static OneConfigConfig INSTANCE;
 
     /**
-     * The action run when {@link #oneConfigKeybind} is pressed. Supplied by the minecraft module rather than stored
-     * on the keybind itself, because a keybind's action is transient and is lost whenever the keybind is loaded from
-     * disk (deserialization rebuilds the keybind with a null action). Keeping it here lets us always reattach it.
+     * The action run when {@link #oneConfigKeybind} is pressed
+     * <p>
+     * Held here rather than on the keybind because deserialization rebuilds the keybind with a null action
      */
     private static Function1<Boolean, Boolean> openAction;
 
     /**
-     * The keybind currently registered with the {@link KeybindManager}, rebuilt whenever the keys or action change.
+     * The keybind currently registered with the {@link KeybindManager} rebuilt whenever the keys or action change
      */
     private static OneConfigKeybind registeredKeybind;
 
     /**
-     * The keybind currently registered with the {@link KeybindManager} for duplicating the selected HUD in the
-     * design studio, rebuilt whenever the keys or the config value change.
+     * The keybind registered with the {@link KeybindManager} for duplicating the selected HUD in the design studio
      */
     private static OneConfigKeybind registeredHudDuplicateKeybind;
 
     /**
-     * The keybinds currently registered with the {@link KeybindManager} for the other HUD editor actions (open
-     * settings, toggle visibility, reset to default), rebuilt whenever the keys or the config values change.
+     * The keybinds registered with the {@link KeybindManager} for the remaining HUD editor actions
      */
     private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
         registeredHudSettingsKeybind = new java.util.concurrent.atomic.AtomicReference<>();
@@ -630,18 +627,17 @@ public class OneConfigConfig extends Config {
         if (tree == null) {
             return;
         }
-        // "Custom GUI scale" only applies when "Use custom GUI scale" is enabled.
         addDependency("customScale", "useCustomScale");
         addDependency(
             "uiSharpening",
             "Reduced-resolution filter",
             () -> reducedResFilter != 0 ? Property.Display.SHOWN : Property.Display.DISABLED);
-        // "Time before reset" only applies to the smart reset opening behavior (index 3).
+        // opening behavior 3 is smart reset
         addDependency(
             "timeBeforeReset",
             "Opening Behavior",
             () -> openingBehavior == 3 ? Property.Display.SHOWN : Property.Display.HIDDEN);
-        // Reopening the HUD editor only makes sense for the behaviors that restore the previous page (2, 3).
+        // opening behaviors 2 and 3 are the ones that restore the previous page
         addDependency(
             "restoreHudEditor",
             "Opening Behavior",
@@ -698,8 +694,7 @@ public class OneConfigConfig extends Config {
                 org.polyfrost.oneconfig.internal.ui.sound.UiSounds.refreshAmbience();
                 return false;
             });
-        // Re-register the keybind whenever the user rebinds it, and once now to pick up the value loaded from disk
-        // (the loaded keybind carries no action, so it must be rebuilt from its keys plus the supplied open action).
+        // also refreshed once below because a keybind loaded from disk carries no action
         addCallback(
             "oneConfigKeybind", (OneConfigKeybind kb) -> {
                 refreshKeybind(kb);
@@ -774,25 +769,28 @@ public class OneConfigConfig extends Config {
         org.polyfrost.oneconfig.api.hud.v1.HudManager.masterHudEnabled = masterHudEnabled;
     }
 
-    /** When the OneConfig keybind last closed the GUI, so the same press cannot immediately reopen it. */
+    /** When the OneConfig keybind last closed the GUI so the same press cannot immediately reopen it */
     private static volatile long keybindClosedAt = 0L;
 
-    /** How long a keybind-driven close blocks the open action for. Longer than a frame, shorter than a re-press. */
+    /** How long a keybind-driven close blocks the open action for */
     private static final long KEYBIND_CLOSE_GRACE_MS = 300L;
 
     /**
-     * Records that the OneConfig keybind just closed the GUI. The keybind manager evaluates presses at the end of a
-     * frame, after the screen has been drawn, so with the closing animation disabled the screen is already gone by
-     * the time the press that closed it is checked and the open action would reopen it. See
-     * {@link #consumeKeybindClose()}.
+     * Records that the OneConfig keybind just closed the GUI
+     * <p>
+     * The keybind manager evaluates presses at the end of a frame after the screen has been drawn so without this
+     * mark the same press would reopen the GUI when the closing animation is disabled
+     *
+     * @see #consumeKeybindClose()
      */
     public static void notifyKeybindClosedGui() {
         keybindClosedAt = System.currentTimeMillis();
     }
 
     /**
-     * True if the press being handled is the one that just closed the GUI, in which case it must not reopen it.
-     * Consumes the mark, so only the first press after a close is dropped.
+     * True if the press being handled is the one that just closed the GUI
+     * <p>
+     * Consumes the mark so only the first press after a close is dropped
      */
     public static boolean consumeKeybindClose() {
         long at = keybindClosedAt;
@@ -802,8 +800,11 @@ public class OneConfigConfig extends Config {
     }
 
     /**
-     * Supplies the action run when the OneConfig keybind is pressed. Called by the minecraft module, as the action
-     * references platform classes this module cannot depend on. See {@link #openAction}.
+     * Supplies the action run when the OneConfig keybind is pressed
+     * <p>
+     * Called by the minecraft module because the action references platform classes this module cannot depend on
+     *
+     * @see #openAction
      */
     public static void setOpenAction(Function1<Boolean, Boolean> action) {
         openAction = action;
@@ -811,8 +812,8 @@ public class OneConfigConfig extends Config {
     }
 
     /**
-     * Rebuilds the registered keybind from {@code src}'s (GLFW) keys and the supplied {@link #openAction},
-     * re-registering it with the {@link KeybindManager}.
+     * Rebuilds the registered keybind from {@code src}'s GLFW keys plus {@link #openAction} and re-registers it
+     * with the {@link KeybindManager}
      */
     private static void refreshKeybind(OneConfigKeybind src) {
         if (registeredKeybind != null) {
@@ -832,9 +833,10 @@ public class OneConfigConfig extends Config {
     }
 
     /**
-     * Rebuilds the registered duplicate-HUD keybind from {@code hudDuplicateKeybind}'s (GLFW) keys, re-registering it
-     * with the {@link KeybindManager}. The action is resolved from the config field's keys rather than stored on the
-     * keybind itself so it survives deserialization.
+     * Rebuilds the registered duplicate-HUD keybind from {@code hudDuplicateKeybind}'s GLFW keys and re-registers it
+     * with the {@link KeybindManager}
+     * <p>
+     * The action is resolved here rather than stored on the keybind so it survives deserialization
      */
     private static void refreshHudDuplicateKeybind() {
         if (registeredHudDuplicateKeybind != null) {
@@ -855,9 +857,10 @@ public class OneConfigConfig extends Config {
     }
 
     /**
-     * Rebuilds one of the additional HUD editor keybinds from its config field's (GLFW) keys, re-registering it
-     * with the {@link KeybindManager}. The action is resolved from the config field's keys rather than stored on the
-     * keybind itself so it survives deserialization.
+     * Rebuilds one of the additional HUD editor keybinds from its config field's GLFW keys and re-registers it
+     * with the {@link KeybindManager}
+     * <p>
+     * The action is resolved here rather than stored on the keybind so it survives deserialization
      */
     private static void refreshHudEditorKeybind(
         OneConfigKeybind src,
@@ -944,8 +947,9 @@ public class OneConfigConfig extends Config {
     }
 
     /**
-     * Called once after the first-launch message has been shown. Flips {@link #showFirstLaunchMessage} off and
-     * persists it so the message is not shown again until the user re-enables it from the menu.
+     * Called once after the first-launch message has been shown
+     * <p>
+     * Turns {@link #showFirstLaunchMessage} off and persists it until the user re-enables it from the menu
      */
     public static void markFirstLaunchShown() {
         if (!showFirstLaunchMessage) {

@@ -39,7 +39,6 @@ private val MOD_GRID_GAP = 19.dp
 fun SearchResultsScreen(query: String) {
     val theme = LocalTheme.current
 
-    // Run search asynchronously
     var searchedQuery by remember { mutableStateOf<String?>(null) }
     var results by remember { mutableStateOf<Map<SearchRow?, List<SearchDocument<*>>>>(emptyMap()) }
     LaunchedEffect(query) {
@@ -53,8 +52,8 @@ fun SearchResultsScreen(query: String) {
     val matchingMods: List<ConfigData> = remember(results) {
         results[null].orEmpty().map { it.payload }.filterIsInstance<ConfigData>()
     }
-    // Grouped by owning mod, in order of first appearance, so a mod is only headed once while keeping its best hit's
-    // rank. Accordions collapse into one row per accordion rather than one per matching option inside it.
+    // grouped by owning mod in order of first appearance so a mod is headed once while keeping its best
+    // hit's rank and accordions collapse into one row each
     val groupedOptions: Map<String, List<SettingNode>> = remember(results) {
         val byGroup = LinkedHashMap<String, MutableList<SettingNode>>()
         results.forEach { (row, documents) ->
@@ -70,7 +69,7 @@ fun SearchResultsScreen(query: String) {
 
     if (matchingMods.isEmpty() && groupedOptions.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            // Nothing to say until the first search comes back.
+            // nothing to say until the first search comes back
             searchedQuery?.also {
                 Text("No results for \"$it\"", color = theme.textColorSecondary, fontSize = 15.sp)
             } ?: Text("Searching...", color = theme.textColorSecondary, fontSize = 15.sp)

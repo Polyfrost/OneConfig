@@ -51,7 +51,7 @@ object NotificationsRenderer {
         }
 
     /**
-     * Renders the toast stack into [ctx].
+     * Renders the toast stack into [ctx]
      */
     @JvmStatic
     fun render(ctx: RenderContext, screenWidth: Float, screenHeight: Float) {
@@ -73,7 +73,6 @@ object NotificationsRenderer {
     }
 
     private fun handleInput(root: PolyNode, scale: Float) {
-        // Reset hover state each frame.
         for (notification in NotificationsManager.active) notification.hovered = false
         ToastInput.hoveredAction = null
         ToastInput.hoverTarget = null

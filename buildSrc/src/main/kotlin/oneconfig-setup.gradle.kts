@@ -39,7 +39,7 @@ repositories {
         content { includeGroup("dev.isxander") }
     }
     maven("https://api.modrinth.com/maven") {
-        content { includeGroup("maven.modrinth") } // for some reason yacl versions exist that aren't on the official repo???
+        content { includeGroup("maven.modrinth") } // some yacl versions only exist here and not on the official repo
     }
     maven("https://jitpack.io") {
         content { includeGroupAndSubgroups("com.github") }
@@ -55,9 +55,6 @@ repositories {
     }
     maven("https://maven.bawnorton.com/releases") {
         content { includeGroup("com.github.bawnorton.mixinsquared") }
-    }
-    maven("https://maven.parchmentmc.org") {
-        content { includeGroupAndSubgroups("org.parchmentmc") }
     }
     maven("https://redirector.kotlinlang.org/maven/compose-dev")
     scopedMaven("https://central.sonatype.com/repository/maven-snapshots/", "net.kyori")
@@ -308,14 +305,6 @@ dependencies {
         }
     }
 
-    //if (mcData.isFabric) {
-    //    provideFabricApiDependency(tripleVersion).forEach {
-    //        @Suppress("USELESS_CAST")
-    //        maybeModApi(if (it.dep is String) it.dep as String else "${(it.dep as ExternalModuleDependency).group}:${(it.dep as ExternalModuleDependency).name}:${(it.dep as ExternalModuleDependency).version}") {
-    //            isTransitive = false
-    //        }
-    //    }
-    //}
     "annotationProcessor"(versionedCatalog["mixin.squared"])
 
     if (enableMoulRelocatorKsp) {
@@ -336,59 +325,11 @@ dependencies {
 
     //api("dev.deftu:enhancedeventbus:2.0.0") // TODO
     if (properties["minecraft.vulkan"] != null) {
-        // i couldnt find a way to get it to work
-        // soooooooooooooooooooooooooooooooo
+        // never got the fabric-api mixin patching to work
         val fabricApiPatchSrc = configurations.create("fabricApiPatchSrc") {
             isCanBeConsumed = false
             isCanBeResolved = true
-        }/*
-        dependencies.add(fabricApiPatchSrc.name, "net.fabricmc.fabric-api:fabric-screen-api-v1:4.0.0+9f78a5a8ed") { isTransitive = false }
-        dependencies.add(fabricApiPatchSrc.name, "net.fabricmc.fabric-api:fabric-rendering-v1:23.0.2+f348b6c3c3") { isTransitive = false }
-
-        val patchedFabricApiDir = layout.buildDirectory.dir("patched-fabric-api")
-
-        val patchFabricApiMods by tasks.registering {
-            inputs.files(fabricApiPatchSrc)
-            outputs.dir(patchedFabricApiDir)
-            doLast {
-                val outDir = patchedFabricApiDir.get().asFile
-                outDir.mkdirs()
-                val jarFiles: Set<File> = fabricApiPatchSrc.resolvedConfiguration.resolvedArtifacts.map { it.file }.toSet()
-                for (jar: File in jarFiles) {
-                    val mixinJson: String? = when {
-                        "screen-api" in jar.name -> "fabric-screen-api-v1.mixins.json"
-                        "rendering-v1" in jar.name -> "fabric-rendering-v1.mixins.json"
-                        else -> null
-                    }
-                    val outFile = File(outDir, jar.name)
-                    ZipFile(jar).use { zf ->
-                        ZipOutputStream(outFile.outputStream().buffered()).use { zos ->
-                            zf.entries().asSequence().forEach { entry ->
-                                val bytes = zf.getInputStream(entry).readBytes()
-                                val content = if (mixinJson != null && entry.name == mixinJson) {
-                                    var json = String(bytes)
-                                        .replace("\"required\": true", "\"required\": false")
-                                        .replace("\"defaultRequire\": 1", "\"defaultRequire\": 0")
-                                    if ("rendering-v1" in mixinJson) {
-                                        json = json.replace(Regex("\"client\"\\s*:\\s*\\[.*?\\]", RegexOption.DOT_MATCHES_ALL), "\"client\": []")
-                                    }
-                                    json.toByteArray()
-                                } else bytes
-                                zos.putNextEntry(ZipEntry(entry.name))
-                                zos.write(content)
-                                zos.closeEntry()
-                            }
-                        }
-                    }
-                }
-            }
         }
-
-         */
-        //val patchedScreenApi = patchedFabricApiDir.map { it.file("fabric-screen-api-v1-4.0.0+9f78a5a8ed.jar") }
-        //val patchedRenderingV1 = patchedFabricApiDir.map { it.file("fabric-rendering-v1-23.0.2+f348b6c3c3.jar") }
-        //"maybeModApi"(files(patchedScreenApi) { builtBy(patchFabricApiMods) })
-        //"maybeModApi"(files(patchedRenderingV1) { builtBy(patchFabricApiMods) })
     }
 }
 

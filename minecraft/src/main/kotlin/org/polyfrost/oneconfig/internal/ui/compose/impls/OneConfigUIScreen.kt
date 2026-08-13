@@ -47,16 +47,16 @@ class OneConfigUIScreen @JvmOverloads constructor(
         private const val FULLSCREEN_BLUR_RADIUS = 8f
         private const val OPEN_ANIMATION_MS = 250L
 
-        /** Serialized so two closes in quick succession can't write the same files at once. */
+        /** Serialized so two closes in quick succession cannot write the same files at once */
         private val SAVE_EXECUTOR = java.util.concurrent.Executors.newSingleThreadExecutor { r ->
             Thread(r, "OneConfig-ConfigSave").apply { isDaemon = true }
         }
 
-        /** [restored] marks a route that puts the user back where they were rather than opening a fixed page. */
+        /** [restored] marks a route that puts the user back where they were rather than opening a fixed page */
         private data class OpeningRoute(val route: Any, val restored: Boolean = false)
 
         private fun resolveOpeningBehaviorRoute(): OpeningRoute = resolveRoute().let {
-            // "Reopen HUD editor" is off by default, in which case the editor is never restored as a page.
+            // "Reopen HUD editor" is off by default so the editor is never restored as a page
             if (it.route === HudEditorRoute && !OneConfigConfig.restoreHudEditor) OpeningRoute(ModsGraph) else it
         }
 
@@ -97,13 +97,13 @@ class OneConfigUIScreen @JvmOverloads constructor(
         UiSounds.play(UiSoundEvent.CLOSE)
     }
 
-    /** The page this screen is showing. Survives the scene being disposed and rebuilt. */
+    /** The page this screen is showing which survives the scene being disposed and rebuilt */
     private var route: Any? = null
 
-    /** True once this screen has been displaced by another and is being shown again. */
+    /** True once this screen has been displaced by another and is being shown again */
     private var resuming = false
 
-    /** True when [route] is a page being put back rather than a page being opened. */
+    /** True when [route] is a page being put back rather than a page being opened */
     private var restoring = false
 
     private fun markClosed() {
@@ -174,8 +174,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
     }
 
     /**
-     * A scene that failed mid-frame is thrown away and rebuilt, but the menu never closed.
-     * Treat the rebuild as coming back from another screen, fixes hanging of the GUI.
+     * A scene that failed mid-frame is thrown away and rebuilt while the menu stays open so the
+     * rebuild is treated as coming back from another screen which stops the GUI hanging
      */
     override fun onSceneRebuilding() {
         ShellState.lastRoute?.takeIf { it !== HudEditorRoute }?.let { route = it }
@@ -185,8 +185,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
     }
 
     override fun removed() {
-        // A screen opened over this one removes it and hands it back when it closes, and the scene is rebuilt
-        // from scratch in between, so the page has to be carried across by hand.
+        // a screen opened over this one removes it and hands it back on close with the scene rebuilt
+        // in between so the page has to be carried across by hand
         ShellState.lastRoute?.takeIf { it !== HudEditorRoute }?.let { route = it }
         resuming = true
         restoring = true
@@ -194,8 +194,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         HudManager.overrideShowInScreens = false
         HudManager.isConfigUiOpen = false
         UiSounds.releaseAmbience()
-        // Writing every registered tree takes long enough to be felt as a hitch, and Minecraft only re-grabs the
-        // cursor once this returns, so the crosshair would sit under a free mouse for the whole write.
+        // writing every registered tree hitches and Minecraft only re-grabs the cursor once this returns
         SAVE_EXECUTOR.execute {
             try {
                 ConfigManager.active().saveAll()
@@ -232,7 +231,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         return false
     }
 
-    /** Mouse side buttons navigate the page history, like a browser. */
+    /** Mouse side buttons navigate the page history like a browser */
     override fun handleMouseClicked(button: Int): Boolean {
         if (!closeRequested && LocalNavController.isReady) {
             when (button) {
@@ -253,10 +252,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     //~ if >= 26.1 'render' -> 'extractRenderState'
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
-        // Some foreign config screens (Better Statistics Screen, other tcdcommons-based UIs) draw as a popup
-        // over their parent and render that parent by hand every frame. When the parent is this screen that
-        // would queue a fullscreen blur into the Skia pass, which runs after vanilla GUI drawing and so smears
-        // the popup on top of it. Nothing here may run unless we are the screen actually being shown.
+        // tcdcommons-based screens like Better Statistics Screen render their parent by hand each frame
+        // and that would queue a fullscreen blur which smears over the popup so bail unless we are current
         if (Platform.screen().current<Any?>() !== this) return
         if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= closeAnimationMs) {
             Platform.screen().close()

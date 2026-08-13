@@ -27,7 +27,7 @@
 package org.polyfrost.oneconfig.api.event.v1;
 
 /**
- * Exception thrown in an event if the game should crash.
+ * Exception thrown in an event if the game should crash
  */
 public class EventException extends RuntimeException {
     public EventException(String message) {

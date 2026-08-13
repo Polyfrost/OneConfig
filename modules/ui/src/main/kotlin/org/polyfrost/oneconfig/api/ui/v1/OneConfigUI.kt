@@ -4,18 +4,19 @@ import org.apache.logging.log4j.LogManager
 import java.util.ServiceLoader
 
 /**
- * Utility for opening the OneConfig UI.
+ * Utility for opening the OneConfig UI
  *
- * A route is any destination registered in the OneConfig navigation graph, such as a page a mod added itself.
- * Opening on a route that is not registered logs an error and falls back to the mods page.
+ * A route is any destination registered in the OneConfig navigation graph such as a page a mod added itself
  *
- * Kotlin:
+ * Opening on a route that is not registered logs an error and falls back to the mods page
+ *
+ * Kotlin
  * ```
  * OneConfigUI.open()
  * OneConfigUI.open(MyModRoute)
  * ```
  *
- * Java:
+ * Java
  * ```
  * OneConfigUI.open();
  * OneConfigUI.open(MyModRoute.INSTANCE);
@@ -25,7 +26,7 @@ object OneConfigUI {
     private val LOGGER = LogManager.getLogger("OneConfig/UI")
 
     /**
-     * Bridge into the OneConfig UI screen if present.
+     * Bridge into the OneConfig UI screen if present
      */
     private val bridge: OneConfigUIBridge? by lazy {
         try {
@@ -38,10 +39,13 @@ object OneConfigUI {
     }
 
     /**
-     * Opens the OneConfig UI on [route], or on the page set by the user's opening behavior when null.
+     * Opens the OneConfig UI on [route] or on the page set by the user's opening behavior when null
      *
-     * [route] must be a destination registered in the OneConfig navigation graph; an unregistered route falls
-     * back to the mods page. If the UI is already open, it navigates to [route] in place.
+     * [route] must be a destination registered in the OneConfig navigation graph
+     *
+     * An unregistered route falls back to the mods page
+     *
+     * If the UI is already open it navigates to [route] in place
      */
     @JvmStatic
     @JvmOverloads
@@ -55,11 +59,16 @@ object OneConfigUI {
     }
 
     /**
-     * Builds the OneConfig UI screen opened on [route] without showing it, for callers that set the screen
-     * themselves. Returns null when the OneConfig UI is unavailable.
+     * Builds the OneConfig UI screen opened on [route] without showing it for callers that set the screen
+     * themselves
      *
-     * [route] must be a destination registered in the OneConfig navigation graph; an unregistered route falls
-     * back to the mods page. When null, the screen opens on the page set by the user's opening behavior.
+     * Returns null when the OneConfig UI is unavailable
+     *
+     * [route] must be a destination registered in the OneConfig navigation graph
+     *
+     * An unregistered route falls back to the mods page
+     *
+     * When null the screen opens on the page set by the user's opening behavior
      */
     @JvmStatic
     @JvmOverloads

@@ -19,10 +19,8 @@ import org.polyfrost.oneconfig.internal.mixin.blaze3d.GpuDeviceAccessor
 import org.slf4j.LoggerFactory
 
 /**
- * Vulkan-backed [VulkanService] using Minecraft 26.2's native Vulkan backend.
- *
- * Replaces [CinnabarVulkanService]: 26.2 ships its own Vulkan renderer in Blaze3D, so the
- * vk handles are pulled straight from the public [VulkanDevice] API instead of Cinnabar's.
+ * Vulkan-backed [VulkanService] for Minecraft 26.2 which ships its own Blaze3D Vulkan renderer
+ * so the vk handles come straight off [VulkanDevice] rather than Cinnabar
  */
 class NativeVulkanService private constructor(
     private val vkInstance: Long,
@@ -128,7 +126,7 @@ class NativeVulkanService private constructor(
     }
 
     override fun midFrameFlush() {
-        // Submit MC's pending command buffer so Skia sees a consistent image state.
+        // submit MC's pending command buffer so Skia sees a consistent image state
         val device = (RenderSystem.getDevice() as? GpuDeviceAccessor)?.`oneconfig$getBackend`() as? VulkanDevice
         if (device == null) {
             LOG.warn("midFrameFlush: GpuDevice backend is not Vulkan, skipping flush")

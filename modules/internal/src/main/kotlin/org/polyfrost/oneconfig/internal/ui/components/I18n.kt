@@ -25,13 +25,15 @@ fun localizedString(key: String?, fallback: Any?): String {
 }
 
 /**
- * Translates [value] when it is a bare translation key (`some.mod.option`), otherwise returns it as-is.
- * Use at any display site which reads a raw string that mods may have filled with a translation key.
+ * Translates [value] when it is a bare translation key such as `some.mod.option` and otherwise returns it
+ * unchanged
+ *
+ * Use at any display site reading a raw string that mods may have filled with a translation key
  */
 fun localizedValue(value: Any?): Any? =
     translationKeyOrNull(value)?.let { Platform.i18n().translate(it) } ?: value
 
-/** [localizedValue] for sites which need a plain string. */
+/** [localizedValue] for sites which need a plain string */
 fun localizedLabel(text: String?): String? =
     translationKeyOrNull(text)?.let { Platform.i18n().translateString(it) } ?: text
 

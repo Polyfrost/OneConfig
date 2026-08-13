@@ -147,7 +147,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
         return
     }
 
-    // Mutated live while dragging so the grid re-lays out under the pointer; the drop is what
+    // mutated live while dragging so the grid re-lays out under the pointer
     val flat = remember(filtered, collapseRevision) {
         buildModGridEntries(filtered, ModCardTypeCollapseStore::isCollapsed)
     }
@@ -199,7 +199,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
             modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
         )
 
-        // Drawn outside the grid so the card isn't clipped when dragged past a viewport edge.
+        // drawn outside the grid so the card is not clipped when dragged past a viewport edge
         val draggedId = reorderState.overlayKey
         val dragged = remember(entries, draggedId) {
             entries.firstNotNullOfOrNull { (it as? ModGridEntry.Card)?.data?.takeIf { mod -> mod.id == draggedId } }
@@ -256,8 +256,9 @@ private val ModCardPlacementSpec = spring(
 )
 
 /**
- * Persists the arrangement after a card is dropped at [index]. Dropping a card inside the
- * favourites block favourites it, and dragging one out of the block clears it again.
+ * Persists the arrangement after a card is dropped at [index]
+ *
+ * Dropping a card inside the favourites block favourites it and dragging one out clears it
  */
 private fun commitDrop(entries: List<ModGridEntry>, index: Int) {
     val dropped = (entries.getOrNull(index) as? ModGridEntry.Card)?.data ?: return
