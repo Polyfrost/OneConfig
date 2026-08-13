@@ -119,7 +119,7 @@ fun NumberSpinner(
             Box(
                 modifier = Modifier
                     .size(18.dp, 13.dp)
-                    .onClick(upInteraction) { commit(formatSpinnerValue((value + step).coerceIn(min, max))) },
+                    .onClick(upInteraction, value < max) { commit(formatSpinnerValue((value + step).coerceIn(min, max))) },
                 contentAlignment = Alignment.Center,
             ) {
                 Icon("up", modifier = Modifier.size(14.dp), color = upColor)
@@ -128,7 +128,7 @@ fun NumberSpinner(
             Box(
                 modifier = Modifier
                     .size(18.dp, 13.dp)
-                    .onClick(downInteraction) { commit(formatSpinnerValue((value - step).coerceIn(min, max))) },
+                    .onClick(downInteraction, value > min) { commit(formatSpinnerValue((value - step).coerceIn(min, max))) },
                 contentAlignment = Alignment.Center,
             ) {
                 Icon("down", modifier = Modifier.size(14.dp), color = downColor)

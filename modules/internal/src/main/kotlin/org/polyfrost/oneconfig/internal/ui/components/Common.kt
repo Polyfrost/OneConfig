@@ -16,9 +16,13 @@ import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 @Composable
 fun rememberInteractionSource() = remember { MutableInteractionSource() }
 
-fun Modifier.onClick(interactionSource: MutableInteractionSource, onClick: () -> Unit) = clickable(
+fun Modifier.onClick(interactionSource: MutableInteractionSource, onClick: () -> Unit) =
+    onClick(interactionSource, true, onClick)
+
+fun Modifier.onClick(interactionSource: MutableInteractionSource, enabled: Boolean, onClick: () -> Unit) = clickable(
     interactionSource = interactionSource,
     indication = null,
+    enabled = enabled,
     onClick = {
         UiSounds.play(UiSoundEvent.CLICK)
         onClick()
