@@ -160,15 +160,12 @@ internal fun ChromaColorAnimation(
     model: ColorPickerModel,
     onColorChanged: (Color) -> Unit,
 ) {
-    LaunchedEffect(model.chromaEnabled, model.chromaSpeed) {
+    LaunchedEffect(model.chromaEnabled) {
         if (!model.chromaEnabled) return@LaunchedEffect
-        var lastNanos = withInfiniteAnimationFrameNanos { it }
         while (true) {
-            withInfiniteAnimationFrameNanos { frameNanos ->
-                val dt = (frameNanos - lastNanos) / 1_000_000_000f
-                lastNanos = frameNanos
-                model.hue = (model.hue + (360f / PolyColor.CHROMA_CYCLE_SECONDS.toFloat()) * model.chromaSpeed * dt) % 360f
-                onColorChanged(model.currentColor())
+            withInfiniteAnimationFrameNanos {
+                val baseColor = model.currentColor()
+                onColorChanged(Color(PolyColor(baseColor.toArgb(), true, model.chromaSpeed).argb))
             }
         }
     }
@@ -187,7 +184,7 @@ fun ColorOption(data: ColorOptionData) {
     val initialColor = remember(data.prop, initialValue) {
         when (val v = initialValue) {
             is Color -> v
-            is PolyColor -> Color(v.argb).let {
+            is PolyColor -> Color(v.rawArgb).let {
                 if (data.alpha) it else it.copy(alpha = 1f)
             }
 
