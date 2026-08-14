@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.containVerticalScroll
 import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
@@ -137,6 +138,7 @@ internal fun <T> ListOptionContainer(
     showAddWhenFull: Boolean = false,
     entryHeight: Dp = ListEntryHeight,
     maxHeight: Dp = 280.dp,
+    containScroll: Boolean = false,
     invalid: (T) -> Boolean = { false },
     row: @Composable RowScope.(entry: ListRowEntry<T>, ctx: ListRowContext) -> Unit,
 ) {
@@ -179,11 +181,17 @@ internal fun <T> ListOptionContainer(
     ) {
         if (entries.isNotEmpty()) {
             val scrollState = rememberScrollState()
+            val containmentModifier = if (containScroll) {
+                Modifier.containVerticalScroll(scrollState)
+            } else {
+                Modifier
+            }
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = maxHeight)
                     .fadingEdges(scrollState, theme.componentBackground)
+                    .then(containmentModifier)
                     .verticalScroll(scrollState),
             ) {
                 Box(

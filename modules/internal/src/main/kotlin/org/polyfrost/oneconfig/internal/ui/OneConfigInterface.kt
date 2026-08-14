@@ -161,7 +161,7 @@ fun OneConfigInterface(
                     LocalLifecycleOwner provides Lifecycle,
                     LocalViewModelStoreOwner provides OCViewModelStoreOwner,
                 ) {
-                    Theme {
+                    Theme(pixelGrid = true) {
                         val animMs = (OneConfigConfig.animationTime * 1000f).toInt().coerceAtLeast(1)
                         val exitMs = guiCloseAnimationMillis().toInt()
                         val enter = if (OneConfigConfig.guiOpenAnimation)
@@ -207,9 +207,9 @@ fun OneConfigInterface(
     }
 }
 
-private const val DESIGN_WIDTH_DP  = 1391f
-private const val DESIGN_HEIGHT_DP = 700f
-private const val EDGE_MARGIN_FRACTION = 0.9f
+internal const val DESIGN_WIDTH_DP  = 1391f
+internal const val DESIGN_HEIGHT_DP = 700f
+internal const val EDGE_MARGIN_FRACTION = 0.9f
 
 private val EaseOutExpo = Easing { x -> if (x >= 1f) 1f else 1f - 2f.pow(-10f * x) }
 

@@ -49,6 +49,7 @@ fun ItemListOption(data: ItemListOptionData) {
             onAdd = { expanded = true },
             showAddWhenFull = true,
             entryHeight = ItemRowHeight,
+            containScroll = true,
         ) { entry, ctx ->
             SelectedItemRow(entry.value, itemById[entry.value], ctx)
         }
