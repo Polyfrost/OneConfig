@@ -161,7 +161,7 @@ fun OneConfigInterface(
                     LocalLifecycleOwner provides Lifecycle,
                     LocalViewModelStoreOwner provides OCViewModelStoreOwner,
                 ) {
-                    Theme {
+                    Theme(pixelGrid = true) {
                         val animMs = (OneConfigConfig.animationTime * 1000f).toInt().coerceAtLeast(1)
                         val exitMs = guiCloseAnimationMillis().toInt()
                         val enter = if (OneConfigConfig.guiOpenAnimation)

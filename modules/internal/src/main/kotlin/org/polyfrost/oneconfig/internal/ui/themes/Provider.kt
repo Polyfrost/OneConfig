@@ -14,6 +14,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import androidx.compose.ui.graphics.toArgb
 import org.polyfrost.compose.render.PolyColor
@@ -42,15 +44,24 @@ private val screenPlatform by lazy { runCatching { Platform.screen() }.getOrNull
 private fun surfaceRatio(): Float = screenPlatform?.surfaceRatio()?.takeIf { it > 0f } ?: 1f
 
 @Composable
-private fun pixelGridDensity(): Density {
+fun pixelGridScale(scale: Float, max: Float, anchorSp: Float = GRID_ANCHOR_SP): Float {
+    if (scale <= 0f) return scale
+    val density = LocalDensity.current
+    val anchorPx = anchorSp * density.fontScale * density.density * scale * surfaceRatio()
+    return scale * snapScaleToPixelGrid(anchorPx, max / scale)
+}
+
+@Composable
+private fun pixelGridDensity(designWidth: Dp, designHeight: Dp): Density {
     val density = LocalDensity.current
     val window = LocalWindowInfo.current.containerSize
-    val headroom = minOf(
-        (window.width  * EDGE_MARGIN_FRACTION) / (DESIGN_WIDTH_DP  * density.density),
-        (window.height * EDGE_MARGIN_FRACTION) / (DESIGN_HEIGHT_DP * density.density),
-    )
-    val anchorPx = GRID_ANCHOR_SP * density.fontScale * density.density * surfaceRatio()
-    val scale = snapScaleToPixelGrid(anchorPx, headroom)
+    val headroom = with(density) {
+        minOf(
+            (window.width  * EDGE_MARGIN_FRACTION) / designWidth.toPx(),
+            (window.height * EDGE_MARGIN_FRACTION) / designHeight.toPx(),
+        )
+    }
+    val scale = pixelGridScale(1f, headroom)
     return remember(density, scale) {
         if (scale == 1f) density else Density(density.density * scale, density.fontScale)
     }
@@ -63,7 +74,15 @@ internal fun snapScaleToPixelGrid(anchorPx: Float, max: Float): Float {
 }
 
 @Composable
-fun Theme(content: @Composable () -> Unit) {
+fun Theme(content: @Composable () -> Unit) = Theme(pixelGrid = false, content = content)
+
+@Composable
+fun Theme(
+    pixelGrid: Boolean,
+    designWidth: Dp = DESIGN_WIDTH_DP.dp,
+    designHeight: Dp = DESIGN_HEIGHT_DP.dp,
+    content: @Composable () -> Unit,
+) {
     _accent = Color(ThemeConfig.accentColor.argb)
 
     LaunchedEffect(Unit) {
@@ -84,7 +103,7 @@ fun Theme(content: @Composable () -> Unit) {
 
     CompositionLocalProvider(
         LocalTheme provides animated,
-        LocalDensity provides pixelGridDensity(),
+        LocalDensity provides if (pixelGrid) pixelGridDensity(designWidth, designHeight) else LocalDensity.current,
         content = content
     )
 }

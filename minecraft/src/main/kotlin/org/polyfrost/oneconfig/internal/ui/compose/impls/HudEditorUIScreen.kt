@@ -146,7 +146,7 @@ class HudEditorUIScreen : ComposeScreen() {
                     LocalLifecycleOwner provides Lifecycle,
                     LocalViewModelStoreOwner provides OCViewModelStoreOwner
                 ) {
-                    Theme {
+                    Theme(pixelGrid = true) {
                         HudDesignStudio(
                             onReturnToOneConfig = {
                                 returningToOneConfig = true
