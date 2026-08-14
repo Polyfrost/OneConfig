@@ -71,6 +71,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
 
     private Tree register0(Tree tree) {
         tree.addMetadata(Backend.UI_ONLY_METADATA, Boolean.TRUE);
+        dropStaleRegistration(tree.getID());
         Tree reg = ConfigManager.active().register(tree).get();
         reg.addMetadata(TAG, Boolean.TRUE);
         if (reg.getMetadata("custom_save") != null) {
@@ -89,6 +90,14 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
             }
         });
         return reg;
+    }
+
+    private void dropStaleRegistration(String id) {
+        if (id == null) return;
+        Tree existing = ConfigManager.active().get(id);
+        if (existing == null || !Boolean.TRUE.equals(existing.getMetadata(TAG))) return;
+        ConfigManager.active().unregister(id);
+        known.remove(id, existing);
     }
 
     @Override
