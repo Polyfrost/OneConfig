@@ -1,0 +1,17 @@
+# =============================================================================
+#  Planification des sauvegardes — /etc/systemd/system/endless-backup.timer
+#      sudo systemctl enable --now endless-backup.timer
+#      systemctl list-timers endless-backup.timer
+# =============================================================================
+[Unit]
+Description=Sauvegarde nocturne EndlessClient
+
+[Timer]
+OnCalendar=daily
+# Étale le déclenchement pour ne pas tomber pile à minuit.
+RandomizedDelaySec=30m
+# Rattrape la sauvegarde si la machine était éteinte à l'heure prévue.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

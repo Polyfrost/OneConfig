@@ -1,0 +1,49 @@
+# =============================================================================
+#  Service de rendu des vignettes (Node + Chromium headless)
+#  /etc/systemd/system/endless-render.service
+#  Installé par inclus/scripts/40-render-service.sh
+#
+#  FACULTATIF : sans lui, les téléversements de cosmétiques fonctionnent
+#  toujours, ils n'enregistrent simplement aucune image de couverture.
+# =============================================================================
+[Unit]
+Description=EndlessClient — service de rendu des cosmétiques
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@@SERVICE_USER@@
+Group=@@SERVICE_USER@@
+WorkingDirectory=@@RENDER_SRC@@
+
+Environment=NODE_ENV=production
+Environment=PORT=@@RENDER_PORT@@
+Environment=PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+Environment=HOME=@@INSTALL_ROOT@@
+Environment=XDG_CACHE_HOME=/tmp/render-cache
+
+ExecStart=/usr/bin/node src/server.js
+
+Restart=on-failure
+RestartSec=5s
+
+# --- Durcissement -----------------------------------------------------------
+# ATTENTION : ce service fait `server.listen(PORT)` SANS adresse d'écoute,
+# il est donc joignable sur TOUTES les interfaces. C'est ufw qui le protège
+# du réseau public (aucune règle n'ouvre @@RENDER_PORT@@). Ne l'exposez jamais.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+ReadWritePaths=@@RENDER_SRC@@
+
+# Chromium a besoin de créer des espaces de noms : ne PAS ajouter
+# RestrictNamespaces=true ni MemoryDenyWriteExecute=true ici, le rendu casse.
+
+[Install]
+WantedBy=multi-user.target

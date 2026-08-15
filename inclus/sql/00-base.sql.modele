@@ -1,0 +1,20 @@
+-- ============================================================================
+--  Création du rôle et de la base — exécuté par inclus/scripts/20-postgresql.sh
+--      sudo -u postgres psql -v ON_ERROR_STOP=1 -f 00-base.sql
+--
+--  Idempotent : relançable sans casse sur une installation déjà en place.
+-- ============================================================================
+
+-- Rôle applicatif, sans droits superutilisateur.
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '@@DB_USER@@') THEN
+        CREATE ROLE @@DB_USER@@ LOGIN PASSWORD '@@DB_PASSWORD@@';
+    ELSE
+        ALTER ROLE @@DB_USER@@ LOGIN PASSWORD '@@DB_PASSWORD@@';
+    END IF;
+END
+$$;
+
+-- CREATE DATABASE ne peut pas figurer dans un bloc DO : le script shell teste
+-- son existence avant d'exécuter ce fichier, puis crée la base séparément.

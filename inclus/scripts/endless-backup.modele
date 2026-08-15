@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# =============================================================================
+#  /usr/local/bin/endless-backup
+#  Rendu par inclus/scripts/80-sauvegardes.sh — ne pas éditer sur place.
+#
+#  Sauvegarde la base ET le bucket, ensemble. Les lignes de cosmétiques
+#  référencent des clés d'objets : restaurer l'un sans l'autre laisse des
+#  cosmétiques dont les fichiers renvoient 404, et l'API ne bronche pas —
+#  elle journalise un avertissement par asset au démarrage et continue.
+#
+#  Ce qui N'EST PAS sauvegardé : les produits et prix Stripe, qui vivent chez
+#  Stripe. Une restauration de base sans les produits correspondants laisse
+#  des cosmétiques inachetables.
+# =============================================================================
+set -euo pipefail
+
+HORODATAGE="$(date -u +%Y%m%dT%H%M%SZ)"
+DEST="@@BACKUP_DIR@@"
+BASE="@@DB_NAME@@"
+BUCKET="@@S3_BUCKET@@"
+RETENTION="@@BACKUP_RETENTION_DAYS@@"
+
+mkdir -p "$DEST/bucket"
+
+echo "[endless-backup] $HORODATAGE — début"
+
+# --- Base de données --------------------------------------------------------
+# Format « custom » (-Fc) : compressé, et restaurable table par table.
+DUMP="$DEST/${BASE}-${HORODATAGE}.dump"
+sudo -u postgres pg_dump -Fc "$BASE" > "$DUMP"
+echo "[endless-backup] base : $(du -h "$DUMP" | cut -f1) → $DUMP"
+
+# --- Bucket -----------------------------------------------------------------
+# --remove supprime côté miroir ce qui a disparu côté source : le miroir
+# reflète l'état courant, il ne s'accumule pas indéfiniment.
+if command -v mc >/dev/null 2>&1; then
+	mc mirror --overwrite --remove "local/$BUCKET" "$DEST/bucket"
+	echo "[endless-backup] bucket : $(du -sh "$DEST/bucket" | cut -f1)"
+else
+	echo "[endless-backup] AVERTISSEMENT : mc introuvable, bucket NON sauvegardé" >&2
+fi
+
+# --- Rotation ---------------------------------------------------------------
+find "$DEST" -maxdepth 1 -name "${BASE}-*.dump" -mtime "+${RETENTION}" -print -delete
+
+echo "[endless-backup] $HORODATAGE — terminé"
+echo
+echo "RAPPEL : une sauvegarde sur le même disque n'est pas une sauvegarde."
+echo "Copiez $DEST hors de la machine (rsync, restic, rclone...)."

@@ -1,0 +1,7 @@
+# Le fichier de configuration réel contient tous les secrets de production.
+config.env
+config.env.local
+
+# Fichiers rendus localement à partir des modèles (contiennent aussi des secrets).
+rendu/
+*.rendu

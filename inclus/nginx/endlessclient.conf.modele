@@ -1,0 +1,177 @@
+# =============================================================================
+#  /etc/nginx/sites-available/endlessclient
+#  Rendu par inclus/scripts/70-nginx-tls.sh
+#
+#  Dépend de /etc/nginx/conf.d/upgrade-map.conf ($connection_upgrade).
+#  Les certificats sont tous émis sous le nom du domaine racine :
+#      /etc/letsencrypt/live/@@DOMAIN@@/
+# =============================================================================
+
+
+# ─── Redirection http → https ────────────────────────────────────────────────
+server {
+    listen 80;
+    listen [::]:80;
+    server_name @@DOMAIN@@ @@DOMAIN_WWW@@ @@DOMAIN_API@@ @@DOMAIN_ADMIN@@ @@DOMAIN_CDN@@;
+
+    # Laisse passer les renouvellements certbot en clair.
+    location /.well-known/acme-challenge/ { root /var/www/html; }
+
+    location / { return 301 https://$host$request_uri; }
+}
+
+
+# ─── API + WebSocket ─────────────────────────────────────────────────────────
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name @@DOMAIN_API@@;
+
+    ssl_certificate     /etc/letsencrypt/live/@@DOMAIN@@/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/@@DOMAIN@@/privkey.pem;
+
+    add_header Strict-Transport-Security "max-age=31536000" always;
+
+    # Les archives de cosmétiques sont téléversées à travers ce vhost.
+    client_max_body_size 64m;
+
+    access_log /var/log/nginx/endless-api.access.log;
+    error_log  /var/log/nginx/endless-api.error.log;
+
+    location / {
+        proxy_pass http://127.0.0.1:@@BACKEND_PORT@@;
+
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # ÉCRASE au lieu d'ajouter : le backend est en
+        # CLIENT_IP_SOURCE=RightmostXForwardedFor, il lit donc la dernière
+        # valeur. Avec un `$proxy_add_x_forwarded_for` classique, un en-tête
+        # forgé par le client survivrait et permettrait d'usurper une IP.
+        proxy_set_header X-Forwarded-For   $remote_addr;
+
+        # /websocket porte les mises à jour d'équipement en direct et la
+        # comptabilisation du temps de jeu : la connexion doit rester ouverte.
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade    $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+    }
+}
+
+
+# ─── Boutique ────────────────────────────────────────────────────────────────
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name @@DOMAIN@@;
+
+    ssl_certificate     /etc/letsencrypt/live/@@DOMAIN@@/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/@@DOMAIN@@/privkey.pem;
+
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    add_header X-Content-Type-Options    "nosniff" always;
+    add_header Referrer-Policy           "strict-origin-when-cross-origin" always;
+
+    access_log /var/log/nginx/endless-shop.access.log;
+    error_log  /var/log/nginx/endless-shop.error.log;
+
+    location / {
+        proxy_pass http://127.0.0.1:@@SHOP_PORT@@;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+
+# ─── www → apex ──────────────────────────────────────────────────────────────
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name @@DOMAIN_WWW@@;
+
+    ssl_certificate     /etc/letsencrypt/live/@@DOMAIN@@/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/@@DOMAIN@@/privkey.pem;
+
+    return 301 https://@@DOMAIN@@$request_uri;
+}
+
+
+# ─── Tableau de bord admin (statique) ────────────────────────────────────────
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name @@DOMAIN_ADMIN@@;
+
+    ssl_certificate     /etc/letsencrypt/live/@@DOMAIN@@/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/@@DOMAIN@@/privkey.pem;
+
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    add_header X-Content-Type-Options    "nosniff" always;
+    add_header X-Frame-Options           "DENY" always;
+
+    # Le champ mot de passe du tableau de bord protège l'API, PAS la page.
+    # Cette auth HTTP est la seule chose qui empêche un inconnu de charger
+    # la console d'administration.
+    auth_basic           "EndlessClient admin";
+    auth_basic_user_file /etc/nginx/endless-admin.htpasswd;
+
+    root @@WEB_DIR@@/admin;
+    index index.html;
+
+    access_log /var/log/nginx/endless-admin.access.log;
+    error_log  /var/log/nginx/endless-admin.error.log;
+
+    # Application monopage : toutes les routes retombent sur index.html.
+    location / { try_files $uri $uri/ /index.html; }
+
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
+
+
+# ─── Stockage objet (MinIO) ──────────────────────────────────────────────────
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name @@DOMAIN_CDN@@;
+
+    ssl_certificate     /etc/letsencrypt/live/@@DOMAIN@@/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/@@DOMAIN@@/privkey.pem;
+
+    client_max_body_size 64m;
+
+    access_log /var/log/nginx/endless-cdn.access.log;
+    error_log  /var/log/nginx/endless-cdn.error.log;
+
+    location / {
+        proxy_pass http://127.0.0.1:@@MINIO_PORT@@;
+
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # La signature d'une URL présignée couvre la requête telle qu'envoyée :
+        # toute réécriture liée au tampon la casse (403 SignatureDoesNotMatch).
+        proxy_request_buffering off;
+        proxy_buffering off;
+
+        # Les gros téléversements de cosmétiques passent par ici.
+        proxy_connect_timeout 300s;
+        proxy_read_timeout    300s;
+        proxy_send_timeout    300s;
+        chunked_transfer_encoding off;
+    }
+}

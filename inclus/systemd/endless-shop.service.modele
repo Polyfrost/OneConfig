@@ -1,0 +1,45 @@
+# =============================================================================
+#  Boutique (Next.js) — /etc/systemd/system/endless-shop.service
+#  Installé par inclus/scripts/60-frontends.sh
+# =============================================================================
+[Unit]
+Description=EndlessClient — boutique
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@@SERVICE_USER@@
+Group=@@SERVICE_USER@@
+WorkingDirectory=@@SHOP_SRC@@
+
+Environment=NODE_ENV=production
+Environment=PORT=@@SHOP_PORT@@
+# Écoute uniquement sur la boucle locale : nginx est le seul point d'entrée.
+Environment=HOSTNAME=127.0.0.1
+Environment=HOME=@@INSTALL_ROOT@@
+# ProtectSystem=strict rend /opt en lecture seule : sans ce cache déporté,
+# le moindre log npm ferait échouer le démarrage.
+Environment=NPM_CONFIG_CACHE=/tmp/npm-cache
+Environment=NPM_CONFIG_UPDATE_NOTIFIER=false
+
+ExecStart=/usr/bin/npm run start
+
+Restart=on-failure
+RestartSec=5s
+
+# --- Durcissement -----------------------------------------------------------
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+# next start écrit son cache d'images et de pages dans .next/
+ReadWritePaths=@@SHOP_SRC@@/.next
+
+[Install]
+WantedBy=multi-user.target

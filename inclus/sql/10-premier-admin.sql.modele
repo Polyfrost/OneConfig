@@ -1,0 +1,19 @@
+-- ============================================================================
+--  Promotion du premier administrateur
+--  Exécuté par inclus/scripts/90-premier-admin.sh, APRÈS le premier démarrage
+--  du backend (les migrations doivent avoir créé la table « user »).
+--
+--      sudo -u postgres psql -v ON_ERROR_STOP=1 -d @@DB_NAME@@ -f 10-premier-admin.sql
+--
+--  Rôles possibles : player | moderator | admin
+--  minecraft_uuid est de type uuid : les tirets sont OBLIGATOIRES.
+--  L'API Mojang renvoie l'UUID sans tirets ; le script les réinsère.
+-- ============================================================================
+
+INSERT INTO "user" (minecraft_uuid, role)
+VALUES ('@@MINECRAFT_UUID@@', 'admin')
+ON CONFLICT (minecraft_uuid) DO UPDATE SET role = 'admin';
+
+SELECT id, minecraft_uuid, role, created_at
+FROM "user"
+WHERE minecraft_uuid = '@@MINECRAFT_UUID@@';

@@ -1,0 +1,21 @@
+# =============================================================================
+#  Sauvegarde ponctuelle — /etc/systemd/system/endless-backup.service
+#  Déclenchée par endless-backup.timer, ou à la main :
+#      sudo systemctl start endless-backup.service
+#      journalctl -u endless-backup -n 50 --no-pager
+# =============================================================================
+[Unit]
+Description=EndlessClient — sauvegarde base + bucket
+After=postgresql.service minio.service
+Wants=postgresql.service minio.service
+
+[Service]
+Type=oneshot
+# Tourne en root : appelle `sudo -u postgres pg_dump` et écrit dans
+# @@BACKUP_DIR@@.
+User=root
+ExecStart=/usr/local/bin/endless-backup
+
+# Ne pas voler d'E/S à l'API pendant le dump.
+Nice=10
+IOSchedulingClass=idle

@@ -1,0 +1,45 @@
+# =============================================================================
+#  API Poly+ (Rust) — /etc/systemd/system/endless-backend.service
+#  Installé par inclus/scripts/50-backend.sh
+# =============================================================================
+[Unit]
+Description=EndlessClient Poly+ API
+After=network-online.target postgresql.service minio.service
+Wants=network-online.target
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=@@SERVICE_USER@@
+Group=@@SERVICE_USER@@
+
+# Contient DATABASE_URL, les clés Stripe, le mot de passe admin, les clés S3.
+EnvironmentFile=@@SECRETS_DIR@@/backend.env
+
+ExecStart=@@BIN_DIR@@/plus-backend serve
+
+Restart=on-failure
+RestartSec=5s
+
+# Les migrations tournent au démarrage, AVANT l'ouverture du socket. Sur une
+# grosse base la première montée de version peut être longue : on laisse
+# systemd patienter au lieu de tuer le processus en pleine migration.
+TimeoutStartSec=600
+
+# --- Durcissement -----------------------------------------------------------
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,22 @@
+# =============================================================================
+#  MinIO — /etc/default/minio   (root:root, 0600)
+#  Rendu par inclus/scripts/30-minio.sh
+#
+#  L'API et la console n'écoutent QUE sur la boucle locale. L'accès public au
+#  stockage passe par nginx sur https://@@DOMAIN_CDN@@ ; la console
+#  d'administration (@@MINIO_CONSOLE_PORT@@) n'est jamais publiée — pour y
+#  accéder, ouvrez un tunnel SSH :
+#      ssh -L @@MINIO_CONSOLE_PORT@@:127.0.0.1:@@MINIO_CONSOLE_PORT@@ user@serveur
+# =============================================================================
+
+MINIO_VOLUMES="/var/lib/minio"
+MINIO_OPTS="--address 127.0.0.1:@@MINIO_PORT@@ --console-address 127.0.0.1:@@MINIO_CONSOLE_PORT@@"
+
+# Compte racine — administration uniquement. L'API utilise la clé dédiée
+# @@S3_ACCESS_KEY@@ créée par le même script.
+MINIO_ROOT_USER=@@MINIO_ROOT_USER@@
+MINIO_ROOT_PASSWORD=@@MINIO_ROOT_PASSWORD@@
+
+# Nom d'hôte annoncé par la console dans ses liens.
+MINIO_SERVER_URL="https://@@DOMAIN_CDN@@"
+MINIO_BROWSER_REDIRECT_URL="http://127.0.0.1:@@MINIO_CONSOLE_PORT@@"

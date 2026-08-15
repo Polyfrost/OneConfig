@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# =============================================================================
+#  /usr/local/bin/endless-update
+#  Rendu par inclus/scripts/80-sauvegardes.sh — ne pas éditer sur place.
+#
+#  Met à jour l'installation : git pull, recompilation, redéploiement.
+#
+#  Les migrations s'appliquent au démarrage du backend. On ARRÊTE donc le
+#  service avant de remplacer le binaire, et on ne le redémarre qu'ensuite :
+#  deux instances contre la même base pendant une migration corrompraient
+#  l'état. Les migrations ne sont pas réversibles en place — d'où le dump
+#  systématique en tête de script.
+# =============================================================================
+set -euo pipefail
+
+SRC="@@SRC_DIR@@"
+BIN="@@BIN_DIR@@"
+WEB="@@WEB_DIR@@"
+UTILISATEUR="@@SERVICE_USER@@"
+BRANCHE="@@GIT_BRANCH@@"
+
+lancer() { runuser -l "$UTILISATEUR" -s /bin/bash -c "$1"; }
+
+echo "=== Sauvegarde préalable ==="
+/usr/local/bin/endless-backup
+
+echo
+echo "=== Récupération des sources (branche $BRANCHE) ==="
+lancer "cd '$SRC' && git fetch --all --prune && git checkout '$BRANCHE' && git pull --ff-only"
+
+echo
+echo "=== Compilation du backend ==="
+lancer "
+	set -e
+	[ -f \"\$HOME/.cargo/env\" ] && . \"\$HOME/.cargo/env\"
+	cd '$SRC/plus-backend-main'
+	cargo build --release
+"
+
+echo
+echo "=== Remplacement du binaire ==="
+systemctl stop endless-backend
+install -o "$UTILISATEUR" -g "$UTILISATEUR" -m 0755 \
+	"$SRC/plus-backend-main/target/release/plus-backend" "$BIN/plus-backend"
+systemctl start endless-backend
+echo "backend redémarré"
+
+echo
+echo "=== Service de rendu ==="
+lancer "cd '$SRC/plus-backend-main/render-service' && PUPPETEER_SKIP_DOWNLOAD=true npm ci"
+systemctl restart endless-render || echo "(service de rendu absent ou en échec — non bloquant)"
+
+echo
+echo "=== Boutique ==="
+lancer "set -e; cd '$SRC/plus-website' && npm ci && npm run build"
+systemctl restart endless-shop
+
+echo
+echo "=== Tableau de bord admin ==="
+lancer "set -e; cd '$SRC/plus-admin-dashboard' && npm ci && npm run build"
+rm -rf "$WEB/admin"
+cp -r "$SRC/plus-admin-dashboard/dist" "$WEB/admin"
+chown -R "$UTILISATEUR:$UTILISATEUR" "$WEB/admin"
+chmod -R a+rX "$WEB/admin"
+
+echo
+echo "=== État final ==="
+systemctl is-active endless-backend endless-render endless-shop nginx || true
+echo
+echo "Mise à jour terminée. Vérifiez : /opt/endless/src/inclus/scripts/verifier.sh"
