@@ -1,0 +1,15 @@
+{
+	"name": "plus-render-service",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"description": "Headless skinview3d sidecar that renders cosmetic cover images for plus-backend.",
+	"main": "src/server.js",
+	"scripts": {
+		"start": "node src/server.js"
+	},
+	"dependencies": {
+		"fflate": "^0.8.2",
+		"puppeteer": "^23.11.1"
+	}
+}

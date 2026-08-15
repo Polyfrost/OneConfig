@@ -1,0 +1,236 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "org.polyfrost.oneconfig.dependencies",
+    "module": "modern",
+    "version": "1.0.0-alpha.16",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.8"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "modern-1.0.0-alpha.16.jar",
+          "url": "modern-1.0.0-alpha.16.jar",
+          "size": 261,
+          "sha512": "9640ee17be156c31178df07b1cf189f64e03bfa435ac83fda7c605383933cb569f61c98ad8aaed6d5ff72f162d585cbf809a1cd575a2d83a14321096319e1716",
+          "sha256": "149c71febdcf81dacc778aae2cde5e1e95d99848963b021413d304d2385145e6",
+          "sha1": "b287915219be8cb957c8a099e6e25579f3db0829",
+          "md5": "6d57affae82c6baa34d93aba307d1f4f"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains",
+          "module": "annotations",
+          "version": {
+            "requires": "24.1.0"
+          }
+        },
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl-nanovg",
+          "version": {
+            "requires": "3.3.3"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ]
+        },
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl-nanovg",
+          "version": {
+            "requires": "3.3.3"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "lwjgl-nanovg",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "natives-windows"
+            }
+          }
+        },
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl-nanovg",
+          "version": {
+            "requires": "3.3.3"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "lwjgl-nanovg",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "natives-windows-arm64"
+            }
+          }
+        },
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl-nanovg",
+          "version": {
+            "requires": "3.3.3"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "lwjgl-nanovg",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "natives-linux"
+            }
+          }
+        },
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl-nanovg",
+          "version": {
+            "requires": "3.3.3"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "lwjgl-nanovg",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "natives-macos"
+            }
+          }
+        },
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl-nanovg",
+          "version": {
+            "requires": "3.3.3"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "lwjgl-nanovg",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "natives-macos-arm64"
+            }
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "modern-1.0.0-alpha.16.jar",
+          "url": "modern-1.0.0-alpha.16.jar",
+          "size": 261,
+          "sha512": "9640ee17be156c31178df07b1cf189f64e03bfa435ac83fda7c605383933cb569f61c98ad8aaed6d5ff72f162d585cbf809a1cd575a2d83a14321096319e1716",
+          "sha256": "149c71febdcf81dacc778aae2cde5e1e95d99848963b021413d304d2385145e6",
+          "sha1": "b287915219be8cb957c8a099e6e25579f3db0829",
+          "md5": "6d57affae82c6baa34d93aba307d1f4f"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      }
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "modern-1.0.0-alpha.16-sources.jar",
+          "url": "modern-1.0.0-alpha.16-sources.jar",
+          "size": 261,
+          "sha512": "4cb69ebdcd84d906d81710a5cdcb7623c45d14d47eeec8daf670b7eb5c8d9ea04a5ffd8c006562be3785640f8c31065f2c8051d6484561579063c9ca1df9a3a4",
+          "sha256": "ee18f6bc555af4b31660474d8741e7e253f2c3d8687a4badb67f574caf198a71",
+          "sha1": "670f85a2205cbe763871963fca70d65f283062ff",
+          "md5": "b6e034c6274fcc70ab7965bc41a0b56b"
+        }
+      ]
+    }
+  ]
+}

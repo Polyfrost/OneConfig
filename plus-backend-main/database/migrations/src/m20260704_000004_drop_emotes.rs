@@ -1,0 +1,274 @@
+use sea_orm_migration::prelude::*;
+
+use crate::m20260704_000000_create_collections_table::Collections;
+
+#[derive(DeriveIden)]
+pub enum Bundles {
+	Table,
+	Id,
+}
+
+#[derive(DeriveIden)]
+pub enum BundlesEmotes {
+	Table,
+	BundleId,
+	CosmeticId,
+}
+
+#[derive(DeriveIden)]
+pub enum Emote {
+	Table,
+	Id,
+	AssetId,
+	Name,
+	CreatedAt,
+	UpdatedAt,
+	Enabled,
+	StripePriceId,
+	StripeProductId,
+	BasePrice,
+	DiscountRate,
+	Collection,
+	Description,
+}
+#[derive(DeriveIden)]
+pub enum Asset {
+	Table,
+	Id,
+}
+#[derive(DeriveIden)]
+pub enum User {
+	Table,
+	Id,
+}
+#[derive(DeriveIden)]
+pub enum Transaction {
+	Table,
+	Id,
+}
+
+#[derive(DeriveIden)]
+pub enum EmotePackage {
+	Table,
+	PackageId,
+	EmoteId,
+}
+#[derive(DeriveIden)]
+pub enum PlayerOwnedEmote {
+	Table,
+	PlayerId,
+	EmoteId,
+	AcquiredVia,
+	TransactionId,
+	AcquiredAt,
+}
+
+#[derive(DeriveMigrationName)]
+pub struct Migration;
+
+#[async_trait::async_trait]
+impl MigrationTrait for Migration {
+	async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+		manager
+			.drop_table(Table::drop().table(BundlesEmotes::Table).to_owned())
+			.await?;
+		manager
+			.drop_table(Table::drop().table(PlayerOwnedEmote::Table).to_owned())
+			.await?;
+		manager
+			.drop_table(Table::drop().table(EmotePackage::Table).to_owned())
+			.await?;
+		manager
+			.drop_table(Table::drop().table(Emote::Table).to_owned())
+			.await
+	}
+
+	async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+		manager
+			.create_table(
+				Table::create()
+					.table(Emote::Table)
+					.if_not_exists()
+					.col(
+						ColumnDef::new(Emote::Id)
+							.integer()
+							.auto_increment()
+							.primary_key(),
+					)
+					.col(ColumnDef::new(Emote::AssetId).integer().null())
+					.foreign_key(
+						ForeignKeyCreateStatement::new()
+							.name("fk_emote_asset")
+							.from_tbl(Emote::Table)
+							.from_col(Emote::AssetId)
+							.to_tbl(Asset::Table)
+							.to_col(Asset::Id),
+					)
+					.col(ColumnDef::new(Emote::Name).text().not_null())
+					.col(
+						ColumnDef::new(Emote::CreatedAt)
+							.timestamp_with_time_zone()
+							.not_null()
+							.default(Expr::current_timestamp()),
+					)
+					.col(
+						ColumnDef::new(Emote::UpdatedAt)
+							.timestamp_with_time_zone()
+							.not_null()
+							.default(Expr::current_timestamp()),
+					)
+					.col(
+						ColumnDef::new(Emote::Enabled)
+							.boolean()
+							.not_null()
+							.default(true),
+					)
+					.col(ColumnDef::new(Emote::StripePriceId).text().null())
+					.col(ColumnDef::new(Emote::StripeProductId).text().null())
+					.col(ColumnDef::new(Emote::BasePrice).float().null())
+					.col(ColumnDef::new(Emote::DiscountRate).integer().null())
+					.col(ColumnDef::new(Emote::Collection).integer().null())
+					.foreign_key(
+						ForeignKeyCreateStatement::new()
+							.name("fk_emote_collections")
+							.from_tbl(Emote::Table)
+							.from_col(Emote::Collection)
+							.to_tbl(Collections::Table)
+							.to_col(Collections::Id)
+							.on_delete(ForeignKeyAction::SetNull)
+							.on_update(ForeignKeyAction::Cascade),
+					)
+					.col(ColumnDef::new(Emote::Description).text().null())
+					.to_owned(),
+			)
+			.await?;
+
+		manager
+			.create_table(
+				TableCreateStatement::new()
+					.table(EmotePackage::Table)
+					.if_not_exists()
+					.col(ColumnDef::new(EmotePackage::PackageId).integer().not_null())
+					.col(ColumnDef::new(EmotePackage::EmoteId).integer().not_null())
+					.foreign_key(
+						ForeignKeyCreateStatement::new()
+							.name("fk_emote_package_to_emote")
+							.from_tbl(EmotePackage::Table)
+							.from_col(EmotePackage::EmoteId)
+							.to_tbl(Emote::Table)
+							.to_col(Emote::Id)
+							.on_delete(ForeignKeyAction::Cascade),
+					)
+					.primary_key(
+						Index::create()
+							.col(EmotePackage::PackageId)
+							.col(EmotePackage::EmoteId),
+					)
+					.to_owned(),
+			)
+			.await?;
+
+		manager
+			.create_table(
+				TableCreateStatement::new()
+					.table(PlayerOwnedEmote::Table)
+					.if_not_exists()
+					.col(
+						ColumnDef::new(PlayerOwnedEmote::PlayerId)
+							.integer()
+							.not_null(),
+					)
+					.foreign_key(
+						ForeignKeyCreateStatement::new()
+							.name("fk_player_owned_emote_to_user")
+							.from_tbl(PlayerOwnedEmote::Table)
+							.from_col(PlayerOwnedEmote::PlayerId)
+							.to_tbl(User::Table)
+							.to_col(User::Id)
+							.on_delete(ForeignKeyAction::Cascade),
+					)
+					.col(
+						ColumnDef::new(PlayerOwnedEmote::EmoteId)
+							.integer()
+							.not_null(),
+					)
+					.foreign_key(
+						ForeignKeyCreateStatement::new()
+							.name("fk_player_owned_emote_to_emote")
+							.from_tbl(PlayerOwnedEmote::Table)
+							.from_col(PlayerOwnedEmote::EmoteId)
+							.to_tbl(Emote::Table)
+							.to_col(Emote::Id)
+							.on_delete(ForeignKeyAction::Cascade),
+					)
+					.col(
+						ColumnDef::new(PlayerOwnedEmote::AcquiredVia)
+							.custom(Alias::new("transaction_provider"))
+							.not_null(),
+					)
+					.col(
+						ColumnDef::new(PlayerOwnedEmote::TransactionId)
+							.integer()
+							.null(),
+					)
+					.foreign_key(
+						ForeignKeyCreateStatement::new()
+							.name("fk_player_owned_emote_to_transaction")
+							.from_tbl(PlayerOwnedEmote::Table)
+							.from_col(PlayerOwnedEmote::TransactionId)
+							.to_tbl(Transaction::Table)
+							.to_col(Transaction::Id)
+							.on_delete(ForeignKeyAction::SetNull),
+					)
+					.col(
+						ColumnDef::new(PlayerOwnedEmote::AcquiredAt)
+							.timestamp_with_time_zone()
+							.not_null()
+							.default(Expr::current_timestamp()),
+					)
+					.primary_key(
+						Index::create()
+							.col(PlayerOwnedEmote::PlayerId)
+							.col(PlayerOwnedEmote::EmoteId),
+					)
+					.to_owned(),
+			)
+			.await?;
+
+		manager
+			.create_table(
+				TableCreateStatement::new()
+					.table(BundlesEmotes::Table)
+					.if_not_exists()
+					.col(ColumnDef::new(BundlesEmotes::BundleId).integer().not_null())
+					.col(
+						ColumnDef::new(BundlesEmotes::CosmeticId)
+							.integer()
+							.not_null(),
+					)
+					.foreign_key(
+						ForeignKeyCreateStatement::new()
+							.name("fk_bundle_emote_to_bundle")
+							.from_tbl(BundlesEmotes::Table)
+							.from_col(BundlesEmotes::BundleId)
+							.to_tbl(Bundles::Table)
+							.to_col(Bundles::Id),
+					)
+					.foreign_key(
+						ForeignKeyCreateStatement::new()
+							.name("fk_bundle_emote_to_emote")
+							.from_tbl(BundlesEmotes::Table)
+							.from_col(BundlesEmotes::CosmeticId)
+							.to_tbl(Emote::Table)
+							.to_col(Emote::Id),
+					)
+					.primary_key(
+						Index::create()
+							.col(BundlesEmotes::BundleId)
+							.col(BundlesEmotes::CosmeticId),
+					)
+					.to_owned(),
+			)
+			.await
+	}
+}

@@ -1,0 +1,57 @@
+[graph]
+targets = []
+all-features = true
+no-default-features = false
+
+[output]
+feature-depth = 1
+
+[advisories]
+ignore = []
+
+[licenses]
+# List of explicitly allowed licenses
+# See https://spdx.org/licenses/ for list of possible licenses
+# [possible values: any SPDX 3.11 short identifier (+ optional exception)].
+allow = [ # All licenses allowed here MUST be GPLv3 compatible (https://www.gnu.org/licenses/license-list.en.html)
+    "GPL-3.0-or-later",
+    "MIT",
+    "Apache-2.0",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "CDLA-Permissive-2.0",
+    "Zlib"
+]
+confidence-threshold = 0.8
+exceptions = []
+
+[licenses.private]
+ignore = false
+registries = []
+
+[bans]
+multiple-versions = "allow"
+wildcards = "deny"
+allow-wildcard-paths = true
+highlight = "all"
+workspace-default-features = "allow"
+external-default-features = "allow"
+allow = []
+deny = [
+    "openssl-sys"
+]
+
+# Certain crates/versions that will be skipped when doing duplicate detection.
+skip = []
+skip-tree = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = [
+    "https://github.com/rust-lang/crates.io-index"
+]
+allow-git = [
+    # "https://github.com/whamcloud/client_rust.git"
+]

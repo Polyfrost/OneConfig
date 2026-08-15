@@ -1,0 +1,4 @@
+[unstable]
+# Fixes rust-lang/cargo#4544, which we run into with aide
+# conditionally depending on serde_qs causing resolution problems
+avoid-dev-deps = true

@@ -1,0 +1,19 @@
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_size = 4
+
+[*.rs]
+indent_style = tab
+
+[*.json]
+indent_style = tab
+
+[*.nix]
+indent_style = space
+
+[*.yaml]
+indent_style = space

@@ -1,0 +1,208 @@
+﻿17 matches found: 
+<match path=C:\Users\DarkIndustries\Documents\GitHub\AstralClient\minecraft\src\main\java\org\polyfrost\oneconfig\internal\OneConfig.java>
+    // Lines 214 to 359
+</match>
+<match path=C:\Users\DarkIndustries\Documents\GitHub\AstralClient\minecraft\src\main\java\org\polyfrost\oneconfig\internal\OneConfig.java>
+    // Lines 289 to 305
+</match>
+<match path=C:\Users\DarkIndustries\Documents\GitHub\AstralClient\modules\hud\src\main\kotlin\org\polyfrost\oneconfig\api\hud\v1\HudManager.kt>
+    File: `modules/hud/src/main/kotlin/org/polyfrost/oneconfig/api/hud/v1/HudManager.kt`
+```kotlin
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021~2024 Polyfrost.
+ *   <https://polyfrost.org> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+...
+```
+</match>
+<match path=C:\Users\DarkIndustries\Documents\GitHub\AstralClient\modules\config\src\main\java\org\polyfrost\oneconfig\api\config\v1\serialize\adapter\Adapter.java>
+    File: `modules/config/src/main/java/org/polyfrost/oneconfig/api/config/v1/serialize/adapter/Adapter.java`
+```java
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021~2024 Polyfrost.
+ *   <https://polyfrost.org> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ /*...*/
+```
+</match>
+<match path=C:\Users\DarkIndustries\Documents\GitHub\AstralClient\modules\internal\src\j17Tests\kotlin\TestMain.kt>
+    // Lines 21 to 49
+</match>
+<match path=C:\Users\DarkIndustries\Documents\GitHub\AstralClient\minecraft\src\main\java\org\polyfrost\oneconfig\internal\SkikoDataPathPreLaunch.java>
+    File: `minecraft/src/main/java/org/polyfrost/oneconfig/internal/SkikoDataPathPreLaunch.java`
+```java
+package org.polyfrost.oneconfig.internal;
+
+import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;
+
+public final class SkikoDataPathPreLaunch implements PreLaunchEntrypoint {
+    @Override
+    public void onPreLaunch() {
+        SkikoDataPath.redirect();
+    }
+}
+
+```
+</match>
+<match path=C:\Users\DarkIndustries\Documents\GitHub\AstralClient\modules\poly-compose\src\main\kotlin\org\polyfrost\compose\runtime\PolyComposeHost.kt>
+    File: `modules/poly-compose/src/main/kotlin/org/polyfrost/compose/runtime/PolyComposeHost.kt`
+```kotlin
+package org.polyfrost.compose.runtime
+
+import androidx.compose.runtime.BroadcastFrameClock
+import androidx.compose.runtime.CompositionContext
+import androidx.compose.runtime.Recomposer
+import androidx.compose.runtime.snapshots.Snapshot
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
+object PolyComposeHost {
+    private val clock = BroadcastFrameClock()
+    private val scope = CoroutineScope(Dispatchers.Unconfined + clock)
+
+    internal val recomposer: CompositionContext = Recomposer(scope.coroutineContext).also { r ->
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            r.runRecomposeAndApplyChanges()
+        }
+    }
+
+    fun frame(nanos: Long = System.nanoTime()) {
+        Snapshot.sendApplyNotifications()
+        clock.sendFrame(nanos)
+    }
+}
+
+```
+</match>
+<match path=C:\Users\DarkIndustries\Documents\GitHub\AstralClient\modules\utils\src\main\kotlin\org\polyfrost\oneconfig\api\platform\v1\DesktopHelper.kt>
+    File: `modules/utils/src/main/kotlin/org/polyfrost/oneconfig/api/platform/v1/DesktopHelper.kt`
+```kotlin
+package org.polyfrost.oneconfig.api.platform.v1
+
+import java.awt.Desktop
+import java.io.File
+import java.io.IOException
+import java.net.URI
+import java.util.concurrent.TimeUnit
+
+/**
+ * Taken from UniversalCraft under LGPL-3.0.
+ *
+ * [LICENSE](https://github.com/SparkUniverse/UniversalCraft/blob/master/LICENSE)
+ */
+object DesktopHelper {
+
+    @JvmStatic
+    var isLinux: Boolean = false
+        private set
+
+    @JvmStatic
+    var isXdg: Boolean = false
+        private set
+
+    @JvmStatic
+    var isKde: Boolean = false
+        private set
+
+    @JvmStatic
+    var isGnome: Boolean = false
+        private set
+
+    @JvmStatic
+    var isMac: Boolean = false
+        private set
+
+    @JvmStatic
+    var isWindows: Boolean = false
+        private set
+
+    init {
+        val osName = try {
+            System.getProperty("os.name")
+        } catch (_: SecurityException) {
+            null
+...
+```
+</match>
+<match path=C:\Users\DarkIndustries\Documents\GitHub\AstralClient\minecraft\src\main\kotlin\org\polyfrost\oneconfig\internal\compat\WWaypointsCompat.kt>
+    // Lines 644 to 669
+</match>
+<match path=C:\Users\DarkIndustries\Documents\GitHub\AstralClient\minecraft\src\main\java\org\polyfrost\oneconfig\api\platform\v1\internal\LoaderPlatformImpl.java>
+    // Lines 20 to 53
+</match>
+<match path=C:\Users\DarkIndustries\Documents\GitHub\AstralClient\modules\internal\src\main\java\org\polyfrost\oneconfig\internal\OneConfigConfig.java>
+    // Lines 618 to 622
+</match>
+<match path=C:\Users\DarkIndustries\Documents\GitHub\AstralClient\modules\internal\src\main\java\org\polyfrost\oneconfig\internal\OneConfigConfig.java>
+    // Lines 565 to 592
+</match>
+<match path=C:\Users\DarkIndustries\Documents\GitHub\AstralClient\minecraft\src\main\java\org\polyfrost\oneconfig\internal\mixin\compat\stella\Mixin_Stella.java>
+    File: `minecraft/src/main/java/org/polyfrost/oneconfig/internal/mixin/compat/stella/Mixin_Stella.java`
+```java
+package org.polyfrost.oneconfig.internal.mixin.compat.stella;
+
+//? stella_compat {
+import co.stellarskys.stella.Stella;
+import org.polyfrost.oneconfig.internal.compat.StellaCompat;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Pseudo
+@Mixin(Stella.class)
+public class Mixin_Stella {
+    @Inject(method = "onInitializeClient", at = @At("TAIL"), require = 0)
+    private void oneconfig$registerStella(CallbackInfo ci) {
+        StellaCompat.initialize();
+    }
+}
+//? }
+```
+</match>
+<match path=C:\Users\DarkIndustries\Documents\GitHub\AstralClient\minecraft\src\main\java\org\polyfrost\oneconfig\api\hypixel\v1\internal\HypixelApiInternalsImpl.java>
+    // Lines 37 to 60
+</match>
+<match path=C:\Users\DarkIndustries\Documents\GitHub\AstralClient\minecraft\src\main\kotlin\org\polyfrost\oneconfig\internal\compat\WWaypointsBridge.kt>
+    // Lines 127 to 150
+</match>
+<match path=C:\Users\DarkIndustries\Documents\GitHub\AstralClient\minecraft\src\main\kotlin\org\polyfrost\oneconfig\internal\compat\YACLCompat.kt>
+    // Lines 17 to 49
+</match>
+<match path=C:\Users\DarkIndustries\Documents\GitHub\AstralClient\modules\utils\src\main\java\org\polyfrost\oneconfig\api\hypixel\v1\HypixelUtils.java>
+    // Lines 69 to 97
+</match>

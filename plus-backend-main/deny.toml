@@ -1,0 +1,52 @@
+[graph]
+targets = []
+all-features = true
+no-default-features = false
+
+[output]
+feature-depth = 1
+
+[advisories]
+ignore = []
+
+[licenses]
+# All licenses allowed here MUST be Polyform Shield compatible
+# Aka, should be permissive with redistribution and sublicensing grants
+allow = [
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "MIT",
+    "Unicode-3.0",
+    "Apache-2.0",
+    "ISC",
+	"Zlib",
+	"CDLA-Permissive-2.0",
+	"CC0-1.0"
+]
+confidence-threshold = 0.8
+exceptions = []
+private = { ignore = true }
+
+[bans]
+multiple-versions = "allow"
+wildcards = "deny"
+allow-wildcard-paths = true
+highlight = "all"
+workspace-default-features = "allow"
+external-default-features = "allow"
+allow = []
+deny = [
+    "openssl-sys"
+]
+
+# Certain crates/versions that will be skipped when doing duplicate detection.
+skip = []
+skip-tree = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = [
+    "https://github.com/rust-lang/crates.io-index"
+]
+allow-git = []

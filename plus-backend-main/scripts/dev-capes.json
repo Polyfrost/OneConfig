@@ -1,0 +1,34 @@
+{
+  "cosmetics": [
+    {
+      "id": 1,
+      "type": "cape",
+      "url": "https://87ec5f67119043bacdb678e60702d612.r2.cloudflarestorage.com/plus/assets/capes/64px_oneclient.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=881625e337d21e7ac5e3f9acc6197f44%2F20260601%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260601T201310Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=77107bbf64135b110f23098ca2b664cc2157a0a969f9a3221ba2672eb1961073",
+      "hash": "4d43cc17fbddf5875c520d8f6ceb816f"
+    },
+    {
+      "id": 2,
+      "type": "cape",
+      "url": "https://87ec5f67119043bacdb678e60702d612.r2.cloudflarestorage.com/plus/assets/capes/64px_oneconfig.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=881625e337d21e7ac5e3f9acc6197f44%2F20260601%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260601T201310Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=f1501fc73cf2a96c5dd363ea9a3408983cc25f744135f6842dd12b41f809827a",
+      "hash": "6cbba2ac142dfcccdf94a9974c7200a8"
+    },
+    {
+      "id": 3,
+      "type": "cape",
+      "url": "https://87ec5f67119043bacdb678e60702d612.r2.cloudflarestorage.com/plus/assets/capes/64px_onelauncher.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=881625e337d21e7ac5e3f9acc6197f44%2F20260601%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260601T201310Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=60cdfe2c8108d3ed8d308da56f4447489ddf31b1079d6151539c520ffd6cd563",
+      "hash": "c4f5ec02f4ac4a14ecafe73efc992bd5"
+    },
+    {
+      "id": 4,
+      "type": "cape",
+      "url": "https://87ec5f67119043bacdb678e60702d612.r2.cloudflarestorage.com/plus/assets/capes/64px_poly.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=881625e337d21e7ac5e3f9acc6197f44%2F20260601%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260601T201310Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=2348ebd1af09ba73715fc4a41026328ec515e387b5042735f4039592c1f5cfc0",
+      "hash": "150b114415e8b8af03269321a5c3b72f"
+    },
+    {
+      "id": 5,
+      "type": "cape",
+      "url": "https://87ec5f67119043bacdb678e60702d612.r2.cloudflarestorage.com/plus/assets/capes/moon.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=881625e337d21e7ac5e3f9acc6197f44%2F20260601%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260601T201310Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=f9c91a451f447cf43a2d742e8ddc289da3e03b4ae2b591de939f5fe28f1498d1",
+      "hash": "a73ff74a4b7871fc63182b749802e7cc"
+    }
+  ]
+}

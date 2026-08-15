@@ -1,0 +1,14 @@
+{
+	"name": "plus-render-service-tools",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"description": "Build tooling for the render sidecar: bundles the skinview3d fork into ../vendor. Not used at runtime or by the Nix build.",
+	"scripts": {
+		"build-bundle": "node build-bundle.mjs"
+	},
+	"dependencies": {
+		"esbuild": "^0.24.0",
+		"skinview3d": "git+https://github.com/Polyfrost/skinview3d.git"
+	}
+}

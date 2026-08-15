@@ -1,6 +1,10 @@
 
 allprojects {
     repositories {
+        // First, so a `publishToMavenLocal` run satisfies OneConfig's own
+        // artifacts without reaching repo.polyfrost.org. See startlocal/mod.ps1.
+        mavenLocal()
+
         mavenCentral()
         maven("https://maven.fabricmc.net/releases")
     }

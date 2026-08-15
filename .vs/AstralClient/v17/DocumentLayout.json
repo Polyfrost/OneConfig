@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\DarkIndustries\\Documents\\GitHub\\AstralClient\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\DarkIndustries\\Documents\\GitHub\\AstralClient\\cargo_oneclient_db_build.log||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:cargo_oneclient_db_build.log||{8B382828-6202-11D1-8870-0000F87579D2}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "cargo_oneclient_db_build.log",
+              "DocumentMoniker": "C:\\Users\\DarkIndustries\\Documents\\GitHub\\AstralClient\\cargo_oneclient_db_build.log",
+              "RelativeDocumentMoniker": "cargo_oneclient_db_build.log",
+              "ToolTip": "C:\\Users\\DarkIndustries\\Documents\\GitHub\\AstralClient\\cargo_oneclient_db_build.log",
+              "RelativeToolTip": "cargo_oneclient_db_build.log",
+              "ViewState": "AgIAAGUGAAAAAAAAAAAAAGsGAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-08-14T08:53:55.273Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
