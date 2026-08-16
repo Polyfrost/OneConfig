@@ -25,7 +25,8 @@ import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.DESIGN_HEIGHT_DP
 import org.polyfrost.oneconfig.internal.ui.DESIGN_WIDTH_DP
 import org.polyfrost.oneconfig.internal.ui.EDGE_MARGIN_FRACTION
-import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.round
 
 private var _accent by mutableStateOf(Color(ThemeConfig.accentColor.argb))
 
@@ -37,7 +38,9 @@ val LocalTheme = compositionLocalOf<UITheme> { error("A UI theme is required but
 
 private const val GRID_ANCHOR_SP = 14f
 
-private const val GLYPH_PIXEL_EM = 10f
+private const val EM_STEP_PX = 5f
+
+private const val MIN_EM_PX = 10f
 
 private val screenPlatform by lazy { runCatching { Platform.screen() }.getOrNull() }
 
@@ -69,8 +72,9 @@ private fun pixelGridDensity(designWidth: Dp, designHeight: Dp): Density {
 
 internal fun snapScaleToPixelGrid(anchorPx: Float, max: Float): Float {
     if (anchorPx <= 0f) return 1f
-    val snapped = ceil(anchorPx / GLYPH_PIXEL_EM).coerceAtLeast(1f) * GLYPH_PIXEL_EM / anchorPx
-    return if (snapped <= max) snapped else 1f
+    val fits = floor(anchorPx * max / EM_STEP_PX) * EM_STEP_PX
+    val nearest = round(anchorPx / EM_STEP_PX) * EM_STEP_PX
+    return maxOf(nearest, fits).coerceAtLeast(MIN_EM_PX) / anchorPx
 }
 
 @Composable

@@ -33,33 +33,52 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class PixelGridScaleTest {
     private static final float ANCHOR_PX = 14f;
 
+    private static final float FIT_8K = 4.9678f;
+
+    private static final float FIT_4K = 2.4839f;
+
     private static final float FIT_1440P = 1.6564f;
 
     private static final float FIT_1080P = 1.2423f;
 
     @Test
-    void growsToTheNextWholeGlyphPixelWhenTheWindowFitsIt() {
+    void growsIntoWhateverSpareRoomTheWindowHas() {
         assertEquals(20f / ANCHOR_PX, ProviderKt.snapScaleToPixelGrid(ANCHOR_PX, FIT_1440P), 1e-4f);
     }
 
     @Test
-    void leavesTheScaleAloneWhenTheNextStepDoesNotFit() {
-        assertEquals(1f, ProviderKt.snapScaleToPixelGrid(ANCHOR_PX, FIT_1080P), 1e-4f);
+    void anEightKScreenKeepsOnGrowing() {
+        assertEquals(65f / ANCHOR_PX, ProviderKt.snapScaleToPixelGrid(ANCHOR_PX, FIT_8K), 1e-4f);
     }
 
     @Test
-    void neverShrinksTheScale() {
-        assertEquals(1f, ProviderKt.snapScaleToPixelGrid(ANCHOR_PX, 1f), 1e-4f);
+    void aFourKScreenGrowsToThreePixelsPerGlyphPixel() {
+        assertEquals(30f / ANCHOR_PX, ProviderKt.snapScaleToPixelGrid(ANCHOR_PX, FIT_4K), 1e-4f);
     }
 
     @Test
-    void anAlreadySnappedAnchorIsLeftWhereItIs() {
-        assertEquals(1f, ProviderKt.snapScaleToPixelGrid(20f, 2f), 1e-4f);
+    void takesTheLargestStepA1080pWindowHasRoomFor() {
+        assertEquals(15f / ANCHOR_PX, ProviderKt.snapScaleToPixelGrid(ANCHOR_PX, FIT_1080P), 1e-4f);
     }
 
     @Test
-    void aRetinaAnchorOnlyNeedsANudge() {
-        assertEquals(30f / 28f, ProviderKt.snapScaleToPixelGrid(28f, 1.8f), 1e-4f);
+    void anAlreadySnappedAnchorWithNoRoomToGrowIsLeftWhereItIs() {
+        assertEquals(1f, ProviderKt.snapScaleToPixelGrid(20f, 1f), 1e-4f);
+    }
+
+    @Test
+    void aRequestBiggerThanTheGrownEmKeepsItsOwnSize() {
+        assertEquals(40f / 38f, ProviderKt.snapScaleToPixelGrid(38f, 1f), 1e-4f);
+    }
+
+    @Test
+    void shrinksOntoTheGridWhenTheRequestSitsJustAboveAStep() {
+        assertEquals(20f / 21f, ProviderKt.snapScaleToPixelGrid(21f, 0.8282f), 1e-4f);
+    }
+
+    @Test
+    void neverGoesBelowOnePixelPerGlyphPixel() {
+        assertEquals(10f / 6f, ProviderKt.snapScaleToPixelGrid(6f, 0.5f), 1e-4f);
     }
 
     @Test
