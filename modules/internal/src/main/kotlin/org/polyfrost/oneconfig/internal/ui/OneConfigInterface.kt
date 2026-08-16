@@ -151,10 +151,8 @@ fun OneConfigInterface(
                     1f
                 ).coerceAtLeast(0.25f)
             }
-            val userScale = if (OneConfigConfig.useCustomScale) OneConfigConfig.customScale.coerceIn(0.5f, 2f) else 1f
-            val effectiveScale = scaleFactor * userScale
-            val adjustedDensity = if (effectiveScale == 1f) currentDensity
-                else Density(currentDensity.density * effectiveScale, currentDensity.fontScale)
+            val adjustedDensity = if (scaleFactor == 1f) currentDensity
+                else Density(currentDensity.density * scaleFactor, currentDensity.fontScale)
 
             CompositionLocalProvider(LocalDensity provides adjustedDensity) {
                 CompositionLocalProvider(

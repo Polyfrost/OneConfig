@@ -82,6 +82,21 @@ class PixelGridScaleTest {
     }
 
     @Test
+    void aChosenSizeReplacesWhateverTheWindowWouldHavePicked() {
+        assertEquals(20f / ANCHOR_PX, ProviderKt.snapScaleToPixelGrid(ANCHOR_PX, FIT_1080P, 20f), 1e-4f);
+    }
+
+    @Test
+    void aChosenSizeIsHonouredEvenWhenItOverflowsTheWindow() {
+        assertEquals(40f / ANCHOR_PX, ProviderKt.snapScaleToPixelGrid(ANCHOR_PX, FIT_1080P, 40f), 1e-4f);
+    }
+
+    @Test
+    void aChosenSizeStillCannotGoBelowOnePixelPerGlyphPixel() {
+        assertEquals(10f / ANCHOR_PX, ProviderKt.snapScaleToPixelGrid(ANCHOR_PX, FIT_1080P, 5f), 1e-4f);
+    }
+
+    @Test
     void aDegenerateAnchorIsLeftAlone() {
         assertEquals(1f, ProviderKt.snapScaleToPixelGrid(0f, 2f), 1e-4f);
     }

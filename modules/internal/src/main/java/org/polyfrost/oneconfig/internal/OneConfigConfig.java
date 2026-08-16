@@ -268,27 +268,27 @@ public class OneConfigConfig extends Config {
     public static boolean pauseGame = false;
 
     @Switch(
-        title = "oneconfig.preferences.use_custom_scale.title",
+        title = "oneconfig.preferences.use_custom_ui_size.title",
         titleTranslation = true,
         subcategory = "oneconfig.preferences.category.gui",
         subcategoryTranslation = true,
-        description = "oneconfig.preferences.use_custom_scale.description",
+        description = "oneconfig.preferences.use_custom_ui_size.description",
         descriptionTranslation = true
     )
-    public static boolean useCustomScale = false;
+    public static boolean useCustomUiSize = false;
 
     @Slider(
-        title = "oneconfig.preferences.custom_scale.title",
+        title = "oneconfig.preferences.ui_pixel_size.title",
         titleTranslation = true,
         subcategory = "oneconfig.preferences.category.gui",
         subcategoryTranslation = true,
-        min = 0.5f,
-        max = 2f,
-        step = 0.05f,
-        description = "oneconfig.preferences.custom_scale.description",
+        min = 1f,
+        max = 4f,
+        step = 0.5f,
+        description = "oneconfig.preferences.ui_pixel_size.description",
         descriptionTranslation = true
     )
-    public static float customScale = 1f;
+    public static float uiPixelSize = 2f;
 
     @Dropdown(
         title = "oneconfig.preferences.reduced_res_filter.title",
@@ -627,7 +627,7 @@ public class OneConfigConfig extends Config {
         if (tree == null) {
             return;
         }
-        addDependency("customScale", "useCustomScale");
+        addDependency("uiPixelSize", "useCustomUiSize");
         addDependency(
             "uiSharpening",
             "Reduced-resolution filter",

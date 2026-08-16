@@ -51,10 +51,10 @@ oneconfig.preferences.sidebar_opacity.title=Sidebar Opacity
 oneconfig.preferences.sidebar_opacity.description=How opaque the OneConfig sidebar background is. 0 = fully transparent, 100 = fully opaque.
 oneconfig.preferences.pause_game.title=Pause Game
 oneconfig.preferences.pause_game.description=Pause singleplayer worlds while the OneConfig menu is open.
-oneconfig.preferences.use_custom_scale.title=Use custom GUI scale
-oneconfig.preferences.use_custom_scale.description=Override the Minecraft GUI scale for the OneConfig menu.
-oneconfig.preferences.custom_scale.title=Custom GUI scale
-oneconfig.preferences.custom_scale.description=The custom GUI scale to use for the OneConfig menu.
+oneconfig.preferences.use_custom_ui_size.title=Set UI size manually
+oneconfig.preferences.use_custom_ui_size.description=Size the OneConfig menu yourself instead of fitting it to the window.
+oneconfig.preferences.ui_pixel_size.title=UI size
+oneconfig.preferences.ui_pixel_size.description=How many screen pixels wide one pixel of the menu is drawn. Whole sizes are the sharpest.
 oneconfig.preferences.opening_behavior.title=Opening Behavior
 oneconfig.preferences.opening_behavior.description=Which page to open when the OneConfig menu is launched.
 oneconfig.preferences.opening_behavior.previous_page=Previous page

@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.toArgb
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationTheme
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.DESIGN_HEIGHT_DP
 import org.polyfrost.oneconfig.internal.ui.DESIGN_WIDTH_DP
@@ -42,6 +43,8 @@ private const val EM_STEP_PX = 5f
 
 private const val MIN_EM_PX = 10f
 
+private const val GLYPH_PIXELS_PER_EM = 10f
+
 private val screenPlatform by lazy { runCatching { Platform.screen() }.getOrNull() }
 
 private fun surfaceRatio(): Float = screenPlatform?.surfaceRatio()?.takeIf { it > 0f } ?: 1f
@@ -51,8 +54,12 @@ fun pixelGridScale(scale: Float, max: Float, anchorSp: Float = GRID_ANCHOR_SP): 
     if (scale <= 0f) return scale
     val density = LocalDensity.current
     val anchorPx = anchorSp * density.fontScale * density.density * scale * surfaceRatio()
-    return scale * snapScaleToPixelGrid(anchorPx, max / scale)
+    return scale * snapScaleToPixelGrid(anchorPx, max / scale, chosenEmPx())
 }
+
+private fun chosenEmPx(): Float? =
+    if (OneConfigConfig.useCustomUiSize) OneConfigConfig.uiPixelSize.coerceIn(1f, 4f) * GLYPH_PIXELS_PER_EM
+    else null
 
 @Composable
 private fun pixelGridDensity(designWidth: Dp, designHeight: Dp): Density {
@@ -70,11 +77,13 @@ private fun pixelGridDensity(designWidth: Dp, designHeight: Dp): Density {
     }
 }
 
-internal fun snapScaleToPixelGrid(anchorPx: Float, max: Float): Float {
+@JvmOverloads
+internal fun snapScaleToPixelGrid(anchorPx: Float, max: Float, chosenEm: Float? = null): Float {
     if (anchorPx <= 0f) return 1f
     val fits = floor(anchorPx * max / EM_STEP_PX) * EM_STEP_PX
     val nearest = round(anchorPx / EM_STEP_PX) * EM_STEP_PX
-    return maxOf(nearest, fits).coerceAtLeast(MIN_EM_PX) / anchorPx
+    val em = chosenEm ?: maxOf(nearest, fits)
+    return em.coerceAtLeast(MIN_EM_PX) / anchorPx
 }
 
 @Composable

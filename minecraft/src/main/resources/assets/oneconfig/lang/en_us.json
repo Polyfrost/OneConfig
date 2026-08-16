@@ -54,11 +54,11 @@
   "oneconfig.preferences.pause_game.title": "Pause Game",
   "oneconfig.preferences.pause_game.description": "Pause singleplayer worlds while the OneConfig menu is open.",
 
-  "oneconfig.preferences.use_custom_scale.title": "Use custom GUI scale",
-  "oneconfig.preferences.use_custom_scale.description": "Override the Minecraft GUI scale for the OneConfig menu.",
+  "oneconfig.preferences.use_custom_ui_size.title": "Set UI size manually",
+  "oneconfig.preferences.use_custom_ui_size.description": "Size the OneConfig menu yourself instead of fitting it to the window.",
 
-  "oneconfig.preferences.custom_scale.title": "Custom GUI scale",
-  "oneconfig.preferences.custom_scale.description": "The custom GUI scale to use for the OneConfig menu.",
+  "oneconfig.preferences.ui_pixel_size.title": "UI size",
+  "oneconfig.preferences.ui_pixel_size.description": "How many screen pixels wide one pixel of the menu is drawn. Whole sizes are the sharpest.",
 
   "oneconfig.preferences.reduced_res_filter.title": "Reduced-resolution filter",
   "oneconfig.preferences.reduced_res_filter.description": "Counteracts blur when the game renders at a reduced resolution (e.g. Sodium Extra's 'Reduce Resolution on macOS'). Only takes effect when the display is upscaling a reduced framebuffer. 'Sharpen' softly crisps the whole menu; 'Harden edges' aliases text/edges so they survive the upscale like Minecraft's font (crisper text, but blockier corners).",
