@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.ui.components.settings
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,7 +11,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
@@ -20,10 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
@@ -35,6 +32,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import java.util.Locale
 import kotlin.math.roundToInt
 
 fun Float.toNumberType(type: Class<*>): Number = when (type) {
@@ -60,7 +58,39 @@ fun filterNumberInput(input: String): String {
 }
 
 fun formatSpinnerValue(v: Float): String =
-    if (v == v.toLong().toFloat()) v.toLong().toString() else "%.2f".format(v)
+    if (v == v.toLong().toFloat()) v.toLong().toString() else String.format(Locale.ROOT, "%.2f", v)
+
+@Composable
+private fun SpinnerArrow(icon: String, enabled: Boolean, onClick: () -> Unit) {
+    val theme = LocalTheme.current
+    val hoverInteraction = rememberInteractionSource()
+    val hovered by hoverInteraction.collectIsHoveredAsState()
+    val color by animateColorAsState(
+        when {
+            !enabled -> theme.textColorSecondary.copy(alpha = 0.4f)
+            hovered -> theme.textColor
+            else -> theme.textColorSecondary
+        }
+    )
+
+    Box(
+        modifier = Modifier
+            .size(18.dp, 13.dp)
+            .hoverable(hoverInteraction)
+            .onClick(rememberInteractionSource(), enabled, onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, modifier = Modifier.size(14.dp), color = color)
+    }
+}
+
+@Composable
+fun SpinnerArrows(value: Float, min: Float, max: Float, step: Float, onStep: (Float) -> Unit) {
+    Column(modifier = Modifier.padding(end = 2.dp)) {
+        SpinnerArrow("up", value < max) { onStep((value + step).coerceIn(min, max)) }
+        SpinnerArrow("down", value > min) { onStep((value - step).coerceIn(min, max)) }
+    }
+}
 
 @Composable
 fun NumberSpinner(
@@ -74,8 +104,7 @@ fun NumberSpinner(
     val theme = LocalTheme.current
     var text by remember(value) { mutableStateOf(formatSpinnerValue(value)) }
 
-    fun commit(raw: String) {
-        val v = raw.toFloatOrNull() ?: return
+    fun commit(v: Float) {
         val clamped = v.coerceIn(min, max)
         text = formatSpinnerValue(clamped)
         onValueChange(clamped)
@@ -108,32 +137,7 @@ fun NumberSpinner(
                 .padding(start = 8.dp, top = 5.dp, bottom = 5.dp),
         )
 
-        Column(modifier = Modifier.padding(end = 2.dp)) {
-            val upInteraction = rememberInteractionSource()
-            val downInteraction = rememberInteractionSource()
-            val upHovered by upInteraction.collectIsHoveredAsState()
-            val downHovered by downInteraction.collectIsHoveredAsState()
-            val upColor by animateColorAsState(if (upHovered) theme.textColor else theme.textColorSecondary)
-            val downColor by animateColorAsState(if (downHovered) theme.textColor else theme.textColorSecondary)
-
-            Box(
-                modifier = Modifier
-                    .size(18.dp, 13.dp)
-                    .onClick(upInteraction) { commit(formatSpinnerValue((value + step).coerceIn(min, max))) },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon("up", modifier = Modifier.size(14.dp), color = upColor)
-            }
-
-            Box(
-                modifier = Modifier
-                    .size(18.dp, 13.dp)
-                    .onClick(downInteraction) { commit(formatSpinnerValue((value - step).coerceIn(min, max))) },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon("down", modifier = Modifier.size(14.dp), color = downColor)
-            }
-        }
+        SpinnerArrows(value, min, max, step) { commit(it) }
     }
 }
 
