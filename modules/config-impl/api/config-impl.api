@@ -1,17 +1,26 @@
 public final class org/polyfrost/oneconfig/api/config/v1/CompatSnapshotStore {
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;)V
+	public fun deleteProfile (Ljava/lang/String;)V
 	public fun flush (Ljava/lang/String;)V
+	public fun flushOrThrow (Ljava/lang/String;)V
 	public fun getValue (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;
+	public fun hasLoadFailure (Ljava/lang/String;)Z
 	public fun load (Ljava/lang/String;)Ljava/util/Map;
 	public fun putValue (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;)V
+	public fun renameProfile (Ljava/lang/String;Ljava/lang/String;)V
 }
 
 public final class org/polyfrost/oneconfig/api/config/v1/CompatSnapshots : org/polyfrost/oneconfig/api/config/v1/ConfigManager$ProfileChangeListener {
+	public static final field CUSTOM_RESET_METADATA Ljava/lang/String;
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/config/v1/CompatSnapshots;
 	public static final field NO_SNAPSHOT_META Ljava/lang/String;
 	public static final field SNAPSHOT_METADATA Ljava/lang/String;
 	public fun onProfileChanged (Ljava/lang/String;)V
+	public fun onProfileCreated (Ljava/lang/String;)V
+	public fun onProfileDeleted (Ljava/lang/String;)V
+	public fun onProfileRenamed (Ljava/lang/String;Ljava/lang/String;)V
+	public fun onProfileSaving (Ljava/lang/String;)V
 	public static fun register (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public static fun setDispatcher (Ljava/util/function/Consumer;)V
 }
@@ -35,6 +44,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
 	protected fun addMigrationEntry (Ljava/lang/String;Ljava/lang/String;)V
 	protected fun addToInitQueue ()V
 	public static fun captureDefaults (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
+	public static fun copyDefault (Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/Object;
 	protected fun getProperty (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	protected static fun getProperty (Lorg/polyfrost/oneconfig/api/config/v1/Tree;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public fun getTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
@@ -45,6 +55,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
 	protected fun loadFrom (Ljava/nio/file/Path;)V
 	protected fun makeTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun preload ()V
+	public static fun restoreCapturedDefaults (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 	protected fun restoreDefaults ()V
 	protected fun restoreProperty (Ljava/lang/String;)V
 	public fun save ()V
@@ -73,11 +84,14 @@ public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public static fun addProfileChangeListener (Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager$ProfileChangeListener;)V
 	public static fun addTreeRegistrationListener (Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager$TreeRegistrationListener;)V
 	public static fun backup ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
+	public static fun cloneProfile (Ljava/lang/String;Ljava/lang/String;)V
 	public static fun collect (Ljava/lang/Object;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public static fun core ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
 	public static fun createProfile (Ljava/lang/String;)V
 	public fun delete (Ljava/lang/String;)Z
 	public static fun deleteProfile (Ljava/lang/String;)V
+	public static fun dispatchAndWait (Ljava/util/function/Consumer;Ljava/lang/Runnable;JLjava/lang/String;)V
+	public static fun exportProfile (Ljava/lang/String;Ljava/nio/file/Path;)V
 	public static fun favoriteProfiles ()Ljava/util/List;
 	public fun gatherAll (Ljava/lang/String;)Ljava/util/Collection;
 	public fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
@@ -87,27 +101,37 @@ public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public static fun internal ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
 	public static fun isFavoriteProfile (Ljava/lang/String;)Z
 	public static fun isFirstRun ()Z
+	public static fun isRebindingProfiles ()Z
 	public fun load (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public static fun openProfile (Ljava/lang/String;)V
 	public static fun profileDir (Ljava/lang/String;)Ljava/nio/file/Path;
 	public static fun profileIcon (Ljava/lang/String;)Ljava/lang/String;
 	public static fun profileIcons ()Ljava/util/Map;
+	public static fun profileSpecificControls ()Z
 	public static fun profiles ()Ljava/util/List;
 	public fun register (Ljava/lang/Object;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun register (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Lorg/polyfrost/oneconfig/api/config/v1/backend/Backend$RegistrationResult;
 	public static fun registerCollector (Lorg/polyfrost/oneconfig/api/config/v1/collect/PropertyCollector;)V
+	public static fun removeProfileChangeListener (Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager$ProfileChangeListener;)V
 	public static fun renameProfile (Ljava/lang/String;Ljava/lang/String;)V
 	public fun save (Ljava/lang/String;)Z
 	public fun save (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z
 	public fun saveAll ()V
 	public static fun setFavoriteProfile (Ljava/lang/String;Z)V
 	public static fun setProfileIcon (Ljava/lang/String;Ljava/lang/String;)V
+	public static fun setProfileSpecificControls (Z)V
 	public static fun submitForInitialization (Lorg/polyfrost/oneconfig/api/config/v1/Config;)V
 	public fun trees ()Ljava/util/Collection;
+	public fun unregister (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/config/v1/ConfigManager$ProfileChangeListener {
 	public abstract fun onProfileChanged (Ljava/lang/String;)V
+	public fun onProfileCreated (Ljava/lang/String;)V
+	public fun onProfileDeleted (Ljava/lang/String;)V
+	public fun onProfileRenamed (Ljava/lang/String;Ljava/lang/String;)V
+	public fun onProfileSaving (Ljava/lang/String;)V
+	public fun onProfileSpecificControlsChanged (Z)V
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/config/v1/ConfigManager$TreeRegistrationListener {

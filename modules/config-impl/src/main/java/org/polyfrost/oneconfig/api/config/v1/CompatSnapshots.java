@@ -44,12 +44,15 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     public static final CompatSnapshots INSTANCE = new CompatSnapshots();
 
     public static final String SNAPSHOT_METADATA = "oc_compat_snapshot";
+    public static final String CUSTOM_RESET_METADATA = "custom_reset";
     private static final String TAG = SNAPSHOT_METADATA;
 
     private final CompatSnapshotStore store = new CompatSnapshotStore();
     private final CompatSnapshotStore baselineStore = new CompatSnapshotStore("compat-baseline.json");
     private static final String BASELINE_BUCKET = "";
+    private static final long DISPATCH_TIMEOUT_SECONDS = 30L;
     private final Map<String, Tree> known = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, Object>> defaults = new ConcurrentHashMap<>();
     private final Map<Property<?>, Boolean> wired = Collections.synchronizedMap(new WeakHashMap<>());
     private final Set<Property<?>> applying = Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
     private volatile java.util.function.Consumer<Runnable> dispatcher = Runnable::run;
@@ -68,6 +71,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
 
     private Tree register0(Tree tree) {
         tree.addMetadata(Backend.UI_ONLY_METADATA, Boolean.TRUE);
+        dropStaleRegistration(tree.getID());
         Tree reg = ConfigManager.active().register(tree).get();
         reg.addMetadata(TAG, Boolean.TRUE);
         if (reg.getMetadata("custom_save") != null) {
@@ -76,6 +80,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         known.put(reg.getID(), reg);
         String profile = ConfigManager.activeProfile();
         if (currentProfile == null) currentProfile = profile;
+        captureDefaults(reg);
         wire(reg);
         dispatcher.accept(() -> {
             try {
@@ -87,20 +92,20 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         return reg;
     }
 
+    private void dropStaleRegistration(String id) {
+        if (id == null) return;
+        Tree existing = ConfigManager.active().get(id);
+        if (existing == null || !Boolean.TRUE.equals(existing.getMetadata(TAG))) return;
+        ConfigManager.active().unregister(id);
+        known.remove(id, existing);
+    }
+
     @Override
     public void onProfileChanged(String newProfile) {
         String old = currentProfile != null ? currentProfile : ConfigManager.activeProfile();
         currentProfile = newProfile;
+        if (newProfile.equals(old)) return;
         dispatcher.accept(() -> {
-            if (old != null && !old.equals(newProfile)) {
-                for (Tree tree : known.values()) {
-                    try {
-                        captureAll(tree, old);
-                    } catch (Throwable t) {
-                        ConfigManager.LOGGER.error("Failed to capture compat snapshot for '{}'", tree.getID(), t);
-                    }
-                }
-            }
             for (Tree tree : known.values()) {
                 try {
                     applyProfile(tree, newProfile);
@@ -109,6 +114,93 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
                 }
             }
         });
+    }
+
+    @Override
+    public void onProfileSaving(String profile) {
+        if (store.hasLoadFailure(profile)) {
+            ConfigManager.LOGGER.warn(
+                    "Continuing the profile operation without rewriting unreadable compat snapshot '{}'", profile
+            );
+            return;
+        }
+        if (!profile.equals(currentProfile)) {
+            flushForLifecycle(store, profile);
+            return;
+        }
+        dispatchAndWait(() -> {
+            for (Tree tree : known.values()) {
+                captureAll(tree, profile);
+            }
+        });
+        flushSnapshotThenBaseline(store, profile, baselineStore, BASELINE_BUCKET);
+    }
+
+    @Override
+    public void onProfileCreated(String profile) {
+        store.deleteProfile(profile);
+        currentProfile = profile;
+        dispatchAndWait(() -> {
+            for (Tree tree : known.values()) {
+                try {
+                    restoreDefaults(tree);
+                    captureAll(tree, profile);
+                } catch (Throwable t) {
+                    ConfigManager.LOGGER.error("Failed to initialize compat defaults for '{}'", tree.getID(), t);
+                }
+            }
+        });
+        flushSnapshotThenBaseline(store, profile, baselineStore, BASELINE_BUCKET);
+    }
+
+    @Override
+    public void onProfileRenamed(String oldProfile, String newProfile) {
+        if (oldProfile.equals(currentProfile)) currentProfile = newProfile;
+        try {
+            store.renameProfile(oldProfile, newProfile);
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException("Failed to move compat snapshot to profile '" + newProfile + "'", e);
+        }
+    }
+
+    @Override
+    public void onProfileDeleted(String profile) {
+        store.deleteProfile(profile);
+        if (profile.equals(currentProfile)) {
+            currentProfile = "";
+            dispatchAndWait(() -> {
+                for (Tree tree : known.values()) {
+                    applyProfile(tree, "");
+                }
+            });
+        }
+    }
+
+    private void dispatchAndWait(Runnable action) {
+        ConfigManager.dispatchAndWait(
+                dispatcher,
+                action,
+                java.util.concurrent.TimeUnit.SECONDS.toNanos(DISPATCH_TIMEOUT_SECONDS),
+                "the compat snapshot dispatcher"
+        );
+    }
+
+    private static void flushForLifecycle(CompatSnapshotStore snapshotStore, String profile) {
+        try {
+            snapshotStore.flushOrThrow(profile);
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException("Failed to save compat snapshot for profile '" + profile + "'", e);
+        }
+    }
+
+    static void flushSnapshotThenBaseline(
+            CompatSnapshotStore snapshotStore,
+            String profile,
+            CompatSnapshotStore baselineStore,
+            String baselineProfile
+    ) {
+        flushForLifecycle(snapshotStore, profile);
+        flushForLifecycle(baselineStore, baselineProfile);
     }
 
     private void applyProfile(Tree tree, String profile) {
@@ -141,7 +233,11 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
             try {
                 value = deserialize(stored);
             } catch (Throwable t) {
-                ConfigManager.LOGGER.warn("Failed to deserialize compat value for '{}'", key, t);
+                ConfigManager.LOGGER.warn("Failed to deserialize compat value for '{}', re-snapshotting from live value", key, t);
+                if (liveSer != null) {
+                    store.putValue(profile, treeId, key, liveSer);
+                    setBaseline(treeId, key, liveSer);
+                }
                 return;
             }
             Object live = p.get();
@@ -160,8 +256,11 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
                 applying.remove(p);
             }
         });
-        store.flush(profile);
-        baselineStore.flush(BASELINE_BUCKET);
+        // Persist the profile snapshot before its baseline. If the first write fails, keeping an
+        // older baseline is safe: the next load treats the live value as an external change and
+        // repairs the snapshot. The opposite order could make a stale snapshot look current and
+        // roll a setting back after a restart.
+        flushSnapshotThenBaseline(store, profile, baselineStore, BASELINE_BUCKET);
         if (changed[0]) runSave(tree);
     }
 
@@ -177,8 +276,50 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
                 setBaseline(treeId, key, serialized);
             }
         });
-        store.flush(profile);
-        baselineStore.flush(BASELINE_BUCKET);
+    }
+
+    private void captureDefaults(Tree tree) {
+        ensureKeys(tree);
+        Map<String, Object> snapshot = defaults.computeIfAbsent(tree.getID(), ignored -> new ConcurrentHashMap<>());
+        forEachProp(tree, property -> {
+            if (!isValueProp(property)) return;
+            Object defaultValue = property.getMetadata("default");
+            Object serialized = trySerialize(defaultValue != null ? defaultValue : property.get());
+            if (serialized != null) snapshot.putIfAbsent(keyOf(property), serialized);
+        });
+    }
+
+    private void restoreDefaults(Tree tree) {
+        if (runCustomReset(tree)) return;
+        Map<String, Object> snapshot = defaults.get(tree.getID());
+        if (snapshot == null) return;
+        boolean[] changed = {false};
+        forEachProp(tree, property -> {
+            Object stored = snapshot.get(keyOf(property));
+            if (stored == null) return;
+            Object value;
+            try {
+                value = deserialize(stored);
+            } catch (Throwable t) {
+                ConfigManager.LOGGER.warn("Failed to deserialize compat default for '{}'", keyOf(property), t);
+                return;
+            }
+            Object live = property.get();
+            if (live != null && value != null && live.getClass() != value.getClass()
+                    && !(live instanceof Number && value instanceof Number)) {
+                return;
+            }
+            applying.add(property);
+            try {
+                property.setAsReferential(value);
+                changed[0] = true;
+            } catch (Throwable t) {
+                ConfigManager.LOGGER.warn("Failed to apply compat default for '{}'", keyOf(property), t);
+            } finally {
+                applying.remove(property);
+            }
+        });
+        if (changed[0]) runSave(tree);
     }
 
     private void wire(Tree tree) {
@@ -203,6 +344,19 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         });
     }
 
+    private boolean runCustomReset(Tree tree) {
+        Object customReset = tree.getMetadata(CUSTOM_RESET_METADATA);
+        if (!(customReset instanceof Runnable)) return false;
+        try {
+            ((Runnable) customReset).run();
+        } catch (Throwable t) {
+            ConfigManager.LOGGER.warn("custom_reset failed for compat tree '{}'", tree.getID(), t);
+            return false;
+        }
+        runSave(tree);
+        return true;
+    }
+
     private void runSave(Tree tree) {
         Object customSave = tree.getMetadata("custom_save");
         if (customSave instanceof Runnable) {
@@ -219,7 +373,9 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     }
 
     private void setBaseline(String treeId, String key, Object serialized) {
-        baselineStore.putValue(BASELINE_BUCKET, treeId, key, serialized);
+        // Baselines are deliberately not scheduled independently. They are only made durable
+        // after the corresponding profile snapshot has been flushed successfully.
+        baselineStore.putValueWithoutScheduling(BASELINE_BUCKET, treeId, key, serialized);
     }
 
     @SuppressWarnings("unchecked")
@@ -251,27 +407,36 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
 
     private static Object trySerialize(Object value) {
         try {
-            return normalize(ObjectSerializer.INSTANCE.serialize(value, false, false));
+            Object serialized = ObjectSerializer.INSTANCE.serialize(value, true, true);
+            return isStorable(serialized) ? serialized : null;
         } catch (Throwable t) {
             return null;
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private static Object normalize(Object value) {
+    private static boolean isStorable(Object value) {
+        if (value == null || value instanceof CharSequence || value instanceof Number
+                || value instanceof Boolean || value instanceof Enum) return true;
         if (value instanceof List) {
-            List<Object> in = (List<Object>) value;
-            List<Object> out = new java.util.ArrayList<>(in.size());
-            for (Object o : in) out.add(normalize(o));
-            return out;
+            for (Object o : (List<?>) value) {
+                if (!isStorable(o)) return false;
+            }
+            return true;
         }
-        if (value != null && value.getClass().isArray()) {
+        if (value.getClass().isArray()) {
             int len = java.lang.reflect.Array.getLength(value);
-            List<Object> out = new java.util.ArrayList<>(len);
-            for (int i = 0; i < len; i++) out.add(normalize(java.lang.reflect.Array.get(value, i)));
-            return out;
+            for (int i = 0; i < len; i++) {
+                if (!isStorable(java.lang.reflect.Array.get(value, i))) return false;
+            }
+            return true;
         }
-        return value;
+        if (value instanceof Map) {
+            for (Map.Entry<?, ?> e : ((Map<?, ?>) value).entrySet()) {
+                if (!(e.getKey() instanceof String) || !isStorable(e.getValue())) return false;
+            }
+            return true;
+        }
+        return false;
     }
 
     @SuppressWarnings("unchecked")

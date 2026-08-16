@@ -34,10 +34,16 @@ public final class ModMenuApiCompat {
     private static void preloadFactories() {
         collectFactories().forEach((modId, factory) -> {
             if (CompatLoader.INSTANCE.getNativeLoadedConfigs().contains(modId) || hasRegisteredTree(modId)) return;
-            Screen screen = createScreen(modId, factory);
-            if (screen != null && !CompatLoader.INSTANCE.getNativeLoadedConfigs().contains(modId) && !hasRegisteredTree(modId)) {
-                registerFallbackTree(modId, factory, screen);
-            }
+            CompatLoader.INSTANCE.queueScreenWarmup(() -> {
+                if (CompatLoader.INSTANCE.getNativeLoadedConfigs().contains(modId) || hasRegisteredTree(modId)) {
+                    return Unit.INSTANCE;
+                }
+                Screen screen = createScreen(modId, factory);
+                if (screen != null && !CompatLoader.INSTANCE.getNativeLoadedConfigs().contains(modId) && !hasRegisteredTree(modId)) {
+                    registerFallbackTree(modId, factory, screen);
+                }
+                return Unit.INSTANCE;
+            });
         });
     }
 

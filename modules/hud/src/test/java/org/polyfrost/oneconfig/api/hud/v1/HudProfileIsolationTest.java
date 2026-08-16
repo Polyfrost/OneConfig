@@ -41,10 +41,14 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
+
+import org.polyfrost.oneconfig.api.config.v1.Tree;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HudProfileIsolationTest {
@@ -62,6 +66,7 @@ class HudProfileIsolationTest {
     void tearDown() throws Exception {
         ConfigManager.openProfile("");
         HudManager.INSTANCE.unregister(new ProfileTestHud(), true, false);
+        HudManager.INSTANCE.unregister(new LateRegisteredHud(), true, false);
         wipeHudState();
         deleteProfile();
     }
@@ -71,21 +76,52 @@ class HudProfileIsolationTest {
         HudManager.register(new ProfileTestHud());
         launch();
         assertEquals(1, instances());
-
-        ConfigManager.createProfile(PROFILE);
-        drain();
-        assertEquals(1, instances(), "the copied profile should have its own instance of the HUD");
-
         hud().setHidden(true);
         ConfigManager.active().saveAll();
 
+        ConfigManager.createProfile(PROFILE);
+        assertEquals(1, instances(), "the blank profile should have its own instance of the HUD");
+        assertFalse(hud().getHidden(), "a blank profile must start from the HUD defaults");
+
+        hud().setHidden(false);
+        ConfigManager.active().saveAll();
+
         ConfigManager.openProfile("");
-        drain();
-        assertFalse(hud().getHidden(), "hiding a HUD in one profile must not hide it in another");
+        assertTrue(hud().getHidden(), "the Default profile must keep its own HUD settings");
 
         ConfigManager.openProfile(PROFILE);
-        drain();
-        assertTrue(hud().getHidden(), "the HUD must come back hidden in the profile it was hidden in");
+        assertFalse(hud().getHidden(), "the blank profile must keep its own HUD settings");
+    }
+
+    @Test
+    void aHudWhoseStaticSizeIsNotKnownYetKeepsItsResetDefaultOpen() throws Exception {
+        UnsizedHud provider = new UnsizedHud();
+        HudManager.register(provider);
+        try {
+            launch();
+            Tree tree = HudManager.INSTANCE.getHudsOfType(UnsizedHud.class).get(0).getTree();
+            assertNull(tree.getProp("staticW").getMetadata("default"),
+                    "a zero staticW must not be recorded as the reset default");
+            assertNull(tree.getProp("staticH").getMetadata("default"),
+                    "a zero staticH must not be recorded as the reset default");
+        } finally {
+            HudManager.INSTANCE.unregister(provider, true, true);
+        }
+    }
+
+    @Test
+    void clonedProfileKeepsHudSettings() throws Exception {
+        HudManager.register(new ProfileTestHud());
+        launch();
+        hud().setHidden(true);
+        ConfigManager.active().saveAll();
+
+        ConfigManager.cloneProfile("", PROFILE);
+
+        assertEquals(1, instances());
+        assertTrue(hud().getHidden(), "a cloned profile must copy the source HUD settings");
+        assertEquals(Boolean.FALSE, hud().getTree().getProp("hidden").getMetadata("default"),
+                "Reset must still use the HUD's code default after cloning a changed profile");
     }
 
     @Test
@@ -94,13 +130,11 @@ class HudProfileIsolationTest {
         launch();
 
         ConfigManager.createProfile(PROFILE);
-        drain();
 
         HudManager.INSTANCE.removeHud(hud(), true);
         assertEquals(0, instances());
 
         ConfigManager.openProfile("");
-        drain();
         assertEquals(1, instances(), "deleting a HUD in one profile must not delete it in another");
     }
 
@@ -114,8 +148,131 @@ class HudProfileIsolationTest {
         assertFalse(ConfigManager.active().trees().stream().anyMatch(t -> t == old),
                 "the old profile's HUD tree must not be carried onto the new profile");
 
-        drain();
         assertFalse(hud().getTree() == old, "the reload must build the HUD from the new profile's own tree");
+    }
+
+    @Test
+    void failedDefaultHudIsRolledBackWithoutStoppingOtherProviders() throws Exception {
+        FailingSetupHud failing = new FailingSetupHud();
+        HealthySetupHud healthy = new HealthySetupHud();
+        HudManager.register(failing, healthy);
+        try {
+            launch();
+
+            assertTrue(HudManager.INSTANCE.getHudsOfType(FailingSetupHud.class).isEmpty());
+            assertFalse(failing.isReal(), "a failed single-instance provider must be usable again");
+            assertFalse(ConfigManager.active().trees().stream()
+                            .anyMatch(tree -> "huds/test-failing-setup".equals(tree.getID())),
+                    "a failed candidate must not remain tracked by the backend");
+            assertEquals(1, HudManager.INSTANCE.getHudsOfType(HealthySetupHud.class).size(),
+                    "one broken provider must not abort the rest of the HUD load");
+        } finally {
+            HudManager.INSTANCE.unregister(failing, true, false);
+            HudManager.INSTANCE.unregister(healthy, true, false);
+            ConfigManager.active().delete("huds/test-failing-setup");
+            ConfigManager.active().delete("huds/test-healthy-setup");
+        }
+    }
+
+    @Test
+    void linkageErrorInOneHudDoesNotAbortOtherProviders() throws Exception {
+        LinkageFailingSetupHud failing = new LinkageFailingSetupHud();
+        HealthySetupHud healthy = new HealthySetupHud();
+        HudManager.register(failing, healthy);
+        try {
+            launch();
+
+            assertTrue(HudManager.INSTANCE.getHudsOfType(LinkageFailingSetupHud.class).isEmpty());
+            assertFalse(failing.isReal());
+            assertEquals(1, HudManager.INSTANCE.getHudsOfType(HealthySetupHud.class).size(),
+                    "a missing optional HUD dependency must not stop healthy providers");
+        } finally {
+            HudManager.INSTANCE.unregister(failing, true, false);
+            HudManager.INSTANCE.unregister(healthy, true, false);
+            ConfigManager.active().delete("huds/test-linkage-failing-setup");
+            ConfigManager.active().delete("huds/test-healthy-setup");
+        }
+    }
+
+    @Test
+    void linkageErrorWhileCheckingADefaultHudDoesNotAbortOtherProviders() throws Exception {
+        EligibilityFailingHud failing = new EligibilityFailingHud();
+        HealthySetupHud healthy = new HealthySetupHud();
+        HudManager.register(failing, healthy);
+        try {
+            launch();
+
+            assertTrue(HudManager.INSTANCE.getHudsOfType(EligibilityFailingHud.class).isEmpty());
+            assertEquals(1, HudManager.INSTANCE.getHudsOfType(HealthySetupHud.class).size(),
+                    "a broken default-visibility check must not stop healthy providers");
+        } finally {
+            HudManager.INSTANCE.unregister(failing, true, false);
+            HudManager.INSTANCE.unregister(healthy, true, false);
+            ConfigManager.active().delete("huds/test-eligibility-failing");
+            ConfigManager.active().delete("huds/test-healthy-setup");
+        }
+    }
+
+    @Test
+    void providerRegisteredAfterInitializationIsLoadedWithoutAProfileSwitch() throws Exception {
+        LateRegisteredHud provider = new LateRegisteredHud();
+        launch();
+        assertTrue(HudManager.INSTANCE.getHudsOfType(LateRegisteredHud.class).isEmpty());
+
+        HudManager.register(provider);
+        try {
+            drainPendingProfileReload();
+            assertEquals(1, HudManager.INSTANCE.getHudsOfType(LateRegisteredHud.class).size(),
+                    "a provider registered by a later startup handler must be available immediately");
+        } finally {
+            HudManager.INSTANCE.unregister(provider, true, true);
+        }
+    }
+
+    @Test
+    void lateRegistrationDoesNotBreakAHudAlreadyLoadedFromDisk() throws Exception {
+        LateRegisteredHud initialProvider = new LateRegisteredHud();
+        HudManager.register(initialProvider);
+        launch();
+        assertEquals(1, HudManager.INSTANCE.getHudsOfType(LateRegisteredHud.class).size());
+        ConfigManager.active().saveAll();
+
+        // Simulate the next launch loading the persisted class before that mod reaches its own
+        // InitializationEvent handler. The backend is intentionally kept warm to catch tree merges.
+        HudManager.INSTANCE.unregister(initialProvider, true, false);
+        launch();
+        assertEquals(1, HudManager.INSTANCE.getHudsOfType(LateRegisteredHud.class).size());
+
+        LateRegisteredHud registeredProvider = new LateRegisteredHud();
+        HudManager.register(registeredProvider);
+        try {
+            drainPendingProfileReload();
+            assertEquals(1, HudManager.INSTANCE.getHudsOfType(LateRegisteredHud.class).size());
+            Hud loaded = HudManager.INSTANCE.getHudsOfType(LateRegisteredHud.class).get(0);
+            assertTrue(loaded.getTree().getProp("prefix") != null,
+                    "the same-backend reload must not clear the rebuilt HUD tree");
+        } finally {
+            HudManager.INSTANCE.unregister(registeredProvider, true, true);
+        }
+    }
+
+    @Test
+    void lateRegistrationDoesNotDiscardUnsavedHudChanges() throws Exception {
+        ProfileTestHud existingProvider = new ProfileTestHud();
+        LateRegisteredHud lateProvider = new LateRegisteredHud();
+        HudManager.register(existingProvider);
+        launch();
+        hud().setHidden(true);
+
+        HudManager.register(lateProvider);
+        try {
+            drainPendingProfileReload();
+            assertTrue(hud().getHidden(),
+                    "reloading for a late provider must first persist the live HUD state");
+            assertEquals(1, HudManager.INSTANCE.getHudsOfType(LateRegisteredHud.class).size());
+        } finally {
+            HudManager.INSTANCE.unregister(lateProvider, true, true);
+        }
     }
 
     private static Hud hud() {
@@ -124,12 +281,6 @@ class HudProfileIsolationTest {
 
     private static int instances() {
         return HudManager.INSTANCE.getHudsOfType(ProfileTestHud.class).size();
-    }
-
-    private static void drain() throws Exception {
-        Method m = HudManager.class.getDeclaredMethod("drainProfileReload");
-        m.setAccessible(true);
-        m.invoke(HudManager.INSTANCE);
     }
 
     private static void launch() throws Exception {
@@ -152,7 +303,7 @@ class HudProfileIsolationTest {
         knownProviders().clear();
         set("registryTree", null);
         set("init", false);
-        set("pendingProfileReload", null);
+        pendingProfileReload().set(null);
         Path folder = ConfigManager.active().getFolder();
         deleteRecursively(folder.resolve("huds"));
         Files.deleteIfExists(folder.resolve("hud-registry.json"));
@@ -185,8 +336,21 @@ class HudProfileIsolationTest {
         return (java.util.Set<String>) f.get(HudManager.INSTANCE);
     }
 
+    @SuppressWarnings("unchecked")
+    private static AtomicReference<String> pendingProfileReload() throws Exception {
+        Field f = HudManager.class.getDeclaredField("pendingProfileReload");
+        f.setAccessible(true);
+        return (AtomicReference<String>) f.get(HudManager.INSTANCE);
+    }
+
     private static void set(String name, Object value) throws Exception {
         set(HudManager.INSTANCE, name, value);
+    }
+
+    private static void drainPendingProfileReload() throws Exception {
+        Method method = HudManager.class.getDeclaredMethod("drainProfileReload");
+        method.setAccessible(true);
+        method.invoke(HudManager.INSTANCE);
     }
 
     private static void set(Object owner, String name, Object value) throws Exception {
@@ -227,6 +391,166 @@ class HudProfileIsolationTest {
         @Override
         public String getText() {
             return "test";
+        }
+    }
+
+    /** Stands in for a wrapped external HUD, whose size is not known when its tree is built. */
+    static class UnsizedHud extends TextHud {
+        UnsizedHud() {
+            super("test-unsized", "Test Unsized HUD", Hud.Category.getINFO(), "", "");
+        }
+
+        @Override
+        public float getStaticW() {
+            return 0f;
+        }
+
+        @Override
+        public void setStaticW(float value) {
+        }
+
+        @Override
+        public float getStaticH() {
+            return 0f;
+        }
+
+        @Override
+        public void setStaticH(float value) {
+        }
+
+        @Override
+        public boolean showByDefault() {
+            return true;
+        }
+
+        @Override
+        public boolean multipleInstancesAllowed() {
+            return false;
+        }
+
+        @Override
+        public String getText() {
+            return "test";
+        }
+    }
+
+    static class LateRegisteredHud extends TextHud {
+        LateRegisteredHud() {
+            super("test-late-registration", "Test Late Registration HUD", Hud.Category.getINFO(), "", "");
+        }
+
+        @Override
+        public Pair<Float, Float> defaultPosition() {
+            return new Pair<>(10f, 10f);
+        }
+
+        @Override
+        public boolean showByDefault() {
+            return true;
+        }
+
+        @Override
+        public boolean multipleInstancesAllowed() {
+            return false;
+        }
+
+        @Override
+        public String getText() {
+            return "late";
+        }
+    }
+
+    static class FailingSetupHud extends TextHud {
+        FailingSetupHud() {
+            super("test-failing-setup", "Failing Setup HUD", Hud.Category.getINFO(), "", "");
+        }
+
+        @Override
+        public boolean showByDefault() {
+            return true;
+        }
+
+        @Override
+        public boolean multipleInstancesAllowed() {
+            return false;
+        }
+
+        @Override
+        public void setup() {
+            throw new IllegalStateException("setup failed");
+        }
+
+        @Override
+        public String getText() {
+            return "fail";
+        }
+    }
+
+    static class HealthySetupHud extends TextHud {
+        HealthySetupHud() {
+            super("test-healthy-setup", "Healthy Setup HUD", Hud.Category.getINFO(), "", "");
+        }
+
+        @Override
+        public boolean showByDefault() {
+            return true;
+        }
+
+        @Override
+        public boolean multipleInstancesAllowed() {
+            return false;
+        }
+
+        @Override
+        public String getText() {
+            return "healthy";
+        }
+    }
+
+    static class LinkageFailingSetupHud extends TextHud {
+        LinkageFailingSetupHud() {
+            super("test-linkage-failing-setup", "Linkage Failing Setup HUD", Hud.Category.getINFO(), "", "");
+        }
+
+        @Override
+        public boolean showByDefault() {
+            return true;
+        }
+
+        @Override
+        public boolean multipleInstancesAllowed() {
+            return false;
+        }
+
+        @Override
+        public void setup() {
+            throw new NoClassDefFoundError("missing.optional.HudDependency");
+        }
+
+        @Override
+        public String getText() {
+            return "linkage-fail";
+        }
+    }
+
+    static class EligibilityFailingHud extends TextHud {
+        EligibilityFailingHud() {
+            super("test-eligibility-failing", "Eligibility Failing HUD", Hud.Category.getINFO(), "", "");
+        }
+
+        @Override
+        public boolean showByDefault() {
+            throw new NoClassDefFoundError("missing.optional.VisibilityDependency");
+        }
+
+        @Override
+        public boolean multipleInstancesAllowed() {
+            return false;
+        }
+
+        @Override
+        public String getText() {
+            return "eligibility-fail";
         }
     }
 }

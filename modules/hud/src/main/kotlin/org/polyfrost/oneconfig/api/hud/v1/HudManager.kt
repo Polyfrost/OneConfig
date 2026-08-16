@@ -43,6 +43,12 @@ import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.utils.v1.MHUtils
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Consumer
+
+@Suppress("DEPRECATION")
+private fun Throwable.isFatalHudFailure(): Boolean = this is VirtualMachineError || this is ThreadDeath
 
 object HudManager {
     internal val LOGGER = LogManager.getLogger("OneConfig/HUD")
@@ -55,6 +61,19 @@ object HudManager {
         private set
 
     private var init = false
+    private const val UI_THREAD_TIMEOUT_SECONDS = 30L
+    @Volatile private var profileReloadDispatcher = Consumer<Runnable> { it.run() }
+    private data class ProfileReload(
+        val profile: String,
+        val saveCurrent: Boolean,
+    )
+    private val pendingProfileReload = AtomicReference<ProfileReload?>(null)
+    private val profileChangeListener = object : ConfigManager.ProfileChangeListener {
+        override fun onProfileChanged(newProfile: String) {
+            pendingProfileReload.set(ProfileReload(newProfile, saveCurrent = false))
+            applyPendingProfileReload()
+        }
+    }
     private val hiddenHudPaint by lazy { org.jetbrains.skia.Paint().apply { setAlphaf(0.35f) } }
 
     /**
@@ -226,6 +245,18 @@ object HudManager {
     fun register(hud: Hud) {
         hudProviders[hud::class.java] = hud
         revision++
+        // Providers are commonly registered by later InitializationEvent handlers, after the
+        // manager has already performed its first load. Coalesce those registrations into one
+        // render-thread reload so default and persisted HUD instances appear on the first launch.
+        if (init && activeInstances.none { it::class.java == hud::class.java }) {
+            pendingProfileReload.compareAndSet(
+                null,
+                ProfileReload(
+                    ConfigManager.activeProfile(),
+                    saveCurrent = true,
+                ),
+            )
+        }
         if (hud.updateFrequency() == 0L) LOGGER.warn("update of HUD ${hud.title} is 0, this is not recommended!")
         notifyRegistrationChanged()
     }
@@ -275,7 +306,7 @@ object HudManager {
             val it = iter.next()
             if (it::class.java == hud::class.java) {
                 iter.remove()
-                disposeHud(it, delete)
+                disposeHudLogging(it, delete)
                 @Suppress("UNCHECKED_CAST")
                 out.add(it as T)
             }
@@ -314,36 +345,59 @@ object HudManager {
     fun removeHud(hud: Hud, delete: Boolean = false) {
         require(hud.isReal) { "Tried to remove a non-real HUD - use unregister() instead." }
         activeInstances.remove(hud)
-        disposeHud(hud, delete)
+        disposeHudLogging(hud, delete)
+    }
+
+    private fun disposeHudLogging(hud: Hud, delete: Boolean) {
+        try {
+            disposeHud(hud, delete)
+        } catch (failure: Throwable) {
+            if (failure.isFatalHudFailure()) throw failure
+            LOGGER.error("Failed to dispose HUD ${hud.title}", failure)
+        }
     }
 
     private fun disposeHud(hud: Hud, delete: Boolean) {
-        hud._runtime?.dispose()
+        val treeId = hud.tree?.id
+        var failure: Throwable? = null
+        fun cleanup(action: () -> Unit) {
+            try {
+                action()
+            } catch (next: Throwable) {
+                val first = failure
+                if (first == null) failure = next else first.addSuppressed(next)
+            }
+        }
+
+        // A user DisposableEffect is allowed to run while the composition is disposed. Even if it
+        // fails, finish detaching the HUD so a profile switch cannot leave instances from two
+        // profiles active at the same time.
+        cleanup { hud._runtime?.dispose() }
         hud._runtime = null
         lastUpdates.remove(hud)
         // anything hanging off this HUD goes back to screen positioning and stays where it is
         // because the relative position kept alongside the anchor is already up to date
-        hud.tree?.id?.let { gone ->
+        treeId?.let { gone ->
             for (it in activeInstances) {
-                if (it.anchorTargetId == gone) it.clearAnchor()
+                if (it.anchorTargetId == gone) cleanup { it.clearAnchor() }
             }
         }
         for (it in activeInstances) {
-            if (it.mergeLinkX?.parent === hud || it.mergeLinkY?.parent === hud) it.clearMergeLink()
+            if (it.mergeLinkX?.parent === hud || it.mergeLinkY?.parent === hud) cleanup { it.clearMergeLink() }
         }
         lastMergeKey = null
-        invalidate()
+        cleanup { invalidate() }
         try { hud.remove() } catch (_: Throwable) {}
-        val treeId = hud.tree?.id
         // a HUD the user cannot delete must never lose its config because an errant
         // unregister(delete = true) would wipe it from disk with no way to restore it
         if (delete && !hud.deletable()) {
             LOGGER.warn("refusing to delete the config of ${hud.title}, which is marked as not user-deletable")
         } else if (delete && treeId != null) {
-            ConfigManager.active().delete(treeId)
+            cleanup { ConfigManager.active().delete(treeId) }
         }
         // back to being a plain provider so a single-instance HUD can be made again later
-        hud.detachTree()
+        cleanup { hud.detachTree() }
+        failure?.let { throw it }
     }
 
     private fun screenBounds(hud: Hud): FloatArray? {
@@ -778,15 +832,19 @@ object HudManager {
     @ApiStatus.Internal
     fun initialize() {
         if (init) throw IllegalStateException("HudManager.initialize() called twice!")
+        ConfigManager.active()
         init = true
-        ConfigManager.addProfileChangeListener { profile -> pendingProfileReload = profile }
+        ConfigManager.addProfileChangeListener(profileChangeListener)
         LOGGER.info("Initializing HUD...")
         loadFromActiveProfile()
     }
 
-    @Volatile private var pendingProfileReload: String? = null
+    @ApiStatus.Internal
+    fun setProfileReloadDispatcher(dispatcher: Consumer<Runnable>) {
+        profileReloadDispatcher = dispatcher
+    }
 
-    private fun reloadForProfile(profile: String) {
+    private fun teardownForProfile(profile: String) {
         val kept = ArrayList<Hud>(activeInstances.size)
         for (hud in ArrayList(activeInstances)) {
             if (!hud.profileLocalTree) {
@@ -794,27 +852,69 @@ object HudManager {
                 continue
             }
             activeInstances.remove(hud)
-            disposeHud(hud, delete = false)
+            try {
+                disposeHud(hud, delete = false)
+            } catch (failure: Throwable) {
+                if (failure.isFatalHudFailure()) throw failure
+                LOGGER.error("Failed to dispose HUD ${hud.title} while switching profiles", failure)
+            }
         }
         knownProviders.clear()
         registryTree = null
         zOrderCache = emptyList()
+        preparedFrameValid = false
         lastMergeKey = null
         frameOrder.clear()
+        layoutOrder.clear()
+        frameGroups = emptyList()
+        setMergeExclusions(emptyList())
+        pendingSelection = null
+        pendingAdd = null
         LOGGER.info("Reloading HUDs for profile '{}' ({} wrapped HUDs kept)", profile, kept.size)
-        loadFromActiveProfile()
-        revision++
-        invalidate()
+    }
+
+    private fun restoreProviderDefaults() {
+        for (provider in hudProviders.values) {
+            if (!provider.profileLocalTree) continue
+            try {
+                provider.restoreCapturedDefaults()
+            } catch (failure: Throwable) {
+                if (failure.isFatalHudFailure()) throw failure
+                LOGGER.error("Failed to restore defaults for HUD ${provider.title}", failure)
+            }
+        }
     }
 
     private fun drainProfileReload() {
-        val profile = pendingProfileReload ?: return
-        pendingProfileReload = null
+        val reload = pendingProfileReload.getAndSet(null) ?: return
         try {
-            reloadForProfile(profile)
+            synchronized(ConfigManager::class.java) {
+                if (reload.saveCurrent && ConfigManager.activeProfile() == reload.profile) {
+                    ConfigManager.active().saveAll()
+                }
+            }
+            teardownForProfile(reload.profile)
+            synchronized(ConfigManager::class.java) {
+                restoreProviderDefaults()
+                loadFromActiveProfile()
+            }
+            revision++
+            invalidate()
         } catch (e: Throwable) {
-            LOGGER.error("Failed to reload HUDs for profile '{}'", profile, e)
+            if (e.isFatalHudFailure()) throw e
+            LOGGER.error("Failed to reload HUDs for profile '{}'", reload.profile, e)
         }
+    }
+
+    /** Applies a queued profile change on the UI thread and waits for it to finish. */
+    private fun applyPendingProfileReload() {
+        if (pendingProfileReload.get() == null) return
+        ConfigManager.dispatchAndWait(
+            profileReloadDispatcher,
+            ::drainProfileReload,
+            TimeUnit.SECONDS.toNanos(UI_THREAD_TIMEOUT_SECONDS),
+            "the HUD profile reload",
+        )
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -822,20 +922,47 @@ object HudManager {
         val now = System.nanoTime()
         val loader = HudManager::class.java.classLoader
         val used = HashSet<Class<Hud>>(hudProviders.size)
+        val failedProviders = HashSet<Class<Hud>>()
         val failed = HashMap<String, Int>(8)
         var i = 0
+
+        fun rollback(candidate: Hud?) {
+            if (candidate == null) return
+            val treeId = candidate.tree?.id
+            if (treeId != null) {
+                try {
+                    ConfigManager.active().unregister(treeId)
+                } catch (failure: Throwable) {
+                    LOGGER.error("Failed to untrack broken HUD tree $treeId", failure)
+                }
+            }
+            activeInstances.remove(candidate)
+            try {
+                disposeHud(candidate, delete = false)
+            } catch (failure: Throwable) {
+                candidate.detachTree()
+                LOGGER.error("Failed to dispose broken HUD ${candidate.title}", failure)
+            }
+        }
 
         loadRegistry()
 
         ConfigManager.active().gatherAll("huds").forEach { data ->
+            var candidate: Hud? = null
+            var providerClass: Class<Hud>? = null
             try {
                 val clsName = data.getProp("hudClass").get() as? String
                     ?: throw IllegalArgumentException("hud tree ${data.id} is missing class name")
                 if (clsName.endsWith(".OneConfigHudCompat")) return@forEach
                 val cls = Class.forName(clsName, true, loader) as? Class<Hud>
                     ?: throw IllegalArgumentException("$clsName is not a subclass of Hud")
+                providerClass = cls
                 val h = hudProviders[cls] ?: MHUtils.instantiate(cls, true).getOrThrow()
+                // A previous HUD instance may still own this ID when the same backend is reloaded.
+                // Drop only the in-memory binding; make() will load the unchanged file into the new HUD.
+                ConfigManager.active().unregister(data.id)
                 val hud = h.make(data)
+                candidate = hud
                 val sec = data.getProp("section")?.getAs<Section?>()
                 if (sec != null) {
                     hud.section = sec
@@ -847,17 +974,20 @@ object HudManager {
                     hud.setAbsolutePosition(absX, absY)
                 }
                 activeInstances.add(hud)
-                // mark only once the instance exists because doing so on a failed load would
-                // suppress the default instance and permanently delete the HUD after a transient error
-                used.add(cls)
                 hud.setup()
                 hud.captureStaticSizeDefaults()
                 hud.capturePositionDefaults()
+                used.add(cls)
                 i++
             } catch (e: ClassNotFoundException) {
+                rollback(candidate)
+                providerClass?.let(failedProviders::add)
                 val cls = e.message?.substringAfter(':')?.trim() ?: "unknown"
                 failed[cls] = failed.getOrDefault(cls, 0) + 1
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
+                rollback(candidate)
+                providerClass?.let(failedProviders::add)
+                if (e.isFatalHudFailure()) throw e
                 LOGGER.error("Failed to load HUD from ${data.id}", e)
             }
         }
@@ -871,30 +1001,38 @@ object HudManager {
         for (cls in used) registryChanged = knownProviders.add(cls.name) or registryChanged
 
         hudProviders.forEach { (cls, h) ->
-            if (cls in used) return@forEach
-            if (h.isReal) return@forEach
-            val known = cls.name in knownProviders
-            // a HUD the user cannot delete has no legitimate deleted state so a missing instance
-            // means its config was lost and it must be restored rather than left stranded
-            val restore = if (h.deletable()) {
-                // the user deleted every instance of this HUD so do not resurrect it
-                h.showByDefault() && !known
-            } else {
-                h.showByDefault() || known
+            var candidate: Hud? = null
+            try {
+                if (cls in used || cls in failedProviders) return@forEach
+                if (h.isReal) return@forEach
+                val known = cls.name in knownProviders
+                val deletable = h.deletable()
+                // A HUD the user cannot delete has no legitimate "deleted" state, so a missing
+                // instance always means its config was lost. Restore it instead of stranding it.
+                val restore = if (deletable) {
+                    h.showByDefault() && !known
+                } else {
+                    h.showByDefault() || known
+                }
+                if (!restore) return@forEach
+                if (known && !deletable) {
+                    LOGGER.warn("HUD ${h.title} cannot be deleted but had no instance; restoring it")
+                }
+                val (dx, dy) = h.defaultPosition()
+                val hud = h.make()
+                candidate = hud
+                hud.setAbsolutePosition(dx, dy)
+                activeInstances.add(hud)
+                hud.setup()
+                hud.captureStaticSizeDefaults()
+                hud.capturePositionDefaults()
+                registryChanged = knownProviders.add(cls.name) or registryChanged
+                LOGGER.info("Added HUD ${hud.title} at default position ($dx, $dy)")
+            } catch (e: Throwable) {
+                rollback(candidate)
+                if (e.isFatalHudFailure()) throw e
+                LOGGER.error("Failed to add default HUD ${h.title}", e)
             }
-            if (!restore) return@forEach
-            if (known && !h.deletable()) {
-                LOGGER.warn("HUD ${h.title} cannot be deleted but had no instance; restoring it")
-            }
-            val (dx, dy) = h.defaultPosition()
-            registryChanged = knownProviders.add(cls.name) or registryChanged
-            val hud = h.make()
-            hud.setAbsolutePosition(dx, dy)
-            activeInstances.add(hud)
-            hud.setup()
-            hud.captureStaticSizeDefaults()
-            hud.capturePositionDefaults()
-            LOGGER.info("Added HUD ${hud.title} at default position ($dx, $dy)")
         }
 
         if (registryChanged) saveRegistry()

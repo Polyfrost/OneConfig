@@ -34,12 +34,17 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
 import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
 import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
 
+import java.lang.reflect.Array;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -144,6 +149,19 @@ public abstract class Config {
         captureDefaults(tree, null, null);
     }
 
+    @ApiStatus.Internal
+    public static void restoreCapturedDefaults(Tree tree) {
+        for (Node node : tree.map.values()) {
+            if (node instanceof Property) {
+                Property<?> property = (Property<?>) node;
+                Object value = property.getMetadata("default");
+                if (value != null) property.setAsReferential(copyDefault(property.type, value));
+            } else if (node instanceof Tree) {
+                restoreCapturedDefaults((Tree) node);
+            }
+        }
+    }
+
     private static void captureDefaults(Tree tree, String prefix, Map<String, Object> out) {
         for (Map.Entry<String, Node> entry : tree.map.entrySet()) {
             Node node = entry.getValue();
@@ -173,9 +191,12 @@ public abstract class Config {
         }
     }
 
+    @ApiStatus.Internal
     @SuppressWarnings("unchecked")
-    private static Object copyDefault(Class<?> type, Object value) {
+    public static Object copyDefault(Class<?> type, Object value) {
         if (WrappingUtils.isSimpleClass(type)) return value;
+        Object container = copyContainer(value);
+        if (container != null) return container;
         try {
             Object serialized = ObjectSerializer.INSTANCE.serialize(value, false, false);
             if (serialized instanceof Map) {
@@ -188,8 +209,79 @@ public abstract class Config {
         return value;
     }
 
+    @SuppressWarnings("unchecked")
+    private static @Nullable Object copyContainer(@Nullable Object value) {
+        if (value == null) return null;
+        Class<?> cls = value.getClass();
+        try {
+            if (cls.isArray()) {
+                Class<?> component = cls.getComponentType();
+                Object copy = shallowCopy(value, cls);
+                if (copy == null || component.isPrimitive()) return copy;
+                for (int i = 0, length = Array.getLength(copy); i < length; i++) {
+                    Object entry = Array.get(copy, i);
+                    Object copied = copyEntry(entry);
+                    if (copied == entry) continue;
+                    try {
+                        Array.set(copy, i, copied);
+                    } catch (IllegalArgumentException mismatch) {
+                        ConfigManager.LOGGER.warn("failed to copy default array entry of type {}", component, mismatch);
+                    }
+                }
+                return copy;
+            }
+            if (value instanceof Collection) {
+                Collection<Object> in = (Collection<Object>) value;
+                Collection<Object> out = value instanceof Set ? new LinkedHashSet<>() : new ArrayList<>(in.size());
+                for (Object entry : in) out.add(copyEntry(entry));
+                return out;
+            }
+            if (value instanceof Map) {
+                LinkedHashMap<Object, Object> out = new LinkedHashMap<>();
+                for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) value).entrySet()) {
+                    out.put(entry.getKey(), copyEntry(entry.getValue()));
+                }
+                return out;
+            }
+        } catch (Throwable t) {
+            ConfigManager.LOGGER.warn("failed to copy default container of type {}", cls, t);
+            return shallowCopy(value, cls);
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static @Nullable Object shallowCopy(Object value, Class<?> cls) {
+        try {
+            if (cls.isArray()) {
+                int length = Array.getLength(value);
+                Object copy = Array.newInstance(cls.getComponentType(), length);
+                //noinspection SuspiciousSystemArraycopy
+                System.arraycopy(value, 0, copy, 0, length);
+                return copy;
+            }
+            if (value instanceof Set) return new LinkedHashSet<>((Set<Object>) value);
+            if (value instanceof Collection) return new ArrayList<>((Collection<Object>) value);
+            if (value instanceof Map) return new LinkedHashMap<>((Map<Object, Object>) value);
+        } catch (Throwable t) {
+            ConfigManager.LOGGER.warn("failed to copy default container of type {}", cls, t);
+        }
+        return null;
+    }
+
+    private static @Nullable Object copyEntry(@Nullable Object entry) {
+        if (entry == null) return null;
+        try {
+            return copyDefault(entry.getClass(), entry);
+        } catch (Throwable t) {
+            ConfigManager.LOGGER.warn("failed to copy default entry of type {}", entry.getClass(), t);
+            return entry;
+        }
+    }
+
     @ApiStatus.Internal
-    void rebindToActiveProfile() {
+    void rebindToActiveProfile(boolean restoreDefaults) {
+        if (restoreDefaults) restoreDefaults();
         tree = null;
         initialize(true);
     }

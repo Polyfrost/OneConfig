@@ -58,6 +58,9 @@ object Tr7zwConfigCompat {
         findMethod(screen.javaClass, "save")?.let { saveMethod ->
             tree.saveFunction = Runnable { runCatching { saveMethod.invoke(screen) } }
         }
+        findMethod(screen.javaClass, "reset")?.let { resetMethod ->
+            tree.addMetadata(CompatSnapshots.CUSTOM_RESET_METADATA, Runnable { resetMethod.invoke(screen) })
+        }
 
         var category = DEFAULT_CATEGORY
         var categoryPath = idPart(DEFAULT_CATEGORY, "general")

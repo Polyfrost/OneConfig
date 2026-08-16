@@ -27,9 +27,11 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.runtime.PolyComposeRuntime
 import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.localizedValue
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -37,6 +39,10 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 private const val MAX_PREVIEW_SCALE = 2f
 
 private const val MEASURE_BOUNDS = 2000f
+private val LOGGER = LogManager.getLogger("OneConfig/HUD-Preview")
+
+@Suppress("DEPRECATION")
+private fun Throwable.isFatalPreviewFailure(): Boolean = this is VirtualMachineError || this is ThreadDeath
 
 internal class HudPreviewState(val runtime: PolyComposeRuntime) {
     var naturalWidth by mutableStateOf(0f)
@@ -49,12 +55,20 @@ internal class HudPreviewState(val runtime: PolyComposeRuntime) {
 
 @Composable
 internal fun rememberHudPreview(hud: Hud): HudPreviewState {
-    val state = remember(hud) {
+    val revision = HudManager.revision
+    val state = remember(hud, revision) {
         hud.update()
         HudPreviewState(PolyComposeRuntime().also { rt -> rt.setContent { hud.Content() } })
     }
     DisposableEffect(state) {
-        onDispose { state.runtime.dispose() }
+        onDispose {
+            try {
+                state.runtime.dispose()
+            } catch (failure: Throwable) {
+                if (failure.isFatalPreviewFailure()) throw failure
+                LOGGER.warn("Failed to dispose HUD preview", failure)
+            }
+        }
     }
     LaunchedEffect(state) {
         hud.update()

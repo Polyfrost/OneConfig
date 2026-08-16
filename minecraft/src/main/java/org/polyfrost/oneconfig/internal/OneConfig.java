@@ -46,6 +46,7 @@ import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading;
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
+import org.polyfrost.oneconfig.api.event.v1.events.ShutdownEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.WorldEvent;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent;
@@ -68,6 +69,7 @@ import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen;
 import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudRenderer;
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry;
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProvider;
+import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProfiles;
 import org.polyfrost.oneconfig.internal.ui.keybind.RightShiftConflicts;
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus;
 import org.polyfrost.oneconfig.test.TestMod_Test;
@@ -213,7 +215,15 @@ public class OneConfig
     }
 
     private static void registerEventHandlers() {
-        EventManager.register(InitializationEvent.class, e -> HudManager.INSTANCE.initialize());
+        EventManager.register(ShutdownEvent.class, e -> MinecraftKeybindProfiles.shutdown());
+        EventManager.register(InitializationEvent.class, e -> {
+            HudManager.INSTANCE.setProfileReloadDispatcher(r -> {
+                Minecraft mc = Minecraft.getInstance();
+                if (mc != null && !mc.isSameThread()) mc.execute(r);
+                else r.run();
+            });
+            HudManager.INSTANCE.initialize();
+        });
         EventManager.register(
                 HudEditorToggleEvent.class, e -> {
                     if (e.open) {
@@ -240,10 +250,10 @@ public class OneConfig
                     RightShiftConflicts.unbindMinecraftKeybinds();
                     org.polyfrost.oneconfig.api.config.v1.CompatSnapshots.setDispatcher(r -> {
                         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-                        if (mc != null) mc.execute(r);
+                        if (mc != null && !mc.isSameThread()) mc.execute(r);
                         else r.run();
                     });
-                    org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProfiles.init();
+                    MinecraftKeybindProfiles.init();
                     ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
                     org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar.register();
                     org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat.register();

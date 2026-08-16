@@ -84,6 +84,7 @@ class TestItemHud_Test : Hud("test-item-hud", "Item List Hud", Category.INFO) {
         (padLeft + padRight + 8f) to (padTop + padBottom + 8f)
 
     override fun clone(): Hud = (super.clone() as TestItemHud_Test).also {
+        it.items = this.items.toMutableList()
         it.displayItems = mutableStateOf(emptyList())
     }
 }

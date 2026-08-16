@@ -4,8 +4,10 @@ package org.polyfrost.oneconfig.internal.compat
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.gui.screens.Screen
+import org.polyfrost.oneconfig.utils.v1.WrappingUtils
 import java.lang.reflect.Field
 import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 
 /**
  * reflective access to wWaypoints which is closed-source and not a compile-time dependency so every class
@@ -73,6 +75,18 @@ internal object WWaypointsBridge {
         val cfg = config() ?: return
         runCatching { configField(name)?.set(cfg, value) }
             .onFailure { LOGGER.warn("Failed to write wWaypoints config field '{}'", name, it) }
+    }
+
+    private val pristineConfig: Any? by lazy {
+        runCatching { cls(CONFIG)!!.getDeclaredConstructor().apply { isAccessible = true }.newInstance() }
+            .onFailure { LOGGER.warn("Could not construct a pristine wWaypoints config", it) }
+            .getOrNull()
+    }
+
+    fun configDefault(name: String): Any? {
+        val field = configField(name) ?: return null
+        if (!WrappingUtils.isSimpleClass(field.type) || Modifier.isStatic(field.modifiers)) return null
+        return runCatching { field.get(pristineConfig) }.getOrNull()
     }
 
     fun bool(name: String, fallback: Boolean = false): Boolean = get<Boolean>(name) ?: fallback

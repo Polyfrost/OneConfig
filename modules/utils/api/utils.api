@@ -162,6 +162,7 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/ScreenPl
 	public abstract fun guiWidth ()I
 	public fun mcToScreenScale ()F
 	public fun pixelRatio ()F
+	public fun runOnUiThread (Ljava/lang/Runnable;)V
 	public fun screenToMcScale ()F
 	public fun showMessage (Ljava/lang/String;)V
 	public fun surfaceRatio ()F

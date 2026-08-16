@@ -39,6 +39,13 @@ import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 
 public class ScreenPlatformImpl implements ScreenPlatform {
     @Override
+    public void runOnUiThread(Runnable action) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft == null || minecraft.isSameThread()) action.run();
+        else minecraft.execute(action);
+    }
+
+    @Override
     public int viewportWidth() {
         return Minecraft.getInstance().getWindow().getWidth();
     }

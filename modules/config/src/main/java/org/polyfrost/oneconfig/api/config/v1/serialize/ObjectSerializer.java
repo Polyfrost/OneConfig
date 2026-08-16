@@ -71,7 +71,8 @@ public class ObjectSerializer {
         if (in == null) return true;
         Class<?> cls = in.getClass();
         // these classes are never serializable
-        return !Runnable.class.isAssignableFrom(cls) &&
+        return !cls.isSynthetic() &&
+                !Runnable.class.isAssignableFrom(cls) &&
                 !Thread.class.isAssignableFrom(cls) &&
                 !ClassLoader.class.isAssignableFrom(cls) &&
                 !cls.getName().startsWith("java.util.function");
@@ -171,9 +172,10 @@ public class ObjectSerializer {
             return in;
         }
 
-        if (cls.isEnum()) {
+        // instanceof rather than cls.isEnum() so constants with a class body are still packed
+        if (in instanceof Enum) {
             Map<String, Object> enumMap = new HashMap<>(2, 1f);
-            enumMap.put("class", cls.getName());
+            enumMap.put("class", ((Enum<?>) in).getDeclaringClass().getName());
             enumMap.put("value", ((Enum<?>) in).name());
             return enumMap;
         }
@@ -280,14 +282,14 @@ public class ObjectSerializer {
         }
         if (useLists) {
             List<Object> out = new ArrayList<>(c.size());
-            out.add(first);
+            out.add(serialize(first, true, boxArrays));
             while (iter.hasNext()) {
                 out.add(serialize(iter.next(), true, boxArrays));
             }
             return out;
         } else {
             Object[] out = new Object[c.size()];
-            out[0] = first;
+            out[0] = serialize(first, false, boxArrays);
             int i = 1;
             while (iter.hasNext()) {
                 out[i] = serialize(iter.next(), false, boxArrays);
@@ -364,8 +366,9 @@ public class ObjectSerializer {
         if (cls.isArray()) {
             throw new SerializationException("Failed to deserialize object: Cannot deserialize into an array type " + cls.getName());
         }
-        if (cls.isEnum()) {
-            return Enum.valueOf((Class) cls, (String) in.get("value"));
+        if (Enum.class.isAssignableFrom(cls)) {
+            Class<?> declaring = cls.isEnum() ? cls : cls.getSuperclass();
+            return Enum.valueOf((Class) declaring, (String) in.get("value"));
         }
         Object o = MHUtils.instantiate(cls, true).getOrNull();
         if (o == null) {

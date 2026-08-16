@@ -72,4 +72,13 @@ public class SharedColorDefaultTest {
     void namedColoursHandOutTheirOwnInstance() {
         assertNotSame(PolyColor.Companion.getWHITE(), PolyColor.Companion.getWHITE());
     }
+
+    @Test
+    void copyDefaultCopiesComplexValuesAndPassesSimpleOnesThrough() {
+        PolyColor colour = PolyColor.Companion.getWHITE();
+        assertNotSame(colour, Config.copyDefault(PolyColor.class, colour));
+
+        String simple = "text";
+        assertSame(simple, Config.copyDefault(String.class, simple));
+    }
 }

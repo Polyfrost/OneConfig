@@ -653,13 +653,14 @@ abstract class ComposeScreen : Screen(CommonComponents.EMPTY) {
     private fun glfwKeyLocation(glfwKey: Int): Int = when (glfwKey) {
         GLFW.GLFW_KEY_RIGHT_SHIFT, GLFW.GLFW_KEY_RIGHT_CONTROL, GLFW.GLFW_KEY_RIGHT_ALT, GLFW.GLFW_KEY_RIGHT_SUPER -> KeyEvent.KEY_LOCATION_RIGHT
         GLFW.GLFW_KEY_LEFT_SHIFT, GLFW.GLFW_KEY_LEFT_CONTROL, GLFW.GLFW_KEY_LEFT_ALT, GLFW.GLFW_KEY_LEFT_SUPER -> KeyEvent.KEY_LOCATION_LEFT
+        GLFW.GLFW_KEY_KP_ENTER -> KeyEvent.KEY_LOCATION_NUMPAD
         else -> KeyEvent.KEY_LOCATION_STANDARD
     }
 
     private fun glfwToAwtKeyCode(glfwKey: Int): Int = when (glfwKey) {
         GLFW.GLFW_KEY_BACKSPACE -> KeyEvent.VK_BACK_SPACE
         GLFW.GLFW_KEY_TAB -> KeyEvent.VK_TAB
-        GLFW.GLFW_KEY_ENTER -> KeyEvent.VK_ENTER
+        GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> KeyEvent.VK_ENTER
         GLFW.GLFW_KEY_ESCAPE -> KeyEvent.VK_ESCAPE
         GLFW.GLFW_KEY_DELETE -> KeyEvent.VK_DELETE
         GLFW.GLFW_KEY_RIGHT -> KeyEvent.VK_RIGHT

@@ -283,6 +283,15 @@ public abstract class Backend {
         }
     }
 
+    /**
+     * Stops tracking a tree without deleting its stored data.
+     */
+    @ApiStatus.Internal
+    public final @Nullable Tree unregister(String id) {
+        if (id == null) throw new NullPointerException("id cannot be null");
+        return trees.remove(id);
+    }
+
     public boolean exists(String id) {
         if (id == null) return false;
         return trees.containsKey(id);

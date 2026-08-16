@@ -177,14 +177,6 @@ val firmamentRelocatedConfiguration: Configuration by configurations.creating {
     attributes { attribute(firmamentRelocated, true) }
 }
 
-val dandelionBpRelocated = registerRelocationAttribute("relocate-dandelion-bp-moulconfig") {
-    relocate("io.github.notenoughupdates.moulconfig", "net.azureaaron.dandelion_bp.deps.moulconfig")
-}
-
-val dandelionBpRelocatedConfiguration: Configuration by configurations.creating {
-    attributes { attribute(dandelionBpRelocated, true) }
-}
-
 dependencies {
     listOf("compat", "common-compat").forEach {
         versionedCatalog.bundles.getOrNull(it)?.let { bundle ->
@@ -202,7 +194,7 @@ dependencies {
         }
     }
 
-    moulConfig(skyhanniRelocatedConfiguration, firmamentRelocatedConfiguration, dandelionBpRelocatedConfiguration)
+    moulConfig(skyhanniRelocatedConfiguration, firmamentRelocatedConfiguration)
 
     "api"(versionedCatalog["jetbrains.compose.foundation"])
     "api"(versionedCatalog["jetbrains.compose.material"])

@@ -2,14 +2,21 @@ package org.polyfrost.oneconfig.internal.compat
 
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.Event
+import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent
 import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
+import org.polyfrost.oneconfig.internal.ui.compose.opengl.resyncTextureBindCache
 import java.net.URI
 import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.atomic.AtomicBoolean
 
 object CompatLoader {
+    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/Compat")
+
     private val forcedModId = ThreadLocal<String?>()
 
     private var bypassDelay = false
@@ -119,6 +126,21 @@ object CompatLoader {
                 screen?.let { Platform.screen().display(it) }
             }
         }
+    }
+
+    private val screenWarmups = ConcurrentLinkedDeque<() -> Unit>()
+    private val screenWarmupScheduled = AtomicBoolean(false)
+
+    fun queueScreenWarmup(block: () -> Unit) {
+        screenWarmups.add(block)
+        if (!screenWarmupScheduled.compareAndSet(false, true)) return
+        EventManager.register(FramebufferRenderEvent.End::class.java) { _ -> runNextScreenWarmup() }
+    }
+
+    private fun runNextScreenWarmup() {
+        val warmup = screenWarmups.poll() ?: return
+        if (!SkiaCtx.isVulkanMode) runCatching { resyncTextureBindCache() }
+        runCatching { warmup() }.onFailure { LOGGER.warn("Config screen warmup failed", it) }
     }
 
     private val list: MutableList<Pair<Int, () -> Unit>> = mutableListOf()
