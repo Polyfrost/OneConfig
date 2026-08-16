@@ -58,7 +58,7 @@ afterEvaluate {
     val platform = rootProject.project(platformPath)
 
     fun isExcluded(group: String?, name: String) =
-        group == "net.fabricmc" && (name == "fabric-loader" || name == "intermediary")
+        (group == "net.fabricmc" && (name == "fabric-loader")) || group == "net.fabricmc.fabric-api"
 
     val seen = HashSet<String>()
 
@@ -202,6 +202,7 @@ publishMods {
 
             minecraftVersions.addAll(minecraftVersion)
 
+            requires("fabric-api")
             requires("fabric-language-kotlin")
             findProperty("publish.modrinth.compose-bundle")
                 ?.toString()

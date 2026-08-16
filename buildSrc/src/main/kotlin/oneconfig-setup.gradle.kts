@@ -235,7 +235,6 @@ dependencies {
     handleApiDep(versionedCatalog.bundles["kotlinx"])
     handleApiDep(versionedCatalog.bundles["nightconfig"])
     handleApiDep(versionedCatalog["snakeyaml"])
-    handleApiDep(versionedCatalog["isolated-lwjgl3-loader"]) //todo check if needed
     handleApiDep(versionedCatalog["java-objc-bridge"])
     val hypixelModApiVersion = if (stonecutter.eval(stonecutter.current.version, ">= 26.1")) "1.0.2" else "1.0.1"
     handleApiDep("net.hypixel:mod-api:$hypixelModApiVersion")
@@ -261,7 +260,7 @@ dependencies {
     if (loader == "fabric") {
         handleApiDep(versionedCatalog["fabric-language-kotlin"], transitive = true)
         handleApiDep(versionedCatalog["fabric-loader"], isMod = true, transitive = true)
-        handleApiDep(versionedCatalog.bundles["fabric-api"], true, transitive = true)
+        "modApi"(versionedCatalog["command-api-v2"]) { isTransitive = false }
 
         val fullFabricApiVersion = when {
             stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "0.155.0+26.2"
