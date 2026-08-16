@@ -91,7 +91,15 @@ private object SystemClipboard : androidx.compose.ui.platform.Clipboard {
 }
 
 @OptIn(InternalComposeUiApi::class)
-abstract class ComposeScreen : Screen(CommonComponents.EMPTY) {
+abstract class ComposeScreen(
+    protected val renderMode: RenderMode = RenderMode.ON_DEMAND,
+) : Screen(CommonComponents.EMPTY) {
+    enum class RenderMode {
+        CONTINUOUS,
+
+        ON_DEMAND,
+    }
+
     @Composable
     abstract fun compose()
 
@@ -386,7 +394,7 @@ abstract class ComposeScreen : Screen(CommonComponents.EMPTY) {
         }
 
         val debugOverlayOnTop = org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen.shouldSuppressVanilla()
-        if (!sceneDirty && SkiaCtx.isDeferredComposeBackend && !debugOverlayOnTop) {
+        if (renderMode == RenderMode.ON_DEMAND && !sceneDirty && SkiaCtx.isDeferredComposeBackend && !debugOverlayOnTop) {
             if (SkiaCtx.blitComposeCached(ctx)) return
         }
 
@@ -417,7 +425,7 @@ abstract class ComposeScreen : Screen(CommonComponents.EMPTY) {
             }
         }
 
-        val wasDirty = sceneDirty
+        val wasDirty = sceneDirty || renderMode == RenderMode.CONTINUOUS
         sceneDirty = false
         when {
             SkiaCtx.isDeferredComposeBackend -> SkiaCtx.drawComposeBlit(ctx, renderBlock)
