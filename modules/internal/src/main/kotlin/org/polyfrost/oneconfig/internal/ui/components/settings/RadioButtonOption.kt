@@ -64,18 +64,7 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
     // each item's width is measured so the indicator can slide between them
     val itemWidths = remember(options.size) { Array(options.size) { mutableIntStateOf(0) } }
     var rowHeight by remember(options.size) { mutableIntStateOf(0) }
-    val indicatorOffset by animateDpAsState(
-        targetValue = with(density) { itemWidths.take(selectedIdx).sumOf { it.intValue }.toDp() },
-        animationSpec = spring(),
-    )
-    val indicatorWidth by animateDpAsState(
-        targetValue = with(density) { itemWidths.getOrElse(selectedIdx) { mutableIntStateOf(146) }.intValue.toDp() },
-        animationSpec = spring(),
-    )
-    val indicatorHeight by animateDpAsState(
-        targetValue = with(density) { rowHeight.toDp() }.coerceAtLeast(RadioItemMinHeight),
-        animationSpec = spring(),
-    )
+    val indicatorReady = selectedIdx in itemWidths.indices && itemWidths[selectedIdx].intValue > 0
 
     Box(
         modifier = Modifier
@@ -87,14 +76,28 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
         Box(
             modifier = Modifier.padding(RadioPadding)
         ) {
-            Box(
-                modifier = Modifier
-                    .height(indicatorHeight)
-                    .width(indicatorWidth)
-                    .offset { IntOffset(indicatorOffset.roundToPx(), 0) }
-                    .clip(RadioItemShape)
-                    .background(Accent),
-            )
+            if (indicatorReady) {
+                val indicatorOffset by animateDpAsState(
+                    targetValue = with(density) { itemWidths.take(selectedIdx).sumOf { it.intValue }.toDp() },
+                    animationSpec = spring(),
+                )
+                val indicatorWidth by animateDpAsState(
+                    targetValue = with(density) { itemWidths[selectedIdx].intValue.toDp() },
+                    animationSpec = spring(),
+                )
+                val indicatorHeight by animateDpAsState(
+                    targetValue = with(density) { rowHeight.toDp() }.coerceAtLeast(RadioItemMinHeight),
+                    animationSpec = spring(),
+                )
+                Box(
+                    modifier = Modifier
+                        .height(indicatorHeight)
+                        .width(indicatorWidth)
+                        .offset { IntOffset(indicatorOffset.roundToPx(), 0) }
+                        .clip(RadioItemShape)
+                        .background(Accent),
+                )
+            }
 
             Row(
                 modifier = Modifier.onSizeChanged { rowHeight = it.height },
