@@ -110,7 +110,7 @@ class HudEditorUIScreen : ComposeScreen() {
             HudManager.guiScreenHeight = sh
             HudManager.prepare(sw, sh)
         }
-        HudEditorViewport.update(Platform.screen().viewportWidth(), Platform.screen().viewportHeight())
+        HudEditorViewport.update(Platform.screen().windowWidth(), Platform.screen().windowHeight())
         //~ if >= 26.1 'render' -> 'extractRenderState'
         super.extractRenderState(ctx, mouseX, mouseY, tickDelta)
     }

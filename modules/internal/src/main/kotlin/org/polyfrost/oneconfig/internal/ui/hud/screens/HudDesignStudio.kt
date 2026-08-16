@@ -127,22 +127,22 @@ enum class StudioCategory(val title: String, val icon: String) {
 }
 
 object HudEditorViewport {
-    var viewportWidth by mutableStateOf(0)
+    var screenWidth by mutableStateOf(0)
         private set
-    var viewportHeight by mutableStateOf(0)
+    var screenHeight by mutableStateOf(0)
         private set
 
     fun update(width: Int, height: Int) {
-        if (width == viewportWidth && height == viewportHeight) return
+        if (width == screenWidth && height == screenHeight) return
         Snapshot.withMutableSnapshot {
-            viewportWidth = width
-            viewportHeight = height
+            screenWidth = width
+            screenHeight = height
         }
     }
 
     fun observe() {
-        @Suppress("UNUSED_EXPRESSION") viewportWidth
-        @Suppress("UNUSED_EXPRESSION") viewportHeight
+        @Suppress("UNUSED_EXPRESSION") screenWidth
+        @Suppress("UNUSED_EXPRESSION") screenHeight
     }
 }
 
@@ -489,9 +489,9 @@ private fun hudActionBarLayout(
 
     // the bar lives outside the HUD box because small HUDs swallow or overlap the icons when the
     // buttons are laid out inside the bounds
-    val screenW = HudEditorViewport.viewportWidth.toFloat()
+    val screenW = HudEditorViewport.screenWidth.toFloat()
         .takeIf { it > 0f } ?: (HudManager.guiScreenWidth * mcToScreen)
-    val screenH = HudEditorViewport.viewportHeight.toFloat()
+    val screenH = HudEditorViewport.screenHeight.toFloat()
         .takeIf { it > 0f } ?: (HudManager.guiScreenHeight * mcToScreen)
 
     val padPx = actionBarPadding(gapPx)
@@ -972,7 +972,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
         HudManager.pendingSelection = null
         HudManager.pendingAdd = null
         if (pendingAdd != null) {
-            snapshotFlow { HudEditorViewport.viewportWidth }.first { it > 0 }
+            snapshotFlow { HudEditorViewport.screenWidth }.first { it > 0 }
             val instance = placeHudCentered(pendingAdd)
             if (instance != null) {
                 Snapshot.withMutableSnapshot {

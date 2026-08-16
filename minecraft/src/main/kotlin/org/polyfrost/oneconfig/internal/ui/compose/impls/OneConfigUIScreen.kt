@@ -267,7 +267,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
             HudManager.guiScreenHeight = sh
             HudManager.prepare(sw, sh)
         }
-        HudEditorViewport.update(Platform.screen().viewportWidth(), Platform.screen().viewportHeight())
+        HudEditorViewport.update(Platform.screen().windowWidth(), Platform.screen().windowHeight())
         if (OneConfigConfig.enableBackgroundBlur) {
             //? if >= 1.21.10 {
             if (SkiaCtx.isDeferredComposeBackend) {
