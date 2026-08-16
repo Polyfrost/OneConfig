@@ -14,11 +14,10 @@ hypixel-data = "0.2.0" # Dep of hypixel-modapi
 # Not in risk of needing to be relaunched / bumped by JiJ
 snakeyaml = "1.31"
 nightconfig = "3.6.6"
-isolated-lwjgl3-loader = "0.3.0"
 java-objc-bridge = "1.2"
 
 # Per version
-lwjgl = "3.3.3" # All downloaded by the isolated-lwjgl3-loader
+lwjgl = "3.3.3"
 
 # Legacy only
 mixin-squared = "0.3.7-beta.1"
@@ -54,7 +53,6 @@ junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
 
 mixin-squared = { module = "com.github.bawnorton.mixinsquared:mixinsquared-common", version.ref = "mixin-squared" }
 
-isolated-lwjgl3-loader = { module = "org.polyfrost:isolated-lwjgl3-loader", version.ref = "isolated-lwjgl3-loader" }
 java-objc-bridge = { module = "ca.weblite:java-objc-bridge", version.ref = "java-objc-bridge" }
 
 hypixel-modapi = { module = "net.hypixel:mod-api", version.ref = "hypixel-modapi" }
