@@ -46,6 +46,8 @@ private val creditSections = listOf(
             "Mona - CompatEngine Founding Engineer",
             "Deftu - OneConfig Major Engineer",
             "ThinkSeal - Major Tester",
+            "Zetvue - Sound Design",
+            "rachel - Lead Cosmetics Designer (OneClient)",
             "Pauline - OG Team - OneConfig Utilities",
             "xtrm - OG Team - OneConfig Utilities",
             "MoonTidez - OG Team - Designer (v0)",
