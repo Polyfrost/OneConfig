@@ -56,6 +56,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
 	protected fun makeTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun preload ()V
 	public static fun restoreCapturedDefaults (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
+	public static fun restoreCapturedDefaults (Lorg/polyfrost/oneconfig/api/config/v1/Tree;Z)V
 	protected fun restoreDefaults ()V
 	protected fun restoreProperty (Ljava/lang/String;)V
 	public fun save ()V

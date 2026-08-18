@@ -110,6 +110,26 @@ class HudProfileIsolationTest {
     }
 
     @Test
+    void switchingProfilesDoesNotFireHudOptionCallbacks() throws Exception {
+        CallbackHud provider = new CallbackHud();
+        HudManager.register(provider);
+        try {
+            launch();
+            Hud loaded = HudManager.INSTANCE.getHudsOfType(CallbackHud.class).get(0);
+            loaded.setRelativeX(loaded.getRelativeX() + 0.25f);
+            CallbackHud.positionCallbacks = 0;
+
+            ConfigManager.createProfile(PROFILE);
+            ConfigManager.openProfile("");
+
+            assertEquals(0, CallbackHud.positionCallbacks,
+                    "restoring provider defaults for a profile switch must not fire the HUD's own callbacks");
+        } finally {
+            HudManager.INSTANCE.unregister(provider, true, true);
+        }
+    }
+
+    @Test
     void clonedProfileKeepsHudSettings() throws Exception {
         HudManager.register(new ProfileTestHud());
         launch();
@@ -366,6 +386,34 @@ class HudProfileIsolationTest {
             }
         }
         throw new NoSuchFieldException(name);
+    }
+
+    static class CallbackHud extends TextHud {
+        static int positionCallbacks = 0;
+
+        CallbackHud() {
+            super("test-callback", "Test Callback HUD", Hud.Category.getINFO(), "", "");
+        }
+
+        @Override
+        public boolean showByDefault() {
+            return true;
+        }
+
+        @Override
+        public boolean multipleInstancesAllowed() {
+            return false;
+        }
+
+        @Override
+        public void setup() {
+            addCallback("relativeX", (Runnable) () -> positionCallbacks++);
+        }
+
+        @Override
+        public String getText() {
+            return "test";
+        }
     }
 
     static class ProfileTestHud extends TextHud {

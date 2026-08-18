@@ -151,13 +151,21 @@ public abstract class Config {
 
     @ApiStatus.Internal
     public static void restoreCapturedDefaults(Tree tree) {
+        restoreCapturedDefaults(tree, false);
+    }
+
+    @ApiStatus.Internal
+    public static void restoreCapturedDefaults(Tree tree, boolean silent) {
         for (Node node : tree.map.values()) {
             if (node instanceof Property) {
                 Property<?> property = (Property<?>) node;
                 Object value = property.getMetadata("default");
-                if (value != null) property.setAsReferential(copyDefault(property.type, value));
+                if (value == null) continue;
+                Object restored = copyDefault(property.type, value);
+                if (silent) property.setAsSilently(restored);
+                else property.setAsReferential(restored);
             } else if (node instanceof Tree) {
-                restoreCapturedDefaults((Tree) node);
+                restoreCapturedDefaults((Tree) node, silent);
             }
         }
     }

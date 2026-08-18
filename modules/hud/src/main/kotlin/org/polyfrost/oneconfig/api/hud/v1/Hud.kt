@@ -1097,7 +1097,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     @ApiStatus.Internal
     internal fun restoreCapturedDefaults() {
-        capturedDefaults?.let(Config::restoreCapturedDefaults)
+        capturedDefaults?.let { Config.restoreCapturedDefaults(it, true) }
     }
 
     open fun remove() {}

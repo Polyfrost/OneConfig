@@ -330,6 +330,11 @@ public abstract class Property<T> extends Node implements Serializable {
         return setReferential((T) WrappingUtils.richCast(value, type));
     }
 
+    @SuppressWarnings("unchecked")
+    public final <V> void setAsSilently(V value) {
+        set0((T) WrappingUtils.richCast(value, type));
+    }
+
     /**
      * Deep equals for a property meaning it checks {@link #equals(Object)} and the value of this property against the given obj
      * <br>

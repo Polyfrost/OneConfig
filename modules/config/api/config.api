@@ -82,6 +82,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Property : org/polyf
 	protected abstract fun set0 (Ljava/lang/Object;)V
 	public final fun setAs (Ljava/lang/Object;)Z
 	public final fun setAsReferential (Ljava/lang/Object;)Z
+	public final fun setAsSilently (Ljava/lang/Object;)V
 	public fun setReferential (Ljava/lang/Object;)Z
 	public final fun toString ()Ljava/lang/String;
 }
