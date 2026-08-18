@@ -32,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -53,6 +52,9 @@ import kotlin.math.roundToInt
 
 private val ListContainerShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
 private val ListItemShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
+private val PlainListItemHeight = 32.dp
+private val CheckableListItemHeight = 40.dp
+private val ListItemSpacing = 14.dp
 
 @Suppress("UNCHECKED_CAST")
 @Composable
@@ -88,17 +90,14 @@ fun DraggableListOption(data: DraggableListOptionData) {
 
     var draggingIndex by remember { mutableStateOf(-1) }
     var dragAccum by remember { mutableStateOf(0f) }
-    var itemHeightPx by remember { mutableStateOf(40) }
-    val spacingPx = with(density) { 14.dp.roundToPx() }
-    val stridePx = (itemHeightPx + spacingPx).toFloat()
+    val itemHeight = if (data.checkable) CheckableListItemHeight else PlainListItemHeight
+    val stridePx = with(density) { (itemHeight + ListItemSpacing).toPx() }
     val dragTargetIndex = if (draggingIndex == -1) {
         -1
     } else {
         (draggingIndex + (dragAccum / stridePx).roundToInt()).coerceIn(0, items.lastIndex)
     }
-    val contentHeight = with(density) {
-        (itemHeightPx * items.size + spacingPx * (items.size - 1).coerceAtLeast(0)).toDp()
-    }
+    val contentHeight = itemHeight * items.size + ListItemSpacing * (items.size - 1).coerceAtLeast(0)
 
     fun save(list: List<ListEntry> = items) {
         val toSave = if (data.checkable) list.filter { it.id in enabledIds } else list
@@ -168,7 +167,7 @@ fun DraggableListOption(data: DraggableListOptionData) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .offset { IntOffset(0, visualOffset.roundToInt()) }
-                            .onSizeChanged { if (index == 0) itemHeightPx = it.height }
+                            .height(itemHeight)
                             .zIndex(if (isDragging) 1f else 0f)
                             .clip(ListItemShape)
                             .background(bgColor, ListItemShape)
