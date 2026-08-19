@@ -74,6 +74,9 @@ object SkiaCtx {
     private var hudRealIsGeneral = false
     private var composeRealIsGeneral = false
 
+    //? if < 1.21.8
+    //private var clearComposeAfterDraw = false
+
     @Volatile
     private var composeActive = false
     @Volatile
@@ -82,6 +85,8 @@ object SkiaCtx {
     private var composeRender: (() -> Unit)? = null
 
     fun submitComposeFrame(dirty: Boolean, render: Runnable) {
+        //? if < 1.21.8
+        //clearComposeAfterDraw = false
         composeActive = true
         if (dirty || composeRender == null) {
             composeRender = { render.run() }
@@ -90,9 +95,17 @@ object SkiaCtx {
     }
 
     fun clearComposeFrame() {
+        //? if >= 1.21.8 {
         composeActive = false
         composeDirty = false
         composeRender = null
+        //?} else {
+        /*// Screen removal calls this before the frame's final Skia draw.
+        // Clearing immediately would leave that frame without a HUD.
+        // Keep the cached Compose surface for that draw so the HUD remains visible.
+        clearComposeAfterDraw = true
+        composeDirty = false
+        *///?}
     }
 
     //? >= 1.21.5 {
@@ -329,6 +342,15 @@ object SkiaCtx {
     @JvmField
     var suppressInGameHudRender = false
 
+    //? if < 1.21.8 {
+    /*// The HUD pass runs before the Compose surface exists, so keep the HUD visible until then.
+    fun shouldSuppressInGameHudRender(): Boolean = suppressInGameHudRender && composeSurface != null
+
+    fun prepareComposeSurface() {
+        if (this::directContext.isInitialized) resolveComposeSurface()
+    }
+    *///? }
+
     fun blitHud(guiGraphics: GuiGraphicsExtractor) {
         val rt = hudTarget ?: return
         val w = rt.width
@@ -504,6 +526,13 @@ object SkiaCtx {
             }
         } finally {
             currentSurface = null
+            //? if < 1.21.8 {
+            /*if (clearComposeAfterDraw) {
+                clearComposeAfterDraw = false
+                composeActive = false
+                composeRender = null
+            }
+            *///?}
         }
     }
 

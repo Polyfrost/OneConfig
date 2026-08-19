@@ -29,6 +29,7 @@ import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.internal.OneConfig
 import kotlin.math.pow
 
 class OneConfigUIScreen @JvmOverloads constructor(
@@ -111,7 +112,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
     }
 
     override fun init() {
-        org.polyfrost.oneconfig.internal.OneConfig.dismissFirstLaunchToast()
+        OneConfig.dismissFirstLaunchToast()
         ConfigRegistry.loadFrom(ConfigManager.active(), ConfigSource.OC)
         initialTree?.let { ConfigRegistry.registerTree(it, ConfigSource.OC) }
 
@@ -162,6 +163,12 @@ class OneConfigUIScreen @JvmOverloads constructor(
         } catch (_: Throwable) {
             ShellState.versionLabel = "OneConfig"
         }
+
+        //? if < 1.21.8 {
+        /*// Compose normally creates its surface after the HUD pass.
+        // Create the surface now to avoid drawing the HUD twice.
+        SkiaCtx.prepareComposeSurface()
+        *///?}
 
         SkiaCtx.suppressInGameHudRender = true
         HudManager.overrideShowInScreens = true
@@ -257,6 +264,12 @@ class OneConfigUIScreen @JvmOverloads constructor(
         if (Platform.screen().current<Any?>() !== this) return
         if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= closeAnimationMs) {
             Platform.screen().close()
+            //? if >= 1.21.8 {
+            // This frame skipped normal HUD rendering because OneConfig was open.
+            // Closing removes the Compose copy as well, so add the normal HUD back.
+            OneConfig.render(ctx, tickDelta)
+            SkiaCtx.blitHud(ctx)
+            //?}
             return
         }
         if (client.level == null) {
