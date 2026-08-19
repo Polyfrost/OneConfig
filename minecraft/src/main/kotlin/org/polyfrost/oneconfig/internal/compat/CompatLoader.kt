@@ -153,9 +153,9 @@ object CompatLoader {
         }
 
         register<ResourceFinishedLoading> {
-            list.sortedBy { (key, _) -> key }.forEach { (_, value) ->
-                value()
-            }
+            val pending = list.sortedBy { (key, _) -> key }
+            list.clear()
+            pending.forEach { (_, value) -> value() }
         }
     }
 

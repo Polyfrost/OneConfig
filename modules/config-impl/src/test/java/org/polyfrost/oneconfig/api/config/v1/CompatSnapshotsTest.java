@@ -33,6 +33,7 @@ import java.lang.reflect.Method;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CompatSnapshotsTest {
@@ -80,6 +81,34 @@ class CompatSnapshotsTest {
 
             assertTrue(reset[0], "the mod's own reset hook must be used when it declares one");
             assertEquals(Boolean.FALSE, property.get(), "the captured default must not overwrite the mod's reset");
+        } finally {
+            defaults().remove(TREE_ID);
+        }
+    }
+
+    @Test
+    void isApplyingOnlyReportsTrueWhileTheSnapshotIsWriting() throws Exception {
+        Property<Boolean> property = Properties.simple("enabled", "Enabled", "", true);
+        property.addMetadata("default", Boolean.FALSE);
+        Tree tree = Tree.tree(TREE_ID).put(property);
+        boolean[] applyingDuringWrite = {false};
+        property.addCallback(value -> {
+            applyingDuringWrite[0] = CompatSnapshots.isApplying();
+            return false;
+        });
+
+        Method capture = CompatSnapshots.class.getDeclaredMethod("captureDefaults", Tree.class);
+        Method restore = CompatSnapshots.class.getDeclaredMethod("restoreDefaults", Tree.class);
+        capture.setAccessible(true);
+        restore.setAccessible(true);
+        try {
+            capture.invoke(CompatSnapshots.INSTANCE, tree);
+            property.setAs(true);
+            assertFalse(applyingDuringWrite[0], "a plain user edit is not a snapshot write");
+
+            restore.invoke(CompatSnapshots.INSTANCE, tree);
+            assertTrue(applyingDuringWrite[0], "restoring the profile defaults must report as a snapshot write");
+            assertFalse(CompatSnapshots.isApplying(), "the flag must not leak past the write");
         } finally {
             defaults().remove(TREE_ID);
         }

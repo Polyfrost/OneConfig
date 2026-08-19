@@ -2,7 +2,10 @@ package org.polyfrost.oneconfig.api.hud.v1
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
+import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.config.v1.Tree
 
 private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
     Hud(wrapper.id, wrapper.name, Category.COMPAT), LegacyHudMarker {
@@ -115,6 +118,8 @@ interface OneConfigHudWrapper {
 
     fun linkedProperties(): List<Property<*>> = emptyList()
 
+    fun save() {}
+
     fun register() {
         val hud = OneConfigHudCompat(this)
         val modId = modId
@@ -125,8 +130,44 @@ interface OneConfigHudWrapper {
         val tree = hud.tree
         if (tree != null) {
             for (prop in linkedProperties()) tree.put(prop)
+            trackPlacementPerProfile(tree)
         }
         hud.captureStaticSizeDefaults()
         hud.capturePositionDefaults()
+    }
+
+    private fun trackPlacementPerProfile(tree: Tree) {
+        excludeFromSnapshots(tree)
+        tree["oc_compat_x"] = placementProperty("x", "X Position", { x }, { x = it })
+        tree["oc_compat_y"] = placementProperty("y", "Y Position", { y }, { y = it })
+        if (supportsScale) tree["oc_compat_scale"] = placementProperty("scale", "Scale", { scale }, { scale = it })
+        tree.addMetadata("custom_save", Runnable { save() })
+        CompatSnapshots.track(tree)
+    }
+
+    private fun placementProperty(
+        key: String,
+        name: String,
+        getter: () -> Float,
+        setter: (Float) -> Unit,
+    ): Property<Float> = Properties.functional<Float>(
+        { getter() },
+        { value -> setter(value) },
+        "oc_compat_$key",
+        name,
+        null,
+        Float::class.java,
+    ).apply {
+        addMetadata(CompatSnapshots.KEY_METADATA, "oc_compat_$key")
+        addDisplayCondition { Property.Display.HIDDEN }
+    }
+
+    private fun excludeFromSnapshots(tree: Tree) {
+        for (node in tree.map.values) {
+            when (node) {
+                is Property<*> -> node.addMetadata(CompatSnapshots.NO_SNAPSHOT_META, true)
+                is Tree -> excludeFromSnapshots(node)
+            }
+        }
     }
 }

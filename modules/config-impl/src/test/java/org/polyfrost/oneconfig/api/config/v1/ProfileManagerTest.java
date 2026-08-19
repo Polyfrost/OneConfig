@@ -42,6 +42,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -386,6 +388,39 @@ class ProfileManagerTest {
         try (ZipFile zip = new ZipFile(archive.toFile())) {
             assertNotNull(zip.getEntry("marker.txt"));
         }
+    }
+
+    @Test
+    void importsAZipDroppedIntoTheProfilesDirectory() throws IOException {
+        Path archive = ConfigManager.PROFILES_DIR.resolve(PROFILE_A + ".zip");
+        Files.createDirectories(ConfigManager.PROFILES_DIR);
+        try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(archive))) {
+            zip.putNextEntry(new ZipEntry(PROFILE_A + "/marker.txt"));
+            zip.write("profile data".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            zip.closeEntry();
+            zip.putNextEntry(new ZipEntry("__MACOSX/._" + PROFILE_A));
+            zip.closeEntry();
+        }
+
+        assertTrue(ConfigManager.profiles().contains(PROFILE_A));
+        assertEquals("profile data", Files.readString(ConfigManager.profileDir(PROFILE_A).resolve("marker.txt")));
+        assertFalse(Files.exists(archive));
+    }
+
+    @Test
+    void doesNotImportAZipOverAnExistingProfile() throws IOException {
+        ConfigManager.createProfile(PROFILE_A);
+        ConfigManager.openProfile("");
+        Path archive = ConfigManager.PROFILES_DIR.resolve(PROFILE_A + ".zip");
+        try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(archive))) {
+            zip.putNextEntry(new ZipEntry("marker.txt"));
+            zip.closeEntry();
+        }
+
+        assertTrue(ConfigManager.profiles().contains(PROFILE_A));
+        assertFalse(Files.exists(ConfigManager.profileDir(PROFILE_A).resolve("marker.txt")));
+        assertTrue(Files.exists(archive));
+        Files.delete(archive);
     }
 
     @Test
@@ -760,6 +795,7 @@ class ProfileManagerTest {
         if (ConfigManager.profiles().contains(PROFILE_A)) ConfigManager.setProfileIcon(PROFILE_A, null);
         if (ConfigManager.profiles().contains(PROFILE_B)) ConfigManager.setProfileIcon(PROFILE_B, null);
         if (ConfigManager.profiles().contains(PROFILE_C)) ConfigManager.setProfileIcon(PROFILE_C, null);
+        Files.deleteIfExists(ConfigManager.PROFILES_DIR.resolve(PROFILE_A + ".zip"));
         deleteProfileDirectory(PROFILE_A);
         deleteProfileDirectory(PROFILE_B);
         deleteProfileDirectory(PROFILE_C);

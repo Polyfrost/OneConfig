@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -34,6 +35,7 @@ fun Chip(
 
     Row(
         modifier = Modifier
+            .defaultMinSize(minHeight = 33.dp)
             .background(backgroundColor, LocalTheme.current.sideBarNavigationEntryShape)
             .border(1.dp, LocalTheme.current.borderColor, LocalTheme.current.sideBarNavigationEntryShape)
             .pointerHoverIcon(PointerIcon.Hand)

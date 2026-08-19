@@ -86,6 +86,11 @@ object SkyHanniHudCompat {
         dirty = true
     }
 
+    internal fun flush() {
+        markDirty()
+        save()
+    }
+
     private fun save() {
         if (!dirty) return
         dirty = false
@@ -348,4 +353,6 @@ private class SkyHanniHudWrapper(private val internalName: String) : OneConfigHu
         set(value) { enabledProperty?.set(!value) }
 
     override fun linkedProperties(): List<Property<*>> = cachedProperties
+
+    override fun save() = SkyHanniHudCompat.flush()
 }

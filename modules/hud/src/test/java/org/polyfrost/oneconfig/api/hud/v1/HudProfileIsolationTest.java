@@ -130,6 +130,25 @@ class HudProfileIsolationTest {
     }
 
     @Test
+    void wrappedHudPositionIsPerProfile() throws Exception {
+        launch();
+        TestWrapper wrapper = new TestWrapper();
+        wrapper.register();
+
+        wrapper.setX(100f);
+        ConfigManager.createProfile(PROFILE);
+        assertEquals(10f, wrapper.getX(), "a new profile must start from the wrapped HUD's default position");
+
+        wrapper.setX(200f);
+        ConfigManager.openProfile("");
+        assertEquals(100f, wrapper.getX(), "the Default profile must keep its own wrapped HUD position");
+
+        ConfigManager.openProfile(PROFILE);
+        assertEquals(200f, wrapper.getX(), "the other profile must keep its own wrapped HUD position");
+        assertTrue(wrapper.saves > 0, "applying a profile must let the wrapped mod persist the move");
+    }
+
+    @Test
     void clonedProfileKeepsHudSettings() throws Exception {
         HudManager.register(new ProfileTestHud());
         launch();
@@ -386,6 +405,86 @@ class HudProfileIsolationTest {
             }
         }
         throw new NoSuchFieldException(name);
+    }
+
+    static class TestWrapper implements OneConfigHudWrapper {
+        private String id = "test-wrapped-hud";
+        private String name = "Test Wrapped HUD";
+        private float x = 10f;
+        private float y = 20f;
+        int saves = 0;
+
+        @Override
+        public String getId() {
+            return id;
+        }
+
+        @Override
+        public void setId(String value) {
+            id = value;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public void setName(String value) {
+            name = value;
+        }
+
+        @Override
+        public float getX() {
+            return x;
+        }
+
+        @Override
+        public void setX(float value) {
+            x = value;
+        }
+
+        @Override
+        public float getY() {
+            return y;
+        }
+
+        @Override
+        public void setY(float value) {
+            y = value;
+        }
+
+        @Override
+        public float getScale() {
+            return 1f;
+        }
+
+        @Override
+        public void setScale(float value) {
+        }
+
+        @Override
+        public float getScaledWidth() {
+            return 20f;
+        }
+
+        @Override
+        public void setScaledWidth(float value) {
+        }
+
+        @Override
+        public float getScaledHeight() {
+            return 10f;
+        }
+
+        @Override
+        public void setScaledHeight(float value) {
+        }
+
+        @Override
+        public void save() {
+            saves++;
+        }
     }
 
     static class CallbackHud extends TextHud {

@@ -249,8 +249,22 @@ final class LwjglTinyFd implements TinyFdApi {
 
     @Nullable
     private static String sanitizePath(@Nullable String input) {
-        if (WINDOWS) return input;
-        return strip(input);
+        String path = absolutize(input);
+        if (WINDOWS) return path;
+        return strip(path);
+    }
+
+    @Nullable
+    static String absolutize(@Nullable String input) {
+        if (input == null || input.isEmpty()) return input;
+        try {
+            Path path = Paths.get(input);
+            if (path.isAbsolute()) return input;
+            String absolute = path.toAbsolutePath().toString();
+            return input.endsWith("/") || input.endsWith("\\") ? absolute + java.io.File.separator : absolute;
+        } catch (Exception e) {
+            return input;
+        }
     }
 
     @Nullable

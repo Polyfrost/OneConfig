@@ -55,10 +55,15 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     private final Map<String, Map<String, Object>> defaults = new ConcurrentHashMap<>();
     private final Map<Property<?>, Boolean> wired = Collections.synchronizedMap(new WeakHashMap<>());
     private final Set<Property<?>> applying = Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
+    private static final ThreadLocal<Boolean> APPLYING_HERE = ThreadLocal.withInitial(() -> Boolean.FALSE);
     private volatile java.util.function.Consumer<Runnable> dispatcher = Runnable::run;
     private volatile String currentProfile;
 
     private CompatSnapshots() {
+    }
+
+    public static boolean isApplying() {
+        return APPLYING_HERE.get();
     }
 
     public static void setDispatcher(java.util.function.Consumer<Runnable> dispatcher) {
@@ -69,10 +74,17 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         return INSTANCE.register0(tree);
     }
 
+    public static Tree track(Tree registered) {
+        return INSTANCE.track0(registered);
+    }
+
     private Tree register0(Tree tree) {
         tree.addMetadata(Backend.UI_ONLY_METADATA, Boolean.TRUE);
         dropStaleRegistration(tree.getID());
-        Tree reg = ConfigManager.active().register(tree).get();
+        return track0(ConfigManager.active().register(tree).get());
+    }
+
+    private Tree track0(Tree reg) {
         reg.addMetadata(TAG, Boolean.TRUE);
         if (reg.getMetadata("custom_save") != null) {
             reg.addMetadata(Backend.CUSTOM_SAVE_TRACKED_METADATA, Boolean.TRUE);
@@ -246,6 +258,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
                 return;
             }
             applying.add(p);
+            APPLYING_HERE.set(Boolean.TRUE);
             try {
                 p.setAsReferential(value);
                 setBaseline(treeId, key, stored);
@@ -253,6 +266,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
             } catch (Throwable t) {
                 ConfigManager.LOGGER.warn("Failed to apply compat value for '{}'", key, t);
             } finally {
+                APPLYING_HERE.remove();
                 applying.remove(p);
             }
         });
@@ -310,12 +324,14 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
                 return;
             }
             applying.add(property);
+            APPLYING_HERE.set(Boolean.TRUE);
             try {
                 property.setAsReferential(value);
                 changed[0] = true;
             } catch (Throwable t) {
                 ConfigManager.LOGGER.warn("Failed to apply compat default for '{}'", keyOf(property), t);
             } finally {
+                APPLYING_HERE.remove();
                 applying.remove(property);
             }
         });
@@ -444,7 +460,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         return stored instanceof Map ? ObjectSerializer.INSTANCE.deserialize((Map<String, Object>) stored) : stored;
     }
 
-    private static final String KEY_META = "oc_snapshot_key";
+    public static final String KEY_METADATA = "oc_snapshot_key";
     private static final String ACTION_META = "runnable";
     public static final String NO_SNAPSHOT_META = "oc_no_snapshot";
 
@@ -456,15 +472,15 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         int[] index = {0};
         forEachProp(tree, p -> {
             int i = index[0]++;
-            if (p.getMetadata(KEY_META) == null) {
+            if (p.getMetadata(KEY_METADATA) == null) {
                 Object title = p.getTitle();
-                p.addMetadata(KEY_META, i + "|" + (title != null ? title : ""));
+                p.addMetadata(KEY_METADATA, i + "|" + (title != null ? title : ""));
             }
         });
     }
 
     private static String keyOf(Property<?> p) {
-        Object key = p.getMetadata(KEY_META);
+        Object key = p.getMetadata(KEY_METADATA);
         return key != null ? key.toString() : p.getID();
     }
 
