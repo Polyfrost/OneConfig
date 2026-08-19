@@ -930,7 +930,7 @@ private fun ProfileActionsMenu(
                 onDismiss()
                 onFavorite()
             }
-            ProfileMenuItem("up", "Export / share", enabled = enabled) {
+            ProfileMenuItem("down", "Export / share", enabled = enabled) {
                 onDismiss()
                 onExport()
             }

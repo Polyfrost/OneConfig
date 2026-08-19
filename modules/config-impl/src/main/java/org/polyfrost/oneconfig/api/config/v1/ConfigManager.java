@@ -416,7 +416,7 @@ public final class ConfigManager {
         String name;
         Path target;
         try {
-            name = normalizeProfileName(fileName.substring(0, fileName.length() - ".zip".length()), false);
+            name = normalizeNewProfileName(fileName.substring(0, fileName.length() - ".zip".length()));
             target = profilePath(name);
         } catch (IllegalArgumentException e) {
             LOGGER.warn("Ignoring profile archive with an invalid name: {}", fileName);
@@ -482,7 +482,7 @@ public final class ConfigManager {
     }
 
     private static void createProfile0(String profile) {
-        String name = normalizeProfileName(profile, false);
+        String name = normalizeNewProfileName(profile);
         Path path = profilePath(name);
         String previousProfile;
         synchronized (ConfigManager.class) {
@@ -530,7 +530,7 @@ public final class ConfigManager {
 
     private static void cloneProfile0(String profile, String newProfile) {
         profile = normalizeProfileName(profile, true);
-        String name = normalizeProfileName(newProfile, false);
+        String name = normalizeNewProfileName(newProfile);
         Path source = profileDir(profile);
         Path target = profilePath(name);
         Set<String> ownedSubdirs;
@@ -663,7 +663,7 @@ public final class ConfigManager {
 
     private static void renameProfile0(String profile, String newProfile) {
         profile = normalizeProfileName(profile, false);
-        newProfile = normalizeProfileName(newProfile, false);
+        newProfile = normalizeNewProfileName(newProfile);
         if (profile.equals(newProfile)) return;
         Path oldPath = profilePath(profile);
         Path newPath = profilePath(newProfile);
@@ -1107,6 +1107,14 @@ public final class ConfigManager {
                 LOGGER.error("Failed to rebind config {} onto active profile", config.id, ex);
             }
         }
+    }
+
+    private static String normalizeNewProfileName(String profile) {
+        String normalized = normalizeProfileName(profile, false);
+        if (normalized.indexOf('$') >= 0) {
+            throw new IllegalArgumentException("Profile names cannot contain '$'");
+        }
+        return normalized;
     }
 
     private static String normalizeProfileName(String profile, boolean allowRoot) {

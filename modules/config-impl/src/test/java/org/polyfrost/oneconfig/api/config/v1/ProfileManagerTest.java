@@ -763,9 +763,16 @@ class ProfileManagerTest {
 
     @Test
     void rejectsInvalidProfileNames() {
-        assertThrows(IllegalArgumentException.class, () -> ConfigManager.createProfile(""));
-        assertThrows(IllegalArgumentException.class, () -> ConfigManager.createProfile("../bad"));
-        assertThrows(IllegalArgumentException.class, () -> ConfigManager.createProfile("bad/name"));
+        for (String name : new String[]{"", "   ", "../bad", "bad/name", "$", "cash$money"}) {
+            assertThrows(IllegalArgumentException.class, () -> ConfigManager.createProfile(name));
+            assertThrows(IllegalArgumentException.class, () -> ConfigManager.cloneProfile("", name));
+        }
+        assertTrue(ConfigManager.profiles().stream().noneMatch(profile -> profile.contains("$")));
+
+        ConfigManager.createProfile(PROFILE_A);
+        assertThrows(IllegalArgumentException.class, () -> ConfigManager.renameProfile(PROFILE_A, "cash$money"));
+        assertThrows(IllegalArgumentException.class, () -> ConfigManager.renameProfile(PROFILE_A, "  "));
+        assertTrue(Files.isDirectory(ConfigManager.PROFILES_DIR.resolve(PROFILE_A)));
     }
 
     @Test

@@ -40,6 +40,15 @@ class TinyFdPathTest {
     }
 
     @Test
+    void macKeepsOnlyTheFileNameSoAppleScriptGetsNoLocation() {
+        assertEquals("Default.zip", LwjglTinyFd.macDefaultPath("/Users/me/Library/Application Support/mc/Default.zip"));
+        assertEquals("Default.zip", LwjglTinyFd.macDefaultPath("Default.zip"));
+        assertNull(LwjglTinyFd.macDefaultPath("/Users/me/mc/"));
+        assertNull(LwjglTinyFd.macDefaultPath(Paths.get(".").toAbsolutePath().toString()));
+        assertNull(LwjglTinyFd.macDefaultPath(null));
+    }
+
+    @Test
     void absolutePathIsUntouched() {
         String absolute = Paths.get("config", "profile.zip").toAbsolutePath().toString();
         assertEquals(absolute, LwjglTinyFd.absolutize(absolute));

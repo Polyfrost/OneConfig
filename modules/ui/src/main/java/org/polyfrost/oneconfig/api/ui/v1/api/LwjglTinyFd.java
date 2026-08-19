@@ -36,6 +36,7 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -47,7 +48,9 @@ final class LwjglTinyFd implements TinyFdApi {
     static final LwjglTinyFd INSTANCE = new LwjglTinyFd();
     private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/TinyFD");
 
-    private static final boolean WINDOWS = System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win");
+    private static final String OS = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+    private static final boolean WINDOWS = OS.contains("win");
+    private static final boolean MAC = OS.contains("mac") || OS.contains("darwin");
 
     private static final String SHELL_METACHARACTERS = "'\"`$\\\r\0";
 
@@ -249,9 +252,20 @@ final class LwjglTinyFd implements TinyFdApi {
 
     @Nullable
     private static String sanitizePath(@Nullable String input) {
+        if (MAC) return strip(macDefaultPath(input));
         String path = absolutize(input);
         if (WINDOWS) return path;
         return strip(path);
+    }
+
+    @Nullable
+    static String macDefaultPath(@Nullable String input) {
+        if (input == null || input.isEmpty()) return input;
+        if (input.endsWith("/")) return null;
+        Path path = Paths.get(input);
+        if (Files.isDirectory(path)) return null;
+        Path name = path.getFileName();
+        return name == null ? null : name.toString();
     }
 
     @Nullable
