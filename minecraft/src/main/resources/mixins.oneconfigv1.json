@@ -30,6 +30,7 @@
         "events.Mixin_TickEvent",
         "events.Mixin_WorldLoadEvent",
         "events.Mixin_WorldUnloadEvent",
+        "fixes.Mixin_EffectTimerPlusLocation",
         "fixes.Mixin_FixScoreboardErrorSpam",
         "keybind.KeyMappingAccessor",
         "keybind.KeyMappingRegistryAccessor",
