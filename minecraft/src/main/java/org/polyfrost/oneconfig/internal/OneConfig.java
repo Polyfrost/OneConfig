@@ -183,6 +183,7 @@ public class OneConfig
         HudManager.targetPixelWidth = Platform.screen().viewportWidth();
         HudManager.targetPixelHeight = Platform.screen().viewportHeight();
 
+        //~ if < 1.21.8 '.suppressInGameHudRender' -> '.shouldSuppressInGameHudRender()'
         if (!SkiaCtx.INSTANCE.suppressInGameHudRender) {
             LegacyHudRenderer.INSTANCE.renderLive(graphics);
         }

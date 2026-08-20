@@ -269,7 +269,13 @@ class OneConfigUIScreen @JvmOverloads constructor(
             // Closing removes the Compose copy as well, so add the normal HUD back.
             OneConfig.render(ctx, tickDelta)
             SkiaCtx.blitHud(ctx)
-            //?}
+            //?} else {
+            /*if (closeAnimationMs <= 0L) {
+                SkiaCtx.discardComposeFrame()
+                OneConfig.render(ctx, tickDelta)
+                SkiaCtx.blitHud(ctx)
+            }
+            *///?}
             return
         }
         if (client.level == null) {

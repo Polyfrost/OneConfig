@@ -74,8 +74,13 @@ object SkiaCtx {
     private var hudRealIsGeneral = false
     private var composeRealIsGeneral = false
 
-    //? if < 1.21.8
-    //private var clearComposeAfterDraw = false
+    //? if < 1.21.8 {
+    /*@Volatile
+    private var clearComposeAfterDraw = false
+
+    @Volatile
+    private var hudBlitSuppressed = false
+    *///? }
 
     @Volatile
     private var composeActive = false
@@ -107,6 +112,21 @@ object SkiaCtx {
         composeDirty = false
         *///?}
     }
+
+    //? if < 1.21.8 {
+    /*fun discardComposeFrame() {
+        clearComposeAfterDraw = false
+        composeActive = false
+        composeDirty = false
+        composeRender = null
+    }
+
+    private fun finishComposeClear() {
+        clearComposeAfterDraw = false
+        composeActive = false
+        composeRender = null
+    }
+    *///? }
 
     //? >= 1.21.5 {
     private val HUD_TEXTURE_LOC = Identifier.fromNamespaceAndPath("oneconfig", "hud_skia")
@@ -344,10 +364,15 @@ object SkiaCtx {
 
     //? if < 1.21.8 {
     /*// The HUD pass runs before the Compose surface exists, so keep the HUD visible until then.
-    fun shouldSuppressInGameHudRender(): Boolean = suppressInGameHudRender && composeSurface != null
+    fun shouldSuppressInGameHudRender(): Boolean {
+        val suppress = suppressInGameHudRender && composeSurface != null
+        hudBlitSuppressed = suppress
+        return suppress
+    }
 
     fun prepareComposeSurface() {
-        if (this::directContext.isInitialized) resolveComposeSurface()
+        if (!isReady || currentSurface != null) return
+        resolveComposeSurface()
     }
     *///? }
 
@@ -461,6 +486,11 @@ object SkiaCtx {
 
     fun draw() {
         if (!this::directContext.isInitialized) return
+        //? if < 1.21.8 {
+        /*val composeStandsInForHud = hudBlitSuppressed
+        hudBlitSuppressed = false
+        if (clearComposeAfterDraw && !composeStandsInForHud) finishComposeClear()
+        *///? }
         runWarmups()
         val draws = queuedDraws.toList()
         queuedDraws.clear()
@@ -527,11 +557,7 @@ object SkiaCtx {
         } finally {
             currentSurface = null
             //? if < 1.21.8 {
-            /*if (clearComposeAfterDraw) {
-                clearComposeAfterDraw = false
-                composeActive = false
-                composeRender = null
-            }
+            /*if (clearComposeAfterDraw) finishComposeClear()
             *///?}
         }
     }
