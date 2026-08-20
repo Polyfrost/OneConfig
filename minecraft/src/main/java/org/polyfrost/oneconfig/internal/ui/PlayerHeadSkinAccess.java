@@ -3,8 +3,11 @@ package org.polyfrost.oneconfig.internal.ui;
 import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
+//? if > 1.8.9 {
 //~if >= 1.21.11 'ResourceLocation;' -> 'Identifier;'
 import net.minecraft.resources.Identifier;
+//?} else
+//import net.minecraft.resource.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
@@ -67,7 +70,7 @@ public final class PlayerHeadSkinAccess {
         }
     }
 
-    //~if >= 1.21.11 'ResourceLocation' -> 'Identifier'
+    //~if >= 1.21.11 || = 1.8.9 'ResourceLocation' -> 'Identifier'
     private static @Nullable NativeImage extractHead(Minecraft mc, Identifier textureId) {
         NativeImage pixels = PlayerHeadTextureAccess.readPixels(mc.getTextureManager().getTexture(textureId));
         if (pixels == null) {

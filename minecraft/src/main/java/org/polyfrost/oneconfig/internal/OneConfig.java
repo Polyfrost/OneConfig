@@ -31,10 +31,12 @@ import com.mojang.brigadier.Command;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+//? if > 1.8.9
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
+//? if > 1.8.9
 import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.world.scores.Scoreboard;
 import org.apache.logging.log4j.LogManager;
@@ -75,7 +77,7 @@ import org.polyfrost.oneconfig.test.TestMod_Test;
 //? neoforge
 //@net.neoforged.fml.common.Mod("oneconfigv1")
 public class OneConfig
-        //? fabric
+        //? fabric || ornithe
         implements net.fabricmc.api.ClientModInitializer {
     public static final OneConfig INSTANCE = new OneConfig();
     private static final Logger LOGGER = LogManager.getLogger("OneConfig");
@@ -154,11 +156,16 @@ public class OneConfig
         if (!minecraft.isLocalServer()) return true;
 
         Scoreboard scoreboard = minecraft.level.getScoreboard();
+        //~ if = 1.8.9 'player.connection.getListedOnlinePlayers' -> 'getNetworkHandler().getOnlinePlayers'
         return minecraft.player.connection.getListedOnlinePlayers().size() > 1
+                //~ if = 1.8.9 'DisplaySlot.LIST' -> '0'
                 || scoreboard.getDisplayObjective(DisplaySlot.LIST) != null;
     }
 
+    //? if > 1.8.9 {
     public static void render(GuiGraphicsExtractor graphics, float partial) {
+    //?} else
+    //public static void render(float partial) {
         if (!SkiaCtx.INSTANCE.isReady()) {
             return;
         }
@@ -185,10 +192,13 @@ public class OneConfig
         //~ if < 1.21.8 '.suppressInGameHudRender' -> '.shouldSuppressInGameHudRender()'
         boolean hudRendersLive = !SkiaCtx.INSTANCE.suppressInGameHudRender;
         if (hudRendersLive || !org.polyfrost.oneconfig.internal.ui.hud.LegacyHudOffscreen.INSTANCE.render()) {
+            //~ if = 1.8.9 '(graphics)' -> '()'
             LegacyHudRenderer.INSTANCE.renderLive(graphics);
         }
         // records the F3 overlay offscreen so Skia can put it above the Compose UI instead of below the
         // blur and it must run every frame regardless of the HUD dirty gate
+        // 1.8.9 replays the overlay in Mixin_SkiaFrame after Skia finishes drawing instead
+        //? if > 1.8.9
         org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen.INSTANCE.render();
         if (HudManager.INSTANCE.beginFrame(sw, sh)) {
             SkiaCtx.INSTANCE.queueHudDraw(() -> {
@@ -252,6 +262,7 @@ public class OneConfig
                     MinecraftKeybindProfiles.init();
                     ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
                     org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar.register();
+                    //? if > 1.8.9
                     org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat.register();
                     //? if wwaypoints_compat
                     org.polyfrost.oneconfig.internal.compat.WWaypointsCompat.register();

@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.compat
 
+//? if > 1.8.9 {
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.Property
@@ -358,3 +359,4 @@ private class SkyHanniHudWrapper(private val internalName: String) : OneConfigHu
 
     override fun save() = SkyHanniHudCompat.flush()
 }
+//?}

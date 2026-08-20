@@ -29,6 +29,7 @@
 
 package org.polyfrost.oneconfig.internal.compat
 
+//? if > 1.8.9 {
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.network.chat.Component
 import org.joml.Vector2i
@@ -392,3 +393,4 @@ object FirmamentHudCompat {
         }
     }
 }
+//?}
