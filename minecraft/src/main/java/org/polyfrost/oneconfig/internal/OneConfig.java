@@ -34,7 +34,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.packs.resources.ReloadableResourceManager;
 import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.world.scores.Scoreboard;
 import org.apache.logging.log4j.LogManager;
@@ -57,8 +56,6 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsRenderer;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
-import org.polyfrost.oneconfig.api.ui.v1.internal.BlurHandler;
-import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindHelper;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories;
@@ -236,7 +233,7 @@ public class OneConfig
         // resets the editing flag if another screen replaces the HUD editor without going through
         // HudManager.closeEditor() and null opens are ignored because commands close chat first
         EventManager.register(
-                org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent.class, e -> {
+                ScreenOpenEvent.class, e -> {
                     if (HudManager.INSTANCE.isEditorOpen() && e.getScreen() != null && !(e.getScreen() instanceof HudEditorUIScreen)) {
                         HudManager.INSTANCE.closeEditor();
                     }
@@ -254,6 +251,7 @@ public class OneConfig
                     ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
                     org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar.register();
                     org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat.register();
+                    //? if wwaypoints_compat
                     org.polyfrost.oneconfig.internal.compat.WWaypointsCompat.register();
                     org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry.INSTANCE.loadFromConfig();
                 });
@@ -342,7 +340,6 @@ public class OneConfig
                 .orElse(null);
         String v = self == null ? "LOCAL" : self.getVersion();
         LOGGER.info("Loading OneConfig v{}", v);
-        BlurHandler.init();
         McFontService.INSTANCE.init();
         ThirdPartyModCategories.INSTANCE.init();
         // force class-load so the hello/disconnect handlers are armed before joining any server

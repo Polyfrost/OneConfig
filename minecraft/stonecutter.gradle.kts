@@ -40,27 +40,20 @@ stonecutter {
                 replace("GuiGraphics", "GuiGraphicsExtractor")
             }
 
-            regex(eval(current.version, "< 26.1")) {
+            string(eval(current.version, "< 26.1")) {
                 replace(
-                    "import net.minecraft.client.gui.GuiGraphicsExtractor(?!;)",
-                    "import net.minecraft.client.gui.GuiGraphics as GuiGraphicsExtractor",
-                    "import net.minecraft.client.gui.GuiGraphics as GuiGraphicsExtractor",
-                    "import net.minecraft.client.gui.GuiGraphicsExtractor",
+                    "import net.minecraft.client.gui.GuiGraphicsExtractor\n",
+                    "import net.minecraft.client.gui.GuiGraphics as GuiGraphicsExtractor\n",
                 )
             }
             // 26.2 moved the main render target from Minecraft onto GameRenderer
             string(eval(current.version, ">= 26.2"), "main_render_target") {
                 replace("mainRenderTarget", "gameRenderer.mainRenderTarget()")
             }
-            string(eval(current.version, ">= 1.21.11"), "identifier") {
-                replace("ResourceLocation", "Identifier")
-            }
-            regex(eval(current.version, "< 1.21.11")) {
+            string(eval(current.version, "< 1.21.11")) {
                 replace(
-                    "import net.minecraft.resources.Identifier(?!;)",
-                    "import net.minecraft.resources.ResourceLocation as Identifier",
-                    "import net.minecraft.resources.ResourceLocation as Identifier",
-                    "import net.minecraft.resources.Identifier",
+                    "import net.minecraft.resources.Identifier\n",
+                    "import net.minecraft.resources.ResourceLocation as Identifier\n",
                 )
             }
 

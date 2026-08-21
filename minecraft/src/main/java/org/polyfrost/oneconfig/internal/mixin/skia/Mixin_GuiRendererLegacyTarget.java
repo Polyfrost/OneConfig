@@ -45,8 +45,7 @@ public class Mixin_GuiRendererLegacyTarget {
         return override != null ? override.height : original;
     }
     //? } else {
-    /*
-    @ModifyExpressionValue(
+    /*@ModifyExpressionValue(
             method = "draw",
             at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/Window;getWidth()I")
     )

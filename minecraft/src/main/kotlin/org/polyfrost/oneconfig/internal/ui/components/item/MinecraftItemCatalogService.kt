@@ -11,7 +11,7 @@ import com.mojang.blaze3d.buffers.GpuBuffer
 import com.mojang.blaze3d.buffers.BufferUsage
 *///? }
 //? if < 1.21.5
-/*import com.mojang.blaze3d.platform.NativeImage*/
+//import com.mojang.blaze3d.platform.NativeImage
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
 //? if >= 1.21.8
@@ -205,13 +205,13 @@ class MinecraftItemCatalogService : ItemCatalogService {
         //? if >= 1.21.11 {
         val graphics = GuiGraphicsExtractor(Minecraft.getInstance(), state, guiWidth, guiHeight)
         //? } else
-        /*val graphics = GuiGraphicsExtractor(Minecraft.getInstance(), state)*/
+        //val graphics = GuiGraphicsExtractor(Minecraft.getInstance(), state)
         placements.forEach { placement ->
             val item = entriesById[placement.id]?.item ?: return@forEach
             //? if >= 26.1 {
             graphics.fakeItem(ItemStack(item), placement.x + ITEM_PADDING, placement.y + ITEM_PADDING)
             //? } else
-            /*graphics.renderFakeItem(ItemStack(item), placement.x + ITEM_PADDING, placement.y + ITEM_PADDING)*/
+            //graphics.renderFakeItem(ItemStack(item), placement.x + ITEM_PADDING, placement.y + ITEM_PADDING)
         }
 
         val client = Minecraft.getInstance()
@@ -438,7 +438,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
             //? if >= 1.21.11 {
             device.createCommandEncoder().copyTextureToBuffer(texture, buffer, 0L, onCopied, 0)
             //? } else
-            /*device.createCommandEncoder().copyTextureToBuffer(texture, buffer, 0, onCopied, 0)*/
+            //device.createCommandEncoder().copyTextureToBuffer(texture, buffer, 0, onCopied, 0)
         } catch (throwable: Throwable) {
             buffer.close()
             throw throwable
@@ -461,7 +461,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
                 //? if >= 1.21.4 {
                 image.getPixel(x, y)
                 //? } else
-                /*abgrToArgb(image.getPixelRGBA(x, y))*/
+                //abgrToArgb(image.getPixelRGBA(x, y))
             }
             completeBatch(batch, icons)
         } finally {
