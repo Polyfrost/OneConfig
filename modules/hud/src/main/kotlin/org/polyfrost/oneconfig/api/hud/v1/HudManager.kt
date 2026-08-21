@@ -499,12 +499,13 @@ object HudManager {
 
     /** Everything [shouldDraw] checks apart from the HUD's own hidden flag */
     private fun isShown(hud: Hud): Boolean {
-        if (!masterHudEnabled && !isEditing) return false
         if (hud is LegacyHudMarker) return false
-        if (isGuiHidden && !isEditing) return false
+        if (isEditing) return true
+        if (!masterHudEnabled) return false
+        if (isGuiHidden) return false
         if (isDebugScreenVisible && !hud.showInF3) return false
         if (isTabListVisible && !hud.showInTab) return false
-        if (!overrideShowInScreens && !isEditing) {
+        if (!overrideShowInScreens) {
             // chat has its own toggle so it is never governed by "Show in GUIs"
             if (isChatScreenOpen) {
                 if (!hud.showInChat) return false
@@ -698,6 +699,7 @@ object HudManager {
         key = key * 31L + (if (isChatScreenOpen) 1 else 0)
         key = key * 31L + (if (isGuiHidden) 1 else 0)
         key = key * 31L + (if (overrideShowInScreens) 1 else 0)
+        key = key * 31L + (if (masterHudEnabled) 1 else 0)
         key = key * 31L + (if (isEditing) 1 else 0)
         key = key * 31L + (if (inWorld) 1 else 0)
         key = key * 31L + targetPixelWidth

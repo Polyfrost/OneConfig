@@ -1,6 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.hud
 
-import com.mojang.blaze3d.pipeline.TextureTarget
+import com.mojang.blaze3d.pipeline.RenderTarget
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
 //? if >= 26.1 {
@@ -12,12 +12,9 @@ import org.polyfrost.oneconfig.internal.mixin.render.GuiRendererAccessor
 import org.polyfrost.oneconfig.internal.mixin.render.GameRendererAccessor
 import org.polyfrost.oneconfig.internal.mixin.render.GuiRendererAccessor
 *///? }
-import org.jetbrains.skia.BackendRenderTarget
-import org.jetbrains.skia.ColorSpace
 import org.jetbrains.skia.Paint
-import org.jetbrains.skia.Surface
-import org.jetbrains.skia.SurfaceOrigin
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.internal.ui.SkiaOffscreenTarget
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
 import org.slf4j.LoggerFactory
@@ -33,11 +30,7 @@ object DebugOverlayOffscreen {
     private val LOG = LoggerFactory.getLogger("OneConfig/DebugOverlayOffscreen")
     private val client get() = Minecraft.getInstance()
 
-    private var target: TextureTarget? = null
-    private var brt: BackendRenderTarget? = null
-    private var surface: Surface? = null
-    private var lastW = -1
-    private var lastH = -1
+    private val offscreen = SkiaOffscreenTarget()
 
     @Volatile private var hasContent = false
     @Volatile private var failed = false
@@ -67,8 +60,8 @@ object DebugOverlayOffscreen {
         if (w <= 0 || h <= 0) return
 
         try {
-            if (!resolveTarget(w, h)) return
-            val rt = target ?: return
+            if (!offscreen.resolveTarget(w, h)) return
+            val rt = offscreen.target ?: return
             //? if >= 1.21.8 {
             renderRecorded(rt)
             //? } else if >= 1.21.5 {
@@ -81,13 +74,12 @@ object DebugOverlayOffscreen {
             LOG.warn("Debug overlay offscreen render failed; disabling", t)
             failed = true
             capturing = false
-            //? if >= 1.21.5
             GuiTargetRedirect.target = null
         }
     }
 
     //? if >= 1.21.8 {
-    private fun renderRecorded(rt: TextureTarget) {
+    private fun renderRecorded(rt: RenderTarget) {
         val guiRenderer = (client.gameRenderer as GameRendererAccessor).`oneconfig$getGuiRenderer`()
         val accessor = guiRenderer as GuiRendererAccessor
 
@@ -95,7 +87,7 @@ object DebugOverlayOffscreen {
         //? if >= 1.21.11 {
         val ext = GuiGraphicsExtractor(client, state, Platform.screen().guiWidth(), Platform.screen().guiHeight())
         //? } else
-        /*val ext = GuiGraphicsExtractor(client, state)*/
+        //val ext = GuiGraphicsExtractor(client, state)
         capturing = true
         try {
             //~ if >= 26.1 'render' -> 'extractRenderState'
@@ -104,7 +96,7 @@ object DebugOverlayOffscreen {
             capturing = false
         }
 
-        clearTarget(rt)
+        offscreen.clearTarget()
 
         val prevState = accessor.`oneconfig$getRenderState`()
         GuiTargetRedirect.target = rt
@@ -123,11 +115,9 @@ object DebugOverlayOffscreen {
         }
     }
     //? } else if >= 1.21.5 {
-
-    /*
-    private fun renderImmediate(rt: TextureTarget) {
+    /*private fun renderImmediate(rt: RenderTarget) {
         val graphics = GuiGraphicsExtractor(client, client.renderBuffers().bufferSource())
-        clearTarget(rt)
+        offscreen.clearTarget()
         capturing = true
         GuiTargetRedirect.target = rt
         try {
@@ -139,106 +129,31 @@ object DebugOverlayOffscreen {
         }
     }
     *///? } else {
-
-    /*
-    private fun renderImmediateLegacy(rt: TextureTarget) {
+    /*private fun renderImmediateLegacy(rt: RenderTarget) {
         val graphics = GuiGraphicsExtractor(client, client.renderBuffers().bufferSource())
-        clearTarget(rt)
+        offscreen.clearTarget()
         capturing = true
-        rt.bindWrite(true)
+        GuiTargetRedirect.target = rt
         try {
+            rt.bindWrite(true)
             client.debugOverlay.render(graphics)
             graphics.flush()
         } finally {
+            GuiTargetRedirect.target = null
             client.mainRenderTarget.bindWrite(true)
             capturing = false
         }
     }
     *///? }
 
-    private fun clearTarget(rt: TextureTarget) {
-        //? if >= 26.2 {
-        val colorTex = rt.colorTexture ?: return
-        com.mojang.blaze3d.systems.RenderSystem.getDevice().createCommandEncoder()
-            .clearColorTexture(colorTex, org.joml.Vector4f(0f, 0f, 0f, 0f))
-        //? } else if >= 1.21.5 {
-        /*val colorTex = rt.colorTexture ?: return
-        com.mojang.blaze3d.systems.RenderSystem.getDevice().createCommandEncoder()
-            .clearColorTexture(colorTex, 0)
-        *///? } else if >= 1.21.4 {
-        /*rt.clear()
-        *///? } else {
-        /*rt.clear(Minecraft.ON_OSX)
-        *///? }
-    }
-
-    private fun resolveTarget(w: Int, h: Int): Boolean {
-        if (target != null && lastW == w && lastH == h && surface != null) return true
-        destroy()
-        try {
-            //? if >= 26.2 {
-            val rt = TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
-            //? } else if >= 1.21.5 {
-            /*val rt = TextureTarget(null, w, h, true)
-            *///? } else if >= 1.21.4 {
-            /*val rt = TextureTarget(w, h, true)
-            *///? } else {
-            /*val rt = TextureTarget(w, h, true, Minecraft.ON_OSX)
-            *///? }
-            target = rt
-            //? if < 1.21.5
-            /*rt.setClearColor(0f, 0f, 0f, 0f)*/
-            val svc = SkiaCtx.vulkanService ?: return false
-            if (!SkiaCtx.isVulkanMode) {
-                //? if >= 1.21.5 {
-                val fboId = org.polyfrost.oneconfig.internal.ui.RenderTargetFbo.getFboId(rt)
-                //? } else
-                /*val fboId = rt.frameBufferId*/
-                if (fboId <= 0) {
-                    target = null
-                    rt.destroyBuffers()
-                    return false
-                }
-            }
-            val (b, colorFmt) = svc.makeOffscreenBRT(rt, w, h)
-            brt = b
-            val origin = if (SkiaCtx.isDeferredComposeBackend) SurfaceOrigin.TOP_LEFT else SurfaceOrigin.BOTTOM_LEFT
-            surface = Surface.makeFromBackendRenderTarget(
-                SkiaCtx.directContext, b, origin, colorFmt, ColorSpace.sRGB, null,
-            )
-            if (surface == null) {
-                b.close(); brt = null
-                return false
-            }
-            lastW = w; lastH = h
-            return true
-        } catch (t: Throwable) {
-            LOG.warn("Failed to create debug overlay offscreen target", t)
-            destroy()
-            return false
-        }
-    }
-
     private fun drawInto(canvas: org.jetbrains.skia.Canvas) {
         if (!hasContent) return
-        val s = surface ?: return
+        val s = offscreen.surface ?: return
         try {
             s.notifyContentWillChange(org.jetbrains.skia.ContentChangeMode.RETAIN)
             s.draw(canvas, 0, 0, blitPaint)
         } catch (t: Throwable) {
             LOG.debug("debug overlay blit failed", t)
         }
-    }
-
-    private fun destroy() {
-        surface?.close(); surface = null
-        brt?.close(); brt = null
-        target?.destroyBuffers(); target = null
-        lastW = -1; lastH = -1
-    }
-
-    fun invalidate() {
-        destroy()
-        hasContent = false
     }
 }

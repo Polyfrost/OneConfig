@@ -572,6 +572,7 @@ object SkiaCtx {
         }
         destroyHudTarget()
         destroyComposeTarget()
+        org.polyfrost.oneconfig.internal.ui.SkiaOffscreenTarget.destroyAll()
     }
 
     private fun flushToTarget(draws: List<() -> Unit>, surface: Surface, flipY: Boolean = false) {
@@ -762,6 +763,7 @@ object SkiaCtx {
         composeAllocFailedAt = System.currentTimeMillis()
         destroyComposeTarget()
         destroyHudTarget()
+        org.polyfrost.oneconfig.internal.ui.SkiaOffscreenTarget.destroyAll()
         if (isVulkanMode) invalidateVkSurfaces()
         runCatching { directContext.flush() }
         LOG.error("SkiaCtx: failed to allocate the {}x{} compose target; skipping compose frames", w, h, error)
