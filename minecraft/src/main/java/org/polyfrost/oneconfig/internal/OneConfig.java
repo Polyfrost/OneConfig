@@ -257,6 +257,7 @@ public class OneConfig
                     ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
                     org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar.register();
                     org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat.register();
+                    //? if wwaypoints_compat
                     org.polyfrost.oneconfig.internal.compat.WWaypointsCompat.register();
                     org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry.INSTANCE.loadFromConfig();
                 });

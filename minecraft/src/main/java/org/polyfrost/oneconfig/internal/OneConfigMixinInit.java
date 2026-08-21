@@ -162,12 +162,10 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("skia.Mixin_InitSkiaFontRenderer");
         mixins.add("skia.Mixin_FixComposeRaceCondition");
 
-        //? >= 1.21.10 {
+        //? if >= 1.21.10 {
         mixins.add("keybind.Mixin_KeybindCategoryLabel");
-        //? }
-        //? < 1.21.10 {
+        //?} else
         //mixins.add("keybind.KeyMappingCategoryAccessor");
-        //? }
 
         mixins.add("keybind.Mixin_OneConfigKeybindRebind");
         mixins.add("keybind.Mixin_KeyMappingResetDetect");
