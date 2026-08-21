@@ -14,17 +14,22 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.MinecraftKeybindBridge;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
+//? if > 1.8.9 {
 import org.polyfrost.oneconfig.internal.mixin.keybind.KeyMappingAccessor;
+//?} else
+//import org.polyfrost.oneconfig.internal.legacy.KeyCodes;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+//? if > 1.8.9 {
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
+//?}
 
 /**
  * Mirrors {@link OneConfigKeybind}s into Minecraft's native Controls menu
@@ -65,8 +70,11 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
     //?} else {
     /*private String categoryFor(String name) {
         String label = (name == null || name.isBlank()) ? "OneConfig" : name;
+        //? if > 1.8.9 {
         java.util.Map<String, Integer> order = org.polyfrost.oneconfig.internal.mixin.keybind.KeyMappingCategoryAccessor.oneconfig$categorySortOrder();
         if (!order.containsKey(label)) order.put(label, order.size());
+        //?} else
+        //KeyMapping.getCategories().add(label);
         return label;
     }
     *///?}
@@ -106,7 +114,10 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         KeyMapping mapping = detached(
             bind.getName(),
             type.getOrCreate(defSrc.getBoundCode()),
+            //? if > 1.8.9 {
             () -> new KeyMapping(bind.getName(), type, defSrc.getBoundCode(), categoryFor(bind.getCategory()))
+            //?} else
+            //() -> new KeyMapping(bind.getName(), KeyCodes.toLegacy(type.getOrCreate(defSrc.getBoundCode())), categoryFor(bind.getCategory()))
         );
         applyKeyTo(mapping, bind);
         mappings.put(bind, mapping);
@@ -132,6 +143,7 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private static KeyMapping detached(String name, InputConstants.Key defaultKey, java.util.function.Supplier<KeyMapping> constructor) {
+        //? if > 1.8.9 {
         Map all;
         Map map;
         Object priorNamed;
@@ -164,6 +176,23 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
             LOGGER.warn("Failed to detach the mirror of '{}' from Minecraft's keybind registries", name, t);
         }
         return mapping;
+        //?} else {
+        /*List all;
+        try {
+            all = org.polyfrost.oneconfig.internal.mixin.keybind.KeyMappingRegistryAccessor.oneconfig$all();
+        } catch (Throwable t) {
+            LOGGER.warn("Cannot reach Minecraft's keybind registries; OneConfig keybinds may shadow Minecraft ones", t);
+            return constructor.get();
+        }
+        KeyMapping mapping = constructor.get();
+        try {
+            all.remove(mapping);
+            KeyMapping.resetMapping();
+        } catch (Throwable t) {
+            LOGGER.warn("Failed to detach the mirror of '{}' from Minecraft's keybind registries", name, t);
+        }
+        return mapping;
+        *///?}
     }
 
     private static String identity(OneConfigKeybind bind) {
@@ -233,7 +262,10 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
             if (mouse != null) for (int m : mouse) set.add(MOUSE_TAG | m);
             set.add(MODS_TAG | (bind.getMods() & 0xFFL));
         } else {
+            //? if > 1.8.9 {
             InputConstants.Key key = ((KeyMappingAccessor) mapping).oneconfig$getKey();
+            //?} else
+            //InputConstants.Key key = KeyCodes.fromLegacy(mapping.getKeyCode());
             int v = key.getValue();
             if (v < 0) return null;
             set.add(key.getType() == InputConstants.Type.MOUSE ? (MOUSE_TAG | v) : (long) v);
@@ -361,6 +393,8 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         internalSetKey = true;
         try {
             mapping.setKey(key);
+            //? if = 1.8.9
+            //KeyMapping.resetMapping();
         } finally {
             internalSetKey = false;
         }
@@ -376,7 +410,10 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         synchronized (this) {
             for (Map.Entry<OneConfigKeybind, KeyMapping> e : mappings.entrySet()) {
                 OneConfigKeybind bind = e.getKey();
+                //? if > 1.8.9 {
                 InputConstants.Key actual = ((KeyMappingAccessor) e.getValue()).oneconfig$getKey();
+                //?} else
+                //InputConstants.Key actual = KeyCodes.fromLegacy(e.getValue().getKeyCode());
                 int actualValue = actual.getValue();
                 boolean actualMouse = actual.getType() == InputConstants.Type.MOUSE;
 
