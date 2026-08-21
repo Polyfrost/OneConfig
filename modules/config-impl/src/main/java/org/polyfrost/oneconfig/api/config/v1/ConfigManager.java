@@ -42,6 +42,7 @@ import org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerializer;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -59,6 +60,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import static org.polyfrost.oneconfig.api.config.v1.Tree.tree;
@@ -129,6 +131,10 @@ public final class ConfigManager {
     static {
         ObjectSerializer.INSTANCE.registerTypeAdapter(new PolyColorAdapter());
         registerCollector(new OneConfigCollector());
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            ConfigManager current = active;
+            if (current != null) current.onClose();
+        }, "OneConfig Config Save"));
     }
 
     final FileBackend backend;
@@ -343,10 +349,10 @@ public final class ConfigManager {
         internal().save("profiles.json");
         if (profile.isEmpty()) {
             LOGGER.info("opened config manager onto root (no profile)");
-            active = new ConfigManager(Paths.get("config"), core.backend.getSerializers().toArray(new FileSerializer[0])).withWatcher().withHook();
+            active = new ConfigManager(Paths.get("config"), core.backend.getSerializers().toArray(new FileSerializer[0])).withWatcher();
         } else {
             LOGGER.info("opening profile {}", profile);
-            active = new ConfigManager(PROFILES_DIR.resolve(profile), core.backend.getSerializers().toArray(new FileSerializer[0])).withHook().withWatcher();
+            active = new ConfigManager(PROFILES_DIR.resolve(profile), core.backend.getSerializers().toArray(new FileSerializer[0])).withWatcher();
         }
         boolean wasRebinding = REBINDING_PROFILES.get();
         REBINDING_PROFILES.set(Boolean.TRUE);
@@ -382,9 +388,11 @@ public final class ConfigManager {
         out.add("");
         try {
             Files.createDirectories(PROFILES_DIR);
+            importDroppedProfiles();
             try (Stream<Path> stream = Files.list(PROFILES_DIR)) {
                 stream.filter(Files::isDirectory)
                         .map(path -> path.getFileName().toString())
+                        .filter(fileName -> !fileName.startsWith("."))
                         .sorted(String.CASE_INSENSITIVE_ORDER)
                         .forEach(out::add);
             }
@@ -394,12 +402,87 @@ public final class ConfigManager {
         return Collections.unmodifiableList(out);
     }
 
+    private static void importDroppedProfiles() throws IOException {
+        List<Path> archives = new ArrayList<>();
+        try (Stream<Path> stream = Files.list(PROFILES_DIR)) {
+            stream.filter(path -> Files.isRegularFile(path) && path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".zip"))
+                    .forEach(archives::add);
+        }
+        for (Path archive : archives) importDroppedProfile(archive);
+    }
+
+    private static void importDroppedProfile(Path archive) {
+        String fileName = archive.getFileName().toString();
+        String name;
+        Path target;
+        try {
+            name = normalizeNewProfileName(fileName.substring(0, fileName.length() - ".zip".length()));
+            target = profilePath(name);
+        } catch (IllegalArgumentException e) {
+            LOGGER.warn("Ignoring profile archive with an invalid name: {}", fileName);
+            return;
+        }
+        if (Files.exists(target)) {
+            LOGGER.warn("Not importing {}: a profile named {} already exists", fileName, name);
+            return;
+        }
+        Path staging = null;
+        try {
+            staging = Files.createTempDirectory(PROFILES_DIR, ".oneconfig-import-");
+            unzip(archive, staging);
+            Files.move(unwrapArchiveFolder(staging, name), target);
+            Files.deleteIfExists(archive);
+            LOGGER.info("Imported profile {} from {}", name, fileName);
+        } catch (IOException | RuntimeException e) {
+            LOGGER.error("Failed to import profile archive: " + fileName, e);
+        } finally {
+            if (staging != null) {
+                try {
+                    deleteDirectory(staging);
+                } catch (IOException e) {
+                    LOGGER.warn("Failed to clean up after importing {}", fileName, e);
+                }
+            }
+        }
+    }
+
+    private static void unzip(Path archive, Path destination) throws IOException {
+        Path root = destination.toAbsolutePath().normalize();
+        try (ZipFile zip = new ZipFile(archive.toFile())) {
+            Enumeration<? extends ZipEntry> entries = zip.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                if (entry.getName().startsWith("__MACOSX/")) continue;
+                Path out = root.resolve(entry.getName()).normalize();
+                if (!out.startsWith(root)) throw new IOException("Archive entry escapes the profile: " + entry.getName());
+                if (entry.isDirectory()) {
+                    Files.createDirectories(out);
+                    continue;
+                }
+                Files.createDirectories(out.getParent());
+                try (InputStream in = zip.getInputStream(entry)) {
+                    Files.copy(in, out, StandardCopyOption.REPLACE_EXISTING);
+                }
+            }
+        }
+    }
+
+    private static Path unwrapArchiveFolder(Path staging, String name) throws IOException {
+        List<Path> children = new ArrayList<>();
+        try (Stream<Path> stream = Files.list(staging)) {
+            stream.forEach(children::add);
+        }
+        if (children.size() != 1) return staging;
+        Path only = children.get(0);
+        return Files.isDirectory(only) && only.getFileName().toString().equals(name) ? only : staging;
+    }
+
     public static void createProfile(String profile) {
         runProfileOperation(() -> createProfile0(profile));
     }
 
     private static void createProfile0(String profile) {
-        String name = normalizeProfileName(profile, false);
+        String name = normalizeNewProfileName(profile);
         Path path = profilePath(name);
         String previousProfile;
         synchronized (ConfigManager.class) {
@@ -447,7 +530,7 @@ public final class ConfigManager {
 
     private static void cloneProfile0(String profile, String newProfile) {
         profile = normalizeProfileName(profile, true);
-        String name = normalizeProfileName(newProfile, false);
+        String name = normalizeNewProfileName(newProfile);
         Path source = profileDir(profile);
         Path target = profilePath(name);
         Set<String> ownedSubdirs;
@@ -580,7 +663,7 @@ public final class ConfigManager {
 
     private static void renameProfile0(String profile, String newProfile) {
         profile = normalizeProfileName(profile, false);
-        newProfile = normalizeProfileName(newProfile, false);
+        newProfile = normalizeNewProfileName(newProfile);
         if (profile.equals(newProfile)) return;
         Path oldPath = profilePath(profile);
         Path newPath = profilePath(newProfile);
@@ -1026,6 +1109,14 @@ public final class ConfigManager {
         }
     }
 
+    private static String normalizeNewProfileName(String profile) {
+        String normalized = normalizeProfileName(profile, false);
+        if (normalized.indexOf('$') >= 0) {
+            throw new IllegalArgumentException("Profile names cannot contain '$'");
+        }
+        return normalized;
+    }
+
     private static String normalizeProfileName(String profile, boolean allowRoot) {
         String normalized = profile == null ? "" : profile.trim();
         if (normalized.isEmpty()) {
@@ -1205,12 +1296,6 @@ public final class ConfigManager {
         Tree t = collect(o, id);
         if (t == null) return null;
         return register(t).get();
-    }
-
-    private ConfigManager withHook() {
-        // a shutdown hook improves the reliability of saving when the game crashes
-        Runtime.getRuntime().addShutdownHook(new Thread(this::onClose));
-        return this;
     }
 
     private ConfigManager withWatcher() {

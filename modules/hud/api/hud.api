@@ -328,6 +328,7 @@ public abstract interface class org/polyfrost/oneconfig/api/hud/v1/OneConfigHudW
 	public fun onDragEnd ()V
 	public fun onDragStart ()V
 	public fun register ()V
+	public fun save ()V
 	public fun setHidden (Z)V
 	public abstract fun setId (Ljava/lang/String;)V
 	public abstract fun setName (Ljava/lang/String;)V
@@ -347,6 +348,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper$Defaul
 	public static fun onDragEnd (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)V
 	public static fun onDragStart (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)V
 	public static fun register (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)V
+	public static fun save (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)V
 	public static fun setHidden (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;Z)V
 }
 

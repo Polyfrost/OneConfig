@@ -44,7 +44,7 @@ object OdinCompat {
             runCatching { unbindRightShiftKeybinds() }
                 .onFailure { LOGGER.error("Failed to unbind conflicting Odin keybinds", it) }
             EventManager.register(HudEditorToggleEvent::class.java) { e ->
-                if (e.open) registerAll() else runCatching { ModuleManager.saveConfigurations() }
+                if (e.open) registerAll() else flush()
             }
             CompatOverlayRenderer.register(::renderExamples)
         }
@@ -105,6 +105,11 @@ object OdinCompat {
         }
     }
 
+    internal fun flush() {
+        runCatching { ModuleManager.saveConfigurations() }
+            .onFailure { LOGGER.error("Failed to save Odin config", it) }
+    }
+
     private fun registerAll() {
         for (setting in ArrayList(ModuleManager.hudSettingsCache)) {
             if (!setting.isEnabled) continue
@@ -150,6 +155,8 @@ private class OdinHudWrapper(private val setting: HUDSetting) : OneConfigHudWrap
         set(_) {}
 
     override fun linkedProperties(): List<Property<*>> = OdinSettingsAdapter.build(setting)
+
+    override fun save() = OdinCompat.flush()
 
     private companion object {
         fun buildId(setting: HUDSetting): String {

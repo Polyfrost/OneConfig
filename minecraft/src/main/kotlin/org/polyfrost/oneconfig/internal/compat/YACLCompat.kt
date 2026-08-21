@@ -365,7 +365,7 @@ object YACLCompat {
             val changed = runCatching { baseSetter(value) }
                 .onFailure { LOGGER.warn("Failed to write YACL option '$name'", it) }
                 .getOrDefault(false)
-            if (changed) ctx.pendFlags(resolveFlags(option))
+            if (changed) ctx.pendFlags(filterFlags(resolveFlags(option), option))
             ctx.revaluateDisplays()
         }
 
@@ -712,6 +712,26 @@ object YACLCompat {
             val available = runCatching { availableMethod.invoke(option) as? Boolean }.getOrNull() ?: true
             if (available) Property.Display.SHOWN else Property.Display.DISABLED
         }
+    }
+
+    private fun filterFlags(flags: Collection<Any>, option: Any): Collection<Any> {
+        if (flags.isEmpty() || !CompatSnapshots.isApplying()) return flags
+        val restart = gameRestartFlag(option::class.java.classLoader) ?: return flags
+        return flags.filter { it !== restart }
+    }
+
+    private var gameRestartFlag: Any? = null
+    private var gameRestartResolved = false
+
+    private fun gameRestartFlag(loader: ClassLoader?): Any? {
+        if (!gameRestartResolved) {
+            gameRestartResolved = true
+            gameRestartFlag = runCatching {
+                Class.forName("dev.isxander.yacl3.api.OptionFlag", false, loader)
+                    .getField("GAME_RESTART").get(null)
+            }.onFailure { LOGGER.debug("Could not resolve YACL GAME_RESTART flag", it) }.getOrNull()
+        }
+        return gameRestartFlag
     }
 
     private fun resolveFlags(option: Any): Collection<Any> {

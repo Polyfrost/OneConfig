@@ -66,11 +66,14 @@ object HudManager {
     private data class ProfileReload(
         val profile: String,
         val saveCurrent: Boolean,
+        val trees: Collection<Tree>? = null,
     )
     private val pendingProfileReload = AtomicReference<ProfileReload?>(null)
     private val profileChangeListener = object : ConfigManager.ProfileChangeListener {
         override fun onProfileChanged(newProfile: String) {
-            pendingProfileReload.set(ProfileReload(newProfile, saveCurrent = false))
+            pendingProfileReload.set(
+                ProfileReload(newProfile, saveCurrent = false, trees = gatherHudTrees())
+            )
             applyPendingProfileReload()
         }
     }
@@ -896,7 +899,7 @@ object HudManager {
             teardownForProfile(reload.profile)
             synchronized(ConfigManager::class.java) {
                 restoreProviderDefaults()
-                loadFromActiveProfile()
+                loadFromActiveProfile(reload.trees)
             }
             revision++
             invalidate()
@@ -917,8 +920,16 @@ object HudManager {
         )
     }
 
+    private fun gatherHudTrees(): Collection<Tree> = try {
+        ConfigManager.active().gatherAll("huds")
+    } catch (e: Throwable) {
+        if (e.isFatalHudFailure()) throw e
+        LOGGER.error("Failed to read HUDs from the active profile", e)
+        emptyList()
+    }
+
     @Suppress("UNCHECKED_CAST")
-    private fun loadFromActiveProfile() {
+    private fun loadFromActiveProfile(prefetched: Collection<Tree>? = null) {
         val now = System.nanoTime()
         val loader = HudManager::class.java.classLoader
         val used = HashSet<Class<Hud>>(hudProviders.size)
@@ -947,7 +958,7 @@ object HudManager {
 
         loadRegistry()
 
-        ConfigManager.active().gatherAll("huds").forEach { data ->
+        (prefetched ?: gatherHudTrees()).forEach { data ->
             var candidate: Hud? = null
             var providerClass: Class<Hud>? = null
             try {

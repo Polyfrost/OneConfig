@@ -9,6 +9,7 @@ import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -36,12 +37,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -106,6 +109,8 @@ private data class ProfileActionResult(
 )
 
 private val ProfileCardHeight = 180.dp
+private const val OverlayFrameTimeoutMs = 500L
+private val FavoriteStarColor = Color(0xFFFFD700)
 private enum class ProfileEditor { Rename, Clone, Icon }
 private val ProfileIconOptions = listOf(
     "profiles",
@@ -155,6 +160,7 @@ fun Profiles() {
             val ownerJob = scope.coroutineContext[Job]!!
             scope.launch(start = CoroutineStart.UNDISPATCHED) {
                 withContext(NonCancellable) {
+                    awaitOverlayDrawn()
                     val result = withContext(Dispatchers.IO) {
                         try {
                             action()
@@ -204,6 +210,7 @@ fun Profiles() {
             busy = true
             scope.launch(start = CoroutineStart.UNDISPATCHED) {
                 withContext(NonCancellable) {
+                    awaitOverlayDrawn()
                     val choice = try {
                         withContext(Dispatchers.IO) { prompt() }
                     } catch (failure: Throwable) {
@@ -228,146 +235,185 @@ fun Profiles() {
         onDispose { }
     }
 
-    Column(
-        verticalArrangement = Arrangement.spacedBy(19.dp)
-    ) {
-        val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
-        val categorizedProfiles = when (activeCategory) {
-            ProfileCategory.All -> profiles
-            ProfileCategory.Favorited -> profiles.filter { it.favorite }
-        }
-        val visibleProfiles = remember(categorizedProfiles, localSearchQuery) {
-            if (localSearchQuery.isBlank()) categorizedProfiles
-            else categorizedProfiles.filter { it.matchesSearch(localSearchQuery) }
-        }
-        val existingProfileIds = remember(profiles) { profiles.mapTo(HashSet()) { it.id.lowercase() } }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(19.dp)
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ProfileCategory.entries.forEach {
+            val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
+            val categorizedProfiles = when (activeCategory) {
+                ProfileCategory.All -> profiles
+                ProfileCategory.Favorited -> profiles.filter { it.favorite }
+            }
+            val visibleProfiles = remember(categorizedProfiles, localSearchQuery) {
+                if (localSearchQuery.isBlank()) categorizedProfiles
+                else categorizedProfiles.filter { it.matchesSearch(localSearchQuery) }
+            }
+            val existingProfileIds = remember(profiles) { profiles.mapTo(HashSet()) { it.id.lowercase() } }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ProfileCategory.entries.forEach {
+                        Chip(
+                            label = it.title,
+                            selected = activeCategory == it,
+                            icon = it.icon,
+                            onClick = { activeCategory = it }
+                        )
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Chip(
-                        label = it.title,
-                        selected = activeCategory == it,
-                        icon = it.icon,
-                        onClick = { activeCategory = it }
+                        label = "Separate controls",
+                        selected = profileSpecificControls,
+                        icon = "keyboard",
+                        onClick = {
+                            val enabled = !profileSpecificControls
+                            runProfileAction(onSuccess = { profileSpecificControls = enabled }) {
+                                ConfigManager.setProfileSpecificControls(enabled)
+                            }
+                        },
+                    )
+                    Chip(
+                        label = "Open folder",
+                        selected = false,
+                        icon = "folder",
+                        onClick = {
+                            scope.launch(Dispatchers.IO) {
+                                runCatching {
+                                    Files.createDirectories(ConfigManager.PROFILES_DIR)
+                                    DesktopHelper.open(ConfigManager.PROFILES_DIR.toFile())
+                                }.onFailure {
+                                    Notifications.error("Could not open the profiles folder", it.messageOrType())
+                                }
+                            }
+                        },
                     )
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Chip(
-                    label = "Separate controls",
-                    selected = profileSpecificControls,
-                    icon = "keyboard",
-                    onClick = {
-                        val enabled = !profileSpecificControls
-                        runProfileAction(onSuccess = { profileSpecificControls = enabled }) {
-                            ConfigManager.setProfileSpecificControls(enabled)
-                        }
-                    },
-                )
-                Chip(
-                    label = "Open folder",
-                    selected = false,
-                    icon = "folder",
-                    onClick = {
-                        scope.launch(Dispatchers.IO) {
-                            runCatching {
-                                Files.createDirectories(ConfigManager.PROFILES_DIR)
-                                DesktopHelper.open(ConfigManager.PROFILES_DIR.toFile())
-                            }.onFailure {
-                                Notifications.error("Could not open the profiles folder", it.messageOrType())
-                            }
-                        }
-                    },
-                )
-            }
-        }
 
-        ProfilesGrid(
-            profiles = visibleProfiles,
-            existingProfileIds = existingProfileIds,
-            showCreateProfile = activeCategory == ProfileCategory.All && localSearchQuery.isBlank(),
-            emptyMessage = if (localSearchQuery.isBlank()) "No favorite profiles."
-                else "No profiles match \"$localSearchQuery\"",
-            newProfileName = newProfileName,
-            createError = createError,
-            busy = busy,
-            createTick = createTick,
-            onNewProfileNameChange = {
-                newProfileName = it
-                createError = null
-            },
-            onCreateProfile = {
-                val profileName = newProfileName
-                runProfileAction(onSuccess = {
-                    newProfileName = ""
+            ProfilesGrid(
+                profiles = visibleProfiles,
+                existingProfileIds = existingProfileIds,
+                showCreateProfile = activeCategory == ProfileCategory.All && localSearchQuery.isBlank(),
+                emptyMessage = if (localSearchQuery.isBlank()) "No favorite profiles."
+                    else "No profiles match \"$localSearchQuery\"",
+                newProfileName = newProfileName,
+                createError = createError,
+                busy = busy,
+                createTick = createTick,
+                onNewProfileNameChange = {
+                    newProfileName = it
                     createError = null
-                    createTick++
-                }, onError = { createError = it }) {
-                    ConfigManager.createProfile(profileName)
+                },
+                onCreateProfile = {
+                    val profileName = newProfileName
+                    runProfileAction(onSuccess = {
+                        newProfileName = ""
+                        createError = null
+                        createTick++
+                    }, onError = { createError = it }) {
+                        ConfigManager.createProfile(profileName)
+                    }
+                },
+                onOpen = { profile ->
+                    if (!profile.active) {
+                        runProfileAction { ConfigManager.openProfile(profile.id) }
+                    }
+                },
+                onFavorite = { profile ->
+                    runProfileAction { ConfigManager.setFavoriteProfile(profile.id, !profile.favorite) }
+                },
+                onRename = { profile, newName, onSuccess, onError ->
+                    runProfileAction(onSuccess, onError) {
+                        ConfigManager.renameProfile(profile.id, newName)
+                    }
+                },
+                onClone = { profile, newName, onSuccess, onError ->
+                    runProfileAction(onSuccess, onError) {
+                        ConfigManager.cloneProfile(profile.id, newName)
+                    }
+                },
+                onIconChange = { profile, icon, onSuccess, onError ->
+                    runProfileAction(onSuccess, onError) { ConfigManager.setProfileIcon(profile.id, icon) }
+                },
+                onDelete = { profile ->
+                    runProfileDialog(
+                        prompt = {
+                            TinyFdApi.getInstance().showMessageBox(
+                                "Delete profile",
+                                "Delete ${profile.name}? This cannot be undone.",
+                                TinyFdApi.YES_NO_DIALOG,
+                                TinyFdApi.WARNING_ICON,
+                                false,
+                            ).takeIf { it }
+                        },
+                        action = { ConfigManager.deleteProfile(profile.id) },
+                    )
+                },
+                onExport = { profile ->
+                    runProfileDialog(
+                        prompt = {
+                            val defaultName = profile.name.replace(Regex("[^a-zA-Z0-9._-]"), "_") + ".zip"
+                            TinyFdApi.getInstance().openSaveSelector(
+                                "Export profile",
+                                defaultName,
+                                arrayOf("*.zip"),
+                                "Zip archive",
+                            )
+                        },
+                        action = { destination ->
+                            val archive = if (destination.fileName.toString().endsWith(".zip", ignoreCase = true)) {
+                                destination
+                            } else {
+                                destination.resolveSibling(destination.fileName.toString() + ".zip")
+                            }
+                            ConfigManager.exportProfile(profile.id, archive)
+                        },
+                    )
                 }
-            },
-            onOpen = { profile ->
-                if (!profile.active) {
-                    runProfileAction { ConfigManager.openProfile(profile.id) }
-                }
-            },
-            onFavorite = { profile ->
-                runProfileAction { ConfigManager.setFavoriteProfile(profile.id, !profile.favorite) }
-            },
-            onRename = { profile, newName, onSuccess, onError ->
-                runProfileAction(onSuccess, onError) {
-                    ConfigManager.renameProfile(profile.id, newName)
-                }
-            },
-            onClone = { profile, newName, onSuccess, onError ->
-                runProfileAction(onSuccess, onError) {
-                    ConfigManager.cloneProfile(profile.id, newName)
-                }
-            },
-            onIconChange = { profile, icon, onSuccess, onError ->
-                runProfileAction(onSuccess, onError) { ConfigManager.setProfileIcon(profile.id, icon) }
-            },
-            onDelete = { profile ->
-                runProfileDialog(
-                    prompt = {
-                        TinyFdApi.getInstance().showMessageBox(
-                            "Delete profile",
-                            "Delete ${profile.name}? This cannot be undone.",
-                            TinyFdApi.YES_NO_DIALOG,
-                            TinyFdApi.WARNING_ICON,
-                            false,
-                        ).takeIf { it }
-                    },
-                    action = { ConfigManager.deleteProfile(profile.id) },
-                )
-            },
-            onExport = { profile ->
-                runProfileDialog(
-                    prompt = {
-                        val defaultName = profile.name.replace(Regex("[^a-zA-Z0-9._-]"), "_") + ".zip"
-                        TinyFdApi.getInstance().openSaveSelector(
-                            "Export profile",
-                            defaultName,
-                            arrayOf("*.zip"),
-                            "Zip archive",
-                        )
-                    },
-                    action = { destination ->
-                        val archive = if (destination.fileName.toString().endsWith(".zip", ignoreCase = true)) {
-                            destination
-                        } else {
-                            destination.resolveSibling(destination.fileName.toString() + ".zip")
-                        }
-                        ConfigManager.exportProfile(profile.id, archive)
-                    },
-                )
-            }
-        )
+            )
+        }
+        if (busy) ProfileBusyOverlay()
+    }
+}
+
+private suspend fun awaitOverlayDrawn() {
+    withTimeoutOrNull(OverlayFrameTimeoutMs) {
+        withFrameNanos { }
+        withFrameNanos { }
+    }
+}
+
+@Composable
+private fun BoxScope.ProfileBusyOverlay() {
+    val theme = LocalTheme.current
+    Box(
+        modifier = Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.55f)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            modifier = Modifier
+                .background(theme.modCardBackground, theme.modCardShape)
+                .padding(horizontal = 32.dp, vertical = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(
+                "Applying profile changes\u2026",
+                color = theme.textColor,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            Text(
+                "The game will stop responding until it finishes.",
+                color = theme.textColorSecondary,
+                fontSize = 14.sp,
+            )
+        }
     }
 }
 
@@ -740,9 +786,14 @@ private fun ProfileCard(
                     ActionIcon("tick", enabled = !busy, tint = Accent, onClick = ::submitName)
                 }
                 ActionIcon("close", enabled = !busy, tint = theme.textColorSecondary, onClick = ::closeEditor)
-            } else if (profile.active || isHovered || menuOpen) {
-                ActionIcon("settings", enabled = !busy, tint = theme.textColorSecondary, hoveredTint = Accent) {
-                    onMenuOpenChange(true)
+            } else {
+                if (profile.favorite) {
+                    ActionIcon("star-filled", enabled = !busy, tint = FavoriteStarColor) { onFavorite() }
+                }
+                if (profile.active || isHovered || menuOpen) {
+                    ActionIcon("settings", enabled = !busy, tint = theme.textColorSecondary, hoveredTint = Accent) {
+                        onMenuOpenChange(true)
+                    }
                 }
             }
         }
@@ -879,7 +930,7 @@ private fun ProfileActionsMenu(
                 onDismiss()
                 onFavorite()
             }
-            ProfileMenuItem("cloud", "Export / share", enabled = enabled) {
+            ProfileMenuItem("down", "Export / share", enabled = enabled) {
                 onDismiss()
                 onExport()
             }

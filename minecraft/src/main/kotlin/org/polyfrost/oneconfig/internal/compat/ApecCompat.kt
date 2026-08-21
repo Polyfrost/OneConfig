@@ -126,6 +126,11 @@ object ApecCompat {
         if (!registering) dirty = true
     }
 
+    internal fun flush() {
+        markDirty()
+        save()
+    }
+
     internal fun element(type: ElementType): Element? =
         runCatching { Apec.apecMenu?.getGuiComponent<Element>(type) }.getOrNull()
 
@@ -241,6 +246,8 @@ private class ApecElementWrapper(private val type: ElementType) : OneConfigHudWr
         set(_) {}
 
     override fun linkedProperties(): List<Property<*>> = ApecCompat.buildSettings(type)
+
+    override fun save() = ApecCompat.flush()
 
     private fun topLeft(element: Element): Vector2f {
         val anchor = element.currentAnchorPoint

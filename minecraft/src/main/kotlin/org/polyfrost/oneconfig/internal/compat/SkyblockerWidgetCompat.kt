@@ -98,6 +98,7 @@ object SkyblockerWidgetCompat {
             visibleIds = emptySet()
             return
         }
+        applyDeferred()
         val window = Minecraft.getInstance().window ?: return
         val scale = tabHudScale()
         if (scale <= 0f) return
@@ -129,6 +130,23 @@ object SkyblockerWidgetCompat {
 
     internal fun markDirty() {
         dirty = true
+    }
+
+    internal fun flush() {
+        markDirty()
+        save()
+    }
+
+    private val deferred = LinkedHashSet<SkyblockerWidgetWrapper>()
+
+    internal fun defer(wrapper: SkyblockerWidgetWrapper) {
+        deferred.add(wrapper)
+    }
+
+    private fun applyDeferred() {
+        if (deferred.isEmpty()) return
+        deferred.removeAll { it.applyDeferredPosition() }
+        save()
     }
 
     private fun save() {
@@ -169,20 +187,44 @@ object SkyblockerWidgetCompat {
     }
 }
 
-private class SkyblockerWidgetWrapper(private val widget: HudWidget) : OneConfigHudWrapper {
+internal class SkyblockerWidgetWrapper(private val widget: HudWidget) : OneConfigHudWrapper {
     override var id: String = "skyblocker_widget_${SkyblockerWidgetCompat.sanitize(widget.internalID)}"
 
     override var name: String = SkyblockerWidgetCompat.displayName(widget)
 
     override val modId: String = "skyblocker"
 
+    private var deferredX: Float? = null
+    private var deferredY: Float? = null
+
     override var x: Float
-        get() = widget.x * SkyblockerWidgetCompat.tabHudScale()
-        set(value) = move(value, null)
+        get() = deferredX ?: (widget.x * SkyblockerWidgetCompat.tabHudScale())
+        set(value) = place(value, null)
 
     override var y: Float
-        get() = widget.y * SkyblockerWidgetCompat.tabHudScale()
-        set(value) = move(null, value)
+        get() = deferredY ?: (widget.y * SkyblockerWidgetCompat.tabHudScale())
+        set(value) = place(null, value)
+
+    private fun place(targetX: Float?, targetY: Float?) {
+        if (move(targetX, targetY)) {
+            if (targetX != null) deferredX = null
+            if (targetY != null) deferredY = null
+            return
+        }
+        if (targetX != null) deferredX = targetX
+        if (targetY != null) deferredY = targetY
+        SkyblockerWidgetCompat.defer(this)
+    }
+
+    internal fun applyDeferredPosition(): Boolean {
+        val pendingX = deferredX
+        val pendingY = deferredY
+        if (pendingX == null && pendingY == null) return true
+        if (!move(pendingX, pendingY)) return false
+        deferredX = null
+        deferredY = null
+        return true
+    }
 
     // Skyblocker scales every widget together via its own 'Tab HUD Scale' option so nothing per-widget exists to expose
     override var scale: Float
@@ -209,18 +251,20 @@ private class SkyblockerWidgetWrapper(private val widget: HudWidget) : OneConfig
 
     override fun linkedProperties(): List<Property<*>> = SkyblockerWidgetCompat.buildSettings(widget)
 
+    override fun save() = SkyblockerWidgetCompat.flush()
+
     /**
      * Rewrites the widget's [PositionRule] to the requested screen position keeping its existing
      * parent/anchor/layer so moving a parent still drags its children along like Skyblocker's own editor
      */
-    private fun move(targetX: Float?, targetY: Float?) {
+    private fun move(targetX: Float?, targetY: Float?): Boolean {
         // position rules are per-location so writing before the player is on Skyblock would pin the widget
         // in Location.UNKNOWN
         // Skyblocker owns these positions so only mirror edits back once a real location is known
-        if (!Utils.isOnSkyblock()) return
+        if (!Utils.isOnSkyblock()) return false
         val scale = SkyblockerWidgetCompat.tabHudScale()
-        if (scale <= 0f) return
-        val builder = SkyblockerWidgetCompat.builder() ?: return
+        if (scale <= 0f) return false
+        val builder = SkyblockerWidgetCompat.builder() ?: return false
         val internalID = widget.internalID
         val current = builder.getPositionRule(internalID)
 
@@ -257,6 +301,7 @@ private class SkyblockerWidgetWrapper(private val widget: HudWidget) : OneConfig
         // which keeps the getters and hence the delta above exact for the rest of this frame's edits
         widget.x = newX
         widget.y = newY
+        return true
     }
 }
 //? }

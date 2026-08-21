@@ -88,6 +88,11 @@ object SkyblockerCompat {
         dirty = true
     }
 
+    internal fun flush() {
+        markDirty()
+        save()
+    }
+
     private fun save() {
         if (!dirty) return
         dirty = false
@@ -480,5 +485,7 @@ private class SkyblockerBarWrapper(private val type: StatusBarType) : OneConfigH
     }
 
     override fun linkedProperties(): List<Property<*>> = SkyblockerCompat.buildSettings(type)
+
+    override fun save() = SkyblockerCompat.flush()
 }
 //? }

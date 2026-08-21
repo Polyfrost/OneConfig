@@ -64,13 +64,15 @@ object StellaCompat {
 
         EventManager.register(HudEditorToggleEvent::class.java, Consumer { event ->
             HUDManager.shouldRenderHuds = !event.open
-            if (!event.open) {
-                runCatching { HUDManager.saveAllLayouts() }
-                    .onFailure { LOGGER.warn("Failed to save Stella HUD layouts", it) }
-                runCatching { config.save() }
-                    .onFailure { LOGGER.warn("Failed to save Stella config", it) }
-            }
+            if (!event.open) flush()
         })
+    }
+
+    private fun flush() {
+        runCatching { HUDManager.saveAllLayouts() }
+            .onFailure { LOGGER.warn("Failed to save Stella HUD layouts", it) }
+        runCatching { config.save() }
+            .onFailure { LOGGER.warn("Failed to save Stella config", it) }
     }
 
     private fun revaluateDisplays() {
@@ -249,6 +251,8 @@ object StellaCompat {
             set(_) {}
 
         override fun linkedProperties(): List<Property<*>> = buildHudProperties(element)
+
+        override fun save() = flush()
     }
 
     private fun addHuds() {
