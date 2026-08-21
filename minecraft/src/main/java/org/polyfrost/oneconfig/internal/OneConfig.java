@@ -57,7 +57,6 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsRenderer;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
-import org.polyfrost.oneconfig.api.ui.v1.internal.BlurHandler;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindHelper;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
@@ -346,7 +345,6 @@ public class OneConfig
                 .orElse(null);
         String v = self == null ? "LOCAL" : self.getVersion();
         LOGGER.info("Loading OneConfig v{}", v);
-        BlurHandler.init();
         McFontService.INSTANCE.init();
         ThirdPartyModCategories.INSTANCE.init();
         // force class-load so the hello/disconnect handlers are armed before joining any server

@@ -52,9 +52,6 @@ stonecutter {
             string(eval(current.version, ">= 26.2"), "main_render_target") {
                 replace("mainRenderTarget", "gameRenderer.mainRenderTarget()")
             }
-            string(eval(current.version, ">= 1.21.11"), "identifier") {
-                replace("ResourceLocation", "Identifier")
-            }
             regex(eval(current.version, "< 1.21.11")) {
                 replace(
                     "import net.minecraft.resources.Identifier(?!;)",
