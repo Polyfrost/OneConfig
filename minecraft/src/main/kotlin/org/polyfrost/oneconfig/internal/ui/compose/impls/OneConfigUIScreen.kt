@@ -200,6 +200,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         SkiaCtx.suppressInGameHudRender = false
         HudManager.overrideShowInScreens = false
         HudManager.isConfigUiOpen = false
+        org.polyfrost.oneconfig.internal.ui.SkiaOffscreenTarget.destroyAll()
         UiSounds.releaseAmbience()
         // writing every registered tree hitches and Minecraft only re-grabs the cursor once this returns
         SAVE_EXECUTOR.execute {

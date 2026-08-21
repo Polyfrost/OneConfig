@@ -74,7 +74,6 @@ object DebugOverlayOffscreen {
             LOG.warn("Debug overlay offscreen render failed; disabling", t)
             failed = true
             capturing = false
-            //? if >= 1.21.5
             GuiTargetRedirect.target = null
         }
     }
@@ -97,7 +96,7 @@ object DebugOverlayOffscreen {
             capturing = false
         }
 
-        clearTarget(rt)
+        offscreen.clearTarget()
 
         val prevState = accessor.`oneconfig$getRenderState`()
         GuiTargetRedirect.target = rt
@@ -118,7 +117,7 @@ object DebugOverlayOffscreen {
     //? } else if >= 1.21.5 {
     /*private fun renderImmediate(rt: RenderTarget) {
         val graphics = GuiGraphicsExtractor(client, client.renderBuffers().bufferSource())
-        clearTarget(rt)
+        offscreen.clearTarget()
         capturing = true
         GuiTargetRedirect.target = rt
         try {
@@ -132,7 +131,7 @@ object DebugOverlayOffscreen {
     *///? } else {
     /*private fun renderImmediateLegacy(rt: RenderTarget) {
         val graphics = GuiGraphicsExtractor(client, client.renderBuffers().bufferSource())
-        clearTarget(rt)
+        offscreen.clearTarget()
         capturing = true
         GuiTargetRedirect.target = rt
         try {
@@ -146,22 +145,6 @@ object DebugOverlayOffscreen {
         }
     }
     *///? }
-
-    private fun clearTarget(rt: RenderTarget) {
-        //? if >= 26.2 {
-        val colorTex = rt.colorTexture ?: return
-        com.mojang.blaze3d.systems.RenderSystem.getDevice().createCommandEncoder()
-            .clearColorTexture(colorTex, org.joml.Vector4f(0f, 0f, 0f, 0f))
-        //? } else if >= 1.21.5 {
-        /*val colorTex = rt.colorTexture ?: return
-        com.mojang.blaze3d.systems.RenderSystem.getDevice().createCommandEncoder()
-            .clearColorTexture(colorTex, 0)
-        *///? } else if >= 1.21.4 {
-        /*rt.clear()
-        *///? } else {
-        /*rt.clear(Minecraft.ON_OSX)
-        *///? }
-    }
 
     private fun drawInto(canvas: org.jetbrains.skia.Canvas) {
         if (!hasContent) return

@@ -184,10 +184,9 @@ public class OneConfig
         HudManager.targetPixelHeight = Platform.screen().viewportHeight();
 
         //~ if < 1.21.8 '.suppressInGameHudRender' -> '.shouldSuppressInGameHudRender()'
-        if (!SkiaCtx.INSTANCE.suppressInGameHudRender) {
+        boolean hudRendersLive = !SkiaCtx.INSTANCE.suppressInGameHudRender;
+        if (hudRendersLive || !org.polyfrost.oneconfig.internal.ui.hud.LegacyHudOffscreen.INSTANCE.render()) {
             LegacyHudRenderer.INSTANCE.renderLive(graphics);
-        } else {
-            org.polyfrost.oneconfig.internal.ui.hud.LegacyHudOffscreen.INSTANCE.render();
         }
         // records the F3 overlay offscreen so Skia can put it above the Compose UI instead of below the
         // blur and it must run every frame regardless of the HUD dirty gate
