@@ -105,7 +105,7 @@ internal object HudBackgroundMerge {
         }
     }
 
-    fun computeGroups(huds: List<Hud>): List<Group> {
+    fun computeGroups(huds: List<Hud>, refWidth: Float, refHeight: Float): List<Group> {
         val items = ArrayList<Item>(huds.size)
         for (hud in huds) {
             if (hud is LegacyHudMarker) continue
@@ -115,7 +115,12 @@ internal object HudBackgroundMerge {
             val w = hud.renderedW
             val h = hud.renderedH
             if (w <= 0f || h <= 0f) continue
-            items.add(Item(hud, hud.x, hud.y, w, h, hud.bgRadius * hud.effectiveScale))
+            items.add(
+                Item(
+                    hud, hud.x, hud.y, w, h, hud.bgRadius * hud.effectiveScale,
+                    hud.layoutX(refWidth), hud.layoutY(refHeight),
+                )
+            )
         }
         if (items.size < 2) return emptyList()
 
@@ -284,9 +289,21 @@ internal object HudBackgroundMerge {
         }
     }
 
-    private class Item(val hud: Hud, var x: Float, var y: Float, var w: Float, var h: Float, val radius: Float) {
+    private class Item(
+        val hud: Hud,
+        var x: Float,
+        var y: Float,
+        var w: Float,
+        var h: Float,
+        val radius: Float,
+        val layoutX: Float,
+        val layoutY: Float,
+    ) {
         val right get() = x + w
         val bottom get() = y + h
+
+        val layoutRight get() = layoutX + w
+        val layoutBottom get() = layoutY + h
 
         fun sameStyle(other: Item): Boolean =
             hud.bgColor == other.hud.bgColor && hud.bgChroma == other.hud.bgChroma &&
@@ -295,15 +312,23 @@ internal object HudBackgroundMerge {
     }
 
     private fun contactPins(a: Item, b: Item): Int {
-        val sharesRow = overlap(a.y, a.bottom, b.y, b.bottom) >= MIN_OVERLAP
-        val sharesColumn = overlap(a.x, a.right, b.x, b.right) >= MIN_OVERLAP
-        val stacked = abs(a.bottom - b.y) <= TOUCH_TOLERANCE || abs(b.bottom - a.y) <= TOUCH_TOLERANCE
-        val sideBySide = abs(a.right - b.x) <= TOUCH_TOLERANCE || abs(b.right - a.x) <= TOUCH_TOLERANCE
+        val ay = a.layoutY
+        val by = b.layoutY
+        val ax = a.layoutX
+        val bx = b.layoutX
+        val aBottom = a.layoutBottom
+        val bBottom = b.layoutBottom
+        val aRight = a.layoutRight
+        val bRight = b.layoutRight
+        val sharesRow = overlap(ay, aBottom, by, bBottom) >= MIN_OVERLAP
+        val sharesColumn = overlap(ax, aRight, bx, bRight) >= MIN_OVERLAP
+        val stacked = abs(aBottom - by) <= TOUCH_TOLERANCE || abs(bBottom - ay) <= TOUCH_TOLERANCE
+        val sideBySide = abs(aRight - bx) <= TOUCH_TOLERANCE || abs(bRight - ax) <= TOUCH_TOLERANCE
         val stackedOnTop = stacked && sharesColumn
         val rowNeighbours = sideBySide && sharesRow
         when {
-            stackedOnTop -> if (nests(a.x, a.right, b.x, b.right)) return PIN_Y
-            rowNeighbours -> if (nests(a.y, a.bottom, b.y, b.bottom)) return PIN_X
+            stackedOnTop -> if (nests(ax, aRight, bx, bRight)) return PIN_Y
+            rowNeighbours -> if (nests(ay, aBottom, by, bBottom)) return PIN_X
         }
         if (!stackedOnTop && !rowNeighbours && !(stacked && sideBySide)) return 0
         if (!a.hud.mergeDiagonally || !b.hud.mergeDiagonally) return 0

@@ -59,6 +59,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getGrowthAnchor ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public fun getHidden ()Z
 	public final fun getKeepBgWhenHidden ()Z
+	public final fun getLayoutRefH ()F
+	public final fun getLayoutRefW ()F
 	public fun getLocked ()Z
 	public final fun getMergeBackground ()Z
 	public final fun getMergeDiagonally ()Z
@@ -67,6 +69,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getPadRight ()F
 	public final fun getPadTop ()F
 	public final fun getPoppinsFontName ()Ljava/lang/String;
+	public final fun getPosSchema ()I
 	public fun getRelativeX ()F
 	public fun getRelativeY ()F
 	public fun getRenderedH ()F
@@ -143,6 +146,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setGrowthAnchorKeepingPosition (Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)V
 	public fun setHidden (Z)V
 	public final fun setKeepBgWhenHidden (Z)V
+	public final fun setLayoutRefH (F)V
+	public final fun setLayoutRefW (F)V
 	public fun setLocked (Z)V
 	public final fun setMergeBackground (Z)V
 	public final fun setMergeDiagonally (Z)V
@@ -150,6 +155,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setPadLeft (F)V
 	public final fun setPadRight (F)V
 	public final fun setPadTop (F)V
+	public final fun setPosSchema (I)V
 	public fun setRelativeX (F)V
 	public fun setRelativeY (F)V
 	public fun setRenderedH (F)V
@@ -251,6 +257,8 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static field isGuiHidden Z
 	public static field isGuiScreenOpen Z
 	public static field isTabListVisible Z
+	public static field layoutRefHeight F
+	public static field layoutRefWidth F
 	public static field masterHudEnabled Z
 	public static field overrideShowInScreens Z
 	public static field pendingAdd Lorg/polyfrost/oneconfig/api/hud/v1/Hud;

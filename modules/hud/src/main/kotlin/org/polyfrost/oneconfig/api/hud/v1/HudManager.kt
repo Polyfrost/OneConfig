@@ -101,6 +101,24 @@ object HudManager {
     @Volatile @JvmField var guiScreenWidth: Float = 960f
     @Volatile @JvmField var guiScreenHeight: Float = 540f
 
+    @ApiStatus.Internal
+    @Volatile @JvmField var layoutRefWidth: Float = 0f
+
+    @ApiStatus.Internal
+    @Volatile @JvmField var layoutRefHeight: Float = 0f
+
+    @Volatile private var loadingLayout = false
+
+    @Volatile @JvmField internal var systemReposition = false
+
+    internal fun noteLayoutArranged() {
+        if (loadingLayout || systemReposition) return
+        val w = guiScreenWidth
+        val h = guiScreenHeight
+        if (w > 0f) layoutRefWidth = w
+        if (h > 0f) layoutRefHeight = h
+    }
+
     @Volatile @JvmField var isDebugScreenVisible: Boolean = false
     @Volatile @JvmField var isTabListVisible: Boolean = false
     @Volatile @JvmField var isGuiScreenOpen: Boolean = false
@@ -534,6 +552,7 @@ object HudManager {
     @ApiStatus.Internal
     fun beginFrame(screenWidth: Float, screenHeight: Float): Boolean {
         drainProfileReload()
+        migratePositions(screenWidth, screenHeight)
         val scale = Platform.compatibility().options().guiScale
 
         frameId++
@@ -591,7 +610,9 @@ object HudManager {
         invalidate()
 
         val mergeable = if (mergeExclusions.isEmpty()) huds else huds.filter { hud -> !isMergeExcluded(hud) }
-        frameGroups = HudBackgroundMerge.computeGroups(mergeable)
+        val refW = if (layoutRefWidth > 0f) layoutRefWidth else screenWidth
+        val refH = if (layoutRefHeight > 0f) layoutRefHeight else screenHeight
+        frameGroups = HudBackgroundMerge.computeGroups(mergeable, refW, refH)
         val merged = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Hud, Boolean>())
         for (group in frameGroups) merged.addAll(group.huds)
         updateMergeLinks()
@@ -748,6 +769,7 @@ object HudManager {
     @ApiStatus.Internal
     fun prepare(screenWidth: Float, screenHeight: Float) {
         drainProfileReload()
+        migratePositions(screenWidth, screenHeight)
         val scale = Platform.compatibility().options().guiScale
         Snapshot.sendApplyNotifications()
         frameId++
@@ -770,6 +792,7 @@ object HudManager {
         val prepared = preparedFrameValid
         preparedFrameValid = false
         if (!prepared) {
+            migratePositions(screenWidth, screenHeight)
             Snapshot.sendApplyNotifications()
             frameId++
             collectFrameOrder()
@@ -930,9 +953,39 @@ object HudManager {
         emptyList()
     }
 
+    private fun migratePositions(screenWidth: Float, screenHeight: Float) {
+        if (screenWidth <= 0f || screenHeight <= 0f) return
+        val gridW = screenWidth / GRID_SIZE
+        val gridH = screenHeight / GRID_SIZE
+        var migrated = false
+        for (hud in activeInstances) {
+            if (hud.posSchema >= POS_SCHEMA) continue
+            hud.relativeX *= gridW
+            hud.relativeY *= gridH
+            hud.posSchema = POS_SCHEMA
+            migrated = true
+        }
+        if (!migrated) return
+        layoutRefWidth = screenWidth
+        layoutRefHeight = screenHeight
+        invalidate()
+    }
+
     @Suppress("UNCHECKED_CAST")
     private fun loadFromActiveProfile(prefetched: Collection<Tree>? = null) {
         val now = System.nanoTime()
+        loadingLayout = true
+        layoutRefWidth = 0f
+        layoutRefHeight = 0f
+        try {
+            loadHuds(now, prefetched)
+        } finally {
+            loadingLayout = false
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun loadHuds(now: Long, prefetched: Collection<Tree>?) {
         val loader = HudManager::class.java.classLoader
         val used = HashSet<Class<Hud>>(hudProviders.size)
         val failedProviders = HashSet<Class<Hud>>()
@@ -974,13 +1027,17 @@ object HudManager {
                 // A previous HUD instance may still own this ID when the same backend is reloaded.
                 // Drop only the in-memory binding; make() will load the unchanged file into the new HUD.
                 ConfigManager.active().unregister(data.id)
+                val savedSchema = data.getProp("posSchema")?.getAs<Number?>()?.toInt() ?: 0
                 val hud = h.make(data)
                 candidate = hud
                 val sec = data.getProp("section")?.getAs<Section?>()
                 if (sec != null) {
                     hud.section = sec
-                    hud.relativeX = data.getProp("relativeX")?.getAs<Number?>()?.toFloat() ?: 0f
-                    hud.relativeY = data.getProp("relativeY")?.getAs<Number?>()?.toFloat() ?: 0f
+                    val rx = data.getProp("relativeX")?.getAs<Number?>()?.toFloat() ?: 0f
+                    val ry = data.getProp("relativeY")?.getAs<Number?>()?.toFloat() ?: 0f
+                    hud.relativeX = rx
+                    hud.relativeY = ry
+                    hud.posSchema = savedSchema
                 } else {
                     val absX = data.getProp("x")?.getAs<Number?>()?.toFloat() ?: 0f
                     val absY = data.getProp("y")?.getAs<Number?>()?.toFloat() ?: 0f

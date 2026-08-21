@@ -101,10 +101,14 @@ enum class HudAnchor {
     }
 }
 
-private const val GRID_SIZE = 3
+internal const val GRID_SIZE = 3
 
 /** Backstop for walking a chain of HUDs anchored to one another */
 private const val MAX_ANCHOR_DEPTH = 16
+
+private const val MIN_VISIBLE = 12f
+
+internal const val POS_SCHEMA = 1
 
 @Suppress("EqualsOrHashCode", "UnstableApiUsage")
 abstract class Hud(id: String, title: String, val category: Category) : Cloneable, Config(id, null, title, null) {
@@ -235,13 +239,29 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         val curSection = section
         val curX = relativeX
         val curY = relativeY
-        setAbsolutePosition(dx, dy)
-        t.getProp("section")?.addMetadata("default", section)
-        t.getProp("relativeX")?.addMetadata("default", relativeX)
-        t.getProp("relativeY")?.addMetadata("default", relativeY)
+        val curSchema = posSchema
+        val curOffX = anchorOffsetX
+        val curOffY = anchorOffsetY
+        val curLinkX = mergeLinkX
+        val curLinkY = mergeLinkY
+        val wasSystem = HudManager.systemReposition
+        HudManager.systemReposition = true
+        try {
+            setAbsolutePosition(dx, dy)
+            t.getProp("section")?.addMetadata("default", section)
+            t.getProp("relativeX")?.addMetadata("default", relativeX)
+            t.getProp("relativeY")?.addMetadata("default", relativeY)
+        } finally {
+            HudManager.systemReposition = wasSystem
+        }
         section = curSection
         relativeX = curX
         relativeY = curY
+        posSchema = curSchema
+        anchorOffsetX = curOffX
+        anchorOffsetY = curOffY
+        mergeLinkX = curLinkX
+        mergeLinkY = curLinkY
     }
 
     @Switch(title = "Show in F3")
@@ -263,10 +283,25 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var section: Section get() = _section.value; set(v) { _section.value = v }
 
     private var _relativeX: MutableState<Float> = mutableStateOf(0f)
+
     open var relativeX: Float get() = _relativeX.value; set(v) { _relativeX.value = v }
 
     private var _relativeY: MutableState<Float> = mutableStateOf(0f)
+
     open var relativeY: Float get() = _relativeY.value; set(v) { _relativeY.value = v }
+
+    @ApiStatus.Internal
+    var posSchema: Int = POS_SCHEMA
+
+    @get:ApiStatus.Internal
+    var layoutRefW: Float
+        get() = HudManager.layoutRefWidth
+        set(v) { if (v > 0f) HudManager.layoutRefWidth = v }
+
+    @get:ApiStatus.Internal
+    var layoutRefH: Float
+        get() = HudManager.layoutRefHeight
+        set(v) { if (v > 0f) HudManager.layoutRefHeight = v }
 
     private var _renderedW: MutableState<Float> = mutableStateOf(0f)
     open var renderedW: Float get() = _renderedW.value; set(v) { _renderedW.value = v }
@@ -333,9 +368,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     /** Screen-space Y of [point] on this HUD's box */
     fun anchorPointY(point: HudAnchor): Float = y + fracY(point) * scaledHeight
 
-    private val screenX: Float get() {
-        val sw = HudManager.guiScreenWidth
-        val secPos = Math.round(sw / GRID_SIZE * relativeX).toFloat()
+    private fun sectionX(sw: Float): Float {
+        val secPos = Math.round(relativeX).toFloat()
         return when (section) {
             Section.TopLeft, Section.CenterLeft, Section.BottomLeft -> secPos
             Section.TopCenter, Section.Center, Section.BottomCenter -> sw / 2f + secPos
@@ -343,9 +377,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         }
     }
 
-    private val screenY: Float get() {
-        val sh = HudManager.guiScreenHeight
-        val secPos = Math.round(sh / GRID_SIZE * relativeY).toFloat()
+    private fun sectionY(sh: Float): Float {
+        val secPos = Math.round(relativeY).toFloat()
         return when (section) {
             Section.TopLeft, Section.TopCenter, Section.TopRight -> secPos
             Section.CenterLeft, Section.Center, Section.CenterRight -> sh / 2f + secPos
@@ -353,37 +386,86 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         }
     }
 
-    open var x: Float
-        get() {
-            resolvedAnchorX?.let { a ->
-                resolvingAnchor = true
-                try {
-                    return a.parent.anchorPointX(a.targetPoint) + a.offset - fracX(a.selfPoint) * scaledWidth
-                } finally {
-                    resolvingAnchor = false
-                }
+    private val screenX: Float get() = sectionX(HudManager.guiScreenWidth)
+
+    private val screenY: Float get() = sectionY(HudManager.guiScreenHeight)
+
+    internal fun layoutX(sw: Float): Float {
+        resolvedAnchorX?.let { a ->
+            resolvingAnchor = true
+            try {
+                return a.parent.layoutX(sw) + a.parent.fracX(a.targetPoint) * a.parent.scaledWidth +
+                    a.offset - fracX(a.selfPoint) * scaledWidth
+            } finally {
+                resolvingAnchor = false
             }
-            return screenX - anchorFracX * scaledWidth
         }
+        return sectionX(sw) - anchorFracX * scaledWidth
+    }
+
+    internal fun layoutY(sh: Float): Float {
+        resolvedAnchorY?.let { a ->
+            resolvingAnchor = true
+            try {
+                return a.parent.layoutY(sh) + a.parent.fracY(a.targetPoint) * a.parent.scaledHeight +
+                    a.offset - fracY(a.selfPoint) * scaledHeight
+            } finally {
+                resolvingAnchor = false
+            }
+        }
+        return sectionY(sh) - anchorFracY * scaledHeight
+    }
+
+    internal val rawX: Float get() {
+        resolvedAnchorX?.let { a ->
+            resolvingAnchor = true
+            try {
+                return a.parent.anchorPointX(a.targetPoint) + a.offset - fracX(a.selfPoint) * scaledWidth
+            } finally {
+                resolvingAnchor = false
+            }
+        }
+        return screenX - anchorFracX * scaledWidth
+    }
+
+    internal val rawY: Float get() {
+        resolvedAnchorY?.let { a ->
+            resolvingAnchor = true
+            try {
+                return a.parent.anchorPointY(a.targetPoint) + a.offset - fracY(a.selfPoint) * scaledHeight
+            } finally {
+                resolvingAnchor = false
+            }
+        }
+        return screenY - anchorFracY * scaledHeight
+    }
+
+    open var x: Float
+        get() = if (resolvedAnchorX != null) rawX else keepVisibleX(rawX)
         set(v) { updateRelativeX(v) }
 
     open var y: Float
-        get() {
-            resolvedAnchorY?.let { a ->
-                resolvingAnchor = true
-                try {
-                    return a.parent.anchorPointY(a.targetPoint) + a.offset - fracY(a.selfPoint) * scaledHeight
-                } finally {
-                    resolvingAnchor = false
-                }
-            }
-            return screenY - anchorFracY * scaledHeight
-        }
+        get() = if (resolvedAnchorY != null) rawY else keepVisibleY(rawY)
         set(v) { updateRelativeY(v) }
+
+    private fun keepVisibleX(absX: Float): Float {
+        val sw = HudManager.guiScreenWidth
+        if (sw <= 0f) return absX
+        val w = scaledWidth
+        val keep = minOf(w, MIN_VISIBLE)
+        return absX.coerceIn(minOf(keep - w, 0f), maxOf(sw - keep, 0f))
+    }
+
+    private fun keepVisibleY(absY: Float): Float {
+        val sh = HudManager.guiScreenHeight
+        if (sh <= 0f) return absY
+        val h = scaledHeight
+        val keep = minOf(h, MIN_VISIBLE)
+        return absY.coerceIn(minOf(keep - h, 0f), maxOf(sh - keep, 0f))
+    }
 
     protected open fun updateRelativeX(absX: Float) {
         val sw = HudManager.guiScreenWidth
-        val gridW = sw / GRID_SIZE
         resolvedAnchorX?.let { a ->
             val pin = absX + fracX(a.selfPoint) * scaledWidth
             resolvingAnchor = true
@@ -403,12 +485,13 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             Section.TopLeft, Section.CenterLeft, Section.BottomLeft -> anchor
             Section.TopCenter, Section.Center, Section.BottomCenter -> anchor - sw / 2f
             else -> sw - anchor
-        }.div(gridW).coerceIn(-1f, 2f)
+        }.let { if (HudManager.systemReposition) it else it.coerceIn(-sw, sw * 2f) }
+        posSchema = POS_SCHEMA
+        HudManager.noteLayoutArranged()
     }
 
     protected open fun updateRelativeY(absY: Float) {
         val sh = HudManager.guiScreenHeight
-        val gridH = sh / GRID_SIZE
         resolvedAnchorY?.let { a ->
             val pin = absY + fracY(a.selfPoint) * scaledHeight
             resolvingAnchor = true
@@ -426,7 +509,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             Section.TopLeft, Section.TopCenter, Section.TopRight -> anchor
             Section.CenterLeft, Section.Center, Section.CenterRight -> anchor - sh / 2f
             else -> sh - anchor
-        }.div(gridH).coerceIn(-1f, 2f)
+        }.let { if (HudManager.systemReposition) it else it.coerceIn(-sh, sh * 2f) }
+        posSchema = POS_SCHEMA
+        HudManager.noteLayoutArranged()
     }
 
     fun setAbsolutePosition(absX: Float, absY: Float) {
@@ -496,8 +581,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     }
 
     fun setGrowthAnchorKeepingPosition(anchor: HudAnchor) {
-        val absX = x
-        val absY = y
+        val absX = rawX
+        val absY = rawY
         growthAnchor = anchor
         updateRelativeX(absX)
         updateRelativeY(absY)
@@ -538,8 +623,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     /** Moves this HUD's own anchor point to [point] without moving the HUD on screen */
     fun setSelfAnchorPointKeepingPosition(point: HudAnchor) {
-        val absX = x
-        val absY = y
+        val absX = rawX
+        val absY = rawY
         selfAnchorPoint = point
         updateRelativeX(absX)
         updateRelativeY(absY)
@@ -653,10 +738,14 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             existing.selfPoint == selfPoint && existing.targetPoint == targetPoint
         ) return
         if (axis == MergeAxis.X) {
-            val offset = x + fracX(selfPoint) * scaledWidth - parent.anchorPointX(targetPoint)
+            val refW = HudManager.layoutRefWidth.takeIf { it > 0f } ?: HudManager.guiScreenWidth
+            val offset = layoutX(refW) + fracX(selfPoint) * scaledWidth -
+                (parent.layoutX(refW) + parent.fracX(targetPoint) * parent.scaledWidth)
             mergeLinkX = MergeLink(parent, selfPoint, targetPoint, offset)
         } else {
-            val offset = y + fracY(selfPoint) * scaledHeight - parent.anchorPointY(targetPoint)
+            val refH = HudManager.layoutRefHeight.takeIf { it > 0f } ?: HudManager.guiScreenHeight
+            val offset = layoutY(refH) + fracY(selfPoint) * scaledHeight -
+                (parent.layoutY(refH) + parent.fracY(targetPoint) * parent.scaledHeight)
             mergeLinkY = MergeLink(parent, selfPoint, targetPoint, offset)
         }
     }
@@ -668,11 +757,17 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         val dropX = clearX && mergeLinkX != null
         val dropY = clearY && mergeLinkY != null
         if (!dropX && !dropY) return
-        val absX = x
-        val absY = y
+        val absX = layoutX(HudManager.guiScreenWidth)
+        val absY = layoutY(HudManager.guiScreenHeight)
         if (dropX) mergeLinkX = null
         if (dropY) mergeLinkY = null
-        setAbsolutePosition(absX, absY)
+        HudManager.systemReposition = true
+        try {
+            updateRelativeX(absX)
+            updateRelativeY(absY)
+        } finally {
+            HudManager.systemReposition = false
+        }
     }
 
     /**
@@ -688,8 +783,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         if (target === this) return
         val id = target.tree?.id ?: return
         if (target.anchorChainContains(this)) return
-        val absX = x
-        val absY = y
+        val absX = rawX
+        val absY = rawY
         // the user placed this HUD by hand so a merge no longer gets to move it around
         mergeLinkX = null
         mergeLinkY = null
@@ -702,8 +797,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     /** Drops the anchor leaving the HUD where it currently sits on screen */
     fun clearAnchor() {
         if (anchorTargetId.isEmpty()) return
-        val absX = x
-        val absY = y
+        val absX = rawX
+        val absY = rawY
         anchorTargetId = ""
         anchorOffsetX = 0f
         anchorOffsetY = 0f
@@ -916,6 +1011,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
                 tree["section"] = ktProperty(out::section).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["relativeX"] = ktProperty(out::relativeX).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["relativeY"] = ktProperty(out::relativeY).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["posSchema"] = ktProperty(out::posSchema).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["layoutRefW"] = ktProperty(out::layoutRefW).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["layoutRefH"] = ktProperty(out::layoutRefH).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["anchorTargetId"] = ktProperty(out::anchorTargetId).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["anchorPoint"] = ktProperty(out::anchorPoint).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["selfAnchorPoint"] = ktProperty(out::selfAnchorPoint).apply { addDisplayCondition(hideFromConfigUi) }
