@@ -1,22 +1,22 @@
-//? if >= 26.1 {
 package org.polyfrost.oneconfig.internal.ui.hud
 
-import com.mojang.blaze3d.pipeline.TextureTarget
+import com.mojang.blaze3d.pipeline.RenderTarget
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
-import net.minecraft.client.gui.render.GuiRenderer
+//? if >= 26.1 {
 import net.minecraft.client.renderer.state.gui.GuiRenderState
 import org.polyfrost.oneconfig.internal.mixin.render.GameRendererAccessor
 import org.polyfrost.oneconfig.internal.mixin.render.GuiRendererAccessor
-import org.jetbrains.skia.BackendRenderTarget
-import org.jetbrains.skia.ColorSpace
+//?} elif >= 1.21.8 {
+/*import net.minecraft.client.gui.render.state.GuiRenderState
+import org.polyfrost.oneconfig.internal.mixin.render.GameRendererAccessor
+import org.polyfrost.oneconfig.internal.mixin.render.GuiRendererAccessor
+*///?}
 import org.jetbrains.skia.Paint
-import org.jetbrains.skia.Surface
-import org.jetbrains.skia.SurfaceOrigin
-import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHud
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.internal.ui.SkiaOffscreenTarget
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
 import org.slf4j.LoggerFactory
 
@@ -24,11 +24,7 @@ object LegacyHudOffscreen {
     private val LOG = LoggerFactory.getLogger("OneConfig/LegacyHudOffscreen")
     private val client get() = Minecraft.getInstance()
 
-    private var target: TextureTarget? = null
-    private var brt: BackendRenderTarget? = null
-    private var surface: Surface? = null
-    private var lastW = -1
-    private var lastH = -1
+    private val offscreen = SkiaOffscreenTarget()
 
     @Volatile private var hasContent = false
     @Volatile private var failed = false
@@ -39,128 +35,97 @@ object LegacyHudOffscreen {
         LegacyHudOverlayBridge.painter = { c -> drawInto(c) }
     }
 
-    private fun resolveTarget(w: Int, h: Int): Boolean {
-        if (target != null && lastW == w && lastH == h && surface != null) return true
-        destroy()
-        try {
-            //? if >= 26.2 {
-            val rt = TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
-            //? } else {
-            /*val rt = TextureTarget(null, w, h, true)
-            *///? }
-            target = rt
-            val svc = SkiaCtx.vulkanService ?: return false
-            if (!SkiaCtx.isVulkanMode) {
-                val fboId = org.polyfrost.oneconfig.internal.ui.RenderTargetFbo.getFboId(rt)
-                if (fboId <= 0) {
-                    target = null
-                    rt.destroyBuffers()
-                    return false
-                }
-            }
-            val (b, colorFmt) = svc.makeOffscreenBRT(rt, w, h)
-            brt = b
-            val origin = if (SkiaCtx.isDeferredComposeBackend) SurfaceOrigin.TOP_LEFT else SurfaceOrigin.BOTTOM_LEFT
-            surface = Surface.makeFromBackendRenderTarget(
-                SkiaCtx.directContext, b, origin, colorFmt, ColorSpace.sRGB, null,
-            )
-            if (surface == null) {
-                b.close(); brt = null
-                return false
-            }
-            lastW = w; lastH = h
-            return true
-        } catch (t: Throwable) {
-            LOG.warn("Failed to create legacy HUD offscreen target", t)
-            destroy()
-            return false
-        }
-    }
-
-    private fun activeLegacyHuds(): List<LegacyHud> =
-        HudManager.activeInstances.mapNotNull { hud: Hud ->
-            (hud as? LegacyHud)?.takeUnless {
-                it.hidden && !HudManager.isEditing && !SkiaCtx.suppressInGameHudRender
-            }
-        }
-
-    fun render() {
+    fun render(): Boolean {
         hasContent = false
-        if (failed) return
-        if (java.lang.Boolean.getBoolean("oneconfig.disable.legacyHudOffscreen")) return
-        val huds = activeLegacyHuds()
-        if (huds.isEmpty() && !CompatOverlayRenderer.hasHooks()) return
-        if (!SkiaCtx.isReady) return
+        if (failed) return false
+        if (java.lang.Boolean.getBoolean("oneconfig.disable.legacyHudOffscreen")) return false
+        if (HudManager.activeInstances.none { it is LegacyHud } && !CompatOverlayRenderer.hasHooks()) return true
+        if (!SkiaCtx.isReady) return true
         val w = Platform.screen().viewportWidth()
         val h = Platform.screen().viewportHeight()
-        if (w <= 0 || h <= 0) return
+        if (w <= 0 || h <= 0) return true
 
         try {
-            if (!resolveTarget(w, h)) return
-            val rt = target ?: return
-            val guiRenderer = (client.gameRenderer as GameRendererAccessor).`oneconfig$getGuiRenderer`()
-            val accessor = guiRenderer as GuiRendererAccessor
-
-            val guiW = Platform.screen().guiWidth()
-            val guiH = Platform.screen().guiHeight()
-
-            val state = GuiRenderState()
-            val ext = GuiGraphicsExtractor(client, state, guiW, guiH)
-            for (hud in huds) {
-                try {
-                    val scale = hud.effectiveScale
-                    hud.renderedW = hud.width * scale
-                    hud.renderedH = hud.height * scale
-                    val pose = ext.pose()
-                    pose.pushMatrix()
-                    try {
-                        pose.translate(hud.x, hud.y)
-                        if (scale != 1f) pose.scale(scale, scale)
-                        hud.render(ext)
-                    } finally {
-                        pose.popMatrix()
-                    }
-                } catch (t: Throwable) {
-                    LOG.debug("legacy hud render (record) failed", t)
-                }
-            }
-
-            if (CompatOverlayRenderer.oneConfigScreenOpen()) CompatOverlayRenderer.render(ext)
-
-            val colorTex = rt.colorTexture ?: return
-            val encoder = com.mojang.blaze3d.systems.RenderSystem.getDevice().createCommandEncoder()
-            //? if >= 26.2 {
-            encoder.clearColorTexture(colorTex, org.joml.Vector4f(0f, 0f, 0f, 0f))
-            //? } else {
-            /*encoder.clearColorTexture(colorTex, 0)
-            *///? }
-
-            val prevState = accessor.`oneconfig$getRenderState`()
-            GuiTargetRedirect.target = rt
-            try {
-                accessor.`oneconfig$setRenderState`(state)
-                //? if >= 26.2 {
-                guiRenderer.render()
-                //? } else {
-                /*val fog = (client.gameRenderer as GameRendererAccessor).`oneconfig$getFogRenderer`()
-                    .getBuffer(net.minecraft.client.renderer.fog.FogRenderer.FogMode.NONE)
-                guiRenderer.render(fog)
-                *///? }
-            } finally {
-                GuiTargetRedirect.target = null
-                accessor.`oneconfig$setRenderState`(prevState)
-            }
+            if (!offscreen.resolveTarget(w, h)) return true
+            val rt = offscreen.target ?: return true
+            //? if >= 1.21.8 {
+            renderRecorded(rt)
+            //?} elif >= 1.21.5 {
+            /*renderImmediate(rt)
+            *///?} else {
+            /*renderImmediateLegacy(rt)
+            *///?}
             hasContent = true
+            return true
         } catch (t: Throwable) {
             LOG.warn("Legacy HUD offscreen render failed; disabling", t)
             failed = true
             GuiTargetRedirect.target = null
+            return false
         }
     }
 
+    //? if >= 1.21.8 {
+    private fun renderRecorded(rt: RenderTarget) {
+        val guiRenderer = (client.gameRenderer as GameRendererAccessor).`oneconfig$getGuiRenderer`()
+        val accessor = guiRenderer as GuiRendererAccessor
+
+        val state = GuiRenderState()
+        //? if >= 1.21.11 {
+        val ext = GuiGraphicsExtractor(client, state, Platform.screen().guiWidth(), Platform.screen().guiHeight())
+        //?} else
+        //val ext = GuiGraphicsExtractor(client, state)
+        LegacyHudRenderer.renderLive(ext)
+
+        offscreen.clearTarget()
+
+        val prevState = accessor.`oneconfig$getRenderState`()
+        GuiTargetRedirect.target = rt
+        try {
+            accessor.`oneconfig$setRenderState`(state)
+            //? if >= 26.2 {
+            guiRenderer.render()
+            //?} else {
+            /*val fog = (client.gameRenderer as GameRendererAccessor).`oneconfig$getFogRenderer`()
+                .getBuffer(net.minecraft.client.renderer.fog.FogRenderer.FogMode.NONE)
+            guiRenderer.render(fog)
+            *///?}
+        } finally {
+            GuiTargetRedirect.target = null
+            accessor.`oneconfig$setRenderState`(prevState)
+        }
+    }
+    //?} elif >= 1.21.5 {
+    /*private fun renderImmediate(rt: RenderTarget) {
+        val graphics = GuiGraphicsExtractor(client, client.renderBuffers().bufferSource())
+        offscreen.clearTarget()
+        GuiTargetRedirect.target = rt
+        try {
+            LegacyHudRenderer.renderLive(graphics)
+            graphics.flush()
+        } finally {
+            GuiTargetRedirect.target = null
+        }
+    }
+    *///?} else {
+    /*private fun renderImmediateLegacy(rt: RenderTarget) {
+        val graphics = GuiGraphicsExtractor(client, client.renderBuffers().bufferSource())
+        offscreen.clearTarget()
+        GuiTargetRedirect.target = rt
+        try {
+            rt.bindWrite(true)
+            LegacyHudRenderer.renderLive(graphics)
+            graphics.flush()
+        } finally {
+            GuiTargetRedirect.target = null
+            client.mainRenderTarget.bindWrite(true)
+        }
+    }
+    *///?}
+
     fun drawInto(canvas: org.jetbrains.skia.Canvas) {
         if (!hasContent) return
-        val s = surface ?: return
+        val s = offscreen.surface ?: return
         try {
             s.notifyContentWillChange(org.jetbrains.skia.ContentChangeMode.RETAIN)
             val surfaceRatio = Platform.screen().surfaceRatio().coerceAtLeast(0.0001f)
@@ -172,17 +137,4 @@ object LegacyHudOffscreen {
             LOG.debug("legacy hud blit failed", t)
         }
     }
-
-    private fun destroy() {
-        surface?.close(); surface = null
-        brt?.close(); brt = null
-        target?.destroyBuffers(); target = null
-        lastW = -1; lastH = -1
-    }
-
-    fun invalidate() {
-        destroy()
-        hasContent = false
-    }
 }
-//? }

@@ -38,17 +38,20 @@ object LegacyHudRenderer {
     }
 
     private fun renderLiveHuds(graphics: GuiGraphicsExtractor) {
+        if (!HudManager.masterHudEnabled && !HudManager.isEditing) return
         frame.clear()
         for (hud in HudManager.activeInstances) {
             if (hud !is LegacyHud) continue
-            if (hud.hidden && !HudManager.isEditing) continue
-            if (HudManager.isGuiHidden && !HudManager.isEditing) continue
-            if (HudManager.isDebugScreenVisible && !hud.showInF3) continue
-            if (HudManager.isTabListVisible && !hud.showInTab) continue
-            if (!HudManager.overrideShowInScreens && !HudManager.isEditing) {
-                if (HudManager.isChatScreenOpen) {
-                    if (!hud.showInChat) continue
-                } else if (HudManager.isGuiScreenOpen && !hud.showInScreens) continue
+            if (!HudManager.isEditing) {
+                if (hud.hidden) continue
+                if (HudManager.isGuiHidden) continue
+                if (HudManager.isDebugScreenVisible && !hud.showInF3) continue
+                if (HudManager.isTabListVisible && !hud.showInTab) continue
+                if (!HudManager.overrideShowInScreens) {
+                    if (HudManager.isChatScreenOpen) {
+                        if (!hud.showInChat) continue
+                    } else if (HudManager.isGuiScreenOpen && !hud.showInScreens) continue
+                }
             }
             frame.add(hud)
         }
