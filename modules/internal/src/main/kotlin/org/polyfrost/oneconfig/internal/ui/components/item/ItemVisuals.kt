@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.components.item
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -40,11 +40,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.compositeOver
-import androidx.compose.ui.graphics.painter.BitmapPainter
-import androidx.compose.ui.graphics.toComposeImageBitmap
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.skiaCanvas
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.TextStyle
@@ -55,6 +54,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
+import org.jetbrains.skia.Rect
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.IconButton
@@ -65,7 +65,6 @@ import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-import java.awt.image.BufferedImage
 
 val ItemTileShape = RoundedCornerShape(8.dp)
 val ItemIconShape = RoundedCornerShape(5.dp)
@@ -104,11 +103,7 @@ fun ItemIcon(
     placeholder: String = "layers",
 ) {
     val theme = LocalTheme.current
-    var icon by remember(id) { mutableStateOf(ItemCatalog.icon(id)) }
-    LaunchedEffect(id) {
-        ItemCatalog.loadIcon(id) { icon = it }
-    }
-    val bitmap = remember(icon) { icon?.toBitmap() }
+    val iconReady = rememberItemIconReady(id)
     val background = if (framed) Modifier.background(theme.chipBackground) else Modifier
     Box(
         modifier = modifier
@@ -116,13 +111,17 @@ fun ItemIcon(
             .then(background),
         contentAlignment = Alignment.Center,
     ) {
-        if (bitmap != null) {
-            Image(
-                painter = BitmapPainter(bitmap, filterQuality = FilterQuality.Low),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize().padding(if (framed) 2.dp else 1.dp),
-                alpha = alpha,
-            )
+        if (iconReady) {
+            Canvas(modifier = Modifier.fillMaxSize().padding(if (framed) 2.dp else 1.dp)) {
+                drawIntoCanvas { canvas ->
+                    ItemCatalog.drawIcon(
+                        id,
+                        canvas.skiaCanvas,
+                        Rect.makeWH(size.width, size.height),
+                        alpha,
+                    )
+                }
+            }
         } else {
             Icon(
                 placeholder,
@@ -460,10 +459,3 @@ object ItemStrings {
 /** Whether [id] can be picked where already-selected items stay clickable so they can be deselected */
 fun canSelect(selected: List<String>, id: String, maxEntries: Int): Boolean =
     id in selected || maxEntries <= 0 || maxEntries == 1 || selected.size < maxEntries
-
-internal fun ItemIconData.toBitmap() = runCatching {
-    require(width > 0 && height > 0 && argb.size >= width * height)
-    BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB).also {
-        it.setRGB(0, 0, width, height, argb, 0, width)
-    }.toComposeImageBitmap()
-}.getOrNull()
