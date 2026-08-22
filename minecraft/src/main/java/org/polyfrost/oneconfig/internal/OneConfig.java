@@ -33,6 +33,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.world.scores.Scoreboard;
@@ -118,7 +119,8 @@ public class OneConfig
             if (OneConfigConfig.consumeKeybindClose()) {
                 return true;
             }
-            if (Platform.screen().current() != null) {
+            Object screen = Platform.screen().current();
+            if (screen != null && !(Platform.compatibility().isDevelopment() && screen instanceof TitleScreen)) {
                 return true;
             }
             if (Minecraft.getInstance().level == null && !Platform.compatibility().isDevelopment()) {
