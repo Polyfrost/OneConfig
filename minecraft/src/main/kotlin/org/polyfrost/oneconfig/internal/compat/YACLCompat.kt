@@ -11,6 +11,7 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.noCache
 import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.event.v1.EventDelay
+import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.compat.CompatIds.componentKey
@@ -58,14 +59,14 @@ object YACLCompat {
 
         private fun awaitSettle() {
             val stamp = writeStamp
-            EventDelay.tick(FLAG_SETTLE_FRAMES) {
+            EventDelay.of(FramebufferRenderEvent.End::class.java, FLAG_SETTLE_FRAMES, Runnable {
                 if (writeStamp != stamp) {
                     awaitSettle()
                 } else {
                     drainScheduled = false
                     runPendingFlags()
                 }
-            }
+            })
         }
 
         fun runPendingFlags() {

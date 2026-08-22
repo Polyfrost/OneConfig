@@ -37,7 +37,7 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 
-fun Screen.openScreen(ticks: Int = 1) = Platform.screen().display(this, ticks)
+fun Screen.openScreen(frames: Int = 1) = Platform.screen().display(this, frames)
 
 fun Tree.createScreen(): Screen {
     val treeId = id

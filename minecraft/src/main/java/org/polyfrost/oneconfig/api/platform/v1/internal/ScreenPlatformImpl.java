@@ -32,6 +32,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.event.v1.EventDelay;
+import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent;
 import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeSupport;
@@ -86,7 +87,7 @@ public class ScreenPlatformImpl implements ScreenPlatform {
     }
 
     @Override
-    public void display(@Nullable Object screen, int ticks) {
+    public void display(@Nullable Object screen, int frames) {
         if (screen instanceof ComposeScreen) {
             String unavailable = ComposeSupport.INSTANCE.unavailableReason();
             if (unavailable != null) {
@@ -99,17 +100,17 @@ public class ScreenPlatformImpl implements ScreenPlatform {
             }
         }
         if (!Minecraft.getInstance().isSameThread()) {
-            Minecraft.getInstance().schedule(() -> display(screen, ticks));
+            Minecraft.getInstance().schedule(() -> display(screen, frames));
             return;
         }
         //? if >= 26.2 {
         // 26.2 removed Minecraft#setScreen so use Gui#setScreen not setScreenAndShow which force-calls
         // renderFrame and re-enters our renderFrame mixin giving a nested frame and a black flash
-        if (ticks < 1) Minecraft.getInstance().gui.setScreen((Screen) screen);
-        else EventDelay.tick(ticks, () -> Minecraft.getInstance().gui.setScreen((Screen) screen));
+        if (frames < 1) Minecraft.getInstance().gui.setScreen((Screen) screen);
+        else EventDelay.of(FramebufferRenderEvent.End.class, frames, () -> Minecraft.getInstance().gui.setScreen((Screen) screen));
         //?} else {
-        /*if (ticks < 1) Minecraft.getInstance().setScreen((Screen) screen);
-        else EventDelay.tick(ticks, () -> Minecraft.getInstance().setScreen((Screen) screen));
+        /*if (frames < 1) Minecraft.getInstance().setScreen((Screen) screen);
+        else EventDelay.of(FramebufferRenderEvent.End.class, frames, () -> Minecraft.getInstance().setScreen((Screen) screen));
         *///?}
     }
 
