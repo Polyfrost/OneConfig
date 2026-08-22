@@ -335,6 +335,8 @@ object FirmamentHudCompat {
 
         private fun capturedBox(): FloatArray? = capturedBounds[id]
 
+        override val placementReady: Boolean get() = position() != null
+
         override var x: Float
             get() = (position()?.x()?.toFloat() ?: 0f) + (capturedBox()?.get(0) ?: 0f)
             set(value) {

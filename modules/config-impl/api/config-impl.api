@@ -13,6 +13,7 @@ public final class org/polyfrost/oneconfig/api/config/v1/CompatSnapshotStore {
 
 public final class org/polyfrost/oneconfig/api/config/v1/CompatSnapshots : org/polyfrost/oneconfig/api/config/v1/ConfigManager$ProfileChangeListener {
 	public static final field CUSTOM_RESET_METADATA Ljava/lang/String;
+	public static final field GATE_METADATA Ljava/lang/String;
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/config/v1/CompatSnapshots;
 	public static final field KEY_METADATA Ljava/lang/String;
 	public static final field NO_SNAPSHOT_META Ljava/lang/String;

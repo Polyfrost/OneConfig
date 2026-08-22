@@ -296,6 +296,8 @@ private class SkyHanniHudWrapper(private val internalName: String) : OneConfigHu
 
     override val modId: String = "skyhanni"
 
+    override val placementReady: Boolean get() = position != null
+
     override var x: Float
         get() = position?.let { SkyHanniHudCompat.absX(it).toFloat() } ?: 0f
         set(value) = move(value, horizontal = true)

@@ -219,6 +219,8 @@ private class ApecElementWrapper(private val type: ElementType) : OneConfigHudWr
 
     override val modId: String = "apec"
 
+    override val placementReady: Boolean get() = element != null
+
     override var x: Float
         get() = element?.let { topLeft(it).x } ?: 0f
         set(value) = moveTo(value, null)

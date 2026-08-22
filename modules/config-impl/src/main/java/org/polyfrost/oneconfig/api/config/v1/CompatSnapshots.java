@@ -216,6 +216,8 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     }
 
     private void applyProfile(Tree tree, String profile) {
+        if (gateClosed(tree)) return;
+        captureDefaults(tree);
         ensureKeys(tree);
         String treeId = tree.getID();
         Map<String, Object> snap = store.load(profile).get(treeId);
@@ -279,6 +281,8 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     }
 
     private void captureAll(Tree tree, String profile) {
+        if (gateClosed(tree)) return;
+        captureDefaults(tree);
         ensureKeys(tree);
         String treeId = tree.getID();
         forEachProp(tree, p -> {
@@ -293,6 +297,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     }
 
     private void captureDefaults(Tree tree) {
+        if (gateClosed(tree)) return;
         ensureKeys(tree);
         Map<String, Object> snapshot = defaults.computeIfAbsent(tree.getID(), ignored -> new ConcurrentHashMap<>());
         forEachProp(tree, property -> {
@@ -304,6 +309,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     }
 
     private void restoreDefaults(Tree tree) {
+        if (gateClosed(tree)) return;
         if (runCustomReset(tree)) return;
         Map<String, Object> snapshot = defaults.get(tree.getID());
         if (snapshot == null) return;
@@ -463,6 +469,13 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     public static final String KEY_METADATA = "oc_snapshot_key";
     private static final String ACTION_META = "runnable";
     public static final String NO_SNAPSHOT_META = "oc_no_snapshot";
+    public static final String GATE_METADATA = "oc_snapshot_gate";
+
+    private static boolean gateClosed(Tree tree) {
+        Object gate = tree.getMetadata(GATE_METADATA);
+        return gate instanceof java.util.function.BooleanSupplier
+                && !((java.util.function.BooleanSupplier) gate).getAsBoolean();
+    }
 
     private static boolean isValueProp(Property<?> p) {
         return p.getMetadata(ACTION_META) == null && p.getMetadata(NO_SNAPSHOT_META) == null;

@@ -462,6 +462,9 @@ private class SkyblockerBarWrapper(private val type: StatusBarType) : OneConfigH
 
     override val supportsScale: Boolean get() = false
 
+    override val placementReady: Boolean
+        get() = runCatching { (bar?.getWidth() ?: 0) > 0 }.getOrDefault(false)
+
     override val resizeAxes: HudResize get() = HudResize.Width
 
     override var hidden: Boolean

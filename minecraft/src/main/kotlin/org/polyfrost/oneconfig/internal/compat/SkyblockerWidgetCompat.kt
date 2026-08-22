@@ -197,6 +197,9 @@ internal class SkyblockerWidgetWrapper(private val widget: HudWidget) : OneConfi
     private var deferredX: Float? = null
     private var deferredY: Float? = null
 
+    override val placementReady: Boolean
+        get() = runCatching { Utils.isOnSkyblock() && SkyblockerWidgetCompat.builder() != null }.getOrDefault(false)
+
     override var x: Float
         get() = deferredX ?: (widget.x * SkyblockerWidgetCompat.tabHudScale())
         set(value) = place(value, null)

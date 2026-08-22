@@ -152,6 +152,8 @@ object HudManager {
 
     private val lastUpdates = HashMap<Hud, Long>()
 
+    private var wasEditing = false
+
     private val redrawCacheDisabled = java.lang.Boolean.getBoolean("oneconfig.hud.nocache")
 
     @Volatile private var contentDirty = true
@@ -461,6 +463,12 @@ object HudManager {
     }
 
     private fun updateAndAdvance(huds: List<Hud>) {
+        // opening or closing the editor swaps between preview and live content, so every HUD gets
+        // one immediate update on the edge instead of waiting out its remaining interval
+        if (wasEditing != isEditing) {
+            wasEditing = isEditing
+            lastUpdates.clear()
+        }
         for (hud in huds) {
             try {
                 updateIfDue(hud)
@@ -490,7 +498,7 @@ object HudManager {
     @ApiStatus.Internal
     fun updateIfDue(hud: Hud) {
         val frequency = hud.updateFrequency()
-        if (frequency < 0L || isEditing) {
+        if (frequency < 0L) {
             hud.update()
             return
         }
