@@ -1,2 +1,2 @@
-1.1.9 changelogs:
-- Fixed compat HUDs breaking after relaunch
+1.1.10 changelogs:
+- Fixed more compat huds issues
