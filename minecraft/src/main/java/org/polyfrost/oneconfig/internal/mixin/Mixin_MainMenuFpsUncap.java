@@ -1,11 +1,10 @@
 package org.polyfrost.oneconfig.internal.mixin;
 
-//? if >=1.21.4 {
+//? if >= 1.21.4
 import com.mojang.blaze3d.platform.FramerateLimitTracker;
-//?} else {
-/*import net.minecraft.client.Minecraft;
-*///?}
+import net.minecraft.client.Minecraft;
 import org.polyfrost.oneconfig.internal.MainMenuFpsSampler;
+import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -17,10 +16,25 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /*@Mixin(value = Minecraft.class, priority = Integer.MAX_VALUE)
 *///?}
 public class Mixin_MainMenuFpsUncap {
+    private static final int MAIN_MENU_FPS_HEADROOM = 60;
+    private static final int FALLBACK_MONITOR_REFRESH_RATE = 60;
+
     @Inject(method = "getFramerateLimit", at = @At("HEAD"), cancellable = true)
     private void oneconfig$uncapWhileSampling(CallbackInfoReturnable<Integer> cir) {
         if (MainMenuFpsSampler.isSampling()) {
             cir.setReturnValue(260);
+            return;
+        }
+
+        Minecraft minecraft = Minecraft.getInstance();
+        //? if >= 26.2 {
+        Object screen = minecraft.gui.screen();
+        //?} else
+        //Object screen = minecraft.screen;
+        if (minecraft.level == null && screen instanceof ComposeScreen) {
+            int refreshRate = minecraft.getWindow().getRefreshRate();
+            if (refreshRate <= 0) refreshRate = FALLBACK_MONITOR_REFRESH_RATE;
+            cir.setReturnValue(refreshRate + MAIN_MENU_FPS_HEADROOM);
         }
     }
 }
