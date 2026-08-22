@@ -21,24 +21,20 @@ public class Mixin_MainMenuFpsUncap {
 
     @Inject(method = "getFramerateLimit", at = @At("HEAD"), cancellable = true)
     private void oneconfig$uncapWhileSampling(CallbackInfoReturnable<Integer> cir) {
+        if (MainMenuFpsSampler.isSampling()) {
+            cir.setReturnValue(260);
+            return;
+        }
+
         Minecraft minecraft = Minecraft.getInstance();
         //? if >= 26.2 {
         Object screen = minecraft.gui.screen();
         //?} else
         //Object screen = minecraft.screen;
         if (minecraft.level == null && screen instanceof ComposeScreen) {
-            int fallback = FALLBACK_MONITOR_REFRESH_RATE + MAIN_MENU_FPS_HEADROOM;
             int refreshRate = minecraft.getWindow().getRefreshRate();
-            if (refreshRate > 0) {
-                cir.setReturnValue(refreshRate + MAIN_MENU_FPS_HEADROOM);
-            } else {
-                cir.setReturnValue(fallback);
-            }
-            return;
-        }
-
-        if (MainMenuFpsSampler.isSampling()) {
-            cir.setReturnValue(260);
+            if (refreshRate <= 0) refreshRate = FALLBACK_MONITOR_REFRESH_RATE;
+            cir.setReturnValue(refreshRate + MAIN_MENU_FPS_HEADROOM);
         }
     }
 }
