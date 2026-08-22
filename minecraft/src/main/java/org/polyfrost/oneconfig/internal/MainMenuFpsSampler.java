@@ -30,8 +30,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.LevelLoadingScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
+import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.MainMenuFpsEvent;
-import org.polyfrost.oneconfig.api.event.v1.events.TickEvent;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen;
@@ -58,7 +58,7 @@ public final class MainMenuFpsSampler {
 
     public static void init() {
         MainMenuFpsSampler sampler = new MainMenuFpsSampler();
-        EventHandler.ofRemoving(TickEvent.End.class, e -> sampler.tick()).register();
+        EventHandler.ofRemoving(FramebufferRenderEvent.End.class, e -> sampler.tick()).register();
     }
 
     private boolean tick() {

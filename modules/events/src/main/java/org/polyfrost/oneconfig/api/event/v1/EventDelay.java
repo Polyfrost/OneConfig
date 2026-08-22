@@ -52,11 +52,9 @@ public final class EventDelay {
 
                 @Override
                 public boolean handle(E event) {
-                    if (delay < 1) {
+                    if (--delay < 1) {
                         function.accept(event);
                         return true;
-                    } else {
-                        delay--;
                     }
                     return false;
                 }

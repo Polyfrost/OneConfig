@@ -82,7 +82,7 @@ public interface ScreenPlatform {
     default void showMessage(String message) {
     }
 
-    void display(@Nullable Object screen, int ticks);
+    void display(@Nullable Object screen, int frames);
 
     default void display(Object screen) {
         display(screen, 1);
