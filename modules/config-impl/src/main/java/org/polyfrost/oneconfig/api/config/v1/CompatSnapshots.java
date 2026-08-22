@@ -106,6 +106,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
 
     private void dropStaleRegistration(String id) {
         if (id == null) return;
+        if (!ConfigManager.active().exists(id)) return;
         Tree existing = ConfigManager.active().get(id);
         if (existing == null || !Boolean.TRUE.equals(existing.getMetadata(TAG))) return;
         ConfigManager.active().unregister(id);
@@ -278,6 +279,11 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         // roll a setting back after a restart.
         flushSnapshotThenBaseline(store, profile, baselineStore, BASELINE_BUCKET);
         if (changed[0]) runSave(tree);
+    }
+
+    public static void capture(Tree tree) {
+        if (tree == null || !Boolean.TRUE.equals(tree.getMetadata(TAG))) return;
+        INSTANCE.captureAll(tree, ConfigManager.activeProfile());
     }
 
     private void captureAll(Tree tree, String profile) {

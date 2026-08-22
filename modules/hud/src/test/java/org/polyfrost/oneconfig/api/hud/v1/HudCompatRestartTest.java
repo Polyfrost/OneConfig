@@ -98,6 +98,32 @@ class HudCompatRestartTest {
     }
 
     @Test
+    void droppingAHudInTheEditorCapturesItsPlacementIntoTheStore() throws Exception {
+        ExternalBar bar = new ExternalBar();
+        new BarWrapper(bar, "dragged_compat_bar").register();
+        Hud hud = compatInstance();
+
+        hud.setAbsolutePosition(320f, 180f);
+        hud.onEditorDragEnd();
+
+        Field f = CompatSnapshots.class.getDeclaredField("store");
+        f.setAccessible(true);
+        Object store = f.get(CompatSnapshots.INSTANCE);
+        java.lang.reflect.Method load = store.getClass().getMethod("load", String.class);
+        @SuppressWarnings("unchecked")
+        Map<String, Map<String, Object>> snap =
+                (Map<String, Map<String, Object>>) load.invoke(store, ConfigManager.activeProfile());
+        Map<String, Object> values = snap.get(hud.getTree().getID());
+
+        assertEquals(320f, ((Number) values.get("oc_compat_x")).floatValue(), 0.5f,
+                "dropping a compat hud must write its live position into the placement store");
+        assertEquals(180f, ((Number) values.get("oc_compat_y")).floatValue(), 0.5f,
+                "dropping a compat hud must write its live position into the placement store");
+
+        removeCompatInstances();
+    }
+
+    @Test
     void wrappedHudPositionSurvivesRestart() throws Exception {
         ExternalBar bar = new ExternalBar();
 

@@ -87,7 +87,11 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
     override fun updateRelativeY(absY: Float) { y = absY }
 
     override fun onEditorDragStart() = wrapper.onDragStart()
-    override fun onEditorDragEnd() = wrapper.onDragEnd()
+
+    override fun onEditorDragEnd() {
+        wrapper.onDragEnd()
+        CompatSnapshots.capture(tree)
+    }
 }
 
 interface OneConfigHudWrapper {
