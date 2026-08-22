@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.Density
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.flow.first
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDragLayer
@@ -91,10 +92,12 @@ fun OneConfigInterface(
             // the page is only being put back which should look like it was never left
             ShellState.initialTransitionConsumed = false
             ShellState.animateOpeningPage = !restoring && OneConfigConfig.showOpeningPageAnimation
+            // non-animated opens navigate instantly when the graph is ready
+            if (!ShellState.animateOpeningPage) LocalNavController.current.currentBackStackEntryFlow.first()
             // the NavHost only sets its graph once the Shell is composed so wait for it or navigate()
             // crashes with "must call setGraph() before getGraph()"
             var attempts = 0
-            while (attempts++ < 600) {
+            while (ShellState.animateOpeningPage && attempts++ < 600) {
                 val ready = try {
                     LocalNavController.current.graph; true
                 } catch (_: IllegalStateException) {
