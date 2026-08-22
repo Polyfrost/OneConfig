@@ -31,7 +31,11 @@ import net.minecraft.client.input.KeyEvent as McKeyEvent
 //? if > 1.8.9 {
 import net.minecraft.network.chat.CommonComponents
 //?} else {
-/*import org.polyfrost.oneconfig.internal.legacy.KeyCodes
+/*import net.minecraft.client.gui.screens.TitleScreen
+import net.minecraft.client.render.platform.GlStateManager
+import org.polyfrost.oneconfig.internal.legacy.KeyCodes
+import org.polyfrost.oneconfig.internal.legacy.LegacyPanoramaTracker
+import org.polyfrost.oneconfig.internal.ui.compose.opengl.StoredGLState
 import org.lwjgl.input.Keyboard
 import org.lwjgl.input.Mouse
 import org.lwjgl.sdl.SDLVideo
@@ -103,6 +107,11 @@ abstract class ComposeScreen(
     protected val renderMode: RenderMode = RenderMode.ON_DEMAND,
 //~ if = 1.8.9 '(CommonComponents.EMPTY)' -> '()'
 ) : Screen(CommonComponents.EMPTY) {
+    //? if = 1.8.9 {
+    /*private val panorama = Platform.screen().current<Any?>() as? TitleScreen ?: LegacyPanoramaTracker.current()
+    private val panoramaGlState = StoredGLState(330)
+    *///?}
+
     enum class RenderMode {
         CONTINUOUS,
 
@@ -288,6 +297,11 @@ abstract class ComposeScreen(
         //? if = 1.8.9
         //Keyboard.enableRepeatEvents(true)
 
+        //? if = 1.8.9 {
+        /*panorama?.width = width
+        panorama?.height = height
+        *///?}
+
         sceneDirty = true
         lastPointer = null
 
@@ -342,8 +356,20 @@ abstract class ComposeScreen(
         //minecraft: Minecraft,
         width: Int, height: Int
     ) {
+        //? if = 1.8.9 {
+        /*this.width = width
+        this.height = height
+        panorama?.width = width
+        panorama?.height = height
+        *///?}
         syncSceneMetrics()
     }
+
+    //? if = 1.8.9 {
+    /*override fun tick() {
+        panorama?.tick()
+    }
+    *///?}
 
     override fun isPauseScreen(): Boolean = false
 
@@ -383,6 +409,20 @@ abstract class ComposeScreen(
     //?} else
     //override fun render(mouseX: Int, mouseY: Int, tickDelta: Float) {
         if (Platform.screen().current<Any?>() !== this) return
+        //? if = 1.8.9 {
+        /*if (client.level == null && panorama != null) {
+            panoramaGlState.capture()
+            try {
+                GlStateManager.disableAlphaTest()
+                panorama.drawBackground(mouseX, mouseY, tickDelta)
+                GlStateManager.enableAlphaTest()
+                fillGradient(0, 0, width, height, -2130706433, 16777215)
+                fillGradient(0, 0, width, height, 0, Int.MIN_VALUE)
+            } finally {
+                panoramaGlState.restore()
+            }
+        }
+        *///?}
         if (scenePoisoned) {
             if (sceneRebuilds >= MAX_SCENE_REBUILDS) {
                 LOGGER.error(
