@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.Density
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDragLayer
@@ -59,6 +61,8 @@ fun guiCloseAnimationMillis(): Long =
     else (OneConfigConfig.animationTime * 1000f).toLong().coerceIn(1L, MAX_CLOSE_ANIMATION_MS)
 
 private const val MAX_CLOSE_ANIMATION_MS = 160L
+
+private const val GRAPH_WAIT_TIMEOUT_MS = 10_000L
 
 @Composable
 fun OneConfigInterface(
@@ -93,15 +97,21 @@ fun OneConfigInterface(
             ShellState.animateOpeningPage = !restoring && OneConfigConfig.showOpeningPageAnimation
             // the NavHost only sets its graph once the Shell is composed so wait for it or navigate()
             // crashes with "must call setGraph() before getGraph()"
-            var attempts = 0
-            while (attempts++ < 600) {
-                val ready = try {
-                    LocalNavController.current.graph; true
-                } catch (_: IllegalStateException) {
-                    false
+            if (ShellState.animateOpeningPage) {
+                var attempts = 0
+                while (attempts++ < 600) {
+                    val ready = try {
+                        LocalNavController.current.graph; true
+                    } catch (_: IllegalStateException) {
+                        false
+                    }
+                    if (ready) break
+                    withFrameNanos { }
                 }
-                if (ready) break
-                withFrameNanos { }
+            } else {
+                withTimeoutOrNull(GRAPH_WAIT_TIMEOUT_MS) {
+                    LocalNavController.current.currentBackStackEntryFlow.first()
+                }
             }
             try {
                 LocalNavController.wrapper.navigate(initialRoute, clearSearch = !resuming)
