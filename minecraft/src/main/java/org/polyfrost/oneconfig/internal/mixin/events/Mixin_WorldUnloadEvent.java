@@ -32,6 +32,7 @@ import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.WorldEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -45,6 +46,31 @@ public class Mixin_WorldUnloadEvent {
             method = "setLevel"
             , at = @At("HEAD"))
     private void onWorldUnloadCallback(CallbackInfo ci) {
+        oneconfig$postWorldUnload();
+    }
+
+    //? if >= 1.21.11 {
+    @Inject(
+            method = "disconnect(Lnet/minecraft/client/gui/screens/Screen;ZZ)V"
+            , at = @At("HEAD"))
+    //?} else {
+    /*@Inject(
+            method = "disconnect(Lnet/minecraft/client/gui/screens/Screen;Z)V"
+            , at = @At("HEAD"))
+    *///?}
+    private void onDisconnectCallback(CallbackInfo ci) {
+        oneconfig$postWorldUnload();
+    }
+
+    @Inject(
+            method = "clearClientLevel"
+            , at = @At("HEAD"))
+    private void onClearClientLevelCallback(CallbackInfo ci) {
+        oneconfig$postWorldUnload();
+    }
+
+    @Unique
+    private void oneconfig$postWorldUnload() {
         if (this.level != null) {
             EventManager.INSTANCE.post(new WorldEvent.Unload(this.level));
         }
