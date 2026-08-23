@@ -41,6 +41,8 @@ class PixelGridScaleTest {
 
     private static final float FIT_1080P = 1.2423f;
 
+    private static final float FIT_720P = 0.8929f;
+
     @Test
     void growsIntoWhateverSpareRoomTheWindowHas() {
         assertEquals(20f / ANCHOR_PX, ProviderKt.snapScaleToPixelGrid(ANCHOR_PX, FIT_1440P), 1e-4f);
@@ -68,17 +70,27 @@ class PixelGridScaleTest {
 
     @Test
     void aRequestBiggerThanTheGrownEmKeepsItsOwnSize() {
-        assertEquals(40f / 38f, ProviderKt.snapScaleToPixelGrid(38f, 1f), 1e-4f);
+        assertEquals(1f, ProviderKt.snapScaleToPixelGrid(38f, 1f), 1e-4f);
     }
 
     @Test
     void shrinksOntoTheGridWhenTheRequestSitsJustAboveAStep() {
-        assertEquals(20f / 21f, ProviderKt.snapScaleToPixelGrid(21f, 0.8282f), 1e-4f);
+        assertEquals(0.8282f, ProviderKt.snapScaleToPixelGrid(21f, 0.8282f), 1e-4f);
     }
 
     @Test
-    void neverGoesBelowOnePixelPerGlyphPixel() {
-        assertEquals(10f / 6f, ProviderKt.snapScaleToPixelGrid(6f, 0.5f), 1e-4f);
+    void aGridStepThatWouldOverflowTheWindowFallsBackToTheRoomThereIs() {
+        assertEquals(FIT_720P, ProviderKt.snapScaleToPixelGrid(ANCHOR_PX, FIT_720P), 1e-4f);
+    }
+
+    @Test
+    void theOnePixelPerGlyphPixelFloorYieldsToAWindowWithNoRoomForIt() {
+        assertEquals(0.5f, ProviderKt.snapScaleToPixelGrid(6f, 0.5f), 1e-4f);
+    }
+
+    @Test
+    void minecraftsSmallestWindowStillLeavesItsMargin() {
+        assertEquals(1f, ProviderKt.snapScaleToPixelGrid(7.7355f, 1f), 1e-4f);
     }
 
     @Test

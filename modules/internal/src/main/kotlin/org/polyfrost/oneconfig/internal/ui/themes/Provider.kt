@@ -83,7 +83,8 @@ internal fun snapScaleToPixelGrid(anchorPx: Float, max: Float, chosenEm: Float? 
     val fits = floor(anchorPx * max / EM_STEP_PX) * EM_STEP_PX
     val nearest = round(anchorPx / EM_STEP_PX) * EM_STEP_PX
     val em = chosenEm ?: maxOf(nearest, fits)
-    return em.coerceAtLeast(MIN_EM_PX) / anchorPx
+    val scale = em.coerceAtLeast(MIN_EM_PX) / anchorPx
+    return if (chosenEm != null || scale <= max) scale else max
 }
 
 @Composable
