@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.mojang.blaze3d.platform.InputConstants
+//? if > 1.8.9
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
@@ -94,8 +95,11 @@ class HudEditorUIScreen : ComposeScreen() {
         return false
     }
 
+    //? if > 1.8.9 {
     //~ if >= 26.1 'render' -> 'extractRenderState'
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
+    //?} else
+    //override fun render(mouseX: Int, mouseY: Int, tickDelta: Float) {
         // a screen drawn over this one may render it as its parent so skip that pass or it closes the screen above us
         if (Platform.screen().current<Any?>() !== this) return
         if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= closeAnimationMs) {
@@ -111,8 +115,11 @@ class HudEditorUIScreen : ComposeScreen() {
             HudManager.prepare(sw, sh)
         }
         HudEditorViewport.update(Platform.screen().windowWidth(), Platform.screen().windowHeight())
+        //? if > 1.8.9 {
         //~ if >= 26.1 'render' -> 'extractRenderState'
         super.extractRenderState(ctx, mouseX, mouseY, tickDelta)
+        //?} else
+        //super.render(mouseX, mouseY, tickDelta)
     }
 
     @Composable

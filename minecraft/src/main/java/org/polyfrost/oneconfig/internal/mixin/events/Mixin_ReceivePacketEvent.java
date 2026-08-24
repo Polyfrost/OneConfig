@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Connection.class)
 public class Mixin_ReceivePacketEvent {
 
+    //~ if = 1.8.9 'protocol/Packet' -> 'packet/Packet'
     @Inject(method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/protocol/Packet;)V", at = @At("HEAD"), cancellable = true)
     private void packetReceiveCallback(ChannelHandlerContext ctx, Packet<?> packet, CallbackInfo ci) {
         PacketEvent.Receive event = new PacketEvent.Receive(packet);

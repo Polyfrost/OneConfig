@@ -11,31 +11,41 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Minecraft.class)
 public class Mixin_FramebufferRenderEvent {
 
+    //? if > 1.8.9 {
     //~ if >= 26.1 'runTick' -> 'renderFrame'
     @Inject(method = "renderFrame", at = @At(value = "INVOKE",
+    //?} else
+    //@Inject(method = "updateDisplay", at = @At(value = "INVOKE",
             //? if >= 26.2 {
             target = "Lcom/mojang/blaze3d/systems/GpuSurface;present()V"
             //?} elif 26.1 {
             /*target = "Lcom/mojang/blaze3d/systems/RenderSystem;flipFrame(Lcom/mojang/blaze3d/TracyFrameCapture;)V"
             *///?} elif >= 1.21.4 {
             /*target = "Lcom/mojang/blaze3d/platform/Window;updateDisplay(Lcom/mojang/blaze3d/TracyFrameCapture;)V"
+            *///?} elif > 1.8.9 {
+            /*target = "Lcom/mojang/blaze3d/platform/Window;updateDisplay()V"
             *///?} else
-            //target = "Lcom/mojang/blaze3d/platform/Window;updateDisplay()V"
+            //target = "Lorg/lwjgl/opengl/Display;update()V"
     ))
     private void preFramebufferRenderCallback(CallbackInfo ci) {
         EventManager.INSTANCE.post(FramebufferRenderEvent.Start.INSTANCE);
     }
 
+    //? if > 1.8.9 {
     //~ if >= 26.1 'runTick' -> 'renderFrame'
     @Inject(method = "renderFrame", at = @At(value = "INVOKE",
+    //?} else
+    //@Inject(method = "updateDisplay", at = @At(value = "INVOKE",
             //? if >= 26.2 {
             target = "Lcom/mojang/blaze3d/systems/GpuSurface;present()V",
             //?} elif 26.1 {
             /*target = "Lcom/mojang/blaze3d/systems/RenderSystem;flipFrame(Lcom/mojang/blaze3d/TracyFrameCapture;)V",
             *///?} elif >= 1.21.4 {
             /*target = "Lcom/mojang/blaze3d/platform/Window;updateDisplay(Lcom/mojang/blaze3d/TracyFrameCapture;)V",
+            *///?} elif > 1.8.9 {
+            /*target = "Lcom/mojang/blaze3d/platform/Window;updateDisplay()V",
             *///?} else
-            //target = "Lcom/mojang/blaze3d/platform/Window;updateDisplay()V",
+            //target = "Lorg/lwjgl/opengl/Display;update()V",
             shift = At.Shift.AFTER
     ))
     private void postFramebufferRenderCallback(CallbackInfo ci) {

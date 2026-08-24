@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.ui.hud
 
 import com.mojang.blaze3d.pipeline.RenderTarget
 import net.minecraft.client.Minecraft
+//? if > 1.8.9
 import net.minecraft.client.gui.GuiGraphicsExtractor
 //? if >= 26.1 {
 import net.minecraft.client.renderer.state.gui.GuiRenderState
@@ -107,7 +108,7 @@ object LegacyHudOffscreen {
             GuiTargetRedirect.target = null
         }
     }
-    *///?} else {
+    *///?} elif > 1.8.9 {
     /*private fun renderImmediateLegacy(rt: RenderTarget) {
         val graphics = GuiGraphicsExtractor(client, client.renderBuffers().bufferSource())
         offscreen.clearTarget()
@@ -118,6 +119,16 @@ object LegacyHudOffscreen {
             graphics.flush()
         } finally {
             GuiTargetRedirect.target = null
+            client.mainRenderTarget.bindWrite(true)
+        }
+    }
+    *///?} else {
+    /*private fun renderImmediateLegacy(rt: RenderTarget) {
+        offscreen.clearTarget()
+        rt.bindWrite(true)
+        try {
+            LegacyHudRenderer.renderLive()
+        } finally {
             client.mainRenderTarget.bindWrite(true)
         }
     }

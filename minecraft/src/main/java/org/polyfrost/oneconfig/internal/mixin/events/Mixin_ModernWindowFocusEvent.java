@@ -34,10 +34,13 @@ import com.mojang.blaze3d.platform.Window;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.WindowFocusEvent;
 import org.spongepowered.asm.mixin.Mixin;
+//? if = 1.8.9
+//import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
+//? if = 1.8.9
+//import org.objectweb.asm.Opcodes;
 
 //? if >= 26.1 {
 @Mixin(Window.class)
@@ -48,7 +51,7 @@ public class Mixin_ModernWindowFocusEvent {
         else EventManager.INSTANCE.post(WindowFocusEvent.Lost.INSTANCE);
     }
 }
-//? } else {
+//?} elif > 1.8.9 {
 /*@Mixin(Minecraft.class)
 public class Mixin_ModernWindowFocusEvent {
     @Inject(method = "setWindowActive", at = @At("HEAD"))
@@ -57,4 +60,25 @@ public class Mixin_ModernWindowFocusEvent {
         else EventManager.INSTANCE.post(WindowFocusEvent.Lost.INSTANCE);
     }
 }
-*///? }
+*///?} else {
+/*@Mixin(targets = "org.lwjgl.opengl.SDLDisplay", remap = false)
+public class Mixin_ModernWindowFocusEvent {
+    @Shadow
+    private boolean focused;
+
+    @Inject(
+        method = "update",
+        at = @At(
+            value = "FIELD",
+            target = "Lorg/lwjgl/opengl/SDLDisplay;focused:Z",
+            opcode = Opcodes.PUTFIELD,
+            shift = At.Shift.AFTER
+        ),
+        remap = false
+    )
+    private void oneconfig$onFocusChanged(CallbackInfo ci) {
+        if (focused) EventManager.INSTANCE.post(WindowFocusEvent.Gained.INSTANCE);
+        else EventManager.INSTANCE.post(WindowFocusEvent.Lost.INSTANCE);
+    }
+}
+*///?}

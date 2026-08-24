@@ -188,6 +188,7 @@ private val snapGuideColor = Color(176, 47, 31)
 private const val CHROME_SETTINGS_PANEL = "settings-panel"
 private const val CHROME_LIBRARY = "library"
 private const val SIDE_CHROME_DIM_ALPHA = 0.45f
+private const val LIBRARY_HOVER_HUD_ALPHA = 0.25f
 
 private data class SnapGuides(val vertical: Float?, val horizontal: Float?) {
     companion object {
@@ -1565,6 +1566,12 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
         label = "sideChromeAlpha"
     )
 
+    val libraryAlpha by animateFloatAsState(
+        targetValue = if (hoveredHud != null) LIBRARY_HOVER_HUD_ALPHA else sideChromeAlpha,
+        animationSpec = tween(150),
+        label = "libraryAlpha"
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -1988,7 +1995,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             Row(
                 modifier = Modifier
                     .chromeRegion(CHROME_LIBRARY)
-                    .graphicsLayer { alpha = sideChromeAlpha }
+                    .graphicsLayer { alpha = libraryAlpha }
                     .safePointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
                         event.changes.forEach { if (!it.isConsumed) it.consume() }
                     }

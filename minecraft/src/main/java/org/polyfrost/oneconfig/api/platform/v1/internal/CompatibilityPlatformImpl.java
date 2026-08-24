@@ -7,6 +7,7 @@ import net.kyori.adventure.platform.modcommon.MinecraftClientAudiences;
 /*import net.kyori.adventure.platform.fabric.FabricClientAudiences;
 *///?}
 import net.kyori.adventure.text.Component;
+//? if > 1.8.9
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
 import org.polyfrost.oneconfig.api.platform.v1.CompatibilityPlatform;
@@ -32,7 +33,7 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
 
     @Override
     public Set<ModInfo> getMods() {
-        //? fabric {
+        //? fabric || ornithe {
 
         return FabricLoader.getInstance().getAllMods().stream()
                 .map(mod -> {
@@ -67,8 +68,11 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
 
     @Override
     public String version() {
+        //? if > 1.8.9 {
         //~ if >= 1.21.8 '.getName()' -> '.name()'
         return SharedConstants.getCurrentVersion().name();
+        //?} else
+        //return FabricLoader.getInstance().getModContainer("minecraft").orElseThrow().getMetadata().getVersion().getFriendlyString();
     }
 
     @Override
@@ -77,6 +81,8 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
         return "fabric";
         //? neoforge
         //return "neoforge";
+        //? ornithe
+        //return "ornithe";
     }
 
     @Override

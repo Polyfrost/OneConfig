@@ -9,6 +9,9 @@ dependencyResolutionManagement {
         create("neoforge") {
             from(files("../gradle/neoforge.versions.toml"))
         }
+        create("ornithe") {
+            from(files("../gradle/ornithe.versions.toml"))
+        }
     }
 }
 

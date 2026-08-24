@@ -68,7 +68,7 @@ private const val ICON_GAP = 12f
 private const val TITLE_SIZE = 14f
 private const val MESSAGE_SIZE = 12f
 
-private const val ICON_RASTER_SCALE = 2
+private const val ICON_RASTER_SCALE = 2f
 
 internal sealed interface ToastHit {
     val notification: Notification
@@ -84,6 +84,7 @@ private const val PROGRESS_LINGER_NANOS = 600_000_000L
 internal object ToastViewport {
     var width by mutableStateOf(0f)
     var height by mutableStateOf(0f)
+    var scale by mutableStateOf(1f)
 }
 
 @Composable
@@ -240,7 +241,8 @@ private fun ToastIcon(notification: Notification, a: Float) {
             val dh = custom.height * s
             image(custom, x + (w - dw) / 2f, y + (h - dh) / 2f, dw, dh, Paint().also { it.setAlphaf(a) })
         } else {
-            val img = SvgRasterizer.get(notification.type.iconName, (w * ICON_RASTER_SCALE).toInt())
+            val pixelSize = Math.ceil((w * ToastViewport.scale * ICON_RASTER_SCALE).toDouble()).toInt()
+            val img = SvgRasterizer.get(notification.type.iconName, pixelSize)
             if (img != null) {
                 val paint = Paint().also { it.colorFilter = ColorFilter.makeBlend(tint.argb, BlendMode.SRC_IN) }
                 image(img, x, y, w, h, paint)

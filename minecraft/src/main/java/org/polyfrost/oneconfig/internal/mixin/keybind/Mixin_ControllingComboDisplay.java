@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.keybind;
 
+//? if > 1.8.9 {
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
@@ -38,3 +39,10 @@ public class Mixin_ControllingComboDisplay {
         if (combo != null && !combo.equals(btnChangeKeyBinding.getMessage())) btnChangeKeyBinding.setMessage(combo);
     }
 }
+//?} else {
+/*import net.minecraft.SharedConstants;
+import org.spongepowered.asm.mixin.Mixin;
+
+@Mixin(SharedConstants.class)
+public class Mixin_ControllingComboDisplay {}
+*///?}

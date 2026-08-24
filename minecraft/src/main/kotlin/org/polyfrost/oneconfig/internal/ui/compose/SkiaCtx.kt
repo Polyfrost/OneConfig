@@ -1,9 +1,14 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
+import com.mojang.blaze3d.pipeline.RenderTarget
+//? if > 1.8.9
 import com.mojang.blaze3d.pipeline.TextureTarget
 import net.minecraft.client.Minecraft
+//? if > 1.8.9 {
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.resources.Identifier
+//?} else
+//import net.minecraft.client.render.platform.GlStateManager
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.Color
 import org.jetbrains.skia.ColorSpace
@@ -60,11 +65,11 @@ object SkiaCtx {
 
     private val gl = StoredGLState(330)
 
-    private var hudTarget: TextureTarget? = null
+    private var hudTarget: RenderTarget? = null
     private var hudSurface: Surface? = null
     private var hudBrt: BackendRenderTarget? = null
 
-    private var composeTarget: TextureTarget? = null
+    private var composeTarget: RenderTarget? = null
     private var composeSurface: Surface? = null
     private var composeBrt: BackendRenderTarget? = null
 
@@ -155,7 +160,7 @@ object SkiaCtx {
             this.textureView = null
         }
     }
-    //? } else {
+    //?} elif > 1.8.9 {
     /*private val HUD_TEXTURE_LOC = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("oneconfig", "hud_skia")
     private val COMPOSE_TEXTURE_LOC = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("oneconfig", "compose_skia")
     private var hudTextureWrapper: HudGlTexture? = null
@@ -282,6 +287,7 @@ object SkiaCtx {
         hudNeedsSamplingTransition = true
     }
 
+    //? if > 1.8.9 {
     @Volatile
     private var blurSnapshotRequested = false
 
@@ -357,6 +363,7 @@ object SkiaCtx {
         }
         *///? }
     }
+    //?}
 
     @Volatile
     @JvmField
@@ -376,6 +383,7 @@ object SkiaCtx {
     }
     *///? }
 
+    //? if > 1.8.9 {
     fun blitHud(guiGraphics: GuiGraphicsExtractor) {
         val rt = hudTarget ?: return
         val w = rt.width
@@ -483,6 +491,41 @@ object SkiaCtx {
         guiGraphics.pose().popPose()
         *///? }
     }
+    //?} else {
+    /*fun blitHud() {
+        val rt = hudTarget ?: return
+        val w = rt.width
+        val h = rt.height
+
+        gl.capture()
+        try {
+            GlStateManager.enableBlend()
+            GlStateManager.blendFuncSeparate(
+                GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA,
+                GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA,
+            )
+            if (hudNeedsSamplingTransition) {
+                vulkanService?.transitionOffscreenForSampling(rt)
+                hudNeedsSamplingTransition = false
+                hudRealIsGeneral = true
+            }
+            GL11.glMatrixMode(GL11.GL_PROJECTION)
+            GL11.glPushMatrix()
+            GL11.glMatrixMode(GL11.GL_MODELVIEW)
+            GL11.glPushMatrix()
+            try {
+                rt.draw(w, h, false)
+            } finally {
+                GL11.glMatrixMode(GL11.GL_MODELVIEW)
+                GL11.glPopMatrix()
+                GL11.glMatrixMode(GL11.GL_PROJECTION)
+                GL11.glPopMatrix()
+            }
+        } finally {
+            gl.restore()
+        }
+    }
+    *///?}
 
     fun draw() {
         if (!this::directContext.isInitialized) return
@@ -636,9 +679,10 @@ object SkiaCtx {
             /*rt = TextureTarget(null, w, h, true)
             *///? } else if >= 1.21.4 {
             // rt = TextureTarget(w, h, true)
-            //? } else {
+            //?} elif > 1.8.9 {
             /*rt = TextureTarget(w, h, true, Minecraft.ON_OSX)
-            *///? }
+            *///?} else
+            //rt = RenderTarget(w, h, false)
             hudTarget = rt
 
             //? >= 1.21.5 {
@@ -663,6 +707,7 @@ object SkiaCtx {
             hudBrt = brt
             hudSurface = Surface.makeFromBackendRenderTarget(
                 directContext, brt,
+                //~ if = 1.8.9 'SurfaceOrigin.TOP_LEFT' -> 'SurfaceOrigin.BOTTOM_LEFT'
                 SurfaceOrigin.TOP_LEFT,
                 colorFmt,
                 ColorSpace.sRGB,
@@ -709,9 +754,10 @@ object SkiaCtx {
                 /*TextureTarget(null, w, h, true)
                 *///? } else if >= 1.21.4 {
                 // TextureTarget(w, h, true)
-                //? } else {
+                //?} elif > 1.8.9 {
                 /*TextureTarget(w, h, true, Minecraft.ON_OSX)
-                *///? }
+                *///?} else
+                //RenderTarget(w, h, false)
             } catch (e: Throwable) {
                 onComposeAllocFailure(w, h, e)
                 return null
@@ -795,7 +841,7 @@ object SkiaCtx {
         if (existing != null && existing.width == w && existing.height == h) return existing
 
         glSurface?.close(); glBrt?.close()
-        //? if >= 26.1 {
+        //? if >= 26.1 || = 1.8.9 {
         //? if >= 26.2 {
         val target = client.gameRenderer.mainRenderTarget()
         //? } else {

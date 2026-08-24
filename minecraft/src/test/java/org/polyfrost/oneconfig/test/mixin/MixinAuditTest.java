@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.test.mixin;
 
+//? if > 1.8.9
 import net.minecraft.SharedConstants;
 import net.minecraft.server.Bootstrap;
 import org.junit.jupiter.api.Assertions;
@@ -79,8 +80,11 @@ class MixinAuditTest {
                 "Error handler resolved to a different class than the test uses, failures would go unrecorded");
 
         try {
+            //? if > 1.8.9 {
             SharedConstants.tryDetectVersion();
             Bootstrap.bootStrap();
+            //?} else
+            //Bootstrap.init();
         } catch (Throwable t) {
             System.out.println("[mixin-audit] Minecraft bootstrap did not complete, continuing anyway:");
             t.printStackTrace(System.out);

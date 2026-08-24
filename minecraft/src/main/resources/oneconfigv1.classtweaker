@@ -1,0 +1,14 @@
+classTweaker v2 named
+
+accessible field net/minecraft/client/Minecraft tasks Ljava/util/Queue;
+accessible field net/minecraft/client/render/texture/HttpTexture image Ljava/awt/image/BufferedImage;
+accessible method net/minecraft/client/gui/screen/TitleScreen drawBackground (IIF)V
+
+transitive-inject-interface net/minecraft/client/Minecraft org/polyfrost/oneconfig/internal/legacy/compat/MinecraftCompat
+transitive-inject-interface net/minecraft/client/KeyMapping org/polyfrost/oneconfig/internal/legacy/compat/KeyBindingCompat
+transitive-inject-interface net/minecraft/world/HitResult org/polyfrost/oneconfig/internal/legacy/compat/HitResultCompat
+transitive-inject-interface net/minecraft/client/render/texture/HttpTexture org/polyfrost/oneconfig/internal/legacy/compat/HttpTextureCompat
+transitive-inject-interface net/minecraft/client/sound/instance/SoundInstance org/polyfrost/oneconfig/internal/legacy/compat/SoundInstanceCompat
+transitive-inject-interface net/minecraft/client/Options org/polyfrost/oneconfig/internal/legacy/compat/GameOptionsCompat
+transitive-inject-interface net/minecraft/client/entity/living/player/ClientPlayerEntity org/polyfrost/oneconfig/internal/legacy/compat/ClientPlayerCompat
+transitive-inject-interface net/minecraft/client/resource/skin/SkinManager org/polyfrost/oneconfig/internal/legacy/compat/SkinManagerCompat

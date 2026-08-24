@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui
 
 import com.mojang.blaze3d.pipeline.RenderTarget
+//? if > 1.8.9
 import com.mojang.blaze3d.pipeline.TextureTarget
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.ColorSpace
@@ -34,9 +35,10 @@ class SkiaOffscreenTarget {
             /*val rt = TextureTarget(null, w, h, true)
             *///?} else if >= 1.21.4 {
             /*val rt = TextureTarget(w, h, true)
-            *///?} else {
+            *///?} elif > 1.8.9 {
             /*val rt = TextureTarget(w, h, true, net.minecraft.client.Minecraft.ON_OSX)
-            *///?}
+            *///?} else
+            //val rt = RenderTarget(w, h, false)
             target = rt
             //? if < 1.21.5
             //rt.setClearColor(0f, 0f, 0f, 0f)
@@ -79,9 +81,10 @@ class SkiaOffscreenTarget {
         *///?}
         *///?} elif >= 1.21.4 {
         /*rt.clear()
-        *///?} else {
+        *///?} elif > 1.8.9 {
         /*rt.clear(net.minecraft.client.Minecraft.ON_OSX)
-        *///?}
+        *///?} else
+        //rt.clear()
     }
 
     fun destroy() {

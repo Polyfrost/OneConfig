@@ -1,7 +1,13 @@
 package org.polyfrost.oneconfig.internal.ui.components.item
 
+//? if > 1.8.9 {
 import com.mojang.blaze3d.pipeline.TextureTarget
 import com.mojang.blaze3d.systems.RenderSystem
+//?} else {
+/*import com.mojang.blaze3d.pipeline.RenderTarget as TextureTarget
+import net.minecraft.client.render.platform.GlStateManager
+import org.lwjgl.opengl.GL11
+*///?}
 //? if >= 1.21.4 && < 1.21.8
 //import com.mojang.blaze3d.ProjectionType
 //? if >= 1.21.8 {
@@ -13,6 +19,7 @@ import com.mojang.blaze3d.buffers.BufferUsage
 //? if < 1.21.5
 //import com.mojang.blaze3d.platform.NativeImage
 import net.minecraft.client.Minecraft
+//? if > 1.8.9 {
 import net.minecraft.client.gui.GuiGraphicsExtractor
 //? if >= 1.21.8
 import net.minecraft.client.gui.render.GuiRenderer
@@ -24,9 +31,11 @@ import org.polyfrost.oneconfig.internal.mixin.render.GameRendererAccessor
 import org.polyfrost.oneconfig.internal.mixin.render.GameRendererAccessor
 *///? }
 import net.minecraft.core.registries.BuiltInRegistries
+//?}
 import net.minecraft.network.chat.Component
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
+//? if > 1.8.9
 import net.minecraft.world.item.Items
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
@@ -40,7 +49,7 @@ import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.min
 import kotlin.math.roundToInt
-//? if < 1.21.8
+//? if < 1.21.8 && > 1.8.9
 //import org.joml.Matrix4f
 
 class MinecraftItemCatalogService : ItemCatalogService {
@@ -49,11 +58,19 @@ class MinecraftItemCatalogService : ItemCatalogService {
     private data class RenderBatch(val ids: List<String>, val generation: Long)
 
     private val entries: List<RegistryEntry> by lazy {
+        //? if > 1.8.9 {
         BuiltInRegistries.ITEM.mapNotNull { item ->
             if (item === Items.AIR) return@mapNotNull null
             val id = BuiltInRegistries.ITEM.getKey(item).toString()
             RegistryEntry(item, id)
         }
+        //?} else {
+        /*Item.REGISTRY.mapNotNull { item ->
+            val id = Item.REGISTRY.getKey(item)?.toString() ?: return@mapNotNull null
+            RegistryEntry(item, id)
+        }
+        *///?}
+
     }
     private val entriesById: Map<String, RegistryEntry> by lazy { entries.associateBy(RegistryEntry::id) }
     private val iconCache: MutableMap<String, ItemIconData> = Collections.synchronizedMap(
@@ -77,7 +94,10 @@ class MinecraftItemCatalogService : ItemCatalogService {
         catalogCache?.let { return it }
         return synchronized(requestLock) {
             catalogCache ?: entries.map { entry ->
+                //? if > 1.8.9 {
                 ItemDescriptor(entry.id, Component.translatable(entry.item.descriptionId).string)
+                //?} else
+                //ItemDescriptor(entry.id, entry.item.getName(ItemStack(entry.item)))
             }.also { catalogCache = it }
         }
     }
@@ -188,9 +208,10 @@ class MinecraftItemCatalogService : ItemCatalogService {
         /*return TextureTarget(null, width, height, true)
         *///? } else if >= 1.21.4 {
         /*return TextureTarget(width, height, true).also { it.setClearColor(0f, 0f, 0f, 0f) }
-        *///? } else {
+        *///? } elif > 1.8.9 {
         /*return TextureTarget(width, height, true, Minecraft.ON_OSX).also { it.setClearColor(0f, 0f, 0f, 0f) }
-        *///? }
+        *///? } else
+        //return TextureTarget(width, height, true).also { it.setClearColor(0f, 0f, 0f, 0f) }
     }
 
     private fun renderItems(
@@ -252,6 +273,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
         return null
         *///? } else {
         /*val client = Minecraft.getInstance()
+        //? if > 1.8.9
         val graphics = GuiGraphicsExtractor(client, client.renderBuffers().bufferSource())
         val previousTarget = GuiTargetRedirect.target
         withGuiProjection(guiWidth, guiHeight) {
@@ -260,8 +282,10 @@ class MinecraftItemCatalogService : ItemCatalogService {
             try {
                 placements.forEach { placement ->
                     val item = entriesById[placement.id]?.item ?: return@forEach
+                    //~ if = 1.8.9 'graphics.renderFakeItem' -> 'client.itemRenderer.renderGuiItem'
                     graphics.renderFakeItem(ItemStack(item), placement.x + ITEM_PADDING, placement.y + ITEM_PADDING)
                 }
+                //? if > 1.8.9
                 graphics.flush()
             } finally {
                 GuiTargetRedirect.target = previousTarget
@@ -294,6 +318,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
 
     //? if < 1.21.8 {
     /*private inline fun withGuiProjection(guiWidth: Int, guiHeight: Int, render: () -> Unit) {
+        //? if > 1.8.9 {
         RenderSystem.backupProjectionMatrix()
         val modelView = RenderSystem.getModelViewStack()
         modelView.pushMatrix()
@@ -321,6 +346,27 @@ class MinecraftItemCatalogService : ItemCatalogService {
             //RenderSystem.applyModelViewMatrix()
             RenderSystem.restoreProjectionMatrix()
         }
+        //?} else {
+        /*val previousMatrixMode = GL11.glGetInteger(GL11.GL_MATRIX_MODE)
+        GL11.glMatrixMode(GL11.GL_PROJECTION)
+        GL11.glPushMatrix()
+        GL11.glLoadIdentity()
+        GL11.glOrtho(0.0, guiWidth.toDouble(), guiHeight.toDouble(), 0.0, 1000.0, 3000.0)
+        GL11.glMatrixMode(GL11.GL_MODELVIEW)
+        GL11.glPushMatrix()
+        GL11.glLoadIdentity()
+        GL11.glTranslatef(0f, 0f, -2000f)
+
+        try {
+            render()
+        } finally {
+            GL11.glMatrixMode(GL11.GL_MODELVIEW)
+            GL11.glPopMatrix()
+            GL11.glMatrixMode(GL11.GL_PROJECTION)
+            GL11.glPopMatrix()
+            GL11.glMatrixMode(previousMatrixMode)
+        }
+        *///?}
     }
     *///? }
 
@@ -335,9 +381,10 @@ class MinecraftItemCatalogService : ItemCatalogService {
         target.depthTexture?.let { encoder.clearDepthTexture(it, 1.0) }
         *///? } else if >= 1.21.4 {
         /*target.clear()
-        *///? } else {
+        *///? } elif > 1.8.9 {
         /*target.clear(Minecraft.ON_OSX)
-        *///? }
+        *///? } else
+        //target.clear()
     }
 
     private fun readTarget(
@@ -445,8 +492,12 @@ class MinecraftItemCatalogService : ItemCatalogService {
         }
         //? } else {
         /*val image = NativeImage(target.width, target.height, false)
+        //? if > 1.8.9 {
         val previousTexture = RenderSystem.getShaderTexture(0)
+        //?} else
+        //val previousTexture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D)
         try {
+            //~ if = 1.8.9 'RenderSystem' -> 'GlStateManager'
             RenderSystem.bindTexture(target.colorTextureId)
             image.downloadTexture(0, false)
             image.flipY()
@@ -465,6 +516,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
             }
             completeBatch(batch, icons)
         } finally {
+            //~ if = 1.8.9 'RenderSystem' -> 'GlStateManager'
             RenderSystem.bindTexture(previousTexture)
             image.close()
             closeRenderResource(renderResource)

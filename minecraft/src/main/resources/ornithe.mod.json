@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "id": "oneconfigv1",
+  "name": "OneConfig (Platform Module)",
+  "version": "${mod_version}",
+  "description": "Access all your mod settings in one place, with a sleek and intuitive interface.",
+  "authors": [
+    "Polyfrost"
+  ],
+  "contact": {
+    "homepage": "https://polyfrost.org",
+    "sources": "https://github.com/Polyfrost/OneConfig",
+    "issues": "https://inv.wtf/polyfrost"
+  },
+  "license": "LGPL-3.0",
+  "environment": "client",
+  "accessWidener": "oneconfigv1.classtweaker",
+  "mixins": [
+    "mixins.oneconfigv1.init.json",
+    "mixins.oneconfigv1.json"
+  ],
+  "entrypoints": {
+    "client": [
+      "org.polyfrost.oneconfig.internal.OneConfig"
+    ],
+    "modmenu": [
+      {
+        "adapter": "kotlin",
+        "value": "org.polyfrost.oneconfig.internal.compat.ModMenuEntrypoint"
+      }
+    ],
+    "preLaunch": [
+      "org.polyfrost.oneconfig.internal.SkikoDataPathPreLaunch"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.0",
+    "minecraft": "${fabric_mc_version}",
+    "legacy-lwjgl3": ">=1.4.4",
+    "osl-core": ">=0.10.0-alpha.5",
+    "osl-resource-loader": ">=0.8.0-alpha.5",
+    "osl-localization": ">=0.1.1-alpha.3",
+    "osl-networking": ">=0.10.0-alpha.3",
+    "osl-text-components": ">=0.1.0-alpha.5"
+  },
+  "custom": {
+    "modmenu": {
+      "parent": "oneconfig",
+      "badges": [ "library" ]
+    }
+  }
+}

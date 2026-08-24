@@ -46,6 +46,7 @@ public class I18nPlatformImpl implements I18nPlatform {
 
     @Override
     public String translateString(String key, Object... args) {
+        //~ if = 1.8.9 'I18n.get(' -> 'L10n.get('
         return I18n.get(key, args);
     }
 
@@ -53,9 +54,10 @@ public class I18nPlatformImpl implements I18nPlatform {
     public boolean hasTranslation(String key) {
         //? if >= 26.2 {
         return Language.getInstance().has(key);
-        //?} else {
+        //?} elif > 1.8.9 {
         /*return I18n.exists(key);
-        *///?}
+        *///?} else
+        //return L10n.has(key);
     }
 
     @Override

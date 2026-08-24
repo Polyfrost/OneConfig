@@ -1,0 +1,12 @@
+[versions]
+loader = "0.19.3"
+osl = "0.21.0-alpha.34"
+feather_build = "1"
+ploceus = "1.17.4"
+
+[libraries]
+fabric-loader = { module = "net.fabricmc:fabric-loader", version.ref = "loader" }
+fabric-loader-junit = { module = "net.fabricmc:fabric-loader-junit", version.ref = "loader" }
+
+[plugins]
+ploceus = { id = "ploceus", version.ref = "ploceus" }
