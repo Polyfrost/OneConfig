@@ -188,8 +188,6 @@ private val snapGuideColor = Color(176, 47, 31)
 private const val CHROME_SETTINGS_PANEL = "settings-panel"
 private const val CHROME_LIBRARY = "library"
 private const val SIDE_CHROME_DIM_ALPHA = 0.45f
-private const val LIBRARY_HOVER_HUD_ALPHA = 0.25f
-private const val LIBRARY_REVEAL_RADIUS = 64f
 
 private data class SnapGuides(val vertical: Float?, val horizontal: Float?) {
     companion object {
@@ -428,27 +426,6 @@ private fun drawHudContents(sk: org.jetbrains.skia.Canvas, mcToScreen: Float) {
 
 private fun orderedInstances(): List<Hud> = HudManager.zOrderedInstances { hud ->
     hudBounds(hud)?.let { floatArrayOf(it.x, it.y, it.width, it.height) }
-}
-
-private fun hudUnderLibrary(libraryRect: Rect, screenX: Float, screenY: Float): Boolean {
-    val probe = Rect(
-        screenX - LIBRARY_REVEAL_RADIUS,
-        screenY - LIBRARY_REVEAL_RADIUS,
-        screenX + LIBRARY_REVEAL_RADIUS,
-        screenY + LIBRARY_REVEAL_RADIUS,
-    )
-    if (!probe.overlaps(libraryRect)) return false
-    val mcToScreen = Platform.screen().mcToScreenScale()
-    return HudManager.activeInstances.any { hud ->
-        val b = hudBounds(hud) ?: return@any false
-        val r = Rect(
-            b.x * mcToScreen,
-            b.y * mcToScreen,
-            (b.x + b.width) * mcToScreen,
-            (b.y + b.height) * mcToScreen,
-        )
-        r.overlaps(libraryRect) && r.overlaps(probe)
-    }
 }
 
 private fun hitTestHud(hud: Hud, screenX: Float, screenY: Float): Boolean {
@@ -937,7 +914,6 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     var resizeStartStaticW by remember { mutableStateOf(0f) }
     var resizeStartStaticH by remember { mutableStateOf(0f) }
     var libraryVisible by remember { mutableStateOf(true) }
-    var libraryRevealHud by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
     var pendingLibraryScroll by remember { mutableStateOf<String?>(null) }
     // the mod last picked from the icon column kept separate from the scroll-derived section because the
@@ -1350,9 +1326,6 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             val pos = event.changes.firstOrNull()?.position ?: return@safePointerEvent
             lastPointerPos[0] = pos.x
             lastPointerPos[1] = pos.y
-            val libraryRect = chromeRects[CHROME_LIBRARY]
-            val revealHud = libraryRect != null && hudUnderLibrary(libraryRect, pos.x, pos.y)
-            if (revealHud != libraryRevealHud) libraryRevealHud = revealHud
             if (anchorPickSources.isNotEmpty()) {
                 val mcToScreen = Platform.screen().mcToScreenScale()
                 val source = anchorPickSources[0]
@@ -1590,12 +1563,6 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
         targetValue = if (selectedHuds.isNotEmpty()) SIDE_CHROME_DIM_ALPHA else 1f,
         animationSpec = tween(150),
         label = "sideChromeAlpha"
-    )
-
-    val libraryAlpha by animateFloatAsState(
-        targetValue = if (libraryRevealHud) LIBRARY_HOVER_HUD_ALPHA else sideChromeAlpha,
-        animationSpec = tween(150),
-        label = "libraryAlpha"
     )
 
     Box(
@@ -2021,7 +1988,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             Row(
                 modifier = Modifier
                     .chromeRegion(CHROME_LIBRARY)
-                    .graphicsLayer { alpha = libraryAlpha }
+                    .graphicsLayer { alpha = sideChromeAlpha }
                     .safePointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
                         event.changes.forEach { if (!it.isConsumed) it.consume() }
                     }
