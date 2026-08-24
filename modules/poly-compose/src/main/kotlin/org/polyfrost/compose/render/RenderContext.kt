@@ -67,11 +67,23 @@ class RenderContext(val canvas: Canvas) {
     }
 
     fun image(image: Image, x: Float, y: Float, w: Float, h: Float, paint: Paint) {
-        canvas.drawImageRect(image, Rect.makeXYWH(x, y, w, h), paint)
+        paint.isAntiAlias = true
+        canvas.drawImageRect(
+            image,
+            Rect.makeWH(image.width.toFloat(), image.height.toFloat()),
+            Rect.makeXYWH(x, y, w, h),
+            IMAGE_SAMPLING,
+            paint,
+            true,
+        )
     }
 
     fun scale(sx: Float, sy: Float) = canvas.scale(sx, sy)
 
     fun clipRect(x: Float, y: Float, w: Float, h: Float) = canvas.clipRect(Rect.makeXYWH(x, y, w, h))
     fun clipRRect(x: Float, y: Float, w: Float, h: Float, radius: Float) = canvas.clipRRect(RRect.makeXYWH(x, y, w, h, radius), true)
+
+    private companion object {
+        private val IMAGE_SAMPLING: SamplingMode = FilterMipmap(FilterMode.LINEAR, MipmapMode.NONE)
+    }
 }

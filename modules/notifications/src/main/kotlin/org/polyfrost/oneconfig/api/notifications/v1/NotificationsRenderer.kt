@@ -38,7 +38,7 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 object NotificationsRenderer {
     private val LOGGER = LogManager.getLogger("OneConfig/Notifications")
 
-    private const val BASE_SCALE = 0.4f
+    private const val BASE_SCALE = 0.5f
 
     @Volatile
     private var runtime: PolyComposeRuntime? = null
@@ -61,6 +61,7 @@ object NotificationsRenderer {
         val viewHeight = screenHeight * guiScale / scale
         ToastViewport.width = viewWidth
         ToastViewport.height = viewHeight
+        ToastViewport.scale = scale
 
         val rt = runtime()
         rt.frame(viewWidth, viewHeight)
