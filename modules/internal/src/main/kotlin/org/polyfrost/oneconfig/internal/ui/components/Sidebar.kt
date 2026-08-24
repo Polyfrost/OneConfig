@@ -66,7 +66,7 @@ fun Sidebar() {
                     modifier = Modifier.fillMaxWidth().padding(bottom = 18.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    TopOptionsSection(flipped = true)
+                    TopOptionsSection()
                 }
             }
             Account()
@@ -98,35 +98,13 @@ private fun Branding() {
 }
 
 @Composable
-private fun TopOptionsSection(flipped: Boolean = false) {
-    val editHud: @Composable () -> Unit = {
+private fun TopOptionsSection() {
+    NavigationSection {
         NavigationEntry(
             "hud",
             "Edit HUD",
         ) {
             HudManager.openEditor()
-        }
-    }
-    val globalSearch: @Composable () -> Unit = {
-        NavigationEntry(
-            "search",
-            "Global Search",
-        ) {
-            ShellState.globalSearchActive = true
-            if (ShellState.searchQuery.isBlank()) {
-                ShellState.searchQuery = ""
-            }
-            ShellState.showSearchField = true
-            ShellState.focusSearchField = true
-        }
-    }
-    NavigationSection {
-        if (flipped) {
-            globalSearch()
-            editHud()
-        } else {
-            editHud()
-            globalSearch()
         }
     }
 }
