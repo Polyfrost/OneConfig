@@ -76,10 +76,13 @@ public abstract class Mixin_ChatReceiveEvent {
             return false;
         }
 
+        ChatEvent.Receive event = new ChatEvent.Receive(adventure);
+        EventManager.INSTANCE.post(event);
+
+        ocfg$chatEvent = event;
+        ocfg$nativeMessage = message;
         ocfg$postedMessage = adventure;
-        ocfg$chatEvent = new ChatEvent.Receive(adventure);
-        EventManager.INSTANCE.post(ocfg$chatEvent);
-        return ocfg$chatEvent.cancelled;
+        return event.cancelled;
     }
 
     /**
