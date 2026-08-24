@@ -82,7 +82,9 @@ internal object GLInterfaceFactory {
                 LibFFI.ffi_type_pointer,
                 LibFFI.ffi_type_pointer,
             )
-            //? if >=26.1
+            //? if >= 26.3 {
+            /*private val DESCRIPTOR: Callback.Descriptor = Callback.Descriptor(GetProcCallbackI::class.java, MethodHandles.lookup(), CALL_INTERFACE)
+            *///?} elif >= 26.1
             private val DESCRIPTOR: Callback.Descriptor = Callback.Descriptor(MethodHandles.lookup(), CALL_INTERFACE)
         }
     }
