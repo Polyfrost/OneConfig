@@ -2067,40 +2067,6 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    val theme = LocalTheme.current
-                    var masterHudEnabled by remember { mutableStateOf(HudManager.masterHudEnabled) }
-                    fun toggleMasterHud() {
-                        masterHudEnabled = !masterHudEnabled
-                        Snapshot.withMutableSnapshot {
-                            HudManager.masterHudEnabled = masterHudEnabled
-                            OneConfigConfig.masterHudEnabled = masterHudEnabled
-                        }
-                        OneConfigConfig.INSTANCE.save()
-                    }
-                    Box(
-                        modifier = Modifier
-                            .size(60.dp)
-                            .background(theme.popupBackground, theme.backgroundShape)
-                            .border(1.dp, theme.borderColor, theme.backgroundShape)
-                            .safePointerEvent(PointerEventType.Press, PointerEventPass.Main) { event ->
-                                if (event.changes.none { it.isConsumed }) {
-                                    event.changes.forEach { it.consume() }
-                                    UiSounds.play(UiSoundEvent.CLICK)
-                                    toggleMasterHud()
-                                }
-                            }
-                            .padding(14.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        IconButton(
-                            if (masterHudEnabled) "eye" else "eye-off",
-                            modifier = Modifier.size(32.dp),
-                            foreground = if (masterHudEnabled) theme.textColor else theme.textColor.copy(alpha = 0.5f),
-                            hoveredForeground = theme.textColor
-                        ) {
-                            toggleMasterHud()
-                        }
-                    }
                     ModIconColumn(
                         modIds = modIds,
                         activeModId = activeLibraryMod,

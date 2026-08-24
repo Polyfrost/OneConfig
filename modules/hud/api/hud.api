@@ -259,7 +259,6 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static field isTabListVisible Z
 	public static field layoutRefHeight F
 	public static field layoutRefWidth F
-	public static field masterHudEnabled Z
 	public static field overrideShowInScreens Z
 	public static field pendingAdd Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public static field pendingSelection Lorg/polyfrost/oneconfig/api/hud/v1/Hud;

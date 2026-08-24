@@ -42,16 +42,6 @@ public class OneConfigConfig extends Config {
     )
     public static boolean keybindClosesGui = false;
 
-    @Switch(
-        title = "oneconfig.preferences.master_hud_enabled.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.hud_editor",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.master_hud_enabled.description",
-        descriptionTranslation = true
-    )
-    public static boolean masterHudEnabled = true;
-
     @Keybind(
         title = "oneconfig.preferences.hud_settings_keybind.title",
         titleTranslation = true,
@@ -761,12 +751,6 @@ public class OneConfigConfig extends Config {
                 return false;
             });
         refreshHudLockKeybind();
-        addCallback(
-            "masterHudEnabled", (Boolean v) -> {
-                org.polyfrost.oneconfig.api.hud.v1.HudManager.masterHudEnabled = v;
-                return false;
-            });
-        org.polyfrost.oneconfig.api.hud.v1.HudManager.masterHudEnabled = masterHudEnabled;
     }
 
     /** When the OneConfig keybind last closed the GUI so the same press cannot immediately reopen it */

@@ -38,7 +38,6 @@ object LegacyHudRenderer {
     }
 
     private fun renderLiveHuds(graphics: GuiGraphicsExtractor) {
-        if (!HudManager.masterHudEnabled && !HudManager.isEditing) return
         frame.clear()
         for (hud in HudManager.activeInstances) {
             if (hud !is LegacyHud) continue
