@@ -20,6 +20,7 @@ public class Mixin_SoundPlayedEvent {
             String name = value.getSound().getLocation().toString();
             SoundPlayedEvent event = new SoundPlayedEvent(name, null, value);
             EventManager.INSTANCE.post(event);
+            return event.getSound();
         }
 
         return value;
