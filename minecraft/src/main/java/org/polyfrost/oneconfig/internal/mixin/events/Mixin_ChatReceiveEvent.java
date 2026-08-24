@@ -29,41 +29,31 @@ public abstract class Mixin_ChatReceiveEvent {
     @Unique private Component ocfg$nativeMessage;
     @Unique private net.kyori.adventure.text.Component ocfg$postedMessage;
 
-    //? if >= 26.1 {
     @Inject(
+            //? if >= 26.1 {
             method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V",
+            //?} else {
+            /*method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V",
+            *///?}
             at = @At("HEAD"),
             cancellable = true
     )
+    //? if >= 26.1 {
     public void chatReceiveCallback(Component message, MessageSignature signature, GuiMessageSource source, GuiMessageTag tag, CallbackInfo ci) {
-        if (ocfg$post(message)) {
-            ci.cancel();
-        }
-    }
-
-    @ModifyVariable(
-            method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V",
-            at = @At("HEAD"),
-            ordinal = 0,
-            argsOnly = true
-    )
-    public Component modifyMessage(Component message) {
-        return ocfg$consume(message);
-    }
     //?} else {
-    /*@Inject(
-            method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V",
-            at = @At("HEAD"),
-            cancellable = true
-    )
-    public void chatReceiveCallback(Component message, MessageSignature signature, GuiMessageTag tag, CallbackInfo ci) {
+    /*public void chatReceiveCallback(Component message, MessageSignature signature, GuiMessageTag tag, CallbackInfo ci) {
+    *///?}
         if (ocfg$post(message)) {
             ci.cancel();
         }
     }
 
     @ModifyVariable(
-            method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V",
+            //? if >= 26.1 {
+            method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V",
+            //?} else {
+            /*method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V",
+            *///?}
             at = @At("HEAD"),
             ordinal = 0,
             argsOnly = true
@@ -71,7 +61,6 @@ public abstract class Mixin_ChatReceiveEvent {
     public Component modifyMessage(Component message) {
         return ocfg$consume(message);
     }
-    *///?}
 
     @Unique
     private boolean ocfg$post(Component message) {

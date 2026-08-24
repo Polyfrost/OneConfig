@@ -2,11 +2,11 @@ package org.polyfrost.oneconfig.internal.mixin.events;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-//? < 26.2 {
-/*import net.minecraft.client.renderer.MultiBufferSource;
-*///? }
+//? if < 1.21.9
+//import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
-import net.minecraft.world.entity.LivingEntity;
+//? if < 1.21.2
+//import net.minecraft.world.entity.LivingEntity;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.RenderLivingEvent;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,15 +21,9 @@ import net.minecraft.client.renderer.state.level.CameraRenderState;
 //? }
 //? if >= 1.21.2
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
-//? if < 1.21.2
-//import net.minecraft.client.Minecraft;
 
 @Mixin(LivingEntityRenderer.class)
-public class Mixin_RenderLivingEntityEvent<
-        T extends LivingEntity
-        //? >= 1.21.2
-        , S extends LivingEntityRenderState
-        > {
+public class Mixin_RenderLivingEntityEvent {
     @Inject(
             //? >= 1.21.9 {
             //~ if >= 26.1 'state/Camera' -> 'state/level/Camera'
@@ -41,26 +35,13 @@ public class Mixin_RenderLivingEntityEvent<
             at = @At("HEAD"),
             cancellable = true
     )
-    private void onPreEntityRenderCallback(
-            //? >= 1.21.2 {
-            S entity,
-            //? } else
-            //T entity,
-            //? <= 1.21.1 {
-            /*float entityYaw,
-            float partialTicks,
-            *///? }
-            //? >= 1.21.9 {
-            PoseStack matrixStack,
-            SubmitNodeCollector renderQueue,
-            CameraRenderState cameraState,
-            //? } else {
-            /*PoseStack matrixStack,
-            MultiBufferSource buffer,
-            int packedLight,
-            *///? }
-            CallbackInfo ci
-    ) {
+    //? if >= 1.21.9 {
+    private void onPreEntityRenderCallback(LivingEntityRenderState entity, PoseStack matrixStack, SubmitNodeCollector renderQueue, CameraRenderState cameraState, CallbackInfo ci) {
+    //?} elif >= 1.21.2 {
+    /*private void onPreEntityRenderCallback(LivingEntityRenderState entity, PoseStack matrixStack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
+    *///?} else {
+    /*private void onPreEntityRenderCallback(LivingEntity entity, float entityYaw, float partialTicks, PoseStack matrixStack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
+    *///?}
 
         //? >= 1.21.2 {
         double x = entity.x;
@@ -89,26 +70,13 @@ public class Mixin_RenderLivingEntityEvent<
             //method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
             at = @At("TAIL")
     )
-    private void onPostEntityRenderCallback(
-            //? >= 1.21.2 {
-            S entity,
-            //? } else
-            //T entity,
-            //? <= 1.21.1 {
-            /*float entityYaw,
-            float partialTicks,
-            *///? }
-            //? >= 1.21.9 {
-            PoseStack matrixStack,
-            SubmitNodeCollector renderQueue,
-            CameraRenderState cameraState,
-            //? } else {
-            /*PoseStack matrixStack,
-            MultiBufferSource buffer,
-            int packedLight,
-            *///? }
-            CallbackInfo ci
-    ) {
+    //? if >= 1.21.9 {
+    private void onPostEntityRenderCallback(LivingEntityRenderState entity, PoseStack matrixStack, SubmitNodeCollector renderQueue, CameraRenderState cameraState, CallbackInfo ci) {
+    //?} elif >= 1.21.2 {
+    /*private void onPostEntityRenderCallback(LivingEntityRenderState entity, PoseStack matrixStack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
+    *///?} else {
+    /*private void onPostEntityRenderCallback(LivingEntity entity, float entityYaw, float partialTicks, PoseStack matrixStack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
+    *///?}
         //? >= 1.21.2 {
         double x = entity.x;
         double y = entity.y;
