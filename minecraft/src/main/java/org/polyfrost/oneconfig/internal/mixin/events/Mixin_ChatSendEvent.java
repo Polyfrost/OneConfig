@@ -6,6 +6,8 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 //import net.minecraft.client.player.LocalPlayer;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.ChatEvent;
+//? if = 1.8.9
+//import org.polyfrost.oneconfig.internal.legacy.command.ClientCommandInternals;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -29,7 +31,15 @@ public abstract class Mixin_ChatSendEvent {
 
         if (ocfg$chatEvent.cancelled) {
             ci.cancel();
+            return;
         }
+
+        //? if = 1.8.9 {
+        /*String commandMessage = ocfg$chatEvent.message;
+        if (commandMessage.startsWith("/") && ClientCommandInternals.executeCommand(commandMessage.substring(1))) {
+            ci.cancel();
+        }
+        *///?}
     }
 
     @ModifyVariable(

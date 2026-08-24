@@ -65,6 +65,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
     public List<String> getMixins() {
         List<String> mixins = new ArrayList<>();
 
+        //? if = 1.8.9
+        //mixins.add("command.Mixin_LegacyChatCompletion");
 
         //? moul_compat {
         RelocatedMixins.INSTANCE.register(e -> {
