@@ -28,6 +28,29 @@ public final class org/polyfrost/oneconfig/api/event/v1/EventManager {
 	public final fun unregister ([Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;)V
 }
 
+public final synthetic class org/polyfrost/oneconfig/api/event/v1/ExtensionsKt {
+	public static final synthetic fun eventHandlerCancellable (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final synthetic fun eventHandlerCancellableZ (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final synthetic fun eventHandlerChat (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final synthetic fun eventHandlerChatZ (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final synthetic fun eventHandlerEvent (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final synthetic fun eventHandlerEventZ (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final synthetic fun eventHandlerFramebufferRender (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final synthetic fun eventHandlerFramebufferRenderZ (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final synthetic fun eventHandlerHud (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final synthetic fun eventHandlerHudZ (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final synthetic fun eventHandlerPacket (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final synthetic fun eventHandlerPacketZ (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final synthetic fun eventHandlerRenderLiving (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final synthetic fun eventHandlerRenderLivingZ (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final synthetic fun eventHandlerTick (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final synthetic fun eventHandlerTickZ (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final synthetic fun eventHandlerWindowFocus (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final synthetic fun eventHandlerWindowFocusZ (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final synthetic fun eventHandlerWorld (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final synthetic fun eventHandlerWorldZ (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+}
+
 public abstract class org/polyfrost/oneconfig/api/event/v1/events/ChatEvent : org/polyfrost/oneconfig/api/event/v1/events/Event$Cancellable {
 	public fun <init> ()V
 }

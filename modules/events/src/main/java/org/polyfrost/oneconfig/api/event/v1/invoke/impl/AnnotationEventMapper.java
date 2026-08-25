@@ -28,6 +28,7 @@ package org.polyfrost.oneconfig.api.event.v1.invoke.impl;
 
 import org.polyfrost.oneconfig.api.event.v1.EventException;
 import org.polyfrost.oneconfig.api.event.v1.events.Event;
+import org.polyfrost.oneconfig.api.event.v1.internal.EventClassValidator;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventCollector;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
@@ -53,11 +54,17 @@ public class AnnotationEventMapper implements EventCollector {
 
     @SuppressWarnings("unchecked")
     private static EventHandler<?> create(Method m, Object owner, int priority) {
+        String description = m.getDeclaringClass().getName() + "." + m.getName();
+        if (m.getParameterCount() != 1) {
+            throw new EventException("Failed to register @Subscribe handler " + description + ": method must have exactly 1 parameter of a concrete event type");
+        }
+        Class<?> parameterType = m.getParameterTypes()[0];
+        String problem = EventClassValidator.describeProblem(parameterType);
+        if (problem != null) {
+            throw new EventException("Failed to register @Subscribe handler " + description + ": " + problem);
+        }
+        Class<Event> eventClass = (Class<Event>) parameterType;
         try {
-            if (m.getParameterCount() != 1) {
-                throw new EventException("Failed to register event handler: Method must have 1 parameter of type Event");
-            }
-            Class<Event> eventClass = (Class<Event>) m.getParameterTypes()[0];
             if (m.getReturnType() == boolean.class) {
                 Predicate<Event> f = MHUtils.getPredicateHandle(owner, m.getName(), eventClass).getOrThrow();
                 return new EventHandler<Event>() {
