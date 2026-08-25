@@ -100,6 +100,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
         mixins.add("Mixin_SimpleReloadInstance");
         mixins.add("Mixin_MainMenuFpsUncap");
+        mixins.add("Mixin_VersionedResourcePacks");
         //? yacl_compat
         mixins.add("compat.yacl.Mixin_YetAnotherConfigLib_Builder");
 
