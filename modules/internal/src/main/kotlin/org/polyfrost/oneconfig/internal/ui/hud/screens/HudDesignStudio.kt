@@ -59,6 +59,7 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils
+import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.*
@@ -3039,6 +3040,7 @@ fun SearchBar() {
     BasicTextField(
         searchText,
         { searchText = it },
+        modifier = Modifier.trackTextInputFocus(),
         interactionSource = interactionSource,
         textStyle = TextStyle(
             color = iconColor, fontSize = 12.sp,
@@ -3082,6 +3084,7 @@ private fun LibrarySearchBar(value: String, onValueChange: (String) -> Unit) {
     BasicTextField(
         value,
         onValueChange,
+        modifier = Modifier.trackTextInputFocus(),
         interactionSource = interactionSource,
         textStyle = TextStyle(
             color = iconColor, fontSize = 12.sp,

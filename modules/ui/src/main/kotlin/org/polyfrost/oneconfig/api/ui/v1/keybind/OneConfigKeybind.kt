@@ -43,6 +43,9 @@ open class OneConfigKeybind(
     @Transient
     var defaultKeybind: OneConfigKeybind? = null
 
+    @Transient
+    var firesWhileTyping = false
+
     val isBound get() = keyCodes?.isNotEmpty() == true || mouseBtns?.isNotEmpty() == true
 
     /**
@@ -67,6 +70,7 @@ open class OneConfigKeybind(
             it.name = name
             it.category = category
             it.defaultKeybind = defaultKeybind
+            it.firesWhileTyping = firesWhileTyping
         }
 
     /**
