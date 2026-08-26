@@ -4,14 +4,6 @@ import com.mojang.blaze3d.pipeline.TextureTarget
 import com.mojang.blaze3d.systems.RenderSystem
 //? if >= 1.21.4 && < 1.21.8
 //import com.mojang.blaze3d.ProjectionType
-//? if >= 1.21.8 {
-import com.mojang.blaze3d.buffers.GpuBuffer
-//? } else if >= 1.21.5 {
-/*import com.mojang.blaze3d.buffers.BufferType
-import com.mojang.blaze3d.buffers.BufferUsage
-*///? }
-//? if < 1.21.5
-//import com.mojang.blaze3d.platform.NativeImage
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
 //? if >= 1.21.8
@@ -28,26 +20,36 @@ import net.minecraft.network.chat.Component
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
+import org.jetbrains.skia.Canvas
+import org.jetbrains.skia.ContentChangeMode
+import org.jetbrains.skia.Paint
+import org.jetbrains.skia.Rect
+import org.jetbrains.skia.SamplingMode
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.internal.ui.SkiaOffscreenTarget
+import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
 import org.polyfrost.oneconfig.internal.ui.hud.GuiTargetRedirect
 import org.slf4j.LoggerFactory
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
-import java.util.Collections
 import kotlin.math.ceil
-import kotlin.math.floor
 import kotlin.math.min
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 //? if < 1.21.8
 //import org.joml.Matrix4f
 
 class MinecraftItemCatalogService : ItemCatalogService {
     private data class RegistryEntry(val item: Item, val id: String)
-    private data class Placement(val id: String, val x: Int, val y: Int)
-    private data class RenderBatch(val ids: List<String>, val generation: Long)
-
+    private data class AtlasIcon(val source: Rect)
+    private data class AtlasLayout(val columns: Int, val rows: Int, val renderScale: Int) {
+        val capacity = columns * rows
+    }
+    private data class Placement(val id: String, val x: Int, val y: Int, val source: Rect)
+    private data class RenderBatch(
+        val placements: List<Placement>,
+        val generation: Long,
+    )
     private val entries: List<RegistryEntry> by lazy {
         BuiltInRegistries.ITEM.mapNotNull { item ->
             if (item === Items.AIR) return@mapNotNull null
@@ -56,17 +58,19 @@ class MinecraftItemCatalogService : ItemCatalogService {
         }
     }
     private val entriesById: Map<String, RegistryEntry> by lazy { entries.associateBy(RegistryEntry::id) }
-    private val iconCache: MutableMap<String, ItemIconData> = Collections.synchronizedMap(
-        object : LinkedHashMap<String, ItemIconData>(MAX_CACHED_ICONS, 0.75f, true) {
-            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, ItemIconData>?): Boolean =
-                size > MAX_CACHED_ICONS
-        }
-    )
+    private val atlas = SkiaOffscreenTarget()
+    private val atlasPaint = Paint()
     private val requestLock = Any()
-    private val waiting = LinkedHashMap<String, MutableList<(ItemIconData?) -> Unit>>()
+    private val icons = LinkedHashMap<String, AtlasIcon>()
+    private val waiting = LinkedHashMap<String, MutableList<(Boolean) -> Unit>>()
+
     @Volatile
     private var catalogCache: List<ItemDescriptor>? = null
+    private var atlasLayout: AtlasLayout? = null
     private var cacheGeneration = 0L
+    private var nextSlot = 0
+    private var atlasNeedsClear = true
+    private var atlasReadyForSampling = false
     private var renderScheduled = false
 
     init {
@@ -82,23 +86,22 @@ class MinecraftItemCatalogService : ItemCatalogService {
         }
     }
 
-    override fun icon(id: String): ItemIconData? = iconCache[id]
-
-    override fun loadIcon(id: String, onLoaded: (ItemIconData?) -> Unit) {
-        iconCache[id]?.let {
-            onLoaded(it)
-            return
-        }
+    override fun requestIcon(id: String, onLoaded: (Boolean) -> Unit) {
         if (id !in entriesById) {
-            onLoaded(null)
+            deliverIcon(onLoaded, false)
             return
         }
 
-        var cachedIcon: ItemIconData? = null
+        var available = false
+        var atlasLost = false
         var shouldSchedule = false
         synchronized(requestLock) {
-            cachedIcon = iconCache[id]
-            if (cachedIcon == null) {
+            if (icons.isNotEmpty() && !atlasAvailable()) {
+                resetAtlasLocked()
+                atlasLost = true
+            }
+            available = id in icons
+            if (!available) {
                 waiting.getOrPut(id, ::mutableListOf).add(onLoaded)
                 if (!renderScheduled) {
                     renderScheduled = true
@@ -106,91 +109,178 @@ class MinecraftItemCatalogService : ItemCatalogService {
                 }
             }
         }
-        cachedIcon?.let(onLoaded)
+
+        if (atlasLost) invalidateMountedIcons()
+        if (available) deliverIcon(onLoaded, true)
         if (shouldSchedule) scheduleRender()
     }
 
+    override fun drawIcon(id: String, canvas: Canvas, bounds: Rect, alpha: Float): Boolean {
+        var atlasLost = false
+        val resolved = synchronized(requestLock) {
+            if (!atlasAvailable()) {
+                if (icons.isNotEmpty()) {
+                    resetAtlasLocked()
+                    atlasLost = true
+                }
+                null
+            } else {
+                val cached = icons[id] ?: return@synchronized null
+                cached to checkNotNull(atlas.surface)
+            }
+        }
+        if (atlasLost) invalidateMountedIcons()
+        if (resolved == null) {
+            return false
+        }
+        val (icon, surface) = resolved
+
+        return runCatching {
+            val source = icon.source
+            if (source.width <= 0f || source.height <= 0f || bounds.width <= 0f || bounds.height <= 0f) {
+                return false
+            }
+
+            atlasPaint.alpha = (alpha.coerceIn(0f, 1f) * 255f).roundToInt()
+            val saveCount = canvas.save()
+            try {
+                canvas.clipRect(bounds)
+                canvas.translate(bounds.left, bounds.top)
+                canvas.scale(bounds.width / source.width, bounds.height / source.height)
+                canvas.translate(-source.left, -source.top)
+                surface.draw(canvas, 0, 0, SamplingMode.LINEAR, atlasPaint)
+            } finally {
+                canvas.restoreToCount(saveCount)
+            }
+            true
+        }.getOrElse {
+            LOG.debug("Failed to draw an item icon from the atlas", it)
+            false
+        }
+    }
+
+    private fun atlasAvailable(): Boolean = atlas.target != null && atlas.surface != null
+
+    private fun invalidateMountedIcons() {
+        runCatching { queueOnRenderThread(ItemCatalog::invalidateIcons) }
+            .onFailure { LOG.warn("Failed to invalidate item selector icons", it) }
+    }
+
+    private fun deliverIcon(callback: (Boolean) -> Unit, loaded: Boolean) {
+        runCatching { callback(loaded) }
+            .onFailure { LOG.warn("Failed to deliver a rendered item selector icon", it) }
+    }
+
     private fun scheduleRender() {
-        // always queue the batch so the current Compose frame finishes before native GUI rendering starts
-        Minecraft.getInstance().schedule(::renderPendingBatch)
+        runCatching { queueOnRenderThread(::renderPendingBatch) }
+            .onFailure {
+                val callbacks = synchronized(requestLock) {
+                    renderScheduled = false
+                    val callbacks = waiting.values.flatten()
+                    waiting.clear()
+                    callbacks
+                }
+                callbacks.forEach { callback -> deliverIcon(callback, false) }
+                LOG.warn("Failed to schedule item selector rendering", it)
+            }
+    }
+
+    private fun queueOnRenderThread(block: () -> Unit) {
+        val task = Runnable(block)
+        //? if >= 1.21.4
+        Minecraft.getInstance().schedule(task)
+        //? if < 1.21.4
+        //Minecraft.getInstance().tell(task)
     }
 
     private fun renderPendingBatch() {
-        val guiWidth = Platform.screen().guiWidth()
-        val guiHeight = Platform.screen().guiHeight()
-        val windowWidth = Platform.screen().windowWidth()
-        val windowHeight = Platform.screen().windowHeight()
-        val viewportWidth = Platform.screen().viewportWidth()
-        val viewportHeight = Platform.screen().viewportHeight()
-        if (
-            guiWidth <= 0 || guiHeight <= 0 ||
-            windowWidth <= 0 || windowHeight <= 0 ||
-            viewportWidth <= 0 || viewportHeight <= 0
-        ) {
-            completeBatch(currentBatch(), emptyMap())
+        val layout = synchronized(requestLock) {
+            atlasLayout ?: createAtlasLayout()?.also { atlasLayout = it }
+        }
+        if (layout == null) {
+            failBatch(currentBatch(), "item icon atlas exceeds the maximum texture size")
             return
         }
 
-        val scaleX = viewportWidth.toDouble() / guiWidth.toDouble()
-        val scaleY = viewportHeight.toDouble() / guiHeight.toDouble()
-        val pixelRatio = maxOf(
-            viewportWidth.toDouble() / windowWidth.toDouble(),
-            viewportHeight.toDouble() / windowHeight.toDouble(),
-        )
-        val iconPixelSize = (ICON_SIZE * pixelRatio).roundToInt().coerceIn(ICON_SIZE, MAX_ICON_PIXEL_SIZE)
-        val columns = min(
-            MAX_BATCH_COLUMNS,
-            floor(MAX_TARGET_SIZE / (CELL_SIZE * scaleX)).toInt().coerceAtLeast(1),
-        )
-        val rows = min(
-            MAX_BATCH_ROWS,
-            floor(MAX_TARGET_SIZE / (CELL_SIZE * scaleY)).toInt().coerceAtLeast(1),
-        )
-        val batch = currentBatch(columns * rows)
-        if (batch.ids.isEmpty()) {
-            markRenderFinished()
+        val previousTarget = atlas.target
+        val resolved = resolveAtlasTarget(layout)
+        val target = atlas.target as? TextureTarget
+        val surface = atlas.surface
+        if (!resolved || target == null || surface == null) {
+            failBatch(currentBatch(), "item icon atlas is unavailable")
             return
         }
 
-        val usedColumns = min(columns, batch.ids.size)
-        val usedRows = (batch.ids.size + usedColumns - 1) / usedColumns
-        val renderGuiWidth = usedColumns * CELL_SIZE
-        val renderGuiHeight = usedRows * CELL_SIZE
-        val targetWidth = ceil(renderGuiWidth * scaleX).toInt().coerceIn(1, MAX_TARGET_SIZE)
-        val targetHeight = ceil(renderGuiHeight * scaleY).toInt().coerceIn(1, MAX_TARGET_SIZE)
-        val placements = batch.ids.mapIndexed { index, id ->
-            Placement(id, index % usedColumns * CELL_SIZE, index / usedColumns * CELL_SIZE)
-        }
-        val target = try {
-            createTarget(targetWidth, targetHeight)
-        } catch (throwable: Throwable) {
-            LOG.warn("Failed to create the item icon render target", throwable)
-            completeBatch(batch, emptyMap())
-            return
+        val guiWidth = layout.columns * CELL_SIZE
+        val guiHeight = layout.rows * CELL_SIZE
+        val targetChanged = target !== previousTarget
+        if (targetChanged) atlasReadyForSampling = false
+
+        val batch: RenderBatch
+        val shouldClear: Boolean
+        synchronized(requestLock) {
+            if (targetChanged && icons.isNotEmpty() || nextSlot > icons.size && waiting.isNotEmpty()) {
+                rebuildAtlasLocked()
+            }
+            val availableSlots = layout.capacity - nextSlot
+            val ids = waiting.keys.take(min(MAX_BATCH_SIZE, availableSlots.coerceAtLeast(0)))
+            val generation = cacheGeneration
+            val targetScaleX = target.width.toFloat() / guiWidth.toFloat()
+            val targetScaleY = target.height.toFloat() / guiHeight.toFloat()
+            val placements = ids.map { id ->
+                val slot = nextSlot++
+                val x = slot % layout.columns * CELL_SIZE
+                val y = slot / layout.columns * CELL_SIZE
+                Placement(
+                    id,
+                    x,
+                    y,
+                    Rect.makeLTRB(
+                        (x + ITEM_PADDING) * targetScaleX,
+                        (y + ITEM_PADDING) * targetScaleY,
+                        (x + ITEM_PADDING + ITEM_RENDER_SIZE) * targetScaleX,
+                        (y + ITEM_PADDING + ITEM_RENDER_SIZE) * targetScaleY,
+                    ),
+                )
+            }
+            batch = RenderBatch(placements, generation)
+            shouldClear = atlasNeedsClear
+            if (placements.isNotEmpty()) atlasNeedsClear = false
         }
 
+        if (batch.placements.isEmpty()) {
+            if (synchronized(requestLock) { waiting.isEmpty() }) {
+                markRenderFinished()
+            } else {
+                failBatch(currentBatch(), "item icon atlas is full")
+            }
+            return
+        }
         var renderResource: AutoCloseable? = null
         try {
-            renderResource = renderItems(target, placements, renderGuiWidth, renderGuiHeight)
-            readTarget(target, placements, renderGuiWidth, renderGuiHeight, iconPixelSize, batch, renderResource)
-        } catch (throwable: Throwable) {
-            LOG.warn("Failed to render item selector icons", throwable)
+            val backend = SkiaCtx.vulkanService
+            surface.notifyContentWillChange(
+                if (shouldClear) ContentChangeMode.DISCARD else ContentChangeMode.RETAIN,
+            )
+            if (atlasReadyForSampling) backend?.transitionOffscreenForRendering(target)
+            if (shouldClear) clearTarget(target)
+            renderResource = renderItems(target, batch.placements, guiWidth, guiHeight)
+            backend?.midFrameFlush()
             closeRenderResource(renderResource)
-            target.destroyBuffers()
-            completeBatch(batch, emptyMap())
+            renderResource = null
+            backend?.transitionOffscreenForSampling(target)
+            backend?.midFrameFlush()
+            atlasReadyForSampling = true
+            completeBatch(batch)
+        } catch (throwable: Throwable) {
+            atlasReadyForSampling = false
+            closeRenderResource(renderResource)
+            if (shouldClear) synchronized(requestLock) {
+                if (batch.generation == cacheGeneration) atlasNeedsClear = true
+            }
+            LOG.warn("Failed to render item selector icons", throwable)
+            failBatch(batch)
         }
-    }
-
-    private fun createTarget(width: Int, height: Int): TextureTarget {
-        //? if >= 26.2 {
-        return TextureTarget(null, width, height, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
-        //? } else if >= 1.21.5 {
-        /*return TextureTarget(null, width, height, true)
-        *///? } else if >= 1.21.4 {
-        /*return TextureTarget(width, height, true).also { it.setClearColor(0f, 0f, 0f, 0f) }
-        *///? } else {
-        /*return TextureTarget(width, height, true, Minecraft.ON_OSX).also { it.setClearColor(0f, 0f, 0f, 0f) }
-        *///? }
     }
 
     private fun renderItems(
@@ -199,19 +289,29 @@ class MinecraftItemCatalogService : ItemCatalogService {
         guiWidth: Int,
         guiHeight: Int,
     ): AutoCloseable? {
-        clearTarget(target)
         //? if >= 1.21.8 {
         val state = GuiRenderState()
         //? if >= 1.21.11 {
         val graphics = GuiGraphicsExtractor(Minecraft.getInstance(), state, guiWidth, guiHeight)
         //? } else
         //val graphics = GuiGraphicsExtractor(Minecraft.getInstance(), state)
+        val pose = graphics.pose()
+        pose.pushMatrix()
+        val guiScale = Minecraft.getInstance().window.guiScale.toFloat().coerceAtLeast(1f)
+        pose.scale(
+            target.width.toFloat() / guiWidth.toFloat() / guiScale,
+            target.height.toFloat() / guiHeight.toFloat() / guiScale,
+        )
+        try {
         placements.forEach { placement ->
             val item = entriesById[placement.id]?.item ?: return@forEach
             //? if >= 26.1 {
             graphics.fakeItem(ItemStack(item), placement.x + ITEM_PADDING, placement.y + ITEM_PADDING)
             //? } else
             //graphics.renderFakeItem(ItemStack(item), placement.x + ITEM_PADDING, placement.y + ITEM_PADDING)
+        }
+        } finally {
+            pose.popMatrix()
         }
 
         val client = Minecraft.getInstance()
@@ -274,8 +374,6 @@ class MinecraftItemCatalogService : ItemCatalogService {
 
     //? if >= 1.21.8 {
     private fun createItemGuiRenderer(client: Minecraft, state: GuiRenderState): GuiRenderer {
-        // keep this icon batch separate from the active frame's render state and item atlas
-        // because reusing the game's renderer would mix two independently-lived frames
         //? if >= 26.2 {
         return GuiRenderer(state, client.gameRenderer.featureRenderDispatcher(), emptyList())
         //? } else if >= 1.21.10 {
@@ -340,236 +438,80 @@ class MinecraftItemCatalogService : ItemCatalogService {
         *///? }
     }
 
-    private fun readTarget(
-        target: TextureTarget,
-        placements: List<Placement>,
-        guiWidth: Int,
-        guiHeight: Int,
-        iconSize: Int,
-        batch: RenderBatch,
-        renderResource: AutoCloseable?,
-    ) {
-        //? if >= 1.21.5 {
-        val texture = target.colorTexture ?: error("Item icon render target has no color texture")
-        val width = target.width
-        val height = target.height
-        //? if >= 26.2 {
-        val pixelSize = texture.format.blockSize()
-        //? } else
-        //val pixelSize = texture.format.pixelSize()
-        val device = RenderSystem.getDevice()
-        //? if >= 1.21.11 {
-        val buffer = device.createBuffer(
-            { "OneConfig item icon readback" },
-            GpuBuffer.USAGE_MAP_READ or GpuBuffer.USAGE_COPY_DST,
-            width.toLong() * height.toLong() * pixelSize,
-        )
-        //? } else if >= 1.21.8 {
-        /*val buffer = device.createBuffer(
-            { "OneConfig item icon readback" },
-            GpuBuffer.USAGE_MAP_READ or GpuBuffer.USAGE_COPY_DST,
-            width * height * pixelSize,
-        )
-        *///? } else {
-        /*val buffer = device.createBuffer(
-            { "OneConfig item icon readback" },
-            BufferType.PIXEL_PACK,
-            BufferUsage.STATIC_READ,
-            width * height * pixelSize,
-        )
-        *///? }
-        //? if < 26.2
-        //val readEncoder = device.createCommandEncoder()
-        val onCopied = Runnable {
-            try {
-                //? if >= 26.2 {
-                buffer.map(true, false).use { view ->
-                    completeReadback(
-                        placements,
-                        guiWidth,
-                        guiHeight,
-                        width,
-                        height,
-                        pixelSize,
-                        iconSize,
-                        view.data(),
-                        batch,
-                    )
-                }
-                //? } else if >= 1.21.8 {
-                /*readEncoder.mapBuffer(buffer, true, false).use { view ->
-                    completeReadback(
-                        placements,
-                        guiWidth,
-                        guiHeight,
-                        width,
-                        height,
-                        pixelSize,
-                        iconSize,
-                        view.data(),
-                        batch,
-                    )
-                }
-                *///? } else {
-                /*readEncoder.readBuffer(buffer).use { view ->
-                    completeReadback(
-                        placements,
-                        guiWidth,
-                        guiHeight,
-                        width,
-                        height,
-                        pixelSize,
-                        iconSize,
-                        view.data(),
-                        batch,
-                    )
-                }
-                *///? }
-            } catch (throwable: Throwable) {
-                LOG.warn("Failed to read item selector icons from the GPU", throwable)
-                completeBatch(batch, emptyMap())
-            } finally {
-                buffer.close()
-                closeRenderResource(renderResource)
-                target.destroyBuffers()
-            }
-        }
-        try {
-            //? if >= 1.21.11 {
-            device.createCommandEncoder().copyTextureToBuffer(texture, buffer, 0L, onCopied, 0)
-            //? } else
-            //device.createCommandEncoder().copyTextureToBuffer(texture, buffer, 0, onCopied, 0)
-        } catch (throwable: Throwable) {
-            buffer.close()
-            throw throwable
-        }
-        //? } else {
-        /*val image = NativeImage(target.width, target.height, false)
-        val previousTexture = RenderSystem.getShaderTexture(0)
-        try {
-            RenderSystem.bindTexture(target.colorTextureId)
-            image.downloadTexture(0, false)
-            image.flipY()
-            val icons = extractIcons(
-                placements,
-                guiWidth,
-                guiHeight,
-                image.width,
-                image.height,
-                iconSize,
-            ) { x, y ->
-                //? if >= 1.21.4 {
-                image.getPixel(x, y)
-                //? } else
-                //abgrToArgb(image.getPixelRGBA(x, y))
-            }
-            completeBatch(batch, icons)
-        } finally {
-            RenderSystem.bindTexture(previousTexture)
-            image.close()
-            closeRenderResource(renderResource)
-            target.destroyBuffers()
-        }
-        *///? }
-    }
-
     private fun closeRenderResource(resource: AutoCloseable?) {
         runCatching { resource?.close() }
             .onFailure { LOG.warn("Failed to release item selector render resources", it) }
     }
 
-    private fun completeReadback(
-        placements: List<Placement>,
-        guiWidth: Int,
-        guiHeight: Int,
-        width: Int,
-        height: Int,
-        pixelSize: Int,
-        iconSize: Int,
-        data: ByteBuffer,
-        batch: RenderBatch,
-    ) {
-        val nativeData = data.order(ByteOrder.nativeOrder())
-        val icons = extractIcons(placements, guiWidth, guiHeight, width, height, iconSize) { x, y ->
-            val sourceY = height - y - 1
-            val raw = nativeData.getInt((x + sourceY * width) * pixelSize)
-            abgrToArgb(raw)
-        }
-        completeBatch(batch, icons)
-    }
-
-    private fun extractIcons(
-        placements: List<Placement>,
-        guiWidth: Int,
-        guiHeight: Int,
-        imageWidth: Int,
-        imageHeight: Int,
-        iconSize: Int,
-        pixel: (Int, Int) -> Int,
-    ): Map<String, ItemIconData> {
-        val scaleX = imageWidth.toDouble() / guiWidth.toDouble()
-        val scaleY = imageHeight.toDouble() / guiHeight.toDouble()
-        return placements.associate { placement ->
-            val pixels = IntArray(iconSize * iconSize)
-            for (y in 0 until iconSize) {
-                val logicalY = placement.y + ITEM_PADDING + (y + 0.5) * ITEM_RENDER_SIZE / iconSize
-                val sourceY = logicalY * scaleY - 0.5
-                for (x in 0 until iconSize) {
-                    val logicalX = placement.x + ITEM_PADDING + (x + 0.5) * ITEM_RENDER_SIZE / iconSize
-                    val sourceX = logicalX * scaleX - 0.5
-                    pixels[y * iconSize + x] = unpremultiply(
-                        sampleBilinear(sourceX, sourceY, imageWidth, imageHeight, pixel),
-                    )
-                }
-            }
-            placement.id to ItemIconData(iconSize, iconSize, pixels)
+    private fun resolveAtlasTarget(layout: AtlasLayout): Boolean {
+        val targetWidth = layout.columns * CELL_SIZE * layout.renderScale
+        val targetHeight = layout.rows * CELL_SIZE * layout.renderScale
+        return runCatching { atlas.resolveTarget(targetWidth, targetHeight) }.getOrElse {
+            LOG.warn("Failed to create the item icon atlas", it)
+            false
         }
     }
 
-    /** Smooths model edges while keeping transparent pixels free of dark color fringes */
-    private fun sampleBilinear(
-        x: Double,
-        y: Double,
-        width: Int,
-        height: Int,
-        pixel: (Int, Int) -> Int,
-    ): Int {
-        val clampedX = x.coerceIn(0.0, (width - 1).toDouble())
-        val clampedY = y.coerceIn(0.0, (height - 1).toDouble())
-        val x0 = floor(clampedX).toInt()
-        val y0 = floor(clampedY).toInt()
-        val x1 = min(x0 + 1, width - 1)
-        val y1 = min(y0 + 1, height - 1)
-        val xWeight = clampedX - x0
-        val yWeight = clampedY - y0
-        val c00 = pixel(x0, y0)
-        val c10 = pixel(x1, y0)
-        val c01 = pixel(x0, y1)
-        val c11 = pixel(x1, y1)
-
-        fun channel(shift: Int): Int {
-            val top = ((c00 ushr shift) and 0xFF) * (1.0 - xWeight) +
-                ((c10 ushr shift) and 0xFF) * xWeight
-            val bottom = ((c01 ushr shift) and 0xFF) * (1.0 - xWeight) +
-                ((c11 ushr shift) and 0xFF) * xWeight
-            return (top * (1.0 - yWeight) + bottom * yWeight).roundToInt().coerceIn(0, 255)
+    private fun createAtlasLayout(): AtlasLayout? {
+        val maxTextureSize = min(maxSupportedTextureSize(), MAX_ATLAS_TARGET_SIZE)
+        val screen = Platform.screen()
+        val guiWidth = screen.guiWidth()
+        val guiHeight = screen.guiHeight()
+        val desiredScale = if (guiWidth > 0 && guiHeight > 0) {
+            ceil(
+                maxOf(
+                    screen.viewportWidth().toDouble() / guiWidth,
+                    screen.viewportHeight().toDouble() / guiHeight,
+                ),
+            ).toInt().coerceIn(1, MAX_ATLAS_RENDER_SCALE)
+        } else {
+            1
         }
+        val itemCount = entriesById.size.coerceAtLeast(1)
 
-        return channel(24) shl 24 or
-            (channel(16) shl 16) or
-            (channel(8) shl 8) or
-            channel(0)
+        for (renderScale in desiredScale downTo 1) {
+            val cellsPerAxis = maxTextureSize / (CELL_SIZE * renderScale)
+            if (cellsPerAxis <= 0 || cellsPerAxis.toLong() * cellsPerAxis < itemCount.toLong()) continue
+            val columns = ceil(sqrt(itemCount.toDouble())).toInt().coerceAtMost(cellsPerAxis)
+            val rows = (itemCount + columns - 1) / columns
+            return AtlasLayout(columns, rows, renderScale)
+        }
+        return null
     }
 
-    private fun completeBatch(batch: RenderBatch, icons: Map<String, ItemIconData>) {
-        val callbacks = mutableListOf<Pair<(ItemIconData?) -> Unit, ItemIconData?>>()
+    private fun rebuildAtlasLocked() {
+        val residentIds = icons.keys.toList()
+        val pending = waiting.mapValues { (_, callbacks) -> callbacks.toMutableList() }
+
+        cacheGeneration++
+        icons.clear()
+        waiting.clear()
+        residentIds.forEach { id -> waiting[id] = mutableListOf() }
+        pending.forEach { (id, callbacks) ->
+            waiting.getOrPut(id, ::mutableListOf).addAll(callbacks)
+        }
+        nextSlot = 0
+        atlasNeedsClear = true
+    }
+
+    private fun maxSupportedTextureSize(): Int {
+        //? if >= 26.2 {
+        return RenderSystem.getDevice().getDeviceInfo().limits().maxTextureSize()
+        //? } else if >= 1.21.5 {
+        /*return RenderSystem.getDevice().getMaxTextureSize()
+        *///? } else {
+        /*return RenderSystem.maxSupportedTextureSize()
+        *///? }
+    }
+
+    private fun completeBatch(batch: RenderBatch) {
+        val callbacks = mutableListOf<(Boolean) -> Unit>()
         var scheduleNext = false
         synchronized(requestLock) {
             if (batch.generation == cacheGeneration) {
-                icons.forEach { (id, icon) -> iconCache[id] = icon }
-                batch.ids.forEach { id ->
-                    val icon = icons[id]
-                    waiting.remove(id).orEmpty().forEach { callbacks += it to icon }
+                batch.placements.forEach { placement ->
+                    icons[placement.id] = AtlasIcon(placement.source)
+                    waiting.remove(placement.id).orEmpty().forEach { callbacks += it }
                 }
             }
             renderScheduled = false
@@ -579,10 +521,27 @@ class MinecraftItemCatalogService : ItemCatalogService {
             }
         }
         if (scheduleNext) scheduleRender()
-        callbacks.forEach { (callback, icon) ->
-            runCatching { callback(icon) }
-                .onFailure { LOG.warn("Failed to deliver a rendered item selector icon", it) }
+        callbacks.forEach { callback -> deliverIcon(callback, true) }
+    }
+
+    private fun failBatch(batch: RenderBatch, reason: String? = null) {
+        val callbacks = mutableListOf<(Boolean) -> Unit>()
+        var scheduleNext = false
+        synchronized(requestLock) {
+            if (batch.generation == cacheGeneration) {
+                batch.placements.forEach { placement ->
+                    waiting.remove(placement.id).orEmpty().forEach { callbacks += it }
+                }
+            }
+            renderScheduled = false
+            if (waiting.isNotEmpty()) {
+                renderScheduled = true
+                scheduleNext = true
+            }
         }
+        if (reason != null) LOG.debug("Item selector rendering skipped: {}", reason)
+        if (scheduleNext) scheduleRender()
+        callbacks.forEach { callback -> deliverIcon(callback, false) }
     }
 
     private fun markRenderFinished() {
@@ -597,28 +556,36 @@ class MinecraftItemCatalogService : ItemCatalogService {
         if (scheduleNext) scheduleRender()
     }
 
-    private fun currentBatch(limit: Int = Int.MAX_VALUE): RenderBatch = synchronized(requestLock) {
-        RenderBatch(waiting.keys.take(limit), cacheGeneration)
+    private fun currentBatch(): RenderBatch = synchronized(requestLock) {
+        val batch = RenderBatch(
+            waiting.keys.take(MAX_BATCH_SIZE).map { id ->
+                Placement(id, 0, 0, Rect.makeLTRB(0f, 0f, 0f, 0f))
+            },
+            cacheGeneration,
+        )
+        batch
     }
 
     private fun clearCaches() {
+        var shouldSchedule = false
         synchronized(requestLock) {
-            cacheGeneration++
             catalogCache = null
-            iconCache.clear()
+            resetAtlasLocked()
+            if (waiting.isNotEmpty() && !renderScheduled) {
+                renderScheduled = true
+                shouldSchedule = true
+            }
         }
+        ItemCatalog.invalidateIcons()
+        if (shouldSchedule) scheduleRender()
     }
 
-    private fun abgrToArgb(color: Int): Int =
-        (color and 0xFF00FF00.toInt()) or ((color and 0xFF) shl 16) or ((color ushr 16) and 0xFF)
-
-    private fun unpremultiply(color: Int): Int {
-        val alpha = color ushr 24
-        if (alpha == 0 || alpha == 255) return color
-        val red = min(255, ((color ushr 16) and 0xFF) * 255 / alpha)
-        val green = min(255, ((color ushr 8) and 0xFF) * 255 / alpha)
-        val blue = min(255, (color and 0xFF) * 255 / alpha)
-        return alpha shl 24 or (red shl 16) or (green shl 8) or blue
+    private fun resetAtlasLocked() {
+        cacheGeneration++
+        icons.clear()
+        atlasLayout = null
+        nextSlot = 0
+        atlasNeedsClear = true
     }
 
     private companion object {
@@ -626,11 +593,8 @@ class MinecraftItemCatalogService : ItemCatalogService {
         const val CELL_SIZE = 20
         const val ITEM_PADDING = 2
         const val ITEM_RENDER_SIZE = CELL_SIZE - ITEM_PADDING * 2
-        const val ICON_SIZE = 32
-        const val MAX_ICON_PIXEL_SIZE = 64
-        const val MAX_CACHED_ICONS = 512
-        const val MAX_BATCH_COLUMNS = 8
-        const val MAX_BATCH_ROWS = 8
-        const val MAX_TARGET_SIZE = 512
+        const val MAX_ATLAS_RENDER_SCALE = 4
+        const val MAX_ATLAS_TARGET_SIZE = 4096
+        const val MAX_BATCH_SIZE = 64
     }
 }
