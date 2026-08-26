@@ -354,6 +354,10 @@ abstract class ComposeScreen(
     //~ if >= 26.1 'render' -> 'extractRenderState'
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
         if (Platform.screen().current<Any?>() !== this) return
+
+        //? if < 1.21.8
+        //renderBackground(ctx, mouseX, mouseY, tickDelta)
+
         if (scenePoisoned) {
             if (sceneRebuilds >= MAX_SCENE_REBUILDS) {
                 LOGGER.error(

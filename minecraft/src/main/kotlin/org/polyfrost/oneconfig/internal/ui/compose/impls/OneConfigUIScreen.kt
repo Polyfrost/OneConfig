@@ -264,6 +264,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
         // and that would queue a fullscreen blur which smears over the popup so bail unless we are current
         if (Platform.screen().current<Any?>() !== this) return
         if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= closeAnimationMs) {
+            //? if < 1.21.8
+            //renderBackground(ctx, mouseX, mouseY, tickDelta)
             Platform.screen().close()
             //? if >= 1.21.8 {
             // This frame skipped normal HUD rendering because OneConfig was open.

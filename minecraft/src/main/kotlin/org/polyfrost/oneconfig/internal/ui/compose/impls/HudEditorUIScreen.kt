@@ -99,6 +99,8 @@ class HudEditorUIScreen : ComposeScreen() {
         // a screen drawn over this one may render it as its parent so skip that pass or it closes the screen above us
         if (Platform.screen().current<Any?>() !== this) return
         if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= closeAnimationMs) {
+            //? if < 1.21.8
+            //renderBackground(ctx, mouseX, mouseY, tickDelta)
             Platform.screen().close()
             return
         }
