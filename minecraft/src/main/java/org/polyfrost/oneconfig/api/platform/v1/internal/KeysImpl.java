@@ -5,6 +5,18 @@ import org.polyfrost.oneconfig.api.platform.v1.Keys;
 
 public class KeysImpl implements Keys {
     @Override
+    public String keyName(int key) {
+        //~ if < 26.3 'Type.KEYBOARD' -> 'Type.KEYSYM'
+        InputConstants.Key input = InputConstants.Type.KEYSYM.getOrCreate(key);
+        return input == InputConstants.UNKNOWN ? "None" : input.getDisplayName().getString();
+    }
+
+    @Override
+    public String mouseName(int button) {
+        return InputConstants.Type.MOUSE.getOrCreate(button).getDisplayName().getString();
+    }
+
+    @Override
     public int getKeyA() {
         return InputConstants.KEY_A;
     }

@@ -1,6 +1,8 @@
 package org.polyfrost.oneconfig.api.platform.v1
 
 interface Keys {
+    fun keyName(key: Int): String
+    fun mouseName(button: Int): String
 
     val keyA: Int
     val keyC: Int
