@@ -59,8 +59,9 @@ internal object ToastInput {
             mouseY = e.y
         }
         EventManager.register(MouseInputEvent::class.java) { e ->
-            // button 0 is GLFW left and state 1 is GLFW_PRESS
-            if (e.button == 0 && e.state == 1) NotificationsRenderer.dispatchClick(hoverTarget)
+            if (e.button == MouseInputEvent.BUTTON_LEFT && e.state == MouseInputEvent.PRESSED) {
+                NotificationsRenderer.dispatchClick(hoverTarget)
+            }
         }
     }
 }

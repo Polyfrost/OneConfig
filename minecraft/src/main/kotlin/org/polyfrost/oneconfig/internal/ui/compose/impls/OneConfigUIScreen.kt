@@ -4,7 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalWindowInfo
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.gui.GuiGraphicsExtractor
-import org.lwjgl.glfw.GLFW
+//? if < 1.21.11
+//import org.lwjgl.glfw.GLFW
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
@@ -243,12 +244,14 @@ class OneConfigUIScreen @JvmOverloads constructor(
     override fun handleMouseClicked(button: Int): Boolean {
         if (!closeRequested && LocalNavController.isReady) {
             when (button) {
-                GLFW.GLFW_MOUSE_BUTTON_4 -> {
+                //~ if < 1.21.11 'InputConstants.MOUSE_BUTTON_4' -> 'GLFW.GLFW_MOUSE_BUTTON_4'
+                InputConstants.MOUSE_BUTTON_4 -> {
                     UiSounds.play(UiSoundEvent.CLICK)
                     LocalNavController.wrapper.back()
                     return true
                 }
-                GLFW.GLFW_MOUSE_BUTTON_5 -> {
+                //~ if < 1.21.11 'InputConstants.MOUSE_BUTTON_5' -> 'GLFW.GLFW_MOUSE_BUTTON_5'
+                InputConstants.MOUSE_BUTTON_5 -> {
                     UiSounds.play(UiSoundEvent.CLICK)
                     LocalNavController.wrapper.forward()
                     return true

@@ -49,7 +49,7 @@ import java.util.Locale;
 /**
  * Cross-platform system clipboard access
  * <p>
- * Uses GLFW/AWT on Windows/Linux
+ * Uses GLFW/SDL/AWT on Windows/Linux
  * <p>
  * Uses NSPasteboard on macOS
  */
@@ -62,6 +62,9 @@ public final class ClipboardHelper {
             .contains("mac");
 
     private static final String MACOS_CLIPBOARD_CLASS = "org.polyfrost.oneconfig.utils.v1.MacOSClipboard";
+    //? if >= 26.3
+    /*private static final String SDL_CLIPBOARD_CLASS = "org.lwjgl.sdl.SDLClipboard";*/
+    //? if < 26.3
     private static final String GLFW_CLASS = "org.lwjgl.glfw.GLFW";
 
     private ClipboardHelper() {
@@ -73,9 +76,10 @@ public final class ClipboardHelper {
             if (IS_MAC) {
                 return invokeMacNullable("getString");
             }
-            String glfwValue = getStringFromGlfw();
-            if (glfwValue != null) {
-                return glfwValue;
+            //~ if < 26.3 'getStringFromSdl' -> 'getStringFromGlfw'
+            String nativeValue = getStringFromGlfw();
+            if (nativeValue != null) {
+                return nativeValue;
             }
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
             if (!clipboard.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
@@ -96,6 +100,7 @@ public final class ClipboardHelper {
             if (IS_MAC) {
                 return invokeMacBoolean("setString", value);
             }
+            //~ if < 26.3 'setStringWithSdl' -> 'setStringWithGlfw'
             if (setStringWithGlfw(value)) {
                 return true;
             }
@@ -159,6 +164,7 @@ public final class ClipboardHelper {
             if (IS_MAC) {
                 return invokeMacBoolean("clear");
             }
+            //~ if < 26.3 'setStringWithSdl' -> 'setStringWithGlfw'
             if (setStringWithGlfw("")) {
                 return true;
             }
@@ -195,6 +201,29 @@ public final class ClipboardHelper {
         return Boolean.TRUE.equals(method.invoke(null, args));
     }
 
+    //? if >= 26.3 {
+    /*@Nullable
+    private static String getStringFromSdl() {
+        try {
+            Method method = Class.forName(SDL_CLIPBOARD_CLASS).getMethod("SDL_GetClipboardText");
+            return (String) method.invoke(null);
+        } catch (Throwable t) {
+            LOGGER.debug("Failed to read SDL clipboard text", t);
+            return null;
+        }
+    }
+
+    private static boolean setStringWithSdl(String value) {
+        try {
+            Class<?> clazz = Class.forName(SDL_CLIPBOARD_CLASS);
+            Method method = clazz.getMethod("SDL_SetClipboardText", CharSequence.class);
+            return Boolean.TRUE.equals(method.invoke(null, value));
+        } catch (Throwable t) {
+            LOGGER.debug("Failed to write SDL clipboard text", t);
+            return false;
+        }
+    }
+    *///?} else {
     @Nullable
     private static String getStringFromGlfw() {
         try {
@@ -236,6 +265,7 @@ public final class ClipboardHelper {
         }
         return null;
     }
+    //?}
 
     private static final class ImageSelection implements Transferable {
         private final Image image;

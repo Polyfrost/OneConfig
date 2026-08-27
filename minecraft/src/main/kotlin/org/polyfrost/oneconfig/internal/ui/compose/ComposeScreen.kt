@@ -18,6 +18,7 @@ import androidx.compose.ui.scene.ComposeScene
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
+import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.Minecraft
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 import net.minecraft.client.gui.GuiGraphicsExtractor
@@ -31,7 +32,11 @@ import net.minecraft.network.chat.CommonComponents
 import org.jetbrains.skia.FilterTileMode
 import org.jetbrains.skia.ImageFilter
 import org.jetbrains.skia.Paint
+//? if < 26.3
 import org.lwjgl.glfw.GLFW
+//? if >= 26.3 {
+/*import org.lwjgl.sdl.SDLVideo.*
+*///?}
 import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.OneConfigConfig
@@ -212,10 +217,12 @@ abstract class ComposeScreen(
     private var cachedSurfaceScale = -1f
 
     protected val client get() = Minecraft.getInstance()
+    //? if < 26.3 {
     private val contentScaleX = FloatArray(1)
     private val contentScaleY = FloatArray(1)
     private val monScaleX = FloatArray(1)
     private val monScaleY = FloatArray(1)
+    //?}
 
     private var filterPaintKey = -1 to -1f
     private var filterPaintCached: Paint? = null
@@ -252,12 +259,19 @@ abstract class ComposeScreen(
 
     private fun osUpscaleFactor(): Float {
         val handle = Platform.compatibility().windowHandle()
+        //? if >= 26.3 {
+        /*val winCS = SDL_GetWindowDisplayScale(handle).coerceAtLeast(1f)
+        val display = SDL_GetDisplayForWindow(handle).takeIf { it != 0 } ?: SDL_GetPrimaryDisplay()
+        if (display == 0) return 1f
+        val monCS = SDL_GetDisplayContentScale(display).coerceAtLeast(1f)
+        *///?} else {
         GLFW.glfwGetWindowContentScale(handle, contentScaleX, contentScaleY)
         val winCS = maxOf(contentScaleX[0], contentScaleY[0]).coerceAtLeast(1f)
         val mon = GLFW.glfwGetWindowMonitor(handle).takeIf { it != 0L } ?: GLFW.glfwGetPrimaryMonitor()
         if (mon == 0L) return 1f
         GLFW.glfwGetMonitorContentScale(mon, monScaleX, monScaleY)
         val monCS = maxOf(monScaleX[0], monScaleY[0]).coerceAtLeast(1f)
+        //?}
         return (monCS / winCS).coerceAtLeast(1f)
     }
 
@@ -486,8 +500,8 @@ abstract class ComposeScreen(
             it.sendPointerEvent(
                 type,
                 button = when (button) {
-                    GLFW.GLFW_MOUSE_BUTTON_LEFT -> PointerButton.Primary
-                    GLFW.GLFW_MOUSE_BUTTON_RIGHT -> PointerButton.Secondary
+                    InputConstants.MOUSE_BUTTON_LEFT -> PointerButton.Primary
+                    InputConstants.MOUSE_BUTTON_RIGHT -> PointerButton.Secondary
                     else -> null
                 },
                 position = pointerPosition()
@@ -528,10 +542,16 @@ abstract class ComposeScreen(
         *///? }
     }
 
-    fun Int.ctrlDown() = this and GLFW.GLFW_MOD_CONTROL != 0
-    fun Int.shiftDown() = this and GLFW.GLFW_MOD_SHIFT != 0
+    fun Int.ctrlDown() = this and InputConstants.MOD_CONTROL != 0
+    //? if >= 1.21.9 {
+    fun Int.shiftDown() = this and InputConstants.MOD_SHIFT != 0
+    fun Int.altDown() = this and InputConstants.MOD_ALT != 0
+    fun Int.superDown() = this and InputConstants.MOD_SUPER != 0
+    //?} else {
+    /*fun Int.shiftDown() = this and GLFW.GLFW_MOD_SHIFT != 0
     fun Int.altDown() = this and GLFW.GLFW_MOD_ALT != 0
     fun Int.superDown() = this and GLFW.GLFW_MOD_SUPER != 0
+    *///?}
 
     protected open fun handleKeyPressed(key: Int, modifiers: Int): Boolean = false
 
@@ -540,12 +560,16 @@ abstract class ComposeScreen(
 
     //? >= 1.21.10 {
     override fun keyPressed(event: McKeyEvent): Boolean {
-        val key = event.key
+        val bindingKey = event.key
+        //~ if < 26.3 'event.shortcutKey()' -> 'bindingKey'
+        val shortcutKey = bindingKey
         val modifiers = event.modifiers
     //?} else {
     /*override fun keyPressed(key: Int, scanCode: Int, modifiers: Int): Boolean {
+        val bindingKey = key
+        val shortcutKey = key
     *///?}
-        val handled = dispatchKeyPressed(key, modifiers)
+        val handled = dispatchKeyPressed(bindingKey, shortcutKey, modifiers)
         //? if >= 1.21.10 {
         return handled || super.keyPressed(event)
         //?} else {
@@ -555,12 +579,16 @@ abstract class ComposeScreen(
 
     //? if >= 1.21.10 {
     override fun keyReleased(event: McKeyEvent): Boolean {
-        val key = event.key
+        val bindingKey = event.key
+        //~ if < 26.3 'event.shortcutKey()' -> 'bindingKey'
+        val shortcutKey = bindingKey
         val modifiers = event.modifiers
     //?} else {
     /*override fun keyReleased(key: Int, scanCode: Int, modifiers: Int): Boolean {
+        val bindingKey = key
+        val shortcutKey = key
     *///?}
-        val handled = if (consumedKeys.remove(key)) false else sendKeyReleasedEvent(key, modifiers)
+        val handled = !consumedKeys.remove(bindingKey) && sendKeyReleasedEvent(bindingKey, shortcutKey, modifiers)
         //? if >= 1.21.10 {
         return handled || super.keyReleased(event)
         //?} else {
@@ -568,24 +596,24 @@ abstract class ComposeScreen(
         *///?}
     }
 
-    private fun dispatchKeyPressed(key: Int, modifiers: Int): Boolean {
-        if ((key == GLFW.GLFW_KEY_ESCAPE && KeybindRecordingBus.consumeEscape()) || handleKeyPressed(key, modifiers)) {
-            consumedKeys += key
+    private fun dispatchKeyPressed(bindingKey: Int, shortcutKey: Int, modifiers: Int): Boolean {
+        if ((bindingKey == InputConstants.KEY_ESCAPE && KeybindRecordingBus.consumeEscape()) || handleKeyPressed(bindingKey, modifiers)) {
+            consumedKeys += bindingKey
             return true
         }
-        return sendKeyPressedEvent(key, modifiers)
+        return sendKeyPressedEvent(bindingKey, shortcutKey, modifiers)
     }
 
-    private fun sendKeyPressedEvent(key: Int, modifiers: Int): Boolean {
-        val awtCode = glfwToAwtKeyCode(key)
-        val eventLocation = glfwKeyLocation(key)
+    private fun sendKeyPressedEvent(bindingKey: Int, shortcutKey: Int, modifiers: Int): Boolean {
+        val awtCode = MinecraftKeyboardAdapter.toAwtKeyCode(shortcutKey)
+        val eventLocation = MinecraftKeyboardAdapter.keyLocation(bindingKey)
         return sendKeyEventSafely {
             androidx.compose.ui.input.key.KeyEvent(
                 key = Key(awtCode, eventLocation),
                 type = KeyEventType.KeyDown,
-                // carry the raw GLFW key code so consumers like KeybindOption can recover it losslessly
+                // carry the raw keybind code so consumers like KeybindOption can recover it losslessly
                 // as the AWT round-trip in the Key collapses unmapped keys to VK_UNDEFINED
-                codePoint = key,
+                codePoint = bindingKey,
                 isCtrlPressed = modifiers.ctrlDown(),
                 isShiftPressed = modifiers.shiftDown(),
                 isAltPressed = modifiers.altDown(),
@@ -603,14 +631,14 @@ abstract class ComposeScreen(
         }
     }
 
-    private fun sendKeyReleasedEvent(key: Int, modifiers: Int): Boolean {
-        val awtCode = glfwToAwtKeyCode(key)
-        val eventLocation = glfwKeyLocation(key)
+    private fun sendKeyReleasedEvent(bindingKey: Int, shortcutKey: Int, modifiers: Int): Boolean {
+        val awtCode = MinecraftKeyboardAdapter.toAwtKeyCode(shortcutKey)
+        val eventLocation = MinecraftKeyboardAdapter.keyLocation(bindingKey)
         return sendKeyEventSafely {
             androidx.compose.ui.input.key.KeyEvent(
                 key = Key(awtCode, eventLocation),
                 type = KeyEventType.KeyUp,
-                codePoint = key,
+                codePoint = bindingKey,
                 isCtrlPressed = modifiers.ctrlDown(),
                 isShiftPressed = modifiers.shiftDown(),
                 isAltPressed = modifiers.altDown(),
@@ -660,41 +688,6 @@ abstract class ComposeScreen(
         return m
     }
 
-    // AWT collapses left/right modifiers to one key code so the side is preserved via key location
-    // and Compose can still tell left shift from right shift
-    private fun glfwKeyLocation(glfwKey: Int): Int = when (glfwKey) {
-        GLFW.GLFW_KEY_RIGHT_SHIFT, GLFW.GLFW_KEY_RIGHT_CONTROL, GLFW.GLFW_KEY_RIGHT_ALT, GLFW.GLFW_KEY_RIGHT_SUPER -> KeyEvent.KEY_LOCATION_RIGHT
-        GLFW.GLFW_KEY_LEFT_SHIFT, GLFW.GLFW_KEY_LEFT_CONTROL, GLFW.GLFW_KEY_LEFT_ALT, GLFW.GLFW_KEY_LEFT_SUPER -> KeyEvent.KEY_LOCATION_LEFT
-        GLFW.GLFW_KEY_KP_ENTER -> KeyEvent.KEY_LOCATION_NUMPAD
-        else -> KeyEvent.KEY_LOCATION_STANDARD
-    }
-
-    private fun glfwToAwtKeyCode(glfwKey: Int): Int = when (glfwKey) {
-        GLFW.GLFW_KEY_BACKSPACE -> KeyEvent.VK_BACK_SPACE
-        GLFW.GLFW_KEY_TAB -> KeyEvent.VK_TAB
-        GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> KeyEvent.VK_ENTER
-        GLFW.GLFW_KEY_ESCAPE -> KeyEvent.VK_ESCAPE
-        GLFW.GLFW_KEY_DELETE -> KeyEvent.VK_DELETE
-        GLFW.GLFW_KEY_RIGHT -> KeyEvent.VK_RIGHT
-        GLFW.GLFW_KEY_LEFT -> KeyEvent.VK_LEFT
-        GLFW.GLFW_KEY_DOWN -> KeyEvent.VK_DOWN
-        GLFW.GLFW_KEY_UP -> KeyEvent.VK_UP
-        GLFW.GLFW_KEY_PAGE_UP -> KeyEvent.VK_PAGE_UP
-        GLFW.GLFW_KEY_PAGE_DOWN -> KeyEvent.VK_PAGE_DOWN
-        GLFW.GLFW_KEY_HOME -> KeyEvent.VK_HOME
-        GLFW.GLFW_KEY_END -> KeyEvent.VK_END
-        GLFW.GLFW_KEY_INSERT -> KeyEvent.VK_INSERT
-        GLFW.GLFW_KEY_CAPS_LOCK -> KeyEvent.VK_CAPS_LOCK
-        GLFW.GLFW_KEY_LEFT_SHIFT, GLFW.GLFW_KEY_RIGHT_SHIFT -> KeyEvent.VK_SHIFT
-        GLFW.GLFW_KEY_LEFT_CONTROL, GLFW.GLFW_KEY_RIGHT_CONTROL -> KeyEvent.VK_CONTROL
-        GLFW.GLFW_KEY_LEFT_SUPER, GLFW.GLFW_KEY_RIGHT_SUPER -> KeyEvent.VK_META
-        GLFW.GLFW_KEY_LEFT_ALT, GLFW.GLFW_KEY_RIGHT_ALT -> KeyEvent.VK_ALT
-        in GLFW.GLFW_KEY_F1..GLFW.GLFW_KEY_F12 -> KeyEvent.VK_F1 + (glfwKey - GLFW.GLFW_KEY_F1)
-        in GLFW.GLFW_KEY_0..GLFW.GLFW_KEY_9 -> KeyEvent.VK_0 + (glfwKey - GLFW.GLFW_KEY_0)
-        in GLFW.GLFW_KEY_A..GLFW.GLFW_KEY_Z -> KeyEvent.VK_A + (glfwKey - GLFW.GLFW_KEY_A)
-        else -> KeyEvent.VK_UNDEFINED
-    }
-
     private fun syncSceneMetrics(): Boolean {
         val w = Platform.screen().windowWidth()
         val h = Platform.screen().windowHeight()
@@ -726,8 +719,12 @@ abstract class ComposeScreen(
 
     private fun sceneDensity(): Float {
         val pixelRatio = Platform.screen().pixelRatio().takeIf { it > 0f } ?: 1f
+        //? if >= 26.3 {
+        /*val contentScale = SDL_GetWindowDisplayScale(Platform.compatibility().windowHandle()).coerceAtLeast(1f)
+        *///?} else {
         GLFW.glfwGetWindowContentScale(Platform.compatibility().windowHandle(), contentScaleX, contentScaleY)
         val contentScale = maxOf(contentScaleX[0], contentScaleY[0]).coerceAtLeast(1f)
+        //?}
         return (contentScale / pixelRatio).coerceAtLeast(1f)
     }
 

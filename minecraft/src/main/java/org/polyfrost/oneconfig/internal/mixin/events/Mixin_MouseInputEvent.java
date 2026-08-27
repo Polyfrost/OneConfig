@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
+//? if >= 26.3
+//import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
 //? >= 1.21.10
@@ -16,7 +18,16 @@ public class Mixin_MouseInputEvent {
     //? >= 1.21.10 {
     @Inject(method = "onButton", at = @At("HEAD"))
     private void mouseCallback(long window, MouseButtonInfo buttonInfo, int action, CallbackInfo ci) {
-        EventManager.INSTANCE.post(new MouseInputEvent(buttonInfo.button(), action));
+        int button = buttonInfo.button();
+        //? if >= 26.3 {
+        /*button = switch (button) {
+            case InputConstants.MOUSE_BUTTON_LEFT -> MouseInputEvent.BUTTON_LEFT;
+            case InputConstants.MOUSE_BUTTON_RIGHT -> MouseInputEvent.BUTTON_RIGHT;
+            case InputConstants.MOUSE_BUTTON_MIDDLE -> MouseInputEvent.BUTTON_MIDDLE;
+            default -> button - 1;
+        };
+        *///?}
+        EventManager.INSTANCE.post(new MouseInputEvent(button, action));
     }
 
     @Inject(method = "onMove", at = @At("HEAD"))

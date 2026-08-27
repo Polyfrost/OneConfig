@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyboardHandler;
 //? >= 1.21.10 {
 import net.minecraft.client.input.CharacterEvent;
@@ -21,6 +22,7 @@ public class Mixin_KeyInputEvent {
     //? >= 1.21.10 {
     @ModifyVariable(method = "keyPress", at = @At(value = "STORE"), ordinal = 0)
     private boolean keyCallback(boolean original, long handle, int action, KeyEvent event) {
+        action = action == InputConstants.REPEAT ? KeyInputEvent.REPEAT : action;
         EventManager.INSTANCE.post(new KeyInputEvent(event.key(), (char) 0, action));
         return original;
     }

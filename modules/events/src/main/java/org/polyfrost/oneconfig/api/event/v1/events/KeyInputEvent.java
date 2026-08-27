@@ -32,6 +32,10 @@ package org.polyfrost.oneconfig.api.event.v1.events;
  * To translate this into something usable by PolyUI have a look at {@code KeybindManager.translateKey(EventManager, keyCode, character, down)}
  */
 public class KeyInputEvent implements Event {
+    public static final int RELEASED = 0;
+    public static final int PRESSED = 1;
+    public static final int REPEAT = 2;
+
     /**
      * The keycode that created this event
      * <br>
@@ -44,9 +48,7 @@ public class KeyInputEvent implements Event {
      */
     public final char character;
     /**
-     * 0 = up <br>
-     * 1 = down <br>
-     * 2 = repeat
+     * {@link #RELEASED}, {@link #PRESSED}, or {@link #REPEAT}
      */
     public final int state;
 
@@ -69,6 +71,6 @@ public class KeyInputEvent implements Event {
     }
 
     public boolean isPressed() {
-        return state > 0;
+        return state != RELEASED;
     }
 }

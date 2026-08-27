@@ -18,8 +18,14 @@ import androidx.compose.ui.scene.ComposeSceneContext
 import androidx.compose.ui.unit.IntSize
 //? if >= 26.1
 import kotlinx.coroutines.awaitCancellation
+import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.Minecraft
+//? if < 26.3
 import org.lwjgl.glfw.GLFW.*
+//? if >= 26.3 {
+/*import org.lwjgl.sdl.SDLMouse.*
+import org.lwjgl.sdl.SDLVideo.SDL_RaiseWindow
+*///?}
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 //? if >= 26.1
 import java.util.concurrent.atomic.AtomicInteger
@@ -37,19 +43,24 @@ private class WindowInfoImpl : WindowInfo {
         Platform.screen().let { IntSize(it.windowWidth(), it.windowHeight()) }
     )
 
-    private fun isKeyDown(glfwKey: Int): Boolean {
-        return glfwGetKey(Platform.compatibility().windowHandle(), glfwKey) == GLFW_PRESS
+    private fun isKeyDown(key: Int): Boolean {
+        //? if >= 26.3 {
+        /*return InputConstants.isKeyDown(key)
+        *///?} else {
+        //~ if < 1.21.10 'Minecraft.getInstance().window' -> 'Platform.compatibility().windowHandle()'
+        return InputConstants.isKeyDown(Minecraft.getInstance().window, key)
+        //?}
     }
 
     override val keyboardModifiers: PointerKeyboardModifiers
         get() = PointerKeyboardModifiers(
-            isCtrlPressed = isKeyDown(GLFW_KEY_LEFT_CONTROL) || isKeyDown(GLFW_KEY_RIGHT_CONTROL),
-            isShiftPressed = isKeyDown(GLFW_KEY_LEFT_SHIFT) || isKeyDown(GLFW_KEY_RIGHT_SHIFT),
-            isAltPressed = isKeyDown(GLFW_KEY_LEFT_ALT) || isKeyDown(GLFW_KEY_RIGHT_ALT),
-            isCapsLockOn = isKeyDown(GLFW_KEY_CAPS_LOCK),
-            isScrollLockOn = isKeyDown(GLFW_KEY_SCROLL_LOCK),
-            isNumLockOn = isKeyDown(GLFW_KEY_NUM_LOCK),
-            isMetaPressed = isKeyDown(GLFW_KEY_LEFT_SUPER) || isKeyDown(GLFW_KEY_RIGHT_SUPER)
+            isCtrlPressed = isKeyDown(InputConstants.KEY_LCONTROL) || isKeyDown(InputConstants.KEY_RCONTROL),
+            isShiftPressed = isKeyDown(InputConstants.KEY_LSHIFT) || isKeyDown(InputConstants.KEY_RSHIFT),
+            isAltPressed = isKeyDown(InputConstants.KEY_LALT) || isKeyDown(InputConstants.KEY_RALT),
+            isCapsLockOn = isKeyDown(InputConstants.KEY_CAPSLOCK),
+            isScrollLockOn = isKeyDown(InputConstants.KEY_SCROLLLOCK),
+            isNumLockOn = isKeyDown(InputConstants.KEY_NUMLOCK),
+            isMetaPressed = isKeyDown(Platform.compatibility().keys().keyLeftSuper) || isKeyDown(Platform.compatibility().keys().keyRightSuper)
         )
 
     override val isWindowFocused: Boolean
@@ -68,9 +79,15 @@ private class PlatformImpl : PlatformContext {
     override val screenReader: PlatformScreenReader = PlatformScreenReaderImpl()
     override val inputModeManager: InputModeManager = InputModeManagerImpl()
 
+    //? if >= 26.3 {
+    /*private val handCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_POINTER)
+    private val textCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_TEXT)
+    private val moveCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_CROSSHAIR)
+    *///?} else {
     private val handCursor = glfwCreateStandardCursor(GLFW_HAND_CURSOR)
     private val textCursor = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR)
     private val moveCursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR)
+    //?}
 
     private val handle = Platform.compatibility().windowHandle()
 
@@ -86,15 +103,26 @@ private class PlatformImpl : PlatformContext {
     }
 
     private fun applyPointerIcon(pointerIcon: PointerIcon) {
+        //? if >= 26.3 {
+        /*SDL_SetCursor(when (pointerIcon) {
+            PointerIcon.Default -> SDL_GetDefaultCursor()
+            PointerIcon.Hand -> handCursor
+            PointerIcon.Text -> textCursor
+            PointerIcon.Crosshair -> moveCursor
+            else -> SDL_GetDefaultCursor()
+        })
+        *///?} else {
         when (pointerIcon) {
             PointerIcon.Default -> glfwSetCursor(handle, 0L)
             PointerIcon.Hand -> glfwSetCursor(handle, handCursor)
             PointerIcon.Text -> glfwSetCursor(handle, textCursor)
             PointerIcon.Crosshair -> glfwSetCursor(handle, moveCursor)
         }
+        //?}
     }
 
     override fun requestFocus(): Boolean {
+        //~ if < 26.3 'SDL_RaiseWindow' -> 'glfwFocusWindow'
         glfwFocusWindow(handle)
         return Minecraft.getInstance().isWindowActive
     }

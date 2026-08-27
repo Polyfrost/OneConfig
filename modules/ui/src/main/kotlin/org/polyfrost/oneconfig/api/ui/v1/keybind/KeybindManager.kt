@@ -59,8 +59,8 @@ object KeybindManager {
             // key == 0 marks a character event not a coded key press and it never reports a release
             // so tracking it in downKeys would leave 0 stuck and match any keybind bound to code 0
             if (key == 0) return@eventHandler
-            if (state == 2) return@eventHandler
-            val down = state == 1
+            if (state == KeyInputEvent.REPEAT) return@eventHandler
+            val down = state == KeyInputEvent.PRESSED
             val mod = MODIFIER_MAP[key]
             if (mod != null) {
                 mods = if (down) (mods or mod) else (mods and mod.inv())
