@@ -93,6 +93,9 @@ public class org/polyfrost/oneconfig/api/event/v1/events/JvmShutdownEvent : org/
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/events/KeyInputEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
+	public static final field PRESSED I
+	public static final field RELEASED I
+	public static final field REPEAT I
 	public final field character C
 	public final field key I
 	public final field state I
@@ -113,6 +116,16 @@ public class org/polyfrost/oneconfig/api/event/v1/events/MainMenuFpsEvent : org/
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/events/MouseInputEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
+	public static final field BUTTON_4 I
+	public static final field BUTTON_5 I
+	public static final field BUTTON_6 I
+	public static final field BUTTON_7 I
+	public static final field BUTTON_8 I
+	public static final field BUTTON_LEFT I
+	public static final field BUTTON_MIDDLE I
+	public static final field BUTTON_RIGHT I
+	public static final field PRESSED I
+	public static final field RELEASED I
 	public final field button I
 	public final field state I
 	public fun <init> (II)V

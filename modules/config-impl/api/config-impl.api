@@ -920,6 +920,17 @@ public final class org/polyfrost/oneconfig/api/config/v1/dsl/Tree_extensionsKt {
 	public static final fun setVisualizer (Lorg/polyfrost/oneconfig/api/config/v1/Property;Ljava/lang/Class;)V
 }
 
+public final class org/polyfrost/oneconfig/api/config/v1/serialize/adapter/impl/OneConfigKeybindAdapter : org/polyfrost/oneconfig/api/config/v1/serialize/adapter/Adapter {
+	public fun <init> ()V
+	public fun <init> (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/internal/KeybindCodec;)V
+	public synthetic fun deserialize (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun deserialize (Ljava/util/Map;)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
+	public fun getOutputClass ()Ljava/lang/Class;
+	public fun getTargetClass ()Ljava/lang/Class;
+	public synthetic fun serialize (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun serialize (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Ljava/util/Map;
+}
+
 public class org/polyfrost/oneconfig/api/config/v1/serialize/adapter/impl/PolyColorAdapter : org/polyfrost/oneconfig/api/config/v1/serialize/adapter/Adapter {
 	public fun <init> ()V
 	public synthetic fun deserialize (Ljava/lang/Object;)Ljava/lang/Object;
