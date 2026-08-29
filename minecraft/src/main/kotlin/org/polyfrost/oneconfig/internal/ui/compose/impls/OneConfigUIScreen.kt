@@ -94,8 +94,22 @@ class OneConfigUIScreen @JvmOverloads constructor(
         closeRequested = true
         closeRequestedAt = System.currentTimeMillis()
         closeAnimationMs = guiCloseAnimationMillis()
-        markClosed()
         UiSounds.play(UiSoundEvent.CLOSE)
+    }
+
+    private fun cancelClose(): Boolean {
+        if (!closeRequested) return false
+
+        // Resume the opening blur animation from current blur intensity
+        val now = System.currentTimeMillis()
+        val blurProgress = if (closeAnimationMs <= 0L) 0f
+            else 1f - easeOutExpo((now - closeRequestedAt).toFloat() / closeAnimationMs)
+        openedAt = now - (blurProgress.coerceIn(0f, 1f) * OPEN_ANIMATION_MS).toLong()
+
+        closeRequested = false
+        requestOpenCallback?.invoke()
+        UiSounds.play(UiSoundEvent.OPEN)
+        return true
     }
 
     /** The page this screen is showing which survives the scene being disposed and rebuilt */
@@ -225,12 +239,11 @@ class OneConfigUIScreen @JvmOverloads constructor(
         }
         val toggleKey = OneConfigConfig.oneConfigKeybind.keyCodes?.firstOrNull()
         if (toggleKey != null && key == toggleKey && !KeybindRecordingBus.isRecording) {
+            if (closeRequested) return cancelClose()
             if (OneConfigConfig.keybindClosesGui) {
-                if (!closeRequested) {
-                    OneConfigConfig.notifyKeybindClosedGui()
-                    beginClose()
-                    requestCloseCallback?.invoke()
-                }
+                OneConfigConfig.notifyKeybindClosedGui()
+                beginClose()
+                requestCloseCallback?.invoke()
             } else {
                 HudManager.openEditor()
             }
@@ -264,6 +277,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         // and that would queue a fullscreen blur which smears over the popup so bail unless we are current
         if (Platform.screen().current<Any?>() !== this) return
         if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= closeAnimationMs) {
+            markClosed()
             //? if < 1.21.8
             //renderBackground(ctx, mouseX, mouseY, tickDelta)
             Platform.screen().close()
@@ -321,6 +335,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     /** Holds a reference to the close-animation trigger from Compose */
     private var requestCloseCallback: (() -> Unit)? = null
+    private var requestOpenCallback: (() -> Unit)? = null
 
     @Composable
     override fun compose() {
@@ -336,6 +351,9 @@ class OneConfigUIScreen @JvmOverloads constructor(
             onCloseRequest = { beginClose() },
             onCloseReady = { closeRequest ->
                 requestCloseCallback = closeRequest
+            },
+            onOpenReady = { openRequest ->
+                requestOpenCallback = openRequest
             },
         ) { }
     }

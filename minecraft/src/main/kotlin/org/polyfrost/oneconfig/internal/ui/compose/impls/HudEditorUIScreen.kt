@@ -45,9 +45,18 @@ class HudEditorUIScreen : ComposeScreen() {
         UiSounds.play(UiSoundEvent.CLOSE)
     }
 
+    private fun cancelClose(): Boolean {
+        if (!closeRequested) return false
+        closeRequested = false
+        requestOpenCallback?.invoke()
+        UiSounds.play(UiSoundEvent.OPEN)
+        return true
+    }
+
     @Volatile private var returningToOneConfig = false
 
     private var requestCloseCallback: (() -> Unit)? = null
+    private var requestOpenCallback: (() -> Unit)? = null
 
     override val scrollSpeed: Float get() = 0.5f
 
@@ -79,12 +88,11 @@ class HudEditorUIScreen : ComposeScreen() {
         }
         val toggleKey = OneConfigConfig.oneConfigKeybind.keyCodes?.firstOrNull()
         if (toggleKey != null && key == toggleKey && !KeybindRecordingBus.isRecording) {
+            if (closeRequested) return cancelClose()
             if (OneConfigConfig.keybindClosesGui) {
-                if (!closeRequested) {
-                    OneConfigConfig.notifyKeybindClosedGui()
-                    beginClose()
-                    requestCloseCallback?.invoke()
-                }
+                OneConfigConfig.notifyKeybindClosedGui()
+                beginClose()
+                requestCloseCallback?.invoke()
             } else {
                 returningToOneConfig = true
                 Platform.screen().display(OneConfigUIScreen())
@@ -131,8 +139,10 @@ class HudEditorUIScreen : ComposeScreen() {
         LaunchedEffect(Unit) { visible = true }
 
         val requestClose: () -> Unit = { visible = false }
+        val requestOpen: () -> Unit = { visible = true }
         SideEffect {
             requestCloseCallback = requestClose
+            requestOpenCallback = requestOpen
         }
 
         val exitMs = guiCloseAnimationMillis().toInt()
