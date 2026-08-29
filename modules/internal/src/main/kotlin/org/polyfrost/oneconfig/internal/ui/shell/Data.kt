@@ -136,6 +136,7 @@ object LocalNavController {
 
         /** [clearSearch] is off when the navigation only restores a page the user was already on */
         fun navigate(route: Any, clearSearch: Boolean = true) {
+            if (route == currentEntry.route) return
             val host = host() ?: return
             forwardStack.clear()
             backStack.addLast(currentEntry)
