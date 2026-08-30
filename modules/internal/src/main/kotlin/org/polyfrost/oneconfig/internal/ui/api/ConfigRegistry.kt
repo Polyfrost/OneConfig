@@ -57,8 +57,12 @@ object ConfigRegistry {
     )
 
     val configs: SnapshotStateList<ConfigData> = mutableStateListOf()
+
+    val configList: List<ConfigData>
+        get() = configs.toList()
+
     val modCardConfigs: List<ConfigData>
-        get() = configs.filter(::shouldShowModCard) + hudModCardConfigs()
+        get() = configList.filter(::shouldShowModCard) + hudModCardConfigs()
 
     var revision by mutableIntStateOf(0)
         private set
@@ -146,12 +150,12 @@ object ConfigRegistry {
         }
     }
 
-    fun findById(id: String): ConfigData? = configs.find { it.id == id }
+    fun findById(id: String): ConfigData? = configList.find { it.id == id }
 
     fun findTree(id: String): Tree? = (findById(id) as? TreeConfigData)?.tree
 
     private fun upsert(data: ConfigData, bumpRevision: Boolean): Boolean {
-        val index = configs.indexOfFirst { it.id == data.id }
+        val index = configList.indexOfFirst { it.id == data.id }
         if (index >= 0) {
             if (configs[index].wraps(data)) return false
             configs[index] = data
