@@ -51,5 +51,16 @@ class MinecraftKeybindCodecTest {
     void rejectsInvalidKeys() {
         assertNull(codec.keyName(9999));
         assertNull(codec.keyCode("key.keyboard.9999"));
+        assertNull(codec.keyName(-1));
+        assertNull(codec.keyCode("key.keyboard.-5"));
+    }
+
+    @Test
+    void rejectsInvalidMouseButtons() {
+        assertNull(codec.mouseName(InputConstants.MOUSE_BUTTON_LEFT - 1));
+        assertNull(codec.mouseName(InputConstants.MOUSE_BUTTON_LEFT + 8));
+        assertNull(codec.mouseButton("key.mouse.99"));
+        assertNull(codec.mouseButton("key.keyboard.a"));
+        assertNull(codec.legacyMouseName(99));
     }
 }

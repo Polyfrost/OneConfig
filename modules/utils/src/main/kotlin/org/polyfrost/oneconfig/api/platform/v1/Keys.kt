@@ -23,4 +23,6 @@ interface Keys {
     val keyLeftSuper: Int
     val keyRightSuper: Int
 
+    val mouseButtonLeft: Int
+
 }

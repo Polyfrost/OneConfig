@@ -62,9 +62,7 @@ public final class ClipboardHelper {
             .contains("mac");
 
     private static final String MACOS_CLIPBOARD_CLASS = "org.polyfrost.oneconfig.utils.v1.MacOSClipboard";
-    //? if >= 26.3
-    /*private static final String SDL_CLIPBOARD_CLASS = "org.lwjgl.sdl.SDLClipboard";*/
-    //? if < 26.3
+    private static final String SDL_CLIPBOARD_CLASS = "org.lwjgl.sdl.SDLClipboard";
     private static final String GLFW_CLASS = "org.lwjgl.glfw.GLFW";
 
     private ClipboardHelper() {
@@ -76,8 +74,8 @@ public final class ClipboardHelper {
             if (IS_MAC) {
                 return invokeMacNullable("getString");
             }
-            //~ if < 26.3 'getStringFromSdl' -> 'getStringFromGlfw'
-            String nativeValue = getStringFromGlfw();
+            String nativeValue = getStringFromSdl();
+            if (nativeValue == null) nativeValue = getStringFromGlfw();
             if (nativeValue != null) {
                 return nativeValue;
             }
@@ -100,8 +98,7 @@ public final class ClipboardHelper {
             if (IS_MAC) {
                 return invokeMacBoolean("setString", value);
             }
-            //~ if < 26.3 'setStringWithSdl' -> 'setStringWithGlfw'
-            if (setStringWithGlfw(value)) {
+            if (setStringWithSdl(value) || setStringWithGlfw(value)) {
                 return true;
             }
             Toolkit.getDefaultToolkit().getSystemClipboard()
@@ -164,8 +161,7 @@ public final class ClipboardHelper {
             if (IS_MAC) {
                 return invokeMacBoolean("clear");
             }
-            //~ if < 26.3 'setStringWithSdl' -> 'setStringWithGlfw'
-            if (setStringWithGlfw("")) {
+            if (setStringWithSdl("") || setStringWithGlfw("")) {
                 return true;
             }
             Toolkit.getDefaultToolkit().getSystemClipboard()
@@ -201,12 +197,12 @@ public final class ClipboardHelper {
         return Boolean.TRUE.equals(method.invoke(null, args));
     }
 
-    //? if >= 26.3 {
-    /*@Nullable
+    @Nullable
     private static String getStringFromSdl() {
         try {
             Method method = Class.forName(SDL_CLIPBOARD_CLASS).getMethod("SDL_GetClipboardText");
-            return (String) method.invoke(null);
+            String value = (String) method.invoke(null);
+            return value == null || value.isEmpty() ? null : value;
         } catch (Throwable t) {
             LOGGER.debug("Failed to read SDL clipboard text", t);
             return null;
@@ -223,7 +219,7 @@ public final class ClipboardHelper {
             return false;
         }
     }
-    *///?} else {
+
     @Nullable
     private static String getStringFromGlfw() {
         try {
@@ -265,7 +261,6 @@ public final class ClipboardHelper {
         }
         return null;
     }
-    //?}
 
     private static final class ImageSelection implements Transferable {
         private final Image image;

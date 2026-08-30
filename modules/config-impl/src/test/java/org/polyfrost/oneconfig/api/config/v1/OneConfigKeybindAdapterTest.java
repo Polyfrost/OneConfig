@@ -59,6 +59,39 @@ public class OneConfigKeybindAdapterTest {
     }
 
     @Test
+    void readsArraysAsWellAsLists() {
+        Map<String, Object> serialized = new HashMap<>();
+        serialized.put("keyCodes", new int[]{65}); // numeric entries are still migrated from the legacy GLFW codes
+        serialized.put("mouseBtns", new Object[]{"key.mouse.left"});
+
+        OneConfigKeybind keybind = adapter.deserialize(serialized);
+
+        assertArrayEquals(new int[]{4}, keybind.getKeyCodes());
+        assertArrayEquals(new int[]{1}, keybind.getMouseBtns());
+    }
+
+    @Test
+    void dropsUnsupportedInputsInsteadOfThrowing() {
+        Map<String, Object> serialized = new HashMap<>();
+        serialized.put("keyCodes", List.of("key.keyboard.a", "key.keyboard.nonsense", Boolean.TRUE));
+
+        OneConfigKeybind keybind = adapter.deserialize(serialized);
+
+        assertArrayEquals(new int[]{4}, keybind.getKeyCodes());
+    }
+
+    @Test
+    void roundTripsRawCodesWithoutACodec() {
+        OneConfigKeybindAdapter noCodec = new OneConfigKeybindAdapter(); // no KeybindCodec service on this classpath
+        OneConfigKeybind keybind = new OneConfigKeybind(new int[]{4}, null, (byte) 0, 0L, ignored -> true);
+
+        Map<String, Object> serialized = noCodec.serialize(keybind);
+
+        assertEquals(List.of(4), serialized.get("keyCodes"));
+        assertArrayEquals(new int[]{4}, noCodec.deserialize(serialized).getKeyCodes());
+    }
+
+    @Test
     void deserializesBindNotInScreen() {
         Map<String, Object> serialized = new HashMap<>();
         serialized.put("class", BindNotInScreen.class.getName());

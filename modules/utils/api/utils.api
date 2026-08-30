@@ -105,6 +105,7 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/Keys {
 	public abstract fun getKeyRightSuper ()I
 	public abstract fun getKeyV ()I
 	public abstract fun getKeyX ()I
+	public abstract fun getMouseButtonLeft ()I
 	public abstract fun keyName (I)Ljava/lang/String;
 	public abstract fun mouseName (I)Ljava/lang/String;
 }

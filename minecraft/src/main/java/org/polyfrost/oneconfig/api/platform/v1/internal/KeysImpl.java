@@ -67,6 +67,11 @@ public class KeysImpl implements Keys {
     }
 
     @Override
+    public int getMouseButtonLeft() {
+        return InputConstants.MOUSE_BUTTON_LEFT;
+    }
+
+    @Override
     public int getKeyLeftShift() {
         return InputConstants.KEY_LSHIFT;
     }

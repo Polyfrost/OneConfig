@@ -4,8 +4,18 @@ import com.mojang.blaze3d.platform.InputConstants;
 import org.jetbrains.annotations.Nullable;
 
 public final class MinecraftKeybindCodec implements KeybindCodec {
+    //? if >= 26.3
+    /*private static final int MAX_KEY = Integer.MAX_VALUE; // SDL keycodes are sparse and unicode/scancode-masked*/
+    //? if < 26.3
+    private static final int MAX_KEY = 348; // GLFW_KEY_LAST
+
+    private static final int MIN_MOUSE = InputConstants.MOUSE_BUTTON_LEFT;
+    private static final int MAX_MOUSE = InputConstants.MOUSE_BUTTON_LEFT + 7; // vanilla names eight mouse buttons
+
     @Override
     public @Nullable String keyName(int code) {
+        if (code < 0 || code > MAX_KEY) return null;
+
         //~ if < 26.3 'Type.KEYBOARD' -> 'Type.KEYSYM'
         InputConstants.Key key = InputConstants.Type.KEYSYM.getOrCreate(code);
         if (key == InputConstants.UNKNOWN) return null;
@@ -30,29 +40,46 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
         if ("key.keyboard.application".equals(name)) name = "key.keyboard.menu";
         //?}
 
-        try {
-            InputConstants.Key key = InputConstants.getKey(name);
-            // Ignore fallback names
-            if (("key.keyboard." + key.getValue()).equals(name)) return null;
+        InputConstants.Key key = lookup(name);
+        if (key == null) return null;
 
-            //~ if < 26.3 'Type.KEYBOARD' -> 'Type.KEYSYM'
-            return key.getType() == InputConstants.Type.KEYSYM && key != InputConstants.UNKNOWN ? key.getValue() : null;
-        } catch (RuntimeException ignored) {
-            return null;
-        }
+        if (("key.keyboard." + key.getValue()).equals(name)) return null;
+
+        //~ if < 26.3 'Type.KEYBOARD' -> 'Type.KEYSYM'
+        return key.getType() == InputConstants.Type.KEYSYM && key != InputConstants.UNKNOWN ? key.getValue() : null;
     }
 
     @Override
     public @Nullable String mouseName(int button) {
-        InputConstants.Key key = InputConstants.Type.MOUSE.getOrCreate(button);
-        return key == InputConstants.UNKNOWN ? null : key.getName();
+        if (button < MIN_MOUSE || button > MAX_MOUSE) return null;
+        return InputConstants.Type.MOUSE.getOrCreate(button).getName();
     }
 
     @Override
     public @Nullable Integer mouseButton(String name) {
+        InputConstants.Key key = lookup(name);
+        if (key == null || key.getType() != InputConstants.Type.MOUSE) return null;
+
+        int value = key.getValue();
+        return value >= MIN_MOUSE && value <= MAX_MOUSE ? value : null;
+    }
+
+    private static @Nullable InputConstants.Key lookup(String name) {
+        int dot = name.lastIndexOf('.');
+        if (dot >= 0) {
+            try {
+                int suffix = Integer.parseInt(name.substring(dot + 1));
+                if (name.startsWith("key.mouse.")) {
+                    if (suffix - 1 < MIN_MOUSE || suffix - 1 > MAX_MOUSE) return null;
+                } else if (suffix < 0 || suffix > MAX_KEY) {
+                    return null;
+                }
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
         try {
-            InputConstants.Key key = InputConstants.getKey(name);
-            return key.getType() == InputConstants.Type.MOUSE && key != InputConstants.UNKNOWN ? key.getValue() : null;
+            return InputConstants.getKey(name);
         } catch (RuntimeException ignored) {
             return null;
         }

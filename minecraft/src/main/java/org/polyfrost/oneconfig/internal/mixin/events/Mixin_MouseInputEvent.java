@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
-//? if >= 26.3
-//import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
 //? >= 1.21.10
@@ -9,6 +8,7 @@ import net.minecraft.client.input.MouseButtonInfo;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.MouseInputEvent;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -18,16 +18,7 @@ public class Mixin_MouseInputEvent {
     //? >= 1.21.10 {
     @Inject(method = "onButton", at = @At("HEAD"))
     private void mouseCallback(long window, MouseButtonInfo buttonInfo, int action, CallbackInfo ci) {
-        int button = buttonInfo.button();
-        //? if >= 26.3 {
-        /*button = switch (button) {
-            case InputConstants.MOUSE_BUTTON_LEFT -> MouseInputEvent.BUTTON_LEFT;
-            case InputConstants.MOUSE_BUTTON_RIGHT -> MouseInputEvent.BUTTON_RIGHT;
-            case InputConstants.MOUSE_BUTTON_MIDDLE -> MouseInputEvent.BUTTON_MIDDLE;
-            default -> button - 1;
-        };
-        *///?}
-        EventManager.INSTANCE.post(new MouseInputEvent(button, action));
+        EventManager.INSTANCE.post(new MouseInputEvent(buttonInfo.button(), oneconfig$state(action)));
     }
 
     @Inject(method = "onMove", at = @At("HEAD"))
@@ -44,7 +35,7 @@ public class Mixin_MouseInputEvent {
     //? } else {
     /*@Inject(method = "onPress", at = @At("HEAD"))
     private void mouseCallback(long handle, int button, int action, int mods, CallbackInfo ci) {
-        EventManager.INSTANCE.post(new MouseInputEvent(button, action));
+        EventManager.INSTANCE.post(new MouseInputEvent(button, oneconfig$state(action)));
     }
 
     @Inject(method = "onMove", at = @At("HEAD"))
@@ -54,4 +45,11 @@ public class Mixin_MouseInputEvent {
         }
     }
     *///? }
+
+    @Unique
+    private static int oneconfig$state(int action) {
+        if (action == InputConstants.PRESS) return MouseInputEvent.PRESSED;
+        if (action == InputConstants.RELEASE) return MouseInputEvent.RELEASED;
+        return action;
+    }
 }
