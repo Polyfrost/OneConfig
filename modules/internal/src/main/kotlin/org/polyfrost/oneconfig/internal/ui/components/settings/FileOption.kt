@@ -37,6 +37,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi
+import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.FileOptionData
 import org.polyfrost.oneconfig.internal.ui.components.IconButton
 import org.polyfrost.oneconfig.internal.ui.components.Text
@@ -103,7 +104,7 @@ fun FileOption(data: FileOptionData) {
         interactionSource = interactionSource,
         cursorBrush = SolidColor(theme.textColor),
         visualTransformation = pathTransformation,
-        modifier = Modifier
+        modifier = Modifier.trackTextInputFocus()
             .width(LocalOptionWidth.current)
             .background(theme.modCardBackground, theme.sideBarNavigationEntryShape)
             .border(1.dp, borderColor, theme.sideBarNavigationEntryShape)

@@ -69,7 +69,11 @@ object KeybindManager {
         }
 
         eventHandler { (btn, state): MouseInputEvent ->
-            if (state == 1) downMouse.add(btn) else downMouse.remove(btn)
+            if (state == 1) {
+                downMouse += btn
+            } else {
+                downMouse -= btn
+            }
         }
 
         eventHandler { _: TickEvent.End ->
@@ -77,7 +81,10 @@ object KeybindManager {
         }
 
         eventHandler { (screen): ScreenOpenEvent ->
-            if (screen == null) clearState()
+            if (screen == null) {
+                TextInputFocus.clear()
+                clearState()
+            }
         }
 
         eventHandler { _: WindowFocusEvent.Lost ->
@@ -194,10 +201,11 @@ object KeybindManager {
     fun builder() = KeybindHelper()
 
     private fun checkBinds() {
+        val typing = TextInputFocus.isTyping
         for (bind in binds) {
             @Suppress("SENSELESS_COMPARISON")
             if (bind.action == null) continue
-            val triggered = bind.test(downKeys, downMouse, mods)
+            val triggered = (!typing || bind.firesWhileTyping) && bind.test(downKeys, downMouse, mods)
             val wasActive = bind in activeBinds
             try {
                 if (triggered && !wasActive) {

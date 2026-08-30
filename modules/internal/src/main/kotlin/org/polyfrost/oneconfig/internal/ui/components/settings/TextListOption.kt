@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
+import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.TextListOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -58,7 +59,7 @@ internal fun RowScope.EntryTextField(
         ),
         interactionSource = ctx.fieldInteraction,
         cursorBrush = SolidColor(theme.textColor),
-        modifier = Modifier.weight(1f),
+        modifier = Modifier.trackTextInputFocus().weight(1f),
         decorationBox = { innerTextField ->
             Box {
                 if (value.isEmpty() && placeholder != null && !ctx.focused) {

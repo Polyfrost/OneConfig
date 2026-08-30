@@ -25,6 +25,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.settings.SpinnerArrows
@@ -77,7 +78,7 @@ fun NumberSpinner(
                 fontFamily = theme.typography.family,
             ),
             cursorBrush = SolidColor(theme.textColor),
-            modifier = Modifier
+            modifier = Modifier.trackTextInputFocus()
                 .weight(1f)
                 .padding(start = 8.dp, top = 5.dp, bottom = 5.dp),
         ) {
@@ -149,7 +150,7 @@ fun NumberSpinner(
                     fontFamily = theme.typography.family,
                 ),
                 cursorBrush = SolidColor(theme.textColor),
-                modifier = Modifier
+                modifier = Modifier.trackTextInputFocus()
                     .weight(1f)
                     .padding(start = 8.dp, top = 5.dp, bottom = 5.dp),
             ) {
@@ -219,7 +220,7 @@ fun NumberSpinnerWithIcon(
                 fontFamily = theme.typography.family,
             ),
             cursorBrush = SolidColor(theme.textColor),
-            modifier = Modifier
+            modifier = Modifier.trackTextInputFocus()
                 .weight(1f)
                 .padding(start = 6.dp, top = 5.dp, bottom = 5.dp),
         ) {

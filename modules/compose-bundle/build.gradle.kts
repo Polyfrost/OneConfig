@@ -4,7 +4,7 @@ import net.fabricmc.loom.task.NestJarsAction
 // ships as a standalone Fabric mod so the shaded Compose/skiko runtime can be published to
 // Modrinth separately and is excluded from the bootstrap JiJ in oneconfig-bootstrap.gradle.kts
 group = "${rootProject.group}.compose"
-version = "1.0.2+compose.${libs.versions.compose.asProvider().get()}"
+version = "1.0.3+compose.${libs.versions.compose.asProvider().get()}"
 
 repositories {
     maven("https://redirector.kotlinlang.org/maven/compose-dev")
@@ -37,6 +37,7 @@ dependencies {
     shade(libs.jetbrains.skiko.awt)
     shade(libs.jetbrains.skiko.awt.runtime.windows.x64)
     shade(libs.jetbrains.skiko.awt.runtime.linux.x64)
+    shade(libs.jetbrains.skiko.awt.runtime.linux.arm64)
     shade(libs.jetbrains.skiko.awt.runtime.macos.x64)
     shade(libs.jetbrains.skiko.awt.runtime.macos.arm64)
     shade(libs.jetbrains.compose.navigation)

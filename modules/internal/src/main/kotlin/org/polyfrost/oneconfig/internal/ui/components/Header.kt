@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.components.dropdown.DropdownPositionProvider
 import androidx.navigation.compose.currentBackStackEntryAsState
 import org.polyfrost.oneconfig.internal.ui.LocalCloseRequest
@@ -255,7 +256,7 @@ fun GlobalSearchBar() {
         cursorBrush = SolidColor(LocalTheme.current.textColorSecondary),
         textStyle = searchTextStyle,
         interactionSource = interactionSource,
-        modifier = Modifier.focusRequester(focusRequester)
+        modifier = Modifier.trackTextInputFocus().focusRequester(focusRequester)
     ) { innerTextField ->
         Box(
             modifier = Modifier
