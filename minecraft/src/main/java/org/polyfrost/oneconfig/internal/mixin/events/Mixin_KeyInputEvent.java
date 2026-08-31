@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyboardHandler;
 //? >= 1.21.10 {
 import net.minecraft.client.input.CharacterEvent;
@@ -9,6 +10,7 @@ import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.KeyInputEvent;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 //? if >= 1.21.10
@@ -21,7 +23,7 @@ public class Mixin_KeyInputEvent {
     //? >= 1.21.10 {
     @ModifyVariable(method = "keyPress", at = @At(value = "STORE"), ordinal = 0)
     private boolean keyCallback(boolean original, long handle, int action, KeyEvent event) {
-        EventManager.INSTANCE.post(new KeyInputEvent(event.key(), (char) 0, action));
+        EventManager.INSTANCE.post(new KeyInputEvent(event.key(), (char) 0, oneconfig$state(action)));
         return original;
     }
 
@@ -31,13 +33,13 @@ public class Mixin_KeyInputEvent {
             return;
         }
 
-        EventManager.INSTANCE.post(new KeyInputEvent(0, (char) event.codepoint(), 1));
+        EventManager.INSTANCE.post(new KeyInputEvent(0, (char) event.codepoint(), KeyInputEvent.PRESSED));
     }
     //? } else {
     
     /*@Inject(method = "keyPress", at = @At("HEAD"))
     private void keyCallback(long window, int key, int scancode, int action, int mods, CallbackInfo ci) {
-        EventManager.INSTANCE.post(new KeyInputEvent(key, (char) 0, action));
+        EventManager.INSTANCE.post(new KeyInputEvent(key, (char) 0, oneconfig$state(action)));
     }
 
     @Inject(method = "charTyped", at = @At("HEAD"))
@@ -45,7 +47,15 @@ public class Mixin_KeyInputEvent {
         if (window != Platform.compatibility().windowHandle()) {
             return;
         }
-        EventManager.INSTANCE.post(new KeyInputEvent(0, (char) codepoint, 1));
+        EventManager.INSTANCE.post(new KeyInputEvent(0, (char) codepoint, KeyInputEvent.PRESSED));
     }
     *///? }
+
+    @Unique
+    private static int oneconfig$state(int action) {
+        if (action == InputConstants.PRESS) return KeyInputEvent.PRESSED;
+        if (action == InputConstants.RELEASE) return KeyInputEvent.RELEASED;
+        if (action == InputConstants.REPEAT) return KeyInputEvent.REPEAT;
+        return action;
+    }
 }

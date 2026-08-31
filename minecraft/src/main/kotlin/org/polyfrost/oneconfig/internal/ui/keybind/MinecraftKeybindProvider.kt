@@ -162,14 +162,12 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
 
     private fun InputConstants.Key.toOneConfigKeybind(): OneConfigKeybind {
         return when (type) {
-            InputConstants.Type.KEYSYM -> {
-                if (value > 0) OneConfigKeybind(intArrayOf(value), null, KeyModifiers.NONE, 0L) { true }
-                else OneConfigKeybind(null, null, KeyModifiers.NONE, 0L) { true }
-            }
-            InputConstants.Type.MOUSE -> {
-                if (value >= 0) OneConfigKeybind(null, intArrayOf(value), KeyModifiers.NONE, 0L) { true }
-                else OneConfigKeybind(null, null, KeyModifiers.NONE, 0L) { true }
-            }
+            //~ if >= 26.3 'Type.KEYSYM' -> 'Type.KEYBOARD'
+            InputConstants.Type.KEYSYM if value > 0 ->
+                OneConfigKeybind(intArrayOf(value), null, KeyModifiers.NONE, 0L) { true }
+            //~ if >= 26.3 'value >= 0' -> 'value > 0'
+            InputConstants.Type.MOUSE if value >= 0 ->
+                OneConfigKeybind(null, intArrayOf(value), KeyModifiers.NONE, 0L) { true }
             else -> OneConfigKeybind(null, null, KeyModifiers.NONE, 0L) { true }
         }
     }
@@ -179,7 +177,9 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
         val keyCodes = keybind?.keyCodes
         val key = when {
             keybind == null || !keybind.isBound -> InputConstants.UNKNOWN
+            //~ if >= 26.3 'it >= 0' -> 'it > 0'
             mouseButtons?.firstOrNull { it >= 0 } != null -> InputConstants.Type.MOUSE.getOrCreate(mouseButtons.first { it >= 0 })
+            //~ if >= 26.3 'Type.KEYSYM' -> 'Type.KEYBOARD'
             keyCodes?.firstOrNull { it > 0 } != null -> InputConstants.Type.KEYSYM.getOrCreate(keyCodes.first { it > 0 })
             else -> InputConstants.UNKNOWN
         }

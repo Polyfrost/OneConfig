@@ -248,6 +248,15 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/TextInputFocusKt {
 	public static final fun trackTextInputFocus (Landroidx/compose/ui/Modifier;)Landroidx/compose/ui/Modifier;
 }
 
+public abstract interface class org/polyfrost/oneconfig/api/ui/v1/keybind/internal/KeybindCodec {
+	public abstract fun keyCode (Ljava/lang/String;)Ljava/lang/Integer;
+	public abstract fun keyName (I)Ljava/lang/String;
+	public abstract fun legacyKeyName (I)Ljava/lang/String;
+	public abstract fun legacyMouseName (I)Ljava/lang/String;
+	public abstract fun mouseButton (Ljava/lang/String;)Ljava/lang/Integer;
+	public abstract fun mouseName (I)Ljava/lang/String;
+}
+
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/screen/BlurScreen {
 	public abstract fun hasBackgroundBlur ()Z
 }

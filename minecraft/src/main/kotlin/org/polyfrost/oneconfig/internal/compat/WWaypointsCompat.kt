@@ -1086,10 +1086,12 @@ object WWaypointsCompat {
 
     private fun KeyMapping.toOneConfigKeybind(): OneConfigKeybind {
         val key = runCatching { InputConstants.getKey(saveString()) }.getOrDefault(InputConstants.UNKNOWN)
-        return when {
-            key.type == InputConstants.Type.KEYSYM && key.value > 0 ->
+        return when (key.type) {
+            //~ if < 26.3 'Type.KEYBOARD' -> 'Type.KEYSYM'
+            InputConstants.Type.KEYSYM if key.value > 0 ->
                 OneConfigKeybind(intArrayOf(key.value), null, KeyModifiers.NONE, 0L) { true }
-            key.type == InputConstants.Type.MOUSE && key.value >= 0 ->
+            //~ if < 26.3 'key.value > 0' -> 'key.value >= 0'
+            InputConstants.Type.MOUSE if key.value >= 0 ->
                 OneConfigKeybind(null, intArrayOf(key.value), KeyModifiers.NONE, 0L) { true }
             else -> OneConfigKeybind(null, null, KeyModifiers.NONE, 0L) { true }
         }
@@ -1098,7 +1100,9 @@ object WWaypointsCompat {
     /** wWaypoints mappings are single-key so only the primary input of a combo survives the round trip */
     private fun OneConfigKeybind?.toInputKey(): InputConstants.Key {
         if (this == null || !isBound) return InputConstants.UNKNOWN
+        //~ if < 26.3 'it > 0' -> 'it >= 0'
         mouseBtns?.firstOrNull { it >= 0 }?.let { return InputConstants.Type.MOUSE.getOrCreate(it) }
+        //~ if < 26.3 'Type.KEYBOARD' -> 'Type.KEYSYM'
         keyCodes?.firstOrNull { it > 0 }?.let { return InputConstants.Type.KEYSYM.getOrCreate(it) }
         return InputConstants.UNKNOWN
     }
