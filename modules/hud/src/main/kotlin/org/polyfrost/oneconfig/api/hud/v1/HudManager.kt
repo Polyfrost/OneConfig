@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
+import androidx.compose.runtime.snapshots.SnapshotStateObserver
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.compose.node.RootNode
@@ -161,6 +162,10 @@ object HudManager {
         contentDirty = true
     }
 
+    // watches the snapshot state read while drawing so a change to it repaints the cached frame
+    private val drawReadObserver = SnapshotStateObserver { it() }.also { it.start() }
+    private val onDrawStateChanged: (Any) -> Unit = { invalidate() }
+
     internal var frameId = 0L
         private set
     private var preparedFrameValid = false
@@ -243,8 +248,6 @@ object HudManager {
     }
 
     init {
-        Snapshot.registerApplyObserver { _, _ -> contentDirty = true }
-
         if (java.lang.Boolean.getBoolean("oneconfig.test")) {
             register(DateTestHud())
             register(TimeTestHud())
@@ -474,7 +477,7 @@ object HudManager {
                 LOGGER.error("Failed to update HUD ${hud.title}", e)
             }
         }
-        PolyComposeHost.frame()
+        if (PolyComposeHost.frameWithReport()) invalidate()
     }
 
     private fun layout(hud: Hud, screenWidth: Float, screenHeight: Float, scale: Float): RootNode {
@@ -719,6 +722,8 @@ object HudManager {
     private fun frameKey(): Long {
         var key = activeInstances.size.toLong() * 31L + frameOrder.size
         key = key * 31L + layoutOrder.size
+        // one HUD hiding while another appears must not leave the cached frame in place
+        for (hud in layoutOrder) key = key * 31L + System.identityHashCode(hud)
         key = key * 31L + (if (isDebugScreenVisible) 1 else 0)
         key = key * 31L + (if (isTabListVisible) 1 else 0)
         key = key * 31L + (if (isGuiScreenOpen) 1 else 0)
@@ -808,27 +813,29 @@ object HudManager {
         ctx.save()
         ctx.scale(scale, scale)
 
-        drawMergedBackgrounds(ctx)
+        drawReadObserver.observeReads(this, onDrawStateChanged) {
+            drawMergedBackgrounds(ctx)
 
-        for (hud in frameOrder) {
-            val hudScale = hud.effectiveScale
-            val root = try {
-                layoutOnce(hud, screenWidth, screenHeight, scale)
-            } catch (e: Throwable) {
-                LOGGER.error("Failed to lay out HUD ${hud.title}", e)
-                continue
+            for (hud in frameOrder) {
+                val hudScale = hud.effectiveScale
+                val root = try {
+                    layoutOnce(hud, screenWidth, screenHeight, scale)
+                } catch (e: Throwable) {
+                    LOGGER.error("Failed to lay out HUD ${hud.title}", e)
+                    continue
+                }
+                ctx.save()
+                ctx.translate(hud.x, hud.y)
+                if (hudScale != 1f) ctx.scale(hudScale, hudScale)
+                if (hud.hidden && isEditing) {
+                    ctx.canvas.saveLayer(null, hiddenHudPaint)
+                    root.render(ctx)
+                    ctx.canvas.restore()
+                } else {
+                    root.render(ctx)
+                }
+                ctx.restore()
             }
-            ctx.save()
-            ctx.translate(hud.x, hud.y)
-            if (hudScale != 1f) ctx.scale(hudScale, hudScale)
-            if (hud.hidden && isEditing) {
-                ctx.canvas.saveLayer(null, hiddenHudPaint)
-                root.render(ctx)
-                ctx.canvas.restore()
-            } else {
-                root.render(ctx)
-            }
-            ctx.restore()
         }
 
         ctx.restore()
