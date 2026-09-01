@@ -74,6 +74,13 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? }
         //? moul_compat {
         mixins.add("compat.moulconfig.Mixin_MCConfigEditorIntegration_Firmament");
+        // unrelocated targets, e.g. Skysoft's SoftConfig
+        mixins.add("compat.moulconfig.Mixin_ConfigProcessorDriver");
+        mixins.add("compat.moulconfig.Mixin_MoulConfigProcessor");
+        mixins.add("compat.moulconfig.Mixin_MoulConfigEditor");
+        mixins.add("compat.moulconfig.Mixin_PropertyImpl");
+        mixins.add("compat.moulconfig.Mixin_GuiOptionEditorSlider");
+        mixins.add("compat.moulconfig.Mixin_GuiOptionEditorDropdown");
         //? }
 
         //? dandelion_compat
