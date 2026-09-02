@@ -21,6 +21,8 @@ object PolyComposeHost {
 
     internal val recomposer: CompositionContext get() = recomposerImpl
 
+    private var inFrame = false
+
     fun frame(nanos: Long = System.nanoTime()) {
         frameWithReport(nanos)
     }
@@ -29,9 +31,17 @@ object PolyComposeHost {
      * Runs a frame like [frame] and reports whether composition content may have changed
      */
     fun frameWithReport(nanos: Long = System.nanoTime()): Boolean {
-        Snapshot.sendApplyNotifications()
-        val appliedBefore = recomposerImpl.changeCount
-        clock.sendFrame(nanos)
-        return recomposerImpl.changeCount != appliedBefore || recomposerImpl.hasPendingWork
+        if (inFrame) return recomposerImpl.hasPendingWork
+        inFrame = true
+        try {
+            return Snapshot.global {
+                Snapshot.sendApplyNotifications()
+                val appliedBefore = recomposerImpl.changeCount
+                clock.sendFrame(nanos)
+                recomposerImpl.changeCount != appliedBefore || recomposerImpl.hasPendingWork
+            }
+        } finally {
+            inFrame = false
+        }
     }
 }

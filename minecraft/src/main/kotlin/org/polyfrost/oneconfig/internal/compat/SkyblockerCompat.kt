@@ -19,6 +19,9 @@ import org.polyfrost.oneconfig.api.hud.v1.OneConfigHudWrapper
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer
 import java.awt.Color
+import java.lang.reflect.Field
+import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 import java.util.function.Consumer
 import kotlin.math.abs
 
@@ -40,40 +43,96 @@ object SkyblockerCompat {
     @Volatile
     private var dragged: StatusBar? = null
 
-    //? if skyblocker_hud_v2 {
-    private fun statusBars(): Map<StatusBarType, StatusBar> = FancyStatusBars.INSTANCE.statusBars
+    private class Bars(
+        val self: Any?,
+        val statusBars: Field,
+        val barPositioner: Field,
+        val saveBarConfig: Method,
+        val placeBarsInPositioner: Method,
+        val updatePositions: Method,
+        val isHealthFancyBarEnabled: Method,
+        val extractRenderState: Method,
+    )
 
-    private fun positioner(): BarPositioner = FancyStatusBars.INSTANCE.barPositioner
+    private var barsResolved = false
+    private var barsCache: Bars? = null
 
-    private fun saveBars() = FancyStatusBars.INSTANCE.saveBarConfig()
-
-    private fun placeBars() = FancyStatusBars.INSTANCE.placeBarsInPositioner()
-
-    private fun updatePositions(ignoreVisibility: Boolean) = FancyStatusBars.INSTANCE.updatePositions(ignoreVisibility)
-
-    private fun healthFancyBarEnabled(): Boolean = FancyStatusBars.INSTANCE.isHealthFancyBarEnabled()
-
-    private fun renderStatusBars(ctx: GuiGraphicsExtractor, mc: Minecraft) {
-        FancyStatusBars.INSTANCE.extractRenderState(ctx, mc)
+    private fun bars(): Bars? {
+        if (!barsResolved) {
+            barsResolved = true
+            barsCache = try {
+                resolveBars()
+            } catch (e: Throwable) {
+                LOGGER.warn("Disabling Skyblocker status bars: FancyStatusBars has an unrecognised shape", e)
+                null
+            }
+        }
+        return barsCache
     }
-    //?} else {
-    /*private fun statusBars(): Map<StatusBarType, StatusBar> = FancyStatusBars.statusBars
 
-    private fun positioner(): BarPositioner = FancyStatusBars.barPositioner
+    private fun resolveBars(): Bars {
+        val cls = FancyStatusBars::class.java
+        fun field(name: String) = cls.getDeclaredField(name).apply { isAccessible = true }
+        fun method(name: String, vararg params: Class<*>) =
+            cls.getDeclaredMethod(name, *params).apply { isAccessible = true }
 
-    private fun saveBars() = FancyStatusBars.saveBarConfig()
-
-    private fun placeBars() = FancyStatusBars.placeBarsInPositioner()
-
-    private fun updatePositions(ignoreVisibility: Boolean) = FancyStatusBars.updatePositions(ignoreVisibility)
-
-    private fun healthFancyBarEnabled(): Boolean = FancyStatusBars.isHealthFancyBarEnabled()
-
-    private fun renderStatusBars(ctx: GuiGraphicsExtractor, mc: Minecraft) {
+        val statusBars = field("statusBars")
+        val barPositioner = field("barPositioner")
+        val saveBarConfig = method("saveBarConfig")
+        val placeBarsInPositioner = method("placeBarsInPositioner")
+        val updatePositions = method("updatePositions", java.lang.Boolean.TYPE)
+        val isHealthFancyBarEnabled = method("isHealthFancyBarEnabled")
         //~ if >= 26.1 'render' -> 'extractRenderState'
-        FancyStatusBars.extractRenderState(ctx, mc)
+        val extractRenderState = method("extractRenderState", GuiGraphicsExtractor::class.java, Minecraft::class.java)
+
+        val self = runCatching { cls.getField("INSTANCE").get(null) }.getOrNull()
+            ?: runCatching { cls.getMethod("getInstance").invoke(null) }.getOrNull()
+        if (self == null) {
+            val modifiers = intArrayOf(
+                statusBars.modifiers, barPositioner.modifiers, saveBarConfig.modifiers,
+                placeBarsInPositioner.modifiers, updatePositions.modifiers,
+                isHealthFancyBarEnabled.modifiers, extractRenderState.modifiers,
+            )
+            if (modifiers.any { !Modifier.isStatic(it) }) error("FancyStatusBars is not static and has no instance")
+        }
+
+        return Bars(
+            self, statusBars, barPositioner, saveBarConfig,
+            placeBarsInPositioner, updatePositions, isHealthFancyBarEnabled, extractRenderState,
+        )
     }
-    *///?}
+
+    @Suppress("UNCHECKED_CAST")
+    private fun statusBars(): Map<StatusBarType, StatusBar> {
+        val bars = bars() ?: return emptyMap()
+        return bars.statusBars.get(bars.self) as? Map<StatusBarType, StatusBar> ?: emptyMap()
+    }
+
+    private fun positioner(): BarPositioner {
+        val bars = bars() ?: error("Skyblocker status bars are unavailable")
+        return bars.barPositioner.get(bars.self) as BarPositioner
+    }
+
+    private fun saveBars() {
+        bars()?.let { it.saveBarConfig.invoke(it.self) }
+    }
+
+    private fun placeBars() {
+        bars()?.let { it.placeBarsInPositioner.invoke(it.self) }
+    }
+
+    private fun updatePositions(ignoreVisibility: Boolean) {
+        bars()?.let { it.updatePositions.invoke(it.self, ignoreVisibility) }
+    }
+
+    private fun healthFancyBarEnabled(): Boolean {
+        val bars = bars() ?: return false
+        return bars.isHealthFancyBarEnabled.invoke(bars.self) as? Boolean == true
+    }
+
+    private fun renderStatusBars(ctx: GuiGraphicsExtractor, mc: Minecraft) {
+        bars()?.let { it.extractRenderState.invoke(it.self, ctx, mc) }
+    }
 
     @JvmStatic
     fun isRedrawing(): Boolean = redrawing

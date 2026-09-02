@@ -112,7 +112,7 @@ public abstract class Config {
 
             tree.addMetadata("category", category);
             if (!ConfigManager.isRebindingProfiles()) {
-                ConfigManager.backup().backend.save0(tree);
+                saveDefaultsBackup(tree);
             }
             // capture code defaults before register() loads stored values over them so the UI can offer a reset action
             if (defaultSnapshot == null) {
@@ -132,6 +132,15 @@ public abstract class Config {
             if (!resetOptions.isEmpty()) {
                 ConfigManager.reportResetOptions(this, resetOptions);
             }
+        }
+    }
+
+    private void saveDefaultsBackup(Tree tree) {
+        try {
+            ConfigManager.backup().backend.save0(tree);
+        } catch (Throwable t) {
+            ConfigManager.LOGGER.error("failed to write the defaults backup for config {}, restore-to-default may be unavailable", id, t);
+            ConfigManager.notifyWriteFailed(this, t);
         }
     }
 

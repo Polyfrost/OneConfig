@@ -191,7 +191,12 @@ public final class ConfigManager {
         LOGGER.info("Initializing {} configs...", pendingInitialization.size());
         while (!pendingInitialization.isEmpty()) {
             Config config = pendingInitialization.poll();
-            if (config != null) config.initialize(true);
+            if (config == null) continue;
+            try {
+                config.initialize(true);
+            } catch (Throwable t) {
+                LOGGER.error("failed to initialize config {}, skipping it", config.id, t);
+            }
         }
         LOGGER.info("Initialized configs in {}ms", (System.nanoTime() - t1) / 1_000_000.0);
     }
@@ -246,8 +251,20 @@ public final class ConfigManager {
                     : options.size() + " options could not be loaded and were reset to their defaults (" + String.join(", ", options) + "). A backup was saved as " + config.getTree().getID() + ".corrupted.";
             org.polyfrost.oneconfig.api.notifications.v1.Notifications.error(name + ": options reset", message);
         } catch (Throwable t) {
-            // notifications are best-effort and must never break config loading
             LOGGER.error("failed to notify about reset options for config {}", config.id, t);
+        }
+    }
+
+    static void notifyWriteFailed(Config config, Throwable cause) {
+        try {
+            String name = config.title != null ? config.title : config.id;
+            Throwable root = cause.getCause() != null ? cause.getCause() : cause;
+            String reason = root.getMessage();
+            org.polyfrost.oneconfig.api.notifications.v1.Notifications.error(name + ": could not write config",
+                    "OneConfig could not write to the config folder" + (reason != null ? " (" + reason + ")" : "")
+                            + ". Your settings still work this session but may not be saved. Check that your disk is not full.");
+        } catch (Throwable t) {
+            LOGGER.error("failed to notify about the write failure for config {}", config.id, t);
         }
     }
 

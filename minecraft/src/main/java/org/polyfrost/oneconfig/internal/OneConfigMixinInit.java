@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Set;
 
 public class OneConfigMixinInit implements IMixinConfigPlugin {
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig/MixinInit");
 
     @Override
     public void onLoad(String mixinPackage) {
@@ -54,8 +55,38 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        //? skyblocker_compat {
+        if (mixinClassName.endsWith(".Mixin_SkyblockerFancyStatusBarsV2")) return skyblockerBarsAreInstanced();
+        if (mixinClassName.endsWith(".Mixin_SkyblockerFancyStatusBars")) return !skyblockerBarsAreInstanced();
+        //? }
         return true;
     }
+
+    //? skyblocker_compat {
+    private static Boolean skyblockerInstanced;
+
+    private static boolean skyblockerBarsAreInstanced() {
+        if (skyblockerInstanced == null) {
+            skyblockerInstanced = false;
+            String path = "de/hysky/skyblocker/skyblock/fancybars/FancyStatusBars.class";
+            try (java.io.InputStream in = OneConfigMixinInit.class.getClassLoader().getResourceAsStream(path)) {
+                if (in != null) {
+                    ClassNode node = new ClassNode();
+                    new org.objectweb.asm.ClassReader(in).accept(node, org.objectweb.asm.ClassReader.SKIP_CODE);
+                    for (org.objectweb.asm.tree.MethodNode method : node.methods) {
+                        //~ if >= 26.1 'render' -> 'extractRenderState'
+                        if (!method.name.equals("extractRenderState")) continue;
+                        skyblockerInstanced = (method.access & org.objectweb.asm.Opcodes.ACC_STATIC) == 0;
+                        break;
+                    }
+                }
+            } catch (Throwable t) {
+                LOGGER.warn("Could not read the installed Skyblocker's status bar shape, assuming static", t);
+            }
+        }
+        return skyblockerInstanced;
+    }
+    //? }
 
     @Override
     public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {
@@ -111,6 +142,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
         //? skyblocker_compat {
         mixins.add("compat.skyblocker.Mixin_SkyblockerFancyStatusBars");
+        mixins.add("compat.skyblocker.Mixin_SkyblockerFancyStatusBarsV2");
         mixins.add("compat.skyblocker.Mixin_SkyblockerWidgetManager");
         //? }
 
