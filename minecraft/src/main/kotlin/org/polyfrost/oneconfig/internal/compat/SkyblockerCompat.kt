@@ -40,6 +40,41 @@ object SkyblockerCompat {
     @Volatile
     private var dragged: StatusBar? = null
 
+    //? if skyblocker_hud_v2 {
+    private fun statusBars(): Map<StatusBarType, StatusBar> = FancyStatusBars.INSTANCE.statusBars
+
+    private fun positioner(): BarPositioner = FancyStatusBars.INSTANCE.barPositioner
+
+    private fun saveBars() = FancyStatusBars.INSTANCE.saveBarConfig()
+
+    private fun placeBars() = FancyStatusBars.INSTANCE.placeBarsInPositioner()
+
+    private fun updatePositions(ignoreVisibility: Boolean) = FancyStatusBars.INSTANCE.updatePositions(ignoreVisibility)
+
+    private fun healthFancyBarEnabled(): Boolean = FancyStatusBars.INSTANCE.isHealthFancyBarEnabled()
+
+    private fun renderStatusBars(ctx: GuiGraphicsExtractor, mc: Minecraft) {
+        FancyStatusBars.INSTANCE.extractRenderState(ctx, mc)
+    }
+    //?} else {
+    /*private fun statusBars(): Map<StatusBarType, StatusBar> = FancyStatusBars.statusBars
+
+    private fun positioner(): BarPositioner = FancyStatusBars.barPositioner
+
+    private fun saveBars() = FancyStatusBars.saveBarConfig()
+
+    private fun placeBars() = FancyStatusBars.placeBarsInPositioner()
+
+    private fun updatePositions(ignoreVisibility: Boolean) = FancyStatusBars.updatePositions(ignoreVisibility)
+
+    private fun healthFancyBarEnabled(): Boolean = FancyStatusBars.isHealthFancyBarEnabled()
+
+    private fun renderStatusBars(ctx: GuiGraphicsExtractor, mc: Minecraft) {
+        //~ if >= 26.1 'render' -> 'extractRenderState'
+        FancyStatusBars.extractRenderState(ctx, mc)
+    }
+    *///?}
+
     @JvmStatic
     fun isRedrawing(): Boolean = redrawing
 
@@ -76,8 +111,7 @@ object SkyblockerCompat {
         try {
             runCatching {
                 renderAnchorHints(ctx)
-                //~ if >= 26.1 'render' -> 'extractRenderState'
-                FancyStatusBars.extractRenderState(ctx, mc)
+                renderStatusBars(ctx, mc)
             }.onFailure { LOGGER.debug("Failed to render Skyblocker status bars above the blur", it) }
         } finally {
             redrawing = false
@@ -96,7 +130,7 @@ object SkyblockerCompat {
     private fun save() {
         if (!dirty) return
         dirty = false
-        runCatching { FancyStatusBars.saveBarConfig() }
+        runCatching { saveBars() }
             .onFailure { LOGGER.warn("Failed to save Skyblocker status bar config", it) }
     }
 
@@ -253,7 +287,7 @@ object SkyblockerCompat {
     }
 
     private fun rowNeighbour(bar: StatusBar, anchor: BarPositioner.BarAnchor): StatusBar? {
-        val row = runCatching { FancyStatusBars.barPositioner.getRow(anchor, bar.gridY) }.getOrNull() ?: return null
+        val row = runCatching { positioner().getRow(anchor, bar.gridY) }.getOrNull() ?: return null
         return row.getOrNull(bar.gridX + 1) ?: row.getOrNull(bar.gridX - 1)
     }
 
@@ -262,7 +296,7 @@ object SkyblockerCompat {
         if (bar.enabled == value) return
         if (value) {
             bar.enabled = true
-            if (bar.anchor != null) runCatching { FancyStatusBars.placeBarsInPositioner() }
+            if (bar.anchor != null) runCatching { placeBars() }
         } else {
             detach(bar)
             bar.enabled = false
@@ -271,7 +305,7 @@ object SkyblockerCompat {
         markDirty()
     }
 
-    internal fun bar(type: StatusBarType): StatusBar? = FancyStatusBars.statusBars[type]
+    internal fun bar(type: StatusBarType): StatusBar? = statusBars()[type]
 
     internal fun guiScaledWidth(): Float =
         Minecraft.getInstance().window?.guiScaledWidth?.toFloat() ?: 0f
@@ -281,7 +315,7 @@ object SkyblockerCompat {
 
     internal fun detach(bar: StatusBar) {
         val anchor = bar.anchor ?: return
-        runCatching { FancyStatusBars.barPositioner.removeBar(anchor, bar.gridY, bar) }
+        runCatching { positioner().removeBar(anchor, bar.gridY, bar) }
         bar.anchor = null
         val screenW = guiScaledWidth()
         val screenH = guiScaledHeight()
@@ -294,7 +328,7 @@ object SkyblockerCompat {
 
     internal fun reflow() {
         markDirty()
-        runCatching { FancyStatusBars.updatePositions(true) }
+        runCatching { updatePositions(true) }
     }
 
     internal fun beginDrag(bar: StatusBar) {
@@ -321,7 +355,7 @@ object SkyblockerCompat {
         val cx = x + w / 2f
         val cy = y + h / 2f
 
-        val target = FancyStatusBars.statusBars.values
+        val target = statusBars().values
             .filter { it !== bar && it.enabled && it.anchor != null }
             .filter {
                 overlaps(
@@ -344,8 +378,8 @@ object SkyblockerCompat {
                 )
             ) continue
             runCatching {
-                FancyStatusBars.barPositioner.addRow(hint.anchor)
-                FancyStatusBars.barPositioner.addBar(hint.anchor, 0, bar)
+                positioner().addRow(hint.anchor)
+                positioner().addBar(hint.anchor, 0, bar)
             }.onFailure { LOGGER.warn("Failed to anchor Skyblocker status bar to '{}'", hint.anchor.name, it) }
             return
         }
@@ -364,11 +398,11 @@ object SkyblockerCompat {
             if (abs(dx) >= abs(dy)) {
                 if (!rowHasRoom(anchor, target.gridY)) return
                 val gridX = neighbourInsertX(anchor, target.gridX, right = dx > 0f)
-                FancyStatusBars.barPositioner.addBar(anchor, target.gridY, gridX, bar)
+                positioner().addBar(anchor, target.gridY, gridX, bar)
             } else {
                 val gridY = neighbourInsertY(anchor, target.gridY, up = dy < 0f)
-                FancyStatusBars.barPositioner.addRow(anchor, gridY)
-                FancyStatusBars.barPositioner.addBar(anchor, gridY, bar)
+                positioner().addRow(anchor, gridY)
+                positioner().addBar(anchor, gridY, bar)
             }
         }.onFailure { LOGGER.warn("Failed to snap Skyblocker status bar next to '{}'", target.name.string, it) }
     }
@@ -376,9 +410,9 @@ object SkyblockerCompat {
     private fun rowHasRoom(anchor: BarPositioner.BarAnchor, row: Int): Boolean {
         val rule = anchor.sizeRule
         if (!rule.isTargetSize) return true
-        val halved = anchor == BarPositioner.BarAnchor.HOTBAR_TOP && !FancyStatusBars.isHealthFancyBarEnabled()
+        val halved = anchor == BarPositioner.BarAnchor.HOTBAR_TOP && !healthFancyBarEnabled()
         val target = if (halved) rule.targetSize() / 2 else rule.targetSize()
-        val occupants = runCatching { FancyStatusBars.barPositioner.getRow(anchor, row).size }.getOrDefault(0)
+        val occupants = runCatching { positioner().getRow(anchor, row).size }.getOrDefault(0)
         val room = (occupants + 1) * rule.minSize() <= target
         if (!room) LOGGER.debug("Refusing to snap a Skyblocker status bar into a full '{}' row", anchor.name)
         return room
@@ -395,7 +429,7 @@ object SkyblockerCompat {
     private fun emptyAnchors(screenW: Int, screenH: Int): List<AnchorHint> =
         BarPositioner.BarAnchor.allAnchors().mapNotNull { anchor ->
             runCatching {
-                if (FancyStatusBars.barPositioner.getRowCount(anchor) != 0) return@runCatching null
+                if (positioner().getRowCount(anchor) != 0) return@runCatching null
                 val hitbox = anchor.getAnchorHitbox(anchor.getAnchorPosition(screenW, screenH))
                 AnchorHint(anchor, hitbox, hitbox.position().x().toFloat(), hitbox.position().y().toFloat())
             }.getOrNull()

@@ -5,7 +5,7 @@ command-api-v2 = "3.1.0+00cb03469c"
 modmenu = "20.0.0-beta.4"
 yacl = "3.9.4+26.2-fabric"
 moulconfig = "3.11.0"
-skyblocker = "PwRyrygz"
+skyblocker = "C9ZW1qql"
 stella = "d12aec9c69"
 
 [libraries]

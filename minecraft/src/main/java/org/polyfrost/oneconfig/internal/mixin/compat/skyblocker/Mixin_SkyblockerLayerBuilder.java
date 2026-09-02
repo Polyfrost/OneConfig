@@ -1,8 +1,7 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.skyblocker;
 
-//? skyblocker_legacy_hud {
-/*import de.hysky.skyblocker.skyblock.tabhud.screenbuilder.ScreenBuilder;
-import de.hysky.skyblocker.skyblock.tabhud.screenbuilder.WidgetManager;
+//? skyblocker_hud_v2 {
+import de.hysky.skyblocker.skyblock.tabhud.screenbuilder.LayerBuilder;
 //~ gui_graphics
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import org.polyfrost.oneconfig.internal.compat.SkyblockerWidgetCompat;
@@ -14,14 +13,14 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Pseudo
-@Mixin(ScreenBuilder.class)
-public class Mixin_SkyblockerScreenBuilder {
+@Mixin(LayerBuilder.class)
+public class Mixin_SkyblockerLayerBuilder {
 
-    @Inject(method = "run", at = @At("HEAD"), cancellable = true, require = 0)
-    private void oneconfig$suppressWhileEditing(GuiGraphicsExtractor graphics, int screenW, int screenH, WidgetManager.ScreenLayer screenLayer, CallbackInfo ci) {
+    @Inject(method = "extractRenderStates", at = @At("HEAD"), cancellable = true, require = 0)
+    private void oneconfig$suppressWhileEditing(GuiGraphicsExtractor graphics, int screenWidth, int screenHeight, boolean config, CallbackInfo ci) {
         if (CompatOverlayRenderer.oneConfigScreenOpen() && !SkyblockerWidgetCompat.isRedrawing()) {
             ci.cancel();
         }
     }
 }
-*///? }
+//? }
