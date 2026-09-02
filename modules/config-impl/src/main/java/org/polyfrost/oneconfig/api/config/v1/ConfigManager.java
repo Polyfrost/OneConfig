@@ -249,7 +249,7 @@ public final class ConfigManager {
             String message = options.size() == 1
                     ? "The option '" + options.get(0) + "' could not be loaded and was reset to its default. A backup was saved as " + config.getTree().getID() + ".corrupted."
                     : options.size() + " options could not be loaded and were reset to their defaults (" + String.join(", ", options) + "). A backup was saved as " + config.getTree().getID() + ".corrupted.";
-            org.polyfrost.oneconfig.api.notifications.v1.Notifications.error(name + ": options reset", message);
+            Notifications.error(name + ": options reset", message);
         } catch (Throwable t) {
             LOGGER.error("failed to notify about reset options for config {}", config.id, t);
         }
