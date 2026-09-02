@@ -76,7 +76,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
                     for (MethodNode method : node.methods) {
                         //~ if >= 26.1 'render' -> 'extractRenderState'
                         if (!method.name.equals("extractRenderState")) continue;
-                        skyblockerInstanced = (method.access & org.objectweb.asm.Opcodes.ACC_STATIC) == 0;
+                        skyblockerInstanced = (method.access & Opcodes.ACC_STATIC) == 0;
                         break;
                     }
                 }
