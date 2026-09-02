@@ -11,6 +11,9 @@ class MinecraftKeybindCodecTest {
 
     @Test
     void convertsKeys() {
+        assertNull(codec.keyName(1));
+        assertEquals(Integer.valueOf(InputConstants.KEY_1), codec.keyCode("key.keyboard.1"));
+        assertEquals(InputConstants.KEY_1, InputConstants.getKey("key.keyboard.1").getValue());
         assertEquals("key.keyboard.a", codec.keyName(InputConstants.KEY_A));
         assertEquals(Integer.valueOf(InputConstants.KEY_A), codec.keyCode("key.keyboard.a"));
     }

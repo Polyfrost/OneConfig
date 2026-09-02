@@ -201,6 +201,7 @@ abstract class ComposeScreen(
     }
 
     private fun createScene() = CanvasLayersComposeScene(
+        coroutineContext = RenderThreadDispatcher,
         platformContext = ComposeSceneContextImpl.platformContext,
         invalidate = { sceneDirty = true }
     )
@@ -760,5 +761,14 @@ abstract class ComposeScreen(
                 return half4(c.rgb / a * na, na);
             }
         """
+    }
+}
+
+private object RenderThreadDispatcher : kotlinx.coroutines.CoroutineDispatcher() {
+    override fun isDispatchNeeded(context: kotlin.coroutines.CoroutineContext): Boolean =
+        !Minecraft.getInstance().isSameThread
+
+    override fun dispatch(context: kotlin.coroutines.CoroutineContext, block: Runnable) {
+        Minecraft.getInstance().execute(block)
     }
 }

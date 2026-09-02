@@ -30,8 +30,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.Event;
+import org.polyfrost.oneconfig.api.event.v1.internal.EventClassValidator;
 
-import java.lang.reflect.Modifier;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -55,9 +55,7 @@ public abstract class EventHandler<E extends Event> implements Comparable<EventH
      */
     @kotlin.OverloadResolutionByLambdaReturnType
     public static <E extends Event> EventHandler<E> ofRemoving(Class<E> cls, Predicate<? super E> handler) {
-        if (Modifier.isAbstract(cls.getModifiers())) {
-            throw new IllegalArgumentException("Cannot register to an abstract event type - is there subtypes you need to specify?");
-        }
+        EventClassValidator.validate(cls);
         return new EventHandler<E>() {
             @Override
             public boolean handle(E event) {
@@ -81,9 +79,7 @@ public abstract class EventHandler<E extends Event> implements Comparable<EventH
      */
     @kotlin.OverloadResolutionByLambdaReturnType
     public static <E extends Event> EventHandler<E> of(Class<E> cls, Consumer<? super E> handler) {
-        if (Modifier.isAbstract(cls.getModifiers())) {
-            throw new IllegalArgumentException("Cannot register to an abstract event type - is there subtypes you need to specify?");
-        }
+        EventClassValidator.validate(cls);
         return new EventHandler<E>() {
             @Override
             public boolean handle(E event) {
@@ -100,9 +96,7 @@ public abstract class EventHandler<E extends Event> implements Comparable<EventH
 
     @kotlin.OverloadResolutionByLambdaReturnType
     public static <E extends Event> EventHandler<E> of(Class<E> cls, Runnable handler) {
-        if (Modifier.isAbstract(cls.getModifiers())) {
-            throw new IllegalArgumentException("Cannot register to an abstract event type - is there subtypes you need to specify?");
-        }
+        EventClassValidator.validate(cls);
         return new EventHandler<E>() {
             @Override
             public boolean handle(E event) {

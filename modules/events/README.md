@@ -13,3 +13,7 @@ is abstracted away from the creation of them, and so, by default there are two w
 - using an annotation based system which will automatically register any applicable `@Subscribe`d event handling methods in a given object, and dispatch using MethodHandles.
 
 The event system is designed to be as flexible as possible, and can be used in a variety of ways.
+
+Note that handlers must be registered for a concrete event type. Parent types such as `TickEvent` are never posted
+directly, so registering for them (instead of e.g. `TickEvent.Start` / `TickEvent.End`) is rejected: at compile time
+for the Kotlin `eventHandler` DSL, and with an exception at registration time for all other paths.
