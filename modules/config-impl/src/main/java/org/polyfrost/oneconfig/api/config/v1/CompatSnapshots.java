@@ -29,6 +29,7 @@ package org.polyfrost.oneconfig.api.config.v1;
 import org.jetbrains.annotations.ApiStatus;
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
 import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -253,6 +254,11 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
                     store.putValue(profile, treeId, key, liveSer);
                     setBaseline(treeId, key, liveSer);
                 }
+                return;
+            }
+            if (value instanceof OneConfigKeybind && ((OneConfigKeybind) value).getHasUnresolvedInputs()) {
+                // some inputs do not exist on this Minecraft version
+                // applying the partial bind would overwrite the mod's config
                 return;
             }
             Object live = p.get();
