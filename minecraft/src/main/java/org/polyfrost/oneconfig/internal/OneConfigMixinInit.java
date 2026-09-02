@@ -112,8 +112,13 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? skyblocker_compat {
         mixins.add("compat.skyblocker.Mixin_SkyblockerFancyStatusBars");
         mixins.add("compat.skyblocker.Mixin_SkyblockerWidgetManager");
-        mixins.add("compat.skyblocker.Mixin_SkyblockerScreenBuilder");
         //? }
+
+        //? skyblocker_legacy_hud
+        //mixins.add("compat.skyblocker.Mixin_SkyblockerScreenBuilder");
+
+        //? skyblocker_hud_v2
+        mixins.add("compat.skyblocker.Mixin_SkyblockerLayerBuilder");
 
         //? stella_compat
         mixins.add("compat.stella.Mixin_Stella");
