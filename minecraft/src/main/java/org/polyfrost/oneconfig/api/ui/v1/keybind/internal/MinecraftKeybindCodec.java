@@ -12,12 +12,17 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
     private static final int MIN_MOUSE = InputConstants.MOUSE_BUTTON_LEFT;
     private static final int MAX_MOUSE = InputConstants.MOUSE_BUTTON_LEFT + 7; // vanilla names eight mouse buttons
 
+    public static InputConstants.Key keysym(int code) {
+        if (code >= 0 && code <= 9) return InputConstants.UNKNOWN;
+        //~ if < 26.3 'Type.KEYBOARD' -> 'Type.KEYSYM'
+        return InputConstants.Type.KEYSYM.getOrCreate(code);
+    }
+
     @Override
     public @Nullable String keyName(int code) {
         if (code < 0 || code > MAX_KEY) return null;
 
-        //~ if < 26.3 'Type.KEYBOARD' -> 'Type.KEYSYM'
-        InputConstants.Key key = InputConstants.Type.KEYSYM.getOrCreate(code);
+        InputConstants.Key key = keysym(code);
         if (key == InputConstants.UNKNOWN) return null;
 
         // Ignore fallback names

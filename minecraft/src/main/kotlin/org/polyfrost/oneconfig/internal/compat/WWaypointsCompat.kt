@@ -25,6 +25,7 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
+import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindCodec
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindRegistrar
 
 /**
@@ -1102,8 +1103,7 @@ object WWaypointsCompat {
         if (this == null || !isBound) return InputConstants.UNKNOWN
         //~ if < 26.3 'it > 0' -> 'it >= 0'
         mouseBtns?.firstOrNull { it >= 0 }?.let { return InputConstants.Type.MOUSE.getOrCreate(it) }
-        //~ if < 26.3 'Type.KEYBOARD' -> 'Type.KEYSYM'
-        keyCodes?.firstOrNull { it > 0 }?.let { return InputConstants.Type.KEYSYM.getOrCreate(it) }
+        keyCodes?.firstOrNull { it > 0 }?.let { return MinecraftKeybindCodec.keysym(it) }
         return InputConstants.UNKNOWN
     }
 
