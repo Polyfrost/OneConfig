@@ -260,7 +260,7 @@ public final class ConfigManager {
             String name = config.title != null ? config.title : config.id;
             Throwable root = cause.getCause() != null ? cause.getCause() : cause;
             String reason = root.getMessage();
-            org.polyfrost.oneconfig.api.notifications.v1.Notifications.error(name + ": could not write config",
+            Notifications.error(name + ": could not write config",
                     "OneConfig could not write to the config folder" + (reason != null ? " (" + reason + ")" : "")
                             + ". Your settings still work this session but may not be saved. Check that your disk is not full.");
         } catch (Throwable t) {
