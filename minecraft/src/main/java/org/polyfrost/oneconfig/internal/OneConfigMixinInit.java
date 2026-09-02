@@ -72,7 +72,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
             try (java.io.InputStream in = OneConfigMixinInit.class.getClassLoader().getResourceAsStream(path)) {
                 if (in != null) {
                     ClassNode node = new ClassNode();
-                    new org.objectweb.asm.ClassReader(in).accept(node, org.objectweb.asm.ClassReader.SKIP_CODE);
+                    new ClassReader(in).accept(node, ClassReader.SKIP_CODE);
                     for (org.objectweb.asm.tree.MethodNode method : node.methods) {
                         //~ if >= 26.1 'render' -> 'extractRenderState'
                         if (!method.name.equals("extractRenderState")) continue;
