@@ -41,6 +41,7 @@ import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.PolyColorAda
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.OneConfigKeybindAdapter;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerializer;
+import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 
 import java.io.IOException;
 import java.io.InputStream;
