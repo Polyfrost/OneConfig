@@ -83,7 +83,7 @@ object SkyblockerCompat {
         val updatePositions = method("updatePositions", java.lang.Boolean.TYPE)
         val isHealthFancyBarEnabled = method("isHealthFancyBarEnabled")
         //~ if >= 26.1 'render' -> 'extractRenderState'
-        val extractRenderState = method("extractRenderState", GuiGraphicsExtractor::class.java, Minecraft::class.java)
+        val extract = method("extractRenderState", GuiGraphicsExtractor::class.java, Minecraft::class.java)
 
         val self = runCatching { cls.getField("INSTANCE").get(null) }.getOrNull()
             ?: runCatching { cls.getMethod("getInstance").invoke(null) }.getOrNull()
@@ -91,14 +91,14 @@ object SkyblockerCompat {
             val modifiers = intArrayOf(
                 statusBars.modifiers, barPositioner.modifiers, saveBarConfig.modifiers,
                 placeBarsInPositioner.modifiers, updatePositions.modifiers,
-                isHealthFancyBarEnabled.modifiers, extractRenderState.modifiers,
+                isHealthFancyBarEnabled.modifiers, extract.modifiers,
             )
             if (modifiers.any { !Modifier.isStatic(it) }) error("FancyStatusBars is not static and has no instance")
         }
 
         return Bars(
             self, statusBars, barPositioner, saveBarConfig,
-            placeBarsInPositioner, updatePositions, isHealthFancyBarEnabled, extractRenderState,
+            placeBarsInPositioner, updatePositions, isHealthFancyBarEnabled, extract,
         )
     }
 
