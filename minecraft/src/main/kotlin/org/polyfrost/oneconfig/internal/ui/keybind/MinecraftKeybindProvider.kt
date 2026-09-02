@@ -14,6 +14,7 @@ import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindBridgeImpl
+import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindCodec
 
 object MinecraftKeybindProvider : KeybindGroupProvider {
     private val properties = IdentityHashMap<KeyMapping, Property<OneConfigKeybind>>()
@@ -179,8 +180,7 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
             keybind == null || !keybind.isBound -> InputConstants.UNKNOWN
             //~ if >= 26.3 'it >= 0' -> 'it > 0'
             mouseButtons?.firstOrNull { it >= 0 } != null -> InputConstants.Type.MOUSE.getOrCreate(mouseButtons.first { it >= 0 })
-            //~ if >= 26.3 'Type.KEYSYM' -> 'Type.KEYBOARD'
-            keyCodes?.firstOrNull { it > 0 } != null -> InputConstants.Type.KEYSYM.getOrCreate(keyCodes.first { it > 0 })
+            keyCodes?.firstOrNull { it > 0 } != null -> MinecraftKeybindCodec.keysym(keyCodes.first { it > 0 })
             else -> InputConstants.UNKNOWN
         }
         setKey(key)

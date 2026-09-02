@@ -2,12 +2,12 @@ package org.polyfrost.oneconfig.api.platform.v1.internal;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import org.polyfrost.oneconfig.api.platform.v1.Keys;
+import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindCodec;
 
 public class KeysImpl implements Keys {
     @Override
     public String keyName(int key) {
-        //~ if < 26.3 'Type.KEYBOARD' -> 'Type.KEYSYM'
-        InputConstants.Key input = InputConstants.Type.KEYSYM.getOrCreate(key);
+        InputConstants.Key input = MinecraftKeybindCodec.keysym(key);
         return input == InputConstants.UNKNOWN ? "None" : input.getDisplayName().getString();
     }
 

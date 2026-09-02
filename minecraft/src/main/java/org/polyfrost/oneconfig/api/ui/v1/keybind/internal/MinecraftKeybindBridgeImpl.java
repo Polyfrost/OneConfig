@@ -108,7 +108,7 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         InputConstants.Type type = defSrc.isMousePrimary() ? InputConstants.Type.MOUSE : InputConstants.Type.KEYSYM;
         KeyMapping mapping = detached(
             bind.getName(),
-            type.getOrCreate(defSrc.getBoundCode()),
+            keyFor(defSrc),
             () -> new KeyMapping(bind.getName(), type, defSrc.getBoundCode(), categoryFor(bind.getCategory()))
         );
         applyKeyTo(mapping, bind);
@@ -321,8 +321,7 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         if (KeyModifiers.INSTANCE.has(mods, KeyModifiers.ALT)) parts.add("Alt");
         if (KeyModifiers.INSTANCE.has(mods, KeyModifiers.META)) parts.add("Meta");
         if (keys != null) {
-            //~ if < 26.3 'Type.KEYBOARD' -> 'Type.KEYSYM'
-            for (int k : keys) parts.add(InputConstants.Type.KEYSYM.getOrCreate(k).getDisplayName().getString());
+            for (int k : keys) parts.add(MinecraftKeybindCodec.keysym(k).getDisplayName().getString());
         }
         if (mouse != null) {
             for (int b : mouse) parts.add(Platform.compatibility().keys().mouseName(b));
@@ -370,8 +369,13 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
     }
 
     private void applyKeyTo(KeyMapping mapping, OneConfigKeybind bind) {
-        //~ if < 26.3 'Type.KEYBOARD' -> 'Type.KEYSYM'
-        setKey(mapping, (bind.isMousePrimary() ? InputConstants.Type.MOUSE : InputConstants.Type.KEYSYM).getOrCreate(bind.getBoundCode()));
+        setKey(mapping, keyFor(bind));
+    }
+
+    private static InputConstants.Key keyFor(OneConfigKeybind bind) {
+        return bind.isMousePrimary()
+            ? InputConstants.Type.MOUSE.getOrCreate(bind.getBoundCode())
+            : MinecraftKeybindCodec.keysym(bind.getBoundCode());
     }
 
     public void reconcile() {
@@ -420,8 +424,7 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         List<String> extra = new ArrayList<>();
         if (keys != null) {
             for (int i = keysPrimary ? 1 : 0; i < keys.length; i++) {
-                //~ if < 26.3 'Type.KEYBOARD' -> 'Type.KEYSYM'
-                extra.add(InputConstants.Type.KEYSYM.getOrCreate(keys[i]).getDisplayName().getString());
+                extra.add(MinecraftKeybindCodec.keysym(keys[i]).getDisplayName().getString());
             }
         }
         if (mouse != null) {
