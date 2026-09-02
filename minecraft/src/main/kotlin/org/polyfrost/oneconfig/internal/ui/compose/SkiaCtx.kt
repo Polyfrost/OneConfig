@@ -625,11 +625,11 @@ object SkiaCtx {
 
     private fun maxTextureSize(): Int =
         //? if >= 26.2 {
-        com.mojang.blaze3d.systems.RenderSystem.getDevice().deviceInfo.limits().maxTextureSize()
+        RenderSystem.getDevice().deviceInfo.limits().maxTextureSize()
         //? } else if >= 1.21.5 {
-        /*com.mojang.blaze3d.systems.RenderSystem.getDevice().maxTextureSize
+        /*RenderSystem.getDevice().maxTextureSize
         *///? } else {
-        /*com.mojang.blaze3d.systems.RenderSystem.maxSupportedTextureSize()
+        /*RenderSystem.maxSupportedTextureSize()
         *///? }
 
     private fun viewportFitsTexture(w: Int, h: Int): Boolean {
