@@ -104,12 +104,11 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         });
         OneConfigKeybind def = bind.getDefaultKeybind();
         OneConfigKeybind defSrc = def != null ? def : bind;
-        //~ if < 26.3 'Type.KEYBOARD' -> 'Type.KEYSYM'
-        InputConstants.Type type = defSrc.isMousePrimary() ? InputConstants.Type.MOUSE : InputConstants.Type.KEYSYM;
+        InputConstants.Key defKey = keyFor(defSrc);
         KeyMapping mapping = detached(
             bind.getName(),
-            keyFor(defSrc),
-            () -> new KeyMapping(bind.getName(), type, defSrc.getBoundCode(), categoryFor(bind.getCategory()))
+            defKey,
+            () -> new KeyMapping(bind.getName(), defKey.getType(), defKey.getValue(), categoryFor(bind.getCategory()))
         );
         applyKeyTo(mapping, bind);
         mappings.put(bind, mapping);
