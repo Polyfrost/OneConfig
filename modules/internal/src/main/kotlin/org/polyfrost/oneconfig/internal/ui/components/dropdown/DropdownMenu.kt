@@ -50,19 +50,12 @@ class DropdownPositionProvider(
             it >= 0 && it + popupContentSize.width <= windowSize.width
         } ?: toLeft
 
-        val toBottom = maxOf(anchorBounds.bottom + contentOffsetY)
-        val toTop = anchorBounds.top - contentOffsetY - popupContentSize.height
-        val toCenter = anchorBounds.top - popupContentSize.height / 2
-        val toDisplayBottom = windowSize.height - popupContentSize.height
-        var y = sequenceOf(toBottom, toTop, toCenter, toDisplayBottom).firstOrNull {
-            it + popupContentSize.height <= windowSize.height
-        } ?: toTop
-
-        val aboveAnchor = anchorBounds.top + contentOffsetY
-        val belowAnchor = windowSize.height - anchorBounds.bottom - contentOffsetY
-
-        if (belowAnchor >= aboveAnchor) {
-            y = anchorBounds.bottom + contentOffsetY
+        val spaceAbove = anchorBounds.top - contentOffsetY
+        val spaceBelow = windowSize.height - anchorBounds.bottom - contentOffsetY
+        var y = if (spaceBelow >= spaceAbove) {
+            anchorBounds.bottom + contentOffsetY
+        } else {
+            anchorBounds.top - contentOffsetY - popupContentSize.height
         }
 
         if (y + popupContentSize.height > windowSize.height) {

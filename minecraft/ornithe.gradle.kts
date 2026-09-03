@@ -5,17 +5,8 @@ plugins {
 }
 
 repositories {
-    exclusiveContent {
-        forRepository { mavenCentral() }
-        filter { includeGroup("org.lwjgl") }
-    }
-
-    maven("https://maven.axolotlclient.com/releases") {
-        content {
-            includeGroup("io.github.moehreag")
-            includeGroup("io.github.moehreag.legacy-lwjgl3")
-            includeGroup("io.github.moehreag.hypixel")
-        }
+    maven("https://maven.cloverclient.com/releases") {
+        content { includeGroup("pl.tomgirl") }
     }
 }
 
@@ -41,9 +32,7 @@ dependencies {
         exclude(group = "org.lwjgl.lwjgl")
     }
 
-    modApi(versionedCatalog["legacy-lwjgl3"]) {
-        exclude(group = "net.ornithemc.osl-gen2")
-    }
+    modApi(versionedCatalog["lenis"])
 
     api("com.mojang:brigadier:1.0.18")
 }

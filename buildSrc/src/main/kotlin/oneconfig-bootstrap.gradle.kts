@@ -16,9 +16,6 @@ repositories {
     maven("https://repo.hypixel.net/repository/Hypixel/") {
         content { includeGroupAndSubgroups("net.hypixel") }
     }
-    maven("https://maven.axolotlclient.com/releases") {
-        content { includeGroup("io.github.moehreag.hypixel") }
-    }
     maven("https://maven.deftu.dev/releases") {
         content { includeGroupAndSubgroups("dev.deftu") }
     }
@@ -61,7 +58,7 @@ gradle.projectsEvaluated {
 
     fun isExcluded(group: String?, name: String) =
         (group == "net.fabricmc" && (name == "fabric-loader")) || group == "net.fabricmc.fabric-api" ||
-            (isOrnithe && ((group == "io.github.moehreag" && name == "legacy-lwjgl3") || group == "net.ornithemc.osl-gen2"))
+            (isOrnithe && ((group == "pl.tomgirl" && name == "lenis") || group == "net.ornithemc.osl-gen2"))
 
     val seen = HashSet<String>()
 
@@ -218,7 +215,6 @@ publishMods {
 
             if (isOrnithe) {
                 requires("osl")
-                requires("moehreag-legacy-lwjgl3")
             } else {
                 requires("fabric-api")
             }

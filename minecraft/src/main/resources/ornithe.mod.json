@@ -36,7 +36,7 @@
   "depends": {
     "fabricloader": ">=0.18.0",
     "minecraft": "${fabric_mc_version}",
-    "legacy-lwjgl3": ">=1.4.4",
+    "lenis": ">=0.1.4",
     "osl-core": ">=0.10.0-alpha.5",
     "osl-resource-loader": ">=0.8.0-alpha.5",
     "osl-localization": ">=0.1.1-alpha.3",

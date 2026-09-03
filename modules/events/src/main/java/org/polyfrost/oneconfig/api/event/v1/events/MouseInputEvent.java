@@ -30,7 +30,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 
 public class MouseInputEvent implements Event {
+    public static final int RELEASED = 0;
+    public static final int PRESSED = 1;
+
     public final int button;
+    /** {@link #RELEASED} or {@link #PRESSED}. */
     public final int state;
 
     public MouseInputEvent(int button, int state) {

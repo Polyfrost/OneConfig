@@ -7,6 +7,7 @@ class KeybindHelper {
     private val mouseBtns = mutableListOf<Int>()
     private var mods: Byte = KeyModifiers.NONE
     private var inScreens = false
+    private var firesWhileTyping = false
     private var durationNanos: Long = 0L
     private var action: ((Boolean) -> Boolean)? = null
     private var name: String? = null
@@ -29,6 +30,7 @@ class KeybindHelper {
     fun alt() = apply { mods = (mods or KeyModifiers.ALT).toByte() }
     fun meta() = apply { mods = (mods or KeyModifiers.META).toByte() }
     fun inScreens() = apply { inScreens = true }
+    fun firesWhileTyping() = apply { firesWhileTyping = true }
     fun duration(nanos: Long) = apply { durationNanos = nanos }
     fun action(fn: (Boolean) -> Boolean) = apply { action = fn }
     fun action(fn: () -> Unit) = apply { action = { b -> if (b) fn(); true } }
@@ -51,6 +53,7 @@ class KeybindHelper {
         else BindNotInScreen(keys, mouse, mods, durationNanos, fn)
         bind.name = name
         bind.category = category
+        bind.firesWhileTyping = firesWhileTyping
         return bind
     }
 

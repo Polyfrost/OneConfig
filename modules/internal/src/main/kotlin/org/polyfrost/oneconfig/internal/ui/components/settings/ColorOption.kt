@@ -54,6 +54,7 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.ColorOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
@@ -665,7 +666,7 @@ internal fun ColorPickerPopup(
                     fontFamily = theme.typography.family,
                 ),
                 cursorBrush = SolidColor(theme.textColor),
-                modifier = Modifier
+                modifier = Modifier.trackTextInputFocus()
                     .weight(1f)
                     .background(theme.componentBackground, LocalTheme.current.sideBarNavigationEntryShape)
                     .border(1.dp, theme.borderColor, LocalTheme.current.sideBarNavigationEntryShape)
@@ -712,7 +713,7 @@ private fun SliderValueField(
                 textAlign = TextAlign.End,
             ),
             cursorBrush = SolidColor(theme.textColor),
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.trackTextInputFocus().weight(1f),
         )
         if (suffix.isNotEmpty()) {
             Text(

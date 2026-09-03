@@ -15,7 +15,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(FancyStatusBars.class)
 public class Mixin_SkyblockerFancyStatusBars {
 
-    @Inject(method = "init", at = @At("TAIL"), require = 0)
+    //? if skyblocker_hud_v2 {
+    @Inject(method = "initStatic", at = @At("TAIL"), require = 0)
+    private static void oneconfig$registerHudCompat(CallbackInfo ci) {
+        SkyblockerCompat.initialize();
+    }
+
+    @Inject(method = "extractRenderState", at = @At("HEAD"), cancellable = true, require = 0)
+    private void oneconfig$suppressWhileEditing(CallbackInfoReturnable<Boolean> cir) {
+        if (CompatOverlayRenderer.oneConfigScreenOpen() && !SkyblockerCompat.isRedrawing()) {
+            cir.setReturnValue(false);
+        }
+    }
+    //?} else {
+    /*@Inject(method = "init", at = @At("TAIL"), require = 0)
     private static void oneconfig$registerHudCompat(CallbackInfo ci) {
         SkyblockerCompat.initialize();
     }
@@ -27,5 +40,6 @@ public class Mixin_SkyblockerFancyStatusBars {
             cir.setReturnValue(false);
         }
     }
+    *///?}
 }
 //? }

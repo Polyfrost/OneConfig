@@ -168,7 +168,7 @@ object MinecraftKeybindProfiles : ConfigManager.ProfileChangeListener {
         var changed = false
         for (mapping in MinecraftKeybindProvider.managedMappings()) {
             val saved = snapshot[mapping.name] as? String ?: continue
-            val key = runCatching { InputConstants.getKey(saved) }.getOrDefault(InputConstants.UNKNOWN)
+            val key = runCatching { InputConstants.getKey(saved) }.getOrNull() ?: continue
             mapping.setKey(key)
             changed = true
         }

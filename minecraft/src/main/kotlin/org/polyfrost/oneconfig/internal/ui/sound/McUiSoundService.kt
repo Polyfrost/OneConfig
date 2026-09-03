@@ -47,12 +47,12 @@ class McUiSoundService : UiSoundService {
         when (event) {
             UiSoundEvent.OPEN -> playModernSound("ui.open", 1f, volume)
             UiSoundEvent.CLOSE -> playModernSound("ui.close", 1f, volume)
-            UiSoundEvent.CLICK -> playModernSound("ui.click", 1f, volume * MODERN_CLICK_VOLUME)
-            UiSoundEvent.SLIDER_TICK -> playModernSound("ui.slider", 1f, volume * MODERN_SLIDER_VOLUME)
-            UiSoundEvent.HUD_SELECT -> playModernSound("ui.click", 1.0f, volume * MODERN_CLICK_VOLUME)
-            UiSoundEvent.HUD_DRAG_START -> playModernSound("ui.click", 0.9f, volume * MODERN_CLICK_VOLUME)
-            UiSoundEvent.HUD_DRAG_END -> playModernSound("ui.click", 1.1f, volume * MODERN_CLICK_VOLUME)
-            UiSoundEvent.HUD_RESIZE_END -> playModernSound("ui.click", 1.0f, volume * MODERN_CLICK_VOLUME)
+            UiSoundEvent.CLICK -> playModernSound("ui.click", 1f, volume)
+            UiSoundEvent.SLIDER_TICK -> playModernSound("ui.slider", 1f, volume)
+            UiSoundEvent.HUD_SELECT -> playModernSound("ui.click", 1.0f, volume)
+            UiSoundEvent.HUD_DRAG_START -> playModernSound("ui.click", 0.9f, volume)
+            UiSoundEvent.HUD_DRAG_END -> playModernSound("ui.click", 1.1f, volume)
+            UiSoundEvent.HUD_RESIZE_END -> playModernSound("ui.click", 1.0f, volume)
             else -> { }
         }
     }
@@ -303,7 +303,5 @@ class McUiSoundService : UiSoundService {
 
     private companion object {
         const val FADE_TICKS = 80f
-        const val MODERN_CLICK_VOLUME = 0.20f
-        const val MODERN_SLIDER_VOLUME = 0.10f
     }
 }

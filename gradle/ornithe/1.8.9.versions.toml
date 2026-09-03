@@ -1,5 +1,5 @@
 [versions]
-legacy-lwjgl3 = "1.4.4"
+lenis = "0.1.4"
 
 [libraries]
-legacy-lwjgl3 = { module = "io.github.moehreag:legacy-lwjgl3", version.ref = "legacy-lwjgl3" }
+lenis = { module = "pl.tomgirl:lenis", version.ref = "lenis" }

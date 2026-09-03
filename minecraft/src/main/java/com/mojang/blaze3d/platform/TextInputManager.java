@@ -1,7 +1,7 @@
 package com.mojang.blaze3d.platform;
 
 //? if = 1.8.9 {
-/*import io.github.moehreag.legacylwjgl3.util.IMEManager;
+/*import pl.tomgirl.lenis.window.DisplaySdl;
 
 public final class TextInputManager {
     private static final TextInputManager INSTANCE = new TextInputManager();
@@ -11,11 +11,11 @@ public final class TextInputManager {
     }
 
     public void startTextInput() {
-        IMEManager.getInstance().startTextInput();
+        DisplaySdl.instance().setTextInputActive(true);
     }
 
     public void stopTextInput() {
-        IMEManager.getInstance().stopTextInput();
+        DisplaySdl.instance().setTextInputActive(false);
     }
 }
 *///?}

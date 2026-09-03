@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.TextOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
@@ -64,7 +65,7 @@ fun TextOption(data: TextOptionData) {
         ),
         interactionSource = interactionSource,
         cursorBrush = SolidColor(theme.textColor),
-        modifier = Modifier
+        modifier = Modifier.trackTextInputFocus()
             .width(LocalOptionWidth.current)
             .then(if (data.multiline) Modifier.heightIn(min = 96.dp) else Modifier)
             .background(theme.modCardBackground, LocalTheme.current.sideBarNavigationEntryShape)

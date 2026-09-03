@@ -52,6 +52,10 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
     @JvmStatic
     fun addConfig(config: ResourcefulConfig) {
         registeredConfigs[config.id()] = config
+        if (config.info().isHidden) {
+            info("Skipping hidden config ${config.id()}!")
+            return
+        }
         val mod = CompatLoader.findFirstMod()
         info("Preparing config wrapper for ${config.id()}!")
         CompatLoader.requireTranslations {
@@ -101,6 +105,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         root: Tree,
         usedIds: MutableSet<String>,
     ) {
+        if (config.info().isHidden) return
         val tree = Tree.tree()
 
         val nestedId = "$id/${config.id()}"
@@ -149,6 +154,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         path: String,
         usedIds: MutableSet<String>,
     ) = list.forEach {
+        if (it.isHidden) return@forEach
         when (it) {
             is ResourcefulConfigCategory -> parseCategory(it, tree, path, usedIds)
             is ResourcefulConfigEntryElement -> parseAny(it, tree, path, usedIds)
@@ -170,6 +176,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         path: String,
         usedIds: MutableSet<String>,
     ) {
+        if (entry.info().isHidden) return
         val categoryPath = "$path/${idPart(entry.id(), "category")}"
         val category = Tree.tree()
         category.title = entry.info().title().toComponent()
@@ -205,6 +212,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         path: String,
         usedIds: MutableSet<String>,
     ) = entries.forEach { (id, entry) ->
+        if (entry.options().hasOption(Option.HIDDEN)) return@forEach
         val entryPath = "$path/${idPart(id, "entry")}"
         when (entry) {
             is ResourcefulConfigObjectEntry -> parseObject(entry, tree, entryPath, usedIds)

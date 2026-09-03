@@ -1,11 +1,13 @@
 package org.polyfrost.oneconfig.internal.mixin.keybind;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
+//? if >= 1.21.10
+import net.minecraft.client.Minecraft;
 //? if > 1.8.9 {
 import net.minecraft.client.gui.screens.options.controls.KeyBindsList;
 //?} else {
 /*import org.polyfrost.oneconfig.internal.legacy.KeyCodes;
-import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 *///?}
 import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
@@ -13,7 +15,10 @@ import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 //?}
+//? if < 26.3 && > 1.8.9
 import org.lwjgl.glfw.GLFW;
+//? if >= 26.3
+//import org.lwjgl.sdl.SDLMouse;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindBridgeImpl;
 import org.polyfrost.oneconfig.internal.ui.keybind.OneConfigKeybindRecorder;
@@ -43,7 +48,7 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     private void oneconfig$keyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
         if (!oneconfig$isOurs()) return;
-        if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
+        if (event.key() == InputConstants.KEY_ESCAPE) {
             oneconfig$recordEscape();
             cir.setReturnValue(true);
             return;
@@ -65,7 +70,7 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
             return;
         }
         ^///?}
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+        if (keyCode == InputConstants.KEY_ESCAPE) {
             oneconfig$recordEscape();
             //$ if > 1.8.9 'cir.setReturnValue(true);' else 'ci.cancel();'
             cir.setReturnValue(true);
@@ -117,14 +122,24 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
         MinecraftKeybindBridgeImpl bridge = MinecraftKeybindBridgeImpl.instance();
         if (bridge != null) bridge.setActiveRebind(oneconfig$target != null ? oneconfig$target : this.selectedKey);
         if (!oneconfig$recording) return;
-        //? if > 1.8.9 {
+        for (int k : oneconfig$keys) {
+            //? if >= 26.3 || = 1.8.9 {
+            /*if (InputConstants.isKeyDown(k)) return;
+            *///?} else {
+            //~ if < 1.21.10 'Minecraft.getInstance().getWindow()' -> 'Platform.compatibility().windowHandle()'
+            if (InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), k)) return;
+            //?}
+        }
+        //? if >= 26.3 {
+        /*int buttons = SDLMouse.SDL_GetMouseState(null, null);
+        for (int b : oneconfig$mouse) {
+            if (b > 0 && b <= Integer.SIZE && (buttons & (1 << (b - 1))) != 0) return;
+        }
+        *///?} elif > 1.8.9 {
         long window = Platform.compatibility().windowHandle();
-        for (int k : oneconfig$keys) if (GLFW.glfwGetKey(window, k) != GLFW.GLFW_RELEASE) return;
-        for (int b : oneconfig$mouse) if (GLFW.glfwGetMouseButton(window, b) != GLFW.GLFW_RELEASE) return;
-        //?} else {
-        /*for (int k : oneconfig$keys) if (Keyboard.isKeyDown(KeyCodes.toLegacy(k))) return;
-        for (int b : oneconfig$mouse) if (Mouse.isButtonDown(b)) return;
-        *///?}
+        for (int b : oneconfig$mouse) if (GLFW.glfwGetMouseButton(window, b) != InputConstants.RELEASE) return;
+        //?} else
+        //for (int b : oneconfig$mouse) if (Mouse.isButtonDown(b)) return;
         oneconfig$commit();
     }
 

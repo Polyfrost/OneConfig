@@ -49,7 +49,7 @@ import java.util.Locale;
 /**
  * Cross-platform system clipboard access
  * <p>
- * Uses GLFW/AWT on Windows/Linux
+ * Uses GLFW/SDL/AWT on Windows/Linux
  * <p>
  * Uses NSPasteboard on macOS
  */
@@ -62,6 +62,7 @@ public final class ClipboardHelper {
             .contains("mac");
 
     private static final String MACOS_CLIPBOARD_CLASS = "org.polyfrost.oneconfig.utils.v1.MacOSClipboard";
+    private static final String SDL_CLIPBOARD_CLASS = "org.lwjgl.sdl.SDLClipboard";
     private static final String GLFW_CLASS = "org.lwjgl.glfw.GLFW";
 
     private ClipboardHelper() {
@@ -73,9 +74,10 @@ public final class ClipboardHelper {
             if (IS_MAC) {
                 return invokeMacNullable("getString");
             }
-            String glfwValue = getStringFromGlfw();
-            if (glfwValue != null) {
-                return glfwValue;
+            String nativeValue = getStringFromSdl();
+            if (nativeValue == null) nativeValue = getStringFromGlfw();
+            if (nativeValue != null) {
+                return nativeValue;
             }
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
             if (!clipboard.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
@@ -96,7 +98,7 @@ public final class ClipboardHelper {
             if (IS_MAC) {
                 return invokeMacBoolean("setString", value);
             }
-            if (setStringWithGlfw(value)) {
+            if (setStringWithSdl(value) || setStringWithGlfw(value)) {
                 return true;
             }
             Toolkit.getDefaultToolkit().getSystemClipboard()
@@ -159,7 +161,7 @@ public final class ClipboardHelper {
             if (IS_MAC) {
                 return invokeMacBoolean("clear");
             }
-            if (setStringWithGlfw("")) {
+            if (setStringWithSdl("") || setStringWithGlfw("")) {
                 return true;
             }
             Toolkit.getDefaultToolkit().getSystemClipboard()
@@ -193,6 +195,29 @@ public final class ClipboardHelper {
             method = clazz.getMethod(methodName, paramTypes);
         }
         return Boolean.TRUE.equals(method.invoke(null, args));
+    }
+
+    @Nullable
+    private static String getStringFromSdl() {
+        try {
+            Method method = Class.forName(SDL_CLIPBOARD_CLASS).getMethod("SDL_GetClipboardText");
+            String value = (String) method.invoke(null);
+            return value == null || value.isEmpty() ? null : value;
+        } catch (Throwable t) {
+            LOGGER.debug("Failed to read SDL clipboard text", t);
+            return null;
+        }
+    }
+
+    private static boolean setStringWithSdl(String value) {
+        try {
+            Class<?> clazz = Class.forName(SDL_CLIPBOARD_CLASS);
+            Method method = clazz.getMethod("SDL_SetClipboardText", CharSequence.class);
+            return Boolean.TRUE.equals(method.invoke(null, value));
+        } catch (Throwable t) {
+            LOGGER.debug("Failed to write SDL clipboard text", t);
+            return false;
+        }
     }
 
     @Nullable

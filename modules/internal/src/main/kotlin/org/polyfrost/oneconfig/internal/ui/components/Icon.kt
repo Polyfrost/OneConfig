@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,6 +22,8 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import java.io.ByteArrayInputStream
@@ -45,12 +48,29 @@ private object IconBitmapCache {
 
     private val cache = ConcurrentHashMap<String, Entry>()
 
-    fun load(path: String, lastModified: Long, decode: () -> RasterIcon): RasterIcon {
-        cache[path]?.let { if (it.lastModified == lastModified) return it.icon }
-        val icon = decode()
-        cache[path] = Entry(lastModified, icon)
-        return icon
+    fun peek(key: String, lastModified: Long): RasterIcon? =
+        cache[key]?.takeIf { it.lastModified == lastModified }?.icon
+
+    fun put(key: String, lastModified: Long, icon: RasterIcon) {
+        cache[key] = Entry(lastModified, icon)
     }
+}
+
+/**
+ * Returns the cached raster icon for [key], or null while it is being decoded on a background thread
+ */
+@Composable
+private fun rememberAsyncRasterIcon(key: String, lastModified: Long, read: () -> ByteArray?): RasterIcon? {
+    return produceState(IconBitmapCache.peek(key, lastModified), key, lastModified) {
+        IconBitmapCache.peek(key, lastModified)?.let {
+            value = it
+            return@produceState
+        }
+        value = withContext(Dispatchers.IO) {
+            runCatching { read()?.let(::decodeRasterIcon) }.getOrNull()
+                ?.also { IconBitmapCache.put(key, lastModified, it) }
+        }
+    }.value
 }
 
 /**
@@ -84,33 +104,37 @@ fun Icon(
     } else null
     if (file != null) {
         val isSvg = file.extension.equals("svg", ignoreCase = true)
-        val over = LocalUiOversample.current
-        val painter = remember(iconName, file.lastModified(), over) {
-            runCatching {
-                if (isSvg) OversampledSvgPainter(file.readBytes(), over)
-                else rasterPainter(
-                    IconBitmapCache.load(iconName, file.lastModified()) {
-                        decodeRasterIcon(file.readBytes())
-                    }
+        val lastModified = file.lastModified()
+        if (isSvg) {
+            val over = LocalUiOversample.current
+            val painter = remember(iconName, lastModified, over) {
+                runCatching { OversampledSvgPainter(file.readBytes(), over) }.getOrNull()
+            }
+            if (painter != null) {
+                val aspectRatio = remember(iconName, lastModified) {
+                    if (fitAspectRatio) file.inputStream().buffered().use(::readSvgAspectRatio) else null
+                }
+                Image(
+                    painter = painter,
+                    contentDescription = null,
+                    modifier = modifier.then(iconSizeModifier(aspectRatio)),
+                    colorFilter = ColorFilter.tint(resolvedColor)
                 )
-            }.getOrNull()
-        }
-        if (painter != null) {
-            val aspectRatio = remember(iconName, file.lastModified()) {
-                if (fitAspectRatio && isSvg) file.inputStream().buffered().use(::readSvgAspectRatio) else null
+                return
             }
-            val imageModifier = modifier.then(iconSizeModifier(aspectRatio))
-            val clippedModifier = if (!isSvg) {
-                imageModifier.clip(DefaultRasterIconShape)
+        } else {
+            val icon = rememberAsyncRasterIcon(iconName, lastModified) { file.readBytes() }
+            val imageModifier = modifier.then(iconSizeModifier(null)).clip(DefaultRasterIconShape)
+            if (icon != null) {
+                Image(
+                    painter = remember(icon) { rasterPainter(icon) },
+                    contentDescription = null,
+                    modifier = imageModifier
+                )
             } else {
-                imageModifier
+                // keeps the icon's space reserved while it decodes in the background
+                Box(imageModifier)
             }
-            Image(
-                painter = painter,
-                contentDescription = null,
-                modifier = clippedModifier,
-                colorFilter = if (isSvg) ColorFilter.tint(resolvedColor) else null
-            )
             return
         }
     }
@@ -129,7 +153,11 @@ fun Icon(
     val painter = if (isSvg) {
         rememberIconSvgPainter(path) ?: return
     } else {
-        rememberIconRasterPainter(path) ?: return
+        rememberIconRasterPainter(path) ?: run {
+            // keeps the icon's space reserved while it decodes in the background
+            Box(clippedResourceModifier)
+            return
+        }
     }
     Image(
         painter = painter,
@@ -157,9 +185,8 @@ fun rememberSvgResourcePainter(path: String): Painter? {
 
 @Composable
 private fun rememberIconRasterPainter(path: String): Painter? {
-    return remember(path) {
-        readIconResourceBytes(path)?.let { rasterPainter(decodeRasterIcon(it)) }
-    }
+    val icon = rememberAsyncRasterIcon(path, 0L) { readIconResourceBytes(path) }
+    return icon?.let { remember(it) { rasterPainter(it) } }
 }
 
 private fun readIconResourceBytes(path: String): ByteArray? {
