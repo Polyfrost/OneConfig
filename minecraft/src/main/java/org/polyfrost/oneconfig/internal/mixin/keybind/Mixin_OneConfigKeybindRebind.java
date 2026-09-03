@@ -139,6 +139,8 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
 
     @Override
     public void oneconfig$recordKey(int keyCode) {
+        //? if >= 26.3
+        if (keyCode <= 0) return;
         if (!oneconfig$begin()) return;
         oneconfig$keys.add(keyCode);
         oneconfig$preview();
