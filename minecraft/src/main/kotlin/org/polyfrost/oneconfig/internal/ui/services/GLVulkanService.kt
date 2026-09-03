@@ -7,6 +7,7 @@ import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.DirectContext
 import org.jetbrains.skia.FramebufferFormat
 import org.jetbrains.skia.SurfaceColorFormat
+import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.internal.ui.RenderTargetFbo
 import org.slf4j.LoggerFactory
 
@@ -15,13 +16,18 @@ object GLVulkanService : VulkanService {
     private val client get() = Minecraft.getInstance()
     override val isVulkan = false
 
-    override fun makeDirectContext(): DirectContext =
-        try {
+    override fun makeDirectContext(): DirectContext {
+        if (DesktopHelper.isAndroid) {
+            return GLInterfaceFactory.makeDirectContextViaLwjgl()
+                ?: error("No LWJGL GL function provider; cannot create a DirectContext on Android")
+        }
+        return try {
             DirectContext.makeGL()
         } catch (e: Exception) {
             LOG.warn("DirectContext.makeGL() failed; retrying via LWJGL proc loader (SDL/EGL backend?)", e)
             GLInterfaceFactory.makeDirectContextViaLwjgl() ?: throw e
         }
+    }
 
     override fun makeBackendRenderTarget(
         width: Int, height: Int,

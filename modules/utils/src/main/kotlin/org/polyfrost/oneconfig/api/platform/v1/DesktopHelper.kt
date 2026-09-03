@@ -37,11 +37,22 @@ object DesktopHelper {
     var isWindows: Boolean = false
         private set
 
+    @JvmStatic
+    var isAndroid: Boolean = false
+        private set
+
     init {
         val osName = try {
             System.getProperty("os.name")
         } catch (_: SecurityException) {
             null
+        }
+
+        isAndroid = try {
+            System.getProperty("os.version").orEmpty().startsWith("Android") ||
+                File("/system/build.prop").exists()
+        } catch (_: SecurityException) {
+            false
         }
 
         isLinux = osName != null && (osName.startsWith("Linux") || osName.startsWith("LINUX"))
