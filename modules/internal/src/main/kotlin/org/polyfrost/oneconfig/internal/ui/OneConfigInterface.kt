@@ -75,6 +75,7 @@ fun OneConfigInterface(
     restoring: Boolean = false,
     onCloseRequest: () -> Unit = {},
     onCloseReady: ((requestClose: () -> Unit) -> Unit)? = null,
+    onOpenReady: ((requestOpen: () -> Unit) -> Unit)? = null,
     shellBackdrop: DrawScope.(Offset) -> Unit = {}
 ) {
     ThemeRegistry.init()
@@ -139,9 +140,11 @@ fun OneConfigInterface(
     }
 
     val requestClose: () -> Unit = { visible = false }
+    val requestOpen: () -> Unit = { visible = true }
 
     SideEffect {
         onCloseReady?.invoke(requestClose)
+        onOpenReady?.invoke(requestOpen)
     }
 
     CompositionLocalProvider(LocalCloseRequest provides requestClose) {

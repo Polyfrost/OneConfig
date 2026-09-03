@@ -171,6 +171,7 @@ apiValidation {
         ignoredPackages.add("org.polyfrost.oneconfig.api.${project.name}.v1.internal")
     }
     ignoredPackages.add("org.polyfrost.oneconfig.api.hypixel.v1.internal")
+    ignoredPackages.add("org.polyfrost.oneconfig.api.event.v1.internal")
     ignoredProjects.add("internal")
     ignoredProjects.add("dependencies")
     ignoredProjects.add("compose-bundle")

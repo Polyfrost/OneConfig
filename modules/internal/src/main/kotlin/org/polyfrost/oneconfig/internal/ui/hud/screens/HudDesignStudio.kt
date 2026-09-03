@@ -59,6 +59,7 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils
+import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.*
@@ -188,7 +189,6 @@ private val snapGuideColor = Color(176, 47, 31)
 private const val CHROME_SETTINGS_PANEL = "settings-panel"
 private const val CHROME_LIBRARY = "library"
 private const val SIDE_CHROME_DIM_ALPHA = 0.45f
-private const val LIBRARY_HOVER_HUD_ALPHA = 0.25f
 
 private data class SnapGuides(val vertical: Float?, val horizontal: Float?) {
     companion object {
@@ -1566,12 +1566,6 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
         label = "sideChromeAlpha"
     )
 
-    val libraryAlpha by animateFloatAsState(
-        targetValue = if (hoveredHud != null) LIBRARY_HOVER_HUD_ALPHA else sideChromeAlpha,
-        animationSpec = tween(150),
-        label = "libraryAlpha"
-    )
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -1995,7 +1989,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             Row(
                 modifier = Modifier
                     .chromeRegion(CHROME_LIBRARY)
-                    .graphicsLayer { alpha = libraryAlpha }
+                    .graphicsLayer { alpha = sideChromeAlpha }
                     .safePointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
                         event.changes.forEach { if (!it.isConsumed) it.consume() }
                     }
@@ -3046,6 +3040,7 @@ fun SearchBar() {
     BasicTextField(
         searchText,
         { searchText = it },
+        modifier = Modifier.trackTextInputFocus(),
         interactionSource = interactionSource,
         textStyle = TextStyle(
             color = iconColor, fontSize = 12.sp,
@@ -3089,6 +3084,7 @@ private fun LibrarySearchBar(value: String, onValueChange: (String) -> Unit) {
     BasicTextField(
         value,
         onValueChange,
+        modifier = Modifier.trackTextInputFocus(),
         interactionSource = interactionSource,
         textStyle = TextStyle(
             color = iconColor, fontSize = 12.sp,

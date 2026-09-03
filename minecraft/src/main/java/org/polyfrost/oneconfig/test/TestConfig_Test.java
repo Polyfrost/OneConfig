@@ -33,6 +33,7 @@ import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.config.v1.annotations.*;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
+import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindHelper;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
@@ -327,7 +328,7 @@ public class TestConfig_Test extends Config {
 
     @Button(title = "Test")
     private void button() {
-        Platform.compatibility().displayChatMessage("button pressed");
+        Notifications.info("Button pressed", "The test button was clicked.");
     }
 
     public static TestConfig_Test getInstance() {

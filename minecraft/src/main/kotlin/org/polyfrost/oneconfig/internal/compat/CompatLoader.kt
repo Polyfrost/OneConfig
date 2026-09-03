@@ -41,6 +41,7 @@ object CompatLoader {
         "co.stellarskys.stella",
         "uk.co.hexeption.apec",
         "moe.nea.firmament.deps.moulconfig",
+        "io.github.notenoughupdates.moulconfig",
         "dev.tr7zw.trender",
         "dev.tr7zw.transition",
         "kotlin",

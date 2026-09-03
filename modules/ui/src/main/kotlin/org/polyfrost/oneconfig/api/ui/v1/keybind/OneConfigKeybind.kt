@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.api.ui.v1.keybind
 
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.utils.v1.OverwriteMergeable
 import kotlin.experimental.and
 
@@ -43,6 +44,9 @@ open class OneConfigKeybind(
     @Transient
     var defaultKeybind: OneConfigKeybind? = null
 
+    @Transient
+    var firesWhileTyping = false
+
     val isBound get() = keyCodes?.isNotEmpty() == true || mouseBtns?.isNotEmpty() == true
 
     /**
@@ -67,6 +71,7 @@ open class OneConfigKeybind(
             it.name = name
             it.category = category
             it.defaultKeybind = defaultKeybind
+            it.firesWhileTyping = firesWhileTyping
         }
 
     /**
@@ -117,70 +122,14 @@ open class OneConfigKeybind(
         val parts = LinkedHashSet<String>()
         parts += modifierNames(mods)
         keyCodes?.forEach { parts += keyName(it) }
-        mouseBtns?.forEach { parts += "Mouse ${it + 1}" }
+        mouseBtns?.forEach { parts += Platform.compatibility().keys().mouseName(it) }
         return parts.joinToString(" + ").ifEmpty { "None" }
     }
 
     companion object {
-        /** Human-readable name for a GLFW key code */
+        /** Human-readable name for a key code */
         @JvmStatic
-        fun keyName(glfwCode: Int): String = when (glfwCode) {
-            -1 -> "None"
-            32 -> "Space"
-            39 -> "'"
-            44 -> ","
-            45 -> "-"
-            46 -> "."
-            47 -> "/"
-            59 -> ";"
-            61 -> "="
-            91 -> "["
-            92 -> "\\"
-            93 -> "]"
-            96 -> "`"
-            161 -> "Non-US #1"
-            162 -> "Non-US #2"
-            256 -> "Escape"
-            257 -> "Enter"
-            258 -> "Tab"
-            259 -> "Backspace"
-            260 -> "Insert"
-            261 -> "Delete"
-            262 -> "Right"
-            263 -> "Left"
-            264 -> "Down"
-            265 -> "Up"
-            266 -> "Page Up"
-            267 -> "Page Down"
-            268 -> "Home"
-            269 -> "End"
-            280 -> "Caps Lock"
-            281 -> "Scroll Lock"
-            282 -> "Num Lock"
-            283 -> "Print Screen"
-            284 -> "Pause"
-            330 -> "Numpad ."
-            331 -> "Numpad /"
-            332 -> "Numpad *"
-            333 -> "Numpad -"
-            334 -> "Numpad +"
-            335 -> "Numpad Enter"
-            336 -> "Numpad ="
-            340 -> "Left Shift"
-            344 -> "Right Shift"
-            341 -> "Left Ctrl"
-            345 -> "Right Ctrl"
-            342 -> "Left Alt"
-            346 -> "Right Alt"
-            343 -> "Left Super"
-            347 -> "Right Super"
-            348 -> "Menu"
-            in 48..57 -> ('0' + (glfwCode - 48)).toString()
-            in 65..90 -> ('A' + (glfwCode - 65)).toString()
-            in 290..313 -> "F${glfwCode - 289}"          // F1 to F24
-            in 320..329 -> "Numpad ${glfwCode - 320}"    // KP_0 to KP_9
-            else -> "Key $glfwCode"
-        }
+        fun keyName(key: Int): String = Platform.compatibility().keys().keyName(key)
 
         private fun modifierNames(mods: Byte): List<String> = buildList {
             if (KeyModifiers.has(mods, KeyModifiers.CTRL)) add("Ctrl")

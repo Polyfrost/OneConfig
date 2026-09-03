@@ -564,6 +564,8 @@ public final class org/polyfrost/compose/runtime/PolyComposeHost {
 	public static final field INSTANCE Lorg/polyfrost/compose/runtime/PolyComposeHost;
 	public final fun frame (J)V
 	public static synthetic fun frame$default (Lorg/polyfrost/compose/runtime/PolyComposeHost;JILjava/lang/Object;)V
+	public final fun frameWithReport (J)Z
+	public static synthetic fun frameWithReport$default (Lorg/polyfrost/compose/runtime/PolyComposeHost;JILjava/lang/Object;)Z
 }
 
 public final class org/polyfrost/compose/runtime/PolyComposeRuntime {

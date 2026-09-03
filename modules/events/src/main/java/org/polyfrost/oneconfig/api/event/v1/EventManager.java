@@ -34,6 +34,7 @@ import org.polyfrost.oneconfig.api.event.v1.events.Event;
 import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventCollector;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
+import org.polyfrost.oneconfig.api.event.v1.internal.EventClassValidator;
 import org.polyfrost.oneconfig.api.event.v1.invoke.impl.AnnotationEventMapper;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
@@ -172,8 +173,10 @@ public final class EventManager {
      * Register an event handler
      *
      * @param handler The handler to register
+     * @throws IllegalArgumentException if the handler's event class is not a concrete, postable event type
      */
     public void register(EventHandler<?> handler) {
+        EventClassValidator.validate(handler.getEventClass());
         List<EventHandler<?>> handles = handlers.computeIfAbsent(
                 handler.getEventClass(),
                 k -> new CopyOnWriteArrayList<>());

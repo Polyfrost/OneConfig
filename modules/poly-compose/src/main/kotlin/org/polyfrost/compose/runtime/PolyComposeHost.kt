@@ -13,14 +13,25 @@ object PolyComposeHost {
     private val clock = BroadcastFrameClock()
     private val scope = CoroutineScope(Dispatchers.Unconfined + clock)
 
-    internal val recomposer: CompositionContext = Recomposer(scope.coroutineContext).also { r ->
+    private val recomposerImpl = Recomposer(scope.coroutineContext).also { r ->
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             r.runRecomposeAndApplyChanges()
         }
     }
 
+    internal val recomposer: CompositionContext get() = recomposerImpl
+
     fun frame(nanos: Long = System.nanoTime()) {
+        frameWithReport(nanos)
+    }
+
+    /**
+     * Runs a frame like [frame] and reports whether composition content may have changed
+     */
+    fun frameWithReport(nanos: Long = System.nanoTime()): Boolean {
         Snapshot.sendApplyNotifications()
+        val appliedBefore = recomposerImpl.changeCount
         clock.sendFrame(nanos)
+        return recomposerImpl.changeCount != appliedBefore || recomposerImpl.hasPendingWork
     }
 }

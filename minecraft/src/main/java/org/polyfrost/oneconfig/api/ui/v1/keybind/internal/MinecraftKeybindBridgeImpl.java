@@ -10,6 +10,8 @@ import net.minecraft.resources.Identifier;
 //?}
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
+import org.polyfrost.oneconfig.api.platform.v1.Keys;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.MinecraftKeybindBridge;
@@ -110,14 +112,14 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         });
         OneConfigKeybind def = bind.getDefaultKeybind();
         OneConfigKeybind defSrc = def != null ? def : bind;
-        InputConstants.Type type = defSrc.isMousePrimary() ? InputConstants.Type.MOUSE : InputConstants.Type.KEYSYM;
+        InputConstants.Key defKey = keyFor(defSrc);
         KeyMapping mapping = detached(
             bind.getName(),
-            type.getOrCreate(defSrc.getBoundCode()),
+            defKey,
             //? if > 1.8.9 {
-            () -> new KeyMapping(bind.getName(), type, defSrc.getBoundCode(), categoryFor(bind.getCategory()))
+            () -> new KeyMapping(bind.getName(), defKey.getType(), defKey.getValue(), categoryFor(bind.getCategory()))
             //?} else
-            //() -> new KeyMapping(bind.getName(), KeyCodes.toLegacy(type.getOrCreate(defSrc.getBoundCode())), categoryFor(bind.getCategory()))
+            //() -> new KeyMapping(bind.getName(), KeyCodes.toLegacy(defKey), categoryFor(bind.getCategory()))
         );
         applyKeyTo(mapping, bind);
         mappings.put(bind, mapping);
@@ -267,7 +269,7 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
             //?} else
             //InputConstants.Key key = KeyCodes.fromLegacy(mapping.getKeyCode());
             int v = key.getValue();
-            if (v < 0) return null;
+            if (key == InputConstants.UNKNOWN) return null;
             set.add(key.getType() == InputConstants.Type.MOUSE ? (MOUSE_TAG | v) : (long) v);
             set.add(MODS_TAG);
         }
@@ -334,14 +336,13 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         return out;
     }
 
-    private static byte modBit(int glfw) {
-        return switch (glfw) {
-            case 340, 344 -> KeyModifiers.SHIFT;
-            case 341, 345 -> KeyModifiers.CTRL;
-            case 342, 346 -> KeyModifiers.ALT;
-            case 343, 347 -> KeyModifiers.META;
-            default -> KeyModifiers.NONE;
-        };
+    private static byte modBit(int key) {
+        Keys keys = Platform.compatibility().keys();
+        if (key == keys.getKeyLeftShift() || key == keys.getKeyRightShift()) return KeyModifiers.SHIFT;
+        if (key == keys.getKeyLeftControl() || key == keys.getKeyRightControl()) return KeyModifiers.CTRL;
+        if (key == keys.getKeyLeftAlt() || key == keys.getKeyRightAlt()) return KeyModifiers.ALT;
+        if (key == keys.getKeyLeftSuper() || key == keys.getKeyRightSuper()) return KeyModifiers.META;
+        return KeyModifiers.NONE;
     }
 
     public static String fullComboText(int[] keys, int[] mouse, byte mods) {
@@ -351,10 +352,10 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         if (KeyModifiers.INSTANCE.has(mods, KeyModifiers.ALT)) parts.add("Alt");
         if (KeyModifiers.INSTANCE.has(mods, KeyModifiers.META)) parts.add("Meta");
         if (keys != null) {
-            for (int k : keys) parts.add(InputConstants.Type.KEYSYM.getOrCreate(k).getDisplayName().getString());
+            for (int k : keys) parts.add(MinecraftKeybindCodec.keysym(k).getDisplayName().getString());
         }
         if (mouse != null) {
-            for (int b : mouse) parts.add("Mouse " + (b + 1));
+            for (int b : mouse) parts.add(Platform.compatibility().keys().mouseName(b));
         }
         return parts.isEmpty() ? "None" : String.join(" + ", parts);
     }
@@ -401,7 +402,13 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
     }
 
     private void applyKeyTo(KeyMapping mapping, OneConfigKeybind bind) {
-        setKey(mapping, (bind.isMousePrimary() ? InputConstants.Type.MOUSE : InputConstants.Type.KEYSYM).getOrCreate(bind.getBoundCode()));
+        setKey(mapping, keyFor(bind));
+    }
+
+    private static InputConstants.Key keyFor(OneConfigKeybind bind) {
+        return bind.isMousePrimary()
+            ? InputConstants.Type.MOUSE.getOrCreate(bind.getBoundCode())
+            : MinecraftKeybindCodec.keysym(bind.getBoundCode());
     }
 
     public void reconcile() {
@@ -418,6 +425,11 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
                 boolean actualMouse = actual.getType() == InputConstants.Type.MOUSE;
 
                 if (actualValue == bind.getBoundCode() && actualMouse == bind.isMousePrimary()) continue;
+
+                if (actual == InputConstants.UNKNOWN) {
+                    pending.add(() -> KeybindManager.rebindFromMinecraft(bind, null, null, KeyModifiers.NONE));
+                    continue;
+                }
 
                 OneConfigKeybind def = bind.getDefaultKeybind();
                 if (def != null && actualValue == def.getBoundCode() && actualMouse == def.isMousePrimary()) {
@@ -448,12 +460,12 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         List<String> extra = new ArrayList<>();
         if (keys != null) {
             for (int i = keysPrimary ? 1 : 0; i < keys.length; i++) {
-                extra.add(InputConstants.Type.KEYSYM.getOrCreate(keys[i]).getDisplayName().getString());
+                extra.add(MinecraftKeybindCodec.keysym(keys[i]).getDisplayName().getString());
             }
         }
         if (mouse != null) {
             for (int i = keysPrimary ? 0 : 1; i < mouse.length; i++) {
-                extra.add("Mouse " + (mouse[i] + 1));
+                extra.add(Platform.compatibility().keys().mouseName(mouse[i]));
             }
         }
 

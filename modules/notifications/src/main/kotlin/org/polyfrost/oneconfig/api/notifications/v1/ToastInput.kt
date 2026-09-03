@@ -31,6 +31,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.MouseInputEvent
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal object ToastInput {
@@ -47,6 +48,8 @@ internal object ToastInput {
 
     private val installed = AtomicBoolean(false)
 
+    private val leftButton by lazy { Platform.compatibility().keys().mouseButtonLeft }
+
     fun clearHover() {
         hoverTarget = null
         hoveredAction = null
@@ -59,8 +62,9 @@ internal object ToastInput {
             mouseY = e.y
         }
         EventManager.register(MouseInputEvent::class.java) { e ->
-            // button 0 is GLFW left and state 1 is GLFW_PRESS
-            if (e.button == 0 && e.state == 1) NotificationsRenderer.dispatchClick(hoverTarget)
+            if (e.button == leftButton && e.state == MouseInputEvent.PRESSED) {
+                NotificationsRenderer.dispatchClick(hoverTarget)
+            }
         }
     }
 }

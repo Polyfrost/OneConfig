@@ -87,14 +87,27 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/I18nPlat
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/Keys {
+	public abstract fun getKeyA ()I
+	public abstract fun getKeyC ()I
+	public abstract fun getKeyD ()I
+	public abstract fun getKeyDelete ()I
+	public abstract fun getKeyE ()I
+	public abstract fun getKeyH ()I
+	public abstract fun getKeyL ()I
 	public abstract fun getKeyLeftAlt ()I
 	public abstract fun getKeyLeftControl ()I
 	public abstract fun getKeyLeftShift ()I
 	public abstract fun getKeyLeftSuper ()I
+	public abstract fun getKeyR ()I
 	public abstract fun getKeyRightAlt ()I
 	public abstract fun getKeyRightControl ()I
 	public abstract fun getKeyRightShift ()I
 	public abstract fun getKeyRightSuper ()I
+	public abstract fun getKeyV ()I
+	public abstract fun getKeyX ()I
+	public abstract fun getMouseButtonLeft ()I
+	public abstract fun keyName (I)Ljava/lang/String;
+	public abstract fun mouseName (I)Ljava/lang/String;
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/LoaderPlatform {

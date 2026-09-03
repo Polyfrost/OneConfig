@@ -7,6 +7,8 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Keybind;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
+import org.polyfrost.oneconfig.api.platform.v1.Keys;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils;
@@ -16,10 +18,9 @@ import kotlin.jvm.functions.Function1;
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession;
 
 public class OneConfigConfig extends Config {
+    private static final Keys KEYS = Platform.compatibility().keys();
     private static final byte HUD_ACTION_MODS = KeybindUtils.getActionModifier();
 
-    // keybinds store GLFW key codes because that is what KeybindManager matches against
-    // 344 == GLFW_KEY_RIGHT_SHIFT written as a literal to avoid a GLFW dependency here
     // the open action comes from the minecraft module via setOpenAction since it cannot be serialized
     @Keybind(
         title = "oneconfig.preferences.keybind.title",
@@ -30,7 +31,7 @@ public class OneConfigConfig extends Config {
         descriptionTranslation = true
     )
     public static OneConfigKeybind oneConfigKeybind =
-        new OneConfigKeybind(new int[] {344}, null, KeyModifiers.NONE, 0L, pressed -> true);
+        new OneConfigKeybind(new int[] {KEYS.getKeyRightShift()}, null, KeyModifiers.NONE, 0L, pressed -> true);
 
     @Switch(
         title = "oneconfig.preferences.keybind_closes_gui.title",
@@ -51,7 +52,7 @@ public class OneConfigConfig extends Config {
         descriptionTranslation = true
     )
     public static OneConfigKeybind hudSettingsKeybind =
-        new OneConfigKeybind(new int[] {69}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+        new OneConfigKeybind(new int[] {KEYS.getKeyE()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Keybind(
         title = "oneconfig.preferences.hud_visibility_keybind.title",
@@ -62,7 +63,7 @@ public class OneConfigConfig extends Config {
         descriptionTranslation = true
     )
     public static OneConfigKeybind hudVisibilityKeybind =
-        new OneConfigKeybind(new int[] {72}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+        new OneConfigKeybind(new int[] {KEYS.getKeyH()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Keybind(
         title = "oneconfig.preferences.hud_lock_keybind.title",
@@ -73,7 +74,7 @@ public class OneConfigConfig extends Config {
         descriptionTranslation = true
     )
     public static OneConfigKeybind hudLockKeybind =
-        new OneConfigKeybind(new int[] {76}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+        new OneConfigKeybind(new int[] {KEYS.getKeyL()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Keybind(
         title = "oneconfig.preferences.hud_copy_keybind.title",
@@ -84,7 +85,7 @@ public class OneConfigConfig extends Config {
         descriptionTranslation = true
     )
     public static OneConfigKeybind hudCopyKeybind =
-        new OneConfigKeybind(new int[] {67}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+        new OneConfigKeybind(new int[] {KEYS.getKeyC()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Keybind(
         title = "oneconfig.preferences.hud_cut_keybind.title",
@@ -95,7 +96,7 @@ public class OneConfigConfig extends Config {
         descriptionTranslation = true
     )
     public static OneConfigKeybind hudCutKeybind =
-        new OneConfigKeybind(new int[] {88}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+        new OneConfigKeybind(new int[] {KEYS.getKeyX()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Keybind(
         title = "oneconfig.preferences.hud_paste_keybind.title",
@@ -106,7 +107,7 @@ public class OneConfigConfig extends Config {
         descriptionTranslation = true
     )
     public static OneConfigKeybind hudPasteKeybind =
-        new OneConfigKeybind(new int[] {86}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+        new OneConfigKeybind(new int[] {KEYS.getKeyV()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Keybind(
         title = "oneconfig.preferences.hud_duplicate_keybind.title",
@@ -117,7 +118,7 @@ public class OneConfigConfig extends Config {
         descriptionTranslation = true
     )
     public static OneConfigKeybind hudDuplicateKeybind =
-        new OneConfigKeybind(new int[] {68}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+        new OneConfigKeybind(new int[] {KEYS.getKeyD()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Keybind(
         title = "oneconfig.preferences.hud_reset_keybind.title",
@@ -128,7 +129,7 @@ public class OneConfigConfig extends Config {
         descriptionTranslation = true
     )
     public static OneConfigKeybind hudResetKeybind =
-        new OneConfigKeybind(new int[] {82}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+        new OneConfigKeybind(new int[] {KEYS.getKeyR()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Keybind(
         title = "oneconfig.preferences.hud_delete_keybind.title",
@@ -139,7 +140,7 @@ public class OneConfigConfig extends Config {
         descriptionTranslation = true
     )
     public static OneConfigKeybind hudDeleteKeybind =
-        new OneConfigKeybind(new int[] {261}, null, KeyModifiers.NONE, 0L, pressed -> true);
+        new OneConfigKeybind(new int[] {KEYS.getKeyDelete()}, null, KeyModifiers.NONE, 0L, pressed -> true);
 
     @Keybind(
         title = "oneconfig.preferences.hud_select_all_keybind.title",
@@ -150,7 +151,7 @@ public class OneConfigConfig extends Config {
         descriptionTranslation = true
     )
     public static OneConfigKeybind hudSelectAllKeybind =
-        new OneConfigKeybind(new int[] {65}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+        new OneConfigKeybind(new int[] {KEYS.getKeyA()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Switch(
         title = "oneconfig.preferences.hud_show_keybind_hints.title",

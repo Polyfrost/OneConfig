@@ -76,6 +76,7 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi
+import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
@@ -1117,7 +1118,7 @@ private fun ProfileTextField(
             ),
             interactionSource = interactionSource,
             cursorBrush = SolidColor(theme.textColor),
-            modifier = Modifier
+            modifier = Modifier.trackTextInputFocus()
                 .fillMaxWidth()
                 .focusRequester(focusRequester)
                 .onPreviewKeyEvent { event ->

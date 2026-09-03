@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 //? if > 1.8.9 {
 import net.minecraft.client.MouseHandler;
@@ -13,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.MouseInputEvent;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -25,7 +27,7 @@ public class Mixin_MouseInputEvent {
     //? >= 1.21.10 {
     @Inject(method = "onButton", at = @At("HEAD"))
     private void mouseCallback(long window, MouseButtonInfo buttonInfo, int action, CallbackInfo ci) {
-        EventManager.INSTANCE.post(new MouseInputEvent(buttonInfo.button(), action));
+        EventManager.INSTANCE.post(new MouseInputEvent(buttonInfo.button(), oneconfig$state(action)));
     }
 
     @Inject(method = "onMove", at = @At("HEAD"))
@@ -42,7 +44,7 @@ public class Mixin_MouseInputEvent {
     //?} elif > 1.8.9 {
     /*@Inject(method = "onPress", at = @At("HEAD"))
     private void mouseCallback(long handle, int button, int action, int mods, CallbackInfo ci) {
-        EventManager.INSTANCE.post(new MouseInputEvent(button, action));
+        EventManager.INSTANCE.post(new MouseInputEvent(button, oneconfig$state(action)));
     }
 
     @Inject(method = "onMove", at = @At("HEAD"))
@@ -70,4 +72,11 @@ public class Mixin_MouseInputEvent {
         MouseInputEvent.Moved.post(x, y);
     }
     *///? }
+
+    @Unique
+    private static int oneconfig$state(int action) {
+        if (action == InputConstants.PRESS) return MouseInputEvent.PRESSED;
+        if (action == InputConstants.RELEASE) return MouseInputEvent.RELEASED;
+        return action;
+    }
 }

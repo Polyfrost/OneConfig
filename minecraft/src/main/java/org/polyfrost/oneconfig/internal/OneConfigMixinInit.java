@@ -76,6 +76,13 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? }
         //? moul_compat {
         mixins.add("compat.moulconfig.Mixin_MCConfigEditorIntegration_Firmament");
+        // unrelocated targets, e.g. Skysoft's SoftConfig
+        mixins.add("compat.moulconfig.Mixin_ConfigProcessorDriver");
+        mixins.add("compat.moulconfig.Mixin_MoulConfigProcessor");
+        mixins.add("compat.moulconfig.Mixin_MoulConfigEditor");
+        mixins.add("compat.moulconfig.Mixin_PropertyImpl");
+        mixins.add("compat.moulconfig.Mixin_GuiOptionEditorSlider");
+        mixins.add("compat.moulconfig.Mixin_GuiOptionEditorDropdown");
         //? }
 
         //? dandelion_compat
@@ -114,8 +121,13 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? skyblocker_compat {
         mixins.add("compat.skyblocker.Mixin_SkyblockerFancyStatusBars");
         mixins.add("compat.skyblocker.Mixin_SkyblockerWidgetManager");
-        mixins.add("compat.skyblocker.Mixin_SkyblockerScreenBuilder");
         //? }
+
+        //? skyblocker_legacy_hud
+        //mixins.add("compat.skyblocker.Mixin_SkyblockerScreenBuilder");
+
+        //? skyblocker_hud_v2
+        mixins.add("compat.skyblocker.Mixin_SkyblockerLayerBuilder");
 
         //? stella_compat
         mixins.add("compat.stella.Mixin_Stella");

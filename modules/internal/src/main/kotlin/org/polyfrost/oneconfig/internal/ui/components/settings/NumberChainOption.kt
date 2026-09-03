@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.NumberChainOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
@@ -318,7 +319,7 @@ private fun ChainValueEditor(
                 }
             }
         },
-        modifier = modifier
+        modifier = modifier.trackTextInputFocus()
             .focusRequester(focusRequester)
             .onFocusChanged { state ->
                 if (state.isFocused) focused = true else if (focused) commit()

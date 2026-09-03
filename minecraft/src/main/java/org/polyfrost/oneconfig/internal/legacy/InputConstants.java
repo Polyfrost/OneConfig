@@ -19,6 +19,7 @@ import com.google.common.base.Supplier;
 
 import net.minecraft.client.resources.language.I18n;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.input.Keyboard;
 import net.minecraft.network.chat.Component;
 
 public class InputConstants {
@@ -158,6 +159,8 @@ public class InputConstants {
     public static final int CURSOR_DISABLED = 212995;
     public static final int CURSOR_NORMAL = 212993;
     public static final InputConstants.Key UNKNOWN = InputConstants.Type.KEYSYM.getOrCreate(-1);
+    public static final int KEY_LWIN = KEY_LSUPER;
+    public static final int KEY_RWIN = KEY_RSUPER;
 
     public static InputConstants.Key getKey(final String name) {
         if (InputConstants.Key.NAME_MAP.containsKey(name)) {
@@ -177,6 +180,10 @@ public class InputConstants {
 
             throw new IllegalArgumentException("Unknown key name: " + name);
         }
+    }
+
+    public static boolean isKeyDown(int key) {
+        return Keyboard.isKeyDown(KeyCodes.toLegacy(key));
     }
 
     public static final class Key {

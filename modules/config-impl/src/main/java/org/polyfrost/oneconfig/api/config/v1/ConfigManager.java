@@ -38,6 +38,7 @@ import org.polyfrost.oneconfig.api.config.v1.collect.PropertyCollector;
 import org.polyfrost.oneconfig.api.config.v1.collect.impl.OneConfigCollector;
 import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.PolyColorAdapter;
+import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.OneConfigKeybindAdapter;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerializer;
 
@@ -130,6 +131,7 @@ public final class ConfigManager {
 
     static {
         ObjectSerializer.INSTANCE.registerTypeAdapter(new PolyColorAdapter());
+        ObjectSerializer.INSTANCE.registerTypeAdapter(new OneConfigKeybindAdapter());
         registerCollector(new OneConfigCollector());
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             ConfigManager current = active;
