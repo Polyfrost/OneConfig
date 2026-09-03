@@ -29,10 +29,7 @@ package org.polyfrost.oneconfig.internal;
 import kotlin.Unit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodNode;
 //todo import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
 //? moul_compat {
 import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
@@ -45,7 +42,6 @@ import java.util.List;
 import java.util.Set;
 
 public class OneConfigMixinInit implements IMixinConfigPlugin {
-    private static final Logger LOGGER = LogManager.getLogger("OneConfig/MixinInit");
 
     @Override
     public void onLoad(String mixinPackage) {
@@ -58,38 +54,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        //? skyblocker_compat {
-        if (mixinClassName.endsWith(".Mixin_SkyblockerFancyStatusBarsV2")) return skyblockerBarsAreInstanced();
-        if (mixinClassName.endsWith(".Mixin_SkyblockerFancyStatusBars")) return !skyblockerBarsAreInstanced();
-        //? }
         return true;
     }
-
-    //? skyblocker_compat {
-    private static Boolean skyblockerInstanced;
-
-    private static boolean skyblockerBarsAreInstanced() {
-        if (skyblockerInstanced == null) {
-            skyblockerInstanced = false;
-            String path = "de/hysky/skyblocker/skyblock/fancybars/FancyStatusBars.class";
-            try (java.io.InputStream in = OneConfigMixinInit.class.getClassLoader().getResourceAsStream(path)) {
-                if (in != null) {
-                    ClassNode node = new ClassNode();
-                    new ClassReader(in).accept(node, ClassReader.SKIP_CODE);
-                    for (MethodNode method : node.methods) {
-                        //~ if >= 26.1 'render' -> 'extractRenderState'
-                        if (!method.name.equals("extractRenderState")) continue;
-                        skyblockerInstanced = (method.access & Opcodes.ACC_STATIC) == 0;
-                        break;
-                    }
-                }
-            } catch (Throwable t) {
-                LOGGER.warn("Could not read the installed Skyblocker's status bar shape, assuming static", t);
-            }
-        }
-        return skyblockerInstanced;
-    }
-    //? }
 
     @Override
     public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {
@@ -152,7 +118,6 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
         //? skyblocker_compat {
         mixins.add("compat.skyblocker.Mixin_SkyblockerFancyStatusBars");
-        mixins.add("compat.skyblocker.Mixin_SkyblockerFancyStatusBarsV2");
         mixins.add("compat.skyblocker.Mixin_SkyblockerWidgetManager");
         //? }
 

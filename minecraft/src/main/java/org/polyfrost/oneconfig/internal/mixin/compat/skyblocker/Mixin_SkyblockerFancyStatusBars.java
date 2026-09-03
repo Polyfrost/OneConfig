@@ -15,7 +15,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(FancyStatusBars.class)
 public class Mixin_SkyblockerFancyStatusBars {
 
-    @Inject(method = "init", at = @At("TAIL"), require = 0)
+    @Inject(method = "init", at = @At("TAIL"), require = 0, expect = 0)
+    private static void oneconfig$registerHudCompatStatic(CallbackInfo ci) {
+        SkyblockerCompat.initialize();
+    }
+
+    @Inject(method = "initStatic", at = @At("TAIL"), require = 0, expect = 0)
     private static void oneconfig$registerHudCompat(CallbackInfo ci) {
         SkyblockerCompat.initialize();
     }
@@ -23,7 +28,7 @@ public class Mixin_SkyblockerFancyStatusBars {
     //~ if >= 26.1 'render' -> 'extractRenderState'
     @Inject(method = "extractRenderState", at = @At("HEAD"), cancellable = true, require = 0)
     private static void oneconfig$suppressWhileEditing(CallbackInfoReturnable<Boolean> cir) {
-        if (CompatOverlayRenderer.oneConfigScreenOpen() && !SkyblockerCompat.isRedrawing()) {
+        if (SkyblockerCompat.isActive() && CompatOverlayRenderer.oneConfigScreenOpen() && !SkyblockerCompat.isRedrawing()) {
             cir.setReturnValue(false);
         }
     }
