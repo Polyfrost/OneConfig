@@ -202,6 +202,7 @@ dependencies {
     "api"(versionedCatalog["jetbrains.compose.ui"])
     "api"(versionedCatalog["jetbrains.compose.ui.tooling.preview"])
     "api"(versionedCatalog["jetbrains.compose.ui.util"])
+    "api"(versionedCatalog["jetbrains.compose.ui.backhandler"])
     "api"(versionedCatalog["jetbrains.skiko.awt"])
     "api"(versionedCatalog["jetbrains.skiko.awt.runtime.windows.x64"])
     "api"(versionedCatalog["jetbrains.skiko.awt.runtime.linux.x64"])

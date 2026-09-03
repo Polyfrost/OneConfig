@@ -28,9 +28,9 @@ kotlinx-abi = "0.18.1"
 log4j-api = "2.0-beta9" # used because this is the version that 1.8.9 supports, so we have to compile against the same (annoying)
 
 # Compose
-compose = "1.12.0-alpha01"
+compose = "1.12.0"
 compose-navigation = "2.10.0-alpha01"
-skiko = "0.999.5"
+skiko = "0.999.6"
 
 lifecycle = "2.11.0-beta01"
 viewmodel = "2.11.0-beta01"
@@ -92,6 +92,7 @@ jetbrains-compose-runtime = { module = "org.jetbrains.compose.runtime:runtime-de
 jetbrains-compose-ui = { module = "org.jetbrains.compose.ui:ui-desktop", version.ref = "compose" }
 jetbrains-compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview-desktop", version.ref = "compose" }
 jetbrains-compose-ui-util = { module = "org.jetbrains.compose.ui:ui-util-desktop", version.ref = "compose" }
+jetbrains-compose-ui-backhandler = { module = "org.jetbrains.compose.ui:ui-backhandler-desktop", version.ref = "compose" }
 jetbrains-compose-navigation = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "compose-navigation" }
 jetbrains-lifecycle = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 jetbrains-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "viewmodel" }

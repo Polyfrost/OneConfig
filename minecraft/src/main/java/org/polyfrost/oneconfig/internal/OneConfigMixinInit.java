@@ -172,7 +172,6 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         /*mixins.add("skia.Mixin_ScreenshotComposite");
         *///? }
         mixins.add("skia.Mixin_InitSkiaFontRenderer");
-        mixins.add("skia.Mixin_FixComposeRaceCondition");
 
         //? if >= 1.21.10 {
         mixins.add("keybind.Mixin_KeybindCategoryLabel");
