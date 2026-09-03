@@ -2,11 +2,11 @@
 
 # Libraries
 # All
-kotlin = "2.3.0"
+kotlin = "2.4.10"
 kotlinx-coroutines = "1.10.2"
 kotlinx-atomicfu = "0.29.0"
-fabric-language-kotlin = "1.13.8+kotlin.2.3.0"
-google-ksp = "2.3.10"
+fabric-language-kotlin = "1.13.13+kotlin.2.4.10"
+google-ksp = "2.3.11"
 annotations = "24.1.0"
 hypixel-modapi = "1.0.1" # modules/utils compile baseline only, the platform selects the runtime version per target
 hypixel-data = "0.2.0" # Dep of hypixel-modapi

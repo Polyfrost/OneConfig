@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
@@ -181,6 +182,41 @@ fun rememberSvgResourcePainter(path: String): Painter? {
     return remember(path, over) {
         readIconResourceBytes(path)?.let { OversampledSvgPainter(it, over) }
     }
+}
+
+private const val LumR = 0.2126f
+private const val LumG = 0.7152f
+private const val LumB = 0.0722f
+
+private val brandFillPeakCache = ConcurrentHashMap<String, Float>()
+private val hexColorRegex = Regex("#([0-9a-fA-F]{6})\\b")
+
+private fun brandFillPeak(path: String): Float = brandFillPeakCache.getOrPut(path) {
+    val svg = readIconResourceBytes(path)?.toString(Charsets.UTF_8) ?: return@getOrPut 0f
+    hexColorRegex.findAll(svg).mapNotNull { match ->
+        val rgb = match.groupValues[1].toInt(16)
+        val r = (rgb shr 16 and 0xFF) / 255f
+        val g = (rgb shr 8 and 0xFF) / 255f
+        val b = (rgb and 0xFF) / 255f
+        if (r == g && g == b) null else LumR * r + LumG * g + LumB * b
+    }.maxOrNull() ?: 0f
+}
+
+@Composable
+fun rememberBrandTint(path: String, tint: Color): ColorFilter? = remember(path, tint) {
+    val peak = brandFillPeak(path)
+    if (peak <= 0f) return@remember null
+    val scale = 1f / peak
+    ColorFilter.colorMatrix(
+        ColorMatrix(
+            floatArrayOf(
+                tint.red * scale * LumR, tint.red * scale * LumG, tint.red * scale * LumB, 0f, 0f,
+                tint.green * scale * LumR, tint.green * scale * LumG, tint.green * scale * LumB, 0f, 0f,
+                tint.blue * scale * LumR, tint.blue * scale * LumG, tint.blue * scale * LumB, 0f, 0f,
+                0f, 0f, 0f, 1f, 0f,
+            )
+        )
+    )
 }
 
 @Composable

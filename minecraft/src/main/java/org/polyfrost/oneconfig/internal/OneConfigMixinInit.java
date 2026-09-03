@@ -111,6 +111,9 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? tr7zw_compat
         mixins.add("compat.tr7zw.Mixin_AbstractConfigScreen");
 
+        //? ukulib_compat
+        mixins.add("compat.ukulib.Mixin_BaseConfigScreen");
+
         //? skycubed_compat {
         /*mixins.add("compat.skycubed.Mixin_SkyCubed");
         mixins.add("compat.skycubed.Mixin_SkyCubedOverlays");

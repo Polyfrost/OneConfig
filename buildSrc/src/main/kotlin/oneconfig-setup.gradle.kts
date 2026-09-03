@@ -265,14 +265,14 @@ dependencies {
         "modApi"(versionedCatalog["command-api-v2"]) { isTransitive = false }
 
         val fullFabricApiVersion = when {
-            stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "0.155.0+26.2"
-            stonecutter.eval(stonecutter.current.version, ">= 26.1") -> "0.155.0+26.1.2"
-            stonecutter.eval(stonecutter.current.version, ">= 1.21.11") -> "0.141.5+1.21.11"
+            stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "0.159.0+26.2"
+            stonecutter.eval(stonecutter.current.version, ">= 26.1") -> "0.155.2+26.1.2"
+            stonecutter.eval(stonecutter.current.version, ">= 1.21.11") -> "0.141.6+1.21.11"
             stonecutter.eval(stonecutter.current.version, ">= 1.21.10") -> "0.138.4+1.21.10"
             stonecutter.eval(stonecutter.current.version, ">= 1.21.8") -> "0.136.1+1.21.8"
             stonecutter.eval(stonecutter.current.version, ">= 1.21.5") -> "0.128.2+1.21.5"
             stonecutter.eval(stonecutter.current.version, ">= 1.21.4") -> "0.119.4+1.21.4"
-            else -> "0.116.14+1.21.1"
+            else -> "0.116.17+1.21.1"
         }
         "modCompileOnly"("net.fabricmc.fabric-api:fabric-api:$fullFabricApiVersion")
         "modRuntimeOnly"("net.fabricmc.fabric-api:fabric-api:$fullFabricApiVersion")
