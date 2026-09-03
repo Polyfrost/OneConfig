@@ -373,7 +373,7 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
 
     private static InputConstants.Key keyFor(OneConfigKeybind bind) {
         return bind.isMousePrimary()
-            ? InputConstants.Type.MOUSE.getOrCreate(bind.getBoundCode())
+            ? MinecraftKeybindCodec.mouse(bind.getBoundCode())
             : MinecraftKeybindCodec.keysym(bind.getBoundCode());
     }
 

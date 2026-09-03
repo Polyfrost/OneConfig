@@ -13,7 +13,8 @@ public class KeysImpl implements Keys {
 
     @Override
     public String mouseName(int button) {
-        return InputConstants.Type.MOUSE.getOrCreate(button).getDisplayName().getString();
+        InputConstants.Key input = MinecraftKeybindCodec.mouse(button);
+        return input == InputConstants.UNKNOWN ? "None" : input.getDisplayName().getString();
     }
 
     @Override

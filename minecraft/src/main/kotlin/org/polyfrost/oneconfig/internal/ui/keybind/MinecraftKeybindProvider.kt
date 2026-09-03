@@ -179,7 +179,7 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
         val key = when {
             keybind == null || !keybind.isBound -> InputConstants.UNKNOWN
             //~ if >= 26.3 'it >= 0' -> 'it > 0'
-            mouseButtons?.firstOrNull { it >= 0 } != null -> InputConstants.Type.MOUSE.getOrCreate(mouseButtons.first { it >= 0 })
+            mouseButtons?.firstOrNull { it >= 0 } != null -> MinecraftKeybindCodec.mouse(mouseButtons.first { it >= 0 })
             keyCodes?.firstOrNull { it > 0 } != null -> MinecraftKeybindCodec.keysym(keyCodes.first { it > 0 })
             else -> InputConstants.UNKNOWN
         }

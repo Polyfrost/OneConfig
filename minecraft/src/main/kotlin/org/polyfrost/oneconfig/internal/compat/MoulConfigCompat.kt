@@ -275,7 +275,6 @@ data object MoulConfigCompat {
             }
 
             is GuiOptionEditorKeybind -> {
-                // MoulConfig keeps a keybind as one int GLFW key code where a code <= 0 means unbound
                 // the action is a no-op stub because MoulConfig owns the actual bind firing
                 fun keybindOf(code: Int) = when {
                     code <= 0 -> OneConfigKeybind(null, null, KeyModifiers.NONE, 0L) { true }
