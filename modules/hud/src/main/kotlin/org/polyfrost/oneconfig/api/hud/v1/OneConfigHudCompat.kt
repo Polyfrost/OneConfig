@@ -16,15 +16,42 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
 
     private val hiddenRevision = mutableStateOf(0)
 
+    private var faulted = false
+
+    private fun fault(member: String, error: Throwable) {
+        faulted = true
+        HudManager.LOGGER.error(
+            "Disabling compat HUD '${wrapper.id}' from '${wrapper.modId ?: "unknown"}': $member failed, so " +
+                "that mod is probably a different version than OneConfig was built against",
+            error,
+        )
+    }
+
+    private inline fun <T> guard(member: String, fallback: T, block: () -> T): T {
+        if (faulted) return fallback
+        return try {
+            block()
+        } catch (e: LinkageError) {
+            fault(member, e)
+            fallback
+        } catch (e: RuntimeException) {
+            fault(member, e)
+            fallback
+        }
+    }
+
     override var hidden: Boolean
         get() {
             hiddenRevision.value
-            return wrapper.hidden
+            return guard("hidden", true) { wrapper.hidden }
         }
         set(value) {
-            if (wrapper.hidden == value) return
-            wrapper.hidden = value
-            hiddenRevision.value++
+            guard("hidden", Unit) {
+                if (wrapper.hidden != value) {
+                    wrapper.hidden = value
+                    hiddenRevision.value++
+                }
+            }
         }
 
     override val persistOwnState: Boolean get() = false
@@ -36,26 +63,36 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
 
     override fun deletable(): Boolean = false
 
-    override val supportsScale: Boolean get() = wrapper.supportsScale
+    override val supportsScale: Boolean get() = guard("supportsScale", true) { wrapper.supportsScale }
 
-    override var x: Float by wrapper::x
-    override var y: Float by wrapper::y
-    override var relativeX: Float by wrapper::x
-    override var relativeY: Float by wrapper::y
+    override var x: Float
+        get() = guard("x", 0f) { wrapper.x }
+        set(value) { guard("x", Unit) { wrapper.x = value } }
+    override var y: Float
+        get() = guard("y", 0f) { wrapper.y }
+        set(value) { guard("y", Unit) { wrapper.y = value } }
+    override var relativeX: Float
+        get() = x
+        set(value) { x = value }
+    override var relativeY: Float
+        get() = y
+        set(value) { y = value }
 
-    override var customScale: Float by wrapper::scale
+    override var customScale: Float
+        get() = guard("scale", 1f) { wrapper.scale }
+        set(value) { guard("scale", Unit) { wrapper.scale = value } }
 
     private var lastW = 0f
     private var lastH = 0f
 
     private fun sizeW(): Float {
-        val live = runCatching { wrapper.scaledWidth }.getOrDefault(0f)
+        val live = guard("scaledWidth", 0f) { wrapper.scaledWidth }
         if (live > 0f) lastW = live
         return if (live > 0f) live else lastW
     }
 
     private fun sizeH(): Float {
-        val live = runCatching { wrapper.scaledHeight }.getOrDefault(0f)
+        val live = guard("scaledHeight", 0f) { wrapper.scaledHeight }
         if (live > 0f) lastH = live
         return if (live > 0f) live else lastH
     }
@@ -77,19 +114,21 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
         get() = sizeH()
         set(_) {}
 
-    override val resizeAxes: HudResize get() = wrapper.resizeAxes
+    override val resizeAxes: HudResize get() = guard("resizeAxes", HudResize.Both) { wrapper.resizeAxes }
 
     override fun applyEditorWidth(width: Float) {
-        wrapper.scaledWidth = width
+        guard("scaledWidth", Unit) { wrapper.scaledWidth = width }
     }
 
     override fun updateRelativeX(absX: Float) { x = absX }
     override fun updateRelativeY(absY: Float) { y = absY }
 
-    override fun onEditorDragStart() = wrapper.onDragStart()
+    override fun onEditorDragStart() {
+        guard("onDragStart", Unit) { wrapper.onDragStart() }
+    }
 
     override fun onEditorDragEnd() {
-        wrapper.onDragEnd()
+        guard("onDragEnd", Unit) { wrapper.onDragEnd() }
         CompatSnapshots.capture(tree)
     }
 }

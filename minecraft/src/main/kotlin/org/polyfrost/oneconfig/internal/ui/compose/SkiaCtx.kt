@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
 import com.mojang.blaze3d.pipeline.TextureTarget
+import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.resources.Identifier
@@ -621,10 +622,35 @@ object SkiaCtx {
         }
     }
 
+    private var oversizeReported = false
+
+    private fun maxTextureSize(): Int =
+        //? if >= 26.2 {
+        RenderSystem.getDevice().deviceInfo.limits().maxTextureSize()
+        //? } else if >= 1.21.5 {
+        /*RenderSystem.getDevice().maxTextureSize
+        *///? } else {
+        /*RenderSystem.maxSupportedTextureSize()
+        *///? }
+
+    private fun viewportFitsTexture(w: Int, h: Int): Boolean {
+        val max = runCatching { maxTextureSize() }.getOrDefault(0)
+        if (max <= 0 || (w <= max && h <= max)) {
+            oversizeReported = false
+            return true
+        }
+        if (!oversizeReported) {
+            oversizeReported = true
+            LOG.warn("SkiaCtx: viewport {}x{} is past the max texture size ({}); skipping offscreen surfaces", w, h, max)
+        }
+        return false
+    }
+
     private fun resolveHudSurface(): Surface? {
         val w = Platform.screen().viewportWidth()
         val h = Platform.screen().viewportHeight()
         if (w <= 0 || h <= 0) return null
+        if (!viewportFitsTexture(w, h)) return null
 
         var rt = hudTarget
         val needNewTarget = rt == null || rt.width != w || rt.height != h
@@ -696,6 +722,7 @@ object SkiaCtx {
         val w = Platform.screen().viewportWidth()
         val h = Platform.screen().viewportHeight()
         if (w <= 0 || h <= 0) return null
+        if (!viewportFitsTexture(w, h)) return null
 
         var rt = composeTarget
         val needNewTarget = rt == null || rt.width != w || rt.height != h

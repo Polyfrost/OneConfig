@@ -19,6 +19,8 @@ import org.polyfrost.oneconfig.api.hud.v1.OneConfigHudWrapper
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer
 import java.awt.Color
+import java.lang.reflect.Field
+import java.lang.reflect.Method
 import java.util.function.Consumer
 import kotlin.math.abs
 
@@ -40,40 +42,65 @@ object SkyblockerCompat {
     @Volatile
     private var dragged: StatusBar? = null
 
-    //? if skyblocker_hud_v2 {
-    private fun statusBars(): Map<StatusBarType, StatusBar> = FancyStatusBars.INSTANCE.statusBars
+    private val cls = FancyStatusBars::class.java
 
-    private fun positioner(): BarPositioner = FancyStatusBars.INSTANCE.barPositioner
-
-    private fun saveBars() = FancyStatusBars.INSTANCE.saveBarConfig()
-
-    private fun placeBars() = FancyStatusBars.INSTANCE.placeBarsInPositioner()
-
-    private fun updatePositions(ignoreVisibility: Boolean) = FancyStatusBars.INSTANCE.updatePositions(ignoreVisibility)
-
-    private fun healthFancyBarEnabled(): Boolean = FancyStatusBars.INSTANCE.isHealthFancyBarEnabled()
-
-    private fun renderStatusBars(ctx: GuiGraphicsExtractor, mc: Minecraft) {
-        FancyStatusBars.INSTANCE.extractRenderState(ctx, mc)
+    private val self: Any? by lazy {
+        runCatching { cls.getField("INSTANCE").get(null) }.getOrNull()
+            ?: runCatching { cls.getMethod("getInstance").invoke(null) }.getOrNull()
     }
-    //?} else {
-    /*private fun statusBars(): Map<StatusBarType, StatusBar> = FancyStatusBars.statusBars
 
-    private fun positioner(): BarPositioner = FancyStatusBars.barPositioner
+    private fun field(name: String): Field? = runCatching {
+        cls.getDeclaredField(name).apply { isAccessible = true }
+    }.onFailure { LOGGER.warn("Skyblocker FancyStatusBars.{} is unavailable", name, it) }.getOrNull()
 
-    private fun saveBars() = FancyStatusBars.saveBarConfig()
+    private fun method(name: String, vararg params: Class<*>): Method? = runCatching {
+        cls.getDeclaredMethod(name, *params).apply { isAccessible = true }
+    }.onFailure { LOGGER.warn("Skyblocker FancyStatusBars.{}() is unavailable", name, it) }.getOrNull()
 
-    private fun placeBars() = FancyStatusBars.placeBarsInPositioner()
-
-    private fun updatePositions(ignoreVisibility: Boolean) = FancyStatusBars.updatePositions(ignoreVisibility)
-
-    private fun healthFancyBarEnabled(): Boolean = FancyStatusBars.isHealthFancyBarEnabled()
-
-    private fun renderStatusBars(ctx: GuiGraphicsExtractor, mc: Minecraft) {
+    private val statusBarsField by lazy { field("statusBars") }
+    private val barPositionerField by lazy { field("barPositioner") }
+    private val saveBarConfigMethod by lazy { method("saveBarConfig") }
+    private val placeBarsMethod by lazy { method("placeBarsInPositioner") }
+    private val updatePositionsMethod by lazy { method("updatePositions", java.lang.Boolean.TYPE) }
+    private val healthFancyBarMethod by lazy { method("isHealthFancyBarEnabled") }
+    private val renderBarsMethod by lazy {
         //~ if >= 26.1 'render' -> 'extractRenderState'
-        FancyStatusBars.extractRenderState(ctx, mc)
+        method("extractRenderState", GuiGraphicsExtractor::class.java, Minecraft::class.java)
     }
-    *///?}
+
+    private val active: Boolean by lazy {
+        val ok = renderBarsMethod != null && runCatching { statusBarsField?.get(self) }.getOrNull() != null
+        if (!ok) LOGGER.warn("Skyblocker status bar compat is off: FancyStatusBars has an unrecognised shape")
+        ok
+    }
+
+    @JvmStatic
+    fun isActive(): Boolean = active
+
+    @Suppress("UNCHECKED_CAST")
+    private fun statusBars(): Map<StatusBarType, StatusBar> =
+        runCatching { statusBarsField?.get(self) as? Map<StatusBarType, StatusBar> }.getOrNull() ?: emptyMap()
+
+    private fun positioner(): BarPositioner =
+        checkNotNull(barPositionerField?.get(self) as? BarPositioner) { "Skyblocker barPositioner is unavailable" }
+
+    private fun saveBars() {
+        saveBarConfigMethod?.invoke(self)
+    }
+
+    private fun placeBars() {
+        placeBarsMethod?.invoke(self)
+    }
+
+    private fun updatePositions(ignoreVisibility: Boolean) {
+        updatePositionsMethod?.invoke(self, ignoreVisibility)
+    }
+
+    private fun healthFancyBarEnabled(): Boolean = healthFancyBarMethod?.invoke(self) as? Boolean == true
+
+    private fun renderStatusBars(ctx: GuiGraphicsExtractor, mc: Minecraft) {
+        renderBarsMethod?.invoke(self, ctx, mc)
+    }
 
     @JvmStatic
     fun isRedrawing(): Boolean = redrawing
@@ -86,6 +113,7 @@ object SkyblockerCompat {
     }
 
     private fun register() {
+        if (!isActive()) return
         var count = 0
         for (type in StatusBarType.values()) {
             runCatching {

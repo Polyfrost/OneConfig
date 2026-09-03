@@ -517,12 +517,13 @@ object HudManager {
     }
 
     private fun shouldDraw(hud: Hud): Boolean {
+        if (hud is LegacyHudMarker) return false
         if (hud.hidden && !isEditing) return false
         return isShown(hud)
     }
 
     private fun keepsBackgroundOnly(hud: Hud): Boolean =
-        hud.hidden && !isEditing && hud.keepsHiddenBackground && isShown(hud)
+        hud !is LegacyHudMarker && hud.hidden && !isEditing && hud.keepsHiddenBackground && isShown(hud)
 
     /** Everything [shouldDraw] checks apart from the HUD's own hidden flag */
     private fun isShown(hud: Hud): Boolean {
