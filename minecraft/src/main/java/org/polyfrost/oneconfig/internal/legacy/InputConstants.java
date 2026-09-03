@@ -10,7 +10,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.OptionalInt;
@@ -18,7 +17,6 @@ import java.util.function.BiFunction;
 import com.google.common.base.Supplier;
 
 import net.minecraft.client.resources.language.I18n;
-import org.lwjgl.glfw.GLFW;
 import org.lwjgl.input.Keyboard;
 import net.minecraft.network.chat.Component;
 
@@ -96,6 +94,8 @@ public class InputConstants {
     public static final int KEY_NUMPAD8 = 328;
     public static final int KEY_NUMPAD9 = 329;
     public static final int KEY_NUMPADCOMMA = 330;
+    public static final int KEY_DIVIDE = 331;
+    public static final int KEY_SUBTRACT = 333;
     public static final int KEY_NUMPADENTER = 335;
     public static final int KEY_NUMPADEQUALS = 336;
     public static final int KEY_DOWN = 264;
@@ -138,6 +138,9 @@ public class InputConstants {
     public static final int KEY_PAUSE = 284;
     public static final int KEY_SCROLLLOCK = 281;
     public static final int KEY_PRINTSCREEN = 283;
+    public static final int KEY_WORLD_1 = 161;
+    public static final int KEY_WORLD_2 = 162;
+    public static final int KEY_MENU = 348;
     public static final int PRESS = 1;
     public static final int RELEASE = 0;
     public static final int REPEAT = 2;
@@ -246,18 +249,8 @@ public class InputConstants {
     }
 
     public static enum Type {
-        KEYSYM("key.keyboard", (value, name) -> {
-            if ("key.keyboard.unknown".equals(name)) {
-                return Component.translatable(name);
-            } else {
-                String systemName = GLFW.glfwGetKeyName(value, -1);
-                return systemName != null ? Component.literal(systemName.toUpperCase(Locale.ROOT)) : Component.translatable(name);
-            }
-        }),
-        SCANCODE("scancode", (value, name) -> {
-            String systemName = GLFW.glfwGetKeyName(-1, value);
-            return systemName != null ? Component.literal(systemName) : Component.translatable(name);
-        }),
+        KEYSYM("key.keyboard", (value, name) -> Component.translatable(name)),
+        SCANCODE("scancode", (value, name) -> Component.translatable(name)),
         MOUSE("key.mouse", (value, name) -> L10n.has(name) ? Component.translatable(name) : Component.translatable("key.mouse", value + 1));
 
         private static final String KEY_KEYBOARD_UNKNOWN = "key.keyboard.unknown";

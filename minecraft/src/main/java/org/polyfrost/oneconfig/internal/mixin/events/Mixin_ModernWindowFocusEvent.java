@@ -61,16 +61,16 @@ public class Mixin_ModernWindowFocusEvent {
     }
 }
 *///?} else {
-/*@Mixin(targets = "org.lwjgl.opengl.SDLDisplay", remap = false)
+/*@Mixin(targets = "pl.tomgirl.lenis.window.DisplaySdl", remap = false)
 public class Mixin_ModernWindowFocusEvent {
     @Shadow
     private boolean focused;
 
     @Inject(
-        method = "update",
+        method = "processMessages",
         at = @At(
             value = "FIELD",
-            target = "Lorg/lwjgl/opengl/SDLDisplay;focused:Z",
+            target = "Lpl/tomgirl/lenis/window/DisplaySdl;focused:Z",
             opcode = Opcodes.PUTFIELD,
             shift = At.Shift.AFTER
         ),

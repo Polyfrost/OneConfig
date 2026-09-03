@@ -3,33 +3,35 @@ package org.polyfrost.oneconfig.internal.legacy;
 //? if = 1.8.9 {
 /*import net.minecraft.client.Minecraft;
 import org.lwjgl.opengl.Display;
+import pl.tomgirl.lenis.window.DisplaySdl;
 
 // We need this shim because Window#getWidth/getHeight return GUI-scaled dimensions in legacy but framebuffer dimensions in modern.
 public final class Window {
     private final net.minecraft.client.render.Window scaled;
+    private final DisplaySdl display = DisplaySdl.instance();
 
     public Window(Minecraft minecraft) {
         this.scaled = new net.minecraft.client.render.Window(minecraft);
     }
 
     public long getWindow() {
-        return Display.getHandle();
+        return display.getHandle();
     }
 
     public int getWidth() {
-        return Display.getWidth();
+        return display.getWidth();
     }
 
     public int getHeight() {
-        return Display.getHeight();
+        return display.getHeight();
     }
 
     public int getScreenWidth() {
-        return Display.getScreenWidth();
+        return display.getWindowWidth();
     }
 
     public int getScreenHeight() {
-        return Display.getScreenHeight();
+        return display.getWindowHeight();
     }
 
     public int getRefreshRate() {

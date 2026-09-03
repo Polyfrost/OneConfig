@@ -8,7 +8,7 @@ import net.minecraft.client.MouseHandler;
 import net.minecraft.client.input.MouseButtonInfo;
 //?} else {
 /*import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.Display;
+import pl.tomgirl.lenis.window.DisplaySdl;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 *///?}
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
@@ -66,9 +66,11 @@ public class Mixin_MouseInputEvent {
 
         if (Mouse.getEventDWheel() != 0 || Minecraft.getInstance().screen == null || Mouse.getEventDX() == 0 && Mouse.getEventDY() == 0) return;
 
-        float scale = Display.getPixelScaleFactor();
-        float x = Mouse.getEventX() / scale;
-        float y = Display.getScreenHeight() - Mouse.getEventY() / scale;
+        DisplaySdl display = DisplaySdl.instance();
+        float scaleX = (float) display.getWidth() / display.getWindowWidth();
+        float scaleY = (float) display.getHeight() / display.getWindowHeight();
+        float x = Mouse.getEventX() / scaleX;
+        float y = (display.getHeight() - 1 - Mouse.getEventY()) / scaleY;
         MouseInputEvent.Moved.post(x, y);
     }
     *///? }
