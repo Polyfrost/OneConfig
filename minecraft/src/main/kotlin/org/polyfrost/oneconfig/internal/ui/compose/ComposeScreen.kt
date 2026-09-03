@@ -602,12 +602,14 @@ abstract class ComposeScreen(
     /*override fun mouseClicked(x: Double, y: Double, button: Int): Boolean {
     *///?} else
     //override fun mouseClicked(x: Int, y: Int, button: Int) {
+        //~ if = 1.8.9 'button' -> 'KeyCodes.mouseFromLegacy(button)' {
         if (handleMouseClicked(button)) {
             consumedButtons += button
             //$ if > 1.8.9 'return true' else 'return'
             return true
         }
         sendMouseButtonEvent(PointerEventType.Press, button)
+        //~}
 
         //? if >= 1.21.10 {
         return super.mouseClicked(event, doubleClick)
@@ -624,6 +626,7 @@ abstract class ComposeScreen(
     /*override fun mouseReleased(x: Double, y: Double, button: Int): Boolean {
     *///?} else
     //override fun mouseReleased(x: Int, y: Int, button: Int) {
+        //~ if = 1.8.9 'button' -> 'KeyCodes.mouseFromLegacy(button)'
         if (!consumedButtons.remove(button)) sendMouseButtonEvent(PointerEventType.Release, button)
 
         //? if >= 1.21.10 {

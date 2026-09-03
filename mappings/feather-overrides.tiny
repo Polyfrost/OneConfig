@@ -41,3 +41,7 @@ c	net/minecraft/unmapped/C_95503740	net/minecraft/client/sound/system/SoundManag
 	m	(Lnet/minecraft/unmapped/C_53396390;)Z	m_92956382	isActive
 c	net/minecraft/unmapped/C_98888256	net/minecraft/item/Item
 	m	()Ljava/lang/String;	m_27822537	getDescriptionId
+c	net/minecraft/unmapped/C_11429682	net/minecraft/util/Util
+	m	()Lnet/minecraft/unmapped/C_11429682$C_09602128;	m_28752873	getPlatform
+c	net/minecraft/unmapped/C_11429682$C_09602128	net/minecraft/util/Util$OS
+	f	Lnet/minecraft/unmapped/C_11429682$C_09602128;	f_35327376	OSX

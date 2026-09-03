@@ -9,6 +9,7 @@ import net.minecraft.client.input.MouseButtonInfo;
 //?} else {
 /*import org.lwjgl.input.Mouse;
 import pl.tomgirl.lenis.window.DisplaySdl;
+import org.polyfrost.oneconfig.internal.legacy.KeyCodes;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 *///?}
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
@@ -60,7 +61,7 @@ public class Mixin_MouseInputEvent {
 
         int button = Mouse.getEventButton();
         if (button >= 0) {
-            EventManager.INSTANCE.post(new MouseInputEvent(button, Mouse.getEventButtonState() ? 1 : 0));
+            EventManager.INSTANCE.post(new MouseInputEvent(KeyCodes.mouseFromLegacy(button), Mouse.getEventButtonState() ? 1 : 0));
             return;
         }
 

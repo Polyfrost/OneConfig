@@ -38,7 +38,7 @@ class MinecraftKeybindCodecTest {
 
     @Test
     void migratesAliases() {
-        //? if >= 26.3 {
+        //? if >= 26.3 || = 1.8.9 {
         /*assertEquals("key.keyboard.keypad.period", codec.keyName(99));
         assertEquals("key.keyboard.application", codec.keyName(101));
         assertEquals("key.keyboard.menu", codec.keyName(118));
