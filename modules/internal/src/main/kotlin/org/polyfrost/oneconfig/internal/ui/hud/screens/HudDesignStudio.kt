@@ -188,6 +188,8 @@ private val snapGuideColor = Color(176, 47, 31)
 
 private const val CHROME_SETTINGS_PANEL = "settings-panel"
 private const val CHROME_LIBRARY = "library"
+private const val CHROME_LIBRARY_ICONS = "library-icons"
+private const val CHROME_RETURN = "return-chip"
 private const val SIDE_CHROME_DIM_ALPHA = 0.45f
 
 private data class SnapGuides(val vertical: Float?, val horizontal: Float?) {
@@ -249,6 +251,14 @@ private fun horizontalSnapLines(dragged: Hud): List<Float> {
         lines.add(b.y + b.height)
     }
     return lines
+}
+
+private fun overlapArea(a: Rect, b: Rect): Float {
+    val w = minOf(a.right, b.right) - maxOf(a.left, b.left)
+    if (w <= 0f) return 0f
+    val h = minOf(a.bottom, b.bottom) - maxOf(a.top, b.top)
+    if (h <= 0f) return 0f
+    return w * h
 }
 
 /**
@@ -895,7 +905,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     HudEditorViewport.observe()
     var activeCategory by remember { mutableStateOf(StudioCategory.Settings) }
     var selectedHuds by remember { mutableStateOf<Set<Hud>>(emptySet()) }
-    var panelHud by remember { mutableStateOf<Hud?>(null) }
+    var panelOpen by remember { mutableStateOf(false) }
+    var panelUserMoved by remember { mutableStateOf(false) }
     var hoveredHud by remember { mutableStateOf<Hud?>(null) }
     var dragOffsetX by remember { mutableStateOf(0f) }
     var dragOffsetY by remember { mutableStateOf(0f) }
@@ -926,6 +937,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     val librarySectionOffsets = remember { mutableStateMapOf<String, Int>() }
     val chromeRects = remember { mutableStateMapOf<String, Rect>() }
     var panelOffset by remember { mutableStateOf(Offset.Zero) }
+    var panelBoxWidth by remember { mutableStateOf(0) }
     var rootSize by remember { mutableStateOf(IntSize.Zero) }
     var hudContextMenuTarget by remember { mutableStateOf<Hud?>(null) }
     var hudContextMenuOffset by remember { mutableStateOf(IntOffset.Zero) }
@@ -948,7 +960,9 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     var anchorPickSelf by remember { mutableStateOf<HudAnchor?>(null) }
 
     // the active HUD of a selection driving the settings panel resize handles action bar and keybinds
-    fun primaryHud(): Hud? = panelHud?.takeIf { it in selectedHuds } ?: selectedHuds.lastOrNull()
+    fun primaryHud(): Hud? = selectedHuds.lastOrNull()
+
+    val panelHud: Hud? = if (panelOpen) primaryHud() else null
 
     val deleteHuds: (Collection<Hud>) -> Unit = { huds ->
         val removed = huds.filter { it.deletable() }
@@ -957,7 +971,6 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 val removedSet = removed.toSet()
                 selectedHuds = selectedHuds - removedSet
                 removed.forEach { hud ->
-                    if (panelHud === hud) panelHud = null
                     if (hoveredHud === hud) hoveredHud = null
                     HudManager.removeHud(hud, delete = true)
                     HudDesignSession.forget(hud)
@@ -978,7 +991,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             if (instance != null) {
                 Snapshot.withMutableSnapshot {
                     selectedHuds = setOf(instance)
-                    panelHud = instance
+                    panelOpen = true
                     libraryVisible = false
                 }
             }
@@ -986,7 +999,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             if (pending in HudManager.activeInstances) {
                 Snapshot.withMutableSnapshot {
                     selectedHuds = setOf(pending)
-                    panelHud = pending
+                    panelOpen = true
                 }
             }
         } else {
@@ -994,26 +1007,35 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             if (restored.isNotEmpty()) {
                 Snapshot.withMutableSnapshot {
                     selectedHuds = restored.toSet()
-                    if (HudDesignSession.restorePanelOpen()) panelHud = restored.first()
+                    if (HudDesignSession.restorePanelOpen()) panelOpen = true
                     activeCategory = HudDesignSession.restoreCategory()
                 }
             }
         }
     }
 
+    val savedSelection = rememberUpdatedState(selectedHuds)
+    val savedPanelOpen = rememberUpdatedState(panelOpen)
+    val savedCategory = rememberUpdatedState(activeCategory)
     DisposableEffect(Unit) {
         onDispose {
-            HudDesignSession.save(emptyList(), false, activeCategory)
+            HudDesignSession.save(savedSelection.value.toList(), savedPanelOpen.value, savedCategory.value)
             HudDesignSession.activeSelection = emptyList()
             HudDesignSession.clearCommands()
         }
     }
 
-    LaunchedEffect(selectedHuds, panelHud) {
+    LaunchedEffect(selectedHuds) {
         val primary = primaryHud()
         primary?.let { repairHudStaticSize(it) }
-        if (panelHud != null && panelHud !in selectedHuds) panelHud = null
         HudDesignSession.activeSelection = selectedHuds.toList()
+    }
+
+    LaunchedEffect(panelOpen) {
+        if (!panelOpen) {
+            panelOffset = Offset.Zero
+            panelUserMoved = false
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -1031,7 +1053,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     val primary = primaryHud()
                     if (primary != null) {
                         Snapshot.withMutableSnapshot {
-                            panelHud = primary
+                            panelOpen = true
                             activeCategory = StudioCategory.Settings
                         }
                     }
@@ -1130,12 +1152,26 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
 
     fun Modifier.chromeRegion(key: String) = onGloballyPositioned { chromeRects[key] = it.boundsInRoot() }
 
+    fun Modifier.chromeBlocker(key: String) = this
+        .chromeRegion(key)
+        .safePointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+            event.changes.forEach { if (!it.isConsumed) it.consume() }
+        }
+        .safePointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
+            if (event.changes.any { it.pressed }) return@safePointerEvent
+            event.changes.forEach { if (!it.isConsumed) it.consume() }
+        }
+        .safePointerEvent(PointerEventType.Release, PointerEventPass.Final) { event ->
+            event.changes.forEach { if (!it.isConsumed) it.consume() }
+        }
+
     fun inChrome(px: Float, py: Float): Boolean {
         val point = Offset(px, py)
         return chromeRects.values.any { it.contains(point) }
     }
 
     fun movePanel(delta: Offset) {
+        panelUserMoved = true
         val rect = chromeRects[CHROME_SETTINGS_PANEL]
         if (rect == null || rootSize.width <= 0 || rootSize.height <= 0) {
             panelOffset += delta
@@ -1566,6 +1602,36 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
         label = "sideChromeAlpha"
     )
 
+    var panelDockedLeft by remember { mutableStateOf(false) }
+    val panelWidthPx = panelBoxWidth.toFloat()
+    if (panelHud != null && !panelUserMoved && panelWidthPx > 0f && rootSize.width > 0) {
+        val mcToScreen = Platform.screen().mcToScreenScale()
+        val rootW = rootSize.width.toFloat()
+        val rootH = rootSize.height.toFloat()
+        val leftSlot = Rect(0f, 0f, panelWidthPx, rootH)
+        val rightSlot = Rect(rootW - panelWidthPx, 0f, rootW, rootH)
+        var leftScore = 0f
+        var rightScore = 0f
+        for (hud in HudManager.activeInstances) {
+            val b = hudBounds(hud) ?: continue
+            val box = Rect(
+                b.x * mcToScreen,
+                b.y * mcToScreen,
+                (b.x + b.width) * mcToScreen,
+                (b.y + b.height) * mcToScreen,
+            )
+            val weight = if (hud in selectedHuds) 8f else 1f
+            leftScore += overlapArea(box, leftSlot) * weight
+            rightScore += overlapArea(box, rightSlot) * weight
+        }
+        panelDockedLeft = leftScore < rightScore
+    }
+    val panelDockX by animateFloatAsState(
+        targetValue = if (panelDockedLeft) -(rootSize.width - panelWidthPx) else 0f,
+        animationSpec = tween(220),
+        label = "panelDockX"
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -1582,10 +1648,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     }
                     return@onKeyEvent true
                 }
-                if (keyEvent.key == Key.Escape && (selectedHuds.isNotEmpty() || panelHud != null)) {
+                if (keyEvent.key == Key.Escape && (selectedHuds.isNotEmpty() || panelOpen)) {
                     Snapshot.withMutableSnapshot {
                         selectedHuds = emptySet()
-                        panelHud = null
+                        panelOpen = false
                     }
                     return@onKeyEvent true
                 }
@@ -1629,13 +1695,15 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             )
             AnimatedVisibility(
                 visible = !isDragging,
-                modifier = Modifier.align(Alignment.CenterStart),
+                modifier = Modifier.align(Alignment.TopStart),
                 enter = slideInHorizontally(initialOffsetX = { -it }),
                 exit = slideOutHorizontally(targetOffsetX = { -it }),
             ) {
-            Column(
+            DisposableEffect(Unit) { onDispose { chromeRects.remove(CHROME_RETURN) } }
+            Row(
                 modifier = Modifier
-                    .padding(start = 12.dp)
+                    .padding(start = 12.dp, top = 12.dp)
+                    .chromeRegion(CHROME_RETURN)
                     .graphicsLayer { alpha = sideChromeAlpha }
                     .clip(theme.buttonShape)
                     .background(returnBackground, theme.buttonShape)
@@ -1647,19 +1715,19 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                             onReturnToOneConfig()
                         }
                     }
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                    .padding(horizontal = 10.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Icon(
                     "left-arrow",
                     color = Color.White,
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(14.dp),
                 )
                 Text(
-                    "Return to\nOneConfig",
+                    "OneConfig",
                     color = Color.White,
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center,
                 )
@@ -1874,7 +1942,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 ) {
                     Snapshot.withMutableSnapshot {
                         selectedHuds = setOf(actionBarTarget)
-                        panelHud = actionBarTarget
+                        panelOpen = true
                     }
                 }
             }
@@ -1938,7 +2006,13 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
 
         Box(
             modifier = Modifier.align(Alignment.CenterEnd)
-                .offset { IntOffset(panelOffset.x.roundToInt(), panelOffset.y.roundToInt()) }
+                .onSizeChanged { panelBoxWidth = it.width }
+                .offset {
+                    IntOffset(
+                        (panelDockX + panelOffset.x).roundToInt(),
+                        panelOffset.y.roundToInt(),
+                    )
+                }
                 .graphicsLayer { alpha = chromeAlpha }
         ) {
         val panelContentHud = remember { mutableStateOf<Hud?>(null) }
@@ -1949,27 +2023,15 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
         ) {
             DisposableEffect(Unit) { onDispose { chromeRects.remove(CHROME_SETTINGS_PANEL) } }
-            Box(
-                modifier = Modifier
-                    .chromeRegion(CHROME_SETTINGS_PANEL)
-                    .safePointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
-                        event.changes.forEach { if (!it.isConsumed) it.consume() }
-                    }
-                    .safePointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
-                        if (event.changes.any { it.pressed }) return@safePointerEvent
-                        event.changes.forEach { if (!it.isConsumed) it.consume() }
-                    }
-                    .safePointerEvent(PointerEventType.Release, PointerEventPass.Final) { event ->
-                        event.changes.forEach { if (!it.isConsumed) it.consume() }
-                    }
-            ) {
+            Box {
                 DesignStudioPanel(
+                    modifier = Modifier.chromeBlocker(CHROME_SETTINGS_PANEL),
                     selectedHud = panelContentHud.value,
                     activeCategory = activeCategory,
                     onCategoryChange = { activeCategory = it },
                     onBack = {
                         Snapshot.withMutableSnapshot {
-                            panelHud = null
+                            panelOpen = false
                             selectedHuds = emptySet()
                         }
                     },
@@ -1985,21 +2047,14 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             enter = slideInHorizontally(initialOffsetX = { it }),
             exit = slideOutHorizontally(targetOffsetX = { it }),
         ) {
-            DisposableEffect(Unit) { onDispose { chromeRects.remove(CHROME_LIBRARY) } }
+            DisposableEffect(Unit) {
+                onDispose {
+                    chromeRects.remove(CHROME_LIBRARY)
+                    chromeRects.remove(CHROME_LIBRARY_ICONS)
+                }
+            }
             Row(
-                modifier = Modifier
-                    .chromeRegion(CHROME_LIBRARY)
-                    .graphicsLayer { alpha = sideChromeAlpha }
-                    .safePointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
-                        event.changes.forEach { if (!it.isConsumed) it.consume() }
-                    }
-                    .safePointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
-                        if (event.changes.any { it.pressed }) return@safePointerEvent
-                        event.changes.forEach { if (!it.isConsumed) it.consume() }
-                    }
-                    .safePointerEvent(PointerEventType.Release, PointerEventPass.Final) { event ->
-                        event.changes.forEach { if (!it.isConsumed) it.consume() }
-                    },
+                modifier = Modifier.graphicsLayer { alpha = sideChromeAlpha },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(24.dp)
             ) {
@@ -2008,7 +2063,9 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
                     exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
                 ) {
+                    DisposableEffect(Unit) { onDispose { chromeRects.remove(CHROME_LIBRARY) } }
                     HudLibraryPanel(
+                        modifier = Modifier.chromeBlocker(CHROME_LIBRARY),
                         searchText = searchText,
                         onSearchChange = { searchText = it },
                         sections = librarySections,
@@ -2056,7 +2113,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                                 UiSounds.play(UiSoundEvent.HUD_SELECT)
                                 Snapshot.withMutableSnapshot {
                                     selectedHuds = setOf(instance)
-                                    panelHud = instance
+                                    panelOpen = true
                                     libraryVisible = false
                                 }
                             }
@@ -2069,6 +2126,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     ModIconColumn(
+                        modifier = Modifier.chromeBlocker(CHROME_LIBRARY_ICONS),
                         modIds = modIds,
                         activeModId = activeLibraryMod,
                         libraryVisible = libraryVisible,
@@ -2104,7 +2162,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 Snapshot.withMutableSnapshot {
                     hudContextMenuTarget = null
                     selectedHuds = setOf(hud)
-                    panelHud = hud
+                    panelOpen = true
                 }
             },
             onCopy = { _ ->
@@ -2519,6 +2577,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
 
 @Composable
 private fun DesignStudioPanel(
+    modifier: Modifier = Modifier,
     selectedHud: Hud?,
     activeCategory: StudioCategory,
     onCategoryChange: (StudioCategory) -> Unit,
@@ -2543,6 +2602,7 @@ private fun DesignStudioPanel(
             .fillMaxHeight()
             .width(500.dp)
             .padding(16.dp)
+            .then(modifier)
             .background(theme.popupBackground, theme.backgroundShape)
             .border(1.dp, theme.borderColor, theme.backgroundShape),
     ) {
@@ -2662,6 +2722,7 @@ private fun libraryIconFor(modId: String?): String =
 
 @Composable
 private fun HudLibraryPanel(
+    modifier: Modifier = Modifier,
     searchText: String,
     onSearchChange: (String) -> Unit,
     sections: List<HudLibrarySection>,
@@ -2675,6 +2736,7 @@ private fun HudLibraryPanel(
         modifier = Modifier
             .size(401.dp, 481.dp)
             .padding(start = 16.dp, top = 16.dp, bottom = 16.dp)
+            .then(modifier)
             .background(theme.popupBackground, theme.backgroundShape)
             .border(1.dp, theme.borderColor, theme.backgroundShape)
             .padding(18.dp),
@@ -2765,6 +2827,7 @@ private fun HudLibraryPanel(
 
 @Composable
 private fun ModIconColumn(
+    modifier: Modifier = Modifier,
     modIds: List<String>,
     activeModId: String?,
     libraryVisible: Boolean,
@@ -2772,7 +2835,7 @@ private fun ModIconColumn(
 ) {
     val theme = LocalTheme.current
     Column(
-        modifier = Modifier
+        modifier = modifier
             .background(theme.popupBackground, theme.backgroundShape)
             .border(1.dp, theme.borderColor, theme.backgroundShape)
             .padding(12.dp),

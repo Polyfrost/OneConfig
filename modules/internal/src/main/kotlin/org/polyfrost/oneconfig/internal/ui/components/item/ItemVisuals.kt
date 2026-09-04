@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.ui.components.item
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.hoverable
@@ -17,12 +18,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
@@ -254,29 +257,38 @@ fun ItemGrid(
     onClick: ((ItemDescriptor) -> Unit)? = null,
 ) {
     val gridState = rememberLazyGridState()
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(cellSize),
-        state = gridState,
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(max = maxHeight)
-            .containVerticalScroll {
-                gridState.canScrollBackward || gridState.canScrollForward
-            },
-        horizontalArrangement = Arrangement.spacedBy(spacing),
-        verticalArrangement = Arrangement.spacedBy(spacing),
-    ) {
-        items(items, key = ItemDescriptor::id) { item ->
-            ItemTile(
-                item,
-                modifier = Modifier.fillMaxWidth(),
-                selected = selected(item),
-                enabled = enabled(item),
-                onClick = onClick?.let { click -> { click(item) } },
+    val scrollable = gridState.canScrollBackward || gridState.canScrollForward
+    Box(modifier = modifier.fillMaxWidth().heightIn(max = maxHeight)) {
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(cellSize),
+            state = gridState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(end = if (scrollable) ScrollbarGutter else 0.dp)
+                .containVerticalScroll { gridState.canScrollBackward || gridState.canScrollForward },
+            horizontalArrangement = Arrangement.spacedBy(spacing),
+            verticalArrangement = Arrangement.spacedBy(spacing),
+        ) {
+            items(items, key = ItemDescriptor::id) { item ->
+                ItemTile(
+                    item,
+                    modifier = Modifier.fillMaxWidth(),
+                    selected = selected(item),
+                    enabled = enabled(item),
+                    onClick = onClick?.let { click -> { click(item) } },
+                )
+            }
+        }
+        if (scrollable) {
+            VerticalScrollbar(
+                adapter = rememberScrollbarAdapter(gridState),
+                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
             )
         }
     }
 }
+
+private val ScrollbarGutter = 12.dp
 
 /** Search box for [ItemGrid] where [autoFocus] is off by default for embedded use */
 @Composable

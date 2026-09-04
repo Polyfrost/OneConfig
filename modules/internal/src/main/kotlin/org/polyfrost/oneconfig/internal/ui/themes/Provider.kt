@@ -1,5 +1,8 @@
 package org.polyfrost.oneconfig.internal.ui.themes
 
+import androidx.compose.foundation.LocalScrollbarStyle
+import androidx.compose.foundation.ScrollbarStyle
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -44,6 +47,15 @@ private const val EM_STEP_PX = 5f
 private const val MIN_EM_PX = 10f
 
 private const val GLYPH_PIXELS_PER_EM = 10f
+
+private fun scrollbarStyle(theme: UITheme) = ScrollbarStyle(
+    minimalHeight = 24.dp,
+    thickness = 8.dp,
+    shape = RoundedCornerShape(4.dp),
+    hoverDurationMillis = 300,
+    unhoverColor = theme.textColorSecondary.copy(alpha = 0.40f),
+    hoverColor = theme.textColorSecondary.copy(alpha = 0.70f),
+)
 
 private val screenPlatform by lazy { runCatching { Platform.screen() }.getOrNull() }
 
@@ -117,6 +129,7 @@ fun Theme(
 
     CompositionLocalProvider(
         LocalTheme provides animated,
+        LocalScrollbarStyle provides remember(animated.textColorSecondary) { scrollbarStyle(animated) },
         LocalDensity provides if (pixelGrid) pixelGridDensity(designWidth, designHeight) else LocalDensity.current,
         content = content
     )

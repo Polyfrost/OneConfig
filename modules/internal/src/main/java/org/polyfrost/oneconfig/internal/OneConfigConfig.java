@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal;
 import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Dropdown;
+import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Keybind;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
@@ -563,6 +564,9 @@ public class OneConfigConfig extends Config {
     )
     public static boolean showFirstLaunchMessage = true;
 
+    @Include
+    public static boolean onboardingCompleted = false;
+
     /**
      * The live instance used to persist programmatic changes such as {@link #markFirstLaunchShown()}
      */
@@ -947,6 +951,39 @@ public class OneConfigConfig extends Config {
             } catch (Exception ignored) {
             }
             INSTANCE.save();
+        }
+    }
+
+    public static void completeOnboarding(float soundVolume, float ambienceVolume) {
+        uiSoundVolume = soundVolume;
+        uiAmbienceVolume = ambienceVolume;
+        onboardingCompleted = true;
+        if (INSTANCE != null && INSTANCE.tree != null) {
+            setPropertyQuietly("uiSoundVolume", soundVolume);
+            setPropertyQuietly("uiAmbienceVolume", ambienceVolume);
+            setPropertyQuietly("onboardingCompleted", Boolean.TRUE);
+        }
+        markFirstLaunchShown();
+        if (INSTANCE != null && INSTANCE.tree != null) {
+            INSTANCE.save();
+        }
+    }
+
+    public static void markOnboardingCompleted() {
+        if (onboardingCompleted) {
+            return;
+        }
+        onboardingCompleted = true;
+        if (INSTANCE != null && INSTANCE.tree != null) {
+            setPropertyQuietly("onboardingCompleted", Boolean.TRUE);
+            INSTANCE.save();
+        }
+    }
+
+    private static void setPropertyQuietly(String id, Object value) {
+        try {
+            INSTANCE.getProperty(id).setAs(value);
+        } catch (Exception ignored) {
         }
     }
 }

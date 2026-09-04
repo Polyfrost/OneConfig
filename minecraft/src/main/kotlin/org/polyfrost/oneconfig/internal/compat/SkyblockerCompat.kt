@@ -468,10 +468,13 @@ private class SkyblockerBarWrapper(private val type: StatusBarType) : OneConfigH
 
     override val modId: String = "skyblocker"
 
+    override val ownsPlacement: Boolean get() = true
+
     override var x: Float
         get() = bar?.getX()?.toFloat() ?: 0f
         set(value) {
             val bar = bar ?: return
+            if (bar.getX().toFloat() == value) return
             val screen = SkyblockerCompat.guiScaledWidth()
             if (screen <= 0f) return
             SkyblockerCompat.detach(bar)
@@ -483,6 +486,7 @@ private class SkyblockerBarWrapper(private val type: StatusBarType) : OneConfigH
         get() = bar?.getY()?.toFloat() ?: 0f
         set(value) {
             val bar = bar ?: return
+            if (bar.getY().toFloat() == value) return
             val screen = SkyblockerCompat.guiScaledHeight()
             if (screen <= 0f) return
             SkyblockerCompat.detach(bar)

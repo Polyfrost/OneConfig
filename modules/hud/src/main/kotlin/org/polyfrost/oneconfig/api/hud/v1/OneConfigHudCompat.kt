@@ -116,6 +116,8 @@ interface OneConfigHudWrapper {
 
     val placementReady: Boolean get() = true
 
+    val ownsPlacement: Boolean get() = false
+
     val resizeAxes: HudResize get() = HudResize.Both
 
     fun onDragStart() {}
@@ -145,9 +147,11 @@ interface OneConfigHudWrapper {
     private fun trackPlacementPerProfile(tree: Tree) {
         excludeFromSnapshots(tree)
         tree.addMetadata(CompatSnapshots.GATE_METADATA, java.util.function.BooleanSupplier { placementReady })
-        tree["oc_compat_x"] = placementProperty("x", "X Position", { x }, { x = it })
-        tree["oc_compat_y"] = placementProperty("y", "Y Position", { y }, { y = it })
-        if (supportsScale) tree["oc_compat_scale"] = placementProperty("scale", "Scale", { scale }, { scale = it })
+        if (!ownsPlacement) {
+            tree["oc_compat_x"] = placementProperty("x", "X Position", { x }, { x = it })
+            tree["oc_compat_y"] = placementProperty("y", "Y Position", { y }, { y = it })
+            if (supportsScale) tree["oc_compat_scale"] = placementProperty("scale", "Scale", { scale }, { scale = it })
+        }
         tree.addMetadata("custom_save", Runnable { save() })
         CompatSnapshots.track(tree)
     }

@@ -13,9 +13,15 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
     private static final int MAX_MOUSE = InputConstants.MOUSE_BUTTON_LEFT + 7; // vanilla names eight mouse buttons
 
     public static InputConstants.Key keysym(int code) {
+        //~ if >= 26.3 'code >= 0 && code <= 9' -> 'code >= 1 && code <= 3'
         if (code >= 0 && code <= 9) return InputConstants.UNKNOWN;
         //~ if < 26.3 'Type.KEYBOARD' -> 'Type.KEYSYM'
         return InputConstants.Type.KEYSYM.getOrCreate(code);
+    }
+
+    public static InputConstants.Key mouse(int button) {
+        if (button < MIN_MOUSE || button > MAX_MOUSE) return InputConstants.UNKNOWN;
+        return InputConstants.Type.MOUSE.getOrCreate(button);
     }
 
     @Override
@@ -56,8 +62,8 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
 
     @Override
     public @Nullable String mouseName(int button) {
-        if (button < MIN_MOUSE || button > MAX_MOUSE) return null;
-        return InputConstants.Type.MOUSE.getOrCreate(button).getName();
+        InputConstants.Key key = mouse(button);
+        return key == InputConstants.UNKNOWN ? null : key.getName();
     }
 
     @Override

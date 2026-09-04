@@ -36,6 +36,7 @@ stonecutter {
             this["stella_compat"] = current.project.endsWith("-fabric") && catalogue.has("stella")
             this["apec_compat"] = current.project.endsWith("-fabric") && catalogue.has("apec")
             this["tr7zw_compat"] = true
+            this["ukulib_compat"] = current.project.endsWith("-fabric")
             this["wwaypoints_compat"] = current.project.endsWith("-fabric")
             this["cinnabar"] = catalogue.has("cinnabar") && rootProject.hasProperty("minecraft.vulkan")
             this["vulkanmod"] = current.project.endsWith("-fabric") && catalogue.has("vulkanmod")
