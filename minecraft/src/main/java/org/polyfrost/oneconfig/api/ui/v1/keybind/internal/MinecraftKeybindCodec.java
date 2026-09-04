@@ -3,7 +3,7 @@ package org.polyfrost.oneconfig.api.ui.v1.keybind.internal;
 import com.mojang.blaze3d.platform.InputConstants;
 import org.jetbrains.annotations.Nullable;
 
-//? if < 26.3 {
+//? if !sdl_keycodes {
 import java.util.HashMap;
 import java.util.Map;
 //?}
@@ -17,7 +17,7 @@ import java.util.Map;
  * like {@code key.keyboard.1}.
  */
 public final class MinecraftKeybindCodec implements KeybindCodec {
-    //? if >= 26.3 {
+    //? if sdl_keycodes {
     /*private static final int MAX_KEY = Integer.MAX_VALUE; // SDL keycodes are sparse and unicode/scancode-masked
     *///?} else
     private static final int MAX_KEY = 348; // GLFW_KEY_LAST
@@ -25,7 +25,7 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
     private static final int MIN_MOUSE = InputConstants.MOUSE_BUTTON_LEFT;
     private static final int MAX_MOUSE = InputConstants.MOUSE_BUTTON_LEFT + 7;
 
-    //? if < 26.3 {
+    //? if !sdl_keycodes {
     private static final Map<String, Integer> KEY_CODES_BY_NAME = new HashMap<>();
     private static final Map<String, Integer> MOUSE_BUTTONS_BY_NAME = new HashMap<>();
 
@@ -47,7 +47,7 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
      * A KEYSYM key for the code, or {@link InputConstants#UNKNOWN}.
      */
     public static InputConstants.Key keysym(int code) {
-        //? if >= 26.3 {
+        //? if sdl_keycodes {
         /*if (code >= 1 && code <= 3) return InputConstants.UNKNOWN;
         return InputConstants.Type.KEYBOARD.getOrCreate(code);
         *///?} else {
@@ -67,7 +67,7 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
 
     @Override
     public @Nullable String keyName(int code) {
-        //? if >= 26.3 {
+        //? if sdl_keycodes {
         /*if (code < 0 || code > MAX_KEY) return null;
 
         InputConstants.Key key = keysym(code);
@@ -84,7 +84,7 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
 
     @Override
     public @Nullable Integer keyCode(String name) {
-        //? if >= 26.3 {
+        //? if sdl_keycodes {
         /*InputConstants.Key key = lookup(name);
         if (key == null) return null;
 
@@ -98,7 +98,7 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
 
     @Override
     public @Nullable String mouseName(int button) {
-        //? if >= 26.3 {
+        //? if sdl_keycodes {
         /*InputConstants.Key key = mouse(button);
         return key == InputConstants.UNKNOWN ? null : key.getName();
         *///?} else {
@@ -108,7 +108,7 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
 
     @Override
     public @Nullable Integer mouseButton(String name) {
-        //? if >= 26.3 {
+        //? if sdl_keycodes {
         /*InputConstants.Key key = lookup(name);
         if (key == null || key.getType() != InputConstants.Type.MOUSE) return null;
 
@@ -119,7 +119,7 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
         //?}
     }
 
-    //? if >= 26.3 {
+    //? if sdl_keycodes {
     /*private static @Nullable InputConstants.Key lookup(String name) {
         int dot = name.lastIndexOf('.');
         if (dot >= 0) {

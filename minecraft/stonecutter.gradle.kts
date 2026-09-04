@@ -13,6 +13,8 @@ stonecutter {
             )
             val catalogue = rootProject.getForwardingVersionCatalog(current)
 
+            this["sdl_keycodes"] = eval(current.version, ">= 26.3")
+
             this["moul_compat"] = current.project.endsWith("-fabric") &&
                 eval(current.version, "> 1.21.10") &&
                 catalogue.has("moulconfig")
