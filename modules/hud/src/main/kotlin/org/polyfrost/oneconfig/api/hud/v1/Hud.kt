@@ -967,6 +967,16 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @JvmField
     var lastLayoutFrame: Long = -1L
 
+    /**
+     * [System.nanoTime] when [update] last ran, or [Long.MIN_VALUE] if it never has
+     *
+     * nanoTime has an arbitrary origin and may be negative, so 0 and -1 are both legal readings
+     * and cannot stand in for "never"
+     */
+    @ApiStatus.Internal
+    @JvmField
+    var lastUpdate: Long = Long.MIN_VALUE
+
     override fun addToInitQueue() {}
 
     val isReal get() = tree != null

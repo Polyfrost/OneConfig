@@ -149,8 +149,6 @@ object HudManager {
     @ApiStatus.Internal
     @Volatile @JvmField var pendingAdd: Hud? = null
 
-    private val lastUpdates = HashMap<Hud, Long>()
-
     private var wasEditing = false
 
     private val redrawCacheDisabled = java.lang.Boolean.getBoolean("oneconfig.hud.nocache")
@@ -178,6 +176,9 @@ object HudManager {
 
     /** [frameOrder] plus the hidden HUDs which still contribute their background to a fused shape */
     private val layoutOrder = ArrayList<Hud>()
+
+    /** Everything [prepare] lays out, reused rather than refiltered into a new list each frame */
+    private val prepareOrder = ArrayList<Hud>()
 
     private var frameGroups: List<HudBackgroundMerge.Group> = emptyList()
     private var lastMergeKey: Int? = null
@@ -349,6 +350,15 @@ object HudManager {
         return out
     }
 
+    /**
+     * Whether any instance of [hudClass] is active
+     *
+     * Short-circuits on the first match and builds no list, unlike [getHudsOfType]. Callers that
+     * only need to know whether the type is present should prefer this, since the library asks once
+     * per provider on every recomposition
+     */
+    fun hasHudOfType(hudClass: Class<out Hud>): Boolean = activeInstances.any { it::class.java == hudClass }
+
     fun getProvider(hudClass: Class<out Hud>): Hud? = hudProviders[hudClass]
 
     /** The live HUD whose config tree has this [id] used to resolve [Hud.anchorTargetId] */
@@ -398,7 +408,7 @@ object HudManager {
         // profiles active at the same time.
         cleanup { hud._runtime?.dispose() }
         hud._runtime = null
-        lastUpdates.remove(hud)
+        hud.lastUpdate = Long.MIN_VALUE
         // anything hanging off this HUD goes back to screen positioning and stays where it is
         // because the relative position kept alongside the anchor is already up to date
         treeId?.let { gone ->
@@ -468,7 +478,7 @@ object HudManager {
         // one immediate update on the edge instead of waiting out its remaining interval
         if (wasEditing != isEditing) {
             wasEditing = isEditing
-            lastUpdates.clear()
+            for (hud in activeInstances) hud.lastUpdate = Long.MIN_VALUE
         }
         for (hud in huds) {
             try {
@@ -478,6 +488,9 @@ object HudManager {
             }
         }
         if (PolyComposeHost.frameWithReport()) invalidate()
+        // previews are only ever on screen behind a OneConfig UI, so that is when their clock runs.
+        // notify=false because the line above already applied this frame's snapshot writes
+        if (isConfigUiOpen || isEditorOpen) PolyComposeHost.previews.frame(notify = false)
     }
 
     private fun layout(hud: Hud, screenWidth: Float, screenHeight: Float, scale: Float): RootNode {
@@ -504,9 +517,9 @@ object HudManager {
             return
         }
         val now = System.nanoTime()
-        val last = lastUpdates[hud]
-        if (last != null && now - last < frequency) return
-        lastUpdates[hud] = now
+        val last = hud.lastUpdate
+        if (last != Long.MIN_VALUE && now - last < frequency) return
+        hud.lastUpdate = now
         hud.update()
     }
 
@@ -782,7 +795,9 @@ object HudManager {
         val scale = Platform.compatibility().options().guiScale
         Snapshot.sendApplyNotifications()
         frameId++
-        val huds = activeInstances.filterNot { it is LegacyHudMarker }
+        val huds = prepareOrder
+        huds.clear()
+        for (hud in activeInstances) if (hud !is LegacyHudMarker) huds.add(hud)
         updateAndAdvance(huds)
         for (hud in huds) {
             try {
