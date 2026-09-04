@@ -4,18 +4,24 @@ import com.mojang.blaze3d.platform.InputConstants;
 import org.jetbrains.annotations.Nullable;
 
 public final class MinecraftKeybindCodec implements KeybindCodec {
-    //? if >= 26.3
+    //? if >= 26.3 || = 1.8.9
     /*private static final int MAX_KEY = Integer.MAX_VALUE; // SDL keycodes are sparse and unicode/scancode-masked*/
-    //? if < 26.3
+    //? if < 26.3 && > 1.8.9
     private static final int MAX_KEY = 348; // GLFW_KEY_LAST
 
     private static final int MIN_MOUSE = InputConstants.MOUSE_BUTTON_LEFT;
     private static final int MAX_MOUSE = InputConstants.MOUSE_BUTTON_LEFT + 7; // vanilla names eight mouse buttons
 
     public static InputConstants.Key keysym(int code) {
+        //~ if >= 26.3 || = 1.8.9 'code >= 0 && code <= 9' -> 'code >= 1 && code <= 3'
         if (code >= 0 && code <= 9) return InputConstants.UNKNOWN;
-        //~ if < 26.3 'Type.KEYBOARD' -> 'Type.KEYSYM'
+        //~ if < 26.3 && > 1.8.9 'Type.KEYBOARD' -> 'Type.KEYSYM'
         return InputConstants.Type.KEYSYM.getOrCreate(code);
+    }
+
+    public static InputConstants.Key mouse(int button) {
+        if (button < MIN_MOUSE || button > MAX_MOUSE) return InputConstants.UNKNOWN;
+        return InputConstants.Type.MOUSE.getOrCreate(button);
     }
 
     @Override
@@ -28,7 +34,7 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
         // Ignore fallback names
         if (("key.keyboard." + code).equals(key.getName())) return null;
 
-        //? if < 26.3 {
+        //? if < 26.3 && > 1.8.9 {
         // GLFW to SDL aliases
         if ("key.keyboard.keypad.decimal".equals(key.getName())) return "key.keyboard.keypad.period";
         if ("key.keyboard.menu".equals(key.getName())) return "key.keyboard.application";
@@ -39,7 +45,7 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
 
     @Override
     public @Nullable Integer keyCode(String name) {
-        //? if < 26.3 {
+        //? if < 26.3 && > 1.8.9 {
         // SDL to GLFW aliases
         if ("key.keyboard.keypad.period".equals(name)) name = "key.keyboard.keypad.decimal";
         if ("key.keyboard.application".equals(name)) name = "key.keyboard.menu";
@@ -50,14 +56,14 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
 
         if (("key.keyboard." + key.getValue()).equals(name)) return null;
 
-        //~ if < 26.3 'Type.KEYBOARD' -> 'Type.KEYSYM'
+        //~ if < 26.3 && > 1.8.9 'Type.KEYBOARD' -> 'Type.KEYSYM'
         return key.getType() == InputConstants.Type.KEYSYM && key != InputConstants.UNKNOWN ? key.getValue() : null;
     }
 
     @Override
     public @Nullable String mouseName(int button) {
-        if (button < MIN_MOUSE || button > MAX_MOUSE) return null;
-        return InputConstants.Type.MOUSE.getOrCreate(button).getName();
+        InputConstants.Key key = mouse(button);
+        return key == InputConstants.UNKNOWN ? null : key.getName();
     }
 
     @Override

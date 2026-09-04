@@ -1,9 +1,9 @@
 public final class org/polyfrost/compose/composables/ComposableSingletons$ComposablesKt {
 	public static final field INSTANCE Lorg/polyfrost/compose/composables/ComposableSingletons$ComposablesKt;
 	public fun <init> ()V
-	public final fun getLambda$-1248108146$poly_compose ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda$-669139357$poly_compose ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda$1218149997$poly_compose ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-1248108146$org_polyfrost_oneconfig_poly_compose ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-669139357$org_polyfrost_oneconfig_poly_compose ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$1218149997$org_polyfrost_oneconfig_poly_compose ()Lkotlin/jvm/functions/Function2;
 }
 
 public final class org/polyfrost/compose/composables/ComposablesKt {

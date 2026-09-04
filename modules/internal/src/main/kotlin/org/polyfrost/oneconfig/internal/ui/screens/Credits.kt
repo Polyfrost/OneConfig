@@ -21,7 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.rememberBrandTint
 import org.polyfrost.oneconfig.internal.ui.components.rememberSvgResourcePainter
+import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val oneConfigVersion: String? by lazy {
@@ -83,6 +85,7 @@ fun Credits() {
                     Image(
                         painter = logo,
                         contentDescription = null,
+                        colorFilter = rememberBrandTint(theme.branding.logoPath, Accent),
                         modifier = Modifier.size(474.dp, 54.dp)
                     )
                 }

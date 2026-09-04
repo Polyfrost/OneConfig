@@ -13,7 +13,8 @@ public class KeysImpl implements Keys {
 
     @Override
     public String mouseName(int button) {
-        return InputConstants.Type.MOUSE.getOrCreate(button).getDisplayName().getString();
+        InputConstants.Key input = MinecraftKeybindCodec.mouse(button);
+        return input == InputConstants.UNKNOWN ? "None" : input.getDisplayName().getString();
     }
 
     @Override
@@ -103,7 +104,7 @@ public class KeysImpl implements Keys {
 
     @Override
     public int getKeyLeftSuper() {
-        //? if >= 26.3 {
+        //? if >= 26.3 || = 1.8.9 {
         /*return InputConstants.KEY_LGUI;
         *///?} elif >= 1.21.10 {
         return InputConstants.KEY_LSUPER;
@@ -113,7 +114,7 @@ public class KeysImpl implements Keys {
 
     @Override
     public int getKeyRightSuper() {
-        //? if >= 26.3 {
+        //? if >= 26.3 || = 1.8.9 {
         /*return InputConstants.KEY_RGUI;
         *///?} elif >= 1.21.10 {
         return InputConstants.KEY_RSUPER;

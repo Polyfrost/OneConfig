@@ -11,10 +11,12 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.FrameRecomposer
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.scene.CanvasLayersComposeScene
 import androidx.compose.ui.scene.ComposeScene
+import androidx.compose.ui.scene.SingleComposeSceneRenderingScope
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
@@ -127,6 +129,10 @@ abstract class ComposeScreen(
 
     private var sceneOrNull: ComposeScene? = null
 
+    private var recomposerOrNull: FrameRecomposer? = null
+
+    private var renderScopeOrNull: SingleComposeSceneRenderingScope? = null
+
     private var scenePoisoned = false
 
     private var sceneRebuilds = 0
@@ -206,22 +212,48 @@ abstract class ComposeScreen(
     }
 
     private fun closeSceneQuietly() {
-        val scene = sceneOrNull ?: return
+        val scene = sceneOrNull
+        val recomposer = recomposerOrNull
+        if (scene == null && recomposer == null) return
         sceneOrNull = null
+        recomposerOrNull = null
+        renderScopeOrNull = null
         contentSet = false
         scenePoisoned = false
         try {
-            scene.close()
+            scene?.close()
         } catch (t: Throwable) {
             LOGGER.debug("Ignoring failure while closing a Compose scene", t)
         }
+        try {
+            recomposer?.close()
+        } catch (t: Throwable) {
+            LOGGER.debug("Ignoring failure while closing a Compose recomposer", t)
+        }
     }
 
-    private fun createScene() = CanvasLayersComposeScene(
-        coroutineContext = RenderThreadDispatcher,
-        platformContext = ComposeSceneContextImpl.platformContext,
-        invalidate = { sceneDirty = true }
-    )
+    private fun createScene(): ComposeScene {
+        val recomposer = FrameRecomposer(RenderThreadDispatcher) { sceneDirty = true }
+        val scope = SingleComposeSceneRenderingScope { sceneDirty = true }
+        val scene = try {
+            CanvasLayersComposeScene(
+                frameRecomposer = recomposer,
+                platformContext = ComposeSceneContextImpl.platformContext,
+                invalidateLayout = scope::onSceneInvalidation,
+                invalidateDraw = scope::onSceneInvalidation,
+            )
+        } catch (t: Throwable) {
+            try {
+                recomposer.close()
+            } catch (closeFailure: Throwable) {
+                t.addSuppressed(closeFailure)
+            }
+            throw t
+        }
+        recomposerOrNull = recomposer
+        renderScopeOrNull = scope
+        return scene
+    }
 
     @Volatile
     private var sceneDirty = true
@@ -495,7 +527,13 @@ abstract class ComposeScreen(
                     if (pixelRatio != 1f) {
                         canvas.scale(pixelRatio, pixelRatio)
                     }
-                    if (withScene { it.render(canvas.asComposeCanvas(), System.nanoTime()) } != null) {
+                    val recomposer = recomposerOrNull
+                    val scope = renderScopeOrNull
+                    val composeCanvas = canvas.asComposeCanvas()
+                    val rendered = if (recomposer == null || scope == null) null else withScene {
+                        with(scope) { it.render(recomposer, composeCanvas, System.nanoTime()) }
+                    }
+                    if (rendered != null) {
                         sceneRebuilds = 0
                     }
                 } finally {
@@ -564,12 +602,14 @@ abstract class ComposeScreen(
     /*override fun mouseClicked(x: Double, y: Double, button: Int): Boolean {
     *///?} else
     //override fun mouseClicked(x: Int, y: Int, button: Int) {
+        //~ if = 1.8.9 'button' -> 'KeyCodes.mouseFromLegacy(button)' {
         if (handleMouseClicked(button)) {
             consumedButtons += button
             //$ if > 1.8.9 'return true' else 'return'
             return true
         }
         sendMouseButtonEvent(PointerEventType.Press, button)
+        //~}
 
         //? if >= 1.21.10 {
         return super.mouseClicked(event, doubleClick)
@@ -586,6 +626,7 @@ abstract class ComposeScreen(
     /*override fun mouseReleased(x: Double, y: Double, button: Int): Boolean {
     *///?} else
     //override fun mouseReleased(x: Int, y: Int, button: Int) {
+        //~ if = 1.8.9 'button' -> 'KeyCodes.mouseFromLegacy(button)'
         if (!consumedButtons.remove(button)) sendMouseButtonEvent(PointerEventType.Release, button)
 
         //? if >= 1.21.10 {
@@ -897,7 +938,7 @@ abstract class ComposeScreen(
     }
 }
 
-private object RenderThreadDispatcher : kotlinx.coroutines.CoroutineDispatcher() {
+internal object RenderThreadDispatcher : kotlinx.coroutines.CoroutineDispatcher() {
     override fun isDispatchNeeded(context: kotlin.coroutines.CoroutineContext): Boolean =
         !Minecraft.getInstance().isSameThread
 

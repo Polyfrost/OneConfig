@@ -1,5 +1,5 @@
 [versions]
-command-api-v2 = "3.1.0+00cb03469c"
+command-api-v2 = "3.1.0+00cb03469e"
 
 # 26.2 uses Minecraft's native Vulkan renderer -> no Cinnabar.
 modmenu = "20.0.0-beta.4"

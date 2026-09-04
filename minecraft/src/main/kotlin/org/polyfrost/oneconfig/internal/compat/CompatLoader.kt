@@ -43,6 +43,7 @@ object CompatLoader {
         "moe.nea.firmament.deps.moulconfig",
         "io.github.notenoughupdates.moulconfig",
         "dev.tr7zw.trender",
+        "net.uku3lig.ukulib",
         "dev.tr7zw.transition",
         "kotlin",
         "kotlinx",
@@ -82,6 +83,10 @@ object CompatLoader {
         }
         return null
     }
+
+    fun findModByClass(cls: Class<*>): ModInfo? = ownerByClassName
+        .computeIfAbsent(cls.name) { Optional.ofNullable(resolveOwner(it)) }
+        .orElse(null)
 
     fun markFirstModAsSkip() {
         val mod = findFirstMod()

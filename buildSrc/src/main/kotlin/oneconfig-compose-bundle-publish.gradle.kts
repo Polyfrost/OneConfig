@@ -13,6 +13,7 @@ publishMods {
     file = tasks.named<Jar>("jar").flatMap { it.archiveFile }
 
     displayName = "Compose Multiplatform ${project.version}"
+    changelog = "Compose Multiplatform ${project.version}"
     version = "v${project.version}"
     type = STABLE
 

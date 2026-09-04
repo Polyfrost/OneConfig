@@ -4,7 +4,10 @@ import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asComposeCanvas
 import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.platform.FrameRecomposer
 import androidx.compose.ui.scene.CanvasLayersComposeScene
+import androidx.compose.ui.scene.ComposeScene
+import androidx.compose.ui.scene.SingleComposeSceneRenderingScope
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import org.jetbrains.skia.ImageInfo
@@ -32,34 +35,50 @@ object ComposePreloader {
             val startNanos = System.nanoTime()
             val w = Platform.screen().windowWidth().takeIf { it > 0 } ?: 1280
             val h = Platform.screen().windowHeight().takeIf { it > 0 } ?: 720
-            // mirror ComposeScreen by creating and rendering on the render thread with the default coroutineContext
-            val scene = CanvasLayersComposeScene(
-                platformContext = ComposeSceneContextImpl.platformContext,
-            )
-            val surface = Surface.makeRenderTarget(
-                SkiaCtx.directContext,
-                false,
-                ImageInfo.makeN32Premul(w, h),
-            )
+            var recomposer: FrameRecomposer? = null
+            var scene: ComposeScene? = null
+            var surface: Surface? = null
             try {
-                scene.setContent {
+                val renderScope = SingleComposeSceneRenderingScope {}
+                val liveRecomposer = FrameRecomposer(RenderThreadDispatcher).also { recomposer = it }
+                val liveScene = CanvasLayersComposeScene(
+                    frameRecomposer = liveRecomposer,
+                    platformContext = ComposeSceneContextImpl.platformContext,
+                ).also { scene = it }
+                val liveSurface = Surface.makeRenderTarget(
+                    SkiaCtx.directContext,
+                    false,
+                    ImageInfo.makeN32Premul(w, h),
+                ).also { surface = it }
+                liveScene.setContent {
                     OneConfigInterface(
                         windowWidth = w.toFloat(),
                         windowHeight = h.toFloat(),
                     )
                 }
-                scene.size = IntSize(w, h)
-                scene.density = Density(1f)
-                scene.sendPointerEvent(PointerEventType.Move, position = Offset(50f, 50f))
-                scene.render(surface.canvas.asComposeCanvas(), System.nanoTime())
-                surface.flushAndSubmit()
+                liveScene.size = IntSize(w, h)
+                liveScene.density = Density(1f)
+                liveScene.sendPointerEvent(PointerEventType.Move, position = Offset(50f, 50f))
+                with(renderScope) {
+                    liveScene.render(liveRecomposer, liveSurface.canvas.asComposeCanvas(), System.nanoTime())
+                }
+                liveSurface.flushAndSubmit()
                 LOG.info("Compose GPU warm-up finished in {} ms", (System.nanoTime() - startNanos) / 1_000_000)
             } catch (e: Throwable) {
                 LOG.warn("Compose GPU warm-up failed", e)
             } finally {
-                scene.close()
-                surface.close()
+                closeQuietly(scene)
+                closeQuietly(recomposer)
+                closeQuietly(surface)
             }
+        }
+    }
+
+    private fun closeQuietly(closeable: AutoCloseable?) {
+        try {
+            closeable?.close()
+        } catch (t: Throwable) {
+            LOG.debug("Ignoring failure while closing a Compose warm-up resource", t)
         }
     }
 }

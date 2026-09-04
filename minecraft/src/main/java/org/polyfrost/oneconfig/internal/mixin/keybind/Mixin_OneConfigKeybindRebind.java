@@ -65,7 +65,7 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
         if (!oneconfig$isOurs()) return;
         //? if = 1.8.9 {
         /^keyCode = KeyCodes.fromLegacy(keyCode).getValue();
-        if (keyCode < 0) {
+        if (keyCode <= 0) {
             ci.cancel();
             return;
         }
@@ -96,6 +96,8 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
     //?} else
     //private void oneconfig$mouseClicked(int mouseX, int mouseY, int button, CallbackInfo ci) {
         if (!oneconfig$isOurs()) return;
+        //? if = 1.8.9
+        //button = KeyCodes.mouseFromLegacy(button);
         oneconfig$recordMouse(button);
         //$ if > 1.8.9 'cir.setReturnValue(true);' else 'ci.cancel();'
         cir.setReturnValue(true);
@@ -139,7 +141,7 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
         long window = Platform.compatibility().windowHandle();
         for (int b : oneconfig$mouse) if (GLFW.glfwGetMouseButton(window, b) != InputConstants.RELEASE) return;
         //?} else
-        //for (int b : oneconfig$mouse) if (Mouse.isButtonDown(b)) return;
+        //for (int b : oneconfig$mouse) if (Mouse.isButtonDown(KeyCodes.mouseToLegacy(b))) return;
         oneconfig$commit();
     }
 
@@ -166,6 +168,8 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
 
     @Override
     public void oneconfig$recordKey(int keyCode) {
+        //? if >= 26.3 || = 1.8.9
+        if (keyCode <= 0) return;
         if (!oneconfig$begin()) return;
         oneconfig$keys.add(keyCode);
         oneconfig$preview();

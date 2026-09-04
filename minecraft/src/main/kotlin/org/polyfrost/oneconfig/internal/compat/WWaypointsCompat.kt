@@ -1102,7 +1102,7 @@ object WWaypointsCompat {
     private fun OneConfigKeybind?.toInputKey(): InputConstants.Key {
         if (this == null || !isBound) return InputConstants.UNKNOWN
         //~ if < 26.3 'it > 0' -> 'it >= 0'
-        mouseBtns?.firstOrNull { it >= 0 }?.let { return InputConstants.Type.MOUSE.getOrCreate(it) }
+        mouseBtns?.firstOrNull { it >= 0 }?.let { return MinecraftKeybindCodec.mouse(it) }
         keyCodes?.firstOrNull { it > 0 }?.let { return MinecraftKeybindCodec.keysym(it) }
         return InputConstants.UNKNOWN
     }

@@ -20,6 +20,9 @@ class MinecraftKeybindCodecTest {
 
     @Test
     void convertsMouseButtons() {
+        String last = codec.mouseName(InputConstants.MOUSE_BUTTON_LEFT + 7);
+        assertEquals(InputConstants.UNKNOWN, MinecraftKeybindCodec.mouse(InputConstants.MOUSE_BUTTON_LEFT + 8));
+        assertEquals(Integer.valueOf(InputConstants.MOUSE_BUTTON_LEFT + 7), codec.mouseButton(last));
         assertEquals("key.mouse.left", codec.mouseName(InputConstants.MOUSE_BUTTON_LEFT));
         assertEquals(Integer.valueOf(InputConstants.MOUSE_BUTTON_LEFT), codec.mouseButton("key.mouse.left"));
     }
@@ -35,7 +38,7 @@ class MinecraftKeybindCodecTest {
 
     @Test
     void migratesAliases() {
-        //? if >= 26.3 {
+        //? if >= 26.3 || = 1.8.9 {
         /*assertEquals("key.keyboard.keypad.period", codec.keyName(99));
         assertEquals("key.keyboard.application", codec.keyName(101));
         assertEquals("key.keyboard.menu", codec.keyName(118));

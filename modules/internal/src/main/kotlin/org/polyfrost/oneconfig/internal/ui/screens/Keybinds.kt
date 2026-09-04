@@ -120,7 +120,7 @@ fun Keybinds() {
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize().padding(end = 10.dp),
+            modifier = Modifier.fillMaxSize().padding(end = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             visibleGroups.forEach { group ->
