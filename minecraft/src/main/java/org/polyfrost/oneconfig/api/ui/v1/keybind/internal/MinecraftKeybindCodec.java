@@ -4,9 +4,9 @@ import com.mojang.blaze3d.platform.InputConstants;
 import org.jetbrains.annotations.Nullable;
 
 public final class MinecraftKeybindCodec implements KeybindCodec {
-    //? if >= 26.3
-    /*private static final int MAX_KEY = Integer.MAX_VALUE; // SDL keycodes are sparse and unicode/scancode-masked*/
-    //? if < 26.3
+    //? if >= 26.3 {
+    /*private static final int MAX_KEY = Integer.MAX_VALUE; // SDL keycodes are sparse and unicode/scancode-masked
+    *///?} else
     private static final int MAX_KEY = 348; // GLFW_KEY_LAST
 
     private static final int MIN_MOUSE = InputConstants.MOUSE_BUTTON_LEFT;
