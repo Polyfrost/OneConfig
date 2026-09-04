@@ -197,6 +197,15 @@ object KeybindManager {
         return binds.filter { it.conflictsWith(bind) }
     }
 
+    /** True when a registered keybind containing [button] matches the current input state */
+    @JvmStatic
+    fun hasTriggeredMouseBind(button: Int): Boolean = binds.any { isTriggeredByMouse(it, button) }
+
+    /** True when [bind] contains [button] and matches the current input state */
+    @JvmStatic
+    fun isTriggeredByMouse(bind: OneConfigKeybind, button: Int): Boolean =
+        bind.mouseBtns?.contains(button) == true && bind.test(downKeys, downMouse, mods)
+
     @JvmStatic
     fun builder() = KeybindHelper()
 

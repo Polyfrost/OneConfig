@@ -497,7 +497,7 @@ abstract class ComposeScreen(
     //? } else {
     /*override fun mouseClicked(x: Double, y: Double, button: Int): Boolean {
     *///? }
-        if (handleMouseClicked(button)) {
+        if (KeybindRecordingBus.consumeMouse(button, true) || handleMouseClicked(button)) {
             consumedButtons += button
             return true
         }
@@ -516,7 +516,11 @@ abstract class ComposeScreen(
     //? } else {
     /*override fun mouseReleased(x: Double, y: Double, button: Int): Boolean {
     *///? }
-        if (!consumedButtons.remove(button)) sendMouseButtonEvent(PointerEventType.Release, button)
+        val recordingConsumed = KeybindRecordingBus.consumeMouse(button, false)
+        val pressConsumed = consumedButtons.remove(button)
+        if (!recordingConsumed && !pressConsumed) {
+            sendMouseButtonEvent(PointerEventType.Release, button)
+        }
 
         //? if >= 1.21.10 {
         return super.mouseReleased(event)
