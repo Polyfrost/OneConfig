@@ -3,12 +3,17 @@ package org.polyfrost.oneconfig.internal.ui.components.settings
 import androidx.compose.runtime.mutableIntStateOf
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
+import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry
 import org.polyfrost.oneconfig.internal.ui.keybind.collectAllKeybindGroups
 
 internal object KeybindConflicts {
     val revision = mutableIntStateOf(0)
+
+    private var cachedKey = Long.MIN_VALUE
+    private var cached: Map<Property<*>, List<Property<*>>> = emptyMap()
 
     private fun boundKeybinds(): List<Pair<Property<*>, OneConfigKeybind>> {
         return collectAllKeybindGroups().flatMap { group ->
@@ -20,7 +25,23 @@ internal object KeybindConflicts {
         }
     }
 
+    /**
+     * Comparing every bound keybind against every other is far too expensive to redo per row per
+     * recomposition, so the result is held until one of the revisions that could change it moves
+     *
+     * Reading those revisions here subscribes the caller to them, so nobody has to name them
+     */
     fun conflictMap(): Map<Property<*>, List<Property<*>>> {
+        val key = (ConfigRegistry.revision * 31L + KeybindProviderRegistry.revision.intValue) * 31 +
+            revision.intValue
+        if (key != cachedKey) {
+            cached = computeConflictMap()
+            cachedKey = key
+        }
+        return cached
+    }
+
+    private fun computeConflictMap(): Map<Property<*>, List<Property<*>>> {
         val bound = boundKeybinds()
         if (bound.size < 2) return emptyMap()
         val conflicting = HashMap<Property<*>, MutableList<Property<*>>>()

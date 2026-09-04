@@ -112,9 +112,7 @@ fun Keybinds() {
         return
     }
 
-    val conflicts = remember(revision, providerRevision, KeybindConflicts.revision.intValue) {
-        KeybindConflicts.conflictMap()
-    }
+    val conflicts = KeybindConflicts.conflictMap()
 
     val searching = localSearchQuery.isNotBlank()
 

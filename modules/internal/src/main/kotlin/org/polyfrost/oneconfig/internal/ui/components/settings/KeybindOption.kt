@@ -43,7 +43,6 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
-import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
@@ -141,9 +140,7 @@ fun KeybindOption(data: KeybindOptionData) {
     val recordedMouse = remember(data.prop) { mutableStateListOf<Int>() }
     val heldMouse = remember(data.prop) { HashSet<Int>() }
 
-    val hasConflict = (KeybindConflicts.revision.intValue + ConfigRegistry.revision).let {
-        !recording && data.prop in KeybindConflicts.conflictingProps()
-    }
+    val hasConflict = !recording && data.prop in KeybindConflicts.conflictingProps()
 
     // setting the property may mutate the keybind in place or swap in a fresh instance and
     // KeybindManager.replace handles both so the bind keeps firing without a mod change callback
