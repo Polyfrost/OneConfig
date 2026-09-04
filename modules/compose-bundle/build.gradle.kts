@@ -4,7 +4,11 @@ import net.fabricmc.loom.task.NestJarsAction
 // ships as a standalone Fabric mod so the shaded Compose/skiko runtime can be published to
 // Modrinth separately and is excluded from the bootstrap JiJ in oneconfig-bootstrap.gradle.kts
 group = "${rootProject.group}.compose"
-version = "1.0.3+compose.${libs.versions.compose.asProvider().get()}"
+
+// NOTE: bump the prefix whenever the compose version changes: the "+compose.x.y.z" part is semver
+// build metadata, which version comparisons ignore, so updaters and dependency constraints
+// only see the prefix
+version = "1.0.4+compose.${libs.versions.compose.asProvider().get()}"
 
 repositories {
     maven("https://redirector.kotlinlang.org/maven/compose-dev")
