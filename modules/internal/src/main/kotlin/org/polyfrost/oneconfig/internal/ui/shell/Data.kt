@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.shell
 
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -68,6 +69,15 @@ object ShellState {
 
     /** Where each scrollable page was left keyed by page key see [rememberRestorableLazyListState] */
     val scrollAnchors = mutableMapOf<String, ScrollAnchor>()
+
+    /**
+     * The live grid states, by the same key their scroll position is remembered under
+     *
+     * A warm-up drives these so a list can be scrolled through before anyone looks at it, which is
+     * the only way to reach the work that only happens when an item first comes into view. Written
+     * and read on the render thread, like everything else here.
+     */
+    val gridStates = mutableMapOf<String, LazyGridState>()
 
     /** Last selected settings tab per page key restored when a page is reopened or navigated back to */
     val selectedCategories = mutableStateMapOf<String, String>()
