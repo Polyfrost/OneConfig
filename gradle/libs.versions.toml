@@ -89,6 +89,10 @@ fabric-language-kotlin = { module = "net.fabricmc:fabric-language-kotlin", versi
 jetbrains-compose-foundation = { module = "org.jetbrains.compose.foundation:foundation-desktop", version.ref = "compose" }
 jetbrains-compose-material = { module = "org.jetbrains.compose.material:material-desktop", version.ref = "compose" }
 jetbrains-compose-runtime = { module = "org.jetbrains.compose.runtime:runtime-desktop", version.ref = "compose" }
+# androidx-coordinate runtime artifacts that the (empty) org.jetbrains.compose.runtime shims redirect to
+# the shims must not be bundled as their jar filenames can collide with these
+androidx-compose-runtime = { module = "androidx.compose.runtime:runtime-desktop", version.ref = "compose" }
+androidx-compose-runtime-saveable = { module = "androidx.compose.runtime:runtime-saveable-desktop", version.ref = "compose" }
 jetbrains-compose-ui = { module = "org.jetbrains.compose.ui:ui-desktop", version.ref = "compose" }
 jetbrains-compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview-desktop", version.ref = "compose" }
 jetbrains-compose-ui-util = { module = "org.jetbrains.compose.ui:ui-util-desktop", version.ref = "compose" }

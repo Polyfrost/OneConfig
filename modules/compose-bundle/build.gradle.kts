@@ -20,6 +20,8 @@ val shade: Configuration by configurations.creating {
     exclude(group = "org.jetbrains.androidx.lifecycle")
     exclude(group = "org.jetbrains.kotlinx")
     exclude(group = "org.jetbrains", module = "annotations")
+    // empty relocation shims whose jar filenames collide with the real androidx-coordinate artifacts of the same name and version
+    exclude(group = "org.jetbrains.compose.runtime")
 }
 
 fun isExcludedFromBundle(file: File): Boolean {
@@ -34,7 +36,8 @@ fun isExcludedFromBundle(file: File): Boolean {
 dependencies {
     shade(libs.jetbrains.compose.foundation)
     shade(libs.jetbrains.compose.material)
-    shade(libs.jetbrains.compose.runtime)
+    shade(libs.androidx.compose.runtime)
+    shade(libs.androidx.compose.runtime.saveable)
     shade(libs.jetbrains.compose.ui)
     shade(libs.jetbrains.compose.ui.tooling.preview)
     shade(libs.jetbrains.compose.ui.util)
@@ -61,6 +64,20 @@ private fun createProcessTask(): TaskProvider<NestableJarGenerationTask> {
 }
 
 val processTask = createProcessTask()
+
+processTask.configure {
+    doFirst {
+        val collisions = shade.resolvedConfiguration.resolvedArtifacts
+            .groupBy { it.file.name }
+            .filterValues { it.size > 1 }
+        check(collisions.isEmpty()) {
+            "Nested jar filename collisions in the compose bundle, exclude the redundant artifacts:\n" +
+                collisions.entries.joinToString("\n") { (name, artifacts) ->
+                    "  $name -> ${artifacts.map { it.moduleVersion.id }}"
+                }
+        }
+    }
+}
 
 private fun getOutputJars(): FileCollection {
     return project.fileTree(processTask.flatMap(Transformer { it.outputDirectory })).matching { include("*.jar") }
