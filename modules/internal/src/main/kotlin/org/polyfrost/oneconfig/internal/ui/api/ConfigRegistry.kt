@@ -58,11 +58,8 @@ object ConfigRegistry {
 
     val configs: SnapshotStateList<ConfigData> = mutableStateListOf()
 
-    val configList: List<ConfigData>
-        get() = configs.toList()
-
     val modCardConfigs: List<ConfigData>
-        get() = configList.filter(::shouldShowModCard) + hudModCardConfigs()
+        get() = configs.filter(::shouldShowModCard) + hudModCardConfigs()
 
     var revision by mutableIntStateOf(0)
         private set
@@ -116,7 +113,6 @@ object ConfigRegistry {
         var changed = false
         manager.trees().forEach { tree ->
             tree.id?.let(seenIds::add)
-            MinecraftKeybindRegistrar.scan(tree)
             if (registerTree(tree, source, bumpRevision = false)) changed = true
         }
         if (configs.removeAll { it.source == source && it is TreeConfigData && it.id !in seenIds }) changed = true
@@ -133,7 +129,8 @@ object ConfigRegistry {
         onOpen: (() -> Unit)? = null,
         bumpRevision: Boolean = true
     ): Boolean {
-        MinecraftKeybindRegistrar.scan(tree)
+        // the bulk reload every open does passes false; an explicit registration is a real change
+        MinecraftKeybindRegistrar.scan(tree, force = bumpRevision)
         if (tree.id == null || tree.title == null) return false
         if (tree.getMetadata<Any?>("hidden") != null) return false
         return upsert(TreeConfigData(tree, source, onOpen), bumpRevision)
@@ -150,12 +147,12 @@ object ConfigRegistry {
         }
     }
 
-    fun findById(id: String): ConfigData? = configList.find { it.id == id }
+    fun findById(id: String): ConfigData? = configs.find { it.id == id }
 
     fun findTree(id: String): Tree? = (findById(id) as? TreeConfigData)?.tree
 
     private fun upsert(data: ConfigData, bumpRevision: Boolean): Boolean {
-        val index = configList.indexOfFirst { it.id == data.id }
+        val index = configs.indexOfFirst { it.id == data.id }
         if (index >= 0) {
             if (configs[index].wraps(data)) return false
             configs[index] = data

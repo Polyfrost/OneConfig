@@ -19,10 +19,22 @@ object MinecraftKeybindRegistrar {
 
     private val propByBind = WeakHashMap<OneConfigKeybind, Property<*>>()
     private val wiredProps = WeakHashMap<Property<*>, Boolean>()
+
+    /**
+     * The trees already walked, held weakly so a discarded profile's trees are not kept alive
+     *
+     * Every open reloads the registry and so re-walked every tree, which with a hundred configs is
+     * the whole property graph plus a localised title each, measured at 45 ms on the opening frame.
+     * A tree only gains properties when something registers it again on purpose, which [force] covers.
+     */
+    private val scannedTrees = WeakHashMap<Tree, Boolean>()
     private var listenerInstalled = false
 
     @JvmStatic
-    fun scan(tree: Tree) {
+    @JvmOverloads
+    fun scan(tree: Tree, force: Boolean = true) {
+        if (!force && scannedTrees.containsKey(tree)) return
+        scannedTrees[tree] = true
         installRebindListener()
         val category = "${tree.localizedTitle()} (OneConfig)"
         walk(tree, category)
