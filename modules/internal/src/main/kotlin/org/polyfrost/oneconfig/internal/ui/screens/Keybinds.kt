@@ -67,6 +67,7 @@ import org.polyfrost.oneconfig.internal.ui.keybind.KeybindEntry
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroup
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroupCollapseStore
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.keybind.collectAllKeybindGroups
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 import org.polyfrost.oneconfig.internal.ui.search.SearchDocument
@@ -244,7 +245,7 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
                 awaitPointerEventScope {
                     while (true) {
                         val event = awaitPointerEvent(PointerEventPass.Initial)
-                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed) {
+                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed && !KeybindRecordingBus.isRecording) {
                             val pos = event.changes.first().position
                             menuOffset = IntOffset(pos.x.roundToInt(), pos.y.roundToInt())
                             menuOpen = true

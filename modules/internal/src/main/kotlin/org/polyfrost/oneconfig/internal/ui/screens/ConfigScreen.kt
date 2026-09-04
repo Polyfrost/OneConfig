@@ -81,6 +81,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.search.CategoryGroup
 import org.polyfrost.oneconfig.internal.ui.search.ConfigListEntry
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
@@ -651,7 +652,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 awaitPointerEventScope {
                     while (true) {
                         val event = awaitPointerEvent(PointerEventPass.Initial)
-                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed) {
+                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed && !KeybindRecordingBus.isRecording) {
                             val pos = event.changes.first().position
                             menuOffset = IntOffset(pos.x.roundToInt(), pos.y.roundToInt())
                             menuOpen = true

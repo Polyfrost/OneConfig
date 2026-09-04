@@ -256,6 +256,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     /** Mouse side buttons navigate the page history like a browser */
     override fun handleMouseClicked(button: Int): Boolean {
+        if (KeybindRecordingBus.isRecording) return false
         if (!closeRequested && LocalNavController.isReady) {
             when (button) {
                 //~ if < 1.21.11 && > 1.8.9 'InputConstants.MOUSE_BUTTON_4' -> 'GLFW.GLFW_MOUSE_BUTTON_4'
