@@ -442,7 +442,9 @@ public abstract class Property<T> extends Node implements Serializable {
         public void set0(@Nullable T value) {
             try {
                 T it = get();
-                if (it != null && complex) {
+                // overwrite() says "cannot write through this" by throwing, and set0 runs once a
+                // frame for the length of a drag, so ask the same question rather than catch it
+                if (it != null && complex && !ObjectSerializer.isImmutable(it.getClass())) {
                     try {
                         ObjectSerializer.overwrite(it, value);
                     } catch (Throwable ignored) {
