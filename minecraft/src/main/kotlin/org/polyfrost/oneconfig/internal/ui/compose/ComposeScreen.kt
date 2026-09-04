@@ -538,8 +538,17 @@ abstract class ComposeScreen(
         withScene {
             it.sendPointerEvent(
                 type,
+                //? if sdl_keycodes {
+                /*button = when (button) {
+                    InputConstants.MOUSE_BUTTON_LEFT -> PointerButton.Primary
+                    InputConstants.MOUSE_BUTTON_RIGHT -> PointerButton.Secondary
+                    InputConstants.MOUSE_BUTTON_MIDDLE -> PointerButton.Tertiary
+                    else -> PointerButton(button - 1)
+                }
+                *///?} else {
                 // PointerButton indices match GLFW button numbers (Primary = 0, Secondary = 1, ...)
                 button = if (button >= 0) PointerButton(button) else null,
+                //?}
                 position = pointerPosition()
             )
         }
