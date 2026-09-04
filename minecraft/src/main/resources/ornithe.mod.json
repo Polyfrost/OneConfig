@@ -37,11 +37,10 @@
     "fabricloader": ">=0.18.0",
     "minecraft": "${fabric_mc_version}",
     "lenis": ">=0.1.4",
-    "osl-core": ">=0.10.0-alpha.5",
-    "osl-resource-loader": ">=0.8.0-alpha.5",
-    "osl-localization": ">=0.1.1-alpha.3",
-    "osl-networking": ">=0.10.0-alpha.3",
-    "osl-text-components": ">=0.1.0-alpha.5"
+    "osl-core": ">=0.9.0",
+    "osl-config": ">=0.6.2",
+    "osl-resource-loader": ">=0.7.4",
+    "osl-text-components": ">=0.1.0-alpha.3"
   },
   "custom": {
     "modmenu": {

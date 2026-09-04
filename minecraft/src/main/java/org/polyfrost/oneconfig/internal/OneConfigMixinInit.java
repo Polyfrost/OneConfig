@@ -68,6 +68,11 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? if = 1.8.9
         //mixins.add("command.Mixin_LegacyChatCompletion");
 
+        //? if = 1.8.9 {
+        /*mixins.add("legacy.Mixin_PathResourcePack");
+        mixins.add("legacy.Mixin_Resource");
+        *///?}
+
         //? moul_compat {
         RelocatedMixins.INSTANCE.register(e -> {
             mixins.add(e);
