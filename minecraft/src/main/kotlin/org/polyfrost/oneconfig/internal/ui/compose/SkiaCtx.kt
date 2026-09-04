@@ -492,11 +492,12 @@ object SkiaCtx {
         if (clearComposeAfterDraw && !composeStandsInForHud) finishComposeClear()
         *///? }
         runWarmups()
-        val draws = queuedDraws.toList()
-        queuedDraws.clear()
         val notifDraw = if (NotificationsManager.count > 0) notifRender else null
         val wantCompose = composeActive && !isVulkanMode
-        if (draws.isEmpty() && notifDraw == null && !wantCompose) return
+        // tested before the snapshot is taken, so an idle frame costs nothing rather than a list copy
+        if (queuedDraws.isEmpty() && notifDraw == null && !wantCompose) return
+        val draws = queuedDraws.toList()
+        queuedDraws.clear()
 
         val mainSurface = if (isVulkanMode) resolveVkSurface() else resolveGLSurface()
         if (mainSurface == null) return
