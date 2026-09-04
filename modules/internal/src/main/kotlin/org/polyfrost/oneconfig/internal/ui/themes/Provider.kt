@@ -19,7 +19,6 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
 import androidx.compose.ui.graphics.toArgb
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationTheme
@@ -34,9 +33,15 @@ import kotlin.math.round
 
 private var _accent by mutableStateOf(Color(ThemeConfig.accentColor.argb))
 
+// only a chroma accent changes on its own, so only that one is worth waiting on a frame
+private var _chroma by mutableStateOf(ThemeConfig.accentColor.chroma)
+
 val Accent: Color get() = _accent
 
-fun updateAccent() { _accent = Color(ThemeConfig.accentColor.argb) }
+fun updateAccent() {
+    _accent = Color(ThemeConfig.accentColor.argb)
+    _chroma = ThemeConfig.accentColor.chroma
+}
 
 val LocalTheme = compositionLocalOf<UITheme> { error("A UI theme is required but was not provided") }
 
@@ -109,16 +114,14 @@ fun Theme(
     designHeight: Dp = DESIGN_HEIGHT_DP.dp,
     content: @Composable () -> Unit,
 ) {
-    _accent = Color(ThemeConfig.accentColor.argb)
+    updateAccent()
 
-    LaunchedEffect(Unit) {
-        while (true) {
-            if (ThemeConfig.accentColor.chroma) {
-                withFrameNanos { }
-                updateAccent()
-            } else {
-                delay(200)
-            }
+    // waiting on the clock unconditionally leaves an awaiter on it forever, and Compose reads that
+    // as pending work, so every frame came back dirty and redrew the whole screen
+    LaunchedEffect(_chroma) {
+        while (_chroma) {
+            withFrameNanos { }
+            updateAccent()
         }
     }
 
