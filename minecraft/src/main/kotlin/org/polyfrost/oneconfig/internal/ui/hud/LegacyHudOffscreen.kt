@@ -35,19 +35,27 @@ object LegacyHudOffscreen {
         LegacyHudOverlayBridge.painter = { c -> drawInto(c) }
     }
 
+    /**
+     * Records the legacy HUDs into the offscreen target so Skia can composite them above the UI
+     *
+     * Returns whether the HUD has been dealt with. False hands it back to the caller's live
+     * renderer, so every path that fails to record has to report false, since returning true without
+     * setting [hasContent] suppresses the live renderer and leaves the HUD missing for that frame
+     */
     fun render(): Boolean {
         hasContent = false
         if (failed) return false
         if (java.lang.Boolean.getBoolean("oneconfig.disable.legacyHudOffscreen")) return false
+        // nothing to record, so there is nothing for the live renderer to draw either
         if (HudManager.activeInstances.none { it is LegacyHud } && !CompatOverlayRenderer.hasHooks()) return true
-        if (!SkiaCtx.isReady) return true
+        if (!SkiaCtx.isReady) return false
         val w = Platform.screen().viewportWidth()
         val h = Platform.screen().viewportHeight()
-        if (w <= 0 || h <= 0) return true
+        if (w <= 0 || h <= 0) return false
 
         try {
-            if (!offscreen.resolveTarget(w, h)) return true
-            val rt = offscreen.target ?: return true
+            if (!offscreen.resolveTarget(w, h)) return false
+            val rt = offscreen.target ?: return false
             //? if >= 1.21.8 {
             renderRecorded(rt)
             //?} elif >= 1.21.5 {
