@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.compose.render.RenderContext
+import org.polyfrost.compose.runtime.PolyComposeHost
 import org.polyfrost.compose.runtime.PolyComposeRuntime
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
@@ -53,15 +54,26 @@ internal class HudPreviewState(val runtime: PolyComposeRuntime) {
     val ready: Boolean get() = naturalWidth > 0f && naturalHeight > 0f
 }
 
-@Composable
-internal fun rememberHudPreview(hud: Hud): HudPreviewState {
-    val revision = HudManager.revision
-    val state = remember(hud, revision) {
-        hud.update()
-        HudPreviewState(PolyComposeRuntime().also { rt -> rt.setContent { hud.Content() } })
+// a lazy grid disposes cards that scroll out of view, so without this every scroll back rebuilds
+// the runtime and re-runs setContent, which is the most expensive thing a card does
+private object HudPreviewCache {
+    private val cache = HashMap<Hud, HudPreviewState>()
+    private var generation = Int.MIN_VALUE
+
+    internal fun get(hud: Hud, revision: Int, build: () -> HudPreviewState): HudPreviewState {
+        // a revision means providers were registered, unregistered or reloaded, so every preview
+        // here mirrors a HUD that may no longer exist
+        if (revision != generation) {
+            releaseAll()
+            generation = revision
+        }
+        return cache.getOrPut(hud, build)
     }
-    DisposableEffect(state) {
-        onDispose {
+
+    /** called when a revision says the HUDs these mirror have been replaced */
+    private fun releaseAll() {
+        if (cache.isEmpty()) return
+        for (state in cache.values) {
             try {
                 state.runtime.dispose()
             } catch (failure: Throwable) {
@@ -69,8 +81,27 @@ internal fun rememberHudPreview(hud: Hud): HudPreviewState {
                 LOGGER.warn("Failed to dispose HUD preview", failure)
             }
         }
+        cache.clear()
+    }
+}
+
+@Composable
+internal fun rememberHudPreview(hud: Hud): HudPreviewState {
+    val revision = HudManager.revision
+    // owned by HudPreviewCache, so a card scrolling out of view must not take the runtime with it
+    val state = remember(hud, revision) {
+        HudPreviewCache.get(hud, revision) {
+            hud.update()
+            HudPreviewState(
+                PolyComposeRuntime(PolyComposeHost.previews).also { rt ->
+                    rt.setContent { hud.Content() }
+                }
+            )
+        }
     }
     LaunchedEffect(state) {
+        // a cached runtime is already measured, and its content cannot change without a revision
+        if (state.ready) return@LaunchedEffect
         hud.update()
         if (hud.staticWidth && hud.staticW > 0f && hud.staticH > 0f) {
             state.runtime.frame(hud.staticW, hud.staticH)
@@ -98,7 +129,11 @@ internal fun HudPreviewCanvas(state: HudPreviewState, scale: Float, modifier: Mo
             skia.save()
             skia.clipRect(org.jetbrains.skia.Rect.makeWH(size.width, size.height))
             skia.scale(scale, scale)
-            state.runtime.root.render(RenderContext(skia))
+            // a HUD reads live values, and reading them in the draw scope makes this layer depend
+            // on them, so a ticking clock redrew the whole interface. it still draws current values
+            Snapshot.withoutReadObservation {
+                state.runtime.root.render(RenderContext(skia))
+            }
             skia.restore()
         }
     }

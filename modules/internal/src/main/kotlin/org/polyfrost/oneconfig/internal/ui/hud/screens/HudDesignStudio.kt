@@ -412,7 +412,18 @@ private fun hitTestAnchorPoint(
     return best
 }
 
-private fun drawHudContents(sk: org.jetbrains.skia.Canvas, mcToScreen: Float) {
+/**
+ * Paints the HUDs as they are right now, without subscribing to what they read
+ *
+ * This runs in the draw scope, where a read is recorded as something the layer depends on, so a
+ * ticking clock invalidated the layer and one invalidated layer redraws the whole editor.
+ */
+private fun drawHudContents(sk: org.jetbrains.skia.Canvas, mcToScreen: Float) =
+    androidx.compose.runtime.snapshots.Snapshot.withoutReadObservation {
+        drawHudContentsNow(sk, mcToScreen)
+    }
+
+private fun drawHudContentsNow(sk: org.jetbrains.skia.Canvas, mcToScreen: Float) {
     // HUDs fused with a neighbour do not paint their own background so the merged shapes are laid down
     // here first just like the in-game HUD pass
     sk.save()
@@ -1112,7 +1123,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     val searchHits = rememberHudSearchResults(providers, searchText)
     val groupedHuds = searchHits ?: providers.groupBy { it.configId }.map { (modId, huds) -> modId to huds }
     val librarySections = groupedHuds.mapNotNull { (modId, huds) ->
-        huds.filter { it.multipleInstancesAllowed() || HudManager.getHudsOfType(it::class.java).isEmpty() }
+        huds.filter { it.multipleInstancesAllowed() || !HudManager.hasHudOfType(it::class.java) }
             .takeIf { it.isNotEmpty() }
             ?.let { HudLibrarySection(modId, modId?.let { id -> modNames[id] } ?: "Other", it) }
     }
