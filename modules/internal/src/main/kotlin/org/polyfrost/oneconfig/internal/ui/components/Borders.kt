@@ -5,6 +5,7 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -81,29 +82,28 @@ fun Modifier.fadingEdges(
 ): Modifier {
     val topAlpha by animateFloatAsState(if (scrollState.canScrollBackward) 1f else 0f)
     val bottomAlpha by animateFloatAsState(if (scrollState.canScrollForward) 1f else 0f)
-    return this.drawWithContent {
-        drawContent()
+    // the two brushes only depend on the size, so they are built in the cache rather than in the
+    // draw: this sits on every scrollable surface in the UI and was allocating both on every frame
+    return this.drawWithCache {
         val lengthPx = length.toPx().coerceAtMost(size.height / 2f)
-        if (topAlpha > 0f) {
-            drawRect(
-                brush = Brush.verticalGradient(
-                    colors = listOf(color, Color.Transparent),
-                    startY = 0f,
-                    endY = lengthPx,
-                ),
-                size = Size(size.width, lengthPx),
-                alpha = topAlpha,
-            )
-        }
-        if (bottomAlpha > 0f) {
-            drawRect(
-                brush = Brush.verticalGradient(
-                    colors = listOf(Color.Transparent, color),
-                    startY = size.height - lengthPx,
-                    endY = size.height,
-                ),
+        val top = Brush.verticalGradient(
+            colors = listOf(color, Color.Transparent),
+            startY = 0f,
+            endY = lengthPx,
+        )
+        val bottom = Brush.verticalGradient(
+            colors = listOf(Color.Transparent, color),
+            startY = size.height - lengthPx,
+            endY = size.height,
+        )
+        val edge = Size(size.width, lengthPx)
+        onDrawWithContent {
+            drawContent()
+            if (topAlpha > 0f) drawRect(brush = top, size = edge, alpha = topAlpha)
+            if (bottomAlpha > 0f) drawRect(
+                brush = bottom,
                 topLeft = Offset(0f, size.height - lengthPx),
-                size = Size(size.width, lengthPx),
+                size = edge,
                 alpha = bottomAlpha,
             )
         }
