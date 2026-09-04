@@ -1,14 +1,8 @@
 package org.polyfrost.oneconfig.internal.ui.compose.impls
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.EaseIn
 import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -20,6 +14,7 @@ import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
+import org.polyfrost.oneconfig.internal.ui.components.RetainedVisibility
 import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignStudio
@@ -32,7 +27,49 @@ import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Theme
 
-class HudEditorUIScreen : ComposeScreen() {
+private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/HudEditor")
+
+/** One frame to build it, one to settle whatever that frame scheduled */
+private const val PREWARM_FRAMES = 2
+
+class HudEditorUIScreen private constructor() : ComposeScreen() {
+    companion object {
+        /**
+         * The editor screen, reused so its scene and composition outlive a close
+         *
+         * Building it is the most expensive open OneConfig has: forty HUD previews, each its own
+         * compose runtime. There is only ever one editor, so there is only ever one of these.
+         */
+        private var instance: HudEditorUIScreen? = null
+
+        @JvmStatic
+        fun open(): HudEditorUIScreen = instance ?: HudEditorUIScreen().also { instance = it }
+
+        /**
+         * Composes, lays out and draws the editor before anything opens it
+         *
+         * Unlike the config screen this never raises the interface's visibility. [RetainedVisibility]
+         * composes its content either way, so the expensive half happens with no state moved.
+         */
+        @JvmStatic
+        fun prewarmShared(): Boolean = open().runPrewarm()
+    }
+
+    /** Set the first time the editor is really shown, after which no warm-up may touch its scene */
+    @Volatile private var everOpened = false
+
+    private fun runPrewarm(): Boolean {
+        if (everOpened || Platform.screen().current<Any?>() === this) return true
+        return try {
+            prewarm(PREWARM_FRAMES) { }
+        } catch (t: Throwable) {
+            LOGGER.warn("HUD editor warm-up failed; the first open will build it instead", t)
+            false
+        }
+    }
+
+    override val retainsScene: Boolean get() = true
+
     @Volatile private var closeRequested = false
     @Volatile private var closeRequestedAt = 0L
     @Volatile private var closeAnimationMs = 0L
@@ -61,8 +98,16 @@ class HudEditorUIScreen : ComposeScreen() {
     override val scrollSpeed: Float get() = 0.5f
 
     override fun init() {
+        everOpened = true
+        // a reused screen still carries the close it was last dismissed by, and its interface still
+        // has the visibility that close lowered; both have to be put back before the first frame
+        closeRequested = false
+        closeRequestedAt = 0L
+        closeAnimationMs = 0L
+        returningToOneConfig = false
         UiSounds.acquireAmbience()
         super.init()
+        requestOpenCallback?.invoke()
     }
 
     override fun removed() {
@@ -95,7 +140,7 @@ class HudEditorUIScreen : ComposeScreen() {
                 requestCloseCallback?.invoke()
             } else {
                 returningToOneConfig = true
-                Platform.screen().display(OneConfigUIScreen())
+                Platform.screen().display(OneConfigUIScreen.open())
             }
             return true
         }
@@ -145,27 +190,25 @@ class HudEditorUIScreen : ComposeScreen() {
             requestOpenCallback = requestOpen
         }
 
-        val exitMs = guiCloseAnimationMillis().toInt()
-        AnimatedVisibility(
+        val exitMs = guiCloseAnimationMillis().toInt().coerceAtLeast(1)
+        RetainedVisibility(
             visible = visible,
-            enter = fadeIn(tween(200, easing = EaseOutCubic)) + scaleIn(tween(200, easing = EaseOutCubic), initialScale = 0.92f),
-            exit = if (exitMs > 0)
-                fadeOut(tween(exitMs, easing = EaseIn)) + scaleOut(tween(exitMs, easing = EaseIn), targetScale = 0.92f)
-            else ExitTransition.None,
-        ) {
-            Box(Modifier.fillMaxSize()) {
-                CompositionLocalProvider(
-                    LocalLifecycleOwner provides Lifecycle,
-                    LocalViewModelStoreOwner provides OCViewModelStoreOwner
-                ) {
-                    Theme(pixelGrid = true) {
-                        HudDesignStudio(
-                            onReturnToOneConfig = {
-                                returningToOneConfig = true
-                                Platform.screen().display(OneConfigUIScreen())
-                            }
-                        )
-                    }
+            enter = tween(200, easing = EaseOutCubic),
+            exit = tween(exitMs, easing = EaseIn),
+            modifier = Modifier.fillMaxSize(),
+            hiddenScale = 0.92f,
+        ) { _ ->
+            CompositionLocalProvider(
+                LocalLifecycleOwner provides Lifecycle,
+                LocalViewModelStoreOwner provides OCViewModelStoreOwner
+            ) {
+                Theme(pixelGrid = true) {
+                    HudDesignStudio(
+                        onReturnToOneConfig = {
+                            returningToOneConfig = true
+                            Platform.screen().display(OneConfigUIScreen.open())
+                        }
+                    )
                 }
             }
         }
