@@ -548,7 +548,7 @@ abstract class ComposeScreen(
                     InputConstants.MOUSE_BUTTON_RIGHT -> PointerButton.Secondary
                     InputConstants.MOUSE_BUTTON_MIDDLE -> PointerButton.Tertiary
                     else -> PointerButton(button - 1)
-                }
+                },
                 *///?} else {
                 // PointerButton indices match GLFW button numbers (Primary = 0, Secondary = 1, ...)
                 button = if (button >= 0) PointerButton(button) else null,
