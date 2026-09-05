@@ -9,6 +9,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/Font : java/lang/Enum {
 public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/oneconfig/api/config/v1/Config, java/lang/Cloneable {
 	public static final field $stable I
 	public field lastLayoutFrame J
+	public field lastUpdate J
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;)V
 	public abstract fun Content (Landroidx/compose/runtime/Composer;I)V
 	protected fun addCallbacks (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
@@ -269,9 +270,12 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public final fun closeEditor ()V
 	public final fun drawMergedBackgrounds (Lorg/polyfrost/compose/render/RenderContext;)V
 	public final fun getActiveInstances ()Ljava/util/ArrayList;
+	public final fun getEditorOpenRevision ()Landroidx/compose/runtime/MutableIntState;
 	public final fun getHudsOfType (Ljava/lang/Class;)Ljava/util/ArrayList;
+	public final fun getPreviewRevision ()Landroidx/compose/runtime/MutableIntState;
 	public final fun getProvider (Ljava/lang/Class;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public final fun getRevision ()I
+	public final fun hasHudOfType (Ljava/lang/Class;)Z
 	public final fun iconFor (Ljava/lang/String;)Ljava/lang/String;
 	public final fun initialize ()V
 	public final fun instanceById (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud;

@@ -14,6 +14,7 @@ public class org/polyfrost/oneconfig/api/event/v1/EventException : java/lang/Run
 public final class org/polyfrost/oneconfig/api/event/v1/EventManager {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/event/v1/EventManager;
 	public fun getRegisteredHandlersDebugTable ()Ljava/lang/String;
+	public fun hasListeners (Ljava/lang/Class;)Z
 	public fun post (Lorg/polyfrost/oneconfig/api/event/v1/events/Event;)V
 	public static fun register (Ljava/lang/Class;Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
 	public static fun register (Ljava/lang/Class;Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
