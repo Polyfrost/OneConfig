@@ -94,6 +94,9 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? rconfig_compat
         mixins.add("compat.rconfig.Mixin_Configurations");
 
+        //? osl_config_compat
+        //mixins.add("compat.osl.Mixin_OslConfigManager");
+
         mixins.add("Mixin_SimpleReloadInstance");
         mixins.add("Mixin_MainMenuFpsUncap");
         //? yacl_compat
@@ -115,6 +118,9 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
         //? ukulib_compat
         mixins.add("compat.ukulib.Mixin_BaseConfigScreen");
+
+        //? axolotlclient_config_compat
+        mixins.add("compat.axolotlclient.Mixin_AxolotlClientConfigImpl");
 
         //? skycubed_compat {
         /*mixins.add("compat.skycubed.Mixin_SkyCubed");
@@ -188,6 +194,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("keybind.Mixin_OneConfigKeybindRebind");
         mixins.add("keybind.Mixin_KeyMappingResetDetect");
         mixins.add("keybind.Mixin_OptionsSaveDetect");
+        mixins.add("keybind.Mixin_OptionsSkipMirrors");
 
         //? cinnabar
         //mixins.add("skia.Mixin_CinnabarSkiaFlush");

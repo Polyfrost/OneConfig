@@ -17,8 +17,11 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.mojang.blaze3d.platform.InputConstants
 //? if > 1.8.9
 import net.minecraft.client.gui.GuiGraphicsExtractor
+//? if < 1.21.11 && > 1.8.9
+//import org.lwjgl.glfw.GLFW
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
@@ -79,6 +82,19 @@ class HudEditorUIScreen : ComposeScreen() {
         super.removed()
     }
 
+    private fun handleOneConfigKeybind(): Boolean {
+        if (closeRequested) return cancelClose()
+        if (OneConfigConfig.keybindClosesGui) {
+            OneConfigConfig.notifyKeybindClosedGui()
+            beginClose()
+            requestCloseCallback?.invoke()
+        } else {
+            returningToOneConfig = true
+            Platform.screen().display(OneConfigUIScreen())
+        }
+        return true
+    }
+
     override fun handleKeyPressed(key: Int, modifiers: Int): Boolean {
         if (key == InputConstants.KEY_ESCAPE) {
             if (!closeRequested) {
@@ -89,16 +105,19 @@ class HudEditorUIScreen : ComposeScreen() {
         }
         val toggleKey = OneConfigConfig.oneConfigKeybind.keyCodes?.firstOrNull()
         if (toggleKey != null && key == toggleKey && !KeybindRecordingBus.isRecording) {
-            if (closeRequested) return cancelClose()
-            if (OneConfigConfig.keybindClosesGui) {
-                OneConfigConfig.notifyKeybindClosedGui()
-                beginClose()
-                requestCloseCallback?.invoke()
-            } else {
-                returningToOneConfig = true
-                Platform.screen().display(OneConfigUIScreen())
-            }
-            return true
+            return handleOneConfigKeybind()
+        }
+        return false
+    }
+
+    override fun handleMouseClicked(button: Int): Boolean {
+        if (KeybindRecordingBus.isRecording) return false
+        // Only side and extra mouse buttons can trigger the OneConfig keybind
+        //~ if < 1.21.11 && > 1.8.9 'InputConstants.MOUSE_BUTTON_4' -> 'GLFW.GLFW_MOUSE_BUTTON_4'
+        if (button >= InputConstants.MOUSE_BUTTON_4 &&
+            KeybindManager.isTriggeredByMouse(OneConfigConfig.oneConfigKeybind, button)
+        ) {
+            return handleOneConfigKeybind()
         }
         return false
     }

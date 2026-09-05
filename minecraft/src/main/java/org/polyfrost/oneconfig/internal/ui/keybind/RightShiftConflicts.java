@@ -69,7 +69,7 @@ public final class RightShiftConflicts {
      * The key OneConfig's own keybind uses and which conflicting keybinds are cleared from
      */
     public static InputConstants.Key key() {
-        //~ if < 26.3 && > 1.8.9 'Type.KEYBOARD' -> 'Type.KEYSYM'
+        //~ if !sdl_keycodes 'Type.KEYBOARD' -> 'Type.KEYSYM'
         return InputConstants.Type.KEYSYM.getOrCreate(InputConstants.KEY_RSHIFT);
     }
 

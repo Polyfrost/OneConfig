@@ -125,7 +125,7 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
         if (bridge != null) bridge.setActiveRebind(oneconfig$target != null ? oneconfig$target : this.selectedKey);
         if (!oneconfig$recording) return;
         for (int k : oneconfig$keys) {
-            //? if >= 26.3 || = 1.8.9 {
+            //? if sdl_keycodes {
             /*if (InputConstants.isKeyDown(k)) return;
             *///?} else {
             //~ if < 1.21.10 'Minecraft.getInstance().getWindow()' -> 'Platform.compatibility().windowHandle()'
@@ -168,8 +168,8 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
 
     @Override
     public void oneconfig$recordKey(int keyCode) {
-        //? if >= 26.3 || = 1.8.9
-        if (keyCode <= 0) return;
+        //? if sdl_keycodes
+        //if (keyCode <= 0) return;
         if (!oneconfig$begin()) return;
         oneconfig$keys.add(keyCode);
         oneconfig$preview();

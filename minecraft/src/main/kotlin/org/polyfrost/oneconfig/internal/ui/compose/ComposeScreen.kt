@@ -603,7 +603,7 @@ abstract class ComposeScreen(
     *///?} else
     //override fun mouseClicked(x: Int, y: Int, button: Int) {
         //~ if = 1.8.9 'button' -> 'KeyCodes.mouseFromLegacy(button)' {
-        if (handleMouseClicked(button)) {
+        if (KeybindRecordingBus.consumeMouse(button, true) || handleMouseClicked(button)) {
             consumedButtons += button
             //$ if > 1.8.9 'return true' else 'return'
             return true
@@ -626,8 +626,13 @@ abstract class ComposeScreen(
     /*override fun mouseReleased(x: Double, y: Double, button: Int): Boolean {
     *///?} else
     //override fun mouseReleased(x: Int, y: Int, button: Int) {
-        //~ if = 1.8.9 'button' -> 'KeyCodes.mouseFromLegacy(button)'
-        if (!consumedButtons.remove(button)) sendMouseButtonEvent(PointerEventType.Release, button)
+        //~ if = 1.8.9 'button' -> 'KeyCodes.mouseFromLegacy(button)' {
+        val recordingConsumed = KeybindRecordingBus.consumeMouse(button, false)
+        val pressConsumed = consumedButtons.remove(button)
+        if (!recordingConsumed && !pressConsumed) {
+            sendMouseButtonEvent(PointerEventType.Release, button)
+        }
+        //~}
 
         //? if >= 1.21.10 {
         return super.mouseReleased(event)
@@ -656,11 +661,17 @@ abstract class ComposeScreen(
         withScene {
             it.sendPointerEvent(
                 type,
-                button = when (button) {
+                //? if sdl_keycodes {
+                /*button = when (button) {
                     InputConstants.MOUSE_BUTTON_LEFT -> PointerButton.Primary
                     InputConstants.MOUSE_BUTTON_RIGHT -> PointerButton.Secondary
-                    else -> null
-                },
+                    InputConstants.MOUSE_BUTTON_MIDDLE -> PointerButton.Tertiary
+                    else -> PointerButton(button - 1)
+                }
+                *///?} else {
+                // PointerButton indices match GLFW button numbers (Primary = 0, Secondary = 1, ...)
+                button = if (button >= 0) PointerButton(button) else null,
+                //?}
                 position = pointerPosition()
             )
         }
