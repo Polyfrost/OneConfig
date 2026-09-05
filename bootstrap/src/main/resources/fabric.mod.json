@@ -21,6 +21,7 @@
   "depends": {
     "fabricloader": ">=0.12.0",
     "minecraft": "${mc_version}",
+    "oneconfigv1": "${mod_version}",
     "compose-multiplatform": ">=1.0.4",
     "fabric-language-kotlin": ">=1.13.13+kotlin.2.4.10"
   }
