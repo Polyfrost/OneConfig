@@ -19,7 +19,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -31,11 +30,8 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.key.utf16CodePoint
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Property
@@ -119,8 +115,6 @@ private fun KeyEvent.awtKeyEventId(): Int? = runCatching {
     (field.get(internal) as? java.awt.event.KeyEvent)?.id
 }.getOrNull()
 
-// PointerEvent.button is experimental but the only way to tell which mouse button was pressed
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun KeybindOption(data: KeybindOptionData) {
     val theme = LocalTheme.current
@@ -201,8 +195,28 @@ fun KeybindOption(data: KeybindOptionData) {
                 applyKeybind(null, null)
                 recording = false
             }
+            val mouseHandler: (Int, Boolean) -> Unit = { button, pressed ->
+                if (pressed) {
+                    if (singleKey) {
+                        applyKeybind(null, intArrayOf(button))
+                        recording = false
+                    } else {
+                        if (button !in recordedMouse) recordedMouse.add(button)
+                        heldMouse.add(button)
+                    }
+                } else {
+                    heldMouse.remove(button)
+                    if (heldKeys.isEmpty() && heldMouse.isEmpty() && (recordedKeys.isNotEmpty() || recordedMouse.isNotEmpty())) {
+                        commitRecording()
+                    }
+                }
+            }
             KeybindRecordingBus.setEscapeHandler(handler)
-            onDispose { KeybindRecordingBus.clearEscapeHandler(handler) }
+            KeybindRecordingBus.setMouseHandler(mouseHandler)
+            onDispose {
+                KeybindRecordingBus.clearEscapeHandler(handler)
+                KeybindRecordingBus.clearMouseHandler(mouseHandler)
+            }
         } else {
             onDispose { }
         }
@@ -257,36 +271,6 @@ fun KeybindOption(data: KeybindOptionData) {
             .focusable()
             .background(bgColor, KeybindShape)
             .border(1.dp, borderColor, KeybindShape)
-            // while recording, mouse buttons pressed on the option are captured as part of the bind
-            // the Initial pass consumes them before clickable can toggle recording off
-            .pointerInput(data.prop) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent(PointerEventPass.Initial)
-                        if (!recording) continue
-                        val button = event.button?.index ?: continue
-                        when (event.type) {
-                            PointerEventType.Press -> {
-                                event.changes.forEach { it.consume() }
-                                if (singleKey) {
-                                    applyKeybind(null, intArrayOf(button))
-                                    recording = false
-                                } else {
-                                    if (button !in recordedMouse) recordedMouse.add(button)
-                                    heldMouse.add(button)
-                                }
-                            }
-                            PointerEventType.Release -> {
-                                event.changes.forEach { it.consume() }
-                                heldMouse.remove(button)
-                                if (heldKeys.isEmpty() && heldMouse.isEmpty() && (recordedKeys.isNotEmpty() || recordedMouse.isNotEmpty())) {
-                                    commitRecording()
-                                }
-                            }
-                        }
-                    }
-                }
-            }
             .onClick(interactionSource) { if (!recording) recording = true }
             .pointerHoverIcon(PointerIcon.Hand)
             .padding(horizontal = 12.dp, vertical = 7.dp),

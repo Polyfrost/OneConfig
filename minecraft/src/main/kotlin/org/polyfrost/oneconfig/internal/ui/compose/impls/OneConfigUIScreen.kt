@@ -13,6 +13,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
@@ -354,6 +355,18 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     override fun isPauseScreen(): Boolean = OneConfigConfig.pauseGame
 
+    private fun handleOneConfigKeybind(): Boolean {
+        if (closeRequested) return cancelClose()
+        if (OneConfigConfig.keybindClosesGui) {
+            OneConfigConfig.notifyKeybindClosedGui()
+            beginClose()
+            requestCloseCallback?.invoke()
+        } else {
+            HudManager.openEditor()
+        }
+        return true
+    }
+
     override fun handleKeyPressed(key: Int, modifiers: Int): Boolean {
         if (key == InputConstants.KEY_ESCAPE) {
             if (!closeRequested) {
@@ -364,15 +377,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         }
         val toggleKey = OneConfigConfig.oneConfigKeybind.keyCodes?.firstOrNull()
         if (toggleKey != null && key == toggleKey && !KeybindRecordingBus.isRecording) {
-            if (closeRequested) return cancelClose()
-            if (OneConfigConfig.keybindClosesGui) {
-                OneConfigConfig.notifyKeybindClosedGui()
-                beginClose()
-                requestCloseCallback?.invoke()
-            } else {
-                HudManager.openEditor()
-            }
-            return true
+            return handleOneConfigKeybind()
         }
         return false
     }
@@ -380,16 +385,25 @@ class OneConfigUIScreen @JvmOverloads constructor(
     /** Mouse side buttons navigate the page history like a browser */
     override fun handleMouseClicked(button: Int): Boolean {
         if (KeybindRecordingBus.isRecording) return false
+        // Only side and extra mouse buttons can trigger the OneConfig keybind
+        //~ if < 1.21.11 'InputConstants.MOUSE_BUTTON_4' -> 'GLFW.GLFW_MOUSE_BUTTON_4'
+        if (button >= InputConstants.MOUSE_BUTTON_4 &&
+            KeybindManager.isTriggeredByMouse(OneConfigConfig.oneConfigKeybind, button)
+        ) {
+            return handleOneConfigKeybind()
+        }
         if (!closeRequested && LocalNavController.isReady) {
             when (button) {
                 //~ if < 1.21.11 'InputConstants.MOUSE_BUTTON_4' -> 'GLFW.GLFW_MOUSE_BUTTON_4'
                 InputConstants.MOUSE_BUTTON_4 -> {
+                    if (KeybindManager.hasTriggeredMouseBind(button)) return true
                     UiSounds.play(UiSoundEvent.CLICK)
                     LocalNavController.wrapper.back()
                     return true
                 }
                 //~ if < 1.21.11 'InputConstants.MOUSE_BUTTON_5' -> 'GLFW.GLFW_MOUSE_BUTTON_5'
                 InputConstants.MOUSE_BUTTON_5 -> {
+                    if (KeybindManager.hasTriggeredMouseBind(button)) return true
                     UiSounds.play(UiSoundEvent.CLICK)
                     LocalNavController.wrapper.forward()
                     return true

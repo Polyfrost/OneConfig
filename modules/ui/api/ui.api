@@ -174,7 +174,9 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindManager {
 	public static final fun addRebindListener (Lkotlin/jvm/functions/Function2;)V
 	public static final fun builder ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public static final fun findConflicts (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Ljava/util/List;
+	public static final fun hasTriggeredMouseBind (I)Z
 	public static final fun isRegistered (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Z
+	public static final fun isTriggeredByMouse (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;I)Z
 	public static final fun notifyMenuEdit (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
 	public static final fun rebindFromMinecraft (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;[I)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
 	public static final fun rebindFromMinecraft (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;[I[I)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;

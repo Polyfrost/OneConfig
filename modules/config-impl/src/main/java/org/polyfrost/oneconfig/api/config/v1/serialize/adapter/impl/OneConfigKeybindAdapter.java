@@ -51,7 +51,6 @@ public final class OneConfigKeybindAdapter extends Adapter<OneConfigKeybind, Map
         int[] mouseBtns = decode(in.get("mouseBtns"), false, droppedMouse);
         byte mods = ((Number) in.getOrDefault("mods", 0)).byteValue();
         long durationNanos = ((Number) in.getOrDefault("durationNanos", 0L)).longValue();
-        notifyDropped(droppedKeys, droppedMouse);
         OneConfigKeybind out = BindNotInScreen.class.getName().equals(in.get("class"))
                 ? new BindNotInScreen(keyCodes, mouseBtns, mods, durationNanos, ignored -> true)
                 : new OneConfigKeybind(keyCodes, mouseBtns, mods, durationNanos, ignored -> true);
@@ -139,27 +138,6 @@ public final class OneConfigKeybindAdapter extends Adapter<OneConfigKeybind, Map
         }
         LOGGER.warn("Ignoring unsupported keybind value {}", value);
         return null;
-    }
-
-    private static void notifyDropped(List<Object> droppedKeys, List<Object> droppedMouse) {
-        if (droppedKeys.isEmpty() && droppedMouse.isEmpty()) return;
-        List<Object> dropped = new ArrayList<>(droppedKeys);
-        dropped.addAll(droppedMouse);
-        try {
-            StringBuilder names = new StringBuilder();
-            for (Object entry : dropped) {
-                if (names.length() != 0) names.append(", ");
-                names.append('\'').append(entry).append('\'');
-            }
-            Notifications.error(
-                "Unsupported keybind" + (dropped.size() == 1 ? "" : "s"),
-                names + (dropped.size() == 1 ? " is" : " are")
-                    + " not supported by this Minecraft version and will stay inactive until it supports "
-                    + (dropped.size() == 1 ? "it" : "them") + " again."
-            );
-        } catch (Throwable t) {
-            LOGGER.error("Failed to notify about unsupported keybind inputs {}", dropped, t);
-        }
     }
 
     private KeybindCodec codec() {
