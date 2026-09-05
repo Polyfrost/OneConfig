@@ -42,7 +42,6 @@ public class Mixin_RenderLivingEntityEvent {
     *///?} else {
     /*private void onPreEntityRenderCallback(LivingEntity entity, float entityYaw, float partialTicks, PoseStack matrixStack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
     *///?}
-        // runs for every living entity on every frame, so build nothing when nothing is listening
         if (!EventManager.INSTANCE.hasListeners(RenderLivingEvent.Pre.class)) return;
 
         //? >= 1.21.2 {

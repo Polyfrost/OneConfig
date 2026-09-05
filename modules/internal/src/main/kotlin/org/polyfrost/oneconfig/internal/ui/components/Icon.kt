@@ -55,8 +55,6 @@ private val SvgViewBoxSeparator = Regex("""[\s,]+""")
  * Pixel art is upscaled with nearest neighbour so it stays crisp
  */
 private class RasterIcon(val bitmap: ImageBitmap, filterQuality: FilterQuality) {
-    // Compose's bitmap painter builds a native image and destroys it on every draw, and the mod
-    // list draws over a hundred icons a frame. nothing about the image changes between them
     val image: SkImage by lazy { SkImage.makeFromBitmap(bitmap.asSkiaBitmap()) }
 
     val sampling: SamplingMode =
@@ -76,8 +74,6 @@ private object IconBitmapCache {
     }
 }
 
-// jar contents cannot change while the game runs, so no modification stamp. misses are cached
-// too, since theme override probes usually resolve to nothing and a scroll asks again
 private object IconResource {
     private class Entry(val bytes: ByteArray?)
 
@@ -87,18 +83,12 @@ private object IconResource {
 
     fun exists(path: String): Boolean = bytes(path) != null
 
-    // an icon shipped as a file was read from disk again on every scroll back, because the read
-    // lived in a remember the lazy grid throws away
     fun fileBytes(file: File, stamp: Long): ByteArray? =
         cache.getOrPut("file:${file.path}@$stamp") {
             Entry(runCatching { file.readBytes() }.getOrNull())
         }.bytes
 
-    // a classpath miss walks every jar the game loaded, and most icon probes miss by design, so
-    // the first card showing a name paid for the search on the frame that showed it
     fun warm(names: Collection<String>) {
-        // one pass at a time: the warm-up runs several times while the window settles, and threads
-        // doing this at once contend in the class loader with each other and with the render thread
         val pending = names.filterTo(HashSet()) { !cache.containsKey(it) && warming.add(it) }
         if (pending.isEmpty()) return
         Multithreading.submit {
@@ -111,7 +101,6 @@ private object IconResource {
         }
     }
 
-    /** names a warm-up already owns, so passes do not duplicate each other */
     private val warming = ConcurrentHashMap.newKeySet<String>()
 
     private fun load(path: String): ByteArray? {
@@ -152,7 +141,6 @@ private fun decodeRasterIcon(bytes: ByteArray): RasterIcon {
     return RasterIcon(buffered.toComposeImageBitmap(), quality)
 }
 
-// raster icons are never tinted so no colour filter is carried, but alpha is, since cards fade
 private class RasterIconPainter(private val icon: RasterIcon) : Painter() {
     private val paint = SkPaint()
     private var alpha = 1f
@@ -265,8 +253,6 @@ fun Icon(
     )
 }
 
-// a painter per call site, not cached: it stores the alpha and colour filter applied to it and
-// callers tint the same icon differently
 @Composable
 fun rememberSvgResourcePainter(path: String): Painter? {
     val over = LocalUiOversample.current
@@ -316,7 +302,6 @@ private fun rememberIconRasterPainter(path: String): Painter? {
     return icon?.let { remember(it) { RasterIconPainter(it) } }
 }
 
-/** resolves [names] on a background thread before anything draws them. safe to call repeatedly */
 fun warmIconCache(names: Collection<String>) = IconResource.warm(names)
 
 fun canRenderIcon(iconName: String): Boolean {
@@ -336,7 +321,6 @@ private fun iconSizeModifier(aspectRatio: Float?): Modifier {
     return Modifier.size((DefaultIconSize * scale).dp, (DefaultIconSize / scale).dp)
 }
 
-/** the viewBox sits in the opening tag, so only the head is worth decoding */
 private fun readSvgAspectRatio(bytes: ByteArray): Float? {
     val header = String(bytes, 0, minOf(bytes.size, SvgHeaderBytes), Charsets.UTF_8)
     val viewBox = SvgViewBox.find(header)?.groupValues?.get(1) ?: return null

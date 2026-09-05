@@ -29,28 +29,15 @@ import org.polyfrost.oneconfig.internal.ui.themes.Theme
 
 private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/HudEditor")
 
-/** One frame to build it, one to settle whatever that frame scheduled */
 private const val PREWARM_FRAMES = 2
 
 class HudEditorUIScreen private constructor() : ComposeScreen() {
     companion object {
-        /**
-         * The editor screen, reused so its scene and composition outlive a close
-         *
-         * Building it is the most expensive open OneConfig has: forty HUD previews, each its own
-         * compose runtime. There is only ever one editor, so there is only ever one of these.
-         */
         private var instance: HudEditorUIScreen? = null
 
         @JvmStatic
         fun open(): HudEditorUIScreen = instance ?: HudEditorUIScreen().also { instance = it }
 
-        /**
-         * Composes, lays out and draws the editor before anything opens it
-         *
-         * Unlike the config screen this never raises the interface's visibility. [RetainedVisibility]
-         * composes its content either way, so the expensive half happens with no state moved.
-         */
         @JvmStatic
         fun prewarmShared(): Boolean = open().runPrewarm()
 
@@ -60,7 +47,6 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
         }
     }
 
-    /** Set the first time the editor is really shown, after which no warm-up may touch its scene */
     @Volatile private var everOpened = false
 
     private fun runPrewarm(): Boolean {
@@ -104,11 +90,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
 
     override fun init() {
         everOpened = true
-        // the composition outlives a close and the warm-up already ran its once-per-composition
-        // effects, so an open has to say so for anything left pending to be picked up
         HudManager.editorOpenRevision.intValue++
-        // a reused screen still carries the close it was last dismissed by, and its interface still
-        // has the visibility that close lowered; both have to be put back before the first frame
         closeRequested = false
         closeRequestedAt = 0L
         closeAnimationMs = 0L

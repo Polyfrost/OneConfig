@@ -45,8 +45,6 @@ data class ModInfo @JvmOverloads constructor(
     }
 
     companion object {
-        // building this walks the loader's whole mod list, and the settings list asks once per
-        // config as it composes. empty means the game is still loading, so that answer is not kept
         @Volatile
         private var cached: Set<ModInfo>? = null
 

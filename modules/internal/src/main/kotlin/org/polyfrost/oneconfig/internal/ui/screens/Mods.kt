@@ -175,8 +175,6 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
             items(
                 entries,
                 key = { it.key },
-                // cards are all the same shape, so the grid can reuse one scrolling out instead of
-                // building a fresh subcomposition and node tree for every one scrolling in
                 contentType = { if (it is ModGridEntry.Header) HEADER_CONTENT_TYPE else CARD_CONTENT_TYPE },
                 span = { if (it is ModGridEntry.Header) GridItemSpan(maxLineSpan) else GridItemSpan(1) },
             ) { entry ->
@@ -279,13 +277,11 @@ private fun commitDrop(entries: List<ModGridEntry>, index: Int) {
     )
 }
 
-/** headers and cards lay out differently, so each may only be reused for its own kind */
 private const val HEADER_CONTENT_TYPE = "header"
 private const val CARD_CONTENT_TYPE = "card"
 
 private val ModCardFooterHeight = 36.dp
 
-/** how far the accent glow reaches up from the bottom of a card */
 private val ModCardGlowHeight = 50.dp
 
 private val FavoriteStarColor = Color(0xFFFFD700)
@@ -317,8 +313,6 @@ fun ModCard(mod: ConfigData, modifier: Modifier = Modifier) {
                 contentAlignment = Alignment.Center
             ) {
                 val preview = mod.preview
-                // canRenderIcon stats the filesystem, and this runs for every card on every
-                // recomposition, so decide it once per icon
                 val icon = remember(mod.icon) { mod.icon?.takeIf(::canRenderIcon) }
                 if (preview != null) {
                     preview(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp))
@@ -355,8 +349,6 @@ fun ModCard(mod: ConfigData, modifier: Modifier = Modifier) {
         }
 
         if (LocalTheme.current.shadowEnabled) {
-            // one box, not two: both are decoration over the whole card, and a box each cost every
-            // card an extra layout node and an extra draw node
             val vignetteColor = theme.textColor
             Box(
                 Modifier.fillMaxSize().drawWithCache {
@@ -392,8 +384,6 @@ fun ModCard(mod: ConfigData, modifier: Modifier = Modifier) {
 
         FavoriteStar(
             mod = mod,
-            // the source rather than its state: reading the state here would recompose the whole
-            // card on hover, both gradients and labels and the icon, instead of just the star
             cardInteractions = interactionSource,
             modifier = Modifier.align(Alignment.TopEnd),
         )

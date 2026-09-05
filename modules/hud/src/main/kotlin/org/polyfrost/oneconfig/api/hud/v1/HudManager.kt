@@ -153,11 +153,9 @@ object HudManager {
 
     private val showingPreviews get() = isConfigUiOpen || isEditorOpen
 
-    /** bumped when a preview's content changed, so previews redraw on that frame and nothing else */
     @ApiStatus.Internal
     val previewRevision = mutableIntStateOf(0)
 
-    /** bumped by a real open, so a retained editor still picks up what was left pending for it */
     @ApiStatus.Internal
     val editorOpenRevision = mutableIntStateOf(0)
 
@@ -187,7 +185,6 @@ object HudManager {
     /** [frameOrder] plus the hidden HUDs which still contribute their background to a fused shape */
     private val layoutOrder = ArrayList<Hud>()
 
-    /** Everything [prepare] lays out, reused rather than refiltered into a new list each frame */
     private val prepareOrder = ArrayList<Hud>()
 
     private var frameGroups: List<HudBackgroundMerge.Group> = emptyList()
@@ -360,13 +357,6 @@ object HudManager {
         return out
     }
 
-    /**
-     * Whether any instance of [hudClass] is active
-     *
-     * Short-circuits on the first match and builds no list, unlike [getHudsOfType]. Callers that
-     * only need to know whether the type is present should prefer this, since the library asks once
-     * per provider on every recomposition
-     */
     fun hasHudOfType(hudClass: Class<out Hud>): Boolean = activeInstances.any { it::class.java == hudClass }
 
     fun getProvider(hudClass: Class<out Hud>): Hud? = hudProviders[hudClass]
@@ -497,16 +487,10 @@ object HudManager {
                 LOGGER.error("Failed to update HUD ${hud.title}", e)
             }
         }
-        // a preview mirrors a provider, and providers are not active instances, so nothing else
-        // advances what one shows. before the notify below, so this frame composes against it
         if (showingPreviews) for (hud in hudProviders.values) updateIfDue(hud)
         if (PolyComposeHost.frameWithReport()) invalidate()
-        // previews are only ever on screen behind a OneConfig UI, so that is when their clock runs.
-        // notify=false because the line above already applied this frame's snapshot writes
         if (showingPreviews) {
             PolyComposeHost.previews.frame(notify = false)
-            // a preview draws without observing what it reads, so this is the only thing that
-            // tells it to redraw, and only on a frame that actually changed something
             if (PolyComposeHost.previews.appliedChange) previewRevision.intValue++
         }
     }

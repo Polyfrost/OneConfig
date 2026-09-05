@@ -9,8 +9,6 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-// a composition only does work on a frame, so one attached to a clock nobody ticks costs nothing.
-// that is what lets a composition stay alive while nothing is looking at it
 class PolyComposeClock {
     private val clock = BroadcastFrameClock()
     private val scope = CoroutineScope(Dispatchers.Unconfined + clock)
@@ -23,12 +21,6 @@ class PolyComposeClock {
 
     internal val recomposer: CompositionContext get() = recomposerImpl
 
-    /**
-     * runs a frame and reports whether the content may have changed
-     *
-     * a second clock ticked in the same frame must pass false: sendApplyNotifications is global,
-     * and firing it again mid frame hands new state to trees already composed against the old.
-     */
     fun frame(nanos: Long = System.nanoTime(), notify: Boolean = true): Boolean {
         if (notify) Snapshot.sendApplyNotifications()
         val appliedBefore = recomposerImpl.changeCount
@@ -37,17 +29,13 @@ class PolyComposeClock {
         return appliedChange || recomposerImpl.hasPendingWork
     }
 
-    /** whether the last [frame] actually changed the content, rather than only leaving work pending */
     var appliedChange = false
         private set
 }
 
 object PolyComposeHost {
-    /** Drives the HUDs actually on screen, ticked every frame */
     val huds = PolyComposeClock()
 
-    // drives HUD previews, ticked only while a UI showing them draws. they are expensive to build
-    // so they are kept for the process and simply left alone the rest of the time
     val previews = PolyComposeClock()
 
     internal val recomposer: CompositionContext get() = huds.recomposer

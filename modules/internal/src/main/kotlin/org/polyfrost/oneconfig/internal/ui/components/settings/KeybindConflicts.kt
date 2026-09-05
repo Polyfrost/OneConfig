@@ -25,12 +25,6 @@ internal object KeybindConflicts {
         }
     }
 
-    /**
-     * Comparing every bound keybind against every other is far too expensive to redo per row per
-     * recomposition, so the result is held until one of the revisions that could change it moves
-     *
-     * Reading those revisions here subscribes the caller to them, so nobody has to name them
-     */
     fun conflictMap(): Map<Property<*>, List<Property<*>>> {
         val key = (ConfigRegistry.revision * 31L + KeybindProviderRegistry.revision.intValue) * 31 +
             revision.intValue

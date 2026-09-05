@@ -494,7 +494,6 @@ object SkiaCtx {
         runWarmups()
         val notifDraw = if (NotificationsManager.count > 0) notifRender else null
         val wantCompose = composeActive && !isVulkanMode
-        // tested before the snapshot is taken, so an idle frame costs nothing rather than a list copy
         if (queuedDraws.isEmpty() && notifDraw == null && !wantCompose) return
         val draws = queuedDraws.toList()
         queuedDraws.clear()

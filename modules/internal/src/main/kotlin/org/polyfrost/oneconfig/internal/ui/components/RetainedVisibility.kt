@@ -10,15 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 
-/**
- * fades and scales [content] in and out, and keeps it composed while it is hidden
- *
- * AnimatedVisibility disposes its content when the exit ends, which for a retained scene hands
- * back the whole cost of an open. this animates the same way and simply stops drawing.
- *
- * the chain is the same shape either way on purpose: a modifier that comes and goes adds and
- * removes nodes Compose indexes for hit testing, and toggling one took the scene down.
- */
 @Composable
 fun RetainedVisibility(
     visible: Boolean,

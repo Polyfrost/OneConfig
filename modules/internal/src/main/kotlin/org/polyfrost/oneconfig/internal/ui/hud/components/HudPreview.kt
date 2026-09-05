@@ -54,15 +54,11 @@ internal class HudPreviewState(val runtime: PolyComposeRuntime) {
     val ready: Boolean get() = naturalWidth > 0f && naturalHeight > 0f
 }
 
-// a lazy grid disposes cards that scroll out of view, so without this every scroll back rebuilds
-// the runtime and re-runs setContent, which is the most expensive thing a card does
 private object HudPreviewCache {
     private val cache = HashMap<Hud, HudPreviewState>()
     private var generation = Int.MIN_VALUE
 
     internal fun get(hud: Hud, revision: Int, build: () -> HudPreviewState): HudPreviewState {
-        // a revision means providers were registered, unregistered or reloaded, so every preview
-        // here mirrors a HUD that may no longer exist
         if (revision != generation) {
             releaseAll()
             generation = revision
@@ -70,7 +66,6 @@ private object HudPreviewCache {
         return cache.getOrPut(hud, build)
     }
 
-    /** called when a revision says the HUDs these mirror have been replaced */
     private fun releaseAll() {
         if (cache.isEmpty()) return
         for (state in cache.values) {
@@ -88,7 +83,6 @@ private object HudPreviewCache {
 @Composable
 internal fun rememberHudPreview(hud: Hud): HudPreviewState {
     val revision = HudManager.revision
-    // owned by HudPreviewCache, so a card scrolling out of view must not take the runtime with it
     val state = remember(hud, revision) {
         HudPreviewCache.get(hud, revision) {
             hud.update()
@@ -100,7 +94,6 @@ internal fun rememberHudPreview(hud: Hud): HudPreviewState {
         }
     }
     LaunchedEffect(state) {
-        // a cached runtime is already measured, and its content cannot change without a revision
         if (state.ready) return@LaunchedEffect
         hud.update()
         if (hud.staticWidth && hud.staticW > 0f && hud.staticH > 0f) {
@@ -124,16 +117,12 @@ internal fun hudPreviewScale(naturalW: Float, naturalH: Float, availableW: Float
 @Composable
 internal fun HudPreviewCanvas(state: HudPreviewState, scale: Float, modifier: Modifier = Modifier) {
     Canvas(modifier) {
-        // read in the draw on purpose: this one revision is what the layer depends on, instead of
-        // every live value the HUD reads, which is what redrew the whole interface
         HudManager.previewRevision.intValue
         drawIntoCanvas { canvas ->
             val skia = canvas.skiaCanvas
             skia.save()
             skia.clipRect(org.jetbrains.skia.Rect.makeWH(size.width, size.height))
             skia.scale(scale, scale)
-            // a HUD reads live values, and reading them in the draw scope makes this layer depend
-            // on them, so a ticking clock redrew the whole interface. it still draws current values
             Snapshot.withoutReadObservation {
                 state.runtime.root.render(RenderContext(skia))
             }

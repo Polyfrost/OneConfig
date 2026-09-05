@@ -241,12 +241,6 @@ abstract class ComposeScreen(
         return scene
     }
 
-    /**
-     * How far this scene's clock has been pushed ahead of the wall clock
-     *
-     * A warm-up runs animations forward in big steps, and holding that as an offset is what stops
-     * the next real frame handing back a smaller number and walking every Transition backwards.
-     */
     private var clockSkewNanos = 0L
 
     private fun frameNanos(): Long = System.nanoTime() + clockSkewNanos
@@ -254,7 +248,6 @@ abstract class ComposeScreen(
     @Volatile
     private var sceneDirty = true
 
-    /** Set by [init]; the frame it guards re-arms the compose pipeline that closing cleared */
     private var awaitingFirstFrame = false
 
     private var lastPointer: Offset? = null
@@ -332,8 +325,6 @@ abstract class ComposeScreen(
             reportUnavailableAndClose()
             return
         }
-        // a reused scene still holds its composition and its last frame, so the cached blit below
-        // can serve the open. anything that really differs invalidates and sets this again
         if (!hadScene) sceneDirty = true
         awaitingFirstFrame = true
         lastPointer = null
@@ -351,15 +342,12 @@ abstract class ComposeScreen(
         }
     }
 
-    // how far the last call got. reset on completion, so a warm-up running again against a changed
-    // window or mod list starts over rather than reporting itself already done
     private var prewarmCursor = 0
 
     private var prewarmSurfaceOrNull: Surface? = null
     private var prewarmSurfaceW = 0
     private var prewarmSurfaceH = 0
 
-    /** one surface for the whole pass: it is viewport sized and was being rebuilt on every frame */
     private fun prewarmSurface(): Surface? {
         prewarmSurfaceOrNull?.let { if (prewarmSurfaceW == lastSceneW && prewarmSurfaceH == lastSceneH) return it }
         releasePrewarmSurface()
@@ -391,12 +379,6 @@ abstract class ComposeScreen(
         releasePrewarmSurface()
     }
 
-    /**
-     * builds the scene and renders it offscreen before anything asks to see it
-     *
-     * [step] runs before each frame so the caller can drive state across them, and frame times are
-     * advanced by hand so an animation finishes in one frame. false means nothing was kept.
-     */
     protected fun prewarm(frames: Int, budget: Int = frames, step: (Int) -> Unit): Boolean {
         val name = this::class.java.simpleName
         if (ensureScene() == null) {
@@ -415,8 +397,6 @@ abstract class ComposeScreen(
             closeSceneQuietly()
             return false
         }
-        // setContent builds the whole composition, and rendering it on the same frame made one
-        // 2430 ms frame on the title screen. it gets a frame to itself
         if (!hadContent) return false
         val surface = prewarmSurface() ?: run {
             closeSceneQuietly()
@@ -424,8 +404,6 @@ abstract class ComposeScreen(
         }
         try {
             val canvas = surface.canvas.asComposeCanvas()
-            // only as many as the caller allowed: running all of them in one go put the whole
-            // warm-up on a single frame, which was measured at 1332 ms as the world appeared
             val until = minOf(frames, prewarmCursor + budget.coerceAtLeast(1))
             val recomposer = recomposerOrNull
             val scope = renderScopeOrNull
@@ -447,7 +425,6 @@ abstract class ComposeScreen(
             LOGGER.warn("Compose warm-up failed; the first open will build the UI instead", t)
             return false
         }
-        // the warm-up drew a frame the player never saw, so the first real open must draw its own
         sceneDirty = true
         if (prewarmCursor < frames) return false
         prewarmCursor = 0
@@ -507,12 +484,6 @@ abstract class ComposeScreen(
         }
     }
 
-    /**
-     * whether this screen keeps its scene so a later open can reuse it
-     *
-     * composing, laying out and drawing is most of what an open costs, and all three are skipped
-     * when the composition is still there. screens built for one target should leave this false.
-     */
     protected open val retainsScene: Boolean get() = false
 
     private fun disposeScene() {
@@ -520,7 +491,6 @@ abstract class ComposeScreen(
         closeSceneQuietly()
     }
 
-    /** Stops driving the scene without destroying it, so its composition survives to the next open */
     private fun releaseScene() {
         if (!retainsScene || sceneOrNull == null || scenePoisoned) {
             disposeScene()
@@ -587,8 +557,6 @@ abstract class ComposeScreen(
         }
 
         val debugOverlayOnTop = org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen.shouldSuppressVanilla()
-        // closing cleared the compose frame, so a real render has to re-arm the pipeline before a
-        // cached blit means anything, or it blits nothing at all
         if (renderMode == RenderMode.ON_DEMAND && !sceneDirty && !awaitingFirstFrame &&
             SkiaCtx.isDeferredComposeBackend && !debugOverlayOnTop
         ) {
@@ -614,8 +582,6 @@ abstract class ComposeScreen(
                     val recomposer = recomposerOrNull
                     val scope = renderScopeOrNull
                     val composeCanvas = canvas.asComposeCanvas()
-                    // frameNanos(), not the wall clock: the warm-up runs this scene's clock ahead in
-                    // big steps, and handing back a smaller number would walk every animation backwards
                     val rendered = if (recomposer == null || scope == null) null else withScene {
                         with(scope) { it.render(recomposer, composeCanvas, frameNanos()) }
                     }
@@ -630,8 +596,6 @@ abstract class ComposeScreen(
             }
         }
 
-        // the first frame of an open always submits, so SkiaCtx re-arms the compose frame that
-        // closing cleared; after that a reused composition is only redrawn when something changed
         val wasDirty = sceneDirty || awaitingFirstFrame || renderMode == RenderMode.CONTINUOUS
         sceneDirty = false
         awaitingFirstFrame = false
@@ -934,7 +898,6 @@ abstract class ComposeScreen(
     private companion object {
         const val SETTLE_FRAMES = 4
 
-        /** Long enough that one warm-up frame runs any of the interface's animations to the end */
         const val PREWARM_FRAME_NANOS = 500_000_000L
 
         const val MAX_SCENE_REBUILDS = 3

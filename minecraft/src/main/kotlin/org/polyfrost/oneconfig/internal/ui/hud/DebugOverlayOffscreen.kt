@@ -49,22 +49,8 @@ object DebugOverlayOffscreen {
             Platform.screen().current<Any?>() is ComposeScreen &&
             client.debugOverlay.showDebugScreen()
 
-    /**
-     * Called from the debug overlay mixin to hide the vanilla under-UI blurred copy
-     *
-     * Gated on [hasContent] so vanilla is only cancelled once there is a capture to put in its
-     * place. Without it the frame a screen opens on cancels vanilla while the offscreen target is
-     * still being resolved, and the overlay disappears for that frame
-     */
     fun shouldSuppressVanilla(): Boolean = !capturing && hasContent && active()
 
-    /**
-     * Records the overlay into the offscreen target
-     *
-     * [hasContent] is deliberately not cleared on the way in: the mixin read it earlier in the
-     * frame, so a failed record would blit nothing over a vanilla overlay already cancelled. Keeping
-     * the last capture makes the worst case a slightly stale frame rather than an empty one.
-     */
     fun render() {
         if (!active()) return
         val w = Platform.screen().viewportWidth()

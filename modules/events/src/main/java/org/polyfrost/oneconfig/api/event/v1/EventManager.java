@@ -65,8 +65,6 @@ public final class EventManager {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Events");
     private final Deque<EventCollector> collectors = new ArrayDeque<>(2);
     private final Map<Object, Iterable<EventHandler<?>>> cache = Collections.synchronizedMap(new WeakHashMap<>(5));
-    // concurrent because post reads it from whichever thread fires the event while mods register
-    // from the main thread, and packet events come off the netty loop
     private final Map<Class<? extends Event>, List<EventHandler<?>>> handlers = new ConcurrentHashMap<>(8);
 
     private EventManager() {
@@ -235,12 +233,6 @@ public final class EventManager {
         collectors.addFirst(collector);
     }
 
-    /**
-     * Whether anything is listening for {@code cls}, so a hot call site can skip building an event
-     * nobody would receive. Entity render and packet events fire thousands of times a second.
-     *
-     * @param cls the concrete event type, as passed to {@link #post}
-     */
     public boolean hasListeners(Class<? extends Event> cls) {
         List<EventHandler<?>> handles = handlers.get(cls);
         return handles != null && !handles.isEmpty();

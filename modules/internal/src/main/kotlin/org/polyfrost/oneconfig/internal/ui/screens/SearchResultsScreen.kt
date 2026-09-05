@@ -37,7 +37,6 @@ private const val MOD_GRID_COLUMNS = 4
 private val MOD_GRID_GAP = 19.dp
 private val LIST_GAP = 8.dp
 
-/** The list already spaces its items, so a mod row only adds the difference up to the grid gap */
 private val MOD_ROW_EXTRA_GAP = MOD_GRID_GAP - LIST_GAP
 
 @Composable
@@ -100,16 +99,12 @@ fun SearchResultsScreen(query: String) {
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                 }
-                // one item per row, not one item holding every row: the whole grid in a single item
-                // composes every match on the keystroke that produced it, so the list stopped being lazy
                 items(modRows.size, key = { "mods-row:$it" }) { index ->
                     BoxWithConstraints(
                         Modifier
                             .fillMaxWidth()
                             .padding(bottom = if (index == modRows.lastIndex) 0.dp else MOD_ROW_EXTRA_GAP)
                     ) {
-                        // four cells and three gaps come to exactly maxWidth and each rounds up on its
-                        // own, so divide in pixels and leave the remainder as slack, as the grid does
                         val cellWidth = with(LocalDensity.current) {
                             val gap = MOD_GRID_GAP.roundToPx()
                             ((maxWidth.roundToPx() - gap * (MOD_GRID_COLUMNS - 1)) / MOD_GRID_COLUMNS).toDp()

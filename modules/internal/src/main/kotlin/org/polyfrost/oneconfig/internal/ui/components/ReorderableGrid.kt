@@ -219,8 +219,6 @@ fun rememberGridReorderState(
  */
 @Composable
 fun Modifier.reorderableItem(state: GridReorderState, key: Any): Modifier = this
-    // the layer caches the card's rasterised content, so a frame that changed nothing replays it
-    // instead of drawing the card again
     .graphicsLayer { alpha = if (state.overlayKey == key) 0f else 1f }
     .pointerInput(key, state) {
         detectDragGestures(

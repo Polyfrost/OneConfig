@@ -82,8 +82,6 @@ fun Modifier.fadingEdges(
 ): Modifier {
     val topAlpha by animateFloatAsState(if (scrollState.canScrollBackward) 1f else 0f)
     val bottomAlpha by animateFloatAsState(if (scrollState.canScrollForward) 1f else 0f)
-    // the two brushes only depend on the size, so they are built in the cache rather than in the
-    // draw: this sits on every scrollable surface in the UI and was allocating both on every frame
     return this.drawWithCache {
         val lengthPx = length.toPx().coerceAtMost(size.height / 2f)
         val top = Brush.verticalGradient(

@@ -52,13 +52,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
     companion object {
         private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/UI")
 
-        /**
-         * The general-purpose screen, reused so its Compose scene and composition outlive a close
-         *
-         * Composing, laying out and drawing the tree is nearly all of what an open costs, and a
-         * reused screen skips all three. A screen aimed at one mod's config is not shared: its page
-         * is fixed at construction, and there is nothing to come back to.
-         */
         private var sharedScreen: OneConfigUIScreen? = null
 
         private fun shared(): OneConfigUIScreen =
@@ -67,7 +60,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
         @JvmStatic
         fun forRoute(route: Any?): OneConfigUIScreen = shared().also { it.initialRoute = route }
 
-        /** Opens the shared screen, reusing whatever it already has composed */
         @JvmStatic
         fun open(): OneConfigUIScreen = shared().also { it.initialRoute = null }
         @JvmStatic
@@ -85,17 +77,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
         private val savePending = java.util.concurrent.atomic.AtomicBoolean(false)
 
-        /**
-         * Writes every registered tree, once, however many closes asked for it
-         *
-         * A save queued and not yet started will write whatever the next close would have written
-         * anyway, so asking again only makes the executor serialise a second full pass over every
-         * config file. Holding the open key produced dozens of closes a second and therefore dozens
-         * of whole-config writes queued behind each other.
-         *
-         * The flag clears as the save begins rather than when it ends, so a close that lands during
-         * a write still gets one of its own.
-         */
         private fun scheduleSave() {
             if (!savePending.compareAndSet(false, true)) return
             SAVE_EXECUTOR.execute {
@@ -132,12 +113,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
             else -> OpeningRoute(ModsGraph)
         }
 
-        /**
-         * Composes, lays out and draws the shared screen before anything opens it
-         *
-         * Queued at client construction and run on the first Skia frame, which lands on the title
-         * screen: the cost of the first open is paid where nobody is waiting for a frame.
-         */
         @JvmStatic
         fun prewarmShared(): Boolean = shared().runPrewarm()
 
@@ -146,35 +121,25 @@ class OneConfigUIScreen @JvmOverloads constructor(
             sharedScreen?.endPrewarm()
         }
 
-        // one at a time: a warm-up frame is not cheap and nothing waits on it finishing, and two
-        // per real frame was measured at 919 ms over 11 frames
         private const val PREWARM_FRAME_BUDGET = 1
 
         private const val PREWARM_OPEN_FRAME = 1
 
-        // focusing the search field lays out a paragraph, which loads the whole Skia text stack.
-        // measured at 40 ms on the frame the interface opened, whenever instant search is on
         private const val PREWARM_FOCUS_FRAME = 2
 
-        // an icon is only rasterised when its card is first drawn, so the grid is dragged through
-        // its whole extent here to make the first real scroll free
         private val PREWARM_SCROLL_FRAMES = 5..17
         private const val PREWARM_RESTORE_FRAME = 18
 
-        // every page the sidebar reaches, two frames each: one to navigate, one to lay out
         private val PREWARM_ROUTES = listOf(PreferencesGraph, ThemesGraph, KeybindsGraph, ModsGraph)
         private const val PREWARM_FRAMES_PER_PAGE = 2
         private val PREWARM_PAGE_FRAMES = PREWARM_RESTORE_FRAME + 1..
             PREWARM_RESTORE_FRAME + PREWARM_ROUTES.size * PREWARM_FRAMES_PER_PAGE
 
-        /** the tour is not history the player took, so it is not left in the back stack */
         private val PREWARM_FORGET_FRAME = PREWARM_PAGE_FRAMES.last + 1
         private val PREWARM_CLOSE_FRAME = PREWARM_FORGET_FRAME + 1
 
-        // the schedule above decides this, so adding a route cannot leave the tail behind
         private val PREWARM_FRAMES = PREWARM_CLOSE_FRAME + 1
 
-        /** The key the mod grid remembers its scroll position under */
         private const val MOD_GRID_KEY = "mods"
 
         @JvmStatic
@@ -212,9 +177,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
         return true
     }
 
-    // snapshot state rather than plain fields: a composition that outlives an open has to notice
-    // these change, and recompose only the part that reads them rather than everything
-
     /** The page this screen is showing which survives the scene being disposed and rebuilt */
     private var route: Any? by mutableStateOf(null)
 
@@ -228,31 +190,22 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     private var openRevision by mutableIntStateOf(0)
 
-    /** Set while [prewarmShared] drives the composition, so warming up cannot close or make a sound */
     private var prewarming = false
 
-    /** Set the first time the screen is really shown, after which no warm-up may touch its scene */
     @Volatile private var everOpened = false
 
     private fun runPrewarm(): Boolean {
-        // a warm-up runs the clock forward and toggles visibility, which is only safe on a tree
-        // nobody has used: once shown, it carries state a warm-up has no business moving
         if (everOpened || Platform.screen().current<Any?>() === this) return true
         prewarming = true
         return try {
             ConfigRegistry.loadFrom(ConfigManager.active(), ConfigSource.OC)
-            // every card the UI can show, and both the grid and the editor's library scale with
-            // the pack, so both were resolving icons inline on the frame that first drew them
             warmIconCache(ConfigRegistry.modCardConfigs.mapNotNull { it.icon })
             var restoreTo = 0
             prewarm(PREWARM_FRAMES, PREWARM_FRAME_BUDGET) { frame ->
-                // the interface raises its own visibility from a once-per-composition effect, so
-                // later passes ask; lowering it again leaves exactly what a close leaves behind
                 when (frame) {
                     PREWARM_OPEN_FRAME -> requestOpenCallback?.invoke()
                     PREWARM_FOCUS_FRAME -> ShellState.focusSearchField = true
                     PREWARM_CLOSE_FRAME -> {
-                        // the warm-up focused the field; a real open decides that for itself
                         ShellState.focusSearchField = false
                         ShellState.searchFieldFocused = false
                         ShellState.searchQuery = ""
@@ -260,8 +213,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
                     }
                     PREWARM_RESTORE_FRAME -> scrollModGrid(restoreTo)
                     in PREWARM_PAGE_FRAMES -> {
-                        // a page nobody has visited has never been composed, so the first visit pays
-                        // for all of it on the frame it lands: 171 ms for preferences, 37 to 55 for the rest
                         val step = frame - PREWARM_PAGE_FRAMES.first
                         if (step % PREWARM_FRAMES_PER_PAGE == 0) {
                             warmRoute(PREWARM_ROUTES[step / PREWARM_FRAMES_PER_PAGE])
@@ -286,12 +237,10 @@ class OneConfigUIScreen @JvmOverloads constructor(
         }
     }
 
-    /** The grid is only there once the mod page has composed, and only it knows how far it can go */
     private fun scrollModGrid(index: Int) {
         runCatching { ShellState.gridStates[MOD_GRID_KEY]?.requestScrollToItem(index) }
     }
 
-    /** The nav host only exists once the shell has composed, so a warm-up asks rather than assumes */
     private fun warmRoute(route: Any) {
         runCatching { if (LocalNavController.isReady) LocalNavController.wrapper.navigate(route) }
     }
@@ -305,8 +254,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
         ConfigRegistry.loadFrom(ConfigManager.active(), ConfigSource.OC)
         initialTree?.let { ConfigRegistry.registerTree(it, ConfigSource.OC) }
 
-        // resolved on every open so opening behaviour still applies to a reused screen. writing the
-        // same value back is free: snapshot state only records a write that changes something
         val isResume = resumeNext
         resumeNext = false
         val (target, targetRestoring) = when {
@@ -370,8 +317,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
         HudManager.overrideShowInScreens = true
         HudManager.isConfigUiOpen = true
 
-        // a reused screen still carries the close it was dismissed by, and left set the opening
-        // frame computes a finished closing animation and renders fully faded out
         closeRequested = false
         closeRequestedAt = 0L
         closeAnimationMs = 0L
@@ -382,8 +327,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
         UiSounds.acquireAmbience()
         super.init()
 
-        // the interface raises its visibility from a LaunchedEffect(Unit), so a composition that
-        // outlives a close comes back invisible. ask it to open, exactly as cancelClose does
         requestOpenCallback?.invoke()
     }
 
@@ -402,11 +345,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         SkiaCtx.suppressInGameHudRender = false
         HudManager.overrideShowInScreens = false
         HudManager.isConfigUiOpen = false
-        // the shell is no longer laid out but its last bounds would still answer hit tests, and the
-        // HUD editor asks them to decide what a click is over
         ShellState.shellBounds = null
-        // the offscreen targets stay alive across opens: resolveTarget rebuilds them when the
-        // viewport changes, so releasing them here only made the next open pay for fresh ones
         UiSounds.releaseAmbience()
         // writing every registered tree hitches and Minecraft only re-grabs the cursor once this returns
         scheduleSave()

@@ -62,8 +62,6 @@ class TreeConfigData(
         get() = tree.getMetadata<String>("mod_card_description")?.nonBlankOrNull()
             ?: modInfo?.description?.nonBlankOrNull()
 
-    // category, version and description each scanned the whole mod list, and a tree's id and
-    // title never change, so neither does the answer
     private var resolvedModInfo: ModInfo? = null
 
     private val modInfo: ModInfo?

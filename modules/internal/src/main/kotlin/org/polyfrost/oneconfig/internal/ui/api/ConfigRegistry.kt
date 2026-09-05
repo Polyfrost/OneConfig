@@ -129,7 +129,6 @@ object ConfigRegistry {
         onOpen: (() -> Unit)? = null,
         bumpRevision: Boolean = true
     ): Boolean {
-        // the bulk reload every open does passes false; an explicit registration is a real change
         MinecraftKeybindRegistrar.scan(tree, force = bumpRevision)
         if (tree.id == null || tree.title == null) return false
         if (tree.getMetadata<Any?>("hidden") != null) return false

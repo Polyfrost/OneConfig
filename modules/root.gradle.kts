@@ -93,9 +93,6 @@ subprojects {
 
     base.archivesName = name
 
-    // Kotlin mangles every internal member's JVM name with the module name, and 2.4 changed that
-    // default from the archives name to the maven coordinates, which renamed a published ABI:
-    // PolyPlus stopped linking against ThemeRegistry.getRegistry$internal the moment it moved
     val kotlinModuleName = project.name
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
         compilerOptions.moduleName = kotlinModuleName

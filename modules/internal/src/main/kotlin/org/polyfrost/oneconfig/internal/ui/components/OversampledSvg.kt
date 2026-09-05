@@ -49,22 +49,15 @@ import kotlin.math.max
 
 val LocalUiOversample = staticCompositionLocalOf { 1f }
 
-// the painter and its DOM cannot be shared, but the bitmap they produce can: it is immutable and
-// the tint is a draw time filter, so one raster serves every call site whatever colour it draws
 private val svgRasters = ConcurrentHashMap<String, ImageBitmap>()
 
-// rasterising overwrites the width and height it is read from, so the size is kept separately
-// and only the first painter for an icon pays for it
 private val svgSizes = ConcurrentHashMap<String, Size>()
 
 class OversampledSvgPainter(
     private val bytes: ByteArray,
     private val oversample: Float,
-    /** identifies the source so rasters and sizes can be shared, null disables sharing */
     private val cacheKey: String? = null,
 ) : Painter() {
-    // parsed on first use, not on construction: a scroll back builds a new painter, and a cached
-    // raster needs no document at all
     private val dom: SVGDOM by lazy {
         SVGDOM(Data.makeFromBytes(bytes)).also { parsed ->
             val r = parsed.root ?: return@also

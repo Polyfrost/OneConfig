@@ -57,12 +57,6 @@ object ModFavorites {
 
     private val writeLock = Any()
 
-    /**
-     * Writes the file off the render thread
-     *
-     * The list is joined here, on the thread that owns it, so only finished bytes cross over and a
-     * star click never puts a disk write in the middle of the frame it happened in.
-     */
     private fun persist() {
         val bytes = favorites.joinToString("\n").toByteArray(StandardCharsets.UTF_8)
         val seq = writeSeq.incrementAndGet()

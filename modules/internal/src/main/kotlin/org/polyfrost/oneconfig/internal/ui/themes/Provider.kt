@@ -33,7 +33,6 @@ import kotlin.math.round
 
 private var _accent by mutableStateOf(Color(ThemeConfig.accentColor.argb))
 
-// only a chroma accent changes on its own, so only that one is worth waiting on a frame
 private var _chroma by mutableStateOf(ThemeConfig.accentColor.chroma)
 
 val Accent: Color get() = _accent
@@ -116,8 +115,6 @@ fun Theme(
 ) {
     updateAccent()
 
-    // waiting on the clock unconditionally leaves an awaiter on it forever, and Compose reads that
-    // as pending work, so every frame came back dirty and redrew the whole screen
     LaunchedEffect(_chroma) {
         while (_chroma) {
             withFrameNanos { }

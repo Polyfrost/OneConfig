@@ -102,15 +102,11 @@ public final class Multithreading {
         return ScheduledPool.INSTANCE;
     }
 
-    // a holder each, so the pool is built once on first use without a lock. the null checks these
-    // replaced were not thread safe, and two callers racing them each built a pool and leaked one
     private static final class SharedPool {
         static final ExecutorService INSTANCE = Executors.newCachedThreadPool(threadFactory("OneConfig-"));
     }
 
     private static final class ScheduledPool {
-        // leaves the game a couple of cores, but never asks for a negative pool:
-        // availableProcessors() is 1 on a single core machine and the constructor rejects that
         static final ScheduledExecutorService INSTANCE = Executors.newScheduledThreadPool(
                 Math.max(1, Runtime.getRuntime().availableProcessors() - 2),
                 threadFactory("OneConfig-Scheduled-"));
