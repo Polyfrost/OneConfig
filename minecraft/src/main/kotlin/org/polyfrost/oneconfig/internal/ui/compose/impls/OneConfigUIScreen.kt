@@ -1,6 +1,10 @@
 package org.polyfrost.oneconfig.internal.ui.compose.impls
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalWindowInfo
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.gui.GuiGraphicsExtractor
@@ -15,13 +19,16 @@ import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
+import org.polyfrost.oneconfig.internal.ui.components.warmIconCache
 import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
 import org.polyfrost.oneconfig.internal.ui.compose.BlurRenderer
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.KeybindsGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.PreferencesGraph
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.ThemesGraph
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
 import org.polyfrost.oneconfig.internal.ui.PlayerHeadLoader
@@ -41,18 +48,46 @@ class OneConfigUIScreen @JvmOverloads constructor(
 ) : ComposeScreen() {
     private var initialRoute: Any? = null
 
+    override val retainsScene: Boolean get() = this === sharedScreen
+
     companion object {
         private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/UI")
 
+        private var sharedScreen: OneConfigUIScreen? = null
+
+        private fun shared(): OneConfigUIScreen =
+            sharedScreen ?: OneConfigUIScreen().also { sharedScreen = it }
+
         @JvmStatic
-        fun forRoute(route: Any?): OneConfigUIScreen =
-            OneConfigUIScreen().also { it.initialRoute = route }
+        fun forRoute(route: Any?): OneConfigUIScreen = shared().also { it.initialRoute = route }
+
+        @JvmStatic
+        fun open(): OneConfigUIScreen = shared().also { it.initialRoute = null }
+        @JvmStatic
+        fun resume(): OneConfigUIScreen = shared().also {
+            it.initialRoute = null
+            it.resumeNext = true
+        }
         private const val FULLSCREEN_BLUR_RADIUS = 8f
         private const val OPEN_ANIMATION_MS = 250L
 
         /** Serialized so two closes in quick succession cannot write the same files at once */
         private val SAVE_EXECUTOR = java.util.concurrent.Executors.newSingleThreadExecutor { r ->
             Thread(r, "OneConfig-ConfigSave").apply { isDaemon = true }
+        }
+
+        private val savePending = java.util.concurrent.atomic.AtomicBoolean(false)
+
+        private fun scheduleSave() {
+            if (!savePending.compareAndSet(false, true)) return
+            SAVE_EXECUTOR.execute {
+                savePending.set(false)
+                try {
+                    ConfigManager.active().saveAll()
+                } catch (t: Throwable) {
+                    LOGGER.error("Failed to save configs on OneConfig UI close", t)
+                }
+            }
         }
 
         /** [restored] marks a route that puts the user back where they were rather than opening a fixed page */
@@ -80,9 +115,38 @@ class OneConfigUIScreen @JvmOverloads constructor(
         }
 
         @JvmStatic
+        fun prewarmShared(): Boolean = shared().runPrewarm()
+
+        @JvmStatic
+        fun endPrewarmShared() {
+            sharedScreen?.endPrewarm()
+        }
+
+        private const val PREWARM_FRAME_BUDGET = 1
+
+        private const val PREWARM_OPEN_FRAME = 1
+
+        private const val PREWARM_FOCUS_FRAME = 2
+
+        private val PREWARM_SCROLL_FRAMES = 5..17
+        private const val PREWARM_RESTORE_FRAME = 18
+
+        private val PREWARM_ROUTES = listOf(PreferencesGraph, ThemesGraph, KeybindsGraph, ModsGraph)
+        private const val PREWARM_FRAMES_PER_PAGE = 2
+        private val PREWARM_PAGE_FRAMES = PREWARM_RESTORE_FRAME + 1..
+            PREWARM_RESTORE_FRAME + PREWARM_ROUTES.size * PREWARM_FRAMES_PER_PAGE
+
+        private val PREWARM_FORGET_FRAME = PREWARM_PAGE_FRAMES.last + 1
+        private val PREWARM_CLOSE_FRAME = PREWARM_FORGET_FRAME + 1
+
+        private val PREWARM_FRAMES = PREWARM_CLOSE_FRAME + 1
+
+        private const val MOD_GRID_KEY = "mods"
+
+        @JvmStatic
         fun openLastSession() {
             if (resolveOpeningBehaviorRoute().route === HudEditorRoute) HudManager.openEditor()
-            else Platform.screen().display(OneConfigUIScreen())
+            else Platform.screen().display(open())
         }
     }
 
@@ -92,7 +156,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
     @Volatile private var openedAt = 0L
 
     private fun beginClose() {
-        if (closeRequested) return
+        if (prewarming || closeRequested) return
         closeRequested = true
         closeRequestedAt = System.currentTimeMillis()
         closeAnimationMs = guiCloseAnimationMillis()
@@ -115,13 +179,72 @@ class OneConfigUIScreen @JvmOverloads constructor(
     }
 
     /** The page this screen is showing which survives the scene being disposed and rebuilt */
-    private var route: Any? = null
+    private var route: Any? by mutableStateOf(null)
 
     /** True once this screen has been displaced by another and is being shown again */
-    private var resuming = false
+    private var resuming by mutableStateOf(false)
 
     /** True when [route] is a page being put back rather than a page being opened */
-    private var restoring = false
+    private var restoring by mutableStateOf(false)
+
+    private var resumeNext = false
+
+    private var openRevision by mutableIntStateOf(0)
+
+    private var prewarming = false
+
+    @Volatile private var everOpened = false
+
+    private fun runPrewarm(): Boolean {
+        if (everOpened || Platform.screen().current<Any?>() === this) return true
+        prewarming = true
+        return try {
+            ConfigRegistry.loadFrom(ConfigManager.active(), ConfigSource.OC)
+            warmIconCache(ConfigRegistry.modCardConfigs.mapNotNull { it.icon })
+            var restoreTo = 0
+            prewarm(PREWARM_FRAMES, PREWARM_FRAME_BUDGET) { frame ->
+                when (frame) {
+                    PREWARM_OPEN_FRAME -> requestOpenCallback?.invoke()
+                    PREWARM_FOCUS_FRAME -> ShellState.focusSearchField = true
+                    PREWARM_CLOSE_FRAME -> {
+                        ShellState.focusSearchField = false
+                        ShellState.searchFieldFocused = false
+                        ShellState.searchQuery = ""
+                        requestCloseCallback?.invoke()
+                    }
+                    PREWARM_RESTORE_FRAME -> scrollModGrid(restoreTo)
+                    in PREWARM_PAGE_FRAMES -> {
+                        val step = frame - PREWARM_PAGE_FRAMES.first
+                        if (step % PREWARM_FRAMES_PER_PAGE == 0) {
+                            warmRoute(PREWARM_ROUTES[step / PREWARM_FRAMES_PER_PAGE])
+                        }
+                    }
+                    PREWARM_FORGET_FRAME -> LocalNavController.wrapper.reset()
+                    in PREWARM_SCROLL_FRAMES -> {
+                        val grid = ShellState.gridStates[MOD_GRID_KEY] ?: return@prewarm
+                        if (frame == PREWARM_SCROLL_FRAMES.first) restoreTo = grid.firstVisibleItemIndex
+                        val last = (grid.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)
+                        val step = frame - PREWARM_SCROLL_FRAMES.first
+                        val span = PREWARM_SCROLL_FRAMES.last - PREWARM_SCROLL_FRAMES.first
+                        scrollModGrid(last * step / span)
+                    }
+                }
+            }
+        } catch (t: Throwable) {
+            LOGGER.warn("OneConfig UI warm-up failed; the first open will build the UI instead", t)
+            false
+        } finally {
+            prewarming = false
+        }
+    }
+
+    private fun scrollModGrid(index: Int) {
+        runCatching { ShellState.gridStates[MOD_GRID_KEY]?.requestScrollToItem(index) }
+    }
+
+    private fun warmRoute(route: Any) {
+        runCatching { if (LocalNavController.isReady) LocalNavController.wrapper.navigate(route) }
+    }
 
     private fun markClosed() {
         ShellState.lastClosedAt = System.currentTimeMillis()
@@ -132,18 +255,23 @@ class OneConfigUIScreen @JvmOverloads constructor(
         ConfigRegistry.loadFrom(ConfigManager.active(), ConfigSource.OC)
         initialTree?.let { ConfigRegistry.registerTree(it, ConfigSource.OC) }
 
-        if (route == null) {
-            when {
-                initialRoute != null -> route = initialRoute
-                initialTreeId != null -> route = ModConfigRoute(initialTreeId, initialCategory)
-                else -> {
-                    val opening = resolveOpeningBehaviorRoute()
-                    route = opening.route.takeIf { it !== HudEditorRoute } ?: ModsGraph
-                    restoring = opening.restored && route === opening.route
-                }
+        val isResume = resumeNext
+        resumeNext = false
+        val (target, targetRestoring) = when {
+            isResume -> (ShellState.lastRoute?.takeIf { it !== HudEditorRoute } ?: ModsGraph) to true
+            initialRoute != null -> initialRoute to false
+            initialTreeId != null -> ModConfigRoute(initialTreeId, initialCategory) to false
+            else -> {
+                val opening = resolveOpeningBehaviorRoute()
+                val resolved = opening.route.takeIf { it !== HudEditorRoute } ?: ModsGraph
+                resolved to (opening.restored && resolved === opening.route)
             }
-            ShellState.lastRoute = route
         }
+        route = target
+        restoring = targetRestoring
+        resuming = isResume
+        openRevision++
+        ShellState.lastRoute = target
 
         try {
             ShellState.playerName = net.minecraft.client.Minecraft.getInstance().user.name
@@ -190,10 +318,17 @@ class OneConfigUIScreen @JvmOverloads constructor(
         HudManager.overrideShowInScreens = true
         HudManager.isConfigUiOpen = true
 
+        closeRequested = false
+        closeRequestedAt = 0L
+        closeAnimationMs = 0L
+
+        everOpened = true
         openedAt = System.currentTimeMillis()
         UiSounds.play(UiSoundEvent.OPEN)
         UiSounds.acquireAmbience()
         super.init()
+
+        requestOpenCallback?.invoke()
     }
 
     /**
@@ -208,24 +343,13 @@ class OneConfigUIScreen @JvmOverloads constructor(
     }
 
     override fun removed() {
-        // a screen opened over this one removes it and hands it back on close with the scene rebuilt
-        // in between so the page has to be carried across by hand
-        ShellState.lastRoute?.takeIf { it !== HudEditorRoute }?.let { route = it }
-        resuming = true
-        restoring = true
         SkiaCtx.suppressInGameHudRender = false
         HudManager.overrideShowInScreens = false
         HudManager.isConfigUiOpen = false
-        org.polyfrost.oneconfig.internal.ui.SkiaOffscreenTarget.destroyAll()
+        ShellState.shellBounds = null
         UiSounds.releaseAmbience()
         // writing every registered tree hitches and Minecraft only re-grabs the cursor once this returns
-        SAVE_EXECUTOR.execute {
-            try {
-                ConfigManager.active().saveAll()
-            } catch (t: Throwable) {
-                LOGGER.error("Failed to save configs on OneConfig UI close", t)
-            }
-        }
+        scheduleSave()
         super.removed()
     }
 
@@ -366,6 +490,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
             initialRoute = initialRoute,
             resuming = resuming,
             restoring = restoring,
+            openRevision = openRevision,
             onCloseRequest = { beginClose() },
             onCloseReady = { closeRequest ->
                 requestCloseCallback = closeRequest

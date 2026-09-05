@@ -32,8 +32,10 @@ import net.minecraft.client.input.KeyEvent as McKeyEvent
 //? }
 import net.minecraft.network.chat.CommonComponents
 import org.jetbrains.skia.FilterTileMode
+import org.jetbrains.skia.ImageInfo
 import org.jetbrains.skia.ImageFilter
 import org.jetbrains.skia.Paint
+import org.jetbrains.skia.Surface
 //? if < 26.3
 import org.lwjgl.glfw.GLFW
 //? if >= 26.3 {
@@ -195,6 +197,7 @@ abstract class ComposeScreen(
     }
 
     private fun closeSceneQuietly() {
+        releasePrewarmSurface()
         val scene = sceneOrNull
         val recomposer = recomposerOrNull
         if (scene == null && recomposer == null) return
@@ -238,8 +241,14 @@ abstract class ComposeScreen(
         return scene
     }
 
+    private var clockSkewNanos = 0L
+
+    private fun frameNanos(): Long = System.nanoTime() + clockSkewNanos
+
     @Volatile
     private var sceneDirty = true
+
+    private var awaitingFirstFrame = false
 
     private var lastPointer: Offset? = null
     private var lastSceneW = -1
@@ -309,13 +318,15 @@ abstract class ComposeScreen(
     }
 
     override fun init() {
+        endPrewarm()
+        val hadScene = sceneOrNull != null
         val scene = ensureScene()
         if (scene == null) {
             reportUnavailableAndClose()
             return
         }
-
-        sceneDirty = true
+        if (!hadScene) sceneDirty = true
+        awaitingFirstFrame = true
         lastPointer = null
 
         syncSceneMetrics()
@@ -327,7 +338,98 @@ abstract class ComposeScreen(
 
         if (!bindContent()) {
             closeWithMessage("OneConfig's UI failed to start. Please check your logs and report this.")
+            return
         }
+    }
+
+    private var prewarmCursor = 0
+
+    private var prewarmSurfaceOrNull: Surface? = null
+    private var prewarmSurfaceW = 0
+    private var prewarmSurfaceH = 0
+
+    private fun prewarmSurface(): Surface? {
+        prewarmSurfaceOrNull?.let { if (prewarmSurfaceW == lastSceneW && prewarmSurfaceH == lastSceneH) return it }
+        releasePrewarmSurface()
+        return try {
+            Surface.makeRenderTarget(
+                SkiaCtx.directContext,
+                false,
+                ImageInfo.makeN32Premul(lastSceneW, lastSceneH),
+            ).also {
+                prewarmSurfaceOrNull = it
+                prewarmSurfaceW = lastSceneW
+                prewarmSurfaceH = lastSceneH
+            }
+        } catch (t: Throwable) {
+            LOGGER.debug("Compose warm-up could not allocate a surface", t)
+            null
+        }
+    }
+
+    private fun releasePrewarmSurface() {
+        prewarmSurfaceOrNull?.let { runCatching { it.close() } }
+        prewarmSurfaceOrNull = null
+        prewarmSurfaceW = 0
+        prewarmSurfaceH = 0
+    }
+
+    fun endPrewarm() {
+        prewarmCursor = 0
+        releasePrewarmSurface()
+    }
+
+    protected fun prewarm(frames: Int, budget: Int = frames, step: (Int) -> Unit): Boolean {
+        val name = this::class.java.simpleName
+        if (ensureScene() == null) {
+            LOGGER.warn("{} warm-up: no scene ({})", name, ComposeSupport.unavailableReason() ?: "createScene failed")
+            return false
+        }
+        syncSceneMetrics()
+        if (lastSceneW <= 0 || lastSceneH <= 0) {
+            LOGGER.warn("{} warm-up: window is {}x{}", name, lastSceneW, lastSceneH)
+            closeSceneQuietly()
+            return false
+        }
+        val hadContent = contentSet
+        if (!bindContent()) {
+            LOGGER.warn("{} warm-up: setContent did not take (poisoned={})", name, scenePoisoned)
+            closeSceneQuietly()
+            return false
+        }
+        if (!hadContent) return false
+        val surface = prewarmSurface() ?: run {
+            closeSceneQuietly()
+            return false
+        }
+        try {
+            val canvas = surface.canvas.asComposeCanvas()
+            val until = minOf(frames, prewarmCursor + budget.coerceAtLeast(1))
+            val recomposer = recomposerOrNull
+            val scope = renderScopeOrNull
+            if (recomposer == null || scope == null) {
+                closeSceneQuietly()
+                return false
+            }
+            while (prewarmCursor < until) {
+                step(prewarmCursor)
+                withScene { with(scope) { it.render(recomposer, canvas, frameNanos()) } }
+                clockSkewNanos += PREWARM_FRAME_NANOS
+                prewarmCursor++
+            }
+            surface.flushAndSubmit()
+        } catch (t: Throwable) {
+            prewarmCursor = 0
+            releasePrewarmSurface()
+            closeSceneQuietly()
+            LOGGER.warn("Compose warm-up failed; the first open will build the UI instead", t)
+            return false
+        }
+        sceneDirty = true
+        if (prewarmCursor < frames) return false
+        prewarmCursor = 0
+        releasePrewarmSurface()
+        return true
     }
 
     private fun bindContent(): Boolean {
@@ -382,19 +484,29 @@ abstract class ComposeScreen(
         }
     }
 
+    protected open val retainsScene: Boolean get() = false
+
     private fun disposeScene() {
         SkiaCtx.clearComposeFrame()
         closeSceneQuietly()
     }
 
+    private fun releaseScene() {
+        if (!retainsScene || sceneOrNull == null || scenePoisoned) {
+            disposeScene()
+            return
+        }
+        SkiaCtx.clearComposeFrame()
+    }
+
     override fun onClose() {
         ComposeSceneContextImpl.resetPointerIcon()
-        disposeScene()
+        releaseScene()
     }
 
     override fun removed() {
         ComposeSceneContextImpl.resetPointerIcon()
-        disposeScene()
+        releaseScene()
         super.removed()
     }
 
@@ -445,7 +557,9 @@ abstract class ComposeScreen(
         }
 
         val debugOverlayOnTop = org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen.shouldSuppressVanilla()
-        if (renderMode == RenderMode.ON_DEMAND && !sceneDirty && SkiaCtx.isDeferredComposeBackend && !debugOverlayOnTop) {
+        if (renderMode == RenderMode.ON_DEMAND && !sceneDirty && !awaitingFirstFrame &&
+            SkiaCtx.isDeferredComposeBackend && !debugOverlayOnTop
+        ) {
             if (SkiaCtx.blitComposeCached(ctx)) return
         }
 
@@ -469,7 +583,7 @@ abstract class ComposeScreen(
                     val scope = renderScopeOrNull
                     val composeCanvas = canvas.asComposeCanvas()
                     val rendered = if (recomposer == null || scope == null) null else withScene {
-                        with(scope) { it.render(recomposer, composeCanvas, System.nanoTime()) }
+                        with(scope) { it.render(recomposer, composeCanvas, frameNanos()) }
                     }
                     if (rendered != null) {
                         sceneRebuilds = 0
@@ -482,8 +596,9 @@ abstract class ComposeScreen(
             }
         }
 
-        val wasDirty = sceneDirty || renderMode == RenderMode.CONTINUOUS
+        val wasDirty = sceneDirty || awaitingFirstFrame || renderMode == RenderMode.CONTINUOUS
         sceneDirty = false
+        awaitingFirstFrame = false
         when {
             SkiaCtx.isDeferredComposeBackend -> SkiaCtx.drawComposeBlit(ctx, renderBlock)
             SkiaCtx.isVulkanMode -> SkiaCtx.queueDraw(renderBlock) // non-deferred Vulkan draws straight to the main RT
@@ -795,6 +910,8 @@ abstract class ComposeScreen(
 
     private companion object {
         const val SETTLE_FRAMES = 4
+
+        const val PREWARM_FRAME_NANOS = 500_000_000L
 
         const val MAX_SCENE_REBUILDS = 3
 

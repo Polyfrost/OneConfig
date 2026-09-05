@@ -358,11 +358,9 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
             .fillMaxWidth()
             .clip(shape)
             .background(theme.modCardBackground, shape)
-            .border(
-                1.dp,
-                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f))),
-                shape
-            )
+            .border(1.dp, remember(theme.borderColor) {
+                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
+            }, shape)
             .drawWithCache {
                 val color = theme.textColor
                 val gradient = Brush.radialGradient(
@@ -431,7 +429,9 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
                     .fillMaxWidth()
                     .border(
                         width = 1.dp,
-                        brush = Brush.verticalGradient(listOf(theme.borderColor.copy(0f), theme.borderColor)),
+                        brush = remember(theme.borderColor) {
+                            Brush.verticalGradient(listOf(theme.borderColor.copy(0f), theme.borderColor))
+                        },
                         shape = shape
                     )
                     .padding(vertical = 12.dp)
@@ -455,11 +455,9 @@ fun SettingRow(prop: Property<*>, compact: Boolean = false) {
             .fillMaxWidth()
             .alpha(displayAlpha(display))
             .background(theme.modCardBackground, theme.modCardShape)
-            .border(
-                1.dp,
-                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f))),
-                theme.modCardShape
-            )
+            .border(1.dp, remember(theme.borderColor) {
+                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
+            }, theme.modCardShape)
     ) {
         val vignetteColor = theme.textColor
         Box(

@@ -45,8 +45,12 @@ data class ModInfo @JvmOverloads constructor(
     }
 
     companion object {
+        @Volatile
+        private var cached: Set<ModInfo>? = null
+
         @get:JvmStatic
-        val loadedMods: Set<ModInfo> get() = Platform.compatibility().mods
+        val loadedMods: Set<ModInfo>
+            get() = cached ?: Platform.compatibility().mods.also { if (it.isNotEmpty()) cached = it }
     }
 }
 

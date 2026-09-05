@@ -49,11 +49,9 @@ object DebugOverlayOffscreen {
             Platform.screen().current<Any?>() is ComposeScreen &&
             client.debugOverlay.showDebugScreen()
 
-    /** Called from the debug overlay mixin to hide the vanilla under-UI blurred copy */
-    fun shouldSuppressVanilla(): Boolean = !capturing && active()
+    fun shouldSuppressVanilla(): Boolean = !capturing && hasContent && active()
 
     fun render() {
-        hasContent = false
         if (!active()) return
         val w = Platform.screen().viewportWidth()
         val h = Platform.screen().viewportHeight()
@@ -72,6 +70,7 @@ object DebugOverlayOffscreen {
             hasContent = true
         } catch (t: Throwable) {
             LOG.warn("Debug overlay offscreen render failed; disabling", t)
+            hasContent = false
             failed = true
             capturing = false
             GuiTargetRedirect.target = null
@@ -147,7 +146,7 @@ object DebugOverlayOffscreen {
     *///? }
 
     private fun drawInto(canvas: org.jetbrains.skia.Canvas) {
-        if (!hasContent) return
+        if (!hasContent || !active()) return
         val s = offscreen.surface ?: return
         try {
             s.notifyContentWillChange(org.jetbrains.skia.ContentChangeMode.RETAIN)

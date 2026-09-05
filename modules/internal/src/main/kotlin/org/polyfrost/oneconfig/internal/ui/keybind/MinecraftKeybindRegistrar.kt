@@ -19,10 +19,15 @@ object MinecraftKeybindRegistrar {
 
     private val propByBind = WeakHashMap<OneConfigKeybind, Property<*>>()
     private val wiredProps = WeakHashMap<Property<*>, Boolean>()
+
+    private val scannedTrees = WeakHashMap<Tree, Boolean>()
     private var listenerInstalled = false
 
     @JvmStatic
-    fun scan(tree: Tree) {
+    @JvmOverloads
+    fun scan(tree: Tree, force: Boolean = true) {
+        if (!force && scannedTrees.containsKey(tree)) return
+        scannedTrees[tree] = true
         installRebindListener()
         val category = "${tree.localizedTitle()} (OneConfig)"
         walk(tree, category)

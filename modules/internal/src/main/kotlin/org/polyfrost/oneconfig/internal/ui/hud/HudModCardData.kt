@@ -33,7 +33,7 @@ private fun withHudSuffix(title: Any): Any {
 private fun findOwner(ownerId: String): ConfigData? =
     ConfigRegistry.findById(ownerId)
         ?: ConfigRegistry.findById("$ownerId.json")
-        ?: ConfigRegistry.configList.firstOrNull { it.id.substringBefore('/').removeSuffix(".json") == ownerId }
+        ?: ConfigRegistry.configs.firstOrNull { it.id.substringBefore('/').removeSuffix(".json") == ownerId }
 
 private fun ownerVisible(ownerId: String, owner: ConfigData?): Boolean {
     if (ownerId == BUILTIN_HUD_CONFIG_ID) return true

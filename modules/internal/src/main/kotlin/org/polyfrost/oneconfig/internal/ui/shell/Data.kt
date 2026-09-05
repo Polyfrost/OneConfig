@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.shell
 
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -69,6 +70,8 @@ object ShellState {
     /** Where each scrollable page was left keyed by page key see [rememberRestorableLazyListState] */
     val scrollAnchors = mutableMapOf<String, ScrollAnchor>()
 
+    val gridStates = mutableMapOf<String, LazyGridState>()
+
     /** Last selected settings tab per page key restored when a page is reopened or navigated back to */
     val selectedCategories = mutableStateMapOf<String, String>()
 
@@ -125,6 +128,8 @@ object LocalNavController {
         private val forwardStack = ArrayDeque<Entry>()
 
         private var currentEntry = Entry(ModsGraph)
+
+        val currentRoute: Any get() = currentEntry.route
 
         fun reset() {
             backStack.clear()

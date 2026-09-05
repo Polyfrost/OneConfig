@@ -26,9 +26,6 @@
 
 package org.polyfrost.oneconfig.utils.v1;
 
-
-import org.jetbrains.annotations.NotNull;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -46,9 +43,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * </p>
  */
 public final class Multithreading {
-    private static ExecutorService executorService = null; /* by lazy { Executors.newCachedThreadPool(ThreadFactoryBuilder().setNameFormat("OneConfig-%d").build()) } */
-    private static ScheduledExecutorService runnableExecutor = null;
-
     private Multithreading() {
     }
 
@@ -101,32 +95,30 @@ public final class Multithreading {
     }
 
     public static ExecutorService getExecutor() {
-        if (executorService == null) executorService = Executors.newCachedThreadPool(new ThreadFactory() {
-            private final AtomicInteger ai = new AtomicInteger();
-
-            @Override
-            public Thread newThread(@NotNull Runnable r) {
-                Thread t = Executors.defaultThreadFactory().newThread(r);
-                t.setName("OneConfig-" + ai.getAndIncrement());
-                t.setDaemon(true);
-                return t;
-            }
-        });
-        return executorService;
+        return SharedPool.INSTANCE;
     }
 
     public static ScheduledExecutorService getScheduledExecutor() {
-        if (runnableExecutor == null) runnableExecutor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() - 2, new ThreadFactory() {
-            private final AtomicInteger ai = new AtomicInteger();
+        return ScheduledPool.INSTANCE;
+    }
 
-            @Override
-            public Thread newThread(@NotNull Runnable r) {
-                Thread t = Executors.defaultThreadFactory().newThread(r);
-                t.setName("OneConfig-Scheduled-" + ai.getAndIncrement());
-                t.setDaemon(true);
-                return t;
-            }
-        });
-        return runnableExecutor;
+    private static final class SharedPool {
+        static final ExecutorService INSTANCE = Executors.newCachedThreadPool(threadFactory("OneConfig-"));
+    }
+
+    private static final class ScheduledPool {
+        static final ScheduledExecutorService INSTANCE = Executors.newScheduledThreadPool(
+                Math.max(1, Runtime.getRuntime().availableProcessors() - 2),
+                threadFactory("OneConfig-Scheduled-"));
+    }
+
+    private static ThreadFactory threadFactory(String prefix) {
+        AtomicInteger counter = new AtomicInteger();
+        return r -> {
+            Thread t = Executors.defaultThreadFactory().newThread(r);
+            t.setName(prefix + counter.getAndIncrement());
+            t.setDaemon(true);
+            return t;
+        };
     }
 }

@@ -93,6 +93,11 @@ subprojects {
 
     base.archivesName = name
 
+    val kotlinModuleName = project.name
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        compilerOptions.moduleName = kotlinModuleName
+    }
+
     configure<JavaPluginExtension> {
         if("dependencies" !in project.path) {
             withJavadocJar()

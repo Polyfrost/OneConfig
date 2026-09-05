@@ -9,7 +9,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-object PolyComposeHost {
+class PolyComposeClock {
     private val clock = BroadcastFrameClock()
     private val scope = CoroutineScope(Dispatchers.Unconfined + clock)
 
@@ -21,6 +21,25 @@ object PolyComposeHost {
 
     internal val recomposer: CompositionContext get() = recomposerImpl
 
+    fun frame(nanos: Long = System.nanoTime(), notify: Boolean = true): Boolean {
+        if (notify) Snapshot.sendApplyNotifications()
+        val appliedBefore = recomposerImpl.changeCount
+        clock.sendFrame(nanos)
+        appliedChange = recomposerImpl.changeCount != appliedBefore
+        return appliedChange || recomposerImpl.hasPendingWork
+    }
+
+    var appliedChange = false
+        private set
+}
+
+object PolyComposeHost {
+    val huds = PolyComposeClock()
+
+    val previews = PolyComposeClock()
+
+    internal val recomposer: CompositionContext get() = huds.recomposer
+
     fun frame(nanos: Long = System.nanoTime()) {
         frameWithReport(nanos)
     }
@@ -28,10 +47,5 @@ object PolyComposeHost {
     /**
      * Runs a frame like [frame] and reports whether composition content may have changed
      */
-    fun frameWithReport(nanos: Long = System.nanoTime()): Boolean {
-        Snapshot.sendApplyNotifications()
-        val appliedBefore = recomposerImpl.changeCount
-        clock.sendFrame(nanos)
-        return recomposerImpl.changeCount != appliedBefore || recomposerImpl.hasPendingWork
-    }
+    fun frameWithReport(nanos: Long = System.nanoTime()): Boolean = huds.frame(nanos)
 }

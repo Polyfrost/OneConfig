@@ -142,6 +142,8 @@ fun Shell(
     }
 
     val glowCache = remember { GlowCache() }
+
+    val glowAlpha = (ShellState.glowOpacity / 100f).coerceIn(0f, 1f)
     val glowPaint = remember(Accent) {
         Paint().apply {
             colorFilter = ColorFilter.makeBlend(Accent.copy(alpha = 1f).toArgb(), SkBlendMode.SRC_IN)
@@ -163,7 +165,7 @@ fun Shell(
                 val glow = glowCache.imageFor(
                     ceil(size.width).toInt(),
                     ceil(size.height).toInt(),
-                    (ShellState.glowOpacity / 100f).coerceIn(0f, 1f),
+                    glowAlpha,
                 )
                 if (glow != null) {
                     drawIntoCanvas {
