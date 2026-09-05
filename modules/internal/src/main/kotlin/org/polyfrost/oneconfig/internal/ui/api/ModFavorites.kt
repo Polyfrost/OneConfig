@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import java.util.concurrent.atomic.AtomicLong
 
 object ModFavorites {
     private val LOGGER = LoggerFactory.getLogger("OneConfig/ModFavorites")
@@ -52,6 +53,10 @@ object ModFavorites {
         persist()
     }
 
+    private val writeSeq = AtomicLong()
+
+    private val writeLock = Any()
+
     /**
      * Writes the file off the render thread
      *
@@ -60,19 +65,23 @@ object ModFavorites {
      */
     private fun persist() {
         val bytes = favorites.joinToString("\n").toByteArray(StandardCharsets.UTF_8)
+        val seq = writeSeq.incrementAndGet()
         Multithreading.submit {
-            try {
-                val path = file()
-                Files.createDirectories(path.parent)
-                Files.write(
-                    path,
-                    bytes,
-                    StandardOpenOption.CREATE,
-                    StandardOpenOption.TRUNCATE_EXISTING,
-                    StandardOpenOption.WRITE,
-                )
-            } catch (e: Exception) {
-                LOGGER.error("Failed to persist favorite mods", e)
+            synchronized(writeLock) {
+                if (seq != writeSeq.get()) return@submit
+                try {
+                    val path = file()
+                    Files.createDirectories(path.parent)
+                    Files.write(
+                        path,
+                        bytes,
+                        StandardOpenOption.CREATE,
+                        StandardOpenOption.TRUNCATE_EXISTING,
+                        StandardOpenOption.WRITE,
+                    )
+                } catch (e: Exception) {
+                    LOGGER.error("Failed to persist favorite mods", e)
+                }
             }
         }
     }

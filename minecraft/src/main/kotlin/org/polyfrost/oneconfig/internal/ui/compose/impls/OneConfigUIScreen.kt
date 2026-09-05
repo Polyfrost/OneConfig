@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.ui.compose.impls
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -46,8 +47,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
 ) : ComposeScreen() {
     private var initialRoute: Any? = null
 
-    /** Only the shared screen is worth keeping: a per-mod one opens on a page fixed at construction */
-    override val retainsScene: Boolean get() = initialTreeId == null && initialTree == null
+    override val retainsScene: Boolean get() = this === sharedScreen
 
     companion object {
         private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/UI")
@@ -70,6 +70,11 @@ class OneConfigUIScreen @JvmOverloads constructor(
         /** Opens the shared screen, reusing whatever it already has composed */
         @JvmStatic
         fun open(): OneConfigUIScreen = shared().also { it.initialRoute = null }
+        @JvmStatic
+        fun resume(): OneConfigUIScreen = shared().also {
+            it.initialRoute = null
+            it.resumeNext = true
+        }
         private const val FULLSCREEN_BLUR_RADIUS = 8f
         private const val OPEN_ANIMATION_MS = 250L
 
@@ -135,6 +140,11 @@ class OneConfigUIScreen @JvmOverloads constructor(
          */
         @JvmStatic
         fun prewarmShared(): Boolean = shared().runPrewarm()
+
+        @JvmStatic
+        fun endPrewarmShared() {
+            sharedScreen?.endPrewarm()
+        }
 
         // one at a time: a warm-up frame is not cheap and nothing waits on it finishing, and two
         // per real frame was measured at 919 ms over 11 frames
@@ -213,6 +223,10 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     /** True when [route] is a page being put back rather than a page being opened */
     private var restoring by mutableStateOf(false)
+
+    private var resumeNext = false
+
+    private var openRevision by mutableIntStateOf(0)
 
     /** Set while [prewarmShared] drives the composition, so warming up cannot close or make a sound */
     private var prewarming = false
@@ -293,9 +307,12 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
         // resolved on every open so opening behaviour still applies to a reused screen. writing the
         // same value back is free: snapshot state only records a write that changes something
+        val isResume = resumeNext
+        resumeNext = false
         val (target, targetRestoring) = when {
-            initialRoute != null -> initialRoute to restoring
-            initialTreeId != null -> ModConfigRoute(initialTreeId, initialCategory) to restoring
+            isResume -> (ShellState.lastRoute?.takeIf { it !== HudEditorRoute } ?: ModsGraph) to true
+            initialRoute != null -> initialRoute to false
+            initialTreeId != null -> ModConfigRoute(initialTreeId, initialCategory) to false
             else -> {
                 val opening = resolveOpeningBehaviorRoute()
                 val resolved = opening.route.takeIf { it !== HudEditorRoute } ?: ModsGraph
@@ -304,6 +321,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
         }
         route = target
         restoring = targetRestoring
+        resuming = isResume
+        openRevision++
         ShellState.lastRoute = target
 
         try {
@@ -380,11 +399,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
     }
 
     override fun removed() {
-        // a screen opened over this one removes it and hands it back on close with the scene rebuilt
-        // in between so the page has to be carried across by hand
-        ShellState.lastRoute?.takeIf { it !== HudEditorRoute }?.let { route = it }
-        resuming = true
-        restoring = true
         SkiaCtx.suppressInGameHudRender = false
         HudManager.overrideShowInScreens = false
         HudManager.isConfigUiOpen = false
@@ -523,6 +537,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
             initialRoute = initialRoute,
             resuming = resuming,
             restoring = restoring,
+            openRevision = openRevision,
             onCloseRequest = { beginClose() },
             onCloseReady = { closeRequest ->
                 requestCloseCallback = closeRequest

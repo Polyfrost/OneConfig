@@ -160,7 +160,7 @@ object DebugOverlayOffscreen {
     *///? }
 
     private fun drawInto(canvas: org.jetbrains.skia.Canvas) {
-        if (!hasContent) return
+        if (!hasContent || !active()) return
         val s = offscreen.surface ?: return
         try {
             s.notifyContentWillChange(org.jetbrains.skia.ContentChangeMode.RETAIN)

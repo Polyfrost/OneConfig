@@ -90,7 +90,7 @@ private object IconResource {
     // an icon shipped as a file was read from disk again on every scroll back, because the read
     // lived in a remember the lazy grid throws away
     fun fileBytes(file: File, stamp: Long): ByteArray? =
-        cache.getOrPut("file:${'$'}{file.path}@${'$'}stamp") {
+        cache.getOrPut("file:${file.path}@$stamp") {
             Entry(runCatching { file.readBytes() }.getOrNull())
         }.bytes
 

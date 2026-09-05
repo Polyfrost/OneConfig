@@ -136,6 +136,8 @@ object LocalNavController {
 
         private var currentEntry = Entry(ModsGraph)
 
+        val currentRoute: Any get() = currentEntry.route
+
         fun reset() {
             backStack.clear()
             forwardStack.clear()

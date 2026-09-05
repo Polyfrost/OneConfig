@@ -63,6 +63,7 @@ fun OneConfigInterface(
     resuming: Boolean = false,
     /** Set when [initialRoute] is a page the user was already on which is put back without a transition */
     restoring: Boolean = false,
+    openRevision: Int = 0,
     onCloseRequest: () -> Unit = {},
     onCloseReady: ((requestClose: () -> Unit) -> Unit)? = null,
     onOpenReady: ((requestOpen: () -> Unit) -> Unit)? = null,
@@ -72,13 +73,8 @@ fun OneConfigInterface(
 
     LocalNavController.current = rememberNavController()
 
-    // the composition holding the nav controller now outlives a close, so only the very first one
-    // is already sitting on the start destination and every open after it has to navigate
-    var everRouted by remember { mutableStateOf(false) }
-
-    LaunchedEffect(initialRoute) {
-        val alreadyThere = initialRoute == ModsGraph && !everRouted
-        everRouted = true
+    LaunchedEffect(initialRoute, openRevision) {
+        val alreadyThere = initialRoute == LocalNavController.wrapper.currentRoute
         if (!resuming) {
             ShellState.globalSearchActive = false
             ShellState.searchQuery = ""

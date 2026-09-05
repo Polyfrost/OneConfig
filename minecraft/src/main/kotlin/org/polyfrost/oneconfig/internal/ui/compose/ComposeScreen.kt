@@ -325,6 +325,7 @@ abstract class ComposeScreen(
     }
 
     override fun init() {
+        endPrewarm()
         val hadScene = sceneOrNull != null
         val scene = ensureScene()
         if (scene == null) {
@@ -383,6 +384,11 @@ abstract class ComposeScreen(
         prewarmSurfaceOrNull = null
         prewarmSurfaceW = 0
         prewarmSurfaceH = 0
+    }
+
+    fun endPrewarm() {
+        prewarmCursor = 0
+        releasePrewarmSurface()
     }
 
     /**

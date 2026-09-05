@@ -53,6 +53,11 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
          */
         @JvmStatic
         fun prewarmShared(): Boolean = open().runPrewarm()
+
+        @JvmStatic
+        fun endPrewarmShared() {
+            instance?.endPrewarm()
+        }
     }
 
     /** Set the first time the editor is really shown, after which no warm-up may touch its scene */
@@ -143,7 +148,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
                 requestCloseCallback?.invoke()
             } else {
                 returningToOneConfig = true
-                Platform.screen().display(OneConfigUIScreen.open())
+                Platform.screen().display(OneConfigUIScreen.resume())
             }
             return true
         }
@@ -209,7 +214,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
                     HudDesignStudio(
                         onReturnToOneConfig = {
                             returningToOneConfig = true
-                            Platform.screen().display(OneConfigUIScreen.open())
+                            Platform.screen().display(OneConfigUIScreen.resume())
                         }
                     )
                 }

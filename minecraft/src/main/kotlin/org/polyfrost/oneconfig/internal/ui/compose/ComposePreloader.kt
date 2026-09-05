@@ -190,6 +190,9 @@ object ComposePreloader {
         // through, so keep watching until a pass has run against a world
         if (warmed?.inWorld != true && passes < MAX_PASSES && System.nanoTime() < deadline) {
             SkiaCtx.queueWarmup(::warmUp)
+        } else {
+            OneConfigUIScreen.endPrewarmShared()
+            HudEditorUIScreen.endPrewarmShared()
         }
     }
 
