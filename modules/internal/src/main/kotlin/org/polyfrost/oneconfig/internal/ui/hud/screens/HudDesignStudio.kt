@@ -991,7 +991,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
         }
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(HudManager.editorOpenRevision.intValue) {
         val pending = HudManager.pendingSelection
         val pendingAdd = HudManager.pendingAdd
         HudManager.pendingSelection = null
@@ -1049,7 +1049,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
         }
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(HudManager.editorOpenRevision.intValue) {
         HudDesignSession.clearCommands()
         for (command in HudDesignSession.commands) {
             when (command) {

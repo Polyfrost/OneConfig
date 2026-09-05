@@ -151,6 +151,16 @@ object HudManager {
 
     private var wasEditing = false
 
+    private val showingPreviews get() = isConfigUiOpen || isEditorOpen
+
+    /** bumped when a preview's content changed, so previews redraw on that frame and nothing else */
+    @ApiStatus.Internal
+    val previewRevision = mutableIntStateOf(0)
+
+    /** bumped by a real open, so a retained editor still picks up what was left pending for it */
+    @ApiStatus.Internal
+    val editorOpenRevision = mutableIntStateOf(0)
+
     private val redrawCacheDisabled = java.lang.Boolean.getBoolean("oneconfig.hud.nocache")
 
     @Volatile private var contentDirty = true
@@ -487,10 +497,18 @@ object HudManager {
                 LOGGER.error("Failed to update HUD ${hud.title}", e)
             }
         }
+        // a preview mirrors a provider, and providers are not active instances, so nothing else
+        // advances what one shows. before the notify below, so this frame composes against it
+        if (showingPreviews) for (hud in hudProviders.values) updateIfDue(hud)
         if (PolyComposeHost.frameWithReport()) invalidate()
         // previews are only ever on screen behind a OneConfig UI, so that is when their clock runs.
         // notify=false because the line above already applied this frame's snapshot writes
-        if (isConfigUiOpen || isEditorOpen) PolyComposeHost.previews.frame(notify = false)
+        if (showingPreviews) {
+            PolyComposeHost.previews.frame(notify = false)
+            // a preview draws without observing what it reads, so this is the only thing that
+            // tells it to redraw, and only on a frame that actually changed something
+            if (PolyComposeHost.previews.appliedChange) previewRevision.intValue++
+        }
     }
 
     private fun layout(hud: Hud, screenWidth: Float, screenHeight: Float, scale: Float): RootNode {

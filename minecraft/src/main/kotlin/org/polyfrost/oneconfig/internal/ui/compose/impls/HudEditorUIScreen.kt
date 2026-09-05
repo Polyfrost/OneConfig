@@ -99,6 +99,9 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
 
     override fun init() {
         everOpened = true
+        // the composition outlives a close and the warm-up already ran its once-per-composition
+        // effects, so an open has to say so for anything left pending to be picked up
+        HudManager.editorOpenRevision.intValue++
         // a reused screen still carries the close it was last dismissed by, and its interface still
         // has the visibility that close lowered; both have to be put back before the first frame
         closeRequested = false

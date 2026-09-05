@@ -124,6 +124,9 @@ internal fun hudPreviewScale(naturalW: Float, naturalH: Float, availableW: Float
 @Composable
 internal fun HudPreviewCanvas(state: HudPreviewState, scale: Float, modifier: Modifier = Modifier) {
     Canvas(modifier) {
+        // read in the draw on purpose: this one revision is what the layer depends on, instead of
+        // every live value the HUD reads, which is what redrew the whole interface
+        HudManager.previewRevision.intValue
         drawIntoCanvas { canvas ->
             val skia = canvas.skiaCanvas
             skia.save()

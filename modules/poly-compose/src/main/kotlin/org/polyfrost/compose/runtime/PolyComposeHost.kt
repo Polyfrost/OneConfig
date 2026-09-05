@@ -33,8 +33,13 @@ class PolyComposeClock {
         if (notify) Snapshot.sendApplyNotifications()
         val appliedBefore = recomposerImpl.changeCount
         clock.sendFrame(nanos)
-        return recomposerImpl.changeCount != appliedBefore || recomposerImpl.hasPendingWork
+        appliedChange = recomposerImpl.changeCount != appliedBefore
+        return appliedChange || recomposerImpl.hasPendingWork
     }
+
+    /** whether the last [frame] actually changed the content, rather than only leaving work pending */
+    var appliedChange = false
+        private set
 }
 
 object PolyComposeHost {
