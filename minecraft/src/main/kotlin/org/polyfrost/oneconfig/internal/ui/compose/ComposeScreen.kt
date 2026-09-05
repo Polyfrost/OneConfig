@@ -497,7 +497,7 @@ abstract class ComposeScreen(
     //? } else {
     /*override fun mouseClicked(x: Double, y: Double, button: Int): Boolean {
     *///? }
-        if (handleMouseClicked(button)) {
+        if (KeybindRecordingBus.consumeMouse(button, true) || handleMouseClicked(button)) {
             consumedButtons += button
             return true
         }
@@ -516,7 +516,11 @@ abstract class ComposeScreen(
     //? } else {
     /*override fun mouseReleased(x: Double, y: Double, button: Int): Boolean {
     *///? }
-        if (!consumedButtons.remove(button)) sendMouseButtonEvent(PointerEventType.Release, button)
+        val recordingConsumed = KeybindRecordingBus.consumeMouse(button, false)
+        val pressConsumed = consumedButtons.remove(button)
+        if (!recordingConsumed && !pressConsumed) {
+            sendMouseButtonEvent(PointerEventType.Release, button)
+        }
 
         //? if >= 1.21.10 {
         return super.mouseReleased(event)
@@ -538,8 +542,17 @@ abstract class ComposeScreen(
         withScene {
             it.sendPointerEvent(
                 type,
+                //? if sdl_keycodes {
+                /*button = when (button) {
+                    InputConstants.MOUSE_BUTTON_LEFT -> PointerButton.Primary
+                    InputConstants.MOUSE_BUTTON_RIGHT -> PointerButton.Secondary
+                    InputConstants.MOUSE_BUTTON_MIDDLE -> PointerButton.Tertiary
+                    else -> PointerButton(button - 1)
+                }
+                *///?} else {
                 // PointerButton indices match GLFW button numbers (Primary = 0, Secondary = 1, ...)
                 button = if (button >= 0) PointerButton(button) else null,
+                //?}
                 position = pointerPosition()
             )
         }
