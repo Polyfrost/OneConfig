@@ -1,9 +1,9 @@
 public final class org/polyfrost/compose/composables/ComposableSingletons$ComposablesKt {
 	public static final field INSTANCE Lorg/polyfrost/compose/composables/ComposableSingletons$ComposablesKt;
 	public fun <init> ()V
-	public final fun getLambda$-1248108146$org_polyfrost_oneconfig_poly_compose ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda$-669139357$org_polyfrost_oneconfig_poly_compose ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda$1218149997$org_polyfrost_oneconfig_poly_compose ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-1248108146$poly_compose ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-669139357$poly_compose ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$1218149997$poly_compose ()Lkotlin/jvm/functions/Function2;
 }
 
 public final class org/polyfrost/compose/composables/ComposablesKt {
@@ -559,6 +559,14 @@ public final class org/polyfrost/compose/runtime/PolyApplier : androidx/compose/
 	public fun remove (II)V
 }
 
+public final class org/polyfrost/compose/runtime/PolyComposeClock {
+	public static final field $stable I
+	public fun <init> ()V
+	public final fun frame (JZ)Z
+	public static synthetic fun frame$default (Lorg/polyfrost/compose/runtime/PolyComposeClock;JZILjava/lang/Object;)Z
+	public final fun getAppliedChange ()Z
+}
+
 public final class org/polyfrost/compose/runtime/PolyComposeHost {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/polyfrost/compose/runtime/PolyComposeHost;
@@ -566,11 +574,15 @@ public final class org/polyfrost/compose/runtime/PolyComposeHost {
 	public static synthetic fun frame$default (Lorg/polyfrost/compose/runtime/PolyComposeHost;JILjava/lang/Object;)V
 	public final fun frameWithReport (J)Z
 	public static synthetic fun frameWithReport$default (Lorg/polyfrost/compose/runtime/PolyComposeHost;JILjava/lang/Object;)Z
+	public final fun getHuds ()Lorg/polyfrost/compose/runtime/PolyComposeClock;
+	public final fun getPreviews ()Lorg/polyfrost/compose/runtime/PolyComposeClock;
 }
 
 public final class org/polyfrost/compose/runtime/PolyComposeRuntime {
 	public static final field $stable I
 	public fun <init> ()V
+	public fun <init> (Lorg/polyfrost/compose/runtime/PolyComposeClock;)V
+	public synthetic fun <init> (Lorg/polyfrost/compose/runtime/PolyComposeClock;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun dispose ()V
 	public final fun frame (FFJ)V
 	public static synthetic fun frame$default (Lorg/polyfrost/compose/runtime/PolyComposeRuntime;FFJILjava/lang/Object;)V

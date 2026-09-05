@@ -1,14 +1,14 @@
 public final class org/polyfrost/oneconfig/api/notifications/v1/ComposableSingletons$NotificationToastsKt {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/notifications/v1/ComposableSingletons$NotificationToastsKt;
 	public fun <init> ()V
-	public final fun getLambda$149396106$org_polyfrost_oneconfig_notifications ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda$708765467$org_polyfrost_oneconfig_notifications ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$149396106$notifications ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$708765467$notifications ()Lkotlin/jvm/functions/Function2;
 }
 
 public final class org/polyfrost/oneconfig/api/notifications/v1/ComposableSingletons$NotificationsRendererKt {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/notifications/v1/ComposableSingletons$NotificationsRendererKt;
 	public fun <init> ()V
-	public final fun getLambda$-1339950985$org_polyfrost_oneconfig_notifications ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-1339950985$notifications ()Lkotlin/jvm/functions/Function2;
 }
 
 public final class org/polyfrost/oneconfig/api/notifications/v1/Notification {
