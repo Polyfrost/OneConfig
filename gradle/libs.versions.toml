@@ -37,7 +37,7 @@ viewmodel = "2.11.0-beta01"
 commonmark = "0.24.0"
 
 # Testing
-junit-bom = "5.10.2"
+junit-bom = "6.0.0"
 log4j-impl = "2.23.1" # unvulnerable version
 
 adventure = "4.25.0"
