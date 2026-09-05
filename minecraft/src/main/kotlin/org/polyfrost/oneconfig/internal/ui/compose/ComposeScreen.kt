@@ -197,6 +197,7 @@ abstract class ComposeScreen(
     }
 
     private fun closeSceneQuietly() {
+        releasePrewarmSurface()
         val scene = sceneOrNull
         val recomposer = recomposerOrNull
         if (scene == null && recomposer == null) return
@@ -353,6 +354,37 @@ abstract class ComposeScreen(
     // window or mod list starts over rather than reporting itself already done
     private var prewarmCursor = 0
 
+    private var prewarmSurfaceOrNull: Surface? = null
+    private var prewarmSurfaceW = 0
+    private var prewarmSurfaceH = 0
+
+    /** one surface for the whole pass: it is viewport sized and was being rebuilt on every frame */
+    private fun prewarmSurface(): Surface? {
+        prewarmSurfaceOrNull?.let { if (prewarmSurfaceW == lastSceneW && prewarmSurfaceH == lastSceneH) return it }
+        releasePrewarmSurface()
+        return try {
+            Surface.makeRenderTarget(
+                SkiaCtx.directContext,
+                false,
+                ImageInfo.makeN32Premul(lastSceneW, lastSceneH),
+            ).also {
+                prewarmSurfaceOrNull = it
+                prewarmSurfaceW = lastSceneW
+                prewarmSurfaceH = lastSceneH
+            }
+        } catch (t: Throwable) {
+            LOGGER.debug("Compose warm-up could not allocate a surface", t)
+            null
+        }
+    }
+
+    private fun releasePrewarmSurface() {
+        prewarmSurfaceOrNull?.let { runCatching { it.close() } }
+        prewarmSurfaceOrNull = null
+        prewarmSurfaceW = 0
+        prewarmSurfaceH = 0
+    }
+
     /**
      * builds the scene and renders it offscreen before anything asks to see it
      *
@@ -371,19 +403,16 @@ abstract class ComposeScreen(
             closeSceneQuietly()
             return false
         }
+        val hadContent = contentSet
         if (!bindContent()) {
             LOGGER.warn("{} warm-up: setContent did not take (poisoned={})", name, scenePoisoned)
             closeSceneQuietly()
             return false
         }
-        val surface = try {
-            Surface.makeRenderTarget(
-                SkiaCtx.directContext,
-                false,
-                ImageInfo.makeN32Premul(lastSceneW, lastSceneH),
-            )
-        } catch (t: Throwable) {
-            LOGGER.debug("Compose warm-up could not allocate a surface", t)
+        // setContent builds the whole composition, and rendering it on the same frame made one
+        // 2430 ms frame on the title screen. it gets a frame to itself
+        if (!hadContent) return false
+        val surface = prewarmSurface() ?: run {
             closeSceneQuietly()
             return false
         }
@@ -407,16 +436,16 @@ abstract class ComposeScreen(
             surface.flushAndSubmit()
         } catch (t: Throwable) {
             prewarmCursor = 0
+            releasePrewarmSurface()
             closeSceneQuietly()
             LOGGER.warn("Compose warm-up failed; the first open will build the UI instead", t)
             return false
-        } finally {
-            surface.close()
         }
         // the warm-up drew a frame the player never saw, so the first real open must draw its own
         sceneDirty = true
         if (prewarmCursor < frames) return false
         prewarmCursor = 0
+        releasePrewarmSurface()
         return true
     }
 

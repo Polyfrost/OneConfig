@@ -2,6 +2,9 @@ package org.polyfrost.oneconfig.internal.ui.compose
 
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.screens.ConnectScreen
+import net.minecraft.client.gui.screens.LevelLoadingScreen
+import net.minecraft.client.gui.screens.ProgressScreen
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
@@ -142,6 +145,13 @@ object ComposePreloader {
      * data. So it watches instead, and a pass that finds nothing changed costs three reads.
      */
     private fun warmUp() {
+        if (waitDeadline == 0L) waitDeadline = System.nanoTime() + WAIT_NANOS
+        // the first pass is one heavy frame, so it waits for the loading screen, where a hitch is
+        // hidden and the window and the mod list are already what a real open will see
+        if (!readyToWarm()) {
+            if (System.nanoTime() < waitDeadline) SkiaCtx.queueWarmup(::warmUp)
+            return
+        }
         if (deadline == 0L) deadline = System.nanoTime() + WATCH_NANOS
         val inputs = Inputs(
             width = Platform.screen().windowWidth(),
@@ -182,6 +192,23 @@ object ComposePreloader {
             SkiaCtx.queueWarmup(::warmUp)
         }
     }
+
+    /**
+     * Whether a heavy frame would go unnoticed
+     *
+     * Singleplayer stops on [LevelLoadingScreen], a server on [ConnectScreen] first, and a world
+     * already loaded is where the warm-up used to run anyway
+     */
+    private fun readyToWarm(): Boolean {
+        if (Minecraft.getInstance().level != null) return true
+        val screen = Platform.screen().current<Any?>()
+        return screen is LevelLoadingScreen || screen is ConnectScreen || screen is ProgressScreen
+    }
+
+    /** How long to wait for a world before giving up, after which the first open builds the UI */
+    private const val WAIT_NANOS = 600_000_000_000L
+
+    private var waitDeadline = 0L
 
     /** Enough passes to follow the window, the mod list and the world, few enough to stay bounded */
     private const val MAX_PASSES = 8
