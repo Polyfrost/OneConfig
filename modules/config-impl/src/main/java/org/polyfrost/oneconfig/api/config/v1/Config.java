@@ -34,6 +34,7 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
 import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
 import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -53,6 +54,7 @@ public abstract class Config {
     protected Tree tree;
     /** code-defined defaults captured at first initialization keyed by dot-separated property path */
     private Map<String, Object> defaultSnapshot;
+    private List<Runnable> deferredSetup;
 
     public final String id, title, iconPath;
     public final Category category;
@@ -73,12 +75,20 @@ public abstract class Config {
     }
 
     public final void addAliases(String... aliases) {
-        if (tree == null) initialize(false);
-        tree.getOrPutMetadata("aliases", () -> new ArrayList<String>(aliases.length)).addAll(Arrays.asList(aliases));
+        whenInitialized(() -> tree.getOrPutMetadata("aliases", () -> new ArrayList<String>(aliases.length)).addAll(Arrays.asList(aliases)));
     }
 
     public final void addAliases(String option, String... aliases) {
-        getProperty(option).getOrPutMetadata("aliases", () -> new ArrayList<String>(aliases.length)).addAll(Arrays.asList(aliases));
+        whenInitialized(() -> getProperty(option).getOrPutMetadata("aliases", () -> new ArrayList<String>(aliases.length)).addAll(Arrays.asList(aliases)));
+    }
+
+    private void whenInitialized(Runnable action) {
+        if (tree == null && ConfigManager.isPendingInitialization(this)) {
+            if (deferredSetup == null) deferredSetup = new ArrayList<>(4);
+            deferredSetup.add(action);
+            return;
+        }
+        action.run();
     }
 
     @ApiStatus.Internal
@@ -131,6 +141,20 @@ public abstract class Config {
             ConfigManager.markInitialized(this);
             if (!resetOptions.isEmpty()) {
                 ConfigManager.reportResetOptions(this, resetOptions);
+            }
+            runDeferredSetup();
+        }
+    }
+
+    private void runDeferredSetup() {
+        if (deferredSetup == null) return;
+        List<Runnable> actions = deferredSetup;
+        deferredSetup = null;
+        for (Runnable action : actions) {
+            try {
+                action.run();
+            } catch (Throwable t) {
+                ConfigManager.LOGGER.error("failed to apply setup for config {}", id, t);
             }
         }
     }
@@ -295,17 +319,17 @@ public abstract class Config {
     }
 
     protected void addDependency(String option, String name, Supplier<Property.Display> condition) {
-        Property<?> opt = getProperty(option).addDisplayCondition(condition);
-        if (name != null) opt.getOrPutMetadata("dependencyNames", () -> new ArrayList<String>(3)).add(name);
-        // unlike the boolean-option variant the supplier has no specific parent to subscribe to so re-evaluate
-        // whenever any sibling property changes
-        java.lang.ref.WeakReference<Property<?>> ref = new java.lang.ref.WeakReference<>(opt);
-        tree.onAllProps((s, p) -> {
-            if (p == opt) return;
-            p.addCallback(t -> {
-                Property<?> self = ref.get();
-                if (self != null) self.revaluateDisplay();
-                return false;
+        whenInitialized(() -> {
+            Property<?> opt = getProperty(option).addDisplayCondition(condition);
+            if (name != null) opt.getOrPutMetadata("dependencyNames", () -> new ArrayList<String>(3)).add(name);
+            WeakReference<Property<?>> ref = new WeakReference<>(opt);
+            tree.onAllProps((s, p) -> {
+                if (p == opt) return;
+                p.addCallback(t -> {
+                    Property<?> self = ref.get();
+                    if (self != null) self.revaluateDisplay();
+                    return false;
+                });
             });
         });
     }
@@ -340,11 +364,13 @@ public abstract class Config {
      */
     @SuppressWarnings("unchecked")
     protected void addDependency(String option, String condition, boolean hide) {
-        Property<?> cond = getProperty(condition);
-        if (cond.type != boolean.class) throw new IllegalArgumentException("Condition property must be boolean");
-        Property<?> opt = getProperty(option).addDisplayCondition((Property<Boolean>) cond, hide);
-        Object title = cond.getTitle();
-        opt.getOrPutMetadata("dependencyNames", () -> new ArrayList<String>(3)).add(title != null ? title.toString() : condition);
+        whenInitialized(() -> {
+            Property<?> cond = getProperty(condition);
+            if (cond.type != boolean.class) throw new IllegalArgumentException("Condition property must be boolean");
+            Property<?> opt = getProperty(option).addDisplayCondition((Property<Boolean>) cond, hide);
+            Object title = cond.getTitle();
+            opt.getOrPutMetadata("dependencyNames", () -> new ArrayList<String>(3)).add(title != null ? title.toString() : condition);
+        });
     }
 
     /**
@@ -355,7 +381,7 @@ public abstract class Config {
     @SuppressWarnings("unchecked")
     @kotlin.OverloadResolutionByLambdaReturnType
     protected <T> void addCallback(String option, Predicate<T> callback) {
-        ((Property<T>) getProperty(option)).addCallback(callback);
+        whenInitialized(() -> ((Property<T>) getProperty(option)).addCallback(callback));
     }
 
     /**
@@ -364,10 +390,10 @@ public abstract class Config {
      * The name of the option should be the name of the field
      */
     protected void addCallback(String option, Runnable callback) {
-        getProperty(option).addCallback(t -> {
+        whenInitialized(() -> getProperty(option).addCallback(t -> {
             callback.run();
             return false;
-        });
+        }));
     }
 
     public Tree getTree() {
@@ -381,8 +407,7 @@ public abstract class Config {
      * <br>To be used in conjunction with {@link #loadFrom(String)} or {@link #loadFrom(Path)} to migrate old configs to new ones
      */
     protected void addMigrationEntry(String oldName, String newName) {
-        if (tree == null) initialize(false);
-        tree.getOrPutMetadata("migrationMap", () -> new HashMap<String, String>()).put(oldName, newName);
+        whenInitialized(() -> tree.getOrPutMetadata("migrationMap", () -> new HashMap<String, String>()).put(oldName, newName));
     }
 
     /**
@@ -392,30 +417,33 @@ public abstract class Config {
      * <br>To be used in conjunction with {@link #loadFrom(String)} or {@link #loadFrom(Path)} to migrate old configs to new ones
      */
     protected void addMigrationEntries(String... entries) {
-        if (tree == null) initialize(false);
-        HashMap<String, String> map = tree.getOrPutMetadata("migrationMap", () -> new HashMap<>(entries.length / 2));
-        for (int i = 0; i < entries.length; i += 2) {
-            map.put(entries[i], entries[i + 1]);
-        }
+        whenInitialized(() -> {
+            HashMap<String, String> map = tree.getOrPutMetadata("migrationMap", () -> new HashMap<>(entries.length / 2));
+            for (int i = 0; i < entries.length; i += 2) {
+                map.put(entries[i], entries[i + 1]);
+            }
+        });
     }
 
     protected void loadFrom(String id) {
-        if (tree == null) initialize(false);
-        Tree in = ConfigManager.active().get(id);
-        if (in == null) return;
-        tree.overwrite(in, false, true, tree);
+        whenInitialized(() -> {
+            Tree in = ConfigManager.active().get(id);
+            if (in == null) return;
+            tree.overwrite(in, false, true, tree);
+        });
     }
 
     protected void loadFrom(Path p) {
-        if (tree == null) initialize(false);
-        Tree in;
-        try {
-            in = ConfigManager.active().getNoRegister(p);
-        } catch (Exception e) {
-            return;
-        }
-        if (in == null) return;
-        tree.overwrite(in, false, true, tree);
+        whenInitialized(() -> {
+            Tree in;
+            try {
+                in = ConfigManager.active().getNoRegister(p);
+            } catch (Exception e) {
+                return;
+            }
+            if (in == null) return;
+            tree.overwrite(in, false, true, tree);
+        });
     }
 
     protected Property<?> getProperty(String option) {

@@ -1,6 +1,6 @@
 [versions]
 loader = "0.19.3"
-osl = "0.21.0-alpha.34"
+osl = "0.20.3"
 feather_build = "1"
 ploceus = "1.17.4"
 

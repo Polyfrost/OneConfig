@@ -132,7 +132,7 @@ gradle.projectsEvaluated {
     } else if (versionedCatalog.versions["minecraft"].requiredVersion.startsWith("1.21")) {
         "maven.modrinth:hypixel-mod-api:1.0.1+build.1+mc1.21"
     } else {
-        "org.polyfrost:mod-api-fabric:1.0.2+build.1+mc1.8.9"
+        "io.github.moehreag.hypixel:mod-api-fabric:1.0.2+build.1+mc1.8.9"
     }
     (dependencies.add("include", hypixelFabricMod) as ExternalModuleDependency).isTransitive = false
 }

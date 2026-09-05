@@ -3,22 +3,63 @@ package org.polyfrost.oneconfig.api.ui.v1.keybind.internal;
 import com.mojang.blaze3d.platform.InputConstants;
 import org.jetbrains.annotations.Nullable;
 
+//? if !sdl_keycodes {
+import java.util.HashMap;
+import java.util.Map;
+//?}
+
+/**
+ * Translates between platform input codes and the stable {@code key.keyboard.*}/{@code key.mouse.*} names
+ * used for serialization.
+ * <p>
+ * On GLFW versions this deliberately never calls {@link InputConstants.Type#getOrCreate(int)} or
+ * {@link InputConstants#getKey(String)} with unvalidated inputs, because it could shadow real keys
+ * like {@code key.keyboard.1}.
+ */
 public final class MinecraftKeybindCodec implements KeybindCodec {
-    //? if >= 26.3 || = 1.8.9
-    /*private static final int MAX_KEY = Integer.MAX_VALUE; // SDL keycodes are sparse and unicode/scancode-masked*/
-    //? if < 26.3 && > 1.8.9
+    //? if sdl_keycodes {
+    /*private static final int MAX_KEY = Integer.MAX_VALUE; // SDL keycodes are sparse and unicode/scancode-masked
+    *///?} else
     private static final int MAX_KEY = 348; // GLFW_KEY_LAST
 
     private static final int MIN_MOUSE = InputConstants.MOUSE_BUTTON_LEFT;
-    private static final int MAX_MOUSE = InputConstants.MOUSE_BUTTON_LEFT + 7; // vanilla names eight mouse buttons
+    private static final int MAX_MOUSE = InputConstants.MOUSE_BUTTON_LEFT + 7;
 
+    //? if !sdl_keycodes {
+    private static final Map<String, Integer> KEY_CODES_BY_NAME = new HashMap<>();
+    private static final Map<String, Integer> MOUSE_BUTTONS_BY_NAME = new HashMap<>();
+
+    static {
+        for (int code = 0; code <= MAX_KEY; code++) {
+            String name = glfwKeyName(code);
+            if (name != null) KEY_CODES_BY_NAME.put(name, code);
+        }
+        // GLFW aliases of the SDL names returned by glfwKeyName
+        KEY_CODES_BY_NAME.put("key.keyboard.keypad.decimal", 330);
+        KEY_CODES_BY_NAME.put("key.keyboard.menu", 348);
+        for (int button = MIN_MOUSE; button <= MAX_MOUSE; button++) {
+            MOUSE_BUTTONS_BY_NAME.put(legacyMouseNameOf(button), button);
+        }
+    }
+    //?}
+
+    /**
+     * A KEYSYM key for the code, or {@link InputConstants#UNKNOWN}.
+     */
     public static InputConstants.Key keysym(int code) {
-        //~ if >= 26.3 || = 1.8.9 'code >= 0 && code <= 9' -> 'code >= 1 && code <= 3'
-        if (code >= 0 && code <= 9) return InputConstants.UNKNOWN;
-        //~ if < 26.3 && > 1.8.9 'Type.KEYBOARD' -> 'Type.KEYSYM'
+        //? if sdl_keycodes {
+        /*if (code >= 1 && code <= 3) return InputConstants.UNKNOWN;
+        return InputConstants.Type.KEYBOARD.getOrCreate(code);
+        *///?} else {
+        if (glfwKeyName(code) == null) return InputConstants.UNKNOWN;
+        // every named GLFW code is pre-registered by vanilla, so this never creates a key
         return InputConstants.Type.KEYSYM.getOrCreate(code);
+        //?}
     }
 
+    /**
+     * A MOUSE key for the button, or {@link InputConstants#UNKNOWN}.
+     */
     public static InputConstants.Key mouse(int button) {
         if (button < MIN_MOUSE || button > MAX_MOUSE) return InputConstants.UNKNOWN;
         return InputConstants.Type.MOUSE.getOrCreate(button);
@@ -26,7 +67,8 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
 
     @Override
     public @Nullable String keyName(int code) {
-        if (code < 0 || code > MAX_KEY) return null;
+        //? if sdl_keycodes {
+        /*if (code < 0 || code > MAX_KEY) return null;
 
         InputConstants.Key key = keysym(code);
         if (key == InputConstants.UNKNOWN) return null;
@@ -34,48 +76,51 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
         // Ignore fallback names
         if (("key.keyboard." + code).equals(key.getName())) return null;
 
-        //? if < 26.3 && > 1.8.9 {
-        // GLFW to SDL aliases
-        if ("key.keyboard.keypad.decimal".equals(key.getName())) return "key.keyboard.keypad.period";
-        if ("key.keyboard.menu".equals(key.getName())) return "key.keyboard.application";
-        //?}
-
         return key.getName();
+        *///?} else {
+        return glfwKeyName(code);
+        //?}
     }
 
     @Override
     public @Nullable Integer keyCode(String name) {
-        //? if < 26.3 && > 1.8.9 {
-        // SDL to GLFW aliases
-        if ("key.keyboard.keypad.period".equals(name)) name = "key.keyboard.keypad.decimal";
-        if ("key.keyboard.application".equals(name)) name = "key.keyboard.menu";
-        //?}
-
-        InputConstants.Key key = lookup(name);
+        //? if sdl_keycodes {
+        /*InputConstants.Key key = lookup(name);
         if (key == null) return null;
 
         if (("key.keyboard." + key.getValue()).equals(name)) return null;
 
-        //~ if < 26.3 && > 1.8.9 'Type.KEYBOARD' -> 'Type.KEYSYM'
-        return key.getType() == InputConstants.Type.KEYSYM && key != InputConstants.UNKNOWN ? key.getValue() : null;
+        return key.getType() == InputConstants.Type.KEYBOARD && key != InputConstants.UNKNOWN ? key.getValue() : null;
+        *///?} else {
+        return KEY_CODES_BY_NAME.get(name);
+        //?}
     }
 
     @Override
     public @Nullable String mouseName(int button) {
-        InputConstants.Key key = mouse(button);
+        //? if sdl_keycodes {
+        /*InputConstants.Key key = mouse(button);
         return key == InputConstants.UNKNOWN ? null : key.getName();
+        *///?} else {
+        return legacyMouseNameOf(button);
+        //?}
     }
 
     @Override
     public @Nullable Integer mouseButton(String name) {
-        InputConstants.Key key = lookup(name);
+        //? if sdl_keycodes {
+        /*InputConstants.Key key = lookup(name);
         if (key == null || key.getType() != InputConstants.Type.MOUSE) return null;
 
         int value = key.getValue();
         return value >= MIN_MOUSE && value <= MAX_MOUSE ? value : null;
+        *///?} else {
+        return MOUSE_BUTTONS_BY_NAME.get(name);
+        //?}
     }
 
-    private static @Nullable InputConstants.Key lookup(String name) {
+    //? if sdl_keycodes {
+    /*private static @Nullable InputConstants.Key lookup(String name) {
         int dot = name.lastIndexOf('.');
         if (dot >= 0) {
             try {
@@ -95,9 +140,23 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
             return null;
         }
     }
+    *///?}
 
     @Override
     public @Nullable String legacyKeyName(int code) {
+        return glfwKeyName(code);
+    }
+
+    @Override
+    public @Nullable String legacyMouseName(int button) {
+        return legacyMouseNameOf(button);
+    }
+
+    /**
+     * Vanilla's name for a GLFW key code, using the SDL spellings for the two keys whose names changed
+     * in 26.3 ({@code keypad.period} and {@code application}) so serialized values stay portable
+     */
+    private static @Nullable String glfwKeyName(int code) {
         if (code >= 48 && code <= 57) return "key.keyboard." + (char) code;
         if (code >= 65 && code <= 90) return "key.keyboard." + (char) (code + 32);
         if (code >= 290 && code <= 314) return "key.keyboard.f" + (code - 289);
@@ -156,8 +215,7 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
         };
     }
 
-    @Override
-    public @Nullable String legacyMouseName(int button) {
+    private static @Nullable String legacyMouseNameOf(int button) {
         return switch (button) {
             case 0 -> "key.mouse.left";
             case 1 -> "key.mouse.right";

@@ -14,6 +14,8 @@ stonecutter {
             )
             val catalogue = rootProject.getForwardingVersionCatalog(current)
 
+            this["sdl_keycodes"] = eval(current.version, ">= 26.3") || eval(current.version, "= 1.8.9")
+
             this["moul_compat"] = current.project.endsWith("-fabric") &&
                 eval(current.version, "> 1.21.10") &&
                 catalogue.has("moulconfig")
@@ -23,6 +25,7 @@ stonecutter {
             this["walksylib_compat"] = catalogue.has("walksylib")
             this["modmenu_compat"] = catalogue.has("modmenu")
             this["rconfig_compat"] = catalogue.has("rconfig")
+            this["osl_config_compat"] = current.project.endsWith("-ornithe")
             this["dandelion_compat"] = catalogue.has("dandelion")
             this["odin_compat"] = current.project.endsWith("-fabric") && catalogue.has("odin")
             this["skycubed_compat"] = current.project.endsWith("-fabric") && catalogue.has("skycubed")
@@ -37,6 +40,7 @@ stonecutter {
             this["apec_compat"] = current.project.endsWith("-fabric") && catalogue.has("apec")
             this["tr7zw_compat"] = true
             this["ukulib_compat"] = current.project.endsWith("-fabric")
+            this["axolotlclient_config_compat"] = true
             this["wwaypoints_compat"] = current.project.endsWith("-fabric")
             this["cinnabar"] = catalogue.has("cinnabar") && rootProject.hasProperty("minecraft.vulkan")
             this["vulkanmod"] = current.project.endsWith("-fabric") && catalogue.has("vulkanmod")
