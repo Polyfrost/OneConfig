@@ -218,6 +218,10 @@ public final class ConfigManager {
         pendingInitialization.remove(config);
     }
 
+    static boolean isPendingInitialization(Config config) {
+        return pendingInitialization.contains(config);
+    }
+
     static void reportResetOptions(Config config, List<String> options) {
         Tree tree = config.getTree();
         if (tree == null || tree.getID() == null) return;
