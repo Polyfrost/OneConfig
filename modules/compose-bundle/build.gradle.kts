@@ -108,12 +108,18 @@ tasks.processResources {
 
 apply(plugin = "oneconfig-compose-bundle-publish")
 
+val modPublishTasks = tasks.named("publishMods").get().dependsOn.toList()
+
 tasks.register("publishComposeBundle") {
     group = "publishing"
-    description = "Publishes compose-bundle to the Polyfrost maven repositories."
-    dependsOn(tasks.withType<PublishToMavenRepository>())
+    description = "Publishes compose-bundle to the Polyfrost maven repositories and Modrinth."
+    dependsOn(tasks.withType<PublishToMavenRepository>(), modPublishTasks)
 }
 
 tasks.named("publish") {
+    setDependsOn(emptyList<Any>())
+}
+
+tasks.named("publishMods") {
     setDependsOn(emptyList<Any>())
 }
