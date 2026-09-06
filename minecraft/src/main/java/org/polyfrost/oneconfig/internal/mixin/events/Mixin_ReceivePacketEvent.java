@@ -16,6 +16,7 @@ public class Mixin_ReceivePacketEvent {
     //~ if = 1.8.9 'protocol/Packet' -> 'packet/Packet'
     @Inject(method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/protocol/Packet;)V", at = @At("HEAD"), cancellable = true)
     private void packetReceiveCallback(ChannelHandlerContext ctx, Packet<?> packet, CallbackInfo ci) {
+        if (!EventManager.INSTANCE.hasListeners(PacketEvent.Receive.class)) return;
         PacketEvent.Receive event = new PacketEvent.Receive(packet);
         EventManager.INSTANCE.post(event);
         if (event.cancelled) {

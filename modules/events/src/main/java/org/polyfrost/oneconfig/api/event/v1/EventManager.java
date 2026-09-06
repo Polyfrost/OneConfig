@@ -45,11 +45,11 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -64,8 +64,8 @@ public final class EventManager {
     public static final EventManager INSTANCE = new EventManager();
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Events");
     private final Deque<EventCollector> collectors = new ArrayDeque<>(2);
-    private final Map<Object, Iterable<EventHandler<?>>> cache = new WeakHashMap<>(5);
-    private final Map<Class<? extends Event>, List<EventHandler<?>>> handlers = new HashMap<>(8);
+    private final Map<Object, Iterable<EventHandler<?>>> cache = Collections.synchronizedMap(new WeakHashMap<>(5));
+    private final Map<Class<? extends Event>, List<EventHandler<?>>> handlers = new ConcurrentHashMap<>(8);
 
     private EventManager() {
         registerCollector(new AnnotationEventMapper());
@@ -231,6 +231,11 @@ public final class EventManager {
 
     public void registerCollector(EventCollector collector) {
         collectors.addFirst(collector);
+    }
+
+    public boolean hasListeners(Class<? extends Event> cls) {
+        List<EventHandler<?>> handles = handlers.get(cls);
+        return handles != null && !handles.isEmpty();
     }
 
     /**

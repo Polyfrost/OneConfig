@@ -13,7 +13,7 @@ internal object ModMenuEntrypoint : ModMenuApi {
     override fun getModConfigScreenFactory(): ConfigScreenFactory<*> {
         if (CompatLoader.hasMod(ROOT_MOD_ID)) return ConfigScreenFactory<Screen> { null }
         return try {
-            ConfigScreenFactory { OneConfigUIScreen() }
+            ConfigScreenFactory { OneConfigUIScreen.open() }
         } catch (e: LinkageError) {
             reportUnlinkable(e)
             ConfigScreenFactory<Screen> { null }
@@ -25,7 +25,7 @@ internal object ModMenuEntrypoint : ModMenuApi {
             val factories = ConfigManager.active().trees()
                 .filter { it.id != null }
                 .associateTo(mutableMapOf()) { it.id to ConfigScreenFactory { _ -> OneConfigUIScreen(initialTree = it) } }
-            factories.putIfAbsent(ROOT_MOD_ID, ConfigScreenFactory { _ -> OneConfigUIScreen() })
+            factories.putIfAbsent(ROOT_MOD_ID, ConfigScreenFactory { _ -> OneConfigUIScreen.open() })
             factories
         } catch (e: LinkageError) {
             reportUnlinkable(e)

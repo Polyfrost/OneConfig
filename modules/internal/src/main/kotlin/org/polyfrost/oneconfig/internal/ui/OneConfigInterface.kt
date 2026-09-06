@@ -1,22 +1,12 @@
 package org.polyfrost.oneconfig.internal.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterExitState
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.EaseOutCubic
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -30,7 +20,6 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -43,6 +32,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ui.components.RetainedVisibility
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDragLayer
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 import org.polyfrost.oneconfig.internal.ui.shell.Lifecycle
@@ -73,6 +63,7 @@ fun OneConfigInterface(
     resuming: Boolean = false,
     /** Set when [initialRoute] is a page the user was already on which is put back without a transition */
     restoring: Boolean = false,
+    openRevision: Int = 0,
     onCloseRequest: () -> Unit = {},
     onCloseReady: ((requestClose: () -> Unit) -> Unit)? = null,
     onOpenReady: ((requestOpen: () -> Unit) -> Unit)? = null,
@@ -82,7 +73,8 @@ fun OneConfigInterface(
 
     LocalNavController.current = rememberNavController()
 
-    LaunchedEffect(initialRoute) {
+    LaunchedEffect(initialRoute, openRevision) {
+        val alreadyThere = initialRoute == LocalNavController.wrapper.currentRoute
         if (!resuming) {
             ShellState.globalSearchActive = false
             ShellState.searchQuery = ""
@@ -90,8 +82,8 @@ fun OneConfigInterface(
         }
 
         ShellState.openingTransitionTarget = null
-        ShellState.awaitingInitialRoute = initialRoute != ModsGraph
-        if (initialRoute != ModsGraph) {
+        ShellState.awaitingInitialRoute = !alreadyThere
+        if (!alreadyThere) {
             // an initial navigation fires a page transition gated by "Show opening page animation" unless
             // the page is only being put back which should look like it was never left
             ShellState.initialTransitionConsumed = false
@@ -174,41 +166,25 @@ fun OneConfigInterface(
                 ) {
                     Theme(pixelGrid = true) {
                         val animMs = (OneConfigConfig.animationTime * 1000f).toInt().coerceAtLeast(1)
-                        val exitMs = guiCloseAnimationMillis().toInt()
-                        val enter = if (OneConfigConfig.guiOpenAnimation)
-                            fadeIn(tween(animMs, easing = EaseOutExpo)) + scaleIn(tween(animMs, easing = EaseOutExpo), initialScale = 0.9f)
-                        else EnterTransition.None
-                        val exit = if (exitMs > 0)
-                            fadeOut(tween(exitMs, easing = EaseOutCubic)) + scaleOut(tween(exitMs, easing = EaseOutCubic), targetScale = 0.9f)
-                        else ExitTransition.None
+                        val enterMs = if (OneConfigConfig.guiOpenAnimation) animMs else 1
+                        val exitMs = guiCloseAnimationMillis().toInt().coerceAtLeast(1)
                         val dragAlpha by animateFloatAsState(
                             targetValue = if (ShellState.hudDragging) OneConfigConfig.hudDragUiOpacity.coerceIn(0f, 1f) else 1f,
                             animationSpec = tween(150),
                             label = "hudDragShellAlpha"
                         )
-                        AnimatedVisibility(
+
+                        RetainedVisibility(
                             visible = visible,
-                            enter = enter,
-                            exit = exit,
-                        ) {
-                            val contentAlpha by transition.animateFloat(
-                                transitionSpec = {
-                                    if (targetState == EnterExitState.Visible) tween(animMs, easing = EaseOutExpo)
-                                    else tween(exitMs.coerceAtLeast(1), easing = EaseOutCubic)
-                                },
-                                label = "oneconfigContentAlpha",
-                            ) { state -> if (state == EnterExitState.Visible) 1f else 0f }
-                            DisposableEffect(Unit) { onDispose { ShellState.shellBounds = null } }
-                            CompositionLocalProvider(
-                                LocalOneConfigContentAlpha provides (contentAlpha * dragAlpha),
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .onGloballyPositioned { ShellState.shellBounds = it.boundsInRoot() }
-                                        .then(if (dragAlpha < 1f) Modifier.graphicsLayer { alpha = dragAlpha } else Modifier)
-                                ) {
-                                    Shell(windowWidth, windowHeight, shellBackdrop)
-                                }
+                            enter = tween(enterMs, easing = EaseOutExpo),
+                            exit = tween(exitMs, easing = EaseOutCubic),
+                            alphaMultiplier = dragAlpha,
+                            modifier = Modifier.onGloballyPositioned {
+                                ShellState.shellBounds = it.boundsInRoot()
+                            },
+                        ) { alpha ->
+                            CompositionLocalProvider(LocalOneConfigContentAlpha provides alpha) {
+                                Shell(windowWidth, windowHeight, shellBackdrop)
                             }
                         }
                     }
