@@ -442,7 +442,7 @@ public abstract class Property<T> extends Node implements Serializable {
         public void set0(@Nullable T value) {
             try {
                 T it = get();
-                if (it != null && complex) {
+                if (it != null && complex && !ObjectSerializer.isImmutable(it.getClass())) {
                     try {
                         ObjectSerializer.overwrite(it, value);
                     } catch (Throwable ignored) {

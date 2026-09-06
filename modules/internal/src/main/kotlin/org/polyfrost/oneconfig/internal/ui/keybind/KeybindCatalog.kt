@@ -46,7 +46,7 @@ object KeybindProviderRegistry {
 }
 
 fun collectAllKeybindGroups(): List<KeybindGroup> {
-    val configGroups = collectKeybindGroups(ConfigRegistry.configList.filterIsInstance<TreeConfigData>())
+    val configGroups = collectKeybindGroups(ConfigRegistry.configs.filterIsInstance<TreeConfigData>())
     return (configGroups + KeybindProviderRegistry.groups()).withUniqueModIds()
 }
 

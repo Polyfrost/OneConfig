@@ -153,6 +153,14 @@ stonecutter {
                     "net.minecraft.client.gui.screen.ChatScreen"
                 )
                 replace(
+                    "net.minecraft.client.gui.screens.ConnectScreen",
+                    "net.minecraft.client.gui.screen.ConnectScreen"
+                )
+                replace(
+                    "net.minecraft.client.gui.screens.ProgressScreen",
+                    "net.minecraft.client.gui.screen.ProgressScreen"
+                )
+                replace(
                     "com.mojang.blaze3d.pipeline.RenderTarget",
                     "net.minecraft.client.render.pipeline.RenderTarget"
                 )
