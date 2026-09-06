@@ -412,12 +412,9 @@ private fun hitTestAnchorPoint(
     return best
 }
 
-private fun drawHudContents(sk: org.jetbrains.skia.Canvas, mcToScreen: Float) =
-    androidx.compose.runtime.snapshots.Snapshot.withoutReadObservation {
-        drawHudContentsNow(sk, mcToScreen)
-    }
-
-private fun drawHudContentsNow(sk: org.jetbrains.skia.Canvas, mcToScreen: Float) {
+private fun drawHudContents(sk: org.jetbrains.skia.Canvas, mcToScreen: Float) {
+    HudManager.renderRevision.intValue
+    HudManager.revision
     // HUDs fused with a neighbour do not paint their own background so the merged shapes are laid down
     // here first just like the in-game HUD pass
     sk.save()
