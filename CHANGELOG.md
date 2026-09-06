@@ -1,5 +1,3 @@
-1.1.13 changelogs:
-- Significantly improve OneConfig performance
-- Add support for mouse binds
-- Add ukulib config support
-- Update Compose, Skiko
+1.1.14 changelogs:
+- Remove onboarding
+- release search focus after warm up
