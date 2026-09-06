@@ -35,6 +35,10 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.config.v1.Properties;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers;
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
+import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindCodec;
+import org.polyfrost.oneconfig.internal.OneConfigConfig;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -44,16 +48,16 @@ import java.util.Set;
 import static org.polyfrost.oneconfig.api.config.v1.Tree.tree;
 
 /**
- * Clears keybinds that would conflict with OneConfig's own Right Shift keybind
+ * Clears keybinds that would conflict with OneConfig's own open keybind
  * <br>
  * Each keybind is considered once on the launch it is first seen and the considered identifiers are
  * remembered across launches so a mod installed later still gets cleared while a bind the user moved
- * onto Right Shift themselves is left alone
+ * onto OneConfig's key themselves is left alone
  * <br>
  * Keybinds outside the vanilla keybind system are reported here by the owning mod's compat layer
  * through {@link #isNew(String)} and {@link #save()}
  */
-public final class RightShiftConflicts {
+public final class KeybindConflicts {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Keybinds");
     private static final String STATE_FILE = "keybind-conflicts.json";
     private static final String CHECKED_KEYBINDS = "checkedKeybinds";
@@ -62,15 +66,22 @@ public final class RightShiftConflicts {
     private static Set<String> checked;
     private static boolean dirty;
 
-    private RightShiftConflicts() {
+    private KeybindConflicts() {
     }
 
     /**
-     * The key OneConfig's own keybind uses and which conflicting keybinds are cleared from
+     * The key OneConfig's open keybind occupies and which conflicting keybinds are cleared from
+     * <br>
+     * {@link InputConstants#UNKNOWN} when the keybind is unbound or uses modifiers, mouse buttons or a
+     * key combo, as those cannot clash with a plain single-key bind
      */
     public static InputConstants.Key key() {
-        //~ if !sdl_keycodes 'Type.KEYBOARD' -> 'Type.KEYSYM'
-        return InputConstants.Type.KEYSYM.getOrCreate(InputConstants.KEY_RSHIFT);
+        OneConfigKeybind keybind = OneConfigConfig.oneConfigKeybind;
+        if (keybind == null || keybind.getMods() != KeyModifiers.NONE) return InputConstants.UNKNOWN;
+        int[] keys = keybind.getKeyCodes();
+        int[] mouse = keybind.getMouseBtns();
+        if (keys == null || keys.length != 1 || (mouse != null && mouse.length != 0)) return InputConstants.UNKNOWN;
+        return MinecraftKeybindCodec.keysym(keys[0]);
     }
 
     /**
@@ -100,12 +111,14 @@ public final class RightShiftConflicts {
      * Unbinds Minecraft keybinds that conflict with OneConfig's keybind
      */
     public static void unbindMinecraftKeybinds() {
-        String rightShift = key().getName();
+        InputConstants.Key key = key();
+        if (key == InputConstants.UNKNOWN) return;
+        String keyName = key.getName();
         List<String> unbound = new ArrayList<>();
 
         for (KeyMapping keyMapping : MinecraftKeybindProvider.INSTANCE.managedMappings()) {
             if (!isNew(keyMapping.getName())) continue;
-            if (!rightShift.equals(keyMapping.saveString())) continue;
+            if (!keyName.equals(keyMapping.saveString())) continue;
             keyMapping.setKey(InputConstants.UNKNOWN);
             unbound.add(keyMapping.getName());
         }
@@ -113,7 +126,7 @@ public final class RightShiftConflicts {
         if (!unbound.isEmpty()) {
             KeyMapping.resetMapping();
             Minecraft.getInstance().options.save();
-            LOGGER.info("Unbound {} Minecraft keybind(s) using Right Shift: {}", unbound.size(), unbound);
+            LOGGER.info("Unbound {} Minecraft keybind(s) using {}: {}", unbound.size(), keyName, unbound);
         }
         save();
     }

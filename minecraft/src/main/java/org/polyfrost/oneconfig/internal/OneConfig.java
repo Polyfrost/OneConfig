@@ -68,7 +68,7 @@ import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudRenderer;
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry;
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProvider;
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProfiles;
-import org.polyfrost.oneconfig.internal.ui.keybind.RightShiftConflicts;
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindConflicts;
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus;
 import org.polyfrost.oneconfig.test.TestMod_Test;
 
@@ -243,7 +243,7 @@ public class OneConfig
         EventManager.register(
                 InitializationEvent.class, e -> {
                     ConfigManager.initialize();
-                    RightShiftConflicts.unbindMinecraftKeybinds();
+                    KeybindConflicts.unbindMinecraftKeybinds();
                     org.polyfrost.oneconfig.api.config.v1.CompatSnapshots.setDispatcher(r -> {
                         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
                         if (mc != null && !mc.isSameThread()) mc.execute(r);
