@@ -1,3 +1,2 @@
-1.1.14 changelogs:
-- Remove onboarding
-- release search focus after warm up
+1.1.15 changelogs:
+- Add uku's Armor HUD compat
