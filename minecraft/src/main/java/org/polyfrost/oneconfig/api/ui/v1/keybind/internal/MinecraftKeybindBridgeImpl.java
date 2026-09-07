@@ -10,7 +10,6 @@ import net.minecraft.resources.Identifier;
 //?}
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
-import org.polyfrost.oneconfig.api.platform.v1.Keys;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager;
@@ -284,7 +283,7 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         List<Integer> keys = new ArrayList<>();
         if (rawKeys != null) {
             for (int k : rawKeys) {
-                byte bit = modBit(k);
+                byte bit = KeyModifiers.of(k);
                 if (bit != KeyModifiers.NONE) mods |= bit;
                 else keys.add(k);
             }
@@ -302,15 +301,6 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         int[] out = new int[list.size()];
         for (int i = 0; i < out.length; i++) out[i] = list.get(i);
         return out;
-    }
-
-    private static byte modBit(int key) {
-        Keys keys = Platform.compatibility().keys();
-        if (key == keys.getKeyLeftShift() || key == keys.getKeyRightShift()) return KeyModifiers.SHIFT;
-        if (key == keys.getKeyLeftControl() || key == keys.getKeyRightControl()) return KeyModifiers.CTRL;
-        if (key == keys.getKeyLeftAlt() || key == keys.getKeyRightAlt()) return KeyModifiers.ALT;
-        if (key == keys.getKeyLeftSuper() || key == keys.getKeyRightSuper()) return KeyModifiers.META;
-        return KeyModifiers.NONE;
     }
 
     public static String fullComboText(int[] keys, int[] mouse, byte mods) {
