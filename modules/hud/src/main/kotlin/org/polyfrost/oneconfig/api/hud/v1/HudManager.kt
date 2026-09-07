@@ -886,9 +886,11 @@ object HudManager {
 
     @ApiStatus.Internal
     fun onEditorScreenRemoved() {
+        val wasOpen = isEditorOpen
         isEditorOpen = false
         // a drag interrupted by the editor closing must not leave a HUD unable to merge
         setMergeExclusions(emptyList())
+        if (wasOpen) EventManager.INSTANCE.post(HudEditorToggleEvent.SCREEN_REMOVED)
     }
 
     @ApiStatus.Internal

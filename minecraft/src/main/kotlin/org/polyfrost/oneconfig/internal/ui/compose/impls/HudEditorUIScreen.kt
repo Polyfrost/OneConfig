@@ -109,9 +109,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
             if (OneConfigConfig.restoreHudEditor) ShellState.lastRoute = HudEditorRoute
             ShellState.lastClosedAt = System.currentTimeMillis()
         }
-        if (HudManager.isEditorOpen) {
-            HudManager.onEditorScreenRemoved()
-        }
+        HudManager.onEditorScreenRemoved()
         UiSounds.releaseAmbience()
         super.removed()
     }
@@ -182,11 +180,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
     @Composable
     override fun compose() {
         DisposableEffect(Unit) {
-            onDispose {
-                if (HudManager.isEditorOpen) {
-                    HudManager.onEditorScreenRemoved()
-                }
-            }
+            onDispose { HudManager.onEditorScreenRemoved() }
         }
 
         var visible by remember { mutableStateOf(false) }
@@ -206,6 +200,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
             exit = tween(exitMs, easing = EaseIn),
             modifier = Modifier.fillMaxSize(),
             hiddenScale = 0.92f,
+            openKey = HudManager.editorOpenRevision.intValue,
         ) { _ ->
             CompositionLocalProvider(
                 LocalLifecycleOwner provides Lifecycle,

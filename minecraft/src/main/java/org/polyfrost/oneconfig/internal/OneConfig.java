@@ -226,7 +226,7 @@ public class OneConfig
                         if (!(Platform.screen().current() instanceof HudEditorUIScreen)) {
                             Platform.screen().display(HudEditorUIScreen.open());
                         }
-                    } else {
+                    } else if (!e.screenAlreadyGone) {
                         if (Platform.screen().current() instanceof HudEditorUIScreen) {
                             Platform.screen().display(null, 0);
                         }
@@ -253,6 +253,7 @@ public class OneConfig
                     ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
                     org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar.register();
                     org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat.register();
+                    org.polyfrost.oneconfig.internal.compat.ArmorHudCompat.register();
                     //? if wwaypoints_compat
                     org.polyfrost.oneconfig.internal.compat.WWaypointsCompat.register();
                     org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry.INSTANCE.loadFromConfig();

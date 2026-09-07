@@ -23,6 +23,15 @@ private fun hudCardId(hud: Hud, ownerId: String) =
 
 private fun isCompatHud(hud: Hud) = hud.category.id == Hud.Category.COMPAT.id
 
+private val COMPAT_CARD_HUD_IDS = setOf("ukus_armor_hud")
+
+private fun cardHuds(): List<Hud> =
+    HudManager.providers().filterNot { isCompatHud(it) } +
+        activeInstancesSnapshot().filter { isCompatHud(it) && it.id in COMPAT_CARD_HUD_IDS }
+
+private fun activeInstancesSnapshot(): List<Hud> =
+    runCatching { ArrayList(HudManager.activeInstances).filterNotNull() }.getOrElse { emptyList() }
+
 internal fun isHudModCard(id: String) = id.startsWith(HUD_CARD_ID_PREFIX)
 
 private fun withHudSuffix(title: Any): Any {
@@ -44,14 +53,18 @@ private fun ownerVisible(ownerId: String, owner: ConfigData?): Boolean {
 /** Cache so the search corpus can keep using the same mod cards */
 private val cardCache = HashMap<String, HudModCardData>()
 
+internal fun cardsSupersededByHudCards(hudCards: List<ConfigData>): Set<ConfigData> =
+    hudCards.mapNotNullTo(HashSet()) { card ->
+        (card as? HudModCardData)?.takeIf { isCompatHud(it.hud) }?.owner
+    }
+
 internal fun hudModCardConfigs(): List<ConfigData> = synchronized(cardCache) {
     @Suppress("UNUSED_VARIABLE")
     val revision = HudManager.revision
 
     val out = ArrayList<ConfigData>()
     val seen = HashSet<String>()
-    for (hud in HudManager.providers()) {
-        if (isCompatHud(hud)) continue
+    for (hud in cardHuds()) {
         val ownerId = ownerIdOf(hud)
         val owner = findOwner(ownerId)
         if (!ownerVisible(ownerId, owner)) continue
@@ -75,7 +88,7 @@ internal class HudModCardData(
 
     override val description: String? = hud.description
 
-    override val icon: String? = if (hud is LegacyHudMarker) null else {
+    override val icon: String? = if (hud is LegacyHudMarker && !isCompatHud(hud)) null else {
         HudManager.iconFor(ownerId)
             ?: owner?.icon
             ?: if (ownerId == BUILTIN_HUD_CONFIG_ID) BUILTIN_HUD_ICON else "hud"
@@ -95,7 +108,9 @@ internal class HudModCardData(
     override val category: Config.Category = Config.Category.HUD
 
     override val onOpen: () -> Unit = {
-        val existing = HudManager.getHudsOfType(hud::class.java)
+        val existing =
+            if (activeInstancesSnapshot().any { it === hud }) listOf(hud)
+            else HudManager.getHudsOfType(hud::class.java)
         HudManager.pendingSelection = existing.firstOrNull()
         HudManager.pendingAdd = if (existing.isEmpty()) hud else null
         HudManager.openEditor()

@@ -1109,13 +1109,14 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     }
 
     val providers = remember { HudManager.providers().toList() }
-    val modIds = remember(providers) { providers.mapNotNull { it.configId }.distinct() }
+    val addable = providers.filter { it.addableToLibrary }
+    val modIds = addable.mapNotNull { it.configId }.distinct()
     val modNames = remember(modIds) { modIds.associateWith { modNameFor(it) ?: it } }
     val searchHits = rememberHudSearchResults(providers, searchText)
-    val groupedHuds = searchHits ?: providers.groupBy { it.configId }.map { (modId, huds) -> modId to huds }
+    val groupedHuds = searchHits?.map { (modId, huds) -> modId to huds.filter { it.addableToLibrary } }
+        ?: addable.groupBy { it.configId }.map { (modId, huds) -> modId to huds }
     val librarySections = groupedHuds.mapNotNull { (modId, huds) ->
-        huds.filter { it.multipleInstancesAllowed() || !HudManager.hasHudOfType(it::class.java) }
-            .takeIf { it.isNotEmpty() }
+        huds.takeIf { it.isNotEmpty() }
             ?.let { HudLibrarySection(modId, modId?.let { id -> modNames[id] } ?: "Other", it) }
     }
     val librarySectionIds = librarySections.map { it.modId }
@@ -2592,7 +2593,7 @@ private fun DesignStudioPanel(
     val subtitle = remember(selectedHud) {
         selectedHud?.let { hud ->
             val name = localizedLabel(hud.title) ?: return@let null
-            val modName = hud.configId?.let(::modNameFor)
+            val modName = hud.configId?.let(::modNameFor)?.takeIf { it != name }
             if (modName != null) "$name / $modName" else name
         }
     }
@@ -2714,6 +2715,9 @@ private fun rememberHudSearchResults(providers: List<Hud>, query: String): List<
 }
 
 /** One mod's worth of addable HUDs as shown in the continuous library list */
+private val Hud.addableToLibrary: Boolean
+    get() = multipleInstancesAllowed() || !HudManager.hasHudOfType(this::class.java)
+
 private class HudLibrarySection(val modId: String?, val title: String, val huds: List<Hud>)
 
 /** Map key for a section since the catch-all section has no mod id */

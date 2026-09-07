@@ -1,12 +1,11 @@
 package org.polyfrost.oneconfig.internal.ui.components
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FiniteAnimationSpec
-import androidx.compose.animation.core.Transition
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 
@@ -18,16 +17,21 @@ fun RetainedVisibility(
     modifier: Modifier = Modifier,
     alphaMultiplier: Float = 1f,
     hiddenScale: Float = 0.9f,
+    openKey: Any? = null,
     content: @Composable (alpha: Float) -> Unit,
 ) {
-    val transition = updateTransition(visible, label = "retainedVisibility")
-    val spec: @Composable Transition.Segment<Boolean>.() -> FiniteAnimationSpec<Float> = {
-        if (targetState) enter else exit
+    val progress = remember { Animatable(if (visible) 1f else 0f) }
+    val lastKey = remember { arrayOf(openKey) }
+    LaunchedEffect(openKey, visible) {
+        if (openKey != lastKey[0]) {
+            progress.snapTo(0f)
+            lastKey[0] = openKey
+        }
+        progress.animateTo(if (visible) 1f else 0f, if (visible) enter else exit)
     }
-    val progress by transition.animateFloat(spec, "retainedVisibilityAlpha") { if (it) 1f else 0f }
-    val scale by transition.animateFloat(spec, "retainedVisibilityScale") { if (it) 1f else hiddenScale }
 
-    val alpha = progress * alphaMultiplier
+    val alpha = progress.value * alphaMultiplier
+    val scale = hiddenScale + (1f - hiddenScale) * progress.value
     Box(
         modifier = modifier
             .graphicsLayer {
