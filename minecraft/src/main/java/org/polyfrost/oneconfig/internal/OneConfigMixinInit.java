@@ -93,7 +93,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //mixins.add("compat.odin.Mixin_OdinModuleManager");
 
         //? rconfig_compat
-        mixins.add("compat.rconfig.Mixin_Configurations");
+        //mixins.add("compat.rconfig.Mixin_Configurations");
 
         //? osl_config_compat
         //mixins.add("compat.osl.Mixin_OslConfigManager");
@@ -129,23 +129,23 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         *///? }
 
         //? skyblocker_compat {
-        Boolean skyblockerSingleton = declaresStaticMethod("de.hysky.skyblocker.skyblock.fancybars.FancyStatusBars", "initStatic");
+        /*Boolean skyblockerSingleton = declaresStaticMethod("de.hysky.skyblocker.skyblock.fancybars.FancyStatusBars", "initStatic");
         if (skyblockerSingleton != null) {
             mixins.add(skyblockerSingleton
                     ? "compat.skyblocker.Mixin_SkyblockerFancyStatusBarsInstance"
                     : "compat.skyblocker.Mixin_SkyblockerFancyStatusBarsStatic");
         }
         mixins.add("compat.skyblocker.Mixin_SkyblockerWidgetManager");
-        //? }
+        *///? }
 
         //? skyblocker_legacy_hud
         //mixins.add("compat.skyblocker.Mixin_SkyblockerScreenBuilder");
 
         //? skyblocker_hud_v2
-        mixins.add("compat.skyblocker.Mixin_SkyblockerLayerBuilder");
+        //mixins.add("compat.skyblocker.Mixin_SkyblockerLayerBuilder");
 
         //? stella_compat
-        mixins.add("compat.stella.Mixin_Stella");
+        //mixins.add("compat.stella.Mixin_Stella");
 
         //? apec_compat
         //mixins.add("compat.apec.Mixin_ApecMenu");

@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.rconfig;
 
 //? rconfig_compat {
-import com.llamalad7.mixinextras.sugar.Local;
+/*import com.llamalad7.mixinextras.sugar.Local;
 import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfig;
 import com.teamresourceful.resourcefulconfig.common.config.Configurations;
 import org.polyfrost.oneconfig.internal.compat.RConfigCompat;
@@ -26,4 +26,4 @@ public class Mixin_Configurations {
     }
 
 }
-//? }
+*///? }

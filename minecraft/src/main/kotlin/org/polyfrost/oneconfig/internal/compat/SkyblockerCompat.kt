@@ -1,5 +1,5 @@
 //? skyblocker_compat {
-package org.polyfrost.oneconfig.internal.compat
+/*package org.polyfrost.oneconfig.internal.compat
 
 import de.hysky.skyblocker.skyblock.fancybars.BarPositioner
 import de.hysky.skyblocker.skyblock.fancybars.FancyStatusBars
@@ -586,4 +586,4 @@ private class SkyblockerBarWrapper(private val type: StatusBarType) : OneConfigH
 
     override fun save() = SkyblockerCompat.flush()
 }
-//? }
+*///? }

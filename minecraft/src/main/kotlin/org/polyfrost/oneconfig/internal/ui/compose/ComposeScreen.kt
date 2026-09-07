@@ -37,10 +37,10 @@ import org.jetbrains.skia.ImageFilter
 import org.jetbrains.skia.Paint
 import org.jetbrains.skia.Surface
 //? if < 26.3
-import org.lwjgl.glfw.GLFW
+//import org.lwjgl.glfw.GLFW
 //? if >= 26.3 {
-/*import org.lwjgl.sdl.SDLVideo.*
-*///?}
+import org.lwjgl.sdl.SDLVideo.*
+//?}
 import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.OneConfigConfig
@@ -260,11 +260,11 @@ abstract class ComposeScreen(
 
     protected val client get() = Minecraft.getInstance()
     //? if < 26.3 {
-    private val contentScaleX = FloatArray(1)
+    /*private val contentScaleX = FloatArray(1)
     private val contentScaleY = FloatArray(1)
     private val monScaleX = FloatArray(1)
     private val monScaleY = FloatArray(1)
-    //?}
+    *///?}
 
     private var filterPaintKey = -1 to -1f
     private var filterPaintCached: Paint? = null
@@ -302,18 +302,18 @@ abstract class ComposeScreen(
     private fun osUpscaleFactor(): Float {
         val handle = Platform.compatibility().windowHandle()
         //? if >= 26.3 {
-        /*val winCS = SDL_GetWindowDisplayScale(handle).coerceAtLeast(1f)
+        val winCS = SDL_GetWindowDisplayScale(handle).coerceAtLeast(1f)
         val display = SDL_GetDisplayForWindow(handle).takeIf { it != 0 } ?: SDL_GetPrimaryDisplay()
         if (display == 0) return 1f
         val monCS = SDL_GetDisplayContentScale(display).coerceAtLeast(1f)
-        *///?} else {
-        GLFW.glfwGetWindowContentScale(handle, contentScaleX, contentScaleY)
+        //?} else {
+        /*GLFW.glfwGetWindowContentScale(handle, contentScaleX, contentScaleY)
         val winCS = maxOf(contentScaleX[0], contentScaleY[0]).coerceAtLeast(1f)
         val mon = GLFW.glfwGetWindowMonitor(handle).takeIf { it != 0L } ?: GLFW.glfwGetPrimaryMonitor()
         if (mon == 0L) return 1f
         GLFW.glfwGetMonitorContentScale(mon, monScaleX, monScaleY)
         val monCS = maxOf(monScaleX[0], monScaleY[0]).coerceAtLeast(1f)
-        //?}
+        *///?}
         return (monCS / winCS).coerceAtLeast(1f)
     }
 
@@ -661,16 +661,16 @@ abstract class ComposeScreen(
             it.sendPointerEvent(
                 type,
                 //? if sdl_keycodes {
-                /*button = when (button) {
+                button = when (button) {
                     InputConstants.MOUSE_BUTTON_LEFT -> PointerButton.Primary
                     InputConstants.MOUSE_BUTTON_RIGHT -> PointerButton.Secondary
                     InputConstants.MOUSE_BUTTON_MIDDLE -> PointerButton.Tertiary
                     else -> PointerButton(button - 1)
                 },
-                *///?} else {
-                // PointerButton indices match GLFW button numbers (Primary = 0, Secondary = 1, ...)
+                //?} else {
+                /*// PointerButton indices match GLFW button numbers (Primary = 0, Secondary = 1, ...)
                 button = if (button >= 0) PointerButton(button) else null,
-                //?}
+                *///?}
                 position = pointerPosition()
             )
         }
@@ -729,7 +729,7 @@ abstract class ComposeScreen(
     override fun keyPressed(event: McKeyEvent): Boolean {
         val bindingKey = event.key
         //~ if < 26.3 'event.shortcutKey()' -> 'bindingKey'
-        val shortcutKey = bindingKey
+        val shortcutKey = event.shortcutKey()
         val modifiers = event.modifiers
     //?} else {
     /*override fun keyPressed(key: Int, scanCode: Int, modifiers: Int): Boolean {
@@ -748,7 +748,7 @@ abstract class ComposeScreen(
     override fun keyReleased(event: McKeyEvent): Boolean {
         val bindingKey = event.key
         //~ if < 26.3 'event.shortcutKey()' -> 'bindingKey'
-        val shortcutKey = bindingKey
+        val shortcutKey = event.shortcutKey()
         val modifiers = event.modifiers
     //?} else {
     /*override fun keyReleased(key: Int, scanCode: Int, modifiers: Int): Boolean {
@@ -899,11 +899,11 @@ abstract class ComposeScreen(
     private fun sceneDensity(): Float {
         val pixelRatio = Platform.screen().pixelRatio().takeIf { it > 0f } ?: 1f
         //? if >= 26.3 {
-        /*val contentScale = SDL_GetWindowDisplayScale(Platform.compatibility().windowHandle()).coerceAtLeast(1f)
-        *///?} else {
-        GLFW.glfwGetWindowContentScale(Platform.compatibility().windowHandle(), contentScaleX, contentScaleY)
+        val contentScale = SDL_GetWindowDisplayScale(Platform.compatibility().windowHandle()).coerceAtLeast(1f)
+        //?} else {
+        /*GLFW.glfwGetWindowContentScale(Platform.compatibility().windowHandle(), contentScaleX, contentScaleY)
         val contentScale = maxOf(contentScaleX[0], contentScaleY[0]).coerceAtLeast(1f)
-        //?}
+        *///?}
         return (contentScale / pixelRatio).coerceAtLeast(1f)
     }
 

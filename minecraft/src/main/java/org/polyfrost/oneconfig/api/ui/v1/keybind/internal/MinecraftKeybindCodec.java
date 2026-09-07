@@ -4,9 +4,9 @@ import com.mojang.blaze3d.platform.InputConstants;
 import org.jetbrains.annotations.Nullable;
 
 //? if !sdl_keycodes {
-import java.util.HashMap;
+/*import java.util.HashMap;
 import java.util.Map;
-//?}
+*///?}
 
 /**
  * Translates between platform input codes and the stable {@code key.keyboard.*}/{@code key.mouse.*} names
@@ -18,15 +18,15 @@ import java.util.Map;
  */
 public final class MinecraftKeybindCodec implements KeybindCodec {
     //? if sdl_keycodes {
-    /*private static final int MAX_KEY = Integer.MAX_VALUE; // SDL keycodes are sparse and unicode/scancode-masked
-    *///?} else
-    private static final int MAX_KEY = 348; // GLFW_KEY_LAST
+    private static final int MAX_KEY = Integer.MAX_VALUE; // SDL keycodes are sparse and unicode/scancode-masked
+    //?} else
+    //private static final int MAX_KEY = 348; // GLFW_KEY_LAST
 
     private static final int MIN_MOUSE = InputConstants.MOUSE_BUTTON_LEFT;
     private static final int MAX_MOUSE = InputConstants.MOUSE_BUTTON_LEFT + 7;
 
     //? if !sdl_keycodes {
-    private static final Map<String, Integer> KEY_CODES_BY_NAME = new HashMap<>();
+    /*private static final Map<String, Integer> KEY_CODES_BY_NAME = new HashMap<>();
     private static final Map<String, Integer> MOUSE_BUTTONS_BY_NAME = new HashMap<>();
 
     static {
@@ -41,20 +41,20 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
             MOUSE_BUTTONS_BY_NAME.put(legacyMouseNameOf(button), button);
         }
     }
-    //?}
+    *///?}
 
     /**
      * A KEYSYM key for the code, or {@link InputConstants#UNKNOWN}.
      */
     public static InputConstants.Key keysym(int code) {
         //? if sdl_keycodes {
-        /*if (code >= 1 && code <= 3) return InputConstants.UNKNOWN;
+        if (code >= 1 && code <= 3) return InputConstants.UNKNOWN;
         return InputConstants.Type.KEYBOARD.getOrCreate(code);
-        *///?} else {
-        if (glfwKeyName(code) == null) return InputConstants.UNKNOWN;
+        //?} else {
+        /*if (glfwKeyName(code) == null) return InputConstants.UNKNOWN;
         // every named GLFW code is pre-registered by vanilla, so this never creates a key
         return InputConstants.Type.KEYSYM.getOrCreate(code);
-        //?}
+        *///?}
     }
 
     /**
@@ -68,7 +68,7 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
     @Override
     public @Nullable String keyName(int code) {
         //? if sdl_keycodes {
-        /*if (code < 0 || code > MAX_KEY) return null;
+        if (code < 0 || code > MAX_KEY) return null;
 
         InputConstants.Key key = keysym(code);
         if (key == InputConstants.UNKNOWN) return null;
@@ -77,50 +77,50 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
         if (("key.keyboard." + code).equals(key.getName())) return null;
 
         return key.getName();
-        *///?} else {
-        return glfwKeyName(code);
-        //?}
+        //?} else {
+        /*return glfwKeyName(code);
+        *///?}
     }
 
     @Override
     public @Nullable Integer keyCode(String name) {
         //? if sdl_keycodes {
-        /*InputConstants.Key key = lookup(name);
+        InputConstants.Key key = lookup(name);
         if (key == null) return null;
 
         if (("key.keyboard." + key.getValue()).equals(name)) return null;
 
         return key.getType() == InputConstants.Type.KEYBOARD && key != InputConstants.UNKNOWN ? key.getValue() : null;
-        *///?} else {
-        return KEY_CODES_BY_NAME.get(name);
-        //?}
+        //?} else {
+        /*return KEY_CODES_BY_NAME.get(name);
+        *///?}
     }
 
     @Override
     public @Nullable String mouseName(int button) {
         //? if sdl_keycodes {
-        /*InputConstants.Key key = mouse(button);
+        InputConstants.Key key = mouse(button);
         return key == InputConstants.UNKNOWN ? null : key.getName();
-        *///?} else {
-        return legacyMouseNameOf(button);
-        //?}
+        //?} else {
+        /*return legacyMouseNameOf(button);
+        *///?}
     }
 
     @Override
     public @Nullable Integer mouseButton(String name) {
         //? if sdl_keycodes {
-        /*InputConstants.Key key = lookup(name);
+        InputConstants.Key key = lookup(name);
         if (key == null || key.getType() != InputConstants.Type.MOUSE) return null;
 
         int value = key.getValue();
         return value >= MIN_MOUSE && value <= MAX_MOUSE ? value : null;
-        *///?} else {
-        return MOUSE_BUTTONS_BY_NAME.get(name);
-        //?}
+        //?} else {
+        /*return MOUSE_BUTTONS_BY_NAME.get(name);
+        *///?}
     }
 
     //? if sdl_keycodes {
-    /*private static @Nullable InputConstants.Key lookup(String name) {
+    private static @Nullable InputConstants.Key lookup(String name) {
         int dot = name.lastIndexOf('.');
         if (dot >= 0) {
             try {
@@ -140,7 +140,7 @@ public final class MinecraftKeybindCodec implements KeybindCodec {
             return null;
         }
     }
-    *///?}
+    //?}
 
     @Override
     public @Nullable String legacyKeyName(int code) {

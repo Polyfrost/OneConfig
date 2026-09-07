@@ -21,11 +21,11 @@ import kotlinx.coroutines.awaitCancellation
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.Minecraft
 //? if < 26.3
-import org.lwjgl.glfw.GLFW.*
+//import org.lwjgl.glfw.GLFW.*
 //? if >= 26.3 {
-/*import org.lwjgl.sdl.SDLMouse.*
+import org.lwjgl.sdl.SDLMouse.*
 import org.lwjgl.sdl.SDLVideo.SDL_RaiseWindow
-*///?}
+//?}
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 //? if >= 26.1
 import java.util.concurrent.atomic.AtomicInteger
@@ -45,11 +45,11 @@ private class WindowInfoImpl : WindowInfo {
 
     private fun isKeyDown(key: Int): Boolean {
         //? if >= 26.3 {
-        /*return InputConstants.isKeyDown(key)
-        *///?} else {
-        //~ if < 1.21.10 'Minecraft.getInstance().window' -> 'Platform.compatibility().windowHandle()'
+        return InputConstants.isKeyDown(key)
+        //?} else {
+        /*//~ if < 1.21.10 'Minecraft.getInstance().window' -> 'Platform.compatibility().windowHandle()'
         return InputConstants.isKeyDown(Minecraft.getInstance().window, key)
-        //?}
+        *///?}
     }
 
     override val keyboardModifiers: PointerKeyboardModifiers
@@ -80,14 +80,14 @@ private class PlatformImpl : PlatformContext {
     override val inputModeManager: InputModeManager = InputModeManagerImpl()
 
     //? if >= 26.3 {
-    /*private val handCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_POINTER)
+    private val handCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_POINTER)
     private val textCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_TEXT)
     private val moveCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_CROSSHAIR)
-    *///?} else {
-    private val handCursor = glfwCreateStandardCursor(GLFW_HAND_CURSOR)
+    //?} else {
+    /*private val handCursor = glfwCreateStandardCursor(GLFW_HAND_CURSOR)
     private val textCursor = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR)
     private val moveCursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR)
-    //?}
+    *///?}
 
     private val handle = Platform.compatibility().windowHandle()
 
@@ -100,34 +100,34 @@ private class PlatformImpl : PlatformContext {
 
     fun resetPointerIcon() {
         //? if >= 26.3 {
-        /*SDL_SetCursor(SDL_GetDefaultCursor())
-        *///?} else {
-        glfwSetCursor(handle, 0L)
-        //?}
+        SDL_SetCursor(SDL_GetDefaultCursor())
+        //?} else {
+        /*glfwSetCursor(handle, 0L)
+        *///?}
     }
 
     private fun applyPointerIcon(pointerIcon: PointerIcon) {
         //? if >= 26.3 {
-        /*SDL_SetCursor(when (pointerIcon) {
+        SDL_SetCursor(when (pointerIcon) {
             PointerIcon.Default -> SDL_GetDefaultCursor()
             PointerIcon.Hand -> handCursor
             PointerIcon.Text -> textCursor
             PointerIcon.Crosshair -> moveCursor
             else -> SDL_GetDefaultCursor()
         })
-        *///?} else {
-        when (pointerIcon) {
+        //?} else {
+        /*when (pointerIcon) {
             PointerIcon.Default -> glfwSetCursor(handle, 0L)
             PointerIcon.Hand -> glfwSetCursor(handle, handCursor)
             PointerIcon.Text -> glfwSetCursor(handle, textCursor)
             PointerIcon.Crosshair -> glfwSetCursor(handle, moveCursor)
         }
-        //?}
+        *///?}
     }
 
     override fun requestFocus(): Boolean {
         //~ if < 26.3 'SDL_RaiseWindow' -> 'glfwFocusWindow'
-        glfwFocusWindow(handle)
+        SDL_RaiseWindow(handle)
         return Minecraft.getInstance().isWindowActive
     }
 
@@ -136,12 +136,14 @@ private class PlatformImpl : PlatformContext {
 
     override suspend fun startInputMethod(request: PlatformTextInputMethodRequest): Nothing {
         textInputSessions.incrementAndGet()
-        onClientThread { it.startTextInput() }
+        //~ if >= 26.3 'startTextInput()' -> 'startTextInput(this)'
+        onClientThread { it.startTextInput(this) }
         try {
             awaitCancellation()
         } finally {
             if (textInputSessions.decrementAndGet() == 0) {
-                onClientThread { it.stopTextInput() }
+                //~ if >= 26.3 'stopTextInput()' -> 'stopTextInput(this)'
+                onClientThread { it.stopTextInput(this) }
             }
         }
     }

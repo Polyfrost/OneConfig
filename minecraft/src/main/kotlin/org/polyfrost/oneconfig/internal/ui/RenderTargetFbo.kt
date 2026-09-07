@@ -1,12 +1,12 @@
 package org.polyfrost.oneconfig.internal.ui
 
 //? if >= 26.1 {
-import com.mojang.blaze3d.opengl.GlTexture
+import com.mojang.renderpearl.backend.opengl.GlTexture
 import org.polyfrost.oneconfig.internal.mixin.blaze3d.GlDeviceAccessor
 import org.polyfrost.oneconfig.internal.mixin.blaze3d.GpuDeviceAccessor
 //? }
 //? if >= 26.2 {
-import com.mojang.blaze3d.opengl.FrameBufferAttachment
+import com.mojang.renderpearl.backend.opengl.FrameBufferAttachment
 //? }
 import com.mojang.blaze3d.pipeline.RenderTarget
 //? if >= 1.21.5 {
@@ -40,10 +40,10 @@ object RenderTargetFbo {
     *///? } else if >= 1.21.5 {
     /*fun getFboId(frameBuffer: RenderTarget): Int {
         val device = RenderSystem.getDevice()
-        if (device !is com.mojang.blaze3d.opengl.GlDevice) {
+        if (device !is com.mojang.renderpearl.backend.opengl.GlDevice) {
             return -1
         } else {
-            val texture = frameBuffer.colorTexture as? com.mojang.blaze3d.opengl.GlTexture
+            val texture = frameBuffer.colorTexture as? com.mojang.renderpearl.backend.opengl.GlTexture
                 ?: return -1
             return texture.getFbo(device.directStateAccess(), frameBuffer.depthTexture)
         }
@@ -56,7 +56,7 @@ object RenderTargetFbo {
 
     //? if >= 1.21.5 {
     fun getColorTexId(frameBuffer: RenderTarget): Int =
-        (frameBuffer.colorTexture as? com.mojang.blaze3d.opengl.GlTexture)?.glId() ?: -1
+        (frameBuffer.colorTexture as? com.mojang.renderpearl.backend.opengl.GlTexture)?.glId() ?: -1
     //? } else {
     /*fun getColorTexId(frameBuffer: RenderTarget): Int = frameBuffer.colorTextureId
     *///? }

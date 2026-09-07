@@ -1,5 +1,6 @@
 import dev.kikugie.stonecutter.build.StonecutterBuildExtension
 import org.gradle.api.artifacts.VersionCatalogsExtension
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.authentication.http.BasicAuthentication
@@ -177,6 +178,46 @@ val firmamentRelocatedConfiguration: Configuration by configurations.creating {
     attributes { attribute(firmamentRelocated, true) }
 }
 
+val adventurePlatform = when {
+    loader != "fabric" -> null
+    stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "7.0.0-SNAPSHOT"
+    stonecutter.eval(stonecutter.current.version, ">= 26.1") -> "6.9.0"
+    stonecutter.eval(stonecutter.current.version, ">= 1.21.11") -> "6.8.0"
+    stonecutter.eval(stonecutter.current.version, ">= 1.21.10") -> "6.7.0"
+    stonecutter.eval(stonecutter.current.version, ">= 1.21.8") -> "6.6.0"
+    stonecutter.eval(stonecutter.current.version, ">= 1.21.5") -> "6.4.0"
+    stonecutter.eval(stonecutter.current.version, ">= 1.21.4") -> "6.3.0"
+    stonecutter.eval(stonecutter.current.version, ">= 1.21.1") -> "5.14.2"
+    else -> error("No adventure-platform-fabric version for ${stonecutter.current.version}")
+}?.let { "net.kyori:adventure-platform-fabric:$it" }
+
+// TODO: remove this hack when adventure-platform-fabric has a proper 26.3 release
+val relaxedAdventurePlatformJar = if (
+    adventurePlatform == null || stonecutter.eval(stonecutter.current.version, "< 26.3")
+) null else {
+    val upstream = configurations.detachedConfiguration(
+        (dependencies.create(adventurePlatform) as ExternalModuleDependency).apply { isTransitive = false }
+    )
+    val devRuntime = configurations.create("adventureDevRuntime")
+    listOf("runtimeClasspath", "testRuntimeClasspath").forEach {
+        configurations.named(it) { extendsFrom(devRuntime) }
+    }
+
+    val modJarTask = if ("remapJar" in tasks.names) "remapJar" else "jar"
+    tasks.matching { it.name == modJarTask }.configureEach {
+        doLast {
+            relaxNestedJar((this as AbstractArchiveTask).archiveFile.get().asFile, "adventure-platform-fabric")
+        }
+    }
+
+    tasks.register("relaxedAdventurePlatformJar") {
+        val output = layout.buildDirectory.file("adventure/adventure-platform-fabric-relaxed.jar")
+        inputs.files(upstream)
+        outputs.file(output)
+        doLast { relaxGameConstraint(upstream.singleFile, output.get().asFile) }
+    }
+}
+
 dependencies {
     listOf("compat", "common-compat").forEach {
         versionedCatalog.bundles.getOrNull(it)?.let { bundle ->
@@ -215,22 +256,15 @@ dependencies {
     "api"(versionedCatalog["commonmark"])
     handleApiDep(versionedCatalog.bundles["adventure"])
 
-    if (loader == "fabric") {
-        val adventurePlatformVersion =
-            when {
-                stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "7.0.0-SNAPSHOT"
-                stonecutter.eval(stonecutter.current.version, ">= 26.1") -> "6.9.0"
-                stonecutter.eval(stonecutter.current.version, ">= 1.21.11") -> "6.8.0"
-                stonecutter.eval(stonecutter.current.version, ">= 1.21.10") -> "6.7.0"
-                stonecutter.eval(stonecutter.current.version, ">= 1.21.8") -> "6.6.0"
-                stonecutter.eval(stonecutter.current.version, ">= 1.21.5") -> "6.4.0"
-                stonecutter.eval(stonecutter.current.version, ">= 1.21.4") -> "6.3.0"
-                stonecutter.eval(stonecutter.current.version, ">= 1.21.1") -> "5.14.2"
-                else -> error("No adventure-platform-fabric version for ${stonecutter.current.version}")
-            }
-        val adventurePlatform = "net.kyori:adventure-platform-fabric:$adventurePlatformVersion"
-        "modApi"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
-        "modImplementation"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
+    if (adventurePlatform != null) {
+        if (relaxedAdventurePlatformJar != null) {
+            "modCompileOnly"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
+            "adventureDevRuntime"(files(relaxedAdventurePlatformJar))
+            "include"(adventurePlatform) { isTransitive = false }
+        } else {
+            "modApi"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
+            "modImplementation"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
+        }
     }
 
     handleApiDep(versionedCatalog.bundles["kotlin"])
@@ -265,6 +299,7 @@ dependencies {
         "modApi"(versionedCatalog["command-api-v2"]) { isTransitive = false }
 
         val fullFabricApiVersion = when {
+            stonecutter.eval(stonecutter.current.version, ">= 26.3") -> "0.160.3+26.3"
             stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "0.159.0+26.2"
             stonecutter.eval(stonecutter.current.version, ">= 26.1") -> "0.155.2+26.1.2"
             stonecutter.eval(stonecutter.current.version, ">= 1.21.11") -> "0.141.6+1.21.11"

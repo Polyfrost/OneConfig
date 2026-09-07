@@ -1,12 +1,12 @@
 package org.polyfrost.oneconfig.internal.ui.services
 
 //? if >= 26.2 {
-import com.mojang.blaze3d.GpuFormat
+import com.mojang.renderpearl.api.GpuFormat
 import com.mojang.blaze3d.pipeline.RenderTarget
 import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vulkan.VulkanCommandEncoder
-import com.mojang.blaze3d.vulkan.VulkanDevice
-import com.mojang.blaze3d.vulkan.VulkanGpuTexture
+import com.mojang.renderpearl.backend.vulkan.VulkanCommandEncoder
+import com.mojang.renderpearl.backend.vulkan.VulkanDevice
+import com.mojang.renderpearl.backend.vulkan.VulkanGpuTexture
 import net.minecraft.client.Minecraft
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.DirectContext

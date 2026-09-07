@@ -14,7 +14,7 @@ public class Mixin_FramebufferRenderEvent {
     //~ if >= 26.1 'runTick' -> 'renderFrame'
     @Inject(method = "renderFrame", at = @At(value = "INVOKE",
             //? if >= 26.2 {
-            target = "Lcom/mojang/blaze3d/systems/GpuSurface;present()V"
+            target = "Lcom/mojang/renderpearl/api/device/GpuSurface;present()V"
             //?} elif 26.1 {
             /*target = "Lcom/mojang/blaze3d/systems/RenderSystem;flipFrame(Lcom/mojang/blaze3d/TracyFrameCapture;)V"
             *///?} elif >= 1.21.4 {
@@ -29,7 +29,7 @@ public class Mixin_FramebufferRenderEvent {
     //~ if >= 26.1 'runTick' -> 'renderFrame'
     @Inject(method = "renderFrame", at = @At(value = "INVOKE",
             //? if >= 26.2 {
-            target = "Lcom/mojang/blaze3d/systems/GpuSurface;present()V",
+            target = "Lcom/mojang/renderpearl/api/device/GpuSurface;present()V",
             //?} elif 26.1 {
             /*target = "Lcom/mojang/blaze3d/systems/RenderSystem;flipFrame(Lcom/mojang/blaze3d/TracyFrameCapture;)V",
             *///?} elif >= 1.21.4 {

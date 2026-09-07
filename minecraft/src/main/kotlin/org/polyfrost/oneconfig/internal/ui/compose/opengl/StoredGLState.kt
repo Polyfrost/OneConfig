@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.compose.opengl
 
 //? if >= 1.21.5 {
-import com.mojang.blaze3d.opengl.GlStateManager
+import com.mojang.renderpearl.backend.opengl.GlStateManager
 //? } else {
 /*import com.mojang.blaze3d.platform.GlStateManager
 *///? }

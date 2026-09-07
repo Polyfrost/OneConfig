@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.compat
 
 //? stella_compat {
-import co.stellarskys.stella.Stella
+/*import co.stellarskys.stella.Stella
 import co.stellarskys.stella.api.config.core.*
 import co.stellarskys.stella.hud.HUDElement
 import co.stellarskys.stella.hud.HUDManager
@@ -305,4 +305,4 @@ object StellaCompat {
         return property
     }
 }
-//? }
+*///? }
