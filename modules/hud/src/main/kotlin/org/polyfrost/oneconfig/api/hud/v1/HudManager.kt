@@ -298,6 +298,11 @@ object HudManager {
     }
 
     @JvmStatic
+    fun register(vararg huds: Hud) {
+        for (hud in huds) register(hud)
+    }
+
+    @JvmStatic
     fun register(hud: Hud, configId: String) {
         hud.configId = configId
         register(hud)
@@ -322,11 +327,6 @@ object HudManager {
 
     /** The menu icon associated with [configId] via [register] or `null` if none was set */
     fun iconFor(configId: String): String? = hudIcons[configId]
-
-    @JvmStatic
-    fun register(vararg huds: Hud) {
-        for (hud in huds) register(hud)
-    }
 
     fun providers(): Collection<Hud> = hudProviders.values
 
@@ -884,6 +884,15 @@ object HudManager {
         if (!isEditorOpen) return
         isEditorOpen = false
         EventManager.INSTANCE.post(HudEditorToggleEvent.CLOSE)
+    }
+
+    /**
+     * The editor screen has been installed, which also happens when Minecraft removes it and
+     * replaces it with itself, clearing the flag while the editor stays open
+     */
+    @ApiStatus.Internal
+    fun onEditorScreenAdded() {
+        if (!isEditorOpen) openEditor()
     }
 
     @ApiStatus.Internal
