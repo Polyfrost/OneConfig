@@ -16,12 +16,16 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
 
     private val hiddenRevision = mutableStateOf(0)
 
+    private val wrapperId = id
+    private val wrapperModId = runCatching { wrapper.modId }.getOrNull() ?: "unknown"
+
+    @Volatile
     private var faulted = false
 
     private fun fault(member: String, error: Throwable) {
         faulted = true
         HudManager.LOGGER.error(
-            "Disabling compat HUD '${wrapper.id}' from '${wrapper.modId ?: "unknown"}': $member failed, so " +
+            "Disabling compat HUD '$wrapperId' from '$wrapperModId': $member failed, so " +
                 "that mod is probably a different version than OneConfig was built against",
             error,
         )
@@ -46,13 +50,25 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
             return guard("hidden", true) { wrapper.hidden }
         }
         set(value) {
-            guard("hidden", Unit) {
-                if (wrapper.hidden != value) {
+            val changed = guard("hidden", false) {
+                if (wrapper.hidden == value) false else {
                     wrapper.hidden = value
-                    hiddenRevision.value++
+                    true
                 }
             }
+            if (changed) hiddenRevision.value++
         }
+
+    fun guardedPlacementReady(): Boolean = guard("placementReady", false) { wrapper.placementReady }
+
+    fun guardedOwnsPlacement(): Boolean = guard("ownsPlacement", false) { wrapper.ownsPlacement }
+
+    fun guardedLinkedProperties(): List<Property<*>> =
+        guard("linkedProperties", emptyList()) { wrapper.linkedProperties() }
+
+    fun guardedSave() {
+        guard("save", Unit) { wrapper.save() }
+    }
 
     override val persistOwnState: Boolean get() = false
 
@@ -176,22 +192,25 @@ interface OneConfigHudWrapper {
         hud.setup()
         val tree = hud.tree
         if (tree != null) {
-            for (prop in linkedProperties()) tree.put(prop)
-            trackPlacementPerProfile(tree)
+            for (prop in hud.guardedLinkedProperties()) tree.put(prop)
+            trackPlacementPerProfile(hud, tree)
         }
         hud.captureStaticSizeDefaults()
         hud.capturePositionDefaults()
     }
 
-    private fun trackPlacementPerProfile(tree: Tree) {
+    private fun trackPlacementPerProfile(hud: OneConfigHudCompat, tree: Tree) {
         excludeFromSnapshots(tree)
-        tree.addMetadata(CompatSnapshots.GATE_METADATA, java.util.function.BooleanSupplier { placementReady })
-        if (!ownsPlacement) {
-            tree["oc_compat_x"] = placementProperty("x", "X Position", { x }, { x = it })
-            tree["oc_compat_y"] = placementProperty("y", "Y Position", { y }, { y = it })
-            if (supportsScale) tree["oc_compat_scale"] = placementProperty("scale", "Scale", { scale }, { scale = it })
+        tree.addMetadata(CompatSnapshots.GATE_METADATA, java.util.function.BooleanSupplier { hud.guardedPlacementReady() })
+        if (!hud.guardedOwnsPlacement()) {
+            tree["oc_compat_x"] = placementProperty("x", "X Position", { hud.x }, { hud.x = it })
+            tree["oc_compat_y"] = placementProperty("y", "Y Position", { hud.y }, { hud.y = it })
+            if (hud.supportsScale) {
+                tree["oc_compat_scale"] =
+                    placementProperty("scale", "Scale", { hud.customScale }, { hud.customScale = it })
+            }
         }
-        tree.addMetadata("custom_save", Runnable { save() })
+        tree.addMetadata("custom_save", Runnable { hud.guardedSave() })
         CompatSnapshots.track(tree)
     }
 

@@ -16,12 +16,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class Mixin_SkyblockerFancyStatusBars {
 
     @Inject(method = "init", at = @At("TAIL"), require = 0, expect = 0)
-    private static void oneconfig$registerHudCompatStatic(CallbackInfo ci) {
+    private static void oneconfig$registerHudCompat(CallbackInfo ci) {
         SkyblockerCompat.initialize();
     }
 
     @Inject(method = "initStatic", at = @At("TAIL"), require = 0, expect = 0)
-    private static void oneconfig$registerHudCompat(CallbackInfo ci) {
+    private static void oneconfig$registerHudCompatStatic(CallbackInfo ci) {
         SkyblockerCompat.initialize();
     }
 
