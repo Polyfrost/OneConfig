@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -65,6 +66,10 @@ private class LastKey(var value: Any?)
 fun rememberRestorableLazyGridState(key: String): LazyGridState {
     val anchor = remember(key) { ShellState.scrollAnchors[key] }
     val state = rememberLazyGridState(anchor?.index ?: 0, anchor?.offset ?: 0)
+    DisposableEffect(state, key) {
+        ShellState.gridStates[key] = state
+        onDispose { if (ShellState.gridStates[key] === state) ShellState.gridStates.remove(key) }
+    }
     LaunchedEffect(state, key) {
         snapshotFlow { ScrollAnchor(state.firstVisibleItemIndex, state.firstVisibleItemScrollOffset) }
             .collect { ShellState.scrollAnchors[key] = it }

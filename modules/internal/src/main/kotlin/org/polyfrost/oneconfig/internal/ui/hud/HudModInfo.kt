@@ -9,7 +9,7 @@ internal fun configForHud(configId: String): ConfigData? {
     val modId = configId.removeSuffix(".json").substringBefore('/')
     return ConfigRegistry.findById(configId)
         ?: ConfigRegistry.findById("$configId.json")
-        ?: ConfigRegistry.configList.firstOrNull { it.id.removeSuffix(".json") == modId }
+        ?: ConfigRegistry.configs.firstOrNull { it.id.removeSuffix(".json") == modId }
 }
 
 internal fun modNameFor(configId: String): String? {

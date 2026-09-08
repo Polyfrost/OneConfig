@@ -92,6 +92,9 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? rconfig_compat
         mixins.add("compat.rconfig.Mixin_Configurations");
 
+        //? osl_config_compat
+        //mixins.add("compat.osl.Mixin_OslConfigManager");
+
         mixins.add("Mixin_SimpleReloadInstance");
         mixins.add("Mixin_MainMenuFpsUncap");
         //? yacl_compat
@@ -110,6 +113,12 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
         //? tr7zw_compat
         mixins.add("compat.tr7zw.Mixin_AbstractConfigScreen");
+
+        //? ukulib_compat
+        mixins.add("compat.ukulib.Mixin_BaseConfigScreen");
+
+        //? axolotlclient_config_compat
+        mixins.add("compat.axolotlclient.Mixin_AxolotlClientConfigImpl");
 
         //? skycubed_compat {
         /*mixins.add("compat.skycubed.Mixin_SkyCubed");
@@ -134,6 +143,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //mixins.add("compat.apec.Mixin_ApecMenu");
 
         mixins.add("compat.skyhanni.Mixin_SkyHanniRenderData");
+
+        mixins.add("compat.armorhud.Mixin_ArmorHudWidgetShown");
 
         mixins.add("compat.firmament.Mixin_FirmamentHudMeta");
         // Firmament has no stable release for 26.2 yet
@@ -172,7 +183,6 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         /*mixins.add("skia.Mixin_ScreenshotComposite");
         *///? }
         mixins.add("skia.Mixin_InitSkiaFontRenderer");
-        mixins.add("skia.Mixin_FixComposeRaceCondition");
 
         //? if >= 1.21.10 {
         mixins.add("keybind.Mixin_KeybindCategoryLabel");
@@ -182,6 +192,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("keybind.Mixin_OneConfigKeybindRebind");
         mixins.add("keybind.Mixin_KeyMappingResetDetect");
         mixins.add("keybind.Mixin_OptionsSaveDetect");
+        mixins.add("keybind.Mixin_OptionsSkipMirrors");
 
         //? cinnabar
         //mixins.add("skia.Mixin_CinnabarSkiaFlush");

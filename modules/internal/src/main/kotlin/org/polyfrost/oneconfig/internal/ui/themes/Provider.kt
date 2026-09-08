@@ -1,5 +1,8 @@
 package org.polyfrost.oneconfig.internal.ui.themes
 
+import androidx.compose.foundation.LocalScrollbarStyle
+import androidx.compose.foundation.ScrollbarStyle
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -16,7 +19,6 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
 import androidx.compose.ui.graphics.toArgb
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationTheme
@@ -31,9 +33,14 @@ import kotlin.math.round
 
 private var _accent by mutableStateOf(Color(ThemeConfig.accentColor.argb))
 
+private var _chroma by mutableStateOf(ThemeConfig.accentColor.chroma)
+
 val Accent: Color get() = _accent
 
-fun updateAccent() { _accent = Color(ThemeConfig.accentColor.argb) }
+fun updateAccent() {
+    _accent = Color(ThemeConfig.accentColor.argb)
+    _chroma = ThemeConfig.accentColor.chroma
+}
 
 val LocalTheme = compositionLocalOf<UITheme> { error("A UI theme is required but was not provided") }
 
@@ -44,6 +51,15 @@ private const val EM_STEP_PX = 5f
 private const val MIN_EM_PX = 10f
 
 private const val GLYPH_PIXELS_PER_EM = 10f
+
+private fun scrollbarStyle(theme: UITheme) = ScrollbarStyle(
+    minimalHeight = 24.dp,
+    thickness = 8.dp,
+    shape = RoundedCornerShape(4.dp),
+    hoverDurationMillis = 300,
+    unhoverColor = theme.textColorSecondary.copy(alpha = 0.40f),
+    hoverColor = theme.textColorSecondary.copy(alpha = 0.70f),
+)
 
 private val screenPlatform by lazy { runCatching { Platform.screen() }.getOrNull() }
 
@@ -97,16 +113,12 @@ fun Theme(
     designHeight: Dp = DESIGN_HEIGHT_DP.dp,
     content: @Composable () -> Unit,
 ) {
-    _accent = Color(ThemeConfig.accentColor.argb)
+    updateAccent()
 
-    LaunchedEffect(Unit) {
-        while (true) {
-            if (ThemeConfig.accentColor.chroma) {
-                withFrameNanos { }
-                updateAccent()
-            } else {
-                delay(200)
-            }
+    LaunchedEffect(_chroma) {
+        while (_chroma) {
+            withFrameNanos { }
+            updateAccent()
         }
     }
 
@@ -117,6 +129,7 @@ fun Theme(
 
     CompositionLocalProvider(
         LocalTheme provides animated,
+        LocalScrollbarStyle provides remember(animated.textColorSecondary) { scrollbarStyle(animated) },
         LocalDensity provides if (pixelGrid) pixelGridDensity(designWidth, designHeight) else LocalDensity.current,
         content = content
     )

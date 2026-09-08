@@ -42,6 +42,7 @@ public class Mixin_RenderLivingEntityEvent {
     *///?} else {
     /*private void onPreEntityRenderCallback(LivingEntity entity, float entityYaw, float partialTicks, PoseStack matrixStack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
     *///?}
+        if (!EventManager.INSTANCE.hasListeners(RenderLivingEvent.Pre.class)) return;
 
         //? >= 1.21.2 {
         double x = entity.x;
@@ -77,6 +78,7 @@ public class Mixin_RenderLivingEntityEvent {
     *///?} else {
     /*private void onPostEntityRenderCallback(LivingEntity entity, float entityYaw, float partialTicks, PoseStack matrixStack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
     *///?}
+        if (!EventManager.INSTANCE.hasListeners(RenderLivingEvent.Post.class)) return;
         //? >= 1.21.2 {
         double x = entity.x;
         double y = entity.y;

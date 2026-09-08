@@ -1,2 +1,2 @@
-1.1.12 changelogs:
-- Fix rare crash with Compose
+1.1.15 changelogs:
+- Add uku's Armor HUD compat

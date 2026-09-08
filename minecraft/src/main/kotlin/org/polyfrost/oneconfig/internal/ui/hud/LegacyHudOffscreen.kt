@@ -40,14 +40,14 @@ object LegacyHudOffscreen {
         if (failed) return false
         if (java.lang.Boolean.getBoolean("oneconfig.disable.legacyHudOffscreen")) return false
         if (HudManager.activeInstances.none { it is LegacyHud } && !CompatOverlayRenderer.hasHooks()) return true
-        if (!SkiaCtx.isReady) return true
+        if (!SkiaCtx.isReady) return false
         val w = Platform.screen().viewportWidth()
         val h = Platform.screen().viewportHeight()
-        if (w <= 0 || h <= 0) return true
+        if (w <= 0 || h <= 0) return false
 
         try {
-            if (!offscreen.resolveTarget(w, h)) return true
-            val rt = offscreen.target ?: return true
+            if (!offscreen.resolveTarget(w, h)) return false
+            val rt = offscreen.target ?: return false
             //? if >= 1.21.8 {
             renderRecorded(rt)
             //?} elif >= 1.21.5 {

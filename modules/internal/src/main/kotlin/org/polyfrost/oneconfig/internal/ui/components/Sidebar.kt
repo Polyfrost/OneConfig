@@ -89,10 +89,12 @@ private fun Navigation(showTopOptions: Boolean) {
 
 @Composable
 private fun Branding() {
-    val logo = rememberSvgResourcePainter(LocalTheme.current.branding.logoPath) ?: return
+    val logoPath = LocalTheme.current.branding.logoPath
+    val logo = rememberSvgResourcePainter(logoPath) ?: return
     Image(
         painter = logo,
         contentDescription = null,
+        colorFilter = rememberBrandTint(logoPath, Accent),
         modifier = Modifier.size(167.dp, 19.dp)
     )
 }

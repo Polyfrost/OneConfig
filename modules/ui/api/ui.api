@@ -174,7 +174,9 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindManager {
 	public static final fun addRebindListener (Lkotlin/jvm/functions/Function2;)V
 	public static final fun builder ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public static final fun findConflicts (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Ljava/util/List;
+	public static final fun hasTriggeredMouseBind (I)Z
 	public static final fun isRegistered (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Z
+	public static final fun isTriggeredByMouse (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;I)Z
 	public static final fun notifyMenuEdit (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
 	public static final fun rebindFromMinecraft (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;[I)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
 	public static final fun rebindFromMinecraft (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;[I[I)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
@@ -212,10 +214,13 @@ public class org/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind : org/po
 	public final fun getDefaultKeybind ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
 	public final fun getDurationNanos ()J
 	public final fun getFiresWhileTyping ()Z
+	public final fun getHasUnresolvedInputs ()Z
 	public final fun getKeyCodes ()[I
 	public final fun getMods ()B
 	public final fun getMouseBtns ()[I
 	public final fun getName ()Ljava/lang/String;
+	public final fun getUnresolvedKeyInputs ()Ljava/util/List;
+	public final fun getUnresolvedMouseInputs ()Ljava/util/List;
 	public final fun isBound ()Z
 	public final fun isMousePrimary ()Z
 	public static final fun keyName (I)Ljava/lang/String;
@@ -228,6 +233,8 @@ public class org/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind : org/po
 	public final fun setMods (B)V
 	public final fun setMouseBtns ([I)V
 	public final fun setName (Ljava/lang/String;)V
+	public final fun setUnresolvedKeyInputs (Ljava/util/List;)V
+	public final fun setUnresolvedMouseInputs (Ljava/util/List;)V
 	public fun test (Ljava/util/Set;Ljava/util/Set;B)Z
 }
 
