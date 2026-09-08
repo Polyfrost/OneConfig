@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.compat
 
+//? if > 1.8.9 {
 import net.minecraft.client.AttackIndicatorStatus
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
@@ -525,3 +526,4 @@ object ArmorHudCompat {
         override fun save() = flush()
     }
 }
+//?}

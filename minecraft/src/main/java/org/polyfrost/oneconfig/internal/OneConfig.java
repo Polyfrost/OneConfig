@@ -262,9 +262,10 @@ public class OneConfig
                     MinecraftKeybindProfiles.init();
                     ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
                     org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar.register();
-                    //? if > 1.8.9
+                    //? if > 1.8.9 {
                     org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat.register();
                     org.polyfrost.oneconfig.internal.compat.ArmorHudCompat.register();
+                    //?}
                     //? if wwaypoints_compat
                     org.polyfrost.oneconfig.internal.compat.WWaypointsCompat.register();
                     org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry.INSTANCE.loadFromConfig();
