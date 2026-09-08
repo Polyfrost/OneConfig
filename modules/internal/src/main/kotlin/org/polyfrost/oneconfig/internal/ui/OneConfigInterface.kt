@@ -179,6 +179,7 @@ fun OneConfigInterface(
                             enter = tween(enterMs, easing = EaseOutExpo),
                             exit = tween(exitMs, easing = EaseOutCubic),
                             alphaMultiplier = dragAlpha,
+                            openKey = openRevision,
                             modifier = Modifier.onGloballyPositioned {
                                 ShellState.shellBounds = it.boundsInRoot()
                             },

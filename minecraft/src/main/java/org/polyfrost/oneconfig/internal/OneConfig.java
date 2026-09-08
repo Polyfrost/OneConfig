@@ -49,7 +49,6 @@ import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading;
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.ShutdownEvent;
-import org.polyfrost.oneconfig.api.event.v1.events.TickEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.WorldEvent;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent;
@@ -67,8 +66,6 @@ import org.polyfrost.oneconfig.internal.ui.compose.McFontService;
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen;
-import org.polyfrost.oneconfig.internal.ui.compose.impls.OnboardingScreen;
-import org.polyfrost.oneconfig.internal.compat.PolyPlusOnboardingCompat;
 import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudRenderer;
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry;
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProvider;
@@ -239,7 +236,7 @@ public class OneConfig
                         if (!(Platform.screen().current() instanceof HudEditorUIScreen)) {
                             Platform.screen().display(HudEditorUIScreen.open());
                         }
-                    } else {
+                    } else if (!e.screenAlreadyGone) {
                         if (Platform.screen().current() instanceof HudEditorUIScreen) {
                             Platform.screen().display(null, 0);
                         }
@@ -267,11 +264,11 @@ public class OneConfig
                     org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar.register();
                     //? if > 1.8.9
                     org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat.register();
+                    org.polyfrost.oneconfig.internal.compat.ArmorHudCompat.register();
                     //? if wwaypoints_compat
                     org.polyfrost.oneconfig.internal.compat.WWaypointsCompat.register();
                     org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry.INSTANCE.loadFromConfig();
                 });
-        EventManager.register(TickEvent.End.class, e -> maybeOpenOnboarding());
         EventManager.register(WorldEvent.Load.class, e -> showFirstLaunchNotification());
         // after loading finishes so translation keys are available
         EventManager.register(ResourceFinishedLoading.class, e -> SearchCorpus.INSTANCE.init());
@@ -287,23 +284,6 @@ public class OneConfig
 //            }
 //        });
 //        //#endif
-    }
-
-    private static boolean onboardingOpened = false;
-
-    private static void maybeOpenOnboarding() {
-        if (onboardingOpened || OneConfigConfig.onboardingCompleted
-            || !(Platform.screen().current() instanceof TitleScreen)) {
-            return;
-        }
-        if (PolyPlusOnboardingCompat.INSTANCE.getPresent()) {
-            if (PolyPlusOnboardingCompat.INSTANCE.completed()) {
-                OneConfigConfig.markOnboardingCompleted();
-            }
-            return;
-        }
-        onboardingOpened = true;
-        Platform.screen().display(new OnboardingScreen(Platform.screen().current()), 2);
     }
 
     private static Notification firstLaunchToast;

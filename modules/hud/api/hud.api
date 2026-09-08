@@ -274,6 +274,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public final fun getHudsOfType (Ljava/lang/Class;)Ljava/util/ArrayList;
 	public final fun getPreviewRevision ()Landroidx/compose/runtime/MutableIntState;
 	public final fun getProvider (Ljava/lang/Class;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
+	public final fun getRenderRevision ()Landroidx/compose/runtime/MutableIntState;
 	public final fun getRevision ()I
 	public final fun hasHudOfType (Ljava/lang/Class;)Z
 	public final fun iconFor (Ljava/lang/String;)Ljava/lang/String;
@@ -328,7 +329,6 @@ public abstract interface class org/polyfrost/oneconfig/api/hud/v1/OneConfigHudW
 	public abstract fun getId ()Ljava/lang/String;
 	public fun getModId ()Ljava/lang/String;
 	public abstract fun getName ()Ljava/lang/String;
-	public fun getOwnsPlacement ()Z
 	public fun getPlacementReady ()Z
 	public fun getResizeAxes ()Lorg/polyfrost/oneconfig/api/hud/v1/HudResize;
 	public abstract fun getScale ()F
@@ -355,7 +355,6 @@ public abstract interface class org/polyfrost/oneconfig/api/hud/v1/OneConfigHudW
 public final class org/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper$DefaultImpls {
 	public static fun getHidden (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)Z
 	public static fun getModId (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)Ljava/lang/String;
-	public static fun getOwnsPlacement (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)Z
 	public static fun getPlacementReady (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)Z
 	public static fun getResizeAxes (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)Lorg/polyfrost/oneconfig/api/hud/v1/HudResize;
 	public static fun getSupportsScale (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)Z

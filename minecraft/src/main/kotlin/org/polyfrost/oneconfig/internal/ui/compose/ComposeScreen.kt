@@ -401,6 +401,10 @@ abstract class ComposeScreen(
     }
 
     fun endPrewarm() {
+        if (prewarmCursor > 0) {
+            // Release hidden search focus so it doesn't suppress keybinds
+            withScene { it.focusManager.releaseFocus() }
+        }
         prewarmCursor = 0
         releasePrewarmSurface()
     }
@@ -453,8 +457,7 @@ abstract class ComposeScreen(
         }
         sceneDirty = true
         if (prewarmCursor < frames) return false
-        prewarmCursor = 0
-        releasePrewarmSurface()
+        endPrewarm()
         return true
     }
 

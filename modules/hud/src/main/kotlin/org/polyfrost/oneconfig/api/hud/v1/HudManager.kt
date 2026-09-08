@@ -157,6 +157,9 @@ object HudManager {
     val previewRevision = mutableIntStateOf(0)
 
     @ApiStatus.Internal
+    val renderRevision = mutableIntStateOf(0)
+
+    @ApiStatus.Internal
     val editorOpenRevision = mutableIntStateOf(0)
 
     private val redrawCacheDisabled = java.lang.Boolean.getBoolean("oneconfig.hud.nocache")
@@ -488,7 +491,10 @@ object HudManager {
             }
         }
         if (showingPreviews) for (hud in hudProviders.values) updateIfDue(hud)
-        if (PolyComposeHost.frameWithReport()) invalidate()
+        if (PolyComposeHost.frameWithReport()) {
+            invalidate()
+            renderRevision.intValue++
+        }
         if (showingPreviews) {
             PolyComposeHost.previews.frame(notify = false)
             if (PolyComposeHost.previews.appliedChange) previewRevision.intValue++
@@ -880,9 +886,11 @@ object HudManager {
 
     @ApiStatus.Internal
     fun onEditorScreenRemoved() {
+        val wasOpen = isEditorOpen
         isEditorOpen = false
         // a drag interrupted by the editor closing must not leave a HUD unable to merge
         setMergeExclusions(emptyList())
+        if (wasOpen) EventManager.INSTANCE.post(HudEditorToggleEvent.SCREEN_REMOVED)
     }
 
     @ApiStatus.Internal

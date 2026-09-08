@@ -232,6 +232,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
                 }
             }
         } catch (t: Throwable) {
+            endPrewarm()
             LOGGER.warn("OneConfig UI warm-up failed; the first open will build the UI instead", t)
             false
         } finally {

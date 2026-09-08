@@ -153,6 +153,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? if > 1.8.9 {
         mixins.add("compat.skyhanni.Mixin_SkyHanniRenderData");
 
+        mixins.add("compat.armorhud.Mixin_ArmorHudWidgetShown");
+
         mixins.add("compat.firmament.Mixin_FirmamentHudMeta");
         //?}
         // Firmament has no stable release for 26.2 yet

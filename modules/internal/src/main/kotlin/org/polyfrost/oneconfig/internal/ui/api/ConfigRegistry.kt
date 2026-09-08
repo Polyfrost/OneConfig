@@ -10,6 +10,7 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
+import org.polyfrost.oneconfig.internal.ui.hud.cardsSupersededByHudCards
 import org.polyfrost.oneconfig.internal.ui.hud.hudModCardConfigs
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindRegistrar
 import org.polyfrost.oneconfig.internal.ui.search.ConfigDocumentSource
@@ -59,7 +60,11 @@ object ConfigRegistry {
     val configs: SnapshotStateList<ConfigData> = mutableStateListOf()
 
     val modCardConfigs: List<ConfigData>
-        get() = configs.filter(::shouldShowModCard) + hudModCardConfigs()
+        get() {
+            val hudCards = hudModCardConfigs()
+            val superseded = cardsSupersededByHudCards(hudCards)
+            return configs.filter { shouldShowModCard(it) && it !in superseded } + hudCards
+        }
 
     var revision by mutableIntStateOf(0)
         private set
