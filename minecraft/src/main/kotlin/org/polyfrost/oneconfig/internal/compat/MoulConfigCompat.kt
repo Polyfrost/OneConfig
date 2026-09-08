@@ -275,11 +275,13 @@ data object MoulConfigCompat {
             }
 
             is GuiOptionEditorKeybind -> {
-                // MoulConfig keeps a keybind as one int GLFW key code where a code <= 0 means unbound
-                // the action is a no-op stub because MoulConfig owns the actual bind firing
+                // -1 (KeyboardConstants.none) = unbound
+                // 0..9 = mouse buttons
+                // anything else is a GLFW key code (see ModernKeybindHelper.getKeyName)
+                // the action is a no-op because MoulConfig takes care of firing the keybind
                 fun keybindOf(code: Int) = when {
-                    code <= 0 -> OneConfigKeybind(null, null, KeyModifiers.NONE, 0L) { true }
-                    code < 32 -> OneConfigKeybind(null, intArrayOf(code), KeyModifiers.NONE, 0L) { true }
+                    code < 0 -> OneConfigKeybind(null, null, KeyModifiers.NONE, 0L) { true }
+                    code <= 9 -> OneConfigKeybind(null, intArrayOf(code), KeyModifiers.NONE, 0L) { true }
                     else -> OneConfigKeybind(intArrayOf(code), null, KeyModifiers.NONE, 0L) { true }
                 }
 
@@ -292,6 +294,7 @@ data object MoulConfigCompat {
                         ?: KeyboardConstants.none
                     children.set(code)
                 }
+                property.metadata["singleKey"] = true
                 KeybindVisualizer::class.java
             }
 

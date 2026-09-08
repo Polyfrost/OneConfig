@@ -47,6 +47,24 @@ open class OneConfigKeybind(
     @Transient
     var firesWhileTyping = false
 
+    /**
+     * Serialized key inputs that could not be resolved on this Minecraft version.
+     *
+     * They stay inactive but are written back on save so they don't get erased by a version switch.
+     */
+    @Transient
+    var unresolvedKeyInputs: List<Any>? = null
+
+    /*
+     * Serialized mouse inputs that could not be resolved on this Minecraft version.
+     *
+     * @see unresolvedKeyInputs
+     */
+    @Transient
+    var unresolvedMouseInputs: List<Any>? = null
+
+    val hasUnresolvedInputs get() = !unresolvedKeyInputs.isNullOrEmpty() || !unresolvedMouseInputs.isNullOrEmpty()
+
     val isBound get() = keyCodes?.isNotEmpty() == true || mouseBtns?.isNotEmpty() == true
 
     /**
@@ -85,6 +103,8 @@ open class OneConfigKeybind(
             mouseBtns = incoming.mouseBtns
             mods = incoming.mods
             durationNanos = incoming.durationNanos
+            unresolvedKeyInputs = incoming.unresolvedKeyInputs
+            unresolvedMouseInputs = incoming.unresolvedMouseInputs
         }
         return this
     }

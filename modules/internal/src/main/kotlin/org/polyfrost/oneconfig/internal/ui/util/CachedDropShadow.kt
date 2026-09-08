@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.alphaMultiplier
 import androidx.compose.ui.graphics.asSkiaBitmap
+import androidx.compose.ui.graphics.skiaPaint
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
@@ -219,7 +220,7 @@ private class CachedDropShadowNode(
         blendMode = BlendMode.SrcOver
         style = PaintingStyle.Fill
         if (radiusPx > 0f) {
-            asFrameworkPaint().maskFilter =
+            skiaPaint.maskFilter =
                 MaskFilter.makeBlur(FilterBlurMode.NORMAL, BLUR_SIGMA_SCALE * radiusPx + 0.5f)
         }
     }

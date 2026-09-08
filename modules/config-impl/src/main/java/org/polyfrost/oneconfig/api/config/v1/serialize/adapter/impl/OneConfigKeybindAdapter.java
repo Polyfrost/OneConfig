@@ -34,8 +34,10 @@ public final class OneConfigKeybindAdapter extends Adapter<OneConfigKeybind, Map
     @Override
     public Map<String, Object> serialize(OneConfigKeybind in) {
         Map<String, Object> out = new HashMap<>(4);
-        if (in.getKeyCodes() != null) out.put("keyCodes", encode(in.getKeyCodes(), true));
-        if (in.getMouseBtns() != null) out.put("mouseBtns", encode(in.getMouseBtns(), false));
+        List<Object> keys = merge(in.getKeyCodes() == null ? null : encode(in.getKeyCodes(), true), in.getUnresolvedKeyInputs());
+        List<Object> mouse = merge(in.getMouseBtns() == null ? null : encode(in.getMouseBtns(), false), in.getUnresolvedMouseInputs());
+        if (keys != null) out.put("keyCodes", keys);
+        if (mouse != null) out.put("mouseBtns", mouse);
         if (in.getMods() != 0) out.put("mods", in.getMods());
         if (in.getDurationNanos() != 0L) out.put("durationNanos", in.getDurationNanos());
         return out;
@@ -43,16 +45,25 @@ public final class OneConfigKeybindAdapter extends Adapter<OneConfigKeybind, Map
 
     @Override
     public OneConfigKeybind deserialize(Map in) {
-        List<Object> dropped = new ArrayList<>();
-        int[] keyCodes = decode(in.get("keyCodes"), true, dropped);
-        int[] mouseBtns = decode(in.get("mouseBtns"), false, dropped);
+        List<Object> droppedKeys = new ArrayList<>();
+        List<Object> droppedMouse = new ArrayList<>();
+        int[] keyCodes = decode(in.get("keyCodes"), true, droppedKeys);
+        int[] mouseBtns = decode(in.get("mouseBtns"), false, droppedMouse);
         byte mods = ((Number) in.getOrDefault("mods", 0)).byteValue();
         long durationNanos = ((Number) in.getOrDefault("durationNanos", 0L)).longValue();
-        notifyDropped(dropped);
-        if (BindNotInScreen.class.getName().equals(in.get("class"))) {
-            return new BindNotInScreen(keyCodes, mouseBtns, mods, durationNanos, ignored -> true);
-        }
-        return new OneConfigKeybind(keyCodes, mouseBtns, mods, durationNanos, ignored -> true);
+        OneConfigKeybind out = BindNotInScreen.class.getName().equals(in.get("class"))
+                ? new BindNotInScreen(keyCodes, mouseBtns, mods, durationNanos, ignored -> true)
+                : new OneConfigKeybind(keyCodes, mouseBtns, mods, durationNanos, ignored -> true);
+        if (!droppedKeys.isEmpty()) out.setUnresolvedKeyInputs(droppedKeys);
+        if (!droppedMouse.isEmpty()) out.setUnresolvedMouseInputs(droppedMouse);
+        return out;
+    }
+
+    private static @Nullable List<Object> merge(@Nullable List<Object> encoded, @Nullable List<?> unresolved) {
+        if (unresolved == null || unresolved.isEmpty()) return encoded;
+        List<Object> out = encoded == null ? new ArrayList<>(unresolved.size()) : new ArrayList<>(encoded);
+        out.addAll(unresolved);
+        return out;
     }
 
     @Override
@@ -91,7 +102,7 @@ public final class OneConfigKeybindAdapter extends Adapter<OneConfigKeybind, Map
             Integer code = toCode(entry, keyboard, codec);
             if (code != null) out[size++] = code;
             else {
-                LOGGER.warn("Ignoring unsupported {} input {}", keyboard ? "keyboard" : "mouse", entry);
+                LOGGER.warn("Unsupported {} input {} is inactive on this Minecraft version", keyboard ? "keyboard" : "mouse", entry);
                 dropped.add(entry);
             }
         }
@@ -127,25 +138,6 @@ public final class OneConfigKeybindAdapter extends Adapter<OneConfigKeybind, Map
         }
         LOGGER.warn("Ignoring unsupported keybind value {}", value);
         return null;
-    }
-
-    private static void notifyDropped(List<Object> dropped) {
-        if (dropped.isEmpty()) return;
-        try {
-            StringBuilder names = new StringBuilder();
-            for (Object entry : dropped) {
-                if (names.length() != 0) names.append(", ");
-                names.append('\'').append(entry).append('\'');
-            }
-            Notifications.error(
-                "Unsupported keybind" + (dropped.size() == 1 ? "" : "s"),
-                names + (dropped.size() == 1 ? " is" : " are")
-                    + " not supported by this Minecraft version and " + (dropped.size() == 1 ? "was" : "were")
-                    + " unbound."
-            );
-        } catch (Throwable t) {
-            LOGGER.error("Failed to notify about unsupported keybind inputs {}", dropped, t);
-        }
     }
 
     private KeybindCodec codec() {

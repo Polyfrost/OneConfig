@@ -81,6 +81,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.search.CategoryGroup
 import org.polyfrost.oneconfig.internal.ui.search.ConfigListEntry
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
@@ -357,11 +358,9 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
             .fillMaxWidth()
             .clip(shape)
             .background(theme.modCardBackground, shape)
-            .border(
-                1.dp,
-                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f))),
-                shape
-            )
+            .border(1.dp, remember(theme.borderColor) {
+                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
+            }, shape)
             .drawWithCache {
                 val color = theme.textColor
                 val gradient = Brush.radialGradient(
@@ -430,7 +429,9 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
                     .fillMaxWidth()
                     .border(
                         width = 1.dp,
-                        brush = Brush.verticalGradient(listOf(theme.borderColor.copy(0f), theme.borderColor)),
+                        brush = remember(theme.borderColor) {
+                            Brush.verticalGradient(listOf(theme.borderColor.copy(0f), theme.borderColor))
+                        },
                         shape = shape
                     )
                     .padding(vertical = 12.dp)
@@ -454,11 +455,9 @@ fun SettingRow(prop: Property<*>, compact: Boolean = false) {
             .fillMaxWidth()
             .alpha(displayAlpha(display))
             .background(theme.modCardBackground, theme.modCardShape)
-            .border(
-                1.dp,
-                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f))),
-                theme.modCardShape
-            )
+            .border(1.dp, remember(theme.borderColor) {
+                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
+            }, theme.modCardShape)
     ) {
         val vignetteColor = theme.textColor
         Box(
@@ -651,7 +650,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 awaitPointerEventScope {
                     while (true) {
                         val event = awaitPointerEvent(PointerEventPass.Initial)
-                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed) {
+                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed && !KeybindRecordingBus.isRecording) {
                             val pos = event.changes.first().position
                             menuOffset = IntOffset(pos.x.roundToInt(), pos.y.roundToInt())
                             menuOpen = true

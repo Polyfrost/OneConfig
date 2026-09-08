@@ -1,5 +1,5 @@
 [versions]
-command-api-v2 = "2.3.7+328a75ba68"
+command-api-v2 = "2.4.0+c0ab2d5d6f"
 
 modmenu = "16.0.0-rc.1"
 yacl = "3.8.0+1.21.9-fabric"

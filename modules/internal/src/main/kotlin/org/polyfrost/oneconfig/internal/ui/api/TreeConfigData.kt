@@ -62,20 +62,24 @@ class TreeConfigData(
         get() = tree.getMetadata<String>("mod_card_description")?.nonBlankOrNull()
             ?: modInfo?.description?.nonBlankOrNull()
 
+    private var resolvedModInfo: ModInfo? = null
+
     private val modInfo: ModInfo?
-        get() {
-            val mods = ModInfo.loadedMods
-            if (mods.isEmpty()) return null
-            val ids = listOfNotNull(
-                id.nonBlankOrNull(),
-                id.substringBeforeLast('.').nonBlankOrNull()?.takeIf { it != id },
-            )
-            for (modId in ids) {
-                mods.firstOrNull { it.id == modId }?.let { return it }
-            }
-            val name = title.asRenderText().nonBlankOrNull() ?: return null
-            return mods.firstOrNull { it.name.equals(name, ignoreCase = true) }
+        get() = resolvedModInfo ?: findModInfo()?.also { resolvedModInfo = it }
+
+    private fun findModInfo(): ModInfo? {
+        val mods = ModInfo.loadedMods
+        if (mods.isEmpty()) return null
+        val ids = listOfNotNull(
+            id.nonBlankOrNull(),
+            id.substringBeforeLast('.').nonBlankOrNull()?.takeIf { it != id },
+        )
+        for (modId in ids) {
+            mods.firstOrNull { it.id == modId }?.let { return it }
         }
+        val name = title.asRenderText().nonBlankOrNull() ?: return null
+        return mods.firstOrNull { it.name.equals(name, ignoreCase = true) }
+    }
 
     private fun String.nonBlankOrNull(): String? = trim().takeIf { it.isNotEmpty() }
 }

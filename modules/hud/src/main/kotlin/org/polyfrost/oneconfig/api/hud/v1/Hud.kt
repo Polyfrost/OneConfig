@@ -967,6 +967,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @JvmField
     var lastLayoutFrame: Long = -1L
 
+    @ApiStatus.Internal
+    @JvmField
+    var lastUpdate: Long = Long.MIN_VALUE
+
     override fun addToInitQueue() {}
 
     val isReal get() = tree != null

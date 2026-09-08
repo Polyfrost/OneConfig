@@ -71,13 +71,27 @@ public class OneConfigKeybindAdapterTest {
     }
 
     @Test
-    void dropsUnsupportedInputsInsteadOfThrowing() {
+    void keepsUnsupportedInputsInactiveInsteadOfThrowing() {
         Map<String, Object> serialized = new HashMap<>();
         serialized.put("keyCodes", List.of("key.keyboard.a", "key.keyboard.nonsense", Boolean.TRUE));
 
         OneConfigKeybind keybind = adapter.deserialize(serialized);
 
         assertArrayEquals(new int[]{4}, keybind.getKeyCodes());
+        assertEquals(List.of("key.keyboard.nonsense", Boolean.TRUE), keybind.getUnresolvedKeyInputs());
+    }
+
+    @Test
+    void unsupportedInputsSurviveARoundTrip() {
+        Map<String, Object> serialized = new HashMap<>();
+        serialized.put("keyCodes", List.of("key.keyboard.a", "key.keyboard.nonsense"));
+        serialized.put("mouseBtns", List.of("key.mouse.9"));
+
+        OneConfigKeybind keybind = adapter.deserialize(serialized);
+        Map<String, Object> reserialized = adapter.serialize(keybind);
+
+        assertEquals(List.of("key.keyboard.a", "key.keyboard.nonsense"), reserialized.get("keyCodes"));
+        assertEquals(List.of("key.mouse.9"), reserialized.get("mouseBtns"));
     }
 
     @Test
