@@ -77,12 +77,10 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
 
     @Override
     public String loader() {
-        //? fabric
-        return "fabric";
         //? neoforge
         //return "neoforge";
-        //? ornithe
-        //return "ornithe";
+        //? else
+        return "fabric";
     }
 
     @Override
