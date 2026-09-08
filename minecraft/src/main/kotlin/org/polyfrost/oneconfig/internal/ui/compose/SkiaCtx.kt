@@ -1,9 +1,33 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
 import com.mojang.blaze3d.pipeline.TextureTarget
+//? if >= 1.21.5 && < 1.21.8 {
+/*import com.mojang.blaze3d.pipeline.BlendFunction
+import com.mojang.blaze3d.pipeline.RenderPipeline
+import com.mojang.blaze3d.platform.DestFactor
+import com.mojang.blaze3d.platform.SourceFactor
+*///? }
+//? if < 1.21.5 {
+/*import com.mojang.blaze3d.platform.GlStateManager
+import com.mojang.blaze3d.systems.RenderSystem
+*///? }
+//? if >= 1.21.4 && < 1.21.5 {
+/*import com.mojang.blaze3d.vertex.DefaultVertexFormat
+import com.mojang.blaze3d.vertex.VertexFormat
+*///? }
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
+//? if >= 1.21.5 {
+import net.minecraft.client.renderer.RenderPipelines
+//? }
+//? if >= 1.21.4 && < 1.21.8 {
+/*import net.minecraft.client.renderer.RenderStateShard
+import net.minecraft.client.renderer.RenderType
+*///? }
 import net.minecraft.resources.Identifier
+//? if >= 1.21.4 && < 1.21.8 {
+/*import net.minecraft.util.TriState
+*///? }
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.Color
 import org.jetbrains.skia.ColorSpace
@@ -172,6 +196,71 @@ object SkiaCtx {
         override fun close() { this.id = -1 }
     }
     *///? }
+    *///? }
+
+    //? if >= 1.21.4 && < 1.21.8 {
+    /*private val premulRenderTypes = HashMap<Identifier, RenderType>()
+
+    private fun premulGuiTextured(loc: Identifier): RenderType = premulRenderTypes.getOrPut(loc) {
+        //? if >= 1.21.5 {
+        /*RenderType.create(
+            "oneconfig_gui_textured_premultiplied",
+            786432,
+            premulGuiPipeline,
+            RenderType.CompositeState.builder()
+                .setTextureState(RenderStateShard.TextureStateShard(loc, TriState.FALSE, false))
+                .createCompositeState(false),
+        )
+        *///? } else {
+        RenderType.create(
+            "oneconfig_gui_textured_premultiplied",
+            DefaultVertexFormat.POSITION_TEX_COLOR,
+            VertexFormat.Mode.QUADS,
+            786432,
+            RenderType.CompositeState.builder()
+                .setTextureState(RenderStateShard.TextureStateShard(loc, TriState.FALSE, false))
+                .setShaderState(RenderStateShard.POSITION_TEXTURE_COLOR_SHADER)
+                .setTransparencyState(premulTransparency)
+                .setDepthTestState(RenderStateShard.LEQUAL_DEPTH_TEST)
+                .createCompositeState(false),
+        )
+        //? }
+    }
+
+    //? if >= 1.21.5 {
+    /*private val premulGuiPipeline by lazy {
+        RenderPipelines.register(
+            RenderPipeline.builder(RenderPipelines.GUI_TEXTURED_SNIPPET)
+                .withLocation("pipeline/oneconfig_gui_textured_premultiplied")
+                .withBlend(
+                    BlendFunction(
+                        SourceFactor.ONE,
+                        DestFactor.ONE_MINUS_SRC_ALPHA,
+                        SourceFactor.ONE,
+                        DestFactor.ONE_MINUS_SRC_ALPHA,
+                    )
+                )
+                .build()
+        )
+    }
+    *///? } else {
+    private val premulTransparency = RenderStateShard.TransparencyStateShard(
+        "oneconfig_premultiplied_transparency",
+        {
+            RenderSystem.enableBlend()
+            RenderSystem.blendFuncSeparate(
+                GlStateManager.SourceFactor.ONE,
+                GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                GlStateManager.SourceFactor.ONE,
+                GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+            )
+        },
+        {
+            RenderSystem.disableBlend()
+            RenderSystem.defaultBlendFunc()
+        },
+    )
+    //? }
     *///? }
 
     private var glSurface: Surface? = null
@@ -400,12 +489,12 @@ object SkiaCtx {
         }
         guiGraphics.pose().pushMatrix()
         guiGraphics.pose().scale(1f / guiScale, 1f / guiScale)
-        guiGraphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
         guiGraphics.pose().popMatrix()
         //? } else {
         /*guiGraphics.pose().pushPose()
         guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
-        guiGraphics.blit(net.minecraft.client.renderer.RenderType::guiTextured, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        guiGraphics.blit(::premulGuiTextured, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
         guiGraphics.pose().popPose()
         *///? }
         //? } else {
@@ -419,12 +508,18 @@ object SkiaCtx {
         guiGraphics.pose().pushPose()
         guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
         //? >= 1.21.4 {
-        guiGraphics.blit(net.minecraft.client.renderer.RenderType::guiTextured, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        guiGraphics.blit(::premulGuiTextured, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
         //?} else {
-        /*com.mojang.blaze3d.systems.RenderSystem.enableBlend()
-        com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc()
+        /*RenderSystem.enableBlend()
+        RenderSystem.blendFuncSeparate(
+            GlStateManager.SourceFactor.ONE,
+            GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+            GlStateManager.SourceFactor.ONE,
+            GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+        )
         guiGraphics.blit(HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
-        com.mojang.blaze3d.systems.RenderSystem.disableBlend()
+        RenderSystem.disableBlend()
+        RenderSystem.defaultBlendFunc()
         *///?}
         guiGraphics.pose().popPose()
         *///? }
@@ -454,12 +549,12 @@ object SkiaCtx {
         }
         guiGraphics.pose().pushMatrix()
         guiGraphics.pose().scale(1f / guiScale, 1f / guiScale)
-        guiGraphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA, COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
         guiGraphics.pose().popMatrix()
         //? } else {
         /*guiGraphics.pose().pushPose()
         guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
-        guiGraphics.blit(net.minecraft.client.renderer.RenderType::guiTextured, COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        guiGraphics.blit(::premulGuiTextured, COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
         guiGraphics.pose().popPose()
         *///? }
         //? } else {
@@ -473,12 +568,18 @@ object SkiaCtx {
         guiGraphics.pose().pushPose()
         guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
         //? >= 1.21.4 {
-        guiGraphics.blit(net.minecraft.client.renderer.RenderType::guiTextured, COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        guiGraphics.blit(::premulGuiTextured, COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
         //?} else {
-        /*com.mojang.blaze3d.systems.RenderSystem.enableBlend()
-        com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc()
+        /*RenderSystem.enableBlend()
+        RenderSystem.blendFuncSeparate(
+            GlStateManager.SourceFactor.ONE,
+            GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+            GlStateManager.SourceFactor.ONE,
+            GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+        )
         guiGraphics.blit(COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
-        com.mojang.blaze3d.systems.RenderSystem.disableBlend()
+        RenderSystem.disableBlend()
+        RenderSystem.defaultBlendFunc()
         *///?}
         guiGraphics.pose().popPose()
         *///? }
