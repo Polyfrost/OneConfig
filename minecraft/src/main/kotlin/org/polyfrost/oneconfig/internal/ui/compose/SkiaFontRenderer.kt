@@ -5,7 +5,6 @@ import com.google.gson.JsonParser
 import net.minecraft.client.Minecraft
 import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.PreparableReloadListener
-import net.minecraft.server.packs.resources.ReloadableResourceManager
 import net.minecraft.server.packs.resources.ResourceManager
 //? < 1.21.4
 //import net.minecraft.util.profiling.ProfilerFiller
@@ -15,6 +14,7 @@ import org.polyfrost.compose.mc.McFontQueue
 import org.polyfrost.compose.render.FontManager
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
+import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import java.util.zip.ZipInputStream
@@ -118,10 +118,6 @@ object SkiaFontRenderer : PreparableReloadListener {
         McFontQueue.measureWidth = { text, scale -> measureWidth(text) * scale }
         McFontQueue.measureHeight = { scale -> LINE_HEIGHT * scale }
         McFontQueue.renderer = ::draw
-        val resourceManager = Minecraft.getInstance().resourceManager
-        if (resourceManager is ReloadableResourceManager) {
-            resourceManager.registerReloadListener(this)
-        }
         ComposePreloader.preloadGpuWarmup()
     }
 
@@ -189,8 +185,10 @@ object SkiaFontRenderer : PreparableReloadListener {
         val now = System.currentTimeMillis()
         if (now - lastLoadAttempt < RETRY_INTERVAL_MS) return
         lastLoadAttempt = now
-        if (rebuild(Minecraft.getInstance().resourceManager)) loaded = true
+        prepare(Minecraft.getInstance().resourceManager, fontOptionsMask())?.let(::applyPrepared)
     }
+
+    internal fun isReadyForWarmup(): Boolean = loaded && builtOptions == fontOptionsMask()
 
     private fun drawGlyphs(canvas: Canvas, text: String, x: Float, y: Float, color: Int, scale: Float, isShadow: Boolean) {
         var curX = x
@@ -476,11 +474,22 @@ object SkiaFontRenderer : PreparableReloadListener {
         }
     }
 
-    private fun rebuild(rm: ResourceManager): Boolean {
-        val options = fontOptionsMask()
+    private class PreparedFont(
+        val glyphs: Map<Int, Glyph>,
+        val fast: Array<Glyph?>,
+        val spaces: Map<Int, Float>,
+        val atlases: List<Image>,
+        val unihex: UnihexGlyphs?,
+        val options: Int,
+    ) {
+        fun close() = atlases.forEach { it.close() }
+    }
+
+    // Uses only local data and CPU-backed Skia images, never the shared GPU context.
+    private fun prepare(rm: ResourceManager, options: Int): PreparedFont? {
         val providers = ArrayList<JsonObject>()
         runCatching { collectProviders(rm, ROOT_FONT, providers, HashSet(), options) }
-        if (providers.isEmpty()) return false
+        if (providers.isEmpty()) return null
 
         val newGlyphs = HashMap<Int, Glyph>(4096)
         val newSpace = HashMap<Int, Float>(4)
@@ -488,47 +497,58 @@ object SkiaFontRenderer : PreparableReloadListener {
         val claimed = HashSet<Int>(4096)
         val hex = HexAccumulator()
 
-        for (provider in providers) {
-            when (provider.get("type")?.asString) {
-                "space" -> {
-                    val advances = provider.getAsJsonObject("advances") ?: continue
-                    for ((key, value) in advances.entrySet()) {
-                        if (key.isEmpty()) continue
-                        val cp = key.codePointAt(0)
-                        if (claimed.add(cp)) newSpace[cp] = value.asFloat
+        var prepared = false
+        try {
+            for (provider in providers) {
+                when (provider.get("type")?.asString) {
+                    "space" -> {
+                        val advances = provider.getAsJsonObject("advances") ?: continue
+                        for ((key, value) in advances.entrySet()) {
+                            if (key.isEmpty()) continue
+                            val cp = key.codePointAt(0)
+                            if (claimed.add(cp)) newSpace[cp] = value.asFloat
+                        }
                     }
+                    "bitmap" -> runCatching { loadBitmap(rm, provider, newGlyphs, newAtlases, claimed) }
+                        .onFailure { LOGGER.warn("Failed to load bitmap font provider, skipping", it) }
+                    "unihex" -> runCatching { loadUnihex(rm, provider, hex, claimed) }
+                        .onFailure { LOGGER.warn("Failed to load unihex font provider, skipping", it) }
+                    else -> {}
                 }
-                "bitmap" -> runCatching { loadBitmap(rm, provider, newGlyphs, newAtlases, claimed) }
-                    .onFailure { LOGGER.warn("Failed to load bitmap font provider, skipping", it) }
-                "unihex" -> runCatching { loadUnihex(rm, provider, hex, claimed) }
-                    .onFailure { LOGGER.warn("Failed to load unihex font provider, skipping", it) }
-                else -> {}
             }
+
+            if (newGlyphs.isEmpty() && hex.size == 0) return null
+
+            val newFast = arrayOfNulls<Glyph>(FAST_GLYPH_LIMIT)
+            for ((cp, glyph) in newGlyphs) if (cp in 0 until FAST_GLYPH_LIMIT) newFast[cp] = glyph
+
+            return PreparedFont(newGlyphs, newFast, newSpace, newAtlases, hex.build(), options).also {
+                prepared = true
+            }
+        } finally {
+            if (!prepared) newAtlases.forEach { it.close() }
         }
+    }
 
-        if (newGlyphs.isEmpty() && hex.size == 0) return false
-
-        val newFast = arrayOfNulls<Glyph>(FAST_GLYPH_LIMIT)
-        for ((cp, glyph) in newGlyphs) if (cp in 0 until FAST_GLYPH_LIMIT) newFast[cp] = glyph
-
+    private fun applyPrepared(prepared: PreparedFont) {
         val oldAtlases = atlases
         val oldImages = unihexImages
         val oldShaders = shaders
-        glyphs = newGlyphs
-        glyphFast = newFast
-        spaceAdvances = if (newSpace.isEmpty()) mapOf(' '.code to 4f) else newSpace
-        atlases = newAtlases
-        unihex = hex.build()
+        glyphs = prepared.glyphs
+        glyphFast = prepared.fast
+        spaceAdvances = prepared.spaces.ifEmpty { mapOf(' '.code to 4f) }
+        atlases = prepared.atlases
+        unihex = prepared.unihex
         unihexImages = HashMap()
         shaders = HashMap()
         shaderImage = null
-        builtOptions = options
+        builtOptions = prepared.options
         val retiring = ArrayList<RefCnt>(oldAtlases.size + oldImages.size + oldShaders.size)
         retiring.addAll(oldAtlases)
         retiring.addAll(oldImages.values)
         retiring.addAll(oldShaders.values)
         retire(retiring)
-        return true
+        loaded = true
     }
 
     private class HexAccumulator {
@@ -779,15 +799,20 @@ object SkiaFontRenderer : PreparableReloadListener {
         //? >= 1.21.10
         val resourceManager = sharedState.resourceManager()
 
-        return CompletableFuture.supplyAsync({ }, executor)
-            .thenCompose {
+        val options = fontOptionsMask()
+        return CompletableFuture.supplyAsync({ Optional.ofNullable(prepare(resourceManager, options)) }, executor)
+            .thenCompose { prepared ->
                 //? >= 1.21.10 {
-                preparationBarrier.wait(Unit)
+                preparationBarrier.wait(prepared)
                 //? } else
-                //preparationBarrier!!.wait(Unit)
-            }.thenAcceptAsync({
-                if (rebuild(resourceManager)) {
-                    loaded = true
+                //preparationBarrier!!.wait(prepared)
+                    .whenComplete { _, failure ->
+                        if (failure != null) prepared.ifPresent { it.close() }
+                    }
+            }.thenAcceptAsync({ result ->
+                val prepared = result.orElse(null)
+                if (prepared != null) {
+                    applyPrepared(prepared)
                 } else {
                     loaded = false
                     lastLoadAttempt = 0L

@@ -17,6 +17,7 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
+import org.polyfrost.oneconfig.internal.ui.compose.ComposePreloader
 import org.polyfrost.oneconfig.internal.ui.components.RetainedVisibility
 import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
@@ -55,9 +56,9 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
     private fun runPrewarm(): Boolean {
         if (everOpened || Platform.screen().current<Any?>() === this) return true
         return try {
-            prewarm(PREWARM_FRAMES) { }
+            prewarm(PREWARM_FRAMES, budget = 1) { }
         } catch (t: Throwable) {
-            LOGGER.warn("HUD editor warm-up failed; the first open will build it instead", t)
+            ComposePreloader.failStartup("HUD editor warm-up failed", t)
             false
         }
     }

@@ -22,6 +22,7 @@ import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
 import org.polyfrost.oneconfig.internal.ui.components.warmIconCache
 import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
 import org.polyfrost.oneconfig.internal.ui.compose.BlurRenderer
+import org.polyfrost.oneconfig.internal.ui.compose.ComposePreloader
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
@@ -119,14 +120,18 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
         @JvmStatic
         fun endPrewarmShared() {
-            sharedScreen?.endPrewarm()
+            sharedScreen?.let {
+                if (!it.everOpened && Platform.screen().current<Any?>() !== it) {
+                    it.restorePrewarmScroll()
+                    it.restorePrewarmNavigation()
+                }
+                it.endPrewarm()
+            }
         }
 
         private const val PREWARM_FRAME_BUDGET = 1
 
         private const val PREWARM_OPEN_FRAME = 1
-
-        private const val PREWARM_FOCUS_FRAME = 2
 
         private val PREWARM_SCROLL_FRAMES = 5..17
         private const val PREWARM_RESTORE_FRAME = 18
@@ -195,34 +200,36 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     @Volatile private var everOpened = false
 
+    private fun restorePrewarmScroll() {
+        scrollModGrid(0)
+    }
+
+    private fun restorePrewarmNavigation() {
+        warmRoute(ModsGraph)
+        LocalNavController.wrapper.reset()
+        ShellState.lastRoute = null
+    }
+
     private fun runPrewarm(): Boolean {
         if (everOpened || Platform.screen().current<Any?>() === this) return true
         prewarming = true
         return try {
             ConfigRegistry.loadFrom(ConfigManager.active(), ConfigSource.OC)
             warmIconCache(ConfigRegistry.modCardConfigs.mapNotNull { it.icon })
-            var restoreTo = 0
             prewarm(PREWARM_FRAMES, PREWARM_FRAME_BUDGET) { frame ->
                 when (frame) {
                     PREWARM_OPEN_FRAME -> requestOpenCallback?.invoke()
-                    PREWARM_FOCUS_FRAME -> ShellState.focusSearchField = true
-                    PREWARM_CLOSE_FRAME -> {
-                        ShellState.focusSearchField = false
-                        ShellState.searchFieldFocused = false
-                        ShellState.searchQuery = ""
-                        requestCloseCallback?.invoke()
-                    }
-                    PREWARM_RESTORE_FRAME -> scrollModGrid(restoreTo)
+                    PREWARM_CLOSE_FRAME -> requestCloseCallback?.invoke()
+                    PREWARM_RESTORE_FRAME -> restorePrewarmScroll()
                     in PREWARM_PAGE_FRAMES -> {
                         val step = frame - PREWARM_PAGE_FRAMES.first
                         if (step % PREWARM_FRAMES_PER_PAGE == 0) {
                             warmRoute(PREWARM_ROUTES[step / PREWARM_FRAMES_PER_PAGE])
                         }
                     }
-                    PREWARM_FORGET_FRAME -> LocalNavController.wrapper.reset()
+                    PREWARM_FORGET_FRAME -> restorePrewarmNavigation()
                     in PREWARM_SCROLL_FRAMES -> {
                         val grid = ShellState.gridStates[MOD_GRID_KEY] ?: return@prewarm
-                        if (frame == PREWARM_SCROLL_FRAMES.first) restoreTo = grid.firstVisibleItemIndex
                         val last = (grid.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)
                         val step = frame - PREWARM_SCROLL_FRAMES.first
                         val span = PREWARM_SCROLL_FRAMES.last - PREWARM_SCROLL_FRAMES.first
@@ -232,7 +239,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
             }
         } catch (t: Throwable) {
             endPrewarm()
-            LOGGER.warn("OneConfig UI warm-up failed; the first open will build the UI instead", t)
+            ComposePreloader.failStartup("menu warm-up failed", t)
             false
         } finally {
             prewarming = false
