@@ -46,6 +46,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
@@ -157,6 +160,10 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
     val entries = remember(flat) { flat.toMutableStateList() }
 
     val gridState = rememberRestorableLazyGridState("mods")
+    val density = LocalDensity.current
+    val windowSize = LocalWindowInfo.current.containerSize
+    // Only enable placement animations after the grid has been laid out for the current size
+    var animateItems by remember(windowSize, density) { mutableStateOf(false) }
     val reorderState = rememberGridReorderState(
         gridState = gridState,
         onMove = { from, to -> entries.add(to, entries.removeAt(from)) },
@@ -170,7 +177,9 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
             columns = GridCells.Fixed(4),
             verticalArrangement = Arrangement.spacedBy(19.dp),
             horizontalArrangement = Arrangement.spacedBy(19.dp),
-            modifier = Modifier.padding(end = 16.dp),
+            modifier = Modifier.padding(end = 16.dp).onGloballyPositioned {
+                animateItems = true
+            },
         ) {
             items(
                 entries,
@@ -181,7 +190,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
                 when (entry) {
                     is ModGridEntry.Header -> ModTypeHeader(
                         entry,
-                        modifier = Modifier.animateItem(placementSpec = ModCardPlacementSpec),
+                        modifier = if (animateItems) Modifier.animateItem(placementSpec = ModCardPlacementSpec) else Modifier,
                         onToggle = { ModCardTypeCollapseStore.toggle(entry.type.id) },
                     )
 
@@ -191,7 +200,15 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
                         ModCard(
                             mod,
                             modifier = Modifier
-                                .animateItem(placementSpec = if (dragging) null else ModCardPlacementSpec)
+                                .then(
+                                    if (animateItems) {
+                                        Modifier.animateItem(
+                                            placementSpec = if (dragging) null else ModCardPlacementSpec,
+                                        )
+                                    } else {
+                                        Modifier
+                                    },
+                                )
                                 .reorderableItem(reorderState, mod.id),
                         )
                     }
