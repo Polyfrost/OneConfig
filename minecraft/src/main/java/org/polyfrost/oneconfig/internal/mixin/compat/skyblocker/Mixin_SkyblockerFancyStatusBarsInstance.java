@@ -13,22 +13,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Pseudo
 @Mixin(FancyStatusBars.class)
-public class Mixin_SkyblockerFancyStatusBars {
+public class Mixin_SkyblockerFancyStatusBarsInstance {
 
-    @Inject(method = "init", at = @At("TAIL"), require = 0, expect = 0)
+    @Inject(method = "initStatic", at = @At("TAIL"), require = 0, expect = 0)
     private static void oneconfig$registerHudCompat(CallbackInfo ci) {
         SkyblockerCompat.initialize();
     }
 
-    @Inject(method = "initStatic", at = @At("TAIL"), require = 0, expect = 0)
-    private static void oneconfig$registerHudCompatStatic(CallbackInfo ci) {
-        SkyblockerCompat.initialize();
-    }
-
     //~ if >= 26.1 'render' -> 'extractRenderState'
-    @Inject(method = "extractRenderState", at = @At("HEAD"), cancellable = true, require = 0)
-    private static void oneconfig$suppressWhileEditing(CallbackInfoReturnable<Boolean> cir) {
-        if (SkyblockerCompat.isActive() && CompatOverlayRenderer.oneConfigScreenOpen() && !SkyblockerCompat.isRedrawing()) {
+    @Inject(method = "extractRenderState", at = @At("HEAD"), cancellable = true, require = 0, expect = 0)
+    private void oneconfig$suppressWhileEditing(CallbackInfoReturnable<Boolean> cir) {
+        if (CompatOverlayRenderer.oneConfigScreenOpen() && !SkyblockerCompat.isRedrawing() && SkyblockerCompat.isActive()) {
             cir.setReturnValue(false);
         }
     }

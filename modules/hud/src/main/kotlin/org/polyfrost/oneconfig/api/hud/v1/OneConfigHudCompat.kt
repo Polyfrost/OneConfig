@@ -6,6 +6,7 @@ import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
+import java.util.concurrent.ConcurrentHashMap
 
 private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
     Hud(wrapper.id, wrapper.name, Category.COMPAT), LegacyHudMarker {
@@ -16,19 +17,23 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
 
     private val hiddenRevision = mutableStateOf(0)
 
-    private val wrapperId = id
-    private val wrapperModId = runCatching { wrapper.modId }.getOrNull() ?: "unknown"
-
     @Volatile
     private var faulted = false
+    private val loggedFailures = ConcurrentHashMap.newKeySet<String>()
 
     private fun fault(member: String, error: Throwable) {
+        if (faulted) return
         faulted = true
         HudManager.LOGGER.error(
-            "Disabling compat HUD '$wrapperId' from '$wrapperModId': $member failed, so " +
+            "Disabling compat HUD '${wrapper.id}' from '${wrapper.modId ?: "unknown"}': $member failed, so " +
                 "that mod is probably a different version than OneConfig was built against",
             error,
         )
+    }
+
+    private fun reportTransient(member: String, error: Throwable) {
+        if (!loggedFailures.add(member)) return
+        HudManager.LOGGER.error("Compat HUD '${wrapper.id}': $member threw, using a fallback for it", error)
     }
 
     private inline fun <T> guard(member: String, fallback: T, block: () -> T): T {
@@ -38,8 +43,8 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
         } catch (e: LinkageError) {
             fault(member, e)
             fallback
-        } catch (e: RuntimeException) {
-            fault(member, e)
+        } catch (e: Exception) {
+            reportTransient(member, e)
             fallback
         }
     }
@@ -50,25 +55,13 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
             return guard("hidden", true) { wrapper.hidden }
         }
         set(value) {
-            val changed = guard("hidden", false) {
-                if (wrapper.hidden == value) false else {
+            guard("hidden", Unit) {
+                if (wrapper.hidden != value) {
                     wrapper.hidden = value
-                    true
+                    hiddenRevision.value++
                 }
             }
-            if (changed) hiddenRevision.value++
         }
-
-    fun guardedPlacementReady(): Boolean = guard("placementReady", false) { wrapper.placementReady }
-
-    fun guardedOwnsPlacement(): Boolean = guard("ownsPlacement", false) { wrapper.ownsPlacement }
-
-    fun guardedLinkedProperties(): List<Property<*>> =
-        guard("linkedProperties", emptyList()) { wrapper.linkedProperties() }
-
-    fun guardedSave() {
-        guard("save", Unit) { wrapper.save() }
-    }
 
     override val persistOwnState: Boolean get() = false
 
@@ -77,16 +70,20 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
     override fun update(): Boolean = false
     override fun multipleInstancesAllowed(): Boolean = false
 
-    override fun deletable(): Boolean = false
+    override fun deletable(): Boolean = faulted
 
-    override val supportsScale: Boolean get() = guard("supportsScale", true) { wrapper.supportsScale }
+    override val supportsScale: Boolean get() = guard("supportsScale", false) { wrapper.supportsScale }
+
+    private var lastX = 0f
+    private var lastY = 0f
+    private var lastScale = 1f
 
     override var x: Float
-        get() = guard("x", 0f) { wrapper.x }
-        set(value) { guard("x", Unit) { wrapper.x = value } }
+        get() = guard<Float?>("x", null) { wrapper.x }?.also { lastX = it } ?: lastX
+        set(value) { guard("x", Unit) { wrapper.x = value; lastX = value } }
     override var y: Float
-        get() = guard("y", 0f) { wrapper.y }
-        set(value) { guard("y", Unit) { wrapper.y = value } }
+        get() = guard<Float?>("y", null) { wrapper.y }?.also { lastY = it } ?: lastY
+        set(value) { guard("y", Unit) { wrapper.y = value; lastY = value } }
     override var relativeX: Float
         get() = x
         set(value) { x = value }
@@ -95,8 +92,8 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
         set(value) { y = value }
 
     override var customScale: Float
-        get() = guard("scale", 1f) { wrapper.scale }
-        set(value) { guard("scale", Unit) { wrapper.scale = value } }
+        get() = guard<Float?>("scale", null) { wrapper.scale }?.also { lastScale = it } ?: lastScale
+        set(value) { guard("scale", Unit) { wrapper.scale = value; lastScale = value } }
 
     private var lastW = 0f
     private var lastH = 0f
@@ -130,7 +127,7 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
         get() = sizeH()
         set(_) {}
 
-    override val resizeAxes: HudResize get() = guard("resizeAxes", HudResize.Both) { wrapper.resizeAxes }
+    override val resizeAxes: HudResize get() = guard("resizeAxes", HudResize.None) { wrapper.resizeAxes }
 
     override fun applyEditorWidth(width: Float) {
         guard("scaledWidth", Unit) { wrapper.scaledWidth = width }
@@ -146,6 +143,57 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
     override fun onEditorDragEnd() {
         guard("onDragEnd", Unit) { wrapper.onDragEnd() }
         CompatSnapshots.capture(tree)
+    }
+
+    private val placementReady: Boolean get() = guard("placementReady", false) { wrapper.placementReady }
+
+    private val ownsPlacement: Boolean get() = guard("ownsPlacement", true) { wrapper.ownsPlacement }
+
+    fun linkedPropertiesGuarded(): List<Property<*>> =
+        guard("linkedProperties", emptyList()) { wrapper.linkedProperties() }
+
+    private fun saveWrapper() {
+        guard("save", Unit) { wrapper.save() }
+    }
+
+    fun trackPlacementPerProfile(tree: Tree) {
+        excludeFromSnapshots(tree)
+        tree.addMetadata(CompatSnapshots.GATE_METADATA, java.util.function.BooleanSupplier { placementReady })
+        if (!ownsPlacement) {
+            tree["oc_compat_x"] = placementProperty("x", "X Position", { x }, { x = it })
+            tree["oc_compat_y"] = placementProperty("y", "Y Position", { y }, { y = it })
+            if (supportsScale) {
+                tree["oc_compat_scale"] = placementProperty("scale", "Scale", { customScale }, { customScale = it })
+            }
+        }
+        tree.addMetadata("custom_save", Runnable { saveWrapper() })
+        CompatSnapshots.track(tree)
+    }
+
+    private fun placementProperty(
+        key: String,
+        name: String,
+        getter: () -> Float,
+        setter: (Float) -> Unit,
+    ): Property<Float> = Properties.functional<Float>(
+        { getter() },
+        { value -> setter(value) },
+        "oc_compat_$key",
+        name,
+        null,
+        Float::class.java,
+    ).apply {
+        addMetadata(CompatSnapshots.KEY_METADATA, "oc_compat_$key")
+        addDisplayCondition { Property.Display.HIDDEN }
+    }
+
+    private fun excludeFromSnapshots(tree: Tree) {
+        for (node in tree.map.values) {
+            when (node) {
+                is Property<*> -> node.addMetadata(CompatSnapshots.NO_SNAPSHOT_META, true)
+                is Tree -> excludeFromSnapshots(node)
+            }
+        }
     }
 }
 
@@ -192,51 +240,10 @@ interface OneConfigHudWrapper {
         hud.setup()
         val tree = hud.tree
         if (tree != null) {
-            for (prop in hud.guardedLinkedProperties()) tree.put(prop)
-            trackPlacementPerProfile(hud, tree)
+            for (prop in hud.linkedPropertiesGuarded()) tree.put(prop)
+            hud.trackPlacementPerProfile(tree)
         }
         hud.captureStaticSizeDefaults()
         hud.capturePositionDefaults()
-    }
-
-    private fun trackPlacementPerProfile(hud: OneConfigHudCompat, tree: Tree) {
-        excludeFromSnapshots(tree)
-        tree.addMetadata(CompatSnapshots.GATE_METADATA, java.util.function.BooleanSupplier { hud.guardedPlacementReady() })
-        if (!hud.guardedOwnsPlacement()) {
-            tree["oc_compat_x"] = placementProperty("x", "X Position", { hud.x }, { hud.x = it })
-            tree["oc_compat_y"] = placementProperty("y", "Y Position", { hud.y }, { hud.y = it })
-            if (hud.supportsScale) {
-                tree["oc_compat_scale"] =
-                    placementProperty("scale", "Scale", { hud.customScale }, { hud.customScale = it })
-            }
-        }
-        tree.addMetadata("custom_save", Runnable { hud.guardedSave() })
-        CompatSnapshots.track(tree)
-    }
-
-    private fun placementProperty(
-        key: String,
-        name: String,
-        getter: () -> Float,
-        setter: (Float) -> Unit,
-    ): Property<Float> = Properties.functional<Float>(
-        { getter() },
-        { value -> setter(value) },
-        "oc_compat_$key",
-        name,
-        null,
-        Float::class.java,
-    ).apply {
-        addMetadata(CompatSnapshots.KEY_METADATA, "oc_compat_$key")
-        addDisplayCondition { Property.Display.HIDDEN }
-    }
-
-    private fun excludeFromSnapshots(tree: Tree) {
-        for (node in tree.map.values) {
-            when (node) {
-                is Property<*> -> node.addMetadata(CompatSnapshots.NO_SNAPSHOT_META, true)
-                is Tree -> excludeFromSnapshots(node)
-            }
-        }
     }
 }

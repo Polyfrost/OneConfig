@@ -45,9 +45,18 @@ object SkyblockerCompat {
 
     private val cls = FancyStatusBars::class.java
 
-    private val self: Any? by lazy {
-        runCatching { cls.getField("INSTANCE").get(null) }.getOrNull()
+    private val NO_INSTANCE = Any()
+
+    @Volatile
+    private var selfCache: Any? = null
+
+    private fun self(): Any? {
+        selfCache?.let { return if (it === NO_INSTANCE) null else it }
+        val found = runCatching { cls.getField("INSTANCE").get(null) }.getOrNull()
             ?: runCatching { cls.getMethod("getInstance").invoke(null) }.getOrNull()
+        if (found == null && !barsReady) return null
+        selfCache = found ?: NO_INSTANCE
+        return found
     }
 
     private fun field(name: String): Field? = runCatching {
@@ -69,14 +78,24 @@ object SkyblockerCompat {
         method("extractRenderState", GuiGraphicsExtractor::class.java, Minecraft::class.java)
     }
 
-    private val active: Boolean by lazy {
-        val ok = renderBarsMethod != null && runCatching { statusBarsField?.get(self) }.getOrNull() != null
+    private val handlesResolved: Boolean by lazy {
+        val ok = listOf(renderBarsMethod, saveBarConfigMethod, updatePositionsMethod, barPositionerField, statusBarsField)
+            .all { it != null }
         if (!ok) LOGGER.warn("Skyblocker status bar compat is off: FancyStatusBars has an unrecognised shape")
         ok
     }
 
+    @Volatile
+    private var barsReady = false
+
     @JvmStatic
-    fun isActive(): Boolean = active
+    fun isActive(): Boolean {
+        if (barsReady) return true
+        if (!handlesResolved) return false
+        if (runCatching { statusBarsField?.get(self()) }.getOrNull() == null) return false
+        barsReady = true
+        return true
+    }
 
     private fun noStatusBars(error: Throwable?): Map<StatusBarType, StatusBar> {
         if (!barsUnavailable) {
@@ -88,28 +107,28 @@ object SkyblockerCompat {
 
     @Suppress("UNCHECKED_CAST")
     private fun statusBars(): Map<StatusBarType, StatusBar> =
-        runCatching { statusBarsField?.get(self) as? Map<StatusBarType, StatusBar> }
+        runCatching { statusBarsField?.get(self()) as? Map<StatusBarType, StatusBar> }
             .getOrElse { noStatusBars(it) } ?: noStatusBars(null)
 
     private fun positioner(): BarPositioner =
-        checkNotNull(barPositionerField?.get(self) as? BarPositioner) { "Skyblocker barPositioner is unavailable" }
+        checkNotNull(barPositionerField?.get(self()) as? BarPositioner) { "Skyblocker barPositioner is unavailable" }
 
     private fun saveBars() {
-        saveBarConfigMethod?.invoke(self)
+        saveBarConfigMethod?.invoke(self())
     }
 
     private fun placeBars() {
-        placeBarsMethod?.invoke(self)
+        placeBarsMethod?.invoke(self())
     }
 
     private fun updatePositions(ignoreVisibility: Boolean) {
-        updatePositionsMethod?.invoke(self, ignoreVisibility)
+        updatePositionsMethod?.invoke(self(), ignoreVisibility)
     }
 
-    private fun healthFancyBarEnabled(): Boolean = healthFancyBarMethod?.invoke(self) as? Boolean == true
+    private fun healthFancyBarEnabled(): Boolean = healthFancyBarMethod?.invoke(self()) as? Boolean == true
 
     private fun renderStatusBars(ctx: GuiGraphicsExtractor, mc: Minecraft) {
-        renderBarsMethod?.invoke(self, ctx, mc)
+        renderBarsMethod?.invoke(self(), ctx, mc)
     }
 
     @JvmStatic
@@ -123,7 +142,7 @@ object SkyblockerCompat {
     }
 
     private fun register() {
-        if (!isActive()) return
+        if (!handlesResolved) return
         var count = 0
         for (type in StatusBarType.values()) {
             runCatching {

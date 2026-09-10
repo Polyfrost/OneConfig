@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 
 class PolyComposeClock {
     private val clock = BroadcastFrameClock()
@@ -21,21 +22,18 @@ class PolyComposeClock {
 
     internal val recomposer: CompositionContext get() = recomposerImpl
 
-    private var inFrame = false
+    private val inFrame = AtomicBoolean(false)
 
     fun frame(nanos: Long = System.nanoTime(), notify: Boolean = true): Boolean {
-        if (inFrame) return recomposerImpl.hasPendingWork
-        inFrame = true
+        if (!inFrame.compareAndSet(false, true)) return recomposerImpl.hasPendingWork
         try {
-            return Snapshot.global {
-                if (notify) Snapshot.sendApplyNotifications()
-                val appliedBefore = recomposerImpl.changeCount
-                clock.sendFrame(nanos)
-                appliedChange = recomposerImpl.changeCount != appliedBefore
-                appliedChange || recomposerImpl.hasPendingWork
-            }
+            if (notify) Snapshot.sendApplyNotifications()
+            val appliedBefore = recomposerImpl.changeCount
+            clock.sendFrame(nanos)
+            appliedChange = recomposerImpl.changeCount != appliedBefore
+            return appliedChange || recomposerImpl.hasPendingWork
         } finally {
-            inFrame = false
+            inFrame.set(false)
         }
     }
 

@@ -765,7 +765,6 @@ private fun DrawScope.drawHudSizeBadge(label: String, centerX: Float, topY: Floa
     }
 }
 
-
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun HudActionButton(
@@ -967,20 +966,18 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     val panelHud: Hud? = if (panelOpen) primaryHud() else null
 
     val deleteHuds: (Collection<Hud>) -> Unit = { huds ->
-        val (live, stale) = huds.partition { it.isReal }
-        val removed = live.filter { it.deletable() }
-        val dropped = removed + stale
-        if (dropped.isNotEmpty()) {
+        val removed = huds.filter { it.canDelete() }
+        if (removed.isNotEmpty()) {
             Snapshot.withMutableSnapshot {
-                val droppedSet = dropped.toSet()
-                selectedHuds = selectedHuds - droppedSet
-                dropped.forEach { hud ->
+                val removedSet = removed.toSet()
+                selectedHuds = selectedHuds - removedSet
+                removed.forEach { hud ->
                     if (hoveredHud === hud) hoveredHud = null
-                    if (hud.isReal) HudManager.removeHud(hud, delete = true)
+                    HudManager.removeHud(hud, delete = true)
                     HudDesignSession.forget(hud)
                 }
             }
-            if (removed.isNotEmpty()) UiSounds.play(UiSoundEvent.CLICK)
+            UiSounds.play(UiSoundEvent.CLICK)
         }
     }
 
@@ -2583,7 +2580,6 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
         }
     }
 }
-
 
 @Composable
 private fun DesignStudioPanel(

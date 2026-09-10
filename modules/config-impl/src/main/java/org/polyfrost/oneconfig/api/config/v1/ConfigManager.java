@@ -145,7 +145,6 @@ public final class ConfigManager {
     final FileBackend backend;
     private volatile boolean shutdown = false;
 
-
     @SuppressWarnings("unchecked")
     private ConfigManager(Path onto, FileSerializer<?>... serializers) {
         backend = new FileBackend(onto, (FileSerializer<String>[]) serializers);
@@ -199,6 +198,15 @@ public final class ConfigManager {
                 config.initialize(true);
             } catch (Throwable t) {
                 failedInitialization.add(config.id);
+                Tree half = config.tree;
+                config.tree = null;
+                if (half != null && half.getID() != null) {
+                    try {
+                        active().unregister(half.getID());
+                    } catch (Throwable u) {
+                        LOGGER.warn("failed to unregister the half-built tree for config {}", config.id, u);
+                    }
+                }
                 LOGGER.error("failed to initialize config {}, skipping it", config.id, t);
             }
         }
@@ -271,16 +279,22 @@ public final class ConfigManager {
 
     private static final AtomicBoolean writeFailureNotified = new AtomicBoolean();
 
-    static void notifyWriteFailed(Config config, Throwable cause) {
+    static void notifyWriteFailed(Config config, @Nullable Throwable cause) {
         if (!writeFailureNotified.compareAndSet(false, true)) return;
         try {
-            Throwable root = cause.getCause() != null ? cause.getCause() : cause;
-            String reason = root.getMessage();
-            Notifications.error("OneConfig: could not write to the config folder",
-                    "Saving the defaults backup for '" + (config.title != null ? config.title : config.id) + "' failed"
-                            + (reason != null ? " (" + reason + ")" : "")
-                            + ". Your settings still load and save normally, but resetting an option to its default"
-                            + " may not work. Check that your disk is not full and the config folder is writable.");
+            String name = config.title != null ? config.title : config.id;
+            String reason = null;
+            if (cause != null) {
+                Throwable root = cause.getCause() != null ? cause.getCause() : cause;
+                reason = root.getMessage();
+            }
+            String tail = reason != null
+                    ? " (" + reason + ")."
+                    : ". This is usually a full disk or a config folder OneConfig cannot write to.";
+            Notifications.error(name + ": could not save config",
+                    "OneConfig could not save this config" + tail
+                            + " Your settings still work this session but will not be kept;"
+                            + " the log has the exact cause.");
         } catch (Throwable t) {
             LOGGER.error("failed to notify about the write failure for config {}", config.id, t);
         }

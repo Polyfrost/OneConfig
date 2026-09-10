@@ -348,23 +348,30 @@ public abstract class Config {
     }
 
     protected void restoreDefaults() {
-        if (tree == null) initialize(false);
-        Tree backup = defaultsBackup();
+        Tree backup = backupTree();
         if (backup == null) return;
         tree.overwrite(backup, false);
     }
 
     protected void restoreProperty(String option) {
         // first restore is slow as the backup tree loads from disc but it then stays in memory
-        Tree backup = defaultsBackup();
+        Tree backup = backupTree();
         if (backup == null) return;
         getProperty(option).overwrite(getProperty(backup, option), false);
     }
 
-    private Tree defaultsBackup() {
+    private Tree backupTree() {
+        if (tree == null) {
+            try {
+                initialize(false);
+            } catch (Throwable t) {
+                ConfigManager.LOGGER.error("failed to initialize config {} while restoring its defaults", id, t);
+            }
+        }
+        if (tree == null) return null;
         Tree backup = ConfigManager.backup().get(tree.getID());
         if (backup == null) {
-            ConfigManager.LOGGER.warn("No defaults backup for config {}, cannot restore to defaults", id);
+            ConfigManager.LOGGER.warn("no defaults backup for config {}, cannot restore its defaults", id);
         }
         return backup;
     }
@@ -484,7 +491,8 @@ public abstract class Config {
 
     public void save() {
         if (tree == null) return;
-        ConfigManager.active().save(tree);
+        ConfigManager manager = ConfigManager.active();
+        if (!manager.save(tree)) ConfigManager.notifyWriteFailed(this, manager.backend.lastSaveFailure());
     }
 
     /**

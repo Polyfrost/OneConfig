@@ -751,8 +751,15 @@ object SkiaCtx {
         /*RenderSystem.maxSupportedTextureSize()
         *///? }
 
+    private var maxTextureSizeCache = -1
+
+    private fun cachedMaxTextureSize(): Int {
+        if (maxTextureSizeCache <= 0) maxTextureSizeCache = runCatching { maxTextureSize() }.getOrDefault(0)
+        return maxTextureSizeCache
+    }
+
     private fun viewportFitsTexture(w: Int, h: Int): Boolean {
-        val max = runCatching { maxTextureSize() }.getOrDefault(0)
+        val max = cachedMaxTextureSize()
         if (max <= 0 || (w <= max && h <= max)) {
             oversizeReported = false
             return true
@@ -760,6 +767,8 @@ object SkiaCtx {
         if (!oversizeReported) {
             oversizeReported = true
             LOG.warn("SkiaCtx: viewport {}x{} is past the max texture size ({}); skipping offscreen surfaces", w, h, max)
+            destroyHudTarget()
+            destroyComposeTarget()
         }
         return false
     }
@@ -773,7 +782,7 @@ object SkiaCtx {
         var rt = hudTarget
         val needNewTarget = rt == null || rt.width != w || rt.height != h
         if (needNewTarget) {
-            if (System.currentTimeMillis() - composeAllocFailedAt < ALLOC_RETRY_COOLDOWN_MS) return null
+            if (System.currentTimeMillis() - allocFailedAt < ALLOC_RETRY_COOLDOWN_MS) return null
             destroyHudTarget()
             rt = try {
                 //? if >= 26.2 {
@@ -786,7 +795,7 @@ object SkiaCtx {
                 /*TextureTarget(w, h, true, Minecraft.ON_OSX)
                 *///? }
             } catch (e: Throwable) {
-                onComposeAllocFailure(w, h, e)
+                onAllocFailure("hud", w, h, e)
                 return null
             }
             hudTarget = rt
@@ -809,7 +818,13 @@ object SkiaCtx {
             hudBrt?.close(); hudBrt = null
             hudRealIsGeneral = false
             val svc = vulkanService ?: return null
-            val (brt, colorFmt) = svc.makeOffscreenBRT(rt, w, h)
+            val (brt, colorFmt) = try {
+                svc.makeOffscreenBRT(rt!!, w, h)
+            } catch (e: Throwable) {
+                destroyHudTarget()
+                onAllocFailure("hud", w, h, e)
+                return null
+            }
             hudBrt = brt
             hudSurface = Surface.makeFromBackendRenderTarget(
                 directContext, brt,
@@ -833,8 +848,8 @@ object SkiaCtx {
         hudTarget = null
     }
 
-    private var composeAllocFailedAt = 0L
-    private var composeAllocReported = false
+    private var allocFailedAt = 0L
+    private var allocReported = false
 
     private const val ALLOC_RETRY_COOLDOWN_MS = 2000L
 
@@ -851,7 +866,7 @@ object SkiaCtx {
         var rt = composeTarget
         val needNewTarget = rt == null || rt.width != w || rt.height != h
         if (needNewTarget) {
-            if (System.currentTimeMillis() - composeAllocFailedAt < ALLOC_RETRY_COOLDOWN_MS) return null
+            if (System.currentTimeMillis() - allocFailedAt < ALLOC_RETRY_COOLDOWN_MS) return null
             destroyComposeTarget()
             rt = try {
                 //? if >= 26.2 {
@@ -864,7 +879,7 @@ object SkiaCtx {
                 /*TextureTarget(w, h, true, Minecraft.ON_OSX)
                 *///? }
             } catch (e: Throwable) {
-                onComposeAllocFailure(w, h, e)
+                onAllocFailure("compose", w, h, e)
                 return null
             }
             composeTarget = rt
@@ -891,7 +906,7 @@ object SkiaCtx {
                 svc.makeOffscreenBRT(rt!!, w, h)
             } catch (e: Throwable) {
                 destroyComposeTarget()
-                onComposeAllocFailure(w, h, e)
+                onAllocFailure("compose", w, h, e)
                 return null
             }
             composeBrt = brt.first
@@ -910,16 +925,16 @@ object SkiaCtx {
         return composeSurface
     }
 
-    private fun onComposeAllocFailure(w: Int, h: Int, error: Throwable) {
-        composeAllocFailedAt = System.currentTimeMillis()
+    private fun onAllocFailure(what: String, w: Int, h: Int, error: Throwable) {
+        allocFailedAt = System.currentTimeMillis()
         destroyComposeTarget()
         destroyHudTarget()
         org.polyfrost.oneconfig.internal.ui.SkiaOffscreenTarget.destroyAll()
         if (isVulkanMode) invalidateVkSurfaces()
         runCatching { directContext.flush() }
-        LOG.error("SkiaCtx: failed to allocate the {}x{} compose target; skipping compose frames", w, h, error)
-        if (!composeAllocReported) {
-            composeAllocReported = true
+        LOG.error("SkiaCtx: failed to allocate the {}x{} {} target; skipping offscreen frames", w, h, what, error)
+        if (!allocReported) {
+            allocReported = true
             runCatching {
                 Platform.screen().showMessage(
                     "OneConfig couldn't allocate GPU memory for its UI (${w}x$h). " +
