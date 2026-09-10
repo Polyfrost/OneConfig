@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
 import com.mojang.blaze3d.pipeline.TextureTarget
+import com.mojang.blaze3d.systems.RenderSystem
 //? if >= 1.21.5 && < 1.21.8 {
 /*import com.mojang.blaze3d.pipeline.BlendFunction
 import com.mojang.blaze3d.pipeline.RenderPipeline
@@ -9,7 +10,6 @@ import com.mojang.blaze3d.platform.SourceFactor
 *///? }
 //? if < 1.21.5 {
 /*import com.mojang.blaze3d.platform.GlStateManager
-import com.mojang.blaze3d.systems.RenderSystem
 *///? }
 //? if >= 1.21.4 && < 1.21.5 {
 /*import com.mojang.blaze3d.vertex.DefaultVertexFormat
@@ -488,14 +488,20 @@ object SkiaCtx {
             hudRealIsGeneral = true
         }
         guiGraphics.pose().pushMatrix()
-        guiGraphics.pose().scale(1f / guiScale, 1f / guiScale)
-        guiGraphics.blit(RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
-        guiGraphics.pose().popMatrix()
+        try {
+            guiGraphics.pose().scale(1f / guiScale, 1f / guiScale)
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        } finally {
+            guiGraphics.pose().popMatrix()
+        }
         //? } else {
         /*guiGraphics.pose().pushPose()
-        guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
-        guiGraphics.blit(::premulGuiTextured, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
-        guiGraphics.pose().popPose()
+        try {
+            guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
+            guiGraphics.blit(::premulGuiTextured, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        } finally {
+            guiGraphics.pose().popPose()
+        }
         *///? }
         //? } else {
         /*var wrapper = hudTextureWrapper
@@ -506,6 +512,7 @@ object SkiaCtx {
         }
         wrapper.setGlTexId(rt.colorTextureId)
         guiGraphics.pose().pushPose()
+        try {
         guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
         //? >= 1.21.4 {
         guiGraphics.blit(::premulGuiTextured, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
@@ -521,7 +528,9 @@ object SkiaCtx {
         RenderSystem.disableBlend()
         RenderSystem.defaultBlendFunc()
         *///?}
-        guiGraphics.pose().popPose()
+        } finally {
+            guiGraphics.pose().popPose()
+        }
         *///? }
     }
 
@@ -548,14 +557,20 @@ object SkiaCtx {
             composeRealIsGeneral = true
         }
         guiGraphics.pose().pushMatrix()
-        guiGraphics.pose().scale(1f / guiScale, 1f / guiScale)
-        guiGraphics.blit(RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA, COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
-        guiGraphics.pose().popMatrix()
+        try {
+            guiGraphics.pose().scale(1f / guiScale, 1f / guiScale)
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA, COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        } finally {
+            guiGraphics.pose().popMatrix()
+        }
         //? } else {
         /*guiGraphics.pose().pushPose()
-        guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
-        guiGraphics.blit(::premulGuiTextured, COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
-        guiGraphics.pose().popPose()
+        try {
+            guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
+            guiGraphics.blit(::premulGuiTextured, COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        } finally {
+            guiGraphics.pose().popPose()
+        }
         *///? }
         //? } else {
         /*var wrapper = composeTextureWrapper
@@ -566,6 +581,7 @@ object SkiaCtx {
         }
         wrapper.setGlTexId(rt.colorTextureId)
         guiGraphics.pose().pushPose()
+        try {
         guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
         //? >= 1.21.4 {
         guiGraphics.blit(::premulGuiTextured, COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
@@ -581,7 +597,9 @@ object SkiaCtx {
         RenderSystem.disableBlend()
         RenderSystem.defaultBlendFunc()
         *///?}
-        guiGraphics.pose().popPose()
+        } finally {
+            guiGraphics.pose().popPose()
+        }
         *///? }
     }
 
@@ -722,24 +740,68 @@ object SkiaCtx {
         }
     }
 
+    private var oversizeReported = false
+
+    private fun maxTextureSize(): Int =
+        //? if >= 26.2 {
+        RenderSystem.getDevice().deviceInfo.limits().maxTextureSize()
+        //? } else if >= 1.21.5 {
+        /*RenderSystem.getDevice().maxTextureSize
+        *///? } else {
+        /*RenderSystem.maxSupportedTextureSize()
+        *///? }
+
+    private var maxTextureSizeCache = 0
+
+    private fun cachedMaxTextureSize(): Int {
+        if (maxTextureSizeCache == 0) {
+            maxTextureSizeCache = runCatching { maxTextureSize() }.getOrNull()
+                ?.takeIf { it > 0 }
+                ?: Int.MAX_VALUE
+        }
+        return maxTextureSizeCache
+    }
+
+    private fun viewportFitsTexture(w: Int, h: Int): Boolean {
+        val max = cachedMaxTextureSize()
+        if (w <= max && h <= max) {
+            oversizeReported = false
+            return true
+        }
+        if (!oversizeReported) {
+            oversizeReported = true
+            LOG.warn("SkiaCtx: viewport {}x{} is past the max texture size ({}); skipping offscreen surfaces", w, h, max)
+            destroyHudTarget()
+            destroyComposeTarget()
+        }
+        return false
+    }
+
     private fun resolveHudSurface(): Surface? {
         val w = Platform.screen().viewportWidth()
         val h = Platform.screen().viewportHeight()
         if (w <= 0 || h <= 0) return null
+        if (!viewportFitsTexture(w, h)) return null
 
         var rt = hudTarget
         val needNewTarget = rt == null || rt.width != w || rt.height != h
         if (needNewTarget) {
+            if (System.currentTimeMillis() - allocFailedAt < ALLOC_RETRY_COOLDOWN_MS) return null
             destroyHudTarget()
-            //? if >= 26.2 {
-            rt = TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
-            //? } else if >= 1.21.5 {
-            /*rt = TextureTarget(null, w, h, true)
-            *///? } else if >= 1.21.4 {
-            // rt = TextureTarget(w, h, true)
-            //? } else {
-            /*rt = TextureTarget(w, h, true, Minecraft.ON_OSX)
-            *///? }
+            rt = try {
+                //? if >= 26.2 {
+                TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
+                //? } else if >= 1.21.5 {
+                /*TextureTarget(null, w, h, true)
+                *///? } else if >= 1.21.4 {
+                // TextureTarget(w, h, true)
+                //? } else {
+                /*TextureTarget(w, h, true, Minecraft.ON_OSX)
+                *///? }
+            } catch (e: Throwable) {
+                onAllocFailure(HUD_TARGET, w, h, e)
+                return null
+            }
             hudTarget = rt
 
             //? >= 1.21.5 {
@@ -760,7 +822,13 @@ object SkiaCtx {
             hudBrt?.close(); hudBrt = null
             hudRealIsGeneral = false
             val svc = vulkanService ?: return null
-            val (brt, colorFmt) = svc.makeOffscreenBRT(rt, w, h)
+            val (brt, colorFmt) = try {
+                svc.makeOffscreenBRT(rt, w, h)
+            } catch (e: Throwable) {
+                destroyHudTarget()
+                onAllocFailure(HUD_TARGET, w, h, e)
+                return null
+            }
             hudBrt = brt
             hudSurface = Surface.makeFromBackendRenderTarget(
                 directContext, brt,
@@ -784,10 +852,13 @@ object SkiaCtx {
         hudTarget = null
     }
 
-    private var composeAllocFailedAt = 0L
-    private var composeAllocReported = false
+    private var allocFailedAt = 0L
+    private var allocReported = false
 
     private const val ALLOC_RETRY_COOLDOWN_MS = 2000L
+
+    private const val HUD_TARGET = "hud"
+    private const val COMPOSE_TARGET = "compose"
 
     // bottom left lets OpenGL do a plain copy which is faster
     // compensated in drawComposeBlit because GuiGraphics always samples top left
@@ -797,11 +868,12 @@ object SkiaCtx {
         val w = Platform.screen().viewportWidth()
         val h = Platform.screen().viewportHeight()
         if (w <= 0 || h <= 0) return null
+        if (!viewportFitsTexture(w, h)) return null
 
         var rt = composeTarget
         val needNewTarget = rt == null || rt.width != w || rt.height != h
         if (needNewTarget) {
-            if (System.currentTimeMillis() - composeAllocFailedAt < ALLOC_RETRY_COOLDOWN_MS) return null
+            if (System.currentTimeMillis() - allocFailedAt < ALLOC_RETRY_COOLDOWN_MS) return null
             destroyComposeTarget()
             rt = try {
                 //? if >= 26.2 {
@@ -814,7 +886,7 @@ object SkiaCtx {
                 /*TextureTarget(w, h, true, Minecraft.ON_OSX)
                 *///? }
             } catch (e: Throwable) {
-                onComposeAllocFailure(w, h, e)
+                onAllocFailure(COMPOSE_TARGET, w, h, e)
                 return null
             }
             composeTarget = rt
@@ -838,10 +910,10 @@ object SkiaCtx {
             composeRealIsGeneral = false
             val svc = vulkanService ?: return null
             val brt = try {
-                svc.makeOffscreenBRT(rt!!, w, h)
+                svc.makeOffscreenBRT(rt, w, h)
             } catch (e: Throwable) {
                 destroyComposeTarget()
-                onComposeAllocFailure(w, h, e)
+                onAllocFailure(COMPOSE_TARGET, w, h, e)
                 return null
             }
             composeBrt = brt.first
@@ -860,16 +932,15 @@ object SkiaCtx {
         return composeSurface
     }
 
-    private fun onComposeAllocFailure(w: Int, h: Int, error: Throwable) {
-        composeAllocFailedAt = System.currentTimeMillis()
-        destroyComposeTarget()
-        destroyHudTarget()
+    private fun onAllocFailure(what: String, w: Int, h: Int, error: Throwable) {
+        allocFailedAt = System.currentTimeMillis()
+        if (what == COMPOSE_TARGET) destroyComposeTarget() else destroyHudTarget()
         org.polyfrost.oneconfig.internal.ui.SkiaOffscreenTarget.destroyAll()
         if (isVulkanMode) invalidateVkSurfaces()
         runCatching { directContext.flush() }
-        LOG.error("SkiaCtx: failed to allocate the {}x{} compose target; skipping compose frames", w, h, error)
-        if (!composeAllocReported) {
-            composeAllocReported = true
+        LOG.error("SkiaCtx: failed to allocate the {}x{} {} target; skipping offscreen frames", w, h, what, error)
+        if (!allocReported) {
+            allocReported = true
             runCatching {
                 Platform.screen().showMessage(
                     "OneConfig couldn't allocate GPU memory for its UI (${w}x$h). " +

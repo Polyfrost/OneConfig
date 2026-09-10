@@ -691,7 +691,7 @@ abstract class ComposeScreen(
 
     //? >= 1.21.10 {
     override fun charTyped(event: CharacterEvent): Boolean {
-        val char = Char(event.codepoint)
+        val char = if (Character.isBmpCodePoint(event.codepoint)) Char(event.codepoint) else Char(0)
         val codepoint = event.codepoint
         //? >= 26.1 {
         val modifiers = 0 //dropped from the event in 26.1 because glfw no longer passes them
@@ -824,6 +824,18 @@ abstract class ComposeScreen(
     }
 
     private fun sendCharacterEvent(char: Char, codePoint: Int, modifiers: Int): Boolean {
+        if (!Character.isBmpCodePoint(codePoint)) {
+            var handled = false
+            for (part in Character.toChars(codePoint)) {
+                handled = sendCharKeyEvent(part, codePoint, modifiers) || handled
+            }
+            return handled
+        }
+        if (char == KeyEvent.CHAR_UNDEFINED) return false
+        return sendCharKeyEvent(char, codePoint, modifiers)
+    }
+
+    private fun sendCharKeyEvent(char: Char, codePoint: Int, modifiers: Int): Boolean {
         return sendKeyEventSafely {
             androidx.compose.ui.input.key.KeyEvent(
                 key = Key(KeyEvent.VK_UNDEFINED),

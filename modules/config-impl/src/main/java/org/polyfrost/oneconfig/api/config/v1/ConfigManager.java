@@ -41,6 +41,7 @@ import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.PolyColorAda
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.OneConfigKeybindAdapter;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerializer;
+import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,9 +55,11 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -142,7 +145,6 @@ public final class ConfigManager {
     final FileBackend backend;
     private volatile boolean shutdown = false;
 
-
     @SuppressWarnings("unchecked")
     private ConfigManager(Path onto, FileSerializer<?>... serializers) {
         backend = new FileBackend(onto, (FileSerializer<String>[]) serializers);
@@ -191,9 +193,30 @@ public final class ConfigManager {
         LOGGER.info("Initializing {} configs...", pendingInitialization.size());
         while (!pendingInitialization.isEmpty()) {
             Config config = pendingInitialization.poll();
-            if (config != null) config.initialize(true);
+            if (config == null) continue;
+            try {
+                config.initialize(true);
+            } catch (Throwable t) {
+                failedInitialization.add(config.id);
+                Tree half = config.tree;
+                config.tree = null;
+                if (half != null && half.getID() != null) {
+                    try {
+                        active().unregister(half.getID());
+                    } catch (Throwable u) {
+                        LOGGER.warn("failed to unregister the half-built tree for config {}", config.id, u);
+                    }
+                }
+                LOGGER.error("failed to initialize config {}, skipping it", config.id, t);
+            }
         }
         LOGGER.info("Initialized configs in {}ms", (System.nanoTime() - t1) / 1_000_000.0);
+    }
+
+    private static final Set<String> failedInitialization = ConcurrentHashMap.newKeySet();
+
+    static boolean didInitializationFail(Config config) {
+        return failedInitialization.contains(config.id);
     }
 
     @ApiStatus.Internal
@@ -248,10 +271,33 @@ public final class ConfigManager {
             String message = options.size() == 1
                     ? "The option '" + options.get(0) + "' could not be loaded and was reset to its default. A backup was saved as " + config.getTree().getID() + ".corrupted."
                     : options.size() + " options could not be loaded and were reset to their defaults (" + String.join(", ", options) + "). A backup was saved as " + config.getTree().getID() + ".corrupted.";
-            org.polyfrost.oneconfig.api.notifications.v1.Notifications.error(name + ": options reset", message);
+            Notifications.error(name + ": options reset", message);
         } catch (Throwable t) {
-            // notifications are best-effort and must never break config loading
             LOGGER.error("failed to notify about reset options for config {}", config.id, t);
+        }
+    }
+
+    private static final AtomicBoolean writeFailureNotified = new AtomicBoolean();
+
+    static void notifyWriteFailed(Config config, @Nullable Throwable cause) {
+        if (cause == null) {
+            LOGGER.error("config {} reported an unsuccessful save with no underlying error", config.id);
+            return;
+        }
+        if (!writeFailureNotified.compareAndSet(false, true)) return;
+        try {
+            String name = config.title != null ? config.title : config.id;
+            Throwable root = cause.getCause() != null ? cause.getCause() : cause;
+            String reason = root.getMessage();
+            String tail = reason != null
+                    ? " (" + reason + ")."
+                    : ". This is usually a full disk or a config folder OneConfig cannot write to.";
+            Notifications.error(name + ": could not save config",
+                    "OneConfig could not save this config" + tail
+                            + " Your settings still work this session but will not be kept;"
+                            + " the log has the exact cause.");
+        } catch (Throwable t) {
+            LOGGER.error("failed to notify about the write failure for config {}", config.id, t);
         }
     }
 
