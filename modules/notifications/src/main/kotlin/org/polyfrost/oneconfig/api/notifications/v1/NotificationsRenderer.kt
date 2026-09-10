@@ -26,11 +26,11 @@
 
 package org.polyfrost.oneconfig.api.notifications.v1
 
-import androidx.compose.runtime.snapshots.Snapshot
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.compose.node.PolyNode
 import org.polyfrost.compose.render.RenderContext
+import org.polyfrost.compose.runtime.PolyComposeHost
 import org.polyfrost.compose.runtime.PolyComposeRuntime
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 
@@ -40,11 +40,15 @@ object NotificationsRenderer {
 
     private const val BASE_SCALE = 0.5f
 
-    @Volatile
+    private val clock = PolyComposeHost.notifications
+
     private var runtime: PolyComposeRuntime? = null
 
+    private var lastViewWidth = 0f
+    private var lastViewHeight = 0f
+
     private fun runtime(): PolyComposeRuntime =
-        runtime ?: PolyComposeRuntime().also {
+        runtime ?: PolyComposeRuntime(clock).also {
             runtime = it
             it.setContent { NotificationToasts() }
             ToastInput.install()
@@ -64,7 +68,12 @@ object NotificationsRenderer {
         ToastViewport.scale = scale
 
         val rt = runtime()
-        rt.frame(viewWidth, viewHeight)
+        clock.frame()
+        if (clock.appliedChange || viewWidth != lastViewWidth || viewHeight != lastViewHeight) {
+            rt.layout(viewWidth, viewHeight)
+            lastViewWidth = viewWidth
+            lastViewHeight = viewHeight
+        }
         handleInput(rt.root, scale)
 
         ctx.save()
@@ -74,28 +83,22 @@ object NotificationsRenderer {
     }
 
     private fun handleInput(root: PolyNode, scale: Float) {
-        for (notification in NotificationsManager.active) notification.hovered = false
-        ToastInput.hoveredAction = null
-        ToastInput.hoverTarget = null
-
         val screenOpen = Platform.screen().current<Any?>() != null
-        val mx = ToastInput.mouseX / scale
-        val my = ToastInput.mouseY / scale
-        if (!screenOpen || ToastInput.mouseX < 0f || ToastInput.mouseY < 0f) return
-
-        val hits = ArrayList<PolyNode>()
-        collectHits(root, hits)
-
         var top: ToastHit? = null
-        for (node in hits) {
-            val tag = node.style.tag as? ToastHit ?: continue
-            if (!contains(node, mx, my)) continue
-            tag.notification.hovered = true
-            top = tag
+
+        if (screenOpen && ToastInput.mouseX >= 0f && ToastInput.mouseY >= 0f) {
+            top = topHit(root, ToastInput.mouseX / scale, ToastInput.mouseY / scale, null)
+        }
+
+        val hovered = top?.notification
+        for (notification in NotificationsManager.active) {
+            val isHovered = notification === hovered
+            if (notification.hovered != isHovered) notification.hovered = isHovered
         }
 
         ToastInput.hoverTarget = top
-        if (top is ToastHit.Action) ToastInput.hoveredAction = top.action
+        val hoveredAction = (top as? ToastHit.Action)?.action
+        if (ToastInput.hoveredAction !== hoveredAction) ToastInput.hoveredAction = hoveredAction
     }
 
     internal fun dispatchClick(target: ToastHit?) {
@@ -120,9 +123,12 @@ object NotificationsRenderer {
         }
     }
 
-    private fun collectHits(node: PolyNode, out: MutableList<PolyNode>) {
-        if (node.style.tag is ToastHit) out.add(node)
-        for (child in node.children) collectHits(child, out)
+    private fun topHit(node: PolyNode, x: Float, y: Float, current: ToastHit?): ToastHit? {
+        var top = current
+        val tag = node.style.tag
+        if (tag is ToastHit && contains(node, x, y)) top = tag
+        for (child in node.children) top = topHit(child, x, y, top)
+        return top
     }
 
     private fun contains(node: PolyNode, x: Float, y: Float): Boolean =
