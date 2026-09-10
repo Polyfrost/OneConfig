@@ -87,7 +87,8 @@ object NotificationsRenderer {
         var top: ToastHit? = null
 
         if (screenOpen && ToastInput.mouseX >= 0f && ToastInput.mouseY >= 0f) {
-            top = topHit(root, ToastInput.mouseX / scale, ToastInput.mouseY / scale, null)
+            val pixelRatio = Platform.screen().pixelRatio()
+            top = topHit(root, ToastInput.mouseX * pixelRatio / scale, ToastInput.mouseY * pixelRatio / scale, null)
         }
 
         val hovered = top?.notification
