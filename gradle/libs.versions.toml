@@ -12,7 +12,7 @@ hypixel-modapi = "1.0.1" # modules/utils compile baseline only, the platform sel
 hypixel-data = "0.2.0" # Dep of hypixel-modapi
 
 # Not in risk of needing to be relaunched / bumped by JiJ
-snakeyaml = "1.31"
+snakeyaml = "2.5"
 nightconfig = "3.6.6"
 java-objc-bridge = "1.2"
 
