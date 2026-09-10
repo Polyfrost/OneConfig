@@ -35,6 +35,7 @@ object SkyblockerCompat {
 
     private var initialized = false
     private var dirty = false
+    private var barsUnavailable = false
 
     @Volatile
     private var redrawing = false
@@ -43,41 +44,11 @@ object SkyblockerCompat {
     private var dragged: StatusBar? = null
 
     private val cls = FancyStatusBars::class.java
-    private var barsUnavailable = false
-
-    private fun noStatusBars(error: Throwable): Map<StatusBarType, StatusBar> {
-        if (!barsUnavailable) {
-            barsUnavailable = true
-            LOGGER.warn("Skyblocker's status bar API is unavailable, its bars will be left out of the OneConfig HUD editor", error)
-        }
-        return emptyMap()
-    }
-
-    //? if skyblocker_hud_v2 {
-    private fun statusBars(): Map<StatusBarType, StatusBar> =
-        runCatching { FancyStatusBars.INSTANCE.statusBars }.getOrElse { noStatusBars(it) }
-
-    private fun positioner(): BarPositioner = FancyStatusBars.INSTANCE.barPositioner
-
-    private fun saveBars() = FancyStatusBars.INSTANCE.saveBarConfig()
-
-    private fun placeBars() = FancyStatusBars.INSTANCE.placeBarsInPositioner()
-
-    private fun updatePositions(ignoreVisibility: Boolean) = FancyStatusBars.INSTANCE.updatePositions(ignoreVisibility)
-
-    private fun healthFancyBarEnabled(): Boolean = FancyStatusBars.INSTANCE.isHealthFancyBarEnabled()
 
     private val self: Any? by lazy {
         runCatching { cls.getField("INSTANCE").get(null) }.getOrNull()
             ?: runCatching { cls.getMethod("getInstance").invoke(null) }.getOrNull()
     }
-    //?} else {
-    /*private fun statusBars(): Map<StatusBarType, StatusBar> =
-        runCatching { FancyStatusBars.statusBars }.getOrElse { noStatusBars(it) }
-
-    private fun positioner(): BarPositioner = FancyStatusBars.barPositioner
-
-    private fun saveBars() = FancyStatusBars.saveBarConfig()
 
     private fun field(name: String): Field? = runCatching {
         cls.getDeclaredField(name).apply { isAccessible = true }
@@ -107,9 +78,18 @@ object SkyblockerCompat {
     @JvmStatic
     fun isActive(): Boolean = active
 
+    private fun noStatusBars(error: Throwable?): Map<StatusBarType, StatusBar> {
+        if (!barsUnavailable) {
+            barsUnavailable = true
+            LOGGER.warn("Skyblocker's status bar API is unavailable, its bars will be left out of the OneConfig HUD editor", error)
+        }
+        return emptyMap()
+    }
+
     @Suppress("UNCHECKED_CAST")
     private fun statusBars(): Map<StatusBarType, StatusBar> =
-        runCatching { statusBarsField?.get(self) as? Map<StatusBarType, StatusBar> }.getOrNull() ?: emptyMap()
+        runCatching { statusBarsField?.get(self) as? Map<StatusBarType, StatusBar> }
+            .getOrElse { noStatusBars(it) } ?: noStatusBars(null)
 
     private fun positioner(): BarPositioner =
         checkNotNull(barPositionerField?.get(self) as? BarPositioner) { "Skyblocker barPositioner is unavailable" }

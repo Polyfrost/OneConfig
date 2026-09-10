@@ -1,6 +1,20 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
 import com.mojang.blaze3d.pipeline.TextureTarget
+import com.mojang.blaze3d.systems.RenderSystem
+//? if >= 1.21.5 && < 1.21.8 {
+/*import com.mojang.blaze3d.pipeline.BlendFunction
+import com.mojang.blaze3d.pipeline.RenderPipeline
+import com.mojang.blaze3d.platform.DestFactor
+import com.mojang.blaze3d.platform.SourceFactor
+*///? }
+//? if < 1.21.5 {
+/*import com.mojang.blaze3d.platform.GlStateManager
+*///? }
+//? if >= 1.21.4 && < 1.21.5 {
+/*import com.mojang.blaze3d.vertex.DefaultVertexFormat
+import com.mojang.blaze3d.vertex.VertexFormat
+*///? }
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
 //? if >= 1.21.5 {
