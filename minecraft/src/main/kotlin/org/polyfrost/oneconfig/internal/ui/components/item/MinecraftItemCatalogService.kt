@@ -116,6 +116,10 @@ class MinecraftItemCatalogService : ItemCatalogService {
     }
 
     private fun renderPendingBatch() {
+        if (Minecraft.getInstance().player == null) {
+            retryRenderLater()
+            return
+        }
         val guiWidth = Platform.screen().guiWidth()
         val guiHeight = Platform.screen().guiHeight()
         val windowWidth = Platform.screen().windowWidth()
@@ -123,7 +127,6 @@ class MinecraftItemCatalogService : ItemCatalogService {
         val viewportWidth = Platform.screen().viewportWidth()
         val viewportHeight = Platform.screen().viewportHeight()
         if (
-            Minecraft.getInstance().player == null ||
             guiWidth <= 0 || guiHeight <= 0 ||
             windowWidth <= 0 || windowHeight <= 0 ||
             viewportWidth <= 0 || viewportHeight <= 0
@@ -584,6 +587,18 @@ class MinecraftItemCatalogService : ItemCatalogService {
             runCatching { callback(icon) }
                 .onFailure { LOG.warn("Failed to deliver a rendered item selector icon", it) }
         }
+    }
+
+    private fun retryRenderLater() {
+        val retry = synchronized(requestLock) {
+            if (waiting.isEmpty()) {
+                renderScheduled = false
+                false
+            } else {
+                true
+            }
+        }
+        if (retry) scheduleRender()
     }
 
     private fun markRenderFinished() {

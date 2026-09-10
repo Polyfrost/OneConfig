@@ -13,7 +13,7 @@ import java.nio.file.StandardOpenOption
 /**
  * User-defined mod card order persisted one id per line
  *
- * Mods that were never dragged are unknown here and sort alphabetically behind the ones that were
+ * Mods that were never dragged are unknown here and sort alphabetically ahead of the ones that were
  */
 object ModOrder {
     private val LOGGER = LoggerFactory.getLogger("OneConfig/ModOrder")
@@ -46,7 +46,7 @@ object ModOrder {
     fun indexOf(id: String): Int {
         ensureLoaded()
         val index = order.indexOf(id)
-        return if (index >= 0) index else Int.MAX_VALUE
+        return if (index >= 0) index else Int.MIN_VALUE
     }
 
     /**
@@ -57,7 +57,7 @@ object ModOrder {
      */
     fun reorder(visible: List<String>, all: List<String>) {
         ensureLoaded()
-        all.forEach { if (it !in order) order.add(it) }
+        order.addAll(0, all.filter { it !in order })
         val slots = order.indices.filter { order[it] in visible }
         if (slots.size != visible.size) {
             LOGGER.warn("Mod order slots ({}) did not match visible mods ({})", slots.size, visible.size)

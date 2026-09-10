@@ -280,14 +280,15 @@ public final class ConfigManager {
     private static final AtomicBoolean writeFailureNotified = new AtomicBoolean();
 
     static void notifyWriteFailed(Config config, @Nullable Throwable cause) {
+        if (cause == null) {
+            LOGGER.error("config {} reported an unsuccessful save with no underlying error", config.id);
+            return;
+        }
         if (!writeFailureNotified.compareAndSet(false, true)) return;
         try {
             String name = config.title != null ? config.title : config.id;
-            String reason = null;
-            if (cause != null) {
-                Throwable root = cause.getCause() != null ? cause.getCause() : cause;
-                reason = root.getMessage();
-            }
+            Throwable root = cause.getCause() != null ? cause.getCause() : cause;
+            String reason = root.getMessage();
             String tail = reason != null
                     ? " (" + reason + ")."
                     : ". This is usually a full disk or a config folder OneConfig cannot write to.";

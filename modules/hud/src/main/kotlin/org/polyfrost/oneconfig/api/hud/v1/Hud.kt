@@ -1179,7 +1179,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     /**
      * Whether this exact HUD can be deleted right now
      */
-    fun canDelete(): Boolean = if (isReal) deletable() else this in HudManager.activeInstances
+    fun canDelete(): Boolean = deletable() && (isReal || this in HudManager.activeInstances)
 
     internal open val profileLocalTree: Boolean get() = true
 

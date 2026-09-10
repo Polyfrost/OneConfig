@@ -751,16 +751,20 @@ object SkiaCtx {
         /*RenderSystem.maxSupportedTextureSize()
         *///? }
 
-    private var maxTextureSizeCache = -1
+    private var maxTextureSizeCache = 0
 
     private fun cachedMaxTextureSize(): Int {
-        if (maxTextureSizeCache <= 0) maxTextureSizeCache = runCatching { maxTextureSize() }.getOrDefault(0)
+        if (maxTextureSizeCache == 0) {
+            maxTextureSizeCache = runCatching { maxTextureSize() }.getOrNull()
+                ?.takeIf { it > 0 }
+                ?: Int.MAX_VALUE
+        }
         return maxTextureSizeCache
     }
 
     private fun viewportFitsTexture(w: Int, h: Int): Boolean {
         val max = cachedMaxTextureSize()
-        if (max <= 0 || (w <= max && h <= max)) {
+        if (w <= max && h <= max) {
             oversizeReported = false
             return true
         }
@@ -795,7 +799,7 @@ object SkiaCtx {
                 /*TextureTarget(w, h, true, Minecraft.ON_OSX)
                 *///? }
             } catch (e: Throwable) {
-                onAllocFailure("hud", w, h, e)
+                onAllocFailure(HUD_TARGET, w, h, e)
                 return null
             }
             hudTarget = rt
@@ -819,10 +823,10 @@ object SkiaCtx {
             hudRealIsGeneral = false
             val svc = vulkanService ?: return null
             val (brt, colorFmt) = try {
-                svc.makeOffscreenBRT(rt!!, w, h)
+                svc.makeOffscreenBRT(rt, w, h)
             } catch (e: Throwable) {
                 destroyHudTarget()
-                onAllocFailure("hud", w, h, e)
+                onAllocFailure(HUD_TARGET, w, h, e)
                 return null
             }
             hudBrt = brt
@@ -853,6 +857,9 @@ object SkiaCtx {
 
     private const val ALLOC_RETRY_COOLDOWN_MS = 2000L
 
+    private const val HUD_TARGET = "hud"
+    private const val COMPOSE_TARGET = "compose"
+
     // bottom left lets OpenGL do a plain copy which is faster
     // compensated in drawComposeBlit because GuiGraphics always samples top left
     private val composeOrigin get() = if (isVulkanMode) SurfaceOrigin.TOP_LEFT else SurfaceOrigin.BOTTOM_LEFT
@@ -879,7 +886,7 @@ object SkiaCtx {
                 /*TextureTarget(w, h, true, Minecraft.ON_OSX)
                 *///? }
             } catch (e: Throwable) {
-                onAllocFailure("compose", w, h, e)
+                onAllocFailure(COMPOSE_TARGET, w, h, e)
                 return null
             }
             composeTarget = rt
@@ -903,10 +910,10 @@ object SkiaCtx {
             composeRealIsGeneral = false
             val svc = vulkanService ?: return null
             val brt = try {
-                svc.makeOffscreenBRT(rt!!, w, h)
+                svc.makeOffscreenBRT(rt, w, h)
             } catch (e: Throwable) {
                 destroyComposeTarget()
-                onAllocFailure("compose", w, h, e)
+                onAllocFailure(COMPOSE_TARGET, w, h, e)
                 return null
             }
             composeBrt = brt.first
@@ -927,8 +934,7 @@ object SkiaCtx {
 
     private fun onAllocFailure(what: String, w: Int, h: Int, error: Throwable) {
         allocFailedAt = System.currentTimeMillis()
-        destroyComposeTarget()
-        destroyHudTarget()
+        if (what == COMPOSE_TARGET) destroyComposeTarget() else destroyHudTarget()
         org.polyfrost.oneconfig.internal.ui.SkiaOffscreenTarget.destroyAll()
         if (isVulkanMode) invalidateVkSurfaces()
         runCatching { directContext.flush() }
