@@ -63,6 +63,7 @@ object ComposeSupport {
 
     private fun awtInitFailure(): String? = try {
         Class.forName("java.awt.event.KeyEvent", true, ComposeSupport::class.java.classLoader)
+        Class.forName("androidx.compose.ui.input.pointer.PointerIcon", true, ComposeSupport::class.java.classLoader)
         null
     } catch (t: Throwable) {
         LOG.error("AWT failed to initialize on this runtime; the OneConfig UI has been disabled.", t)

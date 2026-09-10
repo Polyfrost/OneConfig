@@ -488,14 +488,20 @@ object SkiaCtx {
             hudRealIsGeneral = true
         }
         guiGraphics.pose().pushMatrix()
-        guiGraphics.pose().scale(1f / guiScale, 1f / guiScale)
-        guiGraphics.blit(RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
-        guiGraphics.pose().popMatrix()
+        try {
+            guiGraphics.pose().scale(1f / guiScale, 1f / guiScale)
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        } finally {
+            guiGraphics.pose().popMatrix()
+        }
         //? } else {
         /*guiGraphics.pose().pushPose()
-        guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
-        guiGraphics.blit(::premulGuiTextured, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
-        guiGraphics.pose().popPose()
+        try {
+            guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
+            guiGraphics.blit(::premulGuiTextured, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        } finally {
+            guiGraphics.pose().popPose()
+        }
         *///? }
         //? } else {
         /*var wrapper = hudTextureWrapper
@@ -506,6 +512,7 @@ object SkiaCtx {
         }
         wrapper.setGlTexId(rt.colorTextureId)
         guiGraphics.pose().pushPose()
+        try {
         guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
         //? >= 1.21.4 {
         guiGraphics.blit(::premulGuiTextured, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
@@ -521,7 +528,9 @@ object SkiaCtx {
         RenderSystem.disableBlend()
         RenderSystem.defaultBlendFunc()
         *///?}
-        guiGraphics.pose().popPose()
+        } finally {
+            guiGraphics.pose().popPose()
+        }
         *///? }
     }
 
@@ -548,14 +557,20 @@ object SkiaCtx {
             composeRealIsGeneral = true
         }
         guiGraphics.pose().pushMatrix()
-        guiGraphics.pose().scale(1f / guiScale, 1f / guiScale)
-        guiGraphics.blit(RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA, COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
-        guiGraphics.pose().popMatrix()
+        try {
+            guiGraphics.pose().scale(1f / guiScale, 1f / guiScale)
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA, COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        } finally {
+            guiGraphics.pose().popMatrix()
+        }
         //? } else {
         /*guiGraphics.pose().pushPose()
-        guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
-        guiGraphics.blit(::premulGuiTextured, COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
-        guiGraphics.pose().popPose()
+        try {
+            guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
+            guiGraphics.blit(::premulGuiTextured, COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
+        } finally {
+            guiGraphics.pose().popPose()
+        }
         *///? }
         //? } else {
         /*var wrapper = composeTextureWrapper
@@ -566,6 +581,7 @@ object SkiaCtx {
         }
         wrapper.setGlTexId(rt.colorTextureId)
         guiGraphics.pose().pushPose()
+        try {
         guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
         //? >= 1.21.4 {
         guiGraphics.blit(::premulGuiTextured, COMPOSE_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
@@ -581,7 +597,9 @@ object SkiaCtx {
         RenderSystem.disableBlend()
         RenderSystem.defaultBlendFunc()
         *///?}
-        guiGraphics.pose().popPose()
+        } finally {
+            guiGraphics.pose().popPose()
+        }
         *///? }
     }
 
@@ -730,16 +748,22 @@ object SkiaCtx {
         var rt = hudTarget
         val needNewTarget = rt == null || rt.width != w || rt.height != h
         if (needNewTarget) {
+            if (System.currentTimeMillis() - composeAllocFailedAt < ALLOC_RETRY_COOLDOWN_MS) return null
             destroyHudTarget()
-            //? if >= 26.2 {
-            rt = TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
-            //? } else if >= 1.21.5 {
-            /*rt = TextureTarget(null, w, h, true)
-            *///? } else if >= 1.21.4 {
-            // rt = TextureTarget(w, h, true)
-            //? } else {
-            /*rt = TextureTarget(w, h, true, Minecraft.ON_OSX)
-            *///? }
+            rt = try {
+                //? if >= 26.2 {
+                TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
+                //? } else if >= 1.21.5 {
+                /*TextureTarget(null, w, h, true)
+                *///? } else if >= 1.21.4 {
+                // TextureTarget(w, h, true)
+                //? } else {
+                /*TextureTarget(w, h, true, Minecraft.ON_OSX)
+                *///? }
+            } catch (e: Throwable) {
+                onComposeAllocFailure(w, h, e)
+                return null
+            }
             hudTarget = rt
 
             //? >= 1.21.5 {

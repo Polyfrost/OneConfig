@@ -99,7 +99,11 @@ private class PlatformImpl : PlatformContext {
     }
 
     fun resetPointerIcon() {
-        applyPointerIcon(PointerIcon.Default)
+        //? if >= 26.3 {
+        /*SDL_SetCursor(SDL_GetDefaultCursor())
+        *///?} else {
+        glfwSetCursor(handle, 0L)
+        //?}
     }
 
     private fun applyPointerIcon(pointerIcon: PointerIcon) {

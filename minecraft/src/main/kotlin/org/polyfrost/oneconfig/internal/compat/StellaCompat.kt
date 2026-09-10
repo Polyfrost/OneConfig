@@ -269,21 +269,23 @@ object StellaCompat {
             if (!element.isEnabled()) return@forEach
 
             ctx.pose().pushMatrix()
-            ctx.pose().translate(element.x, element.y)
-            ctx.pose().scale(element.scale, element.scale)
+            try {
+                ctx.pose().translate(element.x, element.y)
+                ctx.pose().scale(element.scale, element.scale)
 
-            val custom = customRenderers[element.id]
-            if (custom != null) custom(ctx)
-            else {
-                if (element.width == 0 && element.height == 0) {
-                    element.width = element.text.width() + 4
-                    element.height = element.text.height() + 6
+                val custom = customRenderers[element.id]
+                if (custom != null) custom(ctx)
+                else {
+                    if (element.width == 0 && element.height == 0) {
+                        element.width = element.text.width() + 4
+                        element.height = element.text.height() + 6
+                    }
+
+                    Render2D.drawString(ctx, element.text, 2, 3, shadow = false)
                 }
-
-                Render2D.drawString(ctx, element.text, 2, 3, shadow = false)
+            } finally {
+                ctx.pose().popMatrix()
             }
-
-            ctx.pose().popMatrix()
         }
     }
 

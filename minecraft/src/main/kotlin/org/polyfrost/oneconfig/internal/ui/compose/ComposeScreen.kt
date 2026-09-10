@@ -691,7 +691,7 @@ abstract class ComposeScreen(
 
     //? >= 1.21.10 {
     override fun charTyped(event: CharacterEvent): Boolean {
-        val char = Char(event.codepoint)
+        val char = if (Character.isBmpCodePoint(event.codepoint)) Char(event.codepoint) else KeyEvent.CHAR_UNDEFINED
         val codepoint = event.codepoint
         //? >= 26.1 {
         val modifiers = 0 //dropped from the event in 26.1 because glfw no longer passes them

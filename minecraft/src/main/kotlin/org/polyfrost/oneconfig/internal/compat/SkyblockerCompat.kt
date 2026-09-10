@@ -40,8 +40,19 @@ object SkyblockerCompat {
     @Volatile
     private var dragged: StatusBar? = null
 
+    private var barsUnavailable = false
+
+    private fun noStatusBars(error: Throwable): Map<StatusBarType, StatusBar> {
+        if (!barsUnavailable) {
+            barsUnavailable = true
+            LOGGER.warn("Skyblocker's status bar API is unavailable, its bars will be left out of the OneConfig HUD editor", error)
+        }
+        return emptyMap()
+    }
+
     //? if skyblocker_hud_v2 {
-    private fun statusBars(): Map<StatusBarType, StatusBar> = FancyStatusBars.INSTANCE.statusBars
+    private fun statusBars(): Map<StatusBarType, StatusBar> =
+        runCatching { FancyStatusBars.INSTANCE.statusBars }.getOrElse { noStatusBars(it) }
 
     private fun positioner(): BarPositioner = FancyStatusBars.INSTANCE.barPositioner
 
@@ -57,7 +68,8 @@ object SkyblockerCompat {
         FancyStatusBars.INSTANCE.extractRenderState(ctx, mc)
     }
     //?} else {
-    /*private fun statusBars(): Map<StatusBarType, StatusBar> = FancyStatusBars.statusBars
+    /*private fun statusBars(): Map<StatusBarType, StatusBar> =
+        runCatching { FancyStatusBars.statusBars }.getOrElse { noStatusBars(it) }
 
     private fun positioner(): BarPositioner = FancyStatusBars.barPositioner
 

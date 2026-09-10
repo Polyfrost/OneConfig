@@ -123,6 +123,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
         val viewportWidth = Platform.screen().viewportWidth()
         val viewportHeight = Platform.screen().viewportHeight()
         if (
+            Minecraft.getInstance().player == null ||
             guiWidth <= 0 || guiHeight <= 0 ||
             windowWidth <= 0 || windowHeight <= 0 ||
             viewportWidth <= 0 || viewportHeight <= 0

@@ -23,6 +23,11 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
 
     @Override
     public void displayChatMessage(Component text) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (!minecraft.isSameThread()) {
+            minecraft.execute(() -> displayChatMessage(text));
+            return;
+        }
         //? if >=1.21.4 {
         MinecraftClientAudiences.of().audience().sendMessage(text);
         //?} else {
