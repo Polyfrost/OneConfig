@@ -75,9 +75,9 @@ public class FileBackend extends Backend {
     }
 
     protected static void write(Path p, String s) {
+        Path tmp = p.resolveSibling(p.getFileName() + ".tmp");
         try {
             Files.createDirectories(p.getParent());
-            Path tmp = p.resolveSibling(p.getFileName() + ".tmp");
             Files.write(tmp, s.getBytes(CHARSET));
             try {
                 Files.move(tmp, p, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
@@ -85,6 +85,10 @@ public class FileBackend extends Backend {
                 Files.move(tmp, p, StandardCopyOption.REPLACE_EXISTING);
             }
         } catch (Exception e) {
+            try {
+                Files.deleteIfExists(tmp);
+            } catch (IOException ignored) {
+            }
             throw new SerializationException("Failed to write file", e);
         }
     }

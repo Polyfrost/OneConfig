@@ -21,12 +21,22 @@ class PolyComposeClock {
 
     internal val recomposer: CompositionContext get() = recomposerImpl
 
+    private var inFrame = false
+
     fun frame(nanos: Long = System.nanoTime(), notify: Boolean = true): Boolean {
-        if (notify) Snapshot.sendApplyNotifications()
-        val appliedBefore = recomposerImpl.changeCount
-        clock.sendFrame(nanos)
-        appliedChange = recomposerImpl.changeCount != appliedBefore
-        return appliedChange || recomposerImpl.hasPendingWork
+        if (inFrame) return recomposerImpl.hasPendingWork
+        inFrame = true
+        try {
+            return Snapshot.global {
+                if (notify) Snapshot.sendApplyNotifications()
+                val appliedBefore = recomposerImpl.changeCount
+                clock.sendFrame(nanos)
+                appliedChange = recomposerImpl.changeCount != appliedBefore
+                appliedChange || recomposerImpl.hasPendingWork
+            }
+        } finally {
+            inFrame = false
+        }
     }
 
     var appliedChange = false
