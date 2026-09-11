@@ -273,7 +273,7 @@ dependencies {
             stonecutter.eval(stonecutter.current.version, ">= 1.21.4") -> "0.119.4+1.21.4"
             else -> "0.116.17+1.21.1"
         }
-        handleApiDep("net.fabricmc.fabric-api:fabric-api:$fullFabricApiVersion")
+        "modApi"("net.fabricmc.fabric-api:fabric-api:$fullFabricApiVersion")
     }
 
     val libsCatalog = rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs")
