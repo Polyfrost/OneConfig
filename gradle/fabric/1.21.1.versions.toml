@@ -1,6 +1,4 @@
 [versions]
-command-api-v2 = "2.2.28+6ced4dd919"
-
 modmenu = "11.0.3"
 yacl = "3.7.1+1.21.1-fabric"
 moulconfig = "3.11.0"
@@ -8,8 +6,6 @@ moulconfig = "3.11.0"
 vulkanmod = "pY3DXoVe"
 
 [libraries]
-command-api-v2 = { module = "net.fabricmc.fabric-api:fabric-command-api-v2", version.ref = "command-api-v2" }
-
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
 moulconfig = { module = "org.notenoughupdates.moulconfig:common", version.ref = "moulconfig" }
