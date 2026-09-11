@@ -260,7 +260,7 @@ dependencies {
     handleApiDep(versionedCatalog["commonmark"])
 
     if (loader == "fabric") {
-        handleApiDep(versionedCatalog["fabric-language-kotlin"], transitive = true)
+        handleApiDep(versionedCatalog["fabric-language-kotlin"])
         handleApiDep(versionedCatalog["fabric-loader"], isMod = true, transitive = true)
         "modApi"(versionedCatalog["command-api-v2"]) { isTransitive = false }
 
@@ -274,8 +274,7 @@ dependencies {
             stonecutter.eval(stonecutter.current.version, ">= 1.21.4") -> "0.119.4+1.21.4"
             else -> "0.116.17+1.21.1"
         }
-        "modCompileOnly"("net.fabricmc.fabric-api:fabric-api:$fullFabricApiVersion")
-        "modRuntimeOnly"("net.fabricmc.fabric-api:fabric-api:$fullFabricApiVersion")
+        handleApiDep("net.fabricmc.fabric-api:fabric-api:$fullFabricApiVersion")
     }
 
     val libsCatalog = rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs")
