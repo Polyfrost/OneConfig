@@ -1,0 +1,28 @@
+classTweaker v2 official
+
+#? if < 1.21.8 {
+#accessible class net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture
+#accessible field net/minecraft/client/renderer/texture/SpriteContents animatedTexture Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;
+#?}
+
+#? if >= 1.21.4 && < 1.21.8 {
+#accessible field net/minecraft/client/renderer/item/ItemStackRenderState activeLayerCount I
+#accessible field net/minecraft/client/renderer/item/ItemStackRenderState layers [Lnet/minecraft/client/renderer/item/ItemStackRenderState$LayerRenderState;
+#accessible field net/minecraft/client/renderer/item/ItemStackRenderState$LayerRenderState renderType Lnet/minecraft/client/renderer/RenderType;
+#accessible field net/minecraft/client/renderer/item/ItemStackRenderState$LayerRenderState foilType Lnet/minecraft/client/renderer/item/ItemStackRenderState$FoilType;
+#accessible field net/minecraft/client/renderer/item/ItemStackRenderState$LayerRenderState tintLayers [I
+#accessible field net/minecraft/client/renderer/item/ItemStackRenderState$LayerRenderState specialRenderer Lnet/minecraft/client/renderer/special/SpecialModelRenderer;
+#?}
+
+#? if 1.21.5 {
+#accessible field net/minecraft/client/renderer/item/ItemStackRenderState$LayerRenderState usesBlockLight Z
+#accessible field net/minecraft/client/renderer/item/ItemStackRenderState$LayerRenderState transform Lnet/minecraft/client/renderer/block/model/ItemTransform;
+#?}
+
+#? if 1.21.4 {
+#accessible field net/minecraft/client/renderer/item/ItemStackRenderState$LayerRenderState model Lnet/minecraft/client/resources/model/BakedModel;
+#?}
+
+#? if < 1.21.4 {
+#accessible field net/minecraft/client/renderer/entity/ItemRenderer itemColors Lnet/minecraft/client/color/item/ItemColors;
+#?}

@@ -20,6 +20,7 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
 import org.polyfrost.oneconfig.internal.ui.components.warmIconCache
+import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
 import org.polyfrost.oneconfig.internal.ui.compose.BlurRenderer
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
@@ -445,6 +446,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
             HudManager.guiScreenWidth = sw
             HudManager.guiScreenHeight = sh
             HudManager.prepare(sw, sh)
+            ItemCatalog.renderHudIcons()
         }
         HudEditorViewport.update(Platform.screen().windowWidth(), Platform.screen().windowHeight())
         if (OneConfigConfig.enableBackgroundBlur) {

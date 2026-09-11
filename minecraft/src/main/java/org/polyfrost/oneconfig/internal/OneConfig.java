@@ -60,6 +60,7 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories;
+import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog;
 import org.polyfrost.oneconfig.internal.ui.compose.McFontService;
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
@@ -190,7 +191,7 @@ public class OneConfig
         // records the F3 overlay offscreen so Skia can put it above the Compose UI instead of below the
         // blur and it must run every frame regardless of the HUD dirty gate
         org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen.INSTANCE.render();
-        if (HudManager.INSTANCE.beginFrame(sw, sh)) {
+        if (HudManager.INSTANCE.beginFrame(sw, sh, ItemCatalog.INSTANCE::renderHudIcons)) {
             SkiaCtx.INSTANCE.queueHudDraw(() -> {
                 var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
                 HudManager.INSTANCE.render(ctx, sw, sh);
@@ -258,7 +259,10 @@ public class OneConfig
                     org.polyfrost.oneconfig.internal.compat.WWaypointsCompat.register();
                     org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry.INSTANCE.loadFromConfig();
                 });
-        EventManager.register(WorldEvent.Load.class, e -> showFirstLaunchNotification());
+        EventManager.register(WorldEvent.Load.class, e -> {
+            showFirstLaunchNotification();
+            ItemCatalog.INSTANCE.markIconsAvailable();
+        });
         // after loading finishes so translation keys are available
         EventManager.register(ResourceFinishedLoading.class, e -> SearchCorpus.INSTANCE.init());
 //        //#if MC < 1.13

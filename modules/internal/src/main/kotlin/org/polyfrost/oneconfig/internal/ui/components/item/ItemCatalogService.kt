@@ -2,37 +2,48 @@ package org.polyfrost.oneconfig.internal.ui.components.item
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.Rect
+import org.polyfrost.oneconfig.api.hud.v1.LocalHud
 import java.util.Locale
 import java.util.ServiceLoader
 
 /** A stable item registry ID and the localized name shown to the user */
 data class ItemDescriptor(val id: String, val displayName: String)
 
+/** An item icon registered with the renderer until [close] is called. */
+interface ItemIconHandle : AutoCloseable {
+    /** Sets the pixel size of this icon's square atlas entry */
+    fun setRenderSizePx(size: Int)
+
+    /** Returns whether the icon was rendered. */
+    fun draw(canvas: Canvas, bounds: Rect, alpha: Float = 1f): Boolean
+
+    /** Unregisters this icon from the renderer. */
+    override fun close()
+}
+
 interface ItemCatalogService {
     fun items(): List<ItemDescriptor>
 
-    fun requestIcon(id: String, onLoaded: (Boolean) -> Unit)
+    fun requestIcons() = Unit
 
-    fun drawIcon(
-        id: String,
-        canvas: Canvas,
-        bounds: Rect,
-        alpha: Float = 1f,
-    ): Boolean
+    /** HUD consumers request a HUD redraw when their icon's cached pixels change. */
+    fun openIcon(id: String, forHud: Boolean = false): ItemIconHandle?
+
+    /** Renders icons needed by screen consumers and returns whether their pixels changed this frame. */
+    fun renderIcons(): Boolean = false
+
+    /** Renders icons needed by HUD consumers before the HUD dirty gate. */
+    fun renderHudIcons() = Unit
 }
 
 object ItemCatalog {
-    @Volatile
-    private var overrideService: ItemCatalogService? = null
-
-    private val loadedService: ItemCatalogService? by lazy {
+    private val service: ItemCatalogService? by lazy {
         runCatching {
             ServiceLoader.load(ItemCatalogService::class.java, ItemCatalogService::class.java.classLoader)
                 .iterator()
@@ -40,56 +51,52 @@ object ItemCatalog {
         }.getOrNull()
     }
 
-    private val service: ItemCatalogService? get() = overrideService ?: loadedService
-    private val iconRevision = mutableStateOf(0L)
+    private val _iconsAvailable = mutableStateOf(false)
 
-    internal val currentIconRevision: Long get() = iconRevision.value
+    val iconsAvailable: Boolean get() = _iconsAvailable.value
+
+    fun platformService(): ItemCatalogService? = service
 
     fun items(): List<ItemDescriptor> = service?.items().orEmpty()
 
-    fun requestIcon(id: String, onLoaded: (Boolean) -> Unit) {
-        service?.requestIcon(id, onLoaded) ?: onLoaded(false)
+    fun requestIcons() {
+        if (!iconsAvailable) service?.requestIcons()
     }
 
-    fun drawIcon(
-        id: String,
-        canvas: Canvas,
-        bounds: Rect,
-        alpha: Float = 1f,
-    ): Boolean = service?.drawIcon(id, canvas, bounds, alpha) == true
+    fun openIcon(id: String, forHud: Boolean = false): ItemIconHandle? =
+        if (iconsAvailable) service?.openIcon(id, forHud) else null
 
-    fun invalidateIcons() {
-        Snapshot.withMutableSnapshot {
-            iconRevision.value++
-        }
+    fun renderIcons(): Boolean = iconsAvailable && service?.renderIcons() == true
+
+    fun renderHudIcons() {
+        if (iconsAvailable) service?.renderHudIcons()
     }
 
-    /** Installs an in-memory catalog for desktop previews and tests */
-    fun installOverride(service: ItemCatalogService?) {
-        overrideService = service
-        invalidateIcons()
+    fun markIconsAvailable() {
+        Snapshot.withMutableSnapshot { _iconsAvailable.value = true }
     }
 }
 
 @Composable
-fun rememberItemIconReady(id: String): Boolean {
-    val revision = ItemCatalog.currentIconRevision
-    var ready by remember(id, revision) { mutableStateOf(false) }
-    DisposableEffect(id, revision) {
-        val lock = Any()
-        var active = true
-        ItemCatalog.requestIcon(id) { loaded ->
-            synchronized(lock) {
-                if (active) ready = loaded
-            }
-        }
-        onDispose {
-            synchronized(lock) {
-                active = false
-            }
-        }
+fun rememberItemIconHandle(id: String): ItemIconHandle? =
+    rememberItemIconHandle(id) { forHud -> ItemCatalog.openIcon(id, forHud) }
+
+/** Holds an icon handle open while icons are available and the enclosing HUD, if any, is visible. */
+@Composable
+fun <T : ItemIconHandle> rememberItemIconHandle(key: Any?, open: (forHud: Boolean) -> T?): T? {
+    val hud = LocalHud.current
+    val visible = hud == null || hud.isVisible.value
+    val available = ItemCatalog.iconsAvailable
+    SideEffect {
+        if (visible && !available) ItemCatalog.requestIcons()
     }
-    return ready
+    val icon = remember(key, visible, available, hud) {
+        if (visible && available) open(hud != null) else null
+    }
+    DisposableEffect(icon) {
+        onDispose { icon?.close() }
+    }
+    return icon
 }
 
 fun normalizeItemIds(ids: Iterable<String>): List<String> = ids

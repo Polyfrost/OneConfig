@@ -1,3 +1,4 @@
+import dev.kikugie.stonecutter.build.StonecutterBuildExtension
 import net.fabricmc.loom.api.LoomGradleExtensionAPI
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
@@ -40,8 +41,13 @@ tasks.withType<Test>().configureEach {
     }
 }
 
+val sc = extensions.getByName<StonecutterBuildExtension>("stonecutter")
 val loom = extensions.getByName<LoomGradleExtensionAPI>("loom")
 loom.apply {
+    accessWidenerPath = sc.process(
+        rootProject.file("minecraft/src/main/resources/oneconfigv1.classtweaker"),
+        "build/processed.classtweaker",
+    )
     runConfigs["client"].apply {
         ideConfigGenerated(true)
         runDir = "../../run"

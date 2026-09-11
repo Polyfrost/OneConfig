@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -46,6 +47,7 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.skiaCanvas
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -55,6 +57,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.jetbrains.skia.Rect
+import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.IconButton
@@ -65,11 +69,15 @@ import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import kotlin.math.ceil
 
 val ItemTileShape = RoundedCornerShape(8.dp)
 val ItemIconShape = RoundedCornerShape(5.dp)
 
 val ItemTileSize = 44.dp
+
+fun polyItemRenderSizePx(size: Float, hud: Hud?): Int =
+    ceil(size * Platform.compatibility().options().guiScale * (hud?.effectiveScale ?: 1f)).toInt()
 
 /** The catalog deduplicated and sorted by display name so grid positions never jump */
 @Composable
@@ -90,8 +98,6 @@ fun rememberItemCatalogById(catalog: List<ItemDescriptor>): Map<String, ItemDesc
 /**
  * The icon for [id] showing [placeholder] until the catalog resolves it or if the item is unknown
  *
- * Resolving may need the Minecraft render thread
- *
  * [framed] adds the theme chip background
  */
 @Composable
@@ -100,22 +106,27 @@ fun ItemIcon(
     modifier: Modifier = Modifier,
     framed: Boolean = true,
     alpha: Float = 1f,
-    placeholder: String = "layers",
+    placeholder: String = "eye-off",
 ) {
+    val itemIcon = rememberItemIconHandle(id)
     val theme = LocalTheme.current
-    val iconReady = rememberItemIconReady(id)
     val background = if (framed) Modifier.background(theme.chipBackground) else Modifier
     Box(
         modifier = modifier
+            .aspectRatio(1f)
             .clip(ItemIconShape)
             .then(background),
         contentAlignment = Alignment.Center,
     ) {
-        if (iconReady) {
-            Canvas(modifier = Modifier.fillMaxSize().padding(if (framed) 2.dp else 1.dp)) {
+        if (itemIcon != null) {
+            Canvas(modifier = Modifier.fillMaxSize().padding(if (framed) 2.dp else 1.dp).onPlaced { coords ->
+                val surfaceScale = Platform.screen().surfaceRatio().coerceAtLeast(0.0001f)
+                itemIcon.setRenderSizePx(
+                    ceil(maxOf(coords.size.width, coords.size.height) * surfaceScale).toInt()
+                )
+            }) {
                 drawIntoCanvas { canvas ->
-                    ItemCatalog.drawIcon(
-                        id,
+                    itemIcon.draw(
                         canvas.skiaCanvas,
                         Rect.makeWH(size.width, size.height),
                         alpha,
@@ -196,7 +207,7 @@ fun ItemTile(
                 .border(1.dp, border, ItemTileShape)
                 .hoverable(interaction)
                 .pointerHoverIcon(if (interactive) PointerIcon.Hand else PointerIcon.Default)
-                .then(if (interactive) Modifier.onClick(interaction, onClick!!) else Modifier)
+                .then(if (interactive) Modifier.onClick(interaction, onClick) else Modifier)
                 .padding(5.dp),
             contentAlignment = Alignment.Center,
         ) {
@@ -371,7 +382,6 @@ fun ItemPicker(
     titleKey: String? = ItemStrings.Title,
     searchPlaceholderKey: String = ItemStrings.Search,
     emptyKey: String = ItemStrings.Empty,
-    catalogUnavailableKey: String = ItemStrings.CatalogUnavailable,
     header: @Composable (ColumnScope.() -> Unit)? = null,
 ) {
     val theme = LocalTheme.current
@@ -420,17 +430,20 @@ fun ItemPicker(
             placeholderKey = searchPlaceholderKey,
         )
 
-        when {
-            items.isEmpty() -> ItemMessage(catalogUnavailableKey)
-            filtered.isEmpty() -> ItemMessage(emptyKey)
-            else -> ItemGrid(
-                items = filtered,
-                selected = { it.id in selected },
-                enabled = { canSelect(selected, it.id, maxEntries) },
-                cellSize = cellSize,
-                maxHeight = gridMaxHeight,
-                onClick = { onToggle(it.id) },
-            )
+        Box(Modifier.fillMaxWidth().height(gridMaxHeight)) {
+            when {
+                items.isEmpty() -> ItemMessage(emptyKey, height = gridMaxHeight)
+                filtered.isEmpty() -> ItemMessage(emptyKey, height = gridMaxHeight)
+                else -> ItemGrid(
+                    items = filtered,
+                    selected = { it.id in selected },
+                    enabled = { canSelect(selected, it.id, maxEntries) },
+                    modifier = Modifier.fillMaxSize(),
+                    cellSize = cellSize,
+                    maxHeight = gridMaxHeight,
+                    onClick = { onToggle(it.id) },
+                )
+            }
         }
     }
 }
@@ -453,7 +466,6 @@ object ItemStrings {
     const val Search = "oneconfig.itemlist.search"
     const val Empty = "oneconfig.itemlist.empty"
     const val Unavailable = "oneconfig.itemlist.unavailable"
-    const val CatalogUnavailable = "oneconfig.itemlist.catalog_unavailable"
 }
 
 /** Whether [id] can be picked where already-selected items stay clickable so they can be deselected */
