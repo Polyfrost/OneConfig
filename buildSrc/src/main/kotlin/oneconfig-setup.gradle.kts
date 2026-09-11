@@ -262,7 +262,6 @@ dependencies {
     if (loader == "fabric") {
         handleApiDep(versionedCatalog["fabric-language-kotlin"])
         handleApiDep(versionedCatalog["fabric-loader"], isMod = true, transitive = true)
-        "modApi"(versionedCatalog["command-api-v2"]) { isTransitive = false }
 
         val fullFabricApiVersion = when {
             stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "0.159.0+26.2"

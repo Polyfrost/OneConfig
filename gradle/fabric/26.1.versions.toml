@@ -1,6 +1,4 @@
 [versions]
-command-api-v2 = "3.0.5+e2bdee784c"
-
 modmenu = "18.0.0-beta.1"
 yacl = "3.9.0+26.1-fabric"
 moulconfig = "3.11.0"
@@ -15,8 +13,6 @@ meowdding-lib = "4.2.5"
 skyblock-api = "4.2.8"
 
 [libraries]
-command-api-v2 = { module = "net.fabricmc.fabric-api:fabric-command-api-v2", version.ref = "command-api-v2" }
-
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
 odin = { module = "maven.modrinth:odin", version.ref = "odin" }
