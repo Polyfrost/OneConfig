@@ -89,7 +89,8 @@ private object IconResource {
         }.bytes
 
     fun warm(names: Collection<String>) {
-        val pending = names.filterTo(HashSet()) { !cache.containsKey(it) && warming.add(it) }
+        val pending = names.asSequence().map { it.toIconResourcePath() }
+            .filter { !cache.containsKey(it) && warming.add(it) }.toSet()
         if (pending.isEmpty()) return
         Multithreading.submit {
             for (name in pending) {
@@ -207,7 +208,7 @@ fun Icon(
                 return
             }
         } else {
-            val icon = rememberAsyncRasterIcon(iconName, lastModified) { file.readBytes() }
+            val icon = rememberAsyncRasterIcon(iconName, lastModified) { IconResource.fileBytes(file, lastModified) }
             val imageModifier = modifier.then(iconSizeModifier(null)).clip(DefaultRasterIconShape)
             if (icon != null) {
                 Image(
