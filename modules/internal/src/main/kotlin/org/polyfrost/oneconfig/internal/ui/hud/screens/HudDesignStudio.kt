@@ -3068,6 +3068,7 @@ private fun ComposeHudPreviewCard(
             HudPreviewCanvas(
                 preview,
                 previewScale,
+                hud.alwaysRedraw,
                 modifier = Modifier.fillMaxSize().padding(cardPadding),
             )
             HudCardAddOverlay(isHovered)

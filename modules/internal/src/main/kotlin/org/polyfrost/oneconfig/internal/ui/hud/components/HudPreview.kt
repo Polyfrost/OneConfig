@@ -6,11 +6,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
@@ -52,6 +53,10 @@ internal class HudPreviewState(val runtime: PolyComposeRuntime) {
         internal set
 
     val ready: Boolean get() = naturalWidth > 0f && naturalHeight > 0f
+
+    fun dispose() {
+        runtime.dispose()
+    }
 }
 
 private object HudPreviewCache {
@@ -70,7 +75,7 @@ private object HudPreviewCache {
         if (cache.isEmpty()) return
         for (state in cache.values) {
             try {
-                state.runtime.dispose()
+                state.dispose()
             } catch (failure: Throwable) {
                 if (failure.isFatalPreviewFailure()) throw failure
                 LOGGER.warn("Failed to dispose HUD preview", failure)
@@ -115,17 +120,29 @@ internal fun hudPreviewScale(naturalW: Float, naturalH: Float, availableW: Float
 }
 
 @Composable
-internal fun HudPreviewCanvas(state: HudPreviewState, scale: Float, modifier: Modifier = Modifier) {
+internal fun HudPreviewCanvas(
+    state: HudPreviewState,
+    scale: Float,
+    alwaysRedraw: Boolean,
+    modifier: Modifier = Modifier
+) {
+    var animationRevision by remember { mutableIntStateOf(0) }
+    LaunchedEffect(alwaysRedraw) {
+        if (!alwaysRedraw) return@LaunchedEffect
+        while (true) {
+            withFrameNanos { animationRevision++ }
+        }
+    }
+
     Canvas(modifier) {
         HudManager.previewRevision.intValue
+        if (alwaysRedraw) animationRevision
         drawIntoCanvas { canvas ->
             val skia = canvas.skiaCanvas
             skia.save()
             skia.clipRect(org.jetbrains.skia.Rect.makeWH(size.width, size.height))
             skia.scale(scale, scale)
-            Snapshot.withoutReadObservation {
-                state.runtime.root.render(RenderContext(skia))
-            }
+            state.runtime.root.render(RenderContext(skia))
             skia.restore()
         }
     }
@@ -166,7 +183,7 @@ internal fun HudPreview(hud: Hud, modifier: Modifier = Modifier) {
             val scale = hudPreviewScale(state.naturalWidth, state.naturalHeight, availableW, availableH)
             val w = (state.naturalWidth * scale / density).dp
             val h = (state.naturalHeight * scale / density).dp
-            HudPreviewCanvas(state, scale, Modifier.size(w, h))
+            HudPreviewCanvas(state, scale, hud.alwaysRedraw, Modifier.size(w, h))
         }
     })
 }
