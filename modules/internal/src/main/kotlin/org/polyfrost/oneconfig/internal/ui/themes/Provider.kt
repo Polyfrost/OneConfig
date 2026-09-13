@@ -35,6 +35,15 @@ private var _accent by mutableStateOf(Color(ThemeConfig.accentColor.argb))
 
 private var _chroma by mutableStateOf(ThemeConfig.accentColor.chroma)
 
+private var useCustomUiSize by mutableStateOf(OneConfigConfig.useCustomUiSize)
+
+private var uiPixelSize by mutableStateOf(OneConfigConfig.uiPixelSize)
+
+fun updateUiScale() {
+    useCustomUiSize = OneConfigConfig.useCustomUiSize
+    uiPixelSize = OneConfigConfig.uiPixelSize
+}
+
 val Accent: Color get() = _accent
 
 fun updateAccent() {
@@ -74,7 +83,7 @@ fun pixelGridScale(scale: Float, max: Float, anchorSp: Float = GRID_ANCHOR_SP): 
 }
 
 private fun chosenEmPx(): Float? =
-    if (OneConfigConfig.useCustomUiSize) OneConfigConfig.uiPixelSize.coerceIn(1f, 4f) * GLYPH_PIXELS_PER_EM
+    if (useCustomUiSize) uiPixelSize.coerceIn(1f, 4f) * GLYPH_PIXELS_PER_EM
     else null
 
 @Composable

@@ -3,8 +3,6 @@ package org.polyfrost.oneconfig.internal.ui.components.settings
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,14 +12,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.PointerEvent
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerId
+import androidx.compose.ui.input.pointer.changedToDown
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.node.PointerInputModifierNode
+import androidx.compose.ui.node.requireDensity
+import androidx.compose.ui.node.requireLayoutCoordinates
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
@@ -47,6 +55,7 @@ fun SliderControl(
 ) {
     val theme = LocalTheme.current
     var trackWidthPx by remember { mutableStateOf(0f) }
+    val currentOnValueChange by rememberUpdatedState(onValueChange)
     val fraction by animateFloatAsState(
         ((value - min) / (max - min)).coerceIn(0f, 1f),
         animationSpec = spring(),
@@ -56,8 +65,7 @@ fun SliderControl(
         modifier = modifier
             .height(thumbSize)
             .onSizeChanged { trackWidthPx = it.width.toFloat() }
-            .pointerInput(min, max, step) {
-                val thumbPx = thumbSize.toPx()
+            .then(remember(min, max, step, thumbSize) {
                 var lastTickValue = Float.NaN
                 var lastTickAt = 0L
                 fun maybeTick(newValue: Float) {
@@ -74,24 +82,10 @@ fun SliderControl(
                     if (step <= 0f) return clamped
                     return (min + ((clamped - min) / step).roundToInt() * step).coerceIn(min, max)
                 }
-                fun xToValue(x: Float): Float {
-                    val usable = (trackWidthPx - thumbPx).coerceAtLeast(1f)
-                    return snap(min + ((x - thumbPx / 2f) / usable).coerceIn(0f, 1f) * (max - min))
+                SliderPointerInput(thumbSize) { fraction ->
+                    snap(min + fraction * (max - min)).let { maybeTick(it); currentOnValueChange(it) }
                 }
-                awaitEachGesture {
-                    val down = awaitFirstDown()
-                    xToValue(down.position.x).let { maybeTick(it); onValueChange(it) }
-                    do {
-                        val event = awaitPointerEvent()
-                        event.changes.forEach { ch ->
-                            if (ch.pressed) {
-                                xToValue(ch.position.x).let { maybeTick(it); onValueChange(it) }
-                                ch.consume()
-                            }
-                        }
-                    } while (event.changes.any { it.pressed })
-                }
-            }
+            })
     ) {
         Box(
             Modifier
@@ -114,5 +108,62 @@ fun SliderControl(
                 .size(thumbSize)
                 .background(theme.controlThumbColor, theme.circleShape)
         )
+    }
+}
+
+private data class SliderPointerInput(
+    val thumbSize: Dp,
+    val onDrag: (Float) -> Unit,
+) : ModifierNodeElement<SliderPointerNode>() {
+    override fun create() = SliderPointerNode(this)
+
+    override fun update(node: SliderPointerNode) {
+        node.input = this
+    }
+}
+
+private class SliderPointerNode(var input: SliderPointerInput) : Modifier.Node(), PointerInputModifierNode {
+    private var pointer: PointerId? = null
+    private var dragStartX = 0f
+    private var dragWidth = 1f
+    private var lastFraction = Float.NaN
+
+    // Keep the active drag alive when UI scaling changes the density.
+    // The drag continues using the slider bounds captured on mouse-down instead of the resized bounds.
+    override fun onDensityChange() = Unit
+
+    override fun onCancelPointerInput() {
+        pointer = null
+    }
+
+    override fun onPointerEvent(pointerEvent: PointerEvent, pass: PointerEventPass, bounds: IntSize) {
+        if (pass != PointerEventPass.Main) return
+        val starting = pointer == null
+        val change = if (starting) {
+            pointerEvent.changes.firstOrNull { it.changedToDown() }?.also { pointer = it.id }
+        } else {
+            pointerEvent.changes.firstOrNull { it.id == pointer }
+        } ?: return
+
+        if (!change.pressed) {
+            pointer = null
+            return
+        }
+
+        val coordinates = requireLayoutCoordinates()
+        if (starting) {
+            val thumbPx = with(requireDensity()) { input.thumbSize.toPx() }
+            dragStartX = coordinates.localToWindow(Offset(thumbPx / 2f, 0f)).x
+            val endX = coordinates.localToWindow(Offset(bounds.width - thumbPx / 2f, 0f)).x
+            dragWidth = (endX - dragStartX).coerceAtLeast(1f)
+            lastFraction = Float.NaN
+        }
+        val windowX = coordinates.localToWindow(change.position).x
+        val fraction = ((windowX - dragStartX) / dragWidth).coerceIn(0f, 1f)
+        change.consume()
+        if (fraction != lastFraction) {
+            lastFraction = fraction
+            input.onDrag(fraction)
+        }
     }
 }

@@ -275,7 +275,7 @@ public class OneConfigConfig extends Config {
         subcategoryTranslation = true,
         min = 1f,
         max = 4f,
-        step = 0.5f,
+        step = 0.1f,
         description = "oneconfig.preferences.ui_pixel_size.description",
         descriptionTranslation = true
     )
@@ -619,6 +619,17 @@ public class OneConfigConfig extends Config {
             return;
         }
         addDependency("uiPixelSize", "useCustomUiSize");
+        org.polyfrost.oneconfig.internal.ui.themes.ProviderKt.updateUiScale();
+        addCallback(
+            "useCustomUiSize", (Boolean v) -> {
+                org.polyfrost.oneconfig.internal.ui.themes.ProviderKt.updateUiScale();
+                return false;
+            });
+        addCallback(
+            "uiPixelSize", (java.lang.Number v) -> {
+                org.polyfrost.oneconfig.internal.ui.themes.ProviderKt.updateUiScale();
+                return false;
+            });
         addDependency(
             "uiSharpening",
             "Reduced-resolution filter",
