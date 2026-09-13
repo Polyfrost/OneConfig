@@ -51,6 +51,8 @@ internal class HudPreviewState(val runtime: PolyComposeRuntime) {
         internal set
     var naturalHeight by mutableStateOf(0f)
         internal set
+    var measured by mutableStateOf(false)
+        internal set
 
     val ready: Boolean get() = naturalWidth > 0f && naturalHeight > 0f
 
@@ -110,6 +112,8 @@ internal fun rememberHudPreview(hud: Hud): HudPreviewState {
             state.naturalWidth = state.runtime.root.width
             state.naturalHeight = state.runtime.root.height
         }
+        // Zero-size previews still count as measured so they don't block shortcut navigation
+        state.measured = true
     }
     return state
 }
