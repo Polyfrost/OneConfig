@@ -474,6 +474,8 @@ abstract class ComposeScreen(
         //minecraft: Minecraft,
         width: Int, height: Int
     ) {
+        this.width = width
+        this.height = height
         syncSceneMetrics()
     }
 
