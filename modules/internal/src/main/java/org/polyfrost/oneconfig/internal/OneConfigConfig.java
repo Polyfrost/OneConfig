@@ -258,29 +258,6 @@ public class OneConfigConfig extends Config {
     )
     public static boolean pauseGame = false;
 
-    @Switch(
-        title = "oneconfig.preferences.use_custom_ui_size.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.use_custom_ui_size.description",
-        descriptionTranslation = true
-    )
-    public static boolean useCustomUiSize = false;
-
-    @Slider(
-        title = "oneconfig.preferences.ui_pixel_size.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        min = 1f,
-        max = 4f,
-        step = 0.5f,
-        description = "oneconfig.preferences.ui_pixel_size.description",
-        descriptionTranslation = true
-    )
-    public static float uiPixelSize = 2f;
-
     @Dropdown(
         title = "oneconfig.preferences.reduced_res_filter.title",
         titleTranslation = true,
@@ -618,7 +595,6 @@ public class OneConfigConfig extends Config {
         if (tree == null) {
             return;
         }
-        addDependency("uiPixelSize", "useCustomUiSize");
         addDependency(
             "uiSharpening",
             "Reduced-resolution filter",
