@@ -39,18 +39,18 @@ class MinecraftKeybindCodecTest {
     @Test
     void migratesAliases() {
         //? if >= 26.3 {
-        /*assertEquals("key.keyboard.keypad.period", codec.keyName(99));
+        assertEquals("key.keyboard.keypad.period", codec.keyName(99));
         assertEquals("key.keyboard.application", codec.keyName(101));
         assertEquals("key.keyboard.menu", codec.keyName(118));
         assertEquals("key.keyboard.keypad.decimal", codec.keyName(220));
         assertEquals(Integer.valueOf(99), codec.keyCode("key.keyboard.keypad.period"));
         assertEquals(Integer.valueOf(101), codec.keyCode("key.keyboard.application"));
-        *///?} else {
-        assertEquals("key.keyboard.keypad.period", codec.keyName(330));
+        //?} else {
+        /*assertEquals("key.keyboard.keypad.period", codec.keyName(330));
         assertEquals("key.keyboard.application", codec.keyName(348));
         assertEquals(Integer.valueOf(330), codec.keyCode("key.keyboard.keypad.period"));
         assertEquals(Integer.valueOf(348), codec.keyCode("key.keyboard.application"));
-        //?}
+        *///?}
     }
 
     @Test

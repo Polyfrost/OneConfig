@@ -11,9 +11,9 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 //?}
 //? if < 26.3
-import org.lwjgl.glfw.GLFW;
+//import org.lwjgl.glfw.GLFW;
 //? if >= 26.3
-//import org.lwjgl.sdl.SDLMouse;
+import org.lwjgl.sdl.SDLMouse;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindBridgeImpl;
 import org.polyfrost.oneconfig.internal.ui.keybind.OneConfigKeybindRecorder;
@@ -98,21 +98,21 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
         if (!oneconfig$recording) return;
         for (int k : oneconfig$keys) {
             //? if sdl_keycodes {
-            /*if (InputConstants.isKeyDown(k)) return;
-            *///?} else {
-            //~ if < 1.21.10 'Minecraft.getInstance().getWindow()' -> 'Platform.compatibility().windowHandle()'
+            if (InputConstants.isKeyDown(k)) return;
+            //?} else {
+            /*//~ if < 1.21.10 'Minecraft.getInstance().getWindow()' -> 'Platform.compatibility().windowHandle()'
             if (InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), k)) return;
-            //?}
+            *///?}
         }
         //? if >= 26.3 {
-        /*int buttons = SDLMouse.SDL_GetMouseState(null, null);
+        int buttons = SDLMouse.SDL_GetMouseState(null, null);
         for (int b : oneconfig$mouse) {
             if (b > 0 && b <= Integer.SIZE && (buttons & (1 << (b - 1))) != 0) return;
         }
-        *///?} else {
-        long window = Platform.compatibility().windowHandle();
+        //?} else {
+        /*long window = Platform.compatibility().windowHandle();
         for (int b : oneconfig$mouse) if (GLFW.glfwGetMouseButton(window, b) != InputConstants.RELEASE) return;
-        //?}
+        *///?}
         oneconfig$commit();
     }
 
@@ -140,7 +140,7 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
     @Override
     public void oneconfig$recordKey(int keyCode) {
         //? if sdl_keycodes
-        //if (keyCode <= 0) return;
+        if (keyCode <= 0) return;
         if (!oneconfig$begin()) return;
         oneconfig$keys.add(keyCode);
         oneconfig$preview();

@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.compat
 
 //? rconfig_compat {
-import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfig
+/*import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfig
 import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigButton
 //? >= 1.21.8 {
 import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigCategory
@@ -498,4 +498,4 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         }
     }
 }
-//? }
+*///? }
