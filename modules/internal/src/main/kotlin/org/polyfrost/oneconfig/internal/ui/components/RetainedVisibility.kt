@@ -20,13 +20,8 @@ fun RetainedVisibility(
     openKey: Any? = null,
     content: @Composable (alpha: Float) -> Unit,
 ) {
-    val progress = remember { Animatable(if (visible) 1f else 0f) }
-    val lastKey = remember { arrayOf(openKey) }
+    val progress = remember(openKey) { Animatable(0f) }
     LaunchedEffect(openKey, visible) {
-        if (openKey != lastKey[0]) {
-            progress.snapTo(0f)
-            lastKey[0] = openKey
-        }
         progress.animateTo(if (visible) 1f else 0f, if (visible) enter else exit)
     }
 

@@ -575,6 +575,7 @@ public final class org/polyfrost/compose/runtime/PolyComposeHost {
 	public final fun frameWithReport (J)Z
 	public static synthetic fun frameWithReport$default (Lorg/polyfrost/compose/runtime/PolyComposeHost;JILjava/lang/Object;)Z
 	public final fun getHuds ()Lorg/polyfrost/compose/runtime/PolyComposeClock;
+	public final fun getNotifications ()Lorg/polyfrost/compose/runtime/PolyComposeClock;
 	public final fun getPreviews ()Lorg/polyfrost/compose/runtime/PolyComposeClock;
 }
 

@@ -33,6 +33,7 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -77,6 +78,12 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
 
     public static Tree track(Tree registered) {
         return INSTANCE.track0(registered);
+    }
+
+    public static void untrack(String treeId) {
+        if (treeId == null) return;
+        INSTANCE.known.remove(treeId);
+        INSTANCE.defaults.remove(treeId);
     }
 
     private Tree register0(Tree tree) {
@@ -144,7 +151,11 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         }
         dispatchAndWait(() -> {
             for (Tree tree : known.values()) {
-                captureAll(tree, profile);
+                try {
+                    captureAll(tree, profile);
+                } catch (Throwable t) {
+                    ConfigManager.LOGGER.error("Failed to capture compat snapshot for '{}'", tree.getID(), t);
+                }
             }
         });
         flushSnapshotThenBaseline(store, profile, baselineStore, BASELINE_BUCKET);
@@ -184,7 +195,11 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
             currentProfile = "";
             dispatchAndWait(() -> {
                 for (Tree tree : known.values()) {
-                    applyProfile(tree, "");
+                    try {
+                        applyProfile(tree, "");
+                    } catch (Throwable t) {
+                        ConfigManager.LOGGER.error("Failed to clear compat snapshot for '{}'", tree.getID(), t);
+                    }
                 }
             });
         }
@@ -224,6 +239,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         String treeId = tree.getID();
         Map<String, Object> snap = store.load(profile).get(treeId);
         boolean[] changed = {false};
+        Map<String, Object> pending = new LinkedHashMap<>();
         forEachProp(tree, p -> {
             if (!isValueProp(p)) return;
             String key = keyOf(p);
@@ -231,17 +247,13 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
             Object baseline = getBaseline(treeId, key);
 
             if (baseline != null && liveSer != null && !valuesEqual(liveSer, baseline)) {
-                store.putValue(profile, treeId, key, liveSer);
-                setBaseline(treeId, key, liveSer);
+                pending.put(key, liveSer);
                 return;
             }
 
             Object stored = snap == null ? null : snap.get(key);
             if (stored == null) {
-                if (liveSer != null) {
-                    store.putValue(profile, treeId, key, liveSer);
-                    setBaseline(treeId, key, liveSer);
-                }
+                if (liveSer != null) pending.put(key, liveSer);
                 return;
             }
 
@@ -250,10 +262,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
                 value = deserialize(stored);
             } catch (Throwable t) {
                 ConfigManager.LOGGER.warn("Failed to deserialize compat value for '{}', re-snapshotting from live value", key, t);
-                if (liveSer != null) {
-                    store.putValue(profile, treeId, key, liveSer);
-                    setBaseline(treeId, key, liveSer);
-                }
+                if (liveSer != null) pending.put(key, liveSer);
                 return;
             }
             if (value instanceof OneConfigKeybind && ((OneConfigKeybind) value).getHasUnresolvedInputs()) {
@@ -279,12 +288,19 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
                 applying.remove(p);
             }
         });
+        boolean ownerStillThere = !gateClosed(tree);
+        if (ownerStillThere) {
+            pending.forEach((key, serialized) -> {
+                store.putValue(profile, treeId, key, serialized);
+                setBaseline(treeId, key, serialized);
+            });
+        }
         // Persist the profile snapshot before its baseline. If the first write fails, keeping an
         // older baseline is safe: the next load treats the live value as an external change and
         // repairs the snapshot. The opposite order could make a stale snapshot look current and
         // roll a setting back after a restart.
         flushSnapshotThenBaseline(store, profile, baselineStore, BASELINE_BUCKET);
-        if (changed[0]) runSave(tree);
+        if (changed[0] && ownerStillThere) runSave(tree);
     }
 
     public static void capture(Tree tree) {
@@ -297,14 +313,16 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         captureDefaults(tree);
         ensureKeys(tree);
         String treeId = tree.getID();
+        Map<String, Object> pending = new LinkedHashMap<>();
         forEachProp(tree, p -> {
             if (!isValueProp(p)) return;
-            String key = keyOf(p);
             Object serialized = trySerialize(p.get());
-            if (serialized != null) {
-                store.putValue(profile, treeId, key, serialized);
-                setBaseline(treeId, key, serialized);
-            }
+            if (serialized != null) pending.put(keyOf(p), serialized);
+        });
+        if (gateClosed(tree)) return;
+        pending.forEach((key, serialized) -> {
+            store.putValue(profile, treeId, key, serialized);
+            setBaseline(treeId, key, serialized);
         });
     }
 

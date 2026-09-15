@@ -1,5 +1,5 @@
 //? skyblocker_hud_v2 {
-package org.polyfrost.oneconfig.internal.compat
+/*package org.polyfrost.oneconfig.internal.compat
 
 import com.google.gson.JsonObject
 import de.hysky.skyblocker.config.SkyblockerConfigManager
@@ -317,4 +317,4 @@ internal class SkyblockerWidgetWrapper(private val widget: HudWidget) : OneConfi
         return true
     }
 }
-//? }
+*///? }

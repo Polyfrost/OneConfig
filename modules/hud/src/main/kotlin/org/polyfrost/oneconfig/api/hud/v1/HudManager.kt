@@ -36,6 +36,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.compose.node.RootNode
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.runtime.PolyComposeHost
+import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -297,6 +298,11 @@ object HudManager {
     }
 
     @JvmStatic
+    fun register(vararg huds: Hud) {
+        for (hud in huds) register(hud)
+    }
+
+    @JvmStatic
     fun register(hud: Hud, configId: String) {
         hud.configId = configId
         register(hud)
@@ -321,11 +327,6 @@ object HudManager {
 
     /** The menu icon associated with [configId] via [register] or `null` if none was set */
     fun iconFor(configId: String): String? = hudIcons[configId]
-
-    @JvmStatic
-    fun register(vararg huds: Hud) {
-        for (hud in huds) register(hud)
-    }
 
     fun providers(): Collection<Hud> = hudProviders.values
 
@@ -380,7 +381,7 @@ object HudManager {
     }
 
     fun removeHud(hud: Hud, delete: Boolean = false) {
-        require(hud.isReal) { "Tried to remove a non-real HUD - use unregister() instead." }
+        if (!hud.isReal) LOGGER.warn("Removing HUD ${hud.title}, which has no config tree")
         activeInstances.remove(hud)
         disposeHudLogging(hud, delete)
     }
@@ -431,6 +432,7 @@ object HudManager {
             LOGGER.warn("refusing to delete the config of ${hud.title}, which is marked as not user-deletable")
         } else if (delete && treeId != null) {
             cleanup { ConfigManager.active().delete(treeId) }
+            cleanup { CompatSnapshots.untrack(treeId) }
         }
         // back to being a plain provider so a single-instance HUD can be made again later
         cleanup { hud.detachTree() }
@@ -882,6 +884,15 @@ object HudManager {
         if (!isEditorOpen) return
         isEditorOpen = false
         EventManager.INSTANCE.post(HudEditorToggleEvent.CLOSE)
+    }
+
+    /**
+     * The editor screen has been installed, which also happens when Minecraft removes it and
+     * replaces it with itself, clearing the flag while the editor stays open
+     */
+    @ApiStatus.Internal
+    fun onEditorScreenAdded() {
+        if (!isEditorOpen) openEditor()
     }
 
     @ApiStatus.Internal

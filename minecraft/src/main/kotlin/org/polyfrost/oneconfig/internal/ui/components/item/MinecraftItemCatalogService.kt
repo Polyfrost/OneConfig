@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.components.item
 
+//? if >= 26.2
+import com.mojang.renderpearl.api.GpuFormat
 //? if > 1.8.9 {
 import com.mojang.blaze3d.pipeline.TextureTarget
 import com.mojang.blaze3d.systems.RenderSystem
@@ -11,10 +13,10 @@ import org.lwjgl.opengl.GL11
 //? if >= 1.21.4 && < 1.21.8
 //import com.mojang.blaze3d.ProjectionType
 //? if >= 1.21.8 {
-import com.mojang.blaze3d.buffers.GpuBuffer
+import com.mojang.renderpearl.api.buffers.GpuBuffer
 //? } else if >= 1.21.5 {
-/*import com.mojang.blaze3d.buffers.BufferType
-import com.mojang.blaze3d.buffers.BufferUsage
+/*import com.mojang.renderpearl.api.buffers.BufferType
+import com.mojang.renderpearl.api.buffers.BufferUsage
 *///? }
 //? if < 1.21.5
 //import com.mojang.blaze3d.platform.NativeImage
@@ -136,6 +138,10 @@ class MinecraftItemCatalogService : ItemCatalogService {
     }
 
     private fun renderPendingBatch() {
+        if (Minecraft.getInstance().player == null) {
+            completeBatch(currentBatch(), emptyMap())
+            return
+        }
         val guiWidth = Platform.screen().guiWidth()
         val guiHeight = Platform.screen().guiHeight()
         val windowWidth = Platform.screen().windowWidth()
@@ -202,9 +208,15 @@ class MinecraftItemCatalogService : ItemCatalogService {
     }
 
     private fun createTarget(width: Int, height: Int): TextureTarget {
-        //? if >= 26.2 {
-        return TextureTarget(null, width, height, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
-        //? } else if >= 1.21.5 {
+        //? if >= 26.3 {
+        return TextureTarget(
+            null, width, height,
+            GpuFormat.RGBA8_UNORM,
+            GpuFormat.D32_FLOAT,
+        )
+        //? } else if >= 26.2 {
+        /*return TextureTarget(null, width, height, true, GpuFormat.RGBA8_UNORM)
+        *///? } else if >= 1.21.5 {
         /*return TextureTarget(null, width, height, true)
         *///? } else if >= 1.21.4 {
         /*return TextureTarget(width, height, true).also { it.setClearColor(0f, 0f, 0f, 0f) }

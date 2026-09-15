@@ -765,7 +765,6 @@ private fun DrawScope.drawHudSizeBadge(label: String, centerX: Float, topY: Floa
     }
 }
 
-
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun HudActionButton(
@@ -967,7 +966,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     val panelHud: Hud? = if (panelOpen) primaryHud() else null
 
     val deleteHuds: (Collection<Hud>) -> Unit = { huds ->
-        val removed = huds.filter { it.deletable() }
+        val removed = huds.filter { it.canDelete() }
         if (removed.isNotEmpty()) {
             Snapshot.withMutableSnapshot {
                 val removedSet = removed.toSet()
@@ -1043,67 +1042,72 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     LaunchedEffect(HudManager.editorOpenRevision.intValue) {
         HudDesignSession.clearCommands()
         for (command in HudDesignSession.commands) {
-            when (command) {
-                is StudioCommand.Select -> {
-                    val huds = command.huds
-                    if (huds.isNotEmpty() && huds.all { it in HudManager.activeInstances }) {
-                        Snapshot.withMutableSnapshot { selectedHuds = huds.toSet() }
-                    }
-                }
-
-                StudioCommand.OpenSettings -> {
-                    val primary = primaryHud()
-                    if (primary != null) {
-                        Snapshot.withMutableSnapshot {
-                            panelOpen = true
-                            activeCategory = StudioCategory.Settings
+            try {
+                when (command) {
+                    is StudioCommand.Select -> {
+                        val huds = command.huds
+                        if (huds.isNotEmpty() && huds.all { it in HudManager.activeInstances }) {
+                            Snapshot.withMutableSnapshot { selectedHuds = huds.toSet() }
                         }
                     }
-                }
 
-                StudioCommand.Copy -> {
-                    Snapshot.withMutableSnapshot { hudClipboard = selectedHuds.toList() }
-                    UiSounds.play(UiSoundEvent.CLICK)
-                }
-
-                StudioCommand.Cut -> {
-                    Snapshot.withMutableSnapshot { hudClipboard = selectedHuds.toList() }
-                    deleteHuds(selectedHuds)
-                }
-
-                StudioCommand.Paste -> {
-                    if (hudClipboard.isNotEmpty()) {
-                        val s = Platform.screen().screenToMcScale()
-                        val pasted = duplicateHudGroup(
-                            hudClipboard,
-                            Offset(lastPointerPos[0] * s, lastPointerPos[1] * s),
-                        )
-                        if (pasted.isNotEmpty()) {
+                    StudioCommand.OpenSettings -> {
+                        if (primaryHud() != null) {
                             Snapshot.withMutableSnapshot {
-                                selectedHuds = pasted.toSet()
-                                pasteMenuOffset = null
+                                panelOpen = true
+                                activeCategory = StudioCategory.Settings
                             }
                         }
+                    }
+
+                    StudioCommand.Copy -> {
+                        Snapshot.withMutableSnapshot { hudClipboard = selectedHuds.toList() }
                         UiSounds.play(UiSoundEvent.CLICK)
                     }
-                }
 
-                StudioCommand.Delete -> deleteHuds(selectedHuds)
+                    StudioCommand.Cut -> {
+                        Snapshot.withMutableSnapshot { hudClipboard = selectedHuds.toList() }
+                        deleteHuds(selectedHuds)
+                    }
 
-                StudioCommand.SelectAll -> Snapshot.withMutableSnapshot {
-                    selectedHuds = HudManager.activeInstances.filter { !it.locked }.toSet()
-                }
-
-                StudioCommand.Lock -> {
-                    val targets = selectedHuds.toList()
-                    if (targets.isNotEmpty()) {
-                        val lock = targets.any { !it.locked }
-                        Snapshot.withMutableSnapshot {
-                            targets.forEach { it.locked = lock }
+                    StudioCommand.Paste -> {
+                        if (hudClipboard.isNotEmpty()) {
+                            val s = Platform.screen().screenToMcScale()
+                            val pasted = duplicateHudGroup(
+                                hudClipboard,
+                                Offset(lastPointerPos[0] * s, lastPointerPos[1] * s),
+                            )
+                            if (pasted.isNotEmpty()) {
+                                Snapshot.withMutableSnapshot {
+                                    selectedHuds = pasted.toSet()
+                                    pasteMenuOffset = null
+                                }
+                            }
+                            UiSounds.play(UiSoundEvent.CLICK)
                         }
-                        OneConfigConfig.INSTANCE.save()
+                    }
+
+                    StudioCommand.Delete -> deleteHuds(selectedHuds)
+
+                    StudioCommand.SelectAll -> Snapshot.withMutableSnapshot {
+                        selectedHuds = HudManager.activeInstances.filter { !it.locked }.toSet()
+                    }
+
+                    StudioCommand.Lock -> {
+                        val targets = selectedHuds.toList()
+                        if (targets.isNotEmpty()) {
+                            val lock = targets.any { !it.locked }
+                            Snapshot.withMutableSnapshot {
+                                targets.forEach { it.locked = lock }
+                            }
+                            OneConfigConfig.INSTANCE.save()
+                        }
                     }
                 }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                LOGGER.error("Failed to handle $command in the HUD Design Studio", e)
             }
         }
     }
@@ -2555,7 +2559,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                     actionBarGapPx = actionBarGapPx,
                     chromeAlpha = 1f,
                     onDelete = {
-                        if (actionBarTarget.deletable()) {
+                        if (actionBarTarget.canDelete()) {
                             Snapshot.withMutableSnapshot {
                                 hoveredHud = null
                                 if (draggedHud === actionBarTarget) {
@@ -2576,7 +2580,6 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
         }
     }
 }
-
 
 @Composable
 private fun DesignStudioPanel(

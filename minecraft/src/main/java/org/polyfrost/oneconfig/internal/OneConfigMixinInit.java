@@ -29,7 +29,10 @@ package org.polyfrost.oneconfig.internal;
 import kotlin.Unit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 //todo import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
 //? moul_compat {
 import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
@@ -37,6 +40,7 @@ import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -98,7 +102,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //mixins.add("compat.odin.Mixin_OdinModuleManager");
 
         //? rconfig_compat
-        mixins.add("compat.rconfig.Mixin_Configurations");
+        //mixins.add("compat.rconfig.Mixin_Configurations");
 
         //? osl_config_compat
         //mixins.add("compat.osl.Mixin_OslConfigManager");
@@ -134,18 +138,23 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         *///? }
 
         //? skyblocker_compat {
-        mixins.add("compat.skyblocker.Mixin_SkyblockerFancyStatusBars");
+        /*Boolean skyblockerSingleton = declaresStaticMethod("de.hysky.skyblocker.skyblock.fancybars.FancyStatusBars", "initStatic");
+        if (skyblockerSingleton != null) {
+            mixins.add(skyblockerSingleton
+                    ? "compat.skyblocker.Mixin_SkyblockerFancyStatusBarsInstance"
+                    : "compat.skyblocker.Mixin_SkyblockerFancyStatusBarsStatic");
+        }
         mixins.add("compat.skyblocker.Mixin_SkyblockerWidgetManager");
-        //? }
+        *///? }
 
         //? skyblocker_legacy_hud
         //mixins.add("compat.skyblocker.Mixin_SkyblockerScreenBuilder");
 
         //? skyblocker_hud_v2
-        mixins.add("compat.skyblocker.Mixin_SkyblockerLayerBuilder");
+        //mixins.add("compat.skyblocker.Mixin_SkyblockerLayerBuilder");
 
         //? stella_compat
-        mixins.add("compat.stella.Mixin_Stella");
+        //mixins.add("compat.stella.Mixin_Stella");
 
         //? apec_compat
         //mixins.add("compat.apec.Mixin_ApecMenu");
@@ -234,6 +243,23 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
             return true;
         } catch (Throwable t) {
             return false;
+        }
+    }
+
+    private static Boolean declaresStaticMethod(String className, String methodName) {
+        try (InputStream in = OneConfigMixinInit.class.getClassLoader()
+                .getResourceAsStream(className.replace('.', '/') + ".class")) {
+            if (in == null) return null;
+            ClassNode node = new ClassNode();
+            new ClassReader(in).accept(node, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+            for (MethodNode method : node.methods) {
+                if (method.name.equals(methodName) && (method.access & Opcodes.ACC_STATIC) != 0) return Boolean.TRUE;
+            }
+            return Boolean.FALSE;
+        } catch (Throwable t) {
+            LogManager.getLogger(OneConfigMixinInit.class)
+                    .warn("could not read {} to pick a mixin shape, skipping the mixins that depend on it", className, t);
+            return null;
         }
     }
 

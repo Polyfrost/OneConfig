@@ -1,8 +1,12 @@
 package org.polyfrost.oneconfig.internal.ui
 
+//? if >= 26.2
+import com.mojang.renderpearl.api.GpuFormat
 import com.mojang.blaze3d.pipeline.RenderTarget
 //? if > 1.8.9
 import com.mojang.blaze3d.pipeline.TextureTarget
+//? if < 1.21.4
+//import net.minecraft.client.Minecraft
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.ColorSpace
 import org.jetbrains.skia.Surface
@@ -29,14 +33,20 @@ class SkiaOffscreenTarget {
         destroy()
         val svc = SkiaCtx.vulkanService ?: return false
         try {
-            //? if >= 26.2 {
-            val rt = TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
-            //?} else if >= 1.21.5 {
+            //? if >= 26.3 {
+            val rt = TextureTarget(
+                null, w, h,
+                GpuFormat.RGBA8_UNORM,
+                GpuFormat.D32_FLOAT,
+            )
+            //?} else if >= 26.2 {
+            /*val rt = TextureTarget(null, w, h, true, GpuFormat.RGBA8_UNORM)
+            *///?} else if >= 1.21.5 {
             /*val rt = TextureTarget(null, w, h, true)
             *///?} else if >= 1.21.4 {
             /*val rt = TextureTarget(w, h, true)
             *///?} elif > 1.8.9 {
-            /*val rt = TextureTarget(w, h, true, net.minecraft.client.Minecraft.ON_OSX)
+            /*val rt = TextureTarget(w, h, true, Minecraft.ON_OSX)
             *///?} else
             //val rt = RenderTarget(w, h, false)
             target = rt
@@ -82,7 +92,7 @@ class SkiaOffscreenTarget {
         *///?} elif >= 1.21.4 {
         /*rt.clear()
         *///?} elif > 1.8.9 {
-        /*rt.clear(net.minecraft.client.Minecraft.ON_OSX)
+        /*rt.clear(Minecraft.ON_OSX)
         *///?} else
         //rt.clear()
     }

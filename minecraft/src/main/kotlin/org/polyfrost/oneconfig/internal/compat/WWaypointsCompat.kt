@@ -1089,10 +1089,10 @@ object WWaypointsCompat {
         val key = runCatching { InputConstants.getKey(saveString()) }.getOrDefault(InputConstants.UNKNOWN)
         return when (key.type) {
             //~ if !sdl_keycodes 'Type.KEYBOARD' -> 'Type.KEYSYM'
-            InputConstants.Type.KEYSYM if key.value > 0 ->
+            InputConstants.Type.KEYBOARD if key.value > 0 ->
                 OneConfigKeybind(intArrayOf(key.value), null, KeyModifiers.NONE, 0L) { true }
             //~ if !sdl_keycodes 'key.value > 0' -> 'key.value >= 0'
-            InputConstants.Type.MOUSE if key.value >= 0 ->
+            InputConstants.Type.MOUSE if key.value > 0 ->
                 OneConfigKeybind(null, intArrayOf(key.value), KeyModifiers.NONE, 0L) { true }
             else -> OneConfigKeybind(null, null, KeyModifiers.NONE, 0L) { true }
         }
@@ -1102,7 +1102,7 @@ object WWaypointsCompat {
     private fun OneConfigKeybind?.toInputKey(): InputConstants.Key {
         if (this == null || !isBound) return InputConstants.UNKNOWN
         //~ if !sdl_keycodes 'it > 0' -> 'it >= 0'
-        mouseBtns?.firstOrNull { it >= 0 }?.let { return MinecraftKeybindCodec.mouse(it) }
+        mouseBtns?.firstOrNull { it > 0 }?.let { return MinecraftKeybindCodec.mouse(it) }
         keyCodes?.firstOrNull { it > 0 }?.let { return MinecraftKeybindCodec.keysym(it) }
         return InputConstants.UNKNOWN
     }

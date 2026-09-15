@@ -137,6 +137,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeyModifiers {
 	public static final field NONE B
 	public static final field SHIFT B
 	public final fun has (BB)Z
+	public static final fun of (I)B
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper {

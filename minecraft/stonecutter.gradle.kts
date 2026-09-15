@@ -2,7 +2,7 @@ plugins {
     id("dev.kikugie.stonecutter")
 }
 
-stonecutter active "26.2-fabric"
+stonecutter active "26.3-fabric"
 stonecutter {
     parameters {
         constants {
@@ -252,6 +252,18 @@ stonecutter {
                     "net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents",
                     "net.ornithemc.osl.networking.api.client.ClientConnectionEvents"
                 )
+            }
+
+            string(eval(current.version, ">= 26.3")) {
+                replace("com.mojang.blaze3d.opengl", "com.mojang.renderpearl.backend.opengl")
+                replace("com.mojang.blaze3d.vulkan", "com.mojang.renderpearl.backend.vulkan")
+                replace("com.mojang.blaze3d.textures", "com.mojang.renderpearl.api.textures")
+                replace("com.mojang.blaze3d.buffers", "com.mojang.renderpearl.api.buffers")
+                replace("com.mojang.blaze3d.GpuFormat", "com.mojang.renderpearl.api.GpuFormat")
+                // mixin descriptors
+                replace("com/mojang/blaze3d/systems/GpuSurface", "com/mojang/renderpearl/api/device/GpuSurface")
+                replace("com/mojang/blaze3d/systems/CommandEncoder", "com/mojang/renderpearl/api/commands/CommandEncoder")
+                replace("com/mojang/blaze3d/textures/GpuTextureView", "com/mojang/renderpearl/api/textures/GpuTextureView")
             }
         }
     }

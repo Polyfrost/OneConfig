@@ -249,6 +249,7 @@ public abstract class Backend {
     public final boolean save(Tree tree) {
         if (tree.getID() == null) throw new IllegalArgumentException("tree must be master (have a valid ID)");
         putSafe(tree);
+        LAST_SAVE_FAILURE.remove();
         try {
             Object customSave = tree.getMetadata("custom_save");
             if (customSave != null) {
@@ -261,8 +262,15 @@ public abstract class Backend {
             return save0(tree);
         } catch (Exception e) {
             LOGGER.error("error saving tree with ID {}!", tree.getID(), e);
+            LAST_SAVE_FAILURE.set(e);
             return false;
         }
+    }
+
+    private static final ThreadLocal<Exception> LAST_SAVE_FAILURE = new ThreadLocal<>();
+
+    public final @Nullable Exception lastSaveFailure() {
+        return LAST_SAVE_FAILURE.get();
     }
 
     protected abstract boolean delete0(@NotNull Tree tree) throws Exception;
@@ -353,7 +361,6 @@ public abstract class Backend {
             throw new IllegalStateException("Backend desync detected for tree " + in.getID());
         }
     }
-
 
     public static final class RegistrationResult {
         public final Tree tree;

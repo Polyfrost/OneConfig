@@ -52,26 +52,18 @@ private val KeybindShape @Composable get() = LocalTheme.current.sideBarNavigatio
 
 private val CONFLICT_COLOR = Color(0xFFE0524F)
 
-/** Human-readable name for a GLFW key code */
-private fun keyCodeToName(glfwCode: Int): String = OneConfigKeybind.keyName(glfwCode)
+/** Human-readable name for a platform key code */
+private fun keyCodeToName(code: Int): String = OneConfigKeybind.keyName(code)
 
-/** Human-readable name for a GLFW mouse button */
+/** Human-readable name for a mouse button */
 private fun mouseButtonToName(button: Int): String = Platform.compatibility().keys().mouseName(button)
-
-private fun modifierBit(glfwCode: Int): Byte? = when (glfwCode) {
-    340, 344 -> KeyModifiers.SHIFT
-    341, 345 -> KeyModifiers.CTRL
-    342, 346 -> KeyModifiers.ALT
-    343, 347 -> KeyModifiers.META
-    else -> null
-}
 
 private fun splitModifiers(codes: List<Int>): Pair<Byte, IntArray> {
     var mods = KeyModifiers.NONE
     val keys = ArrayList<Int>(codes.size)
     for (code in codes) {
-        val bit = modifierBit(code)
-        if (bit != null) mods = (mods.toInt() or bit.toInt()).toByte()
+        val bit = KeyModifiers.of(code)
+        if (bit != KeyModifiers.NONE) mods = (mods.toInt() or bit.toInt()).toByte()
         else keys += code
     }
     return mods to keys.toIntArray()
@@ -82,8 +74,8 @@ private fun keybindDisplayName(keybind: OneConfigKeybind?): String = keybind?.di
 @Suppress("UNCHECKED_CAST")
 private fun writeKeybind(prop: Property<*>, keys: IntArray?, mouse: IntArray?, mods: Byte): OneConfigKeybind {
     val old = prop.get() as? OneConfigKeybind
-    val existingAction = old?.action ?: { true }
-    val newKeybind = OneConfigKeybind(keys, mouse, mods, 0L, existingAction)
+    // copyWith keeps the runtime subtype so a rebound BindNotInScreen is not demoted to the base class
+    val newKeybind = old?.copyWith(keys, mouse, mods) ?: OneConfigKeybind(keys, mouse, mods, 0L) { true }
     (prop as Property<Any>).set(newKeybind)
     val applied = prop.get() as? OneConfigKeybind ?: newKeybind
     applied.keyCodes = keys
@@ -243,18 +235,18 @@ fun KeybindOption(data: KeybindOptionData) {
                                 return@onKeyEvent true
                             }
                         }
-                        // ComposeScreen carries the raw GLFW key code in the event's codePoint which avoids a lossy
-                        // AWT round-trip
+                        // ComposeScreen carries the raw platform key code in the event's codePoint which avoids a
+                        // lossy AWT round-trip
                         // a code <= 0 is an unknown key or a character event and would match nothing or everything
-                        val glfwCode = event.utf16CodePoint
-                        if (glfwCode <= 0) return@onKeyEvent true
+                        val keyCode = event.utf16CodePoint
+                        if (keyCode <= 0) return@onKeyEvent true
                         if (singleKey) {
-                            applyKeybind(intArrayOf(glfwCode), null)
+                            applyKeybind(intArrayOf(keyCode), null)
                             recording = false
                             return@onKeyEvent true
                         }
-                        if (glfwCode !in recordedKeys) recordedKeys.add(glfwCode)
-                        heldKeys.add(glfwCode)
+                        if (keyCode !in recordedKeys) recordedKeys.add(keyCode)
+                        heldKeys.add(keyCode)
                         return@onKeyEvent true
                     }
                     KeyEventType.KeyUp -> {

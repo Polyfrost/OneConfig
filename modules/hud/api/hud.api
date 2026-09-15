@@ -285,6 +285,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public final fun isEditorOpen ()Z
 	public static final fun markProviderKnown (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)V
 	public static final fun mergeGroupOf (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Ljava/util/List;
+	public final fun onEditorScreenAdded ()V
 	public final fun onEditorScreenRemoved ()V
 	public final fun openEditor ()V
 	public final fun prepare (FF)V

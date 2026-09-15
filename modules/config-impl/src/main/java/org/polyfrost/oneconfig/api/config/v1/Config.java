@@ -88,6 +88,10 @@ public abstract class Config {
             deferredSetup.add(action);
             return;
         }
+        if (tree == null && ConfigManager.didInitializationFail(this)) {
+            ConfigManager.LOGGER.warn("Skipping deferred setup for config {}: its initialization failed", id);
+            return;
+        }
         action.run();
     }
 
@@ -122,7 +126,7 @@ public abstract class Config {
 
             tree.addMetadata("category", category);
             if (!ConfigManager.isRebindingProfiles()) {
-                ConfigManager.backup().backend.save0(tree);
+                saveDefaultsBackup(tree);
             }
             // capture code defaults before register() loads stored values over them so the UI can offer a reset action
             if (defaultSnapshot == null) {
@@ -156,6 +160,15 @@ public abstract class Config {
             } catch (Throwable t) {
                 ConfigManager.LOGGER.error("failed to apply setup for config {}", id, t);
             }
+        }
+    }
+
+    private void saveDefaultsBackup(Tree tree) {
+        try {
+            ConfigManager.backup().backend.save0(tree);
+        } catch (Throwable t) {
+            ConfigManager.LOGGER.error("failed to write the defaults backup for config {}, restore-to-default may be unavailable", id, t);
+            ConfigManager.notifyWriteFailed(this, t);
         }
     }
 
@@ -335,13 +348,32 @@ public abstract class Config {
     }
 
     protected void restoreDefaults() {
-        if (tree == null) initialize(false);
-        tree.overwrite(ConfigManager.backup().get(tree.getID()), false);
+        Tree backup = backupTree();
+        if (backup == null) return;
+        tree.overwrite(backup, false);
     }
 
     protected void restoreProperty(String option) {
         // first restore is slow as the backup tree loads from disc but it then stays in memory
-        getProperty(option).overwrite(getProperty(ConfigManager.backup().get(tree.getID()), option), false);
+        Tree backup = backupTree();
+        if (backup == null) return;
+        getProperty(option).overwrite(getProperty(backup, option), false);
+    }
+
+    private Tree backupTree() {
+        if (tree == null) {
+            try {
+                initialize(false);
+            } catch (Throwable t) {
+                ConfigManager.LOGGER.error("failed to initialize config {} while restoring its defaults", id, t);
+            }
+        }
+        if (tree == null) return null;
+        Tree backup = ConfigManager.backup().get(tree.getID());
+        if (backup == null) {
+            ConfigManager.LOGGER.warn("no defaults backup for config {}, cannot restore its defaults", id);
+        }
+        return backup;
     }
 
     protected void addDependency(String option, String condition) {
@@ -459,7 +491,8 @@ public abstract class Config {
 
     public void save() {
         if (tree == null) return;
-        ConfigManager.active().save(tree);
+        ConfigManager manager = ConfigManager.active();
+        if (!manager.save(tree)) ConfigManager.notifyWriteFailed(this, manager.backend.lastSaveFailure());
     }
 
     /**

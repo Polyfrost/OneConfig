@@ -27,7 +27,7 @@ import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.hud.v1.OneConfigHudWrapper
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer
-import org.polyfrost.oneconfig.internal.ui.keybind.RightShiftConflicts
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindConflicts
 import java.util.IdentityHashMap
 
 object OdinCompat {
@@ -41,7 +41,7 @@ object OdinCompat {
     fun ensureRegistered() {
         if (!initialized) {
             initialized = true
-            runCatching { unbindRightShiftKeybinds() }
+            runCatching { unbindConflictingKeybinds() }
                 .onFailure { LOGGER.error("Failed to unbind conflicting Odin keybinds", it) }
             EventManager.register(HudEditorToggleEvent::class.java) { e ->
                 if (e.open) registerAll() else flush()
@@ -52,21 +52,22 @@ object OdinCompat {
     }
 
     /**
-     * Clears Odin keybinds, such as the Click GUI's, that conflict with OneConfig's own Right Shift keybind.
+     * Clears Odin keybinds, such as the Click GUI's, that conflict with OneConfig's own open keybind.
      * Odin drives these itself instead of registering them with Minecraft, so they are invisible to the vanilla
      * keybind sweep and have to be handled here.
      *
-     * @see RightShiftConflicts
+     * @see KeybindConflicts
      */
-    private fun unbindRightShiftKeybinds() {
-        val rightShift = RightShiftConflicts.key()
+    private fun unbindConflictingKeybinds() {
+        val occupied = KeybindConflicts.key()
+        if (occupied == InputConstants.UNKNOWN) return
         val unbound = ArrayList<String>()
 
         for ((_, module) in ModuleManager.modules) {
             for (setting in module.settings.values) {
                 if (setting !is KeybindSetting) continue
-                if (!RightShiftConflicts.isNew("odin:${module.name}:${setting.name}")) continue
-                if (setting.value != rightShift) continue
+                if (!KeybindConflicts.isNew("odin:${module.name}:${setting.name}")) continue
+                if (setting.value != occupied) continue
                 setting.unbind()
                 unbound.add("${module.name}/${setting.name}")
             }
@@ -75,9 +76,9 @@ object OdinCompat {
         if (unbound.isNotEmpty()) {
             runCatching { ModuleManager.saveConfigurations() }
                 .onFailure { LOGGER.error("Failed to save Odin config after unbinding keybinds", it) }
-            LOGGER.info("Unbound ${unbound.size} Odin keybind(s) using Right Shift: $unbound")
+            LOGGER.info("Unbound ${unbound.size} Odin keybind(s) using ${occupied.name}: $unbound")
         }
-        RightShiftConflicts.save()
+        KeybindConflicts.save()
     }
 
     private fun KeybindSetting.unbind() {
