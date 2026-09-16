@@ -184,6 +184,10 @@ class SkyCubedHudWrapper(private val overlay: Overlay) : OneConfigHudWrapper {
         get() = enabledProperty?.get() == false
         set(value) { enabledProperty?.set(!value) }
 
+    // setX/setY clamp against bounds
+    // some overlays build example ItemStacks for that, which requires bound item components
+    override val placementReady: Boolean get() = runCatching { overlay.bounds }.isSuccess
+
     override var scaledWidth: Float
         get() {
             if (!overlay.enabled) return 0f
