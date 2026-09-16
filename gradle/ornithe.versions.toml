@@ -1,7 +1,7 @@
 [versions]
 loader = "0.19.3"
 osl = "0.20.3"
-feather_build = "1"
+feather_build = "2"
 ploceus = "1.17.4"
 
 [libraries]
