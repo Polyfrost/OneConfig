@@ -289,7 +289,7 @@ dependencies {
             "modImplementation"(hypixelFabricMod) { isTransitive = false }
         }
     } else if (loader == "ornithe") {
-        "modLocalRuntime"("io.github.moehreag.hypixel:mod-api-fabric:1.0.2+build.2+mc1.8.9") { isTransitive = false }
+        "modLocalRuntime"("org.polyfrost:mod-api-fabric:1.0.2+build.2+mc1.8.9") { isTransitive = false }
     }
 
     handleApiDep(versionedCatalog["mixin-squared"])
