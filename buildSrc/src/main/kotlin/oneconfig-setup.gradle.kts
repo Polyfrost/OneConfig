@@ -180,7 +180,7 @@ val firmamentRelocatedConfiguration: Configuration by configurations.creating {
 
 val adventurePlatform = when {
     loader != "fabric" -> null
-    stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "7.0.0-SNAPSHOT"
+    stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "7.0.0"
     stonecutter.eval(stonecutter.current.version, ">= 26.1") -> "6.9.0"
     stonecutter.eval(stonecutter.current.version, ">= 1.21.11") -> "6.8.0"
     stonecutter.eval(stonecutter.current.version, ">= 1.21.10") -> "6.7.0"
