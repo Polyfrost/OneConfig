@@ -309,16 +309,42 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     private var _renderedH: MutableState<Float> = mutableStateOf(0f)
     open var renderedH: Float get() = _renderedH.value; set(v) { _renderedH.value = v }
 
+    private var contentHashFrame = Long.MIN_VALUE
+    private var contentHashValue = NO_CONTENT_HASH
+
+    @ApiStatus.Internal
+    fun frameContentHash(): Long {
+        val frame = HudManager.frameId
+        if (contentHashFrame != frame) {
+            contentHashFrame = frame
+            contentHashValue = contentHash()
+        }
+        return contentHashValue
+    }
+
     private var minSizeFrame = Long.MIN_VALUE
     private var minSize: Pair<Float, Float> = 0f to 0f
+    private var minSizeHash = NO_CONTENT_HASH
+    private var minSizeScale = Float.NaN
 
     @ApiStatus.Internal
     fun frameMinimumSize(): Pair<Float, Float> {
         val frame = HudManager.frameId
-        if (minSizeFrame != frame) {
+        if (minSizeFrame == frame) return minSize
+
+        val hash = frameContentHash()
+        val scale = effectiveScale
+        if (minSizeFrame != Long.MIN_VALUE && hash != NO_CONTENT_HASH &&
+            hash == minSizeHash && scale == minSizeScale
+        ) {
             minSizeFrame = frame
-            minSize = minimumSize()
+            return minSize
         }
+
+        minSizeFrame = frame
+        minSizeHash = hash
+        minSizeScale = scale
+        minSize = minimumSize()
         return minSize
     }
 
@@ -963,6 +989,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     open val alwaysRedraw: Boolean
         get() = bgChroma || textChroma || shadowChroma
 
+    open fun contentHash(): Long = NO_CONTENT_HASH
+
     @ApiStatus.Internal
     @JvmField
     var lastLayoutFrame: Long = -1L
@@ -1260,7 +1288,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         _locked = mutableStateOf(this@Hud.locked)
     }
 
-    private companion object {
+    companion object {
+        const val NO_CONTENT_HASH: Long = Long.MIN_VALUE
+
         private fun sanitizeHudCapturedDefaults(tree: Tree) {
             for (id in listOf("staticW", "staticH")) {
                 val prop = tree.getProp(id) ?: continue
