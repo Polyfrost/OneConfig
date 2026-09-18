@@ -16,7 +16,7 @@ public class Mixin_InitSkiaFontRenderer {
     @Final
     private ReloadableResourceManager resourceManager;
 
-    @Inject(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/packs/resources/ReloadableResourceManager;createReload(Ljava/util/concurrent/Executor;Ljava/util/concurrent/Executor;Ljava/util/concurrent/CompletableFuture;Ljava/util/List;)Lnet/minecraft/server/packs/resources/ReloadInstance;"))
+    @Inject(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/packs/resources/ReloadableResourceManager;createReload(Ljava/util/concurrent/Executor;Ljava/util/concurrent/Executor;Ljava/util/concurrent/CompletableFuture;Ljava/util/List;)Lnet/minecraft/server/packs/resources/ReloadInstance;"), require = 1)
     private void impl$registerFontReloadListener(CallbackInfo ci) {
         this.resourceManager.registerReloadListener(SkiaFontRenderer.INSTANCE);
     }

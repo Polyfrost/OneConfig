@@ -58,7 +58,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
         return try {
             prewarm(PREWARM_FRAMES, budget = 1) { }
         } catch (t: Throwable) {
-            ComposePreloader.failStartup("HUD editor warm-up failed", t)
+            ComposePreloader.fail("HUD editor warm-up failed", t)
             false
         }
     }

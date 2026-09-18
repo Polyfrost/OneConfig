@@ -239,7 +239,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
             }
         } catch (t: Throwable) {
             endPrewarm()
-            ComposePreloader.failStartup("menu warm-up failed", t)
+            ComposePreloader.fail("menu warm-up failed", t)
             false
         } finally {
             prewarming = false

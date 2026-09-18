@@ -190,6 +190,10 @@ object SkiaFontRenderer : PreparableReloadListener {
 
     internal fun isReadyForWarmup(): Boolean = loaded && builtOptions == fontOptionsMask()
 
+    @Volatile
+    internal var reloadFailed = false
+        private set
+
     private fun drawGlyphs(canvas: Canvas, text: String, x: Float, y: Float, color: Int, scale: Float, isShadow: Boolean) {
         var curX = x
         var curColor = color
@@ -543,6 +547,7 @@ object SkiaFontRenderer : PreparableReloadListener {
         shaders = HashMap()
         shaderImage = null
         builtOptions = prepared.options
+        reloadFailed = false
         val retiring = ArrayList<RefCnt>(oldAtlases.size + oldImages.size + oldShaders.size)
         retiring.addAll(oldAtlases)
         retiring.addAll(oldImages.values)
@@ -815,6 +820,7 @@ object SkiaFontRenderer : PreparableReloadListener {
                     applyPrepared(prepared)
                 } else {
                     loaded = false
+                    reloadFailed = true
                     lastLoadAttempt = 0L
                 }
             }, executor2)

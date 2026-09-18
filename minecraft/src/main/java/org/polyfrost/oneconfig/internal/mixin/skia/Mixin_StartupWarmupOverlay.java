@@ -6,6 +6,7 @@ import net.minecraft.util.Util;
 //?} else
 //import net.minecraft.Util;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposePreloader;
+import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -37,12 +38,13 @@ public class Mixin_StartupWarmupOverlay {
     private void oneconfig$holdStartupReveal(CallbackInfo ci) {
         // Only hold the initial startup overlay once resource loading has finished
         if (this.fadeIn || this.fadeOutStart < 0L) return;
+        if (!SkiaCtx.INSTANCE.isReady()) ComposePreloader.INSTANCE.fail("Skia context unavailable", null);
         boolean hold = !ComposePreloader.INSTANCE.getStopped();
         if (hold) {
             long now = System.nanoTime();
             if (!this.oneconfig$holdingFade) this.oneconfig$holdStartedNanos = now;
             if (now - this.oneconfig$holdStartedNanos >= ONECONFIG_HOLD_TIMEOUT_NANOS) {
-                ComposePreloader.INSTANCE.failStartup("startup held for more than 15 seconds", null);
+                ComposePreloader.INSTANCE.fail("startup held for more than 15 seconds", null);
                 hold = false;
             }
         }
