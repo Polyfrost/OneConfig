@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -146,7 +147,9 @@ internal fun HudPreviewCanvas(
             skia.save()
             skia.clipRect(org.jetbrains.skia.Rect.makeWH(size.width, size.height))
             skia.scale(scale, scale)
-            state.runtime.root.render(RenderContext(skia))
+            Snapshot.withoutReadObservation {
+                state.runtime.root.render(RenderContext(skia))
+            }
             skia.restore()
         }
     }
