@@ -664,7 +664,7 @@ object SkiaCtx {
                 directContext.flushAndSubmit(mainSurface, false)
                 vulkanService?.restoreMainRTLayout()
             } else {
-                directContext.flush()
+                directContext.flush(mainSurface)
                 GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, savedFbo[0])
                 gl.restore()
             }
@@ -726,7 +726,7 @@ object SkiaCtx {
             if (isVulkanMode) {
                 directContext.flushAndSubmit(surface, false)
             } else {
-                directContext.flush()
+                directContext.flush(surface)
                 GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, savedFbo[0])
                 gl.restore()
             }

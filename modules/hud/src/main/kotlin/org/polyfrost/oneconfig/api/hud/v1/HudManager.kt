@@ -570,7 +570,10 @@ object HudManager {
         for (hud in orderedForRender()) {
             if (shouldDraw(hud)) {
                 frameOrder.add(hud)
-                if (hud.alwaysRedraw) volatileContent = true
+                val chroma = hud.bgChroma || hud.textChroma || hud.shadowChroma
+                if (chroma || (hud.alwaysRedraw && hud.frameContentHash() == Hud.NO_CONTENT_HASH)) {
+                    volatileContent = true
+                }
             } else if (keepsBackgroundOnly(hud)) {
                 layoutOrder.add(hud)
                 if (hud.bgChroma) volatileContent = true
@@ -746,7 +749,10 @@ object HudManager {
         var key = activeInstances.size.toLong() * 31L + frameOrder.size
         key = key * 31L + layoutOrder.size
         // one HUD hiding while another appears must not leave the cached frame in place
-        for (hud in layoutOrder) key = key * 31L + System.identityHashCode(hud)
+        for (hud in layoutOrder) {
+            key = key * 31L + System.identityHashCode(hud)
+            key = key * 31L + hud.frameContentHash()
+        }
         key = key * 31L + (if (isDebugScreenVisible) 1 else 0)
         key = key * 31L + (if (isTabListVisible) 1 else 0)
         key = key * 31L + (if (isGuiScreenOpen) 1 else 0)
