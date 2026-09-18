@@ -47,7 +47,6 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.skiaCanvas
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -77,7 +76,7 @@ val ItemIconShape = RoundedCornerShape(5.dp)
 val ItemTileSize = 44.dp
 
 fun polyItemRenderSizePx(size: Float, hud: Hud?): Int =
-    ceil(size * Platform.compatibility().options().guiScale * (hud?.effectiveScale ?: 1f)).toInt()
+    (ceil(size * Platform.compatibility().options().guiScale * (hud?.effectiveScale ?: 1f)).toInt() + 7) and 7.inv()
 
 /** The catalog deduplicated and sorted by display name so grid positions never jump */
 @Composable
@@ -119,12 +118,9 @@ fun ItemIcon(
         contentAlignment = Alignment.Center,
     ) {
         if (itemIcon != null) {
-            Canvas(modifier = Modifier.fillMaxSize().padding(if (framed) 2.dp else 1.dp).onPlaced { coords ->
+            Canvas(modifier = Modifier.fillMaxSize().padding(if (framed) 2.dp else 1.dp)) {
                 val surfaceScale = Platform.screen().surfaceRatio().coerceAtLeast(0.0001f)
-                itemIcon.setRenderSizePx(
-                    ceil(maxOf(coords.size.width, coords.size.height) * surfaceScale).toInt()
-                )
-            }) {
+                itemIcon.setRenderSizePx(ceil(maxOf(size.width, size.height) * surfaceScale).toInt())
                 drawIntoCanvas { canvas ->
                     itemIcon.draw(
                         canvas.skiaCanvas,

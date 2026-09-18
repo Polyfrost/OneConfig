@@ -3,9 +3,11 @@ package org.polyfrost.oneconfig.api.ui.v1.item
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import net.minecraft.client.Minecraft
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.world.item.Item
@@ -34,7 +36,8 @@ private const val BAR_WIDTH = 13f
 private val BAR_BACKGROUND = PolyColor(0xFF000000.toInt())
 private val COOLDOWN_OVERLAY = PolyColor(0x7FFFFFFF)
 
-/** Draws the item identified by its registry ID, or a placeholder while it is unavailable. */
+private val clientDispatcher by lazy { Minecraft.getInstance().asCoroutineDispatcher() }
+
 @Composable
 fun PolyItemIcon(
     id: String,
@@ -52,6 +55,7 @@ fun PolyItemIcon(
             rectStroke(x, y, w, h, placeholderColor, strokeWidth = 1f, radius = 1f)
             line(x, y, x + w, y + h, placeholderColor, strokeWidth = 1f)
         } else {
+            itemIcon.setRenderSizePx(polyItemRenderSizePx(w, hud))
             itemIcon.draw(canvas, Rect.makeLTRB(x, y, x + w, y + h))
         }
     }
@@ -89,7 +93,9 @@ fun PolyItemIcon(
 
     PolyBox(modifier = modifier.size(size, size)) {
         PolyCanvas(modifier = PolyModifier.size(size, size)) { x, y, w, h ->
-            icon?.draw(canvas, Rect.makeLTRB(x, y, x + w, y + h))
+            if (icon == null) return@PolyCanvas
+            icon.setRenderSizePx(polyItemRenderSizePx(w, hud))
+            icon.draw(canvas, Rect.makeLTRB(x, y, x + w, y + h))
         }
         if (!visible || !decorations || stack.isEmpty) return@PolyBox
 
@@ -118,22 +124,22 @@ private fun ItemCooldown(stack: ItemStack, scale: Float) {
     val size = ITEM_SIZE * scale
     val forHud = LocalHud.current != null
     val height = remember { intArrayOf(cooldownHeight(stack)) }
-    // Read the screen revision during drawing so an enclosing Compose layer observes it.
-    val screenRevision = if (forHud) null else remember { mutableIntStateOf(0) }
 
     LaunchedEffect(forHud, stack) {
-        while (true) {
-            val updated = cooldownHeight(stack)
-            if (height[0] != updated) {
-                height[0] = updated
-                if (forHud) HudManager.invalidate() else screenRevision?.let { it.intValue++ }
+        withContext(clientDispatcher) {
+            while (true) {
+                val updated = cooldownHeight(stack)
+                if (height[0] != updated) {
+                    height[0] = updated
+                    // Previews render without read observation, so they redraw on their shared revision.
+                    if (forHud) HudManager.invalidate() else HudManager.previewRevision.intValue++
+                }
+                if (updated > 0) withFrameNanos { } else delay(50)
             }
-            withFrameNanos { }
         }
     }
 
     PolyCanvas(PolyModifier.size(size, size)) { x, y, _, _ ->
-        screenRevision?.intValue
         val overlayHeight = height[0]
         if (overlayHeight > 0) {
             rect(x, y + (ITEM_SIZE - overlayHeight) * scale, size, overlayHeight * scale, COOLDOWN_OVERLAY)

@@ -67,7 +67,7 @@ import org.jetbrains.skia.SamplingMode
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
 import org.polyfrost.oneconfig.api.event.v1.events.ResizeEvent
-import org.polyfrost.oneconfig.api.event.v1.events.WorldEvent
+import org.polyfrost.oneconfig.api.event.v1.events.ServerJoinEvent
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.internal.ui.SkiaOffscreenTarget
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
@@ -176,6 +176,8 @@ class MinecraftItemCatalogService : ItemCatalogService {
         var atlasSource: Rect = Rect.makeWH(0f, 0f)
         var atlas: AtlasState? = null
         var animated = false
+        var special = false
+        var specialRefreshAtNs = 0L
         var failed = false
         var identityInitialized = false
         var committedIdentity = IdentityBuffer()
@@ -278,7 +280,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
 
     init {
         EventManager.register(ResourceFinishedLoading::class.java, Runnable(::clearCaches))
-        EventManager.register(WorldEvent.Load::class.java, Runnable(::clearCaches))
+        EventManager.register(ServerJoinEvent::class.java, Runnable(::clearCaches))
         EventManager.register(ResizeEvent::class.java, Runnable(::recover))
     }
 
@@ -310,7 +312,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
         val firstFailure = synchronized(requestLock) { failedItems.add(item) }
         val id = BuiltInRegistries.ITEM.getKey(item)
         if (firstFailure) {
-            LOG.warn("Item icon for {} failed while {}, it will stay blank until next world load or resources reload", id, stage, throwable)
+            LOG.warn("Item icon for {} failed while {}, it will stay blank until the next server join, resize, or resources reload", id, stage, throwable)
         }
     }
 
@@ -329,9 +331,10 @@ class MinecraftItemCatalogService : ItemCatalogService {
 
         //? if >= 26.1 {
         // Item components are not bound before the first world load, so initialize them for title screen rendering.
+        val componentsBound = { BuiltInRegistries.ITEM.all { BuiltInRegistries.ITEM.wrapAsHolder(it).areComponentsBound() } }
         java.util.concurrent.CompletableFuture.supplyAsync(
             {
-                if (BuiltInRegistries.ITEM.all { BuiltInRegistries.ITEM.wrapAsHolder(it).areComponentsBound() }) null else {
+                if (componentsBound()) null else {
                     //~ if < 26.3 'createWorldLookup' -> 'createLookup'
                     val lookup = net.minecraft.data.registries.VanillaRegistries.createWorldLookup()
                     BuiltInRegistries.DATA_COMPONENT_INITIALIZERS.build(lookup)
@@ -342,7 +345,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
             Minecraft.getInstance().schedule {
                 try {
                     if (failure != null) throw failure
-                    pending?.forEach { it.apply() }
+                    if (!componentsBound()) pending?.forEach { it.apply() }
                     ItemCatalog.markIconsAvailable()
                 } catch (throwable: Throwable) {
                     LOG.warn("Could not enable item icons before joining a world", throwable)
@@ -446,6 +449,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
         val changed = atlasState.changed
         changed.clear()
         val rebuild = targetChanged || atlasState.rebuild
+        val now = System.nanoTime()
         for (entry in atlasState.entries) {
             if (entry.failed) continue
             val resolvedChanged = try {
@@ -455,7 +459,11 @@ class MinecraftItemCatalogService : ItemCatalogService {
                 changed.add(entry)
                 continue
             }
-            if (resolvedChanged || entry.animated || rebuild) changed.add(entry)
+            val specialRefresh = entry.special && now - entry.specialRefreshAtNs >= 0
+            if (resolvedChanged || entry.animated || rebuild || specialRefresh) {
+                changed.add(entry)
+                if (entry.special) entry.specialRefreshAtNs = now + SPECIAL_REFRESH_NS
+            }
         }
 
         if (changed.isEmpty()) return false
@@ -481,6 +489,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
     private fun invalidateEntries(entries: Collection<IconEntry>) {
         Snapshot.withMutableSnapshot {
             for (entry in entries) entry.revision.intValue++
+            if (entries.any { !it.forHud }) HudManager.previewRevision.intValue++
         }
     }
 
@@ -501,6 +510,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
             0,
         )
         val animated = state.isAnimated
+        val special = false
         //?} else if >= 1.21.4 {
         /*val state = entry.resolutionState
         client.itemModelResolver.updateForTopItem(
@@ -514,6 +524,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
             0,
         )
         var animated = false
+        var special = false
         scratch.int(state.activeLayerCount)
         for (index in 0 until state.activeLayerCount) {
             val layer = state.layers[index]
@@ -553,7 +564,9 @@ class MinecraftItemCatalogService : ItemCatalogService {
             }
             scratch.int(quadCount)
             *///?}
-            if (layer.foilType != ItemStackRenderState.FoilType.NONE || layer.specialRenderer != null) animated = true
+            if (layer.foilType != ItemStackRenderState.FoilType.NONE) animated = true
+            if (layer.specialRenderer != null) special = true
+            scratch.ref(layer.specialRenderer)
             scratch.int(layer.tintLayers.size)
             layer.tintLayers.forEach { tint -> scratch.int(tint) }
             scratch.ref(layer.renderType)
@@ -565,6 +578,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
             scratch.int(if (layer.model?.usesBlockLight() == true) 1 else 0)
             *///?}
         }
+        if (special) scratch.int(stack.components.hashCode())
         *///?} else {
         /*val renderer = client.itemRenderer
         val resolvedModel = renderer.getModel(stack, client.level, client.player, 0)
@@ -581,7 +595,9 @@ class MinecraftItemCatalogService : ItemCatalogService {
         entry.resolvedGuiModel = guiModel
         entry.resolvedUsesBlockLight = resolvedModel.usesBlockLight()
         // These can change each frame without changing model identity.
-        var animated = stack.hasFoil() || guiModel.isCustomRenderer
+        var animated = stack.hasFoil()
+        val special = guiModel.isCustomRenderer
+        if (special) scratch.int(stack.components.hashCode())
         scratch.ref(guiModel)
         val random = entry.resolutionRandom
         random.setSeed(42L)
@@ -630,6 +646,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
         entry.identityInitialized = true
         val animationChanged = entry.animated != animated
         entry.animated = animated
+        entry.special = special
         return changed || animationChanged
     }
 
@@ -1139,5 +1156,6 @@ class MinecraftItemCatalogService : ItemCatalogService {
     private companion object {
         val LOG = LoggerFactory.getLogger("OneConfig/ItemList")
         const val CELL_SIZE = 16
+        const val SPECIAL_REFRESH_NS = 1_000_000_000L
     }
 }
