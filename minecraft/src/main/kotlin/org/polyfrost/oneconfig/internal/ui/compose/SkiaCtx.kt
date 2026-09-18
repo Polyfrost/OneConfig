@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
+//? if >= 26.2
+import com.mojang.renderpearl.api.GpuFormat
 import com.mojang.blaze3d.pipeline.TextureTarget
 import com.mojang.blaze3d.systems.RenderSystem
 //? if >= 1.21.5 && < 1.21.8 {
@@ -159,16 +161,16 @@ object SkiaCtx {
     private var composeTextureWrapper: HudGpuTexture? = null
 
     private class HudGpuTexture : net.minecraft.client.renderer.texture.AbstractTexture() {
-        fun setGpuTexture(t: com.mojang.blaze3d.textures.GpuTexture?) {
+        fun setGpuTexture(t: com.mojang.renderpearl.api.textures.GpuTexture?) {
             this.texture = t
         }
 
         //? >= 1.21.8 {
-        fun setGpuTextureView(v: com.mojang.blaze3d.textures.GpuTextureView?) {
+        fun setGpuTextureView(v: com.mojang.renderpearl.api.textures.GpuTextureView?) {
             this.textureView = v
             //? >= 26.1 {
             this.sampler = com.mojang.blaze3d.systems.RenderSystem.getSamplerCache()
-                .getClampToEdge(com.mojang.blaze3d.textures.FilterMode.LINEAR)
+                .getClampToEdge(com.mojang.renderpearl.api.textures.FilterMode.LINEAR)
             //? }
         }
         //? }
@@ -789,9 +791,15 @@ object SkiaCtx {
             if (System.currentTimeMillis() - allocFailedAt < ALLOC_RETRY_COOLDOWN_MS) return null
             destroyHudTarget()
             rt = try {
-                //? if >= 26.2 {
-                TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
-                //? } else if >= 1.21.5 {
+                //? if >= 26.3 {
+                TextureTarget(
+                    null, w, h,
+                    GpuFormat.RGBA8_UNORM,
+                    GpuFormat.D32_FLOAT,
+                )
+                //? } else if >= 26.2 {
+                /*TextureTarget(null, w, h, true, GpuFormat.RGBA8_UNORM)
+                *///? } else if >= 1.21.5 {
                 /*TextureTarget(null, w, h, true)
                 *///? } else if >= 1.21.4 {
                 // TextureTarget(w, h, true)
@@ -876,9 +884,15 @@ object SkiaCtx {
             if (System.currentTimeMillis() - allocFailedAt < ALLOC_RETRY_COOLDOWN_MS) return null
             destroyComposeTarget()
             rt = try {
-                //? if >= 26.2 {
-                TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
-                //? } else if >= 1.21.5 {
+                //? if >= 26.3 {
+                TextureTarget(
+                    null, w, h,
+                    GpuFormat.RGBA8_UNORM,
+                    GpuFormat.D32_FLOAT,
+                )
+                //? } else if >= 26.2 {
+                /*TextureTarget(null, w, h, true, GpuFormat.RGBA8_UNORM)
+                *///? } else if >= 1.21.5 {
                 /*TextureTarget(null, w, h, true)
                 *///? } else if >= 1.21.4 {
                 // TextureTarget(w, h, true)

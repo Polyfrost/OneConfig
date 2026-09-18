@@ -115,6 +115,8 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
         super.removed()
     }
 
+    override fun isPauseScreen(): Boolean = OneConfigConfig.pauseGame
+
     private fun handleOneConfigKeybind(): Boolean {
         if (closeRequested) return cancelClose()
         if (OneConfigConfig.keybindClosesGui) {

@@ -1,3 +1,2 @@
-1.1.17 changelogs:
-- Improve notification performance
-- Fix minor bugs
+1.2.1 changelogs:
+- remove ui scaling config
