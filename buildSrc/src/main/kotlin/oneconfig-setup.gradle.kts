@@ -87,6 +87,7 @@ if (loader == "fabric") {
     val modMenuShimClasses = layout.buildDirectory.dir("classes/modMenuShim")
     val compileModMenuApiShimJava = tasks.register<JavaCompile>("compileModMenuApiShimJava") {
         val mainSourceSet = sourceSets.named("main").get()
+        javaCompiler.set(tasks.named<JavaCompile>("compileJava").flatMap { it.javaCompiler })
         source(rootProject.projectDir.resolve("minecraft/src/modMenuShim/java"))
         classpath = files(mainSourceSet.output.classesDirs, mainSourceSet.compileClasspath)
         destinationDirectory.set(modMenuShimClasses)
