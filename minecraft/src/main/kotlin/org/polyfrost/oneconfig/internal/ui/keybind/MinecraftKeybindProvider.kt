@@ -7,6 +7,8 @@ import java.util.function.Supplier
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
 import net.minecraft.network.chat.Component
+//? if >= 26.3
+import net.minecraft.server.packs.FixedPathPackResources
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
@@ -128,7 +130,11 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
     }
 
     private fun extractMinecraftIcon(): String? = runCatching {
-        val vanilla = Minecraft.getInstance().vanillaPackResources
+        //? if >= 26.3 {
+        val vanilla = Minecraft.getInstance().vanillaPackResources.fullResources()
+                as? FixedPathPackResources ?: return@runCatching null
+        //?} else
+        //val vanilla = Minecraft.getInstance().vanillaPackResources
         val bytes = listOf(128, 256, 64, 32).firstNotNullOfOrNull { size ->
             runCatching {
                 val supplier = vanilla.getRootResource("icons", "icon_${size}x$size.png") ?: return@runCatching null
@@ -164,10 +170,10 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
     private fun InputConstants.Key.toOneConfigKeybind(): OneConfigKeybind {
         return when (type) {
             //~ if sdl_keycodes 'Type.KEYSYM' -> 'Type.KEYBOARD'
-            InputConstants.Type.KEYSYM if value > 0 ->
+            InputConstants.Type.KEYBOARD if value > 0 ->
                 OneConfigKeybind(intArrayOf(value), null, KeyModifiers.NONE, 0L) { true }
             //~ if sdl_keycodes 'value >= 0' -> 'value > 0'
-            InputConstants.Type.MOUSE if value >= 0 ->
+            InputConstants.Type.MOUSE if value > 0 ->
                 OneConfigKeybind(null, intArrayOf(value), KeyModifiers.NONE, 0L) { true }
             else -> OneConfigKeybind(null, null, KeyModifiers.NONE, 0L) { true }
         }
@@ -179,7 +185,7 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
         val key = when {
             keybind == null || !keybind.isBound -> InputConstants.UNKNOWN
             //~ if sdl_keycodes 'it >= 0' -> 'it > 0'
-            mouseButtons?.firstOrNull { it >= 0 } != null -> MinecraftKeybindCodec.mouse(mouseButtons.first { it >= 0 })
+            mouseButtons?.firstOrNull { it > 0 } != null -> MinecraftKeybindCodec.mouse(mouseButtons.first { it > 0 })
             keyCodes?.firstOrNull { it > 0 } != null -> MinecraftKeybindCodec.keysym(keyCodes.first { it > 0 })
             else -> InputConstants.UNKNOWN
         }

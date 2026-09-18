@@ -1,13 +1,9 @@
 [versions]
-command-api-v2 = "2.3.1+52fff9ec2c"
-
 modmenu = "15.0.0-beta.3"
 yacl = "3.7.1+1.21.6-fabric"
 moulconfig = "3.11.0"
 
 [libraries]
-command-api-v2 = { module = "net.fabricmc.fabric-api:fabric-command-api-v2", version.ref = "command-api-v2" }
-
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
 moulconfig = { module = "org.notenoughupdates.moulconfig:common", version.ref = "moulconfig" }

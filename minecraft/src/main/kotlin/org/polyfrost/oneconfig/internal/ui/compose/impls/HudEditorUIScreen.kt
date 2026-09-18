@@ -94,6 +94,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
 
     override fun init() {
         everOpened = true
+        HudManager.onEditorScreenAdded()
         HudManager.editorOpenRevision.intValue++
         closeRequested = false
         closeRequestedAt = 0L
@@ -114,6 +115,8 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
         UiSounds.releaseAmbience()
         super.removed()
     }
+
+    override fun isPauseScreen(): Boolean = OneConfigConfig.pauseGame
 
     private fun handleOneConfigKeybind(): Boolean {
         if (closeRequested) return cancelClose()
@@ -181,7 +184,12 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
     @Composable
     override fun compose() {
         DisposableEffect(Unit) {
-            onDispose { HudManager.onEditorScreenRemoved() }
+            // a failed scene is disposed and rebuilt while the screen stays open, which is not a close
+            onDispose {
+                if (Platform.screen().current<Any?>() !== this@HudEditorUIScreen) {
+                    HudManager.onEditorScreenRemoved()
+                }
+            }
         }
 
         var visible by remember { mutableStateOf(false) }

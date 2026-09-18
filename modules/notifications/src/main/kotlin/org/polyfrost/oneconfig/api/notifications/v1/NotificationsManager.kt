@@ -45,7 +45,8 @@ object NotificationsManager {
     }
 
     private fun mutate(block: () -> Unit) {
-        if (Snapshot.current.readOnly) block() else Snapshot.withMutableSnapshot(block)
+        if (Snapshot.current.readOnly) Snapshot.global { Snapshot.withMutableSnapshot(block) }
+        else Snapshot.withMutableSnapshot(block)
     }
 
     /**

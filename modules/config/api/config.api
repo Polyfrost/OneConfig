@@ -146,6 +146,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/backend/Backend {
 	public fun exists (Ljava/lang/String;)Z
 	public final fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public final fun getTrees ()Ljava/util/Collection;
+	public final fun lastSaveFailure ()Ljava/lang/Exception;
 	public final fun load (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public final fun load (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z
 	protected abstract fun load0 (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;

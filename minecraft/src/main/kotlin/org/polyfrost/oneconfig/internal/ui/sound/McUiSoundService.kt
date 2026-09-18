@@ -14,7 +14,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
 class McUiSoundService : UiSoundService {
-    private val random = RandomSource.create()
     private val sliderTick = AtomicInteger(0)
 
     @Volatile
@@ -237,7 +236,7 @@ class McUiSoundService : UiSoundService {
         @Volatile var targetVolume: Float,
         val theme: UiSoundTheme,
         private val nativeLoop: Boolean,
-    ) : AbstractTickableSoundInstance(event, source, random) {
+    ) : AbstractTickableSoundInstance(event, source, RandomSource.create()) {
 
         @Volatile
         private var fadingOut = false
