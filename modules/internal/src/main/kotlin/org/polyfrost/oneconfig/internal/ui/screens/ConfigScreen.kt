@@ -678,7 +678,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 modifier = Modifier
                     .fillMaxWidth()
                     .blockInteraction(!enabled)
-                    .padding(horizontal = 16.dp, vertical = verticalPadding),
+                    .padding(start = 16.dp, end = 16.dp, top = verticalPadding, bottom = if (nested) 8.dp else verticalPadding),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 SettingLabel(prop, nested = nested)
