@@ -285,7 +285,10 @@ class MinecraftItemCatalogService : ItemCatalogService {
 
     init {
         EventManager.register(ResourceFinishedLoading::class.java, Runnable(::clearCaches))
-        EventManager.register(ServerJoinEvent::class.java, Runnable(::clearCaches))
+        EventManager.register(ServerJoinEvent::class.java, Runnable {
+            clearCaches()
+            ItemCatalog.markIconsAvailable()
+        })
         EventManager.register(ResizeEvent::class.java, Runnable(::recover))
         EventManager.register(TickEvent.End::class.java, Runnable { clientTick++ })
     }
