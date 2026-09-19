@@ -811,6 +811,8 @@ object SkiaCtx {
                 return null
             }
             hudTarget = rt
+            //? if < 1.21.5
+            //org.polyfrost.oneconfig.internal.ui.RenderTargetFbo.restoreMainTarget()
 
             //? >= 1.21.5 {
             if (!isVulkanMode) {
@@ -856,7 +858,11 @@ object SkiaCtx {
     private fun destroyHudTarget() {
         hudSurface?.close(); hudSurface = null
         hudBrt?.close(); hudBrt = null
-        hudTarget?.destroyBuffers()
+        hudTarget?.let { target ->
+            target.destroyBuffers()
+            //? if < 1.21.5
+            //org.polyfrost.oneconfig.internal.ui.RenderTargetFbo.restoreMainTarget()
+        }
         hudTarget = null
     }
 
