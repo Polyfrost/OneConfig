@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.skiaCanvas
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -118,9 +119,11 @@ fun ItemIcon(
         contentAlignment = Alignment.Center,
     ) {
         if (itemIcon != null) {
-            Canvas(modifier = Modifier.fillMaxSize().padding(if (framed) 2.dp else 1.dp)) {
+            // Register at placement so icons revealed by a scroll are in the atlas before this frame draws.
+            Canvas(modifier = Modifier.fillMaxSize().padding(if (framed) 2.dp else 1.dp).onPlaced { coords ->
                 val surfaceScale = Platform.screen().surfaceRatio().coerceAtLeast(0.0001f)
-                itemIcon.setRenderSizePx(ceil(maxOf(size.width, size.height) * surfaceScale).toInt())
+                itemIcon.setRenderSizePx(ceil(maxOf(coords.size.width, coords.size.height) * surfaceScale).toInt())
+            }) {
                 drawIntoCanvas { canvas ->
                     itemIcon.draw(
                         canvas.skiaCanvas,

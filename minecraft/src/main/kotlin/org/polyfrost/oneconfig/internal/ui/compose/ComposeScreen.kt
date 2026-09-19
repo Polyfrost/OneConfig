@@ -562,6 +562,12 @@ abstract class ComposeScreen(
             withScene { it.invalidatePositionInWindow() }
         }
 
+        // Recompose and lay out before rendering so icons revealed by scrolling or filtering draw on the same frame.
+        val nanos = frameNanos()
+        withScene { scene ->
+            recomposerOrNull?.performFrame(nanos)
+            scene.measureAndLayout()
+        }
         if (ItemCatalog.renderIcons()) sceneDirty = true
 
         val debugOverlayOnTop = org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen.shouldSuppressVanilla()
@@ -591,7 +597,7 @@ abstract class ComposeScreen(
                     val scope = renderScopeOrNull
                     val composeCanvas = canvas.asComposeCanvas()
                     val rendered = if (recomposer == null || scope == null) null else withScene {
-                        with(scope) { it.render(recomposer, composeCanvas, frameNanos()) }
+                        with(scope) { it.render(recomposer, composeCanvas, nanos) }
                     }
                     if (rendered != null) {
                         sceneRebuilds = 0
