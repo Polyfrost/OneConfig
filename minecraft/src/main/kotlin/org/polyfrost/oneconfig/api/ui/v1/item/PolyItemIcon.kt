@@ -6,7 +6,8 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
 import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import net.minecraft.client.Minecraft
 import net.minecraft.core.registries.BuiltInRegistries
@@ -20,6 +21,8 @@ import org.polyfrost.compose.composables.PolyModifier
 import org.polyfrost.compose.composables.absoluteAt
 import org.polyfrost.compose.composables.size
 import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.oneconfig.api.event.v1.EventManager
+import org.polyfrost.oneconfig.api.event.v1.events.TickEvent
 import org.polyfrost.oneconfig.api.hud.v1.LocalHud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
@@ -38,6 +41,16 @@ private val COOLDOWN_OVERLAY = PolyColor(0x7FFFFFFF)
 
 private val clientDispatcher by lazy { Minecraft.getInstance().asCoroutineDispatcher() }
 
+private val clientTicks = MutableStateFlow(0).also { ticks ->
+    EventManager.register(TickEvent.End::class.java, Runnable { ticks.value++ })
+}
+
+private suspend fun awaitClientTick() {
+    val seen = clientTicks.value
+    clientTicks.first { it != seen }
+}
+
+/** Draws the item identified by its registry ID, or a placeholder while it is unavailable. */
 @Composable
 fun PolyItemIcon(
     id: String,
@@ -134,7 +147,7 @@ private fun ItemCooldown(stack: ItemStack, scale: Float) {
                     // Previews render without read observation, so they redraw on their shared revision.
                     if (forHud) HudManager.invalidate() else HudManager.previewRevision.intValue++
                 }
-                if (updated > 0) withFrameNanos { } else delay(50)
+                if (updated > 0) withFrameNanos { } else awaitClientTick()
             }
         }
     }
