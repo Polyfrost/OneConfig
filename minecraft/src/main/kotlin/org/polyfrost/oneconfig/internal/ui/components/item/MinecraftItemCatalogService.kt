@@ -68,6 +68,7 @@ import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
 import org.polyfrost.oneconfig.api.event.v1.events.ResizeEvent
 import org.polyfrost.oneconfig.api.event.v1.events.ServerJoinEvent
+import org.polyfrost.oneconfig.api.event.v1.events.TickEvent
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.internal.ui.SkiaOffscreenTarget
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
@@ -246,6 +247,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
         var atlasImage: Image? = null
         var readyForSampling = false
         var rebuild = true
+        var animatedTick = -1
         val freeSlots = ArrayDeque<Int>()
         var nextUnusedSlot = 0
         //? if >= 1.21.8
@@ -275,6 +277,9 @@ class MinecraftItemCatalogService : ItemCatalogService {
     private var renderingFailed = false
     private val failedItems = HashSet<Item>()
 
+    // Texture animations and glint only change visibly per tick, so animated icons rerender at that rate.
+    private var clientTick = 0
+
     //? if >= 1.21.8
     private data class ItemGuiResources(val state: GuiRenderState, val renderer: GuiRenderer)
 
@@ -282,6 +287,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
         EventManager.register(ResourceFinishedLoading::class.java, Runnable(::clearCaches))
         EventManager.register(ServerJoinEvent::class.java, Runnable(::clearCaches))
         EventManager.register(ResizeEvent::class.java, Runnable(::recover))
+        EventManager.register(TickEvent.End::class.java, Runnable { clientTick++ })
     }
 
     private fun clearCaches() {
@@ -460,11 +466,12 @@ class MinecraftItemCatalogService : ItemCatalogService {
                 continue
             }
             val specialRefresh = entry.special && now - entry.specialRefreshAtNs >= 0
-            if (resolvedChanged || entry.animated || rebuild || specialRefresh) {
+            if (resolvedChanged || (entry.animated && atlasState.animatedTick != clientTick) || rebuild || specialRefresh) {
                 changed.add(entry)
                 if (entry.special) entry.specialRefreshAtNs = now + SPECIAL_REFRESH_NS
             }
         }
+        atlasState.animatedTick = clientTick
 
         if (changed.isEmpty()) return false
 
