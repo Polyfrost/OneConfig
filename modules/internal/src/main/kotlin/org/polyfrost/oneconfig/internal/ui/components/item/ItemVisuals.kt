@@ -76,7 +76,7 @@ val ItemIconShape = RoundedCornerShape(5.dp)
 val ItemTileSize = 44.dp
 
 fun polyItemRenderSizePx(size: Float, hud: Hud?): Int =
-    (ceil(size * Platform.compatibility().options().guiScale * (hud?.effectiveScale ?: 1f)).toInt() + 7) and 7.inv()
+    ceil(size * Platform.compatibility().options().guiScale * (hud?.effectiveScale ?: 1f)).toInt()
 
 /** The catalog deduplicated and sorted by display name so grid positions never jump */
 @Composable
