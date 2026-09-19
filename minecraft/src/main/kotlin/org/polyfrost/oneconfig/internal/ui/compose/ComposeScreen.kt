@@ -45,6 +45,7 @@ import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.components.LocalUiOversample
+import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import java.awt.Component
 import java.awt.event.InputEvent
@@ -560,6 +561,8 @@ abstract class ComposeScreen(
         if (metricsChanged) {
             withScene { it.invalidatePositionInWindow() }
         }
+
+        if (ItemCatalog.renderIcons()) sceneDirty = true
 
         val debugOverlayOnTop = org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen.shouldSuppressVanilla()
         if (renderMode == RenderMode.ON_DEMAND && !sceneDirty && !awaitingFirstFrame &&

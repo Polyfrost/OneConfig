@@ -101,6 +101,11 @@ class SkiaOffscreenTarget {
         lastW = -1; lastH = -1
     }
 
+    fun dispose() {
+        destroy()
+        live.remove(this)
+    }
+
     companion object {
         private val LOG = LoggerFactory.getLogger("OneConfig/SkiaOffscreenTarget")
 

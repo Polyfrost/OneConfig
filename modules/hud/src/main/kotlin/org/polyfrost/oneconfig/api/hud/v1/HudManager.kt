@@ -568,7 +568,9 @@ object HudManager {
         layoutOrder.clear()
         var volatileContent = false
         for (hud in orderedForRender()) {
-            if (shouldDraw(hud)) {
+            val visible = shouldDraw(hud)
+            hud.isVisible.value = visible
+            if (visible) {
                 frameOrder.add(hud)
                 if (hud.alwaysRedraw) volatileContent = true
             } else if (keepsBackgroundOnly(hud)) {
@@ -580,22 +582,37 @@ object HudManager {
         return volatileContent
     }
 
-    @ApiStatus.Internal
-    fun beginFrame(screenWidth: Float, screenHeight: Float): Boolean {
+    private inline fun prepareFrame(
+        screenWidth: Float,
+        screenHeight: Float,
+        selectHuds: () -> List<Hud>,
+        afterPreparation: Runnable? = null,
+    ): Float {
         drainProfileReload()
         migratePositions(screenWidth, screenHeight)
         val scale = Platform.compatibility().options().guiScale
 
         frameId++
-
         Snapshot.sendApplyNotifications()
 
-        val volatileContent = collectFrameOrder()
+        val huds = selectHuds()
+        updateAndAdvance(huds)
+        layoutAll(huds, screenWidth, screenHeight, scale)
+        updateBackgroundGroups(huds, screenWidth, screenHeight, scale)
 
-        updateAndAdvance(layoutOrder)
+        // Atlas rendering can invalidate HUD content after composition has reconciled icon handles.
+        // Run it before consuming contentDirty so those changes are drawn in this frame.
+        afterPreparation?.run()
+        return scale
+    }
 
-        layoutAll(layoutOrder, screenWidth, screenHeight, scale)
-        updateBackgroundGroups(layoutOrder, screenWidth, screenHeight, scale)
+    @ApiStatus.Internal
+    fun beginFrame(screenWidth: Float, screenHeight: Float, beforeDirtyCheck: Runnable? = null): Boolean {
+        var volatileContent = false
+        val scale = prepareFrame(screenWidth, screenHeight, {
+            volatileContent = collectFrameOrder()
+            layoutOrder
+        }, beforeDirtyCheck)
 
         val key = frameKey()
         val keyChanged = key != lastFrameKey ||
@@ -800,39 +817,28 @@ object HudManager {
 
     @ApiStatus.Internal
     fun prepare(screenWidth: Float, screenHeight: Float) {
-        drainProfileReload()
-        migratePositions(screenWidth, screenHeight)
-        val scale = Platform.compatibility().options().guiScale
-        Snapshot.sendApplyNotifications()
-        frameId++
-        val huds = prepareOrder
-        huds.clear()
-        for (hud in activeInstances) if (hud !is LegacyHudMarker) huds.add(hud)
-        updateAndAdvance(huds)
-        for (hud in huds) {
-            try {
-                layoutOnce(hud, screenWidth, screenHeight, scale)
-            } catch (e: Throwable) {
-                LOGGER.error("Failed to lay out HUD ${hud.title}", e)
+        prepareFrame(screenWidth, screenHeight, {
+            prepareOrder.clear()
+            for (hud in activeInstances) {
+                val visible = hud !is LegacyHudMarker
+                hud.isVisible.value = visible
+                if (visible) prepareOrder.add(hud)
             }
-        }
-        updateBackgroundGroups(huds, screenWidth, screenHeight, scale)
+            prepareOrder
+        })
     }
 
     @ApiStatus.Internal
     fun render(ctx: RenderContext, screenWidth: Float, screenHeight: Float) {
-        val scale = Platform.compatibility().options().guiScale
-
         val prepared = preparedFrameValid
         preparedFrameValid = false
-        if (!prepared) {
-            migratePositions(screenWidth, screenHeight)
-            Snapshot.sendApplyNotifications()
-            frameId++
-            collectFrameOrder()
-            updateAndAdvance(layoutOrder)
-            layoutAll(layoutOrder, screenWidth, screenHeight, scale)
-            updateBackgroundGroups(layoutOrder, screenWidth, screenHeight, scale)
+        val scale = if (prepared) {
+            Platform.compatibility().options().guiScale
+        } else {
+            prepareFrame(screenWidth, screenHeight, {
+                collectFrameOrder()
+                layoutOrder
+            })
         }
 
         ctx.save()
