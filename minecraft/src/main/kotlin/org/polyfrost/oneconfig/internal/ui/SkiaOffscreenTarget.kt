@@ -59,9 +59,11 @@ class SkiaOffscreenTarget {
             val (b, colorFmt) = svc.makeOffscreenBRT(rt, w, h)
             brt = b
             val origin = if (SkiaCtx.isDeferredComposeBackend) SurfaceOrigin.TOP_LEFT else SurfaceOrigin.BOTTOM_LEFT
-            surface = Surface.makeFromBackendRenderTarget(
-                SkiaCtx.directContext, b, origin, colorFmt, ColorSpace.sRGB, null,
-            )
+            surface = SkiaCtx.withIsolatedGl {
+                Surface.makeFromBackendRenderTarget(
+                    SkiaCtx.directContext, b, origin, colorFmt, ColorSpace.sRGB, null,
+                )
+            }
             if (surface == null) {
                 destroy()
                 return false

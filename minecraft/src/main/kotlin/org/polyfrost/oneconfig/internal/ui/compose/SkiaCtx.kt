@@ -328,18 +328,32 @@ object SkiaCtx {
         queuedWarmups.add(block)
     }
 
+    /**
+     * Use for any Skia GPU call outside a draw. Skia applies a pending [DirectContext.resetGLAll] on its next GL call,
+     * and GlStateManager's cache becomes stale.
+     */
+    fun <T> withIsolatedGl(block: () -> T): T {
+        if (isVulkanMode || !this::directContext.isInitialized) return block()
+        gl.capture()
+        directContext.resetGLAll()
+        try {
+            return block()
+        } finally {
+            directContext.flush()
+            gl.restore()
+        }
+    }
+
     private fun runWarmups() {
         if (!this::directContext.isInitialized) return
         if (queuedWarmups.isEmpty()) return
         val warmups = queuedWarmups.toList()
         queuedWarmups.clear()
-        val savedFbo = IntArray(1)
         try {
             if (isVulkanMode) {
                 directContext.resetAll()
             } else {
                 gl.capture()
-                GL30.glGetIntegerv(GL30.GL_FRAMEBUFFER_BINDING, savedFbo)
                 directContext.resetGLAll()
             }
 
@@ -349,13 +363,11 @@ object SkiaCtx {
                 directContext.flush()
             } else {
                 directContext.flush()
-                GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, savedFbo[0])
                 gl.restore()
             }
         } catch (e: Throwable) {
             LOG.warn("SkiaCtx.runWarmups() error", e)
             if (!isVulkanMode) try {
-                GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, savedFbo[0])
                 gl.restore()
             } catch (_: Throwable) {
             }
@@ -623,15 +635,12 @@ object SkiaCtx {
         if (mainSurface == null) return
         currentSurface = mainSurface
 
-        val savedFbo = IntArray(1)
         try {
             if (isVulkanMode) {
                 vulkanService?.midFrameFlush()
                 directContext.resetAll()
             } else {
                 gl.capture()
-                // restoring this fbo later avoids screen flickering
-                GL30.glGetIntegerv(GL30.GL_FRAMEBUFFER_BINDING, savedFbo)
                 directContext.resetGLAll()
                 GL11.glViewport(0, 0, mainSurface.width, mainSurface.height)
                 GL11.glDisable(GL11.GL_SCISSOR_TEST)
@@ -665,13 +674,11 @@ object SkiaCtx {
                 vulkanService?.restoreMainRTLayout()
             } else {
                 directContext.flush()
-                GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, savedFbo[0])
                 gl.restore()
             }
         } catch (e: Throwable) {
             LOG.warn("SkiaCtx.draw() error", e)
             if (!isVulkanMode) try {
-                GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, savedFbo[0])
                 gl.restore()
             } catch (_: Throwable) {
             }
@@ -698,13 +705,11 @@ object SkiaCtx {
 
     private fun flushToTarget(draws: List<() -> Unit>, surface: Surface, flipY: Boolean = false) {
         currentSurface = surface
-        val savedFbo = IntArray(1)
         try {
             if (isVulkanMode) {
                 directContext.resetAll()
             } else {
                 gl.capture()
-                GL30.glGetIntegerv(GL30.GL_FRAMEBUFFER_BINDING, savedFbo)
                 directContext.resetGLAll()
                 GL11.glViewport(0, 0, surface.width, surface.height)
                 GL11.glDisable(GL11.GL_SCISSOR_TEST)
@@ -727,13 +732,11 @@ object SkiaCtx {
                 directContext.flushAndSubmit(surface, false)
             } else {
                 directContext.flush()
-                GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, savedFbo[0])
                 gl.restore()
             }
         } catch (e: Throwable) {
             LOG.warn("SkiaCtx.flushToTarget() error", e)
             if (!isVulkanMode) try {
-                GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, savedFbo[0])
                 gl.restore()
             } catch (_: Throwable) {
             }
