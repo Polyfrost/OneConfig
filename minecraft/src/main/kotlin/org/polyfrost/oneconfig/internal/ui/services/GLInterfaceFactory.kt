@@ -4,42 +4,46 @@ import org.jetbrains.skia.DirectContext
 import org.jetbrains.skia.GLAssembledInterface
 import org.jetbrains.skia.makeGLWithInterface
 import org.lwjgl.opengl.GL
-import org.lwjgl.system.APIUtil
-//? if >=26.1
-import org.lwjgl.system.Callback
-import org.lwjgl.system.CallbackI
 import org.lwjgl.system.FunctionProvider
 import org.lwjgl.system.MemoryUtil
+import org.slf4j.LoggerFactory
+//? if >= 26.3
+import org.lwjgl.sdl.SDLVideo.nSDL_GL_GetProcAddress
+//? if >= 26.1 {
+import java.lang.foreign.Arena
+import java.lang.foreign.FunctionDescriptor
+import java.lang.foreign.Linker
+import java.lang.foreign.MemorySegment
+import java.lang.foreign.ValueLayout
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
+//? } else {
+/*import org.lwjgl.system.APIUtil
+import org.lwjgl.system.CallbackI
 import org.lwjgl.system.Pointer
 import org.lwjgl.system.libffi.FFICIF
 import org.lwjgl.system.libffi.LibFFI
-import org.slf4j.LoggerFactory
-//? if >=26.1
-import java.lang.invoke.MethodHandles
+*///? }
 
 internal object GLInterfaceFactory {
     private val LOG = LoggerFactory.getLogger(GLInterfaceFactory::class.java)
 
-    private var getProcCallback: GetProcCallback? = null
     private var getProcAddress: Long = 0L
 
+    @Volatile
+    private var provider: FunctionProvider? = null
+
     fun makeDirectContextViaLwjgl(): DirectContext? {
-        val provider = try {
+        provider = try {
             GL.getFunctionProvider()
         } catch (e: Throwable) {
             LOG.warn("GLInterfaceFactory: GL.getFunctionProvider() unavailable", e)
             null
-        } ?: run {
-            LOG.warn("GLInterfaceFactory: no active GL function provider, cannot assemble interface")
-            return null
         }
+        if (provider == null) LOG.warn("GLInterfaceFactory: no GL function provider, resolving through SDL only")
 
         val getProc = try {
-            if (getProcAddress == 0L) {
-                val cb = GetProcCallback(provider)
-                getProcCallback = cb
-                getProcAddress = cb.address()
-            }
+            if (getProcAddress == 0L) getProcAddress = createGetProcStub()
             getProcAddress
         } catch (e: Throwable) {
             LOG.warn("GLInterfaceFactory: failed to create getProc closure", e)
@@ -58,12 +62,56 @@ internal object GLInterfaceFactory {
         }
     }
 
+    @JvmStatic
+    private fun lookupProc(name: Long): Long {
+        if (name == 0L) return 0L
+        //? if >= 26.3 {
+        try {
+            val sdl = nSDL_GL_GetProcAddress(name)
+            if (sdl != 0L) return sdl
+        } catch (_: Throwable) {
+        }
+        //? }
+        return try {
+            provider?.getFunctionAddress(MemoryUtil.memUTF8(name)) ?: 0L
+        } catch (_: Throwable) {
+            0L
+        }
+    }
+
+    //? if >= 26.1 {
+    @JvmStatic
+    private fun getProcUpcall(context: MemorySegment, name: MemorySegment): MemorySegment =
+        MemorySegment.ofAddress(lookupProc(name.address()))
+
+    private fun createGetProcStub(): Long {
+        val handle = MethodHandles.lookup().findStatic(
+            GLInterfaceFactory::class.java,
+            "getProcUpcall",
+            MethodType.methodType(
+                MemorySegment::class.java,
+                MemorySegment::class.java,
+                MemorySegment::class.java,
+            ),
+        )
+        return Linker.nativeLinker().upcallStub(
+            handle,
+            FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS),
+            Arena.global(),
+        ).address()
+    }
+    //? } else {
+    /*private var getProcCallback: GetProcCallback? = null
+
+    private fun createGetProcStub(): Long {
+        val cb = GetProcCallback()
+        getProcCallback = cb
+        return cb.address()
+    }
+
     @FunctionalInterface
     private fun interface GetProcCallbackI : CallbackI {
-        //? if >=26.1
-        override fun getDescriptor(): Callback.Descriptor = DESCRIPTOR
-        //? if <26.1
-        //override fun getCallInterface(): FFICIF = CALL_INTERFACE
+        override fun getCallInterface(): FFICIF = CALL_INTERFACE
 
         override fun callback(ret: Long, args: Long) {
             val contextPtr = MemoryUtil.memGetAddress(MemoryUtil.memGetAddress(args))
@@ -82,21 +130,11 @@ internal object GLInterfaceFactory {
                 LibFFI.ffi_type_pointer,
                 LibFFI.ffi_type_pointer,
             )
-            //? if >= 26.3 {
-            private val DESCRIPTOR: Callback.Descriptor = Callback.Descriptor(GetProcCallbackI::class.java, MethodHandles.lookup(), CALL_INTERFACE)
-            //?} elif >= 26.1
-            //private val DESCRIPTOR: Callback.Descriptor = Callback.Descriptor(MethodHandles.lookup(), CALL_INTERFACE)
         }
     }
 
-    private class GetProcCallback(
-        private val provider: FunctionProvider,
-    ) : GetProcCallbackI {
-
-        override fun invoke(context: Long, name: Long): Long = try {
-            if (name != 0L) provider.getFunctionAddress(MemoryUtil.memUTF8(name)) else 0L
-        } catch (_: Throwable) {
-            0L
-        }
+    private class GetProcCallback : GetProcCallbackI {
+        override fun invoke(context: Long, name: Long): Long = lookupProc(name)
     }
+    *///? }
 }
