@@ -376,10 +376,6 @@ abstract class ComposeScreen(
     }
 
     fun endPrewarm() {
-        if (prewarmCursor > 0) {
-            // Release hidden search focus so it doesn't suppress keybinds
-            withScene { it.focusManager.releaseFocus() }
-        }
         prewarmCursor = 0
         releasePrewarmSurface()
     }
@@ -387,24 +383,26 @@ abstract class ComposeScreen(
     protected fun prewarm(frames: Int, budget: Int = frames, step: (Int) -> Unit): Boolean {
         val name = this::class.java.simpleName
         if (ensureScene() == null) {
-            LOGGER.warn("{} warm-up: no scene ({})", name, ComposeSupport.unavailableReason() ?: "createScene failed")
+            ComposePreloader.fail("$name: no scene (${ComposeSupport.unavailableReason() ?: "createScene failed"})")
             return false
         }
         syncSceneMetrics()
         if (lastSceneW <= 0 || lastSceneH <= 0) {
-            LOGGER.warn("{} warm-up: window is {}x{}", name, lastSceneW, lastSceneH)
             closeSceneQuietly()
+            ComposePreloader.fail("$name: window is ${lastSceneW}x${lastSceneH}")
             return false
         }
         val hadContent = contentSet
         if (!bindContent()) {
-            LOGGER.warn("{} warm-up: setContent did not take (poisoned={})", name, scenePoisoned)
+            val reason = "$name: setContent did not take (poisoned=$scenePoisoned)"
             closeSceneQuietly()
+            ComposePreloader.fail(reason)
             return false
         }
         if (!hadContent) return false
         val surface = prewarmSurface() ?: run {
             closeSceneQuietly()
+            ComposePreloader.fail("$name: could not allocate warm-up surface")
             return false
         }
         try {
@@ -414,6 +412,7 @@ abstract class ComposeScreen(
             val scope = renderScopeOrNull
             if (recomposer == null || scope == null) {
                 closeSceneQuietly()
+                ComposePreloader.fail("$name: missing recomposer or render scope")
                 return false
             }
             while (prewarmCursor < until) {
@@ -427,7 +426,7 @@ abstract class ComposeScreen(
             prewarmCursor = 0
             releasePrewarmSurface()
             closeSceneQuietly()
-            LOGGER.warn("Compose warm-up failed; the first open will build the UI instead", t)
+            ComposePreloader.fail("Compose warm-up failed; the first open will build the UI instead", t)
             return false
         }
         sceneDirty = true
