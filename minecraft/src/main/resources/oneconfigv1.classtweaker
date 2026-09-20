@@ -1,14 +1,43 @@
-classTweaker v2 named
+classTweaker v2 official
 
-accessible field net/minecraft/client/Minecraft tasks Ljava/util/Queue;
-accessible field net/minecraft/client/render/texture/HttpTexture image Ljava/awt/image/BufferedImage;
-accessible method net/minecraft/client/gui/screen/TitleScreen drawBackground (IIF)V
+#? if = 1.8.9 {
+#accessible field net/minecraft/client/Minecraft tasks Ljava/util/Queue;
+#accessible field net/minecraft/client/render/texture/HttpTexture image Ljava/awt/image/BufferedImage;
+#accessible method net/minecraft/client/gui/screen/menu/TitleScreen drawBackground (IIF)V
+#transitive-inject-interface net/minecraft/client/Minecraft org/polyfrost/oneconfig/internal/legacy/compat/MinecraftCompat
+#transitive-inject-interface net/minecraft/client/KeyMapping org/polyfrost/oneconfig/internal/legacy/compat/KeyBindingCompat
+#transitive-inject-interface net/minecraft/world/HitResult org/polyfrost/oneconfig/internal/legacy/compat/HitResultCompat
+#transitive-inject-interface net/minecraft/client/render/texture/HttpTexture org/polyfrost/oneconfig/internal/legacy/compat/HttpTextureCompat
+#transitive-inject-interface net/minecraft/client/sound/instance/SoundInstance org/polyfrost/oneconfig/internal/legacy/compat/SoundInstanceCompat
+#transitive-inject-interface net/minecraft/client/Options org/polyfrost/oneconfig/internal/legacy/compat/GameOptionsCompat
+#transitive-inject-interface net/minecraft/client/entity/living/player/ClientPlayerEntity org/polyfrost/oneconfig/internal/legacy/compat/ClientPlayerCompat
+#transitive-inject-interface net/minecraft/client/resource/skin/SkinManager org/polyfrost/oneconfig/internal/legacy/compat/SkinManagerCompat
+#transitive-inject-interface net/minecraft/item/ItemStack org/polyfrost/oneconfig/internal/legacy/compat/ItemStackCompat
+#?}
 
-transitive-inject-interface net/minecraft/client/Minecraft org/polyfrost/oneconfig/internal/legacy/compat/MinecraftCompat
-transitive-inject-interface net/minecraft/client/KeyMapping org/polyfrost/oneconfig/internal/legacy/compat/KeyBindingCompat
-transitive-inject-interface net/minecraft/world/HitResult org/polyfrost/oneconfig/internal/legacy/compat/HitResultCompat
-transitive-inject-interface net/minecraft/client/render/texture/HttpTexture org/polyfrost/oneconfig/internal/legacy/compat/HttpTextureCompat
-transitive-inject-interface net/minecraft/client/sound/instance/SoundInstance org/polyfrost/oneconfig/internal/legacy/compat/SoundInstanceCompat
-transitive-inject-interface net/minecraft/client/Options org/polyfrost/oneconfig/internal/legacy/compat/GameOptionsCompat
-transitive-inject-interface net/minecraft/client/entity/living/player/ClientPlayerEntity org/polyfrost/oneconfig/internal/legacy/compat/ClientPlayerCompat
-transitive-inject-interface net/minecraft/client/resource/skin/SkinManager org/polyfrost/oneconfig/internal/legacy/compat/SkinManagerCompat
+#? if < 1.21.8 && > 1.8.9 {
+#accessible class net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture
+#accessible field net/minecraft/client/renderer/texture/SpriteContents animatedTexture Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;
+#?}
+
+#? if >= 1.21.4 && < 1.21.8 {
+#accessible field net/minecraft/client/renderer/item/ItemStackRenderState activeLayerCount I
+#accessible field net/minecraft/client/renderer/item/ItemStackRenderState layers [Lnet/minecraft/client/renderer/item/ItemStackRenderState$LayerRenderState;
+#accessible field net/minecraft/client/renderer/item/ItemStackRenderState$LayerRenderState renderType Lnet/minecraft/client/renderer/RenderType;
+#accessible field net/minecraft/client/renderer/item/ItemStackRenderState$LayerRenderState foilType Lnet/minecraft/client/renderer/item/ItemStackRenderState$FoilType;
+#accessible field net/minecraft/client/renderer/item/ItemStackRenderState$LayerRenderState tintLayers [I
+#accessible field net/minecraft/client/renderer/item/ItemStackRenderState$LayerRenderState specialRenderer Lnet/minecraft/client/renderer/special/SpecialModelRenderer;
+#?}
+
+#? if 1.21.5 {
+#accessible field net/minecraft/client/renderer/item/ItemStackRenderState$LayerRenderState usesBlockLight Z
+#accessible field net/minecraft/client/renderer/item/ItemStackRenderState$LayerRenderState transform Lnet/minecraft/client/renderer/block/model/ItemTransform;
+#?}
+
+#? if 1.21.4 {
+#accessible field net/minecraft/client/renderer/item/ItemStackRenderState$LayerRenderState model Lnet/minecraft/client/resources/model/BakedModel;
+#?}
+
+#? if < 1.21.4 && > 1.8.9 {
+#accessible field net/minecraft/client/renderer/entity/ItemRenderer itemColors Lnet/minecraft/client/color/item/ItemColors;
+#?}

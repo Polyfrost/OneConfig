@@ -3,7 +3,7 @@ modmenu = "11.0.3"
 yacl = "3.7.1+1.21.1-fabric"
 moulconfig = "3.11.0"
 
-vulkanmod = "pY3DXoVe"
+vulkanmod = "2eqroDKD"
 
 [libraries]
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}

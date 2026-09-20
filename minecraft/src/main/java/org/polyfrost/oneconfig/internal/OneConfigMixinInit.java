@@ -195,6 +195,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("render.GameRendererAccessor");
         mixins.add("render.GuiRendererAccessor");
         //? }
+        //? if > 1.8.9
+        mixins.add("skia.Mixin_ItemAtlasScissor");
         //? if < 1.21.8
         //mixins.add("skia.Mixin_MainTargetRedirect");
         mixins.add("skia.Mixin_DebugOverlayAboveUi");
@@ -202,6 +204,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         /*mixins.add("skia.Mixin_ScreenshotComposite");
         *///? }
         mixins.add("skia.Mixin_InitSkiaFontRenderer");
+        mixins.add("skia.Mixin_StartupWarmupOverlay");
 
         //? if >= 1.21.10 {
         mixins.add("keybind.Mixin_KeybindCategoryLabel");

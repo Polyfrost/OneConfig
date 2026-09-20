@@ -27,7 +27,9 @@
 package org.polyfrost.oneconfig.api.hud.v1
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
@@ -46,6 +48,9 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend
 import org.polyfrost.oneconfig.api.hud.v1.HudManager.LOGGER
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+
+@ApiStatus.Internal
+val LocalHud = compositionLocalOf<Hud?> { null }
 
 enum class Font {
     Minecraft,
@@ -982,6 +987,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     internal var _runtime: PolyComposeRuntime? = null
 
     @Transient
+    @ApiStatus.Internal
+    var isVisible = mutableStateOf(false)
+
+    @Transient
     private var capturedDefaults: Tree? = null
 
     /** the runtime only if it has already been created */
@@ -990,7 +999,11 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     val runtime: PolyComposeRuntime
         get() = _runtime ?: PolyComposeRuntime().also {
             _runtime = it
-            it.setContent { Content() }
+            it.setContent {
+                CompositionLocalProvider(LocalHud provides this) {
+                    Content()
+                }
+            }
         }
 
     @Composable
@@ -1205,6 +1218,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @Suppress("UNCHECKED_CAST")
     override fun clone(): Hud = (super.clone() as Hud).apply {
         _runtime = null
+        isVisible = mutableStateOf(false)
         showKey = -1
         toggleKey = -1
         _staticWidth = mutableStateOf(this@Hud.staticWidth)

@@ -14,6 +14,11 @@ c	net/minecraft/client/Minecraft	net/minecraft/client/Minecraft
 	m	()I	m_53086118	getFramerateLimit
 	m	()Lnet/minecraft/unmapped/C_06196994;	m_17688331	getMainRenderTarget
 	m	()V	m_61857590	startUseItem
+	f	Lnet/minecraft/unmapped/C_23014920;	f_21497584	font
+c	net/minecraft/unmapped/C_23014920	net/minecraft/client/render/TextRenderer
+	m	(Ljava/lang/String;)I	m_09235706	width
+c	net/minecraft/unmapped/C_88708284	net/minecraft/item/ItemStack
+	f	I	f_60602012	count
 c	net/minecraft/unmapped/C_23708450	net/minecraft/client/KeyMapping
 	m	()Z	m_70603120	isDown
 c	net/minecraft/unmapped/C_76792751	net/minecraft/client/Options

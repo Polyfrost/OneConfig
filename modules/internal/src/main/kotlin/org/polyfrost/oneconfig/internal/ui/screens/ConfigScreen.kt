@@ -434,7 +434,7 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
                         },
                         shape = shape
                     )
-                    .padding(vertical = 12.dp)
+                    .padding(bottom = 12.dp)
             ) {
                 AccordionOptionsGrid(node.body, compact = compact)
             }
@@ -612,9 +612,10 @@ private fun displayAlpha(display: Property.Display): Float {
 @Composable
 private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: Boolean = false, enabled: Boolean = true) {
     val theme = LocalTheme.current
+    val verticalPadding = if (nested) 0.dp else 12.dp
 
     if (prop.getMetadata<Any?>("visualizer") == Visualizer.InfoVisualizer::class.java) {
-        Row(modifier = Modifier.fillMaxWidth().blockInteraction(!enabled).padding(horizontal = 16.dp, vertical = 12.dp)) {
+        Row(modifier = Modifier.fillMaxWidth().blockInteraction(!enabled).padding(horizontal = 16.dp, vertical = verticalPadding)) {
             Option(prop)
         }
         return
@@ -677,7 +678,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 modifier = Modifier
                     .fillMaxWidth()
                     .blockInteraction(!enabled)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(start = 16.dp, end = 16.dp, top = verticalPadding, bottom = if (nested) 8.dp else verticalPadding),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 SettingLabel(prop, nested = nested)
@@ -704,7 +705,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 modifier = Modifier
                     .fillMaxWidth()
                     .blockInteraction(!enabled)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(horizontal = 16.dp, vertical = verticalPadding),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {

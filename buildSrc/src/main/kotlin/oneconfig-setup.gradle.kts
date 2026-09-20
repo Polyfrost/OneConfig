@@ -87,6 +87,7 @@ if (loader == "fabric") {
     val modMenuShimClasses = layout.buildDirectory.dir("classes/modMenuShim")
     val compileModMenuApiShimJava = tasks.register<JavaCompile>("compileModMenuApiShimJava") {
         val mainSourceSet = sourceSets.named("main").get()
+        javaCompiler.set(tasks.named<JavaCompile>("compileJava").flatMap { it.javaCompiler })
         source(rootProject.projectDir.resolve("minecraft/src/modMenuShim/java"))
         classpath = files(mainSourceSet.output.classesDirs, mainSourceSet.compileClasspath)
         destinationDirectory.set(modMenuShimClasses)
@@ -180,7 +181,7 @@ val firmamentRelocatedConfiguration: Configuration by configurations.creating {
 
 val adventurePlatform = when {
     loader != "fabric" -> null
-    stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "7.0.0-SNAPSHOT"
+    stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "7.0.0"
     stonecutter.eval(stonecutter.current.version, ">= 26.1") -> "6.9.0"
     stonecutter.eval(stonecutter.current.version, ">= 1.21.11") -> "6.8.0"
     stonecutter.eval(stonecutter.current.version, ">= 1.21.10") -> "6.7.0"
