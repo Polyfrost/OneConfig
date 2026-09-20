@@ -21,6 +21,8 @@ class StoredGLState(private val glVersion: Int) {
 
     fun capture(): StoredGLState {
         with(props) {
+            glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, lastDrawFramebuffer)
+            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, lastReadFramebuffer)
             glGetIntegerv(GL_ACTIVE_TEXTURE, lastActiveTexture)
             glActiveTexture(GL_TEXTURE0)
             glGetIntegerv(GL_CURRENT_PROGRAM, lastProgram)
@@ -100,6 +102,8 @@ class StoredGLState(private val glVersion: Int) {
 
     fun restore(): StoredGLState {
         with(props) {
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, lastDrawFramebuffer[0])
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, lastReadFramebuffer[0])
             glUseProgram(lastProgram[0])
             glBindTexture(GL_TEXTURE_2D, lastTexture[0])
             if (glVersion >= 330 || GL.getCapabilities().GL_ARB_sampler_objects) {

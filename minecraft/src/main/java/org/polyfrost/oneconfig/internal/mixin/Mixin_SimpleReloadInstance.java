@@ -15,6 +15,7 @@ public class Mixin_SimpleReloadInstance {
     @Inject(method = "create", at = @At("RETURN"))
     private static void oneconfig$onResourceFinishedLoading(CallbackInfoReturnable<ReloadInstance> cir) {
         cir.getReturnValue().done().whenComplete((result, throwable) -> {
+            if (throwable != null) return;
             EventManager.INSTANCE.post(ResourceFinishedLoading.INSTANCE);
         });
     }

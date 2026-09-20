@@ -48,8 +48,10 @@ class SkiaOffscreenTarget {
             /*val rt = TextureTarget(w, h, true, Minecraft.ON_OSX)
             *///?}
             target = rt
-            //? if < 1.21.5
-            //rt.setClearColor(0f, 0f, 0f, 0f)
+            //? if < 1.21.5 {
+            /*rt.setClearColor(0f, 0f, 0f, 0f)
+            RenderTargetFbo.restoreMainTarget()
+            *///?}
             if (!SkiaCtx.isVulkanMode && RenderTargetFbo.getFboId(rt) <= 0) {
                 destroy()
                 return false
@@ -57,9 +59,11 @@ class SkiaOffscreenTarget {
             val (b, colorFmt) = svc.makeOffscreenBRT(rt, w, h)
             brt = b
             val origin = if (SkiaCtx.isDeferredComposeBackend) SurfaceOrigin.TOP_LEFT else SurfaceOrigin.BOTTOM_LEFT
-            surface = Surface.makeFromBackendRenderTarget(
-                SkiaCtx.directContext, b, origin, colorFmt, ColorSpace.sRGB, null,
-            )
+            surface = SkiaCtx.withIsolatedGl {
+                Surface.makeFromBackendRenderTarget(
+                    SkiaCtx.directContext, b, origin, colorFmt, ColorSpace.sRGB, null,
+                )
+            }
             if (surface == null) {
                 destroy()
                 return false
@@ -92,13 +96,22 @@ class SkiaOffscreenTarget {
         *///?} else {
         /*rt.clear(Minecraft.ON_OSX)
         *///?}
+        //? if < 1.21.5
+        //RenderTargetFbo.restoreMainTarget()
     }
 
     fun destroy() {
         surface?.close(); surface = null
         brt?.close(); brt = null
         target?.destroyBuffers(); target = null
+        //? if < 1.21.5
+        //RenderTargetFbo.restoreMainTarget()
         lastW = -1; lastH = -1
+    }
+
+    fun dispose() {
+        destroy()
+        live.remove(this)
     }
 
     companion object {

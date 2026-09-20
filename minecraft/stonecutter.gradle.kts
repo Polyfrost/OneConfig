@@ -3,6 +3,11 @@ plugins {
 }
 
 stonecutter active "26.3-fabric"
+
+stonecutter handlers {
+    inherit("aw", "classtweaker")
+}
+
 stonecutter {
     parameters {
         constants {
@@ -46,6 +51,9 @@ stonecutter {
         }
 
         replacements {
+            string(eval(current.version, "< 26.1")) {
+                replace("classTweaker v2 official", "classTweaker v2 named")
+            }
 
             string(eval(current.version, ">= 26.1"), "gui_graphics") {
                 replace("GuiGraphics", "GuiGraphicsExtractor")
@@ -78,9 +86,11 @@ stonecutter {
                 replace("com.mojang.blaze3d.textures", "com.mojang.renderpearl.api.textures")
                 replace("com.mojang.blaze3d.buffers", "com.mojang.renderpearl.api.buffers")
                 replace("com.mojang.blaze3d.GpuFormat", "com.mojang.renderpearl.api.GpuFormat")
+                replace("com.mojang.blaze3d.systems.RenderPass", "com.mojang.renderpearl.api.commands.RenderPass")
                 // mixin descriptors
                 replace("com/mojang/blaze3d/systems/GpuSurface", "com/mojang/renderpearl/api/device/GpuSurface")
                 replace("com/mojang/blaze3d/systems/CommandEncoder", "com/mojang/renderpearl/api/commands/CommandEncoder")
+                replace("com/mojang/blaze3d/systems/RenderPass", "com/mojang/renderpearl/api/commands/RenderPass")
                 replace("com/mojang/blaze3d/textures/GpuTextureView", "com/mojang/renderpearl/api/textures/GpuTextureView")
             }
         }

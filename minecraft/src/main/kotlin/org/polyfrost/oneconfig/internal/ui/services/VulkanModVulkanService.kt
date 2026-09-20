@@ -4,15 +4,24 @@ package org.polyfrost.oneconfig.internal.ui.services
 /*import com.mojang.blaze3d.pipeline.RenderTarget
 import net.vulkanmod.gl.VkGlTexture
 import net.vulkanmod.vulkan.Renderer
+import net.vulkanmod.vulkan.VRenderSystem
 import net.vulkanmod.vulkan.device.DeviceManager
 import net.vulkanmod.vulkan.queue.Queue
 import net.vulkanmod.vulkan.texture.VulkanImage
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.DirectContext
 import org.jetbrains.skia.SurfaceColorFormat
+import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
+import org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK
 import org.lwjgl.vulkan.VK12.*
+//? if > 1.21.1 && < 1.21.10 {
+/*import org.lwjgl.vulkan.VkClearAttachment
+import org.lwjgl.vulkan.VkClearRect
+import org.lwjgl.vulkan.VkClearValue
+import org.lwjgl.vulkan.VkRect2D
+*///?}
 import org.lwjgl.vulkan.VkCommandBuffer
 import org.lwjgl.vulkan.VkImageBlit
 import org.lwjgl.vulkan.VkOffset3D
@@ -73,6 +82,42 @@ class VulkanModVulkanService private constructor(
             ?: error("VulkanMod: could not resolve VkImage for offscreen RenderTarget ${target.javaClass.name}")
         val vkFmt = image.format
         return makeBackendRenderTarget(width, height, image.id, vkFmt, queueFamilyIndex) to colorFormatFor(vkFmt)
+    }
+
+    override fun clearOffscreenRect(x: Int, y: Int, width: Int, height: Int): Boolean {
+        VRenderSystem.setClearColor(0f, 0f, 0f, 0f)
+        VRenderSystem.clearDepth(1.0)
+
+        //? if = 1.21.1 || >= 1.21.10 {
+        Renderer.clearAttachments(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT, x, y, width, height)
+        //?} else {
+        /*// Equivalent to VulkanMod's five argument Renderer.clearAttachments overload, missing in 1.21.4 and 1.21.5
+        MemoryStack.stackPush().use { stack ->
+            val colorValue = VkClearValue.calloc(stack)
+            colorValue.color().float32(0, 0f).float32(1, 0f).float32(2, 0f).float32(3, 0f)
+            val depthValue = VkClearValue.calloc(stack)
+            depthValue.depthStencil().set(1f, 0)
+
+            val attachments = VkClearAttachment.malloc(2, stack)
+            attachments[0]
+                .aspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
+                .colorAttachment(0)
+                .clearValue(colorValue)
+            attachments[1]
+                .aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT)
+                .colorAttachment(0)
+                .clearValue(depthValue)
+
+            val renderArea = VkRect2D.malloc(stack)
+            renderArea.offset().set(x, y)
+            renderArea.extent().set(width, height)
+            val clearRect = VkClearRect.malloc(1, stack)
+            clearRect[0].rect(renderArea).baseArrayLayer(0).layerCount(1)
+
+            vkCmdClearAttachments(Renderer.getCommandBuffer(), attachments, clearRect)
+        }
+        *///?}
+        return true
     }
 
     override fun getMainColorImageInfo(): Triple<Long, Int, Int> = try {
@@ -222,7 +267,7 @@ class VulkanModVulkanService private constructor(
             val instAddr = instance.address()
             val physAddr = physicalDevice.address()
             val devAddr = vkDevice.address()
-            //? if >= 1.21.10 {
+            //? if = 1.21.1 || >= 1.21.10 {
             val queueAddr = graphicsQueue.vkQueue().address()
             //? } else {
             /*val queueAddr = graphicsQueue.queue().address()

@@ -184,6 +184,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("render.GameRendererAccessor");
         mixins.add("render.GuiRendererAccessor");
         //? }
+        mixins.add("skia.Mixin_ItemAtlasScissor");
         //? if < 1.21.8
         //mixins.add("skia.Mixin_MainTargetRedirect");
         mixins.add("skia.Mixin_DebugOverlayAboveUi");
