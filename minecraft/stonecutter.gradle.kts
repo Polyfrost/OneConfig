@@ -53,7 +53,7 @@ stonecutter {
 
         replacements {
             string(eval(current.version, "< 26.1")) {
-                replace("classTweaker v2 official", "classTweaker v2 named")
+                replace("classTweaker v1 official", "classTweaker v1 named")
             }
 
             string(eval(current.version, ">= 26.1"), "gui_graphics") {
