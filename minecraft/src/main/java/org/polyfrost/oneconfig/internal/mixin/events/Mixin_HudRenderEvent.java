@@ -9,7 +9,6 @@ import net.minecraft.client.gui.Hud;
 *///? }
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import org.polyfrost.oneconfig.internal.OneConfig;
-import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -25,11 +24,7 @@ public class Mixin_HudRenderEvent {
     //~ if >= 26.1 'render' -> 'extractRenderState'
     @Inject(method = "extractRenderState", at = @At("TAIL"))
     private void renderHudCallback(GuiGraphicsExtractor ctx, DeltaTracker deltaTracker, CallbackInfo ci) {
-        OneConfig.render(ctx, deltaTracker.getRealtimeDeltaTicks());
-        //~ if < 1.21.8 '.suppressInGameHudRender' -> '.shouldSuppressInGameHudRender()'
-        if (!SkiaCtx.INSTANCE.suppressInGameHudRender) {
-            SkiaCtx.INSTANCE.blitHud(ctx);
-        }
+        OneConfig.submitHud(ctx);
     }
 
 }
