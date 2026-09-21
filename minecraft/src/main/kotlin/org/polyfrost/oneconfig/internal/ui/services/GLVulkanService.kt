@@ -7,6 +7,8 @@ import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.DirectContext
 import org.jetbrains.skia.FramebufferFormat
 import org.jetbrains.skia.SurfaceColorFormat
+//? if >= 26.3
+import org.lwjgl.sdl.SDLVideo.SDL_GetCurrentVideoDriver
 import org.polyfrost.oneconfig.internal.ui.RenderTargetFbo
 import org.slf4j.LoggerFactory
 
@@ -15,12 +17,30 @@ object GLVulkanService : VulkanService {
     private val client get() = Minecraft.getInstance()
     override val isVulkan = false
 
-    override fun makeDirectContext(): DirectContext =
-        try {
+    override fun makeDirectContext(): DirectContext {
+        if (!isGlxBackend) {
+            GLInterfaceFactory.makeDirectContextViaLwjgl()?.let { return it }
+            LOG.warn("Assembled GL interface unavailable on a non-GLX backend; falling back to DirectContext.makeGL()")
+        }
+        return try {
             DirectContext.makeGL()
         } catch (e: Exception) {
             LOG.warn("DirectContext.makeGL() failed; retrying via LWJGL proc loader (SDL/EGL backend?)", e)
             GLInterfaceFactory.makeDirectContextViaLwjgl() ?: throw e
+        }
+    }
+
+    private val isGlxBackend: Boolean
+        get() {
+            //? if >= 26.3 {
+            val driver = try {
+                SDL_GetCurrentVideoDriver()
+            } catch (_: Throwable) {
+                null
+            }
+            if (driver != null) return !driver.equals("wayland", ignoreCase = true)
+            //?}
+            return true
         }
 
     override fun makeBackendRenderTarget(
