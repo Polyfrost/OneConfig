@@ -60,4 +60,8 @@ object RenderTargetFbo {
     //? } else {
     /*fun getColorTexId(frameBuffer: RenderTarget): Int = frameBuffer.colorTextureId
     *///? }
+
+    // Creating, clearing, and destroying a render target leaves framebuffer 0 bound, and 1.21.1 GUI draws do not rebind.
+    //? if < 1.21.5
+    //fun restoreMainTarget() = net.minecraft.client.Minecraft.getInstance().mainRenderTarget?.bindWrite(true)
 }

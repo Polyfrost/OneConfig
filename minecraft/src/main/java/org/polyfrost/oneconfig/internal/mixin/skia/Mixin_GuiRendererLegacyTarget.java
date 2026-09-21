@@ -18,6 +18,17 @@ import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(GuiRenderer.class)
 public class Mixin_GuiRendererLegacyTarget {
+    @ModifyExpressionValue(
+            method = "draw",
+            //? if >= 26.1 {
+            at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/state/WindowRenderState;guiScale:I", opcode = Opcodes.GETFIELD)
+            //?} else
+            //at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/Window;getGuiScale()I")
+    )
+    private int oneconfig$itemAtlasProjectionScale(int original) {
+        return GuiTargetRedirect.itemRenderSizePx > 0 ? 1 : original;
+    }
+
     //? if >= 26.1 {
     @ModifyExpressionValue(
             method = "draw",

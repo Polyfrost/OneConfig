@@ -4,7 +4,7 @@ import androidx.compose.runtime.snapshots.Snapshot
 //? if > 1.8.9 {
 import net.minecraft.client.gui.GuiGraphicsExtractor
 //?} else
-//import net.minecraft.client.render.platform.GlStateManager
+//import com.mojang.blaze3d.platform.GlStateManager
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHud
 

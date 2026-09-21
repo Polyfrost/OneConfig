@@ -18,7 +18,9 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
+import org.polyfrost.oneconfig.internal.ui.compose.ComposePreloader
 import org.polyfrost.oneconfig.internal.ui.components.RetainedVisibility
+import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignStudio
@@ -56,9 +58,9 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
     private fun runPrewarm(): Boolean {
         if (everOpened || Platform.screen().current<Any?>() === this) return true
         return try {
-            prewarm(PREWARM_FRAMES) { }
+            prewarm(PREWARM_FRAMES, budget = 1) { }
         } catch (t: Throwable) {
-            LOGGER.warn("HUD editor warm-up failed; the first open will build it instead", t)
+            ComposePreloader.fail("HUD editor warm-up failed", t)
             false
         }
     }
@@ -115,6 +117,8 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
         UiSounds.releaseAmbience()
         super.removed()
     }
+
+    override fun isPauseScreen(): Boolean = OneConfigConfig.pauseGame
 
     private fun handleOneConfigKeybind(): Boolean {
         if (closeRequested) return cancelClose()
@@ -176,6 +180,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
             HudManager.guiScreenWidth = sw
             HudManager.guiScreenHeight = sh
             HudManager.prepare(sw, sh)
+            ItemCatalog.renderHudIcons()
         }
         HudEditorViewport.update(Platform.screen().windowWidth(), Platform.screen().windowHeight())
         //? if > 1.8.9 {

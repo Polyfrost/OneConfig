@@ -62,6 +62,7 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories;
+import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog;
 import org.polyfrost.oneconfig.internal.ui.compose.McFontService;
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
@@ -73,6 +74,10 @@ import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProfiles;
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindConflicts;
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus;
 import org.polyfrost.oneconfig.test.TestMod_Test;
+//? if = 1.8.9 {
+/*import net.ornithemc.osl.resource.loader.api.client.ClientResourceLoaderEvents;
+import org.polyfrost.oneconfig.internal.ui.compose.SkiaFontRenderer;
+*///?}
 
 //? neoforge
 //@net.neoforged.fml.common.Mod("oneconfigv1")
@@ -200,7 +205,7 @@ public class OneConfig
         // 1.8.9 replays the overlay in Mixin_SkiaFrame after Skia finishes drawing instead
         //? if > 1.8.9
         org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen.INSTANCE.render();
-        if (HudManager.INSTANCE.beginFrame(sw, sh)) {
+        if (HudManager.INSTANCE.beginFrame(sw, sh, ItemCatalog.INSTANCE::renderHudIcons)) {
             SkiaCtx.INSTANCE.queueHudDraw(() -> {
                 var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
                 HudManager.INSTANCE.render(ctx, sw, sh);
@@ -270,7 +275,10 @@ public class OneConfig
                     org.polyfrost.oneconfig.internal.compat.WWaypointsCompat.register();
                     org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry.INSTANCE.loadFromConfig();
                 });
-        EventManager.register(WorldEvent.Load.class, e -> showFirstLaunchNotification());
+        EventManager.register(WorldEvent.Load.class, e -> {
+            showFirstLaunchNotification();
+            ItemCatalog.INSTANCE.markIconsAvailable();
+        });
         // after loading finishes so translation keys are available
         EventManager.register(ResourceFinishedLoading.class, e -> SearchCorpus.INSTANCE.init());
 //        //#if MC < 1.13
@@ -331,6 +339,12 @@ public class OneConfig
         }
 
         SkikoDataPath.redirect();
+
+        //? if = 1.8.9 {
+        /*ClientResourceLoaderEvents.INIT_RESOURCE_MANAGER.register(
+            resourceManager -> resourceManager.addReloader(SkiaFontRenderer.INSTANCE)
+        );
+        *///?}
 
         // to enable RenderDoc set these JVM arguments
         // -Drenderdoc.enabled=true

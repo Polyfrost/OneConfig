@@ -4,7 +4,6 @@
 # All
 kotlin = "2.4.10"
 kotlinx-coroutines = "1.10.2"
-kotlinx-atomicfu = "0.29.0"
 fabric-language-kotlin = "1.13.13+kotlin.2.4.10"
 google-ksp = "2.3.11"
 annotations = "24.1.0"
@@ -83,7 +82,6 @@ kotlin-stdlib-jdk8 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", versi
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-jvm = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-jdk8 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8", version.ref = "kotlinx-coroutines" }
-kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu-jvm", version.ref = "kotlinx-atomicfu" }
 fabric-language-kotlin = { module = "net.fabricmc:fabric-language-kotlin", version.ref = "fabric-language-kotlin" }
 
 jetbrains-compose-foundation = { module = "org.jetbrains.compose.foundation:foundation-desktop", version.ref = "compose" }
@@ -145,7 +143,7 @@ adventure = [
     "kyori-option",
 ]
 kotlin = ["kotlin-reflect", "kotlin-stdlib", "kotlin-stdlib-jdk7", "kotlin-stdlib-jdk8"]
-kotlinx = ["kotlinx-coroutines", "kotlinx-coroutines-jvm", "kotlinx-coroutines-jdk8", "kotlinx-atomicfu"]
+kotlinx = ["kotlinx-coroutines", "kotlinx-coroutines-jvm", "kotlinx-coroutines-jdk8"]
 lwjgl = ["lwjgl", "lwjgl-nvg", "lwjgl-opengl", "lwjgl-stb", "lwjgl-tinyfd"]
 nightconfig = ["nightconfig", "nightconfig-json", "nightconfig-toml", "nightconfig-yaml"]
 test-core = ["junit", "logging-impl"]

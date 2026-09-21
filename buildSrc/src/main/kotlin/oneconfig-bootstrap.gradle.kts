@@ -74,7 +74,6 @@ gradle.projectsEvaluated {
         "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm",
         "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm",
         "org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm",
-        "org.jetbrains.kotlinx:atomicfu-jvm",
         "org.jetbrains.kotlinx:kotlinx-datetime-jvm",
         "org.jetbrains.kotlinx:kotlinx-io-core-jvm",
         "org.jetbrains.kotlinx:kotlinx-io-bytestring-jvm",

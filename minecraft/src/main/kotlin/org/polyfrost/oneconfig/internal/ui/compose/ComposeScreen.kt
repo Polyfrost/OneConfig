@@ -35,7 +35,7 @@ import net.minecraft.client.input.KeyEvent as McKeyEvent
 import net.minecraft.network.chat.CommonComponents
 //?} else {
 /*import net.minecraft.client.gui.screens.TitleScreen
-import net.minecraft.client.render.platform.GlStateManager
+import com.mojang.blaze3d.platform.GlStateManager
 import org.polyfrost.oneconfig.internal.legacy.KeyCodes
 import org.polyfrost.oneconfig.internal.legacy.LegacyPanoramaTracker
 import org.polyfrost.oneconfig.internal.ui.compose.opengl.StoredGLState
@@ -56,6 +56,7 @@ import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.components.LocalUiOversample
+import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import java.awt.Component
 import java.awt.event.InputEvent
@@ -401,10 +402,6 @@ abstract class ComposeScreen(
     }
 
     fun endPrewarm() {
-        if (prewarmCursor > 0) {
-            // Release hidden search focus so it doesn't suppress keybinds
-            withScene { it.focusManager.releaseFocus() }
-        }
         prewarmCursor = 0
         releasePrewarmSurface()
     }
@@ -412,24 +409,26 @@ abstract class ComposeScreen(
     protected fun prewarm(frames: Int, budget: Int = frames, step: (Int) -> Unit): Boolean {
         val name = this::class.java.simpleName
         if (ensureScene() == null) {
-            LOGGER.warn("{} warm-up: no scene ({})", name, ComposeSupport.unavailableReason() ?: "createScene failed")
+            ComposePreloader.fail("$name: no scene (${ComposeSupport.unavailableReason() ?: "createScene failed"})")
             return false
         }
         syncSceneMetrics()
         if (lastSceneW <= 0 || lastSceneH <= 0) {
-            LOGGER.warn("{} warm-up: window is {}x{}", name, lastSceneW, lastSceneH)
             closeSceneQuietly()
+            ComposePreloader.fail("$name: window is ${lastSceneW}x${lastSceneH}")
             return false
         }
         val hadContent = contentSet
         if (!bindContent()) {
-            LOGGER.warn("{} warm-up: setContent did not take (poisoned={})", name, scenePoisoned)
+            val reason = "$name: setContent did not take (poisoned=$scenePoisoned)"
             closeSceneQuietly()
+            ComposePreloader.fail(reason)
             return false
         }
         if (!hadContent) return false
         val surface = prewarmSurface() ?: run {
             closeSceneQuietly()
+            ComposePreloader.fail("$name: could not allocate warm-up surface")
             return false
         }
         try {
@@ -439,6 +438,7 @@ abstract class ComposeScreen(
             val scope = renderScopeOrNull
             if (recomposer == null || scope == null) {
                 closeSceneQuietly()
+                ComposePreloader.fail("$name: missing recomposer or render scope")
                 return false
             }
             while (prewarmCursor < until) {
@@ -452,7 +452,7 @@ abstract class ComposeScreen(
             prewarmCursor = 0
             releasePrewarmSurface()
             closeSceneQuietly()
-            LOGGER.warn("Compose warm-up failed; the first open will build the UI instead", t)
+            ComposePreloader.fail("Compose warm-up failed; the first open will build the UI instead", t)
             return false
         }
         sceneDirty = true
@@ -624,6 +624,14 @@ abstract class ComposeScreen(
             withScene { it.invalidatePositionInWindow() }
         }
 
+        // Recompose and lay out before rendering so icons revealed by scrolling or filtering draw on the same frame.
+        val nanos = frameNanos()
+        withScene { scene ->
+            recomposerOrNull?.performFrame(nanos)
+            scene.measureAndLayout()
+        }
+        if (ItemCatalog.renderIcons()) sceneDirty = true
+
         //? if > 1.8.9 {
         val debugOverlayOnTop = org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen.shouldSuppressVanilla()
         if (renderMode == RenderMode.ON_DEMAND && !sceneDirty && !awaitingFirstFrame &&
@@ -653,7 +661,7 @@ abstract class ComposeScreen(
                     val scope = renderScopeOrNull
                     val composeCanvas = canvas.asComposeCanvas()
                     val rendered = if (recomposer == null || scope == null) null else withScene {
-                        with(scope) { it.render(recomposer, composeCanvas, frameNanos()) }
+                        with(scope) { it.render(recomposer, composeCanvas, nanos) }
                     }
                     if (rendered != null) {
                         sceneRebuilds = 0

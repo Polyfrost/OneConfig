@@ -14,10 +14,6 @@ ploceus {
     setIntermediaryGeneration(2)
 }
 
-loom {
-    accessWidenerPath.set(rootProject.file("minecraft/src/main/resources/oneconfigv1.classtweaker"))
-}
-
 dependencies {
     modImplementation(versionedCatalog["fabric-language-kotlin"])
     modImplementation(versionedCatalog["fabric-loader"])

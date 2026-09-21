@@ -3,6 +3,11 @@ plugins {
 }
 
 stonecutter active "26.3-fabric"
+
+stonecutter handlers {
+    inherit("aw", "classtweaker")
+}
+
 stonecutter {
     parameters {
         constants {
@@ -47,6 +52,9 @@ stonecutter {
         }
 
         replacements {
+            string(eval(current.version, "< 26.1")) {
+                replace("classTweaker v2 official", "classTweaker v2 named")
+            }
 
             string(eval(current.version, ">= 26.1"), "gui_graphics") {
                 replace("GuiGraphics", "GuiGraphicsExtractor")
@@ -146,15 +154,15 @@ stonecutter {
                 )
                 replace(
                     "net.minecraft.client.gui.screens.TitleScreen",
-                    "net.minecraft.client.gui.screen.TitleScreen"
+                    "net.minecraft.client.gui.screen.menu.TitleScreen"
                 )
                 replace(
                     "net.minecraft.client.gui.screens.ChatScreen",
-                    "net.minecraft.client.gui.screen.ChatScreen"
+                    "net.minecraft.client.gui.screen.game.ChatScreen"
                 )
                 replace(
                     "net.minecraft.client.gui.screens.ConnectScreen",
-                    "net.minecraft.client.gui.screen.ConnectScreen"
+                    "net.minecraft.client.gui.screen.menu.multiplayer.ConnectScreen"
                 )
                 replace(
                     "net.minecraft.client.gui.screens.ProgressScreen",
@@ -163,6 +171,10 @@ stonecutter {
                 replace(
                     "com.mojang.blaze3d.pipeline.RenderTarget",
                     "net.minecraft.client.render.pipeline.RenderTarget"
+                )
+                replace(
+                    "com.mojang.blaze3d.platform.GlStateManager",
+                    "net.minecraft.client.render.platform.GlStateManager"
                 )
                 replace(
                     "net.minecraft.server.packs.repository.RepositorySource",
@@ -260,9 +272,11 @@ stonecutter {
                 replace("com.mojang.blaze3d.textures", "com.mojang.renderpearl.api.textures")
                 replace("com.mojang.blaze3d.buffers", "com.mojang.renderpearl.api.buffers")
                 replace("com.mojang.blaze3d.GpuFormat", "com.mojang.renderpearl.api.GpuFormat")
+                replace("com.mojang.blaze3d.systems.RenderPass", "com.mojang.renderpearl.api.commands.RenderPass")
                 // mixin descriptors
                 replace("com/mojang/blaze3d/systems/GpuSurface", "com/mojang/renderpearl/api/device/GpuSurface")
                 replace("com/mojang/blaze3d/systems/CommandEncoder", "com/mojang/renderpearl/api/commands/CommandEncoder")
+                replace("com/mojang/blaze3d/systems/RenderPass", "com/mojang/renderpearl/api/commands/RenderPass")
                 replace("com/mojang/blaze3d/textures/GpuTextureView", "com/mojang/renderpearl/api/textures/GpuTextureView")
             }
         }

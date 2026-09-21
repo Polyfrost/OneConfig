@@ -19,6 +19,7 @@ public class Mixin_SimpleReloadInstance {
     private static void oneconfig$onResourceFinishedLoading(CallbackInfoReturnable<ReloadInstance> cir) {
         //~ if = 1.8.9 'done()' -> 'result()'
         cir.getReturnValue().done().whenComplete((result, throwable) -> {
+            if (throwable != null) return;
             EventManager.INSTANCE.post(ResourceFinishedLoading.INSTANCE);
         });
     }

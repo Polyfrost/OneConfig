@@ -118,6 +118,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun isAnchored ()Z
 	public final fun isMergeAnchored ()Z
 	public final fun isReal ()Z
+	public final fun isVisible ()Landroidx/compose/runtime/MutableState;
 	public final fun make (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public static synthetic fun make$default (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Lorg/polyfrost/oneconfig/api/config/v1/Tree;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	protected final fun measureNaturalContentSize ()Lkotlin/Pair;
@@ -190,6 +191,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setTextWeight (Lorg/polyfrost/oneconfig/api/hud/v1/Weight;)V
 	public final fun setToggleKey (I)V
 	public final fun setUseGuiScale (Z)V
+	public final fun setVisible (Landroidx/compose/runtime/MutableState;)V
 	public fun setX (F)V
 	public fun setY (F)V
 	public fun setup ()V
@@ -246,6 +248,10 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudAnchor$Companion {
 	public final fun of (Lorg/polyfrost/compose/layout/PolyAlign;)Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 }
 
+public final class org/polyfrost/oneconfig/api/hud/v1/HudKt {
+	public static final fun getLocalHud ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
 public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/hud/v1/HudManager;
@@ -266,7 +272,8 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static field targetPixelHeight I
 	public static field targetPixelWidth I
 	public final fun addRegistrationListener (Ljava/lang/Runnable;)V
-	public final fun beginFrame (FF)Z
+	public final fun beginFrame (FFLjava/lang/Runnable;)Z
+	public static synthetic fun beginFrame$default (Lorg/polyfrost/oneconfig/api/hud/v1/HudManager;FFLjava/lang/Runnable;ILjava/lang/Object;)Z
 	public final fun closeEditor ()V
 	public final fun drawMergedBackgrounds (Lorg/polyfrost/compose/render/RenderContext;)V
 	public final fun getActiveInstances ()Ljava/util/ArrayList;

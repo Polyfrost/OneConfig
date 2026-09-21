@@ -9,7 +9,7 @@ import com.mojang.renderpearl.backend.opengl.GlStateManager
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL45.*
 //?} else {
-/*import net.minecraft.client.render.platform.GlStateManager
+/*import com.mojang.blaze3d.platform.GlStateManager
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL12
 import org.lwjgl.opengl.GL13
@@ -42,6 +42,8 @@ class StoredGLState(private val glVersion: Int) {
     //? if > 1.8.9 {
     fun capture(): StoredGLState {
         with(props) {
+            glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, lastDrawFramebuffer)
+            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, lastReadFramebuffer)
             glGetIntegerv(GL_ACTIVE_TEXTURE, lastActiveTexture)
             glActiveTexture(GL_TEXTURE0)
             glGetIntegerv(GL_CURRENT_PROGRAM, lastProgram)
@@ -121,6 +123,8 @@ class StoredGLState(private val glVersion: Int) {
 
     fun restore(): StoredGLState {
         with(props) {
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, lastDrawFramebuffer[0])
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, lastReadFramebuffer[0])
             glUseProgram(lastProgram[0])
             glBindTexture(GL_TEXTURE_2D, lastTexture[0])
             if (glVersion >= 330 || GL.getCapabilities().GL_ARB_sampler_objects) {
@@ -236,13 +240,18 @@ class StoredGLState(private val glVersion: Int) {
     //?} else {
     /*private val isMacOS = System.getProperty("os.name").lowercase().contains("mac")
     private var alphaTestEnabled = false
+    private var depthTestEnabled = false
 
     fun capture() {
         alphaTestEnabled = GL11.glIsEnabled(GL11.GL_ALPHA_TEST)
+        depthTestEnabled = GL11.glIsEnabled(GL11.GL_DEPTH_TEST)
         GL11.glPushClientAttrib(GL11.GL_CLIENT_ALL_ATTRIB_BITS)
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS)
 
         with(props) {
+            lastDrawFramebuffer[0] = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING)
+            lastReadFramebuffer[0] = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING)
+
             if (!isMacOS) {
                 lastSampler[0] = GL11.glGetInteger(GL33.GL_SAMPLER_BINDING)
                 lastVertexArrayObject[0] = GL11.glGetInteger(GL30.GL_VERTEX_ARRAY_BINDING)
@@ -285,8 +294,12 @@ class StoredGLState(private val glVersion: Int) {
         GL11.glPopAttrib()
         GL11.glPopClientAttrib()
         if (alphaTestEnabled) GlStateManager.enableAlphaTest() else GlStateManager.disableAlphaTest()
+        if (depthTestEnabled) GlStateManager.enableDepthTest() else GlStateManager.disableDepthTest()
 
         with(props) {
+            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, lastDrawFramebuffer[0])
+            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, lastReadFramebuffer[0])
+
             if (!isMacOS) {
                 for (unit in 0..7) {
                     GL33.glBindSampler(unit, 0)

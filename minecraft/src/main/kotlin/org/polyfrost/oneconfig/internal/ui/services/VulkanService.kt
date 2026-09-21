@@ -24,6 +24,8 @@ interface VulkanService {
 
     fun transitionOffscreenForRendering(target: RenderTarget) {}
 
+    fun clearOffscreenRect(x: Int, y: Int, width: Int, height: Int): Boolean = false
+
     fun restoreMainRTLayout() {}
 
     fun makeDirectContext(): DirectContext
