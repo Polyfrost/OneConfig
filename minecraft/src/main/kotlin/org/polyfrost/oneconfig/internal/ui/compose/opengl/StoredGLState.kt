@@ -240,9 +240,11 @@ class StoredGLState(private val glVersion: Int) {
     //?} else {
     /*private val isMacOS = System.getProperty("os.name").lowercase().contains("mac")
     private var alphaTestEnabled = false
+    private var depthTestEnabled = false
 
     fun capture() {
         alphaTestEnabled = GL11.glIsEnabled(GL11.GL_ALPHA_TEST)
+        depthTestEnabled = GL11.glIsEnabled(GL11.GL_DEPTH_TEST)
         GL11.glPushClientAttrib(GL11.GL_CLIENT_ALL_ATTRIB_BITS)
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS)
 
@@ -292,6 +294,7 @@ class StoredGLState(private val glVersion: Int) {
         GL11.glPopAttrib()
         GL11.glPopClientAttrib()
         if (alphaTestEnabled) GlStateManager.enableAlphaTest() else GlStateManager.disableAlphaTest()
+        if (depthTestEnabled) GlStateManager.enableDepthTest() else GlStateManager.disableDepthTest()
 
         with(props) {
             GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, lastDrawFramebuffer[0])
