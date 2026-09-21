@@ -452,7 +452,10 @@ tasks.withType<ProcessResources>() {
         exclude("ornithe.mod.json")
     }
 
-    val mixinCompat = if (stonecutter.eval(stonecutter.current.version, ">= 26.1")) "JAVA_25" else "JAVA_21"
+    val mixinCompat = if (
+        stonecutter.eval(stonecutter.current.version, ">= 26.1") ||
+        stonecutter.eval(stonecutter.current.version, "= 1.8.9")
+    ) "JAVA_25" else "JAVA_21"
     this.inputs.property("mixin_compat", mixinCompat)
     this.filesMatching("mixins.oneconfigv1*.json") {
         filter { line -> line.replace("\"JAVA_21\"", "\"$mixinCompat\"") }
@@ -460,7 +463,10 @@ tasks.withType<ProcessResources>() {
 }
 
 val minJavaVersion = 21
-val javaVersion = if (stonecutter.eval(stonecutter.current.version, ">= 26.1")) {
+val javaVersion = if (
+    stonecutter.eval(stonecutter.current.version, ">= 26.1") ||
+    stonecutter.eval(stonecutter.current.version, "= 1.8.9")
+) {
     25
 } else {
     21
