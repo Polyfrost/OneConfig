@@ -1,4 +1,4 @@
-classTweaker v2 official
+classTweaker v1 official
 
 #? if = 1.8.9 {
 #accessible field net/minecraft/client/Minecraft tasks Ljava/util/Queue;
