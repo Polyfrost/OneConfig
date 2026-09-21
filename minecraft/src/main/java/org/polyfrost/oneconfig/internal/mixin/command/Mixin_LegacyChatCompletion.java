@@ -47,7 +47,7 @@ public abstract class Mixin_LegacyChatCompletion {
             method = "goThroughHistory(Ljava/lang/String;Ljava/lang/String;)V",
             at = @At(
                     value = "FIELD",
-                    target = "Lnet/minecraft/client/gui/screen/ChatScreen;completed:Z",
+                    target = "Lnet/minecraft/client/gui/screen/game/ChatScreen;completed:Z",
                     opcode = Opcodes.PUTFIELD
             )
     )
