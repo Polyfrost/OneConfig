@@ -258,6 +258,7 @@ class StoredGLState(private val glVersion: Int) {
             }
 
             lastEnableBlend = GL11.glIsEnabled(GL11.GL_BLEND)
+            lastShadeModel[0] = GL11.glGetInteger(GL11.GL_SHADE_MODEL)
 
             lastProgram[0] = GL11.glGetInteger(GL20.GL_CURRENT_PROGRAM)
             lastActiveTexture[0] = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE)
@@ -340,7 +341,7 @@ class StoredGLState(private val glVersion: Int) {
             GL11.glPixelStorei(GL12.GL_UNPACK_SKIP_IMAGES, lastUnpackSkipImages[0])
             GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, lastUnpackAlignment[0])
 
-            GL11.glShadeModel(GL11.GL_SMOOTH)
+            GlStateManager.shadeModel(lastShadeModel[0])
         }
     }
     *///?}
