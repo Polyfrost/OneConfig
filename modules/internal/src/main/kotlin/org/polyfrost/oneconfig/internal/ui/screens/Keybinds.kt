@@ -26,6 +26,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +55,7 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
+import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
@@ -222,6 +224,9 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
     val theme = LocalTheme.current
     val shape = theme.modCardShape
     val prop = entry.prop
+    val display = rememberDisplay(prop)
+    if (display == Property.Display.HIDDEN) return
+    val enabled = display != Property.Display.DISABLED
     var menuOpen by remember(prop) { mutableStateOf(false) }
     var menuOffset by remember(prop) { mutableStateOf(IntOffset.Zero) }
     val rowOrigin = remember(prop) { LayoutRef(Offset.Zero) }
@@ -237,6 +242,7 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .alpha(displayAlpha(display))
             .hoverable(rowInteraction)
             .onGloballyPositioned { rowOrigin.value = it.positionInRoot() }
             .pointerInput(prop) {
@@ -328,7 +334,9 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
                     onClick = ::openMenuFromActionButton,
                 )
             }
-            Option(prop)
+            Box(Modifier.blockInteraction(!enabled)) {
+                Option(prop)
+            }
         }
 
         OptionContextMenu(prop, menuOpen, menuOffset, onDismiss = { menuOpen = false })

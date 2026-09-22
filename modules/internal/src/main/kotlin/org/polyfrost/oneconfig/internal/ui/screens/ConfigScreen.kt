@@ -593,7 +593,7 @@ private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
 }
 
 @Composable
-private fun rememberDisplay(prop: Property<*>): Property.Display {
+internal fun rememberDisplay(prop: Property<*>): Property.Display {
     var display by remember(prop) { mutableStateOf(prop.display) }
 
     DisposableEffect(prop) {
@@ -605,7 +605,7 @@ private fun rememberDisplay(prop: Property<*>): Property.Display {
     return display
 }
 
-private fun displayAlpha(display: Property.Display): Float {
+internal fun displayAlpha(display: Property.Display): Float {
     return if (display == Property.Display.DISABLED) 0.65f else 1f
 }
 
