@@ -67,6 +67,7 @@ object DebugOverlayOffscreen {
             *///? } else {
             /*renderImmediateLegacy(rt)
             *///? }
+            offscreen.ensureSubmitted()
             hasContent = true
         } catch (t: Throwable) {
             LOG.warn("Debug overlay offscreen render failed; disabling", t)
