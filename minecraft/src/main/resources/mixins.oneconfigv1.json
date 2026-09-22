@@ -16,6 +16,7 @@
         "events.Mixin_ChatSendEvent",
         "events.Mixin_DebugOpenEvent",
         "events.Mixin_FramebufferRenderEvent",
+        "events.Mixin_HudPrepareEvent",
         "events.Mixin_HudRenderEvent",
         "events.Mixin_InitializationEvent",
         "events.Mixin_KeyInputEvent",

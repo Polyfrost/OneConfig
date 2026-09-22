@@ -67,6 +67,7 @@ import org.polyfrost.oneconfig.internal.ui.compose.McFontService;
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen;
+import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudOffscreen;
 import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudRenderer;
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry;
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProvider;
@@ -167,10 +168,20 @@ public class OneConfig
                 || scoreboard.getDisplayObjective(DisplaySlot.LIST) != null;
     }
 
-    //? if > 1.8.9 {
-    public static void render(GuiGraphicsExtractor graphics, float partial) {
-    //?} else
-    //public static void render(float partial) {
+    private static boolean legacyHudOffscreenReady;
+
+    //~ if = 1.8.9 '(GuiGraphicsExtractor graphics)' -> '()'
+    public static void render(GuiGraphicsExtractor graphics) {
+        prepareHud();
+        //~ if = 1.8.9 '(graphics)' -> '()'
+        submitHud(graphics);
+    }
+
+    /**
+     * Runs the offscreen passes before vanilla extracts the HUD to maintain compatibility with Gnetum
+     */
+    public static void prepareHud() {
+        legacyHudOffscreenReady = false;
         if (!SkiaCtx.INSTANCE.isReady()) {
             return;
         }
@@ -196,10 +207,7 @@ public class OneConfig
 
         //~ if < 1.21.8 '.suppressInGameHudRender' -> '.shouldSuppressInGameHudRender()'
         boolean hudRendersLive = !SkiaCtx.INSTANCE.suppressInGameHudRender;
-        if (hudRendersLive || !org.polyfrost.oneconfig.internal.ui.hud.LegacyHudOffscreen.INSTANCE.render()) {
-            //~ if = 1.8.9 '(graphics)' -> '()'
-            LegacyHudRenderer.INSTANCE.renderLive(graphics);
-        }
+        legacyHudOffscreenReady = !hudRendersLive && LegacyHudOffscreen.INSTANCE.render();
         // records the F3 overlay offscreen so Skia can put it above the Compose UI instead of below the
         // blur and it must run every frame regardless of the HUD dirty gate
         // 1.8.9 replays the overlay in Mixin_SkiaFrame after Skia finishes drawing instead
@@ -212,6 +220,23 @@ public class OneConfig
             });
             // renders into the offscreen TextureTarget which the mixin blits onto MC's render target
             SkiaCtx.INSTANCE.drawNow();
+        }
+    }
+
+    /** Submits the legacy HUDs (when not captured offscreen) and the Skia HUD blit into the vanilla HUD */
+    //~ if = 1.8.9 '(GuiGraphicsExtractor graphics)' -> '()'
+    public static void submitHud(GuiGraphicsExtractor graphics) {
+        if (!SkiaCtx.INSTANCE.isReady()) {
+            return;
+        }
+        if (!legacyHudOffscreenReady) {
+            //~ if = 1.8.9 '(graphics)' -> '()'
+            LegacyHudRenderer.INSTANCE.renderLive(graphics);
+        }
+        //~ if < 1.21.8 '.suppressInGameHudRender' -> '.shouldSuppressInGameHudRender()'
+        if (!SkiaCtx.INSTANCE.suppressInGameHudRender) {
+            //~ if = 1.8.9 '(graphics)' -> '()'
+            SkiaCtx.INSTANCE.blitHud(graphics);
         }
     }
 

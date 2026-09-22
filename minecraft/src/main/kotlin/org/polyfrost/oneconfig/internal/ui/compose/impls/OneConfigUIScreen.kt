@@ -439,15 +439,12 @@ class OneConfigUIScreen @JvmOverloads constructor(
             //? if >= 1.21.8 {
             // This frame skipped normal HUD rendering because OneConfig was open.
             // Closing removes the Compose copy as well, so add the normal HUD back.
-            OneConfig.render(ctx, tickDelta)
-            SkiaCtx.blitHud(ctx)
+            OneConfig.render(ctx)
             //?} else {
             /*if (closeAnimationMs <= 0L) {
                 SkiaCtx.discardComposeFrame()
-                //~ if = 1.8.9 '(ctx, tickDelta)' -> '(tickDelta)'
-                OneConfig.render(ctx, tickDelta)
                 //~ if = 1.8.9 '(ctx)' -> '()'
-                SkiaCtx.blitHud(ctx)
+                OneConfig.render(ctx)
             }
             *///?}
             return

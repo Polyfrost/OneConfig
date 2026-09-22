@@ -341,6 +341,8 @@ object SkiaCtx {
         if (isVulkanMode || !this::directContext.isInitialized) return block()
         gl.capture()
         directContext.resetGLAll()
+        //? if = 1.8.9
+        //GL11.glDisable(GL11.GL_ALPHA_TEST)
         try {
             return block()
         } finally {
@@ -360,6 +362,8 @@ object SkiaCtx {
             } else {
                 gl.capture()
                 directContext.resetGLAll()
+                //? if = 1.8.9
+                //GL11.glDisable(GL11.GL_ALPHA_TEST)
             }
 
             warmups.forEach { it() }
@@ -685,6 +689,8 @@ object SkiaCtx {
             } else {
                 gl.capture()
                 directContext.resetGLAll()
+                //? if = 1.8.9
+                //GL11.glDisable(GL11.GL_ALPHA_TEST)
                 GL11.glViewport(0, 0, mainSurface.width, mainSurface.height)
                 GL11.glDisable(GL11.GL_SCISSOR_TEST)
             }
@@ -754,6 +760,8 @@ object SkiaCtx {
             } else {
                 gl.capture()
                 directContext.resetGLAll()
+                //? if = 1.8.9
+                //GL11.glDisable(GL11.GL_ALPHA_TEST)
                 GL11.glViewport(0, 0, surface.width, surface.height)
                 GL11.glDisable(GL11.GL_SCISSOR_TEST)
             }
