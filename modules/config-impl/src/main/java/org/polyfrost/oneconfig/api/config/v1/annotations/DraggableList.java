@@ -31,11 +31,14 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer;
 import java.lang.annotation.*;
 
 /**
- * Renders a reorderable list. The annotated field must be {@code String[]}.
+ * Renders a reorderable list
  * <p>
- * When {@code checkable = false} (default), the property value is the full ordered list.
- * When {@code checkable = true}, {@code options} holds all items and the property value
- * is the ordered subset of enabled items.
+ * The annotated field must be {@code String[]}
+ * <p>
+ * When {@code checkable = false} which is the default the property value is the full ordered list
+ * <p>
+ * When {@code checkable = true} the {@code options} value holds all items and the property value
+ * is the ordered subset of enabled items
  */
 @Option(display = Visualizer.DraggableListVisualizer.class)
 @Retention(RetentionPolicy.RUNTIME)
@@ -45,9 +48,7 @@ public @interface DraggableList {
     String title();
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given title is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the title and remove this flag.
+     * @deprecated OneConfig auto-translates title values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean titleTranslation() default false;
@@ -58,9 +59,7 @@ public @interface DraggableList {
     String description() default "";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given description is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the description and remove this flag.
+     * @deprecated OneConfig auto-translates description values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean descriptionTranslation() default false;
@@ -73,9 +72,7 @@ public @interface DraggableList {
     String category() default "General";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given category is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the category and remove this flag.
+     * @deprecated OneConfig auto-translates category values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean categoryTranslation() default false;
@@ -86,7 +83,7 @@ public @interface DraggableList {
     String subcategory() default "General";
 
     /**
-     * @deprecated translation keys will be translated by default.
+     * @deprecated translation keys will be translated by default
      */
     @Deprecated
     boolean subcategoryTranslation() default false;
@@ -94,13 +91,11 @@ public @interface DraggableList {
     @Deprecated
     String subcategoryKey() default "";
 
-    /** Full set of items. Required when {@code checkable = true}; optional otherwise. */
+    /** Full set of items which is required when {@code checkable = true} and optional otherwise */
     String[] options() default {};
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given options is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the options and remove this flag.
+     * @deprecated OneConfig auto-translates options values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean optionsTranslation() default false;
@@ -108,6 +103,6 @@ public @interface DraggableList {
     @Deprecated
     String[] optionsKey() default {};
 
-    /** Show checkboxes to enable/disable individual items. */
+    /** Show checkboxes to enable or disable individual items */
     boolean checkable() default false;
 }

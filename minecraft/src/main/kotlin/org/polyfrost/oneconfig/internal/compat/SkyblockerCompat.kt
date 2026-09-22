@@ -1,5 +1,5 @@
 //? skyblocker_compat {
-package org.polyfrost.oneconfig.internal.compat
+/*package org.polyfrost.oneconfig.internal.compat
 
 import de.hysky.skyblocker.skyblock.fancybars.BarPositioner
 import de.hysky.skyblocker.skyblock.fancybars.FancyStatusBars
@@ -19,6 +19,8 @@ import org.polyfrost.oneconfig.api.hud.v1.OneConfigHudWrapper
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer
 import java.awt.Color
+import java.lang.reflect.Field
+import java.lang.reflect.Method
 import java.util.function.Consumer
 import kotlin.math.abs
 
@@ -33,12 +35,101 @@ object SkyblockerCompat {
 
     private var initialized = false
     private var dirty = false
+    private var barsUnavailable = false
 
     @Volatile
     private var redrawing = false
 
     @Volatile
     private var dragged: StatusBar? = null
+
+    private val cls = FancyStatusBars::class.java
+
+    private val NO_INSTANCE = Any()
+
+    @Volatile
+    private var selfCache: Any? = null
+
+    private fun self(): Any? {
+        selfCache?.let { return if (it === NO_INSTANCE) null else it }
+        val found = runCatching { cls.getField("INSTANCE").get(null) }.getOrNull()
+            ?: runCatching { cls.getMethod("getInstance").invoke(null) }.getOrNull()
+        if (found == null && !barsReady) return null
+        selfCache = found ?: NO_INSTANCE
+        return found
+    }
+
+    private fun field(name: String): Field? = runCatching {
+        cls.getDeclaredField(name).apply { isAccessible = true }
+    }.onFailure { LOGGER.warn("Skyblocker FancyStatusBars.{} is unavailable", name, it) }.getOrNull()
+
+    private fun method(name: String, vararg params: Class<*>): Method? = runCatching {
+        cls.getDeclaredMethod(name, *params).apply { isAccessible = true }
+    }.onFailure { LOGGER.warn("Skyblocker FancyStatusBars.{}() is unavailable", name, it) }.getOrNull()
+
+    private val statusBarsField by lazy { field("statusBars") }
+    private val barPositionerField by lazy { field("barPositioner") }
+    private val saveBarConfigMethod by lazy { method("saveBarConfig") }
+    private val placeBarsMethod by lazy { method("placeBarsInPositioner") }
+    private val updatePositionsMethod by lazy { method("updatePositions", java.lang.Boolean.TYPE) }
+    private val healthFancyBarMethod by lazy { method("isHealthFancyBarEnabled") }
+    private val renderBarsMethod by lazy {
+        //~ if >= 26.1 'render' -> 'extractRenderState'
+        method("extractRenderState", GuiGraphicsExtractor::class.java, Minecraft::class.java)
+    }
+
+    private val handlesResolved: Boolean by lazy {
+        val ok = listOf(renderBarsMethod, saveBarConfigMethod, updatePositionsMethod, barPositionerField, statusBarsField)
+            .all { it != null }
+        if (!ok) LOGGER.warn("Skyblocker status bar compat is off: FancyStatusBars has an unrecognised shape")
+        ok
+    }
+
+    @Volatile
+    private var barsReady = false
+
+    @JvmStatic
+    fun isActive(): Boolean {
+        if (barsReady) return true
+        if (!handlesResolved) return false
+        if (runCatching { statusBarsField?.get(self()) }.getOrNull() == null) return false
+        barsReady = true
+        return true
+    }
+
+    private fun noStatusBars(error: Throwable?): Map<StatusBarType, StatusBar> {
+        if (!barsUnavailable) {
+            barsUnavailable = true
+            LOGGER.warn("Skyblocker's status bar API is unavailable, its bars will be left out of the OneConfig HUD editor", error)
+        }
+        return emptyMap()
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun statusBars(): Map<StatusBarType, StatusBar> =
+        runCatching { statusBarsField?.get(self()) as? Map<StatusBarType, StatusBar> }
+            .getOrElse { noStatusBars(it) } ?: noStatusBars(null)
+
+    private fun positioner(): BarPositioner =
+        checkNotNull(barPositionerField?.get(self()) as? BarPositioner) { "Skyblocker barPositioner is unavailable" }
+
+    private fun saveBars() {
+        saveBarConfigMethod?.invoke(self())
+    }
+
+    private fun placeBars() {
+        placeBarsMethod?.invoke(self())
+    }
+
+    private fun updatePositions(ignoreVisibility: Boolean) {
+        updatePositionsMethod?.invoke(self(), ignoreVisibility)
+    }
+
+    private fun healthFancyBarEnabled(): Boolean = healthFancyBarMethod?.invoke(self()) as? Boolean == true
+
+    private fun renderStatusBars(ctx: GuiGraphicsExtractor, mc: Minecraft) {
+        renderBarsMethod?.invoke(self(), ctx, mc)
+    }
 
     @JvmStatic
     fun isRedrawing(): Boolean = redrawing
@@ -51,6 +142,7 @@ object SkyblockerCompat {
     }
 
     private fun register() {
+        if (!handlesResolved) return
         var count = 0
         for (type in StatusBarType.values()) {
             runCatching {
@@ -76,8 +168,7 @@ object SkyblockerCompat {
         try {
             runCatching {
                 renderAnchorHints(ctx)
-                //~ if >= 26.1 'render' -> 'extractRenderState'
-                FancyStatusBars.extractRenderState(ctx, mc)
+                renderStatusBars(ctx, mc)
             }.onFailure { LOGGER.debug("Failed to render Skyblocker status bars above the blur", it) }
         } finally {
             redrawing = false
@@ -88,10 +179,15 @@ object SkyblockerCompat {
         dirty = true
     }
 
+    internal fun flush() {
+        markDirty()
+        save()
+    }
+
     private fun save() {
         if (!dirty) return
         dirty = false
-        runCatching { FancyStatusBars.saveBarConfig() }
+        runCatching { saveBars() }
             .onFailure { LOGGER.warn("Failed to save Skyblocker status bar config", it) }
     }
 
@@ -248,7 +344,7 @@ object SkyblockerCompat {
     }
 
     private fun rowNeighbour(bar: StatusBar, anchor: BarPositioner.BarAnchor): StatusBar? {
-        val row = runCatching { FancyStatusBars.barPositioner.getRow(anchor, bar.gridY) }.getOrNull() ?: return null
+        val row = runCatching { positioner().getRow(anchor, bar.gridY) }.getOrNull() ?: return null
         return row.getOrNull(bar.gridX + 1) ?: row.getOrNull(bar.gridX - 1)
     }
 
@@ -257,7 +353,7 @@ object SkyblockerCompat {
         if (bar.enabled == value) return
         if (value) {
             bar.enabled = true
-            if (bar.anchor != null) runCatching { FancyStatusBars.placeBarsInPositioner() }
+            if (bar.anchor != null) runCatching { placeBars() }
         } else {
             detach(bar)
             bar.enabled = false
@@ -266,7 +362,7 @@ object SkyblockerCompat {
         markDirty()
     }
 
-    internal fun bar(type: StatusBarType): StatusBar? = FancyStatusBars.statusBars[type]
+    internal fun bar(type: StatusBarType): StatusBar? = statusBars()[type]
 
     internal fun guiScaledWidth(): Float =
         Minecraft.getInstance().window?.guiScaledWidth?.toFloat() ?: 0f
@@ -276,7 +372,7 @@ object SkyblockerCompat {
 
     internal fun detach(bar: StatusBar) {
         val anchor = bar.anchor ?: return
-        runCatching { FancyStatusBars.barPositioner.removeBar(anchor, bar.gridY, bar) }
+        runCatching { positioner().removeBar(anchor, bar.gridY, bar) }
         bar.anchor = null
         val screenW = guiScaledWidth()
         val screenH = guiScaledHeight()
@@ -289,7 +385,7 @@ object SkyblockerCompat {
 
     internal fun reflow() {
         markDirty()
-        runCatching { FancyStatusBars.updatePositions(true) }
+        runCatching { updatePositions(true) }
     }
 
     internal fun beginDrag(bar: StatusBar) {
@@ -316,7 +412,7 @@ object SkyblockerCompat {
         val cx = x + w / 2f
         val cy = y + h / 2f
 
-        val target = FancyStatusBars.statusBars.values
+        val target = statusBars().values
             .filter { it !== bar && it.enabled && it.anchor != null }
             .filter {
                 overlaps(
@@ -339,8 +435,8 @@ object SkyblockerCompat {
                 )
             ) continue
             runCatching {
-                FancyStatusBars.barPositioner.addRow(hint.anchor)
-                FancyStatusBars.barPositioner.addBar(hint.anchor, 0, bar)
+                positioner().addRow(hint.anchor)
+                positioner().addBar(hint.anchor, 0, bar)
             }.onFailure { LOGGER.warn("Failed to anchor Skyblocker status bar to '{}'", hint.anchor.name, it) }
             return
         }
@@ -359,11 +455,11 @@ object SkyblockerCompat {
             if (abs(dx) >= abs(dy)) {
                 if (!rowHasRoom(anchor, target.gridY)) return
                 val gridX = neighbourInsertX(anchor, target.gridX, right = dx > 0f)
-                FancyStatusBars.barPositioner.addBar(anchor, target.gridY, gridX, bar)
+                positioner().addBar(anchor, target.gridY, gridX, bar)
             } else {
                 val gridY = neighbourInsertY(anchor, target.gridY, up = dy < 0f)
-                FancyStatusBars.barPositioner.addRow(anchor, gridY)
-                FancyStatusBars.barPositioner.addBar(anchor, gridY, bar)
+                positioner().addRow(anchor, gridY)
+                positioner().addBar(anchor, gridY, bar)
             }
         }.onFailure { LOGGER.warn("Failed to snap Skyblocker status bar next to '{}'", target.name.string, it) }
     }
@@ -371,9 +467,9 @@ object SkyblockerCompat {
     private fun rowHasRoom(anchor: BarPositioner.BarAnchor, row: Int): Boolean {
         val rule = anchor.sizeRule
         if (!rule.isTargetSize) return true
-        val halved = anchor == BarPositioner.BarAnchor.HOTBAR_TOP && !FancyStatusBars.isHealthFancyBarEnabled()
+        val halved = anchor == BarPositioner.BarAnchor.HOTBAR_TOP && !healthFancyBarEnabled()
         val target = if (halved) rule.targetSize() / 2 else rule.targetSize()
-        val occupants = runCatching { FancyStatusBars.barPositioner.getRow(anchor, row).size }.getOrDefault(0)
+        val occupants = runCatching { positioner().getRow(anchor, row).size }.getOrDefault(0)
         val room = (occupants + 1) * rule.minSize() <= target
         if (!room) LOGGER.debug("Refusing to snap a Skyblocker status bar into a full '{}' row", anchor.name)
         return room
@@ -390,7 +486,7 @@ object SkyblockerCompat {
     private fun emptyAnchors(screenW: Int, screenH: Int): List<AnchorHint> =
         BarPositioner.BarAnchor.allAnchors().mapNotNull { anchor ->
             runCatching {
-                if (FancyStatusBars.barPositioner.getRowCount(anchor) != 0) return@runCatching null
+                if (positioner().getRowCount(anchor) != 0) return@runCatching null
                 val hitbox = anchor.getAnchorHitbox(anchor.getAnchorPosition(screenW, screenH))
                 AnchorHint(anchor, hitbox, hitbox.position().x().toFloat(), hitbox.position().y().toFloat())
             }.getOrNull()
@@ -429,10 +525,13 @@ private class SkyblockerBarWrapper(private val type: StatusBarType) : OneConfigH
 
     override val modId: String = "skyblocker"
 
+    override val ownsPlacement: Boolean get() = true
+
     override var x: Float
         get() = bar?.getX()?.toFloat() ?: 0f
         set(value) {
             val bar = bar ?: return
+            if (bar.getX().toFloat() == value) return
             val screen = SkyblockerCompat.guiScaledWidth()
             if (screen <= 0f) return
             SkyblockerCompat.detach(bar)
@@ -444,6 +543,7 @@ private class SkyblockerBarWrapper(private val type: StatusBarType) : OneConfigH
         get() = bar?.getY()?.toFloat() ?: 0f
         set(value) {
             val bar = bar ?: return
+            if (bar.getY().toFloat() == value) return
             val screen = SkyblockerCompat.guiScaledHeight()
             if (screen <= 0f) return
             SkyblockerCompat.detach(bar)
@@ -456,6 +556,9 @@ private class SkyblockerBarWrapper(private val type: StatusBarType) : OneConfigH
         set(_) {}
 
     override val supportsScale: Boolean get() = false
+
+    override val placementReady: Boolean
+        get() = runCatching { (bar?.getWidth() ?: 0) > 0 }.getOrDefault(false)
 
     override val resizeAxes: HudResize get() = HudResize.Width
 
@@ -480,5 +583,7 @@ private class SkyblockerBarWrapper(private val type: StatusBarType) : OneConfigH
     }
 
     override fun linkedProperties(): List<Property<*>> = SkyblockerCompat.buildSettings(type)
+
+    override fun save() = SkyblockerCompat.flush()
 }
-//? }
+*///? }

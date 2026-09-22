@@ -1,5 +1,6 @@
 import dev.kikugie.stonecutter.build.StonecutterBuildExtension
 import org.gradle.api.artifacts.VersionCatalogsExtension
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.authentication.http.BasicAuthentication
@@ -39,7 +40,7 @@ repositories {
         content { includeGroup("dev.isxander") }
     }
     maven("https://api.modrinth.com/maven") {
-        content { includeGroup("maven.modrinth") } // for some reason yacl versions exist that aren't on the official repo???
+        content { includeGroup("maven.modrinth") } // some yacl versions only exist here and not on the official repo
     }
     maven("https://jitpack.io") {
         content { includeGroupAndSubgroups("com.github") }
@@ -55,9 +56,6 @@ repositories {
     }
     maven("https://maven.bawnorton.com/releases") {
         content { includeGroup("com.github.bawnorton.mixinsquared") }
-    }
-    maven("https://maven.parchmentmc.org") {
-        content { includeGroupAndSubgroups("org.parchmentmc") }
     }
     maven("https://redirector.kotlinlang.org/maven/compose-dev")
     scopedMaven("https://central.sonatype.com/repository/maven-snapshots/", "net.kyori")
@@ -89,6 +87,7 @@ if (loader == "fabric") {
     val modMenuShimClasses = layout.buildDirectory.dir("classes/modMenuShim")
     val compileModMenuApiShimJava = tasks.register<JavaCompile>("compileModMenuApiShimJava") {
         val mainSourceSet = sourceSets.named("main").get()
+        javaCompiler.set(tasks.named<JavaCompile>("compileJava").flatMap { it.javaCompiler })
         source(rootProject.projectDir.resolve("minecraft/src/modMenuShim/java"))
         classpath = files(mainSourceSet.output.classesDirs, mainSourceSet.compileClasspath)
         destinationDirectory.set(modMenuShimClasses)
@@ -180,12 +179,44 @@ val firmamentRelocatedConfiguration: Configuration by configurations.creating {
     attributes { attribute(firmamentRelocated, true) }
 }
 
-val dandelionBpRelocated = registerRelocationAttribute("relocate-dandelion-bp-moulconfig") {
-    relocate("io.github.notenoughupdates.moulconfig", "net.azureaaron.dandelion_bp.deps.moulconfig")
-}
+val adventurePlatform = when {
+    loader != "fabric" -> null
+    stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "7.0.0"
+    stonecutter.eval(stonecutter.current.version, ">= 26.1") -> "6.9.0"
+    stonecutter.eval(stonecutter.current.version, ">= 1.21.11") -> "6.8.0"
+    stonecutter.eval(stonecutter.current.version, ">= 1.21.10") -> "6.7.0"
+    stonecutter.eval(stonecutter.current.version, ">= 1.21.8") -> "6.6.0"
+    stonecutter.eval(stonecutter.current.version, ">= 1.21.5") -> "6.4.0"
+    stonecutter.eval(stonecutter.current.version, ">= 1.21.4") -> "6.3.0"
+    stonecutter.eval(stonecutter.current.version, ">= 1.21.1") -> "5.14.2"
+    else -> error("No adventure-platform-fabric version for ${stonecutter.current.version}")
+}?.let { "net.kyori:adventure-platform-fabric:$it" }
 
-val dandelionBpRelocatedConfiguration: Configuration by configurations.creating {
-    attributes { attribute(dandelionBpRelocated, true) }
+// TODO: remove this hack when adventure-platform-fabric has a proper 26.3 release
+val relaxedAdventurePlatformJar = if (
+    adventurePlatform == null || stonecutter.eval(stonecutter.current.version, "< 26.3")
+) null else {
+    val upstream = configurations.detachedConfiguration(
+        (dependencies.create(adventurePlatform) as ExternalModuleDependency).apply { isTransitive = false }
+    )
+    val devRuntime = configurations.create("adventureDevRuntime")
+    listOf("runtimeClasspath", "testRuntimeClasspath").forEach {
+        configurations.named(it) { extendsFrom(devRuntime) }
+    }
+
+    val modJarTask = if ("remapJar" in tasks.names) "remapJar" else "jar"
+    tasks.matching { it.name == modJarTask }.configureEach {
+        doLast {
+            relaxNestedJar((this as AbstractArchiveTask).archiveFile.get().asFile, "adventure-platform-fabric")
+        }
+    }
+
+    tasks.register("relaxedAdventurePlatformJar") {
+        val output = layout.buildDirectory.file("adventure/adventure-platform-fabric-relaxed.jar")
+        inputs.files(upstream)
+        outputs.file(output)
+        doLast { relaxGameConstraint(upstream.singleFile, output.get().asFile) }
+    }
 }
 
 dependencies {
@@ -205,7 +236,7 @@ dependencies {
         }
     }
 
-    moulConfig(skyhanniRelocatedConfiguration, firmamentRelocatedConfiguration, dandelionBpRelocatedConfiguration)
+    moulConfig(skyhanniRelocatedConfiguration, firmamentRelocatedConfiguration)
 
     "api"(versionedCatalog["jetbrains.compose.foundation"])
     "api"(versionedCatalog["jetbrains.compose.material"])
@@ -213,9 +244,11 @@ dependencies {
     "api"(versionedCatalog["jetbrains.compose.ui"])
     "api"(versionedCatalog["jetbrains.compose.ui.tooling.preview"])
     "api"(versionedCatalog["jetbrains.compose.ui.util"])
+    "api"(versionedCatalog["jetbrains.compose.ui.backhandler"])
     "api"(versionedCatalog["jetbrains.skiko.awt"])
     "api"(versionedCatalog["jetbrains.skiko.awt.runtime.windows.x64"])
     "api"(versionedCatalog["jetbrains.skiko.awt.runtime.linux.x64"])
+    "api"(versionedCatalog["jetbrains.skiko.awt.runtime.linux.arm64"])
     "api"(versionedCatalog["jetbrains.skiko.awt.runtime.macos.x64"])
     "api"(versionedCatalog["jetbrains.skiko.awt.runtime.macos.arm64"])
     "api"(versionedCatalog["jetbrains.compose.navigation"])
@@ -224,29 +257,21 @@ dependencies {
     "api"(versionedCatalog["commonmark"])
     handleApiDep(versionedCatalog.bundles["adventure"])
 
-    if (loader == "fabric") {
-        val adventurePlatformVersion =
-            when {
-                stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "7.0.0-SNAPSHOT"
-                stonecutter.eval(stonecutter.current.version, ">= 26.1") -> "6.9.0"
-                stonecutter.eval(stonecutter.current.version, ">= 1.21.11") -> "6.8.0"
-                stonecutter.eval(stonecutter.current.version, ">= 1.21.10") -> "6.7.0"
-                stonecutter.eval(stonecutter.current.version, ">= 1.21.8") -> "6.6.0"
-                stonecutter.eval(stonecutter.current.version, ">= 1.21.5") -> "6.4.0"
-                stonecutter.eval(stonecutter.current.version, ">= 1.21.4") -> "6.3.0"
-                stonecutter.eval(stonecutter.current.version, ">= 1.21.1") -> "5.14.2"
-                else -> error("No adventure-platform-fabric version for ${stonecutter.current.version}")
-            }
-        val adventurePlatform = "net.kyori:adventure-platform-fabric:$adventurePlatformVersion"
-        "modApi"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
-        "modImplementation"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
+    if (adventurePlatform != null) {
+        if (relaxedAdventurePlatformJar != null) {
+            "modCompileOnly"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
+            "adventureDevRuntime"(files(relaxedAdventurePlatformJar))
+            "include"(adventurePlatform) { isTransitive = false }
+        } else {
+            "modApi"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
+            "modImplementation"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
+        }
     }
 
     handleApiDep(versionedCatalog.bundles["kotlin"])
     handleApiDep(versionedCatalog.bundles["kotlinx"])
     handleApiDep(versionedCatalog.bundles["nightconfig"])
     handleApiDep(versionedCatalog["snakeyaml"])
-    handleApiDep(versionedCatalog["isolated-lwjgl3-loader"]) //todo check if needed
     handleApiDep(versionedCatalog["java-objc-bridge"])
     val hypixelModApiVersion = if (stonecutter.eval(stonecutter.current.version, ">= 26.1")) "1.0.2" else "1.0.1"
     handleApiDep("net.hypixel:mod-api:$hypixelModApiVersion")
@@ -270,22 +295,21 @@ dependencies {
     handleApiDep(versionedCatalog["commonmark"])
 
     if (loader == "fabric") {
-        handleApiDep(versionedCatalog["fabric-language-kotlin"], transitive = true)
+        handleApiDep(versionedCatalog["fabric-language-kotlin"])
         handleApiDep(versionedCatalog["fabric-loader"], isMod = true, transitive = true)
-        handleApiDep(versionedCatalog.bundles["fabric-api"], true, transitive = true)
 
         val fullFabricApiVersion = when {
-            stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "0.155.0+26.2"
-            stonecutter.eval(stonecutter.current.version, ">= 26.1") -> "0.155.0+26.1.2"
-            stonecutter.eval(stonecutter.current.version, ">= 1.21.11") -> "0.141.5+1.21.11"
+            stonecutter.eval(stonecutter.current.version, ">= 26.3") -> "0.160.3+26.3"
+            stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "0.159.0+26.2"
+            stonecutter.eval(stonecutter.current.version, ">= 26.1") -> "0.155.2+26.1.2"
+            stonecutter.eval(stonecutter.current.version, ">= 1.21.11") -> "0.141.6+1.21.11"
             stonecutter.eval(stonecutter.current.version, ">= 1.21.10") -> "0.138.4+1.21.10"
             stonecutter.eval(stonecutter.current.version, ">= 1.21.8") -> "0.136.1+1.21.8"
             stonecutter.eval(stonecutter.current.version, ">= 1.21.5") -> "0.128.2+1.21.5"
             stonecutter.eval(stonecutter.current.version, ">= 1.21.4") -> "0.119.4+1.21.4"
-            else -> "0.116.14+1.21.1"
+            else -> "0.116.17+1.21.1"
         }
-        "modCompileOnly"("net.fabricmc.fabric-api:fabric-api:$fullFabricApiVersion")
-        "modRuntimeOnly"("net.fabricmc.fabric-api:fabric-api:$fullFabricApiVersion")
+        "modApi"("net.fabricmc.fabric-api:fabric-api:$fullFabricApiVersion")
     }
 
     val libsCatalog = rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs")
@@ -316,14 +340,6 @@ dependencies {
         }
     }
 
-    //if (mcData.isFabric) {
-    //    provideFabricApiDependency(tripleVersion).forEach {
-    //        @Suppress("USELESS_CAST")
-    //        maybeModApi(if (it.dep is String) it.dep as String else "${(it.dep as ExternalModuleDependency).group}:${(it.dep as ExternalModuleDependency).name}:${(it.dep as ExternalModuleDependency).version}") {
-    //            isTransitive = false
-    //        }
-    //    }
-    //}
     "annotationProcessor"(versionedCatalog["mixin.squared"])
 
     if (enableMoulRelocatorKsp) {
@@ -344,59 +360,11 @@ dependencies {
 
     //api("dev.deftu:enhancedeventbus:2.0.0") // TODO
     if (properties["minecraft.vulkan"] != null) {
-        // i couldnt find a way to get it to work
-        // soooooooooooooooooooooooooooooooo
+        // never got the fabric-api mixin patching to work
         val fabricApiPatchSrc = configurations.create("fabricApiPatchSrc") {
             isCanBeConsumed = false
             isCanBeResolved = true
-        }/*
-        dependencies.add(fabricApiPatchSrc.name, "net.fabricmc.fabric-api:fabric-screen-api-v1:4.0.0+9f78a5a8ed") { isTransitive = false }
-        dependencies.add(fabricApiPatchSrc.name, "net.fabricmc.fabric-api:fabric-rendering-v1:23.0.2+f348b6c3c3") { isTransitive = false }
-
-        val patchedFabricApiDir = layout.buildDirectory.dir("patched-fabric-api")
-
-        val patchFabricApiMods by tasks.registering {
-            inputs.files(fabricApiPatchSrc)
-            outputs.dir(patchedFabricApiDir)
-            doLast {
-                val outDir = patchedFabricApiDir.get().asFile
-                outDir.mkdirs()
-                val jarFiles: Set<File> = fabricApiPatchSrc.resolvedConfiguration.resolvedArtifacts.map { it.file }.toSet()
-                for (jar: File in jarFiles) {
-                    val mixinJson: String? = when {
-                        "screen-api" in jar.name -> "fabric-screen-api-v1.mixins.json"
-                        "rendering-v1" in jar.name -> "fabric-rendering-v1.mixins.json"
-                        else -> null
-                    }
-                    val outFile = File(outDir, jar.name)
-                    ZipFile(jar).use { zf ->
-                        ZipOutputStream(outFile.outputStream().buffered()).use { zos ->
-                            zf.entries().asSequence().forEach { entry ->
-                                val bytes = zf.getInputStream(entry).readBytes()
-                                val content = if (mixinJson != null && entry.name == mixinJson) {
-                                    var json = String(bytes)
-                                        .replace("\"required\": true", "\"required\": false")
-                                        .replace("\"defaultRequire\": 1", "\"defaultRequire\": 0")
-                                    if ("rendering-v1" in mixinJson) {
-                                        json = json.replace(Regex("\"client\"\\s*:\\s*\\[.*?\\]", RegexOption.DOT_MATCHES_ALL), "\"client\": []")
-                                    }
-                                    json.toByteArray()
-                                } else bytes
-                                zos.putNextEntry(ZipEntry(entry.name))
-                                zos.write(content)
-                                zos.closeEntry()
-                            }
-                        }
-                    }
-                }
-            }
         }
-
-         */
-        //val patchedScreenApi = patchedFabricApiDir.map { it.file("fabric-screen-api-v1-4.0.0+9f78a5a8ed.jar") }
-        //val patchedRenderingV1 = patchedFabricApiDir.map { it.file("fabric-rendering-v1-23.0.2+f348b6c3c3.jar") }
-        //"maybeModApi"(files(patchedScreenApi) { builtBy(patchFabricApiMods) })
-        //"maybeModApi"(files(patchedRenderingV1) { builtBy(patchFabricApiMods) })
     }
 }
 

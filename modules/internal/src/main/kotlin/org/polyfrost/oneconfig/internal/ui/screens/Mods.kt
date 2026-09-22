@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
@@ -38,11 +39,16 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
@@ -147,13 +153,17 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
         return
     }
 
-    // Mutated live while dragging so the grid re-lays out under the pointer; the drop is what
+    // mutated live while dragging so the grid re-lays out under the pointer
     val flat = remember(filtered, collapseRevision) {
         buildModGridEntries(filtered, ModCardTypeCollapseStore::isCollapsed)
     }
     val entries = remember(flat) { flat.toMutableStateList() }
 
     val gridState = rememberRestorableLazyGridState("mods")
+    val density = LocalDensity.current
+    val windowSize = LocalWindowInfo.current.containerSize
+    // Only enable placement animations after the grid has been laid out for the current size
+    var animateItems by remember(windowSize, density) { mutableStateOf(false) }
     val reorderState = rememberGridReorderState(
         gridState = gridState,
         onMove = { from, to -> entries.add(to, entries.removeAt(from)) },
@@ -167,17 +177,20 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
             columns = GridCells.Fixed(4),
             verticalArrangement = Arrangement.spacedBy(19.dp),
             horizontalArrangement = Arrangement.spacedBy(19.dp),
-            modifier = Modifier.padding(end = 16.dp),
+            modifier = Modifier.padding(end = 16.dp).onGloballyPositioned {
+                animateItems = true
+            },
         ) {
             items(
                 entries,
                 key = { it.key },
+                contentType = { if (it is ModGridEntry.Header) HEADER_CONTENT_TYPE else CARD_CONTENT_TYPE },
                 span = { if (it is ModGridEntry.Header) GridItemSpan(maxLineSpan) else GridItemSpan(1) },
             ) { entry ->
                 when (entry) {
                     is ModGridEntry.Header -> ModTypeHeader(
                         entry,
-                        modifier = Modifier.animateItem(placementSpec = ModCardPlacementSpec),
+                        modifier = if (animateItems) Modifier.animateItem(placementSpec = ModCardPlacementSpec) else Modifier,
                         onToggle = { ModCardTypeCollapseStore.toggle(entry.type.id) },
                     )
 
@@ -187,7 +200,15 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
                         ModCard(
                             mod,
                             modifier = Modifier
-                                .animateItem(placementSpec = if (dragging) null else ModCardPlacementSpec)
+                                .then(
+                                    if (animateItems) {
+                                        Modifier.animateItem(
+                                            placementSpec = if (dragging) null else ModCardPlacementSpec,
+                                        )
+                                    } else {
+                                        Modifier
+                                    },
+                                )
                                 .reorderableItem(reorderState, mod.id),
                         )
                     }
@@ -199,7 +220,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
             modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
         )
 
-        // Drawn outside the grid so the card isn't clipped when dragged past a viewport edge.
+        // drawn outside the grid so the card is not clipped when dragged past a viewport edge
         val draggedId = reorderState.overlayKey
         val dragged = remember(entries, draggedId) {
             entries.firstNotNullOfOrNull { (it as? ModGridEntry.Card)?.data?.takeIf { mod -> mod.id == draggedId } }
@@ -223,7 +244,7 @@ private fun ModTypeHeader(entry: ModGridEntry.Header, modifier: Modifier = Modif
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Rule(Modifier.weight(1f))
-        entry.type.icon?.takeIf(::canRenderIcon)?.let { icon ->
+        remember(entry.type.icon) { entry.type.icon?.takeIf(::canRenderIcon) }?.let { icon ->
             Icon(icon, color = theme.textColorSecondary, modifier = Modifier.size(14.dp))
         }
         Text(
@@ -256,8 +277,9 @@ private val ModCardPlacementSpec = spring(
 )
 
 /**
- * Persists the arrangement after a card is dropped at [index]. Dropping a card inside the
- * favourites block favourites it, and dragging one out of the block clears it again.
+ * Persists the arrangement after a card is dropped at [index]
+ *
+ * Dropping a card inside the favourites block favourites it and dragging one out clears it
  */
 private fun commitDrop(entries: List<ModGridEntry>, index: Int) {
     val dropped = (entries.getOrNull(index) as? ModGridEntry.Card)?.data ?: return
@@ -272,7 +294,12 @@ private fun commitDrop(entries: List<ModGridEntry>, index: Int) {
     )
 }
 
+private const val HEADER_CONTENT_TYPE = "header"
+private const val CARD_CONTENT_TYPE = "card"
+
 private val ModCardFooterHeight = 36.dp
+
+private val ModCardGlowHeight = 50.dp
 
 private val FavoriteStarColor = Color(0xFFFFD700)
 
@@ -284,11 +311,9 @@ fun ModCard(mod: ConfigData, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier.fillMaxWidth().height(140.dp)
             .background(theme.modCardBackground, theme.modCardShape)
-            .border(
-                1.dp, Brush.verticalGradient(
-                    listOf(theme.borderColor, theme.borderColor.copy(0f))
-                ), theme.modCardShape
-            )
+            .border(1.dp, remember(theme.borderColor) {
+                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
+            }, theme.modCardShape)
             .onClick(interactionSource) {
                 val onOpen = mod.onOpen
                 when {
@@ -305,14 +330,14 @@ fun ModCard(mod: ConfigData, modifier: Modifier = Modifier) {
                 contentAlignment = Alignment.Center
             ) {
                 val preview = mod.preview
-                val icon = mod.icon?.takeIf(::canRenderIcon)
+                val icon = remember(mod.icon) { mod.icon?.takeIf(::canRenderIcon) }
                 if (preview != null) {
                     preview(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp))
                 } else if (icon != null) {
                     Icon(icon, color = theme.textColor, modifier = Modifier.size(48.dp))
                 } else {
                     Text(
-                        mod.title.asRenderText(),
+                        remember(mod.title) { mod.title.asRenderText() },
                         color = theme.textColor,
                         fontSize = 16.sp,
                         lineHeight = 18.sp,
@@ -344,7 +369,7 @@ fun ModCard(mod: ConfigData, modifier: Modifier = Modifier) {
             val vignetteColor = theme.textColor
             Box(
                 Modifier.fillMaxSize().drawWithCache {
-                    val gradient = Brush.radialGradient(
+                    val vignette = Brush.radialGradient(
                         colors = listOf(
                             vignetteColor.copy(alpha = 0f),
                             vignetteColor.copy(alpha = 0.04f),
@@ -353,36 +378,46 @@ fun ModCard(mod: ConfigData, modifier: Modifier = Modifier) {
                         center = size.center,
                         radius = size.minDimension * 0.9f
                     )
-                    onDrawBehind { drawRect(gradient) }
-                }
-            )
-            val gradient = Brush.verticalGradient(
-                0f to Accent.copy(0f),
-                0.4f to Accent.copy(0.2f),
-                1f to Accent.copy(0.4f),
-            )
-
-            Box(
-                Modifier.align(Alignment.BottomCenter).height(50.dp).fillMaxWidth().drawWithCache {
-                    onDrawBehind { drawRect(gradient) }
+                    val glowHeight = ModCardGlowHeight.toPx().coerceAtMost(size.height)
+                    val glowTop = size.height - glowHeight
+                    val glow = Brush.verticalGradient(
+                        0f to Accent.copy(0f),
+                        0.4f to Accent.copy(0.2f),
+                        1f to Accent.copy(0.4f),
+                        startY = glowTop,
+                        endY = size.height,
+                    )
+                    onDrawBehind {
+                        drawRect(vignette)
+                        drawRect(
+                            glow,
+                            topLeft = Offset(0f, glowTop),
+                            size = Size(size.width, glowHeight),
+                        )
+                    }
                 }
             )
         }
 
         FavoriteStar(
             mod = mod,
-            cardHovered = interactionSource.collectIsHoveredAsState().value,
+            cardInteractions = interactionSource,
             modifier = Modifier.align(Alignment.TopEnd),
         )
     }
 }
 
 @Composable
-private fun FavoriteStar(mod: ConfigData, cardHovered: Boolean, modifier: Modifier = Modifier) {
+private fun FavoriteStar(
+    mod: ConfigData,
+    cardInteractions: InteractionSource,
+    modifier: Modifier = Modifier,
+) {
     val theme = LocalTheme.current
     val favorite = ModFavorites.isFavorite(mod.id)
     val interactionSource = rememberInteractionSource()
     val hovered by interactionSource.collectIsHoveredAsState()
+    val cardHovered by cardInteractions.collectIsHoveredAsState()
     val alpha by animateFloatAsState(
         when {
             favorite || hovered -> 1f

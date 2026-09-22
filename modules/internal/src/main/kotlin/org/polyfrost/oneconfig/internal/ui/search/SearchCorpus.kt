@@ -14,15 +14,13 @@ import org.apache.logging.log4j.LogManager
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.milliseconds
 
-/** How long to wait for further config registrations before rebuilding. */
+/** How long to wait for further config registrations before rebuilding */
 private const val REBUILD_DEBOUNCE_MS = 250L
 
 /**
- * Owns the searchable corpus and keeps every registered [SearchProvider] indexed in the background.
+ * Owns the searchable corpus and keeps every registered [SearchProvider] indexed in the background
  *
- * Indexing is push-based and incremental. When a config is ready it will be registered, and then the
- * search documents for this config can be built. Only what actually changed is forwarded to the search
- * providers.
+ * Indexing is push-based and incremental so only what changed is forwarded to the search providers
  */
 object SearchCorpus {
     private val LOGGER = LogManager.getLogger("OneConfig/Search")
@@ -32,10 +30,10 @@ object SearchCorpus {
     private val rebuildMutex = Mutex()
     private val sources = ArrayList<SearchDocumentSource>()
 
-    /** Sources which need to be run again on the next rebuild, only touched under `synchronized(sources)`. */
+    /** Sources to run again on the next rebuild only touched under `synchronized(sources)` */
     private val dirtySources = HashSet<SearchDocumentSource>()
 
-    /** What every source built, only touched under [rebuildMutex]. */
+    /** What every source built only touched under [rebuildMutex] */
     private val produced = HashMap<SearchDocumentSource, List<SearchDocument<*>>>()
     private var rebuildJob: Job? = null
 
@@ -66,21 +64,17 @@ object SearchCorpus {
         schedule()
     }
 
-    /**
-     * Called when resources are done loading, prevents a lot of corpus builds during initial loading
-     */
+    /** Called when resources are done loading to avoid many corpus builds during initial loading */
     fun init() {
         if (initialized.getAndSet(true)) return
         invalidate()
     }
 
-    /**
-     * Schedule a background rebuild
-     */
+    /** Schedule a background rebuild */
     fun invalidate(vararg invalidated: SearchDocumentSource) {
         synchronized(sources) {
             if (invalidated.isEmpty()) {
-                dirtySources += sources  // All sources
+                dirtySources += sources
             } else {
                 dirtySources += invalidated
             }
@@ -99,9 +93,7 @@ object SearchCorpus {
         }
     }
 
-    /**
-     * Runs [query] against [scope] on the highest-priority available provider.
-     */
+    /** Runs [query] against [scope] on the highest-priority available provider */
     fun search(query: String, scope: Set<SearchScope>): List<SearchDocument<*>> {
         if (query.isBlank()) return emptyList()
         val provider = SearchProviderRegistry.get()
@@ -115,7 +107,7 @@ object SearchCorpus {
             }.getOrDefault(emptyList())
         }
 
-        // Re-resolve against current corpus in case of stale search results
+        // re-resolve against the current corpus in case of stale results
         val current = corpus
         return hits.mapNotNull { hit -> current[hit.id] }
     }
@@ -137,12 +129,12 @@ object SearchCorpus {
             }.getOrDefault(emptyMap())
         }
 
-        // Re-resolve against current corpus in case of stale search results
+        // re-resolve against the current corpus in case of stale results
         val current = corpus
         return hits.mapValues { (_, group) -> group.mapNotNull { hit -> current[hit.id] } }
     }
 
-    /** Hands a freshly registered provider the corpus that already exists. */
+    /** Hands a freshly registered provider the corpus that already exists */
     internal fun seed(provider: SearchProvider) {
         if (!initialized.get()) return
         scope.launch {
@@ -154,7 +146,6 @@ object SearchCorpus {
     }
 
     private suspend fun rebuild() = rebuildMutex.withLock {
-        // Collect rebuild parameters in a thread safe manner
         val start = System.currentTimeMillis()
         val snapshot: List<SearchDocumentSource>
         val dirty: Set<SearchDocumentSource>
@@ -173,13 +164,12 @@ object SearchCorpus {
                 asked++
                 synchronized(sources) { dirtySources -= source }
                 try {
-                    // Keep the previous element of the corpus if nothing changed
+                    // keep the previous corpus element if nothing changed
                     source.documents().map { document ->
                         previous[document.id]?.takeIf { it.equivalentTo(document) } ?: document
                     }
                 } catch (e: Throwable) {
                     LOGGER.error("Search document source ${source.javaClass.name} failed", e)
-                    // Add this source as dirty, since it failed
                     synchronized(sources) { if (source in sources) dirtySources += source }
                     cached ?: continue
                 }
@@ -194,10 +184,9 @@ object SearchCorpus {
                 if (previous[document.id] !== document) upserted += document
             }
         }
-        // Remove other sources from the produced if they haven't been re-run/got removed
         produced.keys.retainAll(snapshot.toHashSet())
 
-        // Get removed keys, if no upserted and same size -> no removed
+        // no upserted documents and an unchanged size means nothing was removed
         val removed = if (upserted.isEmpty() && documents.size == previous.size) emptySet()
         else previous.keys - documents.keys
         if (upserted.isEmpty() && removed.isEmpty()) {
@@ -208,7 +197,7 @@ object SearchCorpus {
             return@withLock
         }
 
-        // Swap to new corpus, non-cancellable to prevent desyncs with search providers
+        // non-cancellable to prevent desyncs with search providers
         withContext(NonCancellable) {
             corpus = documents
             if (ConfigDocumentSource in dirty) GlobalSettingIndex.rebuild()

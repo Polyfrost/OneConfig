@@ -39,23 +39,29 @@ import kotlin.math.roundToInt
 internal enum class MergeAxis { X, Y }
 
 /**
- * Fuses the backgrounds of HUDs which sit right next to each other into a single shape, so that a
- * column of HUDs reads as one panel instead of a stack of separate cards: shared edges lose their
- * corners, and where two neighbours differ in size the step between them gets a concave fillet.
+ * Fuses the backgrounds of HUDs which sit right next to each other into a single shape
  *
- * Only HUDs which share the same background style (colour, chroma and radius) and touch along an
- * edge are fused; everything else keeps drawing its own rounded rectangle.
+ * A column of HUDs then reads as one panel instead of a stack of separate cards
+ *
+ * Shared edges lose their corners
+ *
+ * Where two neighbours differ in size the step between them gets a concave fillet
+ *
+ * Only HUDs which share the same background style (colour chroma and radius) and touch along an
+ * edge are fused
+ *
+ * Everything else keeps drawing its own rounded rectangle
  */
 internal object HudBackgroundMerge {
-    /** Distance between two edges, in gui units, still counted as "touching". */
+    /** Distance in gui units between two edges still counted as "touching" */
     private const val TOUCH_TOLERANCE = 2f
 
-    /** How much two HUDs must overlap along a shared edge before they are fused. */
+    /** How much two HUDs must overlap along a shared edge before they are fused */
     private const val MIN_OVERLAP = 2f
 
     private const val EPS = 0.01f
 
-    /** Backstop for walking anchors set by hand while checking a link would not close a loop. */
+    /** Backstop for walking anchors set by hand while checking a link would not close a loop */
     private const val MAX_LINK_DEPTH = 16
 
     private const val PIN_X = 1
@@ -63,8 +69,10 @@ internal object HudBackgroundMerge {
     private const val PIN_Y = 2
 
     /**
-     * A HUD in a fused shape held against the neighbour it touches, on one [axis]: [childPoint] on
-     * the child's box is the corner or edge midpoint that meets [parentPoint] on the parent's.
+     * A HUD in a fused shape held against the neighbour it touches on one [axis]
+     *
+     * [childPoint] on the child's box is the corner or edge midpoint that meets [parentPoint] on
+     * the parent's box
      */
     class Link(
         val child: Hud,
@@ -76,7 +84,7 @@ internal object HudBackgroundMerge {
 
     class Group(
         val huds: List<Hud>,
-        /** Spanning trees over the group's contacts, so every HUD follows the one it is fused to. */
+        /** Spanning trees over the group's contacts so every HUD follows the one it is fused to */
         val links: List<Link>,
         private val bgColor: Int,
         private val chroma: Boolean,
@@ -97,7 +105,7 @@ internal object HudBackgroundMerge {
         }
     }
 
-    fun computeGroups(huds: List<Hud>): List<Group> {
+    fun computeGroups(huds: List<Hud>, refWidth: Float, refHeight: Float): List<Group> {
         val items = ArrayList<Item>(huds.size)
         for (hud in huds) {
             if (hud is LegacyHudMarker) continue
@@ -107,7 +115,12 @@ internal object HudBackgroundMerge {
             val w = hud.renderedW
             val h = hud.renderedH
             if (w <= 0f || h <= 0f) continue
-            items.add(Item(hud, hud.x, hud.y, w, h, hud.bgRadius * hud.effectiveScale))
+            items.add(
+                Item(
+                    hud, hud.x, hud.y, w, h, hud.bgRadius * hud.effectiveScale,
+                    hud.layoutX(refWidth), hud.layoutY(refHeight),
+                )
+            )
         }
         if (items.size < 2) return emptyList()
 
@@ -162,8 +175,8 @@ internal object HudBackgroundMerge {
         for (i in component) index[items[i].hud] = i
         val parentOf = HashMap<Int, Int>(component.size * 2)
 
-        // whether following [from] up its parents - the links being built here, then anchors set by
-        // hand - ever arrives back at [target], which is what a link must never close
+        // whether following [from] up the links being built here and then hand-set anchors ever
+        // arrives back at [target] which is the loop a link must never close
         fun reaches(from: Int, target: Hud): Boolean {
             var hud: Hud? = items[from].hud
             var depth = 0
@@ -210,9 +223,12 @@ internal object HudBackgroundMerge {
     }
 
     /**
-     * The pair of box points where [child] meets [parent]: the edges that touch decide one axis, and
-     * the edges that line up along the shared edge decide the other, so a HUD stacked flush under
-     * another links its top-left to the parent's bottom-left.
+     * The pair of box points where [child] meets [parent]
+     *
+     * The edges that touch decide one axis and the edges that line up along the shared edge decide
+     * the other
+     *
+     * So a HUD stacked flush under another links its top-left to the parent's bottom-left
      */
     private fun contactPoints(child: Item, parent: Item): Pair<HudAnchor, HudAnchor> {
         var childFx = Float.NaN
@@ -236,7 +252,7 @@ internal object HudBackgroundMerge {
         }
 
         if (childFx.isNaN()) {
-            // stacked: line the link up with whichever side edges are flush, else their middles
+            // when stacked line the link up with whichever side edges are flush else their middles
             val side = alignedSide(child.x, child.right, parent.x, parent.right)
             childFx = side
             parentFx = side
@@ -273,9 +289,21 @@ internal object HudBackgroundMerge {
         }
     }
 
-    private class Item(val hud: Hud, var x: Float, var y: Float, var w: Float, var h: Float, val radius: Float) {
+    private class Item(
+        val hud: Hud,
+        var x: Float,
+        var y: Float,
+        var w: Float,
+        var h: Float,
+        val radius: Float,
+        val layoutX: Float,
+        val layoutY: Float,
+    ) {
         val right get() = x + w
         val bottom get() = y + h
+
+        val layoutRight get() = layoutX + w
+        val layoutBottom get() = layoutY + h
 
         fun sameStyle(other: Item): Boolean =
             hud.bgColor == other.hud.bgColor && hud.bgChroma == other.hud.bgChroma &&
@@ -284,15 +312,23 @@ internal object HudBackgroundMerge {
     }
 
     private fun contactPins(a: Item, b: Item): Int {
-        val sharesRow = overlap(a.y, a.bottom, b.y, b.bottom) >= MIN_OVERLAP
-        val sharesColumn = overlap(a.x, a.right, b.x, b.right) >= MIN_OVERLAP
-        val stacked = abs(a.bottom - b.y) <= TOUCH_TOLERANCE || abs(b.bottom - a.y) <= TOUCH_TOLERANCE
-        val sideBySide = abs(a.right - b.x) <= TOUCH_TOLERANCE || abs(b.right - a.x) <= TOUCH_TOLERANCE
+        val ay = a.layoutY
+        val by = b.layoutY
+        val ax = a.layoutX
+        val bx = b.layoutX
+        val aBottom = a.layoutBottom
+        val bBottom = b.layoutBottom
+        val aRight = a.layoutRight
+        val bRight = b.layoutRight
+        val sharesRow = overlap(ay, aBottom, by, bBottom) >= MIN_OVERLAP
+        val sharesColumn = overlap(ax, aRight, bx, bRight) >= MIN_OVERLAP
+        val stacked = abs(aBottom - by) <= TOUCH_TOLERANCE || abs(bBottom - ay) <= TOUCH_TOLERANCE
+        val sideBySide = abs(aRight - bx) <= TOUCH_TOLERANCE || abs(bRight - ax) <= TOUCH_TOLERANCE
         val stackedOnTop = stacked && sharesColumn
         val rowNeighbours = sideBySide && sharesRow
         when {
-            stackedOnTop -> if (nests(a.x, a.right, b.x, b.right)) return PIN_Y
-            rowNeighbours -> if (nests(a.y, a.bottom, b.y, b.bottom)) return PIN_X
+            stackedOnTop -> if (nests(ax, aRight, bx, bRight)) return PIN_Y
+            rowNeighbours -> if (nests(ay, aBottom, by, bBottom)) return PIN_X
         }
         if (!stackedOnTop && !rowNeighbours && !(stacked && sideBySide)) return 0
         if (!a.hud.mergeDiagonally || !b.hud.mergeDiagonally) return 0
@@ -368,7 +404,7 @@ internal object HudBackgroundMerge {
 
         fun cov(i: Int, j: Int) = i in 0 until nx && j in 0 until ny && covered[i][j]
 
-        // directed clockwise in screen space (y down), so every loop keeps the filled area on its right
+        // directed clockwise in screen space with y down so every loop keeps the filled area on its right
         val next = HashMap<Int, MutableList<Int>>()
         fun node(i: Int, j: Int) = i * (ny + 1) + j
         fun edge(i0: Int, j0: Int, i1: Int, j1: Int) {

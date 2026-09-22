@@ -54,7 +54,7 @@ class HudModCardDataTest {
     private static final String FALLBACK_OWNER_ID = "hud-card-fallback";
     private static final String UNKNOWN_OWNER_ID = "hud-card-unknown";
     private static final String NAMESPACED_OWNER_ID = "hud-card-namespaced";
-    /** Present in ConfigRegistry's hidden mod card list. */
+    /** Present in ConfigRegistry's hidden mod card list */
     private static final String HIDDEN_OWNER_ID = "walksylib";
     private static final String HUD_ID = "hud-card-test-provider";
 

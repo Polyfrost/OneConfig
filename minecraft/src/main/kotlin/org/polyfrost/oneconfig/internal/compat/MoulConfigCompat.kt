@@ -23,9 +23,13 @@ import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
 import org.polyfrost.oneconfig.internal.utils.MoulConfigGuiOptionEditorDropdownAccessor
 import java.awt.Color
+import java.lang.reflect.Field
+import java.lang.reflect.Method
 import java.lang.reflect.Type
+import java.util.Optional
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
-// do not remove the im
+// do not remove this import even though the IDE marks it redundant
 import org.polyfrost.oneconfig.internal.compat.MoulPropertyBuilder
 import io.github.notenoughupdates.moulconfig.Config as MoulConfig
 import org.polyfrost.oneconfig.relocator.annotations.MoulConfig as Moulconfig
@@ -65,6 +69,7 @@ data object MoulConfigCompat {
     fun parseConfigTree(config: MoulConfig, children: Iterable<ProcessedCategory>): Tree = Tree.tree().apply {
         val map = mutableMapOf<String?, Tree>()
         val usedIds = HashSet<String>()
+        val wiring = VisibilityWiring()
         val mod = CompatLoader.findFirstMod()
         LOGGER.info("Loading for ${mod?.id ?: "unknown"}")
         this.id = mod?.id ?: config.toString()
@@ -77,10 +82,11 @@ data object MoulConfigCompat {
         }
 
         children.forEach {
-            val tree = parseCategory(config, it, this, usedIds) { parent -> map[parent] ?: this }
+            val tree = parseCategory(config, it, this, usedIds, wiring) { parent -> map[parent] ?: this }
             map[it.identifier] = tree
             this.put(tree)
         }
+        wiring.wire()
     }
 
     fun parseCategory(
@@ -88,6 +94,7 @@ data object MoulConfigCompat {
         category: ProcessedCategory,
         root: Tree,
         usedIds: MutableSet<String>,
+        wiring: VisibilityWiring,
         parentResolver: (String?) -> Tree,
     ): Tree {
         val displayName = resolveDisplayName(category)
@@ -95,9 +102,10 @@ data object MoulConfigCompat {
         val categoryName = referenceParent.takeUnless { it === root }?.category ?: displayName
 
         val accordionMap = mutableMapOf<Int, Tree>()
+        val accordionConditions = mutableMapOf<Int, List<() -> Boolean>>()
 
         category.options.forEach { option ->
-            parseOption(config, option, categoryName, displayName, root, accordionMap, usedIds)
+            parseOption(config, option, categoryName, displayName, root, accordionMap, accordionConditions, usedIds, wiring)
         }
 
         return Tree.tree().apply {
@@ -115,8 +123,15 @@ data object MoulConfigCompat {
         subcategoryName: String,
         root: Tree,
         accordionMap: MutableMap<Int, Tree>,
+        accordionConditions: MutableMap<Int, List<() -> Boolean>>,
         usedIds: MutableSet<String>,
+        wiring: VisibilityWiring,
     ) {
+        val inheritedConditions = if (children.accordionId >= 0) {
+            accordionConditions[children.accordionId].orEmpty()
+        } else {
+            emptyList()
+        }
         val editor = children.editor
         if (editor is GuiOptionEditorAccordion) {
             val builder = MoulPropertyBuilder(children)
@@ -133,10 +148,13 @@ data object MoulConfigCompat {
             }
             parentTarget.put(accordionTree)
             accordionMap[editor.accordionId] = accordionTree
+            // A Tree cannot carry display conditions, so a conditioned accordion passes it down to every option
+            accordionConditions[editor.accordionId] =
+                inheritedConditions + listOfNotNull(visibilityCondition(children, builder.backingField))
             return
         }
 
-        val built = buildOptionProperty(config, children, categoryName, subcategoryName, usedIds) ?: return
+        val built = buildOptionProperty(config, children, categoryName, subcategoryName, usedIds, inheritedConditions, wiring) ?: return
 
         val parentTarget = if (children.accordionId >= 0) {
             accordionMap[children.accordionId] ?: root
@@ -152,6 +170,8 @@ data object MoulConfigCompat {
         categoryName: String,
         subcategoryName: String,
         usedIds: MutableSet<String>,
+        inheritedConditions: List<() -> Boolean> = emptyList(),
+        wiring: VisibilityWiring? = null,
     ): Property<*>? {
         val property = MoulPropertyBuilder(children)
 
@@ -166,17 +186,18 @@ data object MoulConfigCompat {
             }
 
             is GuiOptionEditorColour -> {
-                property.getter = {
+                fun toArgb(value: Any?): Int? {
                     val colour = when (children.type) {
-                        String::class.java -> ChromaColour.forLegacyString(children.get() as String)
-                        ChromaColour::class.java -> children.get() as ChromaColour
+                        String::class.java -> (value as? String)?.let { ChromaColour.forLegacyString(it) }
+                        ChromaColour::class.java -> value as? ChromaColour
                         else -> null
-                    }
-                    colour?.let {
-                        val rgb = Color.HSBtoRGB(it.hue, it.saturation, it.brightness)
-                        (it.alpha shl 24) or (rgb and 0x00FFFFFF)
-                    } ?: 0xFFFFFFFF.toInt()
+                    } ?: return null
+                    val rgb = Color.HSBtoRGB(colour.hue, colour.saturation, colour.brightness)
+                    return (colour.alpha shl 24) or (rgb and 0x00FFFFFF)
                 }
+
+                property.getter = { toArgb(children.get()) ?: 0xFFFFFFFF.toInt() }
+                property.defaultMapper = ::toArgb
                 property.setter = setter@{
                     val argb = it as? Int ?: return@setter
                     val awtColor = Color(argb, true)
@@ -191,8 +212,8 @@ data object MoulConfigCompat {
             }
 
             is MoulConfigGuiOptionEditorDropdownAccessor -> {
-                fun getIndex(): Int {
-                    val selectedObject: Any = children.get() ?: return -1
+                fun indexOf(selectedObject: Any?): Int {
+                    if (selectedObject == null) return -1
 
                     return if (editor.`oneconfig$useOrdinal`()) {
                         selectedObject as Int
@@ -202,6 +223,8 @@ data object MoulConfigCompat {
                         editor.`oneconfig$values`().indexOf(selectedObject)
                     }
                 }
+
+                fun getIndex(): Int = indexOf(children.get())
 
                 fun setIndex(index: Int) {
                     if (editor.`oneconfig$constants`() != null) {
@@ -214,6 +237,7 @@ data object MoulConfigCompat {
                 }
 
                 property.getter = ::getIndex
+                property.defaultMapper = { indexOf(it).takeIf { index -> index >= 0 } }
                 property.setter = setter@{
                     val index = it as? Int ?: return@setter
                     setIndex(index)
@@ -229,6 +253,7 @@ data object MoulConfigCompat {
                 property.metadata["min"] = editor.`oneconfig$minValue`
                 property.metadata["max"] = editor.`oneconfig$maxValue`
                 property.getter = { (children.get() as? Number)?.toFloat() ?: editor.`oneconfig$maxValue` }
+                property.defaultMapper = { (it as? Number)?.toFloat() }
                 property.setter = setter@{ value ->
                     val numberValue = value as? Number ?: return@setter
                     fun isAny(type: Type, numberType: KClass<out Number>): Boolean {
@@ -250,17 +275,18 @@ data object MoulConfigCompat {
             }
 
             is GuiOptionEditorKeybind -> {
-                // MoulConfig stores a keybind as a single int GLFW key code on an int/Integer property; a code <= 0
-                // (GLFW_KEY_UNKNOWN / "none") means unbound. Bridge it to OneConfig's OneConfigKeybind, which carries
-                // an array of key codes. The action is a no-op stub since MoulConfig owns the actual bind firing.
-                property.getter = {
-                    val code = (children.get() as? Number)?.toInt() ?: KeyboardConstants.none
-                    if (code <= 0) {
-                        OneConfigKeybind(null, null, KeyModifiers.NONE, 0L) { true }
-                    } else {
-                        OneConfigKeybind(intArrayOf(code), null, KeyModifiers.NONE, 0L) { true }
-                    }
+                // -1 (KeyboardConstants.none) = unbound
+                // 0..9 = mouse buttons
+                // anything else is a GLFW key code (see ModernKeybindHelper.getKeyName)
+                // the action is a no-op because MoulConfig takes care of firing the keybind
+                fun keybindOf(code: Int) = when {
+                    code < 0 -> OneConfigKeybind(null, null, KeyModifiers.NONE, 0L) { true }
+                    code <= 9 -> OneConfigKeybind(null, intArrayOf(code), KeyModifiers.NONE, 0L) { true }
+                    else -> OneConfigKeybind(intArrayOf(code), null, KeyModifiers.NONE, 0L) { true }
                 }
+
+                property.getter = { keybindOf((children.get() as? Number)?.toInt() ?: KeyboardConstants.none) }
+                property.defaultMapper = { value -> (value as? Number)?.toInt()?.let(::keybindOf) }
                 property.setter = setter@{ value ->
                     val keybind = value as? OneConfigKeybind ?: return@setter
                     val code = keybind.keyCodes?.firstOrNull()
@@ -268,6 +294,7 @@ data object MoulConfigCompat {
                         ?: KeyboardConstants.none
                     children.set(code)
                 }
+                property.metadata["singleKey"] = true
                 KeybindVisualizer::class.java
             }
 
@@ -284,7 +311,51 @@ data object MoulConfigCompat {
         val built = property.build(usedIds)
         built.category = categoryName
         built.subcategory = subcategoryName
+
+        runCatching { children.searchTags.map { it.value } }.getOrNull()
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { built.addMetadata("searchTags", it) }
+
+        val conditions = inheritedConditions + listOfNotNull(visibilityCondition(children, property.backingField))
+        if (conditions.isNotEmpty()) {
+            conditions.forEach { condition ->
+                built.addDisplayCondition {
+                    if (condition()) Property.Display.SHOWN else Property.Display.HIDDEN
+                }
+            }
+            wiring?.conditioned?.add(built)
+        }
+        wiring?.built?.add(built)
         return built
+    }
+
+    // Ensures conditioned properties get reevaluated whenever a config value changes
+    class VisibilityWiring internal constructor() {
+        internal val conditioned = mutableListOf<Property<*>>()
+        internal val built = mutableListOf<Property<*>>()
+
+        internal fun wire() {
+            if (conditioned.isEmpty()) return
+            val targets = conditioned.toList()
+            built.forEach { property ->
+                @Suppress("UNCHECKED_CAST") // the callback only triggers re-evaluation and never touches the value
+                (property as Property<Any?>).addCallback { _ ->
+                    targets.forEach(Property<*>::revaluateDisplay)
+                    false
+                }
+            }
+        }
+    }
+
+    private val visibilityMethods = ConcurrentHashMap<Class<*>, Optional<Method>>()
+
+    // Support for SoftConfig's @ConfigVisibleIf annotation
+    private fun visibilityCondition(option: ProcessedOption, field: Field?): (() -> Boolean)? {
+        if (field == null || field.annotations.none { it.annotationClass.simpleName == "ConfigVisibleIf" }) return null
+        val method = visibilityMethods.computeIfAbsent(option.javaClass) { cls ->
+            Optional.ofNullable(runCatching { cls.getMethod("isVisible") }.getOrNull())
+        }.orElse(null) ?: return null
+        return { runCatching { method.invoke(option) as? Boolean }.getOrNull() ?: true }
     }
 
     @JvmStatic
@@ -297,18 +368,20 @@ data object MoulConfigCompat {
     ): List<Property<*>> {
         val out = ArrayList<Property<*>>()
         val usedIds = HashSet<String>()
+        val wiring = VisibilityWiring()
         runCatching {
             processor.allCategories.values.forEach { processed ->
                 val catName = category ?: resolveDisplayName(processed)
                 val subName = subcategory ?: catName
                 processed.options.forEach { option ->
                     if (MoulPropertyBuilder(option).declaringClass != declaringClass) return@forEach
-                    buildOptionProperty(config, option, catName, subName, usedIds)?.let(out::add)
+                    buildOptionProperty(config, option, catName, subName, usedIds, wiring = wiring)?.let(out::add)
                 }
             }
         }.onFailure {
             LOGGER.error("Failed to build properties for ${declaringClass.name}: $it")
         }
+        wiring.wire()
         return out
     }
 
@@ -321,11 +394,13 @@ data object MoulConfigCompat {
     ): List<Property<*>> {
         val out = ArrayList<Property<*>>()
         val usedIds = HashSet<String>()
+        val wiring = VisibilityWiring()
         options.forEach { option ->
-            runCatching { buildOptionProperty(config, option, category, subcategory, usedIds) }
+            runCatching { buildOptionProperty(config, option, category, subcategory, usedIds, wiring = wiring) }
                 .onFailure { LOGGER.error("Failed to build property for ${option.path}: $it") }
                 .getOrNull()?.let(out::add)
         }
+        wiring.wire()
         return out
     }
 

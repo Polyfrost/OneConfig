@@ -33,7 +33,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Class used by OneConfig for deprecation related utilities.
+ * Class used by OneConfig for deprecation related utilities
  */
 public final class Deprecator {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Deprecator");
@@ -43,11 +43,13 @@ public final class Deprecator {
     }
 
     /**
-     * mark a method as deprecated. When a method has this call, it will
-     * throw a new exception to grab the name (or package) of the mod that
-     * called said method. <br>
-     * This will then send a notification detailing this to the user, and
-     * throw an UnsupportedOperationException to print a stack to the log.
+     * mark a method as deprecated
+     * <p>
+     * When a method has this call it will throw a new exception to grab the
+     * name or package of the mod that called said method <br>
+     * This will then send a notification detailing this to the user
+     * <p>
+     * It also throws an UnsupportedOperationException to print a stack to the log
      */
     public static void markDeprecated() {
         try {
@@ -59,11 +61,10 @@ public final class Deprecator {
                     .findFirst()
                     .orElse("Unknown");
 
-            // sometimes it blames OneConfig as well so
+            // sometimes it blames OneConfig as well so skip that
             if (culprit.equals("OneConfig")) return;
 
             if (warned.add(culprit)) {
-                //Notifications.INSTANCE.send("Deprecation Warning", "The mod '" + culprit + "' is using a deprecated method, and will no longer work in the future. Please report this to the mod author.");
                 LOGGER.warn("Method {}.{}() is deprecated; but is still being used by mod {}!", e.getStackTrace()[1].getClassName(), e.getStackTrace()[1].getMethodName(), culprit, e);
 
             }

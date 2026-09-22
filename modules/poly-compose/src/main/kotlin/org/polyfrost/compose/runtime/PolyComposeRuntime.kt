@@ -4,15 +4,15 @@ import androidx.compose.runtime.*
 import org.polyfrost.compose.layout.PolyLayoutEngine
 import org.polyfrost.compose.node.RootNode
 
-class PolyComposeRuntime {
+class PolyComposeRuntime(private val host: PolyComposeClock = PolyComposeHost.huds) {
     val root = RootNode()
 
-    private val composition = Composition(PolyApplier(root), PolyComposeHost.recomposer)
+    private val composition = Composition(PolyApplier(root), host.recomposer)
 
     fun setContent(content: @Composable () -> Unit) = composition.setContent(content)
 
     fun frame(parentWidth: Float, parentHeight: Float, nanos: Long = System.nanoTime()) {
-        PolyComposeHost.frame(nanos)
+        host.frame(nanos)
         layout(parentWidth, parentHeight)
     }
 

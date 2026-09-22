@@ -92,8 +92,8 @@ class HudDeletionPersistenceTest {
         launch();
         assertEquals(1, instancesOf(UndeletableHud.class));
 
-        // simulate a lost config (interrupted write, corrupt file, a launch without the mod): the
-        // tree is gone, but the registry still remembers the provider was given its instance.
+        // simulate a lost config where the tree is gone but the registry still remembers
+        // the provider was given its instance
         Hud instance = HudManager.INSTANCE.getHudsOfType(UndeletableHud.class).get(0);
         ConfigManager.active().delete(instance.getTree().getID());
 
@@ -124,8 +124,8 @@ class HudDeletionPersistenceTest {
         HudManager.INSTANCE.removeHud(instance, true);
         assertEquals(0, instancesOf(SingleInstanceHud.class));
 
-        // a single-instance provider *is* its instance, so deleting it must hand the provider back
-        // to the HUD library in a state where it can be made again.
+        // a single-instance provider is its own instance so deleting it must hand the provider
+        // back to the HUD library in a state where it can be made again
         Hud provider = HudManager.INSTANCE.getProvider(SingleInstanceHud.class);
         Hud remade = provider.make(null);
         HudManager.INSTANCE.getActiveInstances().add(remade);
@@ -134,8 +134,8 @@ class HudDeletionPersistenceTest {
     }
 
     /**
-     * Simulates a game restart: everything HudManager holds in memory is dropped, so the next
-     * initialize() sees only what was persisted to disk.
+     * Simulates a game restart by dropping everything HudManager holds in memory so the next
+     * initialize() sees only what was persisted to disk
      */
     private static void launch() throws Exception {
         HudManager.INSTANCE.getActiveInstances().clear();
@@ -164,7 +164,7 @@ class HudDeletionPersistenceTest {
         Path folder = ConfigManager.active().getFolder();
         deleteRecursively(folder.resolve("huds"));
         Files.deleteIfExists(folder.resolve("hud-registry.json"));
-        // the registry tree stays tracked by the backend across tests, so drop it with the file.
+        // the registry tree stays tracked by the backend across tests so drop it with the file
         ConfigManager.active().delete("hud-registry.json");
         for (Path p : trackedHudTrees()) ConfigManager.active().delete(p.toString());
     }

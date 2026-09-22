@@ -54,6 +54,7 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.ColorOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
@@ -365,7 +366,6 @@ internal fun ColorPickerPopup(
                     }
                 }
         ) {
-            // selector circle
             val selectorX = (saturation * sbPaneSize.width).coerceIn(0f, sbPaneSize.width)
             val selectorY = ((1f - brightness) * sbPaneSize.height).coerceIn(0f, sbPaneSize.height)
             Box(
@@ -382,7 +382,6 @@ internal fun ColorPickerPopup(
             )
         }
 
-        // hue bar
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -437,7 +436,6 @@ internal fun ColorPickerPopup(
             )
         }
 
-        // alpha bar
         if (model.alphaEnabled) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -471,7 +469,6 @@ internal fun ColorPickerPopup(
                             listOf(opaqueColor.copy(alpha = 0f), opaqueColor)
                         )
                         onDrawBehind {
-                            // checkerboard background
                             val cellSize = 6f
                             for (row in 0..(size.height / cellSize).toInt()) {
                                 for (col in 0..(size.width / cellSize).toInt()) {
@@ -528,9 +525,8 @@ internal fun ColorPickerPopup(
             }
         }
 
-        // Chroma is only offered when the backing property can actually persist it (a PolyColor).
-        // For Int / java.awt.Color properties there is nowhere to store the chroma flag, so showing
-        // the toggle would be misleading - it would "work" until the screen closed, then freeze.
+        // only PolyColor properties can persist the chroma flag so Int and java.awt.Color ones would
+        // appear to work until the screen closed
         if (chromaCapable) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -670,7 +666,7 @@ internal fun ColorPickerPopup(
                     fontFamily = theme.typography.family,
                 ),
                 cursorBrush = SolidColor(theme.textColor),
-                modifier = Modifier
+                modifier = Modifier.trackTextInputFocus()
                     .weight(1f)
                     .background(theme.componentBackground, LocalTheme.current.sideBarNavigationEntryShape)
                     .border(1.dp, theme.borderColor, LocalTheme.current.sideBarNavigationEntryShape)
@@ -717,7 +713,7 @@ private fun SliderValueField(
                 textAlign = TextAlign.End,
             ),
             cursorBrush = SolidColor(theme.textColor),
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.trackTextInputFocus().weight(1f),
         )
         if (suffix.isNotEmpty()) {
             Text(

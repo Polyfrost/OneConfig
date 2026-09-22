@@ -32,12 +32,20 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.event.v1.EventDelay;
+import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent;
 import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeSupport;
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 
 public class ScreenPlatformImpl implements ScreenPlatform {
+    @Override
+    public void runOnUiThread(Runnable action) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft == null || minecraft.isSameThread()) action.run();
+        else minecraft.execute(action);
+    }
+
     @Override
     public int viewportWidth() {
         return Minecraft.getInstance().getWindow().getWidth();
@@ -68,11 +76,9 @@ public class ScreenPlatformImpl implements ScreenPlatform {
         return Minecraft.getInstance().getWindow().getGuiScaledHeight();
     }
 
-    // On macOS, glfwGetWindowContentScale == framebufferSize / windowSize (e.g. 2.0 on Retina).
-    // On Windows, they differ: framebuffer == window (ratio 1.0), but contentScale reflects DPI (e.g. 1.5).
-    // Using contentScale as pixelRatio on Windows caused the UI to be rendered at the wrong size (#478).
-    // Fix: compute the actual framebuffer-to-window ratio directly, which is correct on all platforms.
-    // See also: https://github.com/glfw/glfw/pull/2457
+    // on Windows contentScale reflects DPI rather than the framebuffer to window ratio so using it
+    // here sized the UI wrong (#478) so compute the ratio directly instead
+    // https://github.com/glfw/glfw/pull/2457
     @Override
     public float pixelRatio() {
         int win = windowWidth();
@@ -81,7 +87,7 @@ public class ScreenPlatformImpl implements ScreenPlatform {
     }
 
     @Override
-    public void display(@Nullable Object screen, int ticks) {
+    public void display(@Nullable Object screen, int frames) {
         if (screen instanceof ComposeScreen) {
             String unavailable = ComposeSupport.INSTANCE.unavailableReason();
             if (unavailable != null) {
@@ -94,17 +100,17 @@ public class ScreenPlatformImpl implements ScreenPlatform {
             }
         }
         if (!Minecraft.getInstance().isSameThread()) {
-            Minecraft.getInstance().schedule(() -> display(screen, ticks));
+            Minecraft.getInstance().schedule(() -> display(screen, frames));
             return;
         }
         //? if >= 26.2 {
-        // 26.2 removed Minecraft#setScreen. Use Gui#setScreen, not setScreenAndShow (which force-calls
-        // renderFrame and re-enters our renderFrame mixin -> nested frame -> 1-frame black flash).
-        if (ticks < 1) Minecraft.getInstance().gui.setScreen((Screen) screen);
-        else EventDelay.tick(ticks, () -> Minecraft.getInstance().gui.setScreen((Screen) screen));
+        // 26.2 removed Minecraft#setScreen so use Gui#setScreen not setScreenAndShow which force-calls
+        // renderFrame and re-enters our renderFrame mixin giving a nested frame and a black flash
+        if (frames < 1) Minecraft.getInstance().gui.setScreen((Screen) screen);
+        else EventDelay.of(FramebufferRenderEvent.End.class, frames, () -> Minecraft.getInstance().gui.setScreen((Screen) screen));
         //?} else {
-        /*if (ticks < 1) Minecraft.getInstance().setScreen((Screen) screen);
-        else EventDelay.tick(ticks, () -> Minecraft.getInstance().setScreen((Screen) screen));
+        /*if (frames < 1) Minecraft.getInstance().setScreen((Screen) screen);
+        else EventDelay.of(FramebufferRenderEvent.End.class, frames, () -> Minecraft.getInstance().setScreen((Screen) screen));
         *///?}
     }
 

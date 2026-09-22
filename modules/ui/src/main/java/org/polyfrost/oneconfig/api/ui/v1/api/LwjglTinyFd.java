@@ -36,6 +36,7 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -47,27 +48,33 @@ final class LwjglTinyFd implements TinyFdApi {
     static final LwjglTinyFd INSTANCE = new LwjglTinyFd();
     private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/TinyFD");
 
-    private static final boolean WINDOWS = System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win");
+    private static final String OS = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+    private static final boolean WINDOWS = OS.contains("win");
+    private static final boolean MAC = OS.contains("mac") || OS.contains("darwin");
 
     private static final String SHELL_METACHARACTERS = "'\"`$\\\r\0";
 
     /**
      * Passing this as the title displays nothing and instead reports whether a graphical backend is
-     * available. Without one, tinyfd falls back to a console prompt that writes to stdout and blocks
-     * on stdin forever.
+     * available
+     * <p>
+     * Without one tinyfd falls back to a console prompt that writes to stdout and blocks on stdin
+     * forever
      */
     private static final String QUERY_TITLE = "tinyfd_query";
 
     /**
-     * tinyfd keeps its state, including the buffers it returns results out of, in globals, so having
-     * two dialogs open at once corrupts them and crashes the JVM inside native code. Every call into
-     * tinyfd is made while holding this lock, so at most one dialog is open at a time and callers
-     * that arrive meanwhile wait their turn.
+     * tinyfd keeps its state in globals including the buffers it returns results out of
+     * <p>
+     * Having two dialogs open at once corrupts them and crashes the JVM inside native code
+     * <p>
+     * Every call into tinyfd is made while holding this lock so at most one dialog is open at a time
+     * and callers that arrive meanwhile wait their turn
      */
     private static final ReentrantLock DIALOG_LOCK = new ReentrantLock(true);
 
     /**
-     * Guarded by {@link #DIALOG_LOCK}.
+     * Guarded by {@link #DIALOG_LOCK}
      */
     @Nullable
     private static Boolean graphicalBackend;
@@ -76,9 +83,9 @@ final class LwjglTinyFd implements TinyFdApi {
     }
 
     /**
-     * Opens a dialog with exclusive access to tinyfd.
+     * Opens a dialog with exclusive access to tinyfd
      *
-     * @param description what the dialog does, for logging, e.g. {@code "open file selector"}
+     * @param description what the dialog does for logging such as {@code "open file selector"}
      * @param fallback    returned if no dialog can be shown or it failed
      */
     private static <T> T open(String description, T fallback, Dialog<T> dialog) {
@@ -95,7 +102,7 @@ final class LwjglTinyFd implements TinyFdApi {
     }
 
     /**
-     * Must be called while holding {@link #DIALOG_LOCK}.
+     * Must be called while holding {@link #DIALOG_LOCK}
      */
     private static boolean hasGraphicalBackend() {
         if (graphicalBackend != null) return graphicalBackend;
@@ -104,8 +111,8 @@ final class LwjglTinyFd implements TinyFdApi {
         String backend;
         try {
             available = messageBox(QUERY_TITLE, "", OK_DIALOG, INFO_ICON, 1) != 0;
-            // the backend the query selected, e.g. "applescript" or "basicinput" for the console
-            // fallback. only meaningful directly after a call.
+            // the backend the query selected such as "applescript" or "basicinput" for the console
+            // fallback and only meaningful directly after a call
             backend = TinyFileDialogs.tinyfd_getGlobalChar("tinyfd_response");
         } catch (Throwable t) {
             LOGGER.error("Failed to query the tinyfd dialog backend", t);
@@ -117,7 +124,7 @@ final class LwjglTinyFd implements TinyFdApi {
             LOGGER.error(
                     "No graphical dialog backend is available, native dialogs are disabled (backend={}, SSH_TTY={})",
                     backend,
-                    // tinyfd unconditionally falls back to the console when this is set, even if empty
+                    // tinyfd unconditionally falls back to the console when this is set even if empty
                     System.getenv("SSH_TTY")
             );
         }
@@ -126,9 +133,9 @@ final class LwjglTinyFd implements TinyFdApi {
     }
 
     /**
-     * Must be called while holding {@link #DIALOG_LOCK}.
+     * Must be called while holding {@link #DIALOG_LOCK}
      *
-     * @return true if no dialog can be opened, in which case the user has been notified.
+     * @return true if no dialog can be opened in which case the user has been notified
      */
     private static boolean noGraphicalBackend() {
         if (hasGraphicalBackend()) return false;
@@ -145,11 +152,13 @@ final class LwjglTinyFd implements TinyFdApi {
 
     /**
      * Goes through tinyfd's unsafe entry point because LWJGL 3.4 changed the public
-     * {@code tinyfd_messageBox} overload from {@code boolean} to {@code int}, whereas
-     * {@code ntinyfd_messageBox} is identical in both. This module is compiled once against a single
-     * LWJGL version but runs against whichever one the game ships.
+     * {@code tinyfd_messageBox} overload from {@code boolean} to {@code int} whereas
+     * {@code ntinyfd_messageBox} is identical in both
+     * <p>
+     * This module is compiled once against a single LWJGL version but runs against whichever one the
+     * game ships
      *
-     * @return the index of the button the user picked, 0 for cancel/no.
+     * @return the index of the button the user picked <br>0 for cancel or no
      */
     private static int messageBox(@Nullable String title, @Nullable String message, @Nullable String dialog, @Nullable String icon, int defaultButton) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -243,8 +252,33 @@ final class LwjglTinyFd implements TinyFdApi {
 
     @Nullable
     private static String sanitizePath(@Nullable String input) {
-        if (WINDOWS) return input;
-        return strip(input);
+        if (MAC) return strip(macDefaultPath(input));
+        String path = absolutize(input);
+        if (WINDOWS) return path;
+        return strip(path);
+    }
+
+    @Nullable
+    static String macDefaultPath(@Nullable String input) {
+        if (input == null || input.isEmpty()) return input;
+        if (input.endsWith("/")) return null;
+        Path path = Paths.get(input);
+        if (Files.isDirectory(path)) return null;
+        Path name = path.getFileName();
+        return name == null ? null : name.toString();
+    }
+
+    @Nullable
+    static String absolutize(@Nullable String input) {
+        if (input == null || input.isEmpty()) return input;
+        try {
+            Path path = Paths.get(input);
+            if (path.isAbsolute()) return input;
+            String absolute = path.toAbsolutePath().toString();
+            return input.endsWith("/") || input.endsWith("\\") ? absolute + java.io.File.separator : absolute;
+        } catch (Exception e) {
+            return input;
+        }
     }
 
     @Nullable

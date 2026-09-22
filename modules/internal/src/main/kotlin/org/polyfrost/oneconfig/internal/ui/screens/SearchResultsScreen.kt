@@ -4,7 +4,7 @@ import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +15,7 @@ import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,12 +35,14 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private const val MOD_GRID_COLUMNS = 4
 private val MOD_GRID_GAP = 19.dp
+private val LIST_GAP = 8.dp
+
+private val MOD_ROW_EXTRA_GAP = MOD_GRID_GAP - LIST_GAP
 
 @Composable
 fun SearchResultsScreen(query: String) {
     val theme = LocalTheme.current
 
-    // Run search asynchronously
     var searchedQuery by remember { mutableStateOf<String?>(null) }
     var results by remember { mutableStateOf<Map<SearchRow?, List<SearchDocument<*>>>>(emptyMap()) }
     LaunchedEffect(query) {
@@ -53,8 +56,8 @@ fun SearchResultsScreen(query: String) {
     val matchingMods: List<ConfigData> = remember(results) {
         results[null].orEmpty().map { it.payload }.filterIsInstance<ConfigData>()
     }
-    // Grouped by owning mod, in order of first appearance, so a mod is only headed once while keeping its best hit's
-    // rank. Accordions collapse into one row per accordion rather than one per matching option inside it.
+    // grouped by owning mod in order of first appearance so a mod is headed once while keeping its best
+    // hit's rank and accordions collapse into one row each
     val groupedOptions: Map<String, List<SettingNode>> = remember(results) {
         val byGroup = LinkedHashMap<String, MutableList<SettingNode>>()
         results.forEach { (row, documents) ->
@@ -66,11 +69,13 @@ fun SearchResultsScreen(query: String) {
         byGroup
     }
 
+    val modRows = remember(matchingMods) { matchingMods.chunked(MOD_GRID_COLUMNS) }
+
     val listState = rememberRestorableLazyListState("global-search", query, searchedQuery)
 
     if (matchingMods.isEmpty() && groupedOptions.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            // Nothing to say until the first search comes back.
+            // nothing to say until the first search comes back
             searchedQuery?.also {
                 Text("No results for \"$it\"", color = theme.textColorSecondary, fontSize = 15.sp)
             } ?: Text("Searching...", color = theme.textColorSecondary, fontSize = 15.sp)
@@ -82,7 +87,7 @@ fun SearchResultsScreen(query: String) {
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize().padding(end = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(LIST_GAP),
         ) {
             if (matchingMods.isNotEmpty()) {
                 item(key = "header:mods") {
@@ -94,24 +99,19 @@ fun SearchResultsScreen(query: String) {
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                 }
-                item(key = "mods-grid") {
-                    BoxWithConstraints(Modifier.fillMaxWidth()) {
-                        val cellWidth = (maxWidth - MOD_GRID_GAP * (MOD_GRID_COLUMNS - 1)) / MOD_GRID_COLUMNS
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(MOD_GRID_GAP),
-                            verticalArrangement = Arrangement.spacedBy(MOD_GRID_GAP),
-                            modifier = Modifier.fillMaxWidth(),
-                            maxItemsInEachRow = MOD_GRID_COLUMNS,
-                        ) {
-                            matchingMods.forEach { mod ->
-                                Box(Modifier.width(cellWidth)) {
-                                    ModCard(mod)
-                                }
-                            }
-                            val remainder =
-                                (MOD_GRID_COLUMNS - matchingMods.size % MOD_GRID_COLUMNS) % MOD_GRID_COLUMNS
-                            repeat(remainder) {
-                                Box(Modifier.width(cellWidth))
+                items(modRows.size, key = { "mods-row:$it" }) { index ->
+                    BoxWithConstraints(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = if (index == modRows.lastIndex) 0.dp else MOD_ROW_EXTRA_GAP)
+                    ) {
+                        val cellWidth = with(LocalDensity.current) {
+                            val gap = MOD_GRID_GAP.roundToPx()
+                            ((maxWidth.roundToPx() - gap * (MOD_GRID_COLUMNS - 1)) / MOD_GRID_COLUMNS).toDp()
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(MOD_GRID_GAP)) {
+                            modRows[index].forEach { mod ->
+                                Box(Modifier.width(cellWidth)) { ModCard(mod) }
                             }
                         }
                     }

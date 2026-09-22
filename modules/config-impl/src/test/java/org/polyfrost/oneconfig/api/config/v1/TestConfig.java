@@ -52,12 +52,6 @@ public class TestConfig extends Config {
     public static boolean cow = false;
     @Dropdown(title = "drop")
     public static int[] dropint = new int[]{23, 2, 24};
-
-//    @Keybind(title = "keybinding", description = "please send help")
-//    KeyBinder.Bind bind0 = new KeyBinder.Bind('A', null,  (int[]) null, mods(KeyModifiers.LCONTROL, KeyModifiers.LSHIFT), 0L, () -> {
-//        System.out.println("you pressed a bind");
-//        return true;
-//    });
     @Dropdown(title = "drop")
     public static String[] dropstr = new String[]{"23", "2", "24"};
     @Dropdown(title = "drop")

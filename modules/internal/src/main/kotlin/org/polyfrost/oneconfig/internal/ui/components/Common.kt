@@ -16,9 +16,13 @@ import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 @Composable
 fun rememberInteractionSource() = remember { MutableInteractionSource() }
 
-fun Modifier.onClick(interactionSource: MutableInteractionSource, onClick: () -> Unit) = clickable(
+fun Modifier.onClick(interactionSource: MutableInteractionSource, onClick: () -> Unit) =
+    onClick(interactionSource, true, onClick)
+
+fun Modifier.onClick(interactionSource: MutableInteractionSource, enabled: Boolean, onClick: () -> Unit) = clickable(
     interactionSource = interactionSource,
     indication = null,
+    enabled = enabled,
     onClick = {
         UiSounds.play(UiSoundEvent.CLICK)
         onClick()
@@ -26,8 +30,10 @@ fun Modifier.onClick(interactionSource: MutableInteractionSource, onClick: () ->
 )
 
 /**
- * Swallows press/release events before children see them, so anything below this modifier cannot be clicked,
- * dragged or focused. Hover, move and scroll events are left alone so tooltips and page scrolling keep working.
+ * Swallows press and release events before children see them so anything below cannot be clicked dragged
+ * or focused
+ *
+ * Hover move and scroll events are left alone so tooltips and page scrolling keep working
  */
 fun Modifier.blockInteraction(blocked: Boolean = true): Modifier =
     if (!blocked) this else pointerInput(Unit) {

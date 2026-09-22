@@ -21,8 +21,8 @@ import java.util.*
 
 
 /**
- * Handles the registration of OneConfig commands.
- * 
+ * Handles the registration of OneConfig commands
+ *
  * @see Command
  */
 typealias ClientCommandSource = FabricClientCommandSource
@@ -68,7 +68,7 @@ object CommandManager {
     }
 
     /**
-     * Register a factory which can be used to create commands from objects in the [.create] method.
+     * Register a factory which can be used to create commands from objects in the [.create] method
      */
     fun registerFactory(factory: CommandFactory) {
         factories.add(factory)

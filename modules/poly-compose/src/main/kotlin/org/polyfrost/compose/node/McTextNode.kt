@@ -19,7 +19,7 @@ class McTextNode : PolyNode() {
 
     override fun render(ctx: RenderContext) {
         val renderer = McFontQueue.renderer
-        // Read color.argb at draw time so chroma colours keep cycling every frame.
+        // read color.argb at draw time so chroma colours keep cycling every frame
         if (renderer != null) renderer(ctx.canvas, text, x, y, color.argb, shadow, scale)
     }
 }

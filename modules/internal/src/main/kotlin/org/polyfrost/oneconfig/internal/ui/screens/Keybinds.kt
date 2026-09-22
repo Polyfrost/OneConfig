@@ -26,6 +26,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +55,7 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
+import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
@@ -67,6 +69,7 @@ import org.polyfrost.oneconfig.internal.ui.keybind.KeybindEntry
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroup
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroupCollapseStore
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.keybind.collectAllKeybindGroups
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 import org.polyfrost.oneconfig.internal.ui.search.SearchDocument
@@ -102,7 +105,7 @@ fun Keybinds() {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             val message = when {
                 localSearchQuery.isBlank() -> "No keybinds available."
-                // Nothing to say until the first search comes back.
+                // nothing to say until the first search comes back
                 searchResults == null -> "Searching..."
                 else -> "No keybinds match \"$localSearchQuery\""
             }
@@ -111,16 +114,14 @@ fun Keybinds() {
         return
     }
 
-    val conflicts = remember(revision, providerRevision, KeybindConflicts.revision.intValue) {
-        KeybindConflicts.conflictMap()
-    }
+    val conflicts = KeybindConflicts.conflictMap()
 
     val searching = localSearchQuery.isNotBlank()
 
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize().padding(end = 10.dp),
+            modifier = Modifier.fillMaxSize().padding(end = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             visibleGroups.forEach { group ->
@@ -152,7 +153,7 @@ fun Keybinds() {
     }
 }
 
-/** The group and entry one keybind property renders as, for resolving corpus hits back to rows. */
+/** The group and entry one keybind property renders as for resolving corpus hits back to rows */
 private class KeybindOwner(val group: KeybindGroup, val entry: KeybindEntry)
 
 private class KeybindSearchResults(val groups: List<KeybindGroup>?, val query: String?)
@@ -180,7 +181,7 @@ private fun searchKeybindGroups(groups: List<KeybindGroup>, query: String): List
             modId to documents.mapNotNull { ownerOf(it)?.entry }
         }.toMap()
 
-    // Group headers are not corpus documents, so surface them here explicitly
+    // group headers are not corpus documents so surface them here explicitly
     val q = query.lowercase()
     return groups.mapNotNull { group ->
         if (searchMatches(group.modTitle.asRenderText(), q) || searchMatches(group.modId, q)) return@mapNotNull group
@@ -223,6 +224,9 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
     val theme = LocalTheme.current
     val shape = theme.modCardShape
     val prop = entry.prop
+    val display = rememberDisplay(prop)
+    if (display == Property.Display.HIDDEN) return
+    val enabled = display != Property.Display.DISABLED
     var menuOpen by remember(prop) { mutableStateOf(false) }
     var menuOffset by remember(prop) { mutableStateOf(IntOffset.Zero) }
     val rowOrigin = remember(prop) { LayoutRef(Offset.Zero) }
@@ -238,13 +242,14 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .alpha(displayAlpha(display))
             .hoverable(rowInteraction)
             .onGloballyPositioned { rowOrigin.value = it.positionInRoot() }
             .pointerInput(prop) {
                 awaitPointerEventScope {
                     while (true) {
                         val event = awaitPointerEvent(PointerEventPass.Initial)
-                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed) {
+                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed && !KeybindRecordingBus.isRecording) {
                             val pos = event.changes.first().position
                             menuOffset = IntOffset(pos.x.roundToInt(), pos.y.roundToInt())
                             menuOpen = true
@@ -329,7 +334,9 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
                     onClick = ::openMenuFromActionButton,
                 )
             }
-            Option(prop)
+            Box(Modifier.blockInteraction(!enabled)) {
+                Option(prop)
+            }
         }
 
         OptionContextMenu(prop, menuOpen, menuOffset, onDismiss = { menuOpen = false })

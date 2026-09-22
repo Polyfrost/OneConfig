@@ -60,12 +60,12 @@ public abstract class ReflectiveCollector implements PropertyCollector {
 
 
     public void handle(@NotNull Tree tree, @NotNull Object src, int depth) {
-        if (src == null) {
-            LOGGER.error("Failed to collect properties for {} from object {} as the object was null", tree.getID(), src);
+        if (tree == null) {
+            LOGGER.error("Failed to collect properties from object {} as the tree was null", src);
             return;
         }
-        if (tree == null) {
-            LOGGER.error("Failed to collect properties for {} from object {} as the tree was null", tree.getID(), src);
+        if (src == null) {
+            LOGGER.error("Failed to collect properties for {} as the object was null", tree.getID());
             return;
         }
         Class<?> cls = src.getClass();
@@ -76,7 +76,7 @@ public abstract class ReflectiveCollector implements PropertyCollector {
             handleMethod(m, src, tree);
         }
         Class<?> superClass = cls.getSuperclass();
-        while (superClass != null) {
+        while (superClass != null && superClass != Object.class) {
             for (Field f : superClass.getDeclaredFields()) {
                 handleField(f, src, tree);
             }

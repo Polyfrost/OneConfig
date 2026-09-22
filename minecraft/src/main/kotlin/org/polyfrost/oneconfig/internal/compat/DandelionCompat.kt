@@ -205,6 +205,7 @@ object DandelionCompat {
                 )
 
                 property.addMetadata("searchTags", option.tags())
+                (defaultValue as Any?)?.let { property.addMetadata("default", it) }
                 property.category = category
                 property.subcategory = subcategory
                 property.addDisplayCondition { if (option.modifiable()) Display.SHOWN else Display.DISABLED }

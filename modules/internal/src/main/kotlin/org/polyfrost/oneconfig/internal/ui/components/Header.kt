@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.components.dropdown.DropdownPositionProvider
 import androidx.navigation.compose.currentBackStackEntryAsState
 import org.polyfrost.oneconfig.internal.ui.LocalCloseRequest
@@ -180,9 +181,8 @@ private fun TitleInfoTooltip(title: String) {
         Icon("info", color = LocalTheme.current.textColorSecondary, modifier = Modifier.size(14.dp))
 
         if (isHovered) {
-            // Render in a Popup overlay so the tooltip doesn't take layout space in the
-            // header Row (which would push the search bar over and hide the close button)
-            // and isn't clipped by the Row's fixed height.
+            // popup so the tooltip takes no layout space in the header Row and is not clipped by its
+            // fixed height
             Popup(
                 popupPositionProvider = DropdownPositionProvider(DpOffset(0.dp, 6.dp), density),
                 properties = PopupProperties(focusable = false)
@@ -256,7 +256,7 @@ fun GlobalSearchBar() {
         cursorBrush = SolidColor(LocalTheme.current.textColorSecondary),
         textStyle = searchTextStyle,
         interactionSource = interactionSource,
-        modifier = Modifier.focusRequester(focusRequester)
+        modifier = Modifier.trackTextInputFocus().focusRequester(focusRequester)
     ) { innerTextField ->
         Box(
             modifier = Modifier

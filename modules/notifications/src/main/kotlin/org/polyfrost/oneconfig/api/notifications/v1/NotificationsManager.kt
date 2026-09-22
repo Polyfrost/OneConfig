@@ -31,7 +31,7 @@ import androidx.compose.runtime.snapshots.Snapshot
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Holds the set of currently-live notifications.
+ * Holds the set of currently-live notifications
  */
 object NotificationsManager {
     private const val MAX_HISTORY = 50
@@ -45,24 +45,27 @@ object NotificationsManager {
     }
 
     private fun mutate(block: () -> Unit) {
-        if (Snapshot.current.readOnly) block() else Snapshot.withMutableSnapshot(block)
+        if (Snapshot.current.readOnly) Snapshot.global { Snapshot.withMutableSnapshot(block) }
+        else Snapshot.withMutableSnapshot(block)
     }
 
     /**
-     * The notifications currently on screen, oldest first.
+     * The notifications currently on screen with the oldest first
      */
     val active: List<Notification> get() = _active
 
     /**
-     * Every notification that has been pushed (up to [MAX_HISTORY]), newest first.
+     * Every notification that has been pushed up to [MAX_HISTORY] with the newest first
      */
     val history: List<Notification> get() = _history
 
     val unreadCount: Int get() = _history.count { !it.read }
 
     /**
-     * Adds [notification] to the live set so it begins rendering on the next frame, and records it
-     * in the [history] so it remains visible in the notifications center after the toast dismisses.
+     * Adds [notification] to the live set so it begins rendering on the next frame
+     *
+     * Also records it in the [history] so it remains visible in the notifications center
+     * after the toast dismisses
      */
     fun push(notification: Notification) {
         mutate {
@@ -85,7 +88,7 @@ object NotificationsManager {
     }
 
     /**
-     * Fully kills/retires [notification] (drop from history + dismiss)
+     * Fully retires [notification] by dropping it from history and dismissing it
      */
     fun remove(notification: Notification) {
         mutate {
@@ -101,7 +104,7 @@ object NotificationsManager {
     }
 
     /**
-     * Removes [notification] immediately, skipping any exit animation.
+     * Removes [notification] immediately and skips any exit animation
      */
     fun dismiss(notification: Notification) {
         mutate {

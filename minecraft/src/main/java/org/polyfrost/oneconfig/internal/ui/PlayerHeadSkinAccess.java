@@ -11,19 +11,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
- * Resolves the local player's head out of the skin texture the game already has loaded.
+ * Resolves the local player's head out of the skin texture the game already has loaded
  * <p>
- * The tasks returned here touch the texture manager and a live {@link NativeImage}, so they have to run on the client
- * thread; resolving the skin can block, so that part must not.
+ * The tasks returned here touch the texture manager and a live {@link NativeImage} so they must run
+ * on the client thread while resolving the skin can block and must not
  * <p>
- * Before 1.21.4 skins are registered as {@code HttpTexture}, a {@code SimpleTexture} with no readable pixel buffer, so
- * extraction always yields null there and callers fall through to their own fallback.
+ * Before 1.21.4 skins are registered as {@code HttpTexture} with no readable pixel buffer so
+ * extraction always yields null there and callers fall through to their own fallback
  */
 public final class PlayerHeadSkinAccess {
     private PlayerHeadSkinAccess() {
     }
 
-    /** Client-thread task: reads the skin the local player is rendering with. Never blocks. */
+    /** Client-thread task reading the skin the local player is rendering with and never blocking */
     public static Supplier<NativeImage> localPlayerHeadTask(Minecraft mc) {
         return () -> {
             var player = mc.player;
@@ -36,8 +36,9 @@ public final class PlayerHeadSkinAccess {
     }
 
     /**
-     * Awaits the profile's skin, then returns a client-thread task producing a detached 32x32 head.
-     * Blocks for up to two seconds, so this must not run on the client thread.
+     * Awaits the profile's skin then returns a client-thread task producing a detached 32x32 head
+     * <p>
+     * Blocks for up to two seconds so this must not run on the client thread
      *
      * @return null when the skin could not be resolved
      */

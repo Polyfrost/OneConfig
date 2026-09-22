@@ -29,7 +29,10 @@ package org.polyfrost.oneconfig.internal;
 import kotlin.Unit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 //todo import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
 //? moul_compat {
 import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
@@ -37,6 +40,7 @@ import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -65,7 +69,6 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
     public List<String> getMixins() {
         List<String> mixins = new ArrayList<>();
 
-
         //? moul_compat {
         RelocatedMixins.INSTANCE.register(e -> {
             mixins.add(e);
@@ -74,7 +77,13 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? }
         //? moul_compat {
         mixins.add("compat.moulconfig.Mixin_MCConfigEditorIntegration_Firmament");
-        mixins.add("compat.moulconfig.Mixin_MoulConfigAdapter_DandelionBp");
+        // unrelocated targets, e.g. Skysoft's SoftConfig
+        mixins.add("compat.moulconfig.Mixin_ConfigProcessorDriver");
+        mixins.add("compat.moulconfig.Mixin_MoulConfigProcessor");
+        mixins.add("compat.moulconfig.Mixin_MoulConfigEditor");
+        mixins.add("compat.moulconfig.Mixin_PropertyImpl");
+        mixins.add("compat.moulconfig.Mixin_GuiOptionEditorSlider");
+        mixins.add("compat.moulconfig.Mixin_GuiOptionEditorDropdown");
         //? }
 
         //? dandelion_compat
@@ -84,7 +93,10 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //mixins.add("compat.odin.Mixin_OdinModuleManager");
 
         //? rconfig_compat
-        mixins.add("compat.rconfig.Mixin_Configurations");
+        //mixins.add("compat.rconfig.Mixin_Configurations");
+
+        //? osl_config_compat
+        //mixins.add("compat.osl.Mixin_OslConfigManager");
 
         mixins.add("Mixin_SimpleReloadInstance");
         mixins.add("Mixin_MainMenuFpsUncap");
@@ -105,31 +117,47 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? tr7zw_compat
         mixins.add("compat.tr7zw.Mixin_AbstractConfigScreen");
 
+        //? ukulib_compat
+        mixins.add("compat.ukulib.Mixin_BaseConfigScreen");
+
+        //? axolotlclient_config_compat
+        mixins.add("compat.axolotlclient.Mixin_AxolotlClientConfigImpl");
+
         //? skycubed_compat {
         /*mixins.add("compat.skycubed.Mixin_SkyCubed");
         mixins.add("compat.skycubed.Mixin_SkyCubedOverlays");
         *///? }
 
         //? skyblocker_compat {
-        mixins.add("compat.skyblocker.Mixin_SkyblockerFancyStatusBars");
+        /*Boolean skyblockerSingleton = declaresStaticMethod("de.hysky.skyblocker.skyblock.fancybars.FancyStatusBars", "initStatic");
+        if (skyblockerSingleton != null) {
+            mixins.add(skyblockerSingleton
+                    ? "compat.skyblocker.Mixin_SkyblockerFancyStatusBarsInstance"
+                    : "compat.skyblocker.Mixin_SkyblockerFancyStatusBarsStatic");
+        }
         mixins.add("compat.skyblocker.Mixin_SkyblockerWidgetManager");
-        mixins.add("compat.skyblocker.Mixin_SkyblockerScreenBuilder");
-        //? }
+        *///? }
+
+        //? skyblocker_legacy_hud
+        //mixins.add("compat.skyblocker.Mixin_SkyblockerScreenBuilder");
+
+        //? skyblocker_hud_v2
+        //mixins.add("compat.skyblocker.Mixin_SkyblockerLayerBuilder");
 
         //? stella_compat
-        mixins.add("compat.stella.Mixin_Stella");
+        //mixins.add("compat.stella.Mixin_Stella");
 
         //? apec_compat
         //mixins.add("compat.apec.Mixin_ApecMenu");
 
         mixins.add("compat.skyhanni.Mixin_SkyHanniRenderData");
 
+        mixins.add("compat.armorhud.Mixin_ArmorHudWidgetShown");
+
         mixins.add("compat.firmament.Mixin_FirmamentHudMeta");
-        // Firmament has no stable release for 26.2, so there is nothing to be compatible with there yet.
+        // Firmament has no stable release for 26.2 yet
         //? >= 1.21.8 && < 26.2
         //mixins.add("compat.firmament.Mixin_FirmamentContentCapture");
-
-        // mixins.add("compat.rconfig.Mixin_Configurations");
 
         //? modmenu_compat
         mixins.add("compat.Mixin_ModMenu");
@@ -142,7 +170,6 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? }
 
         mixins.add("events.Mixin_ModernWindowFocusEvent");
-        // mixins.add("command.Mixin_ModernArgumentTypeEntryAccessor");
 
         mixins.add("skia.Mixin_InitSkia");
         mixins.add("skia.Mixin_SkiaFrame");
@@ -157,6 +184,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("render.GameRendererAccessor");
         mixins.add("render.GuiRendererAccessor");
         //? }
+        mixins.add("skia.Mixin_ItemAtlasScissor");
         //? if < 1.21.8
         //mixins.add("skia.Mixin_MainTargetRedirect");
         mixins.add("skia.Mixin_DebugOverlayAboveUi");
@@ -164,17 +192,17 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         /*mixins.add("skia.Mixin_ScreenshotComposite");
         *///? }
         mixins.add("skia.Mixin_InitSkiaFontRenderer");
-        mixins.add("skia.Mixin_FixComposeRaceCondition");
+        mixins.add("skia.Mixin_StartupWarmupOverlay");
 
-        //? >= 1.21.10 {
+        //? if >= 1.21.10 {
         mixins.add("keybind.Mixin_KeybindCategoryLabel");
-        //? }
-        //? < 1.21.10 {
+        //?} else
         //mixins.add("keybind.KeyMappingCategoryAccessor");
-        //? }
 
         mixins.add("keybind.Mixin_OneConfigKeybindRebind");
         mixins.add("keybind.Mixin_KeyMappingResetDetect");
+        mixins.add("keybind.Mixin_OptionsSaveDetect");
+        mixins.add("keybind.Mixin_OptionsSkipMirrors");
 
         //? cinnabar
         //mixins.add("skia.Mixin_CinnabarSkiaFlush");
@@ -206,6 +234,23 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
             return true;
         } catch (Throwable t) {
             return false;
+        }
+    }
+
+    private static Boolean declaresStaticMethod(String className, String methodName) {
+        try (InputStream in = OneConfigMixinInit.class.getClassLoader()
+                .getResourceAsStream(className.replace('.', '/') + ".class")) {
+            if (in == null) return null;
+            ClassNode node = new ClassNode();
+            new ClassReader(in).accept(node, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+            for (MethodNode method : node.methods) {
+                if (method.name.equals(methodName) && (method.access & Opcodes.ACC_STATIC) != 0) return Boolean.TRUE;
+            }
+            return Boolean.FALSE;
+        } catch (Throwable t) {
+            LogManager.getLogger(OneConfigMixinInit.class)
+                    .warn("could not read {} to pick a mixin shape, skipping the mixins that depend on it", className, t);
+            return null;
         }
     }
 

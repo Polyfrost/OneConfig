@@ -44,7 +44,7 @@ import java.nio.file.Path;
 import java.util.Base64;
 
 /**
- * An Image wrapper class that is used by the OneConfig system.
+ * An Image wrapper class that is used by the OneConfig system
  */
 @SuppressWarnings("unused")
 @ApiStatus.Experimental
@@ -55,7 +55,7 @@ public final class OneImage {
     private Graphics2D graphics = null;
 
     /**
-     * Create a new OneImage from the BufferedImage.
+     * Create a new OneImage from the BufferedImage
      */
     public OneImage(BufferedImage image) {
         this.image = image;
@@ -64,32 +64,32 @@ public final class OneImage {
     }
 
     /**
-     * Create a new OneImage from the file.
+     * Create a new OneImage from the file
      *
-     * @param is InputStream to the image file.
+     * @param is InputStream to the image file
      */
     public OneImage(InputStream is) throws IOException {
         this(ImageIO.read(is));
     }
 
     /**
-     * Create a new OneImage from the file.
+     * Create a new OneImage from the file
      *
-     * @param path path to the image file.
+     * @param path path to the image file
      */
     public OneImage(Path path) throws IOException {
         this(new BufferedInputStream(Files.newInputStream(path)));
     }
 
     /**
-     * Create a new blank image with the specified width and height.
+     * Create a new blank image with the specified width and height
      */
     public OneImage(int width, int height) {
         this(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB));
     }
 
     /**
-     * @return the graphics object associated with the image.
+     * @return the graphics object associated with the image
      */
     public Graphics2D getG2D() {
         if (graphics == null) {
@@ -101,7 +101,7 @@ public final class OneImage {
 
 
     /**
-     * Dispose of the graphics object.
+     * Dispose of the graphics object
      */
     public void dispose() {
         if (graphics != null) {
@@ -111,44 +111,46 @@ public final class OneImage {
     }
 
     /**
-     * Copy and crop the image to the specified width and height.
+     * Copy and crop the image to the specified width and height
      *
-     * @param startX The x coordinate of the top-left corner of the crop.
-     * @param startY The y coordinate of the top-left corner of the crop.
-     * @param width  The width of the crop.
-     * @param height The height of the crop.
+     * @param startX The x coordinate of the top-left corner of the crop
+     * @param startY The y coordinate of the top-left corner of the crop
+     * @param width  The width of the crop
+     * @param height The height of the crop
      */
     public OneImage crop(int startX, int startY, int width, int height) {
         return new OneImage(image.getSubimage(startX, startY, width, height));
     }
 
     /**
-     * Get the color of a pixel in the image.
+     * Get the color of a pixel in the image
      */
     public int getColorAtPos(int x, int y) {
         return image.getRGB(x, y);
     }
 
     /**
-     * Set the color of a pixel in the image.
+     * Set the color of a pixel in the image
      */
     public void setColorAtPos(int x, int y, int argb) {
         image.setRGB(x, y, argb);
     }
 
     /**
-     * Attempt to save the image to the specified file.
+     * Attempt to save the image to the specified file
      */
     public void save(Path path) throws IOException {
         ImageIO.write(image, "png", new BufferedOutputStream(Files.newOutputStream(path)));
     }
 
     /**
-     * Attempt to upload the image to Imgur, returning the URL that the server replied with, or null if it failed for any reason.
+     * Attempt to upload the image to Imgur
+     * <p>
+     * Returns the URL that the server replied with or null if it failed for any reason
      */
     public String uploadToImgur() {
         try {
-            // thanks stack overflow for the help with this :_)
+            // thanks stack overflow for the help with this
             URL url = new URL("https://api.imgur.com/3/image");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setDoInput(true);
@@ -188,14 +190,13 @@ public final class OneImage {
     }
 
     /**
-     * Copy the image to the system clipboard and delete the graphics object.
+     * Copy the image to the system clipboard and delete the graphics object
      */
     public void copyToClipboard() {
         ClipboardHelper.setImage(this.image);
         dispose();
     }
 
-    // MASK METHODS
     public void setBrightness(float brightness) {
         maskColor(new Color(0f, 0f, 0f, brightness));
     }
@@ -215,10 +216,10 @@ public final class OneImage {
     }
 
 
-    // IMAGE METHODS
-
     /**
-     * Return a new OneImage, with the image scaled by the given factor (1.0 = no change).
+     * Return a new OneImage with the image scaled by the given factor
+     * <p>
+     * A factor of {@code 1.0} means no change
      */
     public OneImage scale(double sx, double sy) {
         OneImage out = new OneImage((int) (width * sx), (int) (height * sy));
@@ -229,14 +230,14 @@ public final class OneImage {
     }
 
     /**
-     * Return a copy of this OneImage with the image scaled to the specified width and height.
+     * Return a copy of this OneImage with the image scaled to the specified width and height
      */
     public OneImage scaleToSize(int width, int height) {
         return scale(width / (double) this.width, height / (double) this.height);
     }
 
     /**
-     * Return a copy of this OneImage with the image rotated by the specified number of degrees.
+     * Return a copy of this OneImage with the image rotated by the specified number of degrees
      */
     public OneImage rotate(double degrees) {
         OneImage out = new OneImage(width, height);
@@ -247,14 +248,14 @@ public final class OneImage {
     }
 
     /**
-     * Return a copy of this OneImage flipped horizontally.
+     * Return a copy of this OneImage flipped horizontally
      */
     public OneImage flipHorizontal() {
         return scale(-1, 1);
     }
 
     /**
-     * Return a copy of this OneImage flipped vertically.
+     * Return a copy of this OneImage flipped vertically
      */
     public OneImage flipVertical() {
         return scale(1, -1);

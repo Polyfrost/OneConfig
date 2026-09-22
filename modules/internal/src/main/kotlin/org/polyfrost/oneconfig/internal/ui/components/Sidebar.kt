@@ -66,7 +66,7 @@ fun Sidebar() {
                     modifier = Modifier.fillMaxWidth().padding(bottom = 18.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    TopOptionsSection(flipped = true)
+                    TopOptionsSection()
                 }
             }
             Account()
@@ -89,44 +89,24 @@ private fun Navigation(showTopOptions: Boolean) {
 
 @Composable
 private fun Branding() {
-    val logo = rememberSvgResourcePainter(LocalTheme.current.branding.logoPath) ?: return
+    val logoPath = LocalTheme.current.branding.logoPath
+    val logo = rememberSvgResourcePainter(logoPath) ?: return
     Image(
         painter = logo,
         contentDescription = null,
+        colorFilter = rememberBrandTint(logoPath, Accent),
         modifier = Modifier.size(167.dp, 19.dp)
     )
 }
 
 @Composable
-private fun TopOptionsSection(flipped: Boolean = false) {
-    val editHud: @Composable () -> Unit = {
+private fun TopOptionsSection() {
+    NavigationSection {
         NavigationEntry(
             "hud",
             "Edit HUD",
         ) {
             HudManager.openEditor()
-        }
-    }
-    val globalSearch: @Composable () -> Unit = {
-        NavigationEntry(
-            "search",
-            "Global Search",
-        ) {
-            ShellState.globalSearchActive = true
-            if (ShellState.searchQuery.isBlank()) {
-                ShellState.searchQuery = ""
-            }
-            ShellState.showSearchField = true
-            ShellState.focusSearchField = true
-        }
-    }
-    NavigationSection {
-        if (flipped) {
-            globalSearch()
-            editHud()
-        } else {
-            editHud()
-            globalSearch()
         }
     }
 }
@@ -235,7 +215,6 @@ private fun NotificationBell() {
             .onSizeChanged { bellHeightPx = it.height }
             .onClick(interactionSource) {
                 expanded = !expanded
-                // Clear the unread indicator once the panel closes
                 if (!expanded) NotificationsManager.markAllRead()
             }
             .pointerHoverIcon(PointerIcon.Hand)
@@ -249,7 +228,7 @@ private fun NotificationBell() {
 
         if (expanded) {
             Popup(
-                // Open up and to the right of the bell.
+                // open up and to the right of the bell
                 alignment = Alignment.BottomStart,
                 offset = IntOffset(0, -(bellHeightPx + 12)),
                 onDismissRequest = {

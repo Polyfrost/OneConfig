@@ -31,12 +31,13 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer;
 import java.lang.annotation.*;
 
 /**
- * Renders a dropdown that opens a selectable list.
+ * Renders a dropdown that opens a selectable list
  * <p>
- * When {@code checkable = true} (default), multiple items can be selected; the annotated
- * field must be {@code boolean[]} indexed by option position.
- * When {@code checkable = false}, only one item can be selected; the annotated field must
- * be {@code int} (selected index, -1 for none).
+ * When {@code checkable = true} which is the default multiple items can be selected and the
+ * annotated field must be {@code boolean[]} indexed by option position
+ * <p>
+ * When {@code checkable = false} only one item can be selected and the annotated field must
+ * be {@code int} holding the selected index or -1 for none
  */
 @Option(display = Visualizer.MultiSelectDropdownVisualizer.class)
 @Retention(RetentionPolicy.RUNTIME)
@@ -46,9 +47,7 @@ public @interface MultiSelectDropdown {
     String title();
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given title is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the title and remove this flag.
+     * @deprecated OneConfig auto-translates title values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean titleTranslation() default false;
@@ -59,9 +58,7 @@ public @interface MultiSelectDropdown {
     String description() default "";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given description is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the description and remove this flag.
+     * @deprecated OneConfig auto-translates description values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean descriptionTranslation() default false;
@@ -74,9 +71,7 @@ public @interface MultiSelectDropdown {
     String category() default "General";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given category is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the category and remove this flag.
+     * @deprecated OneConfig auto-translates category values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean categoryTranslation() default false;
@@ -87,7 +82,7 @@ public @interface MultiSelectDropdown {
     String subcategory() default "General";
 
     /**
-     * @deprecated translation keys will be translated by default.
+     * @deprecated translation keys will be translated by default
      */
     @Deprecated
     boolean subcategoryTranslation() default false;
@@ -98,9 +93,7 @@ public @interface MultiSelectDropdown {
     String[] options() default {};
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given options is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the options and remove this flag.
+     * @deprecated OneConfig auto-translates options values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean optionsTranslation() default false;
@@ -108,6 +101,6 @@ public @interface MultiSelectDropdown {
     @Deprecated
     String[] optionsKey() default {};
 
-    /** When true (default), renders checkboxes for multi-select. When false, single-select list. */
+    /** When true which is the default it renders checkboxes for multi-select and when false a single-select list */
     boolean checkable() default true;
 }

@@ -8,19 +8,54 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 
-object PolyComposeHost {
+class PolyComposeClock {
     private val clock = BroadcastFrameClock()
     private val scope = CoroutineScope(Dispatchers.Unconfined + clock)
 
-    internal val recomposer: CompositionContext = Recomposer(scope.coroutineContext).also { r ->
+    private val recomposerImpl = Recomposer(scope.coroutineContext).also { r ->
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             r.runRecomposeAndApplyChanges()
         }
     }
 
-    fun frame(nanos: Long = System.nanoTime()) {
-        Snapshot.sendApplyNotifications()
-        clock.sendFrame(nanos)
+    internal val recomposer: CompositionContext get() = recomposerImpl
+
+    private val inFrame = AtomicBoolean(false)
+
+    fun frame(nanos: Long = System.nanoTime(), notify: Boolean = true): Boolean {
+        if (!inFrame.compareAndSet(false, true)) return recomposerImpl.hasPendingWork
+        try {
+            if (notify) Snapshot.sendApplyNotifications()
+            val appliedBefore = recomposerImpl.changeCount
+            clock.sendFrame(nanos)
+            appliedChange = recomposerImpl.changeCount != appliedBefore
+            return appliedChange || recomposerImpl.hasPendingWork
+        } finally {
+            inFrame.set(false)
+        }
     }
+
+    var appliedChange = false
+        private set
+}
+
+object PolyComposeHost {
+    val huds = PolyComposeClock()
+
+    val previews = PolyComposeClock()
+
+    val notifications = PolyComposeClock()
+
+    internal val recomposer: CompositionContext get() = huds.recomposer
+
+    fun frame(nanos: Long = System.nanoTime()) {
+        frameWithReport(nanos)
+    }
+
+    /**
+     * Runs a frame like [frame] and reports whether composition content may have changed
+     */
+    fun frameWithReport(nanos: Long = System.nanoTime()): Boolean = huds.frame(nanos)
 }

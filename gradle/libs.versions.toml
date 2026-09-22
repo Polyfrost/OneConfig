@@ -2,11 +2,10 @@
 
 # Libraries
 # All
-kotlin = "2.3.0"
+kotlin = "2.4.10"
 kotlinx-coroutines = "1.10.2"
-kotlinx-atomicfu = "0.29.0"
-fabric-language-kotlin = "1.13.8+kotlin.2.3.0"
-google-ksp = "2.3.10"
+fabric-language-kotlin = "1.13.13+kotlin.2.4.10"
+google-ksp = "2.3.11"
 annotations = "24.1.0"
 hypixel-modapi = "1.0.1" # modules/utils compile baseline only, the platform selects the runtime version per target
 hypixel-data = "0.2.0" # Dep of hypixel-modapi
@@ -14,11 +13,10 @@ hypixel-data = "0.2.0" # Dep of hypixel-modapi
 # Not in risk of needing to be relaunched / bumped by JiJ
 snakeyaml = "1.31"
 nightconfig = "3.6.6"
-isolated-lwjgl3-loader = "0.3.0"
 java-objc-bridge = "1.2"
 
 # Per version
-lwjgl = "3.3.3" # All downloaded by the isolated-lwjgl3-loader
+lwjgl = "3.3.3"
 
 # Legacy only
 mixin-squared = "0.3.7-beta.1"
@@ -29,9 +27,9 @@ kotlinx-abi = "0.18.1"
 log4j-api = "2.0-beta9" # used because this is the version that 1.8.9 supports, so we have to compile against the same (annoying)
 
 # Compose
-compose = "1.12.0-alpha01"
+compose = "1.12.0"
 compose-navigation = "2.10.0-alpha01"
-skiko = "0.999.3"
+skiko = "0.999.6"
 
 lifecycle = "2.11.0-beta01"
 viewmodel = "2.11.0-beta01"
@@ -54,7 +52,6 @@ junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
 
 mixin-squared = { module = "com.github.bawnorton.mixinsquared:mixinsquared-common", version.ref = "mixin-squared" }
 
-isolated-lwjgl3-loader = { module = "org.polyfrost:isolated-lwjgl3-loader", version.ref = "isolated-lwjgl3-loader" }
 java-objc-bridge = { module = "ca.weblite:java-objc-bridge", version.ref = "java-objc-bridge" }
 
 hypixel-modapi = { module = "net.hypixel:mod-api", version.ref = "hypixel-modapi" }
@@ -85,21 +82,26 @@ kotlin-stdlib-jdk8 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", versi
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-jvm = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-jdk8 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8", version.ref = "kotlinx-coroutines" }
-kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu-jvm", version.ref = "kotlinx-atomicfu" }
 fabric-language-kotlin = { module = "net.fabricmc:fabric-language-kotlin", version.ref = "fabric-language-kotlin" }
 
 jetbrains-compose-foundation = { module = "org.jetbrains.compose.foundation:foundation-desktop", version.ref = "compose" }
 jetbrains-compose-material = { module = "org.jetbrains.compose.material:material-desktop", version.ref = "compose" }
 jetbrains-compose-runtime = { module = "org.jetbrains.compose.runtime:runtime-desktop", version.ref = "compose" }
+# androidx-coordinate runtime artifacts that the (empty) org.jetbrains.compose.runtime shims redirect to
+# the shims must not be bundled as their jar filenames can collide with these
+androidx-compose-runtime = { module = "androidx.compose.runtime:runtime-desktop", version.ref = "compose" }
+androidx-compose-runtime-saveable = { module = "androidx.compose.runtime:runtime-saveable-desktop", version.ref = "compose" }
 jetbrains-compose-ui = { module = "org.jetbrains.compose.ui:ui-desktop", version.ref = "compose" }
 jetbrains-compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview-desktop", version.ref = "compose" }
 jetbrains-compose-ui-util = { module = "org.jetbrains.compose.ui:ui-util-desktop", version.ref = "compose" }
+jetbrains-compose-ui-backhandler = { module = "org.jetbrains.compose.ui:ui-backhandler-desktop", version.ref = "compose" }
 jetbrains-compose-navigation = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "compose-navigation" }
 jetbrains-lifecycle = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 jetbrains-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "viewmodel" }
 jetbrains-skiko-awt = { module = "org.jetbrains.skiko:skiko-awt", version.ref = "skiko" }
 jetbrains-skiko-awt-runtime-windows-x64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-windows-x64", version.ref = "skiko" }
 jetbrains-skiko-awt-runtime-linux-x64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-linux-x64", version.ref = "skiko" }
+jetbrains-skiko-awt-runtime-linux-arm64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-linux-arm64", version.ref = "skiko" }
 jetbrains-skiko-awt-runtime-macos-x64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-macos-x64", version.ref = "skiko" }
 jetbrains-skiko-awt-runtime-macos-arm64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-macos-arm64", version.ref = "skiko" }
 
@@ -141,7 +143,7 @@ adventure = [
     "kyori-option",
 ]
 kotlin = ["kotlin-reflect", "kotlin-stdlib", "kotlin-stdlib-jdk7", "kotlin-stdlib-jdk8"]
-kotlinx = ["kotlinx-coroutines", "kotlinx-coroutines-jvm", "kotlinx-coroutines-jdk8", "kotlinx-atomicfu"]
+kotlinx = ["kotlinx-coroutines", "kotlinx-coroutines-jvm", "kotlinx-coroutines-jdk8"]
 lwjgl = ["lwjgl", "lwjgl-nvg", "lwjgl-opengl", "lwjgl-stb", "lwjgl-tinyfd"]
 nightconfig = ["nightconfig", "nightconfig-json", "nightconfig-toml", "nightconfig-yaml"]
 test-core = ["junit", "logging-impl"]

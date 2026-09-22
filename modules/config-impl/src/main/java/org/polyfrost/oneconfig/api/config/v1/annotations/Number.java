@@ -38,9 +38,7 @@ public @interface Number {
     String title();
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given title is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the title and remove this flag.
+     * @deprecated OneConfig auto-translates title values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean titleTranslation() default false;
@@ -51,9 +49,7 @@ public @interface Number {
     String description() default "";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given description is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the description and remove this flag.
+     * @deprecated OneConfig auto-translates description values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean descriptionTranslation() default false;
@@ -66,9 +62,7 @@ public @interface Number {
     String category() default "General";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given category is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the category and remove this flag.
+     * @deprecated OneConfig auto-translates category values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean categoryTranslation() default false;
@@ -79,7 +73,7 @@ public @interface Number {
     String subcategory() default "General";
 
     /**
-     * @deprecated translation keys will be translated by default.
+     * @deprecated translation keys will be translated by default
      */
     @Deprecated
     boolean subcategoryTranslation() default false;
@@ -90,9 +84,7 @@ public @interface Number {
     String unit() default "";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given unit is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the unit and remove this flag.
+     * @deprecated OneConfig auto-translates unit values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean unitTranslation() default false;
@@ -108,9 +100,7 @@ public @interface Number {
     String placeholder() default "oneconfig.numberinput.placeholder";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given placeholder is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the placeholder and remove this flag.
+     * @deprecated OneConfig auto-translates placeholder values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean placeholderTranslation() default false;

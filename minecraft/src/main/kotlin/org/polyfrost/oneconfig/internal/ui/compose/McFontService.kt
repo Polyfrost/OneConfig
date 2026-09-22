@@ -4,7 +4,6 @@ import org.polyfrost.compose.render.FontManager
 
 object McFontService {
     fun init() {
-//        SkiaFontRenderer.init()
         FontManager.loadFromResource("assets/oneconfig/fonts/Poppins/Poppins-Thin.ttf", "poppins-thin")
         FontManager.loadFromResource("assets/oneconfig/fonts/Poppins/Poppins-ThinItalic.ttf", "poppins-thin-italic")
         FontManager.loadFromResource("assets/oneconfig/fonts/Poppins/Poppins-Regular.ttf", "poppins")
@@ -15,13 +14,11 @@ object McFontService {
         FontManager.loadFromResource("assets/oneconfig/fonts/Poppins/Poppins-BoldItalic.ttf", "poppins-bold-italic")
         FontManager.loadFromResource("assets/oneconfig/fonts/Poppins/Poppins-Black.ttf", "poppins-black")
         FontManager.loadFromResource("assets/oneconfig/fonts/Poppins/Poppins-BlackItalic.ttf", "poppins-black-italic")
-        // Minecraft theme font (used by toasts when a Minecraft theme is active).
+        // used by toasts when a Minecraft theme is active
         FontManager.loadFromResource("assets/oneconfig/fonts/minecraft/Minecraft-Regular.otf", "minecraft")
         FontManager.loadFromResource("assets/oneconfig/fonts/minecraft/Minecraft-Bold.otf", "minecraft-bold")
-        // GNU Unifont (for mc font renderer)
         FontManager.loadFromResource("assets/oneconfig/fonts/unifont/unifont.otf", SkiaFontRenderer.UNIFONT_KEY)
-        // Make Poppins the default typeface so PolyText (which uses the default font) renders glyphs;
-        // previously nothing was registered for the default key.
+        // PolyText uses the default font key so it needs a typeface registered there
         FontManager.setDefault("poppins")
     }
 }

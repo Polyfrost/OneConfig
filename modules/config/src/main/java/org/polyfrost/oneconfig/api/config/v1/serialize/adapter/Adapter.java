@@ -32,17 +32,20 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * While the Config API is equipped with an automatic deserializer (see {@link ObjectSerializer#serialize(Object, boolean)})
- * It is not perfect, and may produce ugly looking results. <br>
- * For this reason, the Adapter API exists, where you can create your own custom serializer for an object into a map of "simple" objects and string keys.
+ * The Config API is equipped with an automatic deserializer (see {@link ObjectSerializer#serialize(Object, boolean)})
+ * <br>
+ * It is not perfect and may produce ugly looking results <br>
+ * For this reason the Adapter API exists where you can create your own custom serializer for an object into a map of "simple" objects and string keys
  *
  * @param <Type>   the type of this adapter
- * @param <Output> the output type of this adapter, used to avoid unsafe casts for prettier code.
+ * @param <Output> the output type of this adapter used to avoid unsafe casts for prettier code
  * @see Adapter#serialize(Object)
  */
 public abstract class Adapter<Type, Output> {
     /**
-     * Deserialize your object. The form will be identical to what you made in the {@link #serialize(Object)} method.
+     * Deserialize your object
+     * <br>
+     * The form will be identical to what you made in the {@link #serialize(Object)} method
      *
      * @param in the object (same as deserialize) to create your object from
      * @return the complete object
@@ -50,17 +53,17 @@ public abstract class Adapter<Type, Output> {
     public abstract Type deserialize(Output in);
 
     /**
-     * Convert the given object into a serializable form.
+     * Convert the given object into a serializable form
      * <br>
-     * The following types can be returned by this method, and nothing more:
+     * The following types can be returned by this method and nothing more
      * <ul>
-     *     <li>Primitive wrappers (any {@link Number}, {@link Character}, {@link Boolean})</li>
+     *     <li>Primitive wrappers (any {@link Number} or {@link Character} or {@link Boolean})</li>
      *     <li>A {@link String} literal or any class implementing {@link CharSequence}</li>
      *     <li>An {@link Enum}</li>
-     *     <li>An array of the above types, including primitives (e.g. {@code byte[]}, {@code int[]}..)</li>
+     *     <li>An array of the above types including primitives such as {@code byte[]} and {@code int[]}</li>
      *     <li>A {@link List} of the above types</li>
-     *     <li>A {@link Map}{@code <}{@link String}{@code , }{@link Object}{@code >} of the above types, mapped to Strings, which are used as keys. <br>Note that 'class' and 'value' are reserved keys and cannot be used.</li>
-     *     <li>Lists containing lists or maps containing maps (or lists) are also supported.</li>
+     *     <li>A {@link Map}{@code <}{@link String}{@code , }{@link Object}{@code >} of the above types mapped to Strings which are used as keys <br>Note that 'class' and 'value' are reserved keys and cannot be used</li>
+     *     <li>Lists containing lists or maps containing maps (or lists) are also supported</li>
      * </ul>
      *
      * @param in the object to serialize
@@ -68,14 +71,14 @@ public abstract class Adapter<Type, Output> {
     public abstract Output serialize(Type in);
 
     /**
-     * Due to Java type erasure, this method is used to get the type of the adapter. <br>
-     * This is used internally to get what type adapter to use.
+     * Due to Java type erasure this method is used to get the type of the adapter <br>
+     * This is used internally to get what type adapter to use
      */
     public abstract Class<Type> getTargetClass();
 
     /**
-     * Due to Java type erasure, this method is used to get the type of the adapter. <br>
-     * This is used internally to get what type adapter to use.
+     * Due to Java type erasure this method is used to get the type of the adapter <br>
+     * This is used internally to get what type adapter to use
      */
     public abstract Class<Output> getOutputClass();
 

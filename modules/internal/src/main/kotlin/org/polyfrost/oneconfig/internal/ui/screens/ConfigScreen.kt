@@ -81,6 +81,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.search.CategoryGroup
 import org.polyfrost.oneconfig.internal.ui.search.ConfigListEntry
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
@@ -189,8 +190,8 @@ private fun categoryProperties(categories: List<CategoryGroup>): List<Property<*
 }
 
 /**
- * Returns a counter which increments whenever any property in [categories] changes its display state, so that the
- * entry list can be rebuilt.
+ * A counter incremented whenever any property in [categories] changes its display state so the entry list
+ * can be rebuilt
  */
 @Composable
 private fun rememberDisplayRevision(categories: List<CategoryGroup>): Int {
@@ -228,9 +229,7 @@ private fun rememberSearchResults(
     return LocalSearchResults(results, searchedQuery)
 }
 
-/**
- * Rebuild categories from matched search results
- */
+/** Rebuild categories from matched search results */
 private fun searchCategories(grouped: Map<SearchRow?, List<SearchDocument<*>>>): List<CategoryGroup> {
     val byCategory = LinkedHashMap<String, LinkedHashMap<String, MutableList<SettingNode>>>()
     grouped.forEach { (row, documents) ->
@@ -297,8 +296,9 @@ private fun isWideControl(prop: Property<*>): Boolean {
 }
 
 /**
- * Renders one entry of a flattened settings list. [compact] decides per node whether its row stacks the label above the
- * control, which the HUD editor needs for its narrower column.
+ * Renders one entry of a flattened settings list
+ *
+ * [compact] decides per node whether its row stacks the label above the control which the HUD editor needs
  */
 @Composable
 internal fun ConfigListRow(entry: ConfigListEntry, compact: (SettingNode) -> Boolean = { false }) {
@@ -309,7 +309,6 @@ internal fun ConfigListRow(entry: ConfigListEntry, compact: (SettingNode) -> Boo
     }
 }
 
-/** Renders one settings row */
 @Composable
 internal fun SettingEntryRow(node: SettingNode, compact: Boolean = false) {
     when (node) {
@@ -359,11 +358,9 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
             .fillMaxWidth()
             .clip(shape)
             .background(theme.modCardBackground, shape)
-            .border(
-                1.dp,
-                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f))),
-                shape
-            )
+            .border(1.dp, remember(theme.borderColor) {
+                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
+            }, shape)
             .drawWithCache {
                 val color = theme.textColor
                 val gradient = Brush.radialGradient(
@@ -432,10 +429,12 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
                     .fillMaxWidth()
                     .border(
                         width = 1.dp,
-                        brush = Brush.verticalGradient(listOf(theme.borderColor.copy(0f), theme.borderColor)),
+                        brush = remember(theme.borderColor) {
+                            Brush.verticalGradient(listOf(theme.borderColor.copy(0f), theme.borderColor))
+                        },
                         shape = shape
                     )
-                    .padding(vertical = 12.dp)
+                    .padding(bottom = 12.dp)
             ) {
                 AccordionOptionsGrid(node.body, compact = compact)
             }
@@ -456,11 +455,9 @@ fun SettingRow(prop: Property<*>, compact: Boolean = false) {
             .fillMaxWidth()
             .alpha(displayAlpha(display))
             .background(theme.modCardBackground, theme.modCardShape)
-            .border(
-                1.dp,
-                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f))),
-                theme.modCardShape
-            )
+            .border(1.dp, remember(theme.borderColor) {
+                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
+            }, theme.modCardShape)
     ) {
         val vignetteColor = theme.textColor
         Box(
@@ -596,7 +593,7 @@ private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
 }
 
 @Composable
-private fun rememberDisplay(prop: Property<*>): Property.Display {
+internal fun rememberDisplay(prop: Property<*>): Property.Display {
     var display by remember(prop) { mutableStateOf(prop.display) }
 
     DisposableEffect(prop) {
@@ -608,16 +605,17 @@ private fun rememberDisplay(prop: Property<*>): Property.Display {
     return display
 }
 
-private fun displayAlpha(display: Property.Display): Float {
+internal fun displayAlpha(display: Property.Display): Float {
     return if (display == Property.Display.DISABLED) 0.65f else 1f
 }
 
 @Composable
 private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: Boolean = false, enabled: Boolean = true) {
     val theme = LocalTheme.current
+    val verticalPadding = if (nested) 0.dp else 12.dp
 
     if (prop.getMetadata<Any?>("visualizer") == Visualizer.InfoVisualizer::class.java) {
-        Row(modifier = Modifier.fillMaxWidth().blockInteraction(!enabled).padding(horizontal = 16.dp, vertical = 12.dp)) {
+        Row(modifier = Modifier.fillMaxWidth().blockInteraction(!enabled).padding(horizontal = 16.dp, vertical = verticalPadding)) {
             Option(prop)
         }
         return
@@ -653,7 +651,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 awaitPointerEventScope {
                     while (true) {
                         val event = awaitPointerEvent(PointerEventPass.Initial)
-                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed) {
+                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed && !KeybindRecordingBus.isRecording) {
                             val pos = event.changes.first().position
                             menuOffset = IntOffset(pos.x.roundToInt(), pos.y.roundToInt())
                             menuOpen = true
@@ -680,7 +678,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 modifier = Modifier
                     .fillMaxWidth()
                     .blockInteraction(!enabled)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(start = 16.dp, end = 16.dp, top = verticalPadding, bottom = if (nested) 8.dp else verticalPadding),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 SettingLabel(prop, nested = nested)
@@ -707,7 +705,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 modifier = Modifier
                     .fillMaxWidth()
                     .blockInteraction(!enabled)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(horizontal = 16.dp, vertical = verticalPadding),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
@@ -843,7 +841,7 @@ private fun isHudInternal(node: Node): Boolean {
     return node.getMetadata<Any?>("hudInternal") != null
 }
 
-/** The HUD editor's column is narrow, so any row holding a wide control stacks its label above it. */
+/** The HUD editor's column is narrow so any row holding a wide control stacks its label above it */
 private fun hasWideControl(node: SettingNode): Boolean = when (node) {
     is SettingNode.Leaf -> isWideControl(node.prop)
     is SettingNode.Accordion -> node.body.any(::isWideControl)

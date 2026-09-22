@@ -31,6 +31,6 @@ internal fun compatibleKotlinMetadataVersion(version: IntArray): JvmMetadataVers
     return JvmMetadataVersion(version[0], version[1], version[2])
 }
 
-// A safe, constant value for creating consistent zip entries
-// From: https://github.com/gradle/gradle/blob/d6c7fd470449a59fc57a26b4ebc0ad83c64af50a/subprojects/core/src/main/java/org/gradle/api/internal/file/archive/ZipCopyAction.java#L42-L57
+// A safe constant value for creating consistent zip entries
+// From https://github.com/gradle/gradle/blob/d6c7fd470449a59fc57a26b4ebc0ad83c64af50a/subprojects/core/src/main/java/org/gradle/api/internal/file/archive/ZipCopyAction.java#L42-L57
 val CONSTANT_TIME_FOR_ZIP_ENTRIES = GregorianCalendar(1980, Calendar.FEBRUARY, 1, 0, 0, 0).timeInMillis

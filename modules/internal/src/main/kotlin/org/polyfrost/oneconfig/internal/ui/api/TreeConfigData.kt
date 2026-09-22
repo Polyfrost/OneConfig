@@ -16,8 +16,8 @@ class TreeConfigData(
         get() = localizedValue(tree.getMetadata<Any>("mod_card_title") ?: tree.title ?: id) ?: id
 
     /**
-     * Explicit open handler, or the tree's "on_click" metadata (e.g. Mod Menu compat entries
-     * that open the target mod's own screen instead of an OC config).
+     * Explicit open handler or the tree's "on_click" metadata used by compat entries that open a mod's
+     * own screen instead of an OC config
      */
     override val onOpen: (() -> Unit)?
         get() {
@@ -31,8 +31,8 @@ class TreeConfigData(
         }
 
     /**
-     * Returns the full resource path for the icon (from [Config.iconPath] stored as "icon_path" metadata),
-     * or an OC icon name (from "icon_name" metadata), or null when the mod has no icon.
+     * Returns the full resource path for the icon from "icon_path" metadata or an OC icon name from
+     * "icon_name" metadata or null when the mod has no icon
      */
     override val icon: String?
         get() = tree.getMetadata<String>("mod_card_icon_path")
@@ -62,20 +62,24 @@ class TreeConfigData(
         get() = tree.getMetadata<String>("mod_card_description")?.nonBlankOrNull()
             ?: modInfo?.description?.nonBlankOrNull()
 
+    private var resolvedModInfo: ModInfo? = null
+
     private val modInfo: ModInfo?
-        get() {
-            val mods = ModInfo.loadedMods
-            if (mods.isEmpty()) return null
-            val ids = listOfNotNull(
-                id.nonBlankOrNull(),
-                id.substringBeforeLast('.').nonBlankOrNull()?.takeIf { it != id },
-            )
-            for (modId in ids) {
-                mods.firstOrNull { it.id == modId }?.let { return it }
-            }
-            val name = title.asRenderText().nonBlankOrNull() ?: return null
-            return mods.firstOrNull { it.name.equals(name, ignoreCase = true) }
+        get() = resolvedModInfo ?: findModInfo()?.also { resolvedModInfo = it }
+
+    private fun findModInfo(): ModInfo? {
+        val mods = ModInfo.loadedMods
+        if (mods.isEmpty()) return null
+        val ids = listOfNotNull(
+            id.nonBlankOrNull(),
+            id.substringBeforeLast('.').nonBlankOrNull()?.takeIf { it != id },
+        )
+        for (modId in ids) {
+            mods.firstOrNull { it.id == modId }?.let { return it }
         }
+        val name = title.asRenderText().nonBlankOrNull() ?: return null
+        return mods.firstOrNull { it.name.equals(name, ignoreCase = true) }
+    }
 
     private fun String.nonBlankOrNull(): String? = trim().takeIf { it.isNotEmpty() }
 }

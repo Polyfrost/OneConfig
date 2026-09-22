@@ -21,7 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.rememberBrandTint
 import org.polyfrost.oneconfig.internal.ui.components.rememberSvgResourcePainter
+import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val oneConfigVersion: String? by lazy {
@@ -46,6 +48,8 @@ private val creditSections = listOf(
             "Mona - CompatEngine Founding Engineer",
             "Deftu - OneConfig Major Engineer",
             "ThinkSeal - Major Tester",
+            "Zetvue - Sound Design",
+            "rachel - Lead Cosmetics Designer (OneClient)",
             "Pauline - OG Team - OneConfig Utilities",
             "xtrm - OG Team - OneConfig Utilities",
             "MoonTidez - OG Team - Designer (v0)",
@@ -53,24 +57,13 @@ private val creditSections = listOf(
         )
     ),
     CreditSection(
-        "Libraries",
-        listOf(
-            "Compose (JetBrains) - UI Framework",
-            "Skia (Google) - Rendering Engine",
-            "NanoVG (memononen) / LWJGL2.5 (DJtheRedstoner) - Showed us what was possible with OpenGL in Minecraft",
-            "NightConfig (TheElectronWill) - Config backend",
-        )
-    ),
-    CreditSection(
         "Special Thanks",
         listOf(
             "Scherso and FireStorm for saving us",
             "ImToggle for his contributions to OneConfig/Polyfrost mods",
-            "Kevin Wang and Michael Fertik for believing in us",
             "Sk1er for his lasting impact on Minecraft modding",
             "The Polyfrost team for their support and contributions",
             "All our open source contributors and testers for their help in making modding accessible to everyone",
-            "The Minecraft community for their support and feedback",
         )
     ),
 )
@@ -92,6 +85,7 @@ fun Credits() {
                     Image(
                         painter = logo,
                         contentDescription = null,
+                        colorFilter = rememberBrandTint(theme.branding.logoPath, Accent),
                         modifier = Modifier.size(474.dp, 54.dp)
                     )
                 }

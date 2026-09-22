@@ -28,7 +28,6 @@ package org.polyfrost.oneconfig.internal.ui.components
 
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
@@ -40,6 +39,7 @@ import org.jetbrains.skia.Data
 import org.jetbrains.skia.Rect
 import org.jetbrains.skia.Surface
 import org.jetbrains.skia.svg.SVGDOM
+import java.util.concurrent.ConcurrentHashMap
 import org.jetbrains.skia.svg.SVGLength
 import org.jetbrains.skia.svg.SVGLengthUnit
 import org.jetbrains.skia.svg.SVGPreserveAspectRatio
@@ -49,24 +49,34 @@ import kotlin.math.max
 
 val LocalUiOversample = staticCompositionLocalOf { 1f }
 
+private val svgRasters = ConcurrentHashMap<String, ImageBitmap>()
+
+private val svgSizes = ConcurrentHashMap<String, Size>()
+
 class OversampledSvgPainter(
-    bytes: ByteArray,
+    private val bytes: ByteArray,
     private val oversample: Float,
+    private val cacheKey: String? = null,
 ) : Painter() {
-    private val dom = SVGDOM(Data.makeFromBytes(bytes))
-    private val root = dom.root
-
-    private val defaultSize: Size = run {
-        val w = root?.width?.withUnit(SVGLengthUnit.PX)?.value ?: 0f
-        val h = root?.height?.withUnit(SVGLengthUnit.PX)?.value ?: 0f
-        if (w > 0f && h > 0f) Size(w, h) else Size.Unspecified
-    }
-
-    init {
-        if (root?.viewBox == null && defaultSize.isSpecified) {
-            root?.viewBox = Rect.makeXYWH(0f, 0f, defaultSize.width, defaultSize.height)
+    private val dom: SVGDOM by lazy {
+        SVGDOM(Data.makeFromBytes(bytes)).also { parsed ->
+            val r = parsed.root ?: return@also
+            if (r.viewBox != null) return@also
+            val w = r.width.withUnit(SVGLengthUnit.PX).value
+            val h = r.height.withUnit(SVGLengthUnit.PX).value
+            if (w > 0f && h > 0f) r.viewBox = Rect.makeXYWH(0f, 0f, w, h)
         }
     }
+
+    private fun measure(): Size {
+        val r = dom.root
+        val w = r?.width?.withUnit(SVGLengthUnit.PX)?.value ?: 0f
+        val h = r?.height?.withUnit(SVGLengthUnit.PX)?.value ?: 0f
+        return if (w > 0f && h > 0f) Size(w, h) else Size.Unspecified
+    }
+
+    private val defaultSize: Size =
+        if (cacheKey == null) measure() else svgSizes.getOrPut(cacheKey, ::measure)
 
     override val intrinsicSize: Size get() = defaultSize
 
@@ -93,7 +103,9 @@ class OversampledSvgPainter(
         val key = pw.toLong() shl 32 or ph.toLong()
         var img = cached
         if (img == null || cachedKey != key) {
-            img = rasterize(pw, ph)
+            val shared = cacheKey
+            img = if (shared == null) rasterize(pw, ph)
+            else svgRasters.getOrPut("$shared@${pw}x$ph") { rasterize(pw, ph) }
             cached = img
             cachedKey = key
         }
@@ -108,6 +120,7 @@ class OversampledSvgPainter(
 
     private fun rasterize(pw: Int, ph: Int): ImageBitmap {
         val surface = Surface.makeRasterN32Premul(pw, ph)
+        val root = dom.root
         root?.width = SVGLength(pw.toFloat(), SVGLengthUnit.PX)
         root?.height = SVGLength(ph.toFloat(), SVGLengthUnit.PX)
         root?.preserveAspectRatio = SVGPreserveAspectRatio(SVGPreserveAspectRatioAlign.NONE)

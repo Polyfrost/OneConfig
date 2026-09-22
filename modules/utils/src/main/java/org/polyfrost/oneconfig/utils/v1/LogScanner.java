@@ -76,8 +76,9 @@ public final class LogScanner {
     }
 
     /**
-     * Return a set of ActiveMods that have been blamed for the given stacktrace.
-     * This will be an empty set if no mods are blamed.
+     * Return a set of ActiveMods that have been blamed for the given stacktrace
+     * <p>
+     * This will be an empty set if no mods are blamed
      *
      * @param e The throwable to scan
      * @return A set of mods that are blamed for the given stacktrace
@@ -85,7 +86,6 @@ public final class LogScanner {
     @NotNull
     public static Set<ModInfo> identifyFromStacktrace(Throwable e) {
         Set<ModInfo> mods = new HashSet<>();
-        // Include suppressed exceptions too
         visitChildrenThrowables(e, throwable -> {
             for (ModInfo newMod : identifyFromThrowable(throwable)) {
                 if (mods.stream().noneMatch(mod -> mod.getId().equals(newMod.getId()))) {
@@ -97,21 +97,21 @@ public final class LogScanner {
     }
 
     /**
-     * Attempt to get the caller from a given stacktrace.
+     * Attempt to get the caller from a given stacktrace
      *
-     * @return A singleton mod set that contains the caller, or an empty set if no caller is found.
+     * @return A singleton mod set that contains the caller or an empty set if no caller is found
      */
     @NotNull
     public static Set<ModInfo> identifyCallerFromStacktrace(Throwable e) {
-        // first is this method name, second is the method it called, third is what called it
+        // first is this method name then the method it called then what called it
         StackTraceElement target = null;
 
         StackTraceElement[] trace = e.getStackTrace();
         if (trace.length < 3) return Collections.emptySet();
-        // ignore the first two elements, as they are this method and the method that was marked
+        // ignore the first two elements because they are this method and the method that was marked
         for (int i = 2; i < trace.length; i++) {
             StackTraceElement element = trace[i];
-            // remove any that are native, or called from a system package
+            // remove any that are native or called from a system package
             String cls = element.getClassName();
             if (element.isNativeMethod()) continue;
             if (cls.startsWith("sun.") || cls.startsWith("com.sun.")) continue;
@@ -148,7 +148,7 @@ public final class LogScanner {
 
     public static Set<ModInfo> identifyFromClass(String className) {
         try {
-            // Skip identification for Mixin, one's mod copy of the library is shared with all other mods
+            // Skip identification for Mixin because one mod copy of the library is shared with all other mods
             if (className.startsWith("org.spongepowered.asm.mixin.")) {
                 return Collections.emptySet();
             }
@@ -161,7 +161,7 @@ public final class LogScanner {
     // TODO: get a list of mixin transformers that affected the class and blame those too
 
     /**
-     * Return a set of ActiveMods that have been associated with the given class.
+     * Return a set of ActiveMods that have been associated with the given class
      *
      * @param clazz The class to scan
      * @return A set of mods that are associated with the given class
@@ -183,7 +183,6 @@ public final class LogScanner {
                 return Collections.emptySet();
             }
 
-            // Transform JAR URL to a file URL
             URI uri = url.toURI();
             if (uri.toString().startsWith("jar:")) {
                 String s = uri.toString();
@@ -207,7 +206,7 @@ public final class LogScanner {
         Set<ModInfo> mods = modMap.stream().filter(m -> m.getFile().equals(path)).collect(Collectors.toSet());
         if (!mods.isEmpty()) return mods;
         else if (Platform.compatibility().isDevelopment()) {
-            // For some reason, in dev, the mod being tested has the 'resources' folder as the origin instead of the 'classes' folder.
+            // For some reason in dev the mod being tested has the 'resources' folder as the origin instead of the 'classes' folder
             String resourcesPathString = path.toString().replace("\\", "/")
                     // Make it work with Architectury as well
                     .replace("common/build/classes/java/main", "fabric/build/resources/main")

@@ -33,6 +33,7 @@ import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.config.v1.annotations.*;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
+import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindHelper;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
@@ -107,7 +108,6 @@ public class TestConfig_Test extends Config {
     @Keybind(title = "keybind")
     private final OneConfigKeybind bind = KeybindHelper.builder().ctrl().key(InputConstants.KEY_G).action((Consumer<Boolean>) (it) -> LOGGER.info("Keybind 'keybind' (Ctrl+G) {}", it ? "pressed" : "released")).register();
 
-    // DraggableList: drag-only (order preserved, no checkboxes)
     @DraggableList(
             title = "Draggable List (order only)",
             description = "Drag to reorder. No checkboxes.",
@@ -116,7 +116,6 @@ public class TestConfig_Test extends Config {
     )
     public static String[] draggableOrder = {"Alpha", "Bravo", "Charlie", "Delta", "Echo"};
 
-    // DraggableList: drag + checkable (enabled subset stored in prop)
     @DraggableList(
             title = "Draggable List (with checkboxes)",
             description = "Drag to reorder. Check to enable.",
@@ -127,7 +126,6 @@ public class TestConfig_Test extends Config {
     )
     public static String[] draggableCheckable = {"Alpha", "Charlie", "Echo"};
 
-    // MultiSelectDropdown: multi-select with checkboxes (boolean[])
     @MultiSelectDropdown(
             title = "Multi-Select Dropdown",
             description = "Click to open. Check multiple items.",
@@ -137,7 +135,6 @@ public class TestConfig_Test extends Config {
     )
     public static boolean[] multiSelect = {true, false, true, false, false};
 
-    // MultiSelectDropdown: single-select list (int, checkable=false)
     @MultiSelectDropdown(
             title = "Single-Select List Dropdown",
             description = "Click to open. Pick one item.",
@@ -157,7 +154,6 @@ public class TestConfig_Test extends Config {
     )
     public static String[] textList = {"Notch", "Herobrine"};
 
-    // TextList: validated entries, capped, no reordering
     @TextList(
             title = "Text List (validated)",
             description = "Must look like a domain. Max 3 entries, no reordering.",
@@ -257,8 +253,8 @@ public class TestConfig_Test extends Config {
     )
     public static float[] range = {25f, 75f};
 
-    // --- Dependencies: everything below is DISABLED (not hidden) while the master switch is off,
-    // so it can be checked that disabled options really are non-interactable (including right click / kebab menu).
+    // everything below is disabled rather than hidden while the master switch is off so that
+    // disabled options can be checked for being non-interactable
     @Switch(
             title = "Master switch",
             description = "Turn off to disable every option in this subcategory.",
@@ -307,7 +303,7 @@ public class TestConfig_Test extends Config {
     @DependsOn("dependencyMaster")
     public static String[] dependentTextList = {"Entry"};
 
-    // Second, independent condition: disabled only while BOTH switches are on, via addDependency in the constructor.
+    // second independent condition disabled only while both switches are on via addDependency in the constructor
     @Switch(title = "Second condition", category = "Dependencies", subcategory = "Multiple conditions")
     public static boolean dependencySecond = false;
 
@@ -332,7 +328,7 @@ public class TestConfig_Test extends Config {
 
     @Button(title = "Test")
     private void button() {
-        Platform.compatibility().displayChatMessage("button pressed");
+        Notifications.info("Button pressed", "The test button was clicked.");
     }
 
     public static TestConfig_Test getInstance() {

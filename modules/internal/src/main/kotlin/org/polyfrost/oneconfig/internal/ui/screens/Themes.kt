@@ -2,14 +2,13 @@ package org.polyfrost.oneconfig.internal.ui.screens
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -25,10 +24,8 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
@@ -83,7 +80,10 @@ private fun ThemeCard(theme: UITheme) {
         modifier = Modifier
             .background(LocalTheme.current.modCardBackground, LocalTheme.current.backgroundShape)
             .border(borderWidth, borderColor, LocalTheme.current.backgroundShape)
-            .onClick(interactionSource) { ThemeRegistry.activate(theme) }
+            .clickable(interactionSource, indication = null) {
+                // Use clickable because onClick always plays CLICK. ThemeRegistry.activate chooses CLICK or OPEN
+                ThemeRegistry.activate(theme)
+            }
             .pointerHoverIcon(PointerIcon.Hand)
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),

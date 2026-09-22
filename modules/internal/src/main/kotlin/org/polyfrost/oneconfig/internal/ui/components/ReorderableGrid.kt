@@ -38,7 +38,7 @@ import kotlinx.coroutines.launch
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 
-/** Distance from a viewport edge at which a drag starts scrolling the grid. */
+/** Distance from a viewport edge at which a drag starts scrolling the grid */
 private const val AutoScrollZonePx = 64f
 private const val AutoScrollSpeedPx = 12f
 
@@ -49,15 +49,15 @@ private val SettleSpec = spring<Offset>(
 )
 
 /**
- * Drag-to-reorder support for a [androidx.compose.foundation.lazy.grid.LazyVerticalGrid].
+ * Drag-to-reorder support for a [androidx.compose.foundation.lazy.grid.LazyVerticalGrid]
  *
- * The grid re-lays out around the dragged item as the pointer moves, so [onMove] is expected to
- * mutate the backing list immediately, and [onDrop] fires once with the item's final index when
- * the gesture ends.
+ * The grid re-lays out around the dragged item as the pointer moves so [onMove] must mutate the backing
+ * list immediately and [onDrop] fires once with the item's final index when the gesture ends
  *
- * The item itself is not drawn by the grid while it is being dragged — a lazy list clips to its
- * viewport, which would cut the card in half at the edges. Instead the caller draws it in an
- * overlay next to the grid, see [overlayKey] and [reorderOverlay].
+ * The grid does not draw the dragged item because a lazy list clips to its viewport and would cut the card
+ * in half at the edges
+ *
+ * The caller draws it in an overlay instead see [overlayKey] and [reorderOverlay]
  */
 class GridReorderState internal constructor(
     private val gridState: LazyGridState,
@@ -69,7 +69,7 @@ class GridReorderState internal constructor(
     var draggingKey by mutableStateOf<Any?>(null)
         private set
 
-    /** Key of the item to draw in the overlay: the dragged one, or one still settling. */
+    /** Key of the item to draw in the overlay either the dragged one or one still settling */
     var overlayKey by mutableStateOf<Any?>(null)
         private set
 
@@ -78,14 +78,14 @@ class GridReorderState internal constructor(
 
     private var draggingIndex by mutableIntStateOf(-1)
 
-    /** Where the dragged item sat when the gesture started, in viewport coordinates. */
+    /** Where the dragged item sat when the gesture started in viewport coordinates */
     private var initialOffset by mutableStateOf(Offset.Zero)
     private var dragDelta by mutableStateOf(Offset.Zero)
     private val settleOffset = Animatable(Offset.Zero, Offset.VectorConverter)
     private var settling = false
     private var autoScroll: Job? = null
 
-    /** Overlay position, in the coordinate space of the box wrapping the grid. */
+    /** Overlay position in the coordinate space of the box wrapping the grid */
     val overlayOffset: Offset
         get() = if (settling) settleOffset.value else initialOffset + dragDelta
 
@@ -144,9 +144,10 @@ class GridReorderState internal constructor(
     }
 
     /**
-     * Swaps the dragged item into the slot it now covers most. Comparing against how much of its
-     * own slot it still covers gives the swap some hysteresis, so a card hovering a boundary
-     * doesn't flip back and forth, and the gaps between cards aren't dead zones.
+     * Swaps the dragged item into the slot it now covers most
+     *
+     * Comparing against how much of its own slot it still covers adds hysteresis so a card hovering a
+     * boundary does not flip back and forth and the gaps between cards are not dead zones
      */
     private fun settleOnHoveredItem() {
         val info = infoAt(draggingIndex) ?: return
@@ -168,7 +169,7 @@ class GridReorderState internal constructor(
         UiSounds.play(UiSoundEvent.SLIDER_TICK)
     }
 
-    /** Scrolls the grid while the pointer is held near the top or bottom edge. */
+    /** Scrolls the grid while the pointer is held near the top or bottom edge */
     private suspend fun autoScroll() {
         while (scope.isActive && draggingKey != null) {
             withFrameNanos { }
@@ -209,10 +210,12 @@ fun rememberGridReorderState(
 }
 
 /**
- * Makes a grid item draggable. [key] must be the same key the item was declared with, since the
- * grid is looked up by key rather than by index. The item stays in the layout while dragged but
- * is drawn by the overlay instead, so its slot keeps its size and its pointer input keeps
- * receiving the gesture.
+ * Makes a grid item draggable
+ *
+ * [key] must be the same key the item was declared with since the grid is looked up by key not by index
+ *
+ * The item stays in the layout while dragged but is drawn by the overlay so its slot keeps its size and
+ * its pointer input keeps receiving the gesture
  */
 @Composable
 fun Modifier.reorderableItem(state: GridReorderState, key: Any): Modifier = this
@@ -230,8 +233,9 @@ fun Modifier.reorderableItem(state: GridReorderState, key: Any): Modifier = this
     }
 
 /**
- * Positions and sizes the overlay copy of the dragged item. Apply this to the same content the
- * grid would have drawn, placed in a box that wraps the grid.
+ * Positions and sizes the overlay copy of the dragged item
+ *
+ * Apply to the same content the grid would have drawn placed in a box that wraps the grid
  */
 @Composable
 fun Modifier.reorderOverlay(state: GridReorderState): Modifier {

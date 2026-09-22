@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.compat
 
 //? stella_compat {
-import co.stellarskys.stella.Stella
+/*import co.stellarskys.stella.Stella
 import co.stellarskys.stella.api.config.core.*
 import co.stellarskys.stella.hud.HUDElement
 import co.stellarskys.stella.hud.HUDManager
@@ -64,13 +64,15 @@ object StellaCompat {
 
         EventManager.register(HudEditorToggleEvent::class.java, Consumer { event ->
             HUDManager.shouldRenderHuds = !event.open
-            if (!event.open) {
-                runCatching { HUDManager.saveAllLayouts() }
-                    .onFailure { LOGGER.warn("Failed to save Stella HUD layouts", it) }
-                runCatching { config.save() }
-                    .onFailure { LOGGER.warn("Failed to save Stella config", it) }
-            }
+            if (!event.open) flush()
         })
+    }
+
+    private fun flush() {
+        runCatching { HUDManager.saveAllLayouts() }
+            .onFailure { LOGGER.warn("Failed to save Stella HUD layouts", it) }
+        runCatching { config.save() }
+            .onFailure { LOGGER.warn("Failed to save Stella config", it) }
     }
 
     private fun revaluateDisplays() {
@@ -82,7 +84,6 @@ object StellaCompat {
         }
     }
 
-    // Settings
     private fun addConfigTree() {
         val info = ModInfo.loadedMods.firstOrNull { it.id == "stella" }
 
@@ -218,7 +219,6 @@ object StellaCompat {
         }
     }
 
-    // Hud
     private class StellaHudWrapper(private val element: HUDElement): OneConfigHudWrapper {
         private val confElement: ConfigElement? get() =  config.elementMap[element.configKey]
 
@@ -251,6 +251,8 @@ object StellaCompat {
             set(_) {}
 
         override fun linkedProperties(): List<Property<*>> = buildHudProperties(element)
+
+        override fun save() = flush()
     }
 
     private fun addHuds() {
@@ -267,21 +269,23 @@ object StellaCompat {
             if (!element.isEnabled()) return@forEach
 
             ctx.pose().pushMatrix()
-            ctx.pose().translate(element.x, element.y)
-            ctx.pose().scale(element.scale, element.scale)
+            try {
+                ctx.pose().translate(element.x, element.y)
+                ctx.pose().scale(element.scale, element.scale)
 
-            val custom = customRenderers[element.id]
-            if (custom != null) custom(ctx)
-            else {
-                if (element.width == 0 && element.height == 0) {
-                    element.width = element.text.width() + 4
-                    element.height = element.text.height() + 6
+                val custom = customRenderers[element.id]
+                if (custom != null) custom(ctx)
+                else {
+                    if (element.width == 0 && element.height == 0) {
+                        element.width = element.text.width() + 4
+                        element.height = element.text.height() + 6
+                    }
+
+                    Render2D.drawString(ctx, element.text, 2, 3, shadow = false)
                 }
-
-                Render2D.drawString(ctx, element.text, 2, 3, shadow = false)
+            } finally {
+                ctx.pose().popMatrix()
             }
-
-            ctx.pose().popMatrix()
         }
     }
 
@@ -301,4 +305,4 @@ object StellaCompat {
         return property
     }
 }
-//? }
+*///? }

@@ -40,8 +40,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * The Tree class represents a tree structure that contains properties and other trees as children.
- * It provides various methods to access, modify, and compare the tree and its elements.
+ * The Tree class represents a tree structure that contains properties and other trees as children
+ * <br>
+ * It provides methods to access and modify and compare the tree and its elements
  */
 @SuppressWarnings("unused")
 public class Tree extends Node implements Serializable {
@@ -95,8 +96,7 @@ public class Tree extends Node implements Serializable {
             Node _this = self.get(key);
             Node that = from.getValue();
             if (_this == null) {
-                // asm: the node was removed in this case
-                // if we are preserving, we will add it onto ourselves, if not we will just ignore it
+                // asm: node was removed so only re-add it when preserving
                 if (preserveMissingOptions) {
                     self.put(that);
                 }
@@ -104,11 +104,9 @@ public class Tree extends Node implements Serializable {
             }
             if (_this instanceof Tree) {
                 if (skipOverwritten && overwritten instanceof Tree && !Objects.equals(((Tree) overwritten).get(that.getID()), null)) {
-                    // this node was previously overwritten, skip
                     continue;
                 }
                 if (that instanceof Tree) {
-                    // if both are trees, recursively overwrite
                     _overwrite((Tree) _this, (Tree) that, keyMapper, preserveMissingOptions, skipOverwritten, root);
                     _this.addMetadata(that.getMetadata());
                     if (root != null) {
@@ -116,7 +114,7 @@ public class Tree extends Node implements Serializable {
                         ((Tree) overwritten).put(new Tree(that.getID(), null, null, null));
                     }
                 }
-                // nop. do not attempt to overwrite a tree with a property
+                // do not attempt to overwrite a tree with a property
                 else continue;
             }
             List<String> failures = OVERWRITE_FAILURES.get();
@@ -171,7 +169,9 @@ public class Tree extends Node implements Serializable {
     }
 
     /**
-     * Create a new builder from the given tree. This will copy all the data from the tree into the builder.
+     * Create a new builder from the given tree
+     * <br>
+     * This will copy all the data from the tree into the builder
      */
     @Contract("_ -> new")
     public static @NotNull Tree tree(@NotNull Tree src) {
@@ -187,9 +187,8 @@ public class Tree extends Node implements Serializable {
 
     public Tree put(Node n) {
         Node old = theMap.get(n.getID());
-        if (old == n) return this; // yeah, ok.
+        if (old == n) return this;
         if (old != null) {
-//            LOGGER.warn("Replacing existing node with id {}: {} -> {}", n.getID(), old, n);
             n.overwrite(old, false);
         }
         theMap.put(n.getID(), n);
@@ -283,7 +282,9 @@ public class Tree extends Node implements Serializable {
     }
 
     /**
-     * Check if the tree's contents equals another tree's. This will check the values and children of the tree.
+     * Check if the tree contents equal another tree
+     * <br>
+     * This checks the values and children of the tree
      *
      * @param obj the tree to check against
      * @return whether the trees are equal
@@ -294,11 +295,9 @@ public class Tree extends Node implements Serializable {
         for (Map.Entry<String, Node> e : this.theMap.entrySet()) {
             Node n = that.get(e.getKey());
             if (n == null) {
-//                System.err.println("Second tree does not contain " + e);
                 return false;
             }
             if (!e.getValue().deepEquals(n)) {
-//                System.err.println(e.getValue() + " does not equal " + n);
                 return false;
             }
         }
@@ -306,7 +305,7 @@ public class Tree extends Node implements Serializable {
     }
 
     /**
-     * Overwrite this tree with the supplied tree, using the keyMapper to map between key names from old to new if needed.
+     * Overwrite this tree with the supplied tree using the keyMapper to map between key names from old to new if needed
      *
      * @param with      the tree to overwrite with
      * @param keyMapper the key mapper function to use
@@ -330,7 +329,7 @@ public class Tree extends Node implements Serializable {
     }
 
     /**
-     * Unpack this tree into a map of objects, containing either more Maps or the values of the properties of this tree.
+     * Unpack this tree into a map of objects containing either more Maps or the values of the properties of this tree
      */
     public Map<String, Object> unpack() {
         Map<String, Object> out = new LinkedHashMap<>(theMap.size());
@@ -356,9 +355,9 @@ public class Tree extends Node implements Serializable {
     }
 
     /**
-     * Clear this tree of all its members.
+     * Clear this tree of all its members
      * <br>
-     * This function is used internally to discard trees to prevent illegal usage of 'dead' trees.
+     * This function is used internally to discard trees to prevent illegal usage of 'dead' trees
      */
     @ApiStatus.Internal
     public void clear() {
@@ -367,7 +366,7 @@ public class Tree extends Node implements Serializable {
     }
 
     /**
-     * Figure out what the path from the given root to the given node is.
+     * Figure out what the path from the given root to the given node is
      */
     public static String evaluatePath(Tree root, Node node) {
         if (node == null || root == null) return null;

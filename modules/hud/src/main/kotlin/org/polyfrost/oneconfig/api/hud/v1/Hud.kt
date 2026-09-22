@@ -27,7 +27,9 @@
 package org.polyfrost.oneconfig.api.hud.v1
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
@@ -46,6 +48,9 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend
 import org.polyfrost.oneconfig.api.hud.v1.HudManager.LOGGER
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+
+@ApiStatus.Internal
+val LocalHud = compositionLocalOf<Hud?> { null }
 
 enum class Font {
     Minecraft,
@@ -101,20 +106,23 @@ enum class HudAnchor {
     }
 }
 
-private const val GRID_SIZE = 3
+internal const val GRID_SIZE = 3
 
-/** Backstop for walking a chain of HUDs anchored to one another. */
+/** Backstop for walking a chain of HUDs anchored to one another */
 private const val MAX_ANCHOR_DEPTH = 16
+
+private const val MIN_VISIBLE = 12f
+
+internal const val POS_SCHEMA = 1
 
 @Suppress("EqualsOrHashCode", "UnstableApiUsage")
 abstract class Hud(id: String, title: String, val category: Category) : Cloneable, Config(id, null, title, null) {
-    /**
-     * Description of the HUD
-     */
     open val description: String? = null
 
     /**
-     * Search tags, like synonyms, what your users might search for
+     * Search tags and synonyms
+     *
+     * What your users might search for
      */
     open val searchTags: List<String> = emptyList()
 
@@ -138,9 +146,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
                     }
                 }
             } else if (wasStatic && !v) {
-                // Switching from static → dynamic: seed rendered dimensions from the
-                // static values so the HUD doesn't collapse to 0×0 until the render loop
-                // recalculates the natural content size.
+                // seed rendered dimensions from the static values so the HUD does not
+                // collapse to 0x0 until the render loop recalculates the natural size
                 val (minW, minH) = minimumSize()
                 val scale = effectiveScale
                 renderedW = maxOf(staticW, minW) * scale
@@ -166,7 +173,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     /**
      * Fills in [staticW]/[staticH] when static sizing is enabled but dimensions are unset or invalid
-     * (e.g. [TextHud]'s unmeasured sentinel of {@code -1f}). Safe to call after a reset-to-default.
+     *
+     * One such invalid value is [TextHud]'s unmeasured sentinel of {@code -1f}
+     *
+     * Safe to call after a reset-to-default
      */
     fun reseedStaticSizeIfNeeded() {
         if (!staticWidth) return
@@ -175,7 +185,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         reseedStaticHeight()
     }
 
-    /** Re-measures content and applies a new static width. */
+    /** Re-measures content and applies a new static width */
     fun reseedStaticWidth() {
         if (!staticWidth) return
         val (minW, _) = minimumSize()
@@ -187,7 +197,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         }
     }
 
-    /** Re-measures content and applies a new static height. */
+    /** Re-measures content and applies a new static height */
     fun reseedStaticHeight() {
         if (!staticWidth) return
         val (_, minH) = minimumSize()
@@ -200,11 +210,15 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     }
 
     /**
-     * Stores reset defaults for [staticW]/[staticH]. The default is the *natural* content size, never
-     * the current one: this runs after stored values have been loaded, so recording [staticW] directly
-     * would capture whatever size the user last resized to and make "reset to default" a no-op.
-     * When the content cannot be measured yet no default is stored, and resetting falls back to
-     * re-measuring at that point (see `reseedStaticWidth`).
+     * Stores reset defaults for [staticW]/[staticH]
+     *
+     * The default is the *natural* content size and never the current one
+     *
+     * This runs after stored values have been loaded so recording [staticW] directly would capture
+     * whatever size the user last resized to and make "reset to default" a no-op
+     *
+     * When the content cannot be measured yet no default is stored and resetting falls back to
+     * re-measuring at that point (see `reseedStaticWidth`)
      */
     fun captureStaticSizeDefaults(force: Boolean = false) {
         val t = tree ?: return
@@ -221,7 +235,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     }
 
     /**
-     * Stores the reset defaults for [section]/[relativeX]/[relativeY] derived from [defaultPosition].
+     * Stores the reset defaults for [section]/[relativeX]/[relativeY] derived from [defaultPosition]
      */
     fun capturePositionDefaults() {
         val t = tree ?: return
@@ -230,13 +244,29 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         val curSection = section
         val curX = relativeX
         val curY = relativeY
-        setAbsolutePosition(dx, dy)
-        t.getProp("section")?.addMetadata("default", section)
-        t.getProp("relativeX")?.addMetadata("default", relativeX)
-        t.getProp("relativeY")?.addMetadata("default", relativeY)
+        val curSchema = posSchema
+        val curOffX = anchorOffsetX
+        val curOffY = anchorOffsetY
+        val curLinkX = mergeLinkX
+        val curLinkY = mergeLinkY
+        val wasSystem = HudManager.systemReposition
+        HudManager.systemReposition = true
+        try {
+            setAbsolutePosition(dx, dy)
+            t.getProp("section")?.addMetadata("default", section)
+            t.getProp("relativeX")?.addMetadata("default", relativeX)
+            t.getProp("relativeY")?.addMetadata("default", relativeY)
+        } finally {
+            HudManager.systemReposition = wasSystem
+        }
         section = curSection
         relativeX = curX
         relativeY = curY
+        posSchema = curSchema
+        anchorOffsetX = curOffX
+        anchorOffsetY = curOffY
+        mergeLinkX = curLinkX
+        mergeLinkY = curLinkY
     }
 
     @Switch(title = "Show in F3")
@@ -258,10 +288,25 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var section: Section get() = _section.value; set(v) { _section.value = v }
 
     private var _relativeX: MutableState<Float> = mutableStateOf(0f)
+
     open var relativeX: Float get() = _relativeX.value; set(v) { _relativeX.value = v }
 
     private var _relativeY: MutableState<Float> = mutableStateOf(0f)
+
     open var relativeY: Float get() = _relativeY.value; set(v) { _relativeY.value = v }
+
+    @ApiStatus.Internal
+    var posSchema: Int = POS_SCHEMA
+
+    @get:ApiStatus.Internal
+    var layoutRefW: Float
+        get() = HudManager.layoutRefWidth
+        set(v) { if (v > 0f) HudManager.layoutRefWidth = v }
+
+    @get:ApiStatus.Internal
+    var layoutRefH: Float
+        get() = HudManager.layoutRefHeight
+        set(v) { if (v > 0f) HudManager.layoutRefHeight = v }
 
     private var _renderedW: MutableState<Float> = mutableStateOf(0f)
     open var renderedW: Float get() = _renderedW.value; set(v) { _renderedW.value = v }
@@ -322,15 +367,14 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     private val anchorFracY: Float get() = fracY(growthAnchor)
 
-    /** Screen-space X of [point] on this HUD's box, e.g. the middle of its right edge. */
+    /** Screen-space X of [point] on this HUD's box such as the middle of its right edge */
     fun anchorPointX(point: HudAnchor): Float = x + fracX(point) * scaledWidth
 
-    /** Screen-space Y of [point] on this HUD's box. */
+    /** Screen-space Y of [point] on this HUD's box */
     fun anchorPointY(point: HudAnchor): Float = y + fracY(point) * scaledHeight
 
-    private val screenX: Float get() {
-        val sw = HudManager.guiScreenWidth
-        val secPos = Math.round(sw / GRID_SIZE * relativeX).toFloat()
+    private fun sectionX(sw: Float): Float {
+        val secPos = Math.round(relativeX).toFloat()
         return when (section) {
             Section.TopLeft, Section.CenterLeft, Section.BottomLeft -> secPos
             Section.TopCenter, Section.Center, Section.BottomCenter -> sw / 2f + secPos
@@ -338,9 +382,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         }
     }
 
-    private val screenY: Float get() {
-        val sh = HudManager.guiScreenHeight
-        val secPos = Math.round(sh / GRID_SIZE * relativeY).toFloat()
+    private fun sectionY(sh: Float): Float {
+        val secPos = Math.round(relativeY).toFloat()
         return when (section) {
             Section.TopLeft, Section.TopCenter, Section.TopRight -> secPos
             Section.CenterLeft, Section.Center, Section.CenterRight -> sh / 2f + secPos
@@ -348,37 +391,86 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         }
     }
 
-    open var x: Float
-        get() {
-            resolvedAnchorX?.let { a ->
-                resolvingAnchor = true
-                try {
-                    return a.parent.anchorPointX(a.targetPoint) + a.offset - fracX(a.selfPoint) * scaledWidth
-                } finally {
-                    resolvingAnchor = false
-                }
+    private val screenX: Float get() = sectionX(HudManager.guiScreenWidth)
+
+    private val screenY: Float get() = sectionY(HudManager.guiScreenHeight)
+
+    internal fun layoutX(sw: Float): Float {
+        resolvedAnchorX?.let { a ->
+            resolvingAnchor = true
+            try {
+                return a.parent.layoutX(sw) + a.parent.fracX(a.targetPoint) * a.parent.scaledWidth +
+                    a.offset - fracX(a.selfPoint) * scaledWidth
+            } finally {
+                resolvingAnchor = false
             }
-            return screenX - anchorFracX * scaledWidth
         }
+        return sectionX(sw) - anchorFracX * scaledWidth
+    }
+
+    internal fun layoutY(sh: Float): Float {
+        resolvedAnchorY?.let { a ->
+            resolvingAnchor = true
+            try {
+                return a.parent.layoutY(sh) + a.parent.fracY(a.targetPoint) * a.parent.scaledHeight +
+                    a.offset - fracY(a.selfPoint) * scaledHeight
+            } finally {
+                resolvingAnchor = false
+            }
+        }
+        return sectionY(sh) - anchorFracY * scaledHeight
+    }
+
+    internal val rawX: Float get() {
+        resolvedAnchorX?.let { a ->
+            resolvingAnchor = true
+            try {
+                return a.parent.anchorPointX(a.targetPoint) + a.offset - fracX(a.selfPoint) * scaledWidth
+            } finally {
+                resolvingAnchor = false
+            }
+        }
+        return screenX - anchorFracX * scaledWidth
+    }
+
+    internal val rawY: Float get() {
+        resolvedAnchorY?.let { a ->
+            resolvingAnchor = true
+            try {
+                return a.parent.anchorPointY(a.targetPoint) + a.offset - fracY(a.selfPoint) * scaledHeight
+            } finally {
+                resolvingAnchor = false
+            }
+        }
+        return screenY - anchorFracY * scaledHeight
+    }
+
+    open var x: Float
+        get() = if (resolvedAnchorX != null) rawX else keepVisibleX(rawX)
         set(v) { updateRelativeX(v) }
 
     open var y: Float
-        get() {
-            resolvedAnchorY?.let { a ->
-                resolvingAnchor = true
-                try {
-                    return a.parent.anchorPointY(a.targetPoint) + a.offset - fracY(a.selfPoint) * scaledHeight
-                } finally {
-                    resolvingAnchor = false
-                }
-            }
-            return screenY - anchorFracY * scaledHeight
-        }
+        get() = if (resolvedAnchorY != null) rawY else keepVisibleY(rawY)
         set(v) { updateRelativeY(v) }
+
+    private fun keepVisibleX(absX: Float): Float {
+        val sw = HudManager.guiScreenWidth
+        if (sw <= 0f) return absX
+        val w = scaledWidth
+        val keep = minOf(w, MIN_VISIBLE)
+        return absX.coerceIn(minOf(keep - w, 0f), maxOf(sw - keep, 0f))
+    }
+
+    private fun keepVisibleY(absY: Float): Float {
+        val sh = HudManager.guiScreenHeight
+        if (sh <= 0f) return absY
+        val h = scaledHeight
+        val keep = minOf(h, MIN_VISIBLE)
+        return absY.coerceIn(minOf(keep - h, 0f), maxOf(sh - keep, 0f))
+    }
 
     protected open fun updateRelativeX(absX: Float) {
         val sw = HudManager.guiScreenWidth
-        val gridW = sw / GRID_SIZE
         resolvedAnchorX?.let { a ->
             val pin = absX + fracX(a.selfPoint) * scaledWidth
             resolvingAnchor = true
@@ -391,19 +483,20 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
                 resolvingAnchor = false
             }
         }
-        // kept up to date even while anchored, so dropping the anchor (or losing the target HUD)
+        // kept up to date even while anchored so dropping the anchor (or losing the target HUD)
         // leaves the HUD exactly where it was instead of jumping back to a stale screen position
         val anchor = absX + anchorFracX * scaledWidth
         relativeX = when (section) {
             Section.TopLeft, Section.CenterLeft, Section.BottomLeft -> anchor
             Section.TopCenter, Section.Center, Section.BottomCenter -> anchor - sw / 2f
             else -> sw - anchor
-        }.div(gridW).coerceIn(-1f, 2f)
+        }.let { if (HudManager.systemReposition) it else it.coerceIn(-sw, sw * 2f) }
+        posSchema = POS_SCHEMA
+        HudManager.noteLayoutArranged()
     }
 
     protected open fun updateRelativeY(absY: Float) {
         val sh = HudManager.guiScreenHeight
-        val gridH = sh / GRID_SIZE
         resolvedAnchorY?.let { a ->
             val pin = absY + fracY(a.selfPoint) * scaledHeight
             resolvingAnchor = true
@@ -421,7 +514,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             Section.TopLeft, Section.TopCenter, Section.TopRight -> anchor
             Section.CenterLeft, Section.Center, Section.CenterRight -> anchor - sh / 2f
             else -> sh - anchor
-        }.div(gridH).coerceIn(-1f, 2f)
+        }.let { if (HudManager.systemReposition) it else it.coerceIn(-sh, sh * 2f) }
+        posSchema = POS_SCHEMA
+        HudManager.noteLayoutArranged()
     }
 
     fun setAbsolutePosition(absX: Float, absY: Float) {
@@ -491,8 +586,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     }
 
     fun setGrowthAnchorKeepingPosition(anchor: HudAnchor) {
-        val absX = x
-        val absY = y
+        val absX = rawX
+        val absY = rawY
         growthAnchor = anchor
         updateRelativeX(absX)
         updateRelativeY(absY)
@@ -501,36 +596,40 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     private var _anchorTargetId: MutableState<String> = mutableStateOf("")
 
     /**
-     * Config tree id of the HUD this one hangs off, or empty when it is positioned against the
-     * screen. Prefer [anchorTo] and [clearAnchor] over setting this directly.
+     * Config tree id of the HUD this one hangs off or empty when it is positioned against the
+     * screen
+     *
+     * Prefer [anchorTo] and [clearAnchor] over setting this directly
      */
     var anchorTargetId: String get() = _anchorTargetId.value; set(v) { _anchorTargetId.value = v }
 
     private var _anchorPoint: MutableState<HudAnchor> = mutableStateOf(HudAnchor.TopLeft)
 
-    /** Which of the nine points on the target HUD's box this HUD is pinned to. */
+    /** Which of the nine points on the target HUD's box this HUD is pinned to */
     var anchorPoint: HudAnchor get() = _anchorPoint.value; set(v) { _anchorPoint.value = v }
 
     private var _selfAnchorPoint: MutableState<HudAnchor> = mutableStateOf(HudAnchor.Auto)
 
     /**
-     * Which of the nine points on *this* HUD's own box sits on the anchor, i.e. the point that is
-     * held against [anchorPoint] on the target. [HudAnchor.Auto] uses the growth anchor, which is
-     * what anchoring did before the point could be chosen.
+     * Which of the nine points on *this* HUD's own box sits on the anchor
+     *
+     * That is the point held against [anchorPoint] on the target
+     *
+     * [HudAnchor.Auto] uses the growth anchor
      */
     var selfAnchorPoint: HudAnchor get() = _selfAnchorPoint.value; set(v) { _selfAnchorPoint.value = v }
 
-    /** [selfAnchorPoint] with [HudAnchor.Auto] resolved, and the merge link taking priority. */
+    /** [selfAnchorPoint] with [HudAnchor.Auto] resolved and the merge link taking priority */
     val effectiveSelfAnchorPoint: HudAnchor get() = when {
         isAnchored -> selfAnchorPoint.takeUnless { it == HudAnchor.Auto } ?: effectiveGrowthAnchor
         else -> (mergeLinkX ?: mergeLinkY)?.selfPoint
             ?: selfAnchorPoint.takeUnless { it == HudAnchor.Auto } ?: effectiveGrowthAnchor
     }
 
-    /** Moves this HUD's own anchor point to [point] without moving the HUD on screen. */
+    /** Moves this HUD's own anchor point to [point] without moving the HUD on screen */
     fun setSelfAnchorPointKeepingPosition(point: HudAnchor) {
-        val absX = x
-        val absY = y
+        val absX = rawX
+        val absY = rawY
         selfAnchorPoint = point
         updateRelativeX(absX)
         updateRelativeY(absY)
@@ -538,20 +637,20 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     private var _anchorOffsetX: MutableState<Float> = mutableStateOf(0f)
 
-    /** Distance from the target's anchor point to this HUD's own growth anchor, along X. */
+    /** Distance from the target's anchor point to this HUD's own growth anchor along X */
     var anchorOffsetX: Float get() = _anchorOffsetX.value; set(v) { _anchorOffsetX.value = v }
 
     private var _anchorOffsetY: MutableState<Float> = mutableStateOf(0f)
 
-    /** Distance from the target's anchor point to this HUD's own growth anchor, along Y. */
+    /** Distance from the target's anchor point to this HUD's own growth anchor along Y */
     var anchorOffsetY: Float get() = _anchorOffsetY.value; set(v) { _anchorOffsetY.value = v }
 
-    // set while this HUD is asking its target where it is, so a chain that loops back here falls
+    // set while this HUD is asking its target where it is so a chain that loops back here falls
     // through to the screen-relative position instead of recursing forever
     @Transient
     private var resolvingAnchor = false
 
-    /** The HUD this one is anchored to, or `null` when it is not anchored or the target is gone. */
+    /** The HUD this one is anchored to or `null` when it is not anchored or the target is gone */
     val anchorParent: Hud? get() {
         if (resolvingAnchor) return null
         val id = anchorTargetId
@@ -562,9 +661,11 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     val isAnchored: Boolean get() = anchorParent != null
 
     /**
-     * A HUD held against a neighbour on one axis because their backgrounds are fused. Rebuilt from
-     * the merge groups every time the layout changes and never persisted: unmerging the HUDs drops
-     * it again.
+     * A HUD held against a neighbour on one axis because their backgrounds are fused
+     *
+     * Rebuilt from the merge groups every time the layout changes and never persisted
+     *
+     * Unmerging the HUDs drops it again
      */
     internal class MergeLink(
         val parent: Hud,
@@ -615,65 +716,81 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         val fromMerge: Boolean,
     )
 
-    /** The HUD this one is held against right now, whether by its own anchor or by a merge. */
+    /** The HUD this one is held against right now whether by its own anchor or by a merge */
     val effectiveAnchorParent: Hud? get() = anchorParent ?: (mergeLinkX ?: mergeLinkY)?.parent
 
-    /** The point on [effectiveAnchorParent] this HUD hangs off. */
+    /** The point on [effectiveAnchorParent] this HUD hangs off */
     val effectiveAnchorPoint: HudAnchor get() =
         if (isAnchored) anchorPoint else (mergeLinkX ?: mergeLinkY)?.targetPoint ?: anchorPoint
 
-    /** `true` while this HUD is held against a neighbour because their backgrounds are fused. */
+    /** `true` while this HUD is held against a neighbour because their backgrounds are fused */
     val isMergeAnchored: Boolean get() = mergeLinkX != null || mergeLinkY != null
 
     /**
-     * Holds this HUD against [parent] on [axis], with [selfPoint] on its own box sitting on
-     * [targetPoint] of the parent's, for as long as the two stay merged. Keeps the HUD exactly where
-     * it is now.
+     * Holds this HUD against [parent] on [axis] for as long as the two stay merged
+     *
+     * [selfPoint] on its own box sits on [targetPoint] of the parent's box
+     *
+     * Keeps the HUD exactly where it is now
      */
     internal fun applyMergeLink(parent: Hud, selfPoint: HudAnchor, targetPoint: HudAnchor, axis: MergeAxis) {
         if (parent === this) return
-        // an anchor the user set by hand outranks a merge, and a merge must never loop back into one
+        // an anchor the user set by hand outranks a merge
+        // and a merge must never loop back into one
         if (isAnchored || parent.anchorChainContains(this)) return
         val existing = mergeLink(axis)
         if (existing != null && existing.parent === parent &&
             existing.selfPoint == selfPoint && existing.targetPoint == targetPoint
         ) return
         if (axis == MergeAxis.X) {
-            val offset = x + fracX(selfPoint) * scaledWidth - parent.anchorPointX(targetPoint)
+            val refW = HudManager.layoutRefWidth.takeIf { it > 0f } ?: HudManager.guiScreenWidth
+            val offset = layoutX(refW) + fracX(selfPoint) * scaledWidth -
+                (parent.layoutX(refW) + parent.fracX(targetPoint) * parent.scaledWidth)
             mergeLinkX = MergeLink(parent, selfPoint, targetPoint, offset)
         } else {
-            val offset = y + fracY(selfPoint) * scaledHeight - parent.anchorPointY(targetPoint)
+            val refH = HudManager.layoutRefHeight.takeIf { it > 0f } ?: HudManager.guiScreenHeight
+            val offset = layoutY(refH) + fracY(selfPoint) * scaledHeight -
+                (parent.layoutY(refH) + parent.fracY(targetPoint) * parent.scaledHeight)
             mergeLinkY = MergeLink(parent, selfPoint, targetPoint, offset)
         }
     }
 
     internal fun clearMergeLink() = clearMergeLinks(clearX = true, clearY = true)
 
-    /** Drops the merge link on the given axes, leaving the HUD where it currently sits on screen. */
+    /** Drops the merge link on the given axes leaving the HUD where it currently sits on screen */
     internal fun clearMergeLinks(clearX: Boolean, clearY: Boolean) {
         val dropX = clearX && mergeLinkX != null
         val dropY = clearY && mergeLinkY != null
         if (!dropX && !dropY) return
-        val absX = x
-        val absY = y
+        val absX = layoutX(HudManager.guiScreenWidth)
+        val absY = layoutY(HudManager.guiScreenHeight)
         if (dropX) mergeLinkX = null
         if (dropY) mergeLinkY = null
-        setAbsolutePosition(absX, absY)
+        HudManager.systemReposition = true
+        try {
+            updateRelativeX(absX)
+            updateRelativeY(absY)
+        } finally {
+            HudManager.systemReposition = false
+        }
     }
 
     /**
-     * Pins [self] on this HUD to [point] on [target] without moving it: from here on it follows the
-     * target when the target moves or resizes, instead of following the screen. Does nothing if that
-     * would make a loop of anchors.
+     * Pins [self] on this HUD to [point] on [target] without moving it
+     *
+     * From here on it follows the target when the target moves or resizes instead of following the
+     * screen
+     *
+     * Does nothing if that would make a loop of anchors
      */
     @JvmOverloads
     fun anchorTo(target: Hud, point: HudAnchor, self: HudAnchor = HudAnchor.Auto) {
         if (target === this) return
         val id = target.tree?.id ?: return
         if (target.anchorChainContains(this)) return
-        val absX = x
-        val absY = y
-        // the HUD is the user's to place now: a merge no longer gets to move it around
+        val absX = rawX
+        val absY = rawY
+        // the user placed this HUD by hand so a merge no longer gets to move it around
         mergeLinkX = null
         mergeLinkY = null
         anchorTargetId = id
@@ -682,11 +799,11 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         setAbsolutePosition(absX, absY)
     }
 
-    /** Drops the anchor, leaving the HUD where it currently sits on screen. */
+    /** Drops the anchor leaving the HUD where it currently sits on screen */
     fun clearAnchor() {
         if (anchorTargetId.isEmpty()) return
-        val absX = x
-        val absY = y
+        val absX = rawX
+        val absY = rawY
         anchorTargetId = ""
         anchorOffsetX = 0f
         anchorOffsetY = 0f
@@ -694,7 +811,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         setAbsolutePosition(absX, absY)
     }
 
-    /** Whether [hud] is this HUD's anchor target, or the target of one of its targets. */
+    /** Whether [hud] is this HUD's anchor target or the target of one of its targets */
     fun anchorChainContains(hud: Hud): Boolean {
         var current = anchorParent
         var depth = 0
@@ -805,10 +922,14 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     /**
      * `true` while this HUD's background is being drawn as part of a fused neighbour shape by
-     * [HudManager]. A HUD which draws its own background **must** skip it while this is set, or the
-     * background ends up drawn twice, once by the fused shape and once by the HUD itself.
+     * [HudManager]
      *
-     * Prefer [hudBackground], which already accounts for this.
+     * A HUD which draws its own background **must** skip it while this is set
+     *
+     * Otherwise the background ends up drawn twice once by the fused shape and once by the HUD
+     * itself
+     *
+     * Prefer [hudBackground] which already accounts for this
      */
     var bgMerged: Boolean
         get() = _bgMerged.value
@@ -851,6 +972,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @JvmField
     var lastLayoutFrame: Long = -1L
 
+    @ApiStatus.Internal
+    @JvmField
+    var lastUpdate: Long = Long.MIN_VALUE
+
     override fun addToInitQueue() {}
 
     val isReal get() = tree != null
@@ -861,13 +986,24 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @Transient
     internal var _runtime: PolyComposeRuntime? = null
 
-    /** Returns the runtime only if it has already been created; null otherwise. */
+    @Transient
+    @ApiStatus.Internal
+    var isVisible = mutableStateOf(false)
+
+    @Transient
+    private var capturedDefaults: Tree? = null
+
+    /** the runtime only if it has already been created */
     val runtimeOrNull: PolyComposeRuntime? get() = _runtime
 
     val runtime: PolyComposeRuntime
         get() = _runtime ?: PolyComposeRuntime().also {
             _runtime = it
-            it.setContent { Content() }
+            it.setContent {
+                CompositionLocalProvider(LocalHud provides this) {
+                    Content()
+                }
+            }
         }
 
     @Composable
@@ -892,6 +1028,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
                 tree["section"] = ktProperty(out::section).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["relativeX"] = ktProperty(out::relativeX).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["relativeY"] = ktProperty(out::relativeY).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["posSchema"] = ktProperty(out::posSchema).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["layoutRefW"] = ktProperty(out::layoutRefW).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["layoutRefH"] = ktProperty(out::layoutRefH).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["anchorTargetId"] = ktProperty(out::anchorTargetId).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["anchorPoint"] = ktProperty(out::anchorPoint).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["selfAnchorPoint"] = ktProperty(out::selfAnchorPoint).apply { addDisplayCondition(hideFromConfigUi) }
@@ -937,9 +1076,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             tree["bgChroma"] = ktProperty(out::bgChroma).apply { addDisplayCondition(hideFromConfigUi) }
             tree["bgChromaSpeed"] = ktProperty(out::bgChromaSpeed).apply { addDisplayCondition(hideFromConfigUi) }
             tree["bgRadius"] = ktProperty(out::bgRadius).apply { addDisplayCondition(hideFromConfigUi) }
-            // legacy HUDs draw their own background through the compat bridge, so there is nothing
-            // for OneConfig to fuse and no reason to persist the settings for them; the same goes
-            // for HUDs which opted out of merging
+            // legacy HUDs draw their own background through the compat bridge so there is nothing
+            // to fuse and no reason to persist merge settings for them or for opted-out HUDs
             if (out !is LegacyHudMarker && out.canMergeBackground()) {
                 tree["mergeBackground"] = ktProperty(out::mergeBackground).apply {
                     description = "Fuses this HUD's background with the background of HUDs it touches, so they draw as one shape."
@@ -974,8 +1112,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             addCallbacks(tree)
             if (with == null) LOGGER.info("generated new HUD config for $title -> ${tree.id}")
             Config.captureDefaults(tree)
-            sanitizeHudCapturedDefaults(tree)
+            if (out.capturedDefaults == null) out.capturedDefaults = tree
             ConfigManager.active().register(tree)
+            sanitizeHudCapturedDefaults(tree)
             this.tree = tree
         }
         return out
@@ -1002,22 +1141,29 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     open fun hasBackground(): Boolean = true
 
     /**
-     * Whether this HUD's background may be fused with the backgrounds of the HUDs it touches.
+     * Whether this HUD's background may be fused with the backgrounds of the HUDs it touches
      *
-     * Fusing only works when the HUD leaves its own background to OneConfig while [bgMerged] is set:
-     * a HUD which unconditionally draws its own background would have it drawn twice, once by itself
-     * and once by the fused shape, which reads as a doubled (darker) background. So this defaults to
-     * `true` only for [TextHud], which already does that; anything drawing its own content should
-     * override it to `true` *and* apply its background through [hudBackground] (or check [bgMerged]
-     * by hand), or leave it `false` to opt out of merging entirely.
+     * Fusing only works when the HUD leaves its own background to OneConfig while [bgMerged] is set
      *
-     * When `false` the merge settings are hidden from the HUD settings panel and not persisted.
+     * A HUD which unconditionally draws its own background would have it drawn twice once by itself
+     * and once by the fused shape which reads as a doubled (darker) background
+     *
+     * So this defaults to `true` only for [TextHud] which already does that
+     *
+     * Anything drawing its own content should override it to `true` *and* apply its background
+     * through [hudBackground] (or check [bgMerged] by hand)
+     *
+     * Otherwise leave it `false` to opt out of merging entirely
+     *
+     * When `false` the merge settings are hidden from the HUD settings panel and not persisted
      */
     open fun canMergeBackground(): Boolean = this is TextHud
 
     /**
-     * Applies this HUD's background to [modifier], unless the background is turned off or is
-     * currently being drawn as part of a fused neighbour shape (see [bgMerged]).
+     * Applies this HUD's background to [modifier]
+     *
+     * Skipped when the background is turned off or is currently being drawn as part of a fused
+     * neighbour shape (see [bgMerged])
      */
     @JvmOverloads
     fun hudBackground(modifier: PolyModifier = PolyModifier): PolyModifier =
@@ -1032,31 +1178,38 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     open fun minimumSize(): Pair<Float, Float> = 0f to 0f
 
     /**
-     * Whether the user is ever allowed to delete this HUD. When `false`, the settings panel and the
-     * canvas context menu hide the delete button so the HUD cannot be removed (it can still be
-     * hidden/moved). Useful for HUDs that are intrinsic to a mod and cannot be re-created once
-     * deleted.
-
-     * Use [canDelete] to ask whether a *particular* HUD can be deleted right now.
+     * Whether the user is ever allowed to delete this HUD
+     *
+     * When `false` the settings panel and the canvas context menu hide the delete button so the
+     * HUD cannot be removed (it can still be hidden or moved)
+     *
+     * Useful for HUDs that are intrinsic to a mod and cannot be re-created once deleted
+     *
+     * Use [canDelete] to ask whether a *particular* HUD can be deleted right now
      */
     open fun deletable(): Boolean = true
 
     /**
-     * Whether this exact HUD can be deleted right now: it must be a real instance (providers have
-     * nothing to delete) of a type the user is allowed to delete ([deletable]).
+     * Whether this exact HUD can be deleted right now
      */
-    fun canDelete(): Boolean = isReal && deletable()
+    fun canDelete(): Boolean = deletable() && (isReal || this in HudManager.activeInstances)
 
     internal open val profileLocalTree: Boolean get() = true
 
     /**
-     * Drops this instance's config tree reference, turning it back into a provider. Called when the
-     * instance is removed, so that a single-instance HUD (whose provider *is* its instance) can be
-     * made again instead of throwing "HUD is already made" forever.
+     * Drops this instance's config tree reference turning it back into a provider
+     *
+     * Called when the instance is removed so that a single-instance HUD (whose provider *is* its
+     * instance) can be made again instead of throwing "HUD is already made" forever
      */
     @ApiStatus.Internal
     internal fun detachTree() {
         tree = null
+    }
+
+    @ApiStatus.Internal
+    internal fun restoreCapturedDefaults() {
+        capturedDefaults?.let { Config.restoreCapturedDefaults(it, true) }
     }
 
     open fun remove() {}
@@ -1065,6 +1218,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @Suppress("UNCHECKED_CAST")
     override fun clone(): Hud = (super.clone() as Hud).apply {
         _runtime = null
+        isVisible = mutableStateOf(false)
         showKey = -1
         toggleKey = -1
         _staticWidth = mutableStateOf(this@Hud.staticWidth)

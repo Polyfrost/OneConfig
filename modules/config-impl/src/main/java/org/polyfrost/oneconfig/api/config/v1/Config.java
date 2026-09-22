@@ -34,26 +34,33 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
 import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
 import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
 
+import java.lang.ref.WeakReference;
+import java.lang.reflect.Array;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public abstract class Config {
     protected Tree tree;
-    /** code-defined defaults captured at first initialization, keyed by dot-separated property path. */
+    /** code-defined defaults captured at first initialization keyed by dot-separated property path */
     private Map<String, Object> defaultSnapshot;
+    private List<Runnable> deferredSetup;
 
     public final String id, title, iconPath;
     public final Category category;
 
     /**
-     * @param iconPath the path to your mod's icon file, must be located within your mod-specific assets folder as to avoid conflicts.
+     * @param iconPath the path to your mod icon file which must be located within your mod-specific assets folder to avoid conflicts
      */
     public Config(@NotNull String id, @Nullable String iconPath, @NotNull String title, @Nullable Category category) {
         this.title = title;
@@ -68,12 +75,24 @@ public abstract class Config {
     }
 
     public final void addAliases(String... aliases) {
-        if (tree == null) initialize(false);
-        tree.getOrPutMetadata("aliases", () -> new ArrayList<String>(aliases.length)).addAll(Arrays.asList(aliases));
+        whenInitialized(() -> tree.getOrPutMetadata("aliases", () -> new ArrayList<String>(aliases.length)).addAll(Arrays.asList(aliases)));
     }
 
     public final void addAliases(String option, String... aliases) {
-        getProperty(option).getOrPutMetadata("aliases", () -> new ArrayList<String>(aliases.length)).addAll(Arrays.asList(aliases));
+        whenInitialized(() -> getProperty(option).getOrPutMetadata("aliases", () -> new ArrayList<String>(aliases.length)).addAll(Arrays.asList(aliases)));
+    }
+
+    private void whenInitialized(Runnable action) {
+        if (tree == null && ConfigManager.isPendingInitialization(this)) {
+            if (deferredSetup == null) deferredSetup = new ArrayList<>(4);
+            deferredSetup.add(action);
+            return;
+        }
+        if (tree == null && ConfigManager.didInitializationFail(this)) {
+            ConfigManager.LOGGER.warn("Skipping deferred setup for config {}: its initialization failed", id);
+            return;
+        }
+        action.run();
     }
 
     @ApiStatus.Internal
@@ -87,9 +106,9 @@ public abstract class Config {
     }
 
     /**
-     * Use this method to add any initialization logic to your config, for example {@link #hideIf(String, String)}, etc.
+     * Use this method to add any initialization logic to your config for example {@link #hideIf(String, String)}
      * <br>
-     * <b>make sure to call super!</b>
+     * <b>make sure to call super</b>
      */
     @MustBeInvokedByOverriders
     protected void initialize(boolean byConfigManager) {
@@ -107,10 +126,9 @@ public abstract class Config {
 
             tree.addMetadata("category", category);
             if (!ConfigManager.isRebindingProfiles()) {
-                ConfigManager.backup().backend.save0(tree);
+                saveDefaultsBackup(tree);
             }
-            // capture the code-defined default of every property before register() loads stored values over them,
-            // so the UI can offer a "reset to default" action. stored as transient metadata, so it is never persisted.
+            // capture code defaults before register() loads stored values over them so the UI can offer a reset action
             if (defaultSnapshot == null) {
                 defaultSnapshot = new HashMap<>();
                 captureDefaults(tree, "", defaultSnapshot);
@@ -128,20 +146,65 @@ public abstract class Config {
             if (!resetOptions.isEmpty()) {
                 ConfigManager.reportResetOptions(this, resetOptions);
             }
+            runDeferredSetup();
+        }
+    }
+
+    private void runDeferredSetup() {
+        if (deferredSetup == null) return;
+        List<Runnable> actions = deferredSetup;
+        deferredSetup = null;
+        for (Runnable action : actions) {
+            try {
+                action.run();
+            } catch (Throwable t) {
+                ConfigManager.LOGGER.error("failed to apply setup for config {}", id, t);
+            }
+        }
+    }
+
+    private void saveDefaultsBackup(Tree tree) {
+        try {
+            ConfigManager.backup().backend.save0(tree);
+        } catch (Throwable t) {
+            ConfigManager.LOGGER.error("failed to write the defaults backup for config {}, restore-to-default may be unavailable", id, t);
+            ConfigManager.notifyWriteFailed(this, t);
         }
     }
 
     /**
-     * Recursively record the current value of every property in [tree] as transient {@code "default"}
-     * metadata. Call before {@link ConfigManager#register(Tree)} so stored profile values do not
-     * overwrite the captured code defaults.
+     * Recursively record the current value of every property in [tree] as transient {@code "default"} metadata
      * <br>
-     * For complex (non-simple) types a deep copy is stored, because {@link Property.Field#set0} mutates such values
-     * in place; storing the live reference would alias the working value and make a reset a no-op.
+     * Call before {@link ConfigManager#register(Tree)} so stored profile values do not overwrite the captured code defaults
+     * <br>
+     * For complex (non-simple) types a deep copy is stored because {@link Property.Field#set0} mutates such values in place
+     * <br>
+     * Storing the live reference would alias the working value and make a reset a no-op
      */
     @ApiStatus.Internal
     public static void captureDefaults(Tree tree) {
         captureDefaults(tree, null, null);
+    }
+
+    @ApiStatus.Internal
+    public static void restoreCapturedDefaults(Tree tree) {
+        restoreCapturedDefaults(tree, false);
+    }
+
+    @ApiStatus.Internal
+    public static void restoreCapturedDefaults(Tree tree, boolean silent) {
+        for (Node node : tree.map.values()) {
+            if (node instanceof Property) {
+                Property<?> property = (Property<?>) node;
+                Object value = property.getMetadata("default");
+                if (value == null) continue;
+                Object restored = copyDefault(property.type, value);
+                if (silent) property.setAsSilently(restored);
+                else property.setAsReferential(restored);
+            } else if (node instanceof Tree) {
+                restoreCapturedDefaults((Tree) node, silent);
+            }
+        }
     }
 
     private static void captureDefaults(Tree tree, String prefix, Map<String, Object> out) {
@@ -173,9 +236,12 @@ public abstract class Config {
         }
     }
 
+    @ApiStatus.Internal
     @SuppressWarnings("unchecked")
-    private static Object copyDefault(Class<?> type, Object value) {
+    public static Object copyDefault(Class<?> type, Object value) {
         if (WrappingUtils.isSimpleClass(type)) return value;
+        Object container = copyContainer(value);
+        if (container != null) return container;
         try {
             Object serialized = ObjectSerializer.INSTANCE.serialize(value, false, false);
             if (serialized instanceof Map) {
@@ -188,38 +254,126 @@ public abstract class Config {
         return value;
     }
 
+    @SuppressWarnings("unchecked")
+    private static @Nullable Object copyContainer(@Nullable Object value) {
+        if (value == null) return null;
+        Class<?> cls = value.getClass();
+        try {
+            if (cls.isArray()) {
+                Class<?> component = cls.getComponentType();
+                Object copy = shallowCopy(value, cls);
+                if (copy == null || component.isPrimitive()) return copy;
+                for (int i = 0, length = Array.getLength(copy); i < length; i++) {
+                    Object entry = Array.get(copy, i);
+                    Object copied = copyEntry(entry);
+                    if (copied == entry) continue;
+                    try {
+                        Array.set(copy, i, copied);
+                    } catch (IllegalArgumentException mismatch) {
+                        ConfigManager.LOGGER.warn("failed to copy default array entry of type {}", component, mismatch);
+                    }
+                }
+                return copy;
+            }
+            if (value instanceof Collection) {
+                Collection<Object> in = (Collection<Object>) value;
+                Collection<Object> out = value instanceof Set ? new LinkedHashSet<>() : new ArrayList<>(in.size());
+                for (Object entry : in) out.add(copyEntry(entry));
+                return out;
+            }
+            if (value instanceof Map) {
+                LinkedHashMap<Object, Object> out = new LinkedHashMap<>();
+                for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) value).entrySet()) {
+                    out.put(entry.getKey(), copyEntry(entry.getValue()));
+                }
+                return out;
+            }
+        } catch (Throwable t) {
+            ConfigManager.LOGGER.warn("failed to copy default container of type {}", cls, t);
+            return shallowCopy(value, cls);
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static @Nullable Object shallowCopy(Object value, Class<?> cls) {
+        try {
+            if (cls.isArray()) {
+                int length = Array.getLength(value);
+                Object copy = Array.newInstance(cls.getComponentType(), length);
+                //noinspection SuspiciousSystemArraycopy
+                System.arraycopy(value, 0, copy, 0, length);
+                return copy;
+            }
+            if (value instanceof Set) return new LinkedHashSet<>((Set<Object>) value);
+            if (value instanceof Collection) return new ArrayList<>((Collection<Object>) value);
+            if (value instanceof Map) return new LinkedHashMap<>((Map<Object, Object>) value);
+        } catch (Throwable t) {
+            ConfigManager.LOGGER.warn("failed to copy default container of type {}", cls, t);
+        }
+        return null;
+    }
+
+    private static @Nullable Object copyEntry(@Nullable Object entry) {
+        if (entry == null) return null;
+        try {
+            return copyDefault(entry.getClass(), entry);
+        } catch (Throwable t) {
+            ConfigManager.LOGGER.warn("failed to copy default entry of type {}", entry.getClass(), t);
+            return entry;
+        }
+    }
+
     @ApiStatus.Internal
-    void rebindToActiveProfile() {
+    void rebindToActiveProfile(boolean restoreDefaults) {
+        if (restoreDefaults) restoreDefaults();
         tree = null;
         initialize(true);
     }
 
     protected void addDependency(String option, String name, Supplier<Property.Display> condition) {
-        Property<?> opt = getProperty(option).addDisplayCondition(condition);
-        if (name != null) opt.getOrPutMetadata("dependencyNames", () -> new ArrayList<String>(3)).add(name);
-        // the supplier can read any property in the tree, but unlike the boolean-option variant it has no
-        // reference to a specific parent to subscribe to. re-evaluate this option whenever any sibling property
-        // changes so the display stays in sync (e.g. a dropdown gating a slider).
-        java.lang.ref.WeakReference<Property<?>> ref = new java.lang.ref.WeakReference<>(opt);
-        tree.onAllProps((s, p) -> {
-            if (p == opt) return;
-            p.addCallback(t -> {
-                Property<?> self = ref.get();
-                if (self != null) self.revaluateDisplay();
-                return false;
+        whenInitialized(() -> {
+            Property<?> opt = getProperty(option).addDisplayCondition(condition);
+            if (name != null) opt.getOrPutMetadata("dependencyNames", () -> new ArrayList<String>(3)).add(name);
+            WeakReference<Property<?>> ref = new WeakReference<>(opt);
+            tree.onAllProps((s, p) -> {
+                if (p == opt) return;
+                p.addCallback(t -> {
+                    Property<?> self = ref.get();
+                    if (self != null) self.revaluateDisplay();
+                    return false;
+                });
             });
         });
     }
 
     protected void restoreDefaults() {
-        if (tree == null) initialize(false);
-        tree.overwrite(ConfigManager.backup().get(tree.getID()), false);
+        Tree backup = backupTree();
+        if (backup == null) return;
+        tree.overwrite(backup, false);
     }
 
     protected void restoreProperty(String option) {
-        // first operation will be slow as the tree will have to be loaded from the disc, but this is intended as to not waste memory
-        // once one property is restored/restore all is used, the backup tree will be in memory and so will be fast to restore more
-        getProperty(option).overwrite(getProperty(ConfigManager.backup().get(tree.getID()), option), false);
+        // first restore is slow as the backup tree loads from disc but it then stays in memory
+        Tree backup = backupTree();
+        if (backup == null) return;
+        getProperty(option).overwrite(getProperty(backup, option), false);
+    }
+
+    private Tree backupTree() {
+        if (tree == null) {
+            try {
+                initialize(false);
+            } catch (Throwable t) {
+                ConfigManager.LOGGER.error("failed to initialize config {} while restoring its defaults", id, t);
+            }
+        }
+        if (tree == null) return null;
+        Tree backup = ConfigManager.backup().get(tree.getID());
+        if (backup == null) {
+            ConfigManager.LOGGER.warn("no defaults backup for config {}, cannot restore its defaults", id);
+        }
+        return backup;
     }
 
     protected void addDependency(String option, String condition) {
@@ -235,41 +389,43 @@ public abstract class Config {
     }
 
     /**
-     * Add a dependency on the given option, which will gray out or hide the option unless condition is true.
+     * Add a dependency on the given option which will gray out or hide the option unless condition is true
      *
      * @param option    the option to add the dependency to
      * @param condition the <b>boolean option</b> which provides the dependency
      */
     @SuppressWarnings("unchecked")
     protected void addDependency(String option, String condition, boolean hide) {
-        Property<?> cond = getProperty(condition);
-        if (cond.type != boolean.class) throw new IllegalArgumentException("Condition property must be boolean");
-        Property<?> opt = getProperty(option).addDisplayCondition((Property<Boolean>) cond, hide);
-        Object title = cond.getTitle();
-        opt.getOrPutMetadata("dependencyNames", () -> new ArrayList<String>(3)).add(title != null ? title.toString() : condition);
+        whenInitialized(() -> {
+            Property<?> cond = getProperty(condition);
+            if (cond.type != boolean.class) throw new IllegalArgumentException("Condition property must be boolean");
+            Property<?> opt = getProperty(option).addDisplayCondition((Property<Boolean>) cond, hide);
+            Object title = cond.getTitle();
+            opt.getOrPutMetadata("dependencyNames", () -> new ArrayList<String>(3)).add(title != null ? title.toString() : condition);
+        });
     }
 
     /**
-     * Add a callback to the specified option path, which is dot-separated for sub-configs.
+     * Add a callback to the specified option path which is dot-separated for sub-configs
      * <br>
-     * The name of the option should be the name of the field.
+     * The name of the option should be the name of the field
      */
     @SuppressWarnings("unchecked")
     @kotlin.OverloadResolutionByLambdaReturnType
     protected <T> void addCallback(String option, Predicate<T> callback) {
-        ((Property<T>) getProperty(option)).addCallback(callback);
+        whenInitialized(() -> ((Property<T>) getProperty(option)).addCallback(callback));
     }
 
     /**
-     * Add a callback to the specified option path, which is dot-separated for sub-configs.
+     * Add a callback to the specified option path which is dot-separated for sub-configs
      * <br>
-     * The name of the option should be the name of the field.
+     * The name of the option should be the name of the field
      */
     protected void addCallback(String option, Runnable callback) {
-        getProperty(option).addCallback(t -> {
+        whenInitialized(() -> getProperty(option).addCallback(t -> {
             callback.run();
             return false;
-        });
+        }));
     }
 
     public Tree getTree() {
@@ -277,43 +433,49 @@ public abstract class Config {
     }
 
     /**
-     * Add a migration entry to the config. This should be in the format of oldName -> newName.
-     * <br>To be used in conjunction with {@link #loadFrom(String)} or {@link #loadFrom(Path)} to migrate old configs to new ones.
+     * Add a migration entry to the config
+     * <br>
+     * This should be in the format of oldName -> newName
+     * <br>To be used in conjunction with {@link #loadFrom(String)} or {@link #loadFrom(Path)} to migrate old configs to new ones
      */
     protected void addMigrationEntry(String oldName, String newName) {
-        if (tree == null) initialize(false);
-        tree.getOrPutMetadata("migrationMap", () -> new HashMap<String, String>()).put(oldName, newName);
+        whenInitialized(() -> tree.getOrPutMetadata("migrationMap", () -> new HashMap<String, String>()).put(oldName, newName));
     }
 
     /**
-     * Add multiple migration entries to the config. This should be in the format of pairs, where the first element is the old name and the second element is the new name.
-     * <br>To be used in conjunction with {@link #loadFrom(String)} or {@link #loadFrom(Path)} to migrate old configs to new ones.
+     * Add multiple migration entries to the config
+     * <br>
+     * This should be in the format of pairs where the first element is the old name and the second element is the new name
+     * <br>To be used in conjunction with {@link #loadFrom(String)} or {@link #loadFrom(Path)} to migrate old configs to new ones
      */
     protected void addMigrationEntries(String... entries) {
-        if (tree == null) initialize(false);
-        HashMap<String, String> map = tree.getOrPutMetadata("migrationMap", () -> new HashMap<>(entries.length / 2));
-        for (int i = 0; i < entries.length; i += 2) {
-            map.put(entries[i], entries[i + 1]);
-        }
+        whenInitialized(() -> {
+            HashMap<String, String> map = tree.getOrPutMetadata("migrationMap", () -> new HashMap<>(entries.length / 2));
+            for (int i = 0; i < entries.length; i += 2) {
+                map.put(entries[i], entries[i + 1]);
+            }
+        });
     }
 
     protected void loadFrom(String id) {
-        if (tree == null) initialize(false);
-        Tree in = ConfigManager.active().get(id);
-        if (in == null) return;
-        tree.overwrite(in, false, true, tree);
+        whenInitialized(() -> {
+            Tree in = ConfigManager.active().get(id);
+            if (in == null) return;
+            tree.overwrite(in, false, true, tree);
+        });
     }
 
     protected void loadFrom(Path p) {
-        if (tree == null) initialize(false);
-        Tree in;
-        try {
-            in = ConfigManager.active().getNoRegister(p);
-        } catch (Exception e) {
-            return;
-        }
-        if (in == null) return;
-        tree.overwrite(in, false, true, tree);
+        whenInitialized(() -> {
+            Tree in;
+            try {
+                in = ConfigManager.active().getNoRegister(p);
+            } catch (Exception e) {
+                return;
+            }
+            if (in == null) return;
+            tree.overwrite(in, false, true, tree);
+        });
     }
 
     protected Property<?> getProperty(String option) {
@@ -328,15 +490,18 @@ public abstract class Config {
     }
 
     public void save() {
-        if (tree == null) return; // not initialized, nothing to save
-        ConfigManager.active().save(tree);
+        if (tree == null) return;
+        ConfigManager manager = ConfigManager.active();
+        if (!manager.save(tree)) ConfigManager.notifyWriteFailed(this, manager.backend.lastSaveFailure());
     }
 
     /**
-     * If you intend for your Config to be its own self-contained class, you may need to call this method in your mod constructor to ensure that
-     * this class is initialized by Java.
+     * If you intend for your Config to be its own self-contained class you may need to call this method in your mod constructor
+     * to ensure that this class is initialized by Java
      * <br>
-     * If you don't call this method, your config might not appear in the UI. It will still function correctly, and after some code that loads it is called, it will appear.
+     * If you do not call this method your config might not appear in the UI
+     * <br>
+     * It will still function correctly and it will appear once some code that loads it is called
      */
     public void preload() {
         initialize(false);
@@ -344,7 +509,7 @@ public abstract class Config {
 
     private static String validateIconPath(String path) {
         if (path == null || path.isEmpty()) {
-            return null; // no icon
+            return null;
         }
         if (path.startsWith("/")) {
             path = path.substring(1);
@@ -357,9 +522,11 @@ public abstract class Config {
     }
 
     /**
-     * A category for the config, used for sorting in the UI.
+     * A category for the config used for sorting in the UI
      * <br>
-     * IDs start at 1, as 0 is reserved for the default category ("All"). They are also subject to change at any time.
+     * IDs start at 1 because 0 is reserved for the default category ("All")
+     * <br>
+     * They are also subject to change at any time
      * </br>
      */
     public static final class Category {

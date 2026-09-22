@@ -3,7 +3,7 @@ package org.polyfrost.oneconfig.internal.ui.search
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 
 internal object DefaultSearchProvider : SearchProvider {
-    override val priority: Int = 0 // Low priority
+    override val priority: Int = 0
 
     override fun isAvailable(): Boolean = true
 
@@ -26,18 +26,15 @@ internal object DefaultSearchProvider : SearchProvider {
             }
             if (meta.title.matches(q) || meta.description.matches(q)) return@filter true
             if (meta.tags.any { t -> t.matches(q) }) return@filter true
-            // Config specific
             if (searchingConfig && it.scopes.any { s -> s is SearchScope.Config } &&
                 (meta.category.matches(q) || meta.subcategory.matches(q) || meta.id.matches(q))) {
                 return@filter true
             }
-            // Hud specific
             if (SearchScope.Huds in it.scopes && (
                         meta.category.matches(q) || meta.subcategory.matches(q) ||
                                 meta.id.matches(q) || meta.modTitle.matches(q)
                         )
             ) return@filter true
-            // Match old search for keybinds
             if (searchingKeybinds && SearchScope.Keybinds in it.scopes && (
                         meta.category.matches(q) || meta.subcategory.matches(q) ||
                                 meta.id.matches(q) || meta.path.matches(q)
@@ -58,9 +55,7 @@ internal object DefaultSearchProvider : SearchProvider {
     private fun String?.matches(query: String): Boolean = this != null && searchMatches(this, query)
 }
 
-/**
- * Computes the Levenshtein (edit) distance between two strings, capped early once it exceeds [max].
- */
+/** Computes the Levenshtein edit distance between two strings capped early once it exceeds [max] */
 private fun levenshtein(a: String, b: String, max: Int): Int {
     if (a == b) return 0
     if (a.isEmpty()) return b.length
@@ -83,8 +78,8 @@ private fun levenshtein(a: String, b: String, max: Int): Int {
 }
 
 /**
- * Returns true if [text] matches [query] either as a substring or, when "Search Distance" > 0, by a fuzzy
- * (Levenshtein) match against the whole string or any of its words.
+ * Whether [text] matches [query] as a substring or by a fuzzy Levenshtein match against the whole string
+ * or any of its words when "Search Distance" is above 0
  */
 internal fun searchMatches(text: String, query: String): Boolean {
     val q = query.lowercase()

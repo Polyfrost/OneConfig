@@ -33,12 +33,15 @@ import java.lang.annotation.*;
 import java.util.function.BooleanSupplier;
 
 /**
- * Annotation used to specify conditions for this property. Apply this annotation to a field or button method.
+ * Annotation used to specify conditions for this property
  * <br>
- * The value contains an array of strings, with each string being the fully qualified path using dots '.' to the condition property.
- * Any property in the array must be a {@link Boolean}.
+ * Apply this annotation to a field or button method
+ * <br>
+ * The value contains an array of strings with each string being the fully qualified path using dots '.' to the condition property
+ * <br>
+ * Any property in the array must be a {@link Boolean}
  * <br><br>
- * For complex conditions, use {@link Config#addDependency(String, BooleanSupplier)} or {@link Property#addDisplayCondition(BooleanSupplier...)}.
+ * For complex conditions use {@link Config#addDependency(String, BooleanSupplier)} or {@link Property#addDisplayCondition(BooleanSupplier...)}
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.FIELD})

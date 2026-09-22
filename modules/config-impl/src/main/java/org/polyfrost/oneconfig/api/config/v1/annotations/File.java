@@ -38,9 +38,7 @@ public @interface File {
     String title();
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given title is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the title and remove this flag.
+     * @deprecated OneConfig auto-translates title values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean titleTranslation() default false;
@@ -51,9 +49,7 @@ public @interface File {
     String description() default "";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given description is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the description and remove this flag.
+     * @deprecated OneConfig auto-translates description values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean descriptionTranslation() default false;
@@ -64,19 +60,24 @@ public @interface File {
     String icon() default "";
 
     /**
-     * The file extensions to filter the dialog by, e.g. {@code {".png", ".jpg"}}. Entries may be
-     * written as {@code ".png"}, {@code "png"} or {@code "*.png"}; they are all normalised to the
-     * {@code *.ext} form tinyfd expects. Leave empty to allow any file.
+     * The file extensions to filter the dialog by such as {@code {".png", ".jpg"}}
+     * <p>
+     * Entries may be written as {@code ".png"} or {@code "png"} or {@code "*.png"} and they are all
+     * normalised to the {@code *.ext} form tinyfd expects
+     * <p>
+     * Leave empty to allow any file
      */
     String[] types() default {};
 
     /**
-     * A human-readable description for the {@link #types()} filter, e.g. {@code "Images"}.
+     * A human-readable description for the {@link #types()} filter such as {@code "Images"}
      */
     String filterName() default "";
 
     /**
-     * Select a directory instead of a file. When {@code true}, {@link #types()} is ignored.
+     * Select a directory instead of a file
+     * <p>
+     * When {@code true} the {@link #types()} value is ignored
      */
     boolean directory() default false;
 
@@ -86,9 +87,7 @@ public @interface File {
     String categoryKey() default "";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given category is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the category and remove this flag.
+     * @deprecated OneConfig auto-translates category values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean categoryTranslation() default false;
@@ -99,7 +98,7 @@ public @interface File {
     String subcategoryKey() default "";
 
     /**
-     * @deprecated translation keys will be translated by default.
+     * @deprecated translation keys will be translated by default
      */
     @Deprecated
     boolean subcategoryTranslation() default false;
@@ -108,9 +107,7 @@ public @interface File {
     String placeholder() default "oneconfig.filepicker.placeholder";
 
     /**
-     * @deprecated No longer needed. OneConfig now checks whether the given placeholder is a translation
-     * key present in the active language, and translates it automatically when it is. Pass the
-     * translation key directly as the placeholder and remove this flag.
+     * @deprecated OneConfig auto-translates placeholder values that are translation keys so pass the key directly
      */
     @Deprecated
     boolean placeholderTranslation() default false;

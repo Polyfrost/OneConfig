@@ -26,9 +26,6 @@
 
 package org.polyfrost.oneconfig.utils.v1;
 
-
-import org.jetbrains.annotations.NotNull;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -39,23 +36,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Allows for easy multithreading.
+ * Allows for easy multithreading
  * <p>
  * Modified from Seraph by Scherso under LGPL-2.1
  * <a href="https://github.com/Scherso/Seraph/blob/master/LICENSE">https://github.com/Scherso/Seraph/blob/master/LICENSE</a>
  * </p>
  */
 public final class Multithreading {
-    private static ExecutorService executorService = null; /* by lazy { Executors.newCachedThreadPool(ThreadFactoryBuilder().setNameFormat("OneConfig-%d").build()) } */
-    private static ScheduledExecutorService runnableExecutor = null;
-
     private Multithreading() {
     }
 
     /**
-     * Runs the provided runnables asynchronously.
+     * Runs the provided runnables asynchronously
      *
-     * @param runnables The runnables to run.
+     * @param runnables The runnables to run
      * @see Multithreading#submit(Runnable)
      */
     public static void submit(Runnable... runnables) {
@@ -65,10 +59,10 @@ public final class Multithreading {
     }
 
     /**
-     * Submits the Runnable to the executor, making it run asynchronously.
+     * Submits the Runnable to the executor so it runs asynchronously
      *
-     * @param runnable The runnable to run.
-     * @return The future representing the submitted runnable.
+     * @param runnable The runnable to run
+     * @return The future representing the submitted runnable
      * @see ExecutorService#submit(Runnable)
      */
     public static Future<?> submit(Runnable runnable) {
@@ -76,11 +70,11 @@ public final class Multithreading {
     }
 
     /**
-     * Schedules the runnable to run asynchronously after the specified delay.
+     * Schedules the runnable to run asynchronously after the specified delay
      *
-     * @param runnable The runnable to run.
-     * @param delay    The delay before the runnable is run.
-     * @param timeUnit The {@link TimeUnit} of the delay.
+     * @param runnable The runnable to run
+     * @param delay    The delay before the runnable is run
+     * @param timeUnit The {@link TimeUnit} of the delay
      * @see Multithreading#submitScheduled(Runnable, long, TimeUnit)
      */
     public static void schedule(Runnable runnable, long delay, TimeUnit timeUnit) {
@@ -88,12 +82,12 @@ public final class Multithreading {
     }
 
     /**
-     * Submits the Runnable to the executor after a delay, making it run asynchronously.
+     * Submits the Runnable to the executor after a delay so it runs asynchronously
      *
-     * @param runnable The runnable to run.
-     * @param delay    The delay before the runnable is run.
-     * @param timeUnit The {@link TimeUnit} of the delay.
-     * @return The future representing the submitted runnable.
+     * @param runnable The runnable to run
+     * @param delay    The delay before the runnable is run
+     * @param timeUnit The {@link TimeUnit} of the delay
+     * @return The future representing the submitted runnable
      * @see ScheduledExecutorService#schedule(Runnable, long, TimeUnit)
      */
     public static ScheduledFuture<?> submitScheduled(Runnable runnable, long delay, TimeUnit timeUnit) {
@@ -101,32 +95,30 @@ public final class Multithreading {
     }
 
     public static ExecutorService getExecutor() {
-        if (executorService == null) executorService = Executors.newCachedThreadPool(new ThreadFactory() {
-            private final AtomicInteger ai = new AtomicInteger();
-
-            @Override
-            public Thread newThread(@NotNull Runnable r) {
-                Thread t = Executors.defaultThreadFactory().newThread(r);
-                t.setName("OneConfig-" + ai.getAndIncrement());
-                t.setDaemon(true);
-                return t;
-            }
-        });
-        return executorService;
+        return SharedPool.INSTANCE;
     }
 
     public static ScheduledExecutorService getScheduledExecutor() {
-        if (runnableExecutor == null) runnableExecutor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() - 2, new ThreadFactory() {
-            private final AtomicInteger ai = new AtomicInteger();
+        return ScheduledPool.INSTANCE;
+    }
 
-            @Override
-            public Thread newThread(@NotNull Runnable r) {
-                Thread t = Executors.defaultThreadFactory().newThread(r);
-                t.setName("OneConfig-Scheduled-" + ai.getAndIncrement());
-                t.setDaemon(true);
-                return t;
-            }
-        });
-        return runnableExecutor;
+    private static final class SharedPool {
+        static final ExecutorService INSTANCE = Executors.newCachedThreadPool(threadFactory("OneConfig-"));
+    }
+
+    private static final class ScheduledPool {
+        static final ScheduledExecutorService INSTANCE = Executors.newScheduledThreadPool(
+                Math.max(1, Runtime.getRuntime().availableProcessors() - 2),
+                threadFactory("OneConfig-Scheduled-"));
+    }
+
+    private static ThreadFactory threadFactory(String prefix) {
+        AtomicInteger counter = new AtomicInteger();
+        return r -> {
+            Thread t = Executors.defaultThreadFactory().newThread(r);
+            t.setName(prefix + counter.getAndIncrement());
+            t.setDaemon(true);
+            return t;
+        };
     }
 }

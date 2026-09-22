@@ -25,7 +25,8 @@
  */
 
 /**
- * Test package for the OneConfig library.
- * Classes in this package that end with {@code _Test} are excluded from actual builds.
+ * Test package for the OneConfig library
+ * <p>
+ * Classes ending with {@code _Test} are excluded from actual builds
  */
 package org.polyfrost.oneconfig.test;

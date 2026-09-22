@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi
+import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.FileListOptionData
 import org.polyfrost.oneconfig.internal.ui.components.IconButton
 import org.polyfrost.oneconfig.internal.ui.components.Text
@@ -50,7 +51,7 @@ fun FileListOption(data: FileListOptionData) {
                     } else {
                         tinyFd.openFileSelector(data.dialogTitle, start, data.filterPatterns, data.filterName)
                     }
-                } ?: return@launch // cancelled: leave the existing entry untouched
+                } ?: return@launch // cancelled so leave the existing entry untouched
                 state.update(id, selected.toString())
             } finally {
                 dialogOpen = false
@@ -101,7 +102,7 @@ private fun RowScope.PathField(
         interactionSource = ctx.fieldInteraction,
         cursorBrush = SolidColor(theme.textColor),
         visualTransformation = rememberPathTransformation(),
-        modifier = Modifier.weight(1f),
+        modifier = Modifier.trackTextInputFocus().weight(1f),
         decorationBox = { innerTextField ->
             Box {
                 if (value.isEmpty() && placeholder != null && !ctx.focused) {

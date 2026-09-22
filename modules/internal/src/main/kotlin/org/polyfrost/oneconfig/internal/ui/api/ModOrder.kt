@@ -11,8 +11,9 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 
 /**
- * User-defined mod card order, persisted one id per line. Mods that were never dragged are
- * unknown here and fall back to alphabetical sorting behind the ones that were.
+ * User-defined mod card order persisted one id per line
+ *
+ * Mods that were never dragged are unknown here and sort alphabetically ahead of the ones that were
  */
 object ModOrder {
     private val LOGGER = LoggerFactory.getLogger("OneConfig/ModOrder")
@@ -45,17 +46,18 @@ object ModOrder {
     fun indexOf(id: String): Int {
         ensureLoaded()
         val index = order.indexOf(id)
-        return if (index >= 0) index else Int.MAX_VALUE
+        return if (index >= 0) index else Int.MIN_VALUE
     }
 
     /**
-     * Rewrites the order of [visible] (a subset of the mod list, in its new order) while leaving
-     * every other mod where it was. [all] is the full mod list in currently displayed order, and
-     * seeds the stored order the first time a mod that isn't in it yet is dragged.
+     * Rewrites the order of [visible] while leaving every other mod where it was
+     *
+     * [all] is the full mod list in currently displayed order and seeds the stored order the first time an
+     * unknown mod is dragged
      */
     fun reorder(visible: List<String>, all: List<String>) {
         ensureLoaded()
-        all.forEach { if (it !in order) order.add(it) }
+        order.addAll(0, all.filter { it !in order })
         val slots = order.indices.filter { order[it] in visible }
         if (slots.size != visible.size) {
             LOGGER.warn("Mod order slots ({}) did not match visible mods ({})", slots.size, visible.size)

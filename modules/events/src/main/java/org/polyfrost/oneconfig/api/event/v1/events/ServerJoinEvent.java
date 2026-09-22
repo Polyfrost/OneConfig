@@ -27,7 +27,7 @@
 package org.polyfrost.oneconfig.api.event.v1.events;
 
 /**
- * Called when the client successfully logs into a server.
+ * Called when the client successfully logs into a server
  */
 public class ServerJoinEvent implements Event {
     public static final ServerJoinEvent INSTANCE = new ServerJoinEvent();

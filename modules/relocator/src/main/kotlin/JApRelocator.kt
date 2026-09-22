@@ -13,8 +13,7 @@ import kotlin.io.path.deleteIfExists
 import kotlin.io.path.toPath
 
 /**
- * The relocator for java source files.
- *
+ * The relocator for java source files
  */
 @SupportedAnnotationTypes("org.polyfrost.oneconfig.relocator.annotations.*")
 internal class JApRelocator : AbstractProcessor() {

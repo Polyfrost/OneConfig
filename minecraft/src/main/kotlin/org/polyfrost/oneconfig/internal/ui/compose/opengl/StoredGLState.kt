@@ -1,18 +1,28 @@
 package org.polyfrost.oneconfig.internal.ui.compose.opengl
 
 //? if >= 1.21.5 {
-import com.mojang.blaze3d.opengl.GlStateManager
+import com.mojang.renderpearl.backend.opengl.GlStateManager
 //? } else {
 /*import com.mojang.blaze3d.platform.GlStateManager
 *///? }
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL45.*
 
+fun resyncTextureBindCache() {
+    for (unit in 0..7) {
+        GlStateManager._activeTexture(GL_TEXTURE0 + unit)
+        GlStateManager._bindTexture(0)
+    }
+    GlStateManager._activeTexture(GL_TEXTURE0)
+}
+
 class StoredGLState(private val glVersion: Int) {
     private val props = StoredGLStateProps()
 
     fun capture(): StoredGLState {
         with(props) {
+            glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, lastDrawFramebuffer)
+            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, lastReadFramebuffer)
             glGetIntegerv(GL_ACTIVE_TEXTURE, lastActiveTexture)
             glActiveTexture(GL_TEXTURE0)
             glGetIntegerv(GL_CURRENT_PROGRAM, lastProgram)
@@ -92,6 +102,8 @@ class StoredGLState(private val glVersion: Int) {
 
     fun restore(): StoredGLState {
         with(props) {
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, lastDrawFramebuffer[0])
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, lastReadFramebuffer[0])
             glUseProgram(lastProgram[0])
             glBindTexture(GL_TEXTURE_2D, lastTexture[0])
             if (glVersion >= 330 || GL.getCapabilities().GL_ARB_sampler_objects) {
@@ -99,11 +111,7 @@ class StoredGLState(private val glVersion: Int) {
             }
             glActiveTexture(lastActiveTexture[0])
 
-            for (unit in 0..7) {
-                GlStateManager._activeTexture(GL_TEXTURE0 + unit)
-                GlStateManager._bindTexture(0)
-            }
-            GlStateManager._activeTexture(GL_TEXTURE0)
+            resyncTextureBindCache()
 
             glBindVertexArray(lastVertexArrayObject[0])
             glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer[0])
@@ -121,10 +129,8 @@ class StoredGLState(private val glVersion: Int) {
                 lastColorMask.get(3).toInt() != 0
             )
 
-            // Skia's resetGLAll() changes real GL without updating GlStateManager's cache. If we
-            // restore with raw glEnable/glDisable, the cache can still think the old value is active
-            // and MC will skip the GL call on the next draw (e.g. item culling) until a full device
-            // reset such as a window resize. Toggle through GlStateManager to force cache + GL sync.
+            // Skia's resetGLAll changes real GL without updating GlStateManager's cache and raw
+            // glEnable/glDisable leaves it stale so toggle through GlStateManager to resync both
             //? if >= 26.2 {
             forceToggle(lastEnableBlend, { GlStateManager._enableBlend(0) }, { GlStateManager._disableBlend(0) })
             //?} else {

@@ -137,6 +137,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeyModifiers {
 	public static final field NONE B
 	public static final field SHIFT B
 	public final fun has (BB)Z
+	public static final fun of (I)B
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper {
@@ -153,6 +154,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper {
 	public final fun category (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun ctrl ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun duration (J)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
+	public final fun firesWhileTyping ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun inScreens ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun key ([I)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun meta ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
@@ -173,7 +175,9 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindManager {
 	public static final fun addRebindListener (Lkotlin/jvm/functions/Function2;)V
 	public static final fun builder ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public static final fun findConflicts (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Ljava/util/List;
+	public static final fun hasTriggeredMouseBind (I)Z
 	public static final fun isRegistered (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Z
+	public static final fun isTriggeredByMouse (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;I)Z
 	public static final fun notifyMenuEdit (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
 	public static final fun rebindFromMinecraft (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;[I)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
 	public static final fun rebindFromMinecraft (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;[I[I)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
@@ -210,10 +214,14 @@ public class org/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind : org/po
 	public final fun getCategory ()Ljava/lang/String;
 	public final fun getDefaultKeybind ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
 	public final fun getDurationNanos ()J
+	public final fun getFiresWhileTyping ()Z
+	public final fun getHasUnresolvedInputs ()Z
 	public final fun getKeyCodes ()[I
 	public final fun getMods ()B
 	public final fun getMouseBtns ()[I
 	public final fun getName ()Ljava/lang/String;
+	public final fun getUnresolvedKeyInputs ()Ljava/util/List;
+	public final fun getUnresolvedMouseInputs ()Ljava/util/List;
 	public final fun isBound ()Z
 	public final fun isMousePrimary ()Z
 	public static final fun keyName (I)Ljava/lang/String;
@@ -221,15 +229,40 @@ public class org/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind : org/po
 	public final fun setCategory (Ljava/lang/String;)V
 	public final fun setDefaultKeybind (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
 	public final fun setDurationNanos (J)V
+	public final fun setFiresWhileTyping (Z)V
 	public final fun setKeyCodes ([I)V
 	public final fun setMods (B)V
 	public final fun setMouseBtns ([I)V
 	public final fun setName (Ljava/lang/String;)V
+	public final fun setUnresolvedKeyInputs (Ljava/util/List;)V
+	public final fun setUnresolvedMouseInputs (Ljava/util/List;)V
 	public fun test (Ljava/util/Set;Ljava/util/Set;B)Z
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind$Companion {
 	public final fun keyName (I)Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/keybind/TextInputFocus {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/keybind/TextInputFocus;
+	public static final fun acquire (Ljava/lang/Object;)V
+	public static final fun clear ()V
+	public static final fun isTyping ()Z
+	public static final fun release (Ljava/lang/Object;)V
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/keybind/TextInputFocusKt {
+	public static final fun trackTextInputFocus (Landroidx/compose/ui/Modifier;)Landroidx/compose/ui/Modifier;
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/ui/v1/keybind/internal/KeybindCodec {
+	public abstract fun keyCode (Ljava/lang/String;)Ljava/lang/Integer;
+	public abstract fun keyName (I)Ljava/lang/String;
+	public abstract fun legacyKeyName (I)Ljava/lang/String;
+	public abstract fun legacyMouseName (I)Ljava/lang/String;
+	public abstract fun mouseButton (Ljava/lang/String;)Ljava/lang/Integer;
+	public abstract fun mouseName (I)Ljava/lang/String;
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/screen/BlurScreen {

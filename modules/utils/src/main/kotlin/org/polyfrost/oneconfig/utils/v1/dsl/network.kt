@@ -30,7 +30,7 @@ import org.polyfrost.oneconfig.utils.v1.NetworkUtils
 import java.nio.file.Path
 
 /**
- * Downloads the given [url] to the given [Path].
+ * Downloads the given [url] to the given [Path]
  *
  * @see NetworkUtils.downloadFile
  */

@@ -5,11 +5,13 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.setValue
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+import org.polyfrost.oneconfig.utils.v1.Multithreading
 import org.slf4j.LoggerFactory
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import java.util.concurrent.atomic.AtomicLong
 
 object ModFavorites {
     private val LOGGER = LoggerFactory.getLogger("OneConfig/ModFavorites")
@@ -51,19 +53,30 @@ object ModFavorites {
         persist()
     }
 
+    private val writeSeq = AtomicLong()
+
+    private val writeLock = Any()
+
     private fun persist() {
-        try {
-            val path = file()
-            Files.createDirectories(path.parent)
-            Files.write(
-                path,
-                favorites.joinToString("\n").toByteArray(StandardCharsets.UTF_8),
-                StandardOpenOption.CREATE,
-                StandardOpenOption.TRUNCATE_EXISTING,
-                StandardOpenOption.WRITE,
-            )
-        } catch (e: Exception) {
-            LOGGER.error("Failed to persist favorite mods", e)
+        val bytes = favorites.joinToString("\n").toByteArray(StandardCharsets.UTF_8)
+        val seq = writeSeq.incrementAndGet()
+        Multithreading.submit {
+            synchronized(writeLock) {
+                if (seq != writeSeq.get()) return@submit
+                try {
+                    val path = file()
+                    Files.createDirectories(path.parent)
+                    Files.write(
+                        path,
+                        bytes,
+                        StandardOpenOption.CREATE,
+                        StandardOpenOption.TRUNCATE_EXISTING,
+                        StandardOpenOption.WRITE,
+                    )
+                } catch (e: Exception) {
+                    LOGGER.error("Failed to persist favorite mods", e)
+                }
+            }
         }
     }
 }

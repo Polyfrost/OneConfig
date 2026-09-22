@@ -37,17 +37,18 @@ import java.lang.annotation.Target;
 import java.util.function.Consumer;
 
 /**
- * Annotate a method as a subscriber to an event.
+ * Annotate a method as a subscriber to an event
  * <br>
- * The method should take one parameter, a class which extends {@link Event} and return void.
- * @apiNote This mechanism should be replaced with the lambda-style for events (see {@link EventHandler#of(Class, Consumer)}), as it is more performant and better from a code quality perspective.
+ * The method should take one parameter which extends {@link Event} and return void
+ * @apiNote This mechanism should be replaced with the lambda-style for events (see {@link EventHandler#of(Class, Consumer)})
+ * <br> That style is more performant and better from a code quality perspective
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 @ApiStatus.Obsolete
 public @interface Subscribe {
     /**
-     * Priority for this event handler.
+     * Priority for this event handler
      * @see EventHandler#getPriority()
      */
     int priority() default 0;

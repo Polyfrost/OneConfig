@@ -31,35 +31,38 @@ import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter;
 
 /**
- * A serializer is a class that is capable of turning a {@link Tree} into a specific type {@link T}, and vice versa.
+ * A serializer is a class that is capable of turning a {@link Tree} into a specific type {@link T} and back again
  * <br>
- * Trees are the primary data structure in OneConfig, and are used to represent configuration data. They are a tree structure,
- * with each node being a key-value pair of either a string and a sub-tree, or a string and some data.
+ * Trees are the primary data structure in OneConfig and are used to represent configuration data
  * <br>
- * <b>Trees can contain arbitrary, potentially complex data types in them</b>. You need to be able to serialize and deserialize this data into a specific type.
+ * Each node is a key-value pair of either a string and a sub-tree or a string and some data
+ * <br>
+ * <b>Trees can contain arbitrary potentially complex data types in them</b> so you need to be able to serialize and deserialize this data into a specific type
+ * <br>
  * The easiest way to do this is to use the builtin {@link ObjectSerializer} which provides
- * simple methods to convert objects into simple types, along with the facility to use defined {@link Adapter}s.
- * The following types are used by this, and so you need to be able to serialize and deserialize them:
+ * simple methods to convert objects into simple types along with the facility to use defined {@link Adapter}s
+ * <br>
+ * The following types are used by this and so you need to be able to serialize and deserialize them
  * <ul>
- *     <li>primitive type wrappers (Number, Character, Boolean)</li>
+ *     <li>primitive type wrappers (Number and Character and Boolean)</li>
  *     <li>CharSequence</li>
  *     <li>Lists or Arrays of the above types (at your discretion)</li>
- *     <li>Map (containing the above types).</li>
+ *     <li>Map containing the above types</li>
  * </ul>
- * If you don't want to use this facility, you can create your own complex object serializer and use that instead.
+ * If you do not want to use this facility you can create your own complex object serializer and use that instead
  *
- * @param <T> the type of data that your serializer outputs and accepts as input.
+ * @param <T> the type of data that your serializer outputs and accepts as input
  */
 public interface Serializer<T> {
     /**
-     * Serialize the given tree into type T.
+     * Serialize the given tree into type T
      *
      * @return the serialized data
      */
     T serialize(@NotNull Tree config);
 
     /**
-     * Return a new tree with the data in it.
+     * Return a new tree with the data in it
      *
      * @param src the serialized data
      * @return the tree created from the data

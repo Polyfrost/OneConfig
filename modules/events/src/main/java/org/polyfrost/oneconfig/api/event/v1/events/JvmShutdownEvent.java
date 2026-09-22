@@ -29,7 +29,9 @@ package org.polyfrost.oneconfig.api.event.v1.events;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 
 /**
- * Called when the JVM is shutting down. This is called in a {@link Runtime#addShutdownHook(Thread) shutdown hook}.
+ * Called when the JVM is shutting down
+ * <br>
+ * This is called in a {@link Runtime#addShutdownHook(Thread) shutdown hook}
  *
  * @see ShutdownEvent
  */

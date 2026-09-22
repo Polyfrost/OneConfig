@@ -30,13 +30,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.Event;
+import org.polyfrost.oneconfig.api.event.v1.internal.EventClassValidator;
 
-import java.lang.reflect.Modifier;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
- * Class which represents an event handler.
+ * Class which represents an event handler
  *
  * @param <E> The event type
  * @see #of(Class, Consumer)
@@ -46,18 +46,16 @@ public abstract class EventHandler<E extends Event> implements Comparable<EventH
     private byte errors = 0;
 
     /**
-     * Create an event handler from a consumer, in a fabric-style way.
+     * Create an event handler from a consumer in a fabric-style way
      *
      * @param cls     the event class
-     * @param handler the predicate for the event. Return true to remove the event handler.
+     * @param handler the predicate for the event where returning true removes the event handler
      * @param <E>     the event type
      * @return the event handler
      */
     @kotlin.OverloadResolutionByLambdaReturnType
     public static <E extends Event> EventHandler<E> ofRemoving(Class<E> cls, Predicate<? super E> handler) {
-        if (Modifier.isAbstract(cls.getModifiers())) {
-            throw new IllegalArgumentException("Cannot register to an abstract event type - is there subtypes you need to specify?");
-        }
+        EventClassValidator.validate(cls);
         return new EventHandler<E>() {
             @Override
             public boolean handle(E event) {
@@ -72,7 +70,7 @@ public abstract class EventHandler<E extends Event> implements Comparable<EventH
     }
 
     /**
-     * Create an event handler from a consumer, in a fabric-style way.
+     * Create an event handler from a consumer in a fabric-style way
      *
      * @param cls     the event class
      * @param handler the consumer
@@ -81,9 +79,7 @@ public abstract class EventHandler<E extends Event> implements Comparable<EventH
      */
     @kotlin.OverloadResolutionByLambdaReturnType
     public static <E extends Event> EventHandler<E> of(Class<E> cls, Consumer<? super E> handler) {
-        if (Modifier.isAbstract(cls.getModifiers())) {
-            throw new IllegalArgumentException("Cannot register to an abstract event type - is there subtypes you need to specify?");
-        }
+        EventClassValidator.validate(cls);
         return new EventHandler<E>() {
             @Override
             public boolean handle(E event) {
@@ -100,9 +96,7 @@ public abstract class EventHandler<E extends Event> implements Comparable<EventH
 
     @kotlin.OverloadResolutionByLambdaReturnType
     public static <E extends Event> EventHandler<E> of(Class<E> cls, Runnable handler) {
-        if (Modifier.isAbstract(cls.getModifiers())) {
-            throw new IllegalArgumentException("Cannot register to an abstract event type - is there subtypes you need to specify?");
-        }
+        EventClassValidator.validate(cls);
         return new EventHandler<E>() {
             @Override
             public boolean handle(E event) {
@@ -122,8 +116,10 @@ public abstract class EventHandler<E extends Event> implements Comparable<EventH
     public abstract Class<E> getEventClass();
 
     /**
-     * Set the priority of this event handler. Higher priority handlers are called first.
-     * <br> The default priority is 0. <br> if two handlers have the same priority, the order of registration is used.
+     * Set the priority of this event handler
+     * <br> Higher priority handlers are called first
+     * <br> The default priority is 0
+     * <br> Handlers with the same priority run in order of registration
      */
     public int getPriority() {
         return 0;
@@ -135,8 +131,8 @@ public abstract class EventHandler<E extends Event> implements Comparable<EventH
     }
 
     /**
-     * Convenience method for registering this event handler.
-     * Equivalent to {@code EventManager.INSTANCE.register(this)}.
+     * Convenience method for registering this event handler
+     * <br> Equivalent to {@code EventManager.INSTANCE.register(this)}
      *
      * @return this
      */

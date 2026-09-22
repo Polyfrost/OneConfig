@@ -41,18 +41,17 @@ object HudDesignSession {
 
     private var lastClosedAt = 0L
 
-    /**
-     * The HUDs currently selected in the design studio, kept up to date by the studio so global
-     * keybinds (e.g. the duplicate HUD keybind) can act on it.
-     */
+    /** The HUDs currently selected in the design studio so global keybinds can act on them */
     @Volatile
     var activeSelection: List<Hud> = emptyList()
 
     private val commandQueue = Channel<StudioCommand>(Channel.UNLIMITED)
 
     /**
-     * Commands waiting for the design studio. The studio suspends on this while it is open, so a
-     * posted command is handled the moment it arrives rather than on the next frame.
+     * Commands waiting for the design studio
+     *
+     * The studio suspends on this while open so a posted command is handled as it arrives rather than on
+     * the next frame
      */
     internal val commands: ReceiveChannel<StudioCommand> get() = commandQueue
 
@@ -60,17 +59,12 @@ object HudDesignSession {
         commandQueue.trySend(command)
     }
 
-    /**
-     * Drops commands that were never consumed, e.g. ones posted while the studio was closing. They
-     * are stale by the time it opens again.
-     */
+    /** Drops commands that were never consumed since they are stale by the time the studio reopens */
     internal fun clearCommands() {
         while (commandQueue.tryReceive().isSuccess) { /* drain */ }
     }
 
-    /**
-     * Action for the "Duplicate HUD" keybind. Returns `true` if a duplicate was created.
-     */
+    /** Action for the "Duplicate HUD" keybind returning `true` if a duplicate was created */
     @JvmStatic
     fun handleDuplicate(pressed: Boolean): Boolean {
         if (!pressed) return false
@@ -85,9 +79,7 @@ object HudDesignSession {
         return true
     }
 
-    /**
-     * Action for the "Open HUD Settings" keybind. Returns `true` if the settings panel will open.
-     */
+    /** Action for the "Open HUD Settings" keybind returning `true` if the settings panel will open */
     @JvmStatic
     fun handleOpenSettings(pressed: Boolean): Boolean {
         if (!pressed) return false
@@ -99,9 +91,7 @@ object HudDesignSession {
         return true
     }
 
-    /**
-     * Action for the "Show/Hide HUD" keybind. Returns `true` if visibility was toggled.
-     */
+    /** Action for the "Show/Hide HUD" keybind returning `true` if visibility was toggled */
     @JvmStatic
     fun handleToggleVisibility(pressed: Boolean): Boolean {
         if (!pressed) return false
@@ -115,9 +105,7 @@ object HudDesignSession {
         return true
     }
 
-    /**
-     * Action for the "Reset HUD to Default" keybind. Returns `true` if any HUD was reset.
-     */
+    /** Action for the "Reset HUD to Default" keybind returning `true` if any HUD was reset */
     @JvmStatic
     fun handleReset(pressed: Boolean): Boolean {
         if (!pressed) return false
@@ -128,9 +116,7 @@ object HudDesignSession {
         return true
     }
 
-    /**
-     * Action for the "Copy HUD" keybind. Returns `true` if the studio will copy its selection.
-     */
+    /** Action for the "Copy HUD" keybind returning `true` if the studio will copy its selection */
     @JvmStatic
     fun handleCopy(pressed: Boolean): Boolean {
         if (!pressed) return false
@@ -140,9 +126,7 @@ object HudDesignSession {
         return true
     }
 
-    /**
-     * Action for the "Cut HUD" keybind. Returns `true` if the studio will cut its selection.
-     */
+    /** Action for the "Cut HUD" keybind returning `true` if the studio will cut its selection */
     @JvmStatic
     fun handleCut(pressed: Boolean): Boolean {
         if (!pressed) return false
@@ -152,9 +136,7 @@ object HudDesignSession {
         return true
     }
 
-    /**
-     * Action for the "Paste HUD" keybind. Returns `true` if the studio will paste its clipboard.
-     */
+    /** Action for the "Paste HUD" keybind returning `true` if the studio will paste its clipboard */
     @JvmStatic
     fun handlePaste(pressed: Boolean): Boolean {
         if (!pressed) return false
@@ -163,9 +145,7 @@ object HudDesignSession {
         return true
     }
 
-    /**
-     * Action for the "Delete HUD" keybind. Returns `true` if the studio will delete its selection.
-     */
+    /** Action for the "Delete HUD" keybind returning `true` if the studio will delete its selection */
     @JvmStatic
     fun handleDelete(pressed: Boolean): Boolean {
         if (!pressed) return false
@@ -175,9 +155,7 @@ object HudDesignSession {
         return true
     }
 
-    /**
-     * Action for the "Select All HUDs" keybind.
-     */
+    /** Action for the "Select All HUDs" keybind */
     @JvmStatic
     fun handleSelectAll(pressed: Boolean): Boolean {
         if (!pressed) return false
@@ -186,9 +164,7 @@ object HudDesignSession {
         return true
     }
 
-    /**
-     * Action for the "Lock/Unlock HUD" keybind.
-     */
+    /** Action for the "Lock/Unlock HUD" keybind */
     @JvmStatic
     fun handleLock(pressed: Boolean): Boolean {
         if (!pressed) return false

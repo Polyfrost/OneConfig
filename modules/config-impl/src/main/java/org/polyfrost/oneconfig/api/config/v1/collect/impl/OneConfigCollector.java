@@ -49,8 +49,9 @@ import java.util.List;
 import static org.polyfrost.oneconfig.api.config.v1.Node.strv;
 
 /**
- * Collects properties from an object using reflection, and from its inner classes.
- * Ignores fields without an annotation with the {@link Option} annotation.
+ * Collects properties from an object using reflection and from its inner classes
+ * <br>
+ * Ignores fields without an annotation with the {@link Option} annotation
  */
 public class OneConfigCollector extends ReflectiveCollector {
     public OneConfigCollector() {

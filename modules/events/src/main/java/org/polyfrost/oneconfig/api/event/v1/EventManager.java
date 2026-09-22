@@ -34,6 +34,7 @@ import org.polyfrost.oneconfig.api.event.v1.events.Event;
 import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventCollector;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
+import org.polyfrost.oneconfig.api.event.v1.internal.EventClassValidator;
 import org.polyfrost.oneconfig.api.event.v1.invoke.impl.AnnotationEventMapper;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
@@ -44,27 +45,27 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
- * Manages all events from OneConfig.
+ * Manages all events from OneConfig
  */
 public final class EventManager {
     /**
-     * The instance of the {@link EventManager}.
+     * The instance of the {@link EventManager}
      */
     public static final EventManager INSTANCE = new EventManager();
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Events");
     private final Deque<EventCollector> collectors = new ArrayDeque<>(2);
-    private final Map<Object, Iterable<EventHandler<?>>> cache = new WeakHashMap<>(5);
-    private final Map<Class<? extends Event>, List<EventHandler<?>>> handlers = new HashMap<>(8);
+    private final Map<Object, Iterable<EventHandler<?>>> cache = Collections.synchronizedMap(new WeakHashMap<>(5));
+    private final Map<Class<? extends Event>, List<EventHandler<?>>> handlers = new ConcurrentHashMap<>(8);
 
     private EventManager() {
         registerCollector(new AnnotationEventMapper());
@@ -79,7 +80,8 @@ public final class EventManager {
     }
 
     /**
-     * Convenience method for registering an event handler. Equal to
+     * Convenience method for registering an event handler
+     * <br> Equal to
      * {@link EventManager#INSTANCE}{@code .register(}{@link EventHandler#of(Class, Consumer)}{@code )}
      */
     public static <E extends Event> EventHandler<E> register(Class<E> cls, Consumer<E> handler) {
@@ -91,7 +93,8 @@ public final class EventManager {
     }
 
     /**
-     * Convenience method for registering an event handler. Equal to
+     * Convenience method for registering an event handler
+     * <br> Equal to
      * {@link EventManager#INSTANCE}{@code .register(}{@link EventHandler#of(Class, Consumer)}{@code )}
      */
     public static <E extends Event> EventHandler<E> register(kotlin.reflect.KClass<E> cls, Consumer<E> handler) {
@@ -112,18 +115,20 @@ public final class EventManager {
     }
 
     /**
-     * Registers an object to the event manager. If you wish to be able to remove/unregister you events, make sure you set removable to true.
+     * Registers an object to the event manager
+     * <p>
+     * Set removable to true if you want to unregister these events later
      *
-     * @param object The object to register.
+     * @param object The object to register
      */
     public void register(Object object) {
         register(object, false);
     }
 
     /**
-     * Register an object to the event manager.
+     * Register an object to the event manager
      *
-     * @param removable weather this object's event handlers can be removed.
+     * @param removable whether this object's event handlers can be removed
      */
     public void register(Object object, boolean removable) {
         if (object instanceof Class) {
@@ -165,11 +170,13 @@ public final class EventManager {
     }
 
     /**
-     * Register an event handler.
+     * Register an event handler
      *
-     * @param handler The handler to register.
+     * @param handler The handler to register
+     * @throws IllegalArgumentException if the handler's event class is not a concrete, postable event type
      */
     public void register(EventHandler<?> handler) {
+        EventClassValidator.validate(handler.getEventClass());
         List<EventHandler<?>> handles = handlers.computeIfAbsent(
                 handler.getEventClass(),
                 k -> new CopyOnWriteArrayList<>());
@@ -198,15 +205,14 @@ public final class EventManager {
             return false;
         }
         if (!set.remove(handler)) {
-            // LOGGER.warn("Attempted to unregister a handler that was not registered!");
             return false;
         }
         return true;
     }
 
     /**
-     * Remove the event handler's that were provided by the given object.
-     * <br><b>This method only works if the object was registered with removable true!</b>
+     * Remove the event handlers that were provided by the given object
+     * <br><b>This method only works if the object was registered with removable true</b>
      */
     public boolean unregister(Object object) {
         Iterable<EventHandler<?>> h = cache.remove(object);
@@ -227,10 +233,15 @@ public final class EventManager {
         collectors.addFirst(collector);
     }
 
+    public boolean hasListeners(Class<? extends Event> cls) {
+        List<EventHandler<?>> handles = handlers.get(cls);
+        return handles != null && !handles.isEmpty();
+    }
+
     /**
-     * Posts an event to any registered listeners.
+     * Posts an event to any registered listeners
      *
-     * @param event The event to post.
+     * @param event The event to post
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     public <E extends Event> void post(E event) {

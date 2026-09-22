@@ -36,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import org.jetbrains.skia.BlendMode
 import org.jetbrains.skia.ColorFilter
+import org.jetbrains.skia.Font
 import org.jetbrains.skia.Paint
 import org.polyfrost.compose.composables.PolyBox
 import org.polyfrost.compose.composables.PolyCanvas
@@ -68,7 +69,7 @@ private const val ICON_GAP = 12f
 private const val TITLE_SIZE = 14f
 private const val MESSAGE_SIZE = 12f
 
-private const val ICON_RASTER_SCALE = 2
+private const val ICON_RASTER_SCALE = 2f
 
 internal sealed interface ToastHit {
     val notification: Notification
@@ -81,11 +82,10 @@ private const val ENTER_NANOS = 220_000_000L
 private const val EXIT_NANOS = 220_000_000L
 private const val PROGRESS_LINGER_NANOS = 600_000_000L
 
-// Colors come from NotificationTheme, which tracks the active OneConfig GUI theme.
-
 internal object ToastViewport {
     var width by mutableStateOf(0f)
     var height by mutableStateOf(0f)
+    var scale by mutableStateOf(1f)
 }
 
 @Composable
@@ -109,23 +109,34 @@ fun NotificationToasts() {
 @Composable
 private fun Toast(notification: Notification) {
     var appear by remember { mutableStateOf(0f) }
-    var timeFraction by remember { mutableStateOf(1f) }
+    val timeFraction = remember { mutableStateOf(1f) }
+    val progressValue = remember { mutableStateOf(quantize(notification.progressOrNull() ?: 0f)) }
 
     LaunchedEffect(notification.id) {
-        // Enter
+        val tracksProgress = notification.progress != null
+
+        fun sampleProgress(): Float {
+            val p = notification.progressOrNull() ?: 0f
+            progressValue.value = quantize(p)
+            return p
+        }
+
         val enterStart = withFrameNanos { it }
         while (true) {
             val now = withFrameNanos { it }
             val t = ((now - enterStart).coerceAtLeast(0L).toFloat() / ENTER_NANOS).coerceIn(0f, 1f)
             appear = easeOutCubic(t)
+            if (tracksProgress) sampleProgress()
             if (t >= 1f) break
         }
         appear = 1f
 
-        // Wait
         when {
             notification.progress != null -> {
-                while ((notification.progressOrNull() ?: 0f) < 1f && !notification.dismissRequested) withFrameNanos { }
+                while (!notification.dismissRequested) {
+                    if (sampleProgress() >= 1f) break
+                    withFrameNanos { }
+                }
                 val lingerStart = withFrameNanos { it }
                 while (withFrameNanos { it } - lingerStart < PROGRESS_LINGER_NANOS && !notification.dismissRequested) { }
             }
@@ -141,13 +152,12 @@ private fun Toast(notification: Notification) {
                     val dt = now - last
                     last = now
                     if (!notification.hovered) remaining -= dt
-                    timeFraction = (remaining.toFloat() / durationNanos).coerceIn(0f, 1f)
+                    timeFraction.value = quantize((remaining.toFloat() / durationNanos).coerceIn(0f, 1f))
                 }
-                timeFraction = 0f
+                timeFraction.value = 0f
             }
         }
 
-        // Exit
         val exitStart = withFrameNanos { it }
         while (true) {
             val now = withFrameNanos { it }
@@ -159,7 +169,7 @@ private fun Toast(notification: Notification) {
     }
 
     val a = appear
-    val progress = notification.progressOrNull()
+    val hasProgress = notification.progress != null
     val bgBase = if (notification.hovered) NotificationTheme.background.lighten(0.06f) else NotificationTheme.background
     val cardBg = bgBase.multiplyAlpha(a)
 
@@ -176,17 +186,21 @@ private fun Toast(notification: Notification) {
             ToastIcon(notification, a)
             PolyColumn(gap = 4f) {
                 PolyText(notification.title, color = NotificationTheme.accentFor(notification.type).multiplyAlpha(a), fontSize = TITLE_SIZE, font = NotificationTheme.fontTitle)
-                for (line in wrapText(notification.message, TEXT_WIDTH, MESSAGE_SIZE, NotificationTheme.fontBody)) {
+                val bodyFont = messageFont()
+                val lines = remember(notification.message, bodyFont) {
+                    wrapText(notification.message, TEXT_WIDTH, bodyFont)
+                }
+                for (line in lines) {
                     PolyText(line, color = NotificationTheme.textSecondary.multiplyAlpha(a), fontSize = MESSAGE_SIZE, font = NotificationTheme.fontBody)
                 }
             }
         }
 
-        val showTimer = progress == null && !notification.persistent && notification.actions.isEmpty()
-        if (progress != null) {
-            ProgressBar(progress, a)
+        val showTimer = !hasProgress && !notification.persistent && notification.actions.isEmpty()
+        if (hasProgress) {
+            ProgressBar({ progressValue.value }, a)
         } else if (showTimer) {
-            ProgressBar(timeFraction, a)
+            ProgressBar({ timeFraction.value }, a)
         }
 
         if (notification.actions.isNotEmpty()) {
@@ -199,8 +213,13 @@ private fun Toast(notification: Notification) {
     }
 }
 
+private fun quantize(value: Float): Float {
+    val barPixels = (CONTENT_WIDTH * ToastViewport.scale).coerceAtLeast(1f)
+    return Math.round(value * barPixels) / barPixels
+}
+
 @Composable
-private fun ProgressBar(progress: Float, a: Float) {
+private fun ProgressBar(progress: () -> Float, a: Float) {
     val accent = NotificationTheme.accent
     PolyBox(
         modifier = PolyModifier
@@ -208,7 +227,9 @@ private fun ProgressBar(progress: Float, a: Float) {
             .height(6f)
             .background(accent.multiplyAlpha(0.5f * a), NotificationTheme.radiusProgress),
     ) {
-        val fillWidth = (CONTENT_WIDTH * progress).coerceIn(0f, CONTENT_WIDTH)
+        // read here and not in the enclosing body: PolyModifier has no equals, so recomposing the
+        // outer PolyBox would rebuild its chain and reapply the whole style on every tick
+        val fillWidth = (CONTENT_WIDTH * progress()).coerceIn(0f, CONTENT_WIDTH)
         if (fillWidth > 0f) {
             PolyRect(
                 color = accent.multiplyAlpha(a),
@@ -237,17 +258,29 @@ private fun ActionButton(notification: Notification, action: NotificationAction,
 @Composable
 private fun ToastIcon(notification: Notification, a: Float) {
     val custom = notification.icon
-    val tint = NotificationTheme.accentFor(notification.type).multiplyAlpha(a)
-    PolyCanvas(modifier = PolyModifier.size(ICON_SIZE, ICON_SIZE).align(PolyAlign.Top)) { x, y, w, h ->
-        if (custom != null) {
+    if (custom != null) {
+        val paint = remember { Paint() }
+        PolyCanvas(modifier = PolyModifier.size(ICON_SIZE, ICON_SIZE).align(PolyAlign.Top)) { x, y, w, h ->
             val s = minOf(w / custom.width.toFloat(), h / custom.height.toFloat())
             val dw = custom.width * s
             val dh = custom.height * s
-            image(custom, x + (w - dw) / 2f, y + (h - dh) / 2f, dw, dh, Paint().also { it.setAlphaf(a) })
-        } else {
-            val img = SvgRasterizer.get(notification.type.iconName, (w * ICON_RASTER_SCALE).toInt())
+            paint.setAlphaf(a)
+            image(custom, x + (w - dw) / 2f, y + (h - dh) / 2f, dw, dh, paint)
+        }
+    } else {
+        val accent = NotificationTheme.accentFor(notification.type)
+        val paint = remember { Paint() }
+        var filterArgb = 0
+        PolyCanvas(modifier = PolyModifier.size(ICON_SIZE, ICON_SIZE).align(PolyAlign.Top)) { x, y, w, h ->
+            val pixelSize = Math.ceil((w * ToastViewport.scale * ICON_RASTER_SCALE).toDouble()).toInt()
+            val img = SvgRasterizer.get(notification.type.iconName, pixelSize)
             if (img != null) {
-                val paint = Paint().also { it.colorFilter = ColorFilter.makeBlend(tint.argb, BlendMode.SRC_IN) }
+                val argb = accent.argb
+                if (argb != filterArgb) {
+                    filterArgb = argb
+                    paint.colorFilter = ColorFilter.makeBlend(argb, BlendMode.SRC_IN)
+                }
+                paint.setAlphaf(a)
                 image(img, x, y, w, h, paint)
             }
         }
@@ -256,9 +289,13 @@ private fun ToastIcon(notification: Notification, a: Float) {
 
 private const val TEXT_WIDTH = CONTENT_WIDTH - ICON_SIZE - ICON_GAP
 
-private fun wrapText(text: String, maxWidth: Float, fontSize: Float, fontName: String?): List<String> {
+private fun messageFont(): Font {
+    val name = NotificationTheme.fontBody
+    return name?.let { FontManager.getFont(MESSAGE_SIZE, it) } ?: FontManager.getFont(MESSAGE_SIZE)
+}
+
+private fun wrapText(text: String, maxWidth: Float, font: Font): List<String> {
     if (text.isEmpty()) return emptyList()
-    val font = fontName?.let { FontManager.getFont(fontSize, it) } ?: FontManager.getFont(fontSize)
     if (font.measureTextWidth(text) <= maxWidth) return listOf(text)
     val lines = ArrayList<String>()
     var current = StringBuilder()

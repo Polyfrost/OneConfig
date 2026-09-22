@@ -10,6 +10,7 @@ import net.minecraft.resources.Identifier;
 //?}
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.MinecraftKeybindBridge;
@@ -27,7 +28,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Mirrors {@link OneConfigKeybind}s into Minecraft's native Controls menu.
+ * Mirrors {@link OneConfigKeybind}s into Minecraft's native Controls menu
  */
 public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge {
     private static final org.apache.logging.log4j.Logger LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/Keybinds");
@@ -102,11 +103,11 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         });
         OneConfigKeybind def = bind.getDefaultKeybind();
         OneConfigKeybind defSrc = def != null ? def : bind;
-        InputConstants.Type type = defSrc.isMousePrimary() ? InputConstants.Type.MOUSE : InputConstants.Type.KEYSYM;
+        InputConstants.Key defKey = keyFor(defSrc);
         KeyMapping mapping = detached(
             bind.getName(),
-            type.getOrCreate(defSrc.getBoundCode()),
-            () -> new KeyMapping(bind.getName(), type, defSrc.getBoundCode(), categoryFor(bind.getCategory()))
+            defKey,
+            () -> new KeyMapping(bind.getName(), defKey.getType(), defKey.getValue(), categoryFor(bind.getCategory()))
         );
         applyKeyTo(mapping, bind);
         mappings.put(bind, mapping);
@@ -235,7 +236,7 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         } else {
             InputConstants.Key key = ((KeyMappingAccessor) mapping).oneconfig$getKey();
             int v = key.getValue();
-            if (v < 0) return null;
+            if (key == InputConstants.UNKNOWN) return null;
             set.add(key.getType() == InputConstants.Type.MOUSE ? (MOUSE_TAG | v) : (long) v);
             set.add(MODS_TAG);
         }
@@ -282,7 +283,7 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         List<Integer> keys = new ArrayList<>();
         if (rawKeys != null) {
             for (int k : rawKeys) {
-                byte bit = modBit(k);
+                byte bit = KeyModifiers.of(k);
                 if (bit != KeyModifiers.NONE) mods |= bit;
                 else keys.add(k);
             }
@@ -302,16 +303,6 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         return out;
     }
 
-    private static byte modBit(int glfw) {
-        return switch (glfw) {
-            case 340, 344 -> KeyModifiers.SHIFT;
-            case 341, 345 -> KeyModifiers.CTRL;
-            case 342, 346 -> KeyModifiers.ALT;
-            case 343, 347 -> KeyModifiers.META;
-            default -> KeyModifiers.NONE;
-        };
-    }
-
     public static String fullComboText(int[] keys, int[] mouse, byte mods) {
         List<String> parts = new ArrayList<>();
         if (KeyModifiers.INSTANCE.has(mods, KeyModifiers.CTRL)) parts.add("Ctrl");
@@ -319,10 +310,10 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         if (KeyModifiers.INSTANCE.has(mods, KeyModifiers.ALT)) parts.add("Alt");
         if (KeyModifiers.INSTANCE.has(mods, KeyModifiers.META)) parts.add("Meta");
         if (keys != null) {
-            for (int k : keys) parts.add(InputConstants.Type.KEYSYM.getOrCreate(k).getDisplayName().getString());
+            for (int k : keys) parts.add(MinecraftKeybindCodec.keysym(k).getDisplayName().getString());
         }
         if (mouse != null) {
-            for (int b : mouse) parts.add("Mouse " + (b + 1));
+            for (int b : mouse) parts.add(Platform.compatibility().keys().mouseName(b));
         }
         return parts.isEmpty() ? "None" : String.join(" + ", parts);
     }
@@ -367,7 +358,15 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
     }
 
     private void applyKeyTo(KeyMapping mapping, OneConfigKeybind bind) {
-        setKey(mapping, (bind.isMousePrimary() ? InputConstants.Type.MOUSE : InputConstants.Type.KEYSYM).getOrCreate(bind.getBoundCode()));
+        setKey(mapping, keyFor(bind));
+    }
+
+    private static InputConstants.Key keyFor(OneConfigKeybind bind) {
+        if (!bind.isBound()) return InputConstants.UNKNOWN;
+
+        return bind.isMousePrimary()
+            ? MinecraftKeybindCodec.mouse(bind.getBoundCode())
+            : MinecraftKeybindCodec.keysym(bind.getBoundCode());
     }
 
     public void reconcile() {
@@ -381,6 +380,11 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
                 boolean actualMouse = actual.getType() == InputConstants.Type.MOUSE;
 
                 if (actualValue == bind.getBoundCode() && actualMouse == bind.isMousePrimary()) continue;
+
+                if (actual == InputConstants.UNKNOWN) {
+                    pending.add(() -> KeybindManager.rebindFromMinecraft(bind, null, null, KeyModifiers.NONE));
+                    continue;
+                }
 
                 OneConfigKeybind def = bind.getDefaultKeybind();
                 if (def != null && actualValue == def.getBoundCode() && actualMouse == def.isMousePrimary()) {
@@ -411,12 +415,12 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         List<String> extra = new ArrayList<>();
         if (keys != null) {
             for (int i = keysPrimary ? 1 : 0; i < keys.length; i++) {
-                extra.add(InputConstants.Type.KEYSYM.getOrCreate(keys[i]).getDisplayName().getString());
+                extra.add(MinecraftKeybindCodec.keysym(keys[i]).getDisplayName().getString());
             }
         }
         if (mouse != null) {
             for (int i = keysPrimary ? 0 : 1; i < mouse.length; i++) {
-                extra.add("Mouse " + (mouse[i] + 1));
+                extra.add(Platform.compatibility().keys().mouseName(mouse[i]));
             }
         }
 

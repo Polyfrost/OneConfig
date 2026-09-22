@@ -89,13 +89,13 @@ abstract class TextHud(
 
         val contentAlign = alignment
         val padInsets = PolyInsets(padLeft, padTop, padRight, padBottom)
-        // Build chroma-aware colours: when chroma is enabled, PolyColor.argb cycles based on the
-        // current time, so it keeps animating at render time without needing recomposition.
+        // PolyColor.argb cycles on the current time when chroma is on so it keeps animating
+        // at render time without needing recomposition
         val fgColor = PolyColor(textColor, textChroma, textChromaSpeed)
 
         val isStaticValid = staticWidth && staticW > 0f && staticH > 0f
 
-        // when merged, HudManager draws this HUD's background as part of the fused neighbour shape,
+        // when merged HudManager draws this background as part of the fused neighbour shape
         // which hudBackground() accounts for
         val bgModifier = hudBackground()
         val outerModifier =
@@ -192,7 +192,11 @@ abstract class TextHud(
         ).fastFilterNotNull().fastJoinToString(concatString)
     }
 
-    /** Wraps the finished line in square brackets when [brackets] is on. Empty lines stay empty. */
+    /**
+     * Wraps the finished line in square brackets when [brackets] is on
+     *
+     * Empty lines stay empty
+     */
     protected fun decorate(text: String): String =
         if (brackets && text.isNotEmpty()) "[$text]" else text
 

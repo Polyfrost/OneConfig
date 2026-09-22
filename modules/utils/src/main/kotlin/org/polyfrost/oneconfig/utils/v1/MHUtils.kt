@@ -41,17 +41,20 @@ import java.util.function.Function
 import java.util.function.Predicate
 
 /**
- * A collection of (naughty) MethodHandle utilities.
+ * A collection of (naughty) MethodHandle utilities
  *
- * This class allows for Java 8 and below style reflection-type methods, in modern Java versions due to a simple exploit to get the trusted method handle lookup instance.
+ * This class allows for Java 8 and below style reflection-type methods in modern Java versions
+ * It works by way of a simple exploit to get the trusted method handle lookup instance
  *
- * MethodHandles also are "directly supported by the VM" and are "more efficient than the equivalent reflective operations", according to the documentation.
+ * MethodHandles are also "directly supported by the VM" and "more efficient than the equivalent reflective operations" according to the documentation
  *
- * This class is split into two main parts:
- * - direct access methods [getFieldInHierarchy], [setField], [invoke], etc. which use reflection and [setAccessible] to directly access fields and methods.
- * - method handle methods [getFieldGetter], [getFieldSetter], [getMethodHandle], etc. which use the trusted lookup to get method handles for fields and methods - these are reusable.
+ * This class is split into two main parts
+ * - direct access methods [getFieldInHierarchy] [setField] [invoke] and friends which use reflection and [setAccessible] to directly access fields and methods
+ * - method handle methods [getFieldGetter] [getFieldSetter] [getMethodHandle] and friends which use the trusted lookup to get method handles for fields and methods
+ * - method handles from that second group are reusable
  *
- * ## note that these methods are inherently unsafe and in general, bad. use with caution.
+ * ## note that these methods are inherently unsafe and in general bad
+ * ## use with caution
  */
 @Suppress("unused")
 @ApiStatus.Internal
@@ -94,9 +97,10 @@ object MHUtils {
     }
 
     /**
-     * A reference to the trusted IMPL_LOOKUP field in [MethodHandles.Lookup].
+     * A reference to the trusted IMPL_LOOKUP field in [MethodHandles.Lookup]
      *
-     * this field was extracted using unsupported methods, which breaks Java security checks. please be careful with it.
+     * this field was extracted using unsupported methods which breaks Java security checks
+     * please be careful with it
      */
     @ApiStatus.Internal
     @JvmField
@@ -110,12 +114,11 @@ object MHUtils {
     }
 
 
-    // --- get --- //
     /**
-     * Return a field handle, using reflection to get the field, then unreflecting it.
+     * Return a field handle by using reflection to get the field then unreflecting it
      *
-     * @param owner the owner of the field.
-     * @return a field handle, or null if it failed.
+     * @param owner the owner of the field
+     * @return a field handle or null if it failed
      */
     @JvmStatic
     fun getFieldGetter(fieldName: String, owner: Any) = try {
@@ -126,10 +129,11 @@ object MHUtils {
     }
 
     /**
-     * Return a field handle by unreflecting the field.
+     * Return a field handle by unreflecting the field
      *
-     * @param owner the owner of the field. If the field is static, this can be null.
-     * @return a field handle, or null if it failed.
+     * @param owner the owner of the field
+     * If the field is static this can be null
+     * @return a field handle or null if it failed
      */
     @JvmStatic
     fun getFieldGetter(f: Field, owner: Any?) = try {
@@ -142,9 +146,9 @@ object MHUtils {
     }
 
     /**
-     * Return a field handle using the trusted lookup.
+     * Return a field handle using the trusted lookup
      *
-     * @return a field handle, or null if it failed.
+     * @return a field handle or null if it failed
      */
     @JvmStatic
     fun getFieldGetter(owner: Class<*>, fieldName: String, type: Class<*>) = try {
@@ -155,9 +159,9 @@ object MHUtils {
 
 
     /**
-     * Return a static field handle using the trusted lookup.
+     * Return a static field handle using the trusted lookup
      *
-     * @return a field handle, or null if it failed.
+     * @return a field handle or null if it failed
      */
     @JvmStatic
     fun getStaticFieldGetter(owner: Class<*>, fieldName: String, type: Class<*>) = try {
@@ -167,12 +171,11 @@ object MHUtils {
     }
 
 
-    // --- set --- //
     /**
-     * Return a field setter, using reflection to get the field, then unreflecting it.
+     * Return a field setter by using reflection to get the field then unreflecting it
      *
-     * @param owner the owner of the field.
-     * @return a field setter, or null if it failed.
+     * @param owner the owner of the field
+     * @return a field setter or null if it failed
      */
     @JvmStatic
     fun getFieldSetter(fieldName: String, owner: Any) = try {
@@ -183,10 +186,11 @@ object MHUtils {
     }
 
     /**
-     * Return a field setter by unreflecting the field.
+     * Return a field setter by unreflecting the field
      *
-     * @param owner the owner of the field. If the field is static, this can be null.
-     * @return a field setter, or null if it failed.
+     * @param owner the owner of the field
+     * If the field is static this can be null
+     * @return a field setter or null if it failed
      */
     @JvmStatic
     fun getFieldSetter(f: Field, owner: Any) = try {
@@ -199,9 +203,9 @@ object MHUtils {
     }
 
     /**
-     * Return a field setter using the trusted lookup.
+     * Return a field setter using the trusted lookup
      *
-     * @return a field setter, or null if it failed.
+     * @return a field setter or null if it failed
      */
     @JvmStatic
     fun getFieldSetter(owner: Class<*>, fieldName: String, type: Class<*>) = try {
@@ -211,9 +215,9 @@ object MHUtils {
     }
 
     /**
-     * Return a static field setter using the trusted lookup.
+     * Return a static field setter using the trusted lookup
      *
-     * @return a field setter, or null if it failed.
+     * @return a field setter or null if it failed
      */
     @JvmStatic
     fun getStaticFieldSetter(owner: Class<*>, fieldName: String, type: Class<*>) = try {
@@ -223,12 +227,11 @@ object MHUtils {
     }
 
 
-    // --- method --- //
     /**
-     * Return a method handle using the trusted lookup.
+     * Return a method handle using the trusted lookup
      *
      * @param owner the object instance where the method is located
-     * @return a method handle, or null if it failed.
+     * @return a method handle or null if it failed
      */
     @JvmStatic
     fun getMethodHandle(owner: Any, methodName: String, returnType: Class<*>, vararg params: Class<*>?) = try {
@@ -238,10 +241,10 @@ object MHUtils {
     }
 
     /**
-     * Return a method handle using the trusted lookup.
+     * Return a method handle using the trusted lookup
      *
      * @param owner the class where the method is located
-     * @return a method handle, or null if it failed.
+     * @return a method handle or null if it failed
      */
     @JvmStatic
     fun getMethodHandle(owner: Class<*>, methodName: String, returnType: Class<*>, vararg params: Class<*>?) = try {
@@ -251,9 +254,9 @@ object MHUtils {
     }
 
     /**
-     * Return a static method handle using the trusted lookup.
+     * Return a static method handle using the trusted lookup
      *
-     * @return a method handle, or null if it failed.
+     * @return a method handle or null if it failed
      */
     @JvmStatic
     fun getStaticMethodHandle(owner: Class<*>, methodName: String, returnType: Class<*>, vararg params: Class<*>?) = try {
@@ -263,10 +266,10 @@ object MHUtils {
     }
 
     /**
-     * Return a method handle by unreflecting the method.
+     * Return a method handle by unreflecting the method
      *
      * @param owner the object instance where the method is located
-     * @return a method handle, or null if it failed.
+     * @return a method handle or null if it failed
      */
     @JvmStatic
     fun getMethodHandle(m: Method, owner: Any) = try {
@@ -279,11 +282,10 @@ object MHUtils {
     }
 
 
-    // --- ctors --- //
     /**
-     * Return a constructor handle using the trusted lookup.
+     * Return a constructor handle using the trusted lookup
      *
-     * @return a constructor handle, or null if it failed.
+     * @return a constructor handle or null if it failed
      */
     @JvmStatic
     fun getConstructorHandle(owner: Class<*>, vararg params: Class<*>?) = try {
@@ -293,9 +295,9 @@ object MHUtils {
     }
 
     /**
-     * Return a constructor handle by unreflecting the constructor.
+     * Return a constructor handle by unreflecting the constructor
      *
-     * @return a constructor handle, or null if it failed.
+     * @return a constructor handle or null if it failed
      */
     @JvmStatic
     fun getConstructorHandle(ctor: Constructor<*>) = try {
@@ -305,8 +307,9 @@ object MHUtils {
     }
 
     /**
-     * create and return a LMF call-site to the given method, that **must conform to the interface [T]**.
-     * @param it the object on which the method is located - if it is static, pass a class instance here.
+     * create and return a LMF call-site to the given method which **must conform to the interface [T]**
+     * @param it the object on which the method is located
+     * if it is static pass a class instance here
      * @param methodName the name of the method to wrap
      * @param interfaceFuncName the name of the interface function to wrap
      * @param type the method type of the method (**AND INTERFACE FUNCTION**) to wrap
@@ -336,22 +339,24 @@ object MHUtils {
     inline fun <reified T> lmf(it: Any, methodName: String, interfaceFuncName: String, type: MethodType)= lmf(it, T::class.java, methodName, interfaceFuncName, type)
 
 
-    // -- lambda -- //
     /**
-     * Returns a direct, fast lambda call site to the given consumer type method: void method(Object param)
+     * Returns a direct fast lambda call site to the given consumer type method
+     * the method must look like void method(Object param)
      *
-     * @param it the object on which the method is located - if it is static, pass a class instance here.
-     * @return a fast wrapped method handle, or null if it failed.
+     * @param it the object on which the method is located
+     * if it is static pass a class instance here
+     * @return a fast wrapped method handle or null if it failed
      */
     @JvmStatic
     fun <T> getConsumerHandle(it: Any, methodName: String, paramType: Class<T>) = lmf<Consumer<T>>(it, methodName, "accept", methodType(Void.TYPE, paramType))
 
 
     /**
-     * Returns a direct, fast lambda call site to the given one arg, object returning method.
+     * Returns a direct fast lambda call site to the given one arg object returning method
      *
-     * @param it the object on which the method is located - if static, pass a class instance here.
-     * @return a fast wrapped method handle, or null if it failed.
+     * @param it the object on which the method is located
+     * if it is static pass a class instance here
+     * @return a fast wrapped method handle or null if it failed
      */
     @JvmStatic
     fun <T, R> getFunctionHandle(it: Any, methodName: String, returnType: Class<R>, paramType: Class<T>) = lmf<Function<T, R>>(it, methodName, "apply", methodType(returnType, paramType))
@@ -359,12 +364,11 @@ object MHUtils {
     @JvmStatic
     fun <T> getPredicateHandle(it: Any, methodName: String, typeOfT: Class<T>) = lmf<Predicate<T>>(it, methodName, "test", methodType(Boolean::class.java, typeOfT))
 
-// --- direct access methods --- //
     /**
-     * Return a field value using reflection and the trusted lookup.
+     * Return a field value using reflection and the trusted lookup
      *
      * @param owner the object instance where the field is located
-     * @return a field value, or null if it failed.
+     * @return a field value or null if it failed
      */
     @JvmStatic
     @Suppress("UNCHECKED_CAST")
@@ -383,9 +387,9 @@ object MHUtils {
     }
 
     /**
-     * Return a static field value using reflection.
+     * Return a static field value using reflection
      *
-     * @return a field value, or null if it failed.
+     * @return a field value or null if it failed
      */
     @JvmStatic
     @Suppress("UNCHECKED_CAST")
@@ -396,10 +400,10 @@ object MHUtils {
     }
 
     /**
-     * Set a field value using reflection.
+     * Set a field value using reflection
      *
      * @param owner the object instance where the field is located
-     * @return true if it succeeded.
+     * @return true if it succeeded
      */
     @JvmStatic
     fun setField(owner: Any, fieldName: String, value: Any?) = try {
@@ -410,9 +414,9 @@ object MHUtils {
     }
 
     /**
-     * Set a static field value.
+     * Set a static field value
      *
-     * @return true if it succeeded.
+     * @return true if it succeeded
      */
     @JvmStatic
     fun setStatic(cls: Class<*>, fieldName: String, value: Any) = try {
@@ -423,10 +427,10 @@ object MHUtils {
     }
 
     /**
-     * Invoke a method using reflection.
+     * Invoke a method using reflection
      *
      * @param owner the object instance where the method is located
-     * @return the return value of the method, or null if it failed.
+     * @return the return value of the method or null if it failed
      */
     @JvmStatic
     @Suppress("UNCHECKED_CAST")
@@ -438,9 +442,9 @@ object MHUtils {
     }
 
     /**
-     * Invoke a static method using reflection.
+     * Invoke a static method using reflection
      *
-     * @return the return value of the method, or null if it failed.
+     * @return the return value of the method or null if it failed
      */
     @JvmStatic
     @Suppress("UNCHECKED_CAST")
@@ -452,7 +456,7 @@ object MHUtils {
     }
 
     /**
-     * Instantiate a class using the ctor matching the given params.
+     * Instantiate a class using the ctor matching the given params
      */
     @JvmStatic
     fun <T> instantiate(cls: Class<T>, vararg params: Any) = try {
@@ -463,7 +467,8 @@ object MHUtils {
     }
 
     /**
-     * Instantiate a class using the no-args ctor. If allocateAnyway is true and there is no no-args ctor, it will be allocated using the unsafe.
+     * Instantiate a class using the no-args ctor
+     * If allocateAnyway is true and there is no no-args ctor it will be allocated using the unsafe
      */
     @JvmStatic
     @Suppress("UNCHECKED_CAST")
@@ -499,7 +504,8 @@ object MHUtils {
     private val accessibleSetter = trustedLookup.findSetter(AccessibleObject::class.java, "override", Boolean::class.java)
 
     /**
-     * are you tired of **cringe** access checks ruining your reflection fun? well, this method is for you!
+     * are you tired of **cringe** access checks ruining your reflection fun
+     * well this method is for you
      */
     @Suppress("DEPRECATION")
     @JvmStatic
@@ -512,11 +518,12 @@ object MHUtils {
     }
 
     /**
-     * remove the filters that normally prevent you from reflectively accessing internal classes to the JVM. this operation is permanent.
+     * remove the filters that normally prevent you from reflectively accessing internal classes to the JVM
+     * this operation is permanent
      *
-     * # this is a very dangerous operation and should only be used in a controlled environment.
+     * # this is a very dangerous operation and should only be used in a controlled environment
      *
-     * may also minorly increase performance of reflective get member operations.
+     * may also minorly increase performance of reflective get member operations
      */
     @JvmStatic
     @ApiStatus.Experimental
@@ -538,9 +545,9 @@ object MHUtils {
     }
 
     /**
-     * Return a map of all values attached to this annotation.
+     * Return a map of all values attached to this annotation
      *
-     * This method is considerably faster than reflection.
+     * This method is considerably faster than reflection
      */
     @Suppress("UNCHECKED_CAST")
     @JvmStatic

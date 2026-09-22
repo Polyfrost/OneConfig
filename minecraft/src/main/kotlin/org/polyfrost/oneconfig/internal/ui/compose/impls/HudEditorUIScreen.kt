@@ -1,29 +1,25 @@
 package org.polyfrost.oneconfig.internal.ui.compose.impls
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.EaseIn
 import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.key.KeyEventType
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.gui.GuiGraphicsExtractor
-//? >= 1.21.10
-import net.minecraft.client.input.KeyEvent
+//? if < 1.21.11
+//import org.lwjgl.glfw.GLFW
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
+import org.polyfrost.oneconfig.internal.ui.compose.ComposePreloader
+import org.polyfrost.oneconfig.internal.ui.components.RetainedVisibility
+import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignStudio
@@ -36,8 +32,40 @@ import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Theme
 
-@OptIn(InternalComposeUiApi::class)
-class HudEditorUIScreen : ComposeScreen() {
+private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/HudEditor")
+
+private const val PREWARM_FRAMES = 2
+
+class HudEditorUIScreen private constructor() : ComposeScreen() {
+    companion object {
+        private var instance: HudEditorUIScreen? = null
+
+        @JvmStatic
+        fun open(): HudEditorUIScreen = instance ?: HudEditorUIScreen().also { instance = it }
+
+        @JvmStatic
+        fun prewarmShared(): Boolean = open().runPrewarm()
+
+        @JvmStatic
+        fun endPrewarmShared() {
+            instance?.endPrewarm()
+        }
+    }
+
+    @Volatile private var everOpened = false
+
+    private fun runPrewarm(): Boolean {
+        if (everOpened || Platform.screen().current<Any?>() === this) return true
+        return try {
+            prewarm(PREWARM_FRAMES, budget = 1) { }
+        } catch (t: Throwable) {
+            ComposePreloader.fail("HUD editor warm-up failed", t)
+            false
+        }
+    }
+
+    override val retainsScene: Boolean get() = true
+
     @Volatile private var closeRequested = false
     @Volatile private var closeRequestedAt = 0L
     @Volatile private var closeAnimationMs = 0L
@@ -50,39 +78,62 @@ class HudEditorUIScreen : ComposeScreen() {
         UiSounds.play(UiSoundEvent.CLOSE)
     }
 
+    private fun cancelClose(): Boolean {
+        if (!closeRequested) return false
+        closeRequested = false
+        requestOpenCallback?.invoke()
+        UiSounds.play(UiSoundEvent.OPEN)
+        return true
+    }
+
     @Volatile private var returningToOneConfig = false
 
     private var requestCloseCallback: (() -> Unit)? = null
+    private var requestOpenCallback: (() -> Unit)? = null
 
     override val scrollSpeed: Float get() = 0.5f
 
     override fun init() {
+        everOpened = true
+        HudManager.onEditorScreenAdded()
+        HudManager.editorOpenRevision.intValue++
+        closeRequested = false
+        closeRequestedAt = 0L
+        closeAnimationMs = 0L
+        returningToOneConfig = false
         UiSounds.acquireAmbience()
         super.init()
+        requestOpenCallback?.invoke()
     }
 
     override fun removed() {
         if (!returningToOneConfig) {
-            // Off by default: closing the editor leaves the last config page as the route to come back to,
-            // so the toggle key opens the OneConfig menu rather than the editor again.
+            // off by default so closing the editor leaves the last config page as the route to come back to
             if (OneConfigConfig.restoreHudEditor) ShellState.lastRoute = HudEditorRoute
             ShellState.lastClosedAt = System.currentTimeMillis()
         }
-        if (HudManager.isEditorOpen) {
-            HudManager.onEditorScreenRemoved()
-        }
+        HudManager.onEditorScreenRemoved()
         UiSounds.releaseAmbience()
         super.removed()
     }
 
-    //? >= 1.21.10 {
-    override fun keyPressed(event: KeyEvent): Boolean {
-        val key = event.key
-    //? } else {
-    /*override fun keyPressed(key: Int, scanCode: Int, modifiers: Int): Boolean {
-    *///? }
+    override fun isPauseScreen(): Boolean = OneConfigConfig.pauseGame
+
+    private fun handleOneConfigKeybind(): Boolean {
+        if (closeRequested) return cancelClose()
+        if (OneConfigConfig.keybindClosesGui) {
+            OneConfigConfig.notifyKeybindClosedGui()
+            beginClose()
+            requestCloseCallback?.invoke()
+        } else {
+            returningToOneConfig = true
+            Platform.screen().display(OneConfigUIScreen.resume())
+        }
+        return true
+    }
+
+    override fun handleKeyPressed(key: Int, modifiers: Int): Boolean {
         if (key == InputConstants.KEY_ESCAPE) {
-            if (KeybindRecordingBus.consumeEscape()) return true
             if (!closeRequested) {
                 beginClose()
                 requestCloseCallback?.invoke()
@@ -91,31 +142,30 @@ class HudEditorUIScreen : ComposeScreen() {
         }
         val toggleKey = OneConfigConfig.oneConfigKeybind.keyCodes?.firstOrNull()
         if (toggleKey != null && key == toggleKey && !KeybindRecordingBus.isRecording) {
-            if (OneConfigConfig.keybindClosesGui) {
-                if (!closeRequested) {
-                    OneConfigConfig.notifyKeybindClosedGui()
-                    beginClose()
-                    requestCloseCallback?.invoke()
-                }
-            } else {
-                returningToOneConfig = true
-                Platform.screen().display(OneConfigUIScreen())
-            }
-            return true
+            return handleOneConfigKeybind()
         }
-        //? >= 1.21.10 {
-        return super.keyPressed(event)
-        //? } else {
-        /*return super.keyPressed(key, scanCode, modifiers)
-        *///? }
+        return false
+    }
+
+    override fun handleMouseClicked(button: Int): Boolean {
+        if (KeybindRecordingBus.isRecording) return false
+        // Only side and extra mouse buttons can trigger the OneConfig keybind
+        //~ if < 1.21.11 'InputConstants.MOUSE_BUTTON_4' -> 'GLFW.GLFW_MOUSE_BUTTON_4'
+        if (button >= InputConstants.MOUSE_BUTTON_4 &&
+            KeybindManager.isTriggeredByMouse(OneConfigConfig.oneConfigKeybind, button)
+        ) {
+            return handleOneConfigKeybind()
+        }
+        return false
     }
 
     //~ if >= 26.1 'render' -> 'extractRenderState'
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
-        // A screen drawn over this one may render it as its parent; don't act on that pass (it would close
-        // the screen on top of us, among other things).
+        // a screen drawn over this one may render it as its parent so skip that pass or it closes the screen above us
         if (Platform.screen().current<Any?>() !== this) return
         if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= closeAnimationMs) {
+            //? if < 1.21.8
+            //renderBackground(ctx, mouseX, mouseY, tickDelta)
             Platform.screen().close()
             return
         }
@@ -126,8 +176,9 @@ class HudEditorUIScreen : ComposeScreen() {
             HudManager.guiScreenWidth = sw
             HudManager.guiScreenHeight = sh
             HudManager.prepare(sw, sh)
+            ItemCatalog.renderHudIcons()
         }
-        HudEditorViewport.update(Platform.screen().viewportWidth(), Platform.screen().viewportHeight())
+        HudEditorViewport.update(Platform.screen().windowWidth(), Platform.screen().windowHeight())
         //~ if >= 26.1 'render' -> 'extractRenderState'
         super.extractRenderState(ctx, mouseX, mouseY, tickDelta)
     }
@@ -135,8 +186,9 @@ class HudEditorUIScreen : ComposeScreen() {
     @Composable
     override fun compose() {
         DisposableEffect(Unit) {
+            // a failed scene is disposed and rebuilt while the screen stays open, which is not a close
             onDispose {
-                if (HudManager.isEditorOpen) {
+                if (Platform.screen().current<Any?>() !== this@HudEditorUIScreen) {
                     HudManager.onEditorScreenRemoved()
                 }
             }
@@ -146,31 +198,32 @@ class HudEditorUIScreen : ComposeScreen() {
         LaunchedEffect(Unit) { visible = true }
 
         val requestClose: () -> Unit = { visible = false }
+        val requestOpen: () -> Unit = { visible = true }
         SideEffect {
             requestCloseCallback = requestClose
+            requestOpenCallback = requestOpen
         }
 
-        val exitMs = guiCloseAnimationMillis().toInt()
-        AnimatedVisibility(
+        val exitMs = guiCloseAnimationMillis().toInt().coerceAtLeast(1)
+        RetainedVisibility(
             visible = visible,
-            enter = fadeIn(tween(200, easing = EaseOutCubic)) + scaleIn(tween(200, easing = EaseOutCubic), initialScale = 0.92f),
-            exit = if (exitMs > 0)
-                fadeOut(tween(exitMs, easing = EaseIn)) + scaleOut(tween(exitMs, easing = EaseIn), targetScale = 0.92f)
-            else ExitTransition.None,
-        ) {
-            Box(Modifier.fillMaxSize()) {
-                CompositionLocalProvider(
-                    LocalLifecycleOwner provides Lifecycle,
-                    LocalViewModelStoreOwner provides OCViewModelStoreOwner
-                ) {
-                    Theme {
-                        HudDesignStudio(
-                            onReturnToOneConfig = {
-                                returningToOneConfig = true
-                                Platform.screen().display(OneConfigUIScreen())
-                            }
-                        )
-                    }
+            enter = tween(200, easing = EaseOutCubic),
+            exit = tween(exitMs, easing = EaseIn),
+            modifier = Modifier.fillMaxSize(),
+            hiddenScale = 0.92f,
+            openKey = HudManager.editorOpenRevision.intValue,
+        ) { _ ->
+            CompositionLocalProvider(
+                LocalLifecycleOwner provides Lifecycle,
+                LocalViewModelStoreOwner provides OCViewModelStoreOwner
+            ) {
+                Theme(pixelGrid = true) {
+                    HudDesignStudio(
+                        onReturnToOneConfig = {
+                            returningToOneConfig = true
+                            Platform.screen().display(OneConfigUIScreen.resume())
+                        }
+                    )
                 }
             }
         }

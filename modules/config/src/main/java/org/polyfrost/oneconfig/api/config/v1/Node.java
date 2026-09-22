@@ -43,9 +43,7 @@ public abstract class Node {
     protected static final Logger LOGGER = LogManager.getLogger("OneConfig/Config");
     @Nullable
     public transient Object description;
-    // @jdk.internal.vm.annotation.Stable
     private transient String id;
-    // @jdk.internal.vm.annotation.Stable
     @Nullable
     private transient Object title;
     @Nullable
@@ -58,7 +56,7 @@ public abstract class Node {
     }
 
     /**
-     * validate and trim the given string, returning null if it is empty.
+     * validate and trim the given string returning null if it is empty
      */
     @Contract("null -> null")
     public static Object strv(Object s) {
@@ -69,17 +67,15 @@ public abstract class Node {
         return s1;
     }
 
-    /**
-     * The ID of this node.
-     */
     public String getID() {
         return id;
     }
 
     /**
-     * Set the ID of this node. the ID is used solely by the backend to identify it.
-     * It may only contain alphanumeric characters, and underscores.
-     * <br>note that <b>this operation is permanent</b> and cannot be undone/changed!
+     * Set the ID of this node
+     * <br>
+     * The ID is used solely by the backend to identify it and may only contain alphanumeric characters and underscores
+     * <br>note that <b>this operation is permanent</b> and cannot be undone or changed
      */
     public void setID(@NotNull String id) {
         //noinspection ConstantValue
@@ -138,11 +134,11 @@ public abstract class Node {
     }
 
     /**
-     * Return some metadata attached to this node.
+     * Return some metadata attached to this node
      *
      * @param key the key of the metadata
      * @param <M> the type of the metadata
-     * @return the metadata, or null if it doesn't exist
+     * @return the metadata or null if it does not exist
      * @throws ClassCastException if the metadata is not of the expected type M
      */
     @SuppressWarnings("unchecked")
@@ -152,12 +148,12 @@ public abstract class Node {
     }
 
     /**
-     * Return some metadata attached to this node, or put def it is isn't present.
+     * Return some metadata attached to this node or put def if it is not present
      *
      * @param key the key of the metadata
      * @param def the default value to put if there currently is no metadata on this value
      * @param <M> the type of the metadata
-     * @return the metadata, or null if it doesn't exist
+     * @return the metadata or null if it does not exist
      */
     @SuppressWarnings("unchecked")
     public final @NotNull <M> M getOrPutMetadata(String key, Supplier<M> def) {
@@ -166,11 +162,11 @@ public abstract class Node {
     }
 
     /**
-     * Consume some metadata attached to this node, meaning it will be removed.
+     * Consume some metadata attached to this node meaning it will be removed
      *
      * @param key the key of the metadata
      * @param <M> the type of the metadata
-     * @return the metadata, or null if it doesn't exist
+     * @return the metadata or null if it does not exist
      */
     @SuppressWarnings("unchecked")
     public final @Nullable <M> M consumeMetadata(String key) {
@@ -196,17 +192,19 @@ public abstract class Node {
     }
 
     /**
-     * Overwrite all data in this node with the data from another node.
+     * Overwrite all data in this node with the data from another node
      * <br><ul>
-     * <li>For a node, all metadata will be copied from the input onto this. any duplicate keys will be overwritten.</li>
-     * <li>For a {@link Property}, the value, callbacks and display conditions are copied onto this.</li>
-     * <li>For a {@link Tree}, all children and properties will be overwritten if they are present. this operation is recursive.</li>
+     * <li>For a node all metadata will be copied from the input onto this and any duplicate keys will be overwritten</li>
+     * <li>For a {@link Property} the value and callbacks and display conditions are copied onto this</li>
+     * <li>For a {@link Tree} all children and properties will be overwritten if they are present and this operation is recursive</li>
      * </ul>
      *
      * @param with the node to overwrite this with
-     * @param preserveMissingOptions if true, any properties that are missing in THIS tree that are present in the input tree, will be added to this tree.
-     * @param skipOverwritten **DEPENDS ON PARAM "ROOT" BEING NOT NULL** - skips being overwritten if a child node has already been marked as overwritten in the root tree.
-     * @param root The root tree used to mark overwritten nodes for skipOverwritten. May be null if skipOverwritten is false.
+     * @param preserveMissingOptions if true then any properties missing in THIS tree that are present in the input tree will be added to this tree
+     * @param skipOverwritten **DEPENDS ON PARAM "ROOT" BEING NOT NULL** skips being overwritten if a child node has already been marked as overwritten in the root tree
+     * @param root The root tree used to mark overwritten nodes for skipOverwritten
+     *             <br>
+     *             May be null if skipOverwritten is false
      */
     public abstract void overwrite(Node with, boolean preserveMissingOptions, boolean skipOverwritten, @Nullable Tree root);
 

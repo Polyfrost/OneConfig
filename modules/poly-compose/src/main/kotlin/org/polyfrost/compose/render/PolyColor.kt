@@ -3,8 +3,8 @@ package org.polyfrost.compose.render
 import kotlin.math.roundToInt
 
 /**
- * A colour. Named colours such as [WHITE] hand out a fresh instance on every access, so they can
- * safely be used as config defaults without one option's change leaking into another.
+ * A colour where named colours such as [WHITE] hand out a fresh instance on every access so they
+ * can safely be used as config defaults without one option's change leaking into another
  */
 class PolyColor @JvmOverloads constructor(
     argb: Int = 0xFFFFFFFF.toInt(),
@@ -96,8 +96,6 @@ class PolyColor @JvmOverloads constructor(
     companion object {
         const val CHROMA_CYCLE_SECONDS = 10.0
 
-        // These hand out a new instance on every access: they are commonly used as the default of
-        // several options at once, and a shared instance would let a change to one leak into the rest.
         val TRANSPARENT get() = PolyColor(0x00000000)
         val WHITE get() = PolyColor(0xFFFFFFFF.toInt())
         val BLACK get() = PolyColor(0xFF000000.toInt())

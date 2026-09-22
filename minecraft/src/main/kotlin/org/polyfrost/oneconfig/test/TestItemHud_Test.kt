@@ -13,7 +13,7 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Slider
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
-import org.polyfrost.oneconfig.internal.ui.components.item.PolyItemIcon
+import org.polyfrost.oneconfig.api.ui.v1.item.PolyItemIcon
 
 class TestItemHud_Test : Hud("test-item-hud", "Item List Hud", Category.INFO) {
 
@@ -38,16 +38,18 @@ class TestItemHud_Test : Hud("test-item-hud", "Item List Hud", Category.INFO) {
     @Composable
     override fun Content() {
         val ids = displayItems.value
-        PolyBox(modifier = hudBackground().padding(PolyInsets(padLeft, padTop, padRight, padBottom))) {
-            PolyRow(gap = 3f) {
+        val scale = textScale
+        val padding = PolyInsets(padLeft * scale, padTop * scale, padRight * scale, padBottom * scale)
+        PolyBox(modifier = hudBackground().padding(padding)) {
+            PolyRow(gap = 3f * scale) {
                 if (ids.isEmpty()) {
-                    PolyMcText(text = "§7No items", scale = 1f)
+                    PolyMcText(text = "§7No items", scale = scale)
                 } else {
                     ids.forEach { id ->
-                        PolyRow(gap = 2f) {
-                            PolyItemIcon(id, iconSize.toFloat())
+                        PolyRow(gap = 2f * scale) {
+                            PolyItemIcon(id, iconSize * scale)
                             if (showNames) {
-                                PolyMcText(text = displayName(id), scale = 1f)
+                                PolyMcText(text = displayName(id), scale = scale)
                             }
                         }
                     }
@@ -84,6 +86,7 @@ class TestItemHud_Test : Hud("test-item-hud", "Item List Hud", Category.INFO) {
         (padLeft + padRight + 8f) to (padTop + padBottom + 8f)
 
     override fun clone(): Hud = (super.clone() as TestItemHud_Test).also {
+        it.items = this.items.toMutableList()
         it.displayItems = mutableStateOf(emptyList())
     }
 }

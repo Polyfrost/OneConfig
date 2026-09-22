@@ -32,9 +32,10 @@ import org.polyfrost.compose.render.PolyColor;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * {@code Property.Field#set0} mutates complex values in place, so using the same PolyColor constant
- * as the default of several options must not make a change to one option leak into the others:
- * every access to a named colour hands out its own instance.
+ * {@code Property.Field#set0} mutates complex values in place so using the same PolyColor constant
+ * as the default of several options must not make a change to one option leak into the others
+ * <br>
+ * Every access to a named colour hands out its own instance
  */
 public class SharedColorDefaultTest {
 
@@ -70,5 +71,14 @@ public class SharedColorDefaultTest {
     @Test
     void namedColoursHandOutTheirOwnInstance() {
         assertNotSame(PolyColor.Companion.getWHITE(), PolyColor.Companion.getWHITE());
+    }
+
+    @Test
+    void copyDefaultCopiesComplexValuesAndPassesSimpleOnesThrough() {
+        PolyColor colour = PolyColor.Companion.getWHITE();
+        assertNotSame(colour, Config.copyDefault(PolyColor.class, colour));
+
+        String simple = "text";
+        assertSame(simple, Config.copyDefault(String.class, simple));
     }
 }

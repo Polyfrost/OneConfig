@@ -21,16 +21,12 @@ public class Mixin_SkiaFrame {
         SkiaCtx.INSTANCE.recreateSurface(this.framebufferWidth, this.framebufferHeight);
     }
 
-    //? if >= 26.1 {
-    //? } else if >= 1.21.4 {
-    /*@Inject(method = "updateDisplay(Lcom/mojang/blaze3d/TracyFrameCapture;)V", at = @At("HEAD"))
-    void impl$onDraw(CallbackInfo ci) {
-        if (!SkiaCtx.INSTANCE.isVulkanMode()) {
-            SkiaCtx.INSTANCE.draw();
-        }
-    }
-    *///? } else {
-    /*@Inject(method = "updateDisplay()V", at = @At("HEAD"))
+    //? if < 26.1 {
+    /*//? if >= 1.21.4 {
+    @Inject(method = "updateDisplay(Lcom/mojang/blaze3d/TracyFrameCapture;)V", at = @At("HEAD"))
+    //?} else {
+    /^@Inject(method = "updateDisplay()V", at = @At("HEAD"))
+    ^///?}
     void impl$onDraw(CallbackInfo ci) {
         if (!SkiaCtx.INSTANCE.isVulkanMode()) {
             SkiaCtx.INSTANCE.draw();

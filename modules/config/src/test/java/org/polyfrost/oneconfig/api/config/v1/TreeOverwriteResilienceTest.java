@@ -34,22 +34,23 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests for the resilient-overwrite path that backs the fix for issue #706. A single incompatible
- * stored value (e.g. a raw int where a complex type is expected) must reset only that one option to
- * its default rather than aborting the load of the whole config.
+ * Regression tests for issue #706
+ * <br>
+ * A single incompatible stored value must reset only that one option to its default
+ * rather than aborting the load of the whole config
  */
 public class TreeOverwriteResilienceTest {
 
-    /** Owner of a complex (non-simple) field, so setting an incompatible value throws in {@code set0}. */
+    /** Owner of a complex field so setting an incompatible value throws in {@code set0} */
     static class Bean {
         public Point pt = new Point(1, 1);
     }
 
     private static Tree codeTree(Bean b) throws Exception {
         Tree t = Tree.tree("t");
-        // a complex field-backed property: overwriting it with an Integer fails just like PolyColor does.
+        // complex field-backed property that fails on an Integer overwrite just like PolyColor
         t.put(Properties.field("pt", null, Bean.class.getDeclaredField("pt"), b));
-        // a normal simple property that must still be loaded when a sibling fails.
+        // simple sibling that must still be loaded when the complex one fails
         t.put(Properties.simple("count", null, null, 0, Integer.class));
         return t;
     }
@@ -65,12 +66,12 @@ public class TreeOverwriteResilienceTest {
     void withoutCollectionOneBadValueAbortsTheWholeOverwrite() throws Exception {
         Bean b = new Bean();
         Tree code = codeTree(b);
-        // stored "pt" is a raw int, incompatible with the Point field -> the pre-#706-fix behaviour.
+        // stored "pt" is a raw int incompatible with the Point field which is the pre-#706 behaviour
         Tree stored = storedTree(99, 42);
 
         assertThrows(RuntimeException.class, () -> code.overwrite(stored, false));
 
-        // proof of the bug: because the bad option threw, the good sibling never got applied.
+        // the bad option threw so the good sibling never got applied
         assertEquals(0, code.getProp("count").get());
         assertEquals(new Point(1, 1), b.pt);
     }
@@ -82,15 +83,11 @@ public class TreeOverwriteResilienceTest {
         Tree stored = storedTree(99, 42);
 
         Tree.beginFailureCollection();
-        // must not throw, unlike the case above.
         assertDoesNotThrow(() -> code.overwrite(stored, false));
         List<String> failures = Tree.endFailureCollection();
 
-        // only the incompatible option was recorded...
         assertEquals(List.of("pt"), failures);
-        // ...it kept its default (was never mutated)...
         assertEquals(new Point(1, 1), b.pt);
-        // ...and the good sibling was loaded normally.
         assertEquals(42, code.getProp("count").get());
     }
 
@@ -98,7 +95,7 @@ public class TreeOverwriteResilienceTest {
     void withCollectionAllGoodValuesLoadWithNoFailures() throws Exception {
         Bean b = new Bean();
         Tree code = codeTree(b);
-        // "pt" is missing from stored, so only the compatible "count" is applied.
+        // "pt" is missing from stored so only the compatible "count" is applied
         Tree stored = Tree.tree("t");
         stored.put(Properties.simple("count", null, null, 7, Integer.class));
 

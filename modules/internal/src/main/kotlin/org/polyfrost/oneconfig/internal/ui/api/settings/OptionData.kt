@@ -35,15 +35,17 @@ class SliderOptionData(prop: Property<*>) : OptionData(prop) {
 }
 
 /**
- * A start/end pair held in a single property, as a two-element numeric array or list. Both ends are written
- * together and in the container shape the property already holds, so the backing field's type is preserved.
+ * A start/end pair held in a single property as a two-element numeric array or list
+ *
+ * Both ends are written together in the container shape the property already holds so the backing field's
+ * type is preserved
  */
 class RangeSliderOptionData(prop: Property<*>) : OptionData(prop) {
     val min: Float get() = prop.getMetadata("min") ?: 0f
     val max: Float get() = prop.getMetadata("max") ?: 100f
     val step: Float get() = prop.getMetadata("step") ?: 0f
 
-    /** The current `start to end`, or null when the property does not hold a two-element numeric pair. */
+    /** The current `start to end` or null when the property does not hold a two-element numeric pair */
     fun read(): Pair<Float, Float>? {
         val values = prop.readNumbers() ?: return null
         if (values.size < 2) return null
@@ -54,12 +56,11 @@ class RangeSliderOptionData(prop: Property<*>) : OptionData(prop) {
 }
 
 /**
- * An ordered, editable chain of numbers held in a single property, as a numeric array or list — reorder,
- * edit a value in place, remove an entry, or append the next one.
+ * An ordered editable chain of numbers held in a single property as a numeric array or list
  *
- * [lockedLeading] entries at the front are fixed: they cannot be moved, edited or removed, which suits chains
- * that always begin from a known state. Whatever the widget writes still goes through the property's setter, so
- * a backing config is free to normalize further (dedupe, clamp, enforce a minimum length).
+ * [lockedLeading] entries at the front cannot be moved edited or removed
+ *
+ * Writes go through the property's setter so a backing config is free to normalize further
  */
 class NumberChainOptionData(prop: Property<*>) : OptionData(prop) {
     val min: Float get() = prop.getMetadata("min") ?: 0f
@@ -67,17 +68,17 @@ class NumberChainOptionData(prop: Property<*>) : OptionData(prop) {
     val maxEntries: Int get() = prop.getMetadata("maxEntries") ?: Int.MAX_VALUE
     val lockedLeading: Int get() = prop.getMetadata("lockedLeading") ?: 0
 
-    /** Drawn after the number while an entry is being edited. [label] is expected to include it already. */
+    /** Drawn after the number while an entry is being edited and expected to already be part of [label] */
     val unit: String? get() = localizedString(prop.getMetadata("unitKey"), prop.getMetadata<String>("unit")).takeIf { it.isNotBlank() }
 
-    /** Renders one entry as a chip label. Falls back to the bare number. */
+    /** Renders one entry as a chip label falling back to the bare number */
     fun label(value: Float): String {
         val labeller = prop.getMetadata<Function<Number, String>>("entryLabel")
             ?: return formatSpinnerValue(value)
         return runCatching { labeller.apply(value) }.getOrElse { formatSpinnerValue(value) }
     }
 
-    /** The value "add" appends. Defaults to [max] when the property does not supply one. */
+    /** The value "add" appends defaulting to [max] when the property does not supply one */
     fun nextValue(current: List<Float>): Float {
         val next = prop.getMetadata<Function<List<Number>, Number>>("nextValue") ?: return max
         return runCatching { next.apply(current).toFloat() }.getOrElse { max }
@@ -98,7 +99,7 @@ private fun Property<*>.readNumbers(): List<Float>? = when (val value = get()) {
     else -> null
 }
 
-/** Writes [values] back in whatever container shape the property already holds. */
+/** Writes [values] back in whatever container shape the property already holds */
 @Suppress("UNCHECKED_CAST")
 private fun Property<*>.writeNumbers(values: List<Float>) {
     val written: Any = when (val current = get()) {
@@ -122,11 +123,11 @@ private fun Property<*>.writeNumbers(values: List<Float>) {
 }
 
 /**
- * A slider whose value may instead be "inherited" from a broader setting.
+ * A slider whose value may instead be inherited from a broader setting
  *
- * While inheriting, the property holds [inheritSentinel] (`null` unless the metadata says otherwise) and the
- * slider shows [inheritedValue] greyed out. Picking a value writes it normally; clearing goes back to the
- * sentinel. [inheritedValue] may be given as a `Supplier` so it tracks whatever it inherits from.
+ * While inheriting the property holds [inheritSentinel] and the slider shows [inheritedValue] greyed out
+ *
+ * [inheritedValue] may be given as a `Supplier` so it tracks whatever it inherits from
  */
 class InheritableSliderOptionData(prop: Property<*>) : OptionData(prop) {
     val min: Float get() = prop.getMetadata("min") ?: 0f
@@ -152,7 +153,7 @@ class InheritableSliderOptionData(prop: Property<*>) : OptionData(prop) {
             return value is Number && sentinel is Number && value.toDouble() == sentinel.toDouble()
         }
 
-    /** The value the slider should show: the explicit one, or what it inherits while unset. */
+    /** The explicit value or what it inherits while unset */
     val shownValue: Float get() = if (isInherited) inheritedValue else (prop.get() as? Number)?.toFloat() ?: inheritedValue
 
     @Suppress("UNCHECKED_CAST")
@@ -298,7 +299,7 @@ class ButtonOptionData(prop: Property<*>) : OptionData(prop) {
 class InfoOptionData(prop: Property<*>) : OptionData(prop) {
     enum class Type { Info, Success, Warning, Error }
 
-    /** Whether a real title was set (not the default placeholder). */
+    /** Whether a real title was set rather than the default placeholder */
     private val hasTitle: Boolean
         get() = !prop.getMetadata<String>("titleKey").isNullOrBlank() ||
                 (prop.title != null && prop.title != "polyui.info")
@@ -310,13 +311,12 @@ class InfoOptionData(prop: Property<*>) : OptionData(prop) {
                     lines.drop(1).joinToString("\n").takeIf { it.isNotBlank() }
         }
 
-    /** The bold heading shown beside the icon. Falls back to the description when no title was set. */
+    /** The bold heading shown beside the icon falling back to the description when no title was set */
     val heading: Any get() = if (hasTitle) title else (descriptionParts.first ?: title)
 
-    /** The secondary line shown below the heading, or null when no title was set. */
+    /** The secondary line shown below the heading or null when no title was set */
     val body: Any? get() = if (hasTitle) description?.asRenderText() else descriptionParts.second
 
-    /** The message body shown beside the icon. */
     @Deprecated("Use heading/body", ReplaceWith("heading"))
     val message: Any get() = description ?: title
 
@@ -429,8 +429,8 @@ private fun Number.toComponentType(component: Class<*>): Any = when (component) 
 }
 
 private fun Property<*>.optionLabels(): List<Any>? {
-    // Explicit display labels (e.g. compat layers that resolve labels themselves) take precedence
-    // over deriving them from the raw option values. Positionally aligned with "options".
+    // explicit display labels win over ones derived from raw option values and are positionally aligned
+    // with "options"
     getMetadata<Any>("optionLabels").optionList().takeIf { it.isNotEmpty() }?.let { return it }
 
     val raw = getMetadata<Any>("options") ?: return null

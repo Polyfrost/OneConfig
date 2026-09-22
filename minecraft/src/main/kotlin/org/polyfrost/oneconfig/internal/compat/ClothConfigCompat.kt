@@ -19,8 +19,7 @@ import java.util.*
 import java.util.function.Consumer
 
 /**
- * Compatibility layer for Cloth Config and AutoConfig.
- *
+ * Compatibility layer for Cloth Config and AutoConfig
  */
 object ClothConfigCompat {
 
@@ -64,7 +63,7 @@ object ClothConfigCompat {
         if (savingRunnable != null) {
             tree.saveFunction = savingRunnable
         }
-        // Cloth Config exposes no icon, so fall back to the mod's icon (same source Mod Menu uses).
+        // Cloth Config exposes no icon so fall back to the mod icon that Mod Menu uses
         mod?.extractIconFile()?.let {
             tree.addMetadata("icon_path", it)
         }
@@ -169,7 +168,7 @@ object ClothConfigCompat {
             currentValue is String -> Visualizer.TextVisualizer::class.java
             currentValue is Enum<*> -> Visualizer.DropdownVisualizer::class.java
             currentValue is java.awt.Color -> Visualizer.ColorVisualizer::class.java
-            else -> return false // Skip unsupported types (lists, nested objects, etc.)
+            else -> return false
         }
 
         val saveCallbackField = findField(entry.javaClass, "saveCallback")?.apply { isAccessible = true }
@@ -193,7 +192,7 @@ object ClothConfigCompat {
         property.subcategory = subcategoryName
 
         when {
-            isColor -> {} // ColorVisualizer needs no slider/dropdown metadata.
+            isColor -> {} // ColorVisualizer needs no slider or dropdown metadata
             currentValue is Enum<*> -> {
                 val constants = currentValue::class.java.enumConstants
                 property.addMetadata("options", constants?.map { it.toString() } ?: emptyList<String>())
@@ -262,8 +261,7 @@ object ClothConfigCompat {
     }
 
     /**
-     * The type of a single list entry. Taken from the values already present, falling back to the
-     * Cloth entry class itself so that empty lists still render with the right widget.
+     * Falls back to the Cloth entry class so empty lists still render with the right widget
      */
     private fun listElementType(entry: Any, currentValue: List<*>): Class<*>? {
         currentValue.firstOrNull { it != null }?.let { return it.javaClass }
@@ -328,7 +326,7 @@ object ClothConfigCompat {
 
     private fun isSubCategory(entry: Any, value: Any?): Boolean {
         if (entry.javaClass.simpleName == "SubCategoryListEntry") return true
-        // Defensive: a value that is purely a collection of config entries (each has getFieldName).
+        // fallback for entries that are just a collection of things exposing getFieldName
         return value is Collection<*> && value.isNotEmpty() && value.all { it != null && hasGetFieldName(it) }
     }
 

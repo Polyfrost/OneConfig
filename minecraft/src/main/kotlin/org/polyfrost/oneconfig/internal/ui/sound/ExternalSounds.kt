@@ -38,18 +38,17 @@ import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Downloads the large UI sound files that are intentionally not shipped inside the jar (issue #627) and
- * exposes them to Minecraft's sound engine via [OneConfigSoundPackSource], a built-in resource pack rooted
- * at [OneConfigSoundPackSource.PACK_ROOT].
+ * Downloads the large UI sound files kept out of the jar (issue #627) and exposes them to Minecraft's
+ * sound engine via [OneConfigSoundPackSource] which is a built-in pack rooted at [OneConfigSoundPackSource.PACK_ROOT]
  *
- * The manifest (`assets/oneconfig/sounds/external_sounds.json`) lists each file together with a SHA-1 hash;
- * a file is (re)downloaded only when missing or hash-mismatched, so subsequent launches are offline-friendly.
+ * The manifest `assets/oneconfig/sounds/external_sounds.json` gives a SHA-1 per file and a file is
+ * downloaded only when missing or hash-mismatched so later launches work offline
  */
 object ExternalSounds {
     private val LOGGER = LogManager.getLogger("OneConfig/Sounds")
     private const val MANIFEST = "/assets/oneconfig/sounds/external_sounds.json"
 
-    /** Where downloaded oggs live inside the pack: `<PACK_ROOT>/assets/oneconfig/sounds/<rel>`. */
+    /** Where downloaded oggs live inside the pack `<PACK_ROOT>/assets/oneconfig/sounds/<rel>` */
     private val assetsRoot: Path get() = OneConfigSoundPackSource.PACK_ROOT.resolve("assets/oneconfig/sounds")
 
     private val started = AtomicBoolean(false)

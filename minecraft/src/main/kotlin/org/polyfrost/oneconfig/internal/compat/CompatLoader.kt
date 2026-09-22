@@ -2,14 +2,21 @@ package org.polyfrost.oneconfig.internal.compat
 
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.Event
+import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent
 import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
+import org.polyfrost.oneconfig.internal.ui.compose.opengl.resyncTextureBindCache
 import java.net.URI
 import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.atomic.AtomicBoolean
 
 object CompatLoader {
+    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/Compat")
+
     private val forcedModId = ThreadLocal<String?>()
 
     private var bypassDelay = false
@@ -28,13 +35,17 @@ object CompatLoader {
         "org.polyfrost.oneconfig",
         "java.lang",
         "net.fabric",
+        "net.ornithemc.osl",
         "net.azureaaron.dandelion",
         "com.odtheking.odin",
         "de.hysky.skyblocker",
         "co.stellarskys.stella",
         "uk.co.hexeption.apec",
         "moe.nea.firmament.deps.moulconfig",
+        "io.github.notenoughupdates.moulconfig",
         "dev.tr7zw.trender",
+        "net.uku3lig.ukulib",
+        "io.github.axolotlclient.AxolotlClientConfig.",
         "dev.tr7zw.transition",
         "kotlin",
         "kotlinx",
@@ -74,6 +85,10 @@ object CompatLoader {
         }
         return null
     }
+
+    fun findModByClass(cls: Class<*>): ModInfo? = ownerByClassName
+        .computeIfAbsent(cls.name) { Optional.ofNullable(resolveOwner(it)) }
+        .orElse(null)
 
     fun markFirstModAsSkip() {
         val mod = findFirstMod()
@@ -121,6 +136,21 @@ object CompatLoader {
         }
     }
 
+    private val screenWarmups = ConcurrentLinkedDeque<() -> Unit>()
+    private val screenWarmupScheduled = AtomicBoolean(false)
+
+    fun queueScreenWarmup(block: () -> Unit) {
+        screenWarmups.add(block)
+        if (!screenWarmupScheduled.compareAndSet(false, true)) return
+        EventManager.register(FramebufferRenderEvent.End::class.java) { _ -> runNextScreenWarmup() }
+    }
+
+    private fun runNextScreenWarmup() {
+        val warmup = screenWarmups.poll() ?: return
+        if (!SkiaCtx.isVulkanMode) runCatching { resyncTextureBindCache() }
+        runCatching { warmup() }.onFailure { LOGGER.warn("Config screen warmup failed", it) }
+    }
+
     private val list: MutableList<Pair<Int, () -> Unit>> = mutableListOf()
 
     init {
@@ -131,9 +161,9 @@ object CompatLoader {
         }
 
         register<ResourceFinishedLoading> {
-            list.sortedBy { (key, _) -> key }.forEach { (_, value) ->
-                value()
-            }
+            val pending = list.sortedBy { (key, _) -> key }
+            list.clear()
+            pending.forEach { (_, value) -> value() }
         }
     }
 

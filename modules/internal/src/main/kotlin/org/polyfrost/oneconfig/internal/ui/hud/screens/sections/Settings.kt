@@ -189,8 +189,8 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
                                     )
                                 }
                             }
-                            // HUDs which draw their own background opt out of merging entirely, so
-                            // there is nothing for these switches to control
+                            // HUDs drawing their own background opt out of merging so these switches
+                            // have nothing to control
                             if (hud.canMergeBackground()) {
                                 HudSettingTarget(hud, "mergeBackground") {
                                     Row(

@@ -29,7 +29,9 @@ package org.polyfrost.oneconfig.api.platform.v1;
 import java.util.ServiceLoader;
 
 /**
- * Contains various bridges for platform-specific methods, organized into a series of subclasses.
+ * Contains various bridges for platform-specific methods
+ * <p>
+ * Organized into a series of subclasses
  */
 public final class Platform {
     private Platform() {

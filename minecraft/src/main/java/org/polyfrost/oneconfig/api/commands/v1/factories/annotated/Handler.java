@@ -6,16 +6,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a method as an executor inside a (sub)command.
+ * Marks a method as an executor inside a (sub)command
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Handler {
 
     /**
-     * Define overrides for the name this executor is given in the command tree.
+     * Overrides the name this executor is given in the command tree
      * <p>
-     * By default, the name of the method is used as the sole name.
+     * Defaults to the method name
      */
     String[] value() default {};
 

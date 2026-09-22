@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.containVerticalScroll
 import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
@@ -56,9 +57,10 @@ import org.polyfrost.oneconfig.internal.ui.themes.concentric
 import kotlin.math.roundToInt
 
 /**
- * Shared machinery for the user-editable, drag-reorderable list options
- * (text, file, color and number lists). Each option supplies the contents of a single
- * row; adding, removing, reordering, scrolling and the surrounding chrome live here.
+ * Shared machinery for the user-editable drag-reorderable list options
+ *
+ * Each option supplies the contents of a single row while adding removing reordering scrolling and the
+ * surrounding chrome live here
  */
 
 internal val ListEntryHeight = 34.dp
@@ -72,8 +74,10 @@ private val EntryShape @Composable get() = ContainerShape.concentric(ContainerPa
 internal data class ListRowEntry<T>(val id: Int, val value: T)
 
 /**
- * Holds the working copy of the list. Every mutation rewrites the state and immediately reports
- * the new values through [onCommit], which is where the option writes back to its property.
+ * Holds the working copy of the list
+ *
+ * Every mutation rewrites the state and immediately reports the new values through [onCommit] where the
+ * option writes back to its property
  */
 internal class ListEntriesState<T>(initial: List<T>, private val onCommit: (List<T>) -> Unit) {
     private var nextId = 0
@@ -113,7 +117,7 @@ internal class ListEntriesState<T>(initial: List<T>, private val onCommit: (List
     }
 }
 
-/** Per-row state handed to the row content so it can match the row's hover/focus styling. */
+/** Per-row state handed to the row content so it can match the row's hover and focus styling */
 internal class ListRowContext(
     val contentColor: Color,
     val fieldInteraction: MutableInteractionSource,
@@ -134,6 +138,7 @@ internal fun <T> ListOptionContainer(
     showAddWhenFull: Boolean = false,
     entryHeight: Dp = ListEntryHeight,
     maxHeight: Dp = 280.dp,
+    containScroll: Boolean = false,
     invalid: (T) -> Boolean = { false },
     row: @Composable RowScope.(entry: ListRowEntry<T>, ctx: ListRowContext) -> Unit,
 ) {
@@ -176,11 +181,17 @@ internal fun <T> ListOptionContainer(
     ) {
         if (entries.isNotEmpty()) {
             val scrollState = rememberScrollState()
+            val containmentModifier = if (containScroll) {
+                Modifier.containVerticalScroll(scrollState)
+            } else {
+                Modifier
+            }
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = maxHeight)
                     .fadingEdges(scrollState, theme.componentBackground)
+                    .then(containmentModifier)
                     .verticalScroll(scrollState),
             ) {
                 Box(

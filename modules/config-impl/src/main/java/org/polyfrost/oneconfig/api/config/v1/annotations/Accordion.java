@@ -35,7 +35,7 @@ public @interface Accordion {
     String title() default "";
 
     /**
-     * @deprecated translation keys will be translated by default.
+     * @deprecated translation keys will be translated by default
      */
     @Deprecated
     boolean titleTranslation() default false;
@@ -45,7 +45,7 @@ public @interface Accordion {
     String description() default "";
 
     /**
-     * @deprecated translation keys will be translated by default.
+     * @deprecated translation keys will be translated by default
      */
     @Deprecated
     boolean descriptionTranslation() default false;
@@ -58,7 +58,7 @@ public @interface Accordion {
     String category() default "General";
 
     /**
-     * @deprecated translation keys will be translated by default.
+     * @deprecated translation keys will be translated by default
      */
     @Deprecated
     boolean categoryTranslation() default false;
@@ -69,7 +69,7 @@ public @interface Accordion {
     String subcategory() default "General";
 
     /**
-     * @deprecated translation keys will be translated by default.
+     * @deprecated translation keys will be translated by default
      */
     @Deprecated
     boolean subcategoryTranslation() default false;

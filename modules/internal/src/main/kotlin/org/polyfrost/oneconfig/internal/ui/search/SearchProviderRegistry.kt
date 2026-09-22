@@ -2,15 +2,11 @@ package org.polyfrost.oneconfig.internal.ui.search
 
 import java.util.concurrent.CopyOnWriteArrayList
 
-/**
- * Object storing all search providers
- */
+/** Object storing all search providers */
 object SearchProviderRegistry {
     private val providers: CopyOnWriteArrayList<SearchProvider> = CopyOnWriteArrayList()
 
-    /**
-     * Register a new search provider
-     */
+    /** Register a new search provider */
     fun registerSearchProvider(provider: SearchProvider) {
         if (provider in providers) {
             return
@@ -20,9 +16,7 @@ object SearchProviderRegistry {
         SearchCorpus.seed(provider)
     }
 
-    /**
-     * Get the search provider with the highest priority that is currently available
-     */
+    /** The highest priority provider that is currently available */
     internal fun get(): SearchProvider =
         providers.firstOrNull { runCatching { it.isAvailable() }.getOrNull() ?: false } ?: DefaultSearchProvider
 

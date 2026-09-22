@@ -82,6 +82,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Property : org/polyf
 	protected abstract fun set0 (Ljava/lang/Object;)V
 	public final fun setAs (Ljava/lang/Object;)Z
 	public final fun setAsReferential (Ljava/lang/Object;)Z
+	public final fun setAsSilently (Ljava/lang/Object;)V
 	public fun setReferential (Ljava/lang/Object;)Z
 	public final fun toString ()Ljava/lang/String;
 }
@@ -145,6 +146,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/backend/Backend {
 	public fun exists (Ljava/lang/String;)Z
 	public final fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public final fun getTrees ()Ljava/util/Collection;
+	public final fun lastSaveFailure ()Ljava/lang/Exception;
 	public final fun load (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public final fun load (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z
 	protected abstract fun load0 (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
@@ -156,6 +158,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/backend/Backend {
 	protected abstract fun save0 (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z
 	public final fun saveAll ()V
 	public final fun saveAll (Ljava/lang/String;)V
+	public final fun unregister (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 }
 
 public final class org/polyfrost/oneconfig/api/config/v1/backend/Backend$RegistrationResult {

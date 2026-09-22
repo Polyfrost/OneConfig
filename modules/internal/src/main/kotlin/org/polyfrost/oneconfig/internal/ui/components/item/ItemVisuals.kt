@@ -1,7 +1,8 @@
 package org.polyfrost.oneconfig.internal.ui.components.item
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.hoverable
@@ -14,14 +15,18 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
@@ -36,13 +41,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.compositeOver
-import androidx.compose.ui.graphics.painter.BitmapPainter
-import androidx.compose.ui.graphics.toComposeImageBitmap
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.skiaCanvas
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -50,23 +55,31 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
+import org.jetbrains.skia.Rect
+import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.IconButton
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.containVerticalScroll
 import org.polyfrost.oneconfig.internal.ui.components.localizedString
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-import java.awt.image.BufferedImage
+import kotlin.math.ceil
 
 val ItemTileShape = RoundedCornerShape(8.dp)
 val ItemIconShape = RoundedCornerShape(5.dp)
 
 val ItemTileSize = 44.dp
 
-/** The catalog, deduplicated and sorted by display name so grid positions never jump. */
+fun polyItemRenderSizePx(size: Float, hud: Hud?): Int =
+    ceil(size * Platform.compatibility().options().guiScale * (hud?.effectiveScale ?: 1f)).toInt()
+
+/** The catalog deduplicated and sorted by display name so grid positions never jump */
 @Composable
 fun rememberItemCatalog(key: Any? = Unit): List<ItemDescriptor> = remember(key) {
     ItemCatalog.items()
@@ -77,14 +90,15 @@ fun rememberItemCatalog(key: Any? = Unit): List<ItemDescriptor> = remember(key) 
         }
 }
 
-/** [rememberItemCatalog] indexed by registry ID, for resolving stored IDs to descriptors. */
+/** [rememberItemCatalog] indexed by registry ID for resolving stored IDs to descriptors */
 @Composable
 fun rememberItemCatalogById(catalog: List<ItemDescriptor>): Map<String, ItemDescriptor> =
     remember(catalog) { catalog.associateBy(ItemDescriptor::id) }
 
 /**
- * The icon for [id], showing [placeholder] until the catalog resolves it (icons may need the
- * Minecraft render thread) or if the item is unknown. [framed] adds the theme chip background.
+ * The icon for [id] showing [placeholder] until the catalog resolves it or if the item is unknown
+ *
+ * [framed] adds the theme chip background
  */
 @Composable
 fun ItemIcon(
@@ -92,28 +106,32 @@ fun ItemIcon(
     modifier: Modifier = Modifier,
     framed: Boolean = true,
     alpha: Float = 1f,
-    placeholder: String = "layers",
+    placeholder: String = "eye-off",
 ) {
+    val itemIcon = rememberItemIconHandle(id)
     val theme = LocalTheme.current
-    var icon by remember(id) { mutableStateOf(ItemCatalog.icon(id)) }
-    LaunchedEffect(id) {
-        ItemCatalog.loadIcon(id) { icon = it }
-    }
-    val bitmap = remember(icon) { icon?.toBitmap() }
     val background = if (framed) Modifier.background(theme.chipBackground) else Modifier
     Box(
         modifier = modifier
+            .aspectRatio(1f)
             .clip(ItemIconShape)
             .then(background),
         contentAlignment = Alignment.Center,
     ) {
-        if (bitmap != null) {
-            Image(
-                painter = BitmapPainter(bitmap, filterQuality = FilterQuality.Low),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize().padding(if (framed) 2.dp else 1.dp),
-                alpha = alpha,
-            )
+        if (itemIcon != null) {
+            // Register at placement so icons revealed by a scroll are in the atlas before this frame draws.
+            Canvas(modifier = Modifier.fillMaxSize().padding(if (framed) 2.dp else 1.dp).onPlaced { coords ->
+                val surfaceScale = Platform.screen().surfaceRatio().coerceAtLeast(0.0001f)
+                itemIcon.setRenderSizePx(ceil(maxOf(coords.size.width, coords.size.height) * surfaceScale).toInt())
+            }) {
+                drawIntoCanvas { canvas ->
+                    itemIcon.draw(
+                        canvas.skiaCanvas,
+                        Rect.makeWH(size.width, size.height),
+                        alpha,
+                    )
+                }
+            }
         } else {
             Icon(
                 placeholder,
@@ -124,7 +142,7 @@ fun ItemIcon(
     }
 }
 
-/** Display name over registry ID; a `null` [item] is not in the catalog, so [id] becomes the name. */
+/** Display name over registry ID where a `null` [item] is not in the catalog so [id] becomes the name */
 @Composable
 fun ItemLabel(
     id: String,
@@ -155,7 +173,7 @@ fun ItemLabel(
     }
 }
 
-/** A square item cell with selection border, tick badge and tooltip. `null` [onClick] = decorative. */
+/** A square item cell with selection border tick badge and tooltip where a `null` [onClick] is decorative */
 @Composable
 fun ItemTile(
     item: ItemDescriptor,
@@ -188,7 +206,7 @@ fun ItemTile(
                 .border(1.dp, border, ItemTileShape)
                 .hoverable(interaction)
                 .pointerHoverIcon(if (interactive) PointerIcon.Hand else PointerIcon.Default)
-                .then(if (interactive) Modifier.onClick(interaction, onClick!!) else Modifier)
+                .then(if (interactive) Modifier.onClick(interaction, onClick) else Modifier)
                 .padding(5.dp),
             contentAlignment = Alignment.Center,
         ) {
@@ -204,7 +222,7 @@ fun ItemTile(
     }
 }
 
-/** Wraps [content] in the name/ID tooltip, or renders it bare when [enabled] is false. */
+/** Wraps [content] in the name and ID tooltip or renders it bare when [enabled] is false */
 @Composable
 fun ItemTooltip(
     item: ItemDescriptor,
@@ -235,7 +253,7 @@ fun ItemTooltip(
     )
 }
 
-/** Adaptive grid of [ItemTile]s; [selected] and [enabled] are queried per item, so selection rules stay with the caller. */
+/** Adaptive grid of [ItemTile]s where [selected] and [enabled] are queried per item so selection rules stay with the caller */
 @Composable
 fun ItemGrid(
     items: List<ItemDescriptor>,
@@ -247,25 +265,41 @@ fun ItemGrid(
     spacing: Dp = 6.dp,
     onClick: ((ItemDescriptor) -> Unit)? = null,
 ) {
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(cellSize),
-        modifier = modifier.fillMaxWidth().heightIn(max = maxHeight),
-        horizontalArrangement = Arrangement.spacedBy(spacing),
-        verticalArrangement = Arrangement.spacedBy(spacing),
-    ) {
-        items(items, key = ItemDescriptor::id) { item ->
-            ItemTile(
-                item,
-                modifier = Modifier.fillMaxWidth(),
-                selected = selected(item),
-                enabled = enabled(item),
-                onClick = onClick?.let { click -> { click(item) } },
+    val gridState = rememberLazyGridState()
+    val scrollable = gridState.canScrollBackward || gridState.canScrollForward
+    Box(modifier = modifier.fillMaxWidth().heightIn(max = maxHeight)) {
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(cellSize),
+            state = gridState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(end = if (scrollable) ScrollbarGutter else 0.dp)
+                .containVerticalScroll { gridState.canScrollBackward || gridState.canScrollForward },
+            horizontalArrangement = Arrangement.spacedBy(spacing),
+            verticalArrangement = Arrangement.spacedBy(spacing),
+        ) {
+            items(items, key = ItemDescriptor::id) { item ->
+                ItemTile(
+                    item,
+                    modifier = Modifier.fillMaxWidth(),
+                    selected = selected(item),
+                    enabled = enabled(item),
+                    onClick = onClick?.let { click -> { click(item) } },
+                )
+            }
+        }
+        if (scrollable) {
+            VerticalScrollbar(
+                adapter = rememberScrollbarAdapter(gridState),
+                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
             )
         }
     }
 }
 
-/** Search box for [ItemGrid]. [autoFocus] is off by default, for embedded (non-popup) use. */
+private val ScrollbarGutter = 12.dp
+
+/** Search box for [ItemGrid] where [autoFocus] is off by default for embedded use */
 @Composable
 fun ItemSearchField(
     value: String,
@@ -292,7 +326,7 @@ fun ItemSearchField(
         textStyle = TextStyle(color = theme.textColor, fontSize = 12.sp, fontFamily = theme.typography.family),
         cursorBrush = SolidColor(theme.textColor),
         interactionSource = interaction,
-        modifier = modifier.focusRequester(focusRequester),
+        modifier = modifier.trackTextInputFocus().focusRequester(focusRequester),
         decorationBox = { inner ->
             Row(
                 modifier = Modifier
@@ -325,10 +359,13 @@ fun ItemSearchField(
 }
 
 /**
- * Header, search field and result grid: the whole item selector, for any HUD or screen. The
- * [modifier] supplies the chrome, so it fits a dropdown, a HUD editor panel or a full screen;
- * [selected] and [onToggle] leave the selection with the caller. [maxEntries] of `0` or less is
- * unlimited, `1` is radio-style.
+ * Header search field and result grid making up the whole item selector for any HUD or screen
+ *
+ * The [modifier] supplies the chrome so it fits a dropdown a HUD editor panel or a full screen
+ *
+ * [selected] and [onToggle] leave the selection with the caller
+ *
+ * [maxEntries] of `0` or less is unlimited and `1` is radio-style
  */
 @Composable
 fun ItemPicker(
@@ -344,7 +381,6 @@ fun ItemPicker(
     titleKey: String? = ItemStrings.Title,
     searchPlaceholderKey: String = ItemStrings.Search,
     emptyKey: String = ItemStrings.Empty,
-    catalogUnavailableKey: String = ItemStrings.CatalogUnavailable,
     header: @Composable (ColumnScope.() -> Unit)? = null,
 ) {
     val theme = LocalTheme.current
@@ -393,22 +429,25 @@ fun ItemPicker(
             placeholderKey = searchPlaceholderKey,
         )
 
-        when {
-            items.isEmpty() -> ItemMessage(catalogUnavailableKey)
-            filtered.isEmpty() -> ItemMessage(emptyKey)
-            else -> ItemGrid(
-                items = filtered,
-                selected = { it.id in selected },
-                enabled = { canSelect(selected, it.id, maxEntries) },
-                cellSize = cellSize,
-                maxHeight = gridMaxHeight,
-                onClick = { onToggle(it.id) },
-            )
+        Box(Modifier.fillMaxWidth().height(gridMaxHeight)) {
+            when {
+                items.isEmpty() -> ItemMessage(emptyKey, height = gridMaxHeight)
+                filtered.isEmpty() -> ItemMessage(emptyKey, height = gridMaxHeight)
+                else -> ItemGrid(
+                    items = filtered,
+                    selected = { it.id in selected },
+                    enabled = { canSelect(selected, it.id, maxEntries) },
+                    modifier = Modifier.fillMaxSize(),
+                    cellSize = cellSize,
+                    maxHeight = gridMaxHeight,
+                    onClick = { onToggle(it.id) },
+                )
+            }
         }
     }
 }
 
-/** Centered message for empty/unavailable states. */
+/** Centered message for empty and unavailable states */
 @Composable
 fun ItemMessage(key: String, modifier: Modifier = Modifier, height: Dp = 120.dp) {
     Box(modifier = modifier.fillMaxWidth().height(height), contentAlignment = Alignment.Center) {
@@ -420,22 +459,14 @@ fun ItemMessage(key: String, modifier: Modifier = Modifier, height: Dp = 120.dp)
     }
 }
 
-/** Default translation keys; every composable taking one accepts an override. */
+/** Default translation keys where every composable taking one accepts an override */
 object ItemStrings {
     const val Title = "oneconfig.itemlist.title"
     const val Search = "oneconfig.itemlist.search"
     const val Empty = "oneconfig.itemlist.empty"
     const val Unavailable = "oneconfig.itemlist.unavailable"
-    const val CatalogUnavailable = "oneconfig.itemlist.catalog_unavailable"
 }
 
-/** Whether [id] can be picked; already-selected items stay clickable so they can be deselected. */
+/** Whether [id] can be picked where already-selected items stay clickable so they can be deselected */
 fun canSelect(selected: List<String>, id: String, maxEntries: Int): Boolean =
     id in selected || maxEntries <= 0 || maxEntries == 1 || selected.size < maxEntries
-
-internal fun ItemIconData.toBitmap() = runCatching {
-    require(width > 0 && height > 0 && argb.size >= width * height)
-    BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB).also {
-        it.setRGB(0, 0, width, height, argb, 0, width)
-    }.toComposeImageBitmap()
-}.getOrNull()

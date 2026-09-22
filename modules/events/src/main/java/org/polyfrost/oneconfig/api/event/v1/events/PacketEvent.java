@@ -20,11 +20,12 @@ public abstract class PacketEvent extends Event.Cancellable {
     }
 
     /**
-     * Due to differences across Minecraft versions, this is a Duck method, meaning that it will return the expected type for that minecraft version.
+     * This is a Duck method because Minecraft versions differ
+     * <br> It returns the expected type for that minecraft version
      * <ul>
-     *     <li>For legacy forge, this will be a IPacket.</li>
-     *     <li>For modern forge, this will be a Packet.</li>
-     *     <li>For fabric, this will be a Packet.</li>
+     *     <li>legacy forge gives a IPacket</li>
+     *     <li>modern forge gives a Packet</li>
+     *     <li>fabric gives a Packet</li>
      * </ul>
      */
     @SuppressWarnings("unchecked")

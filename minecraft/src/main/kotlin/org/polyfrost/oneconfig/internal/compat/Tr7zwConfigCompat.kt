@@ -50,13 +50,16 @@ object Tr7zwConfigCompat {
             ?: readScreenTitle(screen)?.takeIf { it.isNotBlank() }
             ?: "tr7zw Config"
         tree.noCache = true
-        // tr7zw/trender configs expose no icon, so fall back to the mod's icon (same source Mod Menu uses).
+        // tr7zw/trender configs expose no icon so fall back to the mod icon that Mod Menu also uses
         mod?.extractIconFile()?.let {
             tree.addMetadata("icon_path", it)
         }
 
         findMethod(screen.javaClass, "save")?.let { saveMethod ->
             tree.saveFunction = Runnable { runCatching { saveMethod.invoke(screen) } }
+        }
+        findMethod(screen.javaClass, "reset")?.let { resetMethod ->
+            tree.addMetadata(CompatSnapshots.CUSTOM_RESET_METADATA, Runnable { resetMethod.invoke(screen) })
         }
 
         var category = DEFAULT_CATEGORY

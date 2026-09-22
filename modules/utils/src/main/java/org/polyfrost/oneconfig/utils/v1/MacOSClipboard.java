@@ -32,7 +32,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * macOS clipboard via NSPasteboard. Loaded only on macOS through {@link ClipboardHelper}.
+ * macOS clipboard via NSPasteboard
+ * <p>
+ * Loaded only on macOS through {@link ClipboardHelper}
  */
 @ApiStatus.Internal
 public final class MacOSClipboard {

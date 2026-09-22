@@ -35,12 +35,9 @@ class DropdownPositionProvider(
         layoutDirection: LayoutDirection,
         popupContentSize: IntSize
     ): IntOffset {
-        // The min margin above and below the menu, relative to the screen.
-        // The content offset specified using the dropdown offset parameter.
         val contentOffsetX = with(density) { contentOffset.x.roundToPx() }
         val contentOffsetY = with(density) { contentOffset.y.roundToPx() }
 
-        // Compute horizontal position.
         val toRight = anchorBounds.left + contentOffsetX
         val toLeft = anchorBounds.right - contentOffsetX - popupContentSize.width
         val toDisplayRight = windowSize.width - popupContentSize.width
@@ -53,21 +50,12 @@ class DropdownPositionProvider(
             it >= 0 && it + popupContentSize.width <= windowSize.width
         } ?: toLeft
 
-        // Compute vertical position.
-        val toBottom = maxOf(anchorBounds.bottom + contentOffsetY)
-        val toTop = anchorBounds.top - contentOffsetY - popupContentSize.height
-        val toCenter = anchorBounds.top - popupContentSize.height / 2
-        val toDisplayBottom = windowSize.height - popupContentSize.height
-        var y = sequenceOf(toBottom, toTop, toCenter, toDisplayBottom).firstOrNull {
-            it + popupContentSize.height <= windowSize.height
-        } ?: toTop
-
-        // Desktop specific vertical position checking
-        val aboveAnchor = anchorBounds.top + contentOffsetY
-        val belowAnchor = windowSize.height - anchorBounds.bottom - contentOffsetY
-
-        if (belowAnchor >= aboveAnchor) {
-            y = anchorBounds.bottom + contentOffsetY
+        val spaceAbove = anchorBounds.top - contentOffsetY
+        val spaceBelow = windowSize.height - anchorBounds.bottom - contentOffsetY
+        var y = if (spaceBelow >= spaceAbove) {
+            anchorBounds.bottom + contentOffsetY
+        } else {
+            anchorBounds.top - contentOffsetY - popupContentSize.height
         }
 
         if (y + popupContentSize.height > windowSize.height) {
@@ -132,10 +120,8 @@ fun SimpleDropdownMenu(
     if (expandedStates.currentState || expandedStates.targetState) {
         val transformOriginState = remember { mutableStateOf(TransformOrigin.Center) }
         val density = LocalDensity.current
-        // The original [DropdownMenuPositionProvider] is not yet suitable for large screen devices,
-        // so we need to make additional checks and adjust the position of the [DropdownMenu] to
-        // avoid content being cut off if the [DropdownMenu] contains too many items.
-        // See: https://github.com/JetBrains/compose-jb/issues/1388
+        // the stock DropdownMenuPositionProvider cuts off long menus on large screens
+        // see https://github.com/JetBrains/compose-jb/issues/1388
         val popupPositionProvider = DropdownPositionProvider(
             offset,
             density

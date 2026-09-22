@@ -1,12 +1,12 @@
 package org.polyfrost.oneconfig.internal.ui.services
 
 //? if >= 26.2 {
-import com.mojang.blaze3d.GpuFormat
+import com.mojang.renderpearl.api.GpuFormat
 import com.mojang.blaze3d.pipeline.RenderTarget
 import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vulkan.VulkanCommandEncoder
-import com.mojang.blaze3d.vulkan.VulkanDevice
-import com.mojang.blaze3d.vulkan.VulkanGpuTexture
+import com.mojang.renderpearl.backend.vulkan.VulkanCommandEncoder
+import com.mojang.renderpearl.backend.vulkan.VulkanDevice
+import com.mojang.renderpearl.backend.vulkan.VulkanGpuTexture
 import net.minecraft.client.Minecraft
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.DirectContext
@@ -19,10 +19,8 @@ import org.polyfrost.oneconfig.internal.mixin.blaze3d.GpuDeviceAccessor
 import org.slf4j.LoggerFactory
 
 /**
- * Vulkan-backed [VulkanService] using Minecraft 26.2's native Vulkan backend.
- *
- * Replaces [CinnabarVulkanService]: 26.2 ships its own Vulkan renderer in Blaze3D, so the
- * vk handles are pulled straight from the public [VulkanDevice] API instead of Cinnabar's.
+ * Vulkan-backed [VulkanService] for Minecraft 26.2 which ships its own Blaze3D Vulkan renderer
+ * so the vk handles come straight off [VulkanDevice] rather than Cinnabar
  */
 class NativeVulkanService private constructor(
     private val vkInstance: Long,
@@ -94,7 +92,7 @@ class NativeVulkanService private constructor(
     override fun restoreMainRTLayout() {
         transitionImage(
             Minecraft.getInstance().gameRenderer.mainRenderTarget().colorTexture as? VulkanGpuTexture,
-            oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            oldLayout = VK_IMAGE_LAYOUT_GENERAL,
             newLayout = VK_IMAGE_LAYOUT_GENERAL,
             srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
             dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
@@ -106,7 +104,7 @@ class NativeVulkanService private constructor(
     override fun transitionOffscreenForSampling(target: RenderTarget) {
         transitionImage(
             target.colorTexture as? VulkanGpuTexture,
-            oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            oldLayout = VK_IMAGE_LAYOUT_GENERAL,
             newLayout = VK_IMAGE_LAYOUT_GENERAL,
             srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
             dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
@@ -119,16 +117,16 @@ class NativeVulkanService private constructor(
         transitionImage(
             target.colorTexture as? VulkanGpuTexture,
             oldLayout = VK_IMAGE_LAYOUT_GENERAL,
-            newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-            srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            newLayout = VK_IMAGE_LAYOUT_GENERAL,
+            srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT or VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
             dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-            srcAccessMask = VK_ACCESS_SHADER_READ_BIT,
+            srcAccessMask = VK_ACCESS_SHADER_READ_BIT or VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
             dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT or VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
         )
     }
 
     override fun midFrameFlush() {
-        // Submit MC's pending command buffer so Skia sees a consistent image state.
+        // submit MC's pending command buffer so Skia sees a consistent image state
         val device = (RenderSystem.getDevice() as? GpuDeviceAccessor)?.`oneconfig$getBackend`() as? VulkanDevice
         if (device == null) {
             LOG.warn("midFrameFlush: GpuDevice backend is not Vulkan, skipping flush")

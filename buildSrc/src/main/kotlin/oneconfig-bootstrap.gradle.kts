@@ -58,7 +58,7 @@ afterEvaluate {
     val platform = rootProject.project(platformPath)
 
     fun isExcluded(group: String?, name: String) =
-        group == "net.fabricmc" && (name == "fabric-loader" || name == "intermediary")
+        (group == "net.fabricmc" && (name == "fabric-loader")) || group == "net.fabricmc.fabric-api"
 
     val seen = HashSet<String>()
 
@@ -74,7 +74,6 @@ afterEvaluate {
         "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm",
         "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm",
         "org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm",
-        "org.jetbrains.kotlinx:atomicfu-jvm",
         "org.jetbrains.kotlinx:kotlinx-datetime-jvm",
         "org.jetbrains.kotlinx:kotlinx-io-core-jvm",
         "org.jetbrains.kotlinx:kotlinx-io-bytestring-jvm",
@@ -82,9 +81,8 @@ afterEvaluate {
         "net.fabricmc:fabric-language-kotlin"
     )
 
-    // Compose/skiko classes are shipped via the shaded :modules:compose-bundle jar.
-    // The individual *-desktop artifacts are added non-transitively below, so on their
-    // own they are missing the backing androidx.compose.* classes (e.g. SnapshotStateKt).
+    // compose/skiko classes ship inside the shaded :modules:compose-bundle jar
+    // the *-desktop artifacts are added non-transitively so alone they lack androidx.compose.* classes
     fun isShadedInComposeBundle(group: String?): Boolean {
         group ?: return false
         return group.startsWith("org.jetbrains.compose") ||
@@ -106,8 +104,8 @@ afterEvaluate {
         (dependencies.add("include", coord) as ExternalModuleDependency).isTransitive = false
     }
 
-    // compose-bundle ships as its own Fabric mod on Modrinth, so it must NOT be JiJ'd
-    // into the bootstrap. The platform still compiles against it (api dependency).
+    // compose-bundle ships as its own Fabric mod on Modrinth so it must not be JiJ'd
+    // into the bootstrap while the platform still compiles against it
     val excludedProjects = setOf(":modules:compose-bundle")
 
     fun includeProject(path: String) {
@@ -203,6 +201,7 @@ publishMods {
 
             minecraftVersions.addAll(minecraftVersion)
 
+            requires("fabric-api")
             requires("fabric-language-kotlin")
             findProperty("publish.modrinth.compose-bundle")
                 ?.toString()

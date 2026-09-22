@@ -15,7 +15,9 @@ internal object CompatIds {
     }
 
     /**
-     * Increment the id until it is unique, should be the same every launch because they are added in declaration order
+     * Increment the id until it is unique
+     *
+     * Stable across launches because ids are added in declaration order
      */
     fun uniqueId(used: MutableSet<String>, base: String): String {
         if (used.add(base)) return base
@@ -25,8 +27,9 @@ internal object CompatIds {
     }
 
     /**
-     * Try to get the translation key of a component, preferred over the displayed text so ids do not
-     * change with the active language
+     * Try to get the translation key of a component
+     *
+     * Preferred over the displayed text so ids do not change with the active language
      */
     fun componentKey(value: Any?): String? {
         if (value == null || value is String) return null

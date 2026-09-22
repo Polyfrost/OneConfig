@@ -75,7 +75,7 @@ object MidnightLibCompat {
         val subcategoryByCategory = HashMap<String, String>()
         val propertyByField = HashMap<String, Property<*>>()
         val pending = ArrayList<Pending>()
-        // The raw (untranslated) category ids, which are also the tab ids passed to onTabInit.
+        // raw untranslated category ids which are also the tab ids passed to onTabInit
         val rawCategories = LinkedHashSet<String>()
         val usedIds = HashSet<String>()
 
@@ -223,12 +223,12 @@ object MidnightLibCompat {
         val isNumber = currentValue is Int || currentValue is Long || currentValue is Float || currentValue is Double
 
         val fieldName = field.name
-        // MidnightLib renders Component.translatable(EntryInfo.translationKey), which is @Entry#name when set,
-        // and "<modid>.midnightconfig.<fieldName>" otherwise.
+        // MidnightLib renders Component.translatable(EntryInfo.translationKey) which is @Entry#name when set
+        // and "<modid>.midnightconfig.<fieldName>" otherwise
         val translationKey = translationKeyOf(entry, entryAnnotation, "$modid.midnightconfig.$fieldName")
         val name = labelOf(translationKey) ?: prettify(fieldName)
         val description = translateOrNull("$translationKey.tooltip")
-        // Field names are unique within the config class, so no category prefix
+        // field names are unique within the config class so no category prefix
         val id = uniqueId(usedIds, idPart(fieldName, "entry"))
 
         val property: Property<*>
@@ -422,8 +422,8 @@ object MidnightLibCompat {
 
     private fun categoryOf(modid: String, raw: String?): String {
         val cat = raw?.takeIf { it.isNotBlank() && it != "default" } ?: return "General"
-        // MidnightLib itself uses "<modid>.midnightconfig.<category>"; the ".category." form is also
-        // common in the wild, so accept both.
+        // MidnightLib itself uses "<modid>.midnightconfig.<category>" but the ".category." form is also
+        // common in the wild so accept both
         return translateOrNull("$modid.midnightconfig.$cat")
             ?: translateOrNull("$modid.midnightconfig.category.$cat")
             ?: prettify(cat)
@@ -435,8 +435,8 @@ object MidnightLibCompat {
     }
 
     /**
-     * The key MidnightLib would render for this entry: [EntryInfo.translationKey] if the field is present,
-     * else the annotation's `name`, else [fallbackKey].
+     * The key MidnightLib would render for this entry [EntryInfo.translationKey] if the field is present
+     * otherwise the annotation's `name` otherwise [fallbackKey]
      */
     private fun translationKeyOf(entry: Any?, annotation: Any, fallbackKey: String): String {
         entry?.let { readString(it, "translationKey") }?.takeIf { it.isNotBlank() }?.let { return it }
@@ -444,7 +444,7 @@ object MidnightLibCompat {
         return fallbackKey
     }
 
-    /** Translates [key], or returns it verbatim when mods pass a literal label instead of a key. */
+    /** Translates [key] or returns it verbatim when mods pass a literal label instead of a key */
     private fun labelOf(key: String): String? =
         translateOrNull(key) ?: key.takeIf { it.any(Char::isWhitespace) || !it.contains('.') }
 

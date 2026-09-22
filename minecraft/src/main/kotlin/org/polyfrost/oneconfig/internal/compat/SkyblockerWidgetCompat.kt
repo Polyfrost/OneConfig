@@ -1,12 +1,14 @@
-//? skyblocker_compat {
-package org.polyfrost.oneconfig.internal.compat
+//? skyblocker_hud_v2 {
+/*package org.polyfrost.oneconfig.internal.compat
 
+import com.google.gson.JsonObject
 import de.hysky.skyblocker.config.SkyblockerConfigManager
-import de.hysky.skyblocker.skyblock.tabhud.screenbuilder.ScreenBuilder
+import de.hysky.skyblocker.skyblock.tabhud.screenbuilder.LayerBuilder
+import de.hysky.skyblocker.skyblock.tabhud.screenbuilder.PositionedWidget
+import de.hysky.skyblocker.skyblock.tabhud.screenbuilder.WidgetConfig
 import de.hysky.skyblocker.skyblock.tabhud.screenbuilder.WidgetManager
 import de.hysky.skyblocker.skyblock.tabhud.screenbuilder.pipeline.PositionRule
 import de.hysky.skyblocker.skyblock.tabhud.widget.HudWidget
-import de.hysky.skyblocker.utils.Location
 import de.hysky.skyblocker.utils.Utils
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
@@ -22,17 +24,8 @@ import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer
 import java.util.function.Consumer
 import kotlin.math.roundToInt
 
-/**
- * Wraps Skyblocker's [WidgetManager] HUD widgets (the tab/HUD widget system, e.g. the Dwarven Mines
- * commissions and powder widgets, the Crystal Hollows map, ...) into the OneConfig HUD editor.
- *
- * This is separate from [SkyblockerCompat], which handles the unrelated [de.hysky.skyblocker.skyblock.fancybars]
- * status bars.
- */
 object SkyblockerWidgetCompat {
     private val LOGGER = LogManager.getLogger("OneConfig/Skyblocker-Widget-Compat")
-
-    private const val LAYER_HUD = "HUD"
 
     private var initialized = false
     private var registered = false
@@ -55,12 +48,11 @@ object SkyblockerWidgetCompat {
     }
 
     private fun register() {
-        // Resource reloads re-run the deferred init, but the HUDs only ever need registering once.
         if (registered) return
         registered = true
         val seen = HashSet<String>()
         var count = 0
-        for (widget in WidgetManager.widgetInstances.values.sortedBy { it.internalID }) {
+        for (widget in WidgetManager.WIDGET_INSTANCES.values.sortedBy { it.internalID }) {
             if (!editable(widget)) continue
             if (!seen.add(sanitize(widget.internalID))) {
                 LOGGER.warn("Skipping Skyblocker widget '{}': id clashes with an already registered widget", widget.internalID)
@@ -80,17 +72,9 @@ object SkyblockerWidgetCompat {
         CompatOverlayRenderer.register(::renderWidgets)
     }
 
-    /**
-     * Widgets that can live on the HUD layer: either they declare locations of their own, or some location
-     * already pins them to the HUD (this is how the tab-sourced widgets, e.g. commissions and powders, end
-     * up on the Dwarven Mines HUD).
-     */
     private fun editable(widget: HudWidget): Boolean {
-        if (widget.availableLocations().isNotEmpty()) return true
-        val id = widget.internalID
-        return Location.values().any { location ->
-            WidgetManager.getScreenBuilder(location)?.getPositionRule(id)?.screenLayer()?.name == LAYER_HUD
-        }
+        val available = runCatching { widget.information.available() }.getOrNull() ?: return false
+        return WidgetManager.ALLOWED_LOCATIONS.any { available.test(it) }
     }
 
     private fun renderWidgets(ctx: GuiGraphicsExtractor) {
@@ -98,28 +82,29 @@ object SkyblockerWidgetCompat {
             visibleIds = emptySet()
             return
         }
-        val window = Minecraft.getInstance().window ?: return
+        applyDeferred()
+        val window = Minecraft.getInstance().window
         val scale = tabHudScale()
         if (scale <= 0f) return
-        val builder = builder() ?: return
+        val layer = layer()
         redrawing = true
         try {
             val pose = ctx.pose()
             pose.pushMatrix()
             try {
                 pose.scale(scale, scale)
-                builder.run(
+                layer.extractRenderStates(
                     ctx,
                     (window.guiScaledWidth / scale).toInt(),
                     (window.guiScaledHeight / scale).toInt(),
-                    WidgetManager.ScreenLayer.HUD,
+                    false,
                 )
             } finally {
                 pose.popMatrix()
             }
-            visibleIds = builder.getHudWidgets(WidgetManager.ScreenLayer.HUD)
-                .filter { it.isVisible }
-                .mapTo(HashSet()) { it.internalID }
+            visibleIds = layer.getRendered()
+                .filter { it.widget.shouldRender() }
+                .mapTo(HashSet()) { it.widget.internalID }
         } catch (t: Throwable) {
             LOGGER.debug("Failed to render Skyblocker HUD widgets above the blur", t)
         } finally {
@@ -131,6 +116,23 @@ object SkyblockerWidgetCompat {
         dirty = true
     }
 
+    internal fun flush() {
+        markDirty()
+        save()
+    }
+
+    private val deferred = LinkedHashSet<SkyblockerWidgetWrapper>()
+
+    internal fun defer(wrapper: SkyblockerWidgetWrapper) {
+        deferred.add(wrapper)
+    }
+
+    private fun applyDeferred() {
+        if (deferred.isEmpty()) return
+        deferred.removeAll { it.applyDeferredPosition() }
+        save()
+    }
+
     private fun save() {
         if (!dirty) return
         dirty = false
@@ -138,8 +140,14 @@ object SkyblockerWidgetCompat {
             .onFailure { LOGGER.warn("Failed to save Skyblocker HUD widget positions", it) }
     }
 
-    internal fun builder(): ScreenBuilder? =
-        runCatching { WidgetManager.getScreenBuilder(Utils.getLocation()) }.getOrNull()
+    internal fun layer(): LayerBuilder =
+        WidgetManager.SCREEN_BUILDER.get(WidgetManager.ScreenLayer.HUD)
+
+    internal fun hudWidgets(): MutableMap<String, WidgetConfig> =
+        WidgetManager.getScreenConfig(Utils.getLocation()).hud().widgets()
+
+    internal fun positioned(widget: HudWidget): PositionedWidget? =
+        runCatching { layer().getRendered().firstOrNull { it.widget.internalID == widget.internalID } }.getOrNull()
 
     internal fun tabHudScale(): Float =
         runCatching { SkyblockerConfigManager.get().uiAndVisuals.tabHud.tabHudScale / 100f }.getOrDefault(1f)
@@ -150,14 +158,60 @@ object SkyblockerWidgetCompat {
         internalID.lowercase().replace(Regex("[^a-z0-9_]"), "_")
 
     internal fun displayName(widget: HudWidget): String =
-        runCatching { widget.displayName.string }.getOrNull()?.takeIf { it.isNotBlank() } ?: widget.internalID
+        runCatching { widget.information.displayName.string }.getOrNull()?.takeIf { it.isNotBlank() } ?: widget.internalID
+
+    internal fun isEnabledHere(widget: HudWidget): Boolean {
+        if (!Utils.isOnSkyblock()) return false
+        return runCatching { hudWidgets()[widget.internalID]?.config()?.isPresent == true }.getOrDefault(false)
+    }
+
+    internal fun setEnabledHere(widget: HudWidget, value: Boolean) {
+        if (!Utils.isOnSkyblock()) return
+        if (!editableHere(widget)) return
+        runCatching {
+            val widgets = hudWidgets()
+            val id = widget.internalID
+            if (value) {
+                if (widgets[id]?.config()?.isPresent == true) return@runCatching
+                val rule = widgets[id]?.position()?.orElse(null) ?: PositionRule.DEFAULT
+                widgets[id] = WidgetConfig(JsonObject(), rule)
+            } else if (widgets.remove(id) == null) {
+                return@runCatching
+            }
+            layer().update()
+            markDirty()
+        }.onFailure { LOGGER.warn("Failed to toggle Skyblocker HUD widget '{}'", widget.internalID, it) }
+    }
+
+    internal fun editableHere(widget: HudWidget): Boolean =
+        runCatching { widget.information.available().test(Utils.getLocation()) }.getOrDefault(false)
+
+    internal fun persistRule(widget: HudWidget, rule: PositionRule) {
+        runCatching {
+            val widgets = hudWidgets()
+            val id = widget.internalID
+            val existing = widgets[id]
+            widgets[id] = existing?.withPosition(rule) ?: WidgetConfig(JsonObject(), rule)
+            markDirty()
+        }.onFailure { LOGGER.warn("Failed to store the position of Skyblocker HUD widget '{}'", widget.internalID, it) }
+    }
+
+    internal fun reflow() {
+        val window = Minecraft.getInstance().window
+        val scale = tabHudScale()
+        if (scale <= 0f) return
+        runCatching {
+            layer().updatePositions(
+                (window.guiScaledWidth / scale).toInt(),
+                (window.guiScaledHeight / scale).toInt(),
+            )
+        }
+    }
 
     internal fun buildSettings(widget: HudWidget): List<Property<*>> {
-        // Tab-sourced widgets have no per-location enable switch of their own.
-        if (widget.availableLocations().isEmpty()) return emptyList()
         val prop = Properties.functional<Boolean>(
-            getter = { runCatching { widget.isEnabledIn(Utils.getLocation()) }.getOrDefault(false) },
-            setter = { value -> runCatching { widget.setEnabledIn(Utils.getLocation(), value) } },
+            getter = { isEnabledHere(widget) },
+            setter = { value -> setEnabledHere(widget, value) },
             id = "skyblocker_widget_${sanitize(widget.internalID)}_enabled",
             name = "Enabled Here",
             description = "Whether Skyblocker shows this widget in the location you are currently in.",
@@ -169,22 +223,50 @@ object SkyblockerWidgetCompat {
     }
 }
 
-private class SkyblockerWidgetWrapper(private val widget: HudWidget) : OneConfigHudWrapper {
+internal class SkyblockerWidgetWrapper(private val widget: HudWidget) : OneConfigHudWrapper {
     override var id: String = "skyblocker_widget_${SkyblockerWidgetCompat.sanitize(widget.internalID)}"
 
     override var name: String = SkyblockerWidgetCompat.displayName(widget)
 
     override val modId: String = "skyblocker"
 
+    private var deferredX: Float? = null
+    private var deferredY: Float? = null
+
+    override val placementReady: Boolean
+        get() = runCatching { Utils.isOnSkyblock() && SkyblockerWidgetCompat.positioned(widget) != null }.getOrDefault(false)
+
+    override val ownsPlacement: Boolean get() = true
+
     override var x: Float
-        get() = widget.x * SkyblockerWidgetCompat.tabHudScale()
-        set(value) = move(value, null)
+        get() = deferredX ?: (widget.x * SkyblockerWidgetCompat.tabHudScale())
+        set(value) = place(value, null)
 
     override var y: Float
-        get() = widget.y * SkyblockerWidgetCompat.tabHudScale()
-        set(value) = move(null, value)
+        get() = deferredY ?: (widget.y * SkyblockerWidgetCompat.tabHudScale())
+        set(value) = place(null, value)
 
-    // Skyblocker scales every widget together via its own 'Tab HUD Scale' option, so there is nothing per-widget to expose.
+    private fun place(targetX: Float?, targetY: Float?) {
+        if (move(targetX, targetY)) {
+            if (targetX != null) deferredX = null
+            if (targetY != null) deferredY = null
+            return
+        }
+        if (targetX != null) deferredX = targetX
+        if (targetY != null) deferredY = targetY
+        SkyblockerWidgetCompat.defer(this)
+    }
+
+    internal fun applyDeferredPosition(): Boolean {
+        val pendingX = deferredX
+        val pendingY = deferredY
+        if (pendingX == null && pendingY == null) return true
+        if (!move(pendingX, pendingY)) return false
+        deferredX = null
+        deferredY = null
+        return true
+    }
+
     override var scale: Float
         get() = 1f
         set(_) {}
@@ -192,12 +274,9 @@ private class SkyblockerWidgetWrapper(private val widget: HudWidget) : OneConfig
     override val supportsScale: Boolean get() = false
 
     override var hidden: Boolean
-        get() = if (widget.availableLocations().isEmpty()) false
-        else runCatching { !widget.isEnabledIn(Utils.getLocation()) }.getOrDefault(false)
-        set(value) {
-            if (widget.availableLocations().isEmpty()) return
-            runCatching { widget.setEnabledIn(Utils.getLocation(), !value) }
-        }
+        get() = if (!SkyblockerWidgetCompat.editableHere(widget)) false
+        else !SkyblockerWidgetCompat.isEnabledHere(widget)
+        set(value) = SkyblockerWidgetCompat.setEnabledHere(widget, !value)
 
     override var scaledWidth: Float
         get() = if (!SkyblockerWidgetCompat.isOnHud(widget)) 0f else widget.width * SkyblockerWidgetCompat.tabHudScale()
@@ -209,55 +288,33 @@ private class SkyblockerWidgetWrapper(private val widget: HudWidget) : OneConfig
 
     override fun linkedProperties(): List<Property<*>> = SkyblockerWidgetCompat.buildSettings(widget)
 
-    /**
-     * Rewrites the widget's [PositionRule] so it lands on the requested screen position, keeping whatever
-     * parent/anchor/layer it already had - moving a parent widget still drags its children along, exactly as
-     * it does in Skyblocker's own editor.
-     */
-    private fun move(targetX: Float?, targetY: Float?) {
-        // Position rules are per-location, so a write made before the player is on Skyblock (OneConfig
-        // restoring its own saved copy of these HUDs at startup) would pin the widget in Location.UNKNOWN.
-        // Skyblocker owns these positions; only mirror edits back once a real location is known.
-        if (!Utils.isOnSkyblock()) return
+    override fun save() = SkyblockerWidgetCompat.flush()
+
+    private fun move(targetX: Float?, targetY: Float?): Boolean {
+        if (!Utils.isOnSkyblock()) return false
         val scale = SkyblockerWidgetCompat.tabHudScale()
-        if (scale <= 0f) return
-        val builder = SkyblockerWidgetCompat.builder() ?: return
-        val internalID = widget.internalID
-        val current = builder.getPositionRule(internalID)
+        if (scale <= 0f) return false
+        val positioned = SkyblockerWidgetCompat.positioned(widget) ?: return false
 
         val newX = targetX?.let { (it / scale).roundToInt() } ?: widget.x
         val newY = targetY?.let { (it / scale).roundToInt() } ?: widget.y
 
-        val rule = if (current == null) {
-            PositionRule(
-                "screen",
-                PositionRule.Point.DEFAULT,
-                PositionRule.Point.DEFAULT,
-                newX,
-                newY,
-                WidgetManager.ScreenLayer.HUD,
-            )
-        } else {
-            // The widget's live position is the result of applying the current rule, so shifting the rule's
-            // offset by the requested delta works for every parent/anchor combination without re-deriving them.
-            PositionRule(
-                current.parent(),
-                current.parentPoint(),
-                current.thisPoint(),
-                current.relativeX() + (newX - widget.x),
-                current.relativeY() + (newY - widget.y),
-                current.screenLayer(),
-            )
-        }
+        val rule = positioned.rule
+        val updated = PositionRule(
+            rule.parent(),
+            rule.parentPoint(),
+            rule.thisPoint(),
+            rule.relativeX() + (newX - widget.x),
+            rule.relativeY() + (newY - widget.y),
+        )
 
-        builder.setPositionRule(internalID, rule)
-        SkyblockerWidgetCompat.markDirty()
-        ScreenBuilder.markDirty()
+        positioned.rule = updated
+        SkyblockerWidgetCompat.persistRule(widget, updated)
 
-        // Applying the rule above would land the widget exactly here, so move it now rather than waiting a
-        // frame: it keeps the getters (and hence the delta above) exact for the rest of this frame's edits.
         widget.x = newX
         widget.y = newY
+        SkyblockerWidgetCompat.reflow()
+        return true
     }
 }
-//? }
+*///? }

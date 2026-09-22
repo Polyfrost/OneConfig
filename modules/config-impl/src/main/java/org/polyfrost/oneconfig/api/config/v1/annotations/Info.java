@@ -37,16 +37,12 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Info {
-//	Notifications.Type value() default Notifications.Type.Info;
-
-	/** Title for the info block. Due to Java annotation limitations, if the value is unchanged, it will be replaced with the actual type name. */
+	/** Title for the info block which due to Java annotation limitations is replaced with the actual type name when left unchanged */
 	@TranslatedDefault("polyui.info")
 	String title() default "polyui.info";
 
 	/**
-	 * @deprecated No longer needed. OneConfig now checks whether the given title is a translation
-	 * key present in the active language, and translates it automatically when it is. Pass the
-	 * translation key directly as the title and remove this flag.
+	 * @deprecated OneConfig auto-translates title values that are translation keys so pass the key directly
 	 */
 	@Deprecated
 	boolean titleTranslation() default false;
@@ -57,9 +53,7 @@ public @interface Info {
 	String description() default "";
 
 	/**
-	 * @deprecated No longer needed. OneConfig now checks whether the given description is a translation
-	 * key present in the active language, and translates it automatically when it is. Pass the
-	 * translation key directly as the description and remove this flag.
+	 * @deprecated OneConfig auto-translates description values that are translation keys so pass the key directly
 	 */
 	@Deprecated
 	boolean descriptionTranslation() default false;
@@ -67,15 +61,13 @@ public @interface Info {
 	@Deprecated
 	String descriptionKey() default "";
 
-	/** Icon for the info block. Due to Java annotation limitations, if the value is unchanged, it will be replaced with the actual type icon. */
+	/** Icon for the info block which due to Java annotation limitations is replaced with the actual type icon when left unchanged */
 	String icon() default "polyui/info.svg";
 
 	String category() default "General";
 
 	/**
-	 * @deprecated No longer needed. OneConfig now checks whether the given category is a translation
-	 * key present in the active language, and translates it automatically when it is. Pass the
-	 * translation key directly as the category and remove this flag.
+	 * @deprecated OneConfig auto-translates category values that are translation keys so pass the key directly
 	 */
 	@Deprecated
 	boolean categoryTranslation() default false;
@@ -86,9 +78,7 @@ public @interface Info {
 	String subcategory() default "General";
 
 	/**
-	 * @deprecated No longer needed. OneConfig now checks whether the given subcategory is a translation
-	 * key present in the active language, and translates it automatically when it is. Pass the
-	 * translation key directly as the subcategory and remove this flag.
+	 * @deprecated OneConfig auto-translates subcategory values that are translation keys so pass the key directly
 	 */
 	@Deprecated
 	boolean subcategoryTranslation() default false;

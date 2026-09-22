@@ -29,7 +29,7 @@ import org.polyfrost.oneconfig.internal.ui.components.item.toggleItem
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val ItemRowHeight = 44.dp
-private val SelectorWidth = 440.dp
+private val SelectorWidth = 436.dp
 private val SelectorShape = RoundedCornerShape(12.dp)
 
 @Composable
@@ -49,6 +49,7 @@ fun ItemListOption(data: ItemListOptionData) {
             onAdd = { expanded = true },
             showAddWhenFull = true,
             entryHeight = ItemRowHeight,
+            containScroll = true,
         ) { entry, ctx ->
             SelectedItemRow(entry.value, itemById[entry.value], ctx)
         }
@@ -56,7 +57,7 @@ fun ItemListOption(data: ItemListOptionData) {
         SimpleDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            offset = DpOffset(0.dp, 8.dp),
+            offset = DpOffset((-16).dp, 8.dp),
             modifier = Modifier.width(SelectorWidth),
         ) {
             ItemPicker(

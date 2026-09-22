@@ -8,10 +8,10 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import kotlin.jvm.java
 
 /**
- * Experimental DSL for creating config trees.
+ * Experimental DSL for creating config trees
  *
- * **Note that for Java compatability,** unlike most Kotlin DSLs, this on requires you to add `.apply { ... }`
- * instead of just `{ ... }` to the end of any the functions in order to configure them.
+ * **Note that for Java compatability** unlike most Kotlin DSLs this one requires you to add `.apply { ... }`
+ * instead of just `{ ... }` to the end of any of the functions in order to configure them
  */
 @ApiStatus.Experimental
 class ConfigDSL(id: String? = null, title: String? = null, description: String? = null) {
@@ -92,13 +92,7 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
         tree.put(prop.property)
         return prop
     }
-//      TODO: migrate
-//    fun keybind(default: PolyBind): Prop<PolyBind> {
-//        val prop = Prop(default, PolyBind::class.java)
-//        prop["visualizer"] = Visualizer.KeybindVisualizer::class.java
-//        tree.put(prop.property)
-//        return prop
-//    }
+    // TODO: migrate keybind support
 
     fun dropdown(defaultIndex: Int, vararg options: String): Prop<Int> {
         val prop = Prop(defaultIndex, Int::class.java)

@@ -1,3 +1,4 @@
+import dev.kikugie.stonecutter.build.StonecutterBuildExtension
 import net.fabricmc.loom.api.LoomGradleExtensionAPI
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
@@ -12,8 +13,8 @@ dependencies {
     "minecraft"("com.mojang:minecraft:${versionedCatalog.versions["minecraft"]}")
 
     val libsCatalog = rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs")
-    // libs.bundles.test-core would pull in log4j-core, which collides with the log4j Loom
-    // already places on the test classpath.
+    // libs.bundles.test-core would pull in log4j-core which collides with the log4j
+    // loom already puts on the test classpath
     "testImplementation"(platform(libsCatalog.findLibrary("junit-bom").get()))
     "testImplementation"(libsCatalog.findLibrary("junit").get())
     "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
@@ -40,20 +41,18 @@ tasks.withType<Test>().configureEach {
     }
 }
 
+val sc = extensions.getByName<StonecutterBuildExtension>("stonecutter")
 val loom = extensions.getByName<LoomGradleExtensionAPI>("loom")
 loom.apply {
+    accessWidenerPath = sc.process(
+        rootProject.file("minecraft/src/main/resources/oneconfigv1.classtweaker"),
+        "build/processed.classtweaker",
+    )
     runConfigs["client"].apply {
         ideConfigGenerated(true)
         runDir = "../../run"
-        // -Pdevauth=false launches offline, for runs that do not need a real account.
+        // -Pdevauth=false launches offline for runs that do not need a real account
         property("devauth.enabled", (project.findProperty("devauth") ?: "true").toString())
         property("oneconfig.test", "true")
-//        if (project.hasProperty("gpuprofile")) {
-//            property("oneconfig.debug.gpuprofile", "true")
-//            if (project.hasProperty("gpuprofile.sections")) {
-//                property("oneconfig.debug.gpuprofile.sections", "true")
-//            }
-//        }
-        //vmArg("-Dfabric.modsFolder=" + '"' + rootProject.projectDir.resolve("run/${mcVersion}Mods").absolutePath + '"')
     }
 }

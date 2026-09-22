@@ -196,14 +196,16 @@ object FirmamentHudCompat {
         return runCatching { method.invoke(hudMeta) as? Vector2ic }.getOrNull()
     }
 
+    private fun flush() {
+        runCatching { call(jarvisIntegration(), "onHudEditorClosed") }
+            .onFailure { LOGGER.error("Failed to flush Firmament HUD edits: $it") }
+    }
+
     private fun registerCloseHook() {
         if (closeHookRegistered) return
         closeHookRegistered = true
         EventManager.register(HudEditorToggleEvent::class.java) { event ->
-            if (!event.open) {
-                runCatching { call(jarvisIntegration(), "onHudEditorClosed") }
-                    .onFailure { LOGGER.error("Failed to flush Firmament HUD edits: $it") }
-            }
+            if (!event.open) flush()
         }
     }
 
@@ -333,6 +335,8 @@ object FirmamentHudCompat {
 
         private fun capturedBox(): FloatArray? = capturedBounds[id]
 
+        override val placementReady: Boolean get() = position() != null
+
         override var x: Float
             get() = (position()?.x()?.toFloat() ?: 0f) + (capturedBox()?.get(0) ?: 0f)
             set(value) {
@@ -376,6 +380,8 @@ object FirmamentHudCompat {
             set(value) { enabledProperty?.set(!value) }
 
         override fun linkedProperties(): List<Property<*>> = cachedProperties
+
+        override fun save() = flush()
 
         private fun position(): Vector2ic? = livePosition(hudMeta)
 

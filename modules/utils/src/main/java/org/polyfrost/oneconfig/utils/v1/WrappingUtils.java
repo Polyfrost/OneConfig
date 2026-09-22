@@ -34,8 +34,9 @@ import java.util.Map;
 import static org.polyfrost.oneconfig.utils.v1.ArrayCastUtils.*;
 
 /**
- * Various utilities for wrapping and unboxing of arrays, lists, etc.
- * see {@link ArrayCastUtils} for some more info.
+ * Various utilities for wrapping and unboxing of arrays and lists
+ * <p>
+ * see {@link ArrayCastUtils} for more info
  */
 public final class WrappingUtils {
     private static final Map<Class<?>, Class<?>> prim2Wrapper;
@@ -65,32 +66,36 @@ public final class WrappingUtils {
     }
 
     /**
-     * Return the wrapped class for the given primitive class.
-     * If this class is not a primitive, it will return the same class.
+     * Return the wrapped class for the given primitive class
+     * <p>
+     * If this class is not a primitive it will return the same class
      */
     public static Class<?> getWrapped(Class<?> cls) {
         return prim2Wrapper.getOrDefault(cls, cls);
     }
 
     /**
-     * Return the primitive class for the given wrapped class.
-     * If this class is not a wrapper, it will return the same class.
+     * Return the primitive class for the given wrapped class
+     * <p>
+     * If this class is not a wrapper it will return the same class
      */
     public static Class<?> getUnwrapped(Class<?> cls) {
         return wrapper2Prim.getOrDefault(cls, cls);
     }
 
     /**
-     * Method that will attempt to get around the 'quirks' of casting involving primitives in java.
+     * Method that will attempt to get around the quirks of casting involving primitives in java
      * <br>
-     * This method will do the following (note that these actions are effectively chained where applicable, so a {@code List<Integer>} can become a long[] if needed):
+     * This method will do the following
+     * <p>
+     * These actions are effectively chained where applicable so a {@code List<Integer>} can become a long[] if needed
      * <ul>
-     *     <li> Convert Number classes to the target type (e.g. Float into Double)</li>
-     *     <li> Turn Object[] arrays into their actual types, by inspecting the type of the first element</li>
+     *     <li> Convert Number classes to the target type such as Float into Double</li>
+     *     <li> Turn Object[] arrays into their actual types by inspecting the type of the first element</li>
      *     <li> Turn {@code Collection<?>} into their array counterparts</li>
-     *     <li> unbox boxed arrays (e.g. Integer[] into int[])</li>
+     *     <li> unbox boxed arrays such as Integer[] into int[]</li>
      *     <li> cast array content to the given type if possible</li>
-     *     <li> convert between common primitve array types, e.g. int[] into long[]</li>
+     *     <li> convert between common primitve array types such as int[] into long[]</li>
      * </ul>
      */
     @SuppressWarnings({"unchecked", "DataFlowIssue"})
@@ -128,7 +133,6 @@ public final class WrappingUtils {
                 in = arr2;
             }
             if (cType == tType) {
-                // same type, just return the input
                 return (T) in;
             }
             if (tType.isPrimitive()) {
@@ -144,7 +148,7 @@ public final class WrappingUtils {
                     return (T) a;
                 }
                 if (tType == int.class) {
-                    // long, short, byte, char -> int
+                    // long short byte char -> int
                     if (cType == long.class) return (T) l2i((long[]) in); // LOSSY //
                     if (cType == short.class) return (T) s2i((short[]) in);
                     if (cType == byte.class) return (T) b2i((byte[]) in);
@@ -156,7 +160,7 @@ public final class WrappingUtils {
                     // double -> float
                     if (cType == double.class) return (T) d2f((double[]) in); // LOSSY //
                 } else if (tType == long.class) {
-                    // int, short, byte, char -> long
+                    // int short byte char -> long
                     if (cType == int.class) return (T) i2l((int[]) in);
                     if (cType == short.class) return (T) s2l((short[]) in);
                     if (cType == byte.class) return (T) b2l((byte[]) in);
@@ -170,7 +174,7 @@ public final class WrappingUtils {
 
 
     /**
-     * returns true if: <br>
+     * returns true if <br>
      * - the object is a primitive wrapper <br>
      * - the object is a CharSequence <br>
      */

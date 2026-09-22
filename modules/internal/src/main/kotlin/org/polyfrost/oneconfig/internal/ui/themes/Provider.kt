@@ -1,5 +1,8 @@
 package org.polyfrost.oneconfig.internal.ui.themes
 
+import androidx.compose.foundation.LocalScrollbarStyle
+import androidx.compose.foundation.ScrollbarStyle
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -12,33 +15,102 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Density
-import kotlinx.coroutines.delay
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.toArgb
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationTheme
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ThemeConfig
+import org.polyfrost.oneconfig.internal.ui.DESIGN_HEIGHT_DP
+import org.polyfrost.oneconfig.internal.ui.DESIGN_WIDTH_DP
+import org.polyfrost.oneconfig.internal.ui.EDGE_MARGIN_FRACTION
+import kotlin.math.floor
+import kotlin.math.round
 
 private var _accent by mutableStateOf(Color(ThemeConfig.accentColor.argb))
 
+private var _chroma by mutableStateOf(ThemeConfig.accentColor.chroma)
+
 val Accent: Color get() = _accent
 
-fun updateAccent() { _accent = Color(ThemeConfig.accentColor.argb) }
+fun updateAccent() {
+    _accent = Color(ThemeConfig.accentColor.argb)
+    _chroma = ThemeConfig.accentColor.chroma
+}
 
 val LocalTheme = compositionLocalOf<UITheme> { error("A UI theme is required but was not provided") }
 
-@Composable
-fun Theme(content: @Composable () -> Unit) {
-    _accent = Color(ThemeConfig.accentColor.argb)
+private const val GRID_ANCHOR_SP = 14f
 
-    LaunchedEffect(Unit) {
-        while (true) {
-            if (ThemeConfig.accentColor.chroma) {
-                withFrameNanos { }
-                updateAccent()
-            } else {
-                delay(200)
-            }
+private const val EM_STEP_PX = 5f
+
+private const val MIN_EM_PX = 10f
+
+private fun scrollbarStyle(theme: UITheme) = ScrollbarStyle(
+    minimalHeight = 24.dp,
+    thickness = 8.dp,
+    shape = RoundedCornerShape(4.dp),
+    hoverDurationMillis = 300,
+    unhoverColor = theme.textColorSecondary.copy(alpha = 0.40f),
+    hoverColor = theme.textColorSecondary.copy(alpha = 0.70f),
+)
+
+private val screenPlatform by lazy { runCatching { Platform.screen() }.getOrNull() }
+
+private fun surfaceRatio(): Float = screenPlatform?.surfaceRatio()?.takeIf { it > 0f } ?: 1f
+
+@Composable
+fun pixelGridScale(scale: Float, max: Float, anchorSp: Float = GRID_ANCHOR_SP): Float {
+    if (scale <= 0f) return scale
+    val density = LocalDensity.current
+    val anchorPx = anchorSp * density.fontScale * density.density * scale * surfaceRatio()
+    return scale * snapScaleToPixelGrid(anchorPx, max / scale)
+}
+
+@Composable
+private fun pixelGridDensity(designWidth: Dp, designHeight: Dp): Density {
+    val density = LocalDensity.current
+    val window = LocalWindowInfo.current.containerSize
+    val headroom = with(density) {
+        minOf(
+            (window.width  * EDGE_MARGIN_FRACTION) / designWidth.toPx(),
+            (window.height * EDGE_MARGIN_FRACTION) / designHeight.toPx(),
+        )
+    }
+    val scale = pixelGridScale(1f, headroom)
+    return remember(density, scale) {
+        if (scale == 1f) density else Density(density.density * scale, density.fontScale)
+    }
+}
+
+internal fun snapScaleToPixelGrid(anchorPx: Float, max: Float): Float {
+    if (anchorPx <= 0f) return 1f
+    val fits = floor(anchorPx * max / EM_STEP_PX) * EM_STEP_PX
+    val nearest = round(anchorPx / EM_STEP_PX) * EM_STEP_PX
+    val em = maxOf(nearest, fits)
+    val scale = em.coerceAtLeast(MIN_EM_PX) / anchorPx
+    return if (scale <= max) scale else max
+}
+
+@Composable
+fun Theme(content: @Composable () -> Unit) = Theme(pixelGrid = false, content = content)
+
+@Composable
+fun Theme(
+    pixelGrid: Boolean,
+    designWidth: Dp = DESIGN_WIDTH_DP.dp,
+    designHeight: Dp = DESIGN_HEIGHT_DP.dp,
+    content: @Composable () -> Unit,
+) {
+    updateAccent()
+
+    LaunchedEffect(_chroma) {
+        while (_chroma) {
+            withFrameNanos { }
+            updateAccent()
         }
     }
 
@@ -47,15 +119,10 @@ fun Theme(content: @Composable () -> Unit) {
 
     SideEffect { syncNotificationTheme(animated) }
 
-    val density = LocalDensity.current
-    val scaled = animated.typography.fontScale
-    val themedDensity = remember(density, scaled) {
-        if (scaled == 1f) density else Density(density.density, density.fontScale * scaled)
-    }
-
     CompositionLocalProvider(
         LocalTheme provides animated,
-        LocalDensity provides themedDensity,
+        LocalScrollbarStyle provides remember(animated.textColorSecondary) { scrollbarStyle(animated) },
+        LocalDensity provides if (pixelGrid) pixelGridDensity(designWidth, designHeight) else LocalDensity.current,
         content = content
     )
 }

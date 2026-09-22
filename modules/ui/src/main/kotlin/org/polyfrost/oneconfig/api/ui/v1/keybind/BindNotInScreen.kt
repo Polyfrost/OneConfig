@@ -18,5 +18,6 @@ class BindNotInScreen(
             it.name = name
             it.category = category
             it.defaultKeybind = defaultKeybind
+            it.firesWhileTyping = firesWhileTyping
         }
 }
