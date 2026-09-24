@@ -4,7 +4,7 @@ import org.jetbrains.skia.DirectContext
 import org.jetbrains.skia.GLAssembledInterface
 import org.jetbrains.skia.makeGLWithInterface
 import org.slf4j.LoggerFactory
-//? if >= 26.3 {
+//? if >= 26.3 || = 1.8.9 {
 import org.lwjgl.sdl.SDL
 //?} else
 /*import org.lwjgl.glfw.GLFW*/
@@ -13,7 +13,7 @@ internal object GLInterfaceFactory {
     private val LOG = LoggerFactory.getLogger(GLInterfaceFactory::class.java)
 
     private val procLoader: Long by lazy {
-        //? if >= 26.3 {
+        //? if >= 26.3 || = 1.8.9 {
         SDL.getLibrary().getFunctionAddress("SDL_GL_GetProcAddress")
         //?} else
         /*GLFW.getLibrary().getFunctionAddress("glfwGetProcAddress")*/
