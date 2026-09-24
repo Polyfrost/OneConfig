@@ -502,7 +502,6 @@ class MinecraftItemCatalogService : ItemCatalogService {
         if (rebuild) clearTarget(target) else clearCells(target, changed, layout)
 
         renderItemsIsolated(atlasState, target, layout, changed, guiSize)
-        backend?.midFrameFlush()
         backend?.transitionOffscreenForSampling(target)
         backend?.midFrameFlush()
         atlasState.atlasImage = surface.makeImageSnapshot()

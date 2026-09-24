@@ -54,7 +54,7 @@ import java.util.*;
  * When this class is first referenced it will set up the Hypixel API handlers for you
  * <p>
  * After that all the methods for sending and receiving packets
- * are available directly from their classes such as {@link HypixelModAPI#registerHandler(Class, ClientboundPacketHandler)}
+ * are available directly from their classes such as {@link HypixelModAPI#createHandler(Class, ClientboundPacketHandler)}
  * <br><br>
  * This class is a simple wrapper around this functionality and gives a simple way to access the Hypixel API
  *

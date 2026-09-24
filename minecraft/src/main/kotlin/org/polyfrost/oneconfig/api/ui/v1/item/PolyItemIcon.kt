@@ -16,6 +16,7 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import org.jetbrains.skia.Rect
 import org.polyfrost.compose.composables.PolyCanvas
+import org.polyfrost.compose.mc.McFontQueue
 import org.polyfrost.compose.composables.PolyBox
 import org.polyfrost.compose.composables.PolyMcText
 import org.polyfrost.compose.composables.PolyModifier
@@ -187,7 +188,7 @@ private fun cooldownHeight(stack: ItemStack): Int {
 @Composable
 private fun ItemCount(stack: ItemStack, countOverride: String?, scale: Float) {
     val text = countOverride ?: stack.count.takeIf { it > 1 }?.toString() ?: return
-    val width = Minecraft.getInstance().font.width(text)
+    val width = McFontQueue.measureTextWidth(text, 1f)
     PolyMcText(
         text = text,
         color = PolyColor.WHITE,
