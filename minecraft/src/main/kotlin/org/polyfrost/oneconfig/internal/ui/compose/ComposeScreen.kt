@@ -36,9 +36,9 @@ import org.jetbrains.skia.ImageInfo
 import org.jetbrains.skia.ImageFilter
 import org.jetbrains.skia.Paint
 import org.jetbrains.skia.Surface
-//? if < 26.3
+//? if !sdl
 //import org.lwjgl.glfw.GLFW
-//? if >= 26.3 {
+//? if sdl {
 import org.lwjgl.sdl.SDLVideo.*
 //?}
 import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
@@ -260,7 +260,7 @@ abstract class ComposeScreen(
     private var cachedSurfaceScale = -1f
 
     protected val client get() = Minecraft.getInstance()
-    //? if < 26.3 {
+    //? if !sdl {
     /*private val contentScaleX = FloatArray(1)
     private val contentScaleY = FloatArray(1)
     private val monScaleX = FloatArray(1)
@@ -302,7 +302,7 @@ abstract class ComposeScreen(
 
     private fun osUpscaleFactor(): Float {
         val handle = Platform.compatibility().windowHandle()
-        //? if >= 26.3 {
+        //? if sdl {
         val winCS = SDL_GetWindowDisplayScale(handle).coerceAtLeast(1f)
         val display = SDL_GetDisplayForWindow(handle).takeIf { it != 0 } ?: SDL_GetPrimaryDisplay()
         if (display == 0) return 1f
@@ -670,7 +670,7 @@ abstract class ComposeScreen(
         withScene {
             it.sendPointerEvent(
                 type,
-                //? if sdl_keycodes {
+                //? if sdl {
                 button = when (button) {
                     InputConstants.MOUSE_BUTTON_LEFT -> PointerButton.Primary
                     InputConstants.MOUSE_BUTTON_RIGHT -> PointerButton.Secondary
@@ -738,7 +738,7 @@ abstract class ComposeScreen(
     //? >= 1.21.10 {
     override fun keyPressed(event: McKeyEvent): Boolean {
         val bindingKey = event.key
-        //~ if < 26.3 'event.shortcutKey()' -> 'bindingKey'
+        //~ if !sdl 'event.shortcutKey()' -> 'bindingKey'
         val shortcutKey = event.shortcutKey()
         val modifiers = event.modifiers
     //?} else {
@@ -757,7 +757,7 @@ abstract class ComposeScreen(
     //? if >= 1.21.10 {
     override fun keyReleased(event: McKeyEvent): Boolean {
         val bindingKey = event.key
-        //~ if < 26.3 'event.shortcutKey()' -> 'bindingKey'
+        //~ if !sdl 'event.shortcutKey()' -> 'bindingKey'
         val shortcutKey = event.shortcutKey()
         val modifiers = event.modifiers
     //?} else {
@@ -908,7 +908,7 @@ abstract class ComposeScreen(
 
     private fun sceneDensity(): Float {
         val pixelRatio = Platform.screen().pixelRatio().takeIf { it > 0f } ?: 1f
-        //? if >= 26.3 {
+        //? if sdl {
         val contentScale = SDL_GetWindowDisplayScale(Platform.compatibility().windowHandle()).coerceAtLeast(1f)
         //?} else {
         /*GLFW.glfwGetWindowContentScale(Platform.compatibility().windowHandle(), contentScaleX, contentScaleY)

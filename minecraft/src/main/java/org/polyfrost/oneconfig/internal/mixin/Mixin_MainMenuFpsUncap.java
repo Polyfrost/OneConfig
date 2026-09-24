@@ -2,7 +2,7 @@ package org.polyfrost.oneconfig.internal.mixin;
 
 //? if >= 1.21.4
 import com.mojang.blaze3d.platform.FramerateLimitTracker;
-//? if >= 26.3
+//? if sdl
 import com.mojang.blaze3d.platform.VideoMode;
 import net.minecraft.client.Minecraft;
 import org.polyfrost.oneconfig.internal.MainMenuFpsSampler;
@@ -34,7 +34,7 @@ public class Mixin_MainMenuFpsUncap {
         //?} else
         //Object screen = minecraft.screen;
         if (minecraft.level == null && screen instanceof ComposeScreen) {
-            //? if >= 26.3 {
+            //? if sdl {
             VideoMode videoMode = minecraft.getWindow().getActiveVideoMode();
             int refreshRate = videoMode == null ? 0 : (int) videoMode.getRefreshRate();
             //?} else
