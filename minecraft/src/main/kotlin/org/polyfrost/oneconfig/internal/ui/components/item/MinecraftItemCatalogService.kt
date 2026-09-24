@@ -831,7 +831,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
     }
 
     //? if < 1.21.8 {
-    /** Scales the scissor rectangle to the item texture and flips its Y axis. */
+    /*/** Scales the scissor rectangle to the item texture and flips its Y axis. */
     private fun atlasScissorTransform(target: RenderTarget, renderSizePx: Int, scissorSlotSize: Float) =
         GuiTargetRedirect.ScissorTransform { left, top, right, bottom ->
             val leftPx = (left / scissorSlotSize).roundToInt() * renderSizePx
@@ -840,7 +840,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
             val bottomPx = (bottom / scissorSlotSize).roundToInt() * renderSizePx
             intArrayOf(leftPx, target.height - bottomPx, rightPx - leftPx, bottomPx - topPx)
         }
-    //?}
+    *///?}
 
     //? if >= 1.21.8 {
     private fun createItemGuiRenderer(client: Minecraft, state: GuiRenderState): GuiRenderer {
