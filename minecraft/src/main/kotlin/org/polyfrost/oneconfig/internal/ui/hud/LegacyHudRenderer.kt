@@ -57,6 +57,7 @@ object LegacyHudRenderer {
         for (hud in frame) {
             try {
                 HudManager.updateIfDue(hud)
+                if (!HudManager.isEditing && !hud.shouldShow()) continue
                 val hudScale = hud.effectiveScale
                 val (mw, mh) = hud.frameMinimumSize()
                 val w = mw * hudScale

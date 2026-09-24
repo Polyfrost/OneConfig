@@ -478,20 +478,7 @@ object HudManager {
         return list.indices.sortedBy { depth[it] }.map { list[it] }
     }
 
-    private fun updateAndAdvance(huds: List<Hud>) {
-        // opening or closing the editor swaps between preview and live content, so every HUD gets
-        // one immediate update on the edge instead of waiting out its remaining interval
-        if (wasEditing != isEditing) {
-            wasEditing = isEditing
-            for (hud in activeInstances) hud.lastUpdate = Long.MIN_VALUE
-        }
-        for (hud in huds) {
-            try {
-                updateIfDue(hud)
-            } catch (e: Throwable) {
-                LOGGER.error("Failed to update HUD ${hud.title}", e)
-            }
-        }
+    private fun updateAndAdvance() {
         if (showingPreviews) for (hud in hudProviders.values) updateIfDue(hud)
         if (PolyComposeHost.frameWithReport()) {
             invalidate()
@@ -522,15 +509,17 @@ object HudManager {
     @ApiStatus.Internal
     fun updateIfDue(hud: Hud) {
         val frequency = hud.updateFrequency()
-        if (frequency < 0L) {
-            hud.update()
-            return
+        if (frequency >= 0L) {
+            val now = System.nanoTime()
+            val last = hud.lastUpdate
+            if (last != Long.MIN_VALUE && now - last < frequency) return
+            hud.lastUpdate = now
         }
-        val now = System.nanoTime()
-        val last = hud.lastUpdate
-        if (last != Long.MIN_VALUE && now - last < frequency) return
-        hud.lastUpdate = now
-        hud.update()
+        try {
+            hud.update()
+        } catch (e: Throwable) {
+            LOGGER.error("Failed to update HUD ${hud.title}", e)
+        }
     }
 
     private fun layoutOnce(hud: Hud, screenWidth: Float, screenHeight: Float, scale: Float): RootNode {
@@ -569,6 +558,19 @@ object HudManager {
         var volatileContent = false
         for (hud in orderedForRender()) {
             val visible = shouldDraw(hud)
+            if (visible || keepsBackgroundOnly(hud)) {
+                updateIfDue(hud)
+                val show = isEditing || try {
+                    hud.shouldShow()
+                } catch (e: Throwable) {
+                    LOGGER.error("Failed to check whether HUD ${hud.title} should show", e)
+                    true
+                }
+                if (!show) {
+                    hud.isVisible.value = false
+                    continue
+                }
+            }
             hud.isVisible.value = visible
             if (visible) {
                 frameOrder.add(hud)
@@ -595,8 +597,15 @@ object HudManager {
         frameId++
         Snapshot.sendApplyNotifications()
 
+        // opening or closing the editor swaps between preview and live content, so every HUD gets
+        // one immediate update on the edge instead of waiting out its remaining interval
+        if (wasEditing != isEditing) {
+            wasEditing = isEditing
+            for (hud in activeInstances) hud.lastUpdate = Long.MIN_VALUE
+        }
+
         val huds = selectHuds()
-        updateAndAdvance(huds)
+        updateAndAdvance()
         layoutAll(huds, screenWidth, screenHeight, scale)
         updateBackgroundGroups(huds, screenWidth, screenHeight, scale)
 
@@ -824,6 +833,7 @@ object HudManager {
                 hud.isVisible.value = visible
                 if (visible) prepareOrder.add(hud)
             }
+            for (hud in prepareOrder) updateIfDue(hud)
             prepareOrder
         })
     }
