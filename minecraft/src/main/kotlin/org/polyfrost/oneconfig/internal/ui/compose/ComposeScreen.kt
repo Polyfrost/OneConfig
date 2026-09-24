@@ -41,6 +41,7 @@ import org.polyfrost.oneconfig.internal.legacy.LegacyPanoramaTracker
 import org.polyfrost.oneconfig.internal.ui.compose.opengl.StoredGLState
 import org.lwjgl.input.Keyboard
 import org.lwjgl.input.Mouse
+import org.lwjgl.sdl.SDLKeyboard.SDL_GetKeyFromScancode
 *///?}
 import org.jetbrains.skia.FilterTileMode
 import org.jetbrains.skia.ImageInfo
@@ -874,6 +875,7 @@ abstract class ComposeScreen(
     //?} else
     //private fun keyPressed(key: Int, modifiers: Int): Boolean {
         val bindingKey = key
+        //~ if = 1.8.9 '= key' -> '= SDL_GetKeyFromScancode(key, 0, true)'
         val shortcutKey = key
     *///?}
         val handled = dispatchKeyPressed(bindingKey, shortcutKey, modifiers)
@@ -897,6 +899,7 @@ abstract class ComposeScreen(
     //?} else
     //private fun keyReleased(key: Int, modifiers: Int): Boolean {
         val bindingKey = key
+        //~ if = 1.8.9 '= key' -> '= SDL_GetKeyFromScancode(key, 0, true)'
         val shortcutKey = key
     *///?}
         val handled = !consumedKeys.remove(bindingKey) && sendKeyReleasedEvent(bindingKey, shortcutKey, modifiers)

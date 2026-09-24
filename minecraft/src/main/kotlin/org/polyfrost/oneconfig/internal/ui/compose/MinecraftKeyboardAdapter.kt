@@ -2,7 +2,7 @@ package org.polyfrost.oneconfig.internal.ui.compose
 
 import com.mojang.blaze3d.platform.InputConstants
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-//? if >= 26.3
+//? if sdl
 import org.lwjgl.sdl.SDLKeycode.*
 
 import java.awt.event.KeyEvent
@@ -20,7 +20,7 @@ internal object MinecraftKeyboardAdapter {
     }
 
     fun toAwtKeyCode(shortcutKey: Int): Int = when (shortcutKey) {
-        //? if >= 26.3 {
+        //? if sdl {
         SDLK_BACKSPACE -> KeyEvent.VK_BACK_SPACE
         SDLK_TAB -> KeyEvent.VK_TAB
         SDLK_RETURN, SDLK_KP_ENTER -> KeyEvent.VK_ENTER
