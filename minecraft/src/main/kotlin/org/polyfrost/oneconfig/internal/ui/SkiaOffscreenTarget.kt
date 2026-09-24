@@ -103,6 +103,15 @@ class SkiaOffscreenTarget {
         //RenderTargetFbo.restoreMainTarget()
     }
 
+    fun ensureSubmitted() {
+        if (target == null) return
+        try {
+            SkiaCtx.vulkanService?.midFrameFlush()
+        } catch (t: Throwable) {
+            LOG.debug("Offscreen flush failed", t)
+        }
+    }
+
     fun destroy() {
         surface?.close(); surface = null
         brt?.close(); brt = null

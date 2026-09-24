@@ -56,6 +56,7 @@ object LegacyHudOffscreen {
             *///?} else {
             /*renderImmediateLegacy(rt)
             *///?}
+            offscreen.ensureSubmitted()
             hasContent = true
             return true
         } catch (t: Throwable) {

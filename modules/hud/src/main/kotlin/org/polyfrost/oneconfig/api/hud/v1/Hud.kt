@@ -1137,6 +1137,14 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     open fun updateFrequency(): Long = -1L
     open fun defaultPosition(): Pair<Float, Float> = 10f to 10f
 
+    /**
+     * Return `false` to skip drawing this HUD while it has nothing to show. Unlike [hidden], this
+     * doesn't change the user's visibility setting
+     *
+     * Called every frame after [update], so return state computed there
+     */
+    open fun shouldShow(): Boolean = true
+
     open fun showByDefault(): Boolean = false
     open fun hasBackground(): Boolean = true
 

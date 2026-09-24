@@ -92,7 +92,7 @@ class NativeVulkanService private constructor(
     override fun restoreMainRTLayout() {
         transitionImage(
             Minecraft.getInstance().gameRenderer.mainRenderTarget().colorTexture as? VulkanGpuTexture,
-            oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            oldLayout = VK_IMAGE_LAYOUT_GENERAL,
             newLayout = VK_IMAGE_LAYOUT_GENERAL,
             srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
             dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
@@ -104,7 +104,7 @@ class NativeVulkanService private constructor(
     override fun transitionOffscreenForSampling(target: RenderTarget) {
         transitionImage(
             target.colorTexture as? VulkanGpuTexture,
-            oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            oldLayout = VK_IMAGE_LAYOUT_GENERAL,
             newLayout = VK_IMAGE_LAYOUT_GENERAL,
             srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
             dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
@@ -117,10 +117,10 @@ class NativeVulkanService private constructor(
         transitionImage(
             target.colorTexture as? VulkanGpuTexture,
             oldLayout = VK_IMAGE_LAYOUT_GENERAL,
-            newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-            srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            newLayout = VK_IMAGE_LAYOUT_GENERAL,
+            srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT or VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
             dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-            srcAccessMask = VK_ACCESS_SHADER_READ_BIT,
+            srcAccessMask = VK_ACCESS_SHADER_READ_BIT or VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
             dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT or VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
         )
     }
