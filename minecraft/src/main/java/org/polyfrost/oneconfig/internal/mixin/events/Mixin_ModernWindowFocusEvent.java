@@ -46,7 +46,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Window.class)
 public class Mixin_ModernWindowFocusEvent {
     @Inject(method = "onFocus", at = @At("TAIL"))
-    //~ if >= 26.3 'long window, boolean focused' -> 'boolean focused'
+    //~ if sdl 'long window, boolean focused' -> 'boolean focused'
     private void onGameFocused(boolean focused, CallbackInfo ci) {
         if (focused) EventManager.INSTANCE.post(WindowFocusEvent.Gained.INSTANCE);
         else EventManager.INSTANCE.post(WindowFocusEvent.Lost.INSTANCE);

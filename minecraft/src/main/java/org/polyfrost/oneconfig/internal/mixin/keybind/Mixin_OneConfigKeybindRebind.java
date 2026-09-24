@@ -15,9 +15,9 @@ import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 //?}
-//? if < 26.3 && > 1.8.9
+//? if !sdl
 //import org.lwjgl.glfw.GLFW;
-//? if >= 26.3
+//? if sdl
 import org.lwjgl.sdl.SDLMouse;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindBridgeImpl;
@@ -125,14 +125,14 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
         if (bridge != null) bridge.setActiveRebind(oneconfig$target != null ? oneconfig$target : this.selectedKey);
         if (!oneconfig$recording) return;
         for (int k : oneconfig$keys) {
-            //? if sdl_keycodes {
+            //? if sdl {
             if (InputConstants.isKeyDown(k)) return;
             //?} else {
             /*//~ if < 1.21.10 'Minecraft.getInstance().getWindow()' -> 'Platform.compatibility().windowHandle()'
             if (InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), k)) return;
             *///?}
         }
-        //? if >= 26.3 {
+        //? if sdl {
         int buttons = SDLMouse.SDL_GetMouseState(null, null);
         for (int b : oneconfig$mouse) {
             if (b > 0 && b <= Integer.SIZE && (buttons & (1 << (b - 1))) != 0) return;
@@ -168,7 +168,7 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
 
     @Override
     public void oneconfig$recordKey(int keyCode) {
-        //? if sdl_keycodes
+        //? if sdl
         if (keyCode <= 0) return;
         if (!oneconfig$begin()) return;
         oneconfig$keys.add(keyCode);
