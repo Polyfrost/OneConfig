@@ -103,7 +103,7 @@ abstract class TextHud(
             else bgModifier.padding(padInsets)
 
         PolyBox(modifier = outerModifier) {
-            if (font == Font.Poppins) {
+            if (effectiveFont == Font.Poppins) {
                 val fontName = getPoppinsFontName()
                 val fontSize = 8f * textScale
                 val skiaFont = FontManager.getFont(fontSize, fontName)

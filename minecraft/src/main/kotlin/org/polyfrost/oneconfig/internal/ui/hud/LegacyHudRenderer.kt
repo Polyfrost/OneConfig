@@ -5,6 +5,7 @@ import java.util.Collections
 import java.util.WeakHashMap
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.api.hud.v1.GlobalHudSettings
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHud
 
@@ -45,6 +46,7 @@ object LegacyHudRenderer {
         for (hud in HudManager.activeInstances) {
             if (hud !is LegacyHud) continue
             if (!HudManager.isEditing) {
+                if (!GlobalHudSettings.enabled) continue
                 if (hud.hidden) continue
                 if (HudManager.isGuiHidden) continue
                 if (HudManager.isDebugScreenVisible && !hud.showInF3) continue

@@ -878,12 +878,32 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             return if (gui > 0f) customScale / gui else customScale
         }
 
+    /**
+     * The font this HUD renders with right now: the global one while [GlobalHudSettings.overrideFont]
+     * is on, otherwise this HUD's own [font]
+     */
+    val effectiveFont: Font
+        get() = if (GlobalHudSettings.overrideFont) GlobalHudSettings.font else font
+
+    /** [effectiveFont] for [textWeight]; only applies while the HUD uses Poppins */
+    val effectiveTextWeight: Weight
+        get() = if (GlobalHudSettings.overrideTextWeight) GlobalHudSettings.textWeight else textWeight
+
+    /** [effectiveFont] for [showBackground] */
+    val effectiveShowBackground: Boolean
+        get() = if (GlobalHudSettings.overrideShowBackground) GlobalHudSettings.showBackground else showBackground
+
+    /** [effectiveFont] for [bgRadius] */
+    val effectiveBackgroundRadius: Float
+        get() = if (GlobalHudSettings.overrideBackgroundRadius) GlobalHudSettings.backgroundRadius else bgRadius
+
     fun getPoppinsFontName(): String {
+        val weight = effectiveTextWeight
         val base = when {
-            textBold || textWeight == Weight.Bold -> "poppins-bold"
-            textWeight == Weight.Thin -> "poppins-thin"
-            textWeight == Weight.Medium -> "poppins-medium"
-            textWeight == Weight.Black -> "poppins-black"
+            textBold || weight == Weight.Bold -> "poppins-bold"
+            weight == Weight.Thin -> "poppins-thin"
+            weight == Weight.Medium -> "poppins-medium"
+            weight == Weight.Black -> "poppins-black"
             else -> "poppins"
         }
         return if (textItalic) "$base-italic" else base
@@ -917,7 +937,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var keepBgWhenHidden: Boolean get() = _keepBgWhenHidden.value; set(v) { _keepBgWhenHidden.value = v }
 
     internal val keepsHiddenBackground: Boolean
-        get() = hidden && keepBgWhenHidden && showBackground && mergeBackground &&
+        get() = hidden && keepBgWhenHidden && effectiveShowBackground && mergeBackground &&
             hasBackground() && canMergeBackground() && this !is LegacyHudMarker
 
     /**
@@ -1175,8 +1195,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
      */
     @JvmOverloads
     fun hudBackground(modifier: PolyModifier = PolyModifier): PolyModifier =
-        if (showBackground && hasBackground() && !bgMerged) {
-            modifier.background(PolyColor(bgColor, bgChroma, bgChromaSpeed), bgRadius)
+        if (effectiveShowBackground && hasBackground() && !bgMerged) {
+            modifier.background(PolyColor(bgColor, bgChroma, bgChromaSpeed), effectiveBackgroundRadius)
         } else {
             modifier
         }
