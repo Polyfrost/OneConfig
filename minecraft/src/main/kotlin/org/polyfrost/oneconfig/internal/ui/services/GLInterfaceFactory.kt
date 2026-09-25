@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
 //? if sdl {
 import org.lwjgl.sdl.SDL
 //?} else
-/*import org.lwjgl.glfw.GLFW*/
+//import org.lwjgl.glfw.GLFW
 
 internal object GLInterfaceFactory {
     private val LOG = LoggerFactory.getLogger(GLInterfaceFactory::class.java)
@@ -16,7 +16,7 @@ internal object GLInterfaceFactory {
         //? if sdl {
         SDL.getLibrary().getFunctionAddress("SDL_GL_GetProcAddress")
         //?} else
-        /*GLFW.getLibrary().getFunctionAddress("glfwGetProcAddress")*/
+        //GLFW.getLibrary().getFunctionAddress("glfwGetProcAddress")
     }
 
     fun makeDirectContextViaLwjgl(): DirectContext? = try {
