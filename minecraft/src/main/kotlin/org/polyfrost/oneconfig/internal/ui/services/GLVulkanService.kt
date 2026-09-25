@@ -7,7 +7,7 @@ import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.DirectContext
 import org.jetbrains.skia.FramebufferFormat
 import org.jetbrains.skia.SurfaceColorFormat
-//? if >= 26.3
+//? if sdl
 import org.lwjgl.sdl.SDLVideo.SDL_GetCurrentVideoDriver
 import org.polyfrost.oneconfig.internal.ui.RenderTargetFbo
 import org.slf4j.LoggerFactory
@@ -32,7 +32,7 @@ object GLVulkanService : VulkanService {
 
     private val isGlxBackend: Boolean
         get() {
-            //? if >= 26.3 {
+            //? if sdl {
             val driver = try {
                 SDL_GetCurrentVideoDriver()
             } catch (_: Throwable) {

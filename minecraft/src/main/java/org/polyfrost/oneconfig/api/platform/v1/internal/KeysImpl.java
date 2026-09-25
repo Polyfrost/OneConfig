@@ -104,7 +104,7 @@ public class KeysImpl implements Keys {
 
     @Override
     public int getKeyLeftSuper() {
-        //? if sdl_keycodes {
+        //? if sdl {
         return InputConstants.KEY_LGUI;
         //?} elif >= 1.21.10 {
         /*return InputConstants.KEY_LSUPER;
@@ -114,7 +114,7 @@ public class KeysImpl implements Keys {
 
     @Override
     public int getKeyRightSuper() {
-        //? if sdl_keycodes {
+        //? if sdl {
         return InputConstants.KEY_RGUI;
         //?} elif >= 1.21.10 {
         /*return InputConstants.KEY_RSUPER;
