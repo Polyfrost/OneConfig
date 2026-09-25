@@ -27,11 +27,12 @@
 package org.polyfrost.oneconfig.api.config.v1;
 
 import java.io.File;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class MainTest {
-    @org.junit.jupiter.api.Test
+    @Test
     void test() {
         File configFile = new File("config/test_mod.json");
         assertTrue(!configFile.exists() || configFile.delete());

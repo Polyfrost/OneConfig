@@ -1,10 +1,21 @@
 //? ukulib_compat {
 package org.polyfrost.oneconfig.internal.compat
 
+import java.awt.Color
+import java.lang.reflect.Field
+import java.lang.reflect.Method
+import java.util.Optional
+import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Consumer
+import java.util.function.DoubleConsumer
+import java.util.function.Function
+import java.util.function.IntConsumer
+import java.util.function.UnaryOperator
 import net.minecraft.client.gui.components.Button
 import net.minecraft.client.gui.components.tabs.Tab
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.network.chat.Component
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
@@ -17,14 +28,6 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
-import java.lang.reflect.Field
-import java.lang.reflect.Method
-import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Consumer
-import java.util.function.DoubleConsumer
-import java.util.function.Function
-import java.util.function.IntConsumer
-import java.util.function.UnaryOperator
 
 /**
  * Compat for ukulib (https://github.com/uku3lig/ukulib)
@@ -39,7 +42,7 @@ import java.util.function.UnaryOperator
  */
 object UkulibCompat {
 
-    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/Ukulib-Compat")
+    private val LOGGER = LogManager.getLogger("OneConfig/Ukulib-Compat")
 
     private const val DEFAULT_CATEGORY = "General"
 
@@ -293,7 +296,7 @@ object UkulibCompat {
                 if (typed) {
                     @Suppress("UNCHECKED_CAST")
                     val converted = (converter as? Function<Any?, *>)
-                        ?.let { runCatching { it.apply(text) }.getOrNull() as? java.util.Optional<Any?> }
+                        ?.let { runCatching { it.apply(text) }.getOrNull() as? Optional<Any?> }
                     if (converted != null && converted.isPresent) ref.consume("setter", converted.get())
                 } else {
                     ref.consume("setter", text)
@@ -317,13 +320,13 @@ object UkulibCompat {
         val property = Properties.functional(
             {
                 val argb = (ref.read("initialValue") as? Number)?.toInt() ?: 0
-                java.awt.Color(argb, true)
+                Color(argb, true)
             },
             { value -> ref.consume("setter", value.rgb) },
             id,
             name(creator, "ColorOption"),
             null,
-            java.awt.Color::class.java,
+            Color::class.java,
         )
 
         property.addMetadata("visualizer", Visualizer.ColorVisualizer::class.java)

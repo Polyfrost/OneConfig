@@ -5,6 +5,7 @@ import com.mojang.brigadier.builder.ArgumentBuilder
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
 import com.mojang.brigadier.tree.LiteralCommandNode
+import kotlin.math.max
 import net.minecraft.network.chat.Component
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
@@ -14,8 +15,6 @@ import org.polyfrost.oneconfig.api.commands.v1.CommandManager.argument
 import org.polyfrost.oneconfig.api.commands.v1.CommandManager.getArgumentType
 import org.polyfrost.oneconfig.api.commands.v1.factories.CommandFactory
 import org.polyfrost.oneconfig.utils.v1.MHUtils
-import kotlin.math.max
-
 
 class AnnotationCommandFactory : CommandFactory {
     override fun create(obj: Any): Array<LiteralCommandNode<ClientCommandSource>?>? {

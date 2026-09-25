@@ -26,9 +26,11 @@
 
 package org.polyfrost.oneconfig.api.config.v1
 
-import org.jetbrains.annotations.Contract
 import java.lang.reflect.Field
+import java.util.function.Consumer
+import java.util.function.Supplier
 import kotlin.reflect.KMutableProperty0
+import org.jetbrains.annotations.Contract
 
 object Properties {
     /**
@@ -98,8 +100,8 @@ object Properties {
     @JvmStatic
     @JvmOverloads
     fun <T> functional(
-        getter: java.util.function.Supplier<T>,
-        setter: java.util.function.Consumer<T>,
+        getter: Supplier<T>,
+        setter: Consumer<T>,
         id: String? = null,
         name: Any? = null,
         description: Any? = null,

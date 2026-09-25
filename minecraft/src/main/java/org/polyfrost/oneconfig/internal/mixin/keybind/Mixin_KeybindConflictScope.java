@@ -1,13 +1,12 @@
 package org.polyfrost.oneconfig.internal.mixin.keybind;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import java.util.Arrays;
 import net.minecraft.client.KeyMapping;
 import org.objectweb.asm.Opcodes;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindBridgeImpl;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-
-import java.util.Arrays;
 
 @Mixin(targets = "net.minecraft.client.gui.screens.options.controls.KeyBindsList$KeyEntry")
 public class Mixin_KeybindConflictScope {

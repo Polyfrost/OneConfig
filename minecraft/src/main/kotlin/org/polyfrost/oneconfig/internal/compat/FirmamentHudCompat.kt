@@ -29,8 +29,11 @@
 
 package org.polyfrost.oneconfig.internal.compat
 
+import java.lang.reflect.Constructor
+import java.lang.reflect.Modifier
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.network.chat.Component
+import org.apache.logging.log4j.LogManager
 import org.joml.Vector2i
 import org.joml.Vector2ic
 import org.polyfrost.oneconfig.api.config.v1.Property
@@ -40,7 +43,7 @@ import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer
 
 object FirmamentHudCompat {
-    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/FirmamentHudCompat")
+    private val LOGGER = LogManager.getLogger("OneConfig/FirmamentHudCompat")
 
     private const val JARVIS_INTEGRATION = "moe.nea.firmament.jarvis.JarvisIntegration"
     private const val HUD_META_HANDLER = "moe.nea.firmament.gui.config.HudMetaHandler"
@@ -91,7 +94,7 @@ object FirmamentHudCompat {
         CompatOverlayRenderer.register(::renderOverlays)
     }
 
-    private val hudRenderEventCtor: java.lang.reflect.Constructor<*>? by lazy {
+    private val hudRenderEventCtor: Constructor<*>? by lazy {
         runCatching {
             val eventCls = Class.forName("moe.nea.firmament.events.HudRenderEvent")
             (eventCls.declaredConstructors.firstOrNull { it.parameterCount == 2 }
@@ -105,7 +108,7 @@ object FirmamentHudCompat {
             val deltaClass = hudRenderEventCtor?.parameterTypes?.getOrNull(1)
                 ?: error("HudRenderEvent constructor unavailable")
             val zero = deltaClass.fields.firstOrNull {
-                java.lang.reflect.Modifier.isStatic(it.modifiers) && it.type == deltaClass
+                Modifier.isStatic(it.modifiers) && it.type == deltaClass
             } ?: error("no static ${deltaClass.name} constant (DeltaTracker.ZERO) found")
             zero.get(null)
         }.onFailure { LOGGER.warn("Could not resolve DeltaTracker.ZERO for Firmament render: $it") }

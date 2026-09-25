@@ -1,9 +1,9 @@
+//~ gui_graphics
 package org.polyfrost.oneconfig.internal.mixin.compat.skyblocker;
 
 //? skyblocker_legacy_hud {
 /*import de.hysky.skyblocker.skyblock.tabhud.screenbuilder.ScreenBuilder;
 import de.hysky.skyblocker.skyblock.tabhud.screenbuilder.WidgetManager;
-//~ gui_graphics
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import org.polyfrost.oneconfig.internal.compat.SkyblockerWidgetCompat;
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer;

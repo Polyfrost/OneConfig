@@ -4,6 +4,8 @@
 import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfig
 import com.teamresourceful.resourcefulconfig.api.types.elements.ResourcefulConfigEntryElement
 import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigObjectEntry
+import java.lang.reflect.Field
+import java.util.function.Consumer
 import me.owdding.lib.overlays.Overlay
 import me.owdding.lib.overlays.Overlays
 import net.minecraft.client.Minecraft
@@ -15,8 +17,6 @@ import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.hud.v1.OneConfigHudWrapper
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer
-import java.lang.reflect.Field
-import java.util.function.Consumer
 
 object SkyCubedCompat {
     private val LOGGER = LogManager.getLogger("OneConfig/SkyCubed-Compat")

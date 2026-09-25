@@ -1,5 +1,10 @@
 package org.polyfrost.oneconfig.api.ui.v1.keybind
 
+import java.util.ServiceLoader
+import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.experimental.and
+import kotlin.experimental.inv
+import kotlin.experimental.or
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.event.v1.eventHandler
 import org.polyfrost.oneconfig.api.event.v1.events.KeyInputEvent
@@ -7,16 +12,12 @@ import org.polyfrost.oneconfig.api.event.v1.events.MouseInputEvent
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent
 import org.polyfrost.oneconfig.api.event.v1.events.WindowFocusEvent
-import java.util.ServiceLoader
-import kotlin.experimental.and
-import kotlin.experimental.inv
-import kotlin.experimental.or
 
 @Suppress("UnstableApiUsage")
 object KeybindManager {
     private val LOGGER = LogManager.getLogger("OneConfig/Keybinds")
 
-    private val binds = java.util.concurrent.CopyOnWriteArrayList<OneConfigKeybind>()
+    private val binds = CopyOnWriteArrayList<OneConfigKeybind>()
     private val activeBinds = HashSet<OneConfigKeybind>()
 
     /**

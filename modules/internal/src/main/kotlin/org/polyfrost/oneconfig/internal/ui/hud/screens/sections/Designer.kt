@@ -34,18 +34,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import org.jetbrains.skia.Paint
+import org.polyfrost.compose.layout.PolyAlign
 import org.polyfrost.compose.mc.McFontQueue
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyColor
-import org.polyfrost.compose.layout.PolyAlign
 import org.polyfrost.oneconfig.api.hud.v1.Font
-import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
 import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
 import org.polyfrost.oneconfig.api.hud.v1.TextHud
 import org.polyfrost.oneconfig.api.hud.v1.Weight
-import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
-import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
-import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.components.SelectableIconButton
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
@@ -53,12 +51,15 @@ import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerModel
 import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerPopup
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
+import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
+import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
 import org.polyfrost.oneconfig.internal.ui.hud.components.AlignmentPicker
 import org.polyfrost.oneconfig.internal.ui.hud.components.Dropdown
 import org.polyfrost.oneconfig.internal.ui.hud.components.NumberSpinner
 import org.polyfrost.oneconfig.internal.ui.hud.components.NumberSpinnerWithIcon
 import org.polyfrost.oneconfig.internal.ui.hud.components.Radio
 import org.polyfrost.oneconfig.internal.ui.hud.components.RadioValue
+import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 enum class PaddingType {
@@ -250,13 +251,13 @@ fun Designer(hud: Hud? = null) {
                     val textH = skiaFont.metrics.let { it.descent - it.ascent }
                     Canvas(modifier = Modifier.size((textW / density).dp, (textH / density).dp)) {
                         drawIntoCanvas { canvas ->
-                            val paint = org.jetbrains.skia.Paint().apply { color = textColor.toArgb() }
+                            val paint = Paint().apply { color = textColor.toArgb() }
                             val baseline = -skiaFont.metrics.ascent
                             canvas.nativeCanvas.drawString(previewText, 0f, baseline, skiaFont, paint)
                             if (textUnderline) {
                                 val underlinePos = skiaFont.metrics.underlinePosition ?: (14f * textScale * 0.08f)
                                 val underlineThick = skiaFont.metrics.underlineThickness ?: (14f * textScale * 0.06f)
-                                val linePaint = org.jetbrains.skia.Paint().apply {
+                                val linePaint = Paint().apply {
                                     color = textColor.toArgb()
                                     strokeWidth = underlineThick
                                 }

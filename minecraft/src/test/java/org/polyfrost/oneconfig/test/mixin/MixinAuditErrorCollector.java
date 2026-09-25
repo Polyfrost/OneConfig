@@ -26,14 +26,13 @@
 
 package org.polyfrost.oneconfig.test.mixin;
 
-import org.spongepowered.asm.mixin.extensibility.IMixinConfig;
-import org.spongepowered.asm.mixin.extensibility.IMixinErrorHandler;
-import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+import org.spongepowered.asm.mixin.extensibility.IMixinConfig;
+import org.spongepowered.asm.mixin.extensibility.IMixinErrorHandler;
+import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
 public final class MixinAuditErrorCollector implements IMixinErrorHandler {
 

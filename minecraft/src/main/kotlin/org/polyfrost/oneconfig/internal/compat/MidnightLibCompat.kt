@@ -1,6 +1,8 @@
 //? midnightlib_compat {
 package org.polyfrost.oneconfig.internal.compat
 
+import java.lang.reflect.Field
+import java.util.function.Supplier
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.components.AbstractSelectionList
 import net.minecraft.client.gui.components.AbstractSliderButton
@@ -23,8 +25,6 @@ import org.polyfrost.oneconfig.internal.compat.CompatIds.componentKey
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
 import org.polyfrost.oneconfig.internal.mixin.compat.midnightlib.SliderButtonAccessor
-import java.lang.reflect.Field
-import java.util.function.Supplier
 
 object MidnightLibCompat {
 

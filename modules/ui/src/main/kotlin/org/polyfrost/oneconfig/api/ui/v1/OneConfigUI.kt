@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.api.ui.v1
 
-import org.apache.logging.log4j.LogManager
 import java.util.ServiceLoader
+import org.apache.logging.log4j.LogManager
 
 /**
  * Utility for opening the OneConfig UI

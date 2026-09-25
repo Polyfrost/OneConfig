@@ -35,6 +35,8 @@ import com.electronwill.nightconfig.toml.TomlWriter;
 import com.electronwill.nightconfig.yaml.YamlFormat;
 import com.electronwill.nightconfig.yaml.YamlParser;
 import com.electronwill.nightconfig.yaml.YamlWriter;
+import java.util.HashMap;
+import java.util.Map;
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.config.v1.Node;
 import org.polyfrost.oneconfig.api.config.v1.Properties;
@@ -43,9 +45,6 @@ import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
 import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
 import org.yaml.snakeyaml.DumperOptions;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.polyfrost.oneconfig.api.config.v1.Tree.tree;
 

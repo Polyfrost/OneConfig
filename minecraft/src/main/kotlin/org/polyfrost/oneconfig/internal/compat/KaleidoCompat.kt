@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.compat
 
+import java.lang.reflect.Array as ReflectArray
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
@@ -12,7 +13,6 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-import java.lang.reflect.Array as ReflectArray
 
 object KaleidoCompat {
 

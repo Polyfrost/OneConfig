@@ -6,13 +6,12 @@ import com.bawnorton.mixinsquared.api.MixinAnnotationAdjuster;
 import com.bawnorton.mixinsquared.api.MixinCanceller;
 import com.bawnorton.mixinsquared.canceller.MixinCancellerRegistrar;
 import com.llamalad7.mixinextras.MixinExtrasBootstrap;
+import java.util.List;
+import java.util.Set;
+import net.fabricmc.loader.api.FabricLoader;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
-
-import java.util.List;
-import java.util.ServiceLoader;
-import java.util.Set;
 
 public class OneConfigEarlyMixinInit implements IMixinConfigPlugin {
     //? neoforge {
@@ -26,7 +25,7 @@ public class OneConfigEarlyMixinInit implements IMixinConfigPlugin {
         /*CANCELLERS.forEach(MixinCancellerRegistrar::register);
         ANNOTATION_ADJUSTERS.forEach(MixinAnnotationAdjusterRegistrar::register);
         *///? } else {
-        net.fabricmc.loader.api.FabricLoader.getInstance().getEntrypointContainers("mixinsquared", MixinCanceller.class).forEach(container -> {
+        FabricLoader.getInstance().getEntrypointContainers("mixinsquared", MixinCanceller.class).forEach(container -> {
             String id = container.getProvider().getMetadata().getId();
             try {
                 MixinCanceller canceller = container.getEntrypoint();
@@ -36,7 +35,7 @@ public class OneConfigEarlyMixinInit implements IMixinConfigPlugin {
                 e.printStackTrace(System.err);
             }
         });
-        net.fabricmc.loader.api.FabricLoader.getInstance().getEntrypointContainers("mixinsquared-adjuster", MixinAnnotationAdjuster.class).forEach(container -> {
+        FabricLoader.getInstance().getEntrypointContainers("mixinsquared-adjuster", MixinAnnotationAdjuster.class).forEach(container -> {
             String id = container.getProvider().getMetadata().getId();
             try {
                 MixinAnnotationAdjuster annotationAdjuster = container.getEntrypoint();

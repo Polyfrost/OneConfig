@@ -27,6 +27,7 @@
 package org.polyfrost.oneconfig.test;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.config.v1.Config;
@@ -37,7 +38,6 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindHelper;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
-import java.util.function.Consumer;
 
 @SuppressWarnings("unused")
 public class TestConfig_Test extends Config {

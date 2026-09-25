@@ -26,14 +26,13 @@
 
 package org.polyfrost.oneconfig.api.event.v1.invoke;
 
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.Event;
 import org.polyfrost.oneconfig.api.event.v1.internal.EventClassValidator;
-
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 /**
  * Class which represents an event handler

@@ -26,12 +26,6 @@
 
 package org.polyfrost.oneconfig.api.hud.v1;
 
-import kotlin.Pair;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
-
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -41,9 +35,14 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
-
+import kotlin.Pair;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -369,10 +368,10 @@ class HudProfileIsolationTest {
     }
 
     @SuppressWarnings("unchecked")
-    private static java.util.Set<String> knownProviders() throws Exception {
+    private static Set<String> knownProviders() throws Exception {
         Field f = HudManager.class.getDeclaredField("knownProviders");
         f.setAccessible(true);
-        return (java.util.Set<String>) f.get(HudManager.INSTANCE);
+        return (Set<String>) f.get(HudManager.INSTANCE);
     }
 
     @SuppressWarnings("unchecked")

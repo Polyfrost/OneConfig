@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
 //? moul_compat {
+import java.util.Objects;
 import org.polyfrost.oneconfig.relocator.annotations.MoulConfig;
 import org.polyfrost.oneconfig.relocator.annotations.RelocatedMixin;
 import org.spongepowered.asm.mixin.Mixin;
@@ -9,8 +10,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.Objects;
 
 @Pseudo
 @MoulConfig

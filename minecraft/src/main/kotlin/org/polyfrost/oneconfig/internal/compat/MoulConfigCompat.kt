@@ -3,11 +3,20 @@
 package org.polyfrost.oneconfig.internal.compat
 
 import io.github.notenoughupdates.moulconfig.ChromaColour
+import io.github.notenoughupdates.moulconfig.Config as MoulConfig
 import io.github.notenoughupdates.moulconfig.common.KeyboardConstants
 import io.github.notenoughupdates.moulconfig.gui.editors.*
 import io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor
 import io.github.notenoughupdates.moulconfig.processor.ProcessedCategory
 import io.github.notenoughupdates.moulconfig.processor.ProcessedOption
+import java.awt.Color
+import java.lang.reflect.Field
+import java.lang.reflect.Method
+import java.lang.reflect.Type
+import java.util.Optional
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.reflect.KClass
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -21,23 +30,15 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
-import org.polyfrost.oneconfig.internal.utils.MoulConfigGuiOptionEditorDropdownAccessor
-import java.awt.Color
-import java.lang.reflect.Field
-import java.lang.reflect.Method
-import java.lang.reflect.Type
-import java.util.Optional
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.reflect.KClass
 // do not remove this import even though the IDE marks it redundant
 import org.polyfrost.oneconfig.internal.compat.MoulPropertyBuilder
-import io.github.notenoughupdates.moulconfig.Config as MoulConfig
+import org.polyfrost.oneconfig.internal.utils.MoulConfigGuiOptionEditorDropdownAccessor
 import org.polyfrost.oneconfig.relocator.annotations.MoulConfig as Moulconfig
 
 @Moulconfig
 data object MoulConfigCompat {
 
-    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/$this")
+    private val LOGGER = LogManager.getLogger("OneConfig/$this")
 
     @JvmStatic
     fun parseMoulconfig(processor: MoulConfigProcessor<*>, config: MoulConfig) {

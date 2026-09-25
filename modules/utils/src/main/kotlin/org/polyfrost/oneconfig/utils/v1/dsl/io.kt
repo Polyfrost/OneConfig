@@ -26,8 +26,8 @@
 
 package org.polyfrost.oneconfig.utils.v1.dsl
 
-import org.polyfrost.oneconfig.utils.v1.IOUtils
 import java.nio.file.Path
+import org.polyfrost.oneconfig.utils.v1.IOUtils
 
 /**
  * Returns the SHA-256 hash of the given [Path]

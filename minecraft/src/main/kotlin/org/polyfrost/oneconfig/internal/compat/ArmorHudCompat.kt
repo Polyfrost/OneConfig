@@ -1,5 +1,11 @@
 package org.polyfrost.oneconfig.internal.compat
 
+import java.lang.reflect.Field
+import java.lang.reflect.Method
+import java.lang.reflect.Modifier
+import java.util.Optional
+import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Consumer
 import net.minecraft.client.AttackIndicatorStatus
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
@@ -18,12 +24,6 @@ import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer
-import java.lang.reflect.Field
-import java.lang.reflect.Method
-import java.lang.reflect.Modifier
-import java.util.Optional
-import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Consumer
 
 object ArmorHudCompat {
     private val LOGGER = LogManager.getLogger("OneConfig/ArmorHud-Compat")

@@ -10,9 +10,9 @@ import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import java.io.ByteArrayInputStream
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-import java.io.ByteArrayInputStream
 
 @Composable
 fun PlayerHead(modifier: Modifier = Modifier) {

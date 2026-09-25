@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.internal.compat
 
+import org.apache.logging.log4j.LogManager
+
 /**
  * Dispatches an editor captured without knowing which relocated MoulConfig copy it belongs to
  * to the matching generated `MoulConfigCompat_<target>` class
@@ -12,7 +14,7 @@ package org.polyfrost.oneconfig.internal.compat
  */
 object MoulConfigDispatch {
 
-    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/MoulConfigDispatch")
+    private val LOGGER = LogManager.getLogger("OneConfig/MoulConfigDispatch")
 
     private const val COMPAT_PACKAGE = "org.polyfrost.oneconfig.internal.compat"
     private const val COMPAT_PREFIX = "MoulConfigCompat_"

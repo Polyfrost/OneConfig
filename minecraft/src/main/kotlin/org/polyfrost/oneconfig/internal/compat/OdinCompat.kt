@@ -15,6 +15,8 @@ import com.odtheking.odin.clickgui.settings.impl.SelectorSetting
 import com.odtheking.odin.clickgui.settings.impl.StringSetting
 import com.odtheking.odin.features.ModuleManager
 import com.odtheking.odin.utils.Color
+import java.util.Collections
+import java.util.IdentityHashMap
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.apache.logging.log4j.LogManager
@@ -28,14 +30,13 @@ import org.polyfrost.oneconfig.api.hud.v1.OneConfigHudWrapper
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindConflicts
-import java.util.IdentityHashMap
 
 object OdinCompat {
     private val LOGGER = LogManager.getLogger("OneConfig/Odin-Compat")
 
     private var initialized = false
     private val wrapped: MutableSet<HUDSetting> =
-        java.util.Collections.newSetFromMap(IdentityHashMap<HUDSetting, Boolean>())
+        Collections.newSetFromMap(IdentityHashMap<HUDSetting, Boolean>())
 
     @JvmStatic
     fun ensureRegistered() {

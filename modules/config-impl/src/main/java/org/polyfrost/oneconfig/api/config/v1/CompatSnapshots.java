@@ -26,11 +26,8 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
-import org.jetbrains.annotations.ApiStatus;
-import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
-import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
-import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
-
+import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
@@ -39,7 +36,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import org.jetbrains.annotations.ApiStatus;
+import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
 
 @ApiStatus.Internal
 public final class CompatSnapshots implements ConfigManager.ProfileChangeListener {
@@ -58,7 +61,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     private final Map<Property<?>, Boolean> wired = Collections.synchronizedMap(new WeakHashMap<>());
     private final Set<Property<?>> applying = Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
     private static final ThreadLocal<Boolean> APPLYING_HERE = ThreadLocal.withInitial(() -> Boolean.FALSE);
-    private volatile java.util.function.Consumer<Runnable> dispatcher = Runnable::run;
+    private volatile Consumer<Runnable> dispatcher = Runnable::run;
     private volatile String currentProfile;
 
     private CompatSnapshots() {
@@ -68,7 +71,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         return APPLYING_HERE.get();
     }
 
-    public static void setDispatcher(java.util.function.Consumer<Runnable> dispatcher) {
+    public static void setDispatcher(Consumer<Runnable> dispatcher) {
         INSTANCE.dispatcher = dispatcher == null ? Runnable::run : dispatcher;
     }
 
@@ -183,7 +186,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         if (oldProfile.equals(currentProfile)) currentProfile = newProfile;
         try {
             store.renameProfile(oldProfile, newProfile);
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
             throw new IllegalStateException("Failed to move compat snapshot to profile '" + newProfile + "'", e);
         }
     }
@@ -209,7 +212,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         ConfigManager.dispatchAndWait(
                 dispatcher,
                 action,
-                java.util.concurrent.TimeUnit.SECONDS.toNanos(DISPATCH_TIMEOUT_SECONDS),
+                TimeUnit.SECONDS.toNanos(DISPATCH_TIMEOUT_SECONDS),
                 "the compat snapshot dispatcher"
         );
     }
@@ -217,7 +220,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     private static void flushForLifecycle(CompatSnapshotStore snapshotStore, String profile) {
         try {
             snapshotStore.flushOrThrow(profile);
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
             throw new IllegalStateException("Failed to save compat snapshot for profile '" + profile + "'", e);
         }
     }
@@ -476,9 +479,9 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
             return true;
         }
         if (value.getClass().isArray()) {
-            int len = java.lang.reflect.Array.getLength(value);
+            int len = Array.getLength(value);
             for (int i = 0; i < len; i++) {
-                if (!isStorable(java.lang.reflect.Array.get(value, i))) return false;
+                if (!isStorable(Array.get(value, i))) return false;
             }
             return true;
         }
@@ -503,8 +506,8 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
 
     private static boolean gateClosed(Tree tree) {
         Object gate = tree.getMetadata(GATE_METADATA);
-        return gate instanceof java.util.function.BooleanSupplier
-                && !((java.util.function.BooleanSupplier) gate).getAsBoolean();
+        return gate instanceof BooleanSupplier
+                && !((BooleanSupplier) gate).getAsBoolean();
     }
 
     private static boolean isValueProp(Property<?> p) {

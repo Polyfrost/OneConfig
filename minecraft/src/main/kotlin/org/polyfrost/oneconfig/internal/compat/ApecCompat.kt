@@ -4,6 +4,9 @@
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import java.io.File
+import java.util.function.Consumer
+import kotlin.math.abs
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.apache.logging.log4j.LogManager
 import org.joml.Vector2f
@@ -20,9 +23,6 @@ import uk.co.hexeption.apec.hud.Element
 import uk.co.hexeption.apec.hud.ElementType
 import uk.co.hexeption.apec.settings.SettingID
 import uk.co.hexeption.apec.settings.SettingsManager
-import java.io.File
-import java.util.function.Consumer
-import kotlin.math.abs
 
 object ApecCompat {
     private val LOGGER = LogManager.getLogger("OneConfig/Apec-Compat")

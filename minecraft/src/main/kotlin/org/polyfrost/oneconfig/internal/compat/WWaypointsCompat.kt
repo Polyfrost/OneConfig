@@ -10,6 +10,7 @@ import java.util.function.Supplier
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.Screen
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
@@ -40,7 +41,7 @@ import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindRegistrar
  */
 object WWaypointsCompat {
 
-    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/wWaypoints-Compat")
+    private val LOGGER = LogManager.getLogger("OneConfig/wWaypoints-Compat")
 
     private const val MOD_ID = "wwaypoints"
 

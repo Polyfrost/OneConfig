@@ -1,11 +1,11 @@
 package org.polyfrost.oneconfig.api.config.v1.dsl
 
+import kotlin.jvm.java
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
-import kotlin.jvm.java
 
 /**
  * Experimental DSL for creating config trees

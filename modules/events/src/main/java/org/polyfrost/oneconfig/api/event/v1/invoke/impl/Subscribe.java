@@ -26,15 +26,14 @@
 
 package org.polyfrost.oneconfig.api.event.v1.invoke.impl;
 
-import org.jetbrains.annotations.ApiStatus;
-import org.polyfrost.oneconfig.api.event.v1.events.Event;
-import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.function.Consumer;
+import org.jetbrains.annotations.ApiStatus;
+import org.polyfrost.oneconfig.api.event.v1.events.Event;
+import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 
 /**
  * Annotate a method as a subscriber to an event

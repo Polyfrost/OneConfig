@@ -20,6 +20,12 @@
 package gg.essential.gradle.util
 
 import gg.essential.gradle.util.relocate.KotlinMetadataRemappingClassVisitor
+import java.io.Closeable
+import java.io.File
+import java.io.Serializable
+import java.util.jar.JarInputStream
+import java.util.jar.JarOutputStream
+import java.util.zip.ZipEntry
 import org.gradle.api.Project
 import org.gradle.api.artifacts.transform.InputArtifact
 import org.gradle.api.artifacts.transform.TransformAction
@@ -34,12 +40,6 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.commons.ClassRemapper
 import org.objectweb.asm.commons.Remapper
-import java.io.Closeable
-import java.io.File
-import java.io.Serializable
-import java.util.jar.JarInputStream
-import java.util.jar.JarOutputStream
-import java.util.zip.ZipEntry
 
 /**
  * Relocates packages and single files in an artifact

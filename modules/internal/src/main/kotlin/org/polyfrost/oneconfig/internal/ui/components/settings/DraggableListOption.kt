@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.settings.DraggableListOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
@@ -48,7 +49,6 @@ import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-import kotlin.math.roundToInt
 
 private val ListContainerShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
 private val ListItemShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape

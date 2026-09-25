@@ -1,16 +1,18 @@
 package org.polyfrost.oneconfig.internal.ui.api.settings
 
+import java.awt.Color
+import java.lang.reflect.Array as ReflectArray
+import java.util.function.Function
+import java.util.function.Supplier
+import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
+import org.polyfrost.oneconfig.internal.ui.components.item.normalizeItemIds
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedString
 import org.polyfrost.oneconfig.internal.ui.components.localizedText
 import org.polyfrost.oneconfig.internal.ui.components.settings.formatSpinnerValue
 import org.polyfrost.oneconfig.internal.ui.components.settings.toNumberType
-import java.util.function.Function
-import java.util.function.Supplier
-import kotlin.math.roundToInt
-import java.lang.reflect.Array as ReflectArray
 
 sealed class OptionData(val prop: Property<*>) {
     val title: Any get() = localizedText(prop.getMetadata("titleKey"), prop.title ?: prop.id ?: "")
@@ -190,12 +192,12 @@ class TextListOptionData(prop: Property<*>) : ListOptionData(prop) {
 }
 
 class ItemListOptionData(prop: Property<*>) : ListOptionData(prop) {
-    fun ids(): List<String> = org.polyfrost.oneconfig.internal.ui.components.item.normalizeItemIds(
+    fun ids(): List<String> = normalizeItemIds(
         elements().mapNotNull { it as? String }
     )
 
     fun setIds(values: List<String>) = prop.setItemListElements(
-        org.polyfrost.oneconfig.internal.ui.components.item.normalizeItemIds(values)
+        normalizeItemIds(values)
     )
 }
 
@@ -242,7 +244,7 @@ class ColorListOptionData(prop: Property<*>) : ListOptionData(prop) {
     fun argb(): List<Int> = elements().map {
         when (it) {
             is Number -> it.toInt()
-            is java.awt.Color -> it.rgb
+            is Color -> it.rgb
             else -> -1
         }
     }
@@ -250,7 +252,7 @@ class ColorListOptionData(prop: Property<*>) : ListOptionData(prop) {
     fun setArgb(values: List<Int>) {
         val component = if (prop.type.isArray) prop.type.componentType else Integer::class.java
         setElements(
-            if (component == java.awt.Color::class.java) values.map { java.awt.Color(it, true) } else values
+            if (component == Color::class.java) values.map { Color(it, true) } else values
         )
     }
 }

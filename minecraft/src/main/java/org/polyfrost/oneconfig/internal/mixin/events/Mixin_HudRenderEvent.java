@@ -1,18 +1,21 @@
+//~ gui_graphics
 package org.polyfrost.oneconfig.internal.mixin.events;
 
-//~ gui_graphics
 import net.minecraft.client.DeltaTracker;
-//? >= 26.2 {
-import net.minecraft.client.gui.Hud;
-//? } else {
-/*import net.minecraft.client.gui.Gui;
-*///? }
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import org.polyfrost.oneconfig.internal.OneConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+//? if >= 26.2 {
+import net.minecraft.client.gui.Hud;
+//?}
+
+//? if < 26.2 {
+/*import net.minecraft.client.gui.Gui;
+*///?}
 
 //? if >= 26.2 {
 @Mixin(Hud.class)

@@ -1,16 +1,17 @@
 package org.polyfrost.oneconfig.internal.mixin.keybind;
 
-import net.minecraft.client.Options;
-//? if >=1.21.10 {
-import net.minecraft.client.input.KeyEvent;
-//?}
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
+
+//? if >= 1.21.10 {
+import net.minecraft.client.Options;
+import net.minecraft.client.input.KeyEvent;
+import org.polyfrost.oneconfig.internal.ui.keybind.OneConfigKeybindRecorder;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.polyfrost.oneconfig.internal.ui.keybind.OneConfigKeybindRecorder;
+//?}
 
 @Pseudo
 @Mixin(targets = "com.blamejared.controlling.platform.IPlatformHelper")

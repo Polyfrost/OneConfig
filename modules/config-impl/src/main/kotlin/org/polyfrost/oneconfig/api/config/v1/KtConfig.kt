@@ -26,14 +26,14 @@
 
 package org.polyfrost.oneconfig.api.config.v1
 
-import org.polyfrost.compose.render.PolyColor
-import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import kotlin.jvm.java
 import kotlin.properties.PropertyDelegateProvider
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty0
 import kotlin.reflect.KProperty1
+import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 
 /**
  * Kotlin config class which allows using the `by` keyword to create properties

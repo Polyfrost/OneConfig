@@ -26,6 +26,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.Locale
+import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.NumberOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
@@ -33,11 +35,9 @@ import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-import java.util.Locale
-import kotlin.math.roundToInt
 
 fun Float.toNumberType(type: Class<*>): Number = when (type) {
-    Int::class.java, java.lang.Integer::class.java, Integer.TYPE -> toInt()
+    Int::class.java, Integer::class.java, Integer.TYPE -> toInt()
     Long::class.java, java.lang.Long::class.java, java.lang.Long.TYPE -> toLong()
     Double::class.java, java.lang.Double::class.java, java.lang.Double.TYPE -> toDouble()
     Short::class.java, java.lang.Short::class.java, java.lang.Short.TYPE -> toInt().toShort()

@@ -1,12 +1,12 @@
 package org.polyfrost.oneconfig.internal.ui.keybind
 
+import java.util.WeakHashMap
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.ui.components.localizedString
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
-import java.util.WeakHashMap
 
 object MinecraftKeybindRegistrar {
     /**

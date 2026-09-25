@@ -26,11 +26,6 @@
 
 package org.polyfrost.oneconfig.internal.mixin.events;
 
-//? if >= 26.1 {
-import com.mojang.blaze3d.platform.Window;
-//? } else {
-/*import net.minecraft.client.Minecraft;
-*///? }
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.WindowFocusEvent;
 import org.spongepowered.asm.mixin.Mixin;
@@ -38,6 +33,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+//? if >= 26.1 {
+import com.mojang.blaze3d.platform.Window;
+//?}
+
+//? if < 26.1 {
+/*import net.minecraft.client.Minecraft;
+*///?}
 
 //? if >= 26.1 {
 @Mixin(Window.class)

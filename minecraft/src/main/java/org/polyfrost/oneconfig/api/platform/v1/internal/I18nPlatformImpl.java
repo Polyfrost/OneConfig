@@ -28,15 +28,16 @@ package org.polyfrost.oneconfig.api.platform.v1.internal;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.resources.language.I18n;
-//? if >= 26.2 {
-import net.minecraft.locale.Language;
-//?}
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.FormattedCharSequence;
 import org.polyfrost.oneconfig.api.platform.v1.I18nPlatform;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.internal.ComponentUtil;
+
+//? if >= 26.2 {
+import net.minecraft.locale.Language;
+//?}
 
 public class I18nPlatformImpl implements I18nPlatform {
     @Override

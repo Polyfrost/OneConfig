@@ -35,9 +35,8 @@ import com.electronwill.nightconfig.core.io.ConfigWriter;
 import com.electronwill.nightconfig.core.io.ParsingMode;
 import com.electronwill.nightconfig.json.JsonFormat;
 import com.electronwill.nightconfig.json.JsonParser;
-import org.jetbrains.annotations.Nullable;
-
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
@@ -46,6 +45,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,8 +55,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
-@org.jetbrains.annotations.ApiStatus.Internal
+@ApiStatus.Internal
 public final class CompatSnapshotStore {
     static final String FILE_NAME = "compat-snapshots.json";
     static final int MAX_QUARANTINED = 3;
@@ -333,14 +336,14 @@ public final class CompatSnapshotStore {
         if (value instanceof Map) return toConfig((Map<String, Object>) value);
         if (value instanceof List) {
             List<Object> in = (List<Object>) value;
-            java.util.ArrayList<Object> out = new java.util.ArrayList<>(in.size());
+            ArrayList<Object> out = new ArrayList<>(in.size());
             for (Object o : in) out.add(toStorable(o));
             return out;
         }
         if (value != null && value.getClass().isArray()) {
-            int len = java.lang.reflect.Array.getLength(value);
-            java.util.ArrayList<Object> out = new java.util.ArrayList<>(len);
-            for (int i = 0; i < len; i++) out.add(toStorable(java.lang.reflect.Array.get(value, i)));
+            int len = Array.getLength(value);
+            ArrayList<Object> out = new ArrayList<>(len);
+            for (int i = 0; i < len; i++) out.add(toStorable(Array.get(value, i)));
             return out;
         }
         return value;
@@ -359,7 +362,7 @@ public final class CompatSnapshotStore {
         if (value instanceof Config) return fromConfig((Config) value);
         if (value instanceof List) {
             List<Object> in = (List<Object>) value;
-            java.util.ArrayList<Object> out = new java.util.ArrayList<>(in.size());
+            ArrayList<Object> out = new ArrayList<>(in.size());
             for (Object o : in) out.add(fromStorable(o));
             return out;
         }
@@ -419,7 +422,7 @@ public final class CompatSnapshotStore {
         }
 
         @Override
-        public Config createConfig(java.util.function.Supplier<Map<String, Object>> mapCreator) {
+        public Config createConfig(Supplier<Map<String, Object>> mapCreator) {
             return new BackedConfig(mapCreator.get());
         }
 

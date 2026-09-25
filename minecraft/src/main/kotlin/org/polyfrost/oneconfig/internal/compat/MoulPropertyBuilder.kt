@@ -3,16 +3,16 @@ package org.polyfrost.oneconfig.internal.compat
 
 import io.github.notenoughupdates.moulconfig.observer.Property as MoulProperty
 import io.github.notenoughupdates.moulconfig.processor.ProcessedOption
+import java.lang.reflect.Field
+import java.lang.reflect.Modifier
+import java.util.Optional
+import java.util.concurrent.ConcurrentHashMap
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
 import org.polyfrost.oneconfig.relocator.annotations.MoulConfig
 import org.polyfrost.oneconfig.utils.v1.WrappingUtils
-import java.lang.reflect.Field
-import java.lang.reflect.Modifier
-import java.util.Optional
-import java.util.concurrent.ConcurrentHashMap
 
 @MoulConfig
 class MoulPropertyBuilder internal constructor(option: ProcessedOption) {

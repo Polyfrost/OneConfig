@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.relocator
 
-import org.polyfrost.oneconfig.relocator.annotations.MoulConfig
 import kotlin.reflect.KClass
+import org.polyfrost.oneconfig.relocator.annotations.MoulConfig
 
 internal object Locations {
     val relocations = mapOf<KClass<out Annotation>, Location>(

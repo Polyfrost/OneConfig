@@ -2,17 +2,21 @@ package org.polyfrost.oneconfig.internal.mixin.skia;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
+import org.polyfrost.oneconfig.internal.ui.hud.GuiTargetRedirect;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+
 //? if >= 1.21.8 {
 import com.llamalad7.mixinextras.expression.Expression;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.mojang.renderpearl.api.commands.RenderPass;
 import net.minecraft.client.gui.render.GuiRenderer;
-//?} else
-//import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.navigation.ScreenRectangle;
-import org.polyfrost.oneconfig.internal.ui.hud.GuiTargetRedirect;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
+//?}
+
+//? if < 1.21.8 {
+/*import net.minecraft.client.gui.GuiGraphics;
+*///?}
 
 //~ if < 1.21.8 'GuiRenderer' -> 'GuiGraphics'
 @Mixin(GuiRenderer.class)

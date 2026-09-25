@@ -11,24 +11,28 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.PointerKeyboardModifiers
 import androidx.compose.ui.platform.PlatformContext
 import androidx.compose.ui.platform.PlatformScreenReader
-//? if >= 26.1
-import androidx.compose.ui.platform.PlatformTextInputMethodRequest
 import androidx.compose.ui.platform.WindowInfo
 import androidx.compose.ui.scene.ComposeSceneContext
 import androidx.compose.ui.unit.IntSize
-//? if >= 26.1
-import kotlinx.coroutines.awaitCancellation
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.Minecraft
-//? if !sdl
-//import org.lwjgl.glfw.GLFW.*
+import org.polyfrost.oneconfig.api.platform.v1.Platform
+
 //? if sdl {
 import org.lwjgl.sdl.SDLMouse.*
 import org.lwjgl.sdl.SDLVideo.SDL_RaiseWindow
 //?}
-import org.polyfrost.oneconfig.api.platform.v1.Platform
-//? if >= 26.1
+
+//? if >= 26.1 {
+import androidx.compose.ui.platform.PlatformTextInputMethodRequest
+import com.mojang.blaze3d.platform.TextInputManager
 import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.awaitCancellation
+//?}
+
+//? if !sdl {
+/*import org.lwjgl.glfw.GLFW.*
+*///?}
 
 private class InputModeManagerImpl : InputModeManager {
     override val inputMode: InputMode = InputMode.Keyboard
@@ -148,7 +152,7 @@ private class PlatformImpl : PlatformContext {
         }
     }
 
-    private fun onClientThread(block: (com.mojang.blaze3d.platform.TextInputManager) -> Unit) {
+    private fun onClientThread(block: (TextInputManager) -> Unit) {
         val mc = Minecraft.getInstance()
         mc.execute { block(mc.textInputManager()) }
     }

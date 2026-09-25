@@ -1,9 +1,9 @@
 package org.polyfrost.oneconfig.internal.ui.services
 
 //? if >= 26.2 {
-import com.mojang.renderpearl.api.GpuFormat
 import com.mojang.blaze3d.pipeline.RenderTarget
 import com.mojang.blaze3d.systems.RenderSystem
+import com.mojang.renderpearl.api.GpuFormat
 import com.mojang.renderpearl.backend.vulkan.VulkanCommandEncoder
 import com.mojang.renderpearl.backend.vulkan.VulkanDevice
 import com.mojang.renderpearl.backend.vulkan.VulkanGpuTexture

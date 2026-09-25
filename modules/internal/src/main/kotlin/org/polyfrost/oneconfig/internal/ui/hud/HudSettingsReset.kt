@@ -28,10 +28,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.isSecondaryPressed
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -39,6 +39,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import kotlin.math.roundToInt
+import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
+import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
@@ -46,18 +51,13 @@ import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
+import org.polyfrost.oneconfig.internal.ui.components.settings.optionHasDefault
+import org.polyfrost.oneconfig.internal.ui.components.settings.resetOption
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.concentric
-import org.polyfrost.oneconfig.api.config.v1.Property
-import org.polyfrost.oneconfig.api.config.v1.Tree
-import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
-import org.polyfrost.oneconfig.internal.OneConfigConfig
-import org.polyfrost.oneconfig.api.hud.v1.Hud
-import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
-import org.polyfrost.oneconfig.internal.ui.components.settings.optionHasDefault
-import org.polyfrost.oneconfig.internal.ui.components.settings.resetOption
 
 private val MenuPadding = 4.dp
 
@@ -247,7 +247,7 @@ fun HudSettingsContent(hud: Hud, content: @Composable () -> Unit) {
     }
 }
 
-private val DeleteMenuColor = androidx.compose.ui.graphics.Color(0xFFE5484D)
+private val DeleteMenuColor = Color(0xFFE5484D)
 
 /**
  * Right-click menu on a HUD element in the design studio canvas

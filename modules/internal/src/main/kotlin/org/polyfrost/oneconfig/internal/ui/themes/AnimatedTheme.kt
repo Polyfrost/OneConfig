@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.themes
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -75,7 +76,7 @@ fun animateTheme(target: UITheme): UITheme {
  * Shapes without a fixed radius such as `CircleShape` are left untouched so circles stay circular
  */
 @Composable
-private fun animateCornerShape(target: Shape, spec: androidx.compose.animation.core.AnimationSpec<Float>): Shape {
+private fun animateCornerShape(target: Shape, spec: AnimationSpec<Float>): Shape {
     val targetRadius = target.cornerRadiusOrNull() ?: return target
     val animated by animateFloatAsState(targetRadius.value, spec, label = "cornerRadius")
     return RoundedCornerShape(animated.dp)

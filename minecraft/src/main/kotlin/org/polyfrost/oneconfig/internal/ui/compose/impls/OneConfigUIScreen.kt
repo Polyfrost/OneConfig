@@ -7,41 +7,47 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalWindowInfo
 import com.mojang.blaze3d.platform.InputConstants
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.pow
+import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
-//? if < 1.21.11
-//import org.lwjgl.glfw.GLFW
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
+import org.polyfrost.oneconfig.internal.OneConfig
 import org.polyfrost.oneconfig.internal.OneConfigConfig
-import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
+import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
+import org.polyfrost.oneconfig.internal.ui.PlayerHeadLoader
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
-import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
-import org.polyfrost.oneconfig.internal.ui.components.warmIconCache
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
-import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
+import org.polyfrost.oneconfig.internal.ui.components.warmIconCache
 import org.polyfrost.oneconfig.internal.ui.compose.BlurRenderer
 import org.polyfrost.oneconfig.internal.ui.compose.ComposePreloader
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.KeybindsGraph
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.PreferencesGraph
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.ThemesGraph
+import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
-import org.polyfrost.oneconfig.internal.ui.PlayerHeadLoader
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.KeybindsGraph
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.PreferencesGraph
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.ThemesGraph
 import org.polyfrost.oneconfig.internal.ui.shell.HudEditorRoute
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
-import org.polyfrost.oneconfig.api.platform.v1.Platform
-import org.polyfrost.oneconfig.internal.OneConfig
-import kotlin.math.pow
+
+//? if < 1.21.11 {
+/*import org.lwjgl.glfw.GLFW
+*///?}
 
 class OneConfigUIScreen @JvmOverloads constructor(
     private val initialTreeId: String? = null,
@@ -53,7 +59,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
     override val retainsScene: Boolean get() = this === sharedScreen
 
     companion object {
-        private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/UI")
+        private val LOGGER = LogManager.getLogger("OneConfig/UI")
 
         private var sharedScreen: OneConfigUIScreen? = null
 
@@ -74,11 +80,11 @@ class OneConfigUIScreen @JvmOverloads constructor(
         private const val OPEN_ANIMATION_MS = 250L
 
         /** Serialized so two closes in quick succession cannot write the same files at once */
-        private val SAVE_EXECUTOR = java.util.concurrent.Executors.newSingleThreadExecutor { r ->
+        private val SAVE_EXECUTOR = Executors.newSingleThreadExecutor { r ->
             Thread(r, "OneConfig-ConfigSave").apply { isDaemon = true }
         }
 
-        private val savePending = java.util.concurrent.atomic.AtomicBoolean(false)
+        private val savePending = AtomicBoolean(false)
 
         private fun scheduleSave() {
             if (!savePending.compareAndSet(false, true)) return
@@ -283,13 +289,13 @@ class OneConfigUIScreen @JvmOverloads constructor(
         ShellState.lastRoute = target
 
         try {
-            ShellState.playerName = net.minecraft.client.Minecraft.getInstance().user.name
+            ShellState.playerName = Minecraft.getInstance().user.name
         } catch (_: Throwable) {
             ShellState.playerName = "Player"
         }
         ShellState.focusSearchField = OneConfigConfig.instantSearch
         ShellState.searchFieldFocused = false
-        val client = net.minecraft.client.Minecraft.getInstance()
+        val client = Minecraft.getInstance()
         val cachedHead = PlayerHeadLoader.cachedLocalPlayerHeadPng(client)
         if (cachedHead != null) {
             ShellState.playerHeadPng = cachedHead

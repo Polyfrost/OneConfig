@@ -10,6 +10,8 @@ import co.stellarskys.stella.utils.config
 import co.stellarskys.stella.utils.render.Render2D
 import co.stellarskys.stella.utils.render.Render2D.height
 import co.stellarskys.stella.utils.render.Render2D.width
+import java.awt.Color
+import java.util.function.Consumer
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
@@ -30,8 +32,6 @@ import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer
-import java.awt.Color
-import java.util.function.Consumer
 
 object StellaCompat {
     private val LOGGER = LogManager.getLogger("OneConfig/Stella-Compat")

@@ -1,5 +1,11 @@
 package org.polyfrost.oneconfig.internal.compat
 
+import java.net.URI
+import java.util.Optional
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.atomic.AtomicBoolean
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.Event
 import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent
@@ -8,14 +14,9 @@ import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
 import org.polyfrost.oneconfig.internal.ui.compose.opengl.resyncTextureBindCache
-import java.net.URI
-import java.util.Optional
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.atomic.AtomicBoolean
 
 object CompatLoader {
-    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/Compat")
+    private val LOGGER = LogManager.getLogger("OneConfig/Compat")
 
     private val forcedModId = ThreadLocal<String?>()
 

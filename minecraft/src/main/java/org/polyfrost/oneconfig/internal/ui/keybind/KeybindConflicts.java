@@ -27,6 +27,10 @@
 package org.polyfrost.oneconfig.internal.ui.keybind;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import org.apache.logging.log4j.LogManager;
@@ -39,11 +43,6 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindCodec;
 import org.polyfrost.oneconfig.internal.OneConfigConfig;
-
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
 
 import static org.polyfrost.oneconfig.api.config.v1.Tree.tree;
 

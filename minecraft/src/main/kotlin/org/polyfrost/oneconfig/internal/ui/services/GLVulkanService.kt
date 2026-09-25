@@ -1,16 +1,21 @@
+//~ main_render_target
 package org.polyfrost.oneconfig.internal.ui.services
 
-//~ main_render_target
-import net.minecraft.client.Minecraft
 import com.mojang.blaze3d.pipeline.RenderTarget
+import net.minecraft.client.Minecraft
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.DirectContext
 import org.jetbrains.skia.FramebufferFormat
 import org.jetbrains.skia.SurfaceColorFormat
-//? if sdl
-import org.lwjgl.sdl.SDLVideo.SDL_GetCurrentVideoDriver
-import org.polyfrost.oneconfig.internal.ui.RenderTargetFbo
 import org.slf4j.LoggerFactory
+
+//? if sdl {
+import org.lwjgl.sdl.SDLVideo.SDL_GetCurrentVideoDriver
+//?}
+
+//? if >= 1.21.5 {
+import org.polyfrost.oneconfig.internal.ui.RenderTargetFbo
+//?}
 
 object GLVulkanService : VulkanService {
     private val LOG = LoggerFactory.getLogger(GLVulkanService::class.java)

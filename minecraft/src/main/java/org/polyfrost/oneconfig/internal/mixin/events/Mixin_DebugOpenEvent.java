@@ -1,17 +1,20 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
 import net.minecraft.client.Minecraft;
-//? < 1.21.10 {
-/*import net.minecraft.client.gui.components.DebugScreenOverlay;
-*///? } else {
-import net.minecraft.client.gui.components.debug.DebugScreenEntryList;
-//? }
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.HudEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+//? if >= 1.21.10 {
+import net.minecraft.client.gui.components.debug.DebugScreenEntryList;
+//?}
+
+//? if < 1.21.10 {
+/*import net.minecraft.client.gui.components.DebugScreenOverlay;
+*///?}
 
 //? < 1.21.10 {
 /*@Mixin(DebugScreenOverlay.class)

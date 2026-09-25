@@ -1,8 +1,12 @@
 //? clothconfig_compat {
 package org.polyfrost.oneconfig.internal.compat
 
+import java.awt.Color
+import java.lang.reflect.Field
+import java.util.*
+import java.util.function.Consumer
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
-import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
@@ -14,16 +18,13 @@ import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.internal.compat.CompatIds.componentKey
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
-import java.lang.reflect.Field
-import java.util.*
-import java.util.function.Consumer
 
 /**
  * Compatibility layer for Cloth Config and AutoConfig
  */
 object ClothConfigCompat {
 
-    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/Cloth-Compat")
+    private val LOGGER = LogManager.getLogger("OneConfig/Cloth-Compat")
 
     @JvmStatic
     fun parseClothBuilder(builder: Any) {
@@ -167,7 +168,7 @@ object ClothConfigCompat {
             isNumber -> Visualizer.NumberVisualizer::class.java
             currentValue is String -> Visualizer.TextVisualizer::class.java
             currentValue is Enum<*> -> Visualizer.DropdownVisualizer::class.java
-            currentValue is java.awt.Color -> Visualizer.ColorVisualizer::class.java
+            currentValue is Color -> Visualizer.ColorVisualizer::class.java
             else -> return false
         }
 

@@ -26,10 +26,13 @@
 
 package org.polyfrost.oneconfig.internal.ui.sound;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Optional;
+import java.util.function.Consumer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackLocationInfo;
-//? if >= 26.3
-import net.minecraft.server.packs.PackMetadataResources;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackSelectionConfig;
 import net.minecraft.server.packs.PackType;
@@ -38,13 +41,10 @@ import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.server.packs.repository.RepositorySource;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Optional;
-import java.util.function.Consumer;
-//? if >= 26.3
+//? if >= 26.3 {
 import java.util.stream.Stream;
+import net.minecraft.server.packs.PackMetadataResources;
+//?}
 
 public final class OneConfigSoundPackSource implements RepositorySource {
     public static final OneConfigSoundPackSource INSTANCE = new OneConfigSoundPackSource();

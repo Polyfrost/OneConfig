@@ -1,10 +1,10 @@
 package org.polyfrost.oneconfig.internal.ui.hud
 
+import java.util.concurrent.CopyOnWriteArrayList
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
 import org.slf4j.LoggerFactory
-import java.util.concurrent.CopyOnWriteArrayList
 
 object CompatOverlayRenderer {
     private val LOG = LoggerFactory.getLogger("OneConfig/CompatOverlayRenderer")

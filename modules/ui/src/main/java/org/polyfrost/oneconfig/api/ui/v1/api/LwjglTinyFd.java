@@ -26,6 +26,14 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.api;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.locks.ReentrantLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.PointerBuffer;
@@ -35,14 +43,6 @@ import org.lwjgl.util.tinyfd.TinyFileDialogs;
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.locks.ReentrantLock;
 
 final class LwjglTinyFd implements TinyFdApi {
     static final LwjglTinyFd INSTANCE = new LwjglTinyFd();
@@ -275,7 +275,7 @@ final class LwjglTinyFd implements TinyFdApi {
             Path path = Paths.get(input);
             if (path.isAbsolute()) return input;
             String absolute = path.toAbsolutePath().toString();
-            return input.endsWith("/") || input.endsWith("\\") ? absolute + java.io.File.separator : absolute;
+            return input.endsWith("/") || input.endsWith("\\") ? absolute + File.separator : absolute;
         } catch (Exception e) {
             return input;
         }

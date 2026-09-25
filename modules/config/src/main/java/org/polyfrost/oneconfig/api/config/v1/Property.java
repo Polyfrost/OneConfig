@@ -26,12 +26,6 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
-import org.polyfrost.oneconfig.utils.v1.MHUtils;
-import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
-
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -39,6 +33,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import kotlin.reflect.KMutableProperty0;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
+import org.polyfrost.oneconfig.utils.v1.MHUtils;
+import org.polyfrost.oneconfig.utils.v1.OverwriteMergeable;
+import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
 
 /**
  * Class which represents a property in a tree
@@ -235,8 +236,8 @@ public abstract class Property<T> extends Node implements Serializable {
         Object in = that.get();
         if (in != null) {
             Object current = this.get();
-            if (current instanceof org.polyfrost.oneconfig.utils.v1.OverwriteMergeable) {
-                in = ((org.polyfrost.oneconfig.utils.v1.OverwriteMergeable) current).mergeOverwrite(in);
+            if (current instanceof OverwriteMergeable) {
+                in = ((OverwriteMergeable) current).mergeOverwrite(in);
             }
             this.setAsReferential(in);
         }
@@ -467,9 +468,9 @@ public abstract class Property<T> extends Node implements Serializable {
     @Deprecated
     @SuppressWarnings("DeprecatedIsStillUsed")
     public static final class KtProperty<T> extends Property<T> {
-        private final kotlin.reflect.KMutableProperty0<T> ref;
+        private final KMutableProperty0<T> ref;
 
-        public KtProperty(@Nullable String title, @Nullable String description, @NotNull kotlin.reflect.KMutableProperty0<T> ref, Class<T> type) {
+        public KtProperty(@Nullable String title, @Nullable String description, @NotNull KMutableProperty0<T> ref, Class<T> type) {
             super(ref.getName(), title, description, type);
             this.ref = ref;
         }

@@ -14,12 +14,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.toArgb
+import kotlin.math.floor
+import kotlin.math.round
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationTheme
 import org.polyfrost.oneconfig.api.platform.v1.Platform
@@ -27,8 +29,6 @@ import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.DESIGN_HEIGHT_DP
 import org.polyfrost.oneconfig.internal.ui.DESIGN_WIDTH_DP
 import org.polyfrost.oneconfig.internal.ui.EDGE_MARGIN_FRACTION
-import kotlin.math.floor
-import kotlin.math.round
 
 private var _accent by mutableStateOf(Color(ThemeConfig.accentColor.argb))
 
