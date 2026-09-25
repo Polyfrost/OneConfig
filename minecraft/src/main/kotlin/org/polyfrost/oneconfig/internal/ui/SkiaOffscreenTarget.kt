@@ -29,9 +29,14 @@ class SkiaOffscreenTarget {
     private var lastH = -1
 
     fun resolveTarget(w: Int, h: Int): Boolean {
-        if (target != null && lastW == w && lastH == h && surface != null) return true
+        val current = target
+        if (current != null && lastW == w && lastH == h && surface != null) {
+            if (SkiaCtx.vulkanService?.offscreenNeedsPerFrameRewrap != true) return true
+            releaseSurface()
+            if (runCatching { makeSurface(current, w, h) }.getOrDefault(false)) return true
+        }
         destroy()
-        val svc = SkiaCtx.vulkanService ?: return false
+        if (SkiaCtx.vulkanService == null) return false
         try {
             //? if >= 26.3 {
             val rt = TextureTarget(
@@ -58,15 +63,7 @@ class SkiaOffscreenTarget {
                 destroy()
                 return false
             }
-            val (b, colorFmt) = svc.makeOffscreenBRT(rt, w, h)
-            brt = b
-            val origin = if (SkiaCtx.isDeferredComposeBackend) SurfaceOrigin.TOP_LEFT else SurfaceOrigin.BOTTOM_LEFT
-            surface = SkiaCtx.withIsolatedGl {
-                Surface.makeFromBackendRenderTarget(
-                    SkiaCtx.directContext, b, origin, colorFmt, ColorSpace.sRGB, null,
-                )
-            }
-            if (surface == null) {
+            if (!makeSurface(rt, w, h)) {
                 destroy()
                 return false
             }
@@ -77,6 +74,24 @@ class SkiaOffscreenTarget {
             destroy()
             return false
         }
+    }
+
+    private fun makeSurface(rt: RenderTarget, w: Int, h: Int): Boolean {
+        val svc = SkiaCtx.vulkanService ?: return false
+        val (b, colorFmt) = svc.makeOffscreenBRT(rt, w, h)
+        brt = b
+        val origin = if (SkiaCtx.isDeferredComposeBackend) SurfaceOrigin.TOP_LEFT else SurfaceOrigin.BOTTOM_LEFT
+        surface = SkiaCtx.withIsolatedGl {
+            Surface.makeFromBackendRenderTarget(
+                SkiaCtx.directContext, b, origin, colorFmt, ColorSpace.sRGB, null,
+            )
+        }
+        return surface != null
+    }
+
+    private fun releaseSurface() {
+        surface?.close(); surface = null
+        brt?.close(); brt = null
     }
 
     fun clearTarget() {
@@ -113,8 +128,7 @@ class SkiaOffscreenTarget {
     }
 
     fun destroy() {
-        surface?.close(); surface = null
-        brt?.close(); brt = null
+        releaseSurface()
         target?.destroyBuffers(); target = null
         //? if < 1.21.5
         //RenderTargetFbo.restoreMainTarget()
