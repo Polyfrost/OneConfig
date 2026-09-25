@@ -15,6 +15,7 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
 
 import kotlin.jvm.functions.Function1;
+import org.polyfrost.oneconfig.internal.ui.hud.GlobalHudSettingsBridge;
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession;
 
 public class OneConfigConfig extends Config {
@@ -185,6 +186,110 @@ public class OneConfigConfig extends Config {
         descriptionTranslation = true
     )
     public static float marqueeSelectionAnimDuration = 150f;
+
+    @Switch(
+        title = "oneconfig.preferences.global_hud_enabled.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.global_hud",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.global_hud_enabled.description",
+        descriptionTranslation = true
+    )
+    public static boolean globalHudEnabled = true;
+
+    @Switch(
+        title = "oneconfig.preferences.global_hud_font_override.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.global_hud",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.global_hud_font_override.description",
+        descriptionTranslation = true
+    )
+    public static boolean globalHudFontOverride = false;
+
+    @Dropdown(
+        title = "oneconfig.preferences.global_hud_font.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.global_hud",
+        subcategoryTranslation = true,
+        options = {
+            "Minecraft",
+            "Poppins"
+        },
+        description = "oneconfig.preferences.global_hud_font.description",
+        descriptionTranslation = true
+    )
+    public static int globalHudFont = 0;
+
+    @Switch(
+        title = "oneconfig.preferences.global_hud_weight_override.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.global_hud",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.global_hud_weight_override.description",
+        descriptionTranslation = true
+    )
+    public static boolean globalHudWeightOverride = false;
+
+    @Dropdown(
+        title = "oneconfig.preferences.global_hud_weight.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.global_hud",
+        subcategoryTranslation = true,
+        options = {
+            "Thin",
+            "Regular",
+            "Medium",
+            "Bold",
+            "Black"
+        },
+        description = "oneconfig.preferences.global_hud_weight.description",
+        descriptionTranslation = true
+    )
+    public static int globalHudWeight = 1;
+
+    @Switch(
+        title = "oneconfig.preferences.global_hud_background_override.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.global_hud",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.global_hud_background_override.description",
+        descriptionTranslation = true
+    )
+    public static boolean globalHudBackgroundOverride = false;
+
+    @Switch(
+        title = "oneconfig.preferences.global_hud_show_background.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.global_hud",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.global_hud_show_background.description",
+        descriptionTranslation = true
+    )
+    public static boolean globalHudShowBackground = true;
+
+    @Switch(
+        title = "oneconfig.preferences.global_hud_radius_override.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.global_hud",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.global_hud_radius_override.description",
+        descriptionTranslation = true
+    )
+    public static boolean globalHudRadiusOverride = false;
+
+    @Slider(
+        title = "oneconfig.preferences.global_hud_radius.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.global_hud",
+        subcategoryTranslation = true,
+        min = 0f,
+        max = 32f,
+        step = 1f,
+        description = "oneconfig.preferences.global_hud_radius.description",
+        descriptionTranslation = true
+    )
+    public static float globalHudRadius = 4f;
 
     @Switch(
         title = "oneconfig.preferences.background_blur.title",
@@ -728,6 +833,20 @@ public class OneConfigConfig extends Config {
                 return false;
             });
         refreshHudLockKeybind();
+        addDependency("globalHudFont", "globalHudFontOverride");
+        addDependency("globalHudWeight", "globalHudWeightOverride");
+        addDependency("globalHudShowBackground", "globalHudBackgroundOverride");
+        addDependency("globalHudRadius", "globalHudRadiusOverride");
+        addCallback("globalHudEnabled", () -> GlobalHudSettingsBridge.syncFromConfig());
+        addCallback("globalHudFontOverride", () -> GlobalHudSettingsBridge.syncFromConfig());
+        addCallback("globalHudFont", () -> GlobalHudSettingsBridge.syncFromConfig());
+        addCallback("globalHudWeightOverride", () -> GlobalHudSettingsBridge.syncFromConfig());
+        addCallback("globalHudWeight", () -> GlobalHudSettingsBridge.syncFromConfig());
+        addCallback("globalHudBackgroundOverride", () -> GlobalHudSettingsBridge.syncFromConfig());
+        addCallback("globalHudShowBackground", () -> GlobalHudSettingsBridge.syncFromConfig());
+        addCallback("globalHudRadiusOverride", () -> GlobalHudSettingsBridge.syncFromConfig());
+        addCallback("globalHudRadius", () -> GlobalHudSettingsBridge.syncFromConfig());
+        GlobalHudSettingsBridge.syncFromConfig();
     }
 
     /** When the OneConfig keybind last closed the GUI so the same press cannot immediately reopen it */

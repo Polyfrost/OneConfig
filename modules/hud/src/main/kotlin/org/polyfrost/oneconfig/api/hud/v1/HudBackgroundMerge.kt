@@ -110,14 +110,14 @@ internal object HudBackgroundMerge {
         for (hud in huds) {
             if (hud is LegacyHudMarker) continue
             if (!hud.canMergeBackground()) continue
-            if (!hud.showBackground || !hud.mergeBackground || !hud.hasBackground()) continue
+            if (!hud.effectiveShowBackground || !hud.mergeBackground || !hud.hasBackground()) continue
             if (hud.hidden && !hud.keepBgWhenHidden) continue
             val w = hud.renderedW
             val h = hud.renderedH
             if (w <= 0f || h <= 0f) continue
             items.add(
                 Item(
-                    hud, hud.x, hud.y, w, h, hud.bgRadius * hud.effectiveScale,
+                    hud, hud.x, hud.y, w, h, hud.effectiveBackgroundRadius * hud.effectiveScale,
                     hud.layoutX(refWidth), hud.layoutY(refHeight),
                 )
             )
@@ -495,8 +495,8 @@ internal object HudBackgroundMerge {
             key = key * 31 + (hud.renderedW * 4f).roundToInt()
             key = key * 31 + (hud.renderedH * 4f).roundToInt()
             key = key * 31 + hud.bgColor
-            key = key * 31 + (hud.bgRadius * hud.effectiveScale * 4f).roundToInt()
-            key = key * 31 + (if (hud.showBackground) 1 else 0)
+            key = key * 31 + (hud.effectiveBackgroundRadius * hud.effectiveScale * 4f).roundToInt()
+            key = key * 31 + (if (hud.effectiveShowBackground) 1 else 0)
             key = key * 31 + (if (hud.mergeBackground) 1 else 0)
             key = key * 31 + (if (hud.mergeDiagonally) 1 else 0)
             key = key * 31 + (if (hud.hidden) 1 else 0)
