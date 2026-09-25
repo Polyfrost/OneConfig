@@ -27,7 +27,7 @@ kotlinx-abi = "0.18.1"
 log4j-api = "2.0-beta9" # used because this is the version that 1.8.9 supports, so we have to compile against the same (annoying)
 
 # Compose
-compose = "1.12.0"
+compose = "1.12.1"
 compose-navigation = "2.10.0-alpha01"
 skiko = "0.999.6"
 

@@ -11,8 +11,6 @@ import com.mojang.renderpearl.api.GpuFormat
 //import org.polyfrost.oneconfig.internal.mixin.render.GameRendererAccessor
 //? if < 1.21.8 {
 /*import com.mojang.blaze3d.platform.Lighting
-import net.minecraft.CrashReport
-import net.minecraft.ReportedException
 import net.minecraft.client.renderer.texture.OverlayTexture
 import org.joml.Matrix4f
 import org.lwjgl.opengl.GL11
@@ -803,13 +801,6 @@ class MinecraftItemCatalogService : ItemCatalogService {
                             *///?}
                             graphics.flush()
                             if (flat) Lighting.setupFor3DItems()
-                        } catch (throwable: Throwable) {
-                            val report = CrashReport.forThrowable(throwable, "Rendering item")
-                            val category = report.addCategory("Item being rendered")
-                            category.setDetail("Item Type") { entry.stack.item.toString() }
-                            category.setDetail("Item Components") { entry.stack.components.toString() }
-                            category.setDetail("Item Foil") { entry.stack.hasFoil().toString() }
-                            throw ReportedException(report)
                         } finally {
                             pose.popPose()
                         }
