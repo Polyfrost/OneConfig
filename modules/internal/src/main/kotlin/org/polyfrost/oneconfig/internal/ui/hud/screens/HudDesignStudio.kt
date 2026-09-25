@@ -2,6 +2,13 @@ package org.polyfrost.oneconfig.internal.ui.hud.screens
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.animateScrollBy
@@ -70,6 +77,8 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.*
+import org.polyfrost.oneconfig.api.hud.v1.GlobalHudSettings
+import org.polyfrost.oneconfig.internal.ui.hud.GlobalHudSettingsBridge
 import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasPasteMenu
 import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasResetMenu
 import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudOverlayBridge
@@ -197,6 +206,9 @@ private const val CHROME_SETTINGS_PANEL = "settings-panel"
 private const val CHROME_LIBRARY = "library"
 private const val CHROME_LIBRARY_ICONS = "library-icons"
 private const val CHROME_RETURN = "return-chip"
+private const val CHROME_GLOBAL_CHIP = "global-hud-chip"
+private const val CHROME_GLOBAL_PANEL = "global-hud-panel"
+private const val CHROME_DISABLED_WARNING = "hud-disabled-warning"
 private const val SIDE_CHROME_DIM_ALPHA = 0.45f
 
 private data class SnapGuides(val vertical: Float?, val horizontal: Float?) {
@@ -914,6 +926,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     var activeCategory by remember { mutableStateOf(StudioCategory.Settings) }
     var selectedHuds by remember { mutableStateOf<Set<Hud>>(emptySet()) }
     var panelOpen by remember { mutableStateOf(false) }
+    var globalPanelOpen by remember { mutableStateOf(false) }
     var panelUserMoved by remember { mutableStateOf(false) }
     var hoveredHud by remember { mutableStateOf<Hud?>(null) }
     var dragOffsetX by remember { mutableStateOf(0f) }
@@ -1702,65 +1715,6 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             }
             .then(pointerModifier)
     ) {
-        if (onReturnToOneConfig != null) {
-            val theme = LocalTheme.current
-            val returnKeyName = OneConfigConfig.oneConfigKeybind.displayName()
-            val returnInteraction = remember { MutableInteractionSource() }
-            val returnHovered by returnInteraction.collectIsHoveredAsState()
-            val returnBackground by animateColorAsState(
-                if (returnHovered) Accent else Color.Black.copy(alpha = 0.55f),
-                animationSpec = tween(120),
-                label = "returnChipBackground"
-            )
-            AnimatedVisibility(
-                visible = !isDragging,
-                modifier = Modifier.align(Alignment.TopStart),
-                enter = slideInHorizontally(initialOffsetX = { -it }),
-                exit = slideOutHorizontally(targetOffsetX = { -it }),
-            ) {
-            DisposableEffect(Unit) { onDispose { chromeRects.remove(CHROME_RETURN) } }
-            Row(
-                modifier = Modifier
-                    .padding(start = 12.dp, top = 12.dp)
-                    .chromeRegion(CHROME_RETURN)
-                    .graphicsLayer { alpha = sideChromeAlpha }
-                    .clip(theme.buttonShape)
-                    .background(returnBackground, theme.buttonShape)
-                    .hoverable(returnInteraction)
-                    .safePointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
-                        if (event.changes.none { it.isConsumed }) {
-                            event.changes.forEach { it.consume() }
-                            UiSounds.play(UiSoundEvent.CLICK)
-                            onReturnToOneConfig()
-                        }
-                    }
-                    .padding(horizontal = 10.dp, vertical = 7.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Icon(
-                    "left-arrow",
-                    color = Color.White,
-                    modifier = Modifier.size(14.dp),
-                )
-                Text(
-                    "OneConfig",
-                    color = Color.White,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center,
-                )
-                Text(
-                    "($returnKeyName)",
-                    color = Color.White.copy(alpha = 0.7f),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Normal,
-                    textAlign = TextAlign.Center,
-                )
-            }
-            }
-        }
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -2166,6 +2120,187 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                             pendingLibraryScroll = modId
                         }
                     }
+                }
+            }
+        }
+
+        AnimatedVisibility(
+            visible = !GlobalHudSettings.enabled,
+            modifier = Modifier.align(Alignment.Center),
+            enter = fadeIn(tween(200)) + scaleIn(initialScale = 0.9f, animationSpec = tween(250)),
+            exit = fadeOut(tween(160)) + scaleOut(targetScale = 0.9f, animationSpec = tween(250)),
+        ) {
+            val warnInteraction = remember { MutableInteractionSource() }
+            val warnHovered by warnInteraction.collectIsHoveredAsState()
+            val warnPulse = rememberInfiniteTransition(label = "hudDisabledWarningPulse")
+            val warnAlpha by warnPulse.animateFloat(
+                initialValue = 0.72f,
+                targetValue = 1f,
+                animationSpec = infiniteRepeatable(tween(650), RepeatMode.Reverse),
+                label = "hudDisabledWarningAlpha",
+            )
+            val warnHoverBlend by animateFloatAsState(
+                targetValue = if (warnHovered) 1f else 0f,
+                animationSpec = tween(200),
+                label = "hudDisabledWarningHover",
+            )
+            DisposableEffect(Unit) { onDispose { chromeRects.remove(CHROME_DISABLED_WARNING) } }
+            Box(
+                modifier = Modifier
+                    .chromeRegion(CHROME_DISABLED_WARNING)
+                    .clip(theme.buttonShape)
+                    .pointerHoverIcon(PointerIcon.Hand)
+                    .background(Accent.copy(alpha = warnAlpha + (1f - warnAlpha) * warnHoverBlend), theme.buttonShape)
+                    .border(1.dp, Color.White.copy(alpha = 0.35f), theme.buttonShape)
+                    .hoverable(warnInteraction)
+                    .safePointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+                        if (event.changes.none { it.isConsumed }) {
+                            event.changes.forEach { it.consume() }
+                            UiSounds.play(UiSoundEvent.CLICK)
+                            GlobalHudSettingsBridge.setEnabled(true)
+                        }
+                    }
+                    .padding(horizontal = 24.dp, vertical = 14.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    Text(
+                        "HUD overlay is off",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                    )
+                    Text(
+                        "Click to show your HUDs",
+                        color = Color.White.copy(alpha = 0.8f),
+                        fontSize = 12.sp,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            }
+        }
+
+        val returnKeyName = OneConfigConfig.oneConfigKeybind.displayName()
+        val returnInteraction = remember { MutableInteractionSource() }
+        val returnHovered by returnInteraction.collectIsHoveredAsState()
+        val returnBackground by animateColorAsState(
+            if (returnHovered) Accent else Color.Black.copy(alpha = 0.55f),
+            animationSpec = tween(120),
+            label = "returnChipBackground"
+        )
+        val globalInteraction = remember { MutableInteractionSource() }
+        val globalHovered by globalInteraction.collectIsHoveredAsState()
+        val globalBackground by animateColorAsState(
+            if (globalHovered || globalPanelOpen) Accent else Color.Black.copy(alpha = 0.55f),
+            animationSpec = tween(120),
+            label = "globalHudChipBackground"
+        )
+        AnimatedVisibility(
+            visible = !isDragging,
+            modifier = Modifier.align(Alignment.TopStart),
+            enter = slideInHorizontally(initialOffsetX = { -it }),
+            exit = slideOutHorizontally(targetOffsetX = { -it }),
+        ) {
+            DisposableEffect(Unit) {
+                onDispose {
+                    chromeRects.remove(CHROME_RETURN)
+                    chromeRects.remove(CHROME_GLOBAL_CHIP)
+                }
+            }
+            Column(
+                modifier = Modifier.padding(start = 12.dp, top = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (onReturnToOneConfig != null) {
+                        Row(
+                            modifier = Modifier
+                                .chromeRegion(CHROME_RETURN)
+                                .graphicsLayer { alpha = sideChromeAlpha }
+                                .clip(theme.buttonShape)
+                                .background(returnBackground, theme.buttonShape)
+                                .hoverable(returnInteraction)
+                                .safePointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+                                    if (event.changes.none { it.isConsumed }) {
+                                        event.changes.forEach { it.consume() }
+                                        UiSounds.play(UiSoundEvent.CLICK)
+                                        onReturnToOneConfig()
+                                    }
+                                }
+                                .padding(horizontal = 10.dp, vertical = 7.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                "left-arrow",
+                                color = Color.White,
+                                modifier = Modifier.size(14.dp),
+                            )
+                            Text(
+                                "OneConfig",
+                                color = Color.White,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                textAlign = TextAlign.Center,
+                            )
+                            Text(
+                                "($returnKeyName)",
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Normal,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
+                    Row(
+                        modifier = Modifier
+                            .chromeRegion(CHROME_GLOBAL_CHIP)
+                            .graphicsLayer { alpha = sideChromeAlpha }
+                            .clip(theme.buttonShape)
+                            .background(globalBackground, theme.buttonShape)
+                            .hoverable(globalInteraction)
+                            .safePointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+                                if (event.changes.none { it.isConsumed }) {
+                                    event.changes.forEach { it.consume() }
+                                    UiSounds.play(UiSoundEvent.CLICK)
+                                    Snapshot.withMutableSnapshot { globalPanelOpen = !globalPanelOpen }
+                                }
+                            }
+                            .padding(horizontal = 10.dp, vertical = 7.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            "settings",
+                            color = Color.White,
+                            modifier = Modifier.size(14.dp),
+                        )
+                        Text(
+                            "Global HUD",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+                AnimatedVisibility(
+                    visible = globalPanelOpen && selectedHuds.isEmpty() && !marqueeActive,
+                    modifier = Modifier.weight(1f, fill = false),
+                    enter = slideInHorizontally(tween(280, 0, FastOutSlowInEasing)) { -it } +
+                        fadeIn(tween(220, 0, LinearOutSlowInEasing)),
+                    exit = slideOutHorizontally(tween(240, 0, FastOutLinearInEasing)) { -it } +
+                        fadeOut(tween(200, 0, FastOutLinearInEasing)),
+                ) {
+                    DisposableEffect(Unit) { onDispose { chromeRects.remove(CHROME_GLOBAL_PANEL) } }
+                    GlobalHudSettingsPanel(
+                        modifier = Modifier.chromeBlocker(CHROME_GLOBAL_PANEL),
+                        onClose = { Snapshot.withMutableSnapshot { globalPanelOpen = false } },
+                    )
                 }
             }
         }

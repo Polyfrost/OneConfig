@@ -6,6 +6,29 @@ public final class org/polyfrost/oneconfig/api/hud/v1/Font : java/lang/Enum {
 	public static fun values ()[Lorg/polyfrost/oneconfig/api/hud/v1/Font;
 }
 
+public final class org/polyfrost/oneconfig/api/hud/v1/GlobalHudSettings {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/hud/v1/GlobalHudSettings;
+	public static final fun getBackgroundRadius ()F
+	public static final fun getEnabled ()Z
+	public static final fun getFont ()Lorg/polyfrost/oneconfig/api/hud/v1/Font;
+	public static final fun getOverrideBackgroundRadius ()Z
+	public static final fun getOverrideFont ()Z
+	public static final fun getOverrideShowBackground ()Z
+	public static final fun getOverrideTextWeight ()Z
+	public static final fun getShowBackground ()Z
+	public static final fun getTextWeight ()Lorg/polyfrost/oneconfig/api/hud/v1/Weight;
+	public static final fun setBackgroundRadius (F)V
+	public static final fun setEnabled (Z)V
+	public static final fun setFont (Lorg/polyfrost/oneconfig/api/hud/v1/Font;)V
+	public static final fun setOverrideBackgroundRadius (Z)V
+	public static final fun setOverrideFont (Z)V
+	public static final fun setOverrideShowBackground (Z)V
+	public static final fun setOverrideTextWeight (Z)V
+	public static final fun setShowBackground (Z)V
+	public static final fun setTextWeight (Lorg/polyfrost/oneconfig/api/hud/v1/Weight;)V
+}
+
 public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/oneconfig/api/config/v1/Config, java/lang/Cloneable {
 	public static final field $stable I
 	public field lastLayoutFrame J
@@ -53,9 +76,13 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun getDescription ()Ljava/lang/String;
 	public final fun getEffectiveAnchorParent ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public final fun getEffectiveAnchorPoint ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
+	public final fun getEffectiveBackgroundRadius ()F
+	public final fun getEffectiveFont ()Lorg/polyfrost/oneconfig/api/hud/v1/Font;
 	public final fun getEffectiveGrowthAnchor ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public final fun getEffectiveScale ()F
 	public final fun getEffectiveSelfAnchorPoint ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
+	public final fun getEffectiveShowBackground ()Z
+	public final fun getEffectiveTextWeight ()Lorg/polyfrost/oneconfig/api/hud/v1/Weight;
 	public final fun getFont ()Lorg/polyfrost/oneconfig/api/hud/v1/Font;
 	public final fun getGrowthAnchor ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public fun getHidden ()Z

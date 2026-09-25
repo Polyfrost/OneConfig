@@ -25,6 +25,7 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.polyfrost.oneconfig.api.hud.v1.GlobalHudSettings
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker
@@ -33,6 +34,7 @@ import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
 import org.polyfrost.oneconfig.internal.ui.hud.hudHasPositionDefaults
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.resetHudPosition
+import org.polyfrost.oneconfig.internal.ui.hud.screens.GloballyManagedHint
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
@@ -151,17 +153,21 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
                 Section("Background") {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         HudSettingTarget(hud, "showBackground") {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                SwitchControl(showBackground) {
-                                    Snapshot.withMutableSnapshot { showBackground = it; hud.showBackground = it }
+                            if (GlobalHudSettings.overrideShowBackground) {
+                                GloballyManagedHint("Show Background")
+                            } else {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    SwitchControl(showBackground) {
+                                        Snapshot.withMutableSnapshot { showBackground = it; hud.showBackground = it }
+                                    }
+                                    Text("Show Background", color = LocalTheme.current.textColor, fontSize = 14.sp)
                                 }
-                                Text("Show Background", color = LocalTheme.current.textColor, fontSize = 14.sp)
                             }
                         }
-                        if (showBackground) {
+                        if (hud.effectiveShowBackground) {
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -182,11 +188,15 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
                                     )
                                 }
                                 HudSettingTarget(hud, "bgRadius") {
-                                    NumberSpinner(
-                                        "Radius", "px",
-                                        bgRadius, { Snapshot.withMutableSnapshot { bgRadius = it; hud.bgRadius = it } },
-                                        0f, 32f, 1f, width = 100.dp
-                                    )
+                                    if (GlobalHudSettings.overrideBackgroundRadius) {
+                                        GloballyManagedHint("Radius")
+                                    } else {
+                                        NumberSpinner(
+                                            "Radius", "px",
+                                            bgRadius, { Snapshot.withMutableSnapshot { bgRadius = it; hud.bgRadius = it } },
+                                            0f, 32f, 1f, width = 100.dp
+                                        )
+                                    }
                                 }
                             }
                             // HUDs drawing their own background opt out of merging so these switches
