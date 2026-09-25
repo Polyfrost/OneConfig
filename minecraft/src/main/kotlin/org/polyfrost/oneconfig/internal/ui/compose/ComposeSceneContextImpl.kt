@@ -18,11 +18,6 @@ import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.Minecraft
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 
-//? if sdl {
-import org.lwjgl.sdl.SDLMouse.*
-import org.lwjgl.sdl.SDLVideo.SDL_RaiseWindow
-//?}
-
 //? if >= 26.1 {
 import androidx.compose.ui.platform.PlatformTextInputMethodRequest
 import com.mojang.blaze3d.platform.TextInputManager
@@ -30,7 +25,10 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.awaitCancellation
 //?}
 
-//? if !sdl {
+//? if sdl {
+import org.lwjgl.sdl.SDLMouse.*
+import org.lwjgl.sdl.SDLVideo.SDL_RaiseWindow
+//?} else {
 /*import org.lwjgl.glfw.GLFW.*
 *///?}
 

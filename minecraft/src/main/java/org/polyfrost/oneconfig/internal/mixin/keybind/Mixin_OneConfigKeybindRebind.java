@@ -15,10 +15,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-//? if sdl {
-import org.lwjgl.sdl.SDLMouse;
-//?}
-
 //? if >= 1.21.10 {
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -28,7 +24,9 @@ import net.minecraft.client.input.MouseButtonEvent;
 /*import net.minecraft.client.Minecraft;
 *///?}
 
-//? if !sdl {
+//? if sdl {
+import org.lwjgl.sdl.SDLMouse;
+//?} else {
 /*import org.lwjgl.glfw.GLFW;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 *///?}

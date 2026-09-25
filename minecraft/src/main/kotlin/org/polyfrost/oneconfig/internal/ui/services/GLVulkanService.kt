@@ -9,12 +9,12 @@ import org.jetbrains.skia.FramebufferFormat
 import org.jetbrains.skia.SurfaceColorFormat
 import org.slf4j.LoggerFactory
 
-//? if sdl {
-import org.lwjgl.sdl.SDLVideo.SDL_GetCurrentVideoDriver
-//?}
-
 //? if >= 1.21.5 {
 import org.polyfrost.oneconfig.internal.ui.RenderTargetFbo
+//?}
+
+//? if sdl {
+import org.lwjgl.sdl.SDLVideo.SDL_GetCurrentVideoDriver
 //?}
 
 object GLVulkanService : VulkanService {

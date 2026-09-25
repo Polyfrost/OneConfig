@@ -51,17 +51,15 @@ import org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 
-//? if sdl {
-import org.lwjgl.sdl.SDLVideo.*
-//?}
-
 //? if >= 1.21.10 {
 import net.minecraft.client.input.CharacterEvent
 import net.minecraft.client.input.KeyEvent as McKeyEvent
 import net.minecraft.client.input.MouseButtonEvent
 //?}
 
-//? if !sdl {
+//? if sdl {
+import org.lwjgl.sdl.SDLVideo.*
+//?} else {
 /*import org.lwjgl.glfw.GLFW
 *///?}
 

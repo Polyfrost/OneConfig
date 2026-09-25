@@ -7,9 +7,7 @@ import org.slf4j.LoggerFactory
 
 //? if sdl {
 import org.lwjgl.sdl.SDL
-//?}
-
-//? if !sdl {
+//?} else {
 /*import org.lwjgl.glfw.GLFW
 *///?}
 
