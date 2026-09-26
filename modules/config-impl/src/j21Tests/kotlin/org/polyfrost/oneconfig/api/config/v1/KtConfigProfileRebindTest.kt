@@ -26,15 +26,16 @@
 
 package org.polyfrost.oneconfig.api.config.v1
 
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertDoesNotThrow
 import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.Comparator
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 
 class KtConfigProfileRebindTest {
     private class RebindConfig : KtConfig("kt_profile_rebind.json", "Kt Rebind", Category.OTHER) {
@@ -94,7 +95,7 @@ class KtConfigProfileRebindTest {
                 stream.sorted(Comparator.reverseOrder()).forEach(Files::deleteIfExists)
             }
         }
-        Files.deleteIfExists(java.nio.file.Paths.get("config").resolve("kt_profile_rebind.json"))
+        Files.deleteIfExists(Paths.get("config").resolve("kt_profile_rebind.json"))
     }
 
     private companion object {

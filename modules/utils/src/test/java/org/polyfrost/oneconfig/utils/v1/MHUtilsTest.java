@@ -26,11 +26,6 @@
 
 package org.polyfrost.oneconfig.utils.v1;
 
-import kotlin.Deprecated;
-import kotlin.DeprecationLevel;
-import kotlin.ReplaceWith;
-import org.junit.jupiter.api.Test;
-
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
@@ -39,6 +34,10 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import kotlin.Deprecated;
+import kotlin.DeprecationLevel;
+import kotlin.ReplaceWith;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 

@@ -3,21 +3,31 @@ package org.polyfrost.oneconfig.internal.ui.hud
 import com.mojang.blaze3d.pipeline.RenderTarget
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
-//? if >= 26.1 {
-import net.minecraft.client.renderer.state.gui.GuiRenderState
-import org.polyfrost.oneconfig.internal.mixin.render.GameRendererAccessor
-import org.polyfrost.oneconfig.internal.mixin.render.GuiRendererAccessor
-//? } else if >= 1.21.8 {
-/*import net.minecraft.client.gui.render.state.GuiRenderState
-import org.polyfrost.oneconfig.internal.mixin.render.GameRendererAccessor
-import org.polyfrost.oneconfig.internal.mixin.render.GuiRendererAccessor
-*///? }
+import org.jetbrains.skia.Canvas
+import org.jetbrains.skia.ContentChangeMode
 import org.jetbrains.skia.Paint
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.SkiaOffscreenTarget
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
 import org.slf4j.LoggerFactory
+
+//? if >= 26.1 {
+import net.minecraft.client.renderer.state.gui.GuiRenderState
+//?}
+
+//? if >= 1.21.8 {
+import org.polyfrost.oneconfig.internal.mixin.render.GameRendererAccessor
+import org.polyfrost.oneconfig.internal.mixin.render.GuiRendererAccessor
+//?}
+
+//? if >= 1.21.8 && < 26.2 {
+/*import net.minecraft.client.renderer.fog.FogRenderer
+*///?}
+
+//? if >= 1.21.8 && < 26.1 {
+/*import net.minecraft.client.gui.render.state.GuiRenderState
+*///?}
 
 /**
  * Minecraft draws the F3 debug overlay into the GUI while the OneConfig screen is open which puts it
@@ -106,7 +116,7 @@ object DebugOverlayOffscreen {
             guiRenderer.render()
             //? } else {
             /*val fog = (client.gameRenderer as GameRendererAccessor).`oneconfig$getFogRenderer`()
-                .getBuffer(net.minecraft.client.renderer.fog.FogRenderer.FogMode.NONE)
+                .getBuffer(FogRenderer.FogMode.NONE)
             guiRenderer.render(fog)
             *///? }
         } finally {
@@ -146,11 +156,11 @@ object DebugOverlayOffscreen {
     }
     *///? }
 
-    private fun drawInto(canvas: org.jetbrains.skia.Canvas) {
+    private fun drawInto(canvas: Canvas) {
         if (!hasContent || !active()) return
         val s = offscreen.surface ?: return
         try {
-            s.notifyContentWillChange(org.jetbrains.skia.ContentChangeMode.RETAIN)
+            s.notifyContentWillChange(ContentChangeMode.RETAIN)
             s.draw(canvas, 0, 0, blitPaint)
         } catch (t: Throwable) {
             LOG.debug("debug overlay blit failed", t)

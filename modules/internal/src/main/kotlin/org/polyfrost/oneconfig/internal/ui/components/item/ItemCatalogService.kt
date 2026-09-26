@@ -6,11 +6,11 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.Snapshot
+import java.util.Locale
+import java.util.ServiceLoader
 import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.Rect
 import org.polyfrost.oneconfig.api.hud.v1.LocalHud
-import java.util.Locale
-import java.util.ServiceLoader
 
 /** A stable item registry ID and the localized name shown to the user */
 data class ItemDescriptor(val id: String, val displayName: String)

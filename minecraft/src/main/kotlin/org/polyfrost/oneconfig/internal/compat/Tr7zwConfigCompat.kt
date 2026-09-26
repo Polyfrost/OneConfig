@@ -1,7 +1,16 @@
 //? tr7zw_compat {
 package org.polyfrost.oneconfig.internal.compat
 
+import java.lang.reflect.Field
+import java.lang.reflect.Method
+import java.util.function.Consumer
+import java.util.function.DoubleConsumer
+import java.util.function.DoubleSupplier
+import java.util.function.IntConsumer
+import java.util.function.IntSupplier
+import java.util.function.Supplier
 import net.minecraft.network.chat.Component
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -13,17 +22,10 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
-import java.lang.reflect.Field
-import java.util.function.Consumer
-import java.util.function.DoubleConsumer
-import java.util.function.DoubleSupplier
-import java.util.function.IntConsumer
-import java.util.function.IntSupplier
-import java.util.function.Supplier
 
 object Tr7zwConfigCompat {
 
-    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/Tr7zw-Compat")
+    private val LOGGER = LogManager.getLogger("OneConfig/Tr7zw-Compat")
 
     private const val DEFAULT_CATEGORY = "General"
 
@@ -210,7 +212,7 @@ object Tr7zwConfigCompat {
         return null
     }
 
-    private fun findMethod(cls: Class<*>, name: String): java.lang.reflect.Method? {
+    private fun findMethod(cls: Class<*>, name: String): Method? {
         var current: Class<*>? = cls
         while (current != null && current != Any::class.java) {
             current.declaredMethods.firstOrNull { it.name == name && it.parameterCount == 0 }

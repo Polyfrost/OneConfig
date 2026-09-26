@@ -1,6 +1,6 @@
+//~ gui_graphics
 package org.polyfrost.oneconfig.internal.mixin.skia;
 
-//~ gui_graphics
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.DebugScreenOverlay;
 import org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen;

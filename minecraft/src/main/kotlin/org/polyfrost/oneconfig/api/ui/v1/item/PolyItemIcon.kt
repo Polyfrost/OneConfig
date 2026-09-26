@@ -5,6 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
+import kotlin.math.ceil
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -14,23 +15,22 @@ import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import org.jetbrains.skia.Rect
-import org.polyfrost.compose.composables.PolyCanvas
-import org.polyfrost.compose.mc.McFontQueue
 import org.polyfrost.compose.composables.PolyBox
+import org.polyfrost.compose.composables.PolyCanvas
 import org.polyfrost.compose.composables.PolyMcText
 import org.polyfrost.compose.composables.PolyModifier
 import org.polyfrost.compose.composables.absoluteAt
 import org.polyfrost.compose.composables.size
+import org.polyfrost.compose.mc.McFontQueue
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent
-import org.polyfrost.oneconfig.api.hud.v1.LocalHud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
+import org.polyfrost.oneconfig.api.hud.v1.LocalHud
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.internal.ui.components.item.MinecraftItemCatalogService
 import org.polyfrost.oneconfig.internal.ui.components.item.polyItemRenderSizePx
 import org.polyfrost.oneconfig.internal.ui.components.item.rememberItemIconHandle
-import kotlin.math.ceil
 
 private const val ITEM_SIZE = 16f
 private const val BAR_X = 2f

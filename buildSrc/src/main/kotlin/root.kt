@@ -1,6 +1,15 @@
 import dev.kikugie.stonecutter.data.StonecutterProject
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import java.util.*
+import java.util.zip.CRC32
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
+import javax.inject.Inject
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ExternalModuleDependencyBundle
@@ -13,15 +22,6 @@ import org.gradle.api.attributes.MultipleCandidatesDetails
 import org.gradle.api.provider.Provider
 import org.gradle.kotlin.dsl.getByType
 import org.gradle.plugin.use.PluginDependency
-import java.io.File
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
-import java.util.*
-import java.util.zip.CRC32
-import java.util.zip.ZipEntry
-import java.util.zip.ZipFile
-import java.util.zip.ZipOutputStream
-import javax.inject.Inject
 
 data class ForwardingVersionCatalog(
     val catalogs: List<VersionCatalog>

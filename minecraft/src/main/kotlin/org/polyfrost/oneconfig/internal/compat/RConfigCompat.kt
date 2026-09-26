@@ -3,23 +3,12 @@ package org.polyfrost.oneconfig.internal.compat
 //? rconfig_compat {
 /*import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfig
 import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigButton
-//? >= 1.21.8 {
-import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigCategory
-import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigElement
-import com.teamresourceful.resourcefulconfig.api.types.elements.ResourcefulConfigEntryElement
-//? } else {
-/*import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigEntry
-*///? }
-import com.teamresourceful.resourcefulconfig.api.types.info.Translatable
 import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigObjectEntry
 import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigValueEntry
+import com.teamresourceful.resourcefulconfig.api.types.info.Translatable
 import com.teamresourceful.resourcefulconfig.api.types.options.EntryData
 import com.teamresourceful.resourcefulconfig.api.types.options.EntryType
 import com.teamresourceful.resourcefulconfig.api.types.options.Option
-//? < 1.21.8 {
-/*import net.minecraft.client.resources.language.I18n
-import net.minecraft.util.StringRepresentable
-*///? }
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
@@ -34,6 +23,18 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.visualizer
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
+
+//? if >= 1.21.8 {
+import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigCategory
+import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigElement
+import com.teamresourceful.resourcefulconfig.api.types.elements.ResourcefulConfigEntryElement
+//?}
+
+//? if < 1.21.8 {
+/*import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigEntry
+import net.minecraft.client.resources.language.I18n
+import net.minecraft.util.StringRepresentable
+*///?}
 
 internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/RconfigCompat") {
 

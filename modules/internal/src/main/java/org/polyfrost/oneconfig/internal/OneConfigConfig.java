@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.internal;
 
+import java.util.concurrent.atomic.AtomicReference;
+import kotlin.jvm.functions.Function1;
 import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Dropdown;
@@ -9,13 +11,13 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
 import org.polyfrost.oneconfig.api.platform.v1.Keys;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
-import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers;
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
-
-import kotlin.jvm.functions.Function1;
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession;
+import org.polyfrost.oneconfig.internal.ui.shell.ShellState;
+import org.polyfrost.oneconfig.internal.ui.sound.UiSounds;
 
 public class OneConfigConfig extends Config {
     private static final Keys KEYS = Platform.compatibility().keys();
@@ -565,24 +567,24 @@ public class OneConfigConfig extends Config {
     /**
      * The keybinds registered with the {@link KeybindManager} for the remaining HUD editor actions
      */
-    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
-        registeredHudSettingsKeybind = new java.util.concurrent.atomic.AtomicReference<>();
-    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
-        registeredHudVisibilityKeybind = new java.util.concurrent.atomic.AtomicReference<>();
-    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
-        registeredHudResetKeybind = new java.util.concurrent.atomic.AtomicReference<>();
-    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
-        registeredHudCopyKeybind = new java.util.concurrent.atomic.AtomicReference<>();
-    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
-        registeredHudCutKeybind = new java.util.concurrent.atomic.AtomicReference<>();
-    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
-        registeredHudPasteKeybind = new java.util.concurrent.atomic.AtomicReference<>();
-    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
-        registeredHudDeleteKeybind = new java.util.concurrent.atomic.AtomicReference<>();
-    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
-        registeredHudSelectAllKeybind = new java.util.concurrent.atomic.AtomicReference<>();
-    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
-        registeredHudLockKeybind = new java.util.concurrent.atomic.AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudSettingsKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudVisibilityKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudResetKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudCopyKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudCutKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudPasteKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudDeleteKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudSelectAllKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudLockKeybind = new AtomicReference<>();
 
     public OneConfigConfig() {
         super("oneconfig.json", "assets/oneconfig/brand/oneconfig-icon.svg", "OneConfig", Category.QOL);
@@ -622,43 +624,43 @@ public class OneConfigConfig extends Config {
             "uiAmbienceVolume",
             "UI Ambience",
             () -> enableUIAmbience ? Property.Display.SHOWN : Property.Display.DISABLED);
-        org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setFlipTopOptionOrder(flipTopOptionOrder);
+        ShellState.INSTANCE.setFlipTopOptionOrder(flipTopOptionOrder);
         addCallback(
             "flipTopOptionOrder", (Boolean v) -> {
-                org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setFlipTopOptionOrder(v);
+                ShellState.INSTANCE.setFlipTopOptionOrder(v);
                 return false;
             });
-        org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setPageOpacity(pageOpacity);
+        ShellState.INSTANCE.setPageOpacity(pageOpacity);
         addCallback(
             "pageOpacity", (java.lang.Number v) -> {
-                org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setPageOpacity(v.floatValue());
+                ShellState.INSTANCE.setPageOpacity(v.floatValue());
                 return false;
             });
-        org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setSidebarOpacity(sidebarOpacity);
+        ShellState.INSTANCE.setSidebarOpacity(sidebarOpacity);
         addCallback(
             "sidebarOpacity", (java.lang.Number v) -> {
-                org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setSidebarOpacity(v.floatValue());
+                ShellState.INSTANCE.setSidebarOpacity(v.floatValue());
                 return false;
             });
-        org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setGlowOpacity(glowOpacity);
+        ShellState.INSTANCE.setGlowOpacity(glowOpacity);
         addCallback(
             "glowOpacity", (java.lang.Number v) -> {
-                org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setGlowOpacity(v.floatValue());
+                ShellState.INSTANCE.setGlowOpacity(v.floatValue());
                 return false;
             });
         addCallback(
             "enableUIAmbience", (Boolean v) -> {
-                org.polyfrost.oneconfig.internal.ui.sound.UiSounds.refreshAmbience();
+                UiSounds.refreshAmbience();
                 return false;
             });
         addCallback(
             "enableUIMusicDucking", (Boolean v) -> {
-                org.polyfrost.oneconfig.internal.ui.sound.UiSounds.refreshAmbience();
+                UiSounds.refreshAmbience();
                 return false;
             });
         addCallback(
             "uiAmbienceVolume", (Float v) -> {
-                org.polyfrost.oneconfig.internal.ui.sound.UiSounds.refreshAmbience();
+                UiSounds.refreshAmbience();
                 return false;
             });
         // also refreshed once below because a keybind loaded from disk carries no action
@@ -825,7 +827,7 @@ public class OneConfigConfig extends Config {
      */
     private static void refreshHudEditorKeybind(
         OneConfigKeybind src,
-        java.util.concurrent.atomic.AtomicReference<OneConfigKeybind> slot,
+        AtomicReference<OneConfigKeybind> slot,
         Function1<Boolean, Boolean> action) {
         OneConfigKeybind old = slot.getAndSet(null);
         if (old != null) {

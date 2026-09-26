@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
 //? moul_compat {
-
 import io.github.notenoughupdates.moulconfig.processor.ConfigProcessorDriver;
 import io.github.notenoughupdates.moulconfig.processor.ConfigStructureReader;
 import io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor;

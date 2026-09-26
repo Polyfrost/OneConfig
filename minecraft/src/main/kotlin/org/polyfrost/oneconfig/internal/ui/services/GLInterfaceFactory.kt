@@ -4,10 +4,12 @@ import org.jetbrains.skia.DirectContext
 import org.jetbrains.skia.GLAssembledInterface
 import org.jetbrains.skia.makeGLWithInterface
 import org.slf4j.LoggerFactory
+
 //? if sdl {
 import org.lwjgl.sdl.SDL
-//?} else
-//import org.lwjgl.glfw.GLFW
+//?} else {
+/*import org.lwjgl.glfw.GLFW
+*///?}
 
 internal object GLInterfaceFactory {
     private val LOG = LoggerFactory.getLogger(GLInterfaceFactory::class.java)

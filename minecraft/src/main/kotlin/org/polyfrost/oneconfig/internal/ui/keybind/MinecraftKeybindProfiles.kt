@@ -1,17 +1,18 @@
 package org.polyfrost.oneconfig.internal.ui.keybind
 
 import com.mojang.blaze3d.platform.InputConstants
+import java.util.concurrent.TimeUnit
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshotStore
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
-import java.util.concurrent.TimeUnit
 
 object MinecraftKeybindProfiles : ConfigManager.ProfileChangeListener {
     private const val NAMESPACE = "controls"
     private const val SHARED_NAMESPACE = "shared-controls"
     private const val CLIENT_THREAD_TIMEOUT_SECONDS = 30L
-    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/MC-Keybind-Profiles")
+    private val LOGGER = LogManager.getLogger("OneConfig/MC-Keybind-Profiles")
     private val store = CompatSnapshotStore("minecraft-keybinds.json")
     private val modeTransitions = MinecraftKeybindModeTransitions(
         saveProfile = { profile ->

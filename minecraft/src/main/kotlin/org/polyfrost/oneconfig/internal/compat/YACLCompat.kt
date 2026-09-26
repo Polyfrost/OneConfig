@@ -1,6 +1,13 @@
 //? yacl_compat {
 package org.polyfrost.oneconfig.internal.compat
 
+import java.awt.Color
+import java.lang.reflect.Method
+import java.util.function.BiFunction
+import java.util.function.Consumer
+import java.util.function.Supplier
+import net.minecraft.client.Minecraft
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
@@ -20,7 +27,7 @@ import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
 
 object YACLCompat {
 
-    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/YACL-Compat")
+    private val LOGGER = LogManager.getLogger("OneConfig/YACL-Compat")
 
     private const val FLAG_SETTLE_FRAMES = 20
 
@@ -46,7 +53,7 @@ object YACLCompat {
         }
 
         private fun scheduleDrain() {
-            val client = net.minecraft.client.Minecraft.getInstance()
+            val client = Minecraft.getInstance()
             if (!client.isSameThread) {
                 client.execute { scheduleDrain() }
                 return
@@ -70,7 +77,7 @@ object YACLCompat {
         }
 
         fun runPendingFlags() {
-            val client = net.minecraft.client.Minecraft.getInstance()
+            val client = Minecraft.getInstance()
             if (!client.isSameThread) {
                 val pending = synchronized(pendingFlags) { pendingFlags.isNotEmpty() }
                 if (pending) client.execute { runPendingFlags() }
@@ -81,14 +88,14 @@ object YACLCompat {
                 pendingFlags.toList().also { pendingFlags.clear() }
             }
             for (flag in flags) {
-                runCatching { (flag as java.util.function.Consumer<*>).let { consumeFlag(it, client) } }
+                runCatching { (flag as Consumer<*>).let { consumeFlag(it, client) } }
                     .onFailure { LOGGER.warn("Failed to run YACL option flag", it) }
             }
         }
 
         @Suppress("UNCHECKED_CAST")
-        private fun consumeFlag(flag: java.util.function.Consumer<*>, client: Any) {
-            (flag as java.util.function.Consumer<Any>).accept(client)
+        private fun consumeFlag(flag: Consumer<*>, client: Any) {
+            (flag as Consumer<Any>).accept(client)
         }
     }
 
@@ -190,7 +197,7 @@ object YACLCompat {
     ) {
         val screenFactory = category::class.java.methods
             .firstOrNull { it.name == "screen" && it.parameterCount == 0 }
-            ?.let { runCatching { it.invoke(category) as? java.util.function.BiFunction<*, *, *> }.getOrNull() }
+            ?.let { runCatching { it.invoke(category) as? BiFunction<*, *, *> }.getOrNull() }
             ?: return
 
         val tooltip = category::class.java.methods
@@ -212,11 +219,11 @@ object YACLCompat {
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun openPlaceholderScreen(screenFactory: java.util.function.BiFunction<*, *, *>, ctx: Ctx) {
+    private fun openPlaceholderScreen(screenFactory: BiFunction<*, *, *>, ctx: Ctx) {
         runCatching {
-            val client = net.minecraft.client.Minecraft.getInstance()
+            val client = Minecraft.getInstance()
             val parent = yaclScreen(ctx) ?: Platform.screen().current<Any>()
-            val screen = (screenFactory as java.util.function.BiFunction<Any?, Any?, Any?>)
+            val screen = (screenFactory as BiFunction<Any?, Any?, Any?>)
                 .apply(client, parent) ?: return@runCatching
             Platform.screen().display(screen)
         }.onFailure { LOGGER.warn("Failed to open YACL placeholder screen", it) }
@@ -443,7 +450,7 @@ object YACLCompat {
                 Visualizer.SliderVisualizer::class.java
             currentValue is String -> Visualizer.TextVisualizer::class.java
             currentValue is Enum<*> -> Visualizer.DropdownVisualizer::class.java
-            currentValue is java.awt.Color -> Visualizer.ColorVisualizer::class.java
+            currentValue is Color -> Visualizer.ColorVisualizer::class.java
             else -> return
         }
 
@@ -482,7 +489,7 @@ object YACLCompat {
                 property.addMetadata("max", range?.second ?: 100f)
                 range?.third?.let { property.addMetadata("step", it) }
             }
-            currentValue is java.awt.Color -> {
+            currentValue is Color -> {
                 if (resolveAllowAlpha(option) == false) property.addMetadata("noAlpha", true)
             }
         }
@@ -517,7 +524,7 @@ object YACLCompat {
         }
 
         val numeric = Number::class.java.isAssignableFrom(element)
-        val color = element == java.awt.Color::class.java
+        val color = element == Color::class.java
 
         val visualizer: Class<out Visualizer> = when {
             color -> Visualizer.ColorListVisualizer::class.java
@@ -527,13 +534,13 @@ object YACLCompat {
         }
 
         fun read(value: Any?): Any? = when {
-            color -> (value as? java.awt.Color)?.rgb ?: -1
+            color -> (value as? Color)?.rgb ?: -1
             numeric -> value as? Number ?: 0
             else -> value?.toString() ?: ""
         }
 
         fun write(value: Any?): Any? = when {
-            color -> java.awt.Color((value as? Number)?.toInt() ?: -1, true)
+            color -> Color((value as? Number)?.toInt() ?: -1, true)
             numeric -> coerceNumber(value, element)
             else -> value?.toString() ?: ""
         }
@@ -816,11 +823,11 @@ object YACLCompat {
         var cls: Class<*>? = option::class.java
         while (cls != null && cls != Any::class.java) {
             val field = cls.declaredFields.firstOrNull {
-                it.name == "initialValue" && java.util.function.Supplier::class.java.isAssignableFrom(it.type)
+                it.name == "initialValue" && Supplier::class.java.isAssignableFrom(it.type)
             }
             if (field != null) {
                 return runCatching {
-                    (field.apply { isAccessible = true }.get(option) as? java.util.function.Supplier<*>)?.get()
+                    (field.apply { isAccessible = true }.get(option) as? Supplier<*>)?.get()
                 }.getOrNull()
             }
             cls = cls.superclass
@@ -997,7 +1004,7 @@ object YACLCompat {
         } ?: return null
         // some YACL versions wrap the controller in a Supplier
         var controller = runCatching { controllerMethod.invoke(option) }.getOrNull() ?: return null
-        (controller as? java.util.function.Supplier<*>)?.let { controller = it.get() ?: return null }
+        (controller as? Supplier<*>)?.let { controller = it.get() ?: return null }
         return controller
     }
 
@@ -1016,7 +1023,7 @@ object YACLCompat {
         return if (cls.isEnum) cls else cls.superclass?.takeIf { it.isEnum }
     }
 
-    private fun resolveValueFormatter(controller: Any): Pair<Any, java.lang.reflect.Method>? {
+    private fun resolveValueFormatter(controller: Any): Pair<Any, Method>? {
         var cls: Class<*>? = controller::class.java
         while (cls != null && cls != Any::class.java) {
             val field = cls.declaredFields.firstOrNull { it.type.name.endsWith("ValueFormatter") }

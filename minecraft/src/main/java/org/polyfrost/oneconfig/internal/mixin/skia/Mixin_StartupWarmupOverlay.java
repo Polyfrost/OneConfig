@@ -1,10 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.skia;
 
 import net.minecraft.client.gui.screens.LoadingOverlay;
-//? if >= 1.21.11 {
-import net.minecraft.util.Util;
-//?} else
-//import net.minecraft.Util;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposePreloader;
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import org.spongepowered.asm.mixin.Final;
@@ -14,6 +10,14 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+//? if >= 1.21.11 {
+import net.minecraft.util.Util;
+//?}
+
+//? if < 1.21.11 {
+/*import net.minecraft.Util;
+*///?}
 
 @Mixin(LoadingOverlay.class)
 public class Mixin_StartupWarmupOverlay {

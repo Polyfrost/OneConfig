@@ -4,13 +4,13 @@ package org.polyfrost.oneconfig.internal.ui.services
 /*import com.mojang.blaze3d.pipeline.RenderTarget
 import com.mojang.blaze3d.systems.RenderSystem
 import graphics.cinnabar.api.c3d.C3DGpuDevice
+import java.lang.reflect.Method
+import kotlin.jvm.javaClass
 import net.minecraft.client.Minecraft
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.DirectContext
 import org.jetbrains.skia.SurfaceColorFormat
 import org.slf4j.LoggerFactory
-import java.lang.reflect.Method
-import kotlin.jvm.javaClass
 
 /**
  * Vulkan-backed [VulkanService] using Cinnabar's backend

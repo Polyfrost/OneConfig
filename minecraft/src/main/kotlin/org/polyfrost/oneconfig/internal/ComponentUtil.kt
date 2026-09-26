@@ -1,11 +1,11 @@
 package org.polyfrost.oneconfig.internal
 
+import java.util.Optional
 import net.minecraft.network.chat.Component
 import net.minecraft.network.chat.FormattedText
 import net.minecraft.network.chat.MutableComponent
 import net.minecraft.network.chat.Style
 import net.minecraft.util.FormattedCharSink
-import java.util.Optional
 
 object ComponentUtil {
 

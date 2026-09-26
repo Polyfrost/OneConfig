@@ -1,35 +1,12 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
-//? if >= 26.2
-import com.mojang.renderpearl.api.GpuFormat
+import com.mojang.blaze3d.pipeline.RenderTarget
 import com.mojang.blaze3d.pipeline.TextureTarget
 import com.mojang.blaze3d.systems.RenderSystem
-//? if >= 1.21.5 && < 1.21.8 {
-/*import com.mojang.blaze3d.pipeline.BlendFunction
-import com.mojang.blaze3d.pipeline.RenderPipeline
-import com.mojang.blaze3d.platform.DestFactor
-import com.mojang.blaze3d.platform.SourceFactor
-*///? }
-//? if < 1.21.5 {
-/*import com.mojang.blaze3d.platform.GlStateManager
-*///? }
-//? if >= 1.21.4 && < 1.21.5 {
-/*import com.mojang.blaze3d.vertex.DefaultVertexFormat
-import com.mojang.blaze3d.vertex.VertexFormat
-*///? }
+import java.util.concurrent.CopyOnWriteArrayList
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
-//? if >= 1.21.5 {
-import net.minecraft.client.renderer.RenderPipelines
-//? }
-//? if >= 1.21.4 && < 1.21.8 {
-/*import net.minecraft.client.renderer.RenderStateShard
-import net.minecraft.client.renderer.RenderType
-*///? }
-import net.minecraft.resources.Identifier
-//? if >= 1.21.4 && < 1.21.8 {
-/*import net.minecraft.util.TriState
-*///? }
+import net.minecraft.client.renderer.texture.AbstractTexture
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.Color
 import org.jetbrains.skia.ColorSpace
@@ -38,14 +15,66 @@ import org.jetbrains.skia.Surface
 import org.jetbrains.skia.SurfaceColorFormat
 import org.jetbrains.skia.SurfaceOrigin
 import org.lwjgl.opengl.GL11
-import org.lwjgl.opengl.GL30
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.internal.ui.RenderTargetFbo
+import org.polyfrost.oneconfig.internal.ui.SkiaOffscreenTarget
 import org.polyfrost.oneconfig.internal.ui.compose.opengl.StoredGLState
 import org.polyfrost.oneconfig.internal.ui.services.VulkanService
 import org.slf4j.LoggerFactory
-import java.util.concurrent.CopyOnWriteArrayList
+
+//? if >= 26.2 {
+import com.mojang.renderpearl.api.GpuFormat
+//?}
+
+//? if >= 26.1 {
+import com.mojang.renderpearl.api.textures.FilterMode
+//?}
+
+//? if >= 1.21.8 {
+import com.mojang.renderpearl.api.textures.GpuTextureView
+//?}
+
+//? if >= 1.21.5 {
+import com.mojang.renderpearl.api.textures.GpuTexture
+import net.minecraft.client.renderer.RenderPipelines
+//?}
+
+//? if >= 1.21.4 {
+import net.minecraft.resources.Identifier
+//?}
+
+//? if < 26.1 {
+/*import org.lwjgl.opengl.GL30
+*///?}
+
+//? if = 1.21.5 {
+/*import com.mojang.blaze3d.pipeline.BlendFunction
+import com.mojang.blaze3d.pipeline.RenderPipeline
+import com.mojang.blaze3d.platform.DestFactor
+import com.mojang.blaze3d.platform.SourceFactor
+*///?}
+
+//? if >= 1.21.4 && < 1.21.8 {
+/*import net.minecraft.client.renderer.RenderStateShard
+import net.minecraft.client.renderer.RenderType
+import net.minecraft.util.TriState
+*///?}
+
+//? if = 1.21.4 {
+/*import com.mojang.blaze3d.vertex.DefaultVertexFormat
+import com.mojang.blaze3d.vertex.VertexFormat
+*///?}
+
+//? if < 1.21.5 {
+/*import com.mojang.blaze3d.platform.GlStateManager
+import net.minecraft.resources.ResourceLocation
+*///?}
+
+//? if < 1.21.4 {
+/*import net.minecraft.server.packs.resources.ResourceManager
+*///?}
 
 object SkiaCtx {
     private val LOG = LoggerFactory.getLogger(SkiaCtx::class.java)
@@ -160,17 +189,17 @@ object SkiaCtx {
     private var hudTextureWrapper: HudGpuTexture? = null
     private var composeTextureWrapper: HudGpuTexture? = null
 
-    private class HudGpuTexture : net.minecraft.client.renderer.texture.AbstractTexture() {
-        fun setGpuTexture(t: com.mojang.renderpearl.api.textures.GpuTexture?) {
+    private class HudGpuTexture : AbstractTexture() {
+        fun setGpuTexture(t: GpuTexture?) {
             this.texture = t
         }
 
         //? >= 1.21.8 {
-        fun setGpuTextureView(v: com.mojang.renderpearl.api.textures.GpuTextureView?) {
+        fun setGpuTextureView(v: GpuTextureView?) {
             this.textureView = v
             //? >= 26.1 {
-            this.sampler = com.mojang.blaze3d.systems.RenderSystem.getSamplerCache()
-                .getClampToEdge(com.mojang.renderpearl.api.textures.FilterMode.LINEAR)
+            this.sampler = RenderSystem.getSamplerCache()
+                .getClampToEdge(FilterMode.LINEAR)
             //? }
         }
         //? }
@@ -182,19 +211,19 @@ object SkiaCtx {
         }
     }
     //? } else {
-    /*private val HUD_TEXTURE_LOC = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("oneconfig", "hud_skia")
-    private val COMPOSE_TEXTURE_LOC = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("oneconfig", "compose_skia")
+    /*private val HUD_TEXTURE_LOC = ResourceLocation.fromNamespaceAndPath("oneconfig", "hud_skia")
+    private val COMPOSE_TEXTURE_LOC = ResourceLocation.fromNamespaceAndPath("oneconfig", "compose_skia")
     private var hudTextureWrapper: HudGlTexture? = null
     private var composeTextureWrapper: HudGlTexture? = null
     //? >= 1.21.4 {
-    private class HudGlTexture : net.minecraft.client.renderer.texture.AbstractTexture() {
+    private class HudGlTexture : AbstractTexture() {
         fun setGlTexId(id: Int) { this.id = id }
         override fun close() { this.id = -1 }
     }
     //? } else {
-    /*private class HudGlTexture : net.minecraft.client.renderer.texture.AbstractTexture() {
+    /*private class HudGlTexture : AbstractTexture() {
         fun setGlTexId(id: Int) { this.id = id }
-        override fun load(manager: net.minecraft.server.packs.resources.ResourceManager) {}
+        override fun load(manager: ResourceManager) {}
         override fun close() { this.id = -1 }
     }
     *///? }
@@ -435,7 +464,7 @@ object SkiaCtx {
         return true
     }
 
-    fun compositeBackBufferForScreenshot(target: com.mojang.blaze3d.pipeline.RenderTarget) {
+    fun compositeBackBufferForScreenshot(target: RenderTarget) {
         //? if < 26.1 {
         /*if (!this::directContext.isInitialized) return
         if (isVulkanMode) return
@@ -443,7 +472,7 @@ object SkiaCtx {
         val w = target.width
         val h = target.height
         if (w <= 0 || h <= 0) return
-        val drawFbo = org.polyfrost.oneconfig.internal.ui.RenderTargetFbo.getFboId(target)
+        val drawFbo = RenderTargetFbo.getFboId(target)
         if (drawFbo <= 0) return
 
         val savedRead = IntArray(1)
@@ -700,7 +729,7 @@ object SkiaCtx {
         }
         destroyHudTarget()
         destroyComposeTarget()
-        org.polyfrost.oneconfig.internal.ui.SkiaOffscreenTarget.destroyAll()
+        SkiaOffscreenTarget.destroyAll()
     }
 
     private fun flushToTarget(draws: List<() -> Unit>, surface: Surface, flipY: Boolean = false) {
@@ -815,11 +844,11 @@ object SkiaCtx {
             }
             hudTarget = rt
             //? if < 1.21.5
-            //org.polyfrost.oneconfig.internal.ui.RenderTargetFbo.restoreMainTarget()
+            //RenderTargetFbo.restoreMainTarget()
 
             //? >= 1.21.5 {
             if (!isVulkanMode) {
-                val fboId = org.polyfrost.oneconfig.internal.ui.RenderTargetFbo.getFboId(rt)
+                val fboId = RenderTargetFbo.getFboId(rt)
                 if (fboId <= 0) {
                     LOG.warn("SkiaCtx: hud TextureTarget FBO not ready (id={}), retry next frame", fboId)
                     hudTarget = null
@@ -864,7 +893,7 @@ object SkiaCtx {
         hudTarget?.let { target ->
             target.destroyBuffers()
             //? if < 1.21.5
-            //org.polyfrost.oneconfig.internal.ui.RenderTargetFbo.restoreMainTarget()
+            //RenderTargetFbo.restoreMainTarget()
         }
         hudTarget = null
     }
@@ -916,7 +945,7 @@ object SkiaCtx {
 
             //? >= 1.21.5 {
             if (!isVulkanMode) {
-                val fboId = org.polyfrost.oneconfig.internal.ui.RenderTargetFbo.getFboId(rt)
+                val fboId = RenderTargetFbo.getFboId(rt)
                 if (fboId <= 0) {
                     LOG.warn("SkiaCtx: compose TextureTarget FBO not ready (id={}), retry next frame", fboId)
                     composeTarget = null
@@ -958,7 +987,7 @@ object SkiaCtx {
     private fun onAllocFailure(what: String, w: Int, h: Int, error: Throwable) {
         allocFailedAt = System.currentTimeMillis()
         if (what == COMPOSE_TARGET) destroyComposeTarget() else destroyHudTarget()
-        org.polyfrost.oneconfig.internal.ui.SkiaOffscreenTarget.destroyAll()
+        SkiaOffscreenTarget.destroyAll()
         if (isVulkanMode) invalidateVkSurfaces()
         runCatching { directContext.flush() }
         LOG.error("SkiaCtx: failed to allocate the {}x{} {} target; skipping offscreen frames", w, h, what, error)

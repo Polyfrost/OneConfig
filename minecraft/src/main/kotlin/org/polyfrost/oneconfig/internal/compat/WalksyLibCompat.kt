@@ -1,6 +1,13 @@
 //? walksylib_compat {
 package org.polyfrost.oneconfig.internal.compat
 
+import java.awt.Color
+import java.io.File
+import java.lang.reflect.Method
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardCopyOption
+import net.minecraft.client.Minecraft
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
@@ -13,7 +20,6 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
-import net.minecraft.client.Minecraft
 
 object WalksyLibCompat {
 
@@ -187,10 +193,10 @@ object WalksyLibCompat {
         val setAdditions = colorClass.methods.firstOrNull { it.name == "setAdditions" && it.parameterCount == 1 }
             ?.apply { isAccessible = true }
 
-        fun toColor(wc: Any?): java.awt.Color? {
+        fun toColor(wc: Any?): Color? {
             wc ?: return null
             return runCatching {
-                java.awt.Color(
+                Color(
                     getRed.invoke(wc) as Int,
                     getGreen.invoke(wc) as Int,
                     getBlue.invoke(wc) as Int,
@@ -200,7 +206,7 @@ object WalksyLibCompat {
         }
 
         val property = Properties.functional(
-            { runCatching { toColor(getValueM.invoke(option)) }.getOrNull() ?: java.awt.Color.WHITE },
+            { runCatching { toColor(getValueM.invoke(option)) }.getOrNull() ?: Color.WHITE },
             { value ->
                 runCatching {
                     val wc = ctor.newInstance(value.red, value.green, value.blue, value.alpha)
@@ -215,7 +221,7 @@ object WalksyLibCompat {
             id,
             name,
             description,
-            java.awt.Color::class.java,
+            Color::class.java,
         )
 
         property.addMetadata("visualizer", Visualizer.ColorVisualizer::class.java)
@@ -226,7 +232,7 @@ object WalksyLibCompat {
         return true
     }
 
-    private fun colorMethod(colorClass: Class<*>, name: String): java.lang.reflect.Method? =
+    private fun colorMethod(colorClass: Class<*>, name: String): Method? =
         colorClass.methods.firstOrNull { it.name == name && it.parameterCount == 0 }?.apply { isAccessible = true }
 
     private const val SPRITE_CLASS = "main.walksy.lib.core.utils.IdentifierWrapper"
@@ -263,7 +269,7 @@ object WalksyLibCompat {
             it.name == "loadTextureFromCache" && it.parameterCount == 1
         }?.apply { isAccessible = true } ?: return false
 
-        fun cachedDir(): java.nio.file.Path? = runCatching { cachedImageDirM.invoke(null) as? java.nio.file.Path }.getOrNull()
+        fun cachedDir(): Path? = runCatching { cachedImageDirM.invoke(null) as? Path }.getOrNull()
 
         val defaultWrapper = invoke(option, "getDefaultValue")
         val defaultString = defaultWrapper?.let { runCatching { getFileName.invoke(it) as? String }.getOrNull() }
@@ -286,12 +292,12 @@ object WalksyLibCompat {
                         }
                         return@runCatching
                     }
-                    val source = java.io.File(path)
+                    val source = File(path)
                     if (!source.isFile) return@runCatching
                     val fileName = source.name
                     val dest = cachedDir()?.resolve(fileName)
                     if (dest != null && source.toPath().toAbsolutePath() != dest.toAbsolutePath()) {
-                        java.nio.file.Files.copy(source.toPath(), dest, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+                        Files.copy(source.toPath(), dest, StandardCopyOption.REPLACE_EXISTING)
                     }
                     Minecraft.getInstance().execute {
                         runCatching {

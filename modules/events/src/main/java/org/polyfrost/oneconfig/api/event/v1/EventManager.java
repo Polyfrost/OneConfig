@@ -26,21 +26,6 @@
 
 package org.polyfrost.oneconfig.api.event.v1;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.polyfrost.oneconfig.api.event.v1.events.Event;
-import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
-import org.polyfrost.oneconfig.api.event.v1.invoke.EventCollector;
-import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
-import org.polyfrost.oneconfig.api.event.v1.internal.EventClassValidator;
-import org.polyfrost.oneconfig.api.event.v1.invoke.impl.AnnotationEventMapper;
-import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
-import org.polyfrost.oneconfig.api.platform.v1.Platform;
-import org.polyfrost.oneconfig.utils.v1.LogScanner;
-import org.polyfrost.oneconfig.utils.v1.TableHelper;
-
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Collections;
@@ -53,6 +38,22 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import kotlin.jvm.JvmClassMappingKt;
+import kotlin.reflect.KClass;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.polyfrost.oneconfig.api.event.v1.events.Event;
+import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
+import org.polyfrost.oneconfig.api.event.v1.internal.EventClassValidator;
+import org.polyfrost.oneconfig.api.event.v1.invoke.EventCollector;
+import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
+import org.polyfrost.oneconfig.api.event.v1.invoke.impl.AnnotationEventMapper;
+import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
+import org.polyfrost.oneconfig.utils.v1.LogScanner;
+import org.polyfrost.oneconfig.utils.v1.TableHelper;
 
 /**
  * Manages all events from OneConfig
@@ -97,8 +98,8 @@ public final class EventManager {
      * <br> Equal to
      * {@link EventManager#INSTANCE}{@code .register(}{@link EventHandler#of(Class, Consumer)}{@code )}
      */
-    public static <E extends Event> EventHandler<E> register(kotlin.reflect.KClass<E> cls, Consumer<E> handler) {
-        return EventHandler.of(kotlin.jvm.JvmClassMappingKt.getJavaClass(cls), handler).register();
+    public static <E extends Event> EventHandler<E> register(KClass<E> cls, Consumer<E> handler) {
+        return EventHandler.of(JvmClassMappingKt.getJavaClass(cls), handler).register();
     }
 
     public String getRegisteredHandlersDebugTable() {

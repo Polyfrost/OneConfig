@@ -26,16 +26,16 @@
 
 package org.polyfrost.oneconfig.internal.ui.api;
 
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 import kotlin.ranges.IntRange;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.ui.v1.ModCardType;
 import org.polyfrost.oneconfig.api.ui.v1.ModCardTypes;
-
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -122,7 +122,7 @@ class ModCardGroupingTest {
     }
 
     private static List<ModGridEntry> build(Set<String> collapsed, String... ids) {
-        List<ConfigData> cards = java.util.Arrays.stream(ids)
+        List<ConfigData> cards = Arrays.stream(ids)
                 .map(id -> (ConfigData) new TestConfigData(id))
                 .sorted(Comparator.comparingInt(card -> ModCardGroupingKt.modCardGroupRank(card.getId())))
                 .toList();

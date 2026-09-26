@@ -1,8 +1,8 @@
 package org.polyfrost.oneconfig.internal.mixin.skia;
 
 //? >= 26.1 {
-import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import net.minecraft.client.Minecraft;
+import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

@@ -1,11 +1,14 @@
 package org.polyfrost.oneconfig.internal.ui.hud
 
 import androidx.compose.runtime.snapshots.Snapshot
+import java.util.Collections
+import java.util.WeakHashMap
 import net.minecraft.client.gui.GuiGraphicsExtractor
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHud
 
-private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/HUD-Render")
+private val LOGGER = LogManager.getLogger("OneConfig/HUD-Render")
 
 object LegacyHudRenderer {
     /**
@@ -21,7 +24,7 @@ object LegacyHudRenderer {
      * Weak so a removed HUD can be collected
      */
     private val reportedFailures =
-        java.util.Collections.newSetFromMap(java.util.WeakHashMap<LegacyHud, Boolean>())
+        Collections.newSetFromMap(WeakHashMap<LegacyHud, Boolean>())
 
     private fun reportFailure(hud: LegacyHud, e: Throwable) {
         if (!reportedFailures.add(hud)) return

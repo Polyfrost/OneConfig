@@ -11,22 +11,26 @@ import net.vulkanmod.vulkan.texture.VulkanImage
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.DirectContext
 import org.jetbrains.skia.SurfaceColorFormat
-import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
-import org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK
 import org.lwjgl.vulkan.VK12.*
+import org.lwjgl.vulkan.VkCommandBuffer
+import org.lwjgl.vulkan.VkImageBlit
+import org.lwjgl.vulkan.VkOffset3D
+import org.polyfrost.oneconfig.internal.ui.RenderTargetFbo
+import org.slf4j.LoggerFactory
+
+//? if = 1.21.1 || >= 1.21.10 {
+import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
+import org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT
+//?}
+
 //? if > 1.21.1 && < 1.21.10 {
 /*import org.lwjgl.vulkan.VkClearAttachment
 import org.lwjgl.vulkan.VkClearRect
 import org.lwjgl.vulkan.VkClearValue
 import org.lwjgl.vulkan.VkRect2D
 *///?}
-import org.lwjgl.vulkan.VkCommandBuffer
-import org.lwjgl.vulkan.VkImageBlit
-import org.lwjgl.vulkan.VkOffset3D
-import org.polyfrost.oneconfig.internal.ui.RenderTargetFbo
-import org.slf4j.LoggerFactory
 
 class VulkanModVulkanService private constructor(
     private val vkInstance: Long,

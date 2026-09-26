@@ -1,7 +1,10 @@
 package org.polyfrost.oneconfig.internal.compat
 
 //? dandelion_compat {
-/*import net.azureaaron.dandelion.api.ButtonOption
+/*import java.awt.Color
+import java.util.function.Function
+import java.util.function.Supplier
+import net.azureaaron.dandelion.api.ButtonOption
 import net.azureaaron.dandelion.api.ConfigCategory
 import net.azureaaron.dandelion.api.LabelOption
 import net.azureaaron.dandelion.api.ListOption
@@ -11,9 +14,6 @@ import net.azureaaron.dandelion.api.OptionListener
 import net.azureaaron.dandelion.api.controllers.BooleanController
 import net.azureaaron.dandelion.api.controllers.ColourController
 import net.azureaaron.dandelion.api.controllers.EnumController
-import net.azureaaron.dandelion.api.controllers.FloatController
-import net.azureaaron.dandelion.api.controllers.IntegerController
-import net.azureaaron.dandelion.api.controllers.ItemController
 import net.azureaaron.dandelion.api.controllers.NumberController
 import net.azureaaron.dandelion.api.controllers.StringController
 import net.minecraft.client.Minecraft
@@ -37,8 +37,6 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.compat.CompatIds.componentKey
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
-import java.util.function.Function
-import java.util.function.Supplier
 
 object DandelionCompat {
     private val LOGGER = LogManager.getLogger("OneConfig/Dandelion-Compat")
@@ -261,13 +259,13 @@ object DandelionCompat {
         }
 
         fun read(value: Any?): Any? = when {
-            colour != null -> (value as? java.awt.Color)?.rgb ?: -1
+            colour != null -> (value as? Color)?.rgb ?: -1
             numeric -> value as? Number ?: 0
             else -> value?.toString() ?: ""
         }
 
         fun write(value: Any?): Any = when {
-            colour != null -> java.awt.Color((value as? Number)?.toInt() ?: -1, colour.hasAlpha())
+            colour != null -> Color((value as? Number)?.toInt() ?: -1, colour.hasAlpha())
             numeric -> coerceNumber(value, entryType)
             else -> value?.toString() ?: ""
         }

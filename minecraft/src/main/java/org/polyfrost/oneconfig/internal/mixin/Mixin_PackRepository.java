@@ -26,6 +26,8 @@
 
 package org.polyfrost.oneconfig.internal.mixin;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
 import net.minecraft.client.resources.ClientPackSource;
 import net.minecraft.server.packs.repository.PackRepository;
 import net.minecraft.server.packs.repository.RepositorySource;
@@ -37,9 +39,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 @Mixin(PackRepository.class)
 public abstract class Mixin_PackRepository {

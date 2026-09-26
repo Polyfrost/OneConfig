@@ -26,14 +26,13 @@
 
 package org.polyfrost.oneconfig.internal.ui;
 
+import java.util.Set;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.polyfrost.oneconfig.api.platform.v1.CompatibilityPlatform;
 import org.polyfrost.oneconfig.api.platform.v1.Keys;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Options;
-
-import java.util.Set;
 
 public final class TestCompatibilityPlatform implements CompatibilityPlatform {
     @Override

@@ -26,9 +26,9 @@
 
 package org.polyfrost.oneconfig.api.notifications.v1
 
+import java.util.concurrent.Callable
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.skia.Image
-import java.util.concurrent.Callable
 
 /**
  * Utility for sending notifications

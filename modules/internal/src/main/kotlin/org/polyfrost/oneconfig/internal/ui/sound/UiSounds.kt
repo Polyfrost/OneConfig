@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.sound
 
-import org.polyfrost.oneconfig.internal.OneConfigConfig
 import java.util.ServiceLoader
+import org.polyfrost.oneconfig.internal.OneConfigConfig
 
 object UiSounds {
     private val service: UiSoundService? by lazy { loadService() }

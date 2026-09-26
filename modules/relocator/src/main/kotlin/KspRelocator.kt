@@ -6,16 +6,16 @@ import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.FileLocation
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSDeclaration
-import me.owdding.kotlinpoet.*
-import me.owdding.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import me.owdding.kotlinpoet.ksp.writeTo
-import org.polyfrost.oneconfig.relocator.SourceFileHelper.replacePatterns
-import org.polyfrost.oneconfig.relocator.annotations.RelocatedMixin
 import java.io.OutputStream
 import javax.annotation.processing.Generated
 import kotlin.io.path.Path
 import kotlin.io.path.extension
 import kotlin.io.path.readText
+import me.owdding.kotlinpoet.*
+import me.owdding.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import me.owdding.kotlinpoet.ksp.writeTo
+import org.polyfrost.oneconfig.relocator.SourceFileHelper.replacePatterns
+import org.polyfrost.oneconfig.relocator.annotations.RelocatedMixin
 
 internal const val mainMixinPath = "org.polyfrost.oneconfig.internal.mixin"
 

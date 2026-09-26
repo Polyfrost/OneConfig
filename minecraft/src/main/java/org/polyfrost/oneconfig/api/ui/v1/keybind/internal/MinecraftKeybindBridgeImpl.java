@@ -1,13 +1,21 @@
 package org.polyfrost.oneconfig.api.ui.v1.keybind.internal;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.Supplier;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-//? if >=1.21.10 {
-//~if >= 1.21.11 'ResourceLocation;' -> 'Identifier;'
-import net.minecraft.resources.Identifier;
-//?}
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
@@ -16,22 +24,32 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.MinecraftKeybindBridge;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
 import org.polyfrost.oneconfig.internal.mixin.keybind.KeyMappingAccessor;
+import org.polyfrost.oneconfig.internal.mixin.keybind.KeyMappingRegistryAccessor;
+import org.polyfrost.oneconfig.internal.mixin.keybind.OptionsAccessor;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+//? if >= 1.21.11 {
+import net.minecraft.resources.Identifier;
+//?}
+
+//? if >= 1.21.10 {
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+//?}
+
+//? if = 1.21.10 {
+/*import net.minecraft.resources.ResourceLocation;
+*///?}
+
+//? if < 1.21.10 {
+/*import org.polyfrost.oneconfig.internal.mixin.keybind.KeyMappingCategoryAccessor;
+*///?}
 
 /**
  * Mirrors {@link OneConfigKeybind}s into Minecraft's native Controls menu
  */
 public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge {
-    private static final org.apache.logging.log4j.Logger LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/Keybinds");
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig/Keybinds");
     private static volatile MinecraftKeybindBridgeImpl instance;
 
     //? if >=1.21.10 {
@@ -66,7 +84,7 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
     //?} else {
     /*private String categoryFor(String name) {
         String label = (name == null || name.isBlank()) ? "OneConfig" : name;
-        java.util.Map<String, Integer> order = org.polyfrost.oneconfig.internal.mixin.keybind.KeyMappingCategoryAccessor.oneconfig$categorySortOrder();
+        Map<String, Integer> order = KeyMappingCategoryAccessor.oneconfig$categorySortOrder();
         if (!order.containsKey(label)) order.put(label, order.size());
         return label;
     }
@@ -74,7 +92,7 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
 
     private final Map<OneConfigKeybind, KeyMapping> mappings = new LinkedHashMap<>();
     private final Map<KeyMapping, OneConfigKeybind> reverse = new LinkedHashMap<>();
-    private final Set<KeyMapping> spliced = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    private final Set<KeyMapping> spliced = Collections.newSetFromMap(new IdentityHashMap<>());
 
     public MinecraftKeybindBridgeImpl() {
         instance = this;
@@ -127,19 +145,19 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
         rebuilt.addAll(mappings.values());
         spliced.clear();
         spliced.addAll(mappings.values());
-        ((org.polyfrost.oneconfig.internal.mixin.keybind.OptionsAccessor) (Object) mc.options)
+        ((OptionsAccessor) (Object) mc.options)
             .oneconfig$setKeyMappings(rebuilt.toArray(new KeyMapping[0]));
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private static KeyMapping detached(String name, InputConstants.Key defaultKey, java.util.function.Supplier<KeyMapping> constructor) {
+    private static KeyMapping detached(String name, InputConstants.Key defaultKey, Supplier<KeyMapping> constructor) {
         Map all;
         Map map;
         Object priorNamed;
         Object priorBound;
         try {
-            all = org.polyfrost.oneconfig.internal.mixin.keybind.KeyMappingRegistryAccessor.oneconfig$all();
-            map = org.polyfrost.oneconfig.internal.mixin.keybind.KeyMappingRegistryAccessor.oneconfig$map();
+            all = KeyMappingRegistryAccessor.oneconfig$all();
+            map = KeyMappingRegistryAccessor.oneconfig$map();
             priorNamed = all.get(name);
             priorBound = map.get(defaultKey);
         } catch (Throwable t) {
@@ -224,7 +242,7 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
     }
 
     private long[] combo(KeyMapping mapping) {
-        java.util.TreeSet<Long> set = new java.util.TreeSet<>();
+        TreeSet<Long> set = new TreeSet<>();
         OneConfigKeybind bind = reverse.get(mapping);
         if (bind != null) {
             int[] keys = bind.getKeyCodes();

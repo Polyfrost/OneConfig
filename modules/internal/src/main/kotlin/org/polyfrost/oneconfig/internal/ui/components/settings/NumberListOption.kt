@@ -6,8 +6,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import org.polyfrost.oneconfig.internal.ui.api.settings.NumberListOptionData
 import kotlin.math.roundToInt
+import org.polyfrost.oneconfig.internal.ui.api.settings.NumberListOptionData
 
 @Composable
 fun NumberListOption(data: NumberListOptionData) {

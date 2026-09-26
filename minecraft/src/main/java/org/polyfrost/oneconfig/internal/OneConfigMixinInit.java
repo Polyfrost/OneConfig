@@ -26,24 +26,24 @@
 
 package org.polyfrost.oneconfig.internal;
 
-import kotlin.Unit;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
-//todo import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
-//? moul_compat {
-import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
-//? }
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+//todo import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
+//? if moul_compat {
+import kotlin.Unit;
+import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
+//?}
 
 public class OneConfigMixinInit implements IMixinConfigPlugin {
 

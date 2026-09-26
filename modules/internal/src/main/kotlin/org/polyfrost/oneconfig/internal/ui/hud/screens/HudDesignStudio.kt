@@ -48,12 +48,20 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.math.abs
+import kotlin.math.hypot
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
+import kotlin.ranges.coerceAtLeast
+import kotlin.ranges.coerceAtMost
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import org.apache.logging.log4j.LogManager
+import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.Paint
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.RenderContext
@@ -61,6 +69,7 @@ import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.HudResize
+import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker as LegacyHud
 import org.polyfrost.oneconfig.api.notifications.v1.Notification
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
@@ -73,10 +82,10 @@ import org.polyfrost.oneconfig.internal.ui.components.*
 import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasPasteMenu
 import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasResetMenu
 import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudOverlayBridge
-import org.polyfrost.oneconfig.internal.ui.hud.modNameFor
 import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreviewCanvas
 import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreviewState
 import org.polyfrost.oneconfig.internal.ui.hud.components.rememberHudPreview
+import org.polyfrost.oneconfig.internal.ui.hud.modNameFor
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Designer
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Settings
@@ -86,13 +95,6 @@ import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.*
-import kotlin.coroutines.cancellation.CancellationException
-import kotlin.math.abs
-import kotlin.math.hypot
-import kotlin.math.roundToInt
-import kotlin.ranges.coerceAtLeast
-import kotlin.ranges.coerceAtMost
-import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker as LegacyHud
 
 private val LOGGER = LogManager.getLogger("OneConfig/HudDesignStudio")
 
@@ -419,7 +421,7 @@ private fun hitTestAnchorPoint(
     return best
 }
 
-private fun drawHudContents(sk: org.jetbrains.skia.Canvas, mcToScreen: Float) {
+private fun drawHudContents(sk: Canvas, mcToScreen: Float) {
     HudManager.renderRevision.intValue
     HudManager.revision
     // HUDs fused with a neighbour do not paint their own background so the merged shapes are laid down
@@ -3141,7 +3143,7 @@ private fun LegacyHudPreviewCard(
                 if (!dragStarted && event.changes.any { it.pressed }) {
                     val dx = pos.x - start.x
                     val dy = pos.y - start.y
-                    val dist = kotlin.math.sqrt(dx * dx + dy * dy)
+                    val dist = sqrt(dx * dx + dy * dy)
                     if (dist > 8f) {
                         dragStarted = true
                         val paddingPx = cardPadding.value * density
@@ -3219,7 +3221,7 @@ private fun ComposeHudPreviewCard(
                 if (!dragStarted && event.changes.any { it.pressed }) {
                     val dx = pos.x - start.x
                     val dy = pos.y - start.y
-                    val dist = kotlin.math.sqrt(dx * dx + dy * dy)
+                    val dist = sqrt(dx * dx + dy * dy)
                     if (dist > 8f) {
                         dragStarted = true
                         val paddingPx = cardPadding.value * density

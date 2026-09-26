@@ -11,6 +11,8 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.Clipboard
+import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.FrameRecomposer
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -21,42 +23,52 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import com.mojang.blaze3d.platform.InputConstants
+import java.awt.Component
+import java.awt.datatransfer.StringSelection
+import java.awt.datatransfer.Transferable
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
+import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.CoroutineDispatcher
 import net.minecraft.client.Minecraft
-import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.screens.Screen
-//? >= 1.21.10 {
-import net.minecraft.client.input.CharacterEvent
-import net.minecraft.client.input.MouseButtonEvent
-import net.minecraft.client.input.KeyEvent as McKeyEvent
-//? }
 import net.minecraft.network.chat.CommonComponents
+import org.apache.logging.log4j.LogManager
 import org.jetbrains.skia.FilterTileMode
-import org.jetbrains.skia.ImageInfo
 import org.jetbrains.skia.ImageFilter
+import org.jetbrains.skia.ImageInfo
 import org.jetbrains.skia.Paint
+import org.jetbrains.skia.RuntimeEffect
+import org.jetbrains.skia.RuntimeShaderBuilder
 import org.jetbrains.skia.Surface
-//? if !sdl
-//import org.lwjgl.glfw.GLFW
-//? if sdl {
-import org.lwjgl.sdl.SDLVideo.*
-//?}
 import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.components.LocalUiOversample
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
+import org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
-import java.awt.Component
-import java.awt.event.InputEvent
-import java.awt.event.KeyEvent
+import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CoroutineExceptionHandler
 
-private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/Compose")
+//? if >= 1.21.10 {
+import net.minecraft.client.input.CharacterEvent
+import net.minecraft.client.input.KeyEvent as McKeyEvent
+import net.minecraft.client.input.MouseButtonEvent
+//?}
+
+//? if sdl {
+import org.lwjgl.sdl.SDLVideo.*
+//?} else {
+/*import org.lwjgl.glfw.GLFW
+*///?}
+
+private val LOGGER = LogManager.getLogger("OneConfig/Compose")
 
 @Suppress("DEPRECATION")
-private object SystemClipboardManager : androidx.compose.ui.platform.ClipboardManager {
+private object SystemClipboardManager : ClipboardManager {
     override fun getText(): AnnotatedString? {
         return try {
             val data = ClipboardHelper.getString() ?: return null
@@ -80,20 +92,20 @@ private object SystemClipboardManager : androidx.compose.ui.platform.ClipboardMa
 
 
 @Suppress("DEPRECATION")
-private object SystemClipboard : androidx.compose.ui.platform.Clipboard {
+private object SystemClipboard : Clipboard {
     override val nativeClipboard: Any = Unit
 
     @OptIn(ExperimentalComposeUiApi::class)
     override suspend fun getClipEntry(): ClipEntry? {
         val text = ClipboardHelper.getString() ?: return null
-        return ClipEntry(java.awt.datatransfer.StringSelection(text))
+        return ClipEntry(StringSelection(text))
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     override suspend fun setClipEntry(clipEntry: ClipEntry?) {
         if (clipEntry == null) return
         try {
-            val transferable = clipEntry.nativeClipEntry as? java.awt.datatransfer.Transferable
+            val transferable = clipEntry.nativeClipEntry as? Transferable
             if (transferable != null) {
                 ClipboardHelper.setTransferable(transferable)
             }
@@ -304,8 +316,8 @@ abstract class ComposeScreen(
 
     private fun hardenFilter(amount: Float): ImageFilter {
         val w = (0.5f - 0.48f * amount).coerceIn(0.02f, 0.5f)
-        val effect = org.jetbrains.skia.RuntimeEffect.makeForShader(HARDEN_SKSL)
-        val builder = org.jetbrains.skia.RuntimeShaderBuilder(effect)
+        val effect = RuntimeEffect.makeForShader(HARDEN_SKSL)
+        val builder = RuntimeShaderBuilder(effect)
         builder.uniform("w", w)
         return ImageFilter.makeRuntimeShader(builder, "content", null)
     }
@@ -586,7 +598,7 @@ abstract class ComposeScreen(
         }
         if (ItemCatalog.renderIcons()) sceneDirty = true
 
-        val debugOverlayOnTop = org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen.shouldSuppressVanilla()
+        val debugOverlayOnTop = DebugOverlayOffscreen.shouldSuppressVanilla()
         if (renderMode == RenderMode.ON_DEMAND && !sceneDirty && !awaitingFirstFrame &&
             SkiaCtx.isDeferredComposeBackend && !debugOverlayOnTop
         ) {
@@ -971,11 +983,11 @@ abstract class ComposeScreen(
     }
 }
 
-internal object RenderThreadDispatcher : kotlinx.coroutines.CoroutineDispatcher() {
-    override fun isDispatchNeeded(context: kotlin.coroutines.CoroutineContext): Boolean =
+internal object RenderThreadDispatcher : CoroutineDispatcher() {
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean =
         !Minecraft.getInstance().isSameThread
 
-    override fun dispatch(context: kotlin.coroutines.CoroutineContext, block: Runnable) {
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
         Minecraft.getInstance().execute(block)
     }
 }

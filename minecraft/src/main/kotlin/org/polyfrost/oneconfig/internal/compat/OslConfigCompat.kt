@@ -1,6 +1,11 @@
 //? osl_config_compat {
 /*package org.polyfrost.oneconfig.internal.compat
 
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.util.Collections
+import java.util.IdentityHashMap
+import java.util.UUID
 import net.ornithemc.osl.config.api.ConfigManager
 import net.ornithemc.osl.config.api.ConfigScope
 import net.ornithemc.osl.config.api.config.Config
@@ -22,11 +27,6 @@ import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.util.Collections
-import java.util.IdentityHashMap
-import java.util.UUID
 
 internal object OslConfigCompat {
 

@@ -1,6 +1,10 @@
 //? axolotlclient_config_compat {
 package org.polyfrost.oneconfig.internal.compat
 
+import java.awt.Color
+import java.lang.reflect.Method
+import java.util.Collections
+import java.util.IdentityHashMap
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
@@ -16,9 +20,6 @@ import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
-import java.lang.reflect.Method
-import java.util.Collections
-import java.util.IdentityHashMap
 
 internal object AxolotlClientConfigCompat {
 
@@ -268,11 +269,11 @@ internal object AxolotlClientConfigCompat {
     private fun colorProperty(option: Any, id: String, name: String, description: String?): Property<*> {
         val property = Properties.functional(
             getter = { awtColor(storedColor(option)) },
-            setter = { value: java.awt.Color -> writeColor(option, value) },
+            setter = { value: Color -> writeColor(option, value) },
             id = id,
             name = name,
             description = description,
-            type = java.awt.Color::class.java,
+            type = Color::class.java,
         )
         property.visualizer = Visualizer.ColorVisualizer::class.java
         return property
@@ -280,16 +281,16 @@ internal object AxolotlClientConfigCompat {
 
     private fun storedColor(option: Any): Any? = invoke(option, "getOriginal") ?: read(option)
 
-    private fun awtColor(color: Any?): java.awt.Color {
-        color ?: return java.awt.Color.WHITE
+    private fun awtColor(color: Any?): Color {
+        color ?: return Color.WHITE
         val red = (invoke(color, "getRed") as? Number)?.toInt() ?: 255
         val green = (invoke(color, "getGreen") as? Number)?.toInt() ?: 255
         val blue = (invoke(color, "getBlue") as? Number)?.toInt() ?: 255
         val alpha = (invoke(color, "getAlpha") as? Number)?.toInt() ?: 255
-        return java.awt.Color(red, green, blue, alpha)
+        return Color(red, green, blue, alpha)
     }
 
-    private fun writeColor(option: Any, value: java.awt.Color) {
+    private fun writeColor(option: Any, value: Color) {
         val stored = storedColor(option) ?: return
         val set = method(stored.javaClass, "set", 4)
         if (set != null) {

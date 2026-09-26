@@ -2,23 +2,25 @@ package org.polyfrost.oneconfig.internal.ui.compose
 
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import net.minecraft.client.Minecraft
-import net.minecraft.resources.Identifier
-import net.minecraft.server.packs.resources.PreparableReloadListener
-import net.minecraft.server.packs.resources.ResourceManager
-//? < 1.21.4
-//import net.minecraft.util.profiling.ProfilerFiller
-import org.jetbrains.skia.*
-import org.jetbrains.skia.impl.RefCnt
-import org.polyfrost.compose.mc.McFontQueue
-import org.polyfrost.compose.render.FontManager
-import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import java.util.zip.ZipInputStream
 import kotlin.jvm.optionals.getOrNull
+import net.minecraft.client.Minecraft
+import net.minecraft.resources.Identifier
+import net.minecraft.server.packs.resources.PreparableReloadListener
+import net.minecraft.server.packs.resources.ResourceManager
+import org.jetbrains.skia.*
+import org.jetbrains.skia.impl.RefCnt
+import org.polyfrost.compose.mc.McFontQueue
+import org.polyfrost.compose.render.FontManager
+import org.slf4j.LoggerFactory
+
+//? if < 1.21.4 {
+/*import net.minecraft.util.profiling.ProfilerFiller
+*///?}
 
 object SkiaFontRenderer : PreparableReloadListener {
     private val LOGGER = LoggerFactory.getLogger("OneConfig/SkiaFontRenderer")

@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.ui.hud
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import java.util.concurrent.ConcurrentHashMap
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
@@ -12,7 +13,6 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.localizedValue
 import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreview
-import java.util.concurrent.ConcurrentHashMap
 
 private const val HUD_CARD_ID_PREFIX = "oneconfig.hud:"
 

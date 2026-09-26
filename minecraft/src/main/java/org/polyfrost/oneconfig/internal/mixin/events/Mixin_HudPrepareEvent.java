@@ -1,15 +1,18 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
-//? if >= 26.2 {
-import net.minecraft.client.gui.Gui;
-//? } else {
-/*import net.minecraft.client.renderer.GameRenderer;
-*///? }
 import org.polyfrost.oneconfig.internal.OneConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+//? if >= 26.2 {
+import net.minecraft.client.gui.Gui;
+//?}
+
+//? if < 26.2 {
+/*import net.minecraft.client.renderer.GameRenderer;
+*///?}
 
 //? if >= 26.2 {
 @Mixin(Gui.class)

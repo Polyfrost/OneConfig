@@ -1,8 +1,8 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
-import org.slf4j.LoggerFactory
 import java.util.Collections
 import java.util.IdentityHashMap
+import org.slf4j.LoggerFactory
 
 object ComposeSupport {
     private val LOG = LoggerFactory.getLogger(ComposeSupport::class.java)

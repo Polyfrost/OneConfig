@@ -1,17 +1,26 @@
 package org.polyfrost.oneconfig.internal.ui
 
-//? if >= 26.2
-import com.mojang.renderpearl.api.GpuFormat
 import com.mojang.blaze3d.pipeline.RenderTarget
 import com.mojang.blaze3d.pipeline.TextureTarget
-//? if < 1.21.4
-//import net.minecraft.client.Minecraft
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.ColorSpace
 import org.jetbrains.skia.Surface
 import org.jetbrains.skia.SurfaceOrigin
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
 import org.slf4j.LoggerFactory
+
+//? if >= 26.2 {
+import com.mojang.renderpearl.api.GpuFormat
+import org.joml.Vector4f
+//?}
+
+//? if >= 1.21.5 {
+import com.mojang.blaze3d.systems.RenderSystem
+//?}
+
+//? if < 1.21.4 {
+/*import net.minecraft.client.Minecraft
+*///?}
 
 /** Owns a Minecraft render target and its Skia surface, cached by size. */
 class SkiaOffscreenTarget {
@@ -96,11 +105,11 @@ class SkiaOffscreenTarget {
         val rt = target ?: return
         //? if >= 26.2 {
         val colorTex = rt.colorTexture ?: return
-        com.mojang.blaze3d.systems.RenderSystem.getDevice().createCommandEncoder()
-            .clearColorTexture(colorTex, org.joml.Vector4f(0f, 0f, 0f, 0f))
+        RenderSystem.getDevice().createCommandEncoder()
+            .clearColorTexture(colorTex, Vector4f(0f, 0f, 0f, 0f))
         //? } else if >= 1.21.5 {
         /*val colorTex = rt.colorTexture ?: return
-        val encoder = com.mojang.blaze3d.systems.RenderSystem.getDevice().createCommandEncoder()
+        val encoder = RenderSystem.getDevice().createCommandEncoder()
         encoder.clearColorTexture(colorTex, 0)
         //? if < 1.21.10 {
         /*//1.21.5 does not clear depth, and 1.21.8 clears it only after rendering the before-blur range

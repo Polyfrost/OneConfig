@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.api.ui.v1.keybind
 
-import org.polyfrost.oneconfig.api.platform.v1.Platform
 import kotlin.experimental.and
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 
 object KeyModifiers {
     const val NONE: Byte = 0

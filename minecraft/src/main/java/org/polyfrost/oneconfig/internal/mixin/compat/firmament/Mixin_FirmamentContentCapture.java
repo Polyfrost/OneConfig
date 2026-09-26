@@ -1,19 +1,20 @@
+//~ gui_graphics
 package org.polyfrost.oneconfig.internal.mixin.compat.firmament;
 
-//~ gui_graphics
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-//? >= 1.21.8 {
+
+//? if >= 1.21.8 {
 import org.joml.Matrix3x2f;
 import org.joml.Vector2f;
-//? }
+import org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat;
+import org.spongepowered.asm.mixin.Unique;
+//?}
 
 @Mixin(GuiGraphicsExtractor.class)
 public class Mixin_FirmamentContentCapture {

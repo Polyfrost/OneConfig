@@ -6,15 +6,21 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import net.minecraft.client.gui.render.GuiRenderer;
-//? if >= 26.2 {
-import net.minecraft.client.renderer.GameRenderer;
-//? } else {
-/*import net.minecraft.client.Minecraft;
-*///? }
-import org.objectweb.asm.Opcodes;
 import org.polyfrost.oneconfig.internal.ui.hud.GuiTargetRedirect;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+
+//? if >= 26.2 {
+import net.minecraft.client.renderer.GameRenderer;
+//?}
+
+//? if >= 26.1 {
+import org.objectweb.asm.Opcodes;
+//?}
+
+//? if < 26.2 {
+/*import net.minecraft.client.Minecraft;
+*///?}
 
 @Mixin(GuiRenderer.class)
 public class Mixin_GuiRendererLegacyTarget {

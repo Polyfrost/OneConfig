@@ -1,8 +1,7 @@
 package org.polyfrost.oneconfig.api.platform.v1;
 
-import net.kyori.adventure.text.Component;
-
 import java.util.Set;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslatableComponent;
 
 public interface CompatibilityPlatform {

@@ -1,8 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.components.item;
 
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

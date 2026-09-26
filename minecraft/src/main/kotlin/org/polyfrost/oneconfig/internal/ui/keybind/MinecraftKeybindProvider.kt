@@ -1,14 +1,14 @@
 package org.polyfrost.oneconfig.internal.ui.keybind
 
 import com.mojang.blaze3d.platform.InputConstants
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.IdentityHashMap
 import java.util.function.Consumer
 import java.util.function.Supplier
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
 import net.minecraft.network.chat.Component
-//? if >= 26.3
-import net.minecraft.server.packs.FixedPathPackResources
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
@@ -17,6 +17,10 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindBridgeImpl
 import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindCodec
+
+//? if >= 26.3 {
+import net.minecraft.server.packs.FixedPathPackResources
+//?}
 
 object MinecraftKeybindProvider : KeybindGroupProvider {
     private val properties = IdentityHashMap<KeyMapping, Property<OneConfigKeybind>>()
@@ -141,11 +145,11 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
                 supplier.get().use { it.readBytes() }
             }.getOrNull()
         } ?: return@runCatching null
-        val dir = java.nio.file.Files.createDirectories(
-            java.nio.file.Path.of(System.getProperty("java.io.tmpdir"), "oneconfig-modicons")
+        val dir = Files.createDirectories(
+            Path.of(System.getProperty("java.io.tmpdir"), "oneconfig-modicons")
         )
         val dest = dir.resolve("minecraft.png")
-        java.nio.file.Files.write(dest, bytes)
+        Files.write(dest, bytes)
         dest.toAbsolutePath().toString()
     }.getOrNull()
 
