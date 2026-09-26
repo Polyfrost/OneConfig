@@ -50,6 +50,8 @@ import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
+import java.util.concurrent.atomic.AtomicReference
+import kotlinx.coroutines.CoroutineExceptionHandler
 
 //? if >= 1.21.10 {
 import net.minecraft.client.input.CharacterEvent
@@ -139,6 +141,8 @@ abstract class ComposeScreen(
 
     private var contentSet = false
 
+    private var sceneFailure: AtomicReference<Throwable?>? = null
+
     private fun liveScene(): ComposeScene? {
         if (scenePoisoned || sceneBusy) return null
         return sceneOrNull
@@ -148,7 +152,9 @@ abstract class ComposeScreen(
         val scene = liveScene() ?: return null
         sceneBusy = true
         return try {
-            block(scene)
+            val result = block(scene)
+            sceneFailure?.get()?.let { throw it }
+            result
         } catch (t: Throwable) {
             poisonScene(t)
             null
@@ -219,6 +225,7 @@ abstract class ComposeScreen(
         renderScopeOrNull = null
         contentSet = false
         scenePoisoned = false
+        sceneFailure = null
         try {
             scene?.close()
         } catch (t: Throwable) {
@@ -232,7 +239,9 @@ abstract class ComposeScreen(
     }
 
     private fun createScene(): ComposeScene {
-        val recomposer = FrameRecomposer(RenderThreadDispatcher) { sceneDirty = true }
+        val failure = AtomicReference<Throwable?>()
+        val failureHandler = CoroutineExceptionHandler { _, t -> failure.compareAndSet(null, t) }
+        val recomposer = FrameRecomposer(RenderThreadDispatcher + failureHandler) { sceneDirty = true }
         val scope = SingleComposeSceneRenderingScope { sceneDirty = true }
         val scene = try {
             CanvasLayersComposeScene(
@@ -251,6 +260,7 @@ abstract class ComposeScreen(
         }
         recomposerOrNull = recomposer
         renderScopeOrNull = scope
+        sceneFailure = failure
         return scene
     }
 
@@ -430,6 +440,7 @@ abstract class ComposeScreen(
             while (prewarmCursor < until) {
                 step(prewarmCursor)
                 withScene { with(scope) { it.render(recomposer, canvas, frameNanos()) } }
+                if (scenePoisoned) break
                 clockSkewNanos += PREWARM_FRAME_NANOS
                 prewarmCursor++
             }
@@ -439,6 +450,12 @@ abstract class ComposeScreen(
             releasePrewarmSurface()
             closeSceneQuietly()
             ComposePreloader.fail("Compose warm-up failed; the first open will build the UI instead", t)
+            return false
+        }
+        if (scenePoisoned) {
+            prewarmCursor = 0
+            closeSceneQuietly()
+            ComposePreloader.fail("$name: a warm-up frame failed; the first open will build the UI instead")
             return false
         }
         sceneDirty = true
