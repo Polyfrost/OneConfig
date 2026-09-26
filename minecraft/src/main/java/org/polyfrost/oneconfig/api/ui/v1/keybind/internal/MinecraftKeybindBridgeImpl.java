@@ -400,7 +400,7 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
                 if (actualValue == bind.getBoundCode() && actualMouse == bind.isMousePrimary()) continue;
 
                 if (actual == InputConstants.UNKNOWN) {
-                    pending.add(() -> KeybindManager.rebindFromMinecraft(bind, null, null, KeyModifiers.NONE));
+                    if (bind.isBound()) pending.add(() -> KeybindManager.rebindFromMinecraft(bind, null, null, KeyModifiers.NONE));
                     continue;
                 }
 
