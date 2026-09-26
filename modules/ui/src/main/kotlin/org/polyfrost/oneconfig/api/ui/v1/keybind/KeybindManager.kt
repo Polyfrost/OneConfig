@@ -33,7 +33,7 @@ object KeybindManager {
         }
     }
 
-    /** Listeners notified when a keybind is rebound from Minecraft's Controls menu with the old and new instances */
+    /** Listeners notified when a keybind is rebound from Minecraft's Controls menu */
     private val rebindListeners = ArrayList<(OneConfigKeybind, OneConfigKeybind) -> Unit>()
 
     /** Listeners notified when a keybind is edited in-place from Minecraft's Controls menu (same instance) */
@@ -168,16 +168,21 @@ object KeybindManager {
         mouseBtns: IntArray? = null,
         mods: Byte = KeyModifiers.NONE,
     ): OneConfigKeybind {
-        val new = old.copyWith(keyCodes, mouseBtns, mods)
-        replace(old, new)
+        old.keyCodes = keyCodes
+        old.mouseBtns = mouseBtns
+        old.mods = mods
+        old.unresolvedKeyInputs = null
+        old.unresolvedMouseInputs = null
+        bridge?.sync(old)
+        notifyMenuEdit(old)
         for (listener in rebindListeners) {
             try {
-                listener(old, new)
+                listener(old, old)
             } catch (t: Throwable) {
                 LOGGER.error("Keybind rebind listener threw an exception", t)
             }
         }
-        return new
+        return old
     }
 
     @JvmStatic
