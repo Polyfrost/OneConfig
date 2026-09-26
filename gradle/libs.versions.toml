@@ -31,7 +31,7 @@ compose = "1.12.1"
 compose-navigation = "2.10.0-alpha01"
 skiko = "0.999.6"
 
-lifecycle = "2.11.0-beta01"
+lifecycle = "2.11.0"
 viewmodel = "2.11.0-beta01"
 commonmark = "0.24.0"
 
