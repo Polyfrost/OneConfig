@@ -50,6 +50,7 @@ import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import java.awt.Component
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CoroutineExceptionHandler
 
 private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/Compose")
@@ -128,10 +129,7 @@ abstract class ComposeScreen(
 
     private var contentSet = false
 
-    private var sceneGeneration = 0
-
-    @Volatile
-    private var recomposerFailure: Throwable? = null
+    private var sceneFailure: AtomicReference<Throwable?>? = null
 
     private fun liveScene(): ComposeScene? {
         if (scenePoisoned || sceneBusy) return null
@@ -143,7 +141,7 @@ abstract class ComposeScreen(
         sceneBusy = true
         return try {
             val result = block(scene)
-            recomposerFailure?.let { throw it }
+            sceneFailure?.get()?.let { throw it }
             result
         } catch (t: Throwable) {
             poisonScene(t)
@@ -215,7 +213,7 @@ abstract class ComposeScreen(
         renderScopeOrNull = null
         contentSet = false
         scenePoisoned = false
-        recomposerFailure = null
+        sceneFailure = null
         try {
             scene?.close()
         } catch (t: Throwable) {
@@ -229,12 +227,8 @@ abstract class ComposeScreen(
     }
 
     private fun createScene(): ComposeScene {
-        val generation = ++sceneGeneration
-        recomposerFailure = null
-        val failureHandler = CoroutineExceptionHandler { _, t ->
-            if (generation == sceneGeneration) recomposerFailure = t
-            else LOGGER.debug("Ignoring a failure from a discarded Compose recomposer", t)
-        }
+        val failure = AtomicReference<Throwable?>()
+        val failureHandler = CoroutineExceptionHandler { _, t -> failure.compareAndSet(null, t) }
         val recomposer = FrameRecomposer(RenderThreadDispatcher + failureHandler) { sceneDirty = true }
         val scope = SingleComposeSceneRenderingScope { sceneDirty = true }
         val scene = try {
@@ -254,6 +248,7 @@ abstract class ComposeScreen(
         }
         recomposerOrNull = recomposer
         renderScopeOrNull = scope
+        sceneFailure = failure
         return scene
     }
 
