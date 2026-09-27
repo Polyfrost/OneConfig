@@ -77,6 +77,7 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.utils.v1.NetworkUtils
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.*
 import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasPasteMenu
@@ -1169,7 +1170,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     val densityFloat = densityObj.density
     val actionIconPx = with(densityObj) { 24.dp.toPx() }
     val actionBarGapPx = with(densityObj) { 8.dp.toPx() }
-    val libraryChromeVisible = modIds.isNotEmpty() && selectedHuds.isEmpty() && !isDragging && !marqueeActive
+    val libraryChromeVisible = selectedHuds.isEmpty() && !isDragging && !marqueeActive
 
     fun Modifier.chromeRegion(key: String) = onGloballyPositioned { chromeRects[key] = it.boundsInRoot() }
 
@@ -2091,6 +2092,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                         onSearchChange = { searchText = it },
                         onClose = { closeLibrary() },
                         sections = librarySections,
+                        suggestEvergreenHud = modIds.isEmpty(),
                         activeModId = activeLibraryMod,
                         scrollState = libraryScrollState,
                         onSectionIndexesChanged = { librarySectionIndexes = it },
@@ -2150,7 +2152,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                         },
                     )
                 }
-                Column(
+                if (modIds.isNotEmpty()) Column(
                     modifier = Modifier.padding(end = 16.dp, top = 16.dp, bottom = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -2914,6 +2916,7 @@ private fun HudLibraryPanel(
     onSearchChange: (String) -> Unit,
     onClose: () -> Unit,
     sections: List<HudLibrarySection>,
+    suggestEvergreenHud: Boolean,
     activeModId: String?,
     scrollState: LazyListState,
     onSectionIndexesChanged: (Map<String, Int>) -> Unit,
@@ -2926,7 +2929,8 @@ private fun HudLibraryPanel(
     Column(
         modifier = Modifier
             .size(401.dp, 481.dp)
-            .padding(start = 16.dp, top = 16.dp, bottom = 16.dp)
+            // the mod icon column normally supplies the gap to the screen edge
+            .padding(start = 16.dp, top = 16.dp, bottom = 16.dp, end = if (suggestEvergreenHud) 16.dp else 0.dp)
             .then(modifier)
             .background(theme.popupBackground, theme.backgroundShape)
             .border(1.dp, theme.borderColor, theme.backgroundShape)
@@ -2939,8 +2943,14 @@ private fun HudLibraryPanel(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text("HUDs", color = theme.textColor, fontSize = 18.sp)
-            LibrarySearchBar(searchText, onSearchChange)
-            IconButton("close", modifier = Modifier.size(18.dp), onClick = onClose)
+            if (!suggestEvergreenHud) {
+                LibrarySearchBar(searchText, onSearchChange)
+                IconButton("close", modifier = Modifier.size(18.dp), onClick = onClose)
+            }
+        }
+        if (suggestEvergreenHud) {
+            EvergreenHudSuggestion(Modifier.fillMaxWidth().weight(1f))
+            return@Column
         }
         Text(
             "Click to add  ·  Drag to place it yourself",
@@ -3027,6 +3037,38 @@ private fun HudLibraryPanel(
                     modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun EvergreenHudSuggestion(modifier: Modifier) {
+    val theme = LocalTheme.current
+    val source = rememberInteractionSource()
+    val isHovered by source.collectIsHoveredAsState()
+    val background by animateColorAsState(if (isHovered) Color.White.copy(0.12f).compositeOver(Accent) else Accent)
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text("No HUDs installed", color = theme.textColor, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        Text(
+            "Install EvergreenHUD for FPS, CPS, coordinates, ping, and many more HUDs.",
+            color = theme.textColorSecondary,
+            fontSize = 12.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 24.dp),
+        )
+        Box(
+            modifier = Modifier
+                .clip(theme.buttonShape)
+                .background(background, theme.buttonShape)
+                .onClick(source) { NetworkUtils.browseLink("https://modrinth.com/mod/evergreenhud") }
+                .pointerHoverIcon(PointerIcon.Hand)
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+        ) {
+            Text("Get EvergreenHUD", color = Color.White.copy(0.9f), fontSize = 12.sp, fontWeight = FontWeight.Medium)
         }
     }
 }
