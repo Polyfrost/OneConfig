@@ -144,7 +144,8 @@ private fun NavigationEntries(showTopOptions: Boolean) {
                         def.route,
                         selected
                     ) {
-                        LocalNavController.wrapper.navigate(def.route)
+                        val nav = LocalNavController.wrapper
+                        if (nav.currentRoute == def.route) ShellState.searchQuery = "" else nav.navigate(def.route)
                     }
                 }
             }
