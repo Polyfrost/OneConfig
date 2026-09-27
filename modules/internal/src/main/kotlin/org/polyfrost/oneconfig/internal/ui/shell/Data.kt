@@ -40,14 +40,10 @@ object ShellState {
 
     var searchQuery by mutableStateOf("")
 
-    var globalSearchActive by mutableStateOf(false)
-
     var focusSearchField by mutableStateOf(false)
 
     /** Whether the search field holds focus mirrored here so a discarded composition can recover it */
     var searchFieldFocused: Boolean = false
-
-    var showSearchField by mutableStateOf(false)
 
     var hudDragging by mutableStateOf(false)
 
@@ -146,11 +142,7 @@ object LocalNavController {
             forwardStack.clear()
             backStack.addLast(currentEntry)
             currentEntry = Entry(route)
-            if (clearSearch) {
-                ShellState.searchQuery = ""
-                ShellState.globalSearchActive = false
-                ShellState.showSearchField = false
-            }
+            if (clearSearch) ShellState.searchQuery = ""
             ShellState.lastRoute = route
             seedRouteCategory(route)
             host.navigate(route)
@@ -186,8 +178,6 @@ object LocalNavController {
                 currentEntry = backStack.removeLast()
                 applyCategory(currentEntry)
                 ShellState.lastRoute = currentEntry.route
-                ShellState.globalSearchActive = false
-                ShellState.showSearchField = false
             }
         }
 
@@ -202,8 +192,6 @@ object LocalNavController {
             applyCategory(next)
             if (host == null) return
             ShellState.lastRoute = next.route
-            ShellState.globalSearchActive = false
-            ShellState.showSearchField = false
             host.navigate(next.route)
         }
 

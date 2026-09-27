@@ -75,11 +75,7 @@ fun OneConfigInterface(
 
     LaunchedEffect(initialRoute, openRevision) {
         val alreadyThere = initialRoute == LocalNavController.wrapper.currentRoute
-        if (!resuming) {
-            ShellState.globalSearchActive = false
-            ShellState.searchQuery = ""
-            ShellState.showSearchField = false
-        }
+        if (!resuming) ShellState.searchQuery = ""
 
         ShellState.openingTransitionTarget = null
         ShellState.awaitingInitialRoute = !alreadyThere

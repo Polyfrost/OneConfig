@@ -241,7 +241,7 @@ fun Profiles() {
         Column(
             verticalArrangement = Arrangement.spacedBy(19.dp)
         ) {
-            val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
+            val localSearchQuery = ShellState.searchQuery.trim()
             val categorizedProfiles = when (activeCategory) {
                 ProfileCategory.All -> profiles
                 ProfileCategory.Favorited -> profiles.filter { it.favorite }

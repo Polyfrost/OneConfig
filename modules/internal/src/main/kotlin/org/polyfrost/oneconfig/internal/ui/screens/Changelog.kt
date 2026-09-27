@@ -230,7 +230,7 @@ private fun MdBlocks(node: Node, styles: MdStyles, modifier: Modifier = Modifier
 @Composable
 fun Changelog() {
     val lazyListState = rememberLazyListState()
-    val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
+    val localSearchQuery = ShellState.searchQuery.trim()
     val visibleSections = remember(localSearchQuery) {
         changelogs.sections.mapIndexed { index, section -> index to section }
             .filter { (_, section) ->

@@ -307,7 +307,6 @@ fun GlobalSearchBar() {
                 if (searchText.isNotEmpty()) {
                     IconButton("close", modifier = Modifier.size(16.dp)) {
                         searchText = ""
-                        ShellState.globalSearchActive = false
                     }
                 }
             }
