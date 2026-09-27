@@ -38,8 +38,10 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
@@ -210,25 +212,31 @@ private fun TitleInfoTooltip(title: String) {
     }
 }
 
+private fun searchFieldValue(text: String) = TextFieldValue(text, TextRange(text.length))
+
 @Composable
 fun GlobalSearchBar() {
     val navController = LocalNavController.current
     val backStackEntry by navController.currentBackStackEntryAsState()
     val placeholder = searchPlaceholder(backStackEntry?.destination)
 
-    var searchText by remember { mutableStateOf(ShellState.searchQuery) }
+    var searchText by remember { mutableStateOf(searchFieldValue(ShellState.searchQuery)) }
     val interactionSource = rememberInteractionSource()
     val isFocused by interactionSource.collectIsFocusedAsState()
 
     val focusRequester = remember { FocusRequester() }
 
-    LaunchedEffect(searchText) { ShellState.searchQuery = searchText }
-    LaunchedEffect(ShellState.searchQuery) { if (ShellState.searchQuery != searchText) searchText = ShellState.searchQuery }
+    LaunchedEffect(searchText.text) { ShellState.searchQuery = searchText.text }
+    LaunchedEffect(ShellState.searchQuery) {
+        if (ShellState.searchQuery != searchText.text) searchText = searchFieldValue(ShellState.searchQuery)
+    }
     LaunchedEffect(isFocused) { ShellState.searchFieldFocused = isFocused }
 
     LaunchedEffect(ShellState.focusSearchField) {
         if (ShellState.focusSearchField) {
             withFrameNanos { }
+            // a kept query is selected so typing starts a new search while leaving it alone keeps it
+            searchText = searchText.copy(selection = TextRange(0, searchText.text.length))
             try {
                 focusRequester.requestFocus()
             } catch (_: IllegalStateException) {
@@ -293,7 +301,7 @@ fun GlobalSearchBar() {
                     modifier = Modifier.weight(1f).fillMaxHeight(),
                     contentAlignment = Alignment.CenterStart,
                 ) {
-                    if (searchText.isEmpty() && !isFocused) {
+                    if (searchText.text.isEmpty() && !isFocused) {
                         Text(
                             placeholder,
                             color = LocalTheme.current.textColorSecondary,
@@ -304,9 +312,9 @@ fun GlobalSearchBar() {
                     }
                     innerTextField()
                 }
-                if (searchText.isNotEmpty()) {
+                if (searchText.text.isNotEmpty()) {
                     IconButton("close", modifier = Modifier.size(16.dp)) {
-                        searchText = ""
+                        searchText = TextFieldValue()
                     }
                 }
             }

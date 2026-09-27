@@ -61,7 +61,7 @@ fun OneConfigInterface(
     initialRoute: Any = ModsGraph,
     /** Set when the scene is being rebuilt for a session already in progress so its search survives */
     resuming: Boolean = false,
-    /** Set when [initialRoute] is a page the user was already on which is put back without a transition */
+    /** Set when [initialRoute] is a page the user was already on which is put back without a transition and keeps its search */
     restoring: Boolean = false,
     openRevision: Int = 0,
     onCloseRequest: () -> Unit = {},
@@ -75,7 +75,8 @@ fun OneConfigInterface(
 
     LaunchedEffect(initialRoute, openRevision) {
         val alreadyThere = initialRoute == LocalNavController.wrapper.currentRoute
-        if (!resuming) ShellState.searchQuery = ""
+        val keepSearch = resuming || restoring
+        if (!keepSearch) ShellState.searchQuery = ""
 
         ShellState.openingTransitionTarget = null
         ShellState.awaitingInitialRoute = !alreadyThere
@@ -103,10 +104,10 @@ fun OneConfigInterface(
                 }
             }
             try {
-                LocalNavController.wrapper.navigate(initialRoute, clearSearch = !resuming)
+                LocalNavController.wrapper.navigate(initialRoute, clearSearch = !keepSearch)
             } catch (t: Throwable) {
                 LOGGER.error("Failed to open the OneConfig UI on {}, falling back to the mods page", initialRoute, t)
-                runCatching { LocalNavController.wrapper.navigate(ModsGraph, clearSearch = !resuming) }
+                runCatching { LocalNavController.wrapper.navigate(ModsGraph) }
             }
             ShellState.awaitingInitialRoute = false
         } else {
