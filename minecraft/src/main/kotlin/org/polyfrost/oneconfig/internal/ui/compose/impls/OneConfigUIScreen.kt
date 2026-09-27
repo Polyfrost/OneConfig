@@ -293,8 +293,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         } catch (_: Throwable) {
             ShellState.playerName = "Player"
         }
-        ShellState.focusSearchField = OneConfigConfig.instantSearch
-        ShellState.searchFieldFocused = false
+        if (!isResume) ShellState.focusSearchField = OneConfigConfig.instantSearch
         val client = Minecraft.getInstance()
         val cachedHead = PlayerHeadLoader.cachedLocalPlayerHeadPng(client)
         if (cachedHead != null) {
