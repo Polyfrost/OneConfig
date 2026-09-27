@@ -32,7 +32,7 @@ stonecutter {
             this["osl_config_compat"] = current.project.endsWith("-ornithe")
             this["dandelion_compat"] = catalogue.has("dandelion")
             this["odin_compat"] = current.project.endsWith("-fabric") && catalogue.has("odin")
-            this["skycubed_compat"] = current.project.endsWith("-fabric") && catalogue.has("skycubed")
+            this["mlib_compat"] = current.project.endsWith("-fabric") && catalogue.has("meowdding-lib")
             this["skyblocker_compat"] = current.project.endsWith("-fabric") && catalogue.has("skyblocker")
             this["skyblocker_hud_v2"] = current.project.endsWith("-fabric") &&
                 catalogue.has("skyblocker") &&

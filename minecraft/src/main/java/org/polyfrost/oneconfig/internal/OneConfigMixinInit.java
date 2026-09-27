@@ -123,10 +123,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? axolotlclient_config_compat
         mixins.add("compat.axolotlclient.Mixin_AxolotlClientConfigImpl");
 
-        //? skycubed_compat {
-        /*mixins.add("compat.skycubed.Mixin_SkyCubed");
-        mixins.add("compat.skycubed.Mixin_SkyCubedOverlays");
-        *///? }
+        //? mlib_compat
+        //mixins.add("compat.mlib.Mixin_MlibOverlays");
 
         //? skyblocker_compat {
         /*Boolean skyblockerSingleton = declaresStaticMethod("de.hysky.skyblocker.skyblock.fancybars.FancyStatusBars", "initStatic");

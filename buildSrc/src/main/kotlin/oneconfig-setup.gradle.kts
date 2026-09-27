@@ -327,9 +327,8 @@ dependencies {
         compileOnly(versionedCatalog["lwjgl-vulkan"])
     }
 
-    if (versionedCatalog.has("skycubed")) {
+    if (versionedCatalog.has("meowdding-lib")) {
         val mcVersion = stonecutter.current.version
-        "modCompileOnly"(versionedCatalog["skycubed"]) { isTransitive = false }
         compileOnly(versionedCatalog["meowdding-lib"]) {
             isTransitive = false
             capabilities { requireCapability("me.owdding.meowdding-lib:meowdding-lib-$mcVersion") }

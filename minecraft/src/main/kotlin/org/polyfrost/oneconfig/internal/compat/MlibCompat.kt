@@ -1,4 +1,4 @@
-//? skycubed_compat {
+//? mlib_compat {
 /*package org.polyfrost.oneconfig.internal.compat
 
 import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfig
@@ -18,73 +18,64 @@ import org.polyfrost.oneconfig.api.hud.v1.OneConfigHudWrapper
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer
 
-object SkyCubedCompat {
-    private val LOGGER = LogManager.getLogger("OneConfig/SkyCubed-Compat")
+object MlibCompat {
+    private val LOGGER = LogManager.getLogger("OneConfig/MeowddingLib-Compat")
 
+    // mlib overlays don't expose their settings, so link them to entries in the owning mod's rconfig "overlays" category
     private val OVERLAY_SETTINGS = mapOf(
-        "InfoOverlay" to "info",
-        "PlayerRpgOverlay" to "rpg",
-        "TextOverlay" to "text",
-        "SackOverlay" to "sack",
-        "AttributeOverlay" to "attribute",
-        "PowerOrbOverlay" to "powerOrb",
-        "TrophyFishOverlay" to "trophyFish",
-        "MinimapOverlay" to "map",
-        "DungeonMapOverlay" to "dungeonmap",
-        "PickUpLog" to "pickupLog",
-        "CommissionsOverlay" to "commissions",
-        "DialogueOverlay" to "npc",
-        "VanillaBossbarOverlay" to "bossbar",
-        "MovableItemText" to "itemtext",
+        "skycubed" to mapOf(
+            "InfoOverlay" to "info",
+            "PlayerRpgOverlay" to "rpg",
+            "TextOverlay" to "text",
+            "SackOverlay" to "sack",
+            "AttributeOverlay" to "attribute",
+            "PowerOrbOverlay" to "powerOrb",
+            "TrophyFishOverlay" to "trophyFish",
+            "MinimapOverlay" to "map",
+            "DungeonMapOverlay" to "dungeonmap",
+            "PickUpLog" to "pickupLog",
+            "CommissionsOverlay" to "commissions",
+            "DialogueOverlay" to "npc",
+            "VanillaBossbarOverlay" to "bossbar",
+            "MovableItemText" to "itemtext",
+        ),
     )
 
     private var initialized = false
-    private var overlaysCategory: ResourcefulConfig? = null
-    private var rootConfig: ResourcefulConfig? = null
 
     @JvmStatic
-    fun initialize() {
-        if (initialized) return
-        initialized = true
-        CompatLoader.requireTranslations(skip = true) { register() }
-    }
-
-    private fun register() {
-        resolveConfig()
-
-        val overlays = collectOverlays()
-        var count = 0
-        for (overlay in overlays) {
-            runCatching {
-                SkyCubedHudWrapper(overlay).register()
-                count++
-            }.onFailure { LOGGER.warn("Failed to register SkyCubed overlay ${overlay.name.string}", it) }
+    fun onRegister(overlay: Overlay) {
+        if (!initialized) {
+            initialized = true
+            CompatLoader.requireTranslations(skip = true) {
+                EventManager.register(HudEditorToggleEvent::class.java, Consumer { event ->
+                    if (!event.open) collectOverlays().mapTo(HashSet()) { it.modId }.forEach { flush(config(it)) }
+                })
+                CompatOverlayRenderer.register(::renderExamples)
+            }
         }
-        LOGGER.info("Registered {} SkyCubed overlays into the OneConfig HUD editor", count)
-
-        EventManager.register(HudEditorToggleEvent::class.java, Consumer { event ->
-            if (!event.open) flush()
-        })
-
-        CompatOverlayRenderer.register(::renderExamples)
+        CompatLoader.requireTranslations(skip = true) {
+            runCatching { MlibHudWrapper(overlay).register() }
+                .onFailure { LOGGER.warn("Failed to register ${overlay.modId} overlay ${overlay.name.string}", it) }
+        }
     }
 
-    internal fun flush() {
-        runCatching { rootConfig?.save() }
-            .onFailure { LOGGER.warn("Failed to save SkyCubed config", it) }
+    internal fun flush(config: ResourcefulConfig?) {
+        runCatching { config?.save() }
+            .onFailure { LOGGER.warn("Failed to save ${config?.id()} config", it) }
     }
 
     private val screenField: Field? by lazy {
         runCatching {
             Minecraft::class.java.declaredFields.firstOrNull { it.type == Screen::class.java }
                 ?.apply { isAccessible = true }
-        }.onFailure { LOGGER.warn("Could not resolve Minecraft.screen field for SkyCubed example mode", it) }
+        }.onFailure { LOGGER.warn("Could not resolve Minecraft.screen field for meowdding-lib example mode", it) }
             .getOrNull()
     }
 
     private val editScreen: Any? by lazy {
         runCatching { Class.forName("me.owdding.lib.overlays.EditOverlaysScreen").getDeclaredConstructor().newInstance() }
-            .onFailure { LOGGER.warn("Could not build SkyCubed edit screen for example mode", it) }
+            .onFailure { LOGGER.warn("Could not build meowdding-lib edit screen for example mode", it) }
             .getOrNull()
     }
 
@@ -116,36 +107,31 @@ object SkyCubedCompat {
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
+    @Suppress("UNCHECKED_CAST") // Overlays.overlays is a private MutableList<Overlay>
     private fun collectOverlays(): List<Overlay> = runCatching {
         val field = Overlays::class.java.getDeclaredField("overlays").apply { isAccessible = true }
         (field.get(Overlays) as? List<Overlay>)?.toList() ?: emptyList()
-    }.onFailure { LOGGER.warn("Failed to read SkyCubed overlays from the meowdding registry", it) }
+    }.onFailure { LOGGER.warn("Failed to read overlays from the meowdding-lib registry", it) }
         .getOrDefault(emptyList())
 
-    fun configId(): String? = rootConfig?.id()
-
-    private fun resolveConfig() {
-        val root = RConfigCompat.registeredConfigs().firstOrNull { it.id().contains("skycubed", ignoreCase = true) }
-        rootConfig = root
-        overlaysCategory = root?.categories()?.values?.firstOrNull { category ->
-            category.id().substringAfterLast('/') == "overlays"
-        }
-        if (overlaysCategory == null) {
-            LOGGER.warn("Could not resolve SkyCubed 'overlays' rconfig category; settings will be geometry-only")
-        }
-    }
+    // rconfig ids are conventionally "<modid>/config", but the exact name varies
+    fun config(modId: String): ResourcefulConfig? =
+        RConfigCompat.registeredConfigs().firstOrNull { it.id().substringBefore('/') == modId }
 
     fun buildSettings(overlay: Overlay): List<Property<*>> {
-        val id = OVERLAY_SETTINGS[overlay.javaClass.simpleName] ?: return emptyList()
-        val entry = objectEntry(id) ?: return emptyList()
+        val id = OVERLAY_SETTINGS[overlay.modId]?.get(overlay.javaClass.simpleName) ?: return emptyList()
+        val entry = objectEntry(overlay.modId, id) ?: return emptyList()
         return runCatching { RConfigCompat.buildProperties(entry) }
-            .onFailure { LOGGER.warn("Failed to build SkyCubed settings for '$id'", it) }
+            .onFailure { LOGGER.warn("Failed to build ${overlay.modId} settings for '$id'", it) }
             .getOrDefault(emptyList())
     }
 
-    private fun objectEntry(id: String): ResourcefulConfigObjectEntry? {
-        val category = overlaysCategory ?: return null
+    private fun objectEntry(modId: String, id: String): ResourcefulConfigObjectEntry? {
+        val category = config(modId)?.categories()?.values?.firstOrNull { it.id().substringAfterLast('/') == "overlays" }
+        if (category == null) {
+            LOGGER.warn("Could not resolve $modId 'overlays' rconfig category; settings will be geometry-only")
+            return null
+        }
         for (element in category.elements()) {
             if (element is ResourcefulConfigEntryElement && element.id() == id) {
                 return element.entry() as? ResourcefulConfigObjectEntry
@@ -155,18 +141,18 @@ object SkyCubedCompat {
     }
 }
 
-class SkyCubedHudWrapper(private val overlay: Overlay) : OneConfigHudWrapper {
+class MlibHudWrapper(private val overlay: Overlay) : OneConfigHudWrapper {
     private companion object {
         const val FALLBACK_WIDTH = 60f
         const val FALLBACK_HEIGHT = 24f
     }
 
-    override var id: String = "skycubed/" +
+    override var id: String = overlay.modId + "/" +
         (overlay.javaClass.simpleName + "/" + overlay.name.string).replace(Regex("[^A-Za-z0-9]+"), "_")
 
     override var name: String = overlay.name.string
 
-    override val modId: String? get() = SkyCubedCompat.configId()
+    override val modId: String get() = MlibCompat.config(overlay.modId)?.id() ?: overlay.modId
 
     override var x: Float
         get() = overlay.position.component1().toFloat()
@@ -204,12 +190,12 @@ class SkyCubedHudWrapper(private val overlay: Overlay) : OneConfigHudWrapper {
         }
         set(_) {}
 
-    private val cachedProperties: List<Property<*>> by lazy { SkyCubedCompat.buildSettings(overlay) }
+    private val cachedProperties: List<Property<*>> by lazy { MlibCompat.buildSettings(overlay) }
 
     private val enabledProperty: Property<Boolean>? by lazy { CompatHudToggle.find(cachedProperties) }
 
     override fun linkedProperties(): List<Property<*>> = cachedProperties
 
-    override fun save() = SkyCubedCompat.flush()
+    override fun save() = MlibCompat.flush(MlibCompat.config(overlay.modId))
 }
 *///? }
