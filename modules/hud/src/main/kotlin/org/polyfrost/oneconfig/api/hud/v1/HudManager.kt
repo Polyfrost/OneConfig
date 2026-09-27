@@ -203,8 +203,10 @@ object HudManager {
 
     private const val REGISTRY_ID = "hud-registry.json"
     private const val KNOWN_HUDS = "knownHuds"
+    private const val PROVIDER_LOOKS = "providerLooks"
 
     private val knownProviders = LinkedHashSet<String>()
+    private val providerLooks = HashMap<String, String>()
     private var registryTree: Tree? = null
 
     private fun registryProperty() = Properties.simple(
@@ -213,12 +215,19 @@ object HudManager {
         emptyArray<String>(), Array<String>::class.java
     )
 
+    private fun looksProperty() = Properties.simple(
+        PROVIDER_LOOKS, "Provider Looks",
+        "Appearance explicitly applied to unplaced HUD providers by the global HUD settings.",
+        emptyArray<String>(), Array<String>::class.java
+    )
+
     private fun loadRegistry() {
         try {
             val mgr = ConfigManager.active()
             val t = mgr.trees().firstOrNull { it.id == REGISTRY_ID }
-                ?: mgr.register(Tree.tree(REGISTRY_ID).put(registryProperty())).get()
+                ?: mgr.register(Tree.tree(REGISTRY_ID).put(registryProperty()).put(looksProperty())).get()
             if (t.getProp(KNOWN_HUDS) == null) t.put(registryProperty())
+            if (t.getProp(PROVIDER_LOOKS) == null) t.put(looksProperty())
             t.addMetadata("hidden", true)
             t.addMetadata(ConfigManager.PROFILE_LOCAL_METADATA, true)
             registryTree = t
@@ -226,6 +235,11 @@ object HudManager {
                 is Array<*> -> known.forEach { if (it != null) knownProviders.add(it.toString()) }
                 is Iterable<*> -> known.forEach { if (it != null) knownProviders.add(it.toString()) }
             }
+            when (val looks = t.getProp(PROVIDER_LOOKS)?.get()) {
+                is Array<*> -> looks.forEach { if (it != null) noteProviderLook(it.toString()) }
+                is Iterable<*> -> looks.forEach { if (it != null) noteProviderLook(it.toString()) }
+            }
+            hudProviders.values.forEach { applyProviderLook(it) }
         } catch (e: Exception) {
             LOGGER.error("Failed to load HUD registry, HUD deletions may not persist", e)
         }
@@ -235,9 +249,46 @@ object HudManager {
         val t = registryTree ?: return
         try {
             t.getProp(KNOWN_HUDS)?.setAs(knownProviders.toTypedArray())
+            t.getProp(PROVIDER_LOOKS)?.setAs(providerLooks.values.toTypedArray())
             ConfigManager.active().save(REGISTRY_ID)
         } catch (e: Exception) {
             LOGGER.error("Failed to save HUD registry", e)
+        }
+    }
+
+    private fun noteProviderLook(encoded: String) {
+        val sep = encoded.indexOf('|')
+        if (sep > 0) providerLooks[encoded.substring(0, sep)] = encoded
+    }
+
+    /**
+     * Remembers [hud]'s current look for its provider class in the registry, providers have no
+     * config tree, so without this an applied look would die with the process
+     */
+    @JvmStatic
+    fun storeProviderLook(hud: Hud) {
+        val key = hud::class.java.name
+        providerLooks[key] = listOf(
+            key,
+            hud.font.ordinal,
+            hud.textWeight.ordinal,
+            if (hud.showBackground) 1 else 0,
+            hud.bgRadius,
+        ).joinToString("|")
+        saveRegistry()
+    }
+
+    private fun applyProviderLook(hud: Hud) {
+        val enc = providerLooks[hud::class.java.name] ?: return
+        val parts = enc.split('|')
+        if (parts.size != 5) return
+        try {
+            hud.font = Font.entries[parts[1].toInt()]
+            hud.textWeight = Weight.entries[parts[2].toInt()]
+            hud.showBackground = parts[3].toInt() == 1
+            hud.bgRadius = parts[4].toFloat()
+        } catch (e: Throwable) {
+            LOGGER.error("Failed to re-apply the stored provider look of ${hud::class.java.name}", e)
         }
     }
 
@@ -283,6 +334,7 @@ object HudManager {
     @JvmStatic
     fun register(hud: Hud) {
         hudProviders[hud::class.java] = hud
+        applyProviderLook(hud)
         revision++
         // Providers are commonly registered by later InitializationEvent handlers, after the
         // manager has already performed its first load. Coalesce those registrations into one

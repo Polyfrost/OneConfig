@@ -653,6 +653,20 @@ public class OneConfigConfig extends Config {
     public static OneConfigConfig INSTANCE;
 
     /**
+     * Writes a "Global HUD" preference through its {@link Property} so callbacks, dependent-option
+     * display states and save tracking update as they do from the preferences UI
+     */
+
+    @SuppressWarnings("unchecked")
+    public static void setGlobalHudOption(String option, Object value) {
+        OneConfigConfig inst = INSTANCE;
+        if (inst == null || inst.tree == null) {
+            return;
+        }
+        ((Property<Object>) inst.getProperty(option)).set(value);
+    }
+
+    /**
      * The action run when {@link #oneConfigKeybind} is pressed
      * <p>
      * Held here rather than on the keybind because deserialization rebuilds the keybind with a null action

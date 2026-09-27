@@ -29,62 +29,35 @@ object GlobalHudSettingsBridge {
     }
 
     @JvmStatic
-    fun setEnabled(value: Boolean) = commit {
-        OneConfigConfig.globalHudEnabled = value
-        GlobalHudSettings.enabled = value
-    }
+    fun setEnabled(value: Boolean) = commit { OneConfigConfig.setGlobalHudOption("globalHudEnabled", value) }
 
     @JvmStatic
-    fun setFontOverride(value: Boolean) = commit {
-        OneConfigConfig.globalHudFontOverride = value
-        GlobalHudSettings.overrideFont = value
-    }
+    fun setFontOverride(value: Boolean) = commit { OneConfigConfig.setGlobalHudOption("globalHudFontOverride", value) }
 
     @JvmStatic
-    fun setFont(value: Font) = commit {
-        OneConfigConfig.globalHudFont = value.ordinal
-        GlobalHudSettings.font = value
-    }
+    fun setFont(value: Font) = commit { OneConfigConfig.setGlobalHudOption("globalHudFont", value.ordinal) }
 
     @JvmStatic
-    fun setTextWeightOverride(value: Boolean) = commit {
-        OneConfigConfig.globalHudWeightOverride = value
-        GlobalHudSettings.overrideTextWeight = value
-    }
+    fun setTextWeightOverride(value: Boolean) = commit { OneConfigConfig.setGlobalHudOption("globalHudWeightOverride", value) }
 
     @JvmStatic
-    fun setTextWeight(value: Weight) = commit {
-        OneConfigConfig.globalHudWeight = value.ordinal
-        GlobalHudSettings.textWeight = value
-    }
+    fun setTextWeight(value: Weight) = commit { OneConfigConfig.setGlobalHudOption("globalHudWeight", value.ordinal) }
 
     @JvmStatic
-    fun setShowBackgroundOverride(value: Boolean) = commit {
-        OneConfigConfig.globalHudBackgroundOverride = value
-        GlobalHudSettings.overrideShowBackground = value
-    }
+    fun setShowBackgroundOverride(value: Boolean) = commit { OneConfigConfig.setGlobalHudOption("globalHudBackgroundOverride", value) }
 
     @JvmStatic
-    fun setShowBackground(value: Boolean) = commit {
-        OneConfigConfig.globalHudShowBackground = value
-        GlobalHudSettings.showBackground = value
-    }
+    fun setShowBackground(value: Boolean) = commit { OneConfigConfig.setGlobalHudOption("globalHudShowBackground", value) }
 
     @JvmStatic
-    fun setBackgroundRadiusOverride(value: Boolean) = commit {
-        OneConfigConfig.globalHudRadiusOverride = value
-        GlobalHudSettings.overrideBackgroundRadius = value
-    }
+    fun setBackgroundRadiusOverride(value: Boolean) = commit { OneConfigConfig.setGlobalHudOption("globalHudRadiusOverride", value) }
 
     @JvmStatic
-    fun setBackgroundRadius(value: Float) = commit {
-        OneConfigConfig.globalHudRadius = value
-        GlobalHudSettings.backgroundRadius = value
-    }
+    fun setBackgroundRadius(value: Float) = commit { OneConfigConfig.setGlobalHudOption("globalHudRadius", value) }
 
-    /** Applies [change] to both stores in one snapshot and persists the preferences */
+    /** Writes through the config [org.polyfrost.oneconfig.api.config.v1.Property], then saves */
     private inline fun commit(crossinline change: () -> Unit) {
-        Snapshot.withMutableSnapshot { change() }
+        change()
         OneConfigConfig.INSTANCE?.save()
     }
 }

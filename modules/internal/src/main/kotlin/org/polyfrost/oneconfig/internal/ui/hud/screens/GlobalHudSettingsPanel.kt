@@ -153,7 +153,7 @@ fun GlobalHudSettingsPanel(
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 ApplyOverridesButton()
                 Text(
-                    "Bakes the overrides into every HUD's own settings.",
+                    "Also applies to HUDs you add later.",
                     color = theme.textColorSecondary,
                     fontSize = 12.sp,
                 )
@@ -216,6 +216,8 @@ private fun applyOverridesToAllHuds() {
             if (applyWeight) hud.textWeight = weight
             if (applyBackground) hud.showBackground = showBackground
             if (applyRadius) hud.bgRadius = radius
+            // providers have no tree, so their look is remembered in the registry instead
+            if (hud !in HudManager.activeInstances) HudManager.storeProviderLook(hud)
         }
     }
 }
