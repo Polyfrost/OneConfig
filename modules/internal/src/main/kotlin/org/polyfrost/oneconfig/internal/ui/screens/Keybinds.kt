@@ -94,7 +94,7 @@ fun Keybinds() {
     val configs = ConfigRegistry.configs.toList()
     val providerRevision = KeybindProviderRegistry.revision.intValue
     val groups = remember(revision, providerRevision, configs) { collectAllKeybindGroups() }
-    val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
+    val localSearchQuery = ShellState.searchQuery.trim()
     val search = rememberKeybindSearchResults(groups, localSearchQuery)
     val searchResults = search.groups
     val visibleGroups = if (localSearchQuery.isBlank()) groups else searchResults.orEmpty()

@@ -191,7 +191,7 @@ fun Shell(
             val backStackEntry by LocalNavController.current.currentBackStackEntryAsState()
             val isModsMenu = backStackEntry?.destination?.hasRoute(ModsRoute::class) == true
             val searchQuery = ShellState.searchQuery
-            val isSearching = searchQuery.isNotBlank() && (ShellState.globalSearchActive || isModsMenu)
+            val isSearching = isModsMenu && searchQuery.isNotBlank()
             Column(
                 modifier = Modifier.weight(1f)
                     .padding(horizontal = 25.dp, vertical = 19.dp),

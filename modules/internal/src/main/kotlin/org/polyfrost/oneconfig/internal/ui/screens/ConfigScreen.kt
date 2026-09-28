@@ -106,7 +106,7 @@ import org.polyfrost.oneconfig.internal.ui.util.LayoutRef
 @Composable
 fun ConfigScreen(tree: Tree, initialCategory: String? = null, pageKey: String) {
     val categories = remember(tree) { buildCategories(tree) }
-    val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
+    val localSearchQuery = ShellState.searchQuery.trim()
 
     val savedCategory = ShellState.selectedCategories[pageKey] ?: initialCategory
     val selectedCategory = categories.firstOrNull { it.name.equals(savedCategory, ignoreCase = true) }
@@ -786,7 +786,7 @@ fun HudConfigScreen(tree: Tree, initialCategory: String? = null) {
         tree
     }
     val categories = remember(filteredTree) { buildCategories(filteredTree) { !isHudInternal(it) } }
-    val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
+    val localSearchQuery = ShellState.searchQuery.trim()
     var selectedCategory by remember(filteredTree, initialCategory) {
         mutableStateOf(
             categories.firstOrNull { it.name.equals(initialCategory, ignoreCase = true) }
