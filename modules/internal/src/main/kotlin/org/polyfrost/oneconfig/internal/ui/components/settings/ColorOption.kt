@@ -193,7 +193,7 @@ fun ColorOption(data: ColorOptionData) {
                 if (data.alpha) it else it.copy(alpha = 1f)
             }
 
-            is Int -> Color(v)
+            is Int -> Color(v).let { if (data.alpha) it else it.copy(alpha = 1f) }
             is java.awt.Color -> Color(
                 v.red / 255f,
                 v.green / 255f,
@@ -224,7 +224,7 @@ fun ColorOption(data: ColorOptionData) {
         currentColor = color
         @Suppress("UNCHECKED_CAST")
         when {
-            data.prop.type == Int::class.java || data.prop.type == Int::class.javaPrimitiveType ->
+            data.prop.type == Int::class.javaObjectType || data.prop.type == Int::class.javaPrimitiveType ->
                 (data.prop as Property<Any>).set(color.toArgb())
 
             data.prop.type == PolyColor::class.java -> {
