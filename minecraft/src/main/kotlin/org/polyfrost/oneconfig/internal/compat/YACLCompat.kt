@@ -7,6 +7,7 @@ import java.util.function.BiFunction
 import java.util.function.Consumer
 import java.util.function.Supplier
 import net.minecraft.client.Minecraft
+import net.minecraft.world.item.Item
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
@@ -420,8 +421,16 @@ object YACLCompat {
             }
         }
 
+        if (currentValue is Item) {
+            parseItemOption(
+                option, name, desc, uniqueId(usedIds, optionPath), getter, setter, defaultValue,
+                categoryName, subcategoryName, root, ctx,
+            )
+            return
+        }
+
         if (currentValue is String) {
-            val allowed = resolveDropdownStringValues(option)
+            val allowed = dropdownStringValues(resolveController(option))
             if (allowed != null && allowed.isNotEmpty()) {
                 parseStringDropdown(
                     option,
@@ -441,7 +450,8 @@ object YACLCompat {
             }
         }
 
-        val numberField = currentValue is Number && isNumberFieldController(option)
+        val numberField = currentValue is Number &&
+            (isNumberFieldController(option) || sliderRange(resolveController(option)) == null)
 
         val visualizer: Class<out Visualizer> = when {
             currentValue is Boolean -> Visualizer.SwitchVisualizer::class.java
@@ -478,13 +488,13 @@ object YACLCompat {
                 resolveEnumLabels(option, values)?.let { property.addMetadata("optionLabels", it) }
             }
             numberField -> {
-                val range = resolveSliderRange(option)
+                val range = sliderRange(resolveController(option))
                 val type = currentValue.javaClass
                 property.addMetadata("min", boundedFloat(range?.first, type) ?: -Float.MAX_VALUE)
                 property.addMetadata("max", boundedFloat(range?.second, type) ?: Float.MAX_VALUE)
             }
             currentValue is Number -> {
-                val range = resolveSliderRange(option)
+                val range = sliderRange(resolveController(option))
                 property.addMetadata("min", range?.first ?: 0f)
                 property.addMetadata("max", range?.second ?: 100f)
                 range?.third?.let { property.addMetadata("step", it) }
@@ -513,7 +523,9 @@ object YACLCompat {
         root: Tree,
         ctx: Ctx,
     ) {
-        val element = currentValue.firstOrNull { it != null }?.javaClass ?: String::class.java
+        val element = currentValue.firstOrNull { it != null }?.javaClass
+            ?: initialEntryValue(option)?.javaClass
+            ?: String::class.java
 
         resolveEnumEntryValues(option, currentValue, defaultValue)?.let { values ->
             parseEnumListOption(
@@ -525,10 +537,12 @@ object YACLCompat {
 
         val numeric = Number::class.java.isAssignableFrom(element)
         val color = element == Color::class.java
+        val item = Item::class.java.isAssignableFrom(element)
 
         val visualizer: Class<out Visualizer> = when {
             color -> Visualizer.ColorListVisualizer::class.java
             numeric -> Visualizer.NumberListVisualizer::class.java
+            item -> Visualizer.ItemListVisualizer::class.java
             element == String::class.java -> Visualizer.TextListVisualizer::class.java
             else -> return // record entries have no OneConfig list equivalent
         }
@@ -536,21 +550,23 @@ object YACLCompat {
         fun read(value: Any?): Any? = when {
             color -> (value as? Color)?.rgb ?: -1
             numeric -> value as? Number ?: 0
+            item -> CompatItems.id(value)
             else -> value?.toString() ?: ""
         }
 
         fun write(value: Any?): Any? = when {
             color -> Color((value as? Number)?.toInt() ?: -1, true)
             numeric -> coerceNumber(value, element)
+            item -> CompatItems.byId(value)
             else -> value?.toString() ?: ""
         }
 
         val property = Properties.functional(
             getter = {
                 val list = runCatching { getter() as? List<*> }.getOrNull() ?: emptyList<Any?>()
-                ArrayList(list.map(::read))
+                list.mapNotNullTo(ArrayList(), ::read)
             },
-            setter = { value: List<Any?> -> setter(value.mapTo(ArrayList(), ::write)) },
+            setter = { value: List<Any?> -> setter(value.mapNotNullTo(ArrayList(), ::write)) },
             id = id,
             name = name,
             description = desc,
@@ -558,13 +574,17 @@ object YACLCompat {
         )
 
         property.addMetadata("visualizer", visualizer)
-        (defaultValue as? List<*>)?.let { property.addMetadata("default", ArrayList(it.map(::read))) }
+        (defaultValue as? List<*>)?.let { property.addMetadata("default", it.mapNotNullTo(ArrayList(), ::read)) }
         maximumNumberOfEntries(option)?.let { property.addMetadata("maxEntries", it) }
         if (numeric) {
-            val range = resolveEntryRange(option)
+            val range = sliderRange(resolveEntryController(option))
             property.addMetadata("min", range?.first ?: -Float.MAX_VALUE)
             property.addMetadata("max", range?.second ?: Float.MAX_VALUE)
             range?.third?.let { property.addMetadata("step", it) }
+        }
+        if (element == String::class.java) {
+            dropdownStringValues(resolveEntryController(option))?.takeIf { it.isNotEmpty() }
+                ?.let { allowed -> property.addMetadata("regex", allowed.joinToString("|") { Regex.escape(it) }) }
         }
         property.category = categoryName
         property.subcategory = subcategoryName
@@ -608,6 +628,38 @@ object YACLCompat {
         property.addMetadata("checkable", true)
         property.addMetadata("optionLabels", values.map { it.toString() })
         (defaultValue as? List<*>)?.let { property.addMetadata("default", namesOf(it)) }
+        property.category = categoryName
+        property.subcategory = subcategoryName
+
+        registerProperty(property, option, ctx)
+        root.put(property)
+    }
+
+    private fun parseItemOption(
+        option: Any,
+        name: String,
+        desc: String?,
+        id: String,
+        getter: () -> Any?,
+        setter: (Any?) -> Unit,
+        defaultValue: Any?,
+        categoryName: String,
+        subcategoryName: String?,
+        root: Tree,
+        ctx: Ctx,
+    ) {
+        val property = Properties.functional(
+            getter = { ArrayList<Any?>(listOfNotNull(CompatItems.id(runCatching { getter() }.getOrNull()))) },
+            setter = { value: List<Any?> -> value.firstOrNull()?.let(CompatItems::byId)?.let(setter) },
+            id = id,
+            name = name,
+            description = desc,
+            type = List::class.java,
+        )
+
+        property.addMetadata("visualizer", Visualizer.ItemListVisualizer::class.java)
+        property.addMetadata("maxEntries", 1)
+        CompatItems.id(defaultValue)?.let { property.addMetadata("default", arrayListOf(it)) }
         property.category = categoryName
         property.subcategory = subcategoryName
 
@@ -765,8 +817,8 @@ object YACLCompat {
         return if (value <= -limit || value >= limit) null else value
     }
 
-    private fun resolveDropdownStringValues(option: Any): List<String>? {
-        val controller = resolveController(option) ?: return null
+    private fun dropdownStringValues(controller: Any?): List<String>? {
+        if (controller == null) return null
         val cls = controller::class.java
         if (!inheritsFrom(cls, "DropdownStringController")) return null
         if (inheritsFrom(cls, "EnumDropdownController")) return null
@@ -916,15 +968,6 @@ object YACLCompat {
         return if (max <= 0 || max == Int.MAX_VALUE) 0 else max
     }
 
-    private fun resolveEntryRange(option: Any): Triple<Float, Float, Float?>? {
-        val optionsMethod = option::class.java.methods.firstOrNull {
-            it.name == "options" && it.parameterCount == 0
-        } ?: return null
-        val entries = runCatching { optionsMethod.invoke(option) as? Collection<*> }.getOrNull() ?: return null
-        val entry = entries.firstOrNull { it != null } ?: return null
-        return resolveSliderRange(entry)
-    }
-
     private fun coerceNumber(value: Any?, type: Class<*>): Any {
         val number = value as? Number ?: 0
         return when (type) {
@@ -1040,9 +1083,8 @@ object YACLCompat {
         return null
     }
 
-    private fun resolveSliderRange(option: Any): Triple<Float, Float, Float?>? {
-        val controller = resolveController(option) ?: return null
-        val c = controller
+    private fun sliderRange(controller: Any?): Triple<Float, Float, Float?>? {
+        val c = controller ?: return null
         val min = invokeNumber(c, "min") ?: return null
         val max = invokeNumber(c, "max") ?: return null
         val step = invokeNumber(c, "interval") ?: invokeNumber(c, "step")
