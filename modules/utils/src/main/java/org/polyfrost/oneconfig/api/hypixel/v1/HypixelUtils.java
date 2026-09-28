@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.api.hypixel.v1;
 
+import java.util.*;
 import net.hypixel.data.rank.MonthlyPackageRank;
 import net.hypixel.data.rank.PackageRank;
 import net.hypixel.data.rank.PlayerRank;
@@ -45,8 +46,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.Unmodifiable;
 import org.polyfrost.oneconfig.api.hypixel.v1.internal.HypixelApiInternals;
-
-import java.util.*;
 
 /**
  * Hypixel API wrapper for OneConfig

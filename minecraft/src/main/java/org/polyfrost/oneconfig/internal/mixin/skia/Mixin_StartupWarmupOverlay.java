@@ -1,18 +1,5 @@
 package org.polyfrost.oneconfig.internal.mixin.skia;
 
-//? if > 1.8.9 {
-import net.minecraft.client.gui.screens.LoadingOverlay;
-//? if >= 1.21.11 {
-import net.minecraft.util.Util;
-//?} else
-//import net.minecraft.Util;
-//?} else {
-/*import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.TitleScreen;
-import org.lwjgl.opengl.Display;
-*///?}
 import org.polyfrost.oneconfig.internal.ui.compose.ComposePreloader;
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import org.spongepowered.asm.mixin.Final;
@@ -22,6 +9,26 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+//? if >= 1.21.11 {
+import net.minecraft.util.Util;
+//?}
+
+//? if > 1.8.9 {
+import net.minecraft.client.gui.screens.LoadingOverlay;
+//?}
+
+//? if < 1.21.11 && > 1.8.9 {
+/*import net.minecraft.Util;
+*///?}
+
+//? if = 1.8.9 {
+/*import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.TitleScreen;
+import org.lwjgl.opengl.Display;
+*///?}
 
 //~ if = 1.8.9 'LoadingOverlay' -> 'Minecraft'
 @Mixin(LoadingOverlay.class)
@@ -70,11 +77,8 @@ public class Mixin_StartupWarmupOverlay {
     /*@WrapOperation(method = "updateDisplay", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/Display;update()V"))
     private void oneconfig$holdStartupSplash(Operation<Void> original) {
         Minecraft minecraft = (Minecraft) (Object) this;
-        boolean hold = minecraft.screen instanceof TitleScreen && !ComposePreloader.INSTANCE.getStopped();
-        if (hold && !SkiaCtx.INSTANCE.isReady()) {
-            ComposePreloader.INSTANCE.fail("Skia context unavailable", null);
-            hold = false;
-        }
+        // Fullscreen startup presents frames before Skia is initialized, which must not cancel the warm-up
+        boolean hold = minecraft.screen instanceof TitleScreen && !ComposePreloader.INSTANCE.getStopped() && SkiaCtx.INSTANCE.isReady();
         if (hold) {
             long now = System.nanoTime();
             if (this.oneconfig$holdStartedNanos == 0L) this.oneconfig$holdStartedNanos = now;

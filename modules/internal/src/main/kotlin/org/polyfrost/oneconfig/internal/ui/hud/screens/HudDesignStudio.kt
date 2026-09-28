@@ -48,12 +48,20 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.math.abs
+import kotlin.math.hypot
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
+import kotlin.ranges.coerceAtLeast
+import kotlin.ranges.coerceAtMost
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import org.apache.logging.log4j.LogManager
+import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.Paint
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.RenderContext
@@ -61,6 +69,7 @@ import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.HudResize
+import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker as LegacyHud
 import org.polyfrost.oneconfig.api.notifications.v1.Notification
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
@@ -68,15 +77,16 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.utils.v1.NetworkUtils
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.*
 import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasPasteMenu
 import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasResetMenu
 import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudOverlayBridge
-import org.polyfrost.oneconfig.internal.ui.hud.modNameFor
 import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreviewCanvas
 import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreviewState
 import org.polyfrost.oneconfig.internal.ui.hud.components.rememberHudPreview
+import org.polyfrost.oneconfig.internal.ui.hud.modNameFor
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Designer
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Settings
@@ -86,13 +96,6 @@ import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.*
-import kotlin.coroutines.cancellation.CancellationException
-import kotlin.math.abs
-import kotlin.math.hypot
-import kotlin.math.roundToInt
-import kotlin.ranges.coerceAtLeast
-import kotlin.ranges.coerceAtMost
-import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker as LegacyHud
 
 private val LOGGER = LogManager.getLogger("OneConfig/HudDesignStudio")
 
@@ -419,7 +422,7 @@ private fun hitTestAnchorPoint(
     return best
 }
 
-private fun drawHudContents(sk: org.jetbrains.skia.Canvas, mcToScreen: Float) {
+private fun drawHudContents(sk: Canvas, mcToScreen: Float) {
     HudManager.renderRevision.intValue
     HudManager.revision
     // HUDs fused with a neighbour do not paint their own background so the merged shapes are laid down
@@ -1167,7 +1170,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     val densityFloat = densityObj.density
     val actionIconPx = with(densityObj) { 24.dp.toPx() }
     val actionBarGapPx = with(densityObj) { 8.dp.toPx() }
-    val libraryChromeVisible = modIds.isNotEmpty() && selectedHuds.isEmpty() && !isDragging && !marqueeActive
+    val libraryChromeVisible = selectedHuds.isEmpty() && !isDragging && !marqueeActive
 
     fun Modifier.chromeRegion(key: String) = onGloballyPositioned { chromeRects[key] = it.boundsInRoot() }
 
@@ -2089,6 +2092,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                         onSearchChange = { searchText = it },
                         onClose = { closeLibrary() },
                         sections = librarySections,
+                        suggestEvergreenHud = modIds.isEmpty(),
                         activeModId = activeLibraryMod,
                         scrollState = libraryScrollState,
                         onSectionIndexesChanged = { librarySectionIndexes = it },
@@ -2148,7 +2152,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                         },
                     )
                 }
-                Column(
+                if (modIds.isNotEmpty()) Column(
                     modifier = Modifier.padding(end = 16.dp, top = 16.dp, bottom = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -2912,6 +2916,7 @@ private fun HudLibraryPanel(
     onSearchChange: (String) -> Unit,
     onClose: () -> Unit,
     sections: List<HudLibrarySection>,
+    suggestEvergreenHud: Boolean,
     activeModId: String?,
     scrollState: LazyListState,
     onSectionIndexesChanged: (Map<String, Int>) -> Unit,
@@ -2924,7 +2929,8 @@ private fun HudLibraryPanel(
     Column(
         modifier = Modifier
             .size(401.dp, 481.dp)
-            .padding(start = 16.dp, top = 16.dp, bottom = 16.dp)
+            // the mod icon column normally supplies the gap to the screen edge
+            .padding(start = 16.dp, top = 16.dp, bottom = 16.dp, end = if (suggestEvergreenHud) 16.dp else 0.dp)
             .then(modifier)
             .background(theme.popupBackground, theme.backgroundShape)
             .border(1.dp, theme.borderColor, theme.backgroundShape)
@@ -2937,8 +2943,14 @@ private fun HudLibraryPanel(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text("HUDs", color = theme.textColor, fontSize = 18.sp)
-            LibrarySearchBar(searchText, onSearchChange)
-            IconButton("close", modifier = Modifier.size(18.dp), onClick = onClose)
+            if (!suggestEvergreenHud) {
+                LibrarySearchBar(searchText, onSearchChange)
+                IconButton("close", modifier = Modifier.size(18.dp), onClick = onClose)
+            }
+        }
+        if (suggestEvergreenHud) {
+            EvergreenHudSuggestion(Modifier.fillMaxWidth().weight(1f))
+            return@Column
         }
         Text(
             "Click to add  ·  Drag to place it yourself",
@@ -3025,6 +3037,38 @@ private fun HudLibraryPanel(
                     modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun EvergreenHudSuggestion(modifier: Modifier) {
+    val theme = LocalTheme.current
+    val source = rememberInteractionSource()
+    val isHovered by source.collectIsHoveredAsState()
+    val background by animateColorAsState(if (isHovered) Color.White.copy(0.12f).compositeOver(Accent) else Accent)
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text("No HUDs installed", color = theme.textColor, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        Text(
+            "Install EvergreenHUD for FPS, CPS, coordinates, ping, and many more HUDs.",
+            color = theme.textColorSecondary,
+            fontSize = 12.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 24.dp),
+        )
+        Box(
+            modifier = Modifier
+                .clip(theme.buttonShape)
+                .background(background, theme.buttonShape)
+                .onClick(source) { NetworkUtils.browseLink("https://modrinth.com/mod/evergreenhud") }
+                .pointerHoverIcon(PointerIcon.Hand)
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+        ) {
+            Text("Get EvergreenHUD", color = Color.White.copy(0.9f), fontSize = 12.sp, fontWeight = FontWeight.Medium)
         }
     }
 }
@@ -3141,7 +3185,7 @@ private fun LegacyHudPreviewCard(
                 if (!dragStarted && event.changes.any { it.pressed }) {
                     val dx = pos.x - start.x
                     val dy = pos.y - start.y
-                    val dist = kotlin.math.sqrt(dx * dx + dy * dy)
+                    val dist = sqrt(dx * dx + dy * dy)
                     if (dist > 8f) {
                         dragStarted = true
                         val paddingPx = cardPadding.value * density
@@ -3219,7 +3263,7 @@ private fun ComposeHudPreviewCard(
                 if (!dragStarted && event.changes.any { it.pressed }) {
                     val dx = pos.x - start.x
                     val dy = pos.y - start.y
-                    val dist = kotlin.math.sqrt(dx * dx + dy * dy)
+                    val dist = sqrt(dx * dx + dy * dy)
                     if (dist > 8f) {
                         dragStarted = true
                         val paddingPx = cardPadding.value * density

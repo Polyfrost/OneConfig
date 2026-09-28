@@ -26,12 +26,11 @@
 
 package org.polyfrost.oneconfig.utils.v1;
 
+import java.util.HashMap;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.HashMap;
 
 /**
  * A simple class that can be used to profile code

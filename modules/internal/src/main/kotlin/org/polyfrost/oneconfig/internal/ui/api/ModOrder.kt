@@ -3,12 +3,12 @@ package org.polyfrost.oneconfig.internal.ui.api
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
-import org.polyfrost.oneconfig.api.config.v1.ConfigManager
-import org.slf4j.LoggerFactory
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+import org.slf4j.LoggerFactory
 
 /**
  * User-defined mod card order persisted one id per line

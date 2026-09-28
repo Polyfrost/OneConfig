@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.internal.mixin.keybind;
 
-//? if > 1.8.9
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindBridgeImpl;

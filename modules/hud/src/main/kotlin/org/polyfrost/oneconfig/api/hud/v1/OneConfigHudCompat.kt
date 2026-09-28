@@ -2,11 +2,12 @@ package org.polyfrost.oneconfig.api.hud.v1
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import java.util.concurrent.ConcurrentHashMap
+import java.util.function.BooleanSupplier
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
-import java.util.concurrent.ConcurrentHashMap
 
 private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
     Hud(wrapper.id, wrapper.name, Category.COMPAT), LegacyHudMarker {
@@ -158,7 +159,7 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
 
     fun trackPlacementPerProfile(tree: Tree) {
         excludeFromSnapshots(tree)
-        tree.addMetadata(CompatSnapshots.GATE_METADATA, java.util.function.BooleanSupplier { placementReady })
+        tree.addMetadata(CompatSnapshots.GATE_METADATA, BooleanSupplier { placementReady })
         if (!ownsPlacement) {
             tree["oc_compat_x"] = placementProperty("x", "X Position", { x }, { x = it })
             tree["oc_compat_y"] = placementProperty("y", "Y Position", { y }, { y = it })

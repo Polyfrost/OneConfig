@@ -12,8 +12,8 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.ItemList
 import org.polyfrost.oneconfig.api.config.v1.annotations.Slider
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
 import org.polyfrost.oneconfig.api.hud.v1.Hud
-import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.api.ui.v1.item.PolyItemIcon
+import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 
 class TestItemHud_Test : Hud("test-item-hud", "Item List Hud", Category.INFO) {
 

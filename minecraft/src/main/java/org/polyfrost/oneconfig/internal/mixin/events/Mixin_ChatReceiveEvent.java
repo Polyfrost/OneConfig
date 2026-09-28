@@ -1,24 +1,8 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
-//? if >=1.21.4 {
-import net.kyori.adventure.platform.modcommon.MinecraftClientAudiences;
-//?} else {
-/*import net.kyori.adventure.platform.fabric.FabricClientAudiences;
-*///?}
-//? if >= 26.1 {
-import net.minecraft.client.multiplayer.chat.GuiMessageSource;
-import net.minecraft.client.multiplayer.chat.GuiMessageTag;
-//?} elif > 1.8.9 {
-/*import net.minecraft.client.GuiMessageTag;
-*///?}
-//? if > 1.8.9 {
-import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MessageSignature;
-//?} else {
-/*import net.minecraft.client.gui.chat.ChatGui;
-import net.minecraft.text.Text;
-*///?}
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.ChatEvent;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,6 +11,33 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+//? if >= 26.1 {
+import net.minecraft.client.multiplayer.chat.GuiMessageSource;
+import net.minecraft.client.multiplayer.chat.GuiMessageTag;
+//?}
+
+//? if >= 1.21.4 {
+import net.kyori.adventure.platform.modcommon.MinecraftClientAudiences;
+//?}
+
+//? if > 1.8.9 {
+import net.minecraft.client.gui.components.ChatComponent;
+import net.minecraft.network.chat.MessageSignature;
+//?}
+
+//? if < 26.1 && > 1.8.9 {
+/*import net.minecraft.client.GuiMessageTag;
+*///?}
+
+//? if < 1.21.4 {
+/*import net.kyori.adventure.platform.fabric.FabricClientAudiences;
+*///?}
+
+//? if = 1.8.9 {
+/*import net.minecraft.client.gui.chat.ChatGui;
+import net.minecraft.text.Text;
+*///?}
 
 //~ if = 1.8.9 'ChatComponent' -> 'ChatGui'
 @Mixin(ChatComponent.class)
@@ -124,8 +135,8 @@ public abstract class Mixin_ChatReceiveEvent {
     }
 
     @Unique
-    private static org.apache.logging.log4j.Logger ocfg$logger() {
-        return org.apache.logging.log4j.LogManager.getLogger("OneConfig/Chat");
+    private static Logger ocfg$logger() {
+        return LogManager.getLogger("OneConfig/Chat");
     }
 
     @Unique

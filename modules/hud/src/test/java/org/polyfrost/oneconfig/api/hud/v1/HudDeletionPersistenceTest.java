@@ -26,20 +26,21 @@
 
 package org.polyfrost.oneconfig.api.hud.v1;
 
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Set;
+import java.util.stream.Stream;
 import kotlin.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
-
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -173,7 +174,7 @@ class HudDeletionPersistenceTest {
         ArrayList<Path> out = new ArrayList<>();
         ConfigManager.active().trees().forEach(t -> {
             String id = t.getID();
-            if (id != null && id.startsWith("huds")) out.add(java.nio.file.Paths.get(id));
+            if (id != null && id.startsWith("huds")) out.add(Paths.get(id));
         });
         return out;
     }
@@ -192,10 +193,10 @@ class HudDeletionPersistenceTest {
     }
 
     @SuppressWarnings("unchecked")
-    private static java.util.Set<String> knownProviders() throws Exception {
+    private static Set<String> knownProviders() throws Exception {
         Field f = HudManager.class.getDeclaredField("knownProviders");
         f.setAccessible(true);
-        return (java.util.Set<String>) f.get(HudManager.INSTANCE);
+        return (Set<String>) f.get(HudManager.INSTANCE);
     }
 
     private static void set(Object owner, String name, Object value) throws Exception {

@@ -26,11 +26,10 @@
 
 package org.polyfrost.oneconfig.api.config.v1.annotations;
 
-import org.polyfrost.oneconfig.api.config.v1.Config;
-import org.polyfrost.oneconfig.api.config.v1.Property;
-
 import java.lang.annotation.*;
 import java.util.function.BooleanSupplier;
+import org.polyfrost.oneconfig.api.config.v1.Config;
+import org.polyfrost.oneconfig.api.config.v1.Property;
 
 /**
  * Annotation used to specify conditions for this property

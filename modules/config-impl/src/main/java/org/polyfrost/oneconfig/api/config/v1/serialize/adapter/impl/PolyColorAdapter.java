@@ -26,12 +26,11 @@
 
 package org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl;
 
-import org.polyfrost.compose.render.PolyColor;
-import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.polyfrost.compose.render.PolyColor;
+import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter;
 
 public class PolyColorAdapter extends Adapter<PolyColor, Object> {
 	@Override

@@ -15,12 +15,11 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.annotations.ItemList;
 import org.polyfrost.oneconfig.api.config.v1.collect.impl.OneConfigCollector;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

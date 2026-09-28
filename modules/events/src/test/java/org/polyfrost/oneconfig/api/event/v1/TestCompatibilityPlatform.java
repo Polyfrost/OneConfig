@@ -1,13 +1,12 @@
 package org.polyfrost.oneconfig.api.event.v1;
 
+import java.util.Collections;
+import java.util.Set;
 import net.kyori.adventure.text.Component;
 import org.polyfrost.oneconfig.api.platform.v1.CompatibilityPlatform;
 import org.polyfrost.oneconfig.api.platform.v1.Keys;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Options;
-
-import java.util.Collections;
-import java.util.Set;
 
 // Minimal ServiceLoader-provided platform so EventManager can initialize in unit tests.
 public class TestCompatibilityPlatform implements CompatibilityPlatform {

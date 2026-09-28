@@ -19,9 +19,9 @@
 
 package gg.essential.gradle.util
 
-import kotlin.metadata.jvm.JvmMetadataVersion
 import java.util.Calendar
 import java.util.GregorianCalendar
+import kotlin.metadata.jvm.JvmMetadataVersion
 
 internal fun compatibleKotlinMetadataVersion(version: IntArray): JvmMetadataVersion {
     // Upgrade versions older than 1.4 to 1.4 in accordance with https://youtrack.jetbrains.com/issue/KT-41011

@@ -1,25 +1,9 @@
 package org.polyfrost.oneconfig.internal.mixin.keybind;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import java.util.LinkedHashSet;
 import net.minecraft.client.KeyMapping;
-//? if >= 1.21.10
-import net.minecraft.client.Minecraft;
-//? if > 1.8.9 {
-import net.minecraft.client.gui.screens.options.controls.KeyBindsList;
-//?} else {
-/*import org.polyfrost.oneconfig.internal.legacy.KeyCodes;
-import org.lwjgl.input.Mouse;
-*///?}
 import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
-//? if >=1.21.10 {
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
-//?}
-//? if !sdl
-//import org.lwjgl.glfw.GLFW;
-//? if sdl
-import org.lwjgl.sdl.SDLMouse;
-import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindBridgeImpl;
 import org.polyfrost.oneconfig.internal.ui.keybind.OneConfigKeybindRecorder;
 import org.spongepowered.asm.mixin.Mixin;
@@ -28,10 +12,32 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-//? if > 1.8.9
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.LinkedHashSet;
+//? if >= 1.21.10 {
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+//?}
+
+//? if > 1.8.9 {
+import net.minecraft.client.gui.screens.options.controls.KeyBindsList;
+//?}
+
+//? if >= 1.21.10 && < 26.3 {
+/*import net.minecraft.client.Minecraft;
+*///?}
+
+//? if = 1.8.9 {
+/*import org.lwjgl.input.Mouse;
+import org.polyfrost.oneconfig.internal.legacy.KeyCodes;
+*///?}
+
+//? if sdl {
+import org.lwjgl.sdl.SDLMouse;
+//?} else {
+/*import org.lwjgl.glfw.GLFW;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
+*///?}
 
 @Mixin(KeyBindsScreen.class)
 public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {

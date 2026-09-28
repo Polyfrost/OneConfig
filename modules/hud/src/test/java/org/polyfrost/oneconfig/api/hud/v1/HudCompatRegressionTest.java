@@ -1,14 +1,13 @@
 package org.polyfrost.oneconfig.api.hud.v1;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
-import org.polyfrost.oneconfig.api.config.v1.Property;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
+import org.polyfrost.oneconfig.api.config.v1.Property;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

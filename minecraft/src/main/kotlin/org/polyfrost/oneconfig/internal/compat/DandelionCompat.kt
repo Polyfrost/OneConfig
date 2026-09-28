@@ -1,7 +1,10 @@
 package org.polyfrost.oneconfig.internal.compat
 
 //? dandelion_compat {
-/*import net.azureaaron.dandelion.api.ButtonOption
+/*import java.awt.Color
+import java.util.function.Function
+import java.util.function.Supplier
+import net.azureaaron.dandelion.api.ButtonOption
 import net.azureaaron.dandelion.api.ConfigCategory
 import net.azureaaron.dandelion.api.LabelOption
 import net.azureaaron.dandelion.api.ListOption
@@ -11,14 +14,13 @@ import net.azureaaron.dandelion.api.OptionListener
 import net.azureaaron.dandelion.api.controllers.BooleanController
 import net.azureaaron.dandelion.api.controllers.ColourController
 import net.azureaaron.dandelion.api.controllers.EnumController
-import net.azureaaron.dandelion.api.controllers.FloatController
-import net.azureaaron.dandelion.api.controllers.IntegerController
 import net.azureaaron.dandelion.api.controllers.ItemController
 import net.azureaaron.dandelion.api.controllers.NumberController
 import net.azureaaron.dandelion.api.controllers.StringController
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.network.chat.Component
+import net.minecraft.world.item.Item
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
@@ -37,8 +39,6 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.compat.CompatIds.componentKey
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
-import java.util.function.Function
-import java.util.function.Supplier
 
 object DandelionCompat {
     private val LOGGER = LogManager.getLogger("OneConfig/Dandelion-Compat")
@@ -131,9 +131,10 @@ object DandelionCompat {
     ) = runCatching {
 
         val controller = runCatching { option.controller() }.getOrNull()
+        val title = (option as? LabelOption)?.label() ?: option.name()
         // Dandelion options usually carry their own id; fall back to the option's place in the config.
-        val optionId = option.id()?.toString()
-            ?: uniqueId(usedIds, "$groupPath/${idPart(componentKey(option.name()) ?: option.name().string, "option")}")
+        val optionId = runCatching { option.id() }.getOrNull()?.toString()
+            ?: uniqueId(usedIds, "$groupPath/${idPart(componentKey(title) ?: title.string, "option")}")
 
         when (option) {
             is ButtonOption -> {
@@ -146,13 +147,13 @@ object DandelionCompat {
                 property.addMetadata("textKey", option.prompt())
                 property.metadata?.put(
                     "runnable",
-                    Runnable { option.action().accept(Platform.screen().current<Screen>()!!) })
+                    Runnable { Platform.screen().current<Screen>()?.let { option.action().accept(it) } })
                 root.put(property)
             }
 
             is LabelOption -> {
                 val property = Properties.dummy(id = optionId)
-                property.title = option.name()
+                property.title = title
                 property.description = option.description()
                 property.category = category
                 property.subcategory = subcategory
@@ -184,21 +185,17 @@ object DandelionCompat {
             }
 
             else -> {
-                val binding = option.binding()
-                val setter: (T) -> Unit = {
-                    binding.set(it)
-                    option.listeners().forEach {
-                        it.onUpdate(option, OptionListener.UpdateType.VALUE_CHANGE)
-                    }
-                    option.flags().forEach {
-                        it.accept(Minecraft.getInstance())
-                    }
+                if (controller is ItemController) {
+                    @Suppress("UNCHECKED_CAST")
+                    root.put(itemProperty(option as Option<Item>, optionId, category, subcategory))
+                    return@runCatching
                 }
+                val binding = option.binding()
                 val getter: () -> T = binding::get
                 val defaultValue: T = binding.defaultValue()
                 val property = Properties.functional(
                     getter = { getter() },
-                    setter = { value -> setter(value) },
+                    setter = { value -> commit(option, value) },
                     id = optionId,
                     name = option.name(),
                     description = option.description(),
@@ -214,11 +211,11 @@ object DandelionCompat {
                     is BooleanController -> property.visualizer = Visualizer.SwitchVisualizer::class.java
                     is ColourController -> {
                         property.visualizer = Visualizer.ColorVisualizer::class.java
-                        property.addMetadata("noAlpha", Unit)
+                        if (!controller.hasAlpha()) property.addMetadata("noAlpha", Unit)
                     }
                     is EnumController<*> if defaultValue is Enum<*> -> {
                         property.visualizer = Visualizer.DropdownVisualizer::class.java
-                        property.addMetadata("optionLabels", defaultValue.javaClass.enumConstants.map { (controller.formatter() as Function<T, Component>).apply(it) })
+                        property.addMetadata("optionLabels", defaultValue.declaringJavaClass.enumConstants.map { (controller.formatter() as Function<Any?, Component>).apply(it) })
                     }
                     is NumberController<*> -> {
                         if (controller.slider()) {
@@ -240,15 +237,71 @@ object DandelionCompat {
                 root.put(property)
             }
         }
+    }.onFailure { LOGGER.warn("Failed to parse option ${option.name().string} in $groupPath", it) }
+
+    private fun <T : Any> commit(option: Option<T>, value: T) {
+        option.binding().set(value)
+        option.listeners().forEach { it.onUpdate(option, OptionListener.UpdateType.VALUE_CHANGE) }
+        option.flags().forEach { it.accept(Minecraft.getInstance()) }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun itemProperty(option: Option<Item>, id: String, category: String, subcategory: String): Property<*> {
+        val binding = option.binding()
+        val property = Properties.functional(
+            getter = { ArrayList<Any?>(listOfNotNull(CompatItems.id(binding.get()))) },
+            setter = { value: List<Any?> -> value.firstOrNull()?.let(CompatItems::byId)?.let { commit(option, it) } },
+            id = id,
+            name = option.name(),
+            description = option.description(),
+            type = java.util.List::class.java as Class<List<Any?>>,
+        )
+        property.addMetadata("visualizer", Visualizer.ItemListVisualizer::class.java)
+        property.addMetadata("maxEntries", 1)
+        property.addMetadata("searchTags", option.tags())
+        CompatItems.id(binding.defaultValue())?.let { property.addMetadata("default", arrayListOf(it)) }
+        property.category = category
+        property.subcategory = subcategory
+        property.addDisplayCondition { if (option.modifiable()) Display.SHOWN else Display.DISABLED }
+        return property
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun enumListProperty(option: ListOption<Any>, constants: Array<Any>, id: String, category: String, subcategory: String): Property<*> {
+        val byName = constants.associateBy { (it as Enum<*>).name }
+        val formatter = (runCatching { option.entryController() }.getOrNull() as? EnumController<*>)?.formatter() as? Function<Any, Component>
+        fun names(values: List<Any>?): Array<String> = values.orEmpty().mapNotNull { (it as? Enum<*>)?.name }.toTypedArray()
+
+        val binding = option.binding()
+        val property = Properties.functional(
+            getter = { names(binding.get()) },
+            setter = { selected: Array<String> -> commit(option, selected.mapNotNullTo(ArrayList()) { byName[it] }) },
+            id = id,
+            name = option.name(),
+            description = option.description(),
+            type = Array<String>::class.java,
+        )
+        property.addMetadata("visualizer", Visualizer.DraggableListVisualizer::class.java)
+        property.addMetadata("options", byName.keys.toTypedArray())
+        property.addMetadata("checkable", true)
+        property.addMetadata("optionLabels", constants.map { formatter?.apply(it) ?: it.toString() })
+        property.addMetadata("default", names(binding.defaultValue()))
+        property.addMetadata("searchTags", option.tags())
+        property.category = category
+        property.subcategory = subcategory
+        property.addDisplayCondition { if (option.modifiable()) Display.SHOWN else Display.DISABLED }
+        return property
     }
 
     @Suppress("UNCHECKED_CAST")
     private fun listProperty(listOption: ListOption<*>, id: String, category: String, subcategory: String): Property<*>? {
         val option = listOption as ListOption<Any>
         val entryType = option.entryType()
+        entryType.enumConstants?.let { return enumListProperty(option, it, id, category, subcategory) }
         val entryController = runCatching { option.entryController() }.getOrNull()
         val numeric = Number::class.java.isAssignableFrom(entryType)
         val colour = entryController as? ColourController
+        val item = Item::class.java.isAssignableFrom(entryType)
 
         val visualizer: Class<out Visualizer> = when {
             colour != null -> Visualizer.ColorListVisualizer::class.java
@@ -256,30 +309,29 @@ object DandelionCompat {
                 if ((entryController as? NumberController<*>)?.slider() == true) Visualizer.SliderListVisualizer::class.java
                 else Visualizer.NumberListVisualizer::class.java
 
+            item -> Visualizer.ItemListVisualizer::class.java
             entryType == String::class.java -> Visualizer.TextListVisualizer::class.java
             else -> return null
         }
 
         fun read(value: Any?): Any? = when {
-            colour != null -> (value as? java.awt.Color)?.rgb ?: -1
+            colour != null -> (value as? Color)?.rgb ?: -1
             numeric -> value as? Number ?: 0
+            item -> CompatItems.id(value)
             else -> value?.toString() ?: ""
         }
 
-        fun write(value: Any?): Any = when {
-            colour != null -> java.awt.Color((value as? Number)?.toInt() ?: -1, colour.hasAlpha())
+        fun write(value: Any?): Any? = when {
+            colour != null -> Color((value as? Number)?.toInt() ?: -1, colour.hasAlpha())
             numeric -> coerceNumber(value, entryType)
+            item -> CompatItems.byId(value)
             else -> value?.toString() ?: ""
         }
 
         val binding = option.binding()
         val property = Properties.functional(
-            getter = { ArrayList(binding.get().orEmpty().map(::read)) },
-            setter = { values: List<Any?> ->
-                binding.set(values.mapTo(ArrayList(), ::write))
-                option.listeners().forEach { it.onUpdate(option, OptionListener.UpdateType.VALUE_CHANGE) }
-                option.flags().forEach { it.accept(Minecraft.getInstance()) }
-            },
+            getter = { ArrayList(binding.get().orEmpty().mapNotNull(::read)) },
+            setter = { values: List<Any?> -> commit(option, values.mapNotNullTo(ArrayList(), ::write)) },
             id = id,
             name = option.name(),
             description = option.description(),
@@ -288,7 +340,7 @@ object DandelionCompat {
 
         property.addMetadata("visualizer", visualizer)
         property.addMetadata("searchTags", option.tags())
-        property.addMetadata("default", ArrayList(binding.defaultValue().orEmpty().map(::read)))
+        property.addMetadata("default", ArrayList(binding.defaultValue().orEmpty().mapNotNull(::read)))
         if (colour?.hasAlpha() == false) property.addMetadata("noAlpha", Unit)
         (entryController as? NumberController<*>)?.let {
             property.addMetadata("min", it.min().toFloat())

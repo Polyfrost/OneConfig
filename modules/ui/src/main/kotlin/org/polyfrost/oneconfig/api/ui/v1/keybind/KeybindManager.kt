@@ -1,5 +1,10 @@
 package org.polyfrost.oneconfig.api.ui.v1.keybind
 
+import java.util.ServiceLoader
+import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.experimental.and
+import kotlin.experimental.inv
+import kotlin.experimental.or
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.event.v1.eventHandler
 import org.polyfrost.oneconfig.api.event.v1.events.KeyInputEvent
@@ -7,16 +12,12 @@ import org.polyfrost.oneconfig.api.event.v1.events.MouseInputEvent
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent
 import org.polyfrost.oneconfig.api.event.v1.events.WindowFocusEvent
-import java.util.ServiceLoader
-import kotlin.experimental.and
-import kotlin.experimental.inv
-import kotlin.experimental.or
 
 @Suppress("UnstableApiUsage")
 object KeybindManager {
     private val LOGGER = LogManager.getLogger("OneConfig/Keybinds")
 
-    private val binds = java.util.concurrent.CopyOnWriteArrayList<OneConfigKeybind>()
+    private val binds = CopyOnWriteArrayList<OneConfigKeybind>()
     private val activeBinds = HashSet<OneConfigKeybind>()
 
     /**
@@ -32,7 +33,7 @@ object KeybindManager {
         }
     }
 
-    /** Listeners notified when a keybind is rebound from Minecraft's Controls menu with the old and new instances */
+    /** Listeners notified when a keybind is rebound from Minecraft's Controls menu */
     private val rebindListeners = ArrayList<(OneConfigKeybind, OneConfigKeybind) -> Unit>()
 
     /** Listeners notified when a keybind is edited in-place from Minecraft's Controls menu (same instance) */
@@ -167,16 +168,21 @@ object KeybindManager {
         mouseBtns: IntArray? = null,
         mods: Byte = KeyModifiers.NONE,
     ): OneConfigKeybind {
-        val new = old.copyWith(keyCodes, mouseBtns, mods)
-        replace(old, new)
+        old.keyCodes = keyCodes
+        old.mouseBtns = mouseBtns
+        old.mods = mods
+        old.unresolvedKeyInputs = null
+        old.unresolvedMouseInputs = null
+        bridge?.sync(old)
+        notifyMenuEdit(old)
         for (listener in rebindListeners) {
             try {
-                listener(old, new)
+                listener(old, old)
             } catch (t: Throwable) {
                 LOGGER.error("Keybind rebind listener threw an exception", t)
             }
         }
-        return new
+        return old
     }
 
     @JvmStatic

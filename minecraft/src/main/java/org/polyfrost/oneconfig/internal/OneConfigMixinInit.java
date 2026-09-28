@@ -26,24 +26,24 @@
 
 package org.polyfrost.oneconfig.internal;
 
-import kotlin.Unit;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
-//todo import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
-//? moul_compat {
-import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
-//? }
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+//todo import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
+//? if moul_compat {
+import kotlin.Unit;
+import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
+//?}
 
 public class OneConfigMixinInit implements IMixinConfigPlugin {
 
@@ -80,7 +80,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? }
         //? moul_compat {
         mixins.add("compat.moulconfig.Mixin_MCConfigEditorIntegration_Firmament");
-        // unrelocated targets, e.g. Skysoft's SoftConfig
+        // unrelocated targets, e.g. SoftConfig in Skysoft < 0.1.30
         mixins.add("compat.moulconfig.Mixin_ConfigProcessorDriver");
         mixins.add("compat.moulconfig.Mixin_MoulConfigProcessor");
         mixins.add("compat.moulconfig.Mixin_MoulConfigEditor");
@@ -126,10 +126,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? axolotlclient_config_compat
         mixins.add("compat.axolotlclient.Mixin_AxolotlClientConfigImpl");
 
-        //? skycubed_compat {
-        /*mixins.add("compat.skycubed.Mixin_SkyCubed");
-        mixins.add("compat.skycubed.Mixin_SkyCubedOverlays");
-        *///? }
+        //? mlib_compat
+        //mixins.add("compat.mlib.Mixin_MlibOverlays");
 
         //? skyblocker_compat {
         /*Boolean skyblockerSingleton = declaresStaticMethod("de.hysky.skyblocker.skyblock.fancybars.FancyStatusBars", "initStatic");

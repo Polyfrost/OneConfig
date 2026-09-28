@@ -29,10 +29,10 @@ package org.polyfrost.oneconfig.api.notifications.v1
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import java.util.concurrent.atomic.AtomicBoolean
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.MouseInputEvent
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-import java.util.concurrent.atomic.AtomicBoolean
 
 internal object ToastInput {
     @Volatile var mouseX: Float = -1f

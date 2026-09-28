@@ -31,8 +31,15 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.snapshots.SnapshotStateObserver
+import java.util.Collections
+import java.util.IdentityHashMap
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Consumer
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.skia.Paint
 import org.polyfrost.compose.node.RootNode
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.runtime.PolyComposeHost
@@ -44,10 +51,6 @@ import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.utils.v1.MHUtils
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
-import java.util.function.Consumer
 
 @Suppress("DEPRECATION")
 private fun Throwable.isFatalHudFailure(): Boolean = this is VirtualMachineError || this is ThreadDeath
@@ -79,7 +82,7 @@ object HudManager {
             applyPendingProfileReload()
         }
     }
-    private val hiddenHudPaint by lazy { org.jetbrains.skia.Paint().apply { setAlphaf(0.35f) } }
+    private val hiddenHudPaint by lazy { Paint().apply { setAlphaf(0.35f) } }
 
     /**
      * `true` while HUDs are being shown for editing or preview
@@ -670,7 +673,7 @@ object HudManager {
         val refW = if (layoutRefWidth > 0f) layoutRefWidth else screenWidth
         val refH = if (layoutRefHeight > 0f) layoutRefHeight else screenHeight
         frameGroups = HudBackgroundMerge.computeGroups(mergeable, refW, refH)
-        val merged = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Hud, Boolean>())
+        val merged = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>())
         for (group in frameGroups) merged.addAll(group.huds)
         updateMergeLinks()
 
@@ -733,8 +736,8 @@ object HudManager {
      * A HUD which stops being merged is let go and stays where it was left
      */
     private fun updateMergeLinks() {
-        val linkedX = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Hud, Boolean>())
-        val linkedY = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Hud, Boolean>())
+        val linkedX = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>())
+        val linkedY = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>())
         Snapshot.withMutableSnapshot {
             for (group in frameGroups) {
                 for (link in group.links) {

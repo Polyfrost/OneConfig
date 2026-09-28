@@ -26,9 +26,8 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.api;
 
-import org.junit.jupiter.api.Test;
-
 import java.nio.file.Paths;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;

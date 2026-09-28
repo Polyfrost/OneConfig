@@ -1,11 +1,13 @@
 package org.polyfrost.oneconfig.internal.ui.hud
 
-//? if > 1.8.9
-import net.minecraft.client.gui.GuiGraphicsExtractor
+import java.util.concurrent.CopyOnWriteArrayList
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
 import org.slf4j.LoggerFactory
-import java.util.concurrent.CopyOnWriteArrayList
+
+//? if > 1.8.9 {
+import net.minecraft.client.gui.GuiGraphicsExtractor
+//?}
 
 object CompatOverlayRenderer {
     private val LOG = LoggerFactory.getLogger("OneConfig/CompatOverlayRenderer")

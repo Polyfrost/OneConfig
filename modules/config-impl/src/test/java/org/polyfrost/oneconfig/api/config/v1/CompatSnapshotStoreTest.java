@@ -26,17 +26,19 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -246,7 +248,7 @@ class CompatSnapshotStoreTest {
     @Test
     void snapshotOfAnArrayOfObjectsIsWrittenAndReadBackAsAList() throws IOException {
         CompatSnapshotStore store = new CompatSnapshotStore(FILE_NAME);
-        java.util.Map<String, Object> entry = new java.util.HashMap<>();
+        Map<String, Object> entry = new HashMap<>();
         entry.put("class", "java.awt.Dimension");
         entry.put("width", 10);
         store.putValue(profile, "widgets", "sizes", new Object[]{entry});
@@ -255,7 +257,7 @@ class CompatSnapshotStoreTest {
 
         CompatSnapshotStore reloaded = new CompatSnapshotStore(FILE_NAME);
         Object read = reloaded.getValue(profile, "widgets", "sizes");
-        assertEquals(java.util.Collections.singletonList(entry), read);
+        assertEquals(Collections.singletonList(entry), read);
     }
 
     @Test

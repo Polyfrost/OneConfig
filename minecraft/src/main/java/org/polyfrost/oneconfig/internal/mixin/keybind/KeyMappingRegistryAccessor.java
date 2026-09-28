@@ -1,13 +1,13 @@
 package org.polyfrost.oneconfig.internal.mixin.keybind;
 
+import java.util.Map;
 import net.minecraft.client.KeyMapping;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-//? if > 1.8.9 {
-import java.util.Map;
-//?} else
-//import java.util.List;
+//? if = 1.8.9 {
+/*import java.util.List;
+*///?}
 
 @Mixin(KeyMapping.class)
 public interface KeyMappingRegistryAccessor {

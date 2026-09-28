@@ -1,16 +1,17 @@
 package org.polyfrost.oneconfig.internal.ui
 
 import com.mojang.blaze3d.platform.NativeImage
-import net.minecraft.client.Minecraft
-import org.polyfrost.oneconfig.utils.v1.NetworkUtils
 import java.nio.file.Files
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
+import net.minecraft.client.Minecraft
+import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.utils.v1.NetworkUtils
 
 object PlayerHeadLoader {
-    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/PlayerHead")
+    private val LOGGER = LogManager.getLogger("OneConfig/PlayerHead")
     private const val CLIENT_THREAD_TIMEOUT_MS = 5_000L
 
     private val cache = ConcurrentHashMap<UUID, ByteArray>()

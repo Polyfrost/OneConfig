@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(targets = "main.walksy.lib.core.mods.ModEntryPointList", remap = false)
 public class Mixin_WalksyLib_ModEntryPointList {
 
-    @Inject(method = "loadModConfigs", at = @At("TAIL"), remap = false)
+    @Inject(method = {"loadModConfigs", "retrieve"}, at = @At("TAIL"), remap = false, require = 0)
     private void oneconfig$onLoadModConfigs(CallbackInfo ci) {
         try {
             WalksyLibCompat.onLoad(this);

@@ -53,10 +53,13 @@ fun TextOption(data: TextOptionData) {
     )
 
     var text by remember(data.prop) { mutableStateOf(data.strProp.get() ?: "") }
+    val regex = remember(data.regex) { data.regex?.takeIf { it.isNotBlank() }?.let { runCatching { Regex(it) }.getOrNull() } }
+    val valid = regex == null || text.isEmpty() || regex.matches(text)
+    val borderColor by animateColorAsState(if (valid) theme.borderColor else ListInvalidColor)
 
     BasicTextField(
         value = text,
-        onValueChange = { text = it; data.strProp.set(it) },
+        onValueChange = { text = it; if (regex == null || it.isEmpty() || regex.matches(it)) data.strProp.set(it) },
         singleLine = !data.multiline,
         textStyle = TextStyle(
             color = theme.textColor,
@@ -69,7 +72,7 @@ fun TextOption(data: TextOptionData) {
             .width(LocalOptionWidth.current)
             .then(if (data.multiline) Modifier.heightIn(min = 96.dp) else Modifier)
             .background(theme.modCardBackground, LocalTheme.current.sideBarNavigationEntryShape)
-            .border(1.dp, theme.borderColor, LocalTheme.current.sideBarNavigationEntryShape)
+            .border(1.dp, borderColor, LocalTheme.current.sideBarNavigationEntryShape)
             .padding(horizontal = 12.dp, vertical = 7.dp),
         decorationBox = { innerTextField ->
             Row(

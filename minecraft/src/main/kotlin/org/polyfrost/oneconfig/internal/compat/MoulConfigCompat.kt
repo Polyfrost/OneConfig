@@ -3,11 +3,24 @@
 package org.polyfrost.oneconfig.internal.compat
 
 import io.github.notenoughupdates.moulconfig.ChromaColour
+import io.github.notenoughupdates.moulconfig.Config as MoulConfig
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean
+import io.github.notenoughupdates.moulconfig.annotations.ConfigLink
 import io.github.notenoughupdates.moulconfig.common.KeyboardConstants
 import io.github.notenoughupdates.moulconfig.gui.editors.*
 import io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor
 import io.github.notenoughupdates.moulconfig.processor.ProcessedCategory
 import io.github.notenoughupdates.moulconfig.processor.ProcessedOption
+import java.awt.Color
+import java.lang.reflect.Field
+import java.lang.reflect.Method
+import java.lang.reflect.Type
+import java.util.Optional
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.roundToInt
+import kotlin.reflect.KClass
+import org.apache.logging.log4j.LogManager
+import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -21,23 +34,15 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
-import org.polyfrost.oneconfig.internal.utils.MoulConfigGuiOptionEditorDropdownAccessor
-import java.awt.Color
-import java.lang.reflect.Field
-import java.lang.reflect.Method
-import java.lang.reflect.Type
-import java.util.Optional
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.reflect.KClass
 // do not remove this import even though the IDE marks it redundant
 import org.polyfrost.oneconfig.internal.compat.MoulPropertyBuilder
-import io.github.notenoughupdates.moulconfig.Config as MoulConfig
+import org.polyfrost.oneconfig.internal.utils.MoulConfigGuiOptionEditorDropdownAccessor
 import org.polyfrost.oneconfig.relocator.annotations.MoulConfig as Moulconfig
 
 @Moulconfig
 data object MoulConfigCompat {
 
-    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/$this")
+    private val LOGGER = LogManager.getLogger("OneConfig/$this")
 
     @JvmStatic
     fun parseMoulconfig(processor: MoulConfigProcessor<*>, config: MoulConfig) {
@@ -179,30 +184,57 @@ data object MoulConfigCompat {
         val visualizer: Class<out Visualizer> = when (val editor = children.editor) {
             is GuiOptionEditorAccordion -> return null
 
-            is GuiOptionEditorBoolean -> SwitchVisualizer::class.java
+            is GuiOptionEditorBoolean -> {
+                val runnableId = property.backingField?.getAnnotation(ConfigEditorBoolean::class.java)?.runnableId ?: -1
+                if (runnableId != -1) {
+                    property.setter = { value ->
+                        val old = children.get()
+                        children.set(value)
+                        if (old != value) config.executeRunnable(runnableId)
+                    }
+                }
+                SwitchVisualizer::class.java
+            }
+
             is GuiOptionEditorButton -> {
+                if (property.backingField?.isAnnotationPresent(ConfigLink::class.java) == true) return null
                 property.metadata["runnable"] = Runnable { editor.onClick() }
+                resolveText(MoulPropertyBuilder.readMember(editor, "buttonText", "getButtonText"))
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { property.metadata["text"] = it }
                 ButtonVisualizer::class.java
             }
 
             is GuiOptionEditorColour -> {
-                fun toArgb(value: Any?): Int? {
-                    val colour = when (children.type) {
-                        String::class.java -> (value as? String)?.let { ChromaColour.forLegacyString(it) }
-                        ChromaColour::class.java -> value as? ChromaColour
-                        else -> null
-                    } ?: return null
-                    val rgb = Color.HSBtoRGB(colour.hue, colour.saturation, colour.brightness)
-                    return (colour.alpha shl 24) or (rgb and 0x00FFFFFF)
+                fun toChroma(value: Any?): ChromaColour? = when (children.type) {
+                    String::class.java -> (value as? String)?.let { ChromaColour.forLegacyString(it) }
+                    ChromaColour::class.java -> value as? ChromaColour
+                    else -> null
                 }
 
-                property.getter = { toArgb(children.get()) ?: 0xFFFFFFFF.toInt() }
-                property.defaultMapper = ::toArgb
+                fun toPolyColor(value: Any?): PolyColor? {
+                    val colour = toChroma(value) ?: return null
+                    val rgb = Color.HSBtoRGB(colour.hue, colour.saturation, colour.brightness)
+                    val millis = colour.timeForFullRotationInMillis
+                    return PolyColor(
+                        (colour.alpha shl 24) or (rgb and 0x00FFFFFF),
+                        millis > 0,
+                        if (millis > 0) (PolyColor.CHROMA_CYCLE_SECONDS * 1000 / millis).toFloat() else 1f,
+                    )
+                }
+
+                property.getter = { toPolyColor(children.get()) ?: PolyColor() }
+                property.defaultMapper = ::toPolyColor
                 property.setter = setter@{
-                    val argb = it as? Int ?: return@setter
+                    val (argb, millis) = when (it) {
+                        is PolyColor -> it.rawArgb to (if (!it.chroma) 0 else
+                            (PolyColor.CHROMA_CYCLE_SECONDS * 1000 / it.chromaSpeed.coerceAtLeast(0.01f)).roundToInt().coerceIn(1000, 60000))
+                        is Int -> it to (toChroma(children.get())?.timeForFullRotationInMillis ?: 0)
+                        else -> return@setter
+                    }
                     val awtColor = Color(argb, true)
                     val hsb = Color.RGBtoHSB(awtColor.red, awtColor.green, awtColor.blue, null)
-                    val colour = ChromaColour(hsb[0], hsb[1], hsb[2], 0, awtColor.alpha)
+                    val colour = ChromaColour(hsb[0], hsb[1], hsb[2], millis, awtColor.alpha)
                     when (children.type) {
                         String::class.java -> children.set(colour.toLegacyString())
                         ChromaColour::class.java -> children.set(colour)
@@ -252,7 +284,8 @@ data object MoulConfigCompat {
             is GuiOptionEditorSliderAccessor -> {
                 property.metadata["min"] = editor.`oneconfig$minValue`
                 property.metadata["max"] = editor.`oneconfig$maxValue`
-                property.getter = { (children.get() as? Number)?.toFloat() ?: editor.`oneconfig$maxValue` }
+                property.metadata["step"] = editor.`oneconfig$minStep`
+                property.getter = { (children.get() as? Number)?.toFloat() ?: editor.`oneconfig$minValue` }
                 property.defaultMapper = { (it as? Number)?.toFloat() }
                 property.setter = setter@{ value ->
                     val numberValue = value as? Number ?: return@setter
@@ -298,11 +331,47 @@ data object MoulConfigCompat {
                 KeybindVisualizer::class.java
             }
 
-            is GuiOptionEditorInfoText -> return null
+            is GuiOptionEditorInfoText -> {
+                resolveText(MoulPropertyBuilder.readMember(editor, "infoTitle", "getInfoTitle"))
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { title -> property.description = listOfNotNull(property.description?.takeIf { it.isNotBlank() }, title).joinToString("\n") }
+                property.getter = { "" }
+                property.setter = {}
+                property.metadata[CompatSnapshots.NO_SNAPSHOT_META] = true
+                InfoVisualizer::class.java
+            }
+
             is GuiOptionEditorText -> TextVisualizer::class.java
-            is GuiOptionEditorDraggableList -> return null
+            is GuiOptionEditorDraggableList -> {
+                val labels = MoulPropertyBuilder.readMember(editor, "exampleText", "getExampleText") as? Map<*, *> ?: return null
+                val keys: List<Any> = (MoulPropertyBuilder.readMember(editor, "enumConstants", "getEnumConstants") as? Array<*>)
+                    ?.filterNotNull()
+                    ?: labels.keys.filterIsInstance<Int>().sorted()
+                fun nameOf(value: Any?): String? = (value as? Enum<*>)?.name ?: value?.toString()
+                val byName = keys.associateBy { nameOf(it)!! }
+                fun namesOf(value: Any?): Array<String> =
+                    (value as? List<*>)?.mapNotNull(::nameOf)?.filter(byName::containsKey)?.toTypedArray() ?: emptyArray()
+
+                property.getter = { namesOf(children.get()) }
+                property.defaultMapper = ::namesOf
+                property.setter = setter@{ value ->
+                    val ordered = (value as? Array<*>)?.mapNotNullTo(ArrayList()) { (it as? String)?.let(byName::get) } ?: return@setter
+                    @Suppress("UNCHECKED_CAST")
+                    val current = children.get() as? MutableList<Any?>
+                    if (current != null && runCatching { current.clear(); current.addAll(ordered) }.isSuccess) {
+                        children.explicitNotifyChange()
+                    } else {
+                        children.set(ordered)
+                    }
+                }
+                property.metadata["options"] = keys.map { nameOf(it)!! }.toTypedArray()
+                property.metadata["optionLabels"] = keys.map { resolveText(labels[it]) ?: nameOf(it)!! }
+                property.metadata["checkable"] = MoulPropertyBuilder.readMember(editor, "enableDeleting", "getEnableDeleting") == true
+                DraggableListVisualizer::class.java
+            }
+
             else -> {
-                println("Skipping ${children.path} - ${editor::class.java}")
+                LOGGER.warn("Skipping ${children.path} - ${editor::class.java}")
                 return null
             }
         }

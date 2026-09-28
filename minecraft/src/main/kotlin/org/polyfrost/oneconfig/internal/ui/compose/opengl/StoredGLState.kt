@@ -1,16 +1,20 @@
 package org.polyfrost.oneconfig.internal.ui.compose.opengl
 
-//? if > 1.8.9 {
 //? if >= 1.21.5 {
 import com.mojang.renderpearl.backend.opengl.GlStateManager
-//? } else {
-/*import com.mojang.blaze3d.platform.GlStateManager
-*///? }
+//?}
+
+//? if > 1.8.9 {
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL45.*
-//?} else {
+//?}
+
+//? if < 1.21.5 {
 /*import com.mojang.blaze3d.platform.GlStateManager
-import org.lwjgl.opengl.GL11
+*///?}
+
+//? if = 1.8.9 {
+/*import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL12
 import org.lwjgl.opengl.GL13
 import org.lwjgl.opengl.GL14

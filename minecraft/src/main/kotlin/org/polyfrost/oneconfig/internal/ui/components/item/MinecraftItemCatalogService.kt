@@ -3,67 +3,15 @@ package org.polyfrost.oneconfig.internal.ui.components.item
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.snapshots.Snapshot
 import com.mojang.blaze3d.pipeline.RenderTarget
-//? if > 1.8.9
-import com.mojang.blaze3d.systems.RenderSystem
+import java.util.ArrayDeque
+import kotlin.math.ceil
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
 import net.minecraft.client.Minecraft
-//? if >= 26.2
-import com.mojang.renderpearl.api.GpuFormat
-//? if >= 1.21.8 && < 26.2
-//import org.polyfrost.oneconfig.internal.mixin.render.GameRendererAccessor
-//? if < 1.21.8 && > 1.8.9 {
-/*import com.mojang.blaze3d.platform.Lighting
-import net.minecraft.CrashReport
-import net.minecraft.ReportedException
-import net.minecraft.client.renderer.texture.OverlayTexture
-import org.joml.Matrix4f
-*///?}
-//? if = 1.21.5 {
-/*import com.mojang.renderpearl.api.textures.GpuTexture
-import com.mojang.renderpearl.api.textures.TextureFormat
-*///?}
-//? if >= 1.21.4 && < 1.21.8
-//import com.mojang.blaze3d.ProjectionType
-//? if >= 26.1 {
-import net.minecraft.client.renderer.state.gui.GuiRenderState
-import net.minecraft.client.renderer.state.gui.GuiItemRenderState
-import net.minecraft.util.Util
-//?} elif >= 1.21.8 {
-/*import net.minecraft.client.gui.render.state.GuiRenderState
-import net.minecraft.client.gui.render.state.GuiItemRenderState
-*///?} elif >= 1.21.4 {
-/*import net.minecraft.client.renderer.item.ItemStackRenderState
-*///?} elif > 1.8.9 {
-/*import net.minecraft.resources.ResourceLocation
-import net.minecraft.client.resources.model.ModelResourceLocation
-import net.minecraft.client.resources.model.BakedModel
-import net.minecraft.client.renderer.ItemBlockRenderTypes
-import net.minecraft.client.renderer.block.model.BakedQuad
-*///?}
-//? if < 1.21.5
-//import com.mojang.blaze3d.platform.GlStateManager
-//? if = 1.8.9
-//import net.minecraft.client.render.platform.Lighting
-//? if >= 1.21.8 {
-import net.minecraft.client.gui.render.GuiRenderer
-import net.minecraft.client.gui.GuiGraphicsExtractor
-import net.minecraft.client.renderer.item.TrackingItemStackRenderState
-import net.minecraft.client.gui.navigation.ScreenRectangle
-import org.joml.Matrix3x2f
-//?} elif > 1.8.9 {
-/*import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.core.Direction
-import net.minecraft.util.RandomSource
-*///?}
-//? if > 1.8.9 {
-import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.chat.Component
-import net.minecraft.world.item.ItemDisplayContext
-import net.minecraft.world.item.Items
-//?}
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
-//? if < 1.21.8
-//import org.lwjgl.opengl.GL11
+import net.minecraft.world.item.Items
 import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.ContentChangeMode
 import org.jetbrains.skia.Image
@@ -71,8 +19,8 @@ import org.jetbrains.skia.Paint
 import org.jetbrains.skia.Rect
 import org.jetbrains.skia.SamplingMode
 import org.polyfrost.oneconfig.api.event.v1.EventManager
-import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
 import org.polyfrost.oneconfig.api.event.v1.events.ResizeEvent
+import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
 import org.polyfrost.oneconfig.api.event.v1.events.ServerJoinEvent
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
@@ -80,10 +28,82 @@ import org.polyfrost.oneconfig.internal.ui.SkiaOffscreenTarget
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
 import org.polyfrost.oneconfig.internal.ui.hud.GuiTargetRedirect
 import org.slf4j.LoggerFactory
-import java.util.ArrayDeque
-import kotlin.math.ceil
-import kotlin.math.roundToInt
-import kotlin.math.sqrt
+
+//? if >= 26.2 {
+import com.mojang.renderpearl.api.GpuFormat
+import org.joml.Vector4f
+//?}
+
+//? if >= 26.1 {
+import java.util.concurrent.CompletableFuture
+import net.minecraft.client.renderer.state.gui.GuiItemRenderState
+import net.minecraft.client.renderer.state.gui.GuiRenderState
+import net.minecraft.data.registries.VanillaRegistries
+import net.minecraft.util.Util
+//?}
+
+//? if >= 1.21.8 {
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.client.gui.navigation.ScreenRectangle
+import net.minecraft.client.gui.render.GuiRenderer
+import net.minecraft.client.renderer.item.TrackingItemStackRenderState
+import org.joml.Matrix3x2f
+//?}
+
+//? if > 1.8.9 {
+import com.mojang.blaze3d.systems.RenderSystem
+import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.world.item.ItemDisplayContext
+//?}
+
+//? if >= 1.21.8 && < 26.2 {
+/*import net.minecraft.client.renderer.fog.FogRenderer
+import org.polyfrost.oneconfig.internal.mixin.render.GameRendererAccessor
+*///?}
+
+//? if >= 1.21.8 && < 26.1 {
+/*import net.minecraft.client.gui.render.state.GuiItemRenderState
+import net.minecraft.client.gui.render.state.GuiRenderState
+*///?}
+
+//? if = 1.21.5 {
+/*import com.mojang.renderpearl.api.textures.GpuTexture
+import com.mojang.renderpearl.api.textures.TextureFormat
+*///?}
+
+//? if >= 1.21.4 && < 1.21.8 {
+/*import com.mojang.blaze3d.ProjectionType
+import net.minecraft.client.renderer.item.ItemStackRenderState
+*///?}
+
+//? if < 1.21.8 && > 1.8.9 {
+/*import com.mojang.blaze3d.platform.Lighting
+import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.renderer.texture.OverlayTexture
+import org.joml.Matrix4f
+*///?}
+
+//? if < 1.21.5 {
+/*import com.mojang.blaze3d.platform.GlStateManager
+import net.minecraft.core.Direction
+import org.lwjgl.opengl.GL11
+*///?}
+
+//? if < 1.21.4 && > 1.8.9 {
+/*import com.mojang.blaze3d.vertex.VertexSorting
+import net.minecraft.client.renderer.ItemBlockRenderTypes
+import net.minecraft.client.resources.model.BakedModel
+import net.minecraft.client.resources.model.ModelResourceLocation
+import net.minecraft.resources.ResourceLocation
+*///?}
+
+//? if < 1.21.5 && > 1.8.9 {
+/*import net.minecraft.util.RandomSource
+*///?}
+
+//? if = 1.8.9 {
+/*import net.minecraft.client.render.platform.Lighting
+*///?}
 
 class MinecraftItemCatalogService : ItemCatalogService {
     internal interface ItemStackIconHandle : ItemIconHandle {
@@ -358,11 +378,11 @@ class MinecraftItemCatalogService : ItemCatalogService {
         //? if >= 26.1 {
         // Item components are not bound before the first world load, so initialize them for title screen rendering.
         val componentsBound = { BuiltInRegistries.ITEM.all { BuiltInRegistries.ITEM.wrapAsHolder(it).areComponentsBound() } }
-        java.util.concurrent.CompletableFuture.supplyAsync(
+        CompletableFuture.supplyAsync(
             {
                 if (componentsBound()) null else {
                     //~ if < 26.3 'createWorldLookup' -> 'createLookup'
-                    val lookup = net.minecraft.data.registries.VanillaRegistries.createWorldLookup()
+                    val lookup = VanillaRegistries.createWorldLookup()
                     BuiltInRegistries.DATA_COMPONENT_INITIALIZERS.build(lookup)
                 }
             },
@@ -774,7 +794,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
                 resources.renderer.render()
                 //?} else {
                 /*val fog = (mc.gameRenderer as GameRendererAccessor).`oneconfig$getFogRenderer`()
-                    .getBuffer(net.minecraft.client.renderer.fog.FogRenderer.FogMode.NONE)
+                    .getBuffer(FogRenderer.FogMode.NONE)
                 resources.renderer.render(fog)
                 *///?}
             } finally {
@@ -829,13 +849,6 @@ class MinecraftItemCatalogService : ItemCatalogService {
                             *///?}
                             graphics.flush()
                             if (flat) Lighting.setupFor3DItems()
-                        } catch (throwable: Throwable) {
-                            val report = CrashReport.forThrowable(throwable, "Rendering item")
-                            val category = report.addCategory("Item being rendered")
-                            category.setDetail("Item Type") { entry.stack.item.toString() }
-                            category.setDetail("Item Components") { entry.stack.components.toString() }
-                            category.setDetail("Item Foil") { entry.stack.hasFoil().toString() }
-                            throw ReportedException(report)
                         } finally {
                             pose.popPose()
                         }
@@ -934,7 +947,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
             //? if >= 1.21.4 {
             RenderSystem.setProjectionMatrix(projection, ProjectionType.ORTHOGRAPHIC)
             //? } else {
-            /*RenderSystem.setProjectionMatrix(projection, com.mojang.blaze3d.vertex.VertexSorting.ORTHOGRAPHIC_Z)
+            /*RenderSystem.setProjectionMatrix(projection, VertexSorting.ORTHOGRAPHIC_Z)
             *///? }
             modelView.translation(0f, 0f, -11000f)
             //? if < 1.21.4
@@ -975,7 +988,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
         val colorTexture = target.colorTexture ?: return
         val depthTexture = target.depthTexture ?: return
         //? if >= 26.2 {
-        val clearColor = org.joml.Vector4f(0f, 0f, 0f, 0f)
+        val clearColor = Vector4f(0f, 0f, 0f, 0f)
         val clearDepth = 0.0
         //?} else {
         /*val clearColor = 0

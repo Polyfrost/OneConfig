@@ -2,16 +2,6 @@ package org.polyfrost.oneconfig.internal.mixin.events;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
-//? if > 1.8.9 {
-import net.minecraft.client.MouseHandler;
-//? >= 1.21.10
-import net.minecraft.client.input.MouseButtonInfo;
-//?} else {
-/*import org.lwjgl.input.Mouse;
-import pl.tomgirl.lenis.window.DisplaySdl;
-import org.polyfrost.oneconfig.internal.legacy.KeyCodes;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-*///?}
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.MouseInputEvent;
 import org.spongepowered.asm.mixin.Mixin;
@@ -19,6 +9,21 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+//? if >= 1.21.10 {
+import net.minecraft.client.input.MouseButtonInfo;
+//?}
+
+//? if > 1.8.9 {
+import net.minecraft.client.MouseHandler;
+//?}
+
+//? if = 1.8.9 {
+/*import org.lwjgl.input.Mouse;
+import org.polyfrost.oneconfig.internal.legacy.KeyCodes;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import pl.tomgirl.lenis.window.DisplaySdl;
+*///?}
 
 //? if > 1.8.9 {
 @Mixin(MouseHandler.class)

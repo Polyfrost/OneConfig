@@ -28,18 +28,21 @@
 package org.polyfrost.oneconfig.test;
 
 import kotlin.Pair;
-//? if > 1.8.9 {
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-//?} else {
-/*import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiElement;
-*///?}
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.config.v1.annotations.RadioButton;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHud;
+
+//? if > 1.8.9 {
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+//?}
+
+//? if = 1.8.9 {
+/*import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiElement;
+*///?}
 
 public class TestLegacyHud_Test extends LegacyHud {
     private static final float W = 20f;

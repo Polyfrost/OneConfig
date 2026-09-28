@@ -2,28 +2,33 @@ package org.polyfrost.oneconfig.internal.ui.compose
 
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import net.minecraft.client.Minecraft
-//? if > 1.8.9 {
-import net.minecraft.resources.Identifier
-//?} else {
-/*import net.ornithemc.osl.core.api.util.NamespacedIdentifier as Identifier
-import net.ornithemc.osl.core.api.util.NamespacedIdentifiers
-*///?}
-import net.minecraft.server.packs.resources.PreparableReloadListener
-import net.minecraft.server.packs.resources.ResourceManager
-//? if < 1.21.4 && > 1.8.9
-//import net.minecraft.util.profiling.ProfilerFiller
-import org.jetbrains.skia.*
-import org.jetbrains.skia.impl.RefCnt
-import org.polyfrost.compose.mc.McFontQueue
-import org.polyfrost.compose.render.FontManager
-import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import java.util.zip.ZipInputStream
 import kotlin.jvm.optionals.getOrNull
+import net.minecraft.client.Minecraft
+import net.minecraft.server.packs.resources.PreparableReloadListener
+import net.minecraft.server.packs.resources.ResourceManager
+import org.jetbrains.skia.*
+import org.jetbrains.skia.impl.RefCnt
+import org.polyfrost.compose.mc.McFontQueue
+import org.polyfrost.compose.render.FontManager
+import org.slf4j.LoggerFactory
+
+//? if > 1.8.9 {
+import net.minecraft.resources.Identifier
+//?}
+
+//? if < 1.21.4 && > 1.8.9 {
+/*import net.minecraft.util.profiling.ProfilerFiller
+*///?}
+
+//? if = 1.8.9 {
+/*import net.ornithemc.osl.core.api.util.NamespacedIdentifier as Identifier
+import net.ornithemc.osl.core.api.util.NamespacedIdentifiers
+*///?}
 
 //~ if = 1.8.9 'PreparableReloadListener' -> 'ResourceReloadListener'
 object SkiaFontRenderer : PreparableReloadListener {

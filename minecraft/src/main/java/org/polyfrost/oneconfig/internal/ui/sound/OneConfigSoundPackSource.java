@@ -26,32 +26,34 @@
 
 package org.polyfrost.oneconfig.internal.ui.sound;
 
-//? if > 1.8.9 {
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Optional;
+import java.util.function.Consumer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.packs.PackLocationInfo;
-//? if >= 26.3
+import net.minecraft.server.packs.repository.RepositorySource;
+
+//? if >= 26.3 {
+import java.util.stream.Stream;
 import net.minecraft.server.packs.PackMetadataResources;
+//?}
+
+//? if > 1.8.9 {
+import net.minecraft.server.packs.PackLocationInfo;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackSelectionConfig;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.PathPackResources;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackSource;
-import net.minecraft.server.packs.repository.RepositorySource;
-//?} else {
-/*import net.minecraft.server.packs.repository.RepositorySource;
-import net.ornithemc.osl.resource.loader.api.resource.pack.PackPosition;
+//?}
+
+//? if = 1.8.9 {
+/*import net.ornithemc.osl.resource.loader.api.resource.pack.PackPosition;
 import net.ornithemc.osl.resource.loader.api.resource.repository.ResourcePackSummary;
 import net.ornithemc.osl.resource.loader.impl.resource.pack.DirectoryResourcePack;
 *///?}
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Optional;
-import java.util.function.Consumer;
-//? if >= 26.3
-import java.util.stream.Stream;
 
 //~ if = 1.8.9 'RepositorySource' -> 'ResourcePackRepository.Source'
 public final class OneConfigSoundPackSource implements RepositorySource {

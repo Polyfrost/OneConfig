@@ -26,11 +26,11 @@
 
 package org.polyfrost.oneconfig.api.notifications.v1
 
+import java.util.concurrent.ConcurrentHashMap
 import org.jetbrains.skia.Data
 import org.jetbrains.skia.Image
 import org.jetbrains.skia.Surface
 import org.jetbrains.skia.svg.SVGDOM
-import java.util.concurrent.ConcurrentHashMap
 
 internal object SvgRasterizer {
     private val cache = ConcurrentHashMap<String, Optional>()

@@ -15,32 +15,48 @@ import com.odtheking.odin.clickgui.settings.impl.SelectorSetting
 import com.odtheking.odin.clickgui.settings.impl.StringSetting
 import com.odtheking.odin.features.ModuleManager
 import com.odtheking.odin.utils.Color
+import java.util.Collections
+import java.util.IdentityHashMap
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Property.Display
+import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
+import org.polyfrost.oneconfig.api.config.v1.dsl.category
+import org.polyfrost.oneconfig.api.config.v1.dsl.noCache
+import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
+import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.config.v1.dsl.visualizer
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.hud.v1.OneConfigHudWrapper
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
+import org.polyfrost.oneconfig.api.platform.v1.ModInfo
+import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
+import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindConflicts
-import java.util.IdentityHashMap
 
 object OdinCompat {
     private val LOGGER = LogManager.getLogger("OneConfig/Odin-Compat")
 
+    private const val ODIN_ID = "odin"
+
     private var initialized = false
+    private var treeRegistered = false
+
+    private var treeModules = -1
     private val wrapped: MutableSet<HUDSetting> =
-        java.util.Collections.newSetFromMap(IdentityHashMap<HUDSetting, Boolean>())
+        Collections.newSetFromMap(IdentityHashMap<HUDSetting, Boolean>())
 
     @JvmStatic
     fun ensureRegistered() {
         if (!initialized) {
             initialized = true
+            registerTree()
             runCatching { unbindConflictingKeybinds() }
                 .onFailure { LOGGER.error("Failed to unbind conflicting Odin keybinds", it) }
             EventManager.register(HudEditorToggleEvent::class.java) { e ->
@@ -49,6 +65,23 @@ object OdinCompat {
             CompatOverlayRenderer.register(::renderExamples)
         }
         registerAll()
+    }
+
+    @JvmStatic
+    fun registerTree() {
+        if (treeRegistered) {
+            if (treeModules >= 0 && treeModules != ModuleManager.modules.size) buildTree()
+            return
+        }
+        treeRegistered = true
+        CompatLoader.nativeLoadedConfigs.add(ODIN_ID)
+        CompatLoader.requireTranslations(skip = true, init = ::buildTree)
+    }
+
+    private fun buildTree() {
+        treeModules = ModuleManager.modules.size
+        runCatching { CompatSnapshots.register(OdinSettingsAdapter.tree(ODIN_ID)) }
+            .onFailure { LOGGER.error("Failed to register Odin config tree", it) }
     }
 
     /**
@@ -178,9 +211,52 @@ private object OdinSettingsAdapter {
             if (setting is DropdownSetting) continue
             if (setting is KeybindSetting) continue
             if (!ownedByHud(setting, hud, huds)) continue
-            runCatching { buildProperty(setting, index) }.getOrNull()?.let(out::add)
+            runCatching { buildProperty(setting, settingId(setting, index)) }.getOrNull()
+                ?.let { it.addMetadata("subcategory", "Settings"); out.add(it) }
         }
+        linkDisplays(out)
         return out
+    }
+
+    fun tree(id: String): Tree {
+        val tree = Tree.tree()
+        tree.id = id
+        tree.title = "Odin"
+        tree.noCache = true
+        tree.saveFunction = Runnable { OdinCompat.flush() }
+        ModInfo.loadedMods.firstOrNull { it.id == id }?.extractIconFile()?.let { tree.addMetadata("icon_path", it) }
+
+        val usedIds = HashSet<String>()
+        for (module in ArrayList(ModuleManager.modules.values)) {
+            if (module.isDevModule) continue
+            val base = idPart(module.name, "module")
+            val props = ArrayList<Property<*>>()
+            if (!module.alwaysActive) {
+                props += Properties.functional<Boolean>(
+                    { module.enabled }, { if (it != module.enabled) module.toggle() },
+                    id = uniqueId(usedIds, "$base/enabled"), type = Boolean::class.javaPrimitiveType,
+                    name = "Enabled", description = module.description,
+                ).apply { visualizer = Visualizer.SwitchVisualizer::class.java }
+            }
+            for ((index, setting) in module.settings.values.withIndex()) {
+                if (setting !is RenderableSetting<*>) continue
+                if (setting is HUDSetting || setting is DropdownSetting || setting is KeybindSetting) continue
+                val settingId = uniqueId(usedIds, "$base/${idPart(setting.name, index.toString())}")
+                runCatching { buildProperty(setting, settingId) }.getOrNull()?.let(props::add)
+            }
+            linkDisplays(props)
+            for (prop in props) {
+                prop.category = module.category.name
+                prop.subcategory = module.name
+                tree.put(prop)
+            }
+        }
+        return tree
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun linkDisplays(props: List<Property<*>>) {
+        for (prop in props) (prop as Property<Any?>).addCallback { props.forEach(Property<*>::revaluateDisplay); false }
     }
 
     private fun ownedByHud(setting: Setting<*>, hud: HUDSetting, huds: List<HUDSetting>): Boolean {
@@ -206,8 +282,7 @@ private object OdinSettingsAdapter {
     private fun baseToken(hudName: String): String =
         hudName.trim().removeSuffix("HUD").removeSuffix("Hud").removeSuffix("hud").trim().lowercase()
 
-    private fun buildProperty(setting: RenderableSetting<*>, index: Int): Property<*>? {
-        val id = settingId(setting, index)
+    private fun buildProperty(setting: RenderableSetting<*>, id: String): Property<*>? {
         val prop: Property<*> = when (setting) {
             is BooleanSetting -> Properties.functional<Boolean>(
                 { setting.value }, { setting.value = it },
@@ -263,8 +338,7 @@ private object OdinSettingsAdapter {
 
             else -> return null
         }
-        prop.addMetadata("subcategory", "Settings")
-        prop.addDisplayCondition { if (setting.isVisible) Display.SHOWN else Display.DISABLED }
+        prop.addDisplayCondition { if (setting.isVisible) Display.SHOWN else Display.HIDDEN }
         return prop
     }
 

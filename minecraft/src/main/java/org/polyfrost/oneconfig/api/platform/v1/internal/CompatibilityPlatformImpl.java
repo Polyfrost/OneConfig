@@ -1,22 +1,26 @@
 package org.polyfrost.oneconfig.api.platform.v1.internal;
 
+import java.util.Set;
+import java.util.stream.Collectors;
 import net.fabricmc.loader.api.FabricLoader;
-//? if >=1.21.4 {
-import net.kyori.adventure.platform.modcommon.MinecraftClientAudiences;
-//?} else {
-/*import net.kyori.adventure.platform.fabric.FabricClientAudiences;
-*///?}
 import net.kyori.adventure.text.Component;
-//? if > 1.8.9
-import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
 import org.polyfrost.oneconfig.api.platform.v1.CompatibilityPlatform;
 import org.polyfrost.oneconfig.api.platform.v1.Keys;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Options;
 
-import java.util.Set;
-import java.util.stream.Collectors;
+//? if >= 1.21.4 {
+import net.kyori.adventure.platform.modcommon.MinecraftClientAudiences;
+//?}
+
+//? if > 1.8.9 {
+import net.minecraft.SharedConstants;
+//?}
+
+//? if < 1.21.4 {
+/*import net.kyori.adventure.platform.fabric.FabricClientAudiences;
+*///?}
 
 public class CompatibilityPlatformImpl implements CompatibilityPlatform {
     Options options = new OptionsImpl();

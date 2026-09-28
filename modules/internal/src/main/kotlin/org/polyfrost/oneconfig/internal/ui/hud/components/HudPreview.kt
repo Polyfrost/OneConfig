@@ -20,16 +20,17 @@ import androidx.compose.ui.graphics.skiaCanvas
 import androidx.compose.ui.layout.IntrinsicMeasurable
 import androidx.compose.ui.layout.IntrinsicMeasureScope
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.layout.MeasureResult
 import androidx.compose.ui.layout.MeasureScope
-import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.apache.logging.log4j.LogManager
+import org.jetbrains.skia.Rect
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.runtime.PolyComposeHost
 import org.polyfrost.compose.runtime.PolyComposeRuntime
@@ -145,7 +146,7 @@ internal fun HudPreviewCanvas(
         drawIntoCanvas { canvas ->
             val skia = canvas.skiaCanvas
             skia.save()
-            skia.clipRect(org.jetbrains.skia.Rect.makeWH(size.width, size.height))
+            skia.clipRect(Rect.makeWH(size.width, size.height))
             skia.scale(scale, scale)
             Snapshot.withoutReadObservation {
                 state.runtime.root.render(RenderContext(skia))

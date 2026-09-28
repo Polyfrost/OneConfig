@@ -1,11 +1,10 @@
 package com.terraformersmc.modmenu.api;
 
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
-
 import java.lang.reflect.Constructor;
 import java.util.Map;
 import java.util.function.Consumer;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 
 public interface ModMenuApi {
     static Screen createModsScreen(Screen previous) {

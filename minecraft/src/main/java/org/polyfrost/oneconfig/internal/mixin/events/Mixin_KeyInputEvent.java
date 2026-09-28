@@ -1,17 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
 import com.mojang.blaze3d.platform.InputConstants;
-//? if > 1.8.9 {
-import net.minecraft.client.KeyboardHandler;
-//?} else {
-/*import org.lwjgl.input.Keyboard;
-import org.polyfrost.oneconfig.internal.legacy.KeyCodes;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-*///?}
-//? >= 1.21.10 {
-import net.minecraft.client.input.CharacterEvent;
-import net.minecraft.client.input.KeyEvent;
-//? }
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.KeyInputEvent;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
@@ -19,9 +8,23 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-//? if >= 1.21.10
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+//? if >= 1.21.10 {
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
+//?}
+
+//? if > 1.8.9 {
+import net.minecraft.client.KeyboardHandler;
+//?}
+
+//? if = 1.8.9 {
+/*import org.lwjgl.input.Keyboard;
+import org.polyfrost.oneconfig.internal.legacy.KeyCodes;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+*///?}
 
 //~ if = 1.8.9 'KeyboardHandler.class' -> 'Keyboard.class'
 @Mixin(KeyboardHandler.class)
