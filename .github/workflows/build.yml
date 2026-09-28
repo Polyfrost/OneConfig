@@ -60,7 +60,7 @@ jobs:
           build-scan-terms-of-use-url: "https://gradle.com/terms-of-service"
           build-scan-terms-of-use-agree: "yes"
           validate-wrappers: true
-          cache-read-only: ${{ github.ref != 'refs/heads/v1' }}
+          cache-read-only: ${{ github.ref != 'refs/heads/legacy' }}
 
       - &loom-cache
         uses: actions/cache@v6
