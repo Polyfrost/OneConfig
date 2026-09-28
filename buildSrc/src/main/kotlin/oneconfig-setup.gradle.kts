@@ -179,6 +179,14 @@ val firmamentRelocatedConfiguration: Configuration by configurations.creating {
     attributes { attribute(firmamentRelocated, true) }
 }
 
+val skysoftRelocated = registerRelocationAttribute("relocate-skysoft-moulconfig") {
+    relocate("io.github.notenoughupdates.moulconfig", "com.skysoft.deps.softconfig")
+}
+
+val skysoftRelocatedConfiguration: Configuration by configurations.creating {
+    attributes { attribute(skysoftRelocated, true) }
+}
+
 val adventurePlatform = when {
     loader != "fabric" -> null
     stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "7.0.0"
@@ -236,7 +244,7 @@ dependencies {
         }
     }
 
-    moulConfig(skyhanniRelocatedConfiguration, firmamentRelocatedConfiguration)
+    moulConfig(skyhanniRelocatedConfiguration, firmamentRelocatedConfiguration, skysoftRelocatedConfiguration)
 
     "api"(versionedCatalog["jetbrains.compose.foundation"])
     "api"(versionedCatalog["jetbrains.compose.material"])

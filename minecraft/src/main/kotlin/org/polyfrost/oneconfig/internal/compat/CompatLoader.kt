@@ -44,6 +44,7 @@ object CompatLoader {
         "uk.co.hexeption.apec",
         "moe.nea.firmament.deps.moulconfig",
         "io.github.notenoughupdates.moulconfig",
+        "com.skysoft.deps.softconfig",
         "dev.tr7zw.trender",
         "net.uku3lig.ukulib",
         "io.github.axolotlclient.AxolotlClientConfig.",
