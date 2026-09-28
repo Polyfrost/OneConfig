@@ -1,20 +1,20 @@
 package org.polyfrost.oneconfig.internal.ui
 
 import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.animation.core.Easing
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.Density
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.compose.rememberNavController
+import kotlin.math.pow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import org.apache.logging.log4j.LogManager
@@ -36,13 +37,12 @@ import org.polyfrost.oneconfig.internal.ui.components.RetainedVisibility
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDragLayer
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 import org.polyfrost.oneconfig.internal.ui.shell.Lifecycle
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.OCViewModelStoreOwner
 import org.polyfrost.oneconfig.internal.ui.shell.Shell
+import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.Theme
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
-import kotlin.math.pow
 
 private val LOGGER = LogManager.getLogger("OneConfig/UI")
 
@@ -61,7 +61,7 @@ fun OneConfigInterface(
     initialRoute: Any = ModsGraph,
     /** Set when the scene is being rebuilt for a session already in progress so its search survives */
     resuming: Boolean = false,
-    /** Set when [initialRoute] is a page the user was already on which is put back without a transition */
+    /** Set when [initialRoute] is a page the user was already on which is put back without a transition and keeps its search */
     restoring: Boolean = false,
     openRevision: Int = 0,
     onCloseRequest: () -> Unit = {},
@@ -75,11 +75,8 @@ fun OneConfigInterface(
 
     LaunchedEffect(initialRoute, openRevision) {
         val alreadyThere = initialRoute == LocalNavController.wrapper.currentRoute
-        if (!resuming) {
-            ShellState.globalSearchActive = false
-            ShellState.searchQuery = ""
-            ShellState.showSearchField = false
-        }
+        val keepSearch = resuming || restoring
+        if (!keepSearch) ShellState.searchQuery = ""
 
         ShellState.openingTransitionTarget = null
         ShellState.awaitingInitialRoute = !alreadyThere
@@ -107,10 +104,10 @@ fun OneConfigInterface(
                 }
             }
             try {
-                LocalNavController.wrapper.navigate(initialRoute, clearSearch = !resuming)
+                LocalNavController.wrapper.navigate(initialRoute, clearSearch = !keepSearch)
             } catch (t: Throwable) {
                 LOGGER.error("Failed to open the OneConfig UI on {}, falling back to the mods page", initialRoute, t)
-                runCatching { LocalNavController.wrapper.navigate(ModsGraph, clearSearch = !resuming) }
+                runCatching { LocalNavController.wrapper.navigate(ModsGraph) }
             }
             ShellState.awaitingInitialRoute = false
         } else {

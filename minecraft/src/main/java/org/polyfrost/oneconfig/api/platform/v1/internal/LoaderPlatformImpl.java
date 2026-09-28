@@ -26,11 +26,10 @@
 
 package org.polyfrost.oneconfig.api.platform.v1.internal;
 
+import java.nio.file.Path;
 import net.fabricmc.loader.impl.launch.FabricLauncherBase;
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.platform.v1.LoaderPlatform;
-
-import java.nio.file.Path;
 
 public class LoaderPlatformImpl implements LoaderPlatform {
     @Override

@@ -1,18 +1,5 @@
 package org.polyfrost.oneconfig.internal.mixin.skia;
 
-//? if > 1.8.9 {
-import net.minecraft.client.gui.screens.LoadingOverlay;
-//? if >= 1.21.11 {
-import net.minecraft.util.Util;
-//?} else
-//import net.minecraft.Util;
-//?} else {
-/*import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.TitleScreen;
-import org.lwjgl.opengl.Display;
-*///?}
 import org.polyfrost.oneconfig.internal.ui.compose.ComposePreloader;
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import org.spongepowered.asm.mixin.Final;
@@ -22,6 +9,26 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+//? if >= 1.21.11 {
+import net.minecraft.util.Util;
+//?}
+
+//? if > 1.8.9 {
+import net.minecraft.client.gui.screens.LoadingOverlay;
+//?}
+
+//? if < 1.21.11 && > 1.8.9 {
+/*import net.minecraft.Util;
+*///?}
+
+//? if = 1.8.9 {
+/*import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.TitleScreen;
+import org.lwjgl.opengl.Display;
+*///?}
 
 //~ if = 1.8.9 'LoadingOverlay' -> 'Minecraft'
 @Mixin(LoadingOverlay.class)

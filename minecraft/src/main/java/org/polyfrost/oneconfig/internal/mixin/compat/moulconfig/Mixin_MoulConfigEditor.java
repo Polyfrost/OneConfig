@@ -1,10 +1,10 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
 //? moul_compat {
-
 import io.github.notenoughupdates.moulconfig.Config;
 import io.github.notenoughupdates.moulconfig.gui.MoulConfigEditor;
 import io.github.notenoughupdates.moulconfig.processor.ProcessedCategory;
+import java.util.LinkedHashMap;
 import org.polyfrost.oneconfig.internal.compat.MoulConfigCompat;
 import org.polyfrost.oneconfig.relocator.annotations.MoulConfig;
 import org.polyfrost.oneconfig.relocator.annotations.RelocatedMixin;
@@ -15,8 +15,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.LinkedHashMap;
 
 @Pseudo
 @MoulConfig

@@ -26,9 +26,8 @@
 
 package org.polyfrost.oneconfig.api.platform.v1;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.nio.file.Path;
+import org.jetbrains.annotations.NotNull;
 
 public interface LoaderPlatform {
     void addToClasspath(@NotNull Path path);

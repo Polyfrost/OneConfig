@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.search
 
+import kotlin.math.abs
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 
 internal object DefaultSearchProvider : SearchProvider {
@@ -60,7 +61,7 @@ private fun levenshtein(a: String, b: String, max: Int): Int {
     if (a == b) return 0
     if (a.isEmpty()) return b.length
     if (b.isEmpty()) return a.length
-    if (kotlin.math.abs(a.length - b.length) > max) return max + 1
+    if (abs(a.length - b.length) > max) return max + 1
     var prev = IntArray(b.length + 1) { it }
     var curr = IntArray(b.length + 1)
     for (i in 1..a.length) {

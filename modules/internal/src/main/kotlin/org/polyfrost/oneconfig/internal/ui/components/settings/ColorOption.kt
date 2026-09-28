@@ -44,14 +44,16 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import kotlin.math.abs
+import kotlin.math.roundToInt
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
@@ -63,7 +65,6 @@ import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
-import kotlin.math.roundToInt
 
 private val PickerShape @Composable get() = LocalTheme.current.popupShape
 
@@ -88,7 +89,7 @@ private fun colorToHsb(color: Color): FloatArray {
 private fun hsbToColor(hue: Float, saturation: Float, brightness: Float, alpha: Float = 1f): Color {
     val h = hue / 60f
     val c = brightness * saturation
-    val x = c * (1f - kotlin.math.abs(h.mod(2f) - 1f))
+    val x = c * (1f - abs(h.mod(2f) - 1f))
     val m = brightness - c
     val (r, g, b) = when {
         h < 1f -> Triple(c, x, 0f)
@@ -192,7 +193,7 @@ fun ColorOption(data: ColorOptionData) {
                 if (data.alpha) it else it.copy(alpha = 1f)
             }
 
-            is Int -> Color(v)
+            is Int -> Color(v).let { if (data.alpha) it else it.copy(alpha = 1f) }
             is java.awt.Color -> Color(
                 v.red / 255f,
                 v.green / 255f,
@@ -223,7 +224,7 @@ fun ColorOption(data: ColorOptionData) {
         currentColor = color
         @Suppress("UNCHECKED_CAST")
         when {
-            data.prop.type == Int::class.java || data.prop.type == Int::class.javaPrimitiveType ->
+            data.prop.type == Int::class.javaObjectType || data.prop.type == Int::class.javaPrimitiveType ->
                 (data.prop as Property<Any>).set(color.toArgb())
 
             data.prop.type == PolyColor::class.java -> {

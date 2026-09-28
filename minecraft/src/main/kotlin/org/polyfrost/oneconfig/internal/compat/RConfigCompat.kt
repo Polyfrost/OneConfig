@@ -3,23 +3,12 @@ package org.polyfrost.oneconfig.internal.compat
 //? rconfig_compat {
 /*import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfig
 import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigButton
-//? >= 1.21.8 {
-import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigCategory
-import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigElement
-import com.teamresourceful.resourcefulconfig.api.types.elements.ResourcefulConfigEntryElement
-//? } else {
-/*import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigEntry
-*///? }
-import com.teamresourceful.resourcefulconfig.api.types.info.Translatable
 import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigObjectEntry
 import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigValueEntry
+import com.teamresourceful.resourcefulconfig.api.types.info.Translatable
 import com.teamresourceful.resourcefulconfig.api.types.options.EntryData
 import com.teamresourceful.resourcefulconfig.api.types.options.EntryType
 import com.teamresourceful.resourcefulconfig.api.types.options.Option
-//? < 1.21.8 {
-/*import net.minecraft.client.resources.language.I18n
-import net.minecraft.util.StringRepresentable
-*///? }
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
@@ -32,8 +21,23 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.index
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.config.v1.dsl.visualizer
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
+
+//? if >= 1.21.8 {
+import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigCategory
+import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigElement
+import com.teamresourceful.resourcefulconfig.api.types.elements.ResourcefulConfigEntryElement
+import com.teamresourceful.resourcefulconfig.api.types.elements.ResourcefulConfigSeparatorElement
+//?}
+
+//? if < 1.21.8 {
+/*import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigEntry
+import net.minecraft.client.resources.language.I18n
+import net.minecraft.util.StringRepresentable
+*///?}
 
 internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/RconfigCompat") {
 
@@ -147,6 +151,12 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         tree.put(property)
     }
 
+    private fun parseSeparator(title: String, description: String?, tree: Tree, path: String, usedIds: MutableSet<String>) {
+        val property = Properties.dummy(id = uniqueId(usedIds, "$path/separator"), name = title, description = description)
+        property.visualizer = Visualizer.InfoVisualizer::class.java
+        tree.put(property)
+    }
+
     //? >= 1.21.8 {
     private fun parseAny(
         list: Iterable<ResourcefulConfigElement>,
@@ -159,6 +169,8 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
             is ResourcefulConfigCategory -> parseCategory(it, tree, path, usedIds)
             is ResourcefulConfigEntryElement -> parseAny(it, tree, path, usedIds)
             is ResourcefulConfigButton -> parseButton(it, tree, path, usedIds)
+            is ResourcefulConfigSeparatorElement ->
+                parseSeparator(it.title().toComponent().string, it.description().toComponent().string.ifBlank { null }, tree, path, usedIds)
         }
     }
 
@@ -213,6 +225,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         usedIds: MutableSet<String>,
     ) = entries.forEach { (id, entry) ->
         if (entry.options().hasOption(Option.HIDDEN)) return@forEach
+        entry.options().getOption(Option.SEPARATOR)?.let { parseSeparator(it.value, it.description, tree, path, usedIds) }
         val entryPath = "$path/${idPart(id, "entry")}"
         when (entry) {
             is ResourcefulConfigObjectEntry -> parseObject(entry, tree, entryPath, usedIds)
@@ -294,15 +307,32 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
                     builder["min"] = options.getOption(Option.RANGE).min.toFloat()
                     builder["max"] = options.getOption(Option.RANGE).max.toFloat()
                 } else {
-                    builder["min"] = Float.MIN_VALUE
+                    builder["min"] = -Float.MAX_VALUE
                     builder["max"] = Float.MAX_VALUE
                 }
 
-                if (entry.options().hasOption(Option.COLOR)) {
+                if (entry.type() == EntryType.INTEGER && options.hasOption(Option.KEYBIND)) {
+                    fun keybindOf(code: Int) = when {
+                        code <= -100 -> OneConfigKeybind(null, intArrayOf(-100 - code), KeyModifiers.NONE, 0L) { true }
+                        code > 0 -> OneConfigKeybind(intArrayOf(code), null, KeyModifiers.NONE, 0L) { true }
+                        else -> OneConfigKeybind(null, null, KeyModifiers.NONE, 0L) { true }
+                    }
+                    builder.getter = { keybindOf(entry.int) }
+                    builder.setter = setter@{ value ->
+                        val keybind = value as? OneConfigKeybind ?: return@setter
+                        entry.int = keybind.keyCodes?.firstOrNull()
+                            ?: keybind.mouseBtns?.firstOrNull()?.let { -100 - it }
+                            ?: 0
+                    }
+                    (entry.defaultValue() as? Number)?.let { builder["default"] = keybindOf(it.toInt()) }
+                    builder["singleKey"] = true
+                    Visualizer.KeybindVisualizer::class.java
+                } else if (entry.options().hasOption(Option.COLOR)) {
                     builder.setter = setter@{ color ->
                         entry.int = (color as? Int) ?: return@setter
                     }
                     builder.getter = { entry.int }
+                    if (!options.getOption(Option.COLOR).alpha) builder["noAlpha"] = true
                     Visualizer.ColorVisualizer::class.java
                 } else if (entry.options().hasOption(Option.SLIDER)) {
                     Visualizer.SliderVisualizer::class.java
@@ -312,9 +342,9 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
             }
 
             EntryType.STRING -> {
-                // TODO multiline
-                builder["validate"] =
+                builder["regex"] =
                     if (options.hasOption(Option.REGEX)) options.getOption(Option.REGEX).pattern() else null
+                builder["multiline"] = options.hasOption(Option.MULTILINE)
                 Visualizer.TextVisualizer::class.java
             }
 
@@ -354,6 +384,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
             else -> return // boolean arrays and anything else have no list equivalent
         }
 
+        if (isColor && !options.getOption(Option.COLOR).alpha) builder["noAlpha"] = true
         if (numeric) {
             val range = options.getOption(Option.RANGE)
             builder["min"] = range?.min?.toFloat() ?: -Float.MAX_VALUE
@@ -410,7 +441,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         builder["optionLabels"] = constants.map(::enumDisplayName).toTypedArray()
 
         if (options.hasOption(Option.DRAGGABLE)) {
-            // value is the full ordering of enum names
+            builder["checkable"] = true
             builder.getter = { (entry.getArray() ?: emptyArray()).mapNotNull { (it as? Enum<*>)?.name }.toTypedArray() }
             builder.setter = setter@{ value ->
                 val ordered = (value as? Array<*>)?.mapNotNull { it as? String } ?: return@setter

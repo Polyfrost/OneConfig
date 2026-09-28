@@ -26,16 +26,15 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.compose.render.PolyColor;
 import org.polyfrost.oneconfig.api.config.v1.backend.impl.FileBackend;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerializer;
-
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 

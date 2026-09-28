@@ -56,6 +56,7 @@ subprojects {
 
                     sources {
                         java { srcDir("src/test/java") }
+                        extensions.findByName("kotlin")?.let { (it as SourceDirectorySet).srcDir("src/test/kotlin") }
                         resources { srcDir("src/test/resources") }
                         compileClasspath += test.compileClasspath + main.output
                         runtimeClasspath += test.runtimeClasspath + main.output

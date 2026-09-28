@@ -26,12 +26,10 @@
 
 package org.polyfrost.oneconfig.api.event.v1;
 
-
+import java.util.function.Consumer;
 import org.polyfrost.oneconfig.api.event.v1.events.Event;
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
-
-import java.util.function.Consumer;
 
 public final class EventDelay {
 

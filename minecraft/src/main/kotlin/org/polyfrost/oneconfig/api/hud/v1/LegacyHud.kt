@@ -1,9 +1,11 @@
 package org.polyfrost.oneconfig.api.hud.v1
 
 import androidx.compose.runtime.Composable
-//? if > 1.8.9
-import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.jetbrains.annotations.ApiStatus
+
+//? if > 1.8.9 {
+import net.minecraft.client.gui.GuiGraphicsExtractor
+//?}
 
 @ApiStatus.Obsolete(since = "1.0.0")
 abstract class LegacyHud(id: String, title: String, category: Category) : Hud(id, title, category), LegacyHudMarker {

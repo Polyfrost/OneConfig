@@ -1,6 +1,11 @@
 //? axolotlclient_config_compat {
 package org.polyfrost.oneconfig.internal.compat
 
+import java.awt.Color
+import java.lang.reflect.Method
+import java.lang.reflect.Modifier
+import java.util.Collections
+import java.util.IdentityHashMap
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
@@ -16,9 +21,6 @@ import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
-import java.lang.reflect.Method
-import java.util.Collections
-import java.util.IdentityHashMap
 
 internal object AxolotlClientConfigCompat {
 
@@ -29,18 +31,20 @@ internal object AxolotlClientConfigCompat {
     private val seen: MutableSet<Any> = Collections.newSetFromMap(IdentityHashMap<Any, Boolean>())
     private val usedTreeIds = HashSet<String>()
     private val treesByOwner = HashMap<String, Int>()
+    private val ownMods = HashSet<String>()
 
     @JvmStatic
     fun addManager(manager: Any) {
         runCatching {
             if (!seen.add(manager)) return
             val mod = CompatLoader.findFirstMod()
-            if (mod != null && CompatLoader.nativeLoadedConfigs.contains(mod.id)) return
+            if (mod != null && mod.id !in ownMods && CompatLoader.nativeLoadedConfigs.contains(mod.id)) return
+            mod?.id?.let(ownMods::add)
             CompatLoader.requireTranslations(skip = true) {
                 runCatching {
                     val tree = parseManager(manager, mod) ?: return@requireTranslations
                     CompatSnapshots.register(tree)
-                    mod?.id?.let { CompatLoader.nativeLoadedConfigs.add(it) }
+                    mod?.id?.takeUnless(CompatLoader.nativeLoadedConfigs::contains)?.let(CompatLoader.nativeLoadedConfigs::add)
                 }.onFailure { LOGGER.warn("Failed to parse AxolotlClient config {}", manager, it) }
             }
         }.onFailure { LOGGER.warn("Failed to prepare an AxolotlClient config wrapper", it) }
@@ -268,40 +272,41 @@ internal object AxolotlClientConfigCompat {
     private fun colorProperty(option: Any, id: String, name: String, description: String?): Property<*> {
         val property = Properties.functional(
             getter = { awtColor(storedColor(option)) },
-            setter = { value: java.awt.Color -> writeColor(option, value) },
+            setter = { value: Color -> writeColor(option, value) },
             id = id,
             name = name,
             description = description,
-            type = java.awt.Color::class.java,
+            type = Color::class.java,
         )
         property.visualizer = Visualizer.ColorVisualizer::class.java
+        invoke(option, "getDefault")?.let { property.addMetadata("default", awtColor(it)) }
         return property
     }
 
     private fun storedColor(option: Any): Any? = invoke(option, "getOriginal") ?: read(option)
 
-    private fun awtColor(color: Any?): java.awt.Color {
-        color ?: return java.awt.Color.WHITE
+    private fun awtColor(color: Any?): Color {
+        color ?: return Color.WHITE
         val red = (invoke(color, "getRed") as? Number)?.toInt() ?: 255
         val green = (invoke(color, "getGreen") as? Number)?.toInt() ?: 255
         val blue = (invoke(color, "getBlue") as? Number)?.toInt() ?: 255
         val alpha = (invoke(color, "getAlpha") as? Number)?.toInt() ?: 255
-        return java.awt.Color(red, green, blue, alpha)
+        return Color(red, green, blue, alpha)
     }
 
-    private fun writeColor(option: Any, value: java.awt.Color) {
+    private fun writeColor(option: Any, value: Color) {
         val stored = storedColor(option) ?: return
-        val set = method(stored.javaClass, "set", 4)
-        if (set != null) {
-            runCatching { set.invoke(stored, value.red, value.green, value.blue, value.alpha) }
-                .onFailure { return }
-            write(option, stored)
-            return
-        }
+        val cls = generateSequence<Class<*>>(stored.javaClass) { it.superclass }.first { Modifier.isPublic(it.modifiers) }
+        val int = Int::class.javaPrimitiveType
         runCatching {
-            val replacement = stored.javaClass
-                .getConstructor(Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, Int::class.javaPrimitiveType)
-                .newInstance(value.red, value.green, value.blue, value.alpha)
+            val chroma = invoke(stored, "isChroma") as? Boolean ?: false
+            val speed = (invoke(stored, "getChromaSpeed") as? Number)?.toFloat() ?: 1f
+            val replacement = runCatching {
+                cls.getConstructor(int, int, int, int, Boolean::class.javaPrimitiveType, Float::class.javaPrimitiveType)
+                    .newInstance(value.red, value.green, value.blue, value.alpha, chroma, speed)
+            }.getOrElse {
+                cls.getConstructor(int, int, int, int).newInstance(value.red, value.green, value.blue, value.alpha)
+            }
             write(option, replacement)
         }.onFailure { LOGGER.warn("Failed to write an AxolotlClient color option", it) }
     }

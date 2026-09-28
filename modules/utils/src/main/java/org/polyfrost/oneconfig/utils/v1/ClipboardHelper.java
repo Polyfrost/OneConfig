@@ -26,13 +26,6 @@
 
 package org.polyfrost.oneconfig.utils.v1;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.polyfrost.oneconfig.api.platform.v1.Platform;
-
-import javax.imageio.ImageIO;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -45,6 +38,12 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import javax.imageio.ImageIO;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
 
 /**
  * Cross-platform system clipboard access

@@ -1,11 +1,12 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
 import com.mojang.blaze3d.platform.InputConstants
-import org.polyfrost.oneconfig.api.platform.v1.Platform
-//? if sdl
-import org.lwjgl.sdl.SDLKeycode.*
-
 import java.awt.event.KeyEvent
+import org.polyfrost.oneconfig.api.platform.v1.Platform
+
+//? if sdl {
+import org.lwjgl.sdl.SDLKeycode.*
+//?}
 
 internal object MinecraftKeyboardAdapter {
     private val keys get() = Platform.compatibility().keys()

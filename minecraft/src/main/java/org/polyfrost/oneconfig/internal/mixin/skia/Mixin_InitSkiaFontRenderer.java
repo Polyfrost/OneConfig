@@ -1,13 +1,11 @@
 package org.polyfrost.oneconfig.internal.mixin.skia;
 
 import net.minecraft.client.Minecraft;
-import org.polyfrost.oneconfig.internal.ui.compose.SkiaFontRenderer;
-//? if > 1.8.9 {
 import net.minecraft.server.packs.resources.ReloadableResourceManager;
+import org.polyfrost.oneconfig.internal.ui.compose.SkiaFontRenderer;
 import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Shadow;
-//?}
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;

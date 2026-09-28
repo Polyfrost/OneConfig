@@ -1,10 +1,13 @@
+//~ main_render_target
 package org.polyfrost.oneconfig.internal.ui.compose
 
-//~ main_render_target
 import com.mojang.blaze3d.pipeline.RenderTarget
 import net.minecraft.client.Minecraft
 import org.jetbrains.skia.*
+
+//? if >= 1.21.5 {
 import org.polyfrost.oneconfig.internal.ui.RenderTargetFbo
+//?}
 
 object BlurRenderer {
     private const val RADIUS_QUANTUM = 0.5f

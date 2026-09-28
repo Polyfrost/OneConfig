@@ -26,15 +26,14 @@
 
 package org.polyfrost.oneconfig.api.config.v1.collect.impl;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.config.v1.collect.PropertyCollector;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 
 public abstract class ReflectiveCollector implements PropertyCollector {
     protected static final Logger LOGGER = LogManager.getLogger("OneConfig/Config");

@@ -26,14 +26,6 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.MustBeInvokedByOverriders;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
-import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
-import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
-
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.nio.file.Path;
@@ -49,6 +41,13 @@ import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
+import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
 
 public abstract class Config {
     protected Tree tree;

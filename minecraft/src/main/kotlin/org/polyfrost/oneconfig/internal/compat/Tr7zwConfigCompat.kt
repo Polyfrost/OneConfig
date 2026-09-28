@@ -1,7 +1,16 @@
 //? tr7zw_compat {
 package org.polyfrost.oneconfig.internal.compat
 
+import java.lang.reflect.Field
+import java.lang.reflect.Method
+import java.util.function.Consumer
+import java.util.function.DoubleConsumer
+import java.util.function.DoubleSupplier
+import java.util.function.IntConsumer
+import java.util.function.IntSupplier
+import java.util.function.Supplier
 import net.minecraft.network.chat.Component
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -13,29 +22,33 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
-import java.lang.reflect.Field
-import java.util.function.Consumer
-import java.util.function.DoubleConsumer
-import java.util.function.DoubleSupplier
-import java.util.function.IntConsumer
-import java.util.function.IntSupplier
-import java.util.function.Supplier
 
 object Tr7zwConfigCompat {
 
-    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/Tr7zw-Compat")
+    private val LOGGER = LogManager.getLogger("OneConfig/Tr7zw-Compat")
 
     private const val DEFAULT_CATEGORY = "General"
+
+    private var building: ScreenTree? = null
+
+    private class ScreenTree(val screen: Any, val tree: Tree, val usedIds: MutableSet<String>)
 
     @JvmStatic
     fun parseOptionList(screen: Any, options: List<*>?) {
         runCatching {
             if (options.isNullOrEmpty()) return
+            building?.takeIf { it.screen === screen }?.let { current ->
+                if (parseOptions(options, current.tree, current.usedIds)) CompatSnapshots.register(current.tree)
+                return
+            }
             val mod = CompatLoader.findFirstMod()
             if (mod != null && CompatLoader.nativeLoadedConfigs.contains(mod.id)) {
                 return
             }
-            val tree = parseScreen(screen, options, mod) ?: return
+            val tree = createTree(screen, mod)
+            val usedIds = HashSet<String>()
+            if (!parseOptions(options, tree, usedIds)) return
+            building = ScreenTree(screen, tree, usedIds)
             CompatSnapshots.register(tree)
             CompatLoader.markFirstModAsSkip()
         }.onFailure {
@@ -43,7 +56,7 @@ object Tr7zwConfigCompat {
         }
     }
 
-    private fun parseScreen(screen: Any, options: List<*>, mod: ModInfo?): Tree? {
+    private fun createTree(screen: Any, mod: ModInfo?): Tree {
         val tree = Tree.tree()
         tree.id = mod?.id ?: screen.javaClass.name
         tree.title = mod?.name?.takeIf { it.isNotBlank() }
@@ -61,11 +74,13 @@ object Tr7zwConfigCompat {
         findMethod(screen.javaClass, "reset")?.let { resetMethod ->
             tree.addMetadata(CompatSnapshots.CUSTOM_RESET_METADATA, Runnable { resetMethod.invoke(screen) })
         }
+        return tree
+    }
 
+    private fun parseOptions(options: List<*>, tree: Tree, usedIds: MutableSet<String>): Boolean {
         var category = DEFAULT_CATEGORY
         var categoryPath = idPart(DEFAULT_CATEGORY, "general")
         var added = false
-        val usedIds = HashSet<String>()
         for (option in options) {
             if (option == null) continue
             if (option.javaClass.simpleName == "SplitLine") {
@@ -79,7 +94,7 @@ object Tr7zwConfigCompat {
             }.onFailure { LOGGER.warn("Failed to parse tr7zw option", it) }
         }
 
-        return if (added) tree else null
+        return added
     }
 
     private fun parseOption(
@@ -154,11 +169,12 @@ object Tr7zwConfigCompat {
         val update = recordComponent(option, "update") as DoubleConsumer
         val min = (recordComponent(option, "min") as Number).toFloat()
         val max = (recordComponent(option, "max") as Number).toFloat()
+        val step = (recordComponent(option, "steps") as? Number)?.toFloat()?.takeIf { it > 0f }
         return OptionBuilder(
             getter = { current.asDouble.toFloat() },
             setter = { v -> update.accept((v as Number).toDouble()) },
             visualizer = Visualizer.SliderVisualizer::class.java,
-            metadata = mapOf("min" to min, "max" to max),
+            metadata = if (step != null) mapOf("min" to min, "max" to max, "step" to step) else mapOf("min" to min, "max" to max),
         )
     }
 
@@ -210,7 +226,7 @@ object Tr7zwConfigCompat {
         return null
     }
 
-    private fun findMethod(cls: Class<*>, name: String): java.lang.reflect.Method? {
+    private fun findMethod(cls: Class<*>, name: String): Method? {
         var current: Class<*>? = cls
         while (current != null && current != Any::class.java) {
             current.declaredMethods.firstOrNull { it.name == name && it.parameterCount == 0 }

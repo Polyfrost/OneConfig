@@ -1,12 +1,12 @@
 package org.polyfrost.oneconfig.internal.ui.keybind
 
 import androidx.compose.runtime.mutableStateMapOf
-import org.polyfrost.oneconfig.api.config.v1.ConfigManager
-import org.slf4j.LoggerFactory
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+import org.slf4j.LoggerFactory
 
 object KeybindGroupCollapseStore {
     private val LOGGER = LoggerFactory.getLogger("OneConfig/KeybindCollapse")

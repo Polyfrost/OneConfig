@@ -7,7 +7,7 @@ import net.fabricmc.loom.task.NestJarsAction
 // NOTE: bump the prefix whenever the compose version changes: the "+compose.x.y.z" part is semver
 // build metadata, which version comparisons ignore, so updaters and dependency constraints
 // only see the prefix
-version = "1.0.4+compose.${libs.versions.compose.asProvider().get()}"
+version = "1.0.5+compose.${libs.versions.compose.asProvider().get()}"
 
 repositories {
     maven("https://redirector.kotlinlang.org/maven/compose-dev")

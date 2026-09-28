@@ -26,18 +26,17 @@
 
 package org.polyfrost.oneconfig.api.event.v1.invoke.impl;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import org.polyfrost.oneconfig.api.event.v1.EventException;
 import org.polyfrost.oneconfig.api.event.v1.events.Event;
 import org.polyfrost.oneconfig.api.event.v1.internal.EventClassValidator;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventCollector;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
-
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 public class AnnotationEventMapper implements EventCollector {
     @Override

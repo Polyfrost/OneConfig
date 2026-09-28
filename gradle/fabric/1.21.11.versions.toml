@@ -7,10 +7,6 @@ odin = "0.2.1"
 skyblocker = "7MTtY24j"
 apec = "UpS7y8IB"
 
-skycubed = "HK6ybfV8"
-meowdding-lib = "4.1.5"
-skyblock-api = "4.0.8"
-
 vulkanmod = "0.6.8+1.21.11"
 
 [libraries]
@@ -24,10 +20,6 @@ apec = { module = "maven.modrinth:apec", version.ref = "apec" }
 moulconfig = { module = "org.notenoughupdates.moulconfig:common", version.ref = "moulconfig" }
 
 vulkanmod = { module = "maven.modrinth:vulkanmod", version.ref = "vulkanmod" }
-
-skycubed = { module = "maven.modrinth:skycubed", version.ref = "skycubed" }
-meowdding-lib = { module = "me.owdding.meowdding-lib:meowdding-lib", version.ref = "meowdding-lib" }
-skyblock-api = { module = "tech.thatgravyboat:skyblock-api", version.ref = "skyblock-api" }
 
 [bundles]
 compat = ["modmenu", "yacl", "dandelion", "odin", "skyblocker", "apec"]

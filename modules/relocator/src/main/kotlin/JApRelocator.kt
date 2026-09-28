@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.relocator
 
-import org.polyfrost.oneconfig.relocator.SourceFileHelper.replacePatterns
 import java.util.*
 import javax.annotation.processing.AbstractProcessor
 import javax.annotation.processing.RoundEnvironment
@@ -11,6 +10,7 @@ import javax.tools.Diagnostic
 import javax.tools.JavaFileObject
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.toPath
+import org.polyfrost.oneconfig.relocator.SourceFileHelper.replacePatterns
 
 /**
  * The relocator for java source files

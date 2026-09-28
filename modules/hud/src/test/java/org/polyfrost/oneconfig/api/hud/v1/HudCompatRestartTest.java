@@ -1,15 +1,16 @@
 package org.polyfrost.oneconfig.api.hud.v1;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.config.v1.Property;
-
-import java.lang.reflect.Field;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -93,7 +94,7 @@ class HudCompatRestartTest {
             f.setAccessible(true);
             Object v = f.get(inst);
             if (v instanceof Map) ((Map<?, ?>) v).clear();
-            else if (v instanceof java.util.Set) ((java.util.Set<?>) v).clear();
+            else if (v instanceof Set) ((Set<?>) v).clear();
         }
     }
 
@@ -109,7 +110,7 @@ class HudCompatRestartTest {
         Field f = CompatSnapshots.class.getDeclaredField("store");
         f.setAccessible(true);
         Object store = f.get(CompatSnapshots.INSTANCE);
-        java.lang.reflect.Method load = store.getClass().getMethod("load", String.class);
+        Method load = store.getClass().getMethod("load", String.class);
         @SuppressWarnings("unchecked")
         Map<String, Map<String, Object>> snap =
                 (Map<String, Map<String, Object>>) load.invoke(store, ConfigManager.activeProfile());

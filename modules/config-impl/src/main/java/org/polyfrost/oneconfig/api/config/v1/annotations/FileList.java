@@ -26,9 +26,8 @@
 
 package org.polyfrost.oneconfig.api.config.v1.annotations;
 
-import org.polyfrost.oneconfig.api.config.v1.Visualizer;
-
 import java.lang.annotation.*;
+import org.polyfrost.oneconfig.api.config.v1.Visualizer;
 
 /**
  * Renders a user-editable list of file (or directory) pickers

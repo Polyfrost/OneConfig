@@ -26,10 +26,9 @@
 
 package org.polyfrost.oneconfig.api.config.v1.serialize.adapter;
 
-import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
-
 import java.util.List;
 import java.util.Map;
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
 
 /**
  * The Config API is equipped with an automatic deserializer (see {@link ObjectSerializer#serialize(Object, boolean)})

@@ -1,6 +1,13 @@
 //? walksylib_compat {
 package org.polyfrost.oneconfig.internal.compat
 
+import java.awt.Color
+import java.io.File
+import java.lang.reflect.Method
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardCopyOption
+import net.minecraft.client.Minecraft
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
@@ -13,7 +20,6 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
-import net.minecraft.client.Minecraft
 
 object WalksyLibCompat {
 
@@ -40,8 +46,7 @@ object WalksyLibCompat {
         val modid = invoke(metadata, "getId") as? String ?: return null
         if (CompatLoader.nativeLoadedConfigs.contains(modid)) return null
 
-        val hasConfig = invoke(mod, "hasConfig") as? Boolean ?: false
-        if (!hasConfig) return null
+        if (invoke(mod, "hasConfig") == false) return null
         val config = invoke(mod, "getConfig") ?: return null
 
         val categories = invoke(config, "categories") as? Collection<*> ?: return null
@@ -113,10 +118,12 @@ object WalksyLibCompat {
             return parseStringList(option, name, description, uniqueId(usedIds, optionPath), categoryName, subcategoryName, tree)
         }
 
+        val min = invoke(option, "getMin") as? Number
+        val max = invoke(option, "getMax") as? Number
         val visualizer: Class<out Visualizer> = when {
             type == java.lang.Boolean::class.java -> Visualizer.SwitchVisualizer::class.java
-            type == Integer::class.java || type == java.lang.Double::class.java || type == java.lang.Float::class.java ->
-                Visualizer.SliderVisualizer::class.java
+            type in NUMBER_TYPES ->
+                if (min != null && max != null) Visualizer.SliderVisualizer::class.java else Visualizer.NumberVisualizer::class.java
             type == String::class.java -> Visualizer.TextVisualizer::class.java
             Enum::class.java.isAssignableFrom(type) -> Visualizer.DropdownVisualizer::class.java
             else -> return false // pixel grid and other WalksyLib-only types
@@ -145,9 +152,9 @@ object WalksyLibCompat {
         when {
             Enum::class.java.isAssignableFrom(type) ->
                 property.addMetadata("options", type.enumConstants?.map { it.toString() } ?: emptyList<String>())
-            visualizer == Visualizer.SliderVisualizer::class.java -> {
-                (invoke(option, "getMin") as? Number)?.let { property.addMetadata("min", it.toFloat()) }
-                (invoke(option, "getMax") as? Number)?.let { property.addMetadata("max", it.toFloat()) }
+            type in NUMBER_TYPES -> {
+                property.addMetadata("min", min?.toFloat() ?: -Float.MAX_VALUE)
+                property.addMetadata("max", max?.toFloat() ?: Float.MAX_VALUE)
                 (invoke(option, "getIncrement") as? Number)?.let { property.addMetadata("step", it.toFloat()) }
             }
         }
@@ -155,6 +162,11 @@ object WalksyLibCompat {
         tree.put(property)
         return true
     }
+
+    private val NUMBER_TYPES = setOf<Class<*>>(
+        Integer::class.java, java.lang.Long::class.java, java.lang.Short::class.java, java.lang.Byte::class.java,
+        java.lang.Double::class.java, java.lang.Float::class.java,
+    )
 
     private const val COLOR_CLASS = "main.walksy.lib.core.config.local.options.type.WalksyLibColor"
 
@@ -187,10 +199,10 @@ object WalksyLibCompat {
         val setAdditions = colorClass.methods.firstOrNull { it.name == "setAdditions" && it.parameterCount == 1 }
             ?.apply { isAccessible = true }
 
-        fun toColor(wc: Any?): java.awt.Color? {
+        fun toColor(wc: Any?): Color? {
             wc ?: return null
             return runCatching {
-                java.awt.Color(
+                Color(
                     getRed.invoke(wc) as Int,
                     getGreen.invoke(wc) as Int,
                     getBlue.invoke(wc) as Int,
@@ -200,7 +212,7 @@ object WalksyLibCompat {
         }
 
         val property = Properties.functional(
-            { runCatching { toColor(getValueM.invoke(option)) }.getOrNull() ?: java.awt.Color.WHITE },
+            { runCatching { toColor(getValueM.invoke(option)) }.getOrNull() ?: Color.WHITE },
             { value ->
                 runCatching {
                     val wc = ctor.newInstance(value.red, value.green, value.blue, value.alpha)
@@ -215,7 +227,7 @@ object WalksyLibCompat {
             id,
             name,
             description,
-            java.awt.Color::class.java,
+            Color::class.java,
         )
 
         property.addMetadata("visualizer", Visualizer.ColorVisualizer::class.java)
@@ -226,7 +238,7 @@ object WalksyLibCompat {
         return true
     }
 
-    private fun colorMethod(colorClass: Class<*>, name: String): java.lang.reflect.Method? =
+    private fun colorMethod(colorClass: Class<*>, name: String): Method? =
         colorClass.methods.firstOrNull { it.name == name && it.parameterCount == 0 }?.apply { isAccessible = true }
 
     private const val SPRITE_CLASS = "main.walksy.lib.core.utils.IdentifierWrapper"
@@ -263,7 +275,7 @@ object WalksyLibCompat {
             it.name == "loadTextureFromCache" && it.parameterCount == 1
         }?.apply { isAccessible = true } ?: return false
 
-        fun cachedDir(): java.nio.file.Path? = runCatching { cachedImageDirM.invoke(null) as? java.nio.file.Path }.getOrNull()
+        fun cachedDir(): Path? = runCatching { cachedImageDirM.invoke(null) as? Path }.getOrNull()
 
         val defaultWrapper = invoke(option, "getDefaultValue")
         val defaultString = defaultWrapper?.let { runCatching { getFileName.invoke(it) as? String }.getOrNull() }
@@ -286,12 +298,12 @@ object WalksyLibCompat {
                         }
                         return@runCatching
                     }
-                    val source = java.io.File(path)
+                    val source = File(path)
                     if (!source.isFile) return@runCatching
                     val fileName = source.name
                     val dest = cachedDir()?.resolve(fileName)
                     if (dest != null && source.toPath().toAbsolutePath() != dest.toAbsolutePath()) {
-                        java.nio.file.Files.copy(source.toPath(), dest, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+                        Files.copy(source.toPath(), dest, StandardCopyOption.REPLACE_EXISTING)
                     }
                     Minecraft.getInstance().execute {
                         runCatching {
@@ -382,6 +394,9 @@ object WalksyLibCompat {
 
     private fun coerce(value: Any?, type: Class<*>): Any? = when {
         value is Number && type == Integer::class.java -> value.toInt()
+        value is Number && type == java.lang.Long::class.java -> value.toLong()
+        value is Number && type == java.lang.Short::class.java -> value.toInt().coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
+        value is Number && type == java.lang.Byte::class.java -> value.toInt().coerceIn(Byte.MIN_VALUE.toInt(), Byte.MAX_VALUE.toInt()).toByte()
         value is Number && type == java.lang.Double::class.java -> value.toDouble()
         value is Number && type == java.lang.Float::class.java -> value.toFloat()
         else -> value

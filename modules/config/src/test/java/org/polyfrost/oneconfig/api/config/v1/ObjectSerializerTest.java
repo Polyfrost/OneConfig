@@ -26,17 +26,16 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
-import org.junit.jupiter.api.Test;
-import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
-
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
 
 import static org.junit.jupiter.api.Assertions.*;
-
 
 public class ObjectSerializerTest {
     private final ObjectSerializer objectSerializer = ObjectSerializer.INSTANCE;
@@ -217,14 +216,14 @@ public class ObjectSerializerTest {
 
     @Test
     public void testOverwriteList() {
-        java.util.List<String> self = new java.util.ArrayList<>(Arrays.asList("a", "b"));
-        java.util.List<String> input = new java.util.ArrayList<>(Arrays.asList("c", "d", "e"));
+        List<String> self = new ArrayList<>(Arrays.asList("a", "b"));
+        List<String> input = new ArrayList<>(Arrays.asList("c", "d", "e"));
 
         assertSame(self, ObjectSerializer.overwrite(self, input));
         assertEquals(input, self);
         assertFalse(self.contains(null));
 
-        ObjectSerializer.overwrite(self, new java.util.ArrayList<>(List.of("f")));
+        ObjectSerializer.overwrite(self, new ArrayList<>(List.of("f")));
         assertEquals(List.of("f"), self);
     }
 
@@ -242,7 +241,7 @@ public class ObjectSerializerTest {
 
     @Test
     public void testSerializeComplexCollectionFirstElement() {
-        java.util.List<Dimension> in = Arrays.asList(new Dimension(1, 2), new Dimension(3, 4));
+        List<Dimension> in = Arrays.asList(new Dimension(1, 2), new Dimension(3, 4));
 
         Object[] asArray = (Object[]) objectSerializer.serialize(in, false, false);
         for (Object element : asArray) {

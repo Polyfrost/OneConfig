@@ -26,6 +26,11 @@
 
 package org.polyfrost.oneconfig.api.config.v1.serialize;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.*;
+import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -34,14 +39,7 @@ import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter;
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.ColorAdapter;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.*;
-import java.util.stream.Stream;
-
 import static org.polyfrost.oneconfig.utils.v1.WrappingUtils.*;
-
 
 public class ObjectSerializer {
     public static final ObjectSerializer INSTANCE = new ObjectSerializer();
@@ -416,10 +414,10 @@ public class ObjectSerializer {
         }
         if (cls.isArray()) {
             // arrays have no declared fields to iterate so copy elements in place to preserve the reference
-            int len = java.lang.reflect.Array.getLength(input);
-            if (java.lang.reflect.Array.getLength(self) != len) {
+            int len = Array.getLength(input);
+            if (Array.getLength(self) != len) {
                 // cannot resize in place so the caller must replace the reference
-                throw new SerializationException("Cannot overwrite array of length " + java.lang.reflect.Array.getLength(self) + " with array of length " + len);
+                throw new SerializationException("Cannot overwrite array of length " + Array.getLength(self) + " with array of length " + len);
             }
             //noinspection SuspiciousSystemArraycopy
             System.arraycopy(input, 0, self, 0, len);

@@ -1,8 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
 import net.minecraft.client.Minecraft
-//? if > 1.8.9
-import net.minecraft.client.gui.screens.LoadingOverlay
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent
@@ -12,6 +10,10 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 import org.slf4j.LoggerFactory
+
+//? if > 1.8.9 {
+import net.minecraft.client.gui.screens.LoadingOverlay
+//?}
 
 object ComposePreloader {
     private val LOG = LoggerFactory.getLogger(ComposePreloader::class.java)

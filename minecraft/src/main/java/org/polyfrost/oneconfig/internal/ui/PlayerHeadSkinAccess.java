@@ -2,16 +2,22 @@ package org.polyfrost.oneconfig.internal.ui;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.platform.NativeImage;
-import net.minecraft.client.Minecraft;
-//? if > 1.8.9 {
-//~if >= 1.21.11 'ResourceLocation;' -> 'Identifier;'
-import net.minecraft.resources.Identifier;
-//?} else
-//import net.minecraft.resource.Identifier;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import net.minecraft.client.Minecraft;
+import org.jetbrains.annotations.Nullable;
+
+//? if >= 1.21.11 {
+import net.minecraft.resources.Identifier;
+//?}
+
+//? if < 1.21.11 && > 1.8.9 {
+/*import net.minecraft.resources.ResourceLocation;
+*///?}
+
+//? if = 1.8.9 {
+/*import net.minecraft.resource.Identifier;
+*///?}
 
 /**
  * Resolves the local player's head out of the skin texture the game already has loaded

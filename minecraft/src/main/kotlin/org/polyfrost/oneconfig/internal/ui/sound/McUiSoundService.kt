@@ -1,20 +1,20 @@
 package org.polyfrost.oneconfig.internal.ui.sound
 
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import net.minecraft.client.Minecraft
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance
 import net.minecraft.client.resources.sounds.SimpleSoundInstance
 import net.minecraft.client.resources.sounds.SoundInstance
-//? if > 1.8.9 {
-import net.minecraft.core.Holder
-import net.minecraft.sounds.SoundEvent
-//?}
 import net.minecraft.resources.Identifier
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
-//? if > 1.8.9
+
+//? if > 1.8.9 {
+import net.minecraft.core.Holder
+import net.minecraft.sounds.SoundEvent
 import net.minecraft.util.RandomSource
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
+//?}
 
 class McUiSoundService : UiSoundService {
     private val sliderTick = AtomicInteger(0)

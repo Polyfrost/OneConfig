@@ -27,15 +27,15 @@
 package org.polyfrost.oneconfig.internal.ui.sound
 
 import com.google.gson.JsonObject
+import java.nio.file.Files
+import java.nio.file.Path
+import java.security.MessageDigest
+import java.util.concurrent.atomic.AtomicBoolean
 import net.minecraft.client.Minecraft
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.utils.v1.JsonUtils
 import org.polyfrost.oneconfig.utils.v1.Multithreading
 import org.polyfrost.oneconfig.utils.v1.NetworkUtils
-import java.nio.file.Files
-import java.nio.file.Path
-import java.security.MessageDigest
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Downloads the large UI sound files kept out of the jar (issue #627) and exposes them to Minecraft's

@@ -1,6 +1,14 @@
 //? yacl_compat {
 package org.polyfrost.oneconfig.internal.compat
 
+import java.awt.Color
+import java.lang.reflect.Method
+import java.util.function.BiFunction
+import java.util.function.Consumer
+import java.util.function.Supplier
+import net.minecraft.client.Minecraft
+import net.minecraft.world.item.Item
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
@@ -20,7 +28,7 @@ import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
 
 object YACLCompat {
 
-    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/YACL-Compat")
+    private val LOGGER = LogManager.getLogger("OneConfig/YACL-Compat")
 
     private const val FLAG_SETTLE_FRAMES = 20
 
@@ -46,7 +54,7 @@ object YACLCompat {
         }
 
         private fun scheduleDrain() {
-            val client = net.minecraft.client.Minecraft.getInstance()
+            val client = Minecraft.getInstance()
             if (!client.isSameThread) {
                 client.execute { scheduleDrain() }
                 return
@@ -70,7 +78,7 @@ object YACLCompat {
         }
 
         fun runPendingFlags() {
-            val client = net.minecraft.client.Minecraft.getInstance()
+            val client = Minecraft.getInstance()
             if (!client.isSameThread) {
                 val pending = synchronized(pendingFlags) { pendingFlags.isNotEmpty() }
                 if (pending) client.execute { runPendingFlags() }
@@ -81,14 +89,14 @@ object YACLCompat {
                 pendingFlags.toList().also { pendingFlags.clear() }
             }
             for (flag in flags) {
-                runCatching { (flag as java.util.function.Consumer<*>).let { consumeFlag(it, client) } }
+                runCatching { (flag as Consumer<*>).let { consumeFlag(it, client) } }
                     .onFailure { LOGGER.warn("Failed to run YACL option flag", it) }
             }
         }
 
         @Suppress("UNCHECKED_CAST")
-        private fun consumeFlag(flag: java.util.function.Consumer<*>, client: Any) {
-            (flag as java.util.function.Consumer<Any>).accept(client)
+        private fun consumeFlag(flag: Consumer<*>, client: Any) {
+            (flag as Consumer<Any>).accept(client)
         }
     }
 
@@ -190,7 +198,7 @@ object YACLCompat {
     ) {
         val screenFactory = category::class.java.methods
             .firstOrNull { it.name == "screen" && it.parameterCount == 0 }
-            ?.let { runCatching { it.invoke(category) as? java.util.function.BiFunction<*, *, *> }.getOrNull() }
+            ?.let { runCatching { it.invoke(category) as? BiFunction<*, *, *> }.getOrNull() }
             ?: return
 
         val tooltip = category::class.java.methods
@@ -212,11 +220,11 @@ object YACLCompat {
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun openPlaceholderScreen(screenFactory: java.util.function.BiFunction<*, *, *>, ctx: Ctx) {
+    private fun openPlaceholderScreen(screenFactory: BiFunction<*, *, *>, ctx: Ctx) {
         runCatching {
-            val client = net.minecraft.client.Minecraft.getInstance()
+            val client = Minecraft.getInstance()
             val parent = yaclScreen(ctx) ?: Platform.screen().current<Any>()
-            val screen = (screenFactory as java.util.function.BiFunction<Any?, Any?, Any?>)
+            val screen = (screenFactory as BiFunction<Any?, Any?, Any?>)
                 .apply(client, parent) ?: return@runCatching
             Platform.screen().display(screen)
         }.onFailure { LOGGER.warn("Failed to open YACL placeholder screen", it) }
@@ -413,8 +421,16 @@ object YACLCompat {
             }
         }
 
+        if (currentValue is Item) {
+            parseItemOption(
+                option, name, desc, uniqueId(usedIds, optionPath), getter, setter, defaultValue,
+                categoryName, subcategoryName, root, ctx,
+            )
+            return
+        }
+
         if (currentValue is String) {
-            val allowed = resolveDropdownStringValues(option)
+            val allowed = dropdownStringValues(resolveController(option))
             if (allowed != null && allowed.isNotEmpty()) {
                 parseStringDropdown(
                     option,
@@ -434,7 +450,8 @@ object YACLCompat {
             }
         }
 
-        val numberField = currentValue is Number && isNumberFieldController(option)
+        val numberField = currentValue is Number &&
+            (isNumberFieldController(option) || sliderRange(resolveController(option)) == null)
 
         val visualizer: Class<out Visualizer> = when {
             currentValue is Boolean -> Visualizer.SwitchVisualizer::class.java
@@ -443,7 +460,7 @@ object YACLCompat {
                 Visualizer.SliderVisualizer::class.java
             currentValue is String -> Visualizer.TextVisualizer::class.java
             currentValue is Enum<*> -> Visualizer.DropdownVisualizer::class.java
-            currentValue is java.awt.Color -> Visualizer.ColorVisualizer::class.java
+            currentValue is Color -> Visualizer.ColorVisualizer::class.java
             else -> return
         }
 
@@ -471,18 +488,18 @@ object YACLCompat {
                 resolveEnumLabels(option, values)?.let { property.addMetadata("optionLabels", it) }
             }
             numberField -> {
-                val range = resolveSliderRange(option)
+                val range = sliderRange(resolveController(option))
                 val type = currentValue.javaClass
                 property.addMetadata("min", boundedFloat(range?.first, type) ?: -Float.MAX_VALUE)
                 property.addMetadata("max", boundedFloat(range?.second, type) ?: Float.MAX_VALUE)
             }
             currentValue is Number -> {
-                val range = resolveSliderRange(option)
+                val range = sliderRange(resolveController(option))
                 property.addMetadata("min", range?.first ?: 0f)
                 property.addMetadata("max", range?.second ?: 100f)
                 range?.third?.let { property.addMetadata("step", it) }
             }
-            currentValue is java.awt.Color -> {
+            currentValue is Color -> {
                 if (resolveAllowAlpha(option) == false) property.addMetadata("noAlpha", true)
             }
         }
@@ -506,7 +523,9 @@ object YACLCompat {
         root: Tree,
         ctx: Ctx,
     ) {
-        val element = currentValue.firstOrNull { it != null }?.javaClass ?: String::class.java
+        val element = currentValue.firstOrNull { it != null }?.javaClass
+            ?: initialEntryValue(option)?.javaClass
+            ?: String::class.java
 
         resolveEnumEntryValues(option, currentValue, defaultValue)?.let { values ->
             parseEnumListOption(
@@ -517,33 +536,37 @@ object YACLCompat {
         }
 
         val numeric = Number::class.java.isAssignableFrom(element)
-        val color = element == java.awt.Color::class.java
+        val color = element == Color::class.java
+        val item = Item::class.java.isAssignableFrom(element)
 
         val visualizer: Class<out Visualizer> = when {
             color -> Visualizer.ColorListVisualizer::class.java
             numeric -> Visualizer.NumberListVisualizer::class.java
+            item -> Visualizer.ItemListVisualizer::class.java
             element == String::class.java -> Visualizer.TextListVisualizer::class.java
             else -> return // record entries have no OneConfig list equivalent
         }
 
         fun read(value: Any?): Any? = when {
-            color -> (value as? java.awt.Color)?.rgb ?: -1
+            color -> (value as? Color)?.rgb ?: -1
             numeric -> value as? Number ?: 0
+            item -> CompatItems.id(value)
             else -> value?.toString() ?: ""
         }
 
         fun write(value: Any?): Any? = when {
-            color -> java.awt.Color((value as? Number)?.toInt() ?: -1, true)
+            color -> Color((value as? Number)?.toInt() ?: -1, true)
             numeric -> coerceNumber(value, element)
+            item -> CompatItems.byId(value)
             else -> value?.toString() ?: ""
         }
 
         val property = Properties.functional(
             getter = {
                 val list = runCatching { getter() as? List<*> }.getOrNull() ?: emptyList<Any?>()
-                ArrayList(list.map(::read))
+                list.mapNotNullTo(ArrayList(), ::read)
             },
-            setter = { value: List<Any?> -> setter(value.mapTo(ArrayList(), ::write)) },
+            setter = { value: List<Any?> -> setter(value.mapNotNullTo(ArrayList(), ::write)) },
             id = id,
             name = name,
             description = desc,
@@ -551,13 +574,17 @@ object YACLCompat {
         )
 
         property.addMetadata("visualizer", visualizer)
-        (defaultValue as? List<*>)?.let { property.addMetadata("default", ArrayList(it.map(::read))) }
+        (defaultValue as? List<*>)?.let { property.addMetadata("default", it.mapNotNullTo(ArrayList(), ::read)) }
         maximumNumberOfEntries(option)?.let { property.addMetadata("maxEntries", it) }
         if (numeric) {
-            val range = resolveEntryRange(option)
+            val range = sliderRange(resolveEntryController(option))
             property.addMetadata("min", range?.first ?: -Float.MAX_VALUE)
             property.addMetadata("max", range?.second ?: Float.MAX_VALUE)
             range?.third?.let { property.addMetadata("step", it) }
+        }
+        if (element == String::class.java) {
+            dropdownStringValues(resolveEntryController(option))?.takeIf { it.isNotEmpty() }
+                ?.let { allowed -> property.addMetadata("regex", allowed.joinToString("|") { Regex.escape(it) }) }
         }
         property.category = categoryName
         property.subcategory = subcategoryName
@@ -601,6 +628,38 @@ object YACLCompat {
         property.addMetadata("checkable", true)
         property.addMetadata("optionLabels", values.map { it.toString() })
         (defaultValue as? List<*>)?.let { property.addMetadata("default", namesOf(it)) }
+        property.category = categoryName
+        property.subcategory = subcategoryName
+
+        registerProperty(property, option, ctx)
+        root.put(property)
+    }
+
+    private fun parseItemOption(
+        option: Any,
+        name: String,
+        desc: String?,
+        id: String,
+        getter: () -> Any?,
+        setter: (Any?) -> Unit,
+        defaultValue: Any?,
+        categoryName: String,
+        subcategoryName: String?,
+        root: Tree,
+        ctx: Ctx,
+    ) {
+        val property = Properties.functional(
+            getter = { ArrayList<Any?>(listOfNotNull(CompatItems.id(runCatching { getter() }.getOrNull()))) },
+            setter = { value: List<Any?> -> value.firstOrNull()?.let(CompatItems::byId)?.let(setter) },
+            id = id,
+            name = name,
+            description = desc,
+            type = List::class.java,
+        )
+
+        property.addMetadata("visualizer", Visualizer.ItemListVisualizer::class.java)
+        property.addMetadata("maxEntries", 1)
+        CompatItems.id(defaultValue)?.let { property.addMetadata("default", arrayListOf(it)) }
         property.category = categoryName
         property.subcategory = subcategoryName
 
@@ -758,8 +817,8 @@ object YACLCompat {
         return if (value <= -limit || value >= limit) null else value
     }
 
-    private fun resolveDropdownStringValues(option: Any): List<String>? {
-        val controller = resolveController(option) ?: return null
+    private fun dropdownStringValues(controller: Any?): List<String>? {
+        if (controller == null) return null
         val cls = controller::class.java
         if (!inheritsFrom(cls, "DropdownStringController")) return null
         if (inheritsFrom(cls, "EnumDropdownController")) return null
@@ -816,11 +875,11 @@ object YACLCompat {
         var cls: Class<*>? = option::class.java
         while (cls != null && cls != Any::class.java) {
             val field = cls.declaredFields.firstOrNull {
-                it.name == "initialValue" && java.util.function.Supplier::class.java.isAssignableFrom(it.type)
+                it.name == "initialValue" && Supplier::class.java.isAssignableFrom(it.type)
             }
             if (field != null) {
                 return runCatching {
-                    (field.apply { isAccessible = true }.get(option) as? java.util.function.Supplier<*>)?.get()
+                    (field.apply { isAccessible = true }.get(option) as? Supplier<*>)?.get()
                 }.getOrNull()
             }
             cls = cls.superclass
@@ -909,15 +968,6 @@ object YACLCompat {
         return if (max <= 0 || max == Int.MAX_VALUE) 0 else max
     }
 
-    private fun resolveEntryRange(option: Any): Triple<Float, Float, Float?>? {
-        val optionsMethod = option::class.java.methods.firstOrNull {
-            it.name == "options" && it.parameterCount == 0
-        } ?: return null
-        val entries = runCatching { optionsMethod.invoke(option) as? Collection<*> }.getOrNull() ?: return null
-        val entry = entries.firstOrNull { it != null } ?: return null
-        return resolveSliderRange(entry)
-    }
-
     private fun coerceNumber(value: Any?, type: Class<*>): Any {
         val number = value as? Number ?: 0
         return when (type) {
@@ -997,7 +1047,7 @@ object YACLCompat {
         } ?: return null
         // some YACL versions wrap the controller in a Supplier
         var controller = runCatching { controllerMethod.invoke(option) }.getOrNull() ?: return null
-        (controller as? java.util.function.Supplier<*>)?.let { controller = it.get() ?: return null }
+        (controller as? Supplier<*>)?.let { controller = it.get() ?: return null }
         return controller
     }
 
@@ -1016,7 +1066,7 @@ object YACLCompat {
         return if (cls.isEnum) cls else cls.superclass?.takeIf { it.isEnum }
     }
 
-    private fun resolveValueFormatter(controller: Any): Pair<Any, java.lang.reflect.Method>? {
+    private fun resolveValueFormatter(controller: Any): Pair<Any, Method>? {
         var cls: Class<*>? = controller::class.java
         while (cls != null && cls != Any::class.java) {
             val field = cls.declaredFields.firstOrNull { it.type.name.endsWith("ValueFormatter") }
@@ -1033,9 +1083,8 @@ object YACLCompat {
         return null
     }
 
-    private fun resolveSliderRange(option: Any): Triple<Float, Float, Float?>? {
-        val controller = resolveController(option) ?: return null
-        val c = controller
+    private fun sliderRange(controller: Any?): Triple<Float, Float, Float?>? {
+        val c = controller ?: return null
         val min = invokeNumber(c, "min") ?: return null
         val max = invokeNumber(c, "max") ?: return null
         val step = invokeNumber(c, "interval") ?: invokeNumber(c, "step")

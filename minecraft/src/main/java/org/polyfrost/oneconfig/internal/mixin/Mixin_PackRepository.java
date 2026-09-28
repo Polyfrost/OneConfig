@@ -26,13 +26,8 @@
 
 package org.polyfrost.oneconfig.internal.mixin;
 
-//? if > 1.8.9 {
-import net.minecraft.client.resources.ClientPackSource;
-import net.minecraft.server.packs.repository.PackRepository;
-//?} else {
-/*import net.ornithemc.osl.resource.loader.api.resource.ResourceType;
-import net.ornithemc.osl.resource.loader.impl.resource.repository.SimpleResourcePackRepository;
-*///?}
+import java.util.LinkedHashSet;
+import java.util.Set;
 import net.minecraft.server.packs.repository.RepositorySource;
 import org.polyfrost.oneconfig.internal.ui.sound.OneConfigSoundPackSource;
 import org.spongepowered.asm.mixin.Final;
@@ -43,9 +38,15 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-//? if > 1.8.9
-import java.util.LinkedHashSet;
-import java.util.Set;
+//? if > 1.8.9 {
+import net.minecraft.client.resources.ClientPackSource;
+import net.minecraft.server.packs.repository.PackRepository;
+//?}
+
+//? if = 1.8.9 {
+/*import net.ornithemc.osl.resource.loader.api.resource.ResourceType;
+import net.ornithemc.osl.resource.loader.impl.resource.repository.SimpleResourcePackRepository;
+*///?}
 
 //~ if = 1.8.9 'PackRepository' -> 'SimpleResourcePackRepository'
 @Mixin(PackRepository.class)

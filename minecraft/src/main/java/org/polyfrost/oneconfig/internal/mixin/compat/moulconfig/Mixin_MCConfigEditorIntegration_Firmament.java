@@ -1,16 +1,14 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
 //? moul_compat {
-
+import java.lang.reflect.Field;
+import java.util.Collection;
 import org.polyfrost.oneconfig.internal.compat.MoulConfigDispatch;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.lang.reflect.Field;
-import java.util.Collection;
 
 @Pseudo
 @Mixin(targets = "moe.nea.firmament.compat.moulconfig.MCConfigEditorIntegration", remap = false)

@@ -20,17 +20,17 @@
 package gg.essential.gradle.util
 
 import com.google.common.base.Stopwatch
+import java.io.File
+import java.io.OutputStream
+import java.security.MessageDigest
+import java.util.jar.JarOutputStream
+import java.util.zip.ZipEntry
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.FileCollection
 import org.gradle.api.logging.Logger
 import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.api.tasks.util.PatternSet
-import java.io.File
-import java.io.OutputStream
-import java.security.MessageDigest
-import java.util.jar.JarOutputStream
-import java.util.zip.ZipEntry
 
 /**
  * Bundles all dependencies from the given [configuration] into a single dedicated jar and returns a file collection

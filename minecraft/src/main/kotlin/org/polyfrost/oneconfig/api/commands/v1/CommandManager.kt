@@ -10,6 +10,7 @@ import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.builder.RequiredArgumentBuilder
 import com.mojang.brigadier.tree.LiteralCommandNode
+import java.util.*
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 import org.apache.logging.log4j.LogManager
@@ -17,8 +18,6 @@ import org.apache.logging.log4j.Logger
 import org.polyfrost.oneconfig.api.commands.v1.factories.CommandFactory
 import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.AnnotationCommandFactory
 import org.polyfrost.oneconfig.utils.v1.WrappingUtils
-import java.util.*
-
 
 /**
  * Handles the registration of OneConfig commands

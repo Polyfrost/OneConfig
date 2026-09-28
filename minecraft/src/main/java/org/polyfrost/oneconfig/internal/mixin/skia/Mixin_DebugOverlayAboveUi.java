@@ -1,16 +1,20 @@
+//~ gui_graphics
 package org.polyfrost.oneconfig.internal.mixin.skia;
 
-//~ gui_graphics
-//? if > 1.8.9 {
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-//?} else
-//import net.minecraft.client.render.Window;
 import net.minecraft.client.gui.components.DebugScreenOverlay;
 import org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+//? if > 1.8.9 {
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+//?}
+
+//? if = 1.8.9 {
+/*import net.minecraft.client.render.Window;
+*///?}
 
 //~ if = 1.8.9 'DebugScreenOverlay' -> 'DebugOverlay'
 @Mixin(DebugScreenOverlay.class)

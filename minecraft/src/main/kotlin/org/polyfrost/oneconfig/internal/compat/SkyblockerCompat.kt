@@ -5,6 +5,11 @@ import de.hysky.skyblocker.skyblock.fancybars.BarPositioner
 import de.hysky.skyblocker.skyblock.fancybars.FancyStatusBars
 import de.hysky.skyblocker.skyblock.fancybars.StatusBar
 import de.hysky.skyblocker.skyblock.fancybars.StatusBarType
+import java.awt.Color
+import java.lang.reflect.Field
+import java.lang.reflect.Method
+import java.util.function.Consumer
+import kotlin.math.abs
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.navigation.ScreenRectangle
@@ -18,11 +23,6 @@ import org.polyfrost.oneconfig.api.hud.v1.HudResize
 import org.polyfrost.oneconfig.api.hud.v1.OneConfigHudWrapper
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer
-import java.awt.Color
-import java.lang.reflect.Field
-import java.lang.reflect.Method
-import java.util.function.Consumer
-import kotlin.math.abs
 
 object SkyblockerCompat {
     private val LOGGER = LogManager.getLogger("OneConfig/Skyblocker-Compat")

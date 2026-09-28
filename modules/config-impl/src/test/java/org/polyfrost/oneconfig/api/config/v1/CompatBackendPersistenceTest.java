@@ -23,15 +23,14 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
 import org.polyfrost.oneconfig.api.config.v1.backend.impl.FileBackend;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerializer;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
