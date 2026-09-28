@@ -46,8 +46,7 @@ object WalksyLibCompat {
         val modid = invoke(metadata, "getId") as? String ?: return null
         if (CompatLoader.nativeLoadedConfigs.contains(modid)) return null
 
-        val hasConfig = invoke(mod, "hasConfig") as? Boolean ?: false
-        if (!hasConfig) return null
+        if (invoke(mod, "hasConfig") == false) return null
         val config = invoke(mod, "getConfig") ?: return null
 
         val categories = invoke(config, "categories") as? Collection<*> ?: return null
@@ -119,10 +118,12 @@ object WalksyLibCompat {
             return parseStringList(option, name, description, uniqueId(usedIds, optionPath), categoryName, subcategoryName, tree)
         }
 
+        val min = invoke(option, "getMin") as? Number
+        val max = invoke(option, "getMax") as? Number
         val visualizer: Class<out Visualizer> = when {
             type == java.lang.Boolean::class.java -> Visualizer.SwitchVisualizer::class.java
-            type == Integer::class.java || type == java.lang.Double::class.java || type == java.lang.Float::class.java ->
-                Visualizer.SliderVisualizer::class.java
+            type in NUMBER_TYPES ->
+                if (min != null && max != null) Visualizer.SliderVisualizer::class.java else Visualizer.NumberVisualizer::class.java
             type == String::class.java -> Visualizer.TextVisualizer::class.java
             Enum::class.java.isAssignableFrom(type) -> Visualizer.DropdownVisualizer::class.java
             else -> return false // pixel grid and other WalksyLib-only types
@@ -151,9 +152,9 @@ object WalksyLibCompat {
         when {
             Enum::class.java.isAssignableFrom(type) ->
                 property.addMetadata("options", type.enumConstants?.map { it.toString() } ?: emptyList<String>())
-            visualizer == Visualizer.SliderVisualizer::class.java -> {
-                (invoke(option, "getMin") as? Number)?.let { property.addMetadata("min", it.toFloat()) }
-                (invoke(option, "getMax") as? Number)?.let { property.addMetadata("max", it.toFloat()) }
+            type in NUMBER_TYPES -> {
+                property.addMetadata("min", min?.toFloat() ?: -Float.MAX_VALUE)
+                property.addMetadata("max", max?.toFloat() ?: Float.MAX_VALUE)
                 (invoke(option, "getIncrement") as? Number)?.let { property.addMetadata("step", it.toFloat()) }
             }
         }
@@ -161,6 +162,11 @@ object WalksyLibCompat {
         tree.put(property)
         return true
     }
+
+    private val NUMBER_TYPES = setOf<Class<*>>(
+        Integer::class.java, java.lang.Long::class.java, java.lang.Short::class.java, java.lang.Byte::class.java,
+        java.lang.Double::class.java, java.lang.Float::class.java,
+    )
 
     private const val COLOR_CLASS = "main.walksy.lib.core.config.local.options.type.WalksyLibColor"
 
@@ -388,6 +394,9 @@ object WalksyLibCompat {
 
     private fun coerce(value: Any?, type: Class<*>): Any? = when {
         value is Number && type == Integer::class.java -> value.toInt()
+        value is Number && type == java.lang.Long::class.java -> value.toLong()
+        value is Number && type == java.lang.Short::class.java -> value.toInt().coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
+        value is Number && type == java.lang.Byte::class.java -> value.toInt().coerceIn(Byte.MIN_VALUE.toInt(), Byte.MAX_VALUE.toInt()).toByte()
         value is Number && type == java.lang.Double::class.java -> value.toDouble()
         value is Number && type == java.lang.Float::class.java -> value.toFloat()
         else -> value
