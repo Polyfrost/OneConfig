@@ -10,6 +10,7 @@ import net.ornithemc.osl.config.api.ConfigManager
 import net.ornithemc.osl.config.api.ConfigScope
 import net.ornithemc.osl.config.api.config.Config
 import net.ornithemc.osl.config.api.config.option.BaseOption
+import net.ornithemc.osl.config.api.config.option.IdentifierOption
 import net.ornithemc.osl.config.api.config.option.ListOption
 import net.ornithemc.osl.config.api.config.option.Option
 import org.apache.logging.log4j.LogManager
@@ -125,8 +126,7 @@ internal object OslConfigCompat {
                 visualizer = Visualizer.NumberVisualizer::class.java
                 val numberType = default.javaClass
                 property = wrap(opt, id, name, description, numberType, { it }, { coerceNumber(it, numberType) })
-                property.addMetadata("min", -Float.MAX_VALUE)
-                property.addMetadata("max", Float.MAX_VALUE)
+                addBounds(property, numberType)
             }
 
             is String -> {
@@ -139,7 +139,7 @@ internal object OslConfigCompat {
                 property = wrap(
                     opt, id, name, description, String::class.java,
                     { it?.toString().orEmpty() },
-                    { (it as? String)?.firstOrNull() ?: default },
+                    { (it as? String)?.firstOrNull() },
                 )
             }
 
@@ -148,7 +148,7 @@ internal object OslConfigCompat {
                 property = wrap(
                     opt, id, name, description, String::class.java,
                     { it?.toString().orEmpty() },
-                    { value -> runCatching { UUID.fromString(value as String) }.getOrDefault(default) },
+                    { value -> runCatching { UUID.fromString(value as String) }.getOrNull() },
                 )
             }
 
@@ -157,7 +157,7 @@ internal object OslConfigCompat {
                 property = wrap(
                     opt, id, name, description, String::class.java,
                     { it?.toString().orEmpty() },
-                    { value -> runCatching { Paths.get(value as String) }.getOrDefault(default) },
+                    { value -> runCatching { Paths.get(value as String) }.getOrNull() },
                 )
             }
 
@@ -179,13 +179,19 @@ internal object OslConfigCompat {
                     { value -> readList(value, numeric) },
                     { value -> writeList(value, numeric, elementType) },
                 )
-                if (numeric) {
-                    property.addMetadata("min", -Float.MAX_VALUE)
-                    property.addMetadata("max", Float.MAX_VALUE)
-                }
+                if (numeric) addBounds(property, elementType)
             }
 
-            else -> return null
+            else -> {
+                if (option !is IdentifierOption) return null
+                visualizer = Visualizer.TextVisualizer::class.java
+                val parse = default.javaClass.getConstructor(String::class.java)
+                property = wrap(
+                    opt, id, name, description, String::class.java,
+                    { it?.toString().orEmpty() },
+                    { value -> runCatching { parse.newInstance(value as String) }.getOrNull() },
+                )
+            }
         }
 
         property.visualizer = visualizer
@@ -205,7 +211,7 @@ internal object OslConfigCompat {
         val fallback = read(opt.default)
         val property = Properties.functional<Any?>(
             getter = { runCatching { read(opt.get()) }.getOrNull() ?: fallback },
-            setter = { value -> runCatching { opt.set(write(value)) } },
+            setter = { value -> runCatching { write(value)?.let { opt.set(it) } } },
             id = id,
             name = name,
             description = description,
@@ -229,12 +235,23 @@ internal object OslConfigCompat {
         }
     }
 
+    private fun addBounds(property: Property<*>, type: Class<*>) {
+        val (min, max) = when (boxed(type)) {
+            java.lang.Byte::class.java -> Byte.MIN_VALUE.toFloat() to Byte.MAX_VALUE.toFloat()
+            java.lang.Short::class.java -> Short.MIN_VALUE.toFloat() to Short.MAX_VALUE.toFloat()
+            Integer::class.java -> Int.MIN_VALUE.toFloat() to Int.MAX_VALUE.toFloat()
+            else -> -Float.MAX_VALUE to Float.MAX_VALUE
+        }
+        property.addMetadata("min", min)
+        property.addMetadata("max", max)
+    }
+
     private fun coerceNumber(value: Any?, type: Class<*>): Any {
         val number = value as? Number ?: 0
         return when (boxed(type)) {
-            java.lang.Byte::class.java -> number.toByte()
-            java.lang.Short::class.java -> number.toShort()
-            Integer::class.java -> number.toInt()
+            java.lang.Byte::class.java -> number.toLong().coerceIn(Byte.MIN_VALUE.toLong(), Byte.MAX_VALUE.toLong()).toByte()
+            java.lang.Short::class.java -> number.toLong().coerceIn(Short.MIN_VALUE.toLong(), Short.MAX_VALUE.toLong()).toShort()
+            Integer::class.java -> number.toLong().coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong()).toInt()
             java.lang.Long::class.java -> number.toLong()
             java.lang.Float::class.java -> number.toFloat()
             java.lang.Double::class.java -> number.toDouble()
