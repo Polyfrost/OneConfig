@@ -28,19 +28,24 @@ package org.polyfrost.oneconfig.api.config.v1;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.jetbrains.annotations.ApiStatus;
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
+import org.polyfrost.compose.render.PolyColor;
 import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
 
@@ -240,6 +245,8 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         captureDefaults(tree);
         ensureKeys(tree);
         String treeId = tree.getID();
+        migrateLegacyKeys(tree, store, profile, treeId, true);
+        migrateLegacyKeys(tree, baselineStore, BASELINE_BUCKET, treeId, false);
         Map<String, Object> snap = store.load(profile).get(treeId);
         boolean[] changed = {false};
         Map<String, Object> pending = new LinkedHashMap<>();
@@ -273,11 +280,8 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
                 // applying the partial bind would overwrite the mod's config
                 return;
             }
-            Object live = p.get();
-            if (live != null && value != null && live.getClass() != value.getClass()
-                    && !(live instanceof Number && value instanceof Number)) {
-                return;
-            }
+            value = coerceStored(p.get(), value);
+            if (value == null) return;
             applying.add(p);
             APPLYING_HERE.set(Boolean.TRUE);
             try {
@@ -357,11 +361,8 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
                 ConfigManager.LOGGER.warn("Failed to deserialize compat default for '{}'", keyOf(property), t);
                 return;
             }
-            Object live = property.get();
-            if (live != null && value != null && live.getClass() != value.getClass()
-                    && !(live instanceof Number && value instanceof Number)) {
-                return;
-            }
+            value = coerceStored(property.get(), value);
+            if (value == null) return;
             applying.add(property);
             APPLYING_HERE.set(Boolean.TRUE);
             try {
@@ -503,6 +504,8 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     private static final String ACTION_META = "runnable";
     public static final String NO_SNAPSHOT_META = "oc_no_snapshot";
     public static final String GATE_METADATA = "oc_snapshot_gate";
+    private static final String PATH_KEY_PREFIX = "path:";
+    private static final Pattern LEGACY_KEY = Pattern.compile("^(\\d+)\\|");
 
     private static boolean gateClosed(Tree tree) {
         Object gate = tree.getMetadata(GATE_METADATA);
@@ -515,14 +518,76 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     }
 
     private static void ensureKeys(Tree tree) {
-        int[] index = {0};
-        forEachProp(tree, p -> {
-            int i = index[0]++;
-            if (p.getMetadata(KEY_METADATA) == null) {
-                Object title = p.getTitle();
-                p.addMetadata(KEY_METADATA, i + "|" + (title != null ? title : ""));
+        ensureKeys(tree, "");
+    }
+
+    private static void ensureKeys(Tree tree, String prefix) {
+        for (Map.Entry<String, Node> e : tree.map.entrySet()) {
+            Node node = e.getValue();
+            if (node instanceof Tree) {
+                ensureKeys((Tree) node, prefix + e.getKey() + "/");
+            } else if (node instanceof Property && node.getMetadata(KEY_METADATA) == null) {
+                node.addMetadata(KEY_METADATA, PATH_KEY_PREFIX + prefix + e.getKey());
             }
+        }
+    }
+
+    static void migrateLegacyKeys(Tree tree, CompatSnapshotStore target, String profile, String treeId, boolean schedule) {
+        Map<String, Object> bucket = target.load(profile).get(treeId);
+        if (bucket == null) return;
+        TreeMap<Integer, String> legacy = new TreeMap<>();
+        for (String key : bucket.keySet()) {
+            Matcher m = LEGACY_KEY.matcher(key);
+            if (m.find()) legacy.put(Integer.parseInt(m.group(1)), key);
+        }
+        if (legacy.isEmpty()) return;
+
+        Map<String, List<String>> props = new LinkedHashMap<>();
+        forEachProp(tree, p -> {
+            String key = keyOf(p);
+            if (!isValueProp(p) || !key.startsWith(PATH_KEY_PREFIX) || bucket.containsKey(key)) return;
+            props.computeIfAbsent(titleOf(p), t -> new ArrayList<>()).add(key);
         });
+        Map<String, List<String>> old = new LinkedHashMap<>();
+        for (String key : legacy.values()) {
+            old.computeIfAbsent(key.substring(key.indexOf('|') + 1), t -> new ArrayList<>()).add(key);
+        }
+        Map<String, Object> migrated = new LinkedHashMap<>();
+        List<String> consumed = new ArrayList<>();
+        props.forEach((title, keys) -> {
+            List<String> legacyKeys = old.get(title);
+            if (legacyKeys == null || legacyKeys.size() != keys.size()) return;
+            for (int i = 0; i < keys.size(); i++) migrated.put(keys.get(i), bucket.get(legacyKeys.get(i)));
+            consumed.addAll(legacyKeys);
+        });
+        if (migrated.isEmpty()) return;
+
+        consumed.forEach(bucket::remove);
+        migrated.forEach((key, value) -> {
+            if (schedule) target.putValue(profile, treeId, key, value);
+            else target.putValueWithoutScheduling(profile, treeId, key, value);
+        });
+    }
+
+    private static String titleOf(Property<?> p) {
+        Object title = p.getTitle();
+        return title != null ? title.toString() : "";
+    }
+
+    static Object coerceStored(Object live, Object value) {
+        if (live == null || value == null || live.getClass() == value.getClass()) return value;
+        if (live instanceof Number && value instanceof Number) return value;
+        if (live instanceof List && value instanceof List) return value;
+        if (live.getClass().isArray() && value instanceof List) return value;
+        if (live instanceof PolyColor && value instanceof Number) {
+            int argb = ((Number) value).intValue();
+            return PolyColor.Companion.rgba((argb >> 16) & 0xFF, (argb >> 8) & 0xFF, argb & 0xFF, (argb >> 24) & 0xFF);
+        }
+        if (live instanceof List && value instanceof CharSequence
+                && (((List<?>) live).isEmpty() || ((List<?>) live).get(0) instanceof CharSequence)) {
+            return value.toString().isEmpty() ? new ArrayList<>() : new ArrayList<>(Collections.singletonList(value.toString()));
+        }
+        return null;
     }
 
     private static String keyOf(Property<?> p) {
