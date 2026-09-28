@@ -58,7 +58,7 @@ gradle.projectsEvaluated {
 
     fun isExcluded(group: String?, name: String) =
         (group == "net.fabricmc" && (name == "fabric-loader")) || group == "net.fabricmc.fabric-api" ||
-            (isOrnithe && ((group == "pl.tomgirl" && name == "lenis") || group == "net.ornithemc.osl-gen2"))
+            (isOrnithe && ((group == "pl.tomgirl" && name == "pylon") || group == "net.ornithemc.osl-gen2"))
 
     val seen = HashSet<String>()
 

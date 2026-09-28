@@ -1,5 +1,5 @@
 [versions]
-lenis = "0.1.4"
+pylon = "0.1.7"
 
 [libraries]
-lenis = { module = "pl.tomgirl:lenis", version.ref = "lenis" }
+pylon = { module = "pl.tomgirl:pylon", version.ref = "pylon" }

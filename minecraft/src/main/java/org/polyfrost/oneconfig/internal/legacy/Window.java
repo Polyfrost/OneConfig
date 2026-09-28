@@ -4,7 +4,7 @@ package org.polyfrost.oneconfig.internal.legacy;
 /*import net.minecraft.client.Minecraft;
 import org.lwjgl.sdl.SDLVideo;
 import org.lwjgl.sdl.SDL_DisplayMode;
-import pl.tomgirl.lenis.window.DisplaySdl;
+import pl.tomgirl.pylon.window.DisplaySdl;
 
 // We need this shim because Window#getWidth/getHeight return GUI-scaled dimensions in legacy but framebuffer dimensions in modern.
 public final class Window {

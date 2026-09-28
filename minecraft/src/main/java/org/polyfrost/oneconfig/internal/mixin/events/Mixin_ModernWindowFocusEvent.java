@@ -66,7 +66,7 @@ public class Mixin_ModernWindowFocusEvent {
     }
 }
 *///?} else {
-/*@Mixin(targets = "pl.tomgirl.lenis.window.DisplaySdl", remap = false)
+/*@Mixin(targets = "pl.tomgirl.pylon.window.DisplaySdl", remap = false)
 public class Mixin_ModernWindowFocusEvent {
     @Shadow
     private boolean focused;
@@ -75,7 +75,7 @@ public class Mixin_ModernWindowFocusEvent {
         method = "processMessages",
         at = @At(
             value = "FIELD",
-            target = "Lpl/tomgirl/lenis/window/DisplaySdl;focused:Z",
+            target = "Lpl/tomgirl/pylon/window/DisplaySdl;focused:Z",
             opcode = Opcodes.PUTFIELD,
             shift = At.Shift.AFTER
         ),

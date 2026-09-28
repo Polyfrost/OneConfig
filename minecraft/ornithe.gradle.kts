@@ -28,7 +28,7 @@ dependencies {
         exclude(group = "org.lwjgl.lwjgl")
     }
 
-    modApi(versionedCatalog["lenis"])
+    modApi(versionedCatalog["pylon"])
 
     api("com.mojang:brigadier:1.0.18")
 }
