@@ -182,12 +182,16 @@ object StellaCompat {
 
             is TextInput -> Properties.functional(
                 getter = { element.value as String },
-                setter = { element.value = it },
+                setter = { element.value = it; element.onValueChanged?.invoke(it) },
                 id = key, name = name, description = desc, type = String::class.java,
-            ).apply { visualizer = Visualizer.TextVisualizer::class.java }
+            ).apply {
+                visualizer = Visualizer.TextVisualizer::class.java
+                addMetadata("default", element.placeholder)
+            }
 
             is Button -> Properties.dummy(id = key, name = name, description = desc).apply {
                 visualizer = Visualizer.ButtonVisualizer::class.java
+                element.placeholder.takeIf { it.isNotBlank() }?.let { addMetadata("text", it) }
                 addMetadata("runnable", Runnable { element.onClick?.invoke() })
             }
 
