@@ -72,7 +72,7 @@ public class Mixin_ModernWindowFocusEvent {
     private boolean focused;
 
     @Inject(
-        method = "processMessages",
+        method = "pollEvents",
         at = @At(
             value = "FIELD",
             target = "Lpl/tomgirl/pylon/window/DisplaySdl;focused:Z",
