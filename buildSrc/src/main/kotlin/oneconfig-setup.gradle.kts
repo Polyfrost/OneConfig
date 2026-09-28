@@ -189,7 +189,8 @@ val skysoftRelocatedConfiguration: Configuration by configurations.creating {
 
 val adventurePlatform = when {
     loader != "fabric" -> null
-    stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "7.0.0"
+    stonecutter.eval(stonecutter.current.version, ">= 26.3") -> "7.2.0"
+    stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "7.1.1"
     stonecutter.eval(stonecutter.current.version, ">= 26.1") -> "6.9.0"
     stonecutter.eval(stonecutter.current.version, ">= 1.21.11") -> "6.8.0"
     stonecutter.eval(stonecutter.current.version, ">= 1.21.10") -> "6.7.0"
@@ -199,33 +200,6 @@ val adventurePlatform = when {
     stonecutter.eval(stonecutter.current.version, ">= 1.21.1") -> "5.14.2"
     else -> error("No adventure-platform-fabric version for ${stonecutter.current.version}")
 }?.let { "net.kyori:adventure-platform-fabric:$it" }
-
-// TODO: remove this hack when adventure-platform-fabric has a proper 26.3 release
-val relaxedAdventurePlatformJar = if (
-    adventurePlatform == null || stonecutter.eval(stonecutter.current.version, "< 26.3")
-) null else {
-    val upstream = configurations.detachedConfiguration(
-        (dependencies.create(adventurePlatform) as ExternalModuleDependency).apply { isTransitive = false }
-    )
-    val devRuntime = configurations.create("adventureDevRuntime")
-    listOf("runtimeClasspath", "testRuntimeClasspath").forEach {
-        configurations.named(it) { extendsFrom(devRuntime) }
-    }
-
-    val modJarTask = if ("remapJar" in tasks.names) "remapJar" else "jar"
-    tasks.matching { it.name == modJarTask }.configureEach {
-        doLast {
-            relaxNestedJar((this as AbstractArchiveTask).archiveFile.get().asFile, "adventure-platform-fabric")
-        }
-    }
-
-    tasks.register("relaxedAdventurePlatformJar") {
-        val output = layout.buildDirectory.file("adventure/adventure-platform-fabric-relaxed.jar")
-        inputs.files(upstream)
-        outputs.file(output)
-        doLast { relaxGameConstraint(upstream.singleFile, output.get().asFile) }
-    }
-}
 
 dependencies {
     listOf("compat", "common-compat").forEach {
@@ -266,14 +240,8 @@ dependencies {
     handleApiDep(versionedCatalog.bundles["adventure"])
 
     if (adventurePlatform != null) {
-        if (relaxedAdventurePlatformJar != null) {
-            "modCompileOnly"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
-            "adventureDevRuntime"(files(relaxedAdventurePlatformJar))
-            "include"(adventurePlatform) { isTransitive = false }
-        } else {
-            "modApi"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
-            "modImplementation"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
-        }
+        "modApi"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
+        "modImplementation"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
     }
 
     handleApiDep(versionedCatalog.bundles["kotlin"])
