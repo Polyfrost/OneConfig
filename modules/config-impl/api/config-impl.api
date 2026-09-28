@@ -151,6 +151,8 @@ public class org/polyfrost/oneconfig/api/config/v1/KtConfig : org/polyfrost/onec
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;Ljava/lang/String;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun addCallback (Lkotlin/reflect/KProperty;Lkotlin/jvm/functions/Function1;)V
+	protected final synthetic fun button (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$DummyProvider;
+	public static synthetic fun button$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$DummyProvider;
 	public final fun callback (Lkotlin/properties/PropertyDelegateProvider;Lkotlin/jvm/functions/Function1;)Lkotlin/properties/PropertyDelegateProvider;
 	protected final synthetic fun checkbox (Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun checkbox$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
@@ -158,38 +160,70 @@ public class org/polyfrost/oneconfig/api/config/v1/KtConfig : org/polyfrost/onec
 	protected final synthetic fun color (Lorg/polyfrost/compose/render/PolyColor;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun color$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;Lorg/polyfrost/compose/render/PolyColor;ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun color$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Lorg/polyfrost/compose/render/PolyColor;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	protected final synthetic fun colorList (Ljava/lang/String;[ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZLjava/lang/String;Ljava/lang/String;Z)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	public static synthetic fun colorList$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;[ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZLjava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	protected final synthetic fun draggableList (Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;Z)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	public static synthetic fun draggableList$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;ZILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	protected final fun dropdown (Ljava/lang/String;Ljava/lang/Object;[Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lkotlin/properties/PropertyDelegateProvider;
 	protected final synthetic fun dropdown ([Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun dropdown$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;Ljava/lang/Object;[Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlin/properties/PropertyDelegateProvider;
 	public static synthetic fun dropdown$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;[Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	protected final synthetic fun file (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	public static synthetic fun file$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	protected final synthetic fun fileList (Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZLjava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	public static synthetic fun fileList$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZLjava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	protected final fun getProperty (Lkotlin/reflect/KProperty;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public final fun hideIf (Lkotlin/reflect/KProperty;Lkotlin/jvm/functions/Function0;)V
 	public final fun hideIf (Lkotlin/reflect/KProperty;Lkotlin/reflect/KProperty0;)V
+	protected final synthetic fun info (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$DummyProvider;
+	public static synthetic fun info$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$DummyProvider;
+	protected final synthetic fun itemList (Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZLjava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	public static synthetic fun itemList$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZLjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	protected final synthetic fun keybind (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun keybind$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	protected final fun makeTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
+	protected final synthetic fun multiSelectDropdown (Ljava/lang/String;[Ljava/lang/String;[ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	public static synthetic fun multiSelectDropdown$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;[Ljava/lang/String;[ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	protected final synthetic fun number (Ljava/lang/String;FLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFLjava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun number$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;FLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFLjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	protected final synthetic fun numberList (Ljava/lang/String;[FLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZLjava/lang/String;Ljava/lang/String;FFF)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	public static synthetic fun numberList$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;[FLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZLjava/lang/String;Ljava/lang/String;FFFILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public final fun observable (Lkotlin/properties/PropertyDelegateProvider;Lkotlin/jvm/functions/Function1;)Lkotlin/properties/PropertyDelegateProvider;
 	protected final fun radiobutton (Ljava/lang/String;Ljava/lang/Object;[Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lkotlin/properties/PropertyDelegateProvider;
 	protected final synthetic fun radiobutton ([Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun radiobutton$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;Ljava/lang/Object;[Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlin/properties/PropertyDelegateProvider;
 	public static synthetic fun radiobutton$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;[Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	protected final synthetic fun rangeSlider (Ljava/lang/String;[FLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFF)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	public static synthetic fun rangeSlider$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;[FLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFFILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	protected final synthetic fun singleSelectDropdown (Ljava/lang/String;[Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	public static synthetic fun singleSelectDropdown$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;[Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	protected final synthetic fun slider (FFFLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	protected final synthetic fun slider (Ljava/lang/String;FLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFF)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun slider$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;FFFLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun slider$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;FLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFFILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	protected final synthetic fun sliderList (Ljava/lang/String;[FLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZLjava/lang/String;Ljava/lang/String;FFF)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	public static synthetic fun sliderList$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;[FLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZLjava/lang/String;Ljava/lang/String;FFFILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	protected final synthetic fun switch (Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	protected final synthetic fun switch (ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun switch$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun switch$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	protected final synthetic fun text (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	protected final synthetic fun text (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	protected final synthetic fun text (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun text$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun text$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	public static synthetic fun text$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	protected final synthetic fun textList (Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	public static synthetic fun textList$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public final fun transformed (Lkotlin/properties/PropertyDelegateProvider;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lkotlin/properties/PropertyDelegateProvider;
 	public final fun withCallback (Lkotlin/properties/PropertyDelegateProvider;Lkotlin/jvm/functions/Function1;)Lkotlin/properties/PropertyDelegateProvider;
 	public final fun withObservable (Lkotlin/properties/PropertyDelegateProvider;Lkotlin/jvm/functions/Function1;)Lkotlin/properties/PropertyDelegateProvider;
+}
+
+protected final class org/polyfrost/oneconfig/api/config/v1/KtConfig$DummyProvider : kotlin/properties/PropertyDelegateProvider {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Visualizer;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun provideDelegate (Ljava/lang/Object;Lkotlin/reflect/KProperty;)Ljava/lang/Object;
+	public fun provideDelegate (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Lkotlin/reflect/KProperty;)Lkotlin/properties/ReadOnlyProperty;
 }
 
 protected final class org/polyfrost/oneconfig/api/config/v1/KtConfig$Provider : kotlin/properties/PropertyDelegateProvider {
@@ -820,18 +854,44 @@ public final class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL {
 	public final fun button (Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$RunnableProp;
 	public final fun checkbox (Z)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop;
 	public final fun color (Lorg/polyfrost/compose/render/PolyColor;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$ColorProp;
+	public final fun colorList ([I)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$ColorListProp;
 	public static final fun config (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public final fun dropdown (I[Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop;
+	public final fun draggableList ([Ljava/lang/String;[Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$DraggableListProp;
+	public final fun dropdown (I[Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$OptionsProp;
+	public final synthetic fun dropdown (I[Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop;
+	public final fun file (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$FileProp;
+	public static synthetic fun file$default (Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$FileProp;
+	public final fun fileList ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$FileListProp;
 	public final fun getTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
+	public final fun info (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop;
+	public static synthetic fun info$default (Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop;
+	public final fun itemList ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$ListProp;
+	public final fun keybind (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop;
+	public final fun multiSelectDropdown ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$OptionsProp;
 	public final fun number (F)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$FloatProp;
 	public final fun number (I)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$IntProp;
-	public final fun radiobutton (I[Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop;
+	public final fun numberList ([F)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$NumberListProp;
+	public final fun previousNames (Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop;[Ljava/lang/String;)V
+	public final fun put (Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop;Lorg/polyfrost/oneconfig/api/config/v1/Visualizer;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop;
+	public final fun radiobutton (I[Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$OptionsProp;
+	public final synthetic fun radiobutton (I[Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop;
+	public final fun rangeSlider (FF)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$RangeProp;
+	public final fun singleSelectDropdown (I[Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$OptionsProp;
 	public final fun slider (F)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$FloatProp;
 	public final fun slider (I)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$IntProp;
+	public final fun sliderList ([F)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$NumberListProp;
 	public final fun subconfig (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL;
 	public static synthetic fun subconfig$default (Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL;
 	public final fun switch (Z)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop;
 	public final fun text (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$TextProp;
+	public final fun textList ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$TextListProp;
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$ColorListProp : org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$ListProp {
+	public static final field $stable I
+	public fun <init> ([I)V
+	public final fun getAlpha ()Z
+	public final fun setAlpha (Z)V
 }
 
 public final class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$ColorProp : org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop {
@@ -846,15 +906,60 @@ public final class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Companion
 	public static synthetic fun config$default (Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Companion;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
+public final class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$DraggableListProp : org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$OptionsProp {
+	public static final field $stable I
+	public fun <init> ([Ljava/lang/String;[Ljava/lang/String;)V
+	public final fun getCheckable ()Z
+	public final fun setCheckable (Z)V
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$FileListProp : org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$ListProp {
+	public static final field $stable I
+	public fun <init> ([Ljava/lang/String;)V
+	public final fun getDirectory ()Z
+	public final fun getFilterName ()Ljava/lang/String;
+	public final fun getPlaceholder ()Ljava/lang/String;
+	public final fun getPlaceholderKey ()Ljava/lang/String;
+	public final fun getTypes ()[Ljava/lang/String;
+	public final fun setDirectory (Z)V
+	public final fun setFilterName (Ljava/lang/String;)V
+	public final fun setPlaceholder (Ljava/lang/String;)V
+	public final fun setPlaceholderKey (Ljava/lang/String;)V
+	public final fun setTypes ([Ljava/lang/String;)V
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$FileProp : org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getDirectory ()Z
+	public final fun getFilterName ()Ljava/lang/String;
+	public final fun getPlaceholder ()Ljava/lang/String;
+	public final fun getPlaceholderKey ()Ljava/lang/String;
+	public final fun getTypes ()[Ljava/lang/String;
+	public final fun setDirectory (Z)V
+	public final fun setFilterName (Ljava/lang/String;)V
+	public final fun setPlaceholder (Ljava/lang/String;)V
+	public final fun setPlaceholderKey (Ljava/lang/String;)V
+	public final fun setTypes ([Ljava/lang/String;)V
+}
+
 public final class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$FloatProp : org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop {
 	public static final field $stable I
 	public fun <init> (F)V
 	public final fun getMax ()F
 	public final fun getMin ()F
+	public final fun getPlaceholder ()Ljava/lang/String;
+	public final fun getPlaceholderKey ()Ljava/lang/String;
+	public final fun getStep ()Ljava/lang/Float;
 	public final fun getUnit ()Ljava/lang/String;
+	public final fun getUnitKey ()Ljava/lang/String;
 	public final fun setMax (F)V
 	public final fun setMin (F)V
+	public final fun setPlaceholder (Ljava/lang/String;)V
+	public final fun setPlaceholderKey (Ljava/lang/String;)V
+	public final fun setStep (Ljava/lang/Float;)V
 	public final fun setUnit (Ljava/lang/String;)V
+	public final fun setUnitKey (Ljava/lang/String;)V
 }
 
 public final class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$IntProp : org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop {
@@ -862,26 +967,95 @@ public final class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$IntProp :
 	public fun <init> (I)V
 	public final fun getMax ()I
 	public final fun getMin ()I
+	public final fun getPlaceholder ()Ljava/lang/String;
+	public final fun getPlaceholderKey ()Ljava/lang/String;
+	public final fun getStep ()Ljava/lang/Float;
 	public final fun getUnit ()Ljava/lang/String;
+	public final fun getUnitKey ()Ljava/lang/String;
 	public final fun setMax (I)V
 	public final fun setMin (I)V
+	public final fun setPlaceholder (Ljava/lang/String;)V
+	public final fun setPlaceholderKey (Ljava/lang/String;)V
+	public final fun setStep (Ljava/lang/Float;)V
 	public final fun setUnit (Ljava/lang/String;)V
+	public final fun setUnitKey (Ljava/lang/String;)V
+}
+
+public class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$ListProp : org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/Object;Ljava/lang/Class;)V
+	public final fun getAddText ()Ljava/lang/String;
+	public final fun getAddTextKey ()Ljava/lang/String;
+	public final fun getMaxEntries ()I
+	public final fun getReorderable ()Z
+	public final fun setAddText (Ljava/lang/String;)V
+	public final fun setAddTextKey (Ljava/lang/String;)V
+	public final fun setMaxEntries (I)V
+	public final fun setReorderable (Z)V
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$NumberListProp : org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$ListProp {
+	public static final field $stable I
+	public fun <init> ([F)V
+	public final fun getMax ()Ljava/lang/Float;
+	public final fun getMin ()Ljava/lang/Float;
+	public final fun getStep ()Ljava/lang/Float;
+	public final fun setMax (Ljava/lang/Float;)V
+	public final fun setMin (Ljava/lang/Float;)V
+	public final fun setStep (Ljava/lang/Float;)V
+}
+
+public class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$OptionsProp : org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/Object;Ljava/lang/Class;[Ljava/lang/String;)V
+	public final fun getOptionKeys ()[Ljava/lang/String;
+	public final fun setOptionKeys ([Ljava/lang/String;)V
 }
 
 public class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop {
 	public static final field $stable I
 	public fun <init> (Ljava/lang/Object;Ljava/lang/Class;)V
+	public fun <init> (Lorg/polyfrost/oneconfig/api/config/v1/Property;)V
+	public final fun dependsOn (Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop;Z)V
+	public static synthetic fun dependsOn$default (Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop;Lorg/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop;ZILjava/lang/Object;)V
 	public final fun get (Ljava/lang/String;)Ljava/lang/Object;
+	public final fun getCategory ()Ljava/lang/String;
+	public final fun getCategoryKey ()Ljava/lang/String;
 	public final fun getDescription ()Ljava/lang/Object;
+	public final fun getDescriptionKey ()Ljava/lang/String;
+	public final fun getIcon ()Ljava/lang/String;
 	public final fun getId ()Ljava/lang/String;
+	public final fun getOwner ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public final fun getProperty ()Lorg/polyfrost/oneconfig/api/config/v1/Property;
+	public final fun getSubcategory ()Ljava/lang/String;
+	public final fun getSubcategoryKey ()Ljava/lang/String;
 	public final fun getTitle ()Ljava/lang/Object;
+	public final fun getTitleKey ()Ljava/lang/String;
 	public final fun getValue ()Ljava/lang/Object;
 	public final fun set (Ljava/lang/String;Ljava/lang/Object;)V
+	public final fun setCategory (Ljava/lang/String;)V
+	public final fun setCategoryKey (Ljava/lang/String;)V
 	public final fun setDescription (Ljava/lang/Object;)V
+	public final fun setDescriptionKey (Ljava/lang/String;)V
+	public final fun setIcon (Ljava/lang/String;)V
 	public final fun setId (Ljava/lang/String;)V
+	public final fun setOwner (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
+	public final fun setSubcategory (Ljava/lang/String;)V
+	public final fun setSubcategoryKey (Ljava/lang/String;)V
 	public final fun setTitle (Ljava/lang/Object;)V
+	public final fun setTitleKey (Ljava/lang/String;)V
 	public final fun setValue (Ljava/lang/Object;)V
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$RangeProp : org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop {
+	public static final field $stable I
+	public fun <init> ([F)V
+	public final fun getMax ()Ljava/lang/Float;
+	public final fun getMin ()Ljava/lang/Float;
+	public final fun getStep ()Ljava/lang/Float;
+	public final fun setMax (Ljava/lang/Float;)V
+	public final fun setMin (Ljava/lang/Float;)V
+	public final fun setStep (Ljava/lang/Float;)V
 }
 
 public final class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$RunnableProp : org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop {
@@ -889,8 +1063,21 @@ public final class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$RunnableP
 	public fun <init> (Ljava/lang/Runnable;)V
 	public final fun getAction ()Ljava/lang/Runnable;
 	public final fun getText ()Ljava/lang/String;
+	public final fun getTextKey ()Ljava/lang/String;
 	public final fun setAction (Ljava/lang/Runnable;)V
 	public final fun setText (Ljava/lang/String;)V
+	public final fun setTextKey (Ljava/lang/String;)V
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$TextListProp : org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$ListProp {
+	public static final field $stable I
+	public fun <init> ([Ljava/lang/String;)V
+	public final fun getPlaceholder ()Ljava/lang/String;
+	public final fun getPlaceholderKey ()Ljava/lang/String;
+	public final fun getRegex ()Ljava/lang/String;
+	public final fun setPlaceholder (Ljava/lang/String;)V
+	public final fun setPlaceholderKey (Ljava/lang/String;)V
+	public final fun setRegex (Ljava/lang/String;)V
 }
 
 public final class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$TextProp : org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop {
@@ -898,8 +1085,12 @@ public final class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$TextProp 
 	public fun <init> (Ljava/lang/String;)V
 	public final fun getMultiline ()Z
 	public final fun getPlaceholder ()Ljava/lang/String;
+	public final fun getPlaceholderKey ()Ljava/lang/String;
+	public final fun getRegex ()Ljava/lang/String;
 	public final fun setMultiline (Z)V
 	public final fun setPlaceholder (Ljava/lang/String;)V
+	public final fun setPlaceholderKey (Ljava/lang/String;)V
+	public final fun setRegex (Ljava/lang/String;)V
 }
 
 public final class org/polyfrost/oneconfig/api/config/v1/dsl/Tree_extensionsKt {
