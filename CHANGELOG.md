@@ -3,3 +3,4 @@ Unreleased changes:
 - Dropped 1.21.11 support and added 26.2 support for for Meowdding HUDs
 - The HUD editor now suggests installing EvergreenHUD when no mods providing HUDs are installed
 - Fixed Skysoft 0.1.30+ settings not appearing in OneConfig
+- Improved HUD rendering performance alongside legacy and compat HUDs (such as VanillaHUD), which no longer make every other HUD redraw whenever they change size

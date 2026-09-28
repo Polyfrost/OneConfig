@@ -197,6 +197,7 @@ object HudManager {
     private var frameGroups: List<HudBackgroundMerge.Group> = emptyList()
     private var lastMergeKey: Int? = null
 
+    private val renderable = ArrayList<Hud>()
     private var zOrderCache: List<Hud> = emptyList()
     private var zOrderHuds = arrayOfNulls<Hud>(0)
     private var zOrderBounds = FloatArray(0)
@@ -463,8 +464,9 @@ object HudManager {
             inner[1] + inner[3] <= outer[1] + outer[3]
 
     @ApiStatus.Internal
-    fun zOrderedInstances(bounds: (Hud) -> FloatArray? = ::screenBounds): List<Hud> {
-        val list = activeInstances
+    fun zOrderedInstances(bounds: (Hud) -> FloatArray? = ::screenBounds): List<Hud> = zOrdered(activeInstances, bounds)
+
+    private fun zOrdered(list: List<Hud>, bounds: (Hud) -> FloatArray?): List<Hud> {
         val n = list.size
         if (n <= 1) return list
         val b = arrayOfNulls<FloatArray>(n)
@@ -541,7 +543,6 @@ object HudManager {
 
     /** Everything [shouldDraw] checks apart from the HUD's own hidden flag */
     private fun isShown(hud: Hud): Boolean {
-        if (hud is LegacyHudMarker) return false
         if (isEditing) return true
         if (isGuiHidden) return false
         if (isDebugScreenVisible && !hud.showInF3) return false
@@ -790,7 +791,11 @@ object HudManager {
     }
 
     private fun orderedForRender(): List<Hud> {
-        val list = activeInstances
+        // legacy and compat HUDs draw through their own renderers, and reading their size or hidden
+        // flag can mean measuring text or going through reflection, so keep them out of this pass
+        val list = renderable
+        list.clear()
+        for (hud in activeInstances) if (hud !is LegacyHudMarker) list.add(hud)
         val n = list.size
         if (n <= 1) return list
         if (zOrderHuds.size < n) {
@@ -820,7 +825,7 @@ object HudManager {
         }
         if (same) return zOrderCache
         invalidate()
-        zOrderCache = zOrderedInstances()
+        zOrderCache = zOrdered(list, ::screenBounds)
         return zOrderCache
     }
 
