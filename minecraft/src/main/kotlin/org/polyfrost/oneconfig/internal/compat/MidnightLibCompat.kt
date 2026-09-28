@@ -26,6 +26,10 @@ import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
 import org.polyfrost.oneconfig.internal.mixin.compat.midnightlib.SliderButtonAccessor
 
+//? if >= 1.20.1 {
+import net.minecraft.resources.Identifier
+//?}
+
 object MidnightLibCompat {
 
     private val LOGGER = LogManager.getLogger("OneConfig/MidnightLib-Compat")
@@ -221,6 +225,8 @@ object MidnightLibCompat {
         val isColor = readAnnotationBoolean(entryAnnotation, "isColor")
         val isSlider = readAnnotationBoolean(entryAnnotation, "isSlider")
         val isNumber = currentValue is Int || currentValue is Long || currentValue is Float || currentValue is Double
+        val idMode = readAnnotationDouble(entryAnnotation, "idMode")?.toInt() ?: -1
+        val selectionMode = readAnnotationDouble(entryAnnotation, "selectionMode")?.toInt() ?: -1
 
         val fieldName = field.name
         // MidnightLib renders Component.translatable(EntryInfo.translationKey) which is @Entry#name when set
@@ -262,6 +268,9 @@ object MidnightLibCompat {
                 visualizer = if (isSlider) Visualizer.SliderVisualizer::class.java else Visualizer.NumberVisualizer::class.java
                 extraMetadata["min"] = readAnnotationDouble(entryAnnotation, "min")?.toFloat() ?: 0f
                 extraMetadata["max"] = readAnnotationDouble(entryAnnotation, "max")?.toFloat() ?: 100f
+                if (isSlider && (currentValue is Float || currentValue is Double)) {
+                    readAnnotationDouble(entryAnnotation, "precision")?.takeIf { it > 0 }?.let { extraMetadata["step"] = (1.0 / it).toFloat() }
+                }
                 property = functionalField(field, id, name, description)
             }
 
@@ -273,10 +282,48 @@ object MidnightLibCompat {
                 property = functionalField(field, id, name, description)
             }
 
+            currentValue is String && idMode == 0 -> {
+                visualizer = Visualizer.ItemListVisualizer::class.java
+                extraMetadata["maxEntries"] = 1
+                property = singleItemProperty(id, name, description, read = { field.get(null) as? String }, write = { field.set(null, it) })
+                defaultValue = (defaultValue as? String)?.let { arrayListOf(it) }
+            }
+
+            currentValue is String && selectionMode > -1 -> {
+                visualizer = Visualizer.FileVisualizer::class.java
+                extraMetadata["directory"] = selectionMode == 1
+                val extensions = readAnnotationStringArray(entryAnnotation, "fileExtensions")
+                if (extensions.isNotEmpty() && extensions.none { it == "*" }) extraMetadata["types"] = extensions.toTypedArray()
+                property = functionalField(field, id, name, description)
+            }
+
             currentValue is String -> {
                 visualizer = Visualizer.TextVisualizer::class.java
                 property = functionalField(field, id, name, description)
             }
+
+            //? if >= 1.20.1 {
+            currentValue is Identifier && idMode == 0 -> {
+                visualizer = Visualizer.ItemListVisualizer::class.java
+                extraMetadata["maxEntries"] = 1
+                property = singleItemProperty(
+                    id, name, description,
+                    read = { field.get(null)?.toString() },
+                    write = { s -> Identifier.tryParse(s)?.takeIf { s.isNotBlank() }?.let { field.set(null, it) } },
+                )
+                defaultValue = defaultValue?.let { arrayListOf(it.toString()) }
+            }
+
+            currentValue is Identifier -> {
+                visualizer = Visualizer.TextVisualizer::class.java
+                property = Properties.functional(
+                    getter = { runCatching { field.get(null)?.toString() }.getOrNull() ?: "" },
+                    setter = { v: String -> Identifier.tryParse(v)?.let { runCatching { field.set(null, it) } } },
+                    id = id, name = name, description = description, type = String::class.java,
+                )
+                defaultValue = defaultValue?.toString()
+            }
+            //?}
 
             currentValue is List<*> -> {
                 val element = listElementType(entry, currentValue) ?: return null
@@ -315,7 +362,7 @@ object MidnightLibCompat {
                     }
 
                     element == String::class.java -> {
-                        visualizer = Visualizer.TextListVisualizer::class.java
+                        visualizer = if (idMode == 0) Visualizer.ItemListVisualizer::class.java else Visualizer.TextListVisualizer::class.java
                         property = listProperty(
                             field, id, name, description,
                             read = { it?.toString() ?: "" },
@@ -323,6 +370,18 @@ object MidnightLibCompat {
                         )
                         defaultValue = defaultValue?.let(::stringsOf)
                     }
+
+                    //? if >= 1.20.1 {
+                    element == Identifier::class.java -> {
+                        visualizer = if (idMode == 0) Visualizer.ItemListVisualizer::class.java else Visualizer.TextListVisualizer::class.java
+                        property = listProperty(
+                            field, id, name, description,
+                            read = { it?.toString() ?: "" },
+                            write = { it?.toString()?.takeIf(String::isNotBlank)?.let(Identifier::tryParse) },
+                        )
+                        defaultValue = (defaultValue as? Collection<*>)?.mapTo(ArrayList()) { it.toString() }
+                    }
+                    //?}
 
                     else -> return null
                 }
@@ -334,6 +393,8 @@ object MidnightLibCompat {
         property.addMetadata("visualizer", visualizer)
         extraMetadata.forEach { (k, v) -> property.addMetadata(k, v) }
         defaultValue?.let { property.addMetadata("default", it) }
+        readAnnotationString(entryAnnotation, "requiredMod")?.takeIf { it.isNotBlank() && !CompatLoader.hasMod(it) }
+            ?.let { property.addDisplayCondition(Supplier { Property.Display.HIDDEN }) }
 
         val category = categoryOf(modid, readAnnotationString(entryAnnotation, "category"))
         property.category = category
@@ -385,7 +446,21 @@ object MidnightLibCompat {
             runCatching { ArrayList((field.get(null) as? List<*> ?: emptyList<Any?>()).map(read)) }
                 .getOrDefault(ArrayList())
         },
-        setter = { v: List<Any?> -> runCatching { field.set(null, v.mapTo(ArrayList(), write)) } },
+        setter = { v: List<Any?> -> runCatching { field.set(null, v.mapNotNullTo(ArrayList(), write)) } },
+        id = id, name = name, description = description,
+        type = java.util.List::class.java as Class<List<Any?>>,
+    )
+
+    @Suppress("UNCHECKED_CAST")
+    private fun singleItemProperty(
+        id: String,
+        name: String,
+        description: String?,
+        read: () -> String?,
+        write: (String) -> Unit,
+    ): Property<*> = Properties.functional(
+        getter = { ArrayList(listOfNotNull(runCatching(read).getOrNull()?.takeIf { it.isNotBlank() })) },
+        setter = { v: List<Any?> -> runCatching { write(v.firstOrNull()?.toString() ?: "") } },
         id = id, name = name, description = description,
         type = java.util.List::class.java as Class<List<Any?>>,
     )
@@ -400,9 +475,12 @@ object MidnightLibCompat {
     private fun wireConditions(pending: List<Pending>, propertyByField: Map<String, Property<*>>) {
         for (p in pending) {
             for (condition in p.conditions) {
+                val locked = readAnnotationBoolean(condition, "visibleButLocked")
+                readAnnotationString(condition, "requiredModId")?.takeIf { it.isNotBlank() && !CompatLoader.hasMod(it) }?.let {
+                    p.property.addDisplayCondition(Supplier { if (locked) Property.Display.DISABLED else Property.Display.HIDDEN })
+                }
                 val requiredOption = readAnnotationString(condition, "requiredOption")?.takeIf { it.isNotBlank() } ?: continue
                 val requiredValues = readAnnotationStringArray(condition, "requiredValue")
-                val locked = readAnnotationBoolean(condition, "visibleButLocked")
                 val source = propertyByField[requiredOption] ?: continue
 
                 val evaluate = Supplier {
