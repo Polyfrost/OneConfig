@@ -77,11 +77,8 @@ public class Mixin_StartupWarmupOverlay {
     /*@WrapOperation(method = "updateDisplay", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/Display;update()V"))
     private void oneconfig$holdStartupSplash(Operation<Void> original) {
         Minecraft minecraft = (Minecraft) (Object) this;
-        boolean hold = minecraft.screen instanceof TitleScreen && !ComposePreloader.INSTANCE.getStopped();
-        if (hold && !SkiaCtx.INSTANCE.isReady()) {
-            ComposePreloader.INSTANCE.fail("Skia context unavailable", null);
-            hold = false;
-        }
+        // Fullscreen startup presents frames before Skia is initialized, which must not cancel the warm-up
+        boolean hold = minecraft.screen instanceof TitleScreen && !ComposePreloader.INSTANCE.getStopped() && SkiaCtx.INSTANCE.isReady();
         if (hold) {
             long now = System.nanoTime();
             if (this.oneconfig$holdStartedNanos == 0L) this.oneconfig$holdStartedNanos = now;
