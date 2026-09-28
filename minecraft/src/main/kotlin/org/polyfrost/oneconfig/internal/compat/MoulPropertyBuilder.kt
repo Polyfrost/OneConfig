@@ -18,7 +18,7 @@ import org.polyfrost.oneconfig.utils.v1.WrappingUtils
 class MoulPropertyBuilder internal constructor(option: ProcessedOption) {
     val path: String? = runCatching { option.path }.getOrNull()?.takeIf { it.isNotBlank() }
     val name: String? = resolveTextGetter(option, "getName")
-    val description: String? = resolveTextGetter(option, "getDescription")
+    var description: String? = resolveTextGetter(option, "getDescription")
 
     private var getterReplaced = false
 
@@ -122,7 +122,7 @@ class MoulPropertyBuilder internal constructor(option: ProcessedOption) {
 
     private class ForeignOption(val key: String, val default: () -> Any?)
 
-    private companion object {
+    internal companion object {
         private val pristines = ConcurrentHashMap<Class<*>, Optional<Any>>()
 
         fun pristine(cls: Class<*>): Any? = pristines.computeIfAbsent(cls) {
