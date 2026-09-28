@@ -614,7 +614,8 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
     val theme = LocalTheme.current
     val verticalPadding = if (nested) 0.dp else 12.dp
 
-    if (prop.getMetadata<Any?>("visualizer") == Visualizer.InfoVisualizer::class.java) {
+    val visualizer = prop.getMetadata<Any?>("visualizer")
+    if (visualizer == Visualizer.InfoVisualizer::class.java || visualizer is Visualizer.InfoVisualizer) {
         Row(modifier = Modifier.fillMaxWidth().blockInteraction(!enabled).padding(horizontal = 16.dp, vertical = verticalPadding)) {
             Option(prop)
         }

@@ -89,6 +89,9 @@ class KtApiParityTest {
         val dsl = ConfigDSL("dsl_parity")
         val slider = dsl.slider(5f).apply { min = 0f; max = 1f }
         assertThrows(IllegalArgumentException::class.java) { slider.step = 5f }
+        assertNull(slider.step)
+        dsl.number(5f).apply { min = 0f; max = 1f; step = 5f }
+        dsl.button { error("boom") }.property.getMetadata<Runnable>("runnable")!!.run()
         assertThrows(IllegalArgumentException::class.java) { dsl.itemList().maxEntries = -1 }
         val list = dsl.draggableList(arrayOf("a"), "a", "b").apply { checkable = true }
         assertEquals(true, list["checkable"])

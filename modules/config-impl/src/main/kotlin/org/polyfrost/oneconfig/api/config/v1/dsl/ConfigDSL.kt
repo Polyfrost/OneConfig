@@ -8,6 +8,9 @@ import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
+import org.apache.logging.log4j.LogManager
+
+private val LOGGER = LogManager.getLogger("OneConfig/Config")
 
 /**
  * Experimental DSL for creating config trees
@@ -182,6 +185,12 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
     }
 
     class RunnableProp(action: Runnable) : Prop<Runnable>(action, Runnable::class.java) {
+        init {
+            this["runnable"] = Runnable {
+                runCatching { value?.run() }.onFailure { LOGGER.error("Failed to run button {}", id, it) }
+            }
+        }
+
         var action: Runnable?
             get() = value
             set(value) { this.value = value }
@@ -407,15 +416,17 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
         }
 
         operator fun set(key: String, value: Any?) {
+            if (key == "min" || key == "max" || key == "step") requireStep(key, value)
             property.addMetadata(key, value)
-            if (key == "min" || key == "max" || key == "step") requireStep()
         }
 
-        /** checked on every change so it only fires once min, max and step are all set */
-        private fun requireStep() {
-            val min = (this["min"] as? Number)?.toFloat() ?: return
-            val max = (this["max"] as? Number)?.toFloat() ?: return
-            val step = (this["step"] as? Number)?.toFloat() ?: return
+        private fun requireStep(key: String, value: Any?) {
+            val vis = this["visualizer"]
+            if (vis !is Visualizer.SliderVisualizer && vis !is Visualizer.RangeSliderVisualizer && vis !is Visualizer.SliderListVisualizer) return
+            fun num(k: String) = ((if (k == key) value else this[k]) as? Number)?.toFloat()
+            val min = num("min") ?: return
+            val max = num("max") ?: return
+            val step = num("step") ?: return
             require(step <= 0f || step <= max - min) { "slider '$id' has step ($step) larger than its range ($min to $max)" }
         }
 
