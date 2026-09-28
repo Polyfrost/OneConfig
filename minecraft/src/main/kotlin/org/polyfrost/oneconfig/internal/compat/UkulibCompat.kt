@@ -10,6 +10,7 @@ import java.util.function.Consumer
 import java.util.function.DoubleConsumer
 import java.util.function.Function
 import java.util.function.IntConsumer
+import java.util.function.Predicate
 import java.util.function.UnaryOperator
 import net.minecraft.client.gui.components.Button
 import net.minecraft.client.gui.components.tabs.Tab
@@ -19,6 +20,7 @@ import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.config.v1.Property.Display
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.dsl.category
@@ -198,6 +200,7 @@ object UkulibCompat {
 
     private fun property(kind: String, creator: Any, ref: CreatorRef, id: String): Property<*>? = when (kind) {
         "CyclingOption" -> cyclingProperty(creator, ref, id)
+            ?.addDisplayCondition { if (ref.read("active") == false) Display.DISABLED else Display.SHOWN }
         "SliderOption" -> sliderProperty(creator, ref, id, int = false)
         "IntSliderOption" -> sliderProperty(creator, ref, id, int = true)
         "InputOption" -> inputProperty(creator, ref, id, typed = false)
@@ -293,12 +296,16 @@ object UkulibCompat {
         val property = Properties.functional(
             { ref.read("initialValue") as? String ?: "" },
             { text: String ->
+                @Suppress("UNCHECKED_CAST")
+                val validator = ref.read("validator") as? Predicate<Any?>
                 if (typed) {
                     @Suppress("UNCHECKED_CAST")
                     val converted = (converter as? Function<Any?, *>)
                         ?.let { runCatching { it.apply(text) }.getOrNull() as? Optional<Any?> }
-                    if (converted != null && converted.isPresent) ref.consume("setter", converted.get())
-                } else {
+                    if (converted != null && converted.isPresent && validator.accepts(converted.get())) {
+                        ref.consume("setter", converted.get())
+                    }
+                } else if (validator.accepts(text)) {
                     ref.consume("setter", text)
                 }
             },
@@ -313,6 +320,9 @@ object UkulibCompat {
         (readField(creator, "maxLength") as? Number)?.let { property.addMetadata("maxLength", it.toInt()) }
         return property
     }
+
+    private fun Predicate<Any?>?.accepts(value: Any?): Boolean =
+        this == null || runCatching { test(value) }.getOrDefault(false)
 
     private fun colorProperty(creator: Any, ref: CreatorRef, id: String): Property<*> {
         val allowAlpha = readField(creator, "allowAlpha") == true
