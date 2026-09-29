@@ -41,6 +41,7 @@ import org.polyfrost.oneconfig.internal.ui.navigation.graph.PreferencesGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ThemesGraph
 import org.polyfrost.oneconfig.internal.ui.shell.HudEditorRoute
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
+import org.polyfrost.oneconfig.internal.ui.shell.SearchFocus
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
@@ -67,15 +68,24 @@ class OneConfigUIScreen @JvmOverloads constructor(
             sharedScreen ?: OneConfigUIScreen().also { sharedScreen = it }
 
         @JvmStatic
-        fun forRoute(route: Any?): OneConfigUIScreen = shared().also { it.initialRoute = route }
+        fun forRoute(route: Any?): OneConfigUIScreen = shared().also {
+            it.initialRoute = route
+            it.resumeNext = false
+        }
 
         @JvmStatic
-        fun open(): OneConfigUIScreen = shared().also { it.initialRoute = null }
+        fun open(): OneConfigUIScreen = shared().also {
+            it.initialRoute = null
+            it.resumeNext = false
+        }
+
+        /** For returning from a HUD editor opened from the OneConfig menu */
         @JvmStatic
         fun resume(): OneConfigUIScreen = shared().also {
             it.initialRoute = null
             it.resumeNext = true
         }
+
         private const val FULLSCREEN_BLUR_RADIUS = 8f
         private const val OPEN_ANIMATION_MS = 250L
 
@@ -193,9 +203,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
     /** The page this screen is showing which survives the scene being disposed and rebuilt */
     private var route: Any? by mutableStateOf(null)
 
-    /** True once this screen has been displaced by another and is being shown again */
-    private var resuming by mutableStateOf(false)
-
     /** True when [route] is a page being put back rather than a page being opened */
     private var restoring by mutableStateOf(false)
 
@@ -284,7 +291,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
         }
         route = target
         restoring = targetRestoring
-        resuming = isResume
         openRevision++
         ShellState.lastRoute = target
 
@@ -293,8 +299,13 @@ class OneConfigUIScreen @JvmOverloads constructor(
         } catch (_: Throwable) {
             ShellState.playerName = "Player"
         }
-        ShellState.focusSearchField = OneConfigConfig.instantSearch
-        ShellState.searchFieldFocused = false
+        val keepFocus = if (ShellState.searchFieldFocused) SearchFocus.Focus else SearchFocus.Unfocus
+        ShellState.searchFocus = when {
+            isResume -> keepFocus
+            OneConfigConfig.instantSearch -> SearchFocus.SelectAll
+            targetRestoring -> keepFocus
+            else -> SearchFocus.Unfocus
+        }
         val client = Minecraft.getInstance()
         val cachedHead = PlayerHeadLoader.cachedLocalPlayerHeadPng(client)
         if (cachedHead != null) {
@@ -352,9 +363,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
      */
     override fun onSceneRebuilding() {
         ShellState.lastRoute?.takeIf { it !== HudEditorRoute }?.let { route = it }
-        resuming = true
         restoring = true
-        if (ShellState.searchFieldFocused) ShellState.focusSearchField = true
+        if (ShellState.searchFieldFocused) ShellState.searchFocus = SearchFocus.Focus
     }
 
     override fun removed() {
@@ -502,7 +512,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
             containerSize.width.toFloat(),
             containerSize.height.toFloat(),
             initialRoute = initialRoute,
-            resuming = resuming,
             restoring = restoring,
             openRevision = openRevision,
             onCloseRequest = { beginClose() },

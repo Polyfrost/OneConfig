@@ -260,7 +260,7 @@ public class OneConfig
                 HudEditorToggleEvent.class, e -> {
                     if (e.open) {
                         if (!(Platform.screen().current() instanceof HudEditorUIScreen)) {
-                            Platform.screen().display(HudEditorUIScreen.open());
+                            Platform.screen().display(HudEditorUIScreen.open(Platform.screen().current() instanceof OneConfigUIScreen));
                         }
                     } else if (!e.screenAlreadyGone) {
                         if (Platform.screen().current() instanceof HudEditorUIScreen) {
