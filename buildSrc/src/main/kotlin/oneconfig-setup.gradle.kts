@@ -15,7 +15,6 @@ plugins {
     kotlin("jvm")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
-    id("versioned-catalogues")
     `maven-publish`
     signing
 }

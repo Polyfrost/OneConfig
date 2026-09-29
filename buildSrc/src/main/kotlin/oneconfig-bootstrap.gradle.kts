@@ -6,7 +6,6 @@ import kotlin.collections.listOf
 
 plugins {
     java
-    id("versioned-catalogues")
     id("me.modmuss50.mod-publish-plugin")
 }
 
