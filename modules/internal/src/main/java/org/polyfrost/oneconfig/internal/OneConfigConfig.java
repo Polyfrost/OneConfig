@@ -3,10 +3,9 @@ package org.polyfrost.oneconfig.internal;
 import java.util.concurrent.atomic.AtomicReference;
 import kotlin.jvm.functions.Function1;
 import org.polyfrost.oneconfig.api.config.v1.Config;
-import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.config.v1.Property;
-import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Dropdown;
+import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Keybind;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
@@ -309,6 +308,12 @@ public class OneConfigConfig extends Config {
     )
     public static int rememberLastPage = 1;
 
+    @Include
+    private static int openingBehavior = -1;
+
+    @Include
+    private static float timeBeforeReset = 15f;
+
     @Switch(
         title = "oneconfig.preferences.restore_hud_editor.title",
         titleTranslation = true,
@@ -584,7 +589,6 @@ public class OneConfigConfig extends Config {
 
     @Override
     protected void initialize(boolean byConfigManager) {
-        Tree stored = ConfigManager.active().load(id);
         super.initialize(byConfigManager);
         if (tree == null) {
             return;
@@ -593,7 +597,7 @@ public class OneConfigConfig extends Config {
             "uiSharpening",
             "Reduced-resolution filter",
             () -> reducedResFilter != 0 ? Property.Display.SHOWN : Property.Display.DISABLED);
-        migrateOpeningBehavior(stored);
+        migrateOpeningBehavior();
         addDependency(
             "restoreHudEditor",
             "Remember last page",
@@ -730,30 +734,20 @@ public class OneConfigConfig extends Config {
         return closedAt > 0L && System.currentTimeMillis() - closedAt <= REMEMBER_LAST_PAGE_SECONDS[option - 1] * 1000L;
     }
 
-    private void migrateOpeningBehavior(Tree stored) {
-        if (stored == null || stored.getProp("rememberLastPage") != null) return;
-        java.lang.Number behavior = numberOf(stored, "openingBehavior");
-        if (behavior == null) return;
-        int option;
-        switch (behavior.intValue()) {
+    private void migrateOpeningBehavior() {
+        if (openingBehavior < 0) return;
+        switch (openingBehavior) {
             case 2: // previous page
-                option = REMEMBER_ALWAYS;
+                rememberLastPage = REMEMBER_ALWAYS;
                 break;
             case 3: // smart reset, 37.5 is halfway between 15 seconds and 1 minute
-                java.lang.Number seconds = numberOf(stored, "timeBeforeReset");
-                option = seconds != null && seconds.floatValue() > 37.5f ? 2 : 1;
+                rememberLastPage = timeBeforeReset > 37.5f ? 2 : 1;
                 break;
             default: // mods or preferences
-                option = REMEMBER_NEVER;
+                rememberLastPage = REMEMBER_NEVER;
         }
-        rememberLastPage = option;
+        openingBehavior = -1;
         save();
-    }
-
-    private static java.lang.Number numberOf(Tree tree, String option) {
-        Property<?> property = tree.getProp(option);
-        Object value = property != null ? property.get() : null;
-        return value instanceof java.lang.Number ? (java.lang.Number) value : null;
     }
 
     /** When the OneConfig keybind last closed the GUI so the same press cannot immediately reopen it */
