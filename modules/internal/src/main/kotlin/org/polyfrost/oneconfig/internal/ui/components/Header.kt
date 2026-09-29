@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -55,6 +56,7 @@ import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.components.dropdown.DropdownPositionProvider
 import org.polyfrost.oneconfig.internal.ui.navigation.searchPlaceholder
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
+import org.polyfrost.oneconfig.internal.ui.shell.SearchFocus
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -232,17 +234,26 @@ fun GlobalSearchBar() {
     }
     LaunchedEffect(isFocused) { ShellState.searchFieldFocused = isFocused }
 
-    LaunchedEffect(ShellState.focusSearchField) {
-        if (ShellState.focusSearchField) {
-            withFrameNanos { }
-            // a kept query is selected so typing starts a new search while leaving it alone keeps it
-            searchText = searchText.copy(selection = TextRange(0, searchText.text.length))
-            try {
-                focusRequester.requestFocus()
-            } catch (_: IllegalStateException) {
+    val focusManager = LocalFocusManager.current
+
+    LaunchedEffect(ShellState.searchFocus) {
+        val request = ShellState.searchFocus ?: return@LaunchedEffect
+        withFrameNanos { }
+        if (request == SearchFocus.Unfocus) {
+            if (isFocused) focusManager.clearFocus()
+        } else {
+            if (request == SearchFocus.SelectAll) {
+                // a kept query is selected so typing starts a new search while leaving it alone keeps it
+                searchText = searchText.copy(selection = TextRange(0, searchText.text.length))
             }
-            ShellState.focusSearchField = false
+            if (!isFocused) {
+                try {
+                    focusRequester.requestFocus()
+                } catch (_: IllegalStateException) {
+                }
+            }
         }
+        ShellState.searchFocus = null
     }
 
     val searchTextStyle = TextStyle(

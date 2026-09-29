@@ -16,6 +16,13 @@ import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 
 object HudEditorRoute
 
+enum class SearchFocus {
+    SelectAll,
+    /** Focuses the search field and leaves its text and cursor alone */
+    Focus,
+    Unfocus,
+}
+
 object Lifecycle : LifecycleOwner {
     override val lifecycle = LifecycleRegistry(this)
 }
@@ -40,9 +47,10 @@ object ShellState {
 
     var searchQuery by mutableStateOf("")
 
-    var focusSearchField by mutableStateOf(false)
+    /** Applied once by the search field then cleared */
+    var searchFocus by mutableStateOf<SearchFocus?>(null)
 
-    /** Whether the search field holds focus mirrored here so a discarded composition can recover it */
+    /** Mirrors the search field's focus so a reopened or rebuilt menu can put it back */
     var searchFieldFocused: Boolean = false
 
     var hudDragging by mutableStateOf(false)
