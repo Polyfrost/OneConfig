@@ -71,11 +71,14 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
         @JvmStatic
         fun open(): OneConfigUIScreen = shared().also { it.initialRoute = null }
+
+        /** For returning from a HUD editor opened from the OneConfig menu */
         @JvmStatic
         fun resume(): OneConfigUIScreen = shared().also {
             it.initialRoute = null
             it.resumeNext = true
         }
+
         private const val FULLSCREEN_BLUR_RADIUS = 8f
         private const val OPEN_ANIMATION_MS = 250L
 

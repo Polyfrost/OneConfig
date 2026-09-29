@@ -44,10 +44,14 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
         private var instance: HudEditorUIScreen? = null
 
         @JvmStatic
-        fun open(): HudEditorUIScreen = instance ?: HudEditorUIScreen().also { instance = it }
+        fun open(fromOneConfig: Boolean): HudEditorUIScreen {
+            val screen = instance ?: HudEditorUIScreen().also { instance = it }
+            screen.enteredFromOneConfig = fromOneConfig
+            return screen
+        }
 
         @JvmStatic
-        fun prewarmShared(): Boolean = open().runPrewarm()
+        fun prewarmShared(): Boolean = open(false).runPrewarm()
 
         @JvmStatic
         fun endPrewarmShared() {
@@ -91,6 +95,13 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
 
     @Volatile private var returningToOneConfig = false
 
+    private var enteredFromOneConfig = false
+
+    private fun returnToOneConfig() {
+        returningToOneConfig = true
+        Platform.screen().display(if (enteredFromOneConfig) OneConfigUIScreen.resume() else OneConfigUIScreen.open())
+    }
+
     private var requestCloseCallback: (() -> Unit)? = null
     private var requestOpenCallback: (() -> Unit)? = null
 
@@ -129,8 +140,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
             beginClose()
             requestCloseCallback?.invoke()
         } else {
-            returningToOneConfig = true
-            Platform.screen().display(OneConfigUIScreen.resume())
+            returnToOneConfig()
         }
         return true
     }
@@ -222,10 +232,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
             ) {
                 Theme(pixelGrid = true) {
                     HudDesignStudio(
-                        onReturnToOneConfig = {
-                            returningToOneConfig = true
-                            Platform.screen().display(OneConfigUIScreen.resume())
-                        }
+                        onReturnToOneConfig = ::returnToOneConfig
                     )
                 }
             }
