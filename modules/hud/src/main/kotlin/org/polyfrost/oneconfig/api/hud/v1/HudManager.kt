@@ -194,6 +194,8 @@ object HudManager {
 
     private val prepareOrder = ArrayList<Hud>()
 
+    private val frameDrawn = IdentityHashMap<Hud, Boolean>()
+
     private var frameGroups: List<HudBackgroundMerge.Group> = emptyList()
     private var lastMergeKey: Int? = null
 
@@ -559,10 +561,13 @@ object HudManager {
     private fun collectFrameOrder(): Boolean {
         frameOrder.clear()
         layoutOrder.clear()
+        frameDrawn.clear()
         var volatileContent = false
-        for (hud in orderedForRender()) {
+        for (hud in activeInstances) {
+            if (hud is LegacyHudMarker) continue
             val visible = shouldDraw(hud)
-            if (visible || keepsBackgroundOnly(hud)) {
+            val backgroundOnly = !visible && keepsBackgroundOnly(hud)
+            if (visible || backgroundOnly) {
                 updateIfDue(hud)
                 val show = isEditing || try {
                     hud.shouldShow()
@@ -574,12 +579,16 @@ object HudManager {
                     hud.isVisible.value = false
                     continue
                 }
+                frameDrawn[hud] = visible
             }
             hud.isVisible.value = visible
+        }
+        for (hud in orderedForRender()) {
+            val visible = frameDrawn[hud] ?: continue
             if (visible) {
                 frameOrder.add(hud)
                 if (hud.alwaysRedraw) volatileContent = true
-            } else if (keepsBackgroundOnly(hud)) {
+            } else {
                 layoutOrder.add(hud)
                 if (hud.bgChroma) volatileContent = true
             }
@@ -805,7 +814,7 @@ object HudManager {
         var same = zOrderCache.size == n
         for (i in 0 until n) {
             val hud = list[i]
-            val b = screenBounds(hud)
+            val b = drawnBounds(hud)
             val x = b?.get(0) ?: Float.NaN
             val y = b?.get(1) ?: Float.NaN
             val w = b?.get(2) ?: Float.NaN
@@ -825,9 +834,11 @@ object HudManager {
         }
         if (same) return zOrderCache
         invalidate()
-        zOrderCache = zOrdered(list, ::screenBounds)
+        zOrderCache = zOrdered(list, ::drawnBounds)
         return zOrderCache
     }
+
+    private fun drawnBounds(hud: Hud): FloatArray? = if (hud in frameDrawn) screenBounds(hud) else null
 
     private fun Float.sameBound(other: Float): Boolean =
         this == other || (this.isNaN() && other.isNaN())
