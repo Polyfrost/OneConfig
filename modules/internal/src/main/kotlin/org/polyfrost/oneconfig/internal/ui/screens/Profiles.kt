@@ -113,7 +113,8 @@ private data class ProfileActionResult(
 private val ProfileCardHeight = 180.dp
 private const val OverlayFrameTimeoutMs = 500L
 private val FavoriteStarColor = Color(0xFFFFD700)
-private enum class ProfileEditor { Rename, Clone, Icon }
+private val DangerColor = Color(0xFFE35B5B)
+private enum class ProfileEditor { Rename, Clone, Icon, Delete }
 private val ProfileIconOptions = listOf(
     "profiles",
     "star",
@@ -343,18 +344,7 @@ fun Profiles() {
                     runProfileAction(onSuccess, onError) { ConfigManager.setProfileIcon(profile.id, icon) }
                 },
                 onDelete = { profile ->
-                    runProfileDialog(
-                        prompt = {
-                            TinyFdApi.getInstance().showMessageBox(
-                                "Delete profile",
-                                "Delete ${profile.name}? This cannot be undone.",
-                                TinyFdApi.YES_NO_DIALOG,
-                                TinyFdApi.WARNING_ICON,
-                                false,
-                            ).takeIf { it }
-                        },
-                        action = { ConfigManager.deleteProfile(profile.id) },
-                    )
+                    runProfileAction { ConfigManager.deleteProfile(profile.id) }
                 },
                 onExport = { profile ->
                     runProfileDialog(
@@ -784,8 +774,14 @@ private fun ProfileCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (editor != null) {
-                if (editor == ProfileEditor.Rename || editor == ProfileEditor.Clone) {
-                    ActionIcon("tick", enabled = !busy, tint = Accent, onClick = ::submitName)
+                when (editor) {
+                    ProfileEditor.Rename, ProfileEditor.Clone ->
+                        ActionIcon("tick", enabled = !busy, tint = Accent, onClick = ::submitName)
+                    ProfileEditor.Delete -> ActionIcon("tick", enabled = !busy, tint = DangerColor) {
+                        onEditorChange(null)
+                        onDelete()
+                    }
+                    ProfileEditor.Icon -> Unit
                 }
                 ActionIcon("close", enabled = !busy, tint = theme.textColorSecondary, onClick = ::closeEditor)
             } else {
@@ -821,15 +817,19 @@ private fun ProfileCard(
             },
             onFavorite = onFavorite,
             onExport = onExport,
-            onDelete = onDelete,
+            onDelete = {
+                editError = null
+                onEditorChange(ProfileEditor.Delete)
+            },
         )
 
         Column(
             modifier = Modifier.align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Icon(profile.icon, modifier = Modifier.size(if (editor != null) 42.dp else 64.dp), color = theme.textColor)
-            Spacer(Modifier.height(if (editor != null) 14.dp else 24.dp))
+            val compact = editor != null && editor != ProfileEditor.Delete
+            Icon(profile.icon, modifier = Modifier.size(if (compact) 42.dp else 64.dp), color = theme.textColor)
+            Spacer(Modifier.height(if (compact) 14.dp else 24.dp))
             when (editor) {
                 ProfileEditor.Rename, ProfileEditor.Clone -> ProfileTextField(
                     value = editName,
@@ -858,7 +858,7 @@ private fun ProfileCard(
                         )
                     },
                 )
-                null -> {
+                ProfileEditor.Delete, null -> {
                     BasicText(
                         profile.name,
                         modifier = Modifier
@@ -878,6 +878,9 @@ private fun ProfileCard(
             }
             if (editor == ProfileEditor.Icon && editError != null) {
                 ProfileError(editError!!, 150.dp)
+            }
+            if (editor == ProfileEditor.Delete) {
+                Text("Delete this profile?", modifier = Modifier.padding(top = 4.dp), color = DangerColor, fontSize = 13.sp)
             }
         }
     }
@@ -958,7 +961,7 @@ private fun ProfileMenuItem(
     val theme = LocalTheme.current
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
-    val baseColor = if (danger) Color(0xFFE35B5B) else theme.textColor
+    val baseColor = if (danger) DangerColor else theme.textColor
     val color = if (enabled) baseColor else theme.textColorSecondary
     val shape = theme.popupShape.concentric(4.dp)
     val hoverBackground by animateColorAsState(
@@ -1096,7 +1099,7 @@ private fun ProfileTextField(
     val isFocused by interactionSource.collectIsFocusedAsState()
     val shape = theme.sideBarNavigationEntryShape
     val borderColor by animateColorAsState(
-        if (error != null) Color(0xFFE35B5B)
+        if (error != null) DangerColor
         else if (isFocused) Accent
         else theme.borderColor
     )
@@ -1162,7 +1165,7 @@ private fun ProfileError(message: String, width: Dp) {
         text = message,
         modifier = Modifier.width(width).padding(top = 4.dp),
         style = TextStyle(
-            color = Color(0xFFE35B5B),
+            color = DangerColor,
             fontSize = 10.sp,
             fontFamily = LocalTheme.current.typography.family,
             textAlign = TextAlign.Center,
