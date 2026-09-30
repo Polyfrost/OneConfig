@@ -10,11 +10,11 @@ public final class TextInputManager {
         return INSTANCE;
     }
 
-    public void startTextInput() {
+    public void startTextInput(Object owner) {
         DisplaySdl.instance().setTextInputActive(true);
     }
 
-    public void stopTextInput() {
+    public void stopTextInput(Object owner) {
         DisplaySdl.instance().setTextInputActive(false);
     }
 }

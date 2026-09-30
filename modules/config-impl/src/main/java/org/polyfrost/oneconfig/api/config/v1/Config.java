@@ -349,14 +349,14 @@ public abstract class Config {
     protected void restoreDefaults() {
         Tree backup = backupTree();
         if (backup == null) return;
-        tree.overwrite(backup, false);
+        tree.overwrite(backup, true);
     }
 
     protected void restoreProperty(String option) {
         // first restore is slow as the backup tree loads from disc but it then stays in memory
         Tree backup = backupTree();
         if (backup == null) return;
-        getProperty(option).overwrite(getProperty(backup, option), false);
+        getProperty(option).overwrite(getProperty(backup, option), true);
     }
 
     private Tree backupTree() {

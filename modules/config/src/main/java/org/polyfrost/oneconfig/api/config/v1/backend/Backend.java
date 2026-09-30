@@ -111,7 +111,7 @@ public abstract class Backend {
 
             if (in.map.isEmpty()) return new RegistrationResult(current, RegistrationResult.MERGED);
             LOGGER.info("performing tree merge between {} and {}", current.getTitle(), in.getTitle());
-            current.overwrite(in, false);
+            current.overwrite(in, true);
             // clear the old tree to prevent illegal usage
             in.clear();
             save(current);
@@ -164,7 +164,7 @@ public abstract class Backend {
         if (t.get("reserved:overwritten") != null) {
             tree.put(Objects.requireNonNull(t.get("reserved:overwritten")));
         }
-        tree.overwrite(t, false);
+        tree.overwrite(t, true);
 
         putSafe(tree);
         return true;

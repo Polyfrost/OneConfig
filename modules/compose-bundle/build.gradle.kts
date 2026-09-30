@@ -23,15 +23,6 @@ val shade: Configuration by configurations.creating {
     exclude(group = "org.jetbrains.compose.runtime")
 }
 
-fun isExcludedFromBundle(file: File): Boolean {
-    val artifact = shade.resolvedConfiguration.resolvedArtifacts.find { it.file == file }
-    return artifact?.moduleVersion?.id?.let { id ->
-        id.group == "org.jetbrains.kotlin" ||
-            id.group == "org.jetbrains.kotlinx" ||
-            (id.group == "org.jetbrains" && id.name == "annotations")
-    } ?: false
-}
-
 dependencies {
     shade(libs.jetbrains.compose.foundation)
     shade(libs.jetbrains.compose.material)
@@ -65,14 +56,15 @@ private fun createProcessTask(): TaskProvider<NestableJarGenerationTask> {
 val processTask = createProcessTask()
 
 processTask.configure {
+    val shadeArtifacts = shade.incoming.artifacts.resolvedArtifacts
     doFirst {
-        val collisions = shade.resolvedConfiguration.resolvedArtifacts
+        val collisions = shadeArtifacts.get()
             .groupBy { it.file.name }
             .filterValues { it.size > 1 }
         check(collisions.isEmpty()) {
             "Nested jar filename collisions in the compose bundle, exclude the redundant artifacts:\n" +
                 collisions.entries.joinToString("\n") { (name, artifacts) ->
-                    "  $name -> ${artifacts.map { it.moduleVersion.id }}"
+                    "  $name -> ${artifacts.map { it.id.componentIdentifier.displayName }}"
                 }
         }
     }

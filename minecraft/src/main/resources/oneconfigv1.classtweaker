@@ -3,6 +3,7 @@ classTweaker v1 official
 #? if = 1.8.9 {
 #accessible field net/minecraft/client/Minecraft tasks Ljava/util/Queue;
 #accessible field net/minecraft/client/render/texture/HttpTexture image Ljava/awt/image/BufferedImage;
+#accessible field net/minecraft/client/render/texture/HttpTexture uploaded Z
 #accessible method net/minecraft/client/gui/screen/menu/TitleScreen drawBackground (IIF)V
 #transitive-inject-interface net/minecraft/client/Minecraft org/polyfrost/oneconfig/internal/legacy/compat/MinecraftCompat
 #transitive-inject-interface net/minecraft/client/KeyMapping org/polyfrost/oneconfig/internal/legacy/compat/KeyBindingCompat

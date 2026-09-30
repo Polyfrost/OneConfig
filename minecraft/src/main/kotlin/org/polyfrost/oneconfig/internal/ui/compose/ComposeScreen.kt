@@ -153,6 +153,11 @@ abstract class ComposeScreen(
 
     private var renderScopeOrNull: SingleComposeSceneRenderingScope? = null
 
+    private var sceneContextOrNull: SceneContext? = null
+
+    /** Whether this screen is open. Retained scenes stay alive after it closes */
+    private var showing = false
+
     private var scenePoisoned = false
 
     private var sceneRebuilds = 0
@@ -240,12 +245,15 @@ abstract class ComposeScreen(
         val scene = sceneOrNull
         val recomposer = recomposerOrNull
         if (scene == null && recomposer == null) return
+        val sceneContext = sceneContextOrNull
         sceneOrNull = null
         recomposerOrNull = null
         renderScopeOrNull = null
+        sceneContextOrNull = null
         contentSet = false
         scenePoisoned = false
         sceneFailure = null
+        sceneContext?.close()
         try {
             scene?.close()
         } catch (t: Throwable) {
@@ -263,10 +271,11 @@ abstract class ComposeScreen(
         val failureHandler = CoroutineExceptionHandler { _, t -> failure.compareAndSet(null, t) }
         val recomposer = FrameRecomposer(RenderThreadDispatcher + failureHandler) { sceneDirty = true }
         val scope = SingleComposeSceneRenderingScope { sceneDirty = true }
+        val sceneContext = SceneContext { showing }
         val scene = try {
             CanvasLayersComposeScene(
                 frameRecomposer = recomposer,
-                platformContext = ComposeSceneContextImpl.platformContext,
+                platformContext = sceneContext,
                 invalidateLayout = scope::onSceneInvalidation,
                 invalidateDraw = scope::onSceneInvalidation,
             )
@@ -280,6 +289,7 @@ abstract class ComposeScreen(
         }
         recomposerOrNull = recomposer
         renderScopeOrNull = scope
+        sceneContextOrNull = sceneContext
         sceneFailure = failure
         return scene
     }
@@ -392,6 +402,9 @@ abstract class ComposeScreen(
             closeWithMessage("OneConfig's UI failed to start. Please check your logs and report this.")
             return
         }
+
+        showing = true
+        sceneContextOrNull?.sync()
     }
 
     private var prewarmCursor = 0
@@ -586,6 +599,8 @@ abstract class ComposeScreen(
         /*Keyboard.enableRepeatEvents(false)
         panorama = null
         *///?}
+        showing = false
+        sceneContextOrNull?.sync()
         ComposeSceneContextImpl.resetPointerIcon()
         releaseScene()
         super.removed()

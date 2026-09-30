@@ -30,7 +30,6 @@ import org.polyfrost.oneconfig.internal.ui.compose.ComposePreloader
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
 import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
-import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.KeybindsGraph
@@ -40,6 +39,7 @@ import org.polyfrost.oneconfig.internal.ui.navigation.graph.PreferencesGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ThemesGraph
 import org.polyfrost.oneconfig.internal.ui.shell.HudEditorRoute
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
+import org.polyfrost.oneconfig.internal.ui.shell.SearchFocus
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
@@ -70,15 +70,24 @@ class OneConfigUIScreen @JvmOverloads constructor(
             sharedScreen ?: OneConfigUIScreen().also { sharedScreen = it }
 
         @JvmStatic
-        fun forRoute(route: Any?): OneConfigUIScreen = shared().also { it.initialRoute = route }
+        fun forRoute(route: Any?): OneConfigUIScreen = shared().also {
+            it.initialRoute = route
+            it.resumeNext = false
+        }
 
         @JvmStatic
-        fun open(): OneConfigUIScreen = shared().also { it.initialRoute = null }
+        fun open(): OneConfigUIScreen = shared().also {
+            it.initialRoute = null
+            it.resumeNext = false
+        }
+
+        /** For returning from a HUD editor opened from the OneConfig menu */
         @JvmStatic
         fun resume(): OneConfigUIScreen = shared().also {
             it.initialRoute = null
             it.resumeNext = true
         }
+
         private const val FULLSCREEN_BLUR_RADIUS = 8f
         private const val OPEN_ANIMATION_MS = 250L
 
@@ -104,25 +113,12 @@ class OneConfigUIScreen @JvmOverloads constructor(
         /** [restored] marks a route that puts the user back where they were rather than opening a fixed page */
         private data class OpeningRoute(val route: Any, val restored: Boolean = false)
 
-        private fun resolveOpeningBehaviorRoute(): OpeningRoute = resolveRoute().let {
+        private fun resolveOpeningRoute(): OpeningRoute {
+            val route = ShellState.lastRoute
             // "Reopen HUD editor" is off by default so the editor is never restored as a page
-            if (it.route === HudEditorRoute && !OneConfigConfig.restoreHudEditor) OpeningRoute(ModsGraph) else it
-        }
-
-        private fun resolveRoute(): OpeningRoute = when (OneConfigConfig.openingBehavior) {
-            0 -> OpeningRoute(ModsGraph)
-            1 -> OpeningRoute(PreferencesGraph)
-            2 -> ShellState.lastRoute?.let { OpeningRoute(it, restored = true) } ?: OpeningRoute(ModsGraph)
-            3 -> {
-                val last = ShellState.lastClosedAt
-                val route = ShellState.lastRoute
-                // the HUD editor stays restorable for longer than a config page
-                val window = if (route === HudEditorRoute) HudDesignSession.restoreWindowMillis()
-                    else (OneConfigConfig.timeBeforeReset * 1000f).toLong()
-                val withinWindow = last > 0L && System.currentTimeMillis() - last <= window
-                if (withinWindow && route != null) OpeningRoute(route, restored = true) else OpeningRoute(ModsGraph)
-            }
-            else -> OpeningRoute(ModsGraph)
+            if (route == null || !OneConfigConfig.remembersPageClosedAt(ShellState.lastClosedAt) ||
+                (route === HudEditorRoute && !OneConfigConfig.restoreHudEditor)) return OpeningRoute(ModsGraph)
+            return OpeningRoute(route, restored = true)
         }
 
         @JvmStatic
@@ -160,7 +156,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
         @JvmStatic
         fun openLastSession() {
-            if (resolveOpeningBehaviorRoute().route === HudEditorRoute) HudManager.openEditor()
+            if (resolveOpeningRoute().route === HudEditorRoute) HudManager.openEditor()
             else Platform.screen().display(open())
         }
     }
@@ -195,9 +191,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     /** The page this screen is showing which survives the scene being disposed and rebuilt */
     private var route: Any? by mutableStateOf(null)
-
-    /** True once this screen has been displaced by another and is being shown again */
-    private var resuming by mutableStateOf(false)
 
     /** True when [route] is a page being put back rather than a page being opened */
     private var restoring by mutableStateOf(false)
@@ -280,14 +273,13 @@ class OneConfigUIScreen @JvmOverloads constructor(
             initialRoute != null -> initialRoute to false
             initialTreeId != null -> ModConfigRoute(initialTreeId, initialCategory) to false
             else -> {
-                val opening = resolveOpeningBehaviorRoute()
+                val opening = resolveOpeningRoute()
                 val resolved = opening.route.takeIf { it !== HudEditorRoute } ?: ModsGraph
                 resolved to (opening.restored && resolved === opening.route)
             }
         }
         route = target
         restoring = targetRestoring
-        resuming = isResume
         openRevision++
         ShellState.lastRoute = target
 
@@ -296,8 +288,13 @@ class OneConfigUIScreen @JvmOverloads constructor(
         } catch (_: Throwable) {
             ShellState.playerName = "Player"
         }
-        ShellState.focusSearchField = OneConfigConfig.instantSearch
-        ShellState.searchFieldFocused = false
+        val keepFocus = if (ShellState.searchFieldFocused) SearchFocus.Focus else SearchFocus.Unfocus
+        ShellState.searchFocus = when {
+            isResume -> keepFocus
+            OneConfigConfig.instantSearch -> SearchFocus.SelectAll
+            targetRestoring -> keepFocus
+            else -> SearchFocus.Unfocus
+        }
         val client = Minecraft.getInstance()
         val cachedHead = PlayerHeadLoader.cachedLocalPlayerHeadPng(client)
         if (cachedHead != null) {
@@ -355,9 +352,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
      */
     override fun onSceneRebuilding() {
         ShellState.lastRoute?.takeIf { it !== HudEditorRoute }?.let { route = it }
-        resuming = true
         restoring = true
-        if (ShellState.searchFieldFocused) ShellState.focusSearchField = true
+        if (ShellState.searchFieldFocused) ShellState.searchFocus = SearchFocus.Focus
     }
 
     override fun removed() {
@@ -512,7 +508,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
             containerSize.width.toFloat(),
             containerSize.height.toFloat(),
             initialRoute = initialRoute,
-            resuming = resuming,
             restoring = restoring,
             openRevision = openRevision,
             onCloseRequest = { beginClose() },
