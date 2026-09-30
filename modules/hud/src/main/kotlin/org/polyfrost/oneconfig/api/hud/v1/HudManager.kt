@@ -194,9 +194,12 @@ object HudManager {
 
     private val prepareOrder = ArrayList<Hud>()
 
+    private val frameDrawn = IdentityHashMap<Hud, Boolean>()
+
     private var frameGroups: List<HudBackgroundMerge.Group> = emptyList()
     private var lastMergeKey: Int? = null
 
+    private val renderable = ArrayList<Hud>()
     private var zOrderCache: List<Hud> = emptyList()
     private var zOrderHuds = arrayOfNulls<Hud>(0)
     private var zOrderBounds = FloatArray(0)
@@ -463,8 +466,9 @@ object HudManager {
             inner[1] + inner[3] <= outer[1] + outer[3]
 
     @ApiStatus.Internal
-    fun zOrderedInstances(bounds: (Hud) -> FloatArray? = ::screenBounds): List<Hud> {
-        val list = activeInstances
+    fun zOrderedInstances(bounds: (Hud) -> FloatArray? = ::screenBounds): List<Hud> = zOrdered(activeInstances, bounds)
+
+    private fun zOrdered(list: List<Hud>, bounds: (Hud) -> FloatArray?): List<Hud> {
         val n = list.size
         if (n <= 1) return list
         val b = arrayOfNulls<FloatArray>(n)
@@ -541,7 +545,6 @@ object HudManager {
 
     /** Everything [shouldDraw] checks apart from the HUD's own hidden flag */
     private fun isShown(hud: Hud): Boolean {
-        if (hud is LegacyHudMarker) return false
         if (isEditing) return true
         if (isGuiHidden) return false
         if (isDebugScreenVisible && !hud.showInF3) return false
@@ -558,10 +561,13 @@ object HudManager {
     private fun collectFrameOrder(): Boolean {
         frameOrder.clear()
         layoutOrder.clear()
+        frameDrawn.clear()
         var volatileContent = false
-        for (hud in orderedForRender()) {
+        for (hud in activeInstances) {
+            if (hud is LegacyHudMarker) continue
             val visible = shouldDraw(hud)
-            if (visible || keepsBackgroundOnly(hud)) {
+            val backgroundOnly = !visible && keepsBackgroundOnly(hud)
+            if (visible || backgroundOnly) {
                 updateIfDue(hud)
                 val show = isEditing || try {
                     hud.shouldShow()
@@ -573,12 +579,16 @@ object HudManager {
                     hud.isVisible.value = false
                     continue
                 }
+                frameDrawn[hud] = visible
             }
             hud.isVisible.value = visible
+        }
+        for (hud in orderedForRender()) {
+            val visible = frameDrawn[hud] ?: continue
             if (visible) {
                 frameOrder.add(hud)
                 if (hud.alwaysRedraw) volatileContent = true
-            } else if (keepsBackgroundOnly(hud)) {
+            } else {
                 layoutOrder.add(hud)
                 if (hud.bgChroma) volatileContent = true
             }
@@ -790,7 +800,11 @@ object HudManager {
     }
 
     private fun orderedForRender(): List<Hud> {
-        val list = activeInstances
+        // legacy and compat HUDs draw through their own renderers, and reading their size or hidden
+        // flag can mean measuring text or going through reflection, so keep them out of this pass
+        val list = renderable
+        list.clear()
+        for (hud in activeInstances) if (hud !is LegacyHudMarker) list.add(hud)
         val n = list.size
         if (n <= 1) return list
         if (zOrderHuds.size < n) {
@@ -800,7 +814,7 @@ object HudManager {
         var same = zOrderCache.size == n
         for (i in 0 until n) {
             val hud = list[i]
-            val b = screenBounds(hud)
+            val b = drawnBounds(hud)
             val x = b?.get(0) ?: Float.NaN
             val y = b?.get(1) ?: Float.NaN
             val w = b?.get(2) ?: Float.NaN
@@ -820,9 +834,11 @@ object HudManager {
         }
         if (same) return zOrderCache
         invalidate()
-        zOrderCache = zOrderedInstances()
+        zOrderCache = zOrdered(list, ::drawnBounds)
         return zOrderCache
     }
+
+    private fun drawnBounds(hud: Hud): FloatArray? = if (hud in frameDrawn) screenBounds(hud) else null
 
     private fun Float.sameBound(other: Float): Boolean =
         this == other || (this.isNaN() && other.isNaN())

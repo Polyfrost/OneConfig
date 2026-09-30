@@ -6,7 +6,6 @@ import kotlin.collections.listOf
 
 plugins {
     java
-    id("versioned-catalogues")
     id("me.modmuss50.mod-publish-plugin")
 }
 
@@ -53,7 +52,9 @@ dependencies {
     "minecraft"("com.mojang:minecraft:${versionedCatalog.versions["minecraft"]}")
 }
 
-gradle.projectsEvaluated {
+evaluationDependsOn(platformPath)
+
+afterEvaluate {
     val platform = rootProject.project(platformPath)
 
     fun isExcluded(group: String?, name: String) =

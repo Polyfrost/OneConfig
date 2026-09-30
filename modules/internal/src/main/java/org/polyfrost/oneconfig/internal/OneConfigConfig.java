@@ -5,6 +5,7 @@ import kotlin.jvm.functions.Function1;
 import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Dropdown;
+import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Keybind;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
@@ -290,21 +291,28 @@ public class OneConfigConfig extends Config {
     public static float uiSharpening = 0.4f;
 
     @Dropdown(
-        title = "oneconfig.preferences.opening_behavior.title",
+        title = "oneconfig.preferences.remember_last_page.title",
         titleTranslation = true,
         subcategory = "oneconfig.preferences.category.gui",
         subcategoryTranslation = true,
         options = {
-            "oneconfig.mods",
-            "oneconfig.preferences",
-            "oneconfig.preferences.opening_behavior.previous_page",
-            "oneconfig.preferences.opening_behavior.smart_reset"
+            "oneconfig.preferences.remember_last_page.never",
+            "oneconfig.preferences.remember_last_page.15_seconds",
+            "oneconfig.preferences.remember_last_page.1_minute",
+            "oneconfig.preferences.remember_last_page.5_minutes",
+            "oneconfig.preferences.remember_last_page.always"
         },
         optionsTranslation = true,
-        description = "oneconfig.preferences.opening_behavior.description",
+        description = "oneconfig.preferences.remember_last_page.description",
         descriptionTranslation = true
     )
-    public static int openingBehavior = 3;
+    public static int rememberLastPage = 1;
+
+    @Include
+    private static int openingBehavior = -1;
+
+    @Include
+    private static float timeBeforeReset = 15f;
 
     @Switch(
         title = "oneconfig.preferences.restore_hud_editor.title",
@@ -355,18 +363,6 @@ public class OneConfigConfig extends Config {
         descriptionTranslation = true
     )
     public static boolean flipTopOptionOrder = false;
-
-    @Slider(
-        title = "oneconfig.preferences.time_before_reset.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        min = 5f,
-        max = 60f,
-        description = "oneconfig.preferences.time_before_reset.description",
-        descriptionTranslation = true
-    )
-    public static float timeBeforeReset = 15f;
 
     @Number(
         title = "oneconfig.preferences.search_distance.title",
@@ -601,16 +597,11 @@ public class OneConfigConfig extends Config {
             "uiSharpening",
             "Reduced-resolution filter",
             () -> reducedResFilter != 0 ? Property.Display.SHOWN : Property.Display.DISABLED);
-        // opening behavior 3 is smart reset
-        addDependency(
-            "timeBeforeReset",
-            "Opening Behavior",
-            () -> openingBehavior == 3 ? Property.Display.SHOWN : Property.Display.HIDDEN);
-        // opening behaviors 2 and 3 are the ones that restore the previous page
+        migrateOpeningBehavior();
         addDependency(
             "restoreHudEditor",
-            "Opening Behavior",
-            () -> openingBehavior >= 2 ? Property.Display.SHOWN : Property.Display.HIDDEN);
+            "Remember last page",
+            () -> rememberLastPage != REMEMBER_NEVER ? Property.Display.SHOWN : Property.Display.DISABLED);
         addDependency("enableUIMenuSounds", "enableUISounds");
         addDependency("enableUIClickSounds", "enableUISounds");
         addDependency("enableUISliderSounds", "enableUISounds");
@@ -730,6 +721,33 @@ public class OneConfigConfig extends Config {
                 return false;
             });
         refreshHudLockKeybind();
+    }
+
+    private static final int REMEMBER_NEVER = 0;
+    private static final int REMEMBER_ALWAYS = 4;
+    private static final long[] REMEMBER_LAST_PAGE_SECONDS = {15L, 60L, 300L};
+
+    public static boolean remembersPageClosedAt(long closedAt) {
+        int option = rememberLastPage;
+        if (option <= REMEMBER_NEVER) return false;
+        if (option >= REMEMBER_ALWAYS) return true;
+        return closedAt > 0L && System.currentTimeMillis() - closedAt <= REMEMBER_LAST_PAGE_SECONDS[option - 1] * 1000L;
+    }
+
+    private void migrateOpeningBehavior() {
+        if (openingBehavior < 0) return;
+        switch (openingBehavior) {
+            case 2: // previous page
+                rememberLastPage = REMEMBER_ALWAYS;
+                break;
+            case 3: // smart reset, 37.5 is halfway between 15 seconds and 1 minute
+                rememberLastPage = timeBeforeReset > 37.5f ? 2 : 1;
+                break;
+            default: // mods or preferences
+                rememberLastPage = REMEMBER_NEVER;
+        }
+        openingBehavior = -1;
+        save();
     }
 
     /** When the OneConfig keybind last closed the GUI so the same press cannot immediately reopen it */

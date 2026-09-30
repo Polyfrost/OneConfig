@@ -32,7 +32,8 @@ tasks.withType<Test>().configureEach {
     systemProperty("mixin.debug.countInjections", "true")
     systemProperty("org.apache.logging.log4j.level", "INFO")
 
-    onlyIf { !project.hasProperty("skipMixinAudit") }
+    val skipMixinAudit = project.hasProperty("skipMixinAudit")
+    onlyIf { !skipMixinAudit }
 
     testLogging {
         showStackTraces = true
