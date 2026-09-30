@@ -153,6 +153,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/backend/Backend {
 	protected fun putSafe (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 	public final fun register (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Lorg/polyfrost/oneconfig/api/config/v1/backend/Backend$RegistrationResult;
 	protected fun requestUpdate (Ljava/lang/String;)V
+	protected fun requestUpdate (Ljava/lang/String;Ljava/util/function/BooleanSupplier;)V
 	public final fun save (Ljava/lang/String;)Z
 	public final fun save (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z
 	protected abstract fun save0 (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z
