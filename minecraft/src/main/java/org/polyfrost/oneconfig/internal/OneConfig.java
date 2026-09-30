@@ -218,7 +218,7 @@ public class OneConfig
                 HudManager.INSTANCE.render(ctx, sw, sh);
             });
             // renders into the offscreen TextureTarget which the mixin blits onto MC's render target
-            SkiaCtx.INSTANCE.drawNow();
+            SkiaCtx.INSTANCE.drawNow(HudManager.INSTANCE.isPartialRedraw());
         }
     }
 

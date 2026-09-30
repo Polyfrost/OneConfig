@@ -7,7 +7,14 @@ import org.polyfrost.compose.node.RootNode
 class PolyComposeRuntime(private val host: PolyComposeClock = PolyComposeHost.huds) {
     val root = RootNode()
 
-    private val composition = Composition(PolyApplier(root), host.recomposer)
+    private val applier = PolyApplier(root)
+    private val composition = Composition(applier, host.recomposer)
+
+    fun consumeChanges(): Boolean {
+        if (!applier.changed) return false
+        applier.changed = false
+        return true
+    }
 
     fun setContent(content: @Composable () -> Unit) = composition.setContent(content)
 

@@ -4,6 +4,13 @@ import androidx.compose.runtime.AbstractApplier
 import org.polyfrost.compose.node.PolyNode
 
 class PolyApplier(root: PolyNode) : AbstractApplier<PolyNode>(root) {
+    @Volatile
+    var changed = false
+
+    override fun onEndChanges() {
+        changed = true
+    }
+
     override fun insertTopDown(index: Int, instance: PolyNode) {
         instance.parent = current
         current.children.add(index, instance)

@@ -37,9 +37,16 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
+import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.max
+import kotlin.math.min
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.skia.Color
 import org.jetbrains.skia.Paint
+import org.jetbrains.skia.Rect
 import org.polyfrost.compose.node.RootNode
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.runtime.PolyComposeHost
@@ -167,6 +174,7 @@ object HudManager {
     val editorOpenRevision = mutableIntStateOf(0)
 
     private val redrawCacheDisabled = java.lang.Boolean.getBoolean("oneconfig.hud.nocache")
+    private val partialRedrawDisabled = java.lang.Boolean.getBoolean("oneconfig.hud.nopartial")
 
     @Volatile private var contentDirty = true
 
@@ -178,6 +186,13 @@ object HudManager {
     // watches the snapshot state read while drawing so a change to it repaints the cached frame
     private val drawReadObserver = SnapshotStateObserver { it() }.also { it.start() }
     private val onDrawStateChanged: (Any) -> Unit = { invalidate() }
+
+    private val dirtyHuds: MutableSet<Hud> = Collections.synchronizedSet(Collections.newSetFromMap(IdentityHashMap()))
+    private val onHudDrawStateChanged: (Any) -> Unit = { scope -> if (scope is Hud) dirtyHuds.add(scope) else invalidate() }
+
+    private var redrawRegion: Rect? = null
+    private const val REDRAW_PADDING = 4f
+    private val FULL_REDRAW = Rect.makeWH(0f, 0f)
 
     internal var frameId = 0L
         private set
@@ -430,6 +445,8 @@ object HudManager {
             if (it.mergeLinkX?.parent === hud || it.mergeLinkY?.parent === hud) cleanup { it.clearMergeLink() }
         }
         lastMergeKey = null
+        cleanup { drawReadObserver.clear(hud) }
+        dirtyHuds.remove(hud)
         cleanup { invalidate() }
         try { hud.remove() } catch (_: Throwable) {}
         // a HUD the user cannot delete must never lose its config because an errant
@@ -487,8 +504,16 @@ object HudManager {
 
     private fun updateAndAdvance() {
         if (showingPreviews) for (hud in hudProviders.values) updateIfDue(hud)
-        if (PolyComposeHost.frameWithReport()) {
-            invalidate()
+        val reported = PolyComposeHost.frameWithReport()
+        var claimed = false
+        for (hud in activeInstances) {
+            if (hud.runtimeOrNull?.consumeChanges() == true) {
+                dirtyHuds.add(hud)
+                claimed = true
+            }
+        }
+        if (reported) {
+            if (PolyComposeHost.huds.appliedChange && !claimed) invalidate()
             renderRevision.intValue++
         }
         if (showingPreviews) {
@@ -649,11 +674,40 @@ object HudManager {
 
         val neverCache = redrawCacheDisabled || volatileContent || isEditing
 
-        val dirty = contentDirty || keyChanged || neverCache
+        val changedHuds = synchronized(dirtyHuds) { dirtyHuds.toList().also { dirtyHuds.clear() } }
+        val region = if (contentDirty || keyChanged || neverCache) FULL_REDRAW else dirtyRegion(changedHuds)
         contentDirty = false
+        redrawRegion = region?.takeIf { it !== FULL_REDRAW && !partialRedrawDisabled }
+        val dirty = region != null
         preparedFrameValid = dirty
         return dirty
     }
+
+    private fun dirtyRegion(changed: List<Hud>): Rect? {
+        var region: Rect? = null
+        for (hud in changed) {
+            if (frameOrder.none { it === hud }) continue
+            val bounds = paddedBounds(hud) ?: return FULL_REDRAW
+            region = region?.let {
+                Rect.makeLTRB(min(it.left, bounds.left), min(it.top, bounds.top), max(it.right, bounds.right), max(it.bottom, bounds.bottom))
+            } ?: bounds
+        }
+        return region
+    }
+
+    private fun paddedBounds(hud: Hud): Rect? {
+        val b = screenBounds(hud) ?: return null
+        val pad = REDRAW_PADDING + max(abs(hud.shadowOffsetX), abs(hud.shadowOffsetY)) * hud.effectiveScale
+        return Rect.makeLTRB(b[0] - pad, b[1] - pad, b[0] + b[2] + pad, b[1] + b[3] + pad)
+    }
+
+    @ApiStatus.Internal
+    fun discardPartialRedraw() {
+        redrawRegion = null
+    }
+
+    @get:ApiStatus.Internal
+    val isPartialRedraw: Boolean get() = redrawRegion != null
 
     private fun layoutAll(huds: List<Hud>, screenWidth: Float, screenHeight: Float, scale: Float) {
         for (hud in huds) {
@@ -867,6 +921,8 @@ object HudManager {
     fun render(ctx: RenderContext, screenWidth: Float, screenHeight: Float) {
         val prepared = preparedFrameValid
         preparedFrameValid = false
+        val region = if (prepared) redrawRegion else null
+        redrawRegion = null
         val scale = if (prepared) {
             Platform.compatibility().options().guiScale
         } else {
@@ -878,17 +934,31 @@ object HudManager {
 
         ctx.save()
         ctx.scale(scale, scale)
+        if (region != null) {
+            val px = Rect.makeLTRB(
+                floor(region.left * scale) / scale, floor(region.top * scale) / scale,
+                ceil(region.right * scale) / scale, ceil(region.bottom * scale) / scale,
+            )
+            ctx.canvas.clipRect(px)
+            ctx.canvas.clear(Color.TRANSPARENT)
+        }
 
         drawReadObserver.observeReads(this, onDrawStateChanged) {
             drawMergedBackgrounds(ctx)
+        }
 
-            for (hud in frameOrder) {
+        for (hud in frameOrder) {
+            if (region != null) {
+                val b = paddedBounds(hud)
+                if (b != null && b.intersect(region) == null) continue
+            }
+            drawReadObserver.observeReads(hud, onHudDrawStateChanged) {
                 val hudScale = hud.effectiveScale
                 val root = try {
                     layoutOnce(hud, screenWidth, screenHeight, scale)
                 } catch (e: Throwable) {
                     LOGGER.error("Failed to lay out HUD ${hud.title}", e)
-                    continue
+                    return@observeReads
                 }
                 ctx.save()
                 ctx.translate(hud.x, hud.y)

@@ -392,7 +392,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
     override fun renderIcons(): Boolean = renderIcons(forHud = false)
 
     override fun renderHudIcons() {
-        if (renderIcons(forHud = true)) HudManager.invalidate()
+        renderIcons(forHud = true)
     }
 
     /** Renders the pages owned by one consumer and returns whether any of its pixels changed. */

@@ -17,6 +17,7 @@ import org.jetbrains.skia.SurfaceOrigin
 import org.lwjgl.opengl.GL11
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
+import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.RenderTargetFbo
 import org.polyfrost.oneconfig.internal.ui.SkiaOffscreenTarget
@@ -403,14 +404,23 @@ object SkiaCtx {
         }
     }
 
-    fun drawNow() {
+    private var retainedHudSurface: Surface? = null
+
+    fun drawNow(partial: Boolean = false) {
         if (!this::directContext.isInitialized) return
         val draws = queuedHudDraws.toList()
         queuedHudDraws.clear()
         if (draws.isEmpty()) return
         val surface = resolveHudSurface() ?: return
+        val retain = partial && surface === retainedHudSurface
+        if (partial && !retain) HudManager.discardPartialRedraw()
         if (hudRealIsGeneral) hudTarget?.let { vulkanService?.transitionOffscreenForRendering(it) }
-        flushToTarget(draws, surface)
+        if (flushToTarget(draws, surface, clear = !retain)) {
+            retainedHudSurface = surface
+        } else {
+            retainedHudSurface = null
+            HudManager.invalidate()
+        }
         hudNeedsSamplingTransition = true
     }
 
@@ -732,7 +742,7 @@ object SkiaCtx {
         SkiaOffscreenTarget.destroyAll()
     }
 
-    private fun flushToTarget(draws: List<() -> Unit>, surface: Surface, flipY: Boolean = false) {
+    private fun flushToTarget(draws: List<() -> Unit>, surface: Surface, flipY: Boolean = false, clear: Boolean = true): Boolean {
         currentSurface = surface
         try {
             if (isVulkanMode) {
@@ -745,7 +755,7 @@ object SkiaCtx {
             }
 
             val target = canvas
-            target.clear(Color.TRANSPARENT)
+            if (clear) target.clear(Color.TRANSPARENT)
             val depth = target.save()
             try {
                 if (flipY) {
@@ -763,12 +773,14 @@ object SkiaCtx {
                 directContext.flush(surface)
                 gl.restore()
             }
+            return true
         } catch (e: Throwable) {
             LOG.warn("SkiaCtx.flushToTarget() error", e)
             if (!isVulkanMode) try {
                 gl.restore()
             } catch (_: Throwable) {
             }
+            return false
         } finally {
             currentSurface = null
         }
