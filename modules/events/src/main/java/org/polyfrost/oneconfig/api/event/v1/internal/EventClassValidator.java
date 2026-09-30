@@ -26,12 +26,11 @@
 
 package org.polyfrost.oneconfig.api.event.v1.internal;
 
+import java.lang.reflect.Modifier;
+import java.util.StringJoiner;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.event.v1.events.Event;
-
-import java.lang.reflect.Modifier;
-import java.util.StringJoiner;
 
 /**
  * Validates that a class handlers are registered for is a concrete event type that can actually be posted.

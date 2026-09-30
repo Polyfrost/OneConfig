@@ -1,14 +1,13 @@
 package org.polyfrost.oneconfig.api.hud.v1;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
-import org.polyfrost.oneconfig.api.config.v1.Property;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
+import org.polyfrost.oneconfig.api.config.v1.Property;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -99,5 +98,38 @@ class HudCompatRegressionTest {
         assertEquals(150f, wrapper.barY, 0.001f, "redimension migration must not touch a compat hud");
 
         HudManager.INSTANCE.getActiveInstances().remove(hud);
+    }
+
+    static class CountingWrapper extends FakeBarWrapper {
+        final String id;
+        int reads = 0;
+
+        CountingWrapper(String id) { this.id = id; }
+
+        @Override public String getId() { return id; }
+        @Override public float getX() { reads++; return super.getX(); }
+        @Override public float getY() { reads++; return super.getY(); }
+        @Override public float getScaledWidth() { reads++; return super.getScaledWidth(); }
+        @Override public float getScaledHeight() { reads++; return super.getScaledHeight(); }
+        @Override public boolean getHidden() { reads++; return false; }
+    }
+
+    @Test
+    void framePassDoesNotReadCompatHuds() throws Exception {
+        // two of them so the z-order pass has something to sort
+        CountingWrapper a = new CountingWrapper("fake_compat_a");
+        CountingWrapper b = new CountingWrapper("fake_compat_b");
+        a.register();
+        b.register();
+        a.reads = 0;
+        b.reads = 0;
+        try {
+            Method collect = HudManager.class.getDeclaredMethod("collectFrameOrder");
+            collect.setAccessible(true);
+            collect.invoke(HudManager.INSTANCE);
+            assertEquals(0, a.reads + b.reads, "the per-frame HUD pass must not go through compat wrappers");
+        } finally {
+            HudManager.INSTANCE.getActiveInstances().removeIf(h -> h instanceof LegacyHudMarker);
+        }
     }
 }

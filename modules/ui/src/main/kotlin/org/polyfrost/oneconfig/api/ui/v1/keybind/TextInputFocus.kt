@@ -5,11 +5,11 @@ import androidx.compose.ui.focus.FocusEventModifierNode
 import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.platform.InspectorInfo
-import org.jetbrains.annotations.ApiStatus
-import org.polyfrost.oneconfig.api.platform.v1.Platform
 import java.lang.ref.WeakReference
 import java.util.Collections
 import java.util.WeakHashMap
+import org.jetbrains.annotations.ApiStatus
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 
 object TextInputFocus {
     private val NO_SCREEN = Any()

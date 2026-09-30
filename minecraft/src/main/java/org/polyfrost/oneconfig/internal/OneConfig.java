@@ -28,6 +28,7 @@
 package org.polyfrost.oneconfig.internal;
 
 import com.mojang.brigadier.Command;
+import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -41,6 +42,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.compose.render.RenderContext;
 import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
+import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
@@ -57,26 +59,37 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsRenderer;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
+import org.polyfrost.oneconfig.internal.compat.ArmorHudCompat;
+import org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat;
+import org.polyfrost.oneconfig.internal.compat.KaleidoCompat;
+import org.polyfrost.oneconfig.internal.compat.ModMenuShimLoader;
+import org.polyfrost.oneconfig.internal.compat.WWaypointsCompat;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories;
+import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog;
 import org.polyfrost.oneconfig.internal.ui.compose.McFontService;
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen;
+import org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar;
+import org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen;
+import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudOffscreen;
 import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudRenderer;
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindConflicts;
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry;
-import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProvider;
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProfiles;
-import org.polyfrost.oneconfig.internal.ui.keybind.RightShiftConflicts;
+import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProvider;
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus;
+import org.polyfrost.oneconfig.internal.ui.sound.ExternalSounds;
+import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry;
 import org.polyfrost.oneconfig.test.TestMod_Test;
 
 //? neoforge
 //@net.neoforged.fml.common.Mod("oneconfigv1")
 public class OneConfig
         //? fabric
-        implements net.fabricmc.api.ClientModInitializer {
+        implements ClientModInitializer {
     public static final OneConfig INSTANCE = new OneConfig();
     private static final Logger LOGGER = LogManager.getLogger("OneConfig");
     private boolean initialized = false;
@@ -158,7 +171,18 @@ public class OneConfig
                 || scoreboard.getDisplayObjective(DisplaySlot.LIST) != null;
     }
 
-    public static void render(GuiGraphicsExtractor graphics, float partial) {
+    private static boolean legacyHudOffscreenReady;
+
+    public static void render(GuiGraphicsExtractor graphics) {
+        prepareHud();
+        submitHud(graphics);
+    }
+
+    /**
+     * Runs the offscreen passes before vanilla extracts the HUD to maintain compatibility with Gnetum
+     */
+    public static void prepareHud() {
+        legacyHudOffscreenReady = false;
         if (!SkiaCtx.INSTANCE.isReady()) {
             return;
         }
@@ -184,19 +208,31 @@ public class OneConfig
 
         //~ if < 1.21.8 '.suppressInGameHudRender' -> '.shouldSuppressInGameHudRender()'
         boolean hudRendersLive = !SkiaCtx.INSTANCE.suppressInGameHudRender;
-        if (hudRendersLive || !org.polyfrost.oneconfig.internal.ui.hud.LegacyHudOffscreen.INSTANCE.render()) {
-            LegacyHudRenderer.INSTANCE.renderLive(graphics);
-        }
+        legacyHudOffscreenReady = !hudRendersLive && LegacyHudOffscreen.INSTANCE.render();
         // records the F3 overlay offscreen so Skia can put it above the Compose UI instead of below the
         // blur and it must run every frame regardless of the HUD dirty gate
-        org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen.INSTANCE.render();
-        if (HudManager.INSTANCE.beginFrame(sw, sh)) {
+        DebugOverlayOffscreen.INSTANCE.render();
+        if (HudManager.INSTANCE.beginFrame(sw, sh, ItemCatalog.INSTANCE::renderHudIcons)) {
             SkiaCtx.INSTANCE.queueHudDraw(() -> {
                 var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
                 HudManager.INSTANCE.render(ctx, sw, sh);
             });
             // renders into the offscreen TextureTarget which the mixin blits onto MC's render target
             SkiaCtx.INSTANCE.drawNow();
+        }
+    }
+
+    /** Submits the legacy HUDs (when not captured offscreen) and the Skia HUD blit into the vanilla HUD */
+    public static void submitHud(GuiGraphicsExtractor graphics) {
+        if (!SkiaCtx.INSTANCE.isReady()) {
+            return;
+        }
+        if (!legacyHudOffscreenReady) {
+            LegacyHudRenderer.INSTANCE.renderLive(graphics);
+        }
+        //~ if < 1.21.8 '.suppressInGameHudRender' -> '.shouldSuppressInGameHudRender()'
+        if (!SkiaCtx.INSTANCE.suppressInGameHudRender) {
+            SkiaCtx.INSTANCE.blitHud(graphics);
         }
     }
 
@@ -224,7 +260,7 @@ public class OneConfig
                 HudEditorToggleEvent.class, e -> {
                     if (e.open) {
                         if (!(Platform.screen().current() instanceof HudEditorUIScreen)) {
-                            Platform.screen().display(HudEditorUIScreen.open());
+                            Platform.screen().display(HudEditorUIScreen.open(Platform.screen().current() instanceof OneConfigUIScreen));
                         }
                     } else if (!e.screenAlreadyGone) {
                         if (Platform.screen().current() instanceof HudEditorUIScreen) {
@@ -243,22 +279,25 @@ public class OneConfig
         EventManager.register(
                 InitializationEvent.class, e -> {
                     ConfigManager.initialize();
-                    RightShiftConflicts.unbindMinecraftKeybinds();
-                    org.polyfrost.oneconfig.api.config.v1.CompatSnapshots.setDispatcher(r -> {
-                        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+                    KeybindConflicts.unbindMinecraftKeybinds();
+                    CompatSnapshots.setDispatcher(r -> {
+                        Minecraft mc = Minecraft.getInstance();
                         if (mc != null && !mc.isSameThread()) mc.execute(r);
                         else r.run();
                     });
                     MinecraftKeybindProfiles.init();
                     ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
-                    org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar.register();
-                    org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat.register();
-                    org.polyfrost.oneconfig.internal.compat.ArmorHudCompat.register();
+                    BuiltinHudRegistrar.register();
+                    FirmamentHudCompat.register();
+                    ArmorHudCompat.register();
                     //? if wwaypoints_compat
-                    org.polyfrost.oneconfig.internal.compat.WWaypointsCompat.register();
-                    org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry.INSTANCE.loadFromConfig();
+                    WWaypointsCompat.register();
+                    ThemeRegistry.INSTANCE.loadFromConfig();
                 });
-        EventManager.register(WorldEvent.Load.class, e -> showFirstLaunchNotification());
+        EventManager.register(WorldEvent.Load.class, e -> {
+            showFirstLaunchNotification();
+            ItemCatalog.INSTANCE.markIconsAvailable();
+        });
         // after loading finishes so translation keys are available
         EventManager.register(ResourceFinishedLoading.class, e -> SearchCorpus.INSTANCE.init());
 //        //#if MC < 1.13
@@ -347,7 +386,7 @@ public class OneConfig
         ThirdPartyModCategories.INSTANCE.init();
         // force class-load so the hello/disconnect handlers are armed before joining any server
         HypixelUtils.isHypixel();
-        org.polyfrost.oneconfig.internal.ui.sound.ExternalSounds.INSTANCE.ensureDownloaded();
+        ExternalSounds.INSTANCE.ensureDownloaded();
 
         KeybindProviderRegistry.INSTANCE.register(MinecraftKeybindProvider.INSTANCE);
         registerKeybinds();
@@ -358,8 +397,8 @@ public class OneConfig
         installNotificationRenderer();
         MainMenuFpsSampler.init();
         //? fabric
-        org.polyfrost.oneconfig.internal.compat.ModMenuShimLoader.enable();
-        org.polyfrost.oneconfig.internal.compat.KaleidoCompat.enable();
+        ModMenuShimLoader.enable();
+        KaleidoCompat.enable();
 
         initialized = true;
         LOGGER.info("OneConfig initialization took {}ms", (System.nanoTime() - t1) / 1_000_000.0);

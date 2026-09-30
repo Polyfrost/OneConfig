@@ -16,6 +16,13 @@ import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 
 object HudEditorRoute
 
+enum class SearchFocus {
+    SelectAll,
+    /** Focuses the search field and leaves its text and cursor alone */
+    Focus,
+    Unfocus,
+}
+
 object Lifecycle : LifecycleOwner {
     override val lifecycle = LifecycleRegistry(this)
 }
@@ -40,14 +47,11 @@ object ShellState {
 
     var searchQuery by mutableStateOf("")
 
-    var globalSearchActive by mutableStateOf(false)
+    /** Applied once by the search field then cleared */
+    var searchFocus by mutableStateOf<SearchFocus?>(null)
 
-    var focusSearchField by mutableStateOf(false)
-
-    /** Whether the search field holds focus mirrored here so a discarded composition can recover it */
+    /** Mirrors the search field's focus so a reopened or rebuilt menu can put it back */
     var searchFieldFocused: Boolean = false
-
-    var showSearchField by mutableStateOf(false)
 
     var hudDragging by mutableStateOf(false)
 
@@ -117,11 +121,15 @@ object LocalNavController {
          *
          * [categoryKey] and [category] record the settings tab selected on the page at that point so
          * switching tabs inside a page is undoable without touching the nav host
+         *
+         * [searchQuery] records the page's search when it was left so going back or forward to it brings the
+         * search back
          */
         private data class Entry(
             val route: Any,
             val categoryKey: String? = null,
             val category: String? = null,
+            val searchQuery: String = "",
         )
 
         private val backStack = ArrayDeque<Entry>()
@@ -144,13 +152,9 @@ object LocalNavController {
             if (route == currentEntry.route) return
             val host = host() ?: return
             forwardStack.clear()
-            backStack.addLast(currentEntry)
+            backStack.addLast(currentEntry.withCurrentSearch())
             currentEntry = Entry(route)
-            if (clearSearch) {
-                ShellState.searchQuery = ""
-                ShellState.globalSearchActive = false
-                ShellState.showSearchField = false
-            }
+            if (clearSearch) ShellState.searchQuery = ""
             ShellState.lastRoute = route
             seedRouteCategory(route)
             host.navigate(route)
@@ -175,19 +179,18 @@ object LocalNavController {
             // same page with only the tab changed so restore it in place with no screen transition
             if (previous.route == currentEntry.route) {
                 backStack.removeLast()
-                forwardStack.addLast(currentEntry)
+                forwardStack.addLast(currentEntry.withCurrentSearch())
                 currentEntry = previous
                 applyCategory(previous)
                 return
             }
             val host = host() ?: return
             if (host.popBackStack()) {
-                forwardStack.addLast(currentEntry)
+                forwardStack.addLast(currentEntry.withCurrentSearch())
                 currentEntry = backStack.removeLast()
                 applyCategory(currentEntry)
+                ShellState.searchQuery = currentEntry.searchQuery
                 ShellState.lastRoute = currentEntry.route
-                ShellState.globalSearchActive = false
-                ShellState.showSearchField = false
             }
         }
 
@@ -196,14 +199,13 @@ object LocalNavController {
             val samePage = next.route == currentEntry.route
             val host = if (samePage) null else (host() ?: return)
             forwardStack.removeLast()
-            backStack.addLast(currentEntry)
+            backStack.addLast(currentEntry.withCurrentSearch())
             currentEntry = next
             if (host != null) seedRouteCategory(next.route)
             applyCategory(next)
             if (host == null) return
+            ShellState.searchQuery = next.searchQuery
             ShellState.lastRoute = next.route
-            ShellState.globalSearchActive = false
-            ShellState.showSearchField = false
             host.navigate(next.route)
         }
 
@@ -220,5 +222,7 @@ object LocalNavController {
             if (entry.category == null) ShellState.selectedCategories.remove(key)
             else ShellState.selectedCategories[key] = entry.category
         }
+
+        private fun Entry.withCurrentSearch() = copy(searchQuery = ShellState.searchQuery)
     }
 }

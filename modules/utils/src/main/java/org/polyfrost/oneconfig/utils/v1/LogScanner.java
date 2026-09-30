@@ -48,12 +48,6 @@
 
 package org.polyfrost.oneconfig.utils.v1;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
-import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
-import org.polyfrost.oneconfig.api.platform.v1.Platform;
-
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -64,6 +58,11 @@ import java.security.CodeSource;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
+import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
 
 /**
  * Adapted from <a href="https://github.com/natanfudge/Not-Enough-Crashes">NotEnoughCrashes</a> under the <a href="https://opensource.org/licenses/MIT">MIT License</a>

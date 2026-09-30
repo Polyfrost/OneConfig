@@ -1,6 +1,4 @@
 [versions]
-command-api-v2 = "3.0.5+e2bdee784c"
-
 modmenu = "18.0.0-beta.1"
 yacl = "3.9.0+26.1-fabric"
 moulconfig = "3.11.0"
@@ -10,13 +8,10 @@ stella = "d12aec9c69"
 
 vulkanmod = "0.6.8+26.1.2"
 
-skycubed = "zCt0GMWK"
-meowdding-lib = "4.2.5"
-skyblock-api = "4.2.8"
+meowdding-lib = "4.2.28"
+skyblock-api = "4.2.30"
 
 [libraries]
-command-api-v2 = { module = "net.fabricmc.fabric-api:fabric-command-api-v2", version.ref = "command-api-v2" }
-
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
 odin = { module = "maven.modrinth:odin", version.ref = "odin" }
@@ -28,7 +23,6 @@ moulconfig = { module = "org.notenoughupdates.moulconfig:common", version.ref = 
 
 vulkanmod = { module = "maven.modrinth:vulkanmod", version.ref = "vulkanmod" }
 
-skycubed = { module = "maven.modrinth:skycubed", version.ref = "skycubed" }
 meowdding-lib = { module = "me.owdding.meowdding-lib:meowdding-lib", version.ref = "meowdding-lib" }
 skyblock-api = { module = "tech.thatgravyboat:skyblock-api", version.ref = "skyblock-api" }
 

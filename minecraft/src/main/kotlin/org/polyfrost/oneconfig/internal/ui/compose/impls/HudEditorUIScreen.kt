@@ -10,27 +10,32 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.gui.GuiGraphicsExtractor
-//? if < 1.21.11
-//import org.lwjgl.glfw.GLFW
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.internal.OneConfigConfig
-import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.components.RetainedVisibility
+import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
+import org.polyfrost.oneconfig.internal.ui.compose.ComposePreloader
+import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
-import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignStudio
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
-import org.polyfrost.oneconfig.internal.ui.shell.Lifecycle
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.shell.HudEditorRoute
+import org.polyfrost.oneconfig.internal.ui.shell.Lifecycle
 import org.polyfrost.oneconfig.internal.ui.shell.OCViewModelStoreOwner
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Theme
 
-private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/HudEditor")
+//? if < 1.21.11 {
+/*import org.lwjgl.glfw.GLFW
+*///?}
+
+private val LOGGER = LogManager.getLogger("OneConfig/HudEditor")
 
 private const val PREWARM_FRAMES = 2
 
@@ -39,10 +44,14 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
         private var instance: HudEditorUIScreen? = null
 
         @JvmStatic
-        fun open(): HudEditorUIScreen = instance ?: HudEditorUIScreen().also { instance = it }
+        fun open(fromOneConfig: Boolean): HudEditorUIScreen {
+            val screen = instance ?: HudEditorUIScreen().also { instance = it }
+            screen.enteredFromOneConfig = fromOneConfig
+            return screen
+        }
 
         @JvmStatic
-        fun prewarmShared(): Boolean = open().runPrewarm()
+        fun prewarmShared(): Boolean = open(false).runPrewarm()
 
         @JvmStatic
         fun endPrewarmShared() {
@@ -55,9 +64,9 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
     private fun runPrewarm(): Boolean {
         if (everOpened || Platform.screen().current<Any?>() === this) return true
         return try {
-            prewarm(PREWARM_FRAMES) { }
+            prewarm(PREWARM_FRAMES, budget = 1) { }
         } catch (t: Throwable) {
-            LOGGER.warn("HUD editor warm-up failed; the first open will build it instead", t)
+            ComposePreloader.fail("HUD editor warm-up failed", t)
             false
         }
     }
@@ -86,6 +95,13 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
 
     @Volatile private var returningToOneConfig = false
 
+    private var enteredFromOneConfig = false
+
+    private fun returnToOneConfig() {
+        returningToOneConfig = true
+        Platform.screen().display(if (enteredFromOneConfig) OneConfigUIScreen.resume() else OneConfigUIScreen.open())
+    }
+
     private var requestCloseCallback: (() -> Unit)? = null
     private var requestOpenCallback: (() -> Unit)? = null
 
@@ -93,6 +109,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
 
     override fun init() {
         everOpened = true
+        HudManager.onEditorScreenAdded()
         HudManager.editorOpenRevision.intValue++
         closeRequested = false
         closeRequestedAt = 0L
@@ -114,6 +131,8 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
         super.removed()
     }
 
+    override fun isPauseScreen(): Boolean = OneConfigConfig.pauseGame
+
     private fun handleOneConfigKeybind(): Boolean {
         if (closeRequested) return cancelClose()
         if (OneConfigConfig.keybindClosesGui) {
@@ -121,8 +140,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
             beginClose()
             requestCloseCallback?.invoke()
         } else {
-            returningToOneConfig = true
-            Platform.screen().display(OneConfigUIScreen.resume())
+            returnToOneConfig()
         }
         return true
     }
@@ -171,6 +189,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
             HudManager.guiScreenWidth = sw
             HudManager.guiScreenHeight = sh
             HudManager.prepare(sw, sh)
+            ItemCatalog.renderHudIcons()
         }
         HudEditorViewport.update(Platform.screen().windowWidth(), Platform.screen().windowHeight())
         //~ if >= 26.1 'render' -> 'extractRenderState'
@@ -180,7 +199,12 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
     @Composable
     override fun compose() {
         DisposableEffect(Unit) {
-            onDispose { HudManager.onEditorScreenRemoved() }
+            // a failed scene is disposed and rebuilt while the screen stays open, which is not a close
+            onDispose {
+                if (Platform.screen().current<Any?>() !== this@HudEditorUIScreen) {
+                    HudManager.onEditorScreenRemoved()
+                }
+            }
         }
 
         var visible by remember { mutableStateOf(false) }
@@ -208,10 +232,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
             ) {
                 Theme(pixelGrid = true) {
                     HudDesignStudio(
-                        onReturnToOneConfig = {
-                            returningToOneConfig = true
-                            Platform.screen().display(OneConfigUIScreen.resume())
-                        }
+                        onReturnToOneConfig = ::returnToOneConfig
                     )
                 }
             }

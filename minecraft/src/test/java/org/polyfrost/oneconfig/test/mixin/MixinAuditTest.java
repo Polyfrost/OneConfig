@@ -26,6 +26,9 @@
 
 package org.polyfrost.oneconfig.test.mixin;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeSet;
 import net.minecraft.SharedConstants;
 import net.minecraft.server.Bootstrap;
 import org.junit.jupiter.api.Assertions;
@@ -37,10 +40,6 @@ import org.spongepowered.asm.mixin.Mixins;
 import org.spongepowered.asm.mixin.transformer.IMixinTransformer;
 import org.spongepowered.asm.service.IClassProvider;
 import org.spongepowered.asm.service.MixinService;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.TreeSet;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;

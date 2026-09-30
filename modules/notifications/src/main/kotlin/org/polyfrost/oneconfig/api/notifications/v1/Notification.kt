@@ -29,10 +29,10 @@ package org.polyfrost.oneconfig.api.notifications.v1
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import org.jetbrains.skia.Image
-import org.polyfrost.compose.render.PolyColor
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicLong
+import org.jetbrains.skia.Image
+import org.polyfrost.compose.render.PolyColor
 
 /**
  * The visual category of a [Notification]

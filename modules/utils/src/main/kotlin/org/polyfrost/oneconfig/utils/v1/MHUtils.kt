@@ -26,10 +26,6 @@
 
 package org.polyfrost.oneconfig.utils.v1
 
-import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
-import org.jetbrains.annotations.ApiStatus
-import sun.misc.Unsafe
 import java.lang.invoke.LambdaMetafactory
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
@@ -39,6 +35,10 @@ import java.lang.reflect.*
 import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Predicate
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
+import org.jetbrains.annotations.ApiStatus
+import sun.misc.Unsafe
 
 /**
  * A collection of (naughty) MethodHandle utilities

@@ -9,6 +9,19 @@ import org.jetbrains.skia.SurfaceOrigin
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
 import org.slf4j.LoggerFactory
 
+//? if >= 26.2 {
+import com.mojang.renderpearl.api.GpuFormat
+import org.joml.Vector4f
+//?}
+
+//? if >= 1.21.5 {
+import com.mojang.blaze3d.systems.RenderSystem
+//?}
+
+//? if < 1.21.4 {
+/*import net.minecraft.client.Minecraft
+*///?}
+
 /** Owns a Minecraft render target and its Skia surface, cached by size. */
 class SkiaOffscreenTarget {
     init {
@@ -24,33 +37,40 @@ class SkiaOffscreenTarget {
     private var lastH = -1
 
     fun resolveTarget(w: Int, h: Int): Boolean {
-        if (target != null && lastW == w && lastH == h && surface != null) return true
+        val current = target
+        if (current != null && lastW == w && lastH == h && surface != null) {
+            if (SkiaCtx.vulkanService?.offscreenNeedsPerFrameRewrap != true) return true
+            releaseSurface()
+            if (runCatching { makeSurface(current, w, h) }.getOrDefault(false)) return true
+        }
         destroy()
-        val svc = SkiaCtx.vulkanService ?: return false
+        if (SkiaCtx.vulkanService == null) return false
         try {
-            //? if >= 26.2 {
-            val rt = TextureTarget(null, w, h, true, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM)
-            //?} else if >= 1.21.5 {
+            //? if >= 26.3 {
+            val rt = TextureTarget(
+                null, w, h,
+                GpuFormat.RGBA8_UNORM,
+                GpuFormat.D32_FLOAT,
+            )
+            //?} else if >= 26.2 {
+            /*val rt = TextureTarget(null, w, h, true, GpuFormat.RGBA8_UNORM)
+            *///?} else if >= 1.21.5 {
             /*val rt = TextureTarget(null, w, h, true)
             *///?} else if >= 1.21.4 {
             /*val rt = TextureTarget(w, h, true)
             *///?} else {
-            /*val rt = TextureTarget(w, h, true, net.minecraft.client.Minecraft.ON_OSX)
+            /*val rt = TextureTarget(w, h, true, Minecraft.ON_OSX)
             *///?}
             target = rt
-            //? if < 1.21.5
-            //rt.setClearColor(0f, 0f, 0f, 0f)
+            //? if < 1.21.5 {
+            /*rt.setClearColor(0f, 0f, 0f, 0f)
+            RenderTargetFbo.restoreMainTarget()
+            *///?}
             if (!SkiaCtx.isVulkanMode && RenderTargetFbo.getFboId(rt) <= 0) {
                 destroy()
                 return false
             }
-            val (b, colorFmt) = svc.makeOffscreenBRT(rt, w, h)
-            brt = b
-            val origin = if (SkiaCtx.isDeferredComposeBackend) SurfaceOrigin.TOP_LEFT else SurfaceOrigin.BOTTOM_LEFT
-            surface = Surface.makeFromBackendRenderTarget(
-                SkiaCtx.directContext, b, origin, colorFmt, ColorSpace.sRGB, null,
-            )
-            if (surface == null) {
+            if (!makeSurface(rt, w, h)) {
                 destroy()
                 return false
             }
@@ -63,15 +83,33 @@ class SkiaOffscreenTarget {
         }
     }
 
+    private fun makeSurface(rt: RenderTarget, w: Int, h: Int): Boolean {
+        val svc = SkiaCtx.vulkanService ?: return false
+        val (b, colorFmt) = svc.makeOffscreenBRT(rt, w, h)
+        brt = b
+        val origin = if (SkiaCtx.isDeferredComposeBackend) SurfaceOrigin.TOP_LEFT else SurfaceOrigin.BOTTOM_LEFT
+        surface = SkiaCtx.withIsolatedGl {
+            Surface.makeFromBackendRenderTarget(
+                SkiaCtx.directContext, b, origin, colorFmt, ColorSpace.sRGB, null,
+            )
+        }
+        return surface != null
+    }
+
+    private fun releaseSurface() {
+        surface?.close(); surface = null
+        brt?.close(); brt = null
+    }
+
     fun clearTarget() {
         val rt = target ?: return
         //? if >= 26.2 {
         val colorTex = rt.colorTexture ?: return
-        com.mojang.blaze3d.systems.RenderSystem.getDevice().createCommandEncoder()
-            .clearColorTexture(colorTex, org.joml.Vector4f(0f, 0f, 0f, 0f))
+        RenderSystem.getDevice().createCommandEncoder()
+            .clearColorTexture(colorTex, Vector4f(0f, 0f, 0f, 0f))
         //? } else if >= 1.21.5 {
         /*val colorTex = rt.colorTexture ?: return
-        val encoder = com.mojang.blaze3d.systems.RenderSystem.getDevice().createCommandEncoder()
+        val encoder = RenderSystem.getDevice().createCommandEncoder()
         encoder.clearColorTexture(colorTex, 0)
         //? if < 1.21.10 {
         /*//1.21.5 does not clear depth, and 1.21.8 clears it only after rendering the before-blur range
@@ -80,15 +118,32 @@ class SkiaOffscreenTarget {
         *///?} elif >= 1.21.4 {
         /*rt.clear()
         *///?} else {
-        /*rt.clear(net.minecraft.client.Minecraft.ON_OSX)
+        /*rt.clear(Minecraft.ON_OSX)
         *///?}
+        //? if < 1.21.5
+        //RenderTargetFbo.restoreMainTarget()
+    }
+
+    fun ensureSubmitted() {
+        if (target == null) return
+        try {
+            SkiaCtx.vulkanService?.midFrameFlush()
+        } catch (t: Throwable) {
+            LOG.debug("Offscreen flush failed", t)
+        }
     }
 
     fun destroy() {
-        surface?.close(); surface = null
-        brt?.close(); brt = null
+        releaseSurface()
         target?.destroyBuffers(); target = null
+        //? if < 1.21.5
+        //RenderTargetFbo.restoreMainTarget()
         lastW = -1; lastH = -1
+    }
+
+    fun dispose() {
+        destroy()
+        live.remove(this)
     }
 
     companion object {

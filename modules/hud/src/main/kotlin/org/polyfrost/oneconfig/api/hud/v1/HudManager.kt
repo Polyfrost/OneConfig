@@ -31,8 +31,15 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.snapshots.SnapshotStateObserver
+import java.util.Collections
+import java.util.IdentityHashMap
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Consumer
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.skia.Paint
 import org.polyfrost.compose.node.RootNode
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.runtime.PolyComposeHost
@@ -44,10 +51,6 @@ import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.utils.v1.MHUtils
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
-import java.util.function.Consumer
 
 @Suppress("DEPRECATION")
 private fun Throwable.isFatalHudFailure(): Boolean = this is VirtualMachineError || this is ThreadDeath
@@ -79,7 +82,7 @@ object HudManager {
             applyPendingProfileReload()
         }
     }
-    private val hiddenHudPaint by lazy { org.jetbrains.skia.Paint().apply { setAlphaf(0.35f) } }
+    private val hiddenHudPaint by lazy { Paint().apply { setAlphaf(0.35f) } }
 
     /**
      * `true` while HUDs are being shown for editing or preview
@@ -191,9 +194,12 @@ object HudManager {
 
     private val prepareOrder = ArrayList<Hud>()
 
+    private val frameDrawn = IdentityHashMap<Hud, Boolean>()
+
     private var frameGroups: List<HudBackgroundMerge.Group> = emptyList()
     private var lastMergeKey: Int? = null
 
+    private val renderable = ArrayList<Hud>()
     private var zOrderCache: List<Hud> = emptyList()
     private var zOrderHuds = arrayOfNulls<Hud>(0)
     private var zOrderBounds = FloatArray(0)
@@ -298,6 +304,11 @@ object HudManager {
     }
 
     @JvmStatic
+    fun register(vararg huds: Hud) {
+        for (hud in huds) register(hud)
+    }
+
+    @JvmStatic
     fun register(hud: Hud, configId: String) {
         hud.configId = configId
         register(hud)
@@ -322,11 +333,6 @@ object HudManager {
 
     /** The menu icon associated with [configId] via [register] or `null` if none was set */
     fun iconFor(configId: String): String? = hudIcons[configId]
-
-    @JvmStatic
-    fun register(vararg huds: Hud) {
-        for (hud in huds) register(hud)
-    }
 
     fun providers(): Collection<Hud> = hudProviders.values
 
@@ -460,8 +466,9 @@ object HudManager {
             inner[1] + inner[3] <= outer[1] + outer[3]
 
     @ApiStatus.Internal
-    fun zOrderedInstances(bounds: (Hud) -> FloatArray? = ::screenBounds): List<Hud> {
-        val list = activeInstances
+    fun zOrderedInstances(bounds: (Hud) -> FloatArray? = ::screenBounds): List<Hud> = zOrdered(activeInstances, bounds)
+
+    private fun zOrdered(list: List<Hud>, bounds: (Hud) -> FloatArray?): List<Hud> {
         val n = list.size
         if (n <= 1) return list
         val b = arrayOfNulls<FloatArray>(n)
@@ -478,20 +485,7 @@ object HudManager {
         return list.indices.sortedBy { depth[it] }.map { list[it] }
     }
 
-    private fun updateAndAdvance(huds: List<Hud>) {
-        // opening or closing the editor swaps between preview and live content, so every HUD gets
-        // one immediate update on the edge instead of waiting out its remaining interval
-        if (wasEditing != isEditing) {
-            wasEditing = isEditing
-            for (hud in activeInstances) hud.lastUpdate = Long.MIN_VALUE
-        }
-        for (hud in huds) {
-            try {
-                updateIfDue(hud)
-            } catch (e: Throwable) {
-                LOGGER.error("Failed to update HUD ${hud.title}", e)
-            }
-        }
+    private fun updateAndAdvance() {
         if (showingPreviews) for (hud in hudProviders.values) updateIfDue(hud)
         if (PolyComposeHost.frameWithReport()) {
             invalidate()
@@ -522,15 +516,17 @@ object HudManager {
     @ApiStatus.Internal
     fun updateIfDue(hud: Hud) {
         val frequency = hud.updateFrequency()
-        if (frequency < 0L) {
-            hud.update()
-            return
+        if (frequency >= 0L) {
+            val now = System.nanoTime()
+            val last = hud.lastUpdate
+            if (last != Long.MIN_VALUE && now - last < frequency) return
+            hud.lastUpdate = now
         }
-        val now = System.nanoTime()
-        val last = hud.lastUpdate
-        if (last != Long.MIN_VALUE && now - last < frequency) return
-        hud.lastUpdate = now
-        hud.update()
+        try {
+            hud.update()
+        } catch (e: Throwable) {
+            LOGGER.error("Failed to update HUD ${hud.title}", e)
+        }
     }
 
     private fun layoutOnce(hud: Hud, screenWidth: Float, screenHeight: Float, scale: Float): RootNode {
@@ -549,7 +545,6 @@ object HudManager {
 
     /** Everything [shouldDraw] checks apart from the HUD's own hidden flag */
     private fun isShown(hud: Hud): Boolean {
-        if (hud is LegacyHudMarker) return false
         if (isEditing) return true
         if (isGuiHidden) return false
         if (isDebugScreenVisible && !hud.showInF3) return false
@@ -566,15 +561,37 @@ object HudManager {
     private fun collectFrameOrder(): Boolean {
         frameOrder.clear()
         layoutOrder.clear()
+        frameDrawn.clear()
         var volatileContent = false
+        for (hud in activeInstances) {
+            if (hud is LegacyHudMarker) continue
+            val visible = shouldDraw(hud)
+            val backgroundOnly = !visible && keepsBackgroundOnly(hud)
+            if (visible || backgroundOnly) {
+                updateIfDue(hud)
+                val show = isEditing || try {
+                    hud.shouldShow()
+                } catch (e: Throwable) {
+                    LOGGER.error("Failed to check whether HUD ${hud.title} should show", e)
+                    true
+                }
+                if (!show) {
+                    hud.isVisible.value = false
+                    continue
+                }
+                frameDrawn[hud] = visible
+            }
+            hud.isVisible.value = visible
+        }
         for (hud in orderedForRender()) {
-            if (shouldDraw(hud)) {
+            val visible = frameDrawn[hud] ?: continue
+            if (visible) {
                 frameOrder.add(hud)
                 val chroma = hud.bgChroma || hud.textChroma || hud.shadowChroma
                 if (chroma || (hud.alwaysRedraw && hud.frameContentHash() == Hud.NO_CONTENT_HASH)) {
                     volatileContent = true
                 }
-            } else if (keepsBackgroundOnly(hud)) {
+            } else {
                 layoutOrder.add(hud)
                 if (hud.bgChroma) volatileContent = true
             }
@@ -583,22 +600,44 @@ object HudManager {
         return volatileContent
     }
 
-    @ApiStatus.Internal
-    fun beginFrame(screenWidth: Float, screenHeight: Float): Boolean {
+    private inline fun prepareFrame(
+        screenWidth: Float,
+        screenHeight: Float,
+        selectHuds: () -> List<Hud>,
+        afterPreparation: Runnable? = null,
+    ): Float {
         drainProfileReload()
         migratePositions(screenWidth, screenHeight)
         val scale = Platform.compatibility().options().guiScale
 
         frameId++
-
         Snapshot.sendApplyNotifications()
 
-        val volatileContent = collectFrameOrder()
+        // opening or closing the editor swaps between preview and live content, so every HUD gets
+        // one immediate update on the edge instead of waiting out its remaining interval
+        if (wasEditing != isEditing) {
+            wasEditing = isEditing
+            for (hud in activeInstances) hud.lastUpdate = Long.MIN_VALUE
+        }
 
-        updateAndAdvance(layoutOrder)
+        val huds = selectHuds()
+        updateAndAdvance()
+        layoutAll(huds, screenWidth, screenHeight, scale)
+        updateBackgroundGroups(huds, screenWidth, screenHeight, scale)
 
-        layoutAll(layoutOrder, screenWidth, screenHeight, scale)
-        updateBackgroundGroups(layoutOrder, screenWidth, screenHeight, scale)
+        // Atlas rendering can invalidate HUD content after composition has reconciled icon handles.
+        // Run it before consuming contentDirty so those changes are drawn in this frame.
+        afterPreparation?.run()
+        return scale
+    }
+
+    @ApiStatus.Internal
+    fun beginFrame(screenWidth: Float, screenHeight: Float, beforeDirtyCheck: Runnable? = null): Boolean {
+        var volatileContent = false
+        val scale = prepareFrame(screenWidth, screenHeight, {
+            volatileContent = collectFrameOrder()
+            layoutOrder
+        }, beforeDirtyCheck)
 
         val key = frameKey()
         val keyChanged = key != lastFrameKey ||
@@ -647,7 +686,7 @@ object HudManager {
         val refW = if (layoutRefWidth > 0f) layoutRefWidth else screenWidth
         val refH = if (layoutRefHeight > 0f) layoutRefHeight else screenHeight
         frameGroups = HudBackgroundMerge.computeGroups(mergeable, refW, refH)
-        val merged = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Hud, Boolean>())
+        val merged = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>())
         for (group in frameGroups) merged.addAll(group.huds)
         updateMergeLinks()
 
@@ -710,8 +749,8 @@ object HudManager {
      * A HUD which stops being merged is let go and stays where it was left
      */
     private fun updateMergeLinks() {
-        val linkedX = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Hud, Boolean>())
-        val linkedY = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Hud, Boolean>())
+        val linkedX = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>())
+        val linkedY = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>())
         Snapshot.withMutableSnapshot {
             for (group in frameGroups) {
                 for (link in group.links) {
@@ -767,7 +806,11 @@ object HudManager {
     }
 
     private fun orderedForRender(): List<Hud> {
-        val list = activeInstances
+        // legacy and compat HUDs draw through their own renderers, and reading their size or hidden
+        // flag can mean measuring text or going through reflection, so keep them out of this pass
+        val list = renderable
+        list.clear()
+        for (hud in activeInstances) if (hud !is LegacyHudMarker) list.add(hud)
         val n = list.size
         if (n <= 1) return list
         if (zOrderHuds.size < n) {
@@ -777,7 +820,7 @@ object HudManager {
         var same = zOrderCache.size == n
         for (i in 0 until n) {
             val hud = list[i]
-            val b = screenBounds(hud)
+            val b = drawnBounds(hud)
             val x = b?.get(0) ?: Float.NaN
             val y = b?.get(1) ?: Float.NaN
             val w = b?.get(2) ?: Float.NaN
@@ -797,48 +840,40 @@ object HudManager {
         }
         if (same) return zOrderCache
         invalidate()
-        zOrderCache = zOrderedInstances()
+        zOrderCache = zOrdered(list, ::drawnBounds)
         return zOrderCache
     }
+
+    private fun drawnBounds(hud: Hud): FloatArray? = if (hud in frameDrawn) screenBounds(hud) else null
 
     private fun Float.sameBound(other: Float): Boolean =
         this == other || (this.isNaN() && other.isNaN())
 
     @ApiStatus.Internal
     fun prepare(screenWidth: Float, screenHeight: Float) {
-        drainProfileReload()
-        migratePositions(screenWidth, screenHeight)
-        val scale = Platform.compatibility().options().guiScale
-        Snapshot.sendApplyNotifications()
-        frameId++
-        val huds = prepareOrder
-        huds.clear()
-        for (hud in activeInstances) if (hud !is LegacyHudMarker) huds.add(hud)
-        updateAndAdvance(huds)
-        for (hud in huds) {
-            try {
-                layoutOnce(hud, screenWidth, screenHeight, scale)
-            } catch (e: Throwable) {
-                LOGGER.error("Failed to lay out HUD ${hud.title}", e)
+        prepareFrame(screenWidth, screenHeight, {
+            prepareOrder.clear()
+            for (hud in activeInstances) {
+                val visible = hud !is LegacyHudMarker
+                hud.isVisible.value = visible
+                if (visible) prepareOrder.add(hud)
             }
-        }
-        updateBackgroundGroups(huds, screenWidth, screenHeight, scale)
+            for (hud in prepareOrder) updateIfDue(hud)
+            prepareOrder
+        })
     }
 
     @ApiStatus.Internal
     fun render(ctx: RenderContext, screenWidth: Float, screenHeight: Float) {
-        val scale = Platform.compatibility().options().guiScale
-
         val prepared = preparedFrameValid
         preparedFrameValid = false
-        if (!prepared) {
-            migratePositions(screenWidth, screenHeight)
-            Snapshot.sendApplyNotifications()
-            frameId++
-            collectFrameOrder()
-            updateAndAdvance(layoutOrder)
-            layoutAll(layoutOrder, screenWidth, screenHeight, scale)
-            updateBackgroundGroups(layoutOrder, screenWidth, screenHeight, scale)
+        val scale = if (prepared) {
+            Platform.compatibility().options().guiScale
+        } else {
+            prepareFrame(screenWidth, screenHeight, {
+                collectFrameOrder()
+                layoutOrder
+            })
         }
 
         ctx.save()
@@ -890,6 +925,15 @@ object HudManager {
         if (!isEditorOpen) return
         isEditorOpen = false
         EventManager.INSTANCE.post(HudEditorToggleEvent.CLOSE)
+    }
+
+    /**
+     * The editor screen has been installed, which also happens when Minecraft removes it and
+     * replaces it with itself, clearing the flag while the editor stays open
+     */
+    @ApiStatus.Internal
+    fun onEditorScreenAdded() {
+        if (!isEditorOpen) openEditor()
     }
 
     @ApiStatus.Internal

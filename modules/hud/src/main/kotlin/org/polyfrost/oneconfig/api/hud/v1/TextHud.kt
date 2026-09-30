@@ -31,6 +31,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.util.fastFilterNotNull
 import androidx.compose.ui.util.fastJoinToString
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.compose.composables.PolyBox
 import org.polyfrost.compose.composables.PolyCanvas
@@ -43,8 +45,6 @@ import org.polyfrost.compose.layout.PolyInsets
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text as TextAnnotation
 
 abstract class TextHud(

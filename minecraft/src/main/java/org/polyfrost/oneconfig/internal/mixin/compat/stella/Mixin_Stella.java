@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.stella;
 
 //? stella_compat {
-import co.stellarskys.stella.Stella;
+/*import co.stellarskys.stella.Stella;
 import org.polyfrost.oneconfig.internal.compat.StellaCompat;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -17,4 +17,4 @@ public class Mixin_Stella {
         StellaCompat.initialize();
     }
 }
-//? }
+*///? }

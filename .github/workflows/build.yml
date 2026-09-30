@@ -12,6 +12,7 @@ on:
     paths-ignore:
       - 'README.md'
       - '.github/**'
+      - '!.github/workflows/**'
       - '.editorconfig'
       - 'CODE_OF_CONDUCT.md'
       - 'CONTRIBUTING.md'
@@ -29,40 +30,40 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
+  modules:
+    name: Build modules
 
-    name: CI/CD Build on ${{ matrix.os }}
-
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-26.04
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - &checkout
+        name: Checkout
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - &setup-java
+        name: Setup Java
+        uses: actions/setup-java@v6
         with:
           java-version: 25
           distribution: temurin
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+      - &setup-gradle
+        name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
         with:
-          add-job-summary-as-pr-comment: always
+          # one PR comment per run instead of one per Minecraft version
+          add-job-summary-as-pr-comment: ${{ matrix.version && 'on-failure' || 'always' }}
           add-job-summary: always
           build-scan-publish: true
           build-scan-terms-of-use-url: "https://gradle.com/terms-of-service"
           build-scan-terms-of-use-agree: "yes"
-          gradle-home-cache-cleanup: true
           validate-wrappers: true
           cache-read-only: ${{ github.ref != 'refs/heads/v1' }}
 
-      - uses: actions/cache@v4
+      - &loom-cache
+        uses: actions/cache@v6
         with:
           path: |
             **/loom-cache
@@ -72,22 +73,84 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Build
-        run: ./gradlew build --no-daemon
+        run: ./gradlew -p modules build --no-daemon
 
       - name: Test publication
-        run: ./gradlew publishToMavenLocal
+        run: ./gradlew -p modules publishToMavenLocal
 
-      - name: Upload Build Artifacts (Dev)
-        uses: actions/upload-artifact@v4
+      - name: Upload compose-bundle
+        uses: actions/upload-artifact@v7
         with:
-          name: lib-artifacts (Development purposes)
+          path: |
+            modules/compose-bundle/build/libs/*.jar
+            !**/*-javadoc.jar
+            !**/*-sources.jar
+          archive: false
+          if-no-files-found: error
+
+      - name: Upload module libs
+        uses: actions/upload-artifact@v7
+        with:
+          name: lib-artifacts-modules
+          # the compose-bundle main jar is uploaded on its own
           path: |
             modules/**/build/libs/
-            minecraft/versions/**/build/libs/
+            !modules/compose-bundle/build/libs/*.jar
+            modules/compose-bundle/build/libs/*-javadoc.jar
+            modules/compose-bundle/build/libs/*-sources.jar
+          if-no-files-found: error
 
-      - name: Upload Build Artifacts (Bootstrap)
-        uses: actions/upload-artifact@v4
+  minecraft:
+    name: Build ${{ matrix.version }}
+
+    runs-on: ubuntu-26.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ["1.21.1", "1.21.4", "1.21.5", "1.21.8", "1.21.10", "1.21.11", "26.1", "26.2", "26.3"]
+
+    env:
+      NODE: ${{ matrix.version }}-fabric
+
+    steps:
+      - *checkout
+      - *setup-java
+      - *setup-gradle
+      - *loom-cache
+
+      - name: Build
+        run: ./gradlew :minecraft:$NODE:build :bootstrap:$NODE:build --no-daemon
+
+      - name: Test publication
+        run: ./gradlew :minecraft:$NODE:publishToMavenLocal
+
+      - name: Upload bootstrap jar
+        uses: actions/upload-artifact@v7
         with:
-          name: bootstrap-artifacts (Likely what you're looking for)
-          path: |
-            bootstrap/versions/**/build/libs/
+          path: bootstrap/versions/${{ env.NODE }}/build/libs/*.jar
+          archive: false
+          if-no-files-found: error
+
+      - name: Upload Minecraft libs
+        uses: actions/upload-artifact@v7
+        with:
+          name: lib-artifacts-${{ env.NODE }}
+          path: minecraft/versions/${{ env.NODE }}/build/libs/
+          if-no-files-found: error
+
+  lib-artifacts:
+    name: Merge dev artifacts
+
+    needs: [modules, minecraft]
+    if: ${{ !cancelled() }}
+
+    runs-on: ubuntu-26.04
+
+    steps:
+      - uses: actions/upload-artifact/merge@v7
+        with:
+          name: lib-artifacts (Development purposes)
+          pattern: lib-artifacts-*
+          separate-directories: true
+          delete-merged: true

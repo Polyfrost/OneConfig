@@ -1,8 +1,8 @@
+//~ gui_graphics
 package org.polyfrost.oneconfig.internal.mixin.compat.skyblocker;
 
 //? skyblocker_hud_v2 {
-import de.hysky.skyblocker.skyblock.tabhud.screenbuilder.LayerBuilder;
-//~ gui_graphics
+/*import de.hysky.skyblocker.skyblock.tabhud.screenbuilder.LayerBuilder;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import org.polyfrost.oneconfig.internal.compat.SkyblockerWidgetCompat;
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer;
@@ -23,4 +23,4 @@ public class Mixin_SkyblockerLayerBuilder {
         }
     }
 }
-//? }
+*///? }

@@ -1,17 +1,15 @@
+import dev.kikugie.stonecutter.build.StonecutterBuildExtension
 import dev.kikugie.stonecutter.data.StonecutterProject
+import java.util.*
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ExternalModuleDependencyBundle
 import org.gradle.api.artifacts.MinimalExternalModuleDependency
 import org.gradle.api.artifacts.VersionCatalog
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.artifacts.VersionConstraint
-import org.gradle.api.attributes.AttributeDisambiguationRule
-import org.gradle.api.attributes.MultipleCandidatesDetails
 import org.gradle.api.provider.Provider
 import org.gradle.kotlin.dsl.getByType
 import org.gradle.plugin.use.PluginDependency
-import java.util.*
-import javax.inject.Inject
 
 data class ForwardingVersionCatalog(
     val catalogs: List<VersionCatalog>
@@ -63,6 +61,4 @@ fun Project.getForwardingVersionCatalog(project: StonecutterProject): Forwarding
     )
 }
 
-
-internal val entries: MutableMap<Project, ForwardingVersionCatalog> = mutableMapOf()
-val Project.versionedCatalog get() = entries[this] ?: ForwardingVersionCatalog()
+val Project.versionedCatalog get() = getForwardingVersionCatalog(extensions.getByType<StonecutterBuildExtension>().current)

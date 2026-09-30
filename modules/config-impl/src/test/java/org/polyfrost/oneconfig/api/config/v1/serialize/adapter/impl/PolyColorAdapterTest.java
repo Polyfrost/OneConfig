@@ -26,10 +26,9 @@
 
 package org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl;
 
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.compose.render.PolyColor;
-
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 

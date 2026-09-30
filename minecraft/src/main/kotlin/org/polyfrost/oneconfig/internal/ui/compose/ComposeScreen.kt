@@ -11,6 +11,8 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.Clipboard
+import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.FrameRecomposer
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -21,39 +23,52 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import com.mojang.blaze3d.platform.InputConstants
+import java.awt.Component
+import java.awt.datatransfer.StringSelection
+import java.awt.datatransfer.Transferable
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
+import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.CoroutineDispatcher
 import net.minecraft.client.Minecraft
-import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.screens.Screen
-//? >= 1.21.10 {
-import net.minecraft.client.input.CharacterEvent
-import net.minecraft.client.input.MouseButtonEvent
-import net.minecraft.client.input.KeyEvent as McKeyEvent
-//? }
 import net.minecraft.network.chat.CommonComponents
+import org.apache.logging.log4j.LogManager
 import org.jetbrains.skia.FilterTileMode
-import org.jetbrains.skia.ImageInfo
 import org.jetbrains.skia.ImageFilter
+import org.jetbrains.skia.ImageInfo
 import org.jetbrains.skia.Paint
+import org.jetbrains.skia.RuntimeEffect
+import org.jetbrains.skia.RuntimeShaderBuilder
 import org.jetbrains.skia.Surface
-//? if < 26.3
-import org.lwjgl.glfw.GLFW
-//? if >= 26.3 {
-/*import org.lwjgl.sdl.SDLVideo.*
-*///?}
 import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.components.LocalUiOversample
+import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
+import org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
-import java.awt.Component
-import java.awt.event.InputEvent
-import java.awt.event.KeyEvent
+import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
+import java.util.concurrent.atomic.AtomicReference
+import kotlinx.coroutines.CoroutineExceptionHandler
 
-private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/Compose")
+//? if >= 1.21.10 {
+import net.minecraft.client.input.CharacterEvent
+import net.minecraft.client.input.KeyEvent as McKeyEvent
+import net.minecraft.client.input.MouseButtonEvent
+//?}
+
+//? if sdl {
+import org.lwjgl.sdl.SDLVideo.*
+//?} else {
+/*import org.lwjgl.glfw.GLFW
+*///?}
+
+private val LOGGER = LogManager.getLogger("OneConfig/Compose")
 
 @Suppress("DEPRECATION")
-private object SystemClipboardManager : androidx.compose.ui.platform.ClipboardManager {
+private object SystemClipboardManager : ClipboardManager {
     override fun getText(): AnnotatedString? {
         return try {
             val data = ClipboardHelper.getString() ?: return null
@@ -77,20 +92,20 @@ private object SystemClipboardManager : androidx.compose.ui.platform.ClipboardMa
 
 
 @Suppress("DEPRECATION")
-private object SystemClipboard : androidx.compose.ui.platform.Clipboard {
+private object SystemClipboard : Clipboard {
     override val nativeClipboard: Any = Unit
 
     @OptIn(ExperimentalComposeUiApi::class)
     override suspend fun getClipEntry(): ClipEntry? {
         val text = ClipboardHelper.getString() ?: return null
-        return ClipEntry(java.awt.datatransfer.StringSelection(text))
+        return ClipEntry(StringSelection(text))
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     override suspend fun setClipEntry(clipEntry: ClipEntry?) {
         if (clipEntry == null) return
         try {
-            val transferable = clipEntry.nativeClipEntry as? java.awt.datatransfer.Transferable
+            val transferable = clipEntry.nativeClipEntry as? Transferable
             if (transferable != null) {
                 ClipboardHelper.setTransferable(transferable)
             }
@@ -118,6 +133,11 @@ abstract class ComposeScreen(
 
     private var renderScopeOrNull: SingleComposeSceneRenderingScope? = null
 
+    private var sceneContextOrNull: SceneContext? = null
+
+    /** Whether this screen is open. Retained scenes stay alive after it closes */
+    private var showing = false
+
     private var scenePoisoned = false
 
     private var sceneRebuilds = 0
@@ -125,6 +145,8 @@ abstract class ComposeScreen(
     private var sceneBusy = false
 
     private var contentSet = false
+
+    private var sceneFailure: AtomicReference<Throwable?>? = null
 
     private fun liveScene(): ComposeScene? {
         if (scenePoisoned || sceneBusy) return null
@@ -135,7 +157,9 @@ abstract class ComposeScreen(
         val scene = liveScene() ?: return null
         sceneBusy = true
         return try {
-            block(scene)
+            val result = block(scene)
+            sceneFailure?.get()?.let { throw it }
+            result
         } catch (t: Throwable) {
             poisonScene(t)
             null
@@ -201,11 +225,15 @@ abstract class ComposeScreen(
         val scene = sceneOrNull
         val recomposer = recomposerOrNull
         if (scene == null && recomposer == null) return
+        val sceneContext = sceneContextOrNull
         sceneOrNull = null
         recomposerOrNull = null
         renderScopeOrNull = null
+        sceneContextOrNull = null
         contentSet = false
         scenePoisoned = false
+        sceneFailure = null
+        sceneContext?.close()
         try {
             scene?.close()
         } catch (t: Throwable) {
@@ -219,12 +247,15 @@ abstract class ComposeScreen(
     }
 
     private fun createScene(): ComposeScene {
-        val recomposer = FrameRecomposer(RenderThreadDispatcher) { sceneDirty = true }
+        val failure = AtomicReference<Throwable?>()
+        val failureHandler = CoroutineExceptionHandler { _, t -> failure.compareAndSet(null, t) }
+        val recomposer = FrameRecomposer(RenderThreadDispatcher + failureHandler) { sceneDirty = true }
         val scope = SingleComposeSceneRenderingScope { sceneDirty = true }
+        val sceneContext = SceneContext { showing }
         val scene = try {
             CanvasLayersComposeScene(
                 frameRecomposer = recomposer,
-                platformContext = ComposeSceneContextImpl.platformContext,
+                platformContext = sceneContext,
                 invalidateLayout = scope::onSceneInvalidation,
                 invalidateDraw = scope::onSceneInvalidation,
             )
@@ -238,6 +269,8 @@ abstract class ComposeScreen(
         }
         recomposerOrNull = recomposer
         renderScopeOrNull = scope
+        sceneContextOrNull = sceneContext
+        sceneFailure = failure
         return scene
     }
 
@@ -259,12 +292,12 @@ abstract class ComposeScreen(
     private var cachedSurfaceScale = -1f
 
     protected val client get() = Minecraft.getInstance()
-    //? if < 26.3 {
-    private val contentScaleX = FloatArray(1)
+    //? if !sdl {
+    /*private val contentScaleX = FloatArray(1)
     private val contentScaleY = FloatArray(1)
     private val monScaleX = FloatArray(1)
     private val monScaleY = FloatArray(1)
-    //?}
+    *///?}
 
     private var filterPaintKey = -1 to -1f
     private var filterPaintCached: Paint? = null
@@ -293,27 +326,27 @@ abstract class ComposeScreen(
 
     private fun hardenFilter(amount: Float): ImageFilter {
         val w = (0.5f - 0.48f * amount).coerceIn(0.02f, 0.5f)
-        val effect = org.jetbrains.skia.RuntimeEffect.makeForShader(HARDEN_SKSL)
-        val builder = org.jetbrains.skia.RuntimeShaderBuilder(effect)
+        val effect = RuntimeEffect.makeForShader(HARDEN_SKSL)
+        val builder = RuntimeShaderBuilder(effect)
         builder.uniform("w", w)
         return ImageFilter.makeRuntimeShader(builder, "content", null)
     }
 
     private fun osUpscaleFactor(): Float {
         val handle = Platform.compatibility().windowHandle()
-        //? if >= 26.3 {
-        /*val winCS = SDL_GetWindowDisplayScale(handle).coerceAtLeast(1f)
+        //? if sdl {
+        val winCS = SDL_GetWindowDisplayScale(handle).coerceAtLeast(1f)
         val display = SDL_GetDisplayForWindow(handle).takeIf { it != 0 } ?: SDL_GetPrimaryDisplay()
         if (display == 0) return 1f
         val monCS = SDL_GetDisplayContentScale(display).coerceAtLeast(1f)
-        *///?} else {
-        GLFW.glfwGetWindowContentScale(handle, contentScaleX, contentScaleY)
+        //?} else {
+        /*GLFW.glfwGetWindowContentScale(handle, contentScaleX, contentScaleY)
         val winCS = maxOf(contentScaleX[0], contentScaleY[0]).coerceAtLeast(1f)
         val mon = GLFW.glfwGetWindowMonitor(handle).takeIf { it != 0L } ?: GLFW.glfwGetPrimaryMonitor()
         if (mon == 0L) return 1f
         GLFW.glfwGetMonitorContentScale(mon, monScaleX, monScaleY)
         val monCS = maxOf(monScaleX[0], monScaleY[0]).coerceAtLeast(1f)
-        //?}
+        *///?}
         return (monCS / winCS).coerceAtLeast(1f)
     }
 
@@ -340,6 +373,9 @@ abstract class ComposeScreen(
             closeWithMessage("OneConfig's UI failed to start. Please check your logs and report this.")
             return
         }
+
+        showing = true
+        sceneContextOrNull?.sync()
     }
 
     private var prewarmCursor = 0
@@ -375,10 +411,6 @@ abstract class ComposeScreen(
     }
 
     fun endPrewarm() {
-        if (prewarmCursor > 0) {
-            // Release hidden search focus so it doesn't suppress keybinds
-            withScene { it.focusManager.releaseFocus() }
-        }
         prewarmCursor = 0
         releasePrewarmSurface()
     }
@@ -386,24 +418,26 @@ abstract class ComposeScreen(
     protected fun prewarm(frames: Int, budget: Int = frames, step: (Int) -> Unit): Boolean {
         val name = this::class.java.simpleName
         if (ensureScene() == null) {
-            LOGGER.warn("{} warm-up: no scene ({})", name, ComposeSupport.unavailableReason() ?: "createScene failed")
+            ComposePreloader.fail("$name: no scene (${ComposeSupport.unavailableReason() ?: "createScene failed"})")
             return false
         }
         syncSceneMetrics()
         if (lastSceneW <= 0 || lastSceneH <= 0) {
-            LOGGER.warn("{} warm-up: window is {}x{}", name, lastSceneW, lastSceneH)
             closeSceneQuietly()
+            ComposePreloader.fail("$name: window is ${lastSceneW}x${lastSceneH}")
             return false
         }
         val hadContent = contentSet
         if (!bindContent()) {
-            LOGGER.warn("{} warm-up: setContent did not take (poisoned={})", name, scenePoisoned)
+            val reason = "$name: setContent did not take (poisoned=$scenePoisoned)"
             closeSceneQuietly()
+            ComposePreloader.fail(reason)
             return false
         }
         if (!hadContent) return false
         val surface = prewarmSurface() ?: run {
             closeSceneQuietly()
+            ComposePreloader.fail("$name: could not allocate warm-up surface")
             return false
         }
         try {
@@ -413,11 +447,13 @@ abstract class ComposeScreen(
             val scope = renderScopeOrNull
             if (recomposer == null || scope == null) {
                 closeSceneQuietly()
+                ComposePreloader.fail("$name: missing recomposer or render scope")
                 return false
             }
             while (prewarmCursor < until) {
                 step(prewarmCursor)
                 withScene { with(scope) { it.render(recomposer, canvas, frameNanos()) } }
+                if (scenePoisoned) break
                 clockSkewNanos += PREWARM_FRAME_NANOS
                 prewarmCursor++
             }
@@ -426,7 +462,13 @@ abstract class ComposeScreen(
             prewarmCursor = 0
             releasePrewarmSurface()
             closeSceneQuietly()
-            LOGGER.warn("Compose warm-up failed; the first open will build the UI instead", t)
+            ComposePreloader.fail("Compose warm-up failed; the first open will build the UI instead", t)
+            return false
+        }
+        if (scenePoisoned) {
+            prewarmCursor = 0
+            closeSceneQuietly()
+            ComposePreloader.fail("$name: a warm-up frame failed; the first open will build the UI instead")
             return false
         }
         sceneDirty = true
@@ -474,6 +516,8 @@ abstract class ComposeScreen(
         //minecraft: Minecraft,
         width: Int, height: Int
     ) {
+        this.width = width
+        this.height = height
         syncSceneMetrics()
     }
 
@@ -508,6 +552,8 @@ abstract class ComposeScreen(
     }
 
     override fun removed() {
+        showing = false
+        sceneContextOrNull?.sync()
         ComposeSceneContextImpl.resetPointerIcon()
         releaseScene()
         super.removed()
@@ -559,7 +605,15 @@ abstract class ComposeScreen(
             withScene { it.invalidatePositionInWindow() }
         }
 
-        val debugOverlayOnTop = org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen.shouldSuppressVanilla()
+        // Recompose and lay out before rendering so icons revealed by scrolling or filtering draw on the same frame.
+        val nanos = frameNanos()
+        withScene { scene ->
+            recomposerOrNull?.performFrame(nanos)
+            scene.measureAndLayout()
+        }
+        if (ItemCatalog.renderIcons()) sceneDirty = true
+
+        val debugOverlayOnTop = DebugOverlayOffscreen.shouldSuppressVanilla()
         if (renderMode == RenderMode.ON_DEMAND && !sceneDirty && !awaitingFirstFrame &&
             SkiaCtx.isDeferredComposeBackend && !debugOverlayOnTop
         ) {
@@ -586,7 +640,7 @@ abstract class ComposeScreen(
                     val scope = renderScopeOrNull
                     val composeCanvas = canvas.asComposeCanvas()
                     val rendered = if (recomposer == null || scope == null) null else withScene {
-                        with(scope) { it.render(recomposer, composeCanvas, frameNanos()) }
+                        with(scope) { it.render(recomposer, composeCanvas, nanos) }
                     }
                     if (rendered != null) {
                         sceneRebuilds = 0
@@ -660,17 +714,17 @@ abstract class ComposeScreen(
         withScene {
             it.sendPointerEvent(
                 type,
-                //? if sdl_keycodes {
-                /*button = when (button) {
+                //? if sdl {
+                button = when (button) {
                     InputConstants.MOUSE_BUTTON_LEFT -> PointerButton.Primary
                     InputConstants.MOUSE_BUTTON_RIGHT -> PointerButton.Secondary
                     InputConstants.MOUSE_BUTTON_MIDDLE -> PointerButton.Tertiary
                     else -> PointerButton(button - 1)
                 },
-                *///?} else {
-                // PointerButton indices match GLFW button numbers (Primary = 0, Secondary = 1, ...)
+                //?} else {
+                /*// PointerButton indices match GLFW button numbers (Primary = 0, Secondary = 1, ...)
                 button = if (button >= 0) PointerButton(button) else null,
-                //?}
+                *///?}
                 position = pointerPosition()
             )
         }
@@ -728,8 +782,8 @@ abstract class ComposeScreen(
     //? >= 1.21.10 {
     override fun keyPressed(event: McKeyEvent): Boolean {
         val bindingKey = event.key
-        //~ if < 26.3 'event.shortcutKey()' -> 'bindingKey'
-        val shortcutKey = bindingKey
+        //~ if !sdl 'event.shortcutKey()' -> 'bindingKey'
+        val shortcutKey = event.shortcutKey()
         val modifiers = event.modifiers
     //?} else {
     /*override fun keyPressed(key: Int, scanCode: Int, modifiers: Int): Boolean {
@@ -747,8 +801,8 @@ abstract class ComposeScreen(
     //? if >= 1.21.10 {
     override fun keyReleased(event: McKeyEvent): Boolean {
         val bindingKey = event.key
-        //~ if < 26.3 'event.shortcutKey()' -> 'bindingKey'
-        val shortcutKey = bindingKey
+        //~ if !sdl 'event.shortcutKey()' -> 'bindingKey'
+        val shortcutKey = event.shortcutKey()
         val modifiers = event.modifiers
     //?} else {
     /*override fun keyReleased(key: Int, scanCode: Int, modifiers: Int): Boolean {
@@ -898,12 +952,12 @@ abstract class ComposeScreen(
 
     private fun sceneDensity(): Float {
         val pixelRatio = Platform.screen().pixelRatio().takeIf { it > 0f } ?: 1f
-        //? if >= 26.3 {
-        /*val contentScale = SDL_GetWindowDisplayScale(Platform.compatibility().windowHandle()).coerceAtLeast(1f)
-        *///?} else {
-        GLFW.glfwGetWindowContentScale(Platform.compatibility().windowHandle(), contentScaleX, contentScaleY)
+        //? if sdl {
+        val contentScale = SDL_GetWindowDisplayScale(Platform.compatibility().windowHandle()).coerceAtLeast(1f)
+        //?} else {
+        /*GLFW.glfwGetWindowContentScale(Platform.compatibility().windowHandle(), contentScaleX, contentScaleY)
         val contentScale = maxOf(contentScaleX[0], contentScaleY[0]).coerceAtLeast(1f)
-        //?}
+        *///?}
         return (contentScale / pixelRatio).coerceAtLeast(1f)
     }
 
@@ -944,11 +998,11 @@ abstract class ComposeScreen(
     }
 }
 
-internal object RenderThreadDispatcher : kotlinx.coroutines.CoroutineDispatcher() {
-    override fun isDispatchNeeded(context: kotlin.coroutines.CoroutineContext): Boolean =
+internal object RenderThreadDispatcher : CoroutineDispatcher() {
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean =
         !Minecraft.getInstance().isSameThread
 
-    override fun dispatch(context: kotlin.coroutines.CoroutineContext, block: Runnable) {
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
         Minecraft.getInstance().execute(block)
     }
 }

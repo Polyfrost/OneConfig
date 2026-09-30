@@ -1,17 +1,28 @@
 package org.polyfrost.oneconfig.internal.ui
 
+import com.mojang.blaze3d.pipeline.RenderTarget
+
+//? if >= 26.2 {
+import com.mojang.renderpearl.backend.opengl.FrameBufferAttachment
+//?}
+
 //? if >= 26.1 {
-import com.mojang.blaze3d.opengl.GlTexture
 import org.polyfrost.oneconfig.internal.mixin.blaze3d.GlDeviceAccessor
 import org.polyfrost.oneconfig.internal.mixin.blaze3d.GpuDeviceAccessor
-//? }
-//? if >= 26.2 {
-import com.mojang.blaze3d.opengl.FrameBufferAttachment
-//? }
-import com.mojang.blaze3d.pipeline.RenderTarget
+//?}
+
 //? if >= 1.21.5 {
 import com.mojang.blaze3d.systems.RenderSystem
-//? }
+import com.mojang.renderpearl.backend.opengl.GlTexture
+//?}
+
+//? if >= 1.21.5 && < 26.1 {
+/*import com.mojang.renderpearl.backend.opengl.GlDevice
+*///?}
+
+//? if < 1.21.5 {
+/*import net.minecraft.client.Minecraft
+*///?}
 
 /**
  * Credits to lowercasebtw and taken from The Fabric Project
@@ -40,10 +51,10 @@ object RenderTargetFbo {
     *///? } else if >= 1.21.5 {
     /*fun getFboId(frameBuffer: RenderTarget): Int {
         val device = RenderSystem.getDevice()
-        if (device !is com.mojang.blaze3d.opengl.GlDevice) {
+        if (device !is GlDevice) {
             return -1
         } else {
-            val texture = frameBuffer.colorTexture as? com.mojang.blaze3d.opengl.GlTexture
+            val texture = frameBuffer.colorTexture as? GlTexture
                 ?: return -1
             return texture.getFbo(device.directStateAccess(), frameBuffer.depthTexture)
         }
@@ -56,8 +67,12 @@ object RenderTargetFbo {
 
     //? if >= 1.21.5 {
     fun getColorTexId(frameBuffer: RenderTarget): Int =
-        (frameBuffer.colorTexture as? com.mojang.blaze3d.opengl.GlTexture)?.glId() ?: -1
+        (frameBuffer.colorTexture as? GlTexture)?.glId() ?: -1
     //? } else {
     /*fun getColorTexId(frameBuffer: RenderTarget): Int = frameBuffer.colorTextureId
     *///? }
+
+    // Creating, clearing, and destroying a render target leaves framebuffer 0 bound, and 1.21.1 GUI draws do not rebind.
+    //? if < 1.21.5
+    //fun restoreMainTarget() = Minecraft.getInstance().mainRenderTarget?.bindWrite(true)
 }

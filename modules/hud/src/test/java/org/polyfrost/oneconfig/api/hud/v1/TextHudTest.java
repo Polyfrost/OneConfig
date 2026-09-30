@@ -26,9 +26,9 @@
 
 package org.polyfrost.oneconfig.api.hud.v1;
 
-import org.junit.jupiter.api.Test;
-
+import androidx.compose.runtime.MutableState;
 import java.lang.reflect.Field;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -89,7 +89,7 @@ public class TextHudTest {
     private static String displayText(TextHud hud) throws Exception {
         Field field = TextHud.class.getDeclaredField("displayTextState");
         field.setAccessible(true);
-        return ((androidx.compose.runtime.MutableState<String>) field.get(hud)).getValue();
+        return ((MutableState<String>) field.get(hud)).getValue();
     }
 
     private static class TestDateTimeHud extends TextHud.DateTime {

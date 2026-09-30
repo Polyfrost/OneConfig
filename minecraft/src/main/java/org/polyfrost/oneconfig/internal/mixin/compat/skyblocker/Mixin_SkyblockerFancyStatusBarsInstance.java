@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.skyblocker;
 
 //? skyblocker_compat {
-import de.hysky.skyblocker.skyblock.fancybars.FancyStatusBars;
+/*import de.hysky.skyblocker.skyblock.fancybars.FancyStatusBars;
 import org.polyfrost.oneconfig.internal.compat.SkyblockerCompat;
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -28,4 +28,4 @@ public class Mixin_SkyblockerFancyStatusBarsInstance {
         }
     }
 }
-//? }
+*///? }

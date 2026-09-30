@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.api.ui.v1.keybind
 
+import java.util.function.Consumer
 import kotlin.experimental.or
 
 class KeybindHelper {
@@ -35,7 +36,7 @@ class KeybindHelper {
     fun action(fn: (Boolean) -> Boolean) = apply { action = fn }
     fun action(fn: () -> Unit) = apply { action = { b -> if (b) fn(); true } }
     fun action(fn: Runnable) = apply { action = { b -> if (b) fn.run(); true } }
-    fun action(fn: java.util.function.Consumer<Boolean>) = apply { action = { b -> fn.accept(b); true } }
+    fun action(fn: Consumer<Boolean>) = apply { action = { b -> fn.accept(b); true } }
 
     /**
      * Builds the keybind

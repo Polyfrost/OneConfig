@@ -26,9 +26,9 @@
 
 package org.polyfrost.oneconfig.utils.v1.dsl
 
-import org.polyfrost.oneconfig.utils.v1.Multithreading
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
+import org.polyfrost.oneconfig.utils.v1.Multithreading
 
 /**
  * Runs the given [block] asynchronously

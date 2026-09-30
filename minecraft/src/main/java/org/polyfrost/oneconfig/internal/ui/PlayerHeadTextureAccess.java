@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.ui;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.renderer.texture.AbstractTexture;
+import net.minecraft.client.renderer.texture.DynamicTexture;
 
 public final class PlayerHeadTextureAccess {
     private PlayerHeadTextureAccess() {
@@ -16,7 +17,7 @@ public final class PlayerHeadTextureAccess {
         if (texture == null) {
             return null;
         }
-        if (texture instanceof net.minecraft.client.renderer.texture.DynamicTexture dynamicTexture) {
+        if (texture instanceof DynamicTexture dynamicTexture) {
             return dynamicTexture.getPixels();
         }
         return null;

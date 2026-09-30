@@ -1,20 +1,10 @@
 package org.polyfrost.oneconfig.internal.mixin.keybind;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import java.util.LinkedHashSet;
 import net.minecraft.client.KeyMapping;
-//? if >= 1.21.10
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.options.controls.KeyBindsList;
 import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
-//? if >=1.21.10 {
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
-//?}
-//? if < 26.3
-import org.lwjgl.glfw.GLFW;
-//? if >= 26.3
-//import org.lwjgl.sdl.SDLMouse;
-import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindBridgeImpl;
 import org.polyfrost.oneconfig.internal.ui.keybind.OneConfigKeybindRecorder;
 import org.spongepowered.asm.mixin.Mixin;
@@ -25,7 +15,21 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.LinkedHashSet;
+//? if >= 1.21.10 {
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+//?}
+
+//? if >= 1.21.10 && < 26.3 {
+/*import net.minecraft.client.Minecraft;
+*///?}
+
+//? if sdl {
+import org.lwjgl.sdl.SDLMouse;
+//?} else {
+/*import org.lwjgl.glfw.GLFW;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
+*///?}
 
 @Mixin(KeyBindsScreen.class)
 public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
@@ -97,22 +101,22 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
         if (bridge != null) bridge.setActiveRebind(oneconfig$target != null ? oneconfig$target : this.selectedKey);
         if (!oneconfig$recording) return;
         for (int k : oneconfig$keys) {
-            //? if sdl_keycodes {
-            /*if (InputConstants.isKeyDown(k)) return;
-            *///?} else {
-            //~ if < 1.21.10 'Minecraft.getInstance().getWindow()' -> 'Platform.compatibility().windowHandle()'
+            //? if sdl {
+            if (InputConstants.isKeyDown(k)) return;
+            //?} else {
+            /*//~ if < 1.21.10 'Minecraft.getInstance().getWindow()' -> 'Platform.compatibility().windowHandle()'
             if (InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), k)) return;
-            //?}
+            *///?}
         }
-        //? if >= 26.3 {
-        /*int buttons = SDLMouse.SDL_GetMouseState(null, null);
+        //? if sdl {
+        int buttons = SDLMouse.SDL_GetMouseState(null, null);
         for (int b : oneconfig$mouse) {
             if (b > 0 && b <= Integer.SIZE && (buttons & (1 << (b - 1))) != 0) return;
         }
-        *///?} else {
-        long window = Platform.compatibility().windowHandle();
+        //?} else {
+        /*long window = Platform.compatibility().windowHandle();
         for (int b : oneconfig$mouse) if (GLFW.glfwGetMouseButton(window, b) != InputConstants.RELEASE) return;
-        //?}
+        *///?}
         oneconfig$commit();
     }
 
@@ -139,8 +143,8 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
 
     @Override
     public void oneconfig$recordKey(int keyCode) {
-        //? if sdl_keycodes
-        //if (keyCode <= 0) return;
+        //? if sdl
+        if (keyCode <= 0) return;
         if (!oneconfig$begin()) return;
         oneconfig$keys.add(keyCode);
         oneconfig$preview();

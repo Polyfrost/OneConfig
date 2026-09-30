@@ -28,6 +28,8 @@ package org.polyfrost.oneconfig.internal.ui.hud;
 
 import androidx.compose.runtime.snapshots.Snapshot;
 import androidx.compose.runtime.snapshots.SnapshotStateObserver;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import kotlin.Unit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -38,9 +40,6 @@ import org.polyfrost.oneconfig.api.hud.v1.TextHud;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
-
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

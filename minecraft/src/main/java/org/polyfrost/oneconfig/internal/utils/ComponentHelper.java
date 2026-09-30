@@ -1,10 +1,9 @@
 package org.polyfrost.oneconfig.internal.utils;
 
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
-
 import java.util.List;
 import java.util.Optional;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 
 public class ComponentHelper {
 

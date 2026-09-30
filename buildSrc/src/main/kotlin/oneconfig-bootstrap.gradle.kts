@@ -6,7 +6,6 @@ import kotlin.collections.listOf
 
 plugins {
     java
-    id("versioned-catalogues")
     id("me.modmuss50.mod-publish-plugin")
 }
 
@@ -74,7 +73,6 @@ afterEvaluate {
         "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm",
         "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm",
         "org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm",
-        "org.jetbrains.kotlinx:atomicfu-jvm",
         "org.jetbrains.kotlinx:kotlinx-datetime-jvm",
         "org.jetbrains.kotlinx:kotlinx-io-core-jvm",
         "org.jetbrains.kotlinx:kotlinx-io-bytestring-jvm",

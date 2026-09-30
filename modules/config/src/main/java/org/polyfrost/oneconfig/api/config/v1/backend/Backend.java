@@ -26,6 +26,8 @@
 
 package org.polyfrost.oneconfig.api.config.v1.backend;
 
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
@@ -34,9 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import org.polyfrost.oneconfig.api.config.v1.Node;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A backend is a storage system for ConfigTrees
@@ -112,7 +111,7 @@ public abstract class Backend {
 
             if (in.map.isEmpty()) return new RegistrationResult(current, RegistrationResult.MERGED);
             LOGGER.info("performing tree merge between {} and {}", current.getTitle(), in.getTitle());
-            current.overwrite(in, false);
+            current.overwrite(in, true);
             // clear the old tree to prevent illegal usage
             in.clear();
             save(current);
@@ -165,7 +164,7 @@ public abstract class Backend {
         if (t.get("reserved:overwritten") != null) {
             tree.put(Objects.requireNonNull(t.get("reserved:overwritten")));
         }
-        tree.overwrite(t, false);
+        tree.overwrite(t, true);
 
         putSafe(tree);
         return true;

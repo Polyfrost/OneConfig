@@ -1,5 +1,6 @@
 import dev.kikugie.stonecutter.build.StonecutterBuildExtension
 import org.gradle.api.artifacts.VersionCatalogsExtension
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.authentication.http.BasicAuthentication
@@ -14,7 +15,6 @@ plugins {
     kotlin("jvm")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
-    id("versioned-catalogues")
     `maven-publish`
     signing
 }
@@ -86,6 +86,7 @@ if (loader == "fabric") {
     val modMenuShimClasses = layout.buildDirectory.dir("classes/modMenuShim")
     val compileModMenuApiShimJava = tasks.register<JavaCompile>("compileModMenuApiShimJava") {
         val mainSourceSet = sourceSets.named("main").get()
+        javaCompiler.set(tasks.named<JavaCompile>("compileJava").flatMap { it.javaCompiler })
         source(rootProject.projectDir.resolve("minecraft/src/modMenuShim/java"))
         classpath = files(mainSourceSet.output.classesDirs, mainSourceSet.compileClasspath)
         destinationDirectory.set(modMenuShimClasses)
@@ -177,6 +178,28 @@ val firmamentRelocatedConfiguration: Configuration by configurations.creating {
     attributes { attribute(firmamentRelocated, true) }
 }
 
+val skysoftRelocated = registerRelocationAttribute("relocate-skysoft-moulconfig") {
+    relocate("io.github.notenoughupdates.moulconfig", "com.skysoft.deps.softconfig")
+}
+
+val skysoftRelocatedConfiguration: Configuration by configurations.creating {
+    attributes { attribute(skysoftRelocated, true) }
+}
+
+val adventurePlatform = when {
+    loader != "fabric" -> null
+    stonecutter.eval(stonecutter.current.version, ">= 26.3") -> "7.2.0"
+    stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "7.1.1"
+    stonecutter.eval(stonecutter.current.version, ">= 26.1") -> "6.9.0"
+    stonecutter.eval(stonecutter.current.version, ">= 1.21.11") -> "6.8.0"
+    stonecutter.eval(stonecutter.current.version, ">= 1.21.10") -> "6.7.0"
+    stonecutter.eval(stonecutter.current.version, ">= 1.21.8") -> "6.6.0"
+    stonecutter.eval(stonecutter.current.version, ">= 1.21.5") -> "6.4.0"
+    stonecutter.eval(stonecutter.current.version, ">= 1.21.4") -> "6.3.0"
+    stonecutter.eval(stonecutter.current.version, ">= 1.21.1") -> "5.14.2"
+    else -> error("No adventure-platform-fabric version for ${stonecutter.current.version}")
+}?.let { "net.kyori:adventure-platform-fabric:$it" }
+
 dependencies {
     listOf("compat", "common-compat").forEach {
         versionedCatalog.bundles.getOrNull(it)?.let { bundle ->
@@ -194,7 +217,7 @@ dependencies {
         }
     }
 
-    moulConfig(skyhanniRelocatedConfiguration, firmamentRelocatedConfiguration)
+    moulConfig(skyhanniRelocatedConfiguration, firmamentRelocatedConfiguration, skysoftRelocatedConfiguration)
 
     "api"(versionedCatalog["jetbrains.compose.foundation"])
     "api"(versionedCatalog["jetbrains.compose.material"])
@@ -215,20 +238,7 @@ dependencies {
     "api"(versionedCatalog["commonmark"])
     handleApiDep(versionedCatalog.bundles["adventure"])
 
-    if (loader == "fabric") {
-        val adventurePlatformVersion =
-            when {
-                stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "7.0.0-SNAPSHOT"
-                stonecutter.eval(stonecutter.current.version, ">= 26.1") -> "6.9.0"
-                stonecutter.eval(stonecutter.current.version, ">= 1.21.11") -> "6.8.0"
-                stonecutter.eval(stonecutter.current.version, ">= 1.21.10") -> "6.7.0"
-                stonecutter.eval(stonecutter.current.version, ">= 1.21.8") -> "6.6.0"
-                stonecutter.eval(stonecutter.current.version, ">= 1.21.5") -> "6.4.0"
-                stonecutter.eval(stonecutter.current.version, ">= 1.21.4") -> "6.3.0"
-                stonecutter.eval(stonecutter.current.version, ">= 1.21.1") -> "5.14.2"
-                else -> error("No adventure-platform-fabric version for ${stonecutter.current.version}")
-            }
-        val adventurePlatform = "net.kyori:adventure-platform-fabric:$adventurePlatformVersion"
+    if (adventurePlatform != null) {
         "modApi"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
         "modImplementation"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
     }
@@ -260,11 +270,11 @@ dependencies {
     handleApiDep(versionedCatalog["commonmark"])
 
     if (loader == "fabric") {
-        handleApiDep(versionedCatalog["fabric-language-kotlin"], transitive = true)
+        handleApiDep(versionedCatalog["fabric-language-kotlin"])
         handleApiDep(versionedCatalog["fabric-loader"], isMod = true, transitive = true)
-        "modApi"(versionedCatalog["command-api-v2"]) { isTransitive = false }
 
         val fullFabricApiVersion = when {
+            stonecutter.eval(stonecutter.current.version, ">= 26.3") -> "0.160.3+26.3"
             stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "0.159.0+26.2"
             stonecutter.eval(stonecutter.current.version, ">= 26.1") -> "0.155.2+26.1.2"
             stonecutter.eval(stonecutter.current.version, ">= 1.21.11") -> "0.141.6+1.21.11"
@@ -274,8 +284,7 @@ dependencies {
             stonecutter.eval(stonecutter.current.version, ">= 1.21.4") -> "0.119.4+1.21.4"
             else -> "0.116.17+1.21.1"
         }
-        "modCompileOnly"("net.fabricmc.fabric-api:fabric-api:$fullFabricApiVersion")
-        "modRuntimeOnly"("net.fabricmc.fabric-api:fabric-api:$fullFabricApiVersion")
+        "modApi"("net.fabricmc.fabric-api:fabric-api:$fullFabricApiVersion")
     }
 
     val libsCatalog = rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs")
@@ -293,9 +302,8 @@ dependencies {
         compileOnly(versionedCatalog["lwjgl-vulkan"])
     }
 
-    if (versionedCatalog.has("skycubed")) {
+    if (versionedCatalog.has("meowdding-lib")) {
         val mcVersion = stonecutter.current.version
-        "modCompileOnly"(versionedCatalog["skycubed"]) { isTransitive = false }
         compileOnly(versionedCatalog["meowdding-lib"]) {
             isTransitive = false
             capabilities { requireCapability("me.owdding.meowdding-lib:meowdding-lib-$mcVersion") }

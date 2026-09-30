@@ -26,8 +26,14 @@
 
 package org.polyfrost.oneconfig.internal.ui.sound;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Optional;
+import java.util.function.Consumer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackLocationInfo;
+import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackSelectionConfig;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.PathPackResources;
@@ -35,16 +41,14 @@ import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.server.packs.repository.RepositorySource;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Optional;
-import java.util.function.Consumer;
+//? if >= 26.3 {
+import java.util.stream.Stream;
+import net.minecraft.server.packs.PackMetadataResources;
+//?}
 
 public final class OneConfigSoundPackSource implements RepositorySource {
     public static final OneConfigSoundPackSource INSTANCE = new OneConfigSoundPackSource();
 
-    /** {@code .minecraft/oneconfig/sounds} laid out as a resource pack with {@code pack.mcmeta} and {@code assets/} */
     public static final Path PACK_ROOT = Paths.get("oneconfig", "sounds");
 
     private static final String PACK_ID = "oneconfig_sounds";
@@ -62,17 +66,31 @@ public final class OneConfigSoundPackSource implements RepositorySource {
                 PackSource.BUILT_IN,
                 Optional.empty()
         );
+        //? if >= 26.3 {
         Pack.ResourcesSupplier resources = new Pack.ResourcesSupplier() {
             @Override
-            public net.minecraft.server.packs.PackResources openPrimary(PackLocationInfo info) {
+            public PackMetadataResources openMetadata(PackLocationInfo info) {
                 return new PathPackResources(info, PACK_ROOT);
             }
 
             @Override
-            public net.minecraft.server.packs.PackResources openFull(PackLocationInfo info, Pack.Metadata metadata) {
+            public Stream<PackResources> openResources(PackLocationInfo info, Pack.Metadata metadata) {
+                return Stream.of(new PathPackResources(info, PACK_ROOT));
+            }
+        };
+        //?} else {
+        /*Pack.ResourcesSupplier resources = new Pack.ResourcesSupplier() {
+            @Override
+            public PackResources openPrimary(PackLocationInfo info) {
+                return new PathPackResources(info, PACK_ROOT);
+            }
+
+            @Override
+            public PackResources openFull(PackLocationInfo info, Pack.Metadata metadata) {
                 return new PathPackResources(info, PACK_ROOT);
             }
         };
+        *///?}
         PackSelectionConfig selection = new PackSelectionConfig(true, Pack.Position.BOTTOM, false);
 
         Pack pack = Pack.readMetaAndCreate(location, resources, PackType.CLIENT_RESOURCES, selection);

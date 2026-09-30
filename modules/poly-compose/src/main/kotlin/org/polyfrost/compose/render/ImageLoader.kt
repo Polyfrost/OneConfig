@@ -1,8 +1,8 @@
 package org.polyfrost.compose.render
 
-import org.jetbrains.skia.Image
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
+import org.jetbrains.skia.Image
 
 object ImageLoader {
     private val cache = ConcurrentHashMap<String, Image>()

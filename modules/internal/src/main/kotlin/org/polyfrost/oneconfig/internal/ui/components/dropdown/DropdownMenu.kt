@@ -13,16 +13,16 @@ import androidx.compose.ui.input.InputModeManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.unit.*
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
-import kotlin.math.max
-import kotlin.math.min
-import androidx.compose.ui.unit.*
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import javax.swing.Box
+import kotlin.math.max
+import kotlin.math.min
 
 class DropdownPositionProvider(
     val contentOffset: DpOffset,

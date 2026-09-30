@@ -2,12 +2,14 @@
 package org.polyfrost.oneconfig.internal.compat
 
 import com.mojang.blaze3d.platform.InputConstants
-import net.minecraft.client.KeyMapping
-import net.minecraft.client.gui.screens.Screen
-import org.polyfrost.oneconfig.utils.v1.WrappingUtils
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
+import java.nio.file.Path
+import net.minecraft.client.KeyMapping
+import net.minecraft.client.gui.screens.Screen
+import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.utils.v1.WrappingUtils
 
 /**
  * reflective access to wWaypoints which is closed-source and not a compile-time dependency so every class
@@ -17,7 +19,7 @@ import java.lang.reflect.Modifier
  */
 internal object WWaypointsBridge {
 
-    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/wWaypoints-Compat")
+    private val LOGGER = LogManager.getLogger("OneConfig/wWaypoints-Compat")
 
     private const val CLIENT = "com.wwaypoints.WaypointsClient"
     private const val CONFIG = "com.wwaypoints.client.ModConfig"
@@ -266,8 +268,8 @@ internal object WWaypointsBridge {
     }
 
     /** imports a `.wtemplate` file and returns the name the template was stored under */
-    fun importTemplateFile(path: java.nio.file.Path): String? = runCatching {
-        internalMethod(TEMPLATE_IO, "importTemplateFile", java.nio.file.Path::class.java)
+    fun importTemplateFile(path: Path): String? = runCatching {
+        internalMethod(TEMPLATE_IO, "importTemplateFile", Path::class.java)
             ?.invoke(null, path) as? String
     }.onFailure { LOGGER.warn("Failed to import a wWaypoints template", it) }.getOrNull()
 

@@ -1,6 +1,8 @@
 package org.polyfrost.oneconfig.internal.ui.keybind
 
 import com.mojang.blaze3d.platform.InputConstants
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.IdentityHashMap
 import java.util.function.Consumer
 import java.util.function.Supplier
@@ -15,6 +17,10 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindBridgeImpl
 import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindCodec
+
+//? if >= 26.3 {
+import net.minecraft.server.packs.FixedPathPackResources
+//?}
 
 object MinecraftKeybindProvider : KeybindGroupProvider {
     private val properties = IdentityHashMap<KeyMapping, Property<OneConfigKeybind>>()
@@ -128,18 +134,22 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
     }
 
     private fun extractMinecraftIcon(): String? = runCatching {
-        val vanilla = Minecraft.getInstance().vanillaPackResources
+        //? if >= 26.3 {
+        val vanilla = Minecraft.getInstance().vanillaPackResources.fullResources()
+                as? FixedPathPackResources ?: return@runCatching null
+        //?} else
+        //val vanilla = Minecraft.getInstance().vanillaPackResources
         val bytes = listOf(128, 256, 64, 32).firstNotNullOfOrNull { size ->
             runCatching {
                 val supplier = vanilla.getRootResource("icons", "icon_${size}x$size.png") ?: return@runCatching null
                 supplier.get().use { it.readBytes() }
             }.getOrNull()
         } ?: return@runCatching null
-        val dir = java.nio.file.Files.createDirectories(
-            java.nio.file.Path.of(System.getProperty("java.io.tmpdir"), "oneconfig-modicons")
+        val dir = Files.createDirectories(
+            Path.of(System.getProperty("java.io.tmpdir"), "oneconfig-modicons")
         )
         val dest = dir.resolve("minecraft.png")
-        java.nio.file.Files.write(dest, bytes)
+        Files.write(dest, bytes)
         dest.toAbsolutePath().toString()
     }.getOrNull()
 
@@ -163,11 +173,11 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
 
     private fun InputConstants.Key.toOneConfigKeybind(): OneConfigKeybind {
         return when (type) {
-            //~ if sdl_keycodes 'Type.KEYSYM' -> 'Type.KEYBOARD'
-            InputConstants.Type.KEYSYM if value > 0 ->
+            //~ if sdl 'Type.KEYSYM' -> 'Type.KEYBOARD'
+            InputConstants.Type.KEYBOARD if value > 0 ->
                 OneConfigKeybind(intArrayOf(value), null, KeyModifiers.NONE, 0L) { true }
-            //~ if sdl_keycodes 'value >= 0' -> 'value > 0'
-            InputConstants.Type.MOUSE if value >= 0 ->
+            //~ if sdl 'value >= 0' -> 'value > 0'
+            InputConstants.Type.MOUSE if value > 0 ->
                 OneConfigKeybind(null, intArrayOf(value), KeyModifiers.NONE, 0L) { true }
             else -> OneConfigKeybind(null, null, KeyModifiers.NONE, 0L) { true }
         }
@@ -178,8 +188,8 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
         val keyCodes = keybind?.keyCodes
         val key = when {
             keybind == null || !keybind.isBound -> InputConstants.UNKNOWN
-            //~ if sdl_keycodes 'it >= 0' -> 'it > 0'
-            mouseButtons?.firstOrNull { it >= 0 } != null -> MinecraftKeybindCodec.mouse(mouseButtons.first { it >= 0 })
+            //~ if sdl 'it >= 0' -> 'it > 0'
+            mouseButtons?.firstOrNull { it > 0 } != null -> MinecraftKeybindCodec.mouse(mouseButtons.first { it > 0 })
             keyCodes?.firstOrNull { it > 0 } != null -> MinecraftKeybindCodec.keysym(keyCodes.first { it > 0 })
             else -> InputConstants.UNKNOWN
         }

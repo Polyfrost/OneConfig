@@ -26,14 +26,8 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
-import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
-
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -41,9 +35,15 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
-import java.util.zip.ZipFile;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
+import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -183,7 +183,7 @@ class ProfileManagerTest {
 
             Path file = ConfigManager.profileDir(PROFILE_A).resolve(SEEDED_CONFIG);
             assertTrue(Files.isRegularFile(file));
-            assertTrue(new String(Files.readAllBytes(file), java.nio.charset.StandardCharsets.UTF_8)
+            assertTrue(new String(Files.readAllBytes(file), StandardCharsets.UTF_8)
                             .replace(" ", "").contains("\"enabled\":true"),
                     "seeded values must be on disk before the profile-changed listeners run");
         } finally {
@@ -396,7 +396,7 @@ class ProfileManagerTest {
         Files.createDirectories(ConfigManager.PROFILES_DIR);
         try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(archive))) {
             zip.putNextEntry(new ZipEntry(PROFILE_A + "/marker.txt"));
-            zip.write("profile data".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            zip.write("profile data".getBytes(StandardCharsets.UTF_8));
             zip.closeEntry();
             zip.putNextEntry(new ZipEntry("__MACOSX/._" + PROFILE_A));
             zip.closeEntry();
@@ -575,7 +575,7 @@ class ProfileManagerTest {
     }
 
     @Test
-    void movesSnapshotCacheWithRenamedProfileWithoutLosingNewIdentityUpdates() throws java.io.IOException {
+    void movesSnapshotCacheWithRenamedProfileWithoutLosingNewIdentityUpdates() throws IOException {
         CompatSnapshotStore store = new CompatSnapshotStore("renamed-profile-state.json");
         ConfigManager.createProfile(PROFILE_A);
         store.putValue(PROFILE_A, "test", "value", "latest");

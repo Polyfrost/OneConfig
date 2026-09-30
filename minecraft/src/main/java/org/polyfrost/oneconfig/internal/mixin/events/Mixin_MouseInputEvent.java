@@ -3,8 +3,6 @@ package org.polyfrost.oneconfig.internal.mixin.events;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
-//? >= 1.21.10
-import net.minecraft.client.input.MouseButtonInfo;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.MouseInputEvent;
 import org.spongepowered.asm.mixin.Mixin;
@@ -12,6 +10,10 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+//? if >= 1.21.10 {
+import net.minecraft.client.input.MouseButtonInfo;
+//?}
 
 @Mixin(MouseHandler.class)
 public class Mixin_MouseInputEvent {
@@ -22,7 +24,8 @@ public class Mixin_MouseInputEvent {
     }
 
     @Inject(method = "onMove", at = @At("HEAD"))
-    private void mouseMoveCallback(long handle, double x, double y, CallbackInfo ci) {
+    //~ if sdl 'double y,' -> 'double y, double xrel, double yrel,'
+    private void mouseMoveCallback(long handle, double x, double y, double xrel, double yrel, CallbackInfo ci) {
         //? if >= 26.2 {
         if (Minecraft.getInstance().gui.screen() != null) {
         //?} else {

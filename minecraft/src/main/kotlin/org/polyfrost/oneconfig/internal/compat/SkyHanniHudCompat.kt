@@ -1,5 +1,8 @@
 package org.polyfrost.oneconfig.internal.compat
 
+import java.lang.reflect.Field
+import java.lang.reflect.Method
+import kotlin.reflect.KClass
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.Property
@@ -7,8 +10,6 @@ import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.hud.v1.OneConfigHudWrapper
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer
-import java.lang.reflect.Field
-import java.lang.reflect.Method
 
 object SkyHanniHudCompat {
     private val LOGGER = LogManager.getLogger("OneConfig/SkyHanni-Compat")
@@ -225,7 +226,7 @@ object SkyHanniHudCompat {
         .getOrElse { emptyMap() }
 
     private fun ownerClassOf(value: Any?): Class<*>? =
-        value as? Class<*> ?: (value as? kotlin.reflect.KClass<*>)?.java
+        value as? Class<*> ?: (value as? KClass<*>)?.java
 
     internal fun buildSettings(internalName: String, label: String): List<Property<*>> {
         val position = position(internalName) ?: return emptyList()

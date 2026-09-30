@@ -1,21 +1,24 @@
 package org.polyfrost.oneconfig.internal;
 
+import java.util.concurrent.atomic.AtomicReference;
+import kotlin.jvm.functions.Function1;
 import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Dropdown;
+import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Keybind;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
 import org.polyfrost.oneconfig.api.platform.v1.Keys;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
-import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers;
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
-
-import kotlin.jvm.functions.Function1;
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession;
+import org.polyfrost.oneconfig.internal.ui.shell.ShellState;
+import org.polyfrost.oneconfig.internal.ui.sound.UiSounds;
 
 public class OneConfigConfig extends Config {
     private static final Keys KEYS = Platform.compatibility().keys();
@@ -258,29 +261,6 @@ public class OneConfigConfig extends Config {
     )
     public static boolean pauseGame = false;
 
-    @Switch(
-        title = "oneconfig.preferences.use_custom_ui_size.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.use_custom_ui_size.description",
-        descriptionTranslation = true
-    )
-    public static boolean useCustomUiSize = false;
-
-    @Slider(
-        title = "oneconfig.preferences.ui_pixel_size.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        min = 1f,
-        max = 4f,
-        step = 0.5f,
-        description = "oneconfig.preferences.ui_pixel_size.description",
-        descriptionTranslation = true
-    )
-    public static float uiPixelSize = 2f;
-
     @Dropdown(
         title = "oneconfig.preferences.reduced_res_filter.title",
         titleTranslation = true,
@@ -311,21 +291,28 @@ public class OneConfigConfig extends Config {
     public static float uiSharpening = 0.4f;
 
     @Dropdown(
-        title = "oneconfig.preferences.opening_behavior.title",
+        title = "oneconfig.preferences.remember_last_page.title",
         titleTranslation = true,
         subcategory = "oneconfig.preferences.category.gui",
         subcategoryTranslation = true,
         options = {
-            "oneconfig.mods",
-            "oneconfig.preferences",
-            "oneconfig.preferences.opening_behavior.previous_page",
-            "oneconfig.preferences.opening_behavior.smart_reset"
+            "oneconfig.preferences.remember_last_page.never",
+            "oneconfig.preferences.remember_last_page.15_seconds",
+            "oneconfig.preferences.remember_last_page.1_minute",
+            "oneconfig.preferences.remember_last_page.5_minutes",
+            "oneconfig.preferences.remember_last_page.always"
         },
         optionsTranslation = true,
-        description = "oneconfig.preferences.opening_behavior.description",
+        description = "oneconfig.preferences.remember_last_page.description",
         descriptionTranslation = true
     )
-    public static int openingBehavior = 3;
+    public static int rememberLastPage = 1;
+
+    @Include
+    private static int openingBehavior = -1;
+
+    @Include
+    private static float timeBeforeReset = 15f;
 
     @Switch(
         title = "oneconfig.preferences.restore_hud_editor.title",
@@ -376,18 +363,6 @@ public class OneConfigConfig extends Config {
         descriptionTranslation = true
     )
     public static boolean flipTopOptionOrder = false;
-
-    @Slider(
-        title = "oneconfig.preferences.time_before_reset.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        min = 5f,
-        max = 60f,
-        description = "oneconfig.preferences.time_before_reset.description",
-        descriptionTranslation = true
-    )
-    public static float timeBeforeReset = 15f;
 
     @Number(
         title = "oneconfig.preferences.search_distance.title",
@@ -588,24 +563,24 @@ public class OneConfigConfig extends Config {
     /**
      * The keybinds registered with the {@link KeybindManager} for the remaining HUD editor actions
      */
-    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
-        registeredHudSettingsKeybind = new java.util.concurrent.atomic.AtomicReference<>();
-    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
-        registeredHudVisibilityKeybind = new java.util.concurrent.atomic.AtomicReference<>();
-    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
-        registeredHudResetKeybind = new java.util.concurrent.atomic.AtomicReference<>();
-    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
-        registeredHudCopyKeybind = new java.util.concurrent.atomic.AtomicReference<>();
-    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
-        registeredHudCutKeybind = new java.util.concurrent.atomic.AtomicReference<>();
-    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
-        registeredHudPasteKeybind = new java.util.concurrent.atomic.AtomicReference<>();
-    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
-        registeredHudDeleteKeybind = new java.util.concurrent.atomic.AtomicReference<>();
-    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
-        registeredHudSelectAllKeybind = new java.util.concurrent.atomic.AtomicReference<>();
-    private static final java.util.concurrent.atomic.AtomicReference<OneConfigKeybind>
-        registeredHudLockKeybind = new java.util.concurrent.atomic.AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudSettingsKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudVisibilityKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudResetKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudCopyKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudCutKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudPasteKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudDeleteKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudSelectAllKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudLockKeybind = new AtomicReference<>();
 
     public OneConfigConfig() {
         super("oneconfig.json", "assets/oneconfig/brand/oneconfig-icon.svg", "OneConfig", Category.QOL);
@@ -618,21 +593,15 @@ public class OneConfigConfig extends Config {
         if (tree == null) {
             return;
         }
-        addDependency("uiPixelSize", "useCustomUiSize");
         addDependency(
             "uiSharpening",
             "Reduced-resolution filter",
             () -> reducedResFilter != 0 ? Property.Display.SHOWN : Property.Display.DISABLED);
-        // opening behavior 3 is smart reset
-        addDependency(
-            "timeBeforeReset",
-            "Opening Behavior",
-            () -> openingBehavior == 3 ? Property.Display.SHOWN : Property.Display.HIDDEN);
-        // opening behaviors 2 and 3 are the ones that restore the previous page
+        migrateOpeningBehavior();
         addDependency(
             "restoreHudEditor",
-            "Opening Behavior",
-            () -> openingBehavior >= 2 ? Property.Display.SHOWN : Property.Display.HIDDEN);
+            "Remember last page",
+            () -> rememberLastPage != REMEMBER_NEVER ? Property.Display.SHOWN : Property.Display.DISABLED);
         addDependency("enableUIMenuSounds", "enableUISounds");
         addDependency("enableUIClickSounds", "enableUISounds");
         addDependency("enableUISliderSounds", "enableUISounds");
@@ -646,43 +615,43 @@ public class OneConfigConfig extends Config {
             "uiAmbienceVolume",
             "UI Ambience",
             () -> enableUIAmbience ? Property.Display.SHOWN : Property.Display.DISABLED);
-        org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setFlipTopOptionOrder(flipTopOptionOrder);
+        ShellState.INSTANCE.setFlipTopOptionOrder(flipTopOptionOrder);
         addCallback(
             "flipTopOptionOrder", (Boolean v) -> {
-                org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setFlipTopOptionOrder(v);
+                ShellState.INSTANCE.setFlipTopOptionOrder(v);
                 return false;
             });
-        org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setPageOpacity(pageOpacity);
+        ShellState.INSTANCE.setPageOpacity(pageOpacity);
         addCallback(
             "pageOpacity", (java.lang.Number v) -> {
-                org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setPageOpacity(v.floatValue());
+                ShellState.INSTANCE.setPageOpacity(v.floatValue());
                 return false;
             });
-        org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setSidebarOpacity(sidebarOpacity);
+        ShellState.INSTANCE.setSidebarOpacity(sidebarOpacity);
         addCallback(
             "sidebarOpacity", (java.lang.Number v) -> {
-                org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setSidebarOpacity(v.floatValue());
+                ShellState.INSTANCE.setSidebarOpacity(v.floatValue());
                 return false;
             });
-        org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setGlowOpacity(glowOpacity);
+        ShellState.INSTANCE.setGlowOpacity(glowOpacity);
         addCallback(
             "glowOpacity", (java.lang.Number v) -> {
-                org.polyfrost.oneconfig.internal.ui.shell.ShellState.INSTANCE.setGlowOpacity(v.floatValue());
+                ShellState.INSTANCE.setGlowOpacity(v.floatValue());
                 return false;
             });
         addCallback(
             "enableUIAmbience", (Boolean v) -> {
-                org.polyfrost.oneconfig.internal.ui.sound.UiSounds.refreshAmbience();
+                UiSounds.refreshAmbience();
                 return false;
             });
         addCallback(
             "enableUIMusicDucking", (Boolean v) -> {
-                org.polyfrost.oneconfig.internal.ui.sound.UiSounds.refreshAmbience();
+                UiSounds.refreshAmbience();
                 return false;
             });
         addCallback(
             "uiAmbienceVolume", (Float v) -> {
-                org.polyfrost.oneconfig.internal.ui.sound.UiSounds.refreshAmbience();
+                UiSounds.refreshAmbience();
                 return false;
             });
         // also refreshed once below because a keybind loaded from disk carries no action
@@ -752,6 +721,33 @@ public class OneConfigConfig extends Config {
                 return false;
             });
         refreshHudLockKeybind();
+    }
+
+    private static final int REMEMBER_NEVER = 0;
+    private static final int REMEMBER_ALWAYS = 4;
+    private static final long[] REMEMBER_LAST_PAGE_SECONDS = {15L, 60L, 300L};
+
+    public static boolean remembersPageClosedAt(long closedAt) {
+        int option = rememberLastPage;
+        if (option <= REMEMBER_NEVER) return false;
+        if (option >= REMEMBER_ALWAYS) return true;
+        return closedAt > 0L && System.currentTimeMillis() - closedAt <= REMEMBER_LAST_PAGE_SECONDS[option - 1] * 1000L;
+    }
+
+    private void migrateOpeningBehavior() {
+        if (openingBehavior < 0) return;
+        switch (openingBehavior) {
+            case 2: // previous page
+                rememberLastPage = REMEMBER_ALWAYS;
+                break;
+            case 3: // smart reset, 37.5 is halfway between 15 seconds and 1 minute
+                rememberLastPage = timeBeforeReset > 37.5f ? 2 : 1;
+                break;
+            default: // mods or preferences
+                rememberLastPage = REMEMBER_NEVER;
+        }
+        openingBehavior = -1;
+        save();
     }
 
     /** When the OneConfig keybind last closed the GUI so the same press cannot immediately reopen it */
@@ -849,7 +845,7 @@ public class OneConfigConfig extends Config {
      */
     private static void refreshHudEditorKeybind(
         OneConfigKeybind src,
-        java.util.concurrent.atomic.AtomicReference<OneConfigKeybind> slot,
+        AtomicReference<OneConfigKeybind> slot,
         Function1<Boolean, Boolean> action) {
         OneConfigKeybind old = slot.getAndSet(null);
         if (old != null) {

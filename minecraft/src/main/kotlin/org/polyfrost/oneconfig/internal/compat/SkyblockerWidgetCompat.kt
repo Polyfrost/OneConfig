@@ -1,5 +1,5 @@
 //? skyblocker_hud_v2 {
-package org.polyfrost.oneconfig.internal.compat
+/*package org.polyfrost.oneconfig.internal.compat
 
 import com.google.gson.JsonObject
 import de.hysky.skyblocker.config.SkyblockerConfigManager
@@ -10,6 +10,8 @@ import de.hysky.skyblocker.skyblock.tabhud.screenbuilder.WidgetManager
 import de.hysky.skyblocker.skyblock.tabhud.screenbuilder.pipeline.PositionRule
 import de.hysky.skyblocker.skyblock.tabhud.widget.HudWidget
 import de.hysky.skyblocker.utils.Utils
+import java.util.function.Consumer
+import kotlin.math.roundToInt
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.apache.logging.log4j.LogManager
@@ -21,8 +23,6 @@ import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.hud.v1.OneConfigHudWrapper
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer
-import java.util.function.Consumer
-import kotlin.math.roundToInt
 
 object SkyblockerWidgetCompat {
     private val LOGGER = LogManager.getLogger("OneConfig/Skyblocker-Widget-Compat")
@@ -317,4 +317,4 @@ internal class SkyblockerWidgetWrapper(private val widget: HudWidget) : OneConfi
         return true
     }
 }
-//? }
+*///? }

@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.keybind;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
@@ -28,7 +29,7 @@ public class Mixin_ControllingComboDisplay {
             Component inner = preview != null ? preview : bridge.comboTextFor(key);
             if (inner == null) return;
             Component prompt = Component.literal("> ")
-                .append(inner.copy().withStyle(net.minecraft.ChatFormatting.YELLOW))
+                .append(inner.copy().withStyle(ChatFormatting.YELLOW))
                 .append(Component.literal(" <"));
             if (!prompt.equals(btnChangeKeyBinding.getMessage())) btnChangeKeyBinding.setMessage(prompt);
             return;

@@ -1,8 +1,8 @@
 package org.polyfrost.oneconfig.internal.mixin.skia;
 
 //? >= 26.1 {
-import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import net.minecraft.client.Minecraft;
+import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class Mixin_SkiaFramePresent {
 
     @Inject(method = "renderFrame", at = @At(value = "INVOKE",
-            target = "Lcom/mojang/blaze3d/systems/GpuSurface;blitFromTexture(Lcom/mojang/blaze3d/systems/CommandEncoder;Lcom/mojang/blaze3d/textures/GpuTextureView;)V"))
+            target = "Lcom/mojang/renderpearl/api/device/GpuSurface;blitFromTexture(Lcom/mojang/renderpearl/api/commands/CommandEncoder;Lcom/mojang/renderpearl/api/textures/GpuTextureView;)V"))
     private void impl$onPresent(boolean tick, CallbackInfo ci) {
         SkiaCtx.INSTANCE.draw();
     }

@@ -26,9 +26,8 @@
 
 package org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl;
 
-import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter;
-
 import java.awt.*;
+import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter;
 
 /**
  * The only bundled adapter in the config system which makes colors a lot more readable when serialized

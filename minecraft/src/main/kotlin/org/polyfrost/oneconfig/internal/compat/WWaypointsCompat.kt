@@ -10,6 +10,7 @@ import java.util.function.Supplier
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.Screen
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
@@ -40,7 +41,7 @@ import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindRegistrar
  */
 object WWaypointsCompat {
 
-    private val LOGGER = org.apache.logging.log4j.LogManager.getLogger("OneConfig/wWaypoints-Compat")
+    private val LOGGER = LogManager.getLogger("OneConfig/wWaypoints-Compat")
 
     private const val MOD_ID = "wwaypoints"
 
@@ -1088,11 +1089,11 @@ object WWaypointsCompat {
     private fun KeyMapping.toOneConfigKeybind(): OneConfigKeybind {
         val key = runCatching { InputConstants.getKey(saveString()) }.getOrDefault(InputConstants.UNKNOWN)
         return when (key.type) {
-            //~ if !sdl_keycodes 'Type.KEYBOARD' -> 'Type.KEYSYM'
-            InputConstants.Type.KEYSYM if key.value > 0 ->
+            //~ if !sdl 'Type.KEYBOARD' -> 'Type.KEYSYM'
+            InputConstants.Type.KEYBOARD if key.value > 0 ->
                 OneConfigKeybind(intArrayOf(key.value), null, KeyModifiers.NONE, 0L) { true }
-            //~ if !sdl_keycodes 'key.value > 0' -> 'key.value >= 0'
-            InputConstants.Type.MOUSE if key.value >= 0 ->
+            //~ if !sdl 'key.value > 0' -> 'key.value >= 0'
+            InputConstants.Type.MOUSE if key.value > 0 ->
                 OneConfigKeybind(null, intArrayOf(key.value), KeyModifiers.NONE, 0L) { true }
             else -> OneConfigKeybind(null, null, KeyModifiers.NONE, 0L) { true }
         }
@@ -1101,8 +1102,8 @@ object WWaypointsCompat {
     /** wWaypoints mappings are single-key so only the primary input of a combo survives the round trip */
     private fun OneConfigKeybind?.toInputKey(): InputConstants.Key {
         if (this == null || !isBound) return InputConstants.UNKNOWN
-        //~ if !sdl_keycodes 'it > 0' -> 'it >= 0'
-        mouseBtns?.firstOrNull { it >= 0 }?.let { return MinecraftKeybindCodec.mouse(it) }
+        //~ if !sdl 'it > 0' -> 'it >= 0'
+        mouseBtns?.firstOrNull { it > 0 }?.let { return MinecraftKeybindCodec.mouse(it) }
         keyCodes?.firstOrNull { it > 0 }?.let { return MinecraftKeybindCodec.keysym(it) }
         return InputConstants.UNKNOWN
     }

@@ -1,5 +1,10 @@
 package org.polyfrost.oneconfig.api.ui.v1.keybind
 
+import java.util.ServiceLoader
+import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.experimental.and
+import kotlin.experimental.inv
+import kotlin.experimental.or
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.event.v1.eventHandler
 import org.polyfrost.oneconfig.api.event.v1.events.KeyInputEvent
@@ -7,17 +12,12 @@ import org.polyfrost.oneconfig.api.event.v1.events.MouseInputEvent
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent
 import org.polyfrost.oneconfig.api.event.v1.events.WindowFocusEvent
-import org.polyfrost.oneconfig.api.platform.v1.Platform
-import java.util.ServiceLoader
-import kotlin.experimental.and
-import kotlin.experimental.inv
-import kotlin.experimental.or
 
 @Suppress("UnstableApiUsage")
 object KeybindManager {
     private val LOGGER = LogManager.getLogger("OneConfig/Keybinds")
 
-    private val binds = java.util.concurrent.CopyOnWriteArrayList<OneConfigKeybind>()
+    private val binds = CopyOnWriteArrayList<OneConfigKeybind>()
     private val activeBinds = HashSet<OneConfigKeybind>()
 
     /**
@@ -33,7 +33,7 @@ object KeybindManager {
         }
     }
 
-    /** Listeners notified when a keybind is rebound from Minecraft's Controls menu with the old and new instances */
+    /** Listeners notified when a keybind is rebound from Minecraft's Controls menu */
     private val rebindListeners = ArrayList<(OneConfigKeybind, OneConfigKeybind) -> Unit>()
 
     /** Listeners notified when a keybind is edited in-place from Minecraft's Controls menu (same instance) */
@@ -43,17 +43,6 @@ object KeybindManager {
     private val downMouse = HashSet<Int>()
     private var mods: Byte = KeyModifiers.NONE
 
-    private val MODIFIER_MAP = mapOf(
-        Platform.compatibility().keys().keyLeftShift to KeyModifiers.SHIFT,
-        Platform.compatibility().keys().keyRightShift to KeyModifiers.SHIFT,
-        Platform.compatibility().keys().keyLeftControl to KeyModifiers.CTRL,
-        Platform.compatibility().keys().keyRightControl to KeyModifiers.CTRL,
-        Platform.compatibility().keys().keyLeftAlt to KeyModifiers.ALT,
-        Platform.compatibility().keys().keyRightAlt to KeyModifiers.ALT,
-        Platform.compatibility().keys().keyLeftSuper to KeyModifiers.META,
-        Platform.compatibility().keys().keyRightSuper to KeyModifiers.META,
-    )
-
     init {
         eventHandler { (key, _, state): KeyInputEvent ->
             // key == 0 marks a character event not a coded key press and it never reports a release
@@ -61,8 +50,8 @@ object KeybindManager {
             if (key == 0) return@eventHandler
             if (state == KeyInputEvent.REPEAT) return@eventHandler
             val down = state == KeyInputEvent.PRESSED
-            val mod = MODIFIER_MAP[key]
-            if (mod != null) {
+            val mod = KeyModifiers.of(key)
+            if (mod != KeyModifiers.NONE) {
                 mods = if (down) (mods or mod) else (mods and mod.inv())
             }
             if (down) downKeys.add(key) else downKeys.remove(key)
@@ -179,16 +168,21 @@ object KeybindManager {
         mouseBtns: IntArray? = null,
         mods: Byte = KeyModifiers.NONE,
     ): OneConfigKeybind {
-        val new = old.copyWith(keyCodes, mouseBtns, mods)
-        replace(old, new)
+        old.keyCodes = keyCodes
+        old.mouseBtns = mouseBtns
+        old.mods = mods
+        old.unresolvedKeyInputs = null
+        old.unresolvedMouseInputs = null
+        bridge?.sync(old)
+        notifyMenuEdit(old)
         for (listener in rebindListeners) {
             try {
-                listener(old, new)
+                listener(old, old)
             } catch (t: Throwable) {
                 LOGGER.error("Keybind rebind listener threw an exception", t)
             }
         }
-        return new
+        return old
     }
 
     @JvmStatic

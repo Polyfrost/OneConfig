@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.relocator
 
-import org.polyfrost.oneconfig.relocator.annotations.MoulConfig
 import kotlin.reflect.KClass
+import org.polyfrost.oneconfig.relocator.annotations.MoulConfig
 
 internal object Locations {
     val relocations = mapOf<KClass<out Annotation>, Location>(
@@ -9,6 +9,7 @@ internal object Locations {
             "io.github.notenoughupdates.moulconfig",
             TargetLocation("skyhanni", "at.hannibal2.skyhanni.deps.moulconfig", Newer("1.21.4")),
             TargetLocation("firmament", "moe.nea.firmament.deps.moulconfig", Newer("1.21.5")),
+            TargetLocation("skysoft", "com.skysoft.deps.softconfig", Newer("26.1")),
         )
     )
 

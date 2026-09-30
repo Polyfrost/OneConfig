@@ -6,6 +6,8 @@ import java.util.BitSet
 class StoredGLStateProps {
 
     val lastActiveTexture = IntArray(1)
+    val lastDrawFramebuffer = IntArray(1)
+    val lastReadFramebuffer = IntArray(1)
     val lastProgram = IntArray(1)
     val lastTexture = IntArray(1)
     val lastSampler = IntArray(1)

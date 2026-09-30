@@ -26,6 +26,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,11 +37,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.center
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
@@ -106,7 +106,7 @@ import org.polyfrost.oneconfig.internal.ui.util.LayoutRef
 @Composable
 fun ConfigScreen(tree: Tree, initialCategory: String? = null, pageKey: String) {
     val categories = remember(tree) { buildCategories(tree) }
-    val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
+    val localSearchQuery = ShellState.searchQuery.trim()
 
     val savedCategory = ShellState.selectedCategories[pageKey] ?: initialCategory
     val selectedCategory = categories.firstOrNull { it.name.equals(savedCategory, ignoreCase = true) }
@@ -434,7 +434,7 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
                         },
                         shape = shape
                     )
-                    .padding(vertical = 12.dp)
+                    .padding(bottom = 12.dp)
             ) {
                 AccordionOptionsGrid(node.body, compact = compact)
             }
@@ -593,7 +593,7 @@ private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
 }
 
 @Composable
-private fun rememberDisplay(prop: Property<*>): Property.Display {
+internal fun rememberDisplay(prop: Property<*>): Property.Display {
     var display by remember(prop) { mutableStateOf(prop.display) }
 
     DisposableEffect(prop) {
@@ -605,16 +605,18 @@ private fun rememberDisplay(prop: Property<*>): Property.Display {
     return display
 }
 
-private fun displayAlpha(display: Property.Display): Float {
+internal fun displayAlpha(display: Property.Display): Float {
     return if (display == Property.Display.DISABLED) 0.65f else 1f
 }
 
 @Composable
 private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: Boolean = false, enabled: Boolean = true) {
     val theme = LocalTheme.current
+    val verticalPadding = if (nested) 0.dp else 12.dp
 
-    if (prop.getMetadata<Any?>("visualizer") == Visualizer.InfoVisualizer::class.java) {
-        Row(modifier = Modifier.fillMaxWidth().blockInteraction(!enabled).padding(horizontal = 16.dp, vertical = 12.dp)) {
+    val visualizer = prop.getMetadata<Any?>("visualizer")
+    if (visualizer == Visualizer.InfoVisualizer::class.java || visualizer is Visualizer.InfoVisualizer) {
+        Row(modifier = Modifier.fillMaxWidth().blockInteraction(!enabled).padding(horizontal = 16.dp, vertical = verticalPadding)) {
             Option(prop)
         }
         return
@@ -677,7 +679,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 modifier = Modifier
                     .fillMaxWidth()
                     .blockInteraction(!enabled)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(start = 16.dp, end = 16.dp, top = verticalPadding, bottom = if (nested) 8.dp else verticalPadding),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 SettingLabel(prop, nested = nested)
@@ -704,7 +706,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 modifier = Modifier
                     .fillMaxWidth()
                     .blockInteraction(!enabled)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(horizontal = 16.dp, vertical = verticalPadding),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
@@ -785,7 +787,7 @@ fun HudConfigScreen(tree: Tree, initialCategory: String? = null) {
         tree
     }
     val categories = remember(filteredTree) { buildCategories(filteredTree) { !isHudInternal(it) } }
-    val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
+    val localSearchQuery = ShellState.searchQuery.trim()
     var selectedCategory by remember(filteredTree, initialCategory) {
         mutableStateOf(
             categories.firstOrNull { it.name.equals(initialCategory, ignoreCase = true) }

@@ -35,17 +35,17 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.unit.IntSize
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.ceil
+import kotlin.math.max
 import org.jetbrains.skia.Data
 import org.jetbrains.skia.Rect
 import org.jetbrains.skia.Surface
 import org.jetbrains.skia.svg.SVGDOM
-import java.util.concurrent.ConcurrentHashMap
 import org.jetbrains.skia.svg.SVGLength
 import org.jetbrains.skia.svg.SVGLengthUnit
 import org.jetbrains.skia.svg.SVGPreserveAspectRatio
 import org.jetbrains.skia.svg.SVGPreserveAspectRatioAlign
-import kotlin.math.ceil
-import kotlin.math.max
 
 val LocalUiOversample = staticCompositionLocalOf { 1f }
 

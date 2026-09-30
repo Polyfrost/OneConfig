@@ -1,7 +1,5 @@
 package org.polyfrost.oneconfig.internal.mixin;
 
-//? if >= 1.21.4
-import com.mojang.blaze3d.platform.FramerateLimitTracker;
 import net.minecraft.client.Minecraft;
 import org.polyfrost.oneconfig.internal.MainMenuFpsSampler;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen;
@@ -9,6 +7,14 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+//? if >= 26.3 {
+import com.mojang.blaze3d.platform.VideoMode;
+//?}
+
+//? if >= 1.21.4 {
+import com.mojang.blaze3d.platform.FramerateLimitTracker;
+//?}
 
 //? if >=1.21.4 {
 @Mixin(value = FramerateLimitTracker.class, priority = Integer.MAX_VALUE)
@@ -32,7 +38,11 @@ public class Mixin_MainMenuFpsUncap {
         //?} else
         //Object screen = minecraft.screen;
         if (minecraft.level == null && screen instanceof ComposeScreen) {
-            int refreshRate = minecraft.getWindow().getRefreshRate();
+            //? if >= 26.3 {
+            VideoMode videoMode = minecraft.getWindow().getActiveVideoMode();
+            int refreshRate = videoMode == null ? 0 : (int) videoMode.getRefreshRate();
+            //?} else
+            //int refreshRate = minecraft.getWindow().getRefreshRate();
             if (refreshRate <= 0) refreshRate = FALLBACK_MONITOR_REFRESH_RATE;
             cir.setReturnValue(refreshRate + MAIN_MENU_FPS_HEADROOM);
         }

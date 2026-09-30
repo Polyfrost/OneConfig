@@ -1,11 +1,11 @@
 package org.polyfrost.compose.render
 
-import org.jetbrains.skia.FilterTileMode
-import org.jetbrains.skia.Color4f
-import org.jetbrains.skia.Gradient
-import org.jetbrains.skia.Shader
 import kotlin.math.cos
 import kotlin.math.sin
+import org.jetbrains.skia.Color4f
+import org.jetbrains.skia.FilterTileMode
+import org.jetbrains.skia.Gradient
+import org.jetbrains.skia.Shader
 
 sealed class PolyGradient {
     abstract fun toShader(x: Float, y: Float, w: Float, h: Float): Shader

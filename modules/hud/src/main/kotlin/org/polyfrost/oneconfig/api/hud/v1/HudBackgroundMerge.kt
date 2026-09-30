@@ -26,15 +26,15 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
-import org.jetbrains.skia.PaintMode
-import org.jetbrains.skia.PathBuilder
-import org.polyfrost.compose.render.PolyColor
-import org.polyfrost.compose.render.RenderContext
+import java.util.IdentityHashMap
 import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.min
 import kotlin.math.roundToInt
-
+import org.jetbrains.skia.PaintMode
+import org.jetbrains.skia.PathBuilder
+import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.render.RenderContext
 
 internal enum class MergeAxis { X, Y }
 
@@ -171,7 +171,7 @@ internal object HudBackgroundMerge {
     ): List<Link> {
         val pin = if (axis == MergeAxis.X) PIN_X else PIN_Y
         val out = ArrayList<Link>(component.size - 1)
-        val index = java.util.IdentityHashMap<Hud, Int>(component.size * 2)
+        val index = IdentityHashMap<Hud, Int>(component.size * 2)
         for (i in component) index[items[i].hud] = i
         val parentOf = HashMap<Int, Int>(component.size * 2)
 

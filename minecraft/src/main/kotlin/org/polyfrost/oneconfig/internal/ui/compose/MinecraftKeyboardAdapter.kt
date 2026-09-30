@@ -1,11 +1,12 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
 import com.mojang.blaze3d.platform.InputConstants
-import org.polyfrost.oneconfig.api.platform.v1.Platform
-//? if >= 26.3
-//import org.lwjgl.sdl.SDLKeycode.*
-
 import java.awt.event.KeyEvent
+import org.polyfrost.oneconfig.api.platform.v1.Platform
+
+//? if sdl {
+import org.lwjgl.sdl.SDLKeycode.*
+//?}
 
 internal object MinecraftKeyboardAdapter {
     private val keys get() = Platform.compatibility().keys()
@@ -20,8 +21,8 @@ internal object MinecraftKeyboardAdapter {
     }
 
     fun toAwtKeyCode(shortcutKey: Int): Int = when (shortcutKey) {
-        //? if >= 26.3 {
-        /*SDLK_BACKSPACE -> KeyEvent.VK_BACK_SPACE
+        //? if sdl {
+        SDLK_BACKSPACE -> KeyEvent.VK_BACK_SPACE
         SDLK_TAB -> KeyEvent.VK_TAB
         SDLK_RETURN, SDLK_KP_ENTER -> KeyEvent.VK_ENTER
         SDLK_ESCAPE -> KeyEvent.VK_ESCAPE
@@ -46,8 +47,8 @@ internal object MinecraftKeyboardAdapter {
         } else {
             KeyEvent.VK_UNDEFINED
         }
-        *///?} else {
-        InputConstants.KEY_BACKSPACE -> KeyEvent.VK_BACK_SPACE
+        //?} else {
+        /*InputConstants.KEY_BACKSPACE -> KeyEvent.VK_BACK_SPACE
         InputConstants.KEY_TAB -> KeyEvent.VK_TAB
         InputConstants.KEY_RETURN, InputConstants.KEY_NUMPADENTER -> KeyEvent.VK_ENTER
         InputConstants.KEY_ESCAPE -> KeyEvent.VK_ESCAPE
@@ -70,6 +71,6 @@ internal object MinecraftKeyboardAdapter {
         in InputConstants.KEY_0..InputConstants.KEY_9 -> KeyEvent.VK_0 + (shortcutKey - InputConstants.KEY_0)
         in InputConstants.KEY_A..InputConstants.KEY_Z -> KeyEvent.VK_A + (shortcutKey - InputConstants.KEY_A)
         else -> KeyEvent.VK_UNDEFINED
-        //?}
+        *///?}
     }
 }

@@ -14,6 +14,7 @@
   },
   "license": "LGPL-3.0",
   "environment": "client",
+  "accessWidener": "oneconfigv1.classtweaker",
   "mixins": [
     "mixins.oneconfigv1.init.json",
     "mixins.oneconfigv1.json"
@@ -33,7 +34,7 @@
     ]
   },
   "depends": {
-    "fabricloader": ">=0.12.0",
+    "fabricloader": ">=0.18.0",
     "minecraft": "${fabric_mc_version}",
     "fabric-api": "*"
   },

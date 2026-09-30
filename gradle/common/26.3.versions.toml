@@ -1,0 +1,4 @@
+[versions]
+minecraft = "26.3"
+minecraft-end = "26.3"
+minecraft-range = "26.3.x"
