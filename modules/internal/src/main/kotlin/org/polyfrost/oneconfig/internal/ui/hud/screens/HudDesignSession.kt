@@ -27,12 +27,6 @@ internal sealed interface StudioCommand {
 }
 
 object HudDesignSession {
-    private const val RESTORE_WINDOW_MULTIPLIER = 4f
-
-    @JvmStatic
-    fun restoreWindowMillis(): Long =
-        (OneConfigConfig.timeBeforeReset * 1000f * RESTORE_WINDOW_MULTIPLIER).toLong()
-
     private var selection: List<Hud> = emptyList()
 
     private var panelOpen = false
@@ -200,9 +194,5 @@ object HudDesignSession {
 
     fun restoreCategory(): StudioCategory = category
 
-    private fun shouldRestore(): Boolean = when (OneConfigConfig.openingBehavior) {
-        2 -> true
-        3 -> lastClosedAt > 0L && System.currentTimeMillis() - lastClosedAt <= restoreWindowMillis()
-        else -> false
-    }
+    private fun shouldRestore(): Boolean = OneConfigConfig.remembersPageClosedAt(lastClosedAt)
 }

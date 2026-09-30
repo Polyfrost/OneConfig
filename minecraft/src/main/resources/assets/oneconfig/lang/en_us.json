@@ -61,13 +61,13 @@
   "oneconfig.preferences.ui_sharpening.title": "Filter strength",
   "oneconfig.preferences.ui_sharpening.description": "How strongly to apply the reduced-resolution filter. Higher is crisper but can add halos (Sharpen) or jagged edges (Harden).",
 
-  "oneconfig.preferences.opening_behavior.title": "Opening Behavior",
-  "oneconfig.preferences.opening_behavior.description": "Which page to open when the OneConfig menu is launched.",
-
-  "oneconfig.mods": "Mods",
-  "oneconfig.preferences": "Preferences",
-  "oneconfig.preferences.opening_behavior.previous_page": "Previous page",
-  "oneconfig.preferences.opening_behavior.smart_reset": "Smart reset",
+  "oneconfig.preferences.remember_last_page.title": "Remember last page",
+  "oneconfig.preferences.remember_last_page.description": "Reopens the page you were on if you come back within this time. Otherwise opens the Mods page.",
+  "oneconfig.preferences.remember_last_page.never": "Never",
+  "oneconfig.preferences.remember_last_page.15_seconds": "15 seconds",
+  "oneconfig.preferences.remember_last_page.1_minute": "1 minute",
+  "oneconfig.preferences.remember_last_page.5_minutes": "5 minutes",
+  "oneconfig.preferences.remember_last_page.always": "Always",
 
   "oneconfig.preferences.restore_hud_editor.title": "Reopen HUD editor",
   "oneconfig.preferences.restore_hud_editor.description": "Reopens the HUD editor instead of the OneConfig menu when the HUD editor was the last page you closed.",
@@ -83,9 +83,6 @@
 
   "oneconfig.preferences.flip_top_option_order.title": "Flip Top Option Order",
   "oneconfig.preferences.flip_top_option_order.description": "Moves the Edit HUD and Global Search buttons to the bottom of the sidebar, above your account.",
-
-  "oneconfig.preferences.time_before_reset.title": "Time before reset",
-  "oneconfig.preferences.time_before_reset.description": "Seconds of inactivity before the smart reset returns to the default page.",
 
   "oneconfig.preferences.category.search": "Search",
 

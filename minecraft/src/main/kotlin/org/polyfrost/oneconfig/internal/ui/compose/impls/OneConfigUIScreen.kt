@@ -31,7 +31,6 @@ import org.polyfrost.oneconfig.internal.ui.compose.ComposePreloader
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
 import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
-import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.KeybindsGraph
@@ -111,25 +110,12 @@ class OneConfigUIScreen @JvmOverloads constructor(
         /** [restored] marks a route that puts the user back where they were rather than opening a fixed page */
         private data class OpeningRoute(val route: Any, val restored: Boolean = false)
 
-        private fun resolveOpeningBehaviorRoute(): OpeningRoute = resolveRoute().let {
+        private fun resolveOpeningRoute(): OpeningRoute {
+            val route = ShellState.lastRoute
             // "Reopen HUD editor" is off by default so the editor is never restored as a page
-            if (it.route === HudEditorRoute && !OneConfigConfig.restoreHudEditor) OpeningRoute(ModsGraph) else it
-        }
-
-        private fun resolveRoute(): OpeningRoute = when (OneConfigConfig.openingBehavior) {
-            0 -> OpeningRoute(ModsGraph)
-            1 -> OpeningRoute(PreferencesGraph)
-            2 -> ShellState.lastRoute?.let { OpeningRoute(it, restored = true) } ?: OpeningRoute(ModsGraph)
-            3 -> {
-                val last = ShellState.lastClosedAt
-                val route = ShellState.lastRoute
-                // the HUD editor stays restorable for longer than a config page
-                val window = if (route === HudEditorRoute) HudDesignSession.restoreWindowMillis()
-                    else (OneConfigConfig.timeBeforeReset * 1000f).toLong()
-                val withinWindow = last > 0L && System.currentTimeMillis() - last <= window
-                if (withinWindow && route != null) OpeningRoute(route, restored = true) else OpeningRoute(ModsGraph)
-            }
-            else -> OpeningRoute(ModsGraph)
+            if (route == null || !OneConfigConfig.remembersPageClosedAt(ShellState.lastClosedAt) ||
+                (route === HudEditorRoute && !OneConfigConfig.restoreHudEditor)) return OpeningRoute(ModsGraph)
+            return OpeningRoute(route, restored = true)
         }
 
         @JvmStatic
@@ -167,7 +153,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
         @JvmStatic
         fun openLastSession() {
-            if (resolveOpeningBehaviorRoute().route === HudEditorRoute) HudManager.openEditor()
+            if (resolveOpeningRoute().route === HudEditorRoute) HudManager.openEditor()
             else Platform.screen().display(open())
         }
     }
@@ -284,7 +270,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
             initialRoute != null -> initialRoute to false
             initialTreeId != null -> ModConfigRoute(initialTreeId, initialCategory) to false
             else -> {
-                val opening = resolveOpeningBehaviorRoute()
+                val opening = resolveOpeningRoute()
                 val resolved = opening.route.takeIf { it !== HudEditorRoute } ?: ModsGraph
                 resolved to (opening.restored && resolved === opening.route)
             }
