@@ -17,7 +17,7 @@ publishMods {
     version = "v${project.version}"
     type = STABLE
 
-    modLoaders.add("fabric")
+    modLoaders.addAll("fabric", "ornithe")
 
     dryRun = modrinthId == null || modrinthToken == null
 
@@ -27,6 +27,7 @@ publishMods {
             accessToken = modrinthToken.orEmpty()
 
             minecraftVersions.addAll(listOf(
+                "1.8.9",
                 "1.21",
                 "1.21.1",
                 "1.21.2",
