@@ -31,12 +31,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * API for TinyFD which is a cross-platform file selection dialog
+ * API for native file dialogs and message boxes
+ * <p>
+ * Backed by TinyFD before Minecraft 26.3 and by SDL from then on
+ * <p>
+ * Every method blocks the calling thread until the dialog is closed so call them from a background thread
+ * <br>File dialogs leave the render thread free meanwhile whereas message boxes on Minecraft 26.3 and above
+ * block it until they are closed
  */
 @SuppressWarnings("unused")
 public interface TinyFdApi {
     static TinyFdApi getInstance() {
-        return LwjglTinyFd.INSTANCE;
+        return TinyFdHolder.INSTANCE;
     }
 
     String QUESTION_ICON = "question";

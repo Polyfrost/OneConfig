@@ -1,5 +1,2 @@
-# 1.2.9:
-- fix missing config settings overwriting
-- pause text input while a cached Compose screen is closed
-- replace opening behavior with a remember last page dropdown
-- fix out of main thread config watcher updates
+Unreleased changes:
+- Fixed native file dialogs and message boxes not opening on 26.3
