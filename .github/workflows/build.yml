@@ -85,6 +85,7 @@ jobs:
             modules/compose-bundle/build/libs/*.jar
             !**/*-javadoc.jar
             !**/*-sources.jar
+            !**/*-ornithe.jar
           archive: false
           if-no-files-found: error
 

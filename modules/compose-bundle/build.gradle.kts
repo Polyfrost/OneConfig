@@ -93,10 +93,26 @@ tasks.jar {
 }
 
 tasks.processResources {
-    val props = mapOf("version" to project.version)
+    // the version already carries "+compose..." build metadata, and a second '+' would make it non-semver
+    val props = mapOf("version" to "${project.version}.fabric")
     inputs.properties(props)
     filesMatching("fabric.mod.json") { expand(props) }
 }
+
+// Modrinth requires distinct hashes per upload, so the Ornithe jar only differs in its version metadata
+val ornitheJar by tasks.registering(Zip::class) {
+    val modVersion = project.version.toString()
+    from(zipTree(tasks.jar.flatMap { it.archiveFile }))
+    filesMatching("fabric.mod.json") {
+        filter { it.replace("$modVersion.fabric", "$modVersion.ornithe") }
+    }
+    destinationDirectory = tasks.jar.flatMap { it.destinationDirectory }
+    archiveBaseName = tasks.jar.flatMap { it.archiveBaseName }
+    archiveVersion = tasks.jar.flatMap { it.archiveVersion }
+    archiveClassifier = "ornithe"
+    archiveExtension = "jar"
+}
+tasks.assemble { dependsOn(ornitheJar) }
 
 apply(plugin = "oneconfig-compose-bundle-publish")
 
