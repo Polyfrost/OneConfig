@@ -722,6 +722,7 @@ object WWaypointsCompat {
                 description = "Resets all wWaypoints settings to defaults.",
                 text = "Reset All",
                 tags = listOf("reset", "defaults", "restore defaults", "start over"),
+                confirmText = "Confirm reset",
             ) { resetAllSettings() }
                 .data("Settings")
         )
@@ -781,22 +782,10 @@ object WWaypointsCompat {
         }
     }
 
-    private fun resetAllSettings() {
-        inBackground {
-            val confirmed = TinyFdApi.getInstance().showMessageBox(
-                "Reset All Settings",
-                "Reset every wWaypoints setting to its default?\nWaypoints and presets are not affected.",
-                TinyFdApi.YES_NO_DIALOG,
-                TinyFdApi.WARNING_ICON,
-                false,
-            )
-            if (!confirmed) return@inBackground
-            onClientThread {
-                WWaypointsBridge.resetConfigToDefaults()
-                WWaypointsBridge.saveConfig()
-                WWaypointsBridge.toast("wWaypoints settings reset to defaults.")
-            }
-        }
+    private fun resetAllSettings() = onClientThread {
+        WWaypointsBridge.resetConfigToDefaults()
+        WWaypointsBridge.saveConfig()
+        WWaypointsBridge.toast("wWaypoints settings reset to defaults.")
     }
 
     private fun importTemplate() {
@@ -1007,11 +996,13 @@ object WWaypointsCompat {
         description: String,
         text: String,
         tags: List<String>,
+        confirmText: String? = null,
         run: () -> Unit,
     ): Property<Void> {
         val prop = Properties.dummy("wwaypoints.$id", name, description)
         prop.visualizer = Visualizer.ButtonVisualizer::class.java
         prop.addMetadata("text", text)
+        if (confirmText != null) prop.addMetadata("confirmText", confirmText)
         prop.addMetadata("runnable", Runnable { runCatching(run).onFailure { LOGGER.warn("wWaypoints action '{}' failed", id, it) } })
         prop.category = "General"
         prop.addMetadata("searchTags", tags)
