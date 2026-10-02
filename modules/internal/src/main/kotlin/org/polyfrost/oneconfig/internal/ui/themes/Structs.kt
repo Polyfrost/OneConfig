@@ -36,6 +36,8 @@ data class UITheme(
     val buttonShape: Shape,
     val popupShape: Shape,
     val circleShape: Shape,
+    val modIconShape: Shape,
+    val scrollBarShape: Shape,
 
     val branding: UIBranding,
     val typography: UITypography,
