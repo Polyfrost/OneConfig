@@ -65,4 +65,11 @@ public class PolyColorAdapterTest {
         assertTrue(deserialized.getChroma());
         assertEquals(2.5f, deserialized.getChromaSpeed());
     }
+
+    @Test
+    public void deserializesPackedArgbInts() {
+        PolyColor deserialized = adapter.deserialize(-12566464);
+        assertEquals(PolyColor.Companion.rgba(64, 64, 64, 255).getRawArgb(), deserialized.getRawArgb());
+        assertFalse(deserialized.getChroma());
+    }
 }
