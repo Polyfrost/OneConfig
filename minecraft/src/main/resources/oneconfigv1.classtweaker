@@ -5,6 +5,21 @@ classTweaker v1 official
 #accessible field net/minecraft/client/render/texture/HttpTexture image Ljava/awt/image/BufferedImage;
 #accessible field net/minecraft/client/render/texture/HttpTexture uploaded Z
 #accessible method net/minecraft/client/gui/screen/menu/TitleScreen drawBackground (IIF)V
+#accessible class net/minecraft/client/render/platform/GlStateManager$GlState
+#accessible class net/minecraft/client/render/platform/GlStateManager$Alpha
+#accessible class net/minecraft/client/render/platform/GlStateManager$Blend
+#accessible class net/minecraft/client/render/platform/GlStateManager$Depth
+#accessible class net/minecraft/client/render/platform/GlStateManager$Texture
+#accessible class net/minecraft/client/render/platform/GlStateManager$Color
+#accessible field net/minecraft/client/render/platform/GlStateManager$GlState enabled Z
+#accessible field net/minecraft/client/render/platform/GlStateManager ALPHA_TEST Lnet/minecraft/client/render/platform/GlStateManager$Alpha;
+#accessible field net/minecraft/client/render/platform/GlStateManager LIGHTING Lnet/minecraft/client/render/platform/GlStateManager$GlState;
+#accessible field net/minecraft/client/render/platform/GlStateManager BLEND Lnet/minecraft/client/render/platform/GlStateManager$Blend;
+#accessible field net/minecraft/client/render/platform/GlStateManager DEPTH Lnet/minecraft/client/render/platform/GlStateManager$Depth;
+#accessible field net/minecraft/client/render/platform/GlStateManager texture I
+#accessible field net/minecraft/client/render/platform/GlStateManager TEXTURES [Lnet/minecraft/client/render/platform/GlStateManager$Texture;
+#accessible field net/minecraft/client/render/platform/GlStateManager shadeModel I
+#accessible field net/minecraft/client/render/platform/GlStateManager COLOR Lnet/minecraft/client/render/platform/GlStateManager$Color;
 #transitive-inject-interface net/minecraft/client/Minecraft org/polyfrost/oneconfig/internal/legacy/compat/MinecraftCompat
 #transitive-inject-interface net/minecraft/client/KeyMapping org/polyfrost/oneconfig/internal/legacy/compat/KeyBindingCompat
 #transitive-inject-interface net/minecraft/world/HitResult org/polyfrost/oneconfig/internal/legacy/compat/HitResultCompat

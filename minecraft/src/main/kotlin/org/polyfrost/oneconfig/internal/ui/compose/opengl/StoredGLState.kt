@@ -15,10 +15,7 @@ import org.lwjgl.opengl.GL45.*
 
 //? if = 1.8.9 {
 /*import org.lwjgl.opengl.GL11
-import org.lwjgl.opengl.GL12
 import org.lwjgl.opengl.GL13
-import org.lwjgl.opengl.GL14
-import org.lwjgl.opengl.GL15
 import org.lwjgl.opengl.GL20
 import org.lwjgl.opengl.GL30
 import org.lwjgl.opengl.GL33
@@ -245,53 +242,27 @@ class StoredGLState(private val glVersion: Int) {
     /*private val isMacOS = System.getProperty("os.name").lowercase().contains("mac")
     private var alphaTestEnabled = false
     private var depthTestEnabled = false
+    private var activeTextureUnit = 0
 
     fun capture() {
-        alphaTestEnabled = GL11.glIsEnabled(GL11.GL_ALPHA_TEST)
-        depthTestEnabled = GL11.glIsEnabled(GL11.GL_DEPTH_TEST)
+        alphaTestEnabled = GlStateManager.ALPHA_TEST.state.enabled
+        depthTestEnabled = GlStateManager.DEPTH.state.enabled
+        activeTextureUnit = GlStateManager.texture
         GL11.glPushClientAttrib(GL11.GL_CLIENT_ALL_ATTRIB_BITS)
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS)
 
         with(props) {
             lastDrawFramebuffer[0] = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING)
             lastReadFramebuffer[0] = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING)
-
-            if (!isMacOS) {
-                lastSampler[0] = GL11.glGetInteger(GL33.GL_SAMPLER_BINDING)
-                lastVertexArrayObject[0] = GL11.glGetInteger(GL30.GL_VERTEX_ARRAY_BINDING)
-            }
-
-            lastEnableBlend = GL11.glIsEnabled(GL11.GL_BLEND)
-            lastShadeModel[0] = GL11.glGetInteger(GL11.GL_SHADE_MODEL)
-
             lastProgram[0] = GL11.glGetInteger(GL20.GL_CURRENT_PROGRAM)
-            lastActiveTexture[0] = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE)
-            lastArrayBuffer[0] = GL11.glGetInteger(GL15.GL_ARRAY_BUFFER_BINDING)
 
-            lastBlendSrcRgb[0] = GL11.glGetInteger(GL14.GL_BLEND_SRC_RGB)
-            lastBlendDstRgb[0] = GL11.glGetInteger(GL14.GL_BLEND_DST_RGB)
-            lastBlendSrcAlpha[0] = GL11.glGetInteger(GL14.GL_BLEND_SRC_ALPHA)
-            lastBlendDstAlpha[0] = GL11.glGetInteger(GL14.GL_BLEND_DST_ALPHA)
-            lastBlendEquationRgb[0] = GL11.glGetInteger(GL20.GL_BLEND_EQUATION_RGB)
-            lastBlendEquationAlpha[0] = GL11.glGetInteger(GL20.GL_BLEND_EQUATION_ALPHA)
-
-            lastPackSwapBytes[0] = GL11.glGetInteger(GL11.GL_PACK_SWAP_BYTES)
-            lastPackLsbFirst[0] = GL11.glGetInteger(GL11.GL_PACK_LSB_FIRST)
-            lastPackRowLength[0] = GL11.glGetInteger(GL11.GL_PACK_ROW_LENGTH)
-            lastPackImageHeight[0] = GL11.glGetInteger(GL12.GL_PACK_IMAGE_HEIGHT)
-            lastPackSkipPixels[0] = GL11.glGetInteger(GL11.GL_PACK_SKIP_PIXELS)
-            lastPackSkipRows[0] = GL11.glGetInteger(GL11.GL_PACK_SKIP_ROWS)
-            lastPackSkipImages[0] = GL11.glGetInteger(GL12.GL_PACK_SKIP_IMAGES)
-            lastPackAlignment[0] = GL11.glGetInteger(GL11.GL_PACK_ALIGNMENT)
-
-            lastUnpackSwapBytes[0] = GL11.glGetInteger(GL11.GL_UNPACK_SWAP_BYTES)
-            lastUnpackLsbFirst[0] = GL11.glGetInteger(GL11.GL_UNPACK_LSB_FIRST)
-            lastUnpackRowLength[0] = GL11.glGetInteger(GL11.GL_UNPACK_ROW_LENGTH)
-            lastUnpackImageHeight[0] = GL11.glGetInteger(GL12.GL_UNPACK_IMAGE_HEIGHT)
-            lastUnpackSkipPixels[0] = GL11.glGetInteger(GL11.GL_UNPACK_SKIP_PIXELS)
-            lastUnpackSkipRows[0] = GL11.glGetInteger(GL11.GL_UNPACK_SKIP_ROWS)
-            lastUnpackSkipImages[0] = GL11.glGetInteger(GL12.GL_UNPACK_SKIP_IMAGES)
-            lastUnpackAlignment[0] = GL11.glGetInteger(GL11.GL_UNPACK_ALIGNMENT)
+            val blend = GlStateManager.BLEND
+            lastEnableBlend = blend.state.enabled
+            lastBlendSrcRgb[0] = blend.sfactorRGB
+            lastBlendDstRgb[0] = blend.dfactorRGB
+            lastBlendSrcAlpha[0] = blend.sfactorAlpha
+            lastBlendDstAlpha[0] = blend.dfactorAlpha
+            lastShadeModel[0] = GlStateManager.shadeModel
         }
     }
 
@@ -309,42 +280,19 @@ class StoredGLState(private val glVersion: Int) {
                 for (unit in 0..7) {
                     GL33.glBindSampler(unit, 0)
                 }
-                GL33.glBindSampler(0, lastSampler[0])
-                GL30.glBindVertexArray(lastVertexArrayObject[0])
             }
 
             if (lastEnableBlend) GlStateManager.enableBlend() else GlStateManager.disableBlend()
 
             GL20.glUseProgram(lastProgram[0])
-            GL13.glActiveTexture(GL13.GL_TEXTURE0)
-            GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, lastArrayBuffer[0])
+            GlStateManager.activeTexture(GL13.GL_TEXTURE0 + activeTextureUnit)
 
-            GL20.glBlendEquationSeparate(lastBlendEquationRgb[0], lastBlendEquationAlpha[0])
             GlStateManager.blendFuncSeparate(
                 lastBlendSrcRgb[0],
                 lastBlendDstRgb[0],
                 lastBlendSrcAlpha[0],
                 lastBlendDstAlpha[0],
             )
-
-            GL11.glPixelStorei(GL11.GL_PACK_SWAP_BYTES, lastPackSwapBytes[0])
-            GL11.glPixelStorei(GL11.GL_PACK_LSB_FIRST, lastPackLsbFirst[0])
-            GL11.glPixelStorei(GL11.GL_PACK_ROW_LENGTH, lastPackRowLength[0])
-            GL11.glPixelStorei(GL12.GL_PACK_IMAGE_HEIGHT, lastPackImageHeight[0])
-            GL11.glPixelStorei(GL11.GL_PACK_SKIP_PIXELS, lastPackSkipPixels[0])
-            GL11.glPixelStorei(GL11.GL_PACK_SKIP_ROWS, lastPackSkipRows[0])
-            GL11.glPixelStorei(GL12.GL_PACK_SKIP_IMAGES, lastPackSkipImages[0])
-            GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, lastPackAlignment[0])
-
-            GL11.glPixelStorei(GL11.GL_UNPACK_SWAP_BYTES, lastUnpackSwapBytes[0])
-            GL11.glPixelStorei(GL11.GL_UNPACK_LSB_FIRST, lastUnpackLsbFirst[0])
-            GL11.glPixelStorei(GL11.GL_UNPACK_ROW_LENGTH, lastUnpackRowLength[0])
-            GL11.glPixelStorei(GL12.GL_UNPACK_IMAGE_HEIGHT, lastUnpackImageHeight[0])
-            GL11.glPixelStorei(GL11.GL_UNPACK_SKIP_PIXELS, lastUnpackSkipPixels[0])
-            GL11.glPixelStorei(GL11.GL_UNPACK_SKIP_ROWS, lastUnpackSkipRows[0])
-            GL11.glPixelStorei(GL12.GL_UNPACK_SKIP_IMAGES, lastUnpackSkipImages[0])
-            GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, lastUnpackAlignment[0])
-
             GlStateManager.shadeModel(lastShadeModel[0])
         }
     }

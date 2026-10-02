@@ -82,10 +82,6 @@ import com.mojang.blaze3d.vertex.VertexFormat
 /*import net.minecraft.resources.ResourceLocation
 *///?}
 
-//? if = 1.8.9 {
-/*import org.lwjgl.opengl.GL14
-*///?}
-
 object SkiaCtx {
     private val LOG = LoggerFactory.getLogger(SkiaCtx::class.java)
 
@@ -668,19 +664,25 @@ object SkiaCtx {
         val w = rt.width
         val h = rt.height
 
-        val depthTest = GL11.glIsEnabled(GL11.GL_DEPTH_TEST)
-        val depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK)
-        val alphaTest = GL11.glIsEnabled(GL11.GL_ALPHA_TEST)
-        val lighting = GL11.glIsEnabled(GL11.GL_LIGHTING)
-        val texture2d = GL11.glIsEnabled(GL11.GL_TEXTURE_2D)
-        val blend = GL11.glIsEnabled(GL11.GL_BLEND)
-        val srcRgb = GL11.glGetInteger(GL14.GL_BLEND_SRC_RGB)
-        val dstRgb = GL11.glGetInteger(GL14.GL_BLEND_DST_RGB)
-        val srcAlpha = GL11.glGetInteger(GL14.GL_BLEND_SRC_ALPHA)
-        val dstAlpha = GL11.glGetInteger(GL14.GL_BLEND_DST_ALPHA)
-        val texture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D)
-        val color = FloatArray(4).also { GL11.glGetFloatv(GL11.GL_CURRENT_COLOR, it) }
-        val bound = RenderTargetFbo.saveBoundTarget()
+        // Everything below goes through GlStateManager, so its cache is the state to put back. glGet/glIsEnabled
+        // would make Mesa's glthread wait on the driver for most of these.
+        val depthTest = GlStateManager.DEPTH.state.enabled
+        val depthMask = GlStateManager.DEPTH.mask
+        val alphaTest = GlStateManager.ALPHA_TEST.state.enabled
+        val lighting = GlStateManager.LIGHTING.enabled
+        val unit = GlStateManager.TEXTURES[GlStateManager.texture]
+        val texture2d = unit.state.enabled
+        val texture = unit.texture
+        val blendState = GlStateManager.BLEND
+        val blend = blendState.state.enabled
+        val srcRgb = blendState.sfactorRGB
+        val dstRgb = blendState.dfactorRGB
+        val srcAlpha = blendState.sfactorAlpha
+        val dstAlpha = blendState.dfactorAlpha
+        val c = GlStateManager.COLOR
+        val color = floatArrayOf(c.r, c.g, c.b, c.a)
+        GL11.glPushAttrib(GL11.GL_VIEWPORT_BIT)
+        val fbo = GL11.glGetInteger(GL30.GL_FRAMEBUFFER_BINDING)
         try {
             GlStateManager.enableBlend()
             GlStateManager.blendFuncSeparate(
@@ -714,7 +716,8 @@ object SkiaCtx {
             GlStateManager.blendFuncSeparate(srcRgb, dstRgb, srcAlpha, dstAlpha)
             GlStateManager.bindTexture(texture)
             GlStateManager.color4f(color[0], color[1], color[2], color[3])
-            RenderTargetFbo.restoreBoundTarget(bound)
+            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, fbo)
+            GL11.glPopAttrib()
         }
     }
     *///?}
