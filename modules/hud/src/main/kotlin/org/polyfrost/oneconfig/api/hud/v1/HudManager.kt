@@ -120,8 +120,8 @@ object HudManager {
         if (loadingLayout || systemReposition) return
         val w = guiScreenWidth
         val h = guiScreenHeight
-        if (w > 0f) layoutRefWidth = w
-        if (h > 0f) layoutRefHeight = h
+        if (w > 0f && w != layoutRefWidth) { layoutRefWidth = w; bumpHudStateRevision() }
+        if (h > 0f && h != layoutRefHeight) { layoutRefHeight = h; bumpHudStateRevision() }
     }
 
     @Volatile @JvmField var isDebugScreenVisible: Boolean = false
@@ -203,6 +203,10 @@ object HudManager {
     private var zOrderCache: List<Hud> = emptyList()
     private var zOrderHuds = arrayOfNulls<Hud>(0)
     private var zOrderBounds = FloatArray(0)
+    private var zOrderDrawn = BooleanArray(0)
+    private var zOrderRev = -1
+    private var zOrderW = Float.NaN
+    private var zOrderH = Float.NaN
 
     private const val REGISTRY_ID = "hud-registry.json"
     private const val KNOWN_HUDS = "knownHuds"
@@ -498,13 +502,13 @@ object HudManager {
     }
 
     private fun layout(hud: Hud, screenWidth: Float, screenHeight: Float, scale: Float): RootNode {
-        val hudScale = hud.effectiveScale
+        val hudScale = hud.frameScale
         val rt = hud.runtime
         rt.layout(screenWidth / scale / hudScale, screenHeight / scale / hudScale)
         val root = rt.root
         val w = root.width * hudScale
         val h = root.height * hudScale
-        if (hud.renderedW != w || hud.renderedH != h) {
+        if (hud.frameRenderedW != w || hud.frameRenderedH != h) {
             Snapshot.withMutableSnapshot {
                 hud.renderedW = w
                 hud.renderedH = h
@@ -536,12 +540,12 @@ object HudManager {
     }
 
     private fun shouldDraw(hud: Hud): Boolean {
-        if (hud.hidden && !isEditing) return false
+        if (!isEditing && hud.hidden) return false
         return isShown(hud)
     }
 
     private fun keepsBackgroundOnly(hud: Hud): Boolean =
-        hud.hidden && !isEditing && hud.keepsHiddenBackground && isShown(hud)
+        !isEditing && hud.hidden && hud.keepsHiddenBackground && isShown(hud)
 
     /** Everything [shouldDraw] checks apart from the HUD's own hidden flag */
     private fun isShown(hud: Hud): Boolean {
@@ -576,12 +580,12 @@ object HudManager {
                     true
                 }
                 if (!show) {
-                    hud.isVisible.value = false
+                    hud.markVisible(false)
                     continue
                 }
                 frameDrawn[hud] = visible
             }
-            hud.isVisible.value = visible
+            hud.markVisible(visible)
         }
         for (hud in orderedForRender()) {
             val visible = frameDrawn[hud] ?: continue
@@ -597,6 +601,8 @@ object HudManager {
         return volatileContent
     }
 
+    private var lastGuiScale = Float.NaN
+
     private inline fun prepareFrame(
         screenWidth: Float,
         screenHeight: Float,
@@ -606,6 +612,10 @@ object HudManager {
         drainProfileReload()
         migratePositions(screenWidth, screenHeight)
         val scale = Platform.compatibility().options().guiScale
+        if (scale != lastGuiScale) {
+            lastGuiScale = scale
+            bumpHudStateRevision()
+        }
 
         frameId++
         Snapshot.sendApplyNotifications()
@@ -671,6 +681,17 @@ object HudManager {
      * when a position or size or background style actually changed
      */
     private fun updateBackgroundGroups(huds: List<Hud>, screenWidth: Float, screenHeight: Float, scale: Float) {
+        val rev = hudStateRevision
+        var hudsKey = huds.size
+        for (hud in huds) hudsKey = hudsKey * 31 + System.identityHashCode(hud)
+        if (!isGuiScreenOpen && lastMergeKey != null && rev == mergeCheckRev && hudsKey == mergeCheckHuds &&
+            screenWidth == mergeCheckW && screenHeight == mergeCheckH && scale == mergeCheckScale
+        ) return
+        mergeCheckRev = rev
+        mergeCheckHuds = hudsKey
+        mergeCheckW = screenWidth
+        mergeCheckH = screenHeight
+        mergeCheckScale = scale
         val key = HudBackgroundMerge.layoutKey(huds)
         if (key == lastMergeKey) return
         lastMergeKey = key
@@ -710,6 +731,11 @@ object HudManager {
     }
 
     private var mergeExclusions: List<Hud> = emptyList()
+    private var mergeCheckRev = -1
+    private var mergeCheckHuds = 0
+    private var mergeCheckW = Float.NaN
+    private var mergeCheckH = Float.NaN
+    private var mergeCheckScale = Float.NaN
 
     /**
      * HUDs kept out of merging for now
@@ -810,11 +836,20 @@ object HudManager {
         if (zOrderHuds.size < n) {
             zOrderHuds = arrayOfNulls(n)
             zOrderBounds = FloatArray(n * 4)
+            zOrderDrawn = BooleanArray(n)
         }
+        val rev = hudStateRevision
+        val stable = !isGuiScreenOpen && rev == zOrderRev && guiScreenWidth == zOrderW && guiScreenHeight == zOrderH
+        zOrderRev = rev
+        zOrderW = guiScreenWidth
+        zOrderH = guiScreenHeight
         var same = zOrderCache.size == n
         for (i in 0 until n) {
             val hud = list[i]
-            val b = drawnBounds(hud)
+            val drawn = hud in frameDrawn
+            if (stable && same && zOrderHuds[i] === hud && zOrderDrawn[i] == drawn) continue
+            zOrderDrawn[i] = drawn
+            val b = if (drawn) screenBounds(hud) else null
             val x = b?.get(0) ?: Float.NaN
             val y = b?.get(1) ?: Float.NaN
             val w = b?.get(2) ?: Float.NaN
@@ -849,7 +884,7 @@ object HudManager {
             prepareOrder.clear()
             for (hud in activeInstances) {
                 val visible = hud !is LegacyHudMarker
-                hud.isVisible.value = visible
+                hud.markVisible(visible)
                 if (visible) prepareOrder.add(hud)
             }
             for (hud in prepareOrder) updateIfDue(hud)

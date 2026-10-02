@@ -26,11 +26,14 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshots.Snapshot
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.polyfrost.compose.composables.PolyModifier
@@ -115,6 +118,32 @@ private const val MIN_VISIBLE = 12f
 
 internal const val POS_SCHEMA = 1
 
+private val stateRevision = AtomicInteger()
+
+@get:ApiStatus.Internal
+val hudStateRevision: Int get() = stateRevision.get()
+
+internal fun bumpHudStateRevision() {
+    stateRevision.incrementAndGet()
+}
+
+private fun <T> MutableState<T>.put(v: T) {
+    if (Snapshot.withoutReadObservation { value } == v) return
+    value = v
+    bumpHudStateRevision()
+}
+
+private val GEOMETRY_GETTERS = arrayOf(
+    "getX", "getY", "getRelativeX", "getRelativeY", "getRenderedW", "getRenderedH",
+    "getCustomScale", "getScaledWidth", "getScaledHeight", "getStaticW", "getStaticH",
+)
+
+private val externalGeometry = object : ClassValue<Boolean>() {
+    override fun computeValue(type: Class<*>): Boolean = GEOMETRY_GETTERS.any {
+        runCatching { type.getMethod(it).declaringClass != Hud::class.java }.getOrDefault(true)
+    }
+}
+
 @Suppress("EqualsOrHashCode", "UnstableApiUsage")
 abstract class Hud(id: String, title: String, val category: Category) : Cloneable, Config(id, null, title, null) {
     open val description: String? = null
@@ -131,7 +160,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         get() = _staticWidth.value
         set(v) {
             val wasStatic = _staticWidth.value
-            _staticWidth.value = v
+            _staticWidth.put(v)
             if (!wasStatic && v) {
                 val (minW, minH) = minimumSize()
                 if (renderedW > 0f || renderedH > 0f) {
@@ -285,15 +314,15 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var showKey: Int = -1
 
     private var _section: MutableState<Section> = mutableStateOf(Section.TopLeft)
-    var section: Section get() = _section.value; set(v) { _section.value = v }
+    var section: Section get() = _section.value; set(v) { _section.put(v) }
 
     private var _relativeX: MutableState<Float> = mutableStateOf(0f)
 
-    open var relativeX: Float get() = _relativeX.value; set(v) { _relativeX.value = v }
+    open var relativeX: Float get() = _relativeX.value; set(v) { _relativeX.put(v) }
 
     private var _relativeY: MutableState<Float> = mutableStateOf(0f)
 
-    open var relativeY: Float get() = _relativeY.value; set(v) { _relativeY.value = v }
+    open var relativeY: Float get() = _relativeY.value; set(v) { _relativeY.put(v) }
 
     @ApiStatus.Internal
     var posSchema: Int = POS_SCHEMA
@@ -301,18 +330,18 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @get:ApiStatus.Internal
     var layoutRefW: Float
         get() = HudManager.layoutRefWidth
-        set(v) { if (v > 0f) HudManager.layoutRefWidth = v }
+        set(v) { if (v > 0f && v != HudManager.layoutRefWidth) { HudManager.layoutRefWidth = v; bumpHudStateRevision() } }
 
     @get:ApiStatus.Internal
     var layoutRefH: Float
         get() = HudManager.layoutRefHeight
-        set(v) { if (v > 0f) HudManager.layoutRefHeight = v }
+        set(v) { if (v > 0f && v != HudManager.layoutRefHeight) { HudManager.layoutRefHeight = v; bumpHudStateRevision() } }
 
     private var _renderedW: MutableState<Float> = mutableStateOf(0f)
-    open var renderedW: Float get() = _renderedW.value; set(v) { _renderedW.value = v }
+    open var renderedW: Float get() = _renderedW.value; set(v) { _renderedW.put(v) }
 
     private var _renderedH: MutableState<Float> = mutableStateOf(0f)
-    open var renderedH: Float get() = _renderedH.value; set(v) { _renderedH.value = v }
+    open var renderedH: Float get() = _renderedH.value; set(v) { _renderedH.put(v) }
 
     private var minSizeFrame = Long.MIN_VALUE
     private var minSize: Pair<Float, Float> = 0f to 0f
@@ -566,10 +595,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     open fun onEditorDragEnd() {}
 
     private var _hidden: MutableState<Boolean> = mutableStateOf(false)
-    open var hidden: Boolean get() = _hidden.value; set(v) { _hidden.value = v }
+    open var hidden: Boolean get() = _hidden.value; set(v) { _hidden.put(v) }
 
     private var _locked: MutableState<Boolean> = mutableStateOf(false)
-    open var locked: Boolean get() = _locked.value; set(v) { _locked.value = v }
+    open var locked: Boolean get() = _locked.value; set(v) { _locked.put(v) }
 
     internal open val persistOwnState: Boolean get() = true
 
@@ -582,10 +611,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     }
 
     private var _alignment: MutableState<PolyAlign> = mutableStateOf(PolyAlign.Center)
-    var alignment: PolyAlign get() = _alignment.value; set(v) { _alignment.value = v }
+    var alignment: PolyAlign get() = _alignment.value; set(v) { _alignment.put(v) }
 
     private var _growthAnchor: MutableState<HudAnchor> = mutableStateOf(HudAnchor.Auto)
-    var growthAnchor: HudAnchor get() = _growthAnchor.value; set(v) { _growthAnchor.value = v }
+    var growthAnchor: HudAnchor get() = _growthAnchor.value; set(v) { _growthAnchor.put(v) }
 
     val effectiveGrowthAnchor: HudAnchor get() {
         val fx = anchorFracX
@@ -613,12 +642,12 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
      *
      * Prefer [anchorTo] and [clearAnchor] over setting this directly
      */
-    var anchorTargetId: String get() = _anchorTargetId.value; set(v) { _anchorTargetId.value = v }
+    var anchorTargetId: String get() = _anchorTargetId.value; set(v) { _anchorTargetId.put(v) }
 
     private var _anchorPoint: MutableState<HudAnchor> = mutableStateOf(HudAnchor.TopLeft)
 
     /** Which of the nine points on the target HUD's box this HUD is pinned to */
-    var anchorPoint: HudAnchor get() = _anchorPoint.value; set(v) { _anchorPoint.value = v }
+    var anchorPoint: HudAnchor get() = _anchorPoint.value; set(v) { _anchorPoint.put(v) }
 
     private var _selfAnchorPoint: MutableState<HudAnchor> = mutableStateOf(HudAnchor.Auto)
 
@@ -629,7 +658,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
      *
      * [HudAnchor.Auto] uses the growth anchor
      */
-    var selfAnchorPoint: HudAnchor get() = _selfAnchorPoint.value; set(v) { _selfAnchorPoint.value = v }
+    var selfAnchorPoint: HudAnchor get() = _selfAnchorPoint.value; set(v) { _selfAnchorPoint.put(v) }
 
     /** [selfAnchorPoint] with [HudAnchor.Auto] resolved and the merge link taking priority */
     val effectiveSelfAnchorPoint: HudAnchor get() = when {
@@ -650,12 +679,12 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     private var _anchorOffsetX: MutableState<Float> = mutableStateOf(0f)
 
     /** Distance from the target's anchor point to this HUD's own growth anchor along X */
-    var anchorOffsetX: Float get() = _anchorOffsetX.value; set(v) { _anchorOffsetX.value = v }
+    var anchorOffsetX: Float get() = _anchorOffsetX.value; set(v) { _anchorOffsetX.put(v) }
 
     private var _anchorOffsetY: MutableState<Float> = mutableStateOf(0f)
 
     /** Distance from the target's anchor point to this HUD's own growth anchor along Y */
-    var anchorOffsetY: Float get() = _anchorOffsetY.value; set(v) { _anchorOffsetY.value = v }
+    var anchorOffsetY: Float get() = _anchorOffsetY.value; set(v) { _anchorOffsetY.put(v) }
 
     // set while this HUD is asking its target where it is so a chain that loops back here falls
     // through to the screen-relative position instead of recursing forever
@@ -693,14 +722,14 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     internal var mergeLinkX: MergeLink?
         get() = _mergeLinkX.value
-        private set(v) { _mergeLinkX.value = v }
+        private set(v) { _mergeLinkX.put(v) }
 
     @Transient
     private var _mergeLinkY: MutableState<MergeLink?> = mutableStateOf(null)
 
     internal var mergeLinkY: MergeLink?
         get() = _mergeLinkY.value
-        private set(v) { _mergeLinkY.value = v }
+        private set(v) { _mergeLinkY.put(v) }
 
     private fun mergeLink(axis: MergeAxis) = if (axis == MergeAxis.X) mergeLinkX else mergeLinkY
 
@@ -836,52 +865,52 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     }
 
     private var _padTop: MutableState<Float> = mutableStateOf(0f)
-    var padTop: Float get() = _padTop.value; set(v) { _padTop.value = v }
+    var padTop: Float get() = _padTop.value; set(v) { _padTop.put(v) }
 
     private var _padBottom: MutableState<Float> = mutableStateOf(0f)
-    var padBottom: Float get() = _padBottom.value; set(v) { _padBottom.value = v }
+    var padBottom: Float get() = _padBottom.value; set(v) { _padBottom.put(v) }
 
     private var _padLeft: MutableState<Float> = mutableStateOf(0f)
-    var padLeft: Float get() = _padLeft.value; set(v) { _padLeft.value = v }
+    var padLeft: Float get() = _padLeft.value; set(v) { _padLeft.put(v) }
 
     private var _padRight: MutableState<Float> = mutableStateOf(0f)
-    var padRight: Float get() = _padRight.value; set(v) { _padRight.value = v }
+    var padRight: Float get() = _padRight.value; set(v) { _padRight.put(v) }
 
     private var _staticW: MutableState<Float> = mutableStateOf(200f)
-    open var staticW: Float get() = _staticW.value; set(v) { _staticW.value = v }
+    open var staticW: Float get() = _staticW.value; set(v) { _staticW.put(v) }
 
     private var _staticH: MutableState<Float> = mutableStateOf(48f)
-    open var staticH: Float get() = _staticH.value; set(v) { _staticH.value = v }
+    open var staticH: Float get() = _staticH.value; set(v) { _staticH.put(v) }
 
     private var _font: MutableState<Font> = mutableStateOf(Font.Minecraft)
-    var font: Font get() = _font.value; set(v) { _font.value = v }
+    var font: Font get() = _font.value; set(v) { _font.put(v) }
 
     private var _caseType: MutableState<Int> = mutableStateOf(0)
-    var caseType: Int get() = _caseType.value; set(v) { _caseType.value = v }
+    var caseType: Int get() = _caseType.value; set(v) { _caseType.put(v) }
 
     private var _textScale: MutableState<Float> = mutableStateOf(1f)
-    var textScale: Float get() = _textScale.value; set(v) { _textScale.value = v }
+    var textScale: Float get() = _textScale.value; set(v) { _textScale.put(v) }
 
     private var _textBold: MutableState<Boolean> = mutableStateOf(false)
-    var textBold: Boolean get() = _textBold.value; set(v) { _textBold.value = v }
+    var textBold: Boolean get() = _textBold.value; set(v) { _textBold.put(v) }
 
     private var _textItalic: MutableState<Boolean> = mutableStateOf(false)
-    var textItalic: Boolean get() = _textItalic.value; set(v) { _textItalic.value = v }
+    var textItalic: Boolean get() = _textItalic.value; set(v) { _textItalic.put(v) }
 
     private var _textUnderline: MutableState<Boolean> = mutableStateOf(false)
-    var textUnderline: Boolean get() = _textUnderline.value; set(v) { _textUnderline.value = v }
+    var textUnderline: Boolean get() = _textUnderline.value; set(v) { _textUnderline.put(v) }
 
     private var _textWeight: MutableState<Weight> = mutableStateOf(Weight.Regular)
-    var textWeight: Weight get() = _textWeight.value; set(v) { _textWeight.value = v }
+    var textWeight: Weight get() = _textWeight.value; set(v) { _textWeight.put(v) }
 
     private var _textAlign: MutableState<Int> = mutableStateOf(1)
-    var textAlign: Int get() = _textAlign.value; set(v) { _textAlign.value = v }
+    var textAlign: Int get() = _textAlign.value; set(v) { _textAlign.put(v) }
 
     private var _useGuiScale: MutableState<Boolean> = mutableStateOf(true)
-    var useGuiScale: Boolean get() = _useGuiScale.value; set(v) { _useGuiScale.value = v }
+    var useGuiScale: Boolean get() = _useGuiScale.value; set(v) { _useGuiScale.put(v) }
 
     private var _customScale: MutableState<Float> = mutableStateOf(1f)
-    open var customScale: Float get() = _customScale.value; set(v) { _customScale.value = v }
+    open var customScale: Float get() = _customScale.value; set(v) { _customScale.put(v) }
 
     val effectiveScale: Float
         get() {
@@ -902,31 +931,31 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     }
 
     private var _showBackground: MutableState<Boolean> = mutableStateOf(true)
-    var showBackground: Boolean get() = _showBackground.value; set(v) { _showBackground.value = v }
+    var showBackground: Boolean get() = _showBackground.value; set(v) { _showBackground.put(v) }
 
     private var _bgColor: MutableState<Int> = mutableStateOf(0x80000000.toInt())
-    var bgColor: Int get() = _bgColor.value; set(v) { _bgColor.value = v }
+    var bgColor: Int get() = _bgColor.value; set(v) { _bgColor.put(v) }
 
     private var _bgChroma: MutableState<Boolean> = mutableStateOf(false)
-    var bgChroma: Boolean get() = _bgChroma.value; set(v) { _bgChroma.value = v }
+    var bgChroma: Boolean get() = _bgChroma.value; set(v) { _bgChroma.put(v) }
 
     private var _bgChromaSpeed: MutableState<Float> = mutableStateOf(1f)
-    var bgChromaSpeed: Float get() = _bgChromaSpeed.value; set(v) { _bgChromaSpeed.value = v }
+    var bgChromaSpeed: Float get() = _bgChromaSpeed.value; set(v) { _bgChromaSpeed.put(v) }
 
     private var _bgRadius: MutableState<Float> = mutableStateOf(4f)
-    var bgRadius: Float get() = _bgRadius.value; set(v) { _bgRadius.value = v }
+    var bgRadius: Float get() = _bgRadius.value; set(v) { _bgRadius.put(v) }
 
     private var _mergeBackground: MutableState<Boolean> = mutableStateOf(true)
 
-    var mergeBackground: Boolean get() = _mergeBackground.value; set(v) { _mergeBackground.value = v }
+    var mergeBackground: Boolean get() = _mergeBackground.value; set(v) { _mergeBackground.put(v) }
 
     private var _mergeDiagonally: MutableState<Boolean> = mutableStateOf(false)
 
-    var mergeDiagonally: Boolean get() = _mergeDiagonally.value; set(v) { _mergeDiagonally.value = v }
+    var mergeDiagonally: Boolean get() = _mergeDiagonally.value; set(v) { _mergeDiagonally.put(v) }
 
     private var _keepBgWhenHidden: MutableState<Boolean> = mutableStateOf(false)
 
-    var keepBgWhenHidden: Boolean get() = _keepBgWhenHidden.value; set(v) { _keepBgWhenHidden.value = v }
+    var keepBgWhenHidden: Boolean get() = _keepBgWhenHidden.value; set(v) { _keepBgWhenHidden.put(v) }
 
     internal val keepsHiddenBackground: Boolean
         get() = hidden && keepBgWhenHidden && showBackground && mergeBackground &&
@@ -945,37 +974,37 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
      */
     var bgMerged: Boolean
         get() = _bgMerged.value
-        internal set(v) { _bgMerged.value = v }
+        internal set(v) { _bgMerged.put(v) }
 
     @Transient
     private var _bgMerged: MutableState<Boolean> = mutableStateOf(false)
 
     private var _textColor: MutableState<Int> = mutableStateOf(0xFFFFFFFF.toInt())
-    var textColor: Int get() = _textColor.value; set(v) { _textColor.value = v }
+    var textColor: Int get() = _textColor.value; set(v) { _textColor.put(v) }
 
     private var _textChroma: MutableState<Boolean> = mutableStateOf(false)
-    var textChroma: Boolean get() = _textChroma.value; set(v) { _textChroma.value = v }
+    var textChroma: Boolean get() = _textChroma.value; set(v) { _textChroma.put(v) }
 
     private var _textChromaSpeed: MutableState<Float> = mutableStateOf(1f)
-    var textChromaSpeed: Float get() = _textChromaSpeed.value; set(v) { _textChromaSpeed.value = v }
+    var textChromaSpeed: Float get() = _textChromaSpeed.value; set(v) { _textChromaSpeed.put(v) }
 
     private var _showShadow: MutableState<Boolean> = mutableStateOf(false)
-    var showShadow: Boolean get() = _showShadow.value; set(v) { _showShadow.value = v }
+    var showShadow: Boolean get() = _showShadow.value; set(v) { _showShadow.put(v) }
 
     private var _shadowColor: MutableState<Int> = mutableStateOf(0x40000000)
-    var shadowColor: Int get() = _shadowColor.value; set(v) { _shadowColor.value = v }
+    var shadowColor: Int get() = _shadowColor.value; set(v) { _shadowColor.put(v) }
 
     private var _shadowChroma: MutableState<Boolean> = mutableStateOf(false)
-    var shadowChroma: Boolean get() = _shadowChroma.value; set(v) { _shadowChroma.value = v }
+    var shadowChroma: Boolean get() = _shadowChroma.value; set(v) { _shadowChroma.put(v) }
 
     private var _shadowChromaSpeed: MutableState<Float> = mutableStateOf(1f)
-    var shadowChromaSpeed: Float get() = _shadowChromaSpeed.value; set(v) { _shadowChromaSpeed.value = v }
+    var shadowChromaSpeed: Float get() = _shadowChromaSpeed.value; set(v) { _shadowChromaSpeed.put(v) }
 
     private var _shadowOffsetX: MutableState<Float> = mutableStateOf(2f)
-    var shadowOffsetX: Float get() = _shadowOffsetX.value; set(v) { _shadowOffsetX.value = v }
+    var shadowOffsetX: Float get() = _shadowOffsetX.value; set(v) { _shadowOffsetX.put(v) }
 
     private var _shadowOffsetY: MutableState<Float> = mutableStateOf(2f)
-    var shadowOffsetY: Float get() = _shadowOffsetY.value; set(v) { _shadowOffsetY.value = v }
+    var shadowOffsetY: Float get() = _shadowOffsetY.value; set(v) { _shadowOffsetY.put(v) }
 
     open val alwaysRedraw: Boolean
         get() = bgChroma || textChroma || shadowChroma
@@ -987,6 +1016,120 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @ApiStatus.Internal
     @JvmField
     var lastUpdate: Long = Long.MIN_VALUE
+
+    @Transient private var geomRev = -1
+    @Transient private var geomW = Float.NaN
+    @Transient private var geomH = Float.NaN
+    @Transient private var geomHuds = -1
+    @Transient private var cachedScale = 1f
+    @Transient private var cachedX = 0f
+    @Transient private var cachedY = 0f
+    @Transient private var cachedRenderedW = 0f
+    @Transient private var cachedRenderedH = 0f
+
+    @Transient private var geomMinW = Float.NaN
+    @Transient private var geomMinH = Float.NaN
+    @Transient private var parentCheckFrame = Long.MIN_VALUE
+    @Transient private var externalParent: Hud? = null
+    @Transient private var parentX = 0f
+    @Transient private var parentY = 0f
+    @Transient private var parentW = 0f
+    @Transient private var parentH = 0f
+
+    private val liveGeometry: Boolean get() {
+        if (HudManager.isGuiScreenOpen) {
+            geomRev = -1
+            return true
+        }
+        return hasExternalGeometry
+    }
+
+    @get:ApiStatus.Internal
+    val hasExternalGeometry: Boolean get() = externalGeometry.get(javaClass)
+
+    private fun refreshFrameGeometry() {
+        val rev = hudStateRevision
+        val sw = HudManager.guiScreenWidth
+        val sh = HudManager.guiScreenHeight
+        val huds = HudManager.activeInstances.size
+        val (minW, minH) = frameMinimumSize()
+        val parent = externalParent
+        val frame = HudManager.frameId
+        val parentMoved = parent != null && parentCheckFrame != frame && (parent.x != parentX || parent.y != parentY ||
+            parent.scaledWidth != parentW || parent.scaledHeight != parentH)
+        parentCheckFrame = frame
+        if (rev == geomRev && sw == geomW && sh == geomH && huds == geomHuds && minW == geomMinW &&
+            minH == geomMinH && !parentMoved
+        ) return
+        if (parentMoved) bumpHudStateRevision()
+        cachedScale = effectiveScale
+        cachedRenderedW = renderedW
+        cachedRenderedH = renderedH
+        cachedX = x
+        cachedY = y
+        geomRev = hudStateRevision
+        geomW = sw
+        geomH = sh
+        geomHuds = huds
+        geomMinW = minW
+        geomMinH = minH
+        val ext = findExternalAnchorParent()
+        externalParent = ext
+        if (ext != null) {
+            parentX = ext.x
+            parentY = ext.y
+            parentW = ext.scaledWidth
+            parentH = ext.scaledHeight
+        }
+    }
+
+    private fun findExternalAnchorParent(): Hud? {
+        var parent = effectiveAnchorParent
+        var depth = 0
+        while (parent != null && depth++ < MAX_ANCHOR_DEPTH) {
+            if (externalGeometry.get(parent.javaClass)) return parent
+            parent = parent.effectiveAnchorParent
+        }
+        return null
+    }
+
+    @get:ApiStatus.Internal
+    val frameScale: Float get() {
+        if (liveGeometry) return effectiveScale
+        refreshFrameGeometry(); return cachedScale
+    }
+
+    @get:ApiStatus.Internal
+    val frameX: Float get() {
+        if (liveGeometry) return x
+        refreshFrameGeometry(); return cachedX
+    }
+
+    @get:ApiStatus.Internal
+    val frameY: Float get() {
+        if (liveGeometry) return y
+        refreshFrameGeometry(); return cachedY
+    }
+
+    @get:ApiStatus.Internal
+    val frameRenderedW: Float get() {
+        if (liveGeometry) return renderedW
+        refreshFrameGeometry(); return cachedRenderedW
+    }
+
+    @get:ApiStatus.Internal
+    val frameRenderedH: Float get() {
+        if (liveGeometry) return renderedH
+        refreshFrameGeometry(); return cachedRenderedH
+    }
+
+    @Transient private var visibleShadow = false
+
+    internal fun markVisible(visible: Boolean) {
+        if (visibleShadow == visible) return
+        visibleShadow = visible
+        isVisible.value = visible
+    }
 
     override fun addToInitQueue() {}
 
@@ -1239,6 +1382,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     override fun clone(): Hud = (super.clone() as Hud).apply {
         _runtime = null
         isVisible = mutableStateOf(false)
+        visibleShadow = false
+        externalParent = null
+        bumpHudStateRevision()
         showKey = -1
         toggleKey = -1
         _staticWidth = mutableStateOf(this@Hud.staticWidth)
