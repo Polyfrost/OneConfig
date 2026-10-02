@@ -128,6 +128,7 @@ public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public static fun setFavoriteProfile (Ljava/lang/String;Z)V
 	public static fun setProfileIcon (Ljava/lang/String;Ljava/lang/String;)V
 	public static fun setProfileSpecificControls (Z)V
+	public static fun setProfileSwitchDispatcher (Ljava/util/function/Consumer;)V
 	public static fun submitForInitialization (Lorg/polyfrost/oneconfig/api/config/v1/Config;)V
 	public fun trees ()Ljava/util/Collection;
 	public fun unregister (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
