@@ -115,7 +115,9 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
         closeRequestedAt = 0L
         closeAnimationMs = 0L
         returningToOneConfig = false
-        UiSounds.acquireAmbience()
+        if (!enteredFromOneConfig) {
+            UiSounds.acquireAmbience()
+        }
         super.init()
         requestOpenCallback?.invoke()
     }
@@ -125,9 +127,9 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
             // off by default so closing the editor leaves the last config page as the route to come back to
             if (OneConfigConfig.restoreHudEditor) ShellState.lastRoute = HudEditorRoute
             ShellState.lastClosedAt = System.currentTimeMillis()
+            UiSounds.releaseAmbience()
         }
         HudManager.onEditorScreenRemoved()
-        UiSounds.releaseAmbience()
         super.removed()
     }
 
