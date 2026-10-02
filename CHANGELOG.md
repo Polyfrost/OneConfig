@@ -1,2 +1,2 @@
-# 1.2.11:
-- fix unknown options being wiped in 1.8
+# 1.2.12:
+- run profile switches on correct thread
