@@ -21,7 +21,9 @@ import com.mojang.renderpearl.backend.opengl.GlTexture
 *///?}
 
 //? if < 1.21.5 {
-/*import net.minecraft.client.Minecraft
+/*import com.mojang.blaze3d.platform.GlStateManager
+import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL30
 *///?}
 
 /**
@@ -72,7 +74,15 @@ object RenderTargetFbo {
     /*fun getColorTexId(frameBuffer: RenderTarget): Int = frameBuffer.colorTextureId
     *///? }
 
-    // Creating, clearing, and destroying a render target leaves framebuffer 0 bound, and 1.21.1 GUI draws do not rebind.
-    //? if < 1.21.5
-    //fun restoreMainTarget() = Minecraft.getInstance().mainRenderTarget?.bindWrite(true)
+    //? if < 1.21.5 {
+    /*fun saveBoundTarget() = IntArray(5).also {
+        GL11.glGetIntegerv(GL11.GL_VIEWPORT, it)
+        it[4] = GL11.glGetInteger(GL30.GL_FRAMEBUFFER_BINDING)
+    }
+
+    fun restoreBoundTarget(s: IntArray) {
+        GlStateManager._glBindFramebuffer(GL30.GL_FRAMEBUFFER, s[4])
+        GlStateManager._viewport(s[0], s[1], s[2], s[3])
+    }
+    *///?}
 }
