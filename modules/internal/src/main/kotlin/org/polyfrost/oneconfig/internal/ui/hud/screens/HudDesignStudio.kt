@@ -424,6 +424,7 @@ private fun hitTestAnchorPoint(
 
 private fun drawHudContents(sk: Canvas, mcToScreen: Float) {
     HudManager.renderRevision.intValue
+    HudManager.instancesRevision.intValue
     HudManager.revision
     // HUDs fused with a neighbour do not paint their own background so the merged shapes are laid down
     // here first just like the in-game HUD pass
@@ -900,6 +901,7 @@ private fun placeHudCentered(provider: Hud): Hud? = try {
     instance.setAbsolutePosition((screenW - w) / 2f, (screenH - h) / 2f)
     if (instance !in HudManager.activeInstances) {
         HudManager.activeInstances.add(instance)
+        HudManager.instancesRevision.intValue++
         instance.setup()
         instance.captureStaticSizeDefaults()
         instance.capturePositionDefaults()
@@ -2120,6 +2122,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                                 instance.setAbsolutePosition(initX, initY)
                                 if (instance !in HudManager.activeInstances) {
                                     HudManager.activeInstances.add(instance)
+                                    HudManager.instancesRevision.intValue++
                                     instance.setup()
                                     instance.captureStaticSizeDefaults()
                                     instance.capturePositionDefaults()
@@ -2305,6 +2308,7 @@ internal fun duplicateHud(
             fresh.setAbsolutePosition(source.x + offset, source.y + offset)
         }
         HudManager.activeInstances.add(fresh)
+        HudManager.instancesRevision.intValue++
     }
     HudManager.markProviderKnown(fresh)
     fresh.setup()
