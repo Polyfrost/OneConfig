@@ -107,14 +107,14 @@ class McUiSoundService : UiSoundService {
         }
     }
 
-    override fun stopAmbience() {
+    override fun stopAmbience(setDucking: Boolean) {
         val instance = ambience ?: return
         if (instance.isStopped) {
             ambience = null
             return
         }
         instance.beginFadeOut()
-        UiSoundDucking.setActive(false)
+        UiSoundDucking.setActive(setDucking)
         driveMusicDuckFade()
     }
 

@@ -48,14 +48,14 @@ object UiSounds {
     @JvmStatic
     @Synchronized
     fun releaseAmbience() {
-        if (ambienceRefs > 0 && --ambienceRefs == 0) service?.stopAmbience()
+        if (ambienceRefs > 0 && --ambienceRefs == 0) service?.stopAmbience(false)
     }
 
     @JvmStatic
     @Synchronized
     fun refreshAmbience() {
         if (ambienceRefs <= 0) return
-        if (OneConfigConfig.enableUIAmbience) startAmbienceIfEnabled() else service?.stopAmbience()
+        if (OneConfigConfig.enableUIAmbience) startAmbienceIfEnabled() else service?.stopAmbience(false)
     }
 
     @JvmStatic
@@ -63,7 +63,7 @@ object UiSounds {
     fun onSoundThemeChanged() {
         play(UiSoundEvent.OPEN)
         if (ambienceRefs > 0) {
-            service?.stopAmbience()
+            service?.stopAmbience(true)
             startAmbienceIfEnabled()
         }
     }
