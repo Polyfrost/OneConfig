@@ -1,2 +1,2 @@
-# 1.2.13:
-- 1.8.9: Fixed expensive GL state capture reducing performance
+# 1.2.14:
+- 1.8.9: Fixed FPS regression for mesa drivers
