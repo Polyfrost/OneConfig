@@ -131,14 +131,14 @@ public class WatcherUpdateThreadTest {
             Runnable staleUpdate = awaitTask();
             oldBackend.closeWatcher();
             newBackend.register(tree);
-            // Reopening must not make work from the previous watcher valid again.
+            // reopening must not make work from the previous watcher valid again
             oldBackend.addWatcher();
             staleUpdate.run();
             assertFalse(holder.flag, "closed watcher must not overwrite the new profile");
 
             Files.writeString(oldDir.resolve("watch.json"), "{ \"flag\": true }");
-            awaitTask().run();
-            assertTrue(holder.flag, "the new watcher must still apply its own updates");
+            // one write can fire several MODIFY events, so rejected tasks from the closed watcher may still be queued
+            while (!holder.flag) awaitTask().run();
         } finally {
             oldBackend.closeWatcher();
         }
