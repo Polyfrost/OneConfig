@@ -673,7 +673,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         val targetPoint: HudAnchor,
         val offset: Float,
     ) {
-        fun withOffset(offset: Float) = MergeLink(parent, selfPoint, targetPoint, offset)
+        fun withOffset(offset: Float) = if (offset == this.offset) this else MergeLink(parent, selfPoint, targetPoint, offset)
     }
 
     @Transient
