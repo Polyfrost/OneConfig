@@ -12,4 +12,4 @@ For more information on how the UI works and how to use it, see the `PolyUI` pro
 utilized for OneConfig's frontend.
 
 Outside of this, it also provides the ability
-to blur backgrounds in menus, and exposes the `TinyFD` library for native file dialogs.
+to blur backgrounds in menus, and exposes native file dialogs through `TinyFdApi`.

@@ -19,6 +19,10 @@ public final class Window {
         return display.getHandle();
     }
 
+    public long handle() {
+        return display.getHandle();
+    }
+
     public int getWidth() {
         return display.getWidth();
     }

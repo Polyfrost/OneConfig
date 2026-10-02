@@ -26,31 +26,11 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.api;
 
-import java.nio.file.Paths;
-import org.junit.jupiter.api.Test;
+import java.util.ServiceLoader;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+final class TinyFdHolder {
+    static final TinyFdApi INSTANCE = ServiceLoader.load(TinyFdApi.class, TinyFdApi.class.getClassLoader()).iterator().next();
 
-class TinyFdPathTest {
-    @Test
-    void bareFileNameAnchorsToGameDirectory() {
-        assertEquals(Paths.get("Default.zip").toAbsolutePath().toString(), LwjglTinyFd.absolutize("Default.zip"));
-    }
-
-    @Test
-    void macKeepsOnlyTheFileNameSoAppleScriptGetsNoLocation() {
-        assertEquals("Default.zip", LwjglTinyFd.macDefaultPath("/Users/me/Library/Application Support/mc/Default.zip"));
-        assertEquals("Default.zip", LwjglTinyFd.macDefaultPath("Default.zip"));
-        assertNull(LwjglTinyFd.macDefaultPath("/Users/me/mc/"));
-        assertNull(LwjglTinyFd.macDefaultPath(Paths.get(".").toAbsolutePath().toString()));
-        assertNull(LwjglTinyFd.macDefaultPath(null));
-    }
-
-    @Test
-    void absolutePathIsUntouched() {
-        String absolute = Paths.get("config", "profile.zip").toAbsolutePath().toString();
-        assertEquals(absolute, LwjglTinyFd.absolutize(absolute));
-        assertNull(LwjglTinyFd.absolutize(null));
+    private TinyFdHolder() {
     }
 }

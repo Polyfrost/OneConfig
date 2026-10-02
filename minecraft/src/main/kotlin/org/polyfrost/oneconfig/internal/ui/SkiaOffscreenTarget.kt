@@ -49,6 +49,8 @@ class SkiaOffscreenTarget {
         destroy()
         if (SkiaCtx.vulkanService == null) return false
         try {
+            //? if < 1.21.5
+            //val bound = RenderTargetFbo.saveBoundTarget()
             //? if >= 26.3 {
             val rt = TextureTarget(
                 null, w, h,
@@ -68,7 +70,7 @@ class SkiaOffscreenTarget {
             target = rt
             //? if < 1.21.5 {
             /*rt.setClearColor(0f, 0f, 0f, 0f)
-            RenderTargetFbo.restoreMainTarget()
+            RenderTargetFbo.restoreBoundTarget(bound)
             *///?}
             if (!SkiaCtx.isVulkanMode && RenderTargetFbo.getFboId(rt) <= 0) {
                 destroy()
@@ -107,6 +109,8 @@ class SkiaOffscreenTarget {
 
     fun clearTarget() {
         val rt = target ?: return
+        //? if < 1.21.5
+        //val bound = RenderTargetFbo.saveBoundTarget()
         //? if >= 26.2 {
         val colorTex = rt.colorTexture ?: return
         RenderSystem.getDevice().createCommandEncoder()
@@ -126,7 +130,7 @@ class SkiaOffscreenTarget {
         *///?} else
         //rt.clear()
         //? if < 1.21.5
-        //RenderTargetFbo.restoreMainTarget()
+        //RenderTargetFbo.restoreBoundTarget(bound)
     }
 
     fun ensureSubmitted() {
@@ -140,9 +144,11 @@ class SkiaOffscreenTarget {
 
     fun destroy() {
         releaseSurface()
+        //? if < 1.21.5
+        //val bound = RenderTargetFbo.saveBoundTarget()
         target?.destroyBuffers(); target = null
         //? if < 1.21.5
-        //RenderTargetFbo.restoreMainTarget()
+        //RenderTargetFbo.restoreBoundTarget(bound)
         lastW = -1; lastH = -1
     }
 

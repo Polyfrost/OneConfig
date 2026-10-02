@@ -71,6 +71,10 @@ public interface MinecraftCompat {
         }
     }
 
+    default void schedule(Runnable task) {
+        tell(task);
+    }
+
     default <T> CompletableFuture<T> submit(Supplier<T> task) {
         Minecraft minecraft = (Minecraft) (Object) this;
         if (minecraft.isSameThread()) {

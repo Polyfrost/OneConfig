@@ -62,11 +62,6 @@ annotations = { module = "org.jetbrains:annotations", version.ref = "annotations
 logging-api = { module = "org.apache.logging.log4j:log4j-api", version.ref = "log4j-api" }
 logging-impl = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j-impl" }
 
-lwjgl = { module = "org.lwjgl:lwjgl", version.ref = "lwjgl" }
-lwjgl-nvg = { module = "org.lwjgl:lwjgl-nanovg", version.ref = "lwjgl" }
-lwjgl-stb = { module = "org.lwjgl:lwjgl-stb", version.ref = "lwjgl" }
-lwjgl-tinyfd = { module = "org.lwjgl:lwjgl-tinyfd", version.ref = "lwjgl" }
-lwjgl-opengl = { module = "org.lwjgl:lwjgl-opengl", version.ref = "lwjgl" }
 lwjgl-vulkan = { module = "org.lwjgl:lwjgl-vulkan", version.ref = "lwjgl" }
 
 snakeyaml = { module = "org.yaml:snakeyaml", version.ref = "snakeyaml" }
@@ -144,7 +139,6 @@ adventure = [
 ]
 kotlin = ["kotlin-reflect", "kotlin-stdlib", "kotlin-stdlib-jdk7", "kotlin-stdlib-jdk8"]
 kotlinx = ["kotlinx-coroutines", "kotlinx-coroutines-jvm", "kotlinx-coroutines-jdk8"]
-lwjgl = ["lwjgl", "lwjgl-nvg", "lwjgl-opengl", "lwjgl-stb", "lwjgl-tinyfd"]
 nightconfig = ["nightconfig", "nightconfig-json", "nightconfig-toml", "nightconfig-yaml"]
 test-core = ["junit", "logging-impl"]
 

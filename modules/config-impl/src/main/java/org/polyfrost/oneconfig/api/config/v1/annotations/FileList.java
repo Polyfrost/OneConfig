@@ -83,7 +83,7 @@ public @interface FileList {
      * The file extensions to filter the dialog by such as {@code {".png", ".jpg"}}
      * <p>
      * Entries may be written as {@code ".png"} or {@code "png"} or {@code "*.png"} and they are all
-     * normalised to the {@code *.ext} form tinyfd expects
+     * normalised to the {@code *.ext} form {@code TinyFdApi} expects
      * <p>
      * Leave empty to allow any file
      */

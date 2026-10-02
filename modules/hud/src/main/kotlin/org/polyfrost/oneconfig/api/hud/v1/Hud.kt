@@ -421,50 +421,62 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         return sectionY(sh) - anchorFracY * scaledHeight
     }
 
-    internal val rawX: Float get() {
-        resolvedAnchorX?.let { a ->
+    internal val rawX: Float get() = rawX(resolvedAnchorX, scaledWidth)
+
+    internal val rawY: Float get() = rawY(resolvedAnchorY, scaledHeight)
+
+    private fun rawX(a: ResolvedAnchor?, w: Float): Float {
+        if (a != null) {
             resolvingAnchor = true
             try {
-                return a.parent.anchorPointX(a.targetPoint) + a.offset - fracX(a.selfPoint) * scaledWidth
+                return a.parent.anchorPointX(a.targetPoint) + a.offset - fracX(a.selfPoint) * w
             } finally {
                 resolvingAnchor = false
             }
         }
-        return screenX - anchorFracX * scaledWidth
+        return screenX - anchorFracX * w
     }
 
-    internal val rawY: Float get() {
-        resolvedAnchorY?.let { a ->
+    private fun rawY(a: ResolvedAnchor?, h: Float): Float {
+        if (a != null) {
             resolvingAnchor = true
             try {
-                return a.parent.anchorPointY(a.targetPoint) + a.offset - fracY(a.selfPoint) * scaledHeight
+                return a.parent.anchorPointY(a.targetPoint) + a.offset - fracY(a.selfPoint) * h
             } finally {
                 resolvingAnchor = false
             }
         }
-        return screenY - anchorFracY * scaledHeight
+        return screenY - anchorFracY * h
     }
 
     open var x: Float
-        get() = if (resolvedAnchorX != null) rawX else keepVisibleX(rawX)
+        get() {
+            val a = resolvedAnchorX
+            val w = scaledWidth
+            val raw = rawX(a, w)
+            return if (a != null) raw else keepVisibleX(raw, w)
+        }
         set(v) { updateRelativeX(v) }
 
     open var y: Float
-        get() = if (resolvedAnchorY != null) rawY else keepVisibleY(rawY)
+        get() {
+            val a = resolvedAnchorY
+            val h = scaledHeight
+            val raw = rawY(a, h)
+            return if (a != null) raw else keepVisibleY(raw, h)
+        }
         set(v) { updateRelativeY(v) }
 
-    private fun keepVisibleX(absX: Float): Float {
+    private fun keepVisibleX(absX: Float, w: Float): Float {
         val sw = HudManager.guiScreenWidth
         if (sw <= 0f) return absX
-        val w = scaledWidth
         val keep = minOf(w, MIN_VISIBLE)
         return absX.coerceIn(minOf(keep - w, 0f), maxOf(sw - keep, 0f))
     }
 
-    private fun keepVisibleY(absY: Float): Float {
+    private fun keepVisibleY(absY: Float, h: Float): Float {
         val sh = HudManager.guiScreenHeight
         if (sh <= 0f) return absY
-        val h = scaledHeight
         val keep = minOf(h, MIN_VISIBLE)
         return absY.coerceIn(minOf(keep - h, 0f), maxOf(sh - keep, 0f))
     }
@@ -673,7 +685,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         val targetPoint: HudAnchor,
         val offset: Float,
     ) {
-        fun withOffset(offset: Float) = MergeLink(parent, selfPoint, targetPoint, offset)
+        fun withOffset(offset: Float) = if (offset == this.offset) this else MergeLink(parent, selfPoint, targetPoint, offset)
     }
 
     @Transient

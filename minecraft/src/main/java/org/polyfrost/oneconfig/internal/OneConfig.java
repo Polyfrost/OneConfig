@@ -293,10 +293,11 @@ public class OneConfig
                 });
         // resets the editing flag if another screen replaces the HUD editor without going through
         // HudManager.closeEditor() and null opens are ignored because commands close chat first
+        // closeEditor() would re-enter setScreen(null) mid-switch, which 26.2+ rejects during disconnect
         EventManager.register(
                 ScreenOpenEvent.class, e -> {
                     if (HudManager.INSTANCE.isEditorOpen() && e.getScreen() != null && !(e.getScreen() instanceof HudEditorUIScreen)) {
-                        HudManager.INSTANCE.closeEditor();
+                        HudManager.INSTANCE.onEditorScreenRemoved();
                     }
                 });
         EventManager.register(
