@@ -238,6 +238,7 @@ interface OneConfigHudWrapper {
         if (modId != null) HudManager.register(hud, modId) else HudManager.register(hud)
         hud.make()
         HudManager.activeInstances.add(hud)
+        HudManager.instancesRevision.intValue++
         hud.setup()
         val tree = hud.tree
         if (tree != null) {
