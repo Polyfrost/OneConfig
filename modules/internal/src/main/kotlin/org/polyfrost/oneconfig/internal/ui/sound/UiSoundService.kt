@@ -5,5 +5,5 @@ interface UiSoundService {
 
     fun startAmbience(theme: UiSoundTheme, volume: Float)
 
-    fun stopAmbience()
+    fun stopAmbience(setDucking: Boolean)
 }
