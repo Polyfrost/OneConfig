@@ -10,23 +10,25 @@ val modrinthToken = findProperty("modrinth.token")
     ?.takeIf { it.isNotBlank() }
 
 publishMods {
-    file = tasks.named<Jar>("jar").flatMap { it.archiveFile }
-
     displayName = "Compose Multiplatform ${project.version}"
     changelog = "Compose Multiplatform ${project.version}"
     version = "v${project.version}"
     type = STABLE
 
-    modLoaders.add("fabric")
-
     dryRun = modrinthId == null || modrinthToken == null
 
     if (modrinthId != null) {
-        modrinth {
+        val modrinthOptions = modrinthOptions {
             projectId = modrinthId
             accessToken = modrinthToken.orEmpty()
+            requires("fabric-language-kotlin")
+        }
 
-            minecraftVersions.addAll(listOf(
+        modrinth("modrinthFabric") {
+            from(modrinthOptions)
+            file = tasks.named<Jar>("jar").flatMap { it.archiveFile }
+            modLoaders.add("fabric")
+            minecraftVersions.addAll(
                 "1.21",
                 "1.21.1",
                 "1.21.2",
@@ -44,9 +46,17 @@ publishMods {
                 "26.1.2",
                 "26.2",
                 "26.3"
-            ))
+            )
+        }
 
-            requires("fabric-language-kotlin")
+        // intentionally published here, even though Ornithe code only lives in the `legacy` branch
+        // this is identical to the Fabric version, but has to be published separately,
+        // because Modrinth's API rejects a version claiming to support Fabric on 1.8.9
+        modrinth("modrinthOrnithe") {
+            from(modrinthOptions)
+            file = tasks.named<Zip>("ornitheJar").flatMap { it.archiveFile }
+            modLoaders.add("ornithe")
+            minecraftVersions.add("1.8.9")
         }
     }
 }
