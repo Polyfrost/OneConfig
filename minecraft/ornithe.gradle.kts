@@ -18,8 +18,10 @@ dependencies {
     modImplementation(versionedCatalog["fabric-language-kotlin"])
     modImplementation(versionedCatalog["fabric-loader"])
 
-    mappings(loom.layered {
-        mappings(ploceus.featherMappings(versionedCatalog.versions["feather.build"].requiredVersion))
+    // ploceus.featherMappings() is itself a layered dependency - nesting it in loom.layered fails on a cold cache
+    // since Loom doesn't order the generation of nested layered mappings
+    mappings(ploceus.layeredMappings {
+        mappings("net.ornithemc:feather-gen2:${versionedCatalog.versions["minecraft"].requiredVersion}+build.${versionedCatalog.versions["feather.build"].requiredVersion}:v2")
         mappings(rootProject.file("mappings/feather-overrides.tiny"))
     })
     ploceus.dependOsl(versionedCatalog.versions["osl"].requiredVersion)
