@@ -70,6 +70,10 @@ public class PolyColorAdapter extends Adapter<PolyColor, Object> {
 				((Number) color.get(3)).intValue()
 			);
 		}
+		if (in instanceof Number) {
+			int argb = ((Number) in).intValue();
+			return PolyColor.Companion.rgba((argb >> 16) & 0xFF, (argb >> 8) & 0xFF, argb & 0xFF, (argb >> 24) & 0xFF);
+		}
 		throw new IllegalArgumentException("Unsupported PolyColor value: " + in);
 	}
 

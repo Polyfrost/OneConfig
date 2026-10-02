@@ -1,2 +1,2 @@
-# 1.2.12:
-- run profile switches on correct thread
+# 1.2.13:
+- 1.8.9: Fixed expensive GL state capture reducing performance
