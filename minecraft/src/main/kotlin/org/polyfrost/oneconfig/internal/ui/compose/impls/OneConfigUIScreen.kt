@@ -76,6 +76,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         fun open(): OneConfigUIScreen = shared().also {
             it.initialRoute = null
             it.resumeNext = false
+            UiSounds.acquireAmbience()
         }
 
         /** For returning from a HUD editor opened from the OneConfig menu */
@@ -169,6 +170,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         closeRequestedAt = System.currentTimeMillis()
         closeAnimationMs = guiCloseAnimationMillis()
         UiSounds.play(UiSoundEvent.CLOSE)
+        UiSounds.releaseAmbience()
     }
 
     private fun cancelClose(): Boolean {
@@ -337,9 +339,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         everOpened = true
         openedAt = System.currentTimeMillis()
         UiSounds.play(UiSoundEvent.OPEN)
-        UiSounds.acquireAmbience()
         super.init()
-
         requestOpenCallback?.invoke()
     }
 
@@ -358,7 +358,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
         HudManager.overrideShowInScreens = false
         HudManager.isConfigUiOpen = false
         ShellState.shellBounds = null
-        UiSounds.releaseAmbience()
         // writing every registered tree hitches and Minecraft only re-grabs the cursor once this returns
         scheduleSave()
         super.removed()
