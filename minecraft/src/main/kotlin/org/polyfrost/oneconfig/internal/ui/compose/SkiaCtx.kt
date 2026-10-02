@@ -676,17 +676,17 @@ object SkiaCtx {
                 hudNeedsSamplingTransition = false
                 hudRealIsGeneral = true
             }
-            GL11.glMatrixMode(GL11.GL_PROJECTION)
-            GL11.glPushMatrix()
-            GL11.glMatrixMode(GL11.GL_MODELVIEW)
-            GL11.glPushMatrix()
+            GlStateManager.matrixMode(GL11.GL_PROJECTION)
+            GlStateManager.pushMatrix()
+            GlStateManager.matrixMode(GL11.GL_MODELVIEW)
+            GlStateManager.pushMatrix()
             try {
                 rt.draw(w, h, false)
             } finally {
-                GL11.glMatrixMode(GL11.GL_MODELVIEW)
-                GL11.glPopMatrix()
-                GL11.glMatrixMode(GL11.GL_PROJECTION)
-                GL11.glPopMatrix()
+                GlStateManager.matrixMode(GL11.GL_PROJECTION)
+                GlStateManager.popMatrix()
+                GlStateManager.matrixMode(GL11.GL_MODELVIEW)
+                GlStateManager.popMatrix()
             }
         } finally {
             gl.restore()
