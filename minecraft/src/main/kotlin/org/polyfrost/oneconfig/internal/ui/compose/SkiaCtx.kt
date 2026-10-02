@@ -875,6 +875,8 @@ object SkiaCtx {
         if (needNewTarget) {
             if (System.currentTimeMillis() - allocFailedAt < ALLOC_RETRY_COOLDOWN_MS) return null
             destroyHudTarget()
+            //? if < 1.21.5
+            //val bound = RenderTargetFbo.saveBoundTarget()
             rt = try {
                 //? if >= 26.3 {
                 TextureTarget(
@@ -898,7 +900,7 @@ object SkiaCtx {
             }
             hudTarget = rt
             //? if < 1.21.5
-            //RenderTargetFbo.restoreMainTarget()
+            //RenderTargetFbo.restoreBoundTarget(bound)
 
             //? >= 1.21.5 {
             if (!isVulkanMode) {
@@ -946,9 +948,11 @@ object SkiaCtx {
         hudSurface?.close(); hudSurface = null
         hudBrt?.close(); hudBrt = null
         hudTarget?.let { target ->
+            //? if < 1.21.5
+            //val bound = RenderTargetFbo.saveBoundTarget()
             target.destroyBuffers()
             //? if < 1.21.5
-            //RenderTargetFbo.restoreMainTarget()
+            //RenderTargetFbo.restoreBoundTarget(bound)
         }
         hudTarget = null
     }

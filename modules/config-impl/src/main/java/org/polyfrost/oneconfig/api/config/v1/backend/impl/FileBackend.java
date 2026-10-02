@@ -39,13 +39,13 @@ import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
 import org.polyfrost.oneconfig.api.config.v1.exceptions.SerializationException;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
 
 public class FileBackend extends Backend {
     private static final Charset CHARSET = StandardCharsets.UTF_8;
     public final Path folder;
     private final Map<String, FileSerializer<String>> serializers = new HashMap<>(4);
-    private boolean hasWatcher = false;
-    private WatchService watcherService = null;
+    private volatile WatchService watcherService = null;
     private final Set<String> selfEvents = ConcurrentHashMap.newKeySet();
 
     @SafeVarargs
@@ -93,18 +93,18 @@ public class FileBackend extends Backend {
     }
 
     public synchronized FileBackend addWatcher() throws IOException {
-        if (hasWatcher) return this;
+        if (watcherService != null) return this;
         WatchService service = folder.getFileSystem().newWatchService();
         folder.register(service, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
         watcherService = service;
-        hasWatcher = true;
 
         Thread t = new Thread(() -> {
             int i = 0;
-            while (hasWatcher) {
+            while (watcherService == service) {
                 try {
                     WatchKey key = service.take();
                     for (WatchEvent<?> event : key.pollEvents()) {
+                        if (watcherService != service) break;
                         if (event.kind() == StandardWatchEventKinds.OVERFLOW) {
                             continue;
                         }
@@ -119,16 +119,18 @@ public class FileBackend extends Backend {
                         if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
                             if (Files.exists(folder.resolve(id))) continue;
                             LOGGER.info("config {} deleted? saving", id);
-                            save(id);
+                            Platform.screen().runOnUiThread(() -> {
+                                if (watcherService == service && exists(id) && !Files.exists(folder.resolve(id))) save(id);
+                            });
                         }
                         if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
                             LOGGER.info("config {} modified, update requested", id);
-                            requestUpdate(id);
+                            requestUpdate(id, () -> watcherService == service);
                         }
                     }
+                    if (watcherService != service) break;
                     if (!key.reset()) {
                         LOGGER.error("file watcher is invalid; disabled!");
-                        hasWatcher = false;
                         break;
                     }
                 } catch (ClosedWatchServiceException e) {
@@ -137,14 +139,14 @@ public class FileBackend extends Backend {
                     i++;
                     LOGGER.error("error with config file watcher (error no. {})", i, e);
                     if (i > 10) {
-                        hasWatcher = false;
                         LOGGER.error("Too many errors, shutting down file watcher!");
                         break;
                     }
                 }
             }
-            hasWatcher = false;
-            watcherService = null;
+            synchronized (FileBackend.this) {
+                if (watcherService == service) watcherService = null;
+            }
             try {
                 service.close();
             } catch (IOException e) {
@@ -159,14 +161,15 @@ public class FileBackend extends Backend {
     }
 
     public boolean hasWatcher() {
-        return hasWatcher;
+        return watcherService != null;
     }
 
     public synchronized void closeWatcher() {
-        if (!hasWatcher || watcherService == null) return;
-        hasWatcher = false;
+        WatchService service = watcherService;
+        watcherService = null;
+        if (service == null) return;
         try {
-            watcherService.close();
+            service.close();
         } catch (IOException e) {
             LOGGER.error("Failed to close file watcher service", e);
         }

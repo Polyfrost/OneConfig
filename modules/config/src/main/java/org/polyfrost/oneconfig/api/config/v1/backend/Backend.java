@@ -28,6 +28,7 @@ package org.polyfrost.oneconfig.api.config.v1.backend;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BooleanSupplier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import org.polyfrost.oneconfig.api.config.v1.Node;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
 
 /**
  * A backend is a storage system for ConfigTrees
@@ -54,6 +56,7 @@ public abstract class Backend {
     public static final String CUSTOM_SAVE_TRACKED_METADATA = "custom_save_tracked";
     public static final String CUSTOM_SAVE_DIRTY_METADATA = "custom_save_dirty";
     private final Map<String, Tree> trees = new ConcurrentHashMap<>();
+    private final Map<String, Long> saveGenerations = new ConcurrentHashMap<>();
 
     private static boolean isUiOnly(@NotNull Tree tree) {
         return Boolean.TRUE.equals(tree.getMetadata(UI_ONLY_METADATA));
@@ -161,13 +164,17 @@ public abstract class Backend {
             return false;
         }
         if (t == null) return false;
-        if (t.get("reserved:overwritten") != null) {
-            tree.put(Objects.requireNonNull(t.get("reserved:overwritten")));
+        apply(tree, t);
+        return true;
+    }
+
+    private void apply(Tree tree, Tree loaded) {
+        if (loaded.get("reserved:overwritten") != null) {
+            tree.put(Objects.requireNonNull(loaded.get("reserved:overwritten")));
         }
-        tree.overwrite(t, true);
+        tree.overwrite(loaded, true);
 
         putSafe(tree);
-        return true;
     }
 
     /**
@@ -196,6 +203,7 @@ public abstract class Backend {
         if (id == null) throw new NullPointerException("id cannot be null");
         Tree tree = trees.get(id);
         if (tree == null) throw new IllegalArgumentException("no registered tree with ID " + id);
+        saveGenerations.merge(id, 1L, Long::sum);
         try {
             Object customSave = tree.getMetadata("custom_save");
             if (customSave != null) {
@@ -209,6 +217,8 @@ public abstract class Backend {
         } catch (Exception e) {
             LOGGER.error("error saving tree with ID {}!", id, e);
             return false;
+        } finally {
+            saveGenerations.merge(id, 1L, Long::sum);
         }
     }
 
@@ -249,6 +259,8 @@ public abstract class Backend {
         if (tree.getID() == null) throw new IllegalArgumentException("tree must be master (have a valid ID)");
         putSafe(tree);
         LAST_SAVE_FAILURE.remove();
+        String id = tree.getID();
+        saveGenerations.merge(id, 1L, Long::sum);
         try {
             Object customSave = tree.getMetadata("custom_save");
             if (customSave != null) {
@@ -263,6 +275,8 @@ public abstract class Backend {
             LOGGER.error("error saving tree with ID {}!", tree.getID(), e);
             LAST_SAVE_FAILURE.set(e);
             return false;
+        } finally {
+            saveGenerations.merge(id, 1L, Long::sum);
         }
     }
 
@@ -323,14 +337,25 @@ public abstract class Backend {
      */
     @ApiStatus.Experimental
     protected void requestUpdate(String id) {
+        requestUpdate(id, () -> true);
+    }
+
+    protected void requestUpdate(String id, BooleanSupplier isActive) {
         if (id == null) throw new NullPointerException("id cannot be null");
+        if (!isActive.getAsBoolean()) return;
         Tree tree = trees.get(id);
         if (tree == null) {
             LOGGER.warn("can't update: no registered tree with ID {}", id);
             return;
         }
-        if (isUiOnly(tree)) return;
-        load(tree);
+        if (isUiOnly(tree) || tree.getMetadata("custom_save") != null) return;
+        long saveGeneration = saveGenerations.getOrDefault(id, 0L);
+        Tree loaded = load(id);
+        if (loaded == null) return;
+        Platform.screen().runOnUiThread(() -> {
+            if (isActive.getAsBoolean() && trees.get(id) == tree
+                    && saveGenerations.getOrDefault(id, 0L) == saveGeneration) apply(tree, loaded);
+        });
     }
 
     /**

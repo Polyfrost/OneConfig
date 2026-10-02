@@ -295,6 +295,7 @@ class KeybindOptionData(prop: Property<*>) : OptionData(prop)
 
 class ButtonOptionData(prop: Property<*>) : OptionData(prop) {
     val buttonText: Any? get() = localizedText(prop.getMetadata<Any?>("textKey")?.asRenderText(), prop.getMetadata<Any?>("text")?.asRenderText())
+    val confirmText: Any? get() = prop.getMetadata<Any?>("confirmText")?.asRenderText()?.let { localizedText(null, it) }
     val runnable: Runnable? get() = prop.getMetadata("runnable") ?: prop.getAs()
 }
 

@@ -1,12 +1,7 @@
-# 1.2.8:
-- Added proper compatibility for Meowdding HUDs rather than detecting them all as SkyCubed HUDs
-- Dropped 1.21.11 support and added 26.2 support for for Meowdding HUDs
-- The HUD editor now suggests installing EvergreenHUD when no mods providing HUDs are installed
-- Fixed Skysoft 0.1.30+ settings not appearing in OneConfig
-- Improved HUD rendering performance alongside legacy and compat HUDs (such as VanillaHUD), which no longer make every other HUD redraw whenever they change size
-- Bump Compose
-- Fix rebinding keybinds that start unbounded
-- Keep and restore search across reopen and navigation
-- Run Compose RectManager dispatch on the client thread
-- Add support for a lot more options in config compat layers
-- Add parity to Java API for KtConfig / Kt DSL config API
+Unreleased changes:
+- Fixed native file dialogs and message boxes not opening on 26.3
+- Fixed keybinds and the HUD editor not reacting to most screen changes on 26.2 and above
+
+Public API:
+
+- `ScreenOpenEvent` now fires for all screen changes on 26.2 and above, including screens closing
