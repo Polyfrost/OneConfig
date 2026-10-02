@@ -44,7 +44,6 @@ import org.polyfrost.oneconfig.utils.v1.Multithreading
 
 private object IconResourceMarker
 private const val DefaultIconSize = 18f
-private val DefaultRasterIconShape = RoundedCornerShape(8.dp)
 private const val SvgHeaderBytes = 512
 private val SvgViewBox = Regex("""viewBox\s*=\s*"([^"]+)"""")
 private val SvgViewBoxSeparator = Regex("""[\s,]+""")
@@ -209,7 +208,7 @@ fun Icon(
             }
         } else {
             val icon = rememberAsyncRasterIcon(iconName, lastModified) { IconResource.fileBytes(file, lastModified) }
-            val imageModifier = modifier.then(iconSizeModifier(null)).clip(DefaultRasterIconShape)
+            val imageModifier = modifier.then(iconSizeModifier(null)).clip(theme.modIconShape)
             if (icon != null) {
                 Image(
                     painter = remember(icon) { RasterIconPainter(icon) },
@@ -233,7 +232,7 @@ fun Icon(
     }
     val resourceModifier = modifier.then(iconSizeModifier(aspectRatio))
     val clippedResourceModifier = if (!isSvg) {
-        resourceModifier.clip(DefaultRasterIconShape)
+        resourceModifier.clip(theme.modIconShape)
     } else {
         resourceModifier
     }
