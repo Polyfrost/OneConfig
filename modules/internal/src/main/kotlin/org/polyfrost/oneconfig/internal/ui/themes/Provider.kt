@@ -121,7 +121,7 @@ fun Theme(
 
     CompositionLocalProvider(
         LocalTheme provides animated,
-        LocalScrollbarStyle provides remember(animated.textColorSecondary) { scrollbarStyle(animated) },
+        LocalScrollbarStyle provides remember(animated.scrollBarShape) { scrollbarStyle(animated) },
         LocalDensity provides if (pixelGrid) pixelGridDensity(designWidth, designHeight) else LocalDensity.current,
         content = content
     )
