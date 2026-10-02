@@ -82,6 +82,10 @@ import com.mojang.blaze3d.vertex.VertexFormat
 /*import net.minecraft.resources.ResourceLocation
 *///?}
 
+//? if = 1.8.9 {
+/*import org.lwjgl.opengl.GL14
+*///?}
+
 object SkiaCtx {
     private val LOG = LoggerFactory.getLogger(SkiaCtx::class.java)
 
@@ -664,7 +668,19 @@ object SkiaCtx {
         val w = rt.width
         val h = rt.height
 
-        gl.capture()
+        val depthTest = GL11.glIsEnabled(GL11.GL_DEPTH_TEST)
+        val depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK)
+        val alphaTest = GL11.glIsEnabled(GL11.GL_ALPHA_TEST)
+        val lighting = GL11.glIsEnabled(GL11.GL_LIGHTING)
+        val texture2d = GL11.glIsEnabled(GL11.GL_TEXTURE_2D)
+        val blend = GL11.glIsEnabled(GL11.GL_BLEND)
+        val srcRgb = GL11.glGetInteger(GL14.GL_BLEND_SRC_RGB)
+        val dstRgb = GL11.glGetInteger(GL14.GL_BLEND_DST_RGB)
+        val srcAlpha = GL11.glGetInteger(GL14.GL_BLEND_SRC_ALPHA)
+        val dstAlpha = GL11.glGetInteger(GL14.GL_BLEND_DST_ALPHA)
+        val texture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D)
+        val color = FloatArray(4).also { GL11.glGetFloatv(GL11.GL_CURRENT_COLOR, it) }
+        val bound = RenderTargetFbo.saveBoundTarget()
         try {
             GlStateManager.enableBlend()
             GlStateManager.blendFuncSeparate(
@@ -689,7 +705,16 @@ object SkiaCtx {
                 GlStateManager.popMatrix()
             }
         } finally {
-            gl.restore()
+            if (depthTest) GlStateManager.enableDepthTest() else GlStateManager.disableDepthTest()
+            GlStateManager.depthMask(depthMask)
+            if (alphaTest) GlStateManager.enableAlphaTest() else GlStateManager.disableAlphaTest()
+            if (lighting) GlStateManager.enableLighting() else GlStateManager.disableLighting()
+            if (texture2d) GlStateManager.enableTexture() else GlStateManager.disableTexture()
+            if (blend) GlStateManager.enableBlend() else GlStateManager.disableBlend()
+            GlStateManager.blendFuncSeparate(srcRgb, dstRgb, srcAlpha, dstAlpha)
+            GlStateManager.bindTexture(texture)
+            GlStateManager.color4f(color[0], color[1], color[2], color[3])
+            RenderTargetFbo.restoreBoundTarget(bound)
         }
     }
     *///?}
