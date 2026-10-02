@@ -33,6 +33,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -103,6 +105,34 @@ class ProfileManagerTest {
         ConfigManager.createProfile(PROFILE_A);
 
         assertFalse(config.enabled);
+    }
+
+    @Test
+    void profileSwitchFiresConfigCallbacksOnTheDispatcherThread() throws Exception {
+        ProfileTestConfig config = new ProfileTestConfig("profile_dispatch_test.json");
+        config.initialize(false);
+        List<Thread> callbackThreads = new ArrayList<>();
+        config.addCallback("enabled", (Boolean value) -> {
+            callbackThreads.add(Thread.currentThread());
+            ConfigManager.active();
+            return false;
+        });
+        config.enabled = true;
+        config.save();
+
+        ExecutorService mainThread = Executors.newSingleThreadExecutor();
+        Thread main = mainThread.submit(Thread::currentThread).get();
+        ConfigManager.setProfileSwitchDispatcher(mainThread::execute);
+        try {
+            ConfigManager.createProfile(PROFILE_A);
+        } finally {
+            ConfigManager.setProfileSwitchDispatcher(null);
+            mainThread.shutdown();
+        }
+
+        assertFalse(config.enabled);
+        assertFalse(callbackThreads.isEmpty());
+        for (Thread thread : callbackThreads) assertSame(main, thread);
     }
 
     @Test
