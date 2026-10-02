@@ -302,6 +302,7 @@ public class OneConfig
                 });
         EventManager.register(
                 InitializationEvent.class, e -> {
+                    ConfigManager.setProfileSwitchDispatcher(Platform.screen()::runOnUiThread);
                     ConfigManager.initialize();
                     KeybindConflicts.unbindMinecraftKeybinds();
                     CompatSnapshots.setDispatcher(r -> {
