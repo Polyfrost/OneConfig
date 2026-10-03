@@ -57,3 +57,7 @@ classTweaker v1 official
 #? if < 1.21.4 && > 1.8.9 {
 #accessible field net/minecraft/client/renderer/entity/ItemRenderer itemColors Lnet/minecraft/client/color/item/ItemColors;
 #?}
+
+#? if > 1.8.9 {
+#accessible class net/minecraft/client/Options$FieldAccess
+#?}
