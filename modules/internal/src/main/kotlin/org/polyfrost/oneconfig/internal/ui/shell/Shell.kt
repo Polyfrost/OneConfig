@@ -93,7 +93,7 @@ private class GlowCache : RememberObserver {
 
         val surface = Surface.makeRasterN32Premul(w, h)
         val sigma = GLOW_BLUR_SIGMA * GLOW_BAKE_SCALE
-        val filter = ImageFilter.makeBlur(sigma, sigma, FilterTileMode.CLAMP)
+        val filter = ImageFilter.makeBlur(sigma, sigma, FilterTileMode.DECAL)
         val paint = Paint().apply {
             imageFilter = filter
             color = 0xFFFFFFFF.toInt()
