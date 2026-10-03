@@ -21,11 +21,12 @@ public class Mixin_VersionedResourcePacks {
         at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Options$FieldAccess;process(Ljava/lang/String;Ljava/lang/Object;Ljava/util/function/Function;Ljava/util/function/Function;)Ljava/lang/Object;")
     )
     private Object oneconfig$carryLegacyPackLists(Options.FieldAccess access, String name, Object value, Function<String, Object> reader, Function<Object, String> writer, Operation<Object> original) {
+        Object result = original.call(access, name, value, reader, writer);
         if (name.equals("resourcePacks") || name.equals("incompatibleResourcePacks")) {
             String key = "oneconfig_legacy_" + name;
-            oneconfig$legacyPacks.put(key, original.call(access, key, oneconfig$legacyPacks.getOrDefault(key, "[]"), Function.identity(), Function.identity()));
+            oneconfig$legacyPacks.put(key, original.call(access, key, oneconfig$legacyPacks.getOrDefault(key, writer.apply(result)), Function.identity(), Function.identity()));
         }
-        return original.call(access, name, value, reader, writer);
+        return result;
     }
 }
 //?}
