@@ -28,6 +28,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -82,6 +83,7 @@ import org.polyfrost.oneconfig.internal.ui.components.reorderOverlay
 import org.polyfrost.oneconfig.internal.ui.components.reorderableItem
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
+import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyGridState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -106,6 +108,11 @@ enum class ModCategory(
 @Composable
 fun Mods() {
     var activeCategory by remember { mutableStateOf(ModCategory.All) }
+
+    DisposableEffect(Unit) {
+        ShellState.title = "Mods"
+        onDispose { }
+    }
 
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
