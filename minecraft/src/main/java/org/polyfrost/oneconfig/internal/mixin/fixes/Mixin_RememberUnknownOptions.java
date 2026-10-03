@@ -45,6 +45,9 @@ public abstract class Mixin_RememberUnknownOptions {
     @Shadow
     public KeyMapping[] keyMappings;
 
+    @Shadow
+    public abstract void save();
+
     @Unique
     private final List<String> ocfg$loadedLines = new ArrayList<>();
 
@@ -72,6 +75,16 @@ public abstract class Mixin_RememberUnknownOptions {
                 }
             }
         } catch (IOException ignored) {
+        }
+    }
+
+    @Inject(method = "load", at = @At("RETURN"))
+    private void ocfg$rewriteStaleFormats(CallbackInfo ci) {
+        for (String line : ocfg$loadedLines) {
+            if (!LegacyOptionsFormat.toModernLine(line, ocfg$dataVersion).equals(line)) {
+                save();
+                return;
+            }
         }
     }
 
@@ -126,7 +139,7 @@ public abstract class Mixin_RememberUnknownOptions {
 
             String fresh = saved.remove(key);
             if (fresh == null) {
-                if (!mirrors.contains(key)) merged.add(line);
+                if (!mirrors.contains(key)) merged.add(LegacyOptionsFormat.toModernLine(line, ocfg$dataVersion));
             } else if (ocfg$rejectedKeys.contains(key) && !ocfg$changedThisSession(key, mappings)) {
                 merged.add(line);
             } else {
