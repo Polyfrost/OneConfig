@@ -133,10 +133,6 @@ private fun NavigationEntries(showTopOptions: Boolean) {
                         arche.hasRoute(def.route::class)
                     } ?: false
 
-                    if (selected) {
-                        ShellState.title = def.id.replaceFirstChar { char -> if (char.isLowerCase()) char.titlecase(getDefault()) else char.toString() }
-                    }
-
                     // todo: i18n
                     NavigationEntry(
                         def.icon,
