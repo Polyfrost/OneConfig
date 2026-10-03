@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
@@ -184,7 +185,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
             columns = GridCells.Fixed(4),
             verticalArrangement = Arrangement.spacedBy(19.dp),
             horizontalArrangement = Arrangement.spacedBy(19.dp),
-            modifier = Modifier.padding(end = 16.dp).onGloballyPositioned {
+            modifier = Modifier.fillMaxSize().clipToBounds().onGloballyPositioned {
                 animateItems = true
             },
         ) {
