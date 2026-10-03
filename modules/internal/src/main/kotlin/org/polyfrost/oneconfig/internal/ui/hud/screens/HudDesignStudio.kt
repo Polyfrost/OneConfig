@@ -34,7 +34,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.*
-import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -947,6 +947,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     val libraryScrollState = rememberLazyListState()
     var librarySectionIndexes by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
     val chromeRects = remember { mutableStateMapOf<String, Rect>() }
+    val rootCoords = remember { arrayOfNulls<LayoutCoordinates>(1) }
     var panelOffset by remember { mutableStateOf(Offset.Zero) }
     var panelBoxWidth by remember { mutableStateOf(0) }
     var rootSize by remember { mutableStateOf(IntSize.Zero) }
@@ -990,7 +991,6 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 removed.forEach { hud ->
                     if (hoveredHud === hud) hoveredHud = null
                     HudManager.removeHud(hud, delete = true)
-                    HudDesignSession.forget(hud)
                 }
             }
             UiSounds.play(UiSoundEvent.CLICK)
@@ -1019,24 +1019,11 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     panelOpen = true
                 }
             }
-        } else {
-            val restored = HudDesignSession.restoreSelection()
-            if (restored.isNotEmpty()) {
-                Snapshot.withMutableSnapshot {
-                    selectedHuds = restored.toSet()
-                    if (HudDesignSession.restorePanelOpen()) panelOpen = true
-                    activeCategory = HudDesignSession.restoreCategory()
-                }
-            }
         }
     }
 
-    val savedSelection = rememberUpdatedState(selectedHuds)
-    val savedPanelOpen = rememberUpdatedState(panelOpen)
-    val savedCategory = rememberUpdatedState(activeCategory)
     DisposableEffect(Unit) {
         onDispose {
-            HudDesignSession.save(savedSelection.value.toList(), savedPanelOpen.value, savedCategory.value)
             HudDesignSession.activeSelection = emptyList()
             HudDesignSession.clearCommands()
         }
@@ -1174,7 +1161,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     val actionBarGapPx = with(densityObj) { 8.dp.toPx() }
     val libraryChromeVisible = selectedHuds.isEmpty() && !isDragging && !marqueeActive
 
-    fun Modifier.chromeRegion(key: String) = onGloballyPositioned { chromeRects[key] = it.boundsInRoot() }
+    fun Modifier.chromeRegion(key: String) = onGloballyPositioned { coords ->
+        val root = rootCoords[0]?.takeIf { it.isAttached } ?: return@onGloballyPositioned
+        chromeRects[key] = root.localBoundingBoxOf(coords)
+    }
 
     fun Modifier.chromeBlocker(key: String) = this
         .chromeRegion(key)
@@ -1660,6 +1650,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
         modifier = Modifier
             .fillMaxSize()
             .onSizeChanged { rootSize = it }
+            .onGloballyPositioned { rootCoords[0] = it }
             .focusRequester(keyFocusRequester)
             .focusable()
             .onKeyEvent { keyEvent ->
@@ -2592,7 +2583,6 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                                     ShellState.hudDragging = false
                                 }
                                 HudManager.removeHud(actionBarTarget, delete = true)
-                                HudDesignSession.forget(actionBarTarget)
                             }
                         }
                     },
