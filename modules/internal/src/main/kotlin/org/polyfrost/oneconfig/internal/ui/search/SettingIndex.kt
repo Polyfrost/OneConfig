@@ -90,7 +90,7 @@ private fun isAccordionToggle(prop: Property<*>): Boolean {
 
 internal fun isRenderableProperty(prop: Property<*>): Boolean {
     if (prop.getMetadata<Any?>("hidden") != null) return false
-    return (prop.getMetadata<Any?>("visualizer") != null) || prop.canDisplay()
+    return prop.getMetadata<Any?>("visualizer") != null
 }
 
 internal fun nodeGroup(node: Node, key: String, default: String): String {

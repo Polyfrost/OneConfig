@@ -107,6 +107,7 @@ private fun treeDocuments(
     fun walk(node: Node, path: String, category: String, subcategory: String, section: String?) {
         if (!include(node)) return
         if (node.getMetadata<Any?>("hidden") != null) return
+        if (node is Property<*> && !isRenderableProperty(node)) return
 
         val documentScopes = if (node is Property<*> && node.isKeybindProperty()) scopes + SearchScope.Keybinds
         else scopes
