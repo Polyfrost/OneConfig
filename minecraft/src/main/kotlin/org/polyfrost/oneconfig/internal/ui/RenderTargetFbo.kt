@@ -86,7 +86,7 @@ object RenderTargetFbo {
         GlStateManager._viewport(s[0], s[1], s[2], s[3])
         //?} else {
         /*GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, s[4])
-        GL11.glViewport(s[0], s[1], s[2], s[3])
+        GlStateManager.viewport(s[0], s[1], s[2], s[3])
         *///?}
     }
     *///?}
