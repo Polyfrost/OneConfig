@@ -20,6 +20,7 @@ object FontManager {
             flushCache(DEFAULT_KEY)
         }
 
+    @JvmOverloads
     fun register(name: String, tf: Typeface, pixelAligned: Boolean = false) {
         typefaces[name] = tf
         if (pixelAligned) pixelFonts.add(name) else pixelFonts.remove(name)
@@ -36,7 +37,13 @@ object FontManager {
         return true
     }
 
-    fun loadFromResource(path: String) { loadFromResource(path, DEFAULT_KEY) }
+    fun loadFromResource(path: String, name: String = DEFAULT_KEY, loader: ClassLoader? = null): Boolean {
+        return loadFromResource(path, name, loader, pixelAligned = false)
+    }
+
+    fun loadFromResource(path: String) {
+        loadFromResource(path, DEFAULT_KEY)
+    }
 
     fun setDefault(name: String) {
         typefaces[name]?.let { typeface = it }
