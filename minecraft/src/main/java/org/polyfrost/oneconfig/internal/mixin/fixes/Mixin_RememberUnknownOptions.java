@@ -39,6 +39,9 @@ public abstract class Mixin_RememberUnknownOptions {
     @Unique
     private static final String ocfg$SKIPPED_PREFIX = "Skipping bad option:";
 
+    @Unique
+    private static final String ocfg$LEGACY_PACKS_PREFIX = "oneconfig_legacy_";
+
     @Shadow
     private File file;
 
@@ -55,18 +58,25 @@ public abstract class Mixin_RememberUnknownOptions {
     private final Set<String> ocfg$rejectedKeys = new HashSet<>();
 
     @Unique
+    private final Set<String> ocfg$legacyPackKeys = new HashSet<>();
+
+    @Unique
     private int ocfg$dataVersion;
 
     @Inject(method = "load", at = @At("HEAD"))
     private void ocfg$rememberLines(CallbackInfo ci) {
         ocfg$loadedLines.clear();
         ocfg$rejectedKeys.clear();
+        ocfg$legacyPackKeys.clear();
         ocfg$dataVersion = 0;
         if (file == null || !file.exists()) return;
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 ocfg$loadedLines.add(line);
+                if (line.startsWith(ocfg$LEGACY_PACKS_PREFIX)) {
+                    ocfg$legacyPackKeys.add(ocfg$keyOf(line.substring(ocfg$LEGACY_PACKS_PREFIX.length())));
+                }
                 if (line.startsWith("version:")) {
                     try {
                         ocfg$dataVersion = Integer.parseInt(line.substring("version:".length()).trim());
@@ -93,7 +103,10 @@ public abstract class Mixin_RememberUnknownOptions {
         at = @At(value = "INVOKE", target = "Ljava/io/BufferedReader;readLine()Ljava/lang/String;", remap = false)
     )
     private String ocfg$readModernFormats(String line) {
-        return line == null ? null : LegacyOptionsFormat.toLegacyLine(line);
+        if (line == null) return null;
+        if (line.startsWith(ocfg$LEGACY_PACKS_PREFIX)) return line.substring(ocfg$LEGACY_PACKS_PREFIX.length());
+        if (ocfg$legacyPackKeys.contains(ocfg$keyOf(line))) return "";
+        return LegacyOptionsFormat.toLegacyLine(line);
     }
 
     @WrapWithCondition(
@@ -117,6 +130,10 @@ public abstract class Mixin_RememberUnknownOptions {
             String line;
             while ((line = reader.readLine()) != null) {
                 String key = ocfg$keyOf(line);
+                if ("resourcePacks".equals(key) || "incompatibleResourcePacks".equals(key)) {
+                    key = ocfg$LEGACY_PACKS_PREFIX + key;
+                    line = ocfg$LEGACY_PACKS_PREFIX + line;
+                }
                 if (key != null) saved.put(key, LegacyOptionsFormat.toModernLine(line, ocfg$dataVersion));
             }
         } catch (IOException e) {
