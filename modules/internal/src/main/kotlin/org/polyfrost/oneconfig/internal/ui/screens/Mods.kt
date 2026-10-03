@@ -110,12 +110,20 @@ fun Mods() {
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ModCategory.entries.forEach {
-                Chip(
-                    label = it.title,
-                    selected = activeCategory == it,
-                    icon = it.icon,
-                    onClick = { activeCategory = it }
-                )
+                if (it == ModCategory.Favorited || ConfigRegistry.modCardConfigs.any {configData -> configData.category == it.configCategory}) {
+                    Chip(
+                        label = it.title,
+                        selected = activeCategory == it,
+                        icon = it.icon,
+                        onClick = {
+                            activeCategory = if (activeCategory != it) {
+                                it
+                            } else {
+                                ModCategory.All;
+                            }
+                        }
+                    )
+                }
             }
         }
         ModsGrid(activeCategory)
@@ -145,7 +153,6 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
             }
             .sortedWith(modCardOrder())
     }
-
     if (filtered.isEmpty() && category.favoritesOnly) {
         Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("No favorite mods.", color = LocalTheme.current.textColorSecondary)

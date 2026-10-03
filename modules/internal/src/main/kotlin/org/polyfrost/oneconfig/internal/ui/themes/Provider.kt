@@ -52,7 +52,7 @@ private const val MIN_EM_PX = 10f
 private fun scrollbarStyle(theme: UITheme) = ScrollbarStyle(
     minimalHeight = 24.dp,
     thickness = 8.dp,
-    shape = RoundedCornerShape(4.dp),
+    shape = theme.scrollBarShape,
     hoverDurationMillis = 300,
     unhoverColor = theme.textColorSecondary.copy(alpha = 0.40f),
     hoverColor = theme.textColorSecondary.copy(alpha = 0.70f),
@@ -121,7 +121,7 @@ fun Theme(
 
     CompositionLocalProvider(
         LocalTheme provides animated,
-        LocalScrollbarStyle provides remember(animated.textColorSecondary) { scrollbarStyle(animated) },
+        LocalScrollbarStyle provides remember(animated.scrollBarShape) { scrollbarStyle(animated) },
         LocalDensity provides if (pixelGrid) pixelGridDensity(designWidth, designHeight) else LocalDensity.current,
         content = content
     )

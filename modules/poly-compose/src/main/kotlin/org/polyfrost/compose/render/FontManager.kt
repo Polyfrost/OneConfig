@@ -2,13 +2,14 @@ package org.polyfrost.compose.render
 
 import org.jetbrains.skia.Data
 import org.jetbrains.skia.Font
+import org.jetbrains.skia.FontHinting
 import org.jetbrains.skia.FontMgr
-import org.jetbrains.skia.FontStyle
 import org.jetbrains.skia.Typeface
 
 object FontManager {
     private val typefaces  = HashMap<String, Typeface>()
-    private val fontCache  = HashMap<Long, Font>()        // key is name.hashCode() << 32 | sizeAsInt
+    private val fontCache  = HashMap<Long, Font>()
+    private val pixelFonts = HashSet<String>()
 
     private const val DEFAULT_KEY = "__default__"
 
@@ -19,17 +20,18 @@ object FontManager {
             flushCache(DEFAULT_KEY)
         }
 
-    fun register(name: String, tf: Typeface) {
+    fun register(name: String, tf: Typeface, pixelAligned: Boolean = false) {
         typefaces[name] = tf
+        if (pixelAligned) pixelFonts.add(name) else pixelFonts.remove(name)
         flushCache(name)
     }
 
-    fun loadFromResource(path: String, name: String = DEFAULT_KEY, loader: ClassLoader? = null): Boolean {
+    fun loadFromResource(path: String, name: String = DEFAULT_KEY, loader: ClassLoader? = null, pixelAligned: Boolean = false): Boolean {
         val cl = loader ?: FontManager::class.java.classLoader
         val bytes = (cl?.getResourceAsStream(path) ?: FontManager::class.java.getResourceAsStream(path))
             ?.readBytes() ?: return false
         val tf = FontMgr.default.makeFromData(Data.makeFromBytes(bytes)) ?: return false
-        register(name, tf)
+        register(name, tf, pixelAligned)
         if (name == DEFAULT_KEY) typeface = tf
         return true
     }
@@ -44,7 +46,12 @@ object FontManager {
         val cacheKey = (name.hashCode().toLong() shl 32) or (size.toBits().toLong() and 0xFFFFFFFFL)
         return fontCache.getOrPut(cacheKey) {
             val tf = typefaces[name] ?: Typeface.makeEmpty()
-            Font(tf, size)
+            Font(tf, size).apply {
+                if (name !in pixelFonts) {
+                    hinting = FontHinting.NONE
+                    isSubpixel = true
+                }
+            }
         }
     }
 

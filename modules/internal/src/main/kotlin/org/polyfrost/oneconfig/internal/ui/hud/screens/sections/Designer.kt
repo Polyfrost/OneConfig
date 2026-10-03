@@ -247,21 +247,28 @@ fun Designer(hud: Hud? = null) {
                 if (font == Font.Poppins) {
                     val fontName = hud.getPoppinsFontName()
                     val skiaFont = FontManager.getFont(14f * textScale, fontName)
-                    val textW = skiaFont.measureTextWidth(previewText)
-                    val textH = skiaFont.metrics.let { it.descent - it.ascent }
+                    val metrics = skiaFont.metrics
+                    val previewLines = previewText.lines()
+                    val lineHeight = skiaFont.spacing
+                    val textW = previewLines.maxOf { skiaFont.measureTextWidth(it) }
+                    val textH = (previewLines.size - 1) * lineHeight + (metrics.descent - metrics.ascent)
                     Canvas(modifier = Modifier.size((textW / density).dp, (textH / density).dp)) {
                         drawIntoCanvas { canvas ->
                             val paint = Paint().apply { color = textColor.toArgb() }
-                            val baseline = -skiaFont.metrics.ascent
-                            canvas.nativeCanvas.drawString(previewText, 0f, baseline, skiaFont, paint)
-                            if (textUnderline) {
-                                val underlinePos = skiaFont.metrics.underlinePosition ?: (14f * textScale * 0.08f)
-                                val underlineThick = skiaFont.metrics.underlineThickness ?: (14f * textScale * 0.06f)
-                                val linePaint = Paint().apply {
-                                    color = textColor.toArgb()
-                                    strokeWidth = underlineThick
+                            previewLines.forEachIndexed { index, lineText ->
+                                if (lineText.isEmpty()) return@forEachIndexed
+                                val baseline = index * lineHeight - metrics.ascent
+                                canvas.nativeCanvas.drawString(lineText, 0f, baseline, skiaFont, paint)
+                                if (textUnderline) {
+                                    val underlinePos = metrics.underlinePosition ?: (14f * textScale * 0.08f)
+                                    val underlineThick = metrics.underlineThickness ?: (14f * textScale * 0.06f)
+                                    val linePaint = Paint().apply {
+                                        color = textColor.toArgb()
+                                        strokeWidth = underlineThick
+                                    }
+                                    val lineW = skiaFont.measureTextWidth(lineText)
+                                    canvas.nativeCanvas.drawLine(0f, baseline + underlinePos, lineW, baseline + underlinePos, linePaint)
                                 }
-                                canvas.nativeCanvas.drawLine(0f, baseline + underlinePos, textW, baseline + underlinePos, linePaint)
                             }
                         }
                     }
@@ -273,8 +280,8 @@ fun Designer(hud: Hud? = null) {
                         append(previewText)
                     }
                     val scale = textScale
-                    val textW = McFontQueue.measureTextWidth(mcText, scale)
-                    val textH = McFontQueue.measureTextHeight(scale)
+                    val textW = mcText.lines().maxOf { McFontQueue.measureTextWidth(it, scale) }
+                    val textH = mcText.lines().size * McFontQueue.measureTextHeight(scale)
                     Canvas(modifier = Modifier.size((textW / density).dp, (textH / density).dp)) {
                         drawIntoCanvas { canvas ->
                             McFontQueue.renderer?.invoke(
