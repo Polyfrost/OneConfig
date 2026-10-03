@@ -1,11 +1,13 @@
 package org.polyfrost.oneconfig.internal.mixin.fixes;
 
 //? if = 1.8.9 {
-/*import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
+/*import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Options;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindBridgeImpl;
+import org.polyfrost.oneconfig.internal.legacy.LegacyOptionsFormat;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -49,18 +51,36 @@ public abstract class Mixin_RememberUnknownOptions {
     @Unique
     private final Set<String> ocfg$rejectedKeys = new HashSet<>();
 
+    @Unique
+    private int ocfg$dataVersion;
+
     @Inject(method = "load", at = @At("HEAD"))
     private void ocfg$rememberLines(CallbackInfo ci) {
         ocfg$loadedLines.clear();
         ocfg$rejectedKeys.clear();
+        ocfg$dataVersion = 0;
         if (file == null || !file.exists()) return;
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 ocfg$loadedLines.add(line);
+                if (line.startsWith("version:")) {
+                    try {
+                        ocfg$dataVersion = Integer.parseInt(line.substring("version:".length()).trim());
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
             }
         } catch (IOException ignored) {
         }
+    }
+
+    @ModifyExpressionValue(
+        method = "load",
+        at = @At(value = "INVOKE", target = "Ljava/io/BufferedReader;readLine()Ljava/lang/String;", remap = false)
+    )
+    private String ocfg$readModernFormats(String line) {
+        return line == null ? null : LegacyOptionsFormat.toLegacyLine(line);
     }
 
     @WrapWithCondition(
@@ -84,7 +104,7 @@ public abstract class Mixin_RememberUnknownOptions {
             String line;
             while ((line = reader.readLine()) != null) {
                 String key = ocfg$keyOf(line);
-                if (key != null) saved.put(key, line);
+                if (key != null) saved.put(key, LegacyOptionsFormat.toModernLine(line, ocfg$dataVersion));
             }
         } catch (IOException e) {
             return;
