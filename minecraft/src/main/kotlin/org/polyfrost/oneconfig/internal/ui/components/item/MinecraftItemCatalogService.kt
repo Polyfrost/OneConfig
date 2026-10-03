@@ -961,22 +961,22 @@ class MinecraftItemCatalogService : ItemCatalogService {
         }
         //?} else {
         val previousMode = GL11.glGetInteger(GL11.GL_MATRIX_MODE)
-        GL11.glMatrixMode(GL11.GL_PROJECTION)
-        GL11.glPushMatrix()
-        GL11.glLoadIdentity()
-        GL11.glOrtho(0.0, guiWidth.toDouble(), guiHeight.toDouble(), 0.0, 1000.0, 3000.0)
-        GL11.glMatrixMode(GL11.GL_MODELVIEW)
-        GL11.glPushMatrix()
-        GL11.glLoadIdentity()
-        GL11.glTranslated(0.0, 0.0, -2000.0)
+        GlStateManager.matrixMode(GL11.GL_PROJECTION)
+        GlStateManager.pushMatrix()
+        GlStateManager.loadIdentity()
+        GlStateManager.ortho(0.0, guiWidth.toDouble(), guiHeight.toDouble(), 0.0, 1000.0, 3000.0)
+        GlStateManager.matrixMode(GL11.GL_MODELVIEW)
+        GlStateManager.pushMatrix()
+        GlStateManager.loadIdentity()
+        GlStateManager.translatef(0f, 0f, -2000f)
         try {
             render()
         } finally {
-            GL11.glMatrixMode(GL11.GL_MODELVIEW)
-            GL11.glPopMatrix()
-            GL11.glMatrixMode(GL11.GL_PROJECTION)
-            GL11.glPopMatrix()
-            GL11.glMatrixMode(previousMode)
+            GlStateManager.matrixMode(GL11.GL_MODELVIEW)
+            GlStateManager.popMatrix()
+            GlStateManager.matrixMode(GL11.GL_PROJECTION)
+            GlStateManager.popMatrix()
+            GlStateManager.matrixMode(previousMode)
         }
         //?}
     }
