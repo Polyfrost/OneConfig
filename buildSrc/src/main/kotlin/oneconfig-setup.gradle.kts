@@ -128,7 +128,7 @@ fun DependencyHandlerScope.handleApiDep(
     this.handleApiDep(project.provider { dependency }, isMod, transitive)
 }
 
-if (loader != "fabric") {
+if (loader == "neoforge") {
     configurations {
         val localRuntime = create("localRuntime")
         named("runtimeClasspath") { this.extendsFrom(localRuntime) }
@@ -248,7 +248,7 @@ dependencies {
     handleApiDep(versionedCatalog.bundles["nightconfig"])
     handleApiDep(versionedCatalog["snakeyaml"])
     handleApiDep(versionedCatalog["java-objc-bridge"])
-    val hypixelModApiVersion = if (stonecutter.eval(stonecutter.current.version, ">= 26.1")) "1.0.2" else "1.0.1"
+    val hypixelModApiVersion = if (stonecutter.eval(stonecutter.current.version, ">= 26.1") || loader == "ornithe") "1.0.2" else "1.0.1"
     handleApiDep("net.hypixel:mod-api:$hypixelModApiVersion")
     handleApiDep(versionedCatalog["hypixel-data"])
 
@@ -264,6 +264,8 @@ dependencies {
         } else {
             "modImplementation"(hypixelFabricMod) { isTransitive = false }
         }
+    } else if (loader == "ornithe") {
+        "modLocalRuntime"("org.polyfrost:mod-api-fabric:1.0.2+build.3+mc1.8.9") { isTransitive = false }
     }
 
     handleApiDep(versionedCatalog["mixin-squared"])
@@ -289,7 +291,7 @@ dependencies {
 
     val libsCatalog = rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs")
     when (loader) {
-        "fabric" -> "modRuntimeOnly"(libsCatalog.findLibrary("devauth-fabric").get())
+        "fabric", "ornithe" -> "modRuntimeOnly"(libsCatalog.findLibrary("devauth-fabric").get())
         "neoforge" -> "runtimeOnly"(libsCatalog.findLibrary("devauth-neoforge").get())
     }
 
@@ -388,6 +390,15 @@ afterEvaluate {
     }
 }
 
+if (loader != "ornithe") {
+    tasks.withType<PublishToMavenRepository>().configureEach {
+        enabled = false
+    }
+    tasks.withType<PublishToMavenLocal>().configureEach {
+        enabled = false
+    }
+}
+
 tasks.withType<ProcessResources>() {
     val range = if (versionedCatalog.versions.has("minecraft.range")) {
         versionedCatalog.versions.get("minecraft.range").toString()
@@ -405,11 +416,20 @@ tasks.withType<ProcessResources>() {
 
     this.inputs.properties(fabricProperties)
 
-    this.filesMatching("fabric.mod.json") {
+    this.filesMatching(if (loader == "ornithe") "ornithe.mod.json" else "fabric.mod.json") {
         expand(fabricProperties)
     }
+    if (loader == "ornithe") {
+        exclude("fabric.mod.json")
+        eachFile { if (path == "ornithe.mod.json") path = "fabric.mod.json" }
+    } else {
+        exclude("ornithe.mod.json")
+    }
 
-    val mixinCompat = if (stonecutter.eval(stonecutter.current.version, ">= 26.1")) "JAVA_25" else "JAVA_21"
+    val mixinCompat = if (
+        stonecutter.eval(stonecutter.current.version, ">= 26.1") ||
+        stonecutter.eval(stonecutter.current.version, "= 1.8.9")
+    ) "JAVA_25" else "JAVA_21"
     this.inputs.property("mixin_compat", mixinCompat)
     this.filesMatching("mixins.oneconfigv1*.json") {
         filter { line -> line.replace("\"JAVA_21\"", "\"$mixinCompat\"") }
@@ -417,7 +437,10 @@ tasks.withType<ProcessResources>() {
 }
 
 val minJavaVersion = 21
-val javaVersion = if (stonecutter.eval(stonecutter.current.version, ">= 26.1")) {
+val javaVersion = if (
+    stonecutter.eval(stonecutter.current.version, ">= 26.1") ||
+    stonecutter.eval(stonecutter.current.version, "= 1.8.9")
+) {
     25
 } else {
     21

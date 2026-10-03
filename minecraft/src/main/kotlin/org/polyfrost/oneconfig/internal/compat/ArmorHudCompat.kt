@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.compat
 
+//? if > 1.8.9 {
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
@@ -525,3 +526,4 @@ object ArmorHudCompat {
         override fun save() = flush()
     }
 }
+//?}

@@ -37,6 +37,8 @@ import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeSupport;
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
+//? if = 1.8.9
+//import org.polyfrost.oneconfig.internal.legacy.LegacyPanoramaTracker;
 
 public class ScreenPlatformImpl implements ScreenPlatform {
     @Override
@@ -108,9 +110,14 @@ public class ScreenPlatformImpl implements ScreenPlatform {
         // renderFrame and re-enters our renderFrame mixin giving a nested frame and a black flash
         if (frames < 1) Minecraft.getInstance().gui.setScreen((Screen) screen);
         else EventDelay.of(FramebufferRenderEvent.End.class, frames, () -> Minecraft.getInstance().gui.setScreen((Screen) screen));
-        //?} else {
+        //?} elif > 1.8.9 {
         /*if (frames < 1) Minecraft.getInstance().setScreen((Screen) screen);
         else EventDelay.of(FramebufferRenderEvent.End.class, frames, () -> Minecraft.getInstance().setScreen((Screen) screen));
+        *///?} else {
+        /*Object target = (screen == null && Minecraft.getInstance().level == null && current() instanceof ComposeScreen)
+                ? LegacyPanoramaTracker.current() : screen;
+        if (frames < 1) Minecraft.getInstance().setScreen((Screen) target);
+        else EventDelay.of(FramebufferRenderEvent.End.class, frames, () -> Minecraft.getInstance().setScreen((Screen) target));
         *///?}
     }
 

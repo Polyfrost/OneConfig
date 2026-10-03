@@ -3,7 +3,6 @@ package org.polyfrost.oneconfig.internal.mixin.keybind;
 import com.mojang.blaze3d.platform.InputConstants;
 import java.util.LinkedHashSet;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.client.gui.screens.options.controls.KeyBindsList;
 import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindBridgeImpl;
 import org.polyfrost.oneconfig.internal.ui.keybind.OneConfigKeybindRecorder;
@@ -20,8 +19,17 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 //?}
 
+//? if > 1.8.9 {
+import net.minecraft.client.gui.screens.options.controls.KeyBindsList;
+//?}
+
 //? if >= 1.21.10 && < 26.3 {
 /*import net.minecraft.client.Minecraft;
+*///?}
+
+//? if = 1.8.9 {
+/*import org.lwjgl.input.Mouse;
+import org.polyfrost.oneconfig.internal.legacy.KeyCodes;
 *///?}
 
 //? if sdl {
@@ -34,6 +42,7 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform;
 @Mixin(KeyBindsScreen.class)
 public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
     @Shadow public KeyMapping selectedKey;
+    //? if > 1.8.9
     @Shadow private KeyBindsList keyBindsList;
 
     @Unique private final LinkedHashSet<Integer> oneconfig$keys = new LinkedHashSet<>();
@@ -55,14 +64,26 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
     }
     //?} else {
     /*@Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
+    //? if > 1.8.9 {
     private void oneconfig$keyPressed(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
+    //?} else
+    //private void oneconfig$keyPressed(char keyChar, int keyCode, CallbackInfo ci) {
         if (!oneconfig$isOurs()) return;
+        //? if = 1.8.9 {
+        /^keyCode = KeyCodes.fromLegacy(keyCode).getValue();
+        if (keyCode <= 0) {
+            ci.cancel();
+            return;
+        }
+        ^///?}
         if (keyCode == InputConstants.KEY_ESCAPE) {
             oneconfig$recordEscape();
+            //$ if > 1.8.9 'cir.setReturnValue(true);' else 'ci.cancel();'
             cir.setReturnValue(true);
             return;
         }
         oneconfig$recordKey(keyCode);
+        //$ if > 1.8.9 'cir.setReturnValue(true);' else 'ci.cancel();'
         cir.setReturnValue(true);
     }
     *///?}
@@ -76,9 +97,15 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
     }
     //?} else {
     /*@Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
+    //? if > 1.8.9 {
     private void oneconfig$mouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
+    //?} else
+    //private void oneconfig$mouseClicked(int mouseX, int mouseY, int button, CallbackInfo ci) {
         if (!oneconfig$isOurs()) return;
+        //? if = 1.8.9
+        //button = KeyCodes.mouseFromLegacy(button);
         oneconfig$recordMouse(button);
+        //$ if > 1.8.9 'cir.setReturnValue(true);' else 'ci.cancel();'
         cir.setReturnValue(true);
     }
     *///?}
@@ -90,7 +117,10 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
     }
     //?} else {
     /*@Inject(method = "render", at = @At("HEAD"))
+    //? if > 1.8.9 {
     private void oneconfig$poll(CallbackInfo ci) {
+    //?} else
+    //private void oneconfig$poll(int mouseX, int mouseY, float tickDelta, CallbackInfo ci) {
         oneconfig$pollInputs();
     }
     *///?}
@@ -113,10 +143,11 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
         for (int b : oneconfig$mouse) {
             if (b > 0 && b <= Integer.SIZE && (buttons & (1 << (b - 1))) != 0) return;
         }
-        //?} else {
+        //?} elif > 1.8.9 {
         /*long window = Platform.compatibility().windowHandle();
         for (int b : oneconfig$mouse) if (GLFW.glfwGetMouseButton(window, b) != InputConstants.RELEASE) return;
-        *///?}
+        *///?} else
+        //for (int b : oneconfig$mouse) if (Mouse.isButtonDown(KeyCodes.mouseToLegacy(b))) return;
         oneconfig$commit();
     }
 
@@ -174,6 +205,7 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
         MinecraftKeybindBridgeImpl bridge = MinecraftKeybindBridgeImpl.instance();
         if (bridge == null || oneconfig$target == null) return;
         bridge.setPreview(oneconfig$target, oneconfig$toArray(oneconfig$keys), oneconfig$toArray(oneconfig$mouse));
+        //? if > 1.8.9
         if (this.keyBindsList != null) this.keyBindsList.resetMappingAndUpdateButtons();
     }
 
@@ -192,6 +224,7 @@ public class Mixin_OneConfigKeybindRebind implements OneConfigKeybindRecorder {
     @Unique
     private void oneconfig$finishSelection() {
         this.selectedKey = null;
+        //? if > 1.8.9
         if (this.keyBindsList != null) this.keyBindsList.resetMappingAndUpdateButtons();
     }
 

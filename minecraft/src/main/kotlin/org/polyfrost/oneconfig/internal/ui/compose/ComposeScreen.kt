@@ -31,9 +31,7 @@ import java.awt.event.KeyEvent
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineDispatcher
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.screens.Screen
-import net.minecraft.network.chat.CommonComponents
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.skia.FilterTileMode
 import org.jetbrains.skia.ImageFilter
@@ -63,6 +61,22 @@ import net.minecraft.client.input.MouseButtonEvent
 import org.lwjgl.sdl.SDLVideo.*
 //?} else {
 /*import org.lwjgl.glfw.GLFW
+*///?}
+
+//? if > 1.8.9 {
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.network.chat.CommonComponents
+//?}
+
+//? if = 1.8.9 {
+/*import com.mojang.blaze3d.platform.GlStateManager
+import net.minecraft.client.gui.screens.TitleScreen
+import org.lwjgl.input.Keyboard
+import org.lwjgl.input.Mouse
+import org.lwjgl.sdl.SDLKeyboard.SDL_GetKeyFromScancode
+import org.polyfrost.oneconfig.internal.legacy.KeyCodes
+import org.polyfrost.oneconfig.internal.legacy.LegacyPanoramaTracker
+import org.polyfrost.oneconfig.internal.ui.compose.opengl.StoredGLState
 *///?}
 
 private val LOGGER = LogManager.getLogger("OneConfig/Compose")
@@ -117,7 +131,13 @@ private object SystemClipboard : Clipboard {
 @OptIn(InternalComposeUiApi::class)
 abstract class ComposeScreen(
     protected val renderMode: RenderMode = RenderMode.ON_DEMAND,
+//~ if = 1.8.9 '(CommonComponents.EMPTY)' -> '()'
 ) : Screen(CommonComponents.EMPTY) {
+    //? if = 1.8.9 {
+    /*private var panorama: TitleScreen? = null
+    private val panoramaGlState = StoredGLState(330)
+    *///?}
+
     enum class RenderMode {
         CONTINUOUS,
 
@@ -358,6 +378,15 @@ abstract class ComposeScreen(
             reportUnavailableAndClose()
             return
         }
+        //? if = 1.8.9
+        //Keyboard.enableRepeatEvents(true)
+
+        //? if = 1.8.9 {
+        /*panorama = Platform.screen().current<Any?>() as? TitleScreen ?: LegacyPanoramaTracker.current()
+        panorama?.width = width
+        panorama?.height = height
+        *///?}
+
         if (!hadScene) sceneDirty = true
         awaitingFirstFrame = true
         lastPointer = null
@@ -518,11 +547,22 @@ abstract class ComposeScreen(
     ) {
         this.width = width
         this.height = height
+        //? if = 1.8.9 {
+        /*panorama?.width = width
+        panorama?.height = height
+        *///?}
         syncSceneMetrics()
     }
 
+    //? if = 1.8.9 {
+    /*override fun tick() {
+        panorama?.tick()
+    }
+    *///?}
+
     override fun isPauseScreen(): Boolean = false
 
+    //? if > 1.8.9 {
     //~ if >= 26.1 'renderBackground' -> 'extractBackground'
     override fun extractBackground(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
         if (client.level == null) {
@@ -530,6 +570,7 @@ abstract class ComposeScreen(
             extractPanorama(ctx, tickDelta)
         }
     }
+    //?}
 
     protected open val retainsScene: Boolean get() = false
 
@@ -546,12 +587,18 @@ abstract class ComposeScreen(
         SkiaCtx.clearComposeFrame()
     }
 
+    //? if > 1.8.9 {
     override fun onClose() {
         ComposeSceneContextImpl.resetPointerIcon()
         releaseScene()
     }
+    //?}
 
     override fun removed() {
+        //? if = 1.8.9 {
+        /*Keyboard.enableRepeatEvents(false)
+        panorama = null
+        *///?}
         showing = false
         sceneContextOrNull?.sync()
         ComposeSceneContextImpl.resetPointerIcon()
@@ -559,11 +606,30 @@ abstract class ComposeScreen(
         super.removed()
     }
 
+    //? if > 1.8.9 {
     //~ if >= 26.1 'render' -> 'extractRenderState'
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
+    //?} else
+    //override fun render(mouseX: Int, mouseY: Int, tickDelta: Float) {
         if (Platform.screen().current<Any?>() !== this) return
+        //? if = 1.8.9 {
+        /*if (client.level == null) {
+            panorama?.let {
+                panoramaGlState.capture()
+                try {
+                    GlStateManager.disableAlphaTest()
+                    it.drawBackground(mouseX, mouseY, tickDelta)
+                    GlStateManager.enableAlphaTest()
+                    fillGradient(0, 0, width, height, -2130706433, 16777215)
+                    fillGradient(0, 0, width, height, 0, Int.MIN_VALUE)
+                } finally {
+                    panoramaGlState.restore()
+                }
+            }
+        }
+        *///?}
 
-        //? if < 1.21.8
+        //? if < 1.21.8 && > 1.8.9
         //renderBackground(ctx, mouseX, mouseY, tickDelta)
 
         if (scenePoisoned) {
@@ -613,12 +679,14 @@ abstract class ComposeScreen(
         }
         if (ItemCatalog.renderIcons()) sceneDirty = true
 
+        //? if > 1.8.9 {
         val debugOverlayOnTop = DebugOverlayOffscreen.shouldSuppressVanilla()
         if (renderMode == RenderMode.ON_DEMAND && !sceneDirty && !awaitingFirstFrame &&
             SkiaCtx.isDeferredComposeBackend && !debugOverlayOnTop
         ) {
             if (SkiaCtx.blitComposeCached(ctx)) return
         }
+        //?}
 
         if (liveScene() == null) return
 
@@ -657,56 +725,113 @@ abstract class ComposeScreen(
         sceneDirty = false
         awaitingFirstFrame = false
         when {
+            //? if > 1.8.9
             SkiaCtx.isDeferredComposeBackend -> SkiaCtx.drawComposeBlit(ctx, renderBlock)
             SkiaCtx.isVulkanMode -> SkiaCtx.queueDraw(renderBlock) // non-deferred Vulkan draws straight to the main RT
             else -> SkiaCtx.submitComposeFrame(wasDirty, renderBlock) // GL uses a cached FBO and re-renders only when dirty
         }
     }
 
+    //? if = 1.8.9 {
+    /*override fun handleMouse() {
+        val wheel = Mouse.getEventDWheel()
+        if (wheel != 0) {
+            mouseScrolled(wheel)
+        }
+
+        super.handleMouse()
+    }
+
+    override fun handleKeyboard() {
+        fun getModifiers(): Int {
+            var m = 0
+            if (Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL)) m = m or InputConstants.MOD_CONTROL
+            if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) m = m or InputConstants.MOD_SHIFT
+            if (Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU)) m = m or InputConstants.MOD_ALT
+            if (Keyboard.isKeyDown(Keyboard.KEY_LMETA) || Keyboard.isKeyDown(Keyboard.KEY_RMETA)) m = m or InputConstants.MOD_SUPER
+            return m
+        }
+
+        val char = Keyboard.getEventCharacter()
+        val legacyKey = Keyboard.getEventKey()
+        val key = if (legacyKey > 0) KeyCodes.fromLegacy(legacyKey).value else -1
+        val modifiers = getModifiers()
+
+        if (Keyboard.getEventKeyState()) {
+            val keyHandled = if (key >= 0) keyPressed(key, modifiers) else false
+            val typedHandled = if (char != Keyboard.CHAR_NONE.toChar()) {
+                charTyped(char, modifiers)
+            } else false
+
+            if (key >= 0 && !keyHandled && !typedHandled) {
+                super.keyPressed(char, legacyKey)
+            }
+        } else if (key >= 0) {
+            keyReleased(key, modifiers)
+        }
+        client.handleGuiKeyBindings()
+    }
+    *///?}
+
     //? >= 1.21.10 {
     override fun mouseClicked(event: MouseButtonEvent, doubleClick: Boolean): Boolean {
         val button = event.button()
-    //? } else {
+    //?} elif > 1.8.9 {
     /*override fun mouseClicked(x: Double, y: Double, button: Int): Boolean {
-    *///? }
+    *///?} else
+    //override fun mouseClicked(x: Int, y: Int, button: Int) {
+        //~ if = 1.8.9 'button' -> 'KeyCodes.mouseFromLegacy(button)' {
         if (KeybindRecordingBus.consumeMouse(button, true) || handleMouseClicked(button)) {
             consumedButtons += button
+            //$ if > 1.8.9 'return true' else 'return'
             return true
         }
         sendMouseButtonEvent(PointerEventType.Press, button)
+        //~}
 
-        //? >= 1.21.10 {
+        //? if >= 1.21.10 {
         return super.mouseClicked(event, doubleClick)
-        //? } else {
+        //?} elif > 1.8.9 {
         /*return super.mouseClicked(x, y, button)
-        *///? }
+        *///?} else
+        //super.mouseClicked(x, y, button)
     }
 
     //? >= 1.21.10 {
     override fun mouseReleased(event: MouseButtonEvent): Boolean {
         val button = event.button()
-    //? } else {
+    //?} elif > 1.8.9 {
     /*override fun mouseReleased(x: Double, y: Double, button: Int): Boolean {
-    *///? }
+    *///?} else
+    //override fun mouseReleased(x: Int, y: Int, button: Int) {
+        //~ if = 1.8.9 'button' -> 'KeyCodes.mouseFromLegacy(button)' {
         val recordingConsumed = KeybindRecordingBus.consumeMouse(button, false)
         val pressConsumed = consumedButtons.remove(button)
         if (!recordingConsumed && !pressConsumed) {
             sendMouseButtonEvent(PointerEventType.Release, button)
         }
+        //~}
 
         //? if >= 1.21.10 {
         return super.mouseReleased(event)
-        //?} else {
+        //?} elif > 1.8.9 {
         /*return super.mouseReleased(x, y, button)
-        *///?}
+        *///?} else
+        //super.mouseReleased(x, y, button)
     }
 
     protected open val scrollSpeed: Float get() = 1f
 
+    //? if > 1.8.9 {
     override fun mouseScrolled(x: Double, y: Double, scrollX: Double, scrollY: Double): Boolean {
         sendScrollEvent(scrollX, scrollY)
         return super.mouseScrolled(x, y, scrollX, scrollY)
     }
+    //?} else {
+    /*private fun mouseScrolled(scrollY: Int) {
+        sendScrollEvent(0.0, scrollY.toDouble())
+    }
+    *///?}
 
     protected open fun handleMouseClicked(button: Int): Boolean = false
 
@@ -738,6 +863,7 @@ abstract class ComposeScreen(
             it.sendPointerEvent(
                 eventType = PointerEventType.Scroll,
                 position = position,
+                //~ if = 1.8.9 '(-scrollX * scrollScale).toFloat()' -> '0f'
                 scrollDelta = Offset((-scrollX * scrollScale).toFloat(), (-scrollY * scrollScale).toFloat()),
             )
         }
@@ -751,20 +877,24 @@ abstract class ComposeScreen(
         val modifiers = 0 //dropped from the event in 26.1 because glfw no longer passes them
         //? } else
         //val modifiers = event.modifiers
-    //? } else {
+    //?} elif > 1.8.9 {
     /*override fun charTyped(char: Char, modifiers: Int): Boolean {
        val codepoint = char.code
-    *///? }
+    *///?} else {
+    /*private fun charTyped(char: Char, modifiers: Int): Boolean {
+        val codepoint = char.code
+    *///?}
         val handled = sendCharacterEvent(char, codepoint, modifiers)
-        //? >= 1.21.10 {
+        //? if >= 1.21.10 {
         return handled || super.charTyped(event)
-        //? } else {
+        //?} elif > 1.8.9 {
         /*return handled || super.charTyped(char, modifiers)
-        *///? }
+        *///?} else
+        //return handled
     }
 
     fun Int.ctrlDown() = this and InputConstants.MOD_CONTROL != 0
-    //? if >= 1.21.9 {
+    //? if >= 1.21.9 || = 1.8.9 {
     fun Int.shiftDown() = this and InputConstants.MOD_SHIFT != 0
     fun Int.altDown() = this and InputConstants.MOD_ALT != 0
     fun Int.superDown() = this and InputConstants.MOD_SUPER != 0
@@ -786,16 +916,21 @@ abstract class ComposeScreen(
         val shortcutKey = event.shortcutKey()
         val modifiers = event.modifiers
     //?} else {
-    /*override fun keyPressed(key: Int, scanCode: Int, modifiers: Int): Boolean {
+    /*//? if > 1.8.9 {
+    override fun keyPressed(key: Int, scanCode: Int, modifiers: Int): Boolean {
+    //?} else
+    //private fun keyPressed(key: Int, modifiers: Int): Boolean {
         val bindingKey = key
+        //~ if = 1.8.9 '= key' -> '= SDL_GetKeyFromScancode(key, 0, true)'
         val shortcutKey = key
     *///?}
         val handled = dispatchKeyPressed(bindingKey, shortcutKey, modifiers)
         //? if >= 1.21.10 {
         return handled || super.keyPressed(event)
-        //?} else {
+        //?} elif > 1.8.9 {
         /*return handled || super.keyPressed(key, scanCode, modifiers)
-        *///?}
+        *///?} else
+        //return handled
     }
 
     //? if >= 1.21.10 {
@@ -805,16 +940,21 @@ abstract class ComposeScreen(
         val shortcutKey = event.shortcutKey()
         val modifiers = event.modifiers
     //?} else {
-    /*override fun keyReleased(key: Int, scanCode: Int, modifiers: Int): Boolean {
+    /*//? if > 1.8.9 {
+    override fun keyReleased(key: Int, scanCode: Int, modifiers: Int): Boolean {
+    //?} else
+    //private fun keyReleased(key: Int, modifiers: Int): Boolean {
         val bindingKey = key
+        //~ if = 1.8.9 '= key' -> '= SDL_GetKeyFromScancode(key, 0, true)'
         val shortcutKey = key
     *///?}
         val handled = !consumedKeys.remove(bindingKey) && sendKeyReleasedEvent(bindingKey, shortcutKey, modifiers)
         //? if >= 1.21.10 {
         return handled || super.keyReleased(event)
-        //?} else {
+        //?} elif > 1.8.9 {
         /*return handled || super.keyReleased(key, scanCode, modifiers)
-        *///?}
+        *///?} else
+        //return handled
     }
 
     private fun dispatchKeyPressed(bindingKey: Int, shortcutKey: Int, modifiers: Int): Boolean {
@@ -971,8 +1111,13 @@ abstract class ComposeScreen(
     }
 
     protected fun pointerPosition(): Offset {
+        //? if > 1.8.9 {
         val mouse = client.mouseHandler
         return Offset(mouse.xpos().toFloat(), mouse.ypos().toFloat())
+        //?} else {
+        /*val pixelRatio = Platform.screen().pixelRatio()
+        return Offset(Mouse.getX() / pixelRatio, (Platform.screen().viewportHeight() - Mouse.getY() - 1) / pixelRatio)
+        *///?}
     }
 
     private val dummyComponent by lazy { object : Component() {} }

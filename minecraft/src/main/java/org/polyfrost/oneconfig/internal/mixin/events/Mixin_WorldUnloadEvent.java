@@ -43,12 +43,14 @@ public class Mixin_WorldUnloadEvent {
     @Shadow public ClientLevel level;
 
     @Inject(
+            //~ if = 1.8.9 'setLevel' -> 'setWorld(Lnet/minecraft/client/multiplayer/ClientLevel;Ljava/lang/String;)V'
             method = "setLevel"
             , at = @At("HEAD"))
     private void onWorldUnloadCallback(CallbackInfo ci) {
         oneconfig$postWorldUnload();
     }
 
+    //? if > 1.8.9 {
     //? if >= 1.21.11 {
     @Inject(
             method = "disconnect(Lnet/minecraft/client/gui/screens/Screen;ZZ)V"
@@ -68,6 +70,7 @@ public class Mixin_WorldUnloadEvent {
     private void onClearClientLevelCallback(CallbackInfo ci) {
         oneconfig$postWorldUnload();
     }
+    //?}
 
     @Unique
     private void oneconfig$postWorldUnload() {

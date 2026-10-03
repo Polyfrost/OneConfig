@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
+//? if > 1.8.9 {
 import org.polyfrost.oneconfig.internal.OneConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -34,3 +35,10 @@ public class Mixin_HudPrepareEvent {
         OneConfig.prepareHud();
     }
 }
+//?} else {
+/*import net.minecraft.SharedConstants;
+import org.spongepowered.asm.mixin.Mixin;
+
+@Mixin(SharedConstants.class)
+public class Mixin_HudPrepareEvent {}
+*///?}

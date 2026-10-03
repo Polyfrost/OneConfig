@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.internal.mixin.skia;
 
-import net.minecraft.client.gui.screens.LoadingOverlay;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposePreloader;
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import org.spongepowered.asm.mixin.Final;
@@ -15,12 +14,26 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.util.Util;
 //?}
 
-//? if < 1.21.11 {
+//? if > 1.8.9 {
+import net.minecraft.client.gui.screens.LoadingOverlay;
+//?}
+
+//? if < 1.21.11 && > 1.8.9 {
 /*import net.minecraft.Util;
 *///?}
 
+//? if = 1.8.9 {
+/*import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.TitleScreen;
+import org.lwjgl.opengl.Display;
+*///?}
+
+//~ if = 1.8.9 'LoadingOverlay' -> 'Minecraft'
 @Mixin(LoadingOverlay.class)
 public class Mixin_StartupWarmupOverlay {
+    //? if > 1.8.9 {
     @Shadow
     @Final
     private boolean fadeIn;
@@ -30,6 +43,7 @@ public class Mixin_StartupWarmupOverlay {
 
     @Unique
     private boolean oneconfig$holdingFade;
+    //?}
 
     @Unique
     private long oneconfig$holdStartedNanos;
@@ -37,6 +51,7 @@ public class Mixin_StartupWarmupOverlay {
     @Unique
     private static final long ONECONFIG_HOLD_TIMEOUT_NANOS = 15_000_000_000L;
 
+    //? if > 1.8.9 {
     //~ if >= 26.1 'render' -> 'extractRenderState'
     @Inject(method = "extractRenderState", at = @At("HEAD"))
     private void oneconfig$holdStartupReveal(CallbackInfo ci) {
@@ -58,4 +73,26 @@ public class Mixin_StartupWarmupOverlay {
         }
         this.oneconfig$holdingFade = hold;
     }
+    //?} else {
+    /*@WrapOperation(method = "updateDisplay", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/Display;update()V"))
+    private void oneconfig$holdStartupSplash(Operation<Void> original) {
+        Minecraft minecraft = (Minecraft) (Object) this;
+        // Fullscreen startup presents frames before Skia is initialized, which must not cancel the warm-up
+        boolean hold = minecraft.screen instanceof TitleScreen && !ComposePreloader.INSTANCE.getStopped() && SkiaCtx.INSTANCE.isReady();
+        if (hold) {
+            long now = System.nanoTime();
+            if (this.oneconfig$holdStartedNanos == 0L) this.oneconfig$holdStartedNanos = now;
+            if (now - this.oneconfig$holdStartedNanos >= ONECONFIG_HOLD_TIMEOUT_NANOS) {
+                ComposePreloader.INSTANCE.fail("startup held for more than 15 seconds", null);
+                hold = false;
+            }
+        }
+        if (hold) {
+            Display.processMessages();
+        } else {
+            this.oneconfig$holdStartedNanos = 0L;
+            original.call();
+        }
+    }
+    *///?}
 }

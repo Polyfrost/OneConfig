@@ -4,7 +4,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import net.fabricmc.loader.api.FabricLoader;
 import net.kyori.adventure.text.Component;
-import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
 import org.polyfrost.oneconfig.api.platform.v1.CompatibilityPlatform;
 import org.polyfrost.oneconfig.api.platform.v1.Keys;
@@ -13,6 +12,10 @@ import org.polyfrost.oneconfig.api.platform.v1.Options;
 
 //? if >= 1.21.4 {
 import net.kyori.adventure.platform.modcommon.MinecraftClientAudiences;
+//?}
+
+//? if > 1.8.9 {
+import net.minecraft.SharedConstants;
 //?}
 
 //? if < 1.21.4 {
@@ -39,7 +42,7 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
 
     @Override
     public Set<ModInfo> getMods() {
-        //? fabric {
+        //? fabric || ornithe {
 
         return FabricLoader.getInstance().getAllMods().stream()
                 .map(mod -> {
@@ -74,13 +77,16 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
 
     @Override
     public String version() {
+        //? if > 1.8.9 {
         //~ if >= 1.21.8 '.getName()' -> '.name()'
         return SharedConstants.getCurrentVersion().name();
+        //?} else
+        //return FabricLoader.getInstance().getModContainer("minecraft").orElseThrow().getMetadata().getVersion().getFriendlyString();
     }
 
     @Override
     public String loader() {
-        //? fabric
+        //? fabric || ornithe
         return "fabric";
         //? neoforge
         //return "neoforge";

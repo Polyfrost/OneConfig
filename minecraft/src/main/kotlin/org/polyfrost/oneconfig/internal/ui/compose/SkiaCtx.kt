@@ -1,11 +1,8 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
 import com.mojang.blaze3d.pipeline.RenderTarget
-import com.mojang.blaze3d.pipeline.TextureTarget
-import com.mojang.blaze3d.systems.RenderSystem
 import java.util.concurrent.CopyOnWriteArrayList
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.renderer.texture.AbstractTexture
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.Color
@@ -45,6 +42,12 @@ import net.minecraft.client.renderer.RenderPipelines
 import net.minecraft.resources.Identifier
 //?}
 
+//? if > 1.8.9 {
+import com.mojang.blaze3d.pipeline.TextureTarget
+import com.mojang.blaze3d.systems.RenderSystem
+import net.minecraft.client.gui.GuiGraphicsExtractor
+//?}
+
 //? if < 26.1 {
 /*import org.lwjgl.opengl.GL30
 *///?}
@@ -69,11 +72,14 @@ import com.mojang.blaze3d.vertex.VertexFormat
 
 //? if < 1.21.5 {
 /*import com.mojang.blaze3d.platform.GlStateManager
-import net.minecraft.resources.ResourceLocation
 *///?}
 
 //? if < 1.21.4 {
 /*import net.minecraft.server.packs.resources.ResourceManager
+*///?}
+
+//? if < 1.21.5 && > 1.8.9 {
+/*import net.minecraft.resources.ResourceLocation
 *///?}
 
 object SkiaCtx {
@@ -115,11 +121,11 @@ object SkiaCtx {
 
     private val gl = StoredGLState(330)
 
-    private var hudTarget: TextureTarget? = null
+    private var hudTarget: RenderTarget? = null
     private var hudSurface: Surface? = null
     private var hudBrt: BackendRenderTarget? = null
 
-    private var composeTarget: TextureTarget? = null
+    private var composeTarget: RenderTarget? = null
     private var composeSurface: Surface? = null
     private var composeBrt: BackendRenderTarget? = null
 
@@ -210,7 +216,7 @@ object SkiaCtx {
             this.textureView = null
         }
     }
-    //? } else {
+    //?} elif > 1.8.9 {
     /*private val HUD_TEXTURE_LOC = ResourceLocation.fromNamespaceAndPath("oneconfig", "hud_skia")
     private val COMPOSE_TEXTURE_LOC = ResourceLocation.fromNamespaceAndPath("oneconfig", "compose_skia")
     private var hudTextureWrapper: HudGlTexture? = null
@@ -365,6 +371,8 @@ object SkiaCtx {
         if (isVulkanMode || !this::directContext.isInitialized) return block()
         gl.capture()
         directContext.resetGLAll()
+        //? if = 1.8.9
+        //GL11.glDisable(GL11.GL_ALPHA_TEST)
         try {
             return block()
         } finally {
@@ -384,6 +392,8 @@ object SkiaCtx {
             } else {
                 gl.capture()
                 directContext.resetGLAll()
+                //? if = 1.8.9
+                //GL11.glDisable(GL11.GL_ALPHA_TEST)
             }
 
             warmups.forEach { it() }
@@ -414,6 +424,7 @@ object SkiaCtx {
         hudNeedsSamplingTransition = true
     }
 
+    //? if > 1.8.9 {
     @Volatile
     private var blurSnapshotRequested = false
 
@@ -489,6 +500,7 @@ object SkiaCtx {
         }
         *///? }
     }
+    //?}
 
     @Volatile
     @JvmField
@@ -508,6 +520,7 @@ object SkiaCtx {
     }
     *///? }
 
+    //? if > 1.8.9 {
     fun blitHud(guiGraphics: GuiGraphicsExtractor) {
         val rt = hudTarget ?: return
         val w = rt.width
@@ -645,6 +658,69 @@ object SkiaCtx {
         }
         *///? }
     }
+    //?} else {
+    /*fun blitHud() {
+        val rt = hudTarget ?: return
+        val w = rt.width
+        val h = rt.height
+
+        // Everything below goes through GlStateManager, so its cache is the state to put back. glGet/glIsEnabled
+        // would make Mesa's glthread wait on the driver for most of these.
+        val depthTest = GlStateManager.DEPTH.state.enabled
+        val depthMask = GlStateManager.DEPTH.mask
+        val alphaTest = GlStateManager.ALPHA_TEST.state.enabled
+        val lighting = GlStateManager.LIGHTING.enabled
+        val unit = GlStateManager.TEXTURES[GlStateManager.texture]
+        val texture2d = unit.state.enabled
+        val texture = unit.texture
+        val blendState = GlStateManager.BLEND
+        val blend = blendState.state.enabled
+        val srcRgb = blendState.sfactorRGB
+        val dstRgb = blendState.dfactorRGB
+        val srcAlpha = blendState.sfactorAlpha
+        val dstAlpha = blendState.dfactorAlpha
+        val c = GlStateManager.COLOR
+        val color = floatArrayOf(c.r, c.g, c.b, c.a)
+        GL11.glPushAttrib(GL11.GL_VIEWPORT_BIT)
+        val fbo = GL11.glGetInteger(GL30.GL_FRAMEBUFFER_BINDING)
+        try {
+            GlStateManager.enableBlend()
+            GlStateManager.blendFuncSeparate(
+                GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA,
+                GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA,
+            )
+            if (hudNeedsSamplingTransition) {
+                vulkanService?.transitionOffscreenForSampling(rt)
+                hudNeedsSamplingTransition = false
+                hudRealIsGeneral = true
+            }
+            GlStateManager.matrixMode(GL11.GL_PROJECTION)
+            GlStateManager.pushMatrix()
+            GlStateManager.matrixMode(GL11.GL_MODELVIEW)
+            GlStateManager.pushMatrix()
+            try {
+                rt.draw(w, h, false)
+            } finally {
+                GlStateManager.matrixMode(GL11.GL_PROJECTION)
+                GlStateManager.popMatrix()
+                GlStateManager.matrixMode(GL11.GL_MODELVIEW)
+                GlStateManager.popMatrix()
+            }
+        } finally {
+            if (depthTest) GlStateManager.enableDepthTest() else GlStateManager.disableDepthTest()
+            GlStateManager.depthMask(depthMask)
+            if (alphaTest) GlStateManager.enableAlphaTest() else GlStateManager.disableAlphaTest()
+            if (lighting) GlStateManager.enableLighting() else GlStateManager.disableLighting()
+            if (texture2d) GlStateManager.enableTexture() else GlStateManager.disableTexture()
+            if (blend) GlStateManager.enableBlend() else GlStateManager.disableBlend()
+            GlStateManager.blendFuncSeparate(srcRgb, dstRgb, srcAlpha, dstAlpha)
+            GlStateManager.bindTexture(texture)
+            GlStateManager.color4f(color[0], color[1], color[2], color[3])
+            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, fbo)
+            GL11.glPopAttrib()
+        }
+    }
+    *///?}
 
     fun draw() {
         if (!this::directContext.isInitialized) return
@@ -671,6 +747,8 @@ object SkiaCtx {
             } else {
                 gl.capture()
                 directContext.resetGLAll()
+                //? if = 1.8.9
+                //GL11.glDisable(GL11.GL_ALPHA_TEST)
                 GL11.glViewport(0, 0, mainSurface.width, mainSurface.height)
                 GL11.glDisable(GL11.GL_SCISSOR_TEST)
             }
@@ -740,6 +818,8 @@ object SkiaCtx {
             } else {
                 gl.capture()
                 directContext.resetGLAll()
+                //? if = 1.8.9
+                //GL11.glDisable(GL11.GL_ALPHA_TEST)
                 GL11.glViewport(0, 0, surface.width, surface.height)
                 GL11.glDisable(GL11.GL_SCISSOR_TEST)
             }
@@ -781,9 +861,10 @@ object SkiaCtx {
         RenderSystem.getDevice().deviceInfo.limits().maxTextureSize()
         //? } else if >= 1.21.5 {
         /*RenderSystem.getDevice().maxTextureSize
-        *///? } else {
+        *///? } else if > 1.8.9 {
         /*RenderSystem.maxSupportedTextureSize()
-        *///? }
+        *///? } else
+        //Minecraft.getMaxTextureSize()
 
     private var maxTextureSizeCache = 0
 
@@ -837,9 +918,10 @@ object SkiaCtx {
                 /*TextureTarget(null, w, h, true)
                 *///? } else if >= 1.21.4 {
                 // TextureTarget(w, h, true)
-                //? } else {
+                //? } elif > 1.8.9 {
                 /*TextureTarget(w, h, true, Minecraft.ON_OSX)
-                *///? }
+                *///? } else
+                //RenderTarget(w, h, false)
             } catch (e: Throwable) {
                 onAllocFailure(HUD_TARGET, w, h, e)
                 return null
@@ -876,6 +958,7 @@ object SkiaCtx {
             hudBrt = brt
             hudSurface = Surface.makeFromBackendRenderTarget(
                 directContext, brt,
+                //~ if = 1.8.9 'SurfaceOrigin.TOP_LEFT' -> 'SurfaceOrigin.BOTTOM_LEFT'
                 SurfaceOrigin.TOP_LEFT,
                 colorFmt,
                 ColorSpace.sRGB,
@@ -938,9 +1021,10 @@ object SkiaCtx {
                 /*TextureTarget(null, w, h, true)
                 *///? } else if >= 1.21.4 {
                 // TextureTarget(w, h, true)
-                //? } else {
+                //?} elif > 1.8.9 {
                 /*TextureTarget(w, h, true, Minecraft.ON_OSX)
-                *///? }
+                *///?} else
+                //RenderTarget(w, h, false)
             } catch (e: Throwable) {
                 onAllocFailure(COMPOSE_TARGET, w, h, e)
                 return null
@@ -1023,7 +1107,7 @@ object SkiaCtx {
         if (existing != null && existing.width == w && existing.height == h) return existing
 
         glSurface?.close(); glBrt?.close()
-        //? if >= 26.1 {
+        //? if >= 26.1 || = 1.8.9 {
         //? if >= 26.2 {
         val target = client.gameRenderer.mainRenderTarget()
         //? } else {

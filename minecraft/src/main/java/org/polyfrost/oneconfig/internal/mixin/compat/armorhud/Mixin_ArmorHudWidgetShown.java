@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.armorhud;
 
+//? if > 1.8.9 {
 import org.polyfrost.oneconfig.internal.compat.ArmorHudCompat;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -21,3 +22,4 @@ public class Mixin_ArmorHudWidgetShown {
         }
     }
 }
+//?}

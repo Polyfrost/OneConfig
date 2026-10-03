@@ -3,6 +3,7 @@ allprojects {
     repositories {
         mavenCentral()
         maven("https://maven.fabricmc.net/releases")
+        maven("https://maven.ornithemc.net/releases")
     }
 }
 

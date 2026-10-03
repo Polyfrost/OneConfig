@@ -11,7 +11,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.pow
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -45,7 +44,11 @@ import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 
-//? if < 1.21.11 {
+//? if > 1.8.9 {
+import net.minecraft.client.gui.GuiGraphicsExtractor
+//?}
+
+//? if < 1.21.11 && > 1.8.9 {
 /*import org.lwjgl.glfw.GLFW
 *///?}
 
@@ -396,7 +399,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
     override fun handleMouseClicked(button: Int): Boolean {
         if (KeybindRecordingBus.isRecording) return false
         // Only side and extra mouse buttons can trigger the OneConfig keybind
-        //~ if < 1.21.11 'InputConstants.MOUSE_BUTTON_4' -> 'GLFW.GLFW_MOUSE_BUTTON_4'
+        //~ if < 1.21.11 && > 1.8.9 'InputConstants.MOUSE_BUTTON_4' -> 'GLFW.GLFW_MOUSE_BUTTON_4'
         if (button >= InputConstants.MOUSE_BUTTON_4 &&
             KeybindManager.isTriggeredByMouse(OneConfigConfig.oneConfigKeybind, button)
         ) {
@@ -404,14 +407,14 @@ class OneConfigUIScreen @JvmOverloads constructor(
         }
         if (!closeRequested && LocalNavController.isReady) {
             when (button) {
-                //~ if < 1.21.11 'InputConstants.MOUSE_BUTTON_4' -> 'GLFW.GLFW_MOUSE_BUTTON_4'
+                //~ if < 1.21.11 && > 1.8.9 'InputConstants.MOUSE_BUTTON_4' -> 'GLFW.GLFW_MOUSE_BUTTON_4'
                 InputConstants.MOUSE_BUTTON_4 -> {
                     if (KeybindManager.hasTriggeredMouseBind(button)) return true
                     UiSounds.play(UiSoundEvent.CLICK)
                     LocalNavController.wrapper.back()
                     return true
                 }
-                //~ if < 1.21.11 'InputConstants.MOUSE_BUTTON_5' -> 'GLFW.GLFW_MOUSE_BUTTON_5'
+                //~ if < 1.21.11 && > 1.8.9 'InputConstants.MOUSE_BUTTON_5' -> 'GLFW.GLFW_MOUSE_BUTTON_5'
                 InputConstants.MOUSE_BUTTON_5 -> {
                     if (KeybindManager.hasTriggeredMouseBind(button)) return true
                     UiSounds.play(UiSoundEvent.CLICK)
@@ -423,14 +426,17 @@ class OneConfigUIScreen @JvmOverloads constructor(
         return false
     }
 
+    //? if > 1.8.9 {
     //~ if >= 26.1 'render' -> 'extractRenderState'
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
+    //?} else
+    //override fun render(mouseX: Int, mouseY: Int, tickDelta: Float) {
         // tcdcommons-based screens like Better Statistics Screen render their parent by hand each frame
         // and that would queue a fullscreen blur which smears over the popup so bail unless we are current
         if (Platform.screen().current<Any?>() !== this) return
         if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= closeAnimationMs) {
             markClosed()
-            //? if < 1.21.8
+            //? if < 1.21.8 && > 1.8.9
             //renderBackground(ctx, mouseX, mouseY, tickDelta)
             Platform.screen().close()
             //? if >= 1.21.8 {
@@ -440,6 +446,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
             //?} else {
             /*if (closeAnimationMs <= 0L) {
                 SkiaCtx.discardComposeFrame()
+                //~ if = 1.8.9 '(ctx)' -> '()'
                 OneConfig.render(ctx)
             }
             *///?}
@@ -465,8 +472,11 @@ class OneConfigUIScreen @JvmOverloads constructor(
             //? }
             BlurRenderer.drawBlur(fullscreenBlurRadius())
         }
+        //? if > 1.8.9 {
         //~ if >= 26.1 'render' -> 'extractRenderState'
         super.extractRenderState(ctx, mouseX, mouseY, tickDelta)
+        //?} else
+        //super.render(mouseX, mouseY, tickDelta)
     }
 
     private fun fullscreenBlurRadius(): Float {

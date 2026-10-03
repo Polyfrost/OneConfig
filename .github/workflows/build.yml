@@ -60,7 +60,7 @@ jobs:
           build-scan-terms-of-use-url: "https://gradle.com/terms-of-service"
           build-scan-terms-of-use-agree: "yes"
           validate-wrappers: true
-          cache-read-only: ${{ github.ref != 'refs/heads/v1' }}
+          cache-read-only: ${{ github.ref != 'refs/heads/legacy' }}
 
       - &loom-cache
         uses: actions/cache@v6
@@ -109,10 +109,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: ["1.21.1", "1.21.4", "1.21.5", "1.21.8", "1.21.10", "1.21.11", "26.1", "26.2", "26.3"]
+        version: ["1.8.9"]
 
     env:
-      NODE: ${{ matrix.version }}-fabric
+      NODE: ${{ matrix.version }}-ornithe
 
     steps:
       - *checkout

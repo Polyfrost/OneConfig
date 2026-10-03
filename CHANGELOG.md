@@ -5,3 +5,4 @@
 - Mod category chips can now be deselected, and only categories that have mods are shown
 - Fixed audio ducking when switching between the PolyGlass and Minecraft themes
 - Fixed audio ducking when switching between the HUD editor and the OneConfig screen
+- 1.8.9: Fixed FPS regression for mesa drivers

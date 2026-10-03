@@ -45,6 +45,7 @@ group = "${rootProject.group}.bootstrap"
 version = rootProject.version
 
 val node = project.name
+val isOrnithe = node.endsWith("-ornithe")
 val platformPath = ":minecraft:$node"
 
 dependencies {
@@ -57,7 +58,8 @@ afterEvaluate {
     val platform = rootProject.project(platformPath)
 
     fun isExcluded(group: String?, name: String) =
-        (group == "net.fabricmc" && (name == "fabric-loader")) || group == "net.fabricmc.fabric-api"
+        (group == "net.fabricmc" && (name == "fabric-loader")) || group == "net.fabricmc.fabric-api" ||
+            (isOrnithe && ((group == "pl.tomgirl" && name == "pylon") || group == "net.ornithemc.osl-gen2"))
 
     val seen = HashSet<String>()
 
@@ -127,8 +129,10 @@ afterEvaluate {
 
     val hypixelFabricMod = if (versionedCatalog.versions["minecraft"].requiredVersion.startsWith("26")) {
         "maven.modrinth:hypixel-mod-api:1.0.2+build.1+mc26.1"
-    } else {
+    } else if (versionedCatalog.versions["minecraft"].requiredVersion.startsWith("1.21")) {
         "maven.modrinth:hypixel-mod-api:1.0.1+build.1+mc1.21"
+    } else {
+        "org.polyfrost:mod-api-fabric:1.0.2+build.3+mc1.8.9"
     }
     (dependencies.add("include", hypixelFabricMod) as ExternalModuleDependency).isTransitive = false
 }
@@ -181,6 +185,15 @@ tasks.matching { it.name == "publishModrinth" }.configureEach {
     dependsOn(validateChangelog)
 }
 
+if (!isOrnithe) {
+    tasks.publishMods.configure {
+        enabled = false
+    }
+    tasks.matching { it.name == "publishModrinth" }.configureEach {
+        enabled = false
+    }
+}
+
 publishMods {
     file = tasks.named<AbstractArchiveTask>(publishJarTaskName).flatMap { it.archiveFile }
 
@@ -189,7 +202,7 @@ publishMods {
     changelog = changelogs
     type = STABLE
 
-    modLoaders.add("fabric")
+    modLoaders.add(if (isOrnithe) "ornithe" else "fabric")
 
     dryRun = modrinthId == null || modrinthToken == null
 
@@ -200,7 +213,11 @@ publishMods {
 
             minecraftVersions.addAll(minecraftVersion)
 
-            requires("fabric-api")
+            if (isOrnithe) {
+                requires("osl")
+            } else {
+                requires("fabric-api")
+            }
             requires("fabric-language-kotlin")
             findProperty("publish.modrinth.compose-bundle")
                 ?.toString()

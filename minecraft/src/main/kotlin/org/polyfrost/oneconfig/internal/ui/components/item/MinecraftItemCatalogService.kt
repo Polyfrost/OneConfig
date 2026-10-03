@@ -3,16 +3,13 @@ package org.polyfrost.oneconfig.internal.ui.components.item
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.snapshots.Snapshot
 import com.mojang.blaze3d.pipeline.RenderTarget
-import com.mojang.blaze3d.systems.RenderSystem
 import java.util.ArrayDeque
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 import net.minecraft.client.Minecraft
-import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.chat.Component
 import net.minecraft.world.item.Item
-import net.minecraft.world.item.ItemDisplayContext
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 import org.jetbrains.skia.Canvas
@@ -53,6 +50,12 @@ import net.minecraft.client.renderer.item.TrackingItemStackRenderState
 import org.joml.Matrix3x2f
 //?}
 
+//? if > 1.8.9 {
+import com.mojang.blaze3d.systems.RenderSystem
+import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.world.item.ItemDisplayContext
+//?}
+
 //? if >= 1.21.8 && < 26.2 {
 /*import net.minecraft.client.renderer.fog.FogRenderer
 import org.polyfrost.oneconfig.internal.mixin.render.GameRendererAccessor
@@ -73,7 +76,7 @@ import com.mojang.renderpearl.api.textures.TextureFormat
 import net.minecraft.client.renderer.item.ItemStackRenderState
 *///?}
 
-//? if < 1.21.8 {
+//? if < 1.21.8 && > 1.8.9 {
 /*import com.mojang.blaze3d.platform.Lighting
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.renderer.texture.OverlayTexture
@@ -83,16 +86,23 @@ import org.joml.Matrix4f
 //? if < 1.21.5 {
 /*import com.mojang.blaze3d.platform.GlStateManager
 import net.minecraft.core.Direction
-import net.minecraft.util.RandomSource
 import org.lwjgl.opengl.GL11
 *///?}
 
-//? if < 1.21.4 {
+//? if < 1.21.4 && > 1.8.9 {
 /*import com.mojang.blaze3d.vertex.VertexSorting
 import net.minecraft.client.renderer.ItemBlockRenderTypes
 import net.minecraft.client.resources.model.BakedModel
 import net.minecraft.client.resources.model.ModelResourceLocation
 import net.minecraft.resources.ResourceLocation
+*///?}
+
+//? if < 1.21.5 && > 1.8.9 {
+/*import net.minecraft.util.RandomSource
+*///?}
+
+//? if = 1.8.9 {
+/*import net.minecraft.client.render.platform.Lighting
 *///?}
 
 class MinecraftItemCatalogService : ItemCatalogService {
@@ -204,11 +214,11 @@ class MinecraftItemCatalogService : ItemCatalogService {
         val resolutionState = ReusableTrackingState()
         //?} elif >= 1.21.4 {
         /*val resolutionState = ItemStackRenderState()
-        *///?} else {
+        *///?} elif > 1.8.9 {
         /*var resolvedGuiModel: BakedModel? = null
         var resolvedUsesBlockLight = true
         *///?}
-        //? if < 1.21.5
+        //? if < 1.21.5 && > 1.8.9
         //val resolutionRandom = RandomSource.create(42L)
 
         override fun setRenderSizePx(size: Int) {
@@ -271,11 +281,18 @@ class MinecraftItemCatalogService : ItemCatalogService {
     }
 
     private val entries: List<RegistryEntry> by lazy {
+        //? if > 1.8.9 {
         BuiltInRegistries.ITEM.mapNotNull { item ->
             if (item === Items.AIR) return@mapNotNull null
             val id = BuiltInRegistries.ITEM.getKey(item).toString()
             RegistryEntry(item, id)
         }
+        //?} else {
+        /*Item.REGISTRY.mapNotNull { item ->
+            val id = Item.REGISTRY.getKey(item)?.toString() ?: return@mapNotNull null
+            RegistryEntry(item, id)
+        }
+        *///?}
     }
     private val entriesById: Map<String, RegistryEntry> by lazy { entries.associateBy(RegistryEntry::id) }
     private val atlasPaint = Paint()
@@ -335,6 +352,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
         entry.failed = true
         val item = entry.stack.item
         val firstFailure = synchronized(requestLock) { failedItems.add(item) }
+        //~ if = 1.8.9 'BuiltInRegistries.ITEM' -> 'Item.REGISTRY'
         val id = BuiltInRegistries.ITEM.getKey(item)
         if (firstFailure) {
             LOG.warn("Item icon for {} failed while {}, it will stay blank until the next server join, resize, or resources reload", id, stage, throwable)
@@ -345,7 +363,10 @@ class MinecraftItemCatalogService : ItemCatalogService {
         catalogCache?.let { return it }
         return synchronized(requestLock) {
             catalogCache ?: entries.map { entry ->
+                //? if > 1.8.9 {
                 ItemDescriptor(entry.id, Component.translatable(entry.item.descriptionId).string)
+                //?} else
+                //ItemDescriptor(entry.id, entry.item.getName(ItemStack(entry.item)))
             }.also { catalogCache = it }
         }
     }
@@ -604,7 +625,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
             *///?}
         }
         if (special) scratch.int(stack.components.hashCode())
-        *///?} else {
+        *///?} elif > 1.8.9 {
         /*val renderer = client.itemRenderer
         val resolvedModel = renderer.getModel(stack, client.level, client.player, 0)
         // Vanilla replaces the held trident and spyglass models in GUIs
@@ -656,6 +677,15 @@ class MinecraftItemCatalogService : ItemCatalogService {
         scratch.ref(guiModel.transforms.getTransform(ItemDisplayContext.GUI))
         scratch.ref(ItemBlockRenderTypes.getRenderType(stack, true))
         scratch.int(if (resolvedModel.usesBlockLight()) 1 else 0)
+        *///?} else {
+        /*val guiModel = client.itemRenderer.modelShaper.getModel(stack)
+        val animated = stack.hasEnchantmentGlint() || guiModel.particleIcon?.isAnimated == true
+        val special = guiModel.isCustomRenderer
+        scratch.ref(guiModel)
+        scratch.ref(stack.item)
+        scratch.int(stack.metadata)
+        scratch.int(stack.count)
+        scratch.int(stack.nbt?.hashCode() ?: 0)
         *///?}
         val changed = !entry.identityInitialized || !scratch.sameAs(entry.committedIdentity)
         if (changed) {
@@ -780,7 +810,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
             discardItemGuiResources(page)
             throw throwable
         }
-        //?} else {
+        //?} elif > 1.8.9 {
         /*val bufferSource = mc.renderBuffers().bufferSource()
         val graphics = GuiGraphics(mc, bufferSource)
         withGuiProjection(guiWidth, guiHeight) {
@@ -836,10 +866,28 @@ class MinecraftItemCatalogService : ItemCatalogService {
                 //(previousTarget ?: mc.mainRenderTarget).bindWrite(true)
             }
         }
+        *///?} else {
+        /*withGuiProjection(guiWidth, guiHeight) {
+            target.bindWrite(true)
+            Lighting.turnOnGui()
+            GL11.glEnable(GL11.GL_SCISSOR_TEST)
+            try {
+                entries.forEach { entry ->
+                    val left = entry.x / CELL_SIZE * renderSizePx
+                    val top = entry.y / CELL_SIZE * renderSizePx
+                    GL11.glScissor(left, target.height - top - renderSizePx, renderSizePx, renderSizePx)
+                    mc.itemRenderer.renderGuiItem(entry.stack, entry.x, entry.y)
+                }
+            } finally {
+                GL11.glDisable(GL11.GL_SCISSOR_TEST)
+                Lighting.turnOff()
+                mc.mainRenderTarget.bindWrite(true)
+            }
+        }
         *///?}
     }
 
-    //? if < 1.21.8 {
+    //? if < 1.21.8 && > 1.8.9 {
     /*/** Scales the scissor rectangle to the item texture and flips its Y axis. */
     private fun atlasScissorTransform(target: RenderTarget, renderSizePx: Int, scissorSlotSize: Float) =
         GuiTargetRedirect.ScissorTransform { left, top, right, bottom ->
@@ -883,6 +931,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
 
     //? if < 1.21.8 {
     /*private inline fun withGuiProjection(guiWidth: Int, guiHeight: Int, render: () -> Unit) {
+        //? if > 1.8.9 {
         RenderSystem.backupProjectionMatrix()
         val modelView = RenderSystem.getModelViewStack()
         modelView.pushMatrix()
@@ -910,6 +959,26 @@ class MinecraftItemCatalogService : ItemCatalogService {
             //RenderSystem.applyModelViewMatrix()
             RenderSystem.restoreProjectionMatrix()
         }
+        //?} else {
+        val previousMode = GL11.glGetInteger(GL11.GL_MATRIX_MODE)
+        GL11.glMatrixMode(GL11.GL_PROJECTION)
+        GL11.glPushMatrix()
+        GL11.glLoadIdentity()
+        GL11.glOrtho(0.0, guiWidth.toDouble(), guiHeight.toDouble(), 0.0, 1000.0, 3000.0)
+        GL11.glMatrixMode(GL11.GL_MODELVIEW)
+        GL11.glPushMatrix()
+        GL11.glLoadIdentity()
+        GL11.glTranslated(0.0, 0.0, -2000.0)
+        try {
+            render()
+        } finally {
+            GL11.glMatrixMode(GL11.GL_MODELVIEW)
+            GL11.glPopMatrix()
+            GL11.glMatrixMode(GL11.GL_PROJECTION)
+            GL11.glPopMatrix()
+            GL11.glMatrixMode(previousMode)
+        }
+        //?}
     }
     *///? }
 
@@ -928,8 +997,10 @@ class MinecraftItemCatalogService : ItemCatalogService {
         encoder.clearColorAndDepthTextures(colorTexture, clearColor, depthTexture, clearDepth)
         //?} else if >= 1.21.4 {
         /*target.clear()
-        *///?} else {
+        *///?} elif > 1.8.9 {
         /*target.clear(Minecraft.ON_OSX)
+        *///?} else {
+        /*target.clear()
         *///?}
     }
 
@@ -986,11 +1057,19 @@ class MinecraftItemCatalogService : ItemCatalogService {
         target.depthTexture?.let { encoder.clearDepthTexture(it, 1.0) }
         *///?} else {
         /*target.bindWrite(false)
+        //? if > 1.8.9 {
         GlStateManager._clearColor(0f, 0f, 0f, 0f)
         GlStateManager._clearDepth(1.0)
         GlStateManager._colorMask(true, true, true, true)
         GlStateManager._depthMask(true)
         GlStateManager._enableScissorTest()
+        //?} else {
+        /*GlStateManager.clearColor(0f, 0f, 0f, 0f)
+        GlStateManager.clearDepth(1.0)
+        GlStateManager.colorMask(true, true, true, true)
+        GlStateManager.depthMask(true)
+        GL11.glEnable(GL11.GL_SCISSOR_TEST)
+        *///?}
 
         try {
             entries.forEach { entry ->
@@ -1001,6 +1080,8 @@ class MinecraftItemCatalogService : ItemCatalogService {
 
                 val width = right - left
                 val height = bottom - top
+
+                //? if > 1.8.9 {
                 // VulkanMod's glClear ignores the scissor box.
                 if (SkiaCtx.vulkanService?.clearOffscreenRect(left, top, width, height) != true) {
                     GlStateManager._scissorBox(left, target.height - bottom, width, height)
@@ -1009,9 +1090,16 @@ class MinecraftItemCatalogService : ItemCatalogService {
                     //?} else
                     //GlStateManager._clear(GL11.GL_COLOR_BUFFER_BIT or GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX)
                 }
+                //?} else {
+                /*GL11.glScissor(left, target.height - bottom, width, height)
+                GlStateManager.clear(GL11.GL_COLOR_BUFFER_BIT or GL11.GL_DEPTH_BUFFER_BIT)
+                *///?}
             }
         } finally {
+            //? if > 1.8.9 {
             GlStateManager._disableScissorTest()
+            //?} else
+            //GL11.glDisable(GL11.GL_SCISSOR_TEST)
             Minecraft.getInstance().mainRenderTarget.bindWrite(true)
         }
         *///?}
@@ -1113,8 +1201,10 @@ class MinecraftItemCatalogService : ItemCatalogService {
         return RenderSystem.getDevice().deviceInfo.limits().maxTextureSizeForFormat(GpuFormat.RGBA8_UNORM)
         //?} else if >= 1.21.5 {
         /*return RenderSystem.getDevice().getMaxTextureSize()
+        *///?} elif > 1.8.9 {
+        /*return RenderSystem.maxSupportedTextureSize()
         *///?} else
-        //return RenderSystem.maxSupportedTextureSize()
+        //return Minecraft.getMaxTextureSize()
     }
 
     private fun resetAtlas(state: AtlasState, layout: AtlasLayout?) {

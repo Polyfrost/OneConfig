@@ -18,7 +18,7 @@ import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.Minecraft
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 
-//? if >= 26.1 {
+//? if >= 26.1 || = 1.8.9 {
 import androidx.compose.ui.platform.PlatformTextInputMethodRequest
 import kotlinx.coroutines.awaitCancellation
 //?}
@@ -151,7 +151,7 @@ private class PlatformImpl : PlatformContext {
 internal class SceneContext(
     private val isShowing: () -> Boolean,
 ) : PlatformContext by ComposeSceneContextImpl.platformContext {
-    //? if >= 26.1 {
+    //? if >= 26.1 || = 1.8.9 {
     private var sessions = 0
     private var inputActive = false
     private var closed = false

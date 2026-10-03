@@ -7,6 +7,7 @@ repositories {
     mavenCentral()
     gradlePluginPortal()
     maven("https://maven.fabricmc.net/")
+    maven("https://maven.ornithemc.net/releases")
     maven("https://repo.polyfrost.org/releases")
     maven("https://maven.modmuss50.me/releases")
 }
@@ -28,6 +29,8 @@ dependencies {
 
     implementation(plugin(fabric.plugins.loom))
     implementation(plugin(fabric.plugins.loom.remap))
+
+    implementation(plugin(ornithe.plugins.ploceus))
 
     implementation(plugin(neoforge.plugins.moddev))
 
