@@ -15,9 +15,9 @@ object McFontService {
         FontManager.loadFromResource("assets/oneconfig/fonts/Poppins/Poppins-Black.ttf", "poppins-black")
         FontManager.loadFromResource("assets/oneconfig/fonts/Poppins/Poppins-BlackItalic.ttf", "poppins-black-italic")
         // used by toasts when a Minecraft theme is active
-        FontManager.loadFromResource("assets/oneconfig/fonts/minecraft/Minecraft-Regular.otf", "minecraft")
-        FontManager.loadFromResource("assets/oneconfig/fonts/minecraft/Minecraft-Bold.otf", "minecraft-bold")
-        FontManager.loadFromResource("assets/oneconfig/fonts/unifont/unifont.otf", SkiaFontRenderer.UNIFONT_KEY)
+        FontManager.loadFromResource("assets/oneconfig/fonts/minecraft/Minecraft-Regular.otf", "minecraft", pixelAligned = true)
+        FontManager.loadFromResource("assets/oneconfig/fonts/minecraft/Minecraft-Bold.otf", "minecraft-bold", pixelAligned = true)
+        FontManager.loadFromResource("assets/oneconfig/fonts/unifont/unifont.otf", SkiaFontRenderer.UNIFONT_KEY, pixelAligned = true)
         // PolyText uses the default font key so it needs a typeface registered there
         FontManager.setDefault("poppins")
     }
