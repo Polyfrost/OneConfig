@@ -28,8 +28,6 @@ package org.polyfrost.oneconfig.internal.mixin;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
-import net.minecraft.client.resources.ClientPackSource;
-import net.minecraft.server.packs.repository.PackRepository;
 import net.minecraft.server.packs.repository.RepositorySource;
 import org.polyfrost.oneconfig.internal.ui.sound.OneConfigSoundPackSource;
 import org.spongepowered.asm.mixin.Final;
@@ -40,13 +38,32 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+//? if > 1.8.9 {
+import net.minecraft.client.resources.ClientPackSource;
+import net.minecraft.server.packs.repository.PackRepository;
+//?}
+
+//? if = 1.8.9 {
+/*import net.ornithemc.osl.resource.loader.api.resource.ResourceType;
+import net.ornithemc.osl.resource.loader.impl.resource.repository.SimpleResourcePackRepository;
+*///?}
+
+//~ if = 1.8.9 'PackRepository' -> 'SimpleResourcePackRepository'
 @Mixin(PackRepository.class)
 public abstract class Mixin_PackRepository {
     @Mutable
     @Shadow
     @Final
+    //~ if = 1.8.9 'RepositorySource' -> 'ResourcePackRepository.Source'
     private Set<RepositorySource> sources;
 
+    //? if = 1.8.9 {
+    /*@Shadow
+    @Final
+    private ResourceType type;
+    *///?}
+
+    //? if > 1.8.9 {
     @Inject(method = "<init>", at = @At("TAIL"))
     private void oneconfig$addSoundPack(RepositorySource[] sources, CallbackInfo ci) {
         boolean isClientResources = false;
@@ -62,4 +79,12 @@ public abstract class Mixin_PackRepository {
         combined.add(OneConfigSoundPackSource.INSTANCE);
         this.sources = combined;
     }
+    //?} else {
+    /*@Inject(method = "init", at = @At("TAIL"))
+    private void oneconfig$addSoundPack(CallbackInfo ci) {
+        if (this.type != ResourceType.CLIENT_ASSETS) return;
+
+        this.sources.add(OneConfigSoundPackSource.INSTANCE);
+    }
+    *///?}
 }

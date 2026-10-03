@@ -3,10 +3,17 @@ package org.polyfrost.oneconfig.internal.ui.hud
 import androidx.compose.runtime.snapshots.Snapshot
 import java.util.Collections
 import java.util.WeakHashMap
-import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHud
+
+//? if > 1.8.9 {
+import net.minecraft.client.gui.GuiGraphicsExtractor
+//?}
+
+//? if = 1.8.9 {
+/*import com.mojang.blaze3d.platform.GlStateManager
+*///?}
 
 private val LOGGER = LogManager.getLogger("OneConfig/HUD-Render")
 
@@ -35,11 +42,15 @@ object LegacyHudRenderer {
         )
     }
 
+    //~ if = 1.8.9 '(graphics: GuiGraphicsExtractor)' -> '()'
     fun renderLive(graphics: GuiGraphicsExtractor) {
+        //~ if = 1.8.9 'renderLiveHuds(graphics)' -> 'renderLiveHuds()'
         renderLiveHuds(graphics)
+        //~ if = 1.8.9 '.render(graphics)' -> '.render()'
         if (CompatOverlayRenderer.oneConfigScreenOpen()) CompatOverlayRenderer.render(graphics)
     }
 
+    //~ if = 1.8.9 '(graphics: GuiGraphicsExtractor)' -> '()'
     private fun renderLiveHuds(graphics: GuiGraphicsExtractor) {
         frame.clear()
         for (hud in HudManager.activeInstances) {
@@ -81,7 +92,7 @@ object LegacyHudRenderer {
                 } finally {
                     pose.popMatrix()
                 }
-                //? } else {
+                //? } elif > 1.8.9 {
                 /*val pose = graphics.pose()
                 pose.pushPose()
                 try {
@@ -91,7 +102,16 @@ object LegacyHudRenderer {
                 } finally {
                     pose.popPose()
                 }
-                *///? }
+                *///?} else {
+                /*GlStateManager.pushMatrix()
+                try {
+                    GlStateManager.translatef(hud.x, hud.y, 0f)
+                    if (hudScale != 1f) GlStateManager.scalef(hudScale, hudScale, 1f)
+                    hud.render()
+                } finally {
+                    GlStateManager.popMatrix()
+                }
+                *///?}
             } catch (e: Throwable) {
                 reportFailure(hud, e)
             }

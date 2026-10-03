@@ -29,7 +29,6 @@ package org.polyfrost.oneconfig.test.mixin;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
-import net.minecraft.SharedConstants;
 import net.minecraft.server.Bootstrap;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -45,6 +44,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+//? if > 1.8.9 {
+import net.minecraft.SharedConstants;
+//?}
 
 class MixinAuditTest {
 
@@ -78,8 +81,11 @@ class MixinAuditTest {
                 "Error handler resolved to a different class than the test uses, failures would go unrecorded");
 
         try {
+            //? if > 1.8.9 {
             SharedConstants.tryDetectVersion();
             Bootstrap.bootStrap();
+            //?} else
+            //Bootstrap.init();
         } catch (Throwable t) {
             System.out.println("[mixin-audit] Minecraft bootstrap did not complete, continuing anyway:");
             t.printStackTrace(System.out);

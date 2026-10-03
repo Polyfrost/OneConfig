@@ -28,13 +28,21 @@
 package org.polyfrost.oneconfig.test;
 
 import kotlin.Pair;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.config.v1.annotations.RadioButton;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHud;
+
+//? if > 1.8.9 {
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+//?}
+
+//? if = 1.8.9 {
+/*import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiElement;
+*///?}
 
 public class TestLegacyHud_Test extends LegacyHud {
     private static final float W = 20f;
@@ -87,12 +95,19 @@ public class TestLegacyHud_Test extends LegacyHud {
     }
 
     @Override
+    //? if > 1.8.9 {
     public void render(@NotNull GuiGraphicsExtractor graphics) {
+    //?} else
+    //public void render() {
         if (stack == null) stack = new ItemStack(Items.DIAMOND_SWORD);
 
+        //~ if = 1.8.9 'graphics.fill' -> 'GuiElement.fill'
         graphics.fill(0, 0, (int) W, (int) H, 0x80000000);
 
+        //? if > 1.8.9 {
         //~ if >= 26.1 'renderItem' -> 'item'
         graphics.item(stack, 2, 2);
+        //?} else
+        //Minecraft.getInstance().getItemRenderer().renderGuiItem(stack, 2, 2);
     }
 }

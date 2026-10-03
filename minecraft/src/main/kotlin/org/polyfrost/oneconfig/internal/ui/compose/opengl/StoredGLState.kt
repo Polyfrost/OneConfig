@@ -1,27 +1,46 @@
 package org.polyfrost.oneconfig.internal.ui.compose.opengl
 
-import org.lwjgl.opengl.GL
-import org.lwjgl.opengl.GL45.*
-
 //? if >= 1.21.5 {
 import com.mojang.renderpearl.backend.opengl.GlStateManager
+//?}
+
+//? if > 1.8.9 {
+import org.lwjgl.opengl.GL
+import org.lwjgl.opengl.GL45.*
 //?}
 
 //? if < 1.21.5 {
 /*import com.mojang.blaze3d.platform.GlStateManager
 *///?}
 
+//? if = 1.8.9 {
+/*import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL13
+import org.lwjgl.opengl.GL20
+import org.lwjgl.opengl.GL30
+import org.lwjgl.opengl.GL33
+*///?}
+
 fun resyncTextureBindCache() {
+    //? if > 1.8.9 {
     for (unit in 0..7) {
         GlStateManager._activeTexture(GL_TEXTURE0 + unit)
         GlStateManager._bindTexture(0)
     }
     GlStateManager._activeTexture(GL_TEXTURE0)
+    //?} else {
+    /*for (unit in 0..7) {
+        GlStateManager.activeTexture(GL13.GL_TEXTURE0 + unit)
+        GlStateManager.bindTexture(0)
+    }
+    GlStateManager.activeTexture(GL13.GL_TEXTURE0)
+    *///?}
 }
 
 class StoredGLState(private val glVersion: Int) {
     private val props = StoredGLStateProps()
 
+    //? if > 1.8.9 {
     fun capture(): StoredGLState {
         with(props) {
             glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, lastDrawFramebuffer)
@@ -219,4 +238,63 @@ class StoredGLState(private val glVersion: Int) {
         GlStateManager._depthMask(!mask)
         GlStateManager._depthMask(mask)
     }
+    //?} else {
+    /*private val isMacOS = System.getProperty("os.name").lowercase().contains("mac")
+    private var alphaTestEnabled = false
+    private var depthTestEnabled = false
+    private var activeTextureUnit = 0
+
+    fun capture() {
+        alphaTestEnabled = GlStateManager.ALPHA_TEST.state.enabled
+        depthTestEnabled = GlStateManager.DEPTH.state.enabled
+        activeTextureUnit = GlStateManager.texture
+        GL11.glPushClientAttrib(GL11.GL_CLIENT_ALL_ATTRIB_BITS)
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS)
+
+        with(props) {
+            lastDrawFramebuffer[0] = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING)
+            lastReadFramebuffer[0] = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING)
+            lastProgram[0] = GL11.glGetInteger(GL20.GL_CURRENT_PROGRAM)
+
+            val blend = GlStateManager.BLEND
+            lastEnableBlend = blend.state.enabled
+            lastBlendSrcRgb[0] = blend.sfactorRGB
+            lastBlendDstRgb[0] = blend.dfactorRGB
+            lastBlendSrcAlpha[0] = blend.sfactorAlpha
+            lastBlendDstAlpha[0] = blend.dfactorAlpha
+            lastShadeModel[0] = GlStateManager.shadeModel
+        }
+    }
+
+    fun restore() {
+        GL11.glPopAttrib()
+        GL11.glPopClientAttrib()
+        if (alphaTestEnabled) GlStateManager.enableAlphaTest() else GlStateManager.disableAlphaTest()
+        if (depthTestEnabled) GlStateManager.enableDepthTest() else GlStateManager.disableDepthTest()
+
+        with(props) {
+            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, lastDrawFramebuffer[0])
+            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, lastReadFramebuffer[0])
+
+            if (!isMacOS) {
+                for (unit in 0..7) {
+                    GL33.glBindSampler(unit, 0)
+                }
+            }
+
+            if (lastEnableBlend) GlStateManager.enableBlend() else GlStateManager.disableBlend()
+
+            GL20.glUseProgram(lastProgram[0])
+            GlStateManager.activeTexture(GL13.GL_TEXTURE0 + activeTextureUnit)
+
+            GlStateManager.blendFuncSeparate(
+                lastBlendSrcRgb[0],
+                lastBlendDstRgb[0],
+                lastBlendSrcAlpha[0],
+                lastBlendDstAlpha[0],
+            )
+            GlStateManager.shadeModel(lastShadeModel[0])
+        }
+    }
+    *///?}
 }

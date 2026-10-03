@@ -32,11 +32,9 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.world.scores.Scoreboard;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -59,11 +57,7 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsRenderer;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
-import org.polyfrost.oneconfig.internal.compat.ArmorHudCompat;
-import org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat;
 import org.polyfrost.oneconfig.internal.compat.KaleidoCompat;
-import org.polyfrost.oneconfig.internal.compat.ModMenuShimLoader;
-import org.polyfrost.oneconfig.internal.compat.WWaypointsCompat;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories;
@@ -85,10 +79,30 @@ import org.polyfrost.oneconfig.internal.ui.sound.ExternalSounds;
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry;
 import org.polyfrost.oneconfig.test.TestMod_Test;
 
+//? if > 1.8.9 {
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.world.scores.DisplaySlot;
+import org.polyfrost.oneconfig.internal.compat.ArmorHudCompat;
+import org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat;
+//?}
+
+//? if = 1.8.9 {
+/*import net.ornithemc.osl.resource.loader.api.client.ClientResourceLoaderEvents;
+import org.polyfrost.oneconfig.internal.ui.compose.SkiaFontRenderer;
+*///?}
+
+//? if fabric {
+import org.polyfrost.oneconfig.internal.compat.ModMenuShimLoader;
+//?}
+
+//? if wwaypoints_compat {
+import org.polyfrost.oneconfig.internal.compat.WWaypointsCompat;
+//?}
+
 //? neoforge
 //@net.neoforged.fml.common.Mod("oneconfigv1")
 public class OneConfig
-        //? fabric
+        //? fabric || ornithe
         implements ClientModInitializer {
     public static final OneConfig INSTANCE = new OneConfig();
     private static final Logger LOGGER = LogManager.getLogger("OneConfig");
@@ -167,14 +181,18 @@ public class OneConfig
         if (!minecraft.isLocalServer()) return true;
 
         Scoreboard scoreboard = minecraft.level.getScoreboard();
+        //~ if = 1.8.9 'player.connection.getListedOnlinePlayers' -> 'getNetworkHandler().getOnlinePlayers'
         return minecraft.player.connection.getListedOnlinePlayers().size() > 1
+                //~ if = 1.8.9 'DisplaySlot.LIST' -> '0'
                 || scoreboard.getDisplayObjective(DisplaySlot.LIST) != null;
     }
 
     private static boolean legacyHudOffscreenReady;
 
+    //~ if = 1.8.9 '(GuiGraphicsExtractor graphics)' -> '()'
     public static void render(GuiGraphicsExtractor graphics) {
         prepareHud();
+        //~ if = 1.8.9 '(graphics)' -> '()'
         submitHud(graphics);
     }
 
@@ -211,6 +229,8 @@ public class OneConfig
         legacyHudOffscreenReady = !hudRendersLive && LegacyHudOffscreen.INSTANCE.render();
         // records the F3 overlay offscreen so Skia can put it above the Compose UI instead of below the
         // blur and it must run every frame regardless of the HUD dirty gate
+        // 1.8.9 replays the overlay in Mixin_SkiaFrame after Skia finishes drawing instead
+        //? if > 1.8.9
         DebugOverlayOffscreen.INSTANCE.render();
         if (HudManager.INSTANCE.beginFrame(sw, sh, ItemCatalog.INSTANCE::renderHudIcons)) {
             SkiaCtx.INSTANCE.queueHudDraw(() -> {
@@ -223,15 +243,18 @@ public class OneConfig
     }
 
     /** Submits the legacy HUDs (when not captured offscreen) and the Skia HUD blit into the vanilla HUD */
+    //~ if = 1.8.9 '(GuiGraphicsExtractor graphics)' -> '()'
     public static void submitHud(GuiGraphicsExtractor graphics) {
         if (!SkiaCtx.INSTANCE.isReady()) {
             return;
         }
         if (!legacyHudOffscreenReady) {
+            //~ if = 1.8.9 '(graphics)' -> '()'
             LegacyHudRenderer.INSTANCE.renderLive(graphics);
         }
         //~ if < 1.21.8 '.suppressInGameHudRender' -> '.shouldSuppressInGameHudRender()'
         if (!SkiaCtx.INSTANCE.suppressInGameHudRender) {
+            //~ if = 1.8.9 '(graphics)' -> '()'
             SkiaCtx.INSTANCE.blitHud(graphics);
         }
     }
@@ -290,8 +313,10 @@ public class OneConfig
                     MinecraftKeybindProfiles.init();
                     ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
                     BuiltinHudRegistrar.register();
+                    //? if > 1.8.9 {
                     FirmamentHudCompat.register();
                     ArmorHudCompat.register();
+                    //?}
                     //? if wwaypoints_compat
                     WWaypointsCompat.register();
                     ThemeRegistry.INSTANCE.loadFromConfig();
@@ -360,6 +385,12 @@ public class OneConfig
         }
 
         SkikoDataPath.redirect();
+
+        //? if = 1.8.9 {
+        /*ClientResourceLoaderEvents.INIT_RESOURCE_MANAGER.register(
+            resourceManager -> resourceManager.addReloader(SkiaFontRenderer.INSTANCE)
+        );
+        *///?}
 
         // to enable RenderDoc set these JVM arguments
         // -Drenderdoc.enabled=true

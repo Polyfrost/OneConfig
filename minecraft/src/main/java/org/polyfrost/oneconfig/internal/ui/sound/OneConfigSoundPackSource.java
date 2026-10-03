@@ -32,13 +32,6 @@ import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.function.Consumer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.packs.PackLocationInfo;
-import net.minecraft.server.packs.PackResources;
-import net.minecraft.server.packs.PackSelectionConfig;
-import net.minecraft.server.packs.PackType;
-import net.minecraft.server.packs.PathPackResources;
-import net.minecraft.server.packs.repository.Pack;
-import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.server.packs.repository.RepositorySource;
 
 //? if >= 26.3 {
@@ -46,6 +39,23 @@ import java.util.stream.Stream;
 import net.minecraft.server.packs.PackMetadataResources;
 //?}
 
+//? if > 1.8.9 {
+import net.minecraft.server.packs.PackLocationInfo;
+import net.minecraft.server.packs.PackResources;
+import net.minecraft.server.packs.PackSelectionConfig;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.PathPackResources;
+import net.minecraft.server.packs.repository.Pack;
+import net.minecraft.server.packs.repository.PackSource;
+//?}
+
+//? if = 1.8.9 {
+/*import net.ornithemc.osl.resource.loader.api.resource.pack.PackPosition;
+import net.ornithemc.osl.resource.loader.api.resource.repository.ResourcePackSummary;
+import net.ornithemc.osl.resource.loader.impl.resource.pack.DirectoryResourcePack;
+*///?}
+
+//~ if = 1.8.9 'RepositorySource' -> 'ResourcePackRepository.Source'
 public final class OneConfigSoundPackSource implements RepositorySource {
     public static final OneConfigSoundPackSource INSTANCE = new OneConfigSoundPackSource();
 
@@ -56,6 +66,7 @@ public final class OneConfigSoundPackSource implements RepositorySource {
     private OneConfigSoundPackSource() {
     }
 
+    //? if > 1.8.9 {
     @Override
     public void loadPacks(Consumer<Pack> consumer) {
         if (!Files.isRegularFile(PACK_ROOT.resolve("pack.mcmeta"))) return;
@@ -98,4 +109,27 @@ public final class OneConfigSoundPackSource implements RepositorySource {
             consumer.accept(pack);
         }
     }
+    //?} else {
+    /*@Override
+    public void loadResourcePacks(Consumer<ResourcePackSummary> consumer) {
+            if (!Files.isRegularFile(PACK_ROOT.resolve("pack.mcmeta"))) return;
+
+            ResourcePackSummary summary = ResourcePackSummary.create(
+                    PACK_ID,
+                    true,
+                    false,
+                    PackPosition.BOTTOM,
+                    () -> new DirectoryResourcePack(PACK_ROOT) {
+                        @Override
+                        public String getName() {
+                            return "OneConfig Sounds";
+                        }
+                    }
+            );
+
+            if (summary != null) {
+                consumer.accept(summary);
+            }
+        }
+    *///?}
 }

@@ -44,9 +44,16 @@ val NEO_FORGE: ModLoader = object : ModLoader {
     override fun buildFile(version: String) = "neoforge.gradle.kts"
 }
 
+val ORNITHE: ModLoader = object : ModLoader {
+    override val name: String = "ornithe"
+    override fun versionName(version: String) = "$version-ornithe"
+    override fun buildFile(version: String) = "ornithe.gradle.kts"
+}
+
 val versions = buildList {
     fun fabric(version: String) = add(version to listOf(FABRIC))
     fun neoforge(version: String) = add(version to listOf(NEO_FORGE))
+    fun ornithe(version: String) = add(version to listOf(ORNITHE))
     fun both(version: String) {
         add(version to listOf(FABRIC))
     }
@@ -60,6 +67,7 @@ val versions = buildList {
     both("1.21.5")
     both("1.21.4")
     both("1.21.1")
+    ornithe("1.8.9")
 }
 
 stonecutter {
@@ -74,7 +82,7 @@ stonecutter {
     // mirrors every Fabric node of the minecraft tree
     create("bootstrap") {
         versions.forEach { (version, loaders) ->
-            loaders.filter { it == FABRIC }.forEach { loader ->
+            loaders.filter { it == FABRIC || it == ORNITHE }.forEach { loader ->
                 version(loader.versionName(version), version).buildscript = loader.buildFile(version)
             }
         }
@@ -88,6 +96,9 @@ dependencyResolutionManagement {
         }
         create("neoforge") {
             from(files(rootProject.projectDir.resolve("gradle/neoforge.versions.toml")))
+        }
+        create("ornithe") {
+            from(files(rootProject.projectDir.resolve("gradle/ornithe.versions.toml")))
         }
         versions.forEach { (version, loaders) ->
             val common = "common$version".replace(".", "")

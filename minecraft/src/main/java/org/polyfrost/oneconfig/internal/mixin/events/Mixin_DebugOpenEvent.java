@@ -12,14 +12,22 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.client.gui.components.debug.DebugScreenEntryList;
 //?}
 
-//? if < 1.21.10 {
+//? if < 1.21.10 && > 1.8.9 {
 /*import net.minecraft.client.gui.components.DebugScreenOverlay;
 *///?}
 
+//? if = 1.8.9 {
+/*import org.objectweb.asm.Opcodes;
+*///?}
+
 //? < 1.21.10 {
-/*@Mixin(DebugScreenOverlay.class)
+/*//~ if = 1.8.9 'DebugScreenOverlay' -> 'Minecraft'
+@Mixin(DebugScreenOverlay.class)
 public abstract class Mixin_DebugOpenEvent {
+    //? if > 1.8.9 {
     @Inject(method = "toggleOverlay", at = @At("TAIL"))
+    //?} else
+    //@Inject(method = "tick", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Options;debugEnabled:Z", opcode = Opcodes.PUTFIELD, shift = At.Shift.AFTER))
     private void onDebugOpen(CallbackInfo ci) {
         if (Minecraft.getInstance().getDebugOverlay().showDebugScreen()) {
             EventManager.INSTANCE.post(HudEvent.Debug.OPENED);

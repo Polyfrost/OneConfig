@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
-import net.minecraft.client.multiplayer.ClientPacketListener;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.ChatEvent;
 import org.spongepowered.asm.mixin.Mixin;
@@ -10,6 +9,16 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+//? if > 1.8.9 {
+import net.minecraft.client.multiplayer.ClientPacketListener;
+//?}
+
+//? if = 1.8.9 {
+/*import net.minecraft.client.player.LocalPlayer;
+import org.polyfrost.oneconfig.internal.legacy.command.ClientCommandInternals;
+*///?}
+
+//~ if = 1.8.9 'ClientPacketListener' -> 'LocalPlayer'
 @Mixin(ClientPacketListener.class)
 public abstract class Mixin_ChatSendEvent {
     @Unique private ChatEvent.Send ocfg$chatEvent;
@@ -25,7 +34,15 @@ public abstract class Mixin_ChatSendEvent {
 
         if (ocfg$chatEvent.cancelled) {
             ci.cancel();
+            return;
         }
+
+        //? if = 1.8.9 {
+        /*String commandMessage = ocfg$chatEvent.message;
+        if (commandMessage.startsWith("/") && ClientCommandInternals.executeCommand(commandMessage.substring(1))) {
+            ci.cancel();
+        }
+        *///?}
     }
 
     @ModifyVariable(

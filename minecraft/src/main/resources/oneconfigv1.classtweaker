@@ -1,6 +1,37 @@
-classTweaker v2 official
+classTweaker v1 official
 
-#? if < 1.21.8 {
+#? if = 1.8.9 {
+#accessible field net/minecraft/client/Minecraft tasks Ljava/util/Queue;
+#accessible field net/minecraft/client/render/texture/HttpTexture image Ljava/awt/image/BufferedImage;
+#accessible field net/minecraft/client/render/texture/HttpTexture uploaded Z
+#accessible method net/minecraft/client/gui/screen/menu/TitleScreen drawBackground (IIF)V
+#accessible class net/minecraft/client/render/platform/GlStateManager$GlState
+#accessible class net/minecraft/client/render/platform/GlStateManager$Alpha
+#accessible class net/minecraft/client/render/platform/GlStateManager$Blend
+#accessible class net/minecraft/client/render/platform/GlStateManager$Depth
+#accessible class net/minecraft/client/render/platform/GlStateManager$Texture
+#accessible class net/minecraft/client/render/platform/GlStateManager$Color
+#accessible field net/minecraft/client/render/platform/GlStateManager$GlState enabled Z
+#accessible field net/minecraft/client/render/platform/GlStateManager ALPHA_TEST Lnet/minecraft/client/render/platform/GlStateManager$Alpha;
+#accessible field net/minecraft/client/render/platform/GlStateManager LIGHTING Lnet/minecraft/client/render/platform/GlStateManager$GlState;
+#accessible field net/minecraft/client/render/platform/GlStateManager BLEND Lnet/minecraft/client/render/platform/GlStateManager$Blend;
+#accessible field net/minecraft/client/render/platform/GlStateManager DEPTH Lnet/minecraft/client/render/platform/GlStateManager$Depth;
+#accessible field net/minecraft/client/render/platform/GlStateManager texture I
+#accessible field net/minecraft/client/render/platform/GlStateManager TEXTURES [Lnet/minecraft/client/render/platform/GlStateManager$Texture;
+#accessible field net/minecraft/client/render/platform/GlStateManager shadeModel I
+#accessible field net/minecraft/client/render/platform/GlStateManager COLOR Lnet/minecraft/client/render/platform/GlStateManager$Color;
+#transitive-inject-interface net/minecraft/client/Minecraft org/polyfrost/oneconfig/internal/legacy/compat/MinecraftCompat
+#transitive-inject-interface net/minecraft/client/KeyMapping org/polyfrost/oneconfig/internal/legacy/compat/KeyBindingCompat
+#transitive-inject-interface net/minecraft/world/HitResult org/polyfrost/oneconfig/internal/legacy/compat/HitResultCompat
+#transitive-inject-interface net/minecraft/client/render/texture/HttpTexture org/polyfrost/oneconfig/internal/legacy/compat/HttpTextureCompat
+#transitive-inject-interface net/minecraft/client/sound/instance/SoundInstance org/polyfrost/oneconfig/internal/legacy/compat/SoundInstanceCompat
+#transitive-inject-interface net/minecraft/client/Options org/polyfrost/oneconfig/internal/legacy/compat/GameOptionsCompat
+#transitive-inject-interface net/minecraft/client/entity/living/player/ClientPlayerEntity org/polyfrost/oneconfig/internal/legacy/compat/ClientPlayerCompat
+#transitive-inject-interface net/minecraft/client/resource/skin/SkinManager org/polyfrost/oneconfig/internal/legacy/compat/SkinManagerCompat
+#transitive-inject-interface net/minecraft/item/ItemStack org/polyfrost/oneconfig/internal/legacy/compat/ItemStackCompat
+#?}
+
+#? if < 1.21.8 && > 1.8.9 {
 #accessible class net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture
 #accessible field net/minecraft/client/renderer/texture/SpriteContents animatedTexture Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;
 #?}
@@ -23,7 +54,7 @@ classTweaker v2 official
 #accessible field net/minecraft/client/renderer/item/ItemStackRenderState$LayerRenderState model Lnet/minecraft/client/resources/model/BakedModel;
 #?}
 
-#? if < 1.21.4 {
+#? if < 1.21.4 && > 1.8.9 {
 #accessible field net/minecraft/client/renderer/entity/ItemRenderer itemColors Lnet/minecraft/client/color/item/ItemColors;
 #?}
 

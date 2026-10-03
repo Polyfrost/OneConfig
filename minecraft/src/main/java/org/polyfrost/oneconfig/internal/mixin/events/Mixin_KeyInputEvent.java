@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import net.minecraft.client.KeyboardHandler;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.KeyInputEvent;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
@@ -17,6 +16,17 @@ import net.minecraft.client.input.KeyEvent;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 //?}
 
+//? if > 1.8.9 {
+import net.minecraft.client.KeyboardHandler;
+//?}
+
+//? if = 1.8.9 {
+/*import org.lwjgl.input.Keyboard;
+import org.polyfrost.oneconfig.internal.legacy.KeyCodes;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+*///?}
+
+//~ if = 1.8.9 'KeyboardHandler.class' -> 'Keyboard.class'
 @Mixin(KeyboardHandler.class)
 public class Mixin_KeyInputEvent {
 
@@ -35,8 +45,7 @@ public class Mixin_KeyInputEvent {
 
         EventManager.INSTANCE.post(new KeyInputEvent(0, (char) event.codepoint(), KeyInputEvent.PRESSED));
     }
-    //? } else {
-    
+    //?} elif > 1.8.9 {
     /*@Inject(method = "keyPress", at = @At("HEAD"))
     private void keyCallback(long window, int key, int scancode, int action, int mods, CallbackInfo ci) {
         EventManager.INSTANCE.post(new KeyInputEvent(key, (char) 0, oneconfig$state(action)));
@@ -49,7 +58,23 @@ public class Mixin_KeyInputEvent {
         }
         EventManager.INSTANCE.post(new KeyInputEvent(0, (char) codepoint, KeyInputEvent.PRESSED));
     }
-    *///? }
+    *///?} else {
+    /*@Inject(method = "next", at = @At("RETURN"), remap = false)
+    private static void keyCallback(CallbackInfoReturnable<Boolean> cir) {
+        if (!cir.getReturnValue()) return;
+
+        int keyCode = Keyboard.getEventKey();
+        if (keyCode > 0) {
+            int action = Keyboard.isRepeatEvent() ? InputConstants.REPEAT : Keyboard.getEventKeyState() ? InputConstants.PRESS : InputConstants.RELEASE;
+            EventManager.INSTANCE.post(new KeyInputEvent(KeyCodes.fromLegacy(keyCode).getValue(), (char) 0, oneconfig$state(action)));
+        }
+
+        char character = Keyboard.getEventCharacter();
+        if (character != 0) {
+            EventManager.INSTANCE.post(new KeyInputEvent(0, character, KeyInputEvent.PRESSED));
+        }
+    }
+    *///?}
 
     @Unique
     private static int oneconfig$state(int action) {

@@ -44,7 +44,10 @@ public final class HypixelApiInternalsImpl implements HypixelApiInternals {
     public HypixelApiInternalsImpl() {
         LOGGER.info("Registering Hypixel API hello/disconnect handlers");
         HypixelModAPI.getInstance().createHandler(ClientboundHelloPacket.class, p -> onHypixel = true);
+        //? if > 1.8.9 {
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> onHypixel = false);
+        //?} else
+        //ClientConnectionEvents.DISCONNECT.register(context -> onHypixel = false);
     }
 
     @Override

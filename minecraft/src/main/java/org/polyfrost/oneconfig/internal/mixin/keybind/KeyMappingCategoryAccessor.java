@@ -1,6 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.keybind;
 
-//? if <1.21.10 {
+//? if < 1.21.10 && > 1.8.9 {
 /*import java.util.Map;
 import net.minecraft.client.KeyMapping;
 import org.spongepowered.asm.mixin.Mixin;

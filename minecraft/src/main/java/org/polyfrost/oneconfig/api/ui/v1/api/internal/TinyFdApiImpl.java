@@ -207,6 +207,7 @@ public final class TinyFdApiImpl implements TinyFdApi {
         minecraft.schedule(() -> {
             SDL_RaiseWindow(minecraft.getWindow().handle());
             // the cursor position Minecraft knows about is from before the dialog as motion was blocked meanwhile
+            //? if > 1.8.9
             minecraft.mouseHandler.resyncMousePosition();
         });
     }

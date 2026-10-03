@@ -28,6 +28,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
@@ -82,6 +84,7 @@ import org.polyfrost.oneconfig.internal.ui.components.reorderOverlay
 import org.polyfrost.oneconfig.internal.ui.components.reorderableItem
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
+import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyGridState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -106,6 +109,11 @@ enum class ModCategory(
 @Composable
 fun Mods() {
     var activeCategory by remember { mutableStateOf(ModCategory.All) }
+
+    DisposableEffect(Unit) {
+        ShellState.title = "Mods"
+        onDispose { }
+    }
 
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -184,7 +192,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
             columns = GridCells.Fixed(4),
             verticalArrangement = Arrangement.spacedBy(19.dp),
             horizontalArrangement = Arrangement.spacedBy(19.dp),
-            modifier = Modifier.padding(end = 16.dp).onGloballyPositioned {
+            modifier = Modifier.fillMaxSize().clipToBounds().onGloballyPositioned {
                 animateItems = true
             },
         ) {

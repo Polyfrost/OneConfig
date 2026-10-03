@@ -9,7 +9,6 @@ import java.util.concurrent.Executor
 import java.util.zip.ZipInputStream
 import kotlin.jvm.optionals.getOrNull
 import net.minecraft.client.Minecraft
-import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.PreparableReloadListener
 import net.minecraft.server.packs.resources.ResourceManager
 import org.jetbrains.skia.*
@@ -18,10 +17,20 @@ import org.polyfrost.compose.mc.McFontQueue
 import org.polyfrost.compose.render.FontManager
 import org.slf4j.LoggerFactory
 
-//? if < 1.21.4 {
+//? if > 1.8.9 {
+import net.minecraft.resources.Identifier
+//?}
+
+//? if < 1.21.4 && > 1.8.9 {
 /*import net.minecraft.util.profiling.ProfilerFiller
 *///?}
 
+//? if = 1.8.9 {
+/*import net.ornithemc.osl.core.api.util.NamespacedIdentifier as Identifier
+import net.ornithemc.osl.core.api.util.NamespacedIdentifiers
+*///?}
+
+//~ if = 1.8.9 'PreparableReloadListener' -> 'ResourceReloadListener'
 object SkiaFontRenderer : PreparableReloadListener {
     private val LOGGER = LoggerFactory.getLogger("OneConfig/SkiaFontRenderer")
 
@@ -72,6 +81,7 @@ object SkiaFontRenderer : PreparableReloadListener {
     private var lastLoadAttempt = 0L
     private const val RETRY_INTERVAL_MS = 200L
 
+    //~ if = 1.8.9 'minecraft:default' -> 'oneconfig:legacy_default'
     private const val ROOT_FONT = "minecraft:default"
 
     private val textPaint = Paint().apply { isAntiAlias = false }
@@ -187,6 +197,7 @@ object SkiaFontRenderer : PreparableReloadListener {
         val now = System.currentTimeMillis()
         if (now - lastLoadAttempt < RETRY_INTERVAL_MS) return
         lastLoadAttempt = now
+        //~ if = 1.8.9 'Minecraft.getInstance().resourceManager' -> 'ResourceManager.client()'
         prepare(Minecraft.getInstance().resourceManager, fontOptionsMask())?.let(::applyPrepared)
     }
 
@@ -466,6 +477,7 @@ object SkiaFontRenderer : PreparableReloadListener {
     private fun collectProviders(rm: ResourceManager, id: String, out: MutableList<JsonObject>, visited: MutableSet<String>, options: Int) {
         if (!visited.add(id)) return
         val (ns, path) = splitId(id)
+        //~ if = 1.8.9 'Identifier.fromNamespaceAndPath' -> 'NamespacedIdentifiers.from'
         for (bytes in readStack(rm, Identifier.fromNamespaceAndPath(ns, "font/$path.json"))) {
             val root = runCatching { JsonParser.parseString(String(bytes, Charsets.UTF_8)).asJsonObject }.getOrNull() ?: continue
             val providers = root.getAsJsonArray("providers") ?: continue
@@ -618,6 +630,7 @@ object SkiaFontRenderer : PreparableReloadListener {
     private fun loadUnihex(rm: ResourceManager, provider: JsonObject, hex: HexAccumulator, claimed: MutableSet<Int>) {
         val hexRef = provider.get("hex_file")?.asString ?: return
         val (ns, path) = splitId(hexRef)
+        //~ if = 1.8.9 'Identifier.fromNamespaceAndPath' -> 'NamespacedIdentifiers.from'
         val zipBytes = read(rm, Identifier.fromNamespaceAndPath(ns, path)) ?: run {
             LOGGER.warn("unihex font provider references missing file {}", hexRef)
             return
@@ -724,6 +737,7 @@ object SkiaFontRenderer : PreparableReloadListener {
     private fun loadBitmap(rm: ResourceManager, provider: JsonObject, out: MutableMap<Int, Glyph>, atlasesOut: MutableList<Image>, claimed: MutableSet<Int>) {
         val fileRef = provider.get("file")?.asString ?: return
         val (ns, filePath) = splitId(fileRef)
+        //~ if = 1.8.9 'Identifier.fromNamespaceAndPath' -> 'NamespacedIdentifiers.from'
         val bytes = read(rm, Identifier.fromNamespaceAndPath(ns, "textures/$filePath")) ?: return
         if (!isPng(bytes)) return
         val image = Image.makeFromEncoded(bytes)
@@ -784,6 +798,7 @@ object SkiaFontRenderer : PreparableReloadListener {
             bytes[0] == 0x89.toByte() && bytes[1] == 0x50.toByte() &&
             bytes[2] == 0x4E.toByte() && bytes[3] == 0x47.toByte()
 
+    //? if > 1.8.9 {
     //? < 1.21.10 {
     /*override fun reload(
         preparationBarrier: PreparableReloadListener.PreparationBarrier?,
@@ -827,4 +842,16 @@ object SkiaFontRenderer : PreparableReloadListener {
                 }
             }, executor2)
     }
+    //?} else {
+    /*override fun resourcesReloaded(resourceManager: ResourceManager) {
+        val prepared = prepare(resourceManager, fontOptionsMask())
+        if (prepared != null) {
+            applyPrepared(prepared)
+        } else {
+            loaded = false
+            reloadFailed = true
+            lastLoadAttempt = 0L
+        }
+    }
+    *///?}
 }

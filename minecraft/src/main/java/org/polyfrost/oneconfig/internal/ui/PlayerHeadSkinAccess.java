@@ -11,8 +11,12 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.resources.Identifier;
 //?}
 
-//? if < 1.21.11 {
+//? if < 1.21.11 && > 1.8.9 {
 /*import net.minecraft.resources.ResourceLocation;
+*///?}
+
+//? if = 1.8.9 {
+/*import net.minecraft.resource.Identifier;
 *///?}
 
 /**
@@ -72,7 +76,7 @@ public final class PlayerHeadSkinAccess {
         }
     }
 
-    //~if >= 1.21.11 'ResourceLocation' -> 'Identifier'
+    //~if >= 1.21.11 || = 1.8.9 'ResourceLocation' -> 'Identifier'
     private static @Nullable NativeImage extractHead(Minecraft mc, Identifier textureId) {
         NativeImage pixels = PlayerHeadTextureAccess.readPixels(mc.getTextureManager().getTexture(textureId));
         if (pixels == null) {
