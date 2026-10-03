@@ -415,6 +415,8 @@ tasks.withType<ProcessResources>() {
         eachFile { if (path == "ornithe.mod.json") path = "fabric.mod.json" }
     } else {
         exclude("ornithe.mod.json")
+        // modern font loading rejects its legacy_unicode provider
+        exclude("assets/oneconfig/font/legacy_default.json")
     }
 
     val mixinCompat = if (
