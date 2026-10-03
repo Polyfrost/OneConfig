@@ -390,15 +390,6 @@ afterEvaluate {
     }
 }
 
-if (loader != "ornithe") {
-    tasks.withType<PublishToMavenRepository>().configureEach {
-        enabled = false
-    }
-    tasks.withType<PublishToMavenLocal>().configureEach {
-        enabled = false
-    }
-}
-
 tasks.withType<ProcessResources>() {
     val range = if (versionedCatalog.versions.has("minecraft.range")) {
         versionedCatalog.versions.get("minecraft.range").toString()

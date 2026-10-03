@@ -185,15 +185,6 @@ tasks.matching { it.name == "publishModrinth" }.configureEach {
     dependsOn(validateChangelog)
 }
 
-if (!isOrnithe) {
-    tasks.publishMods.configure {
-        enabled = false
-    }
-    tasks.matching { it.name == "publishModrinth" }.configureEach {
-        enabled = false
-    }
-}
-
 publishMods {
     file = tasks.named<AbstractArchiveTask>(publishJarTaskName).flatMap { it.archiveFile }
 

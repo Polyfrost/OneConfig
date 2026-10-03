@@ -49,7 +49,6 @@ publishMods {
             )
         }
 
-        // intentionally published here, even though Ornithe code only lives in the `legacy` branch
         // this is identical to the Fabric version, but has to be published separately,
         // because Modrinth's API rejects a version claiming to support Fabric on 1.8.9
         modrinth("modrinthOrnithe") {
