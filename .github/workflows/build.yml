@@ -54,13 +54,13 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
         with:
           # one PR comment per run instead of one per Minecraft version
-          add-job-summary-as-pr-comment: ${{ matrix.version && 'on-failure' || 'always' }}
+          add-job-summary-as-pr-comment: ${{ matrix.node && 'on-failure' || 'always' }}
           add-job-summary: always
           build-scan-publish: true
           build-scan-terms-of-use-url: "https://gradle.com/terms-of-service"
           build-scan-terms-of-use-agree: "yes"
           validate-wrappers: true
-          cache-read-only: ${{ github.ref != 'refs/heads/legacy' }}
+          cache-read-only: ${{ github.ref != 'refs/heads/v1' }}
 
       - &loom-cache
         uses: actions/cache@v6
@@ -102,17 +102,27 @@ jobs:
           if-no-files-found: error
 
   minecraft:
-    name: Build ${{ matrix.version }}
+    name: Build ${{ matrix.node }}
 
     runs-on: ubuntu-26.04
 
     strategy:
       fail-fast: false
       matrix:
-        version: ["1.8.9"]
+        node:
+          - 1.8.9-ornithe
+          - 1.21.1-fabric
+          - 1.21.4-fabric
+          - 1.21.5-fabric
+          - 1.21.8-fabric
+          - 1.21.10-fabric
+          - 1.21.11-fabric
+          - 26.1-fabric
+          - 26.2-fabric
+          - 26.3-fabric
 
     env:
-      NODE: ${{ matrix.version }}-ornithe
+      NODE: ${{ matrix.node }}
 
     steps:
       - *checkout
