@@ -8,6 +8,8 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -41,14 +43,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -186,7 +192,18 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
         canSwap = { from, to -> sameModGroup(entries, from, to) },
     )
 
-    Box(modifier = Modifier.weight(1f)) {
+    val focusManager = LocalFocusManager.current
+    Box(
+        modifier = Modifier
+            .weight(1f)
+            // cards can't take focus, so clear it on press to unfocus the search field
+            .pointerInput(focusManager) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                    focusManager.clearFocus()
+                }
+            },
+    ) {
         LazyVerticalGrid(
             state = gridState,
             columns = GridCells.Fixed(4),
@@ -322,6 +339,8 @@ fun ModCard(mod: ConfigData, modifier: Modifier = Modifier) {
             .border(1.dp, remember(theme.borderColor) {
                 Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
             }, theme.modCardShape)
+            // cards never take focus, otherwise they slide in from off screen when scrolled back into view
+            .focusProperties { canFocus = false }
             .onClick(interactionSource) {
                 val onOpen = mod.onOpen
                 when {
@@ -440,6 +459,7 @@ private fun FavoriteStar(
             .padding(4.dp)
             .size(24.dp)
             .alpha(alpha)
+            .focusProperties { canFocus = false }
             .onClick(interactionSource) { ModFavorites.toggle(mod.id) }
             .pointerHoverIcon(PointerIcon.Hand),
         contentAlignment = Alignment.Center,
