@@ -45,7 +45,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -316,8 +315,6 @@ private val ModCardFooterHeight = 36.dp
 
 private val ModCardGlowHeight = 50.dp
 
-private val FavoriteStarColor = Color(0xFFFFD700)
-
 @Composable
 fun ModCard(mod: ConfigData, modifier: Modifier = Modifier) {
     val interactionSource = rememberInteractionSource()
@@ -440,7 +437,7 @@ private fun FavoriteStar(
             else -> 0f
         }
     )
-    val color by animateColorAsState(if (favorite) FavoriteStarColor else theme.textColor)
+    val color by animateColorAsState(if (favorite) theme.favoriteColor else theme.textColor)
 
     Box(
         modifier = modifier
