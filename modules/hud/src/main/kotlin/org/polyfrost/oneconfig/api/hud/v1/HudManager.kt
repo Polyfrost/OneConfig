@@ -515,6 +515,7 @@ object HudManager {
                 hud.renderedH = h
             }
         }
+        hud.settlePin()
         return root
     }
 
@@ -941,6 +942,12 @@ object HudManager {
         isEditorOpen = false
         // a drag interrupted by the editor closing must not leave a HUD unable to merge
         setMergeExclusions(emptyList())
+
+        for (hud in activeInstances) {
+            hud.unpinCorner()
+            hud.settlePin()
+        }
+
         if (wasOpen) EventManager.INSTANCE.post(HudEditorToggleEvent.SCREEN_REMOVED)
     }
 

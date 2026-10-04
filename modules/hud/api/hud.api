@@ -126,6 +126,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun multipleInstancesAllowed ()Z
 	public fun onEditorDragEnd ()V
 	public fun onEditorDragStart ()V
+	public fun pinCorner (Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)V
 	public fun remove ()V
 	public final fun reseedStaticHeight ()V
 	public final fun reseedStaticSizeIfNeeded ()V
@@ -194,9 +195,11 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setVisible (Landroidx/compose/runtime/MutableState;)V
 	public fun setX (F)V
 	public fun setY (F)V
+	public fun settlePin ()V
 	public fun setup ()V
 	public fun shouldShow ()Z
 	public fun showByDefault ()Z
+	public fun unpinCorner ()V
 	public abstract fun update ()Z
 	public final fun updateAndRecalculate ()V
 	public fun updateFrequency ()J
