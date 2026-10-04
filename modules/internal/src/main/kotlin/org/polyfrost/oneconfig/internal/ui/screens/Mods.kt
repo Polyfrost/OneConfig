@@ -192,7 +192,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
             columns = GridCells.Fixed(4),
             verticalArrangement = Arrangement.spacedBy(19.dp),
             horizontalArrangement = Arrangement.spacedBy(19.dp),
-            modifier = Modifier.fillMaxSize().clipToBounds().onGloballyPositioned {
+            modifier = Modifier.fillMaxSize().padding(end = 16.dp).clipToBounds().onGloballyPositioned {
                 animateItems = true
             },
         ) {
