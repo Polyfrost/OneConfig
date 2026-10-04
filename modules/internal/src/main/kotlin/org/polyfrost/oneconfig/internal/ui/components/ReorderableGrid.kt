@@ -164,6 +164,11 @@ class GridReorderState internal constructor(
             }
         }
         val target = best ?: return
+        // override scroll to stay in place instead of following the first visible item
+        val first = gridState.firstVisibleItemIndex
+        if (first in minOf(draggingIndex, target.index)..maxOf(draggingIndex, target.index)) {
+            gridState.requestScrollToItem(first, gridState.firstVisibleItemScrollOffset)
+        }
         onMove(draggingIndex, target.index)
         draggingIndex = target.index
         UiSounds.play(UiSoundEvent.SLIDER_TICK)

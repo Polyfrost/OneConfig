@@ -192,6 +192,12 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
         canSwap = { from, to -> sameModGroup(entries, from, to) },
     )
 
+    // override scroll to stay in place instead of following the first visible item
+    DisposableEffect(favoriteRevision) {
+        gridState.requestScrollToItem(gridState.firstVisibleItemIndex, gridState.firstVisibleItemScrollOffset)
+        onDispose { }
+    }
+
     val focusManager = LocalFocusManager.current
     Box(
         modifier = Modifier
