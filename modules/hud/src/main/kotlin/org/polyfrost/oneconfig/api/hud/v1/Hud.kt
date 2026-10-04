@@ -31,6 +31,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshots.Snapshot
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.polyfrost.compose.composables.PolyModifier
@@ -363,9 +364,13 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         HudAnchor.BottomLeft, HudAnchor.Bottom, HudAnchor.BottomRight -> 1f
     }
 
-    private val anchorFracX: Float get() = fracX(growthAnchor)
+    private val anchorFracX: Float get() = pinnedFracX(growthAnchor)
 
-    private val anchorFracY: Float get() = fracY(growthAnchor)
+    private val anchorFracY: Float get() = pinnedFracY(growthAnchor)
+
+    private fun pinnedFracX(point: HudAnchor): Float = fracX(pinnedCorner ?: point)
+
+    private fun pinnedFracY(point: HudAnchor): Float = fracY(pinnedCorner ?: point)
 
     /** Screen-space X of [point] on this HUD's box such as the middle of its right edge */
     fun anchorPointX(point: HudAnchor): Float = x + fracX(point) * scaledWidth
@@ -400,7 +405,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             resolvingAnchor = true
             try {
                 return a.parent.layoutX(sw) + a.parent.fracX(a.targetPoint) * a.parent.scaledWidth +
-                    a.offset - fracX(a.selfPoint) * scaledWidth
+                    a.offset - pinnedFracX(a.selfPoint) * scaledWidth
             } finally {
                 resolvingAnchor = false
             }
@@ -413,7 +418,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             resolvingAnchor = true
             try {
                 return a.parent.layoutY(sh) + a.parent.fracY(a.targetPoint) * a.parent.scaledHeight +
-                    a.offset - fracY(a.selfPoint) * scaledHeight
+                    a.offset - pinnedFracY(a.selfPoint) * scaledHeight
             } finally {
                 resolvingAnchor = false
             }
@@ -429,7 +434,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         if (a != null) {
             resolvingAnchor = true
             try {
-                return a.parent.anchorPointX(a.targetPoint) + a.offset - fracX(a.selfPoint) * w
+                return a.parent.anchorPointX(a.targetPoint) + a.offset - pinnedFracX(a.selfPoint) * w
             } finally {
                 resolvingAnchor = false
             }
@@ -441,7 +446,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         if (a != null) {
             resolvingAnchor = true
             try {
-                return a.parent.anchorPointY(a.targetPoint) + a.offset - fracY(a.selfPoint) * h
+                return a.parent.anchorPointY(a.targetPoint) + a.offset - pinnedFracY(a.selfPoint) * h
             } finally {
                 resolvingAnchor = false
             }
@@ -484,7 +489,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     protected open fun updateRelativeX(absX: Float) {
         val sw = HudManager.guiScreenWidth
         resolvedAnchorX?.let { a ->
-            val pin = absX + fracX(a.selfPoint) * scaledWidth
+            val pin = absX + pinnedFracX(a.selfPoint) * scaledWidth
             resolvingAnchor = true
             try {
                 val offset = pin - a.parent.anchorPointX(a.targetPoint)
@@ -510,7 +515,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     protected open fun updateRelativeY(absY: Float) {
         val sh = HudManager.guiScreenHeight
         resolvedAnchorY?.let { a ->
-            val pin = absY + fracY(a.selfPoint) * scaledHeight
+            val pin = absY + pinnedFracY(a.selfPoint) * scaledHeight
             resolvingAnchor = true
             try {
                 val offset = pin - a.parent.anchorPointY(a.targetPoint)
@@ -581,6 +586,35 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         staticW = width
     }
 
+    private var pinnedCorner: HudAnchor? = null
+    private var unpinPending = false
+
+    @ApiStatus.Internal
+    open fun pinCorner(pin: HudAnchor) {
+        val absX = x
+        val absY = y
+        pinnedCorner = pin
+        unpinPending = false
+        updateRelativeX(absX)
+        updateRelativeY(absY)
+    }
+
+    /** Only takes effect on the next [settlePin] because the final size is not laid out yet */
+    @ApiStatus.Internal
+    open fun unpinCorner() {
+        if (pinnedCorner != null) unpinPending = true
+    }
+
+    @ApiStatus.Internal
+    open fun settlePin() {
+        if (!unpinPending) return
+        val absX = rawX
+        val absY = rawY
+        pinnedCorner = null
+        unpinPending = false
+        Snapshot.withMutableSnapshot { setAbsolutePosition(absX, absY) }
+    }
+
     private var _alignment: MutableState<PolyAlign> = mutableStateOf(PolyAlign.Center)
     var alignment: PolyAlign get() = _alignment.value; set(v) { _alignment.value = v }
 
@@ -588,8 +622,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var growthAnchor: HudAnchor get() = _growthAnchor.value; set(v) { _growthAnchor.value = v }
 
     val effectiveGrowthAnchor: HudAnchor get() {
-        val fx = anchorFracX
-        val fy = anchorFracY
+        val fx = fracX(growthAnchor)
+        val fy = fracY(growthAnchor)
         return when {
             fy == 0f -> when (fx) { 0f -> HudAnchor.TopLeft; 0.5f -> HudAnchor.Top; else -> HudAnchor.TopRight }
             fy == 0.5f -> when (fx) { 0f -> HudAnchor.Left; 0.5f -> HudAnchor.Center; else -> HudAnchor.Right }
@@ -756,12 +790,12 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         ) return
         if (axis == MergeAxis.X) {
             val refW = HudManager.layoutRefWidth.takeIf { it > 0f } ?: HudManager.guiScreenWidth
-            val offset = layoutX(refW) + fracX(selfPoint) * scaledWidth -
+            val offset = layoutX(refW) + pinnedFracX(selfPoint) * scaledWidth -
                 (parent.layoutX(refW) + parent.fracX(targetPoint) * parent.scaledWidth)
             mergeLinkX = MergeLink(parent, selfPoint, targetPoint, offset)
         } else {
             val refH = HudManager.layoutRefHeight.takeIf { it > 0f } ?: HudManager.guiScreenHeight
-            val offset = layoutY(refH) + fracY(selfPoint) * scaledHeight -
+            val offset = layoutY(refH) + pinnedFracY(selfPoint) * scaledHeight -
                 (parent.layoutY(refH) + parent.fracY(targetPoint) * parent.scaledHeight)
             mergeLinkY = MergeLink(parent, selfPoint, targetPoint, offset)
         }
@@ -1238,6 +1272,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @Suppress("UNCHECKED_CAST")
     override fun clone(): Hud = (super.clone() as Hud).apply {
         _runtime = null
+        pinnedCorner = null
+        unpinPending = false
         isVisible = mutableStateOf(false)
         showKey = -1
         toggleKey = -1
