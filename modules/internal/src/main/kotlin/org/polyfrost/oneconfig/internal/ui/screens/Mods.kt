@@ -68,6 +68,7 @@ import org.polyfrost.oneconfig.internal.ui.api.ModOrder
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories
 import org.polyfrost.oneconfig.internal.ui.api.buildModGridEntries
 import org.polyfrost.oneconfig.internal.ui.api.modCardOrder
+import org.polyfrost.oneconfig.internal.ui.api.modFavoriteAt
 import org.polyfrost.oneconfig.internal.ui.api.modGroupBounds
 import org.polyfrost.oneconfig.internal.ui.api.sameModGroup
 import org.polyfrost.oneconfig.internal.ui.components.Chip
@@ -290,18 +291,13 @@ private val ModCardPlacementSpec = spring(
     visibilityThreshold = IntOffset.VisibilityThreshold,
 )
 
-/**
- * Persists the arrangement after a card is dropped at [index]
- *
- * Dropping a card inside the favourites block favourites it and dragging one out clears it
- */
+/** Persists the arrangement and the favorite state after a card is dropped at [index] */
 private fun commitDrop(entries: List<ModGridEntry>, index: Int) {
     val dropped = (entries.getOrNull(index) as? ModGridEntry.Card)?.data ?: return
-    val bounds = modGroupBounds(entries, index)
-    val group = entries.slice(bounds).filterIsInstance<ModGridEntry.Card>().map { it.data }
-    val position = index - bounds.first
-    val favoritesElsewhere = group.filterIndexed { i, _ -> i != position }.count { ModFavorites.isFavorite(it.id) }
-    if ((position < favoritesElsewhere) != ModFavorites.isFavorite(dropped.id)) ModFavorites.toggle(dropped.id)
+    if (modFavoriteAt(entries, index, ModFavorites::isFavorite) != ModFavorites.isFavorite(dropped.id)) {
+        ModFavorites.toggle(dropped.id)
+    }
+    val group = entries.slice(modGroupBounds(entries, index)).filterIsInstance<ModGridEntry.Card>().map { it.data }
     ModOrder.reorder(
         group.map { it.id },
         ConfigRegistry.modCardConfigs.sortedWith(modCardOrder()).map { it.id },
