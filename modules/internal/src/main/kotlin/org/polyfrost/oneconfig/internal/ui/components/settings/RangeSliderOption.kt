@@ -73,6 +73,8 @@ fun RangeSliderOption(data: RangeSliderOptionData) {
     ) {
         Box(
             modifier = Modifier
+                // the spinners beside the track outgrow narrow columns like the HUD editor's
+                .weight(1f, fill = false)
                 .width(LocalOptionWidth.current)
                 .height(19.dp)
                 .onSizeChanged { trackWidthPx = it.width.toFloat() }

@@ -287,13 +287,18 @@ private fun Tree.matchesLocalSearch(category: String, subcategory: String, query
         .any { searchMatches(it.asRenderText(), query) }
 }
 
-private fun isWideControl(prop: Property<*>): Boolean {
+/** Width a slider-style control needs beside its track, or null when the control is compact */
+private fun sliderTrailingWidth(prop: Property<*>): Dp? {
     return when (prop.getMetadata<Any?>("visualizer")) {
-        Visualizer.SliderVisualizer::class.java -> true
-        is Visualizer.SliderVisualizer -> true
-        else -> false
+        Visualizer.SliderVisualizer::class.java, is Visualizer.SliderVisualizer -> SLIDER_SPINNER_WIDTH
+        // two spinners, or a spinner plus the inherit chip
+        Visualizer.RangeSliderVisualizer::class.java, is Visualizer.RangeSliderVisualizer,
+        Visualizer.InheritableSliderVisualizer::class.java, is Visualizer.InheritableSliderVisualizer -> SLIDER_SPINNER_WIDTH * 2
+        else -> null
     }
 }
+
+private fun isWideControl(prop: Property<*>): Boolean = sliderTrailingWidth(prop) != null
 
 /**
  * Renders one entry of a flattened settings list
@@ -505,7 +510,7 @@ private val OPTION_ROW_CHROME = 32.dp + 16.dp
 private val SLIDER_SPINNER_WIDTH = 80.dp + 16.dp
 
 private fun optionReservedWidth(prop: Property<*>, optionWidth: Dp): Dp {
-    val control = if (isWideControl(prop)) optionWidth + SLIDER_SPINNER_WIDTH + OPTION_ROW_CHROME else OPTION_CHROME_WIDTH
+    val control = sliderTrailingWidth(prop)?.let { optionWidth + it + OPTION_ROW_CHROME } ?: OPTION_CHROME_WIDTH
     return control + (if (prop.getMetadata<String>("icon") != null) OPTION_ICON_WIDTH else 0.dp)
 }
 
