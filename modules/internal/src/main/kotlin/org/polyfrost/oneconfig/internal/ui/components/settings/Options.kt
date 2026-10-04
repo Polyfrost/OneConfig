@@ -44,6 +44,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.concentric
 import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
@@ -177,8 +178,10 @@ fun OptionContextMenu(
         Column(
             // intrinsic width keeps the menu content-sized while rows fillMaxWidth so hover backgrounds
             // span the whole menu instead of each row's own text width
+            //TODO: fix this always moving right
             modifier = Modifier
                 .width(IntrinsicSize.Max)
+                .shellTransition()
                 .background(theme.popupBackground, theme.popupShape)
                 .border(1.dp, theme.borderColor, theme.popupShape)
                 .padding(ContextMenuPadding),

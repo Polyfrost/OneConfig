@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.withInfiniteAnimationFrameNanos
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,7 +17,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
@@ -62,6 +60,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
@@ -308,6 +307,7 @@ internal fun ColorPickerPopup(
     Column(
         modifier = Modifier
             .width(280.dp)
+            .shellTransition()
             .background(theme.popupBackground, PickerShape)
             .border(1.dp, theme.borderColor, PickerShape)
             .padding(16.dp),
