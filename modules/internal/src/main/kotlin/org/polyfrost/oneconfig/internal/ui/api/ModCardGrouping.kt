@@ -54,14 +54,6 @@ fun buildModGridEntries(sorted: List<ConfigData>, collapsed: (String) -> Boolean
     return out
 }
 
-fun sameModGroup(entries: List<ModGridEntry>, from: Int, to: Int): Boolean {
-    if (entries.getOrNull(from) !is ModGridEntry.Card) return false
-    if (entries.getOrNull(to) !is ModGridEntry.Card) return false
-    if (from == to) return true
-    val between = if (from < to) from + 1 until to else to + 1 until from
-    return between.none { entries[it] is ModGridEntry.Header }
-}
-
 /** Whether the card at [index] would be a favorite if dropped there */
 fun modFavoriteAt(entries: List<ModGridEntry>, index: Int, isFavorite: (String) -> Boolean): Boolean {
     val card = entries.getOrNull(index) as? ModGridEntry.Card ?: return false

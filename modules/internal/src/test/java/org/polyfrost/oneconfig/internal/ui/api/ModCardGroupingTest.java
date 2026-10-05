@@ -96,17 +96,6 @@ class ModCardGroupingTest {
     }
 
     @Test
-    void swapsAreRefusedAcrossAndOntoHeaders() {
-        // [untyped, HEADER, a, b, HEADER, c]
-        List<ModGridEntry> entries = build(Set.of(), "grouping-untyped", "grouping-a", "grouping-b", "grouping-c");
-
-        assertTrue(ModCardGroupingKt.sameModGroup(entries, 2, 3), "cards of one group may swap");
-        assertFalse(ModCardGroupingKt.sameModGroup(entries, 0, 2), "a header sits between the groups");
-        assertFalse(ModCardGroupingKt.sameModGroup(entries, 2, 1), "a header is never a drop slot");
-        assertFalse(ModCardGroupingKt.sameModGroup(entries, 3, 5), "different groups may not swap");
-    }
-
-    @Test
     void cardIsFavoriteAboveTheOtherFavorites() {
         // [HEADER, a, b]
         List<ModGridEntry> entries = build(Set.of(), "grouping-a", "grouping-b");
