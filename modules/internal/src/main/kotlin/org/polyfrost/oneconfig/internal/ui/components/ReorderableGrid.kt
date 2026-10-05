@@ -33,10 +33,13 @@ import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.isPrimaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.zIndex
+import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -46,8 +49,11 @@ import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 
 /** Distance from a viewport edge at which a drag starts scrolling the grid */
-private const val AutoScrollZonePx = 64f
-private const val AutoScrollSpeedPx = 12f
+private val AutoScrollZone = 40.dp
+/** How far into the zone the item must go for auto-scroll to reach [AutoScrollMaxSpeed] */
+private val AutoScrollRamp = 240.dp
+/** Distance auto-scroll covers per second at its fastest */
+private val AutoScrollMaxSpeed = 3200.dp
 
 private val SettleSpec = spring<Offset>(
     dampingRatio = Spring.DampingRatioNoBouncy,
@@ -78,6 +84,7 @@ class GridReorderState internal constructor(
     private val onDrop: (index: Int) -> Unit,
     private val dragBounds: (index: Int) -> IntRange?,
     internal val onClick: (key: Any) -> Unit,
+    private val density: () -> Density,
 ) {
     var draggingKey by mutableStateOf<Any?>(null)
         private set
@@ -238,11 +245,15 @@ class GridReorderState internal constructor(
     }
 
     /**
-     * Moves the dragged item into the slot under it, and scrolls the grid while it is near the top or bottom edge
+     * Moves the dragged item into the slot under it, and scrolls the grid while it is near the top or bottom edge,
+     * faster the further past it
      */
     private suspend fun dragLoop() {
+        var lastFrame = withFrameNanos { it }
         while (scope.isActive && draggingKey != null) {
-            withFrameNanos { }
+            val frame = withFrameNanos { it }
+            val seconds = ((frame - lastFrame) / 1e9f).coerceAtMost(1 / 30f)
+            lastFrame = frame
             trackSlot()
             settleOnHoveredItem()
             val top = overlayOffset.y
@@ -254,15 +265,20 @@ class GridReorderState internal constructor(
             }
             val canScrollUp = bounds == null || inView.isEmpty() || bounds.first < inView.first().index
             val canScrollDown = bounds == null || inView.isEmpty() || bounds.last > inView.last().index
-            val nearTop = top < layout.viewportStartOffset + AutoScrollZonePx
-            val nearBottom = bottom > layout.viewportEndOffset - AutoScrollZonePx
-            val speed = when {
-                nearTop && dragDelta.y < 0f && canScrollUp -> -AutoScrollSpeedPx
-                nearBottom && dragDelta.y > 0f && canScrollDown -> AutoScrollSpeedPx
+            val (zone, rampDistance, maxSpeed) = with(density()) {
+                Triple(AutoScrollZone.toPx(), AutoScrollRamp.toPx(), AutoScrollMaxSpeed.toPx())
+            }
+            // an item picked up inside the zone should only scroll when further dragged towards the edge
+            val intoTop = minOf(layout.viewportStartOffset + zone, initialOffset.y) - top
+            val intoBottom = bottom - maxOf(layout.viewportEndOffset - zone, initialOffset.y + overlaySize.height)
+            val depth = when {
+                intoTop > 0f && canScrollUp -> -intoTop
+                intoBottom > 0f && canScrollDown -> intoBottom
                 else -> 0f
             }
+            val ramp = (depth / rampDistance).coerceIn(-1f, 1f)
             // raw delta so a wheel scroll mid drag cannot interrupt this loop
-            if (speed != 0f) gridState.dispatchRawDelta(speed)
+            if (depth != 0f) gridState.dispatchRawDelta(ramp * abs(ramp) * maxSpeed * seconds)
         }
     }
 }
@@ -280,6 +296,7 @@ fun rememberGridReorderState(
     val currentOnDrop by rememberUpdatedState(onDrop)
     val currentDragBounds by rememberUpdatedState(dragBounds)
     val currentOnClick by rememberUpdatedState(onClick)
+    val currentDensity by rememberUpdatedState(LocalDensity.current)
     return remember(gridState, scope) {
         GridReorderState(
             gridState = gridState,
@@ -288,6 +305,7 @@ fun rememberGridReorderState(
             onDrop = { index -> currentOnDrop(index) },
             dragBounds = { index -> currentDragBounds(index) },
             onClick = { key -> currentOnClick(key) },
+            density = { currentDensity },
         )
     }
 }
