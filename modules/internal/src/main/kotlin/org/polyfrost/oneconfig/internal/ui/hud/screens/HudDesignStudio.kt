@@ -662,13 +662,7 @@ private fun resizeHud(
         } else 1f
         val baseScale = startScale.coerceAtLeast(0.001f)
         val newScale = (baseScale * rawFactor).coerceIn(0.25f, 4f)
-        val factor = newScale / baseScale
-        val newWidth = startBounds.width * factor
-        val newHeight = startBounds.height * factor
-        val newX = if (corner.isLeft) anchorX - newWidth else anchorX
-        val newY = if (corner.isTop) anchorY - newHeight else anchorY
         hud.customScale = newScale
-        hud.setAbsolutePosition(newX, newY)
         return
     }
 
@@ -677,13 +671,10 @@ private fun resizeHud(
         val (minStaticW, minStaticH) = hud.minimumSize()
         val newWidth = targetWidth.coerceAtLeast(minStaticW * effectiveScale)
         val newHeight = targetHeight.coerceAtLeast(minStaticH * effectiveScale)
-        val newX = if (corner.isLeft) anchorX - newWidth else anchorX
-        val newY = if (corner.isTop) anchorY - newHeight else anchorY
 
         hud.staticWidth = true
         hud.staticW = newWidth / effectiveScale
         hud.staticH = newHeight / effectiveScale
-        hud.setAbsolutePosition(newX, newY)
         return
     }
 
@@ -701,17 +692,12 @@ private fun resizeHud(
     val maxTextScale = 64f / 14f
     val newTextScale = (startTextScale * rawFactor).coerceIn(minTextScale, maxTextScale)
     val factor = if (startTextScale > 0f) newTextScale / startTextScale else 1f
-    val newWidth = startBounds.width * factor
-    val newHeight = startBounds.height * factor
-    val newX = if (corner.isLeft) anchorX - newWidth else anchorX
-    val newY = if (corner.isTop) anchorY - newHeight else anchorY
 
     hud.textScale = newTextScale
     if (hud.staticWidth && startStaticW > 0f && startStaticH > 0f) {
         hud.staticW = startStaticW * factor
         hud.staticH = startStaticH * factor
     }
-    hud.setAbsolutePosition(newX, newY)
 }
 
 private fun DrawScope.drawSelectedHudBounds(
@@ -1291,6 +1277,14 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     event.changes.forEach { it.consume() }
                     UiSounds.play(UiSoundEvent.HUD_RESIZE_START)
                     Snapshot.withMutableSnapshot {
+                        selected.pinCorner(
+                            when (handle) {
+                                ResizeCorner.TopLeft -> HudAnchor.BottomRight
+                                ResizeCorner.TopRight -> HudAnchor.BottomLeft
+                                ResizeCorner.BottomLeft -> HudAnchor.TopRight
+                                ResizeCorner.BottomRight -> HudAnchor.TopLeft
+                            }
+                        )
                         isResizing = true
                         resizedHud = selected
                         resizeCorner = handle
@@ -1391,6 +1385,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             if (isResizing) {
                 if (event.changes.none { it.pressed }) {
                     Snapshot.withMutableSnapshot {
+                        resizedHud?.unpinCorner()
                         isResizing = false
                         resizedHud = null
                         resizeCorner = null
@@ -1523,6 +1518,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             val wasResizing = isResizing
             val wasResizedHud = resizedHud
             Snapshot.withMutableSnapshot {
+                wasResizedHud?.unpinCorner()
                 isResizing = false
                 resizedHud = null
                 resizeCorner = null

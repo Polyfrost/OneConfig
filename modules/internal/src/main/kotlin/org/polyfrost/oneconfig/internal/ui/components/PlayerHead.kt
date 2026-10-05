@@ -28,6 +28,5 @@ fun PlayerHead(modifier: Modifier = Modifier) {
         contentDescription = null,
         modifier = modifier
             .clip(shape)
-            .border(1.dp, LocalTheme.current.borderColor, shape),
     )
 }
