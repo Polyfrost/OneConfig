@@ -31,6 +31,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.jupiter.api.Test;
+import org.polyfrost.compose.render.PolyColor;
+import org.polyfrost.oneconfig.api.config.v1.annotations.Color;
+import org.polyfrost.oneconfig.api.config.v1.annotations.Dropdown;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -86,5 +89,65 @@ public class ConfigResetOnCorruptTest {
         assertTrue(Files.exists(backup), "a backup of the problematic file must be created");
         String rewritten = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
         assertFalse(rewritten.contains("not_a_bool"), "the bad value must be scrubbed from the live file");
+    }
+
+    private static final String LEGACY_ID = "legacy_format_test.json";
+    private static final String LEGACY_ORDINAL_ID = "legacy_ordinal_test.json";
+
+    public enum Curve { FLAT, EASE }
+
+    @SuppressWarnings("unused")
+    public static class LegacyConfig extends Config {
+        @Dropdown(title = "Curve")
+        public Curve curve = Curve.FLAT;
+        @Color(title = "Label")
+        public PolyColor label = new PolyColor(0);
+
+        public LegacyConfig(String id) {
+            super(id, "Legacy format", Category.QOL);
+        }
+
+        @Override
+        public void initialize(boolean byConfigManager) {
+            super.initialize(byConfigManager);
+        }
+    }
+
+    @Test
+    void legacyPlainEnumAndColorValuesLoad() throws Exception {
+        Path dir = ConfigManager.active().getFolder();
+        Files.createDirectories(dir);
+        Path file = dir.resolve(LEGACY_ID);
+        Path backup = dir.resolve(LEGACY_ID + ".corrupted");
+        Files.deleteIfExists(file);
+        Files.deleteIfExists(backup);
+
+        Files.write(file, "{ \"curve\": \"EASE\", \"label\": -12566464 }".getBytes(StandardCharsets.UTF_8));
+
+        LegacyConfig config = new LegacyConfig(LEGACY_ID);
+        assertDoesNotThrow(() -> config.initialize(true));
+
+        assertEquals(Curve.EASE, config.curve);
+        assertEquals(0xFF404040, config.label.getRawArgb());
+        assertFalse(Files.exists(backup), "a convertible legacy value must not be reported as corrupt");
+    }
+
+    @Test
+    void legacyOrdinalEnumAndHexColorValuesLoad() throws Exception {
+        Path dir = ConfigManager.active().getFolder();
+        Files.createDirectories(dir);
+        Path file = dir.resolve(LEGACY_ORDINAL_ID);
+        Path backup = dir.resolve(LEGACY_ORDINAL_ID + ".corrupted");
+        Files.deleteIfExists(file);
+        Files.deleteIfExists(backup);
+
+        Files.write(file, "{ \"curve\": 1, \"label\": \"#404040\" }".getBytes(StandardCharsets.UTF_8));
+
+        LegacyConfig config = new LegacyConfig(LEGACY_ORDINAL_ID);
+        assertDoesNotThrow(() -> config.initialize(true));
+
+        assertEquals(Curve.EASE, config.curve);
+        assertEquals(0xFF404040, config.label.getRawArgb());
+        assertFalse(Files.exists(backup), "a convertible legacy value must not be reported as corrupt");
     }
 }

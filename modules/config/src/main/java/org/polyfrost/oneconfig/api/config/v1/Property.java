@@ -37,6 +37,7 @@ import kotlin.reflect.KMutableProperty0;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
+import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
 import org.polyfrost.oneconfig.utils.v1.OverwriteMergeable;
 import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
@@ -235,6 +236,7 @@ public abstract class Property<T> extends Node implements Serializable {
         this.addMetadata(that.getMetadata());
         Object in = that.get();
         if (in != null) {
+            in = coerceLegacy(in);
             Object current = this.get();
             if (current instanceof OverwriteMergeable) {
                 in = ((OverwriteMergeable) current).mergeOverwrite(in);
@@ -247,6 +249,37 @@ public abstract class Property<T> extends Node implements Serializable {
             overwritten = root.getOrPutChild("reserved:overwritten");
             ((Tree) overwritten).put(new Tree(that.getID(), null, null, null));
         }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private Object coerceLegacy(Object in) {
+        if (WrappingUtils.getWrapped(type).isInstance(in)) return in;
+        if ((in instanceof String || in instanceof Number) && Enum.class.isAssignableFrom(type)) {
+            Object[] constants = (type.isEnum() ? type : type.getSuperclass()).getEnumConstants();
+            if (constants == null) return in;
+            if (in instanceof Number) {
+                double ordinal = ((Number) in).doubleValue();
+                return ordinal >= 0 && ordinal < constants.length && ordinal == Math.rint(ordinal) ? constants[(int) ordinal] : in;
+            }
+            Object loose = null;
+            for (Object constant : constants) {
+                String name = ((Enum<?>) constant).name();
+                if (name.equals(in)) return constant;
+                if (loose == null && name.equalsIgnoreCase((String) in)) loose = constant;
+            }
+            return loose != null ? loose : in;
+        }
+        if (in instanceof Number || in instanceof String) {
+            Adapter adapter = ObjectSerializer.INSTANCE.getAdapter(type);
+            if (adapter != null) {
+                try {
+                    Object out = adapter.deserialize(WrappingUtils.richCast(in, adapter.getOutputClass()));
+                    if (out != null) return out;
+                } catch (RuntimeException ignored) {
+                }
+            }
+        }
+        return in;
     }
 
     protected final void clearCallbacks() {

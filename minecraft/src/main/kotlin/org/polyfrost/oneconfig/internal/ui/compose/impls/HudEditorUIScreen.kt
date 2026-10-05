@@ -86,6 +86,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
         closeRequestedAt = System.currentTimeMillis()
         closeAnimationMs = guiCloseAnimationMillis()
         UiSounds.play(UiSoundEvent.CLOSE)
+        UiSounds.releaseAmbience()
     }
 
     private fun cancelClose(): Boolean {
@@ -93,6 +94,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
         closeRequested = false
         requestOpenCallback?.invoke()
         UiSounds.play(UiSoundEvent.OPEN)
+        UiSounds.acquireAmbience()
         return true
     }
 
@@ -118,9 +120,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
         closeRequestedAt = 0L
         closeAnimationMs = 0L
         returningToOneConfig = false
-        if (!enteredFromOneConfig) {
-            UiSounds.acquireAmbience()
-        }
+        UiSounds.acquireAmbience()
         super.init()
         requestOpenCallback?.invoke()
     }
@@ -130,8 +130,8 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
             // off by default so closing the editor leaves the last config page as the route to come back to
             if (OneConfigConfig.restoreHudEditor) ShellState.lastRoute = HudEditorRoute
             ShellState.lastClosedAt = System.currentTimeMillis()
-            UiSounds.releaseAmbience()
         }
+        UiSounds.releaseAmbience()
         HudManager.onEditorScreenRemoved()
         super.removed()
     }

@@ -71,8 +71,11 @@ public class PolyColorAdapter extends Adapter<PolyColor, Object> {
 			);
 		}
 		if (in instanceof Number) {
-			int argb = ((Number) in).intValue();
+			int argb = (int) ((Number) in).longValue();
 			return PolyColor.Companion.rgba((argb >> 16) & 0xFF, (argb >> 8) & 0xFF, argb & 0xFF, (argb >> 24) & 0xFF);
+		}
+		if (in instanceof String) {
+			return PolyColor.Companion.hex((String) in);
 		}
 		throw new IllegalArgumentException("Unsupported PolyColor value: " + in);
 	}
