@@ -13,10 +13,6 @@ import org.slf4j.LoggerFactory
 import org.polyfrost.oneconfig.internal.ui.RenderTargetFbo
 //?}
 
-//? if sdl {
-import org.lwjgl.sdl.SDLVideo.SDL_GetCurrentVideoDriver
-//?}
-
 object GLVulkanService : VulkanService {
     private val LOG = LoggerFactory.getLogger(GLVulkanService::class.java)
     private val client get() = Minecraft.getInstance()
@@ -36,17 +32,7 @@ object GLVulkanService : VulkanService {
     }
 
     private val isGlxBackend: Boolean
-        get() {
-            //? if sdl {
-            val driver = try {
-                SDL_GetCurrentVideoDriver()
-            } catch (_: Throwable) {
-                null
-            }
-            if (driver != null) return !driver.equals("wayland", ignoreCase = true)
-            //?}
-            return true
-        }
+        get() = !GLInterfaceFactory.sdlVideoDriver.equals("wayland", ignoreCase = true)
 
     override fun makeBackendRenderTarget(
         width: Int, height: Int,
