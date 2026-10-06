@@ -96,8 +96,10 @@ import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreviewState
 import org.polyfrost.oneconfig.internal.ui.hud.components.rememberHudPreview
 import org.polyfrost.oneconfig.internal.ui.hud.modNameFor
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
-import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Designer
+import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Layout
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Settings
+import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Style
+import org.polyfrost.oneconfig.internal.ui.screens.hasHudOptions
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 import org.polyfrost.oneconfig.internal.ui.search.SearchScope
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
@@ -142,7 +144,8 @@ private fun Modifier.safePointerEvent(
 
 enum class StudioCategory(val title: String, val icon: String) {
     Settings("Settings", "qol"),
-    Designer("Designer", "paintbrush");
+    Style("Style", "paintbrush"),
+    Layout("Layout", "move");
 }
 
 object HudEditorViewport {
@@ -3011,8 +3014,19 @@ private fun DesignStudioPanel(
     onDragPanel: (Offset) -> Unit,
 ) {
     val theme = LocalTheme.current
-    val isLegacy = selectedHud is LegacyHud
-    val categories = if (isLegacy) listOf(StudioCategory.Settings) else StudioCategory.entries
+    val categories = remember(selectedHud) {
+        StudioCategory.entries.filter {
+            when (it) {
+                // hide settings tab for legacy HUDs that would leave it empty
+                StudioCategory.Settings -> selectedHud !is LegacyHud ||
+                    selectedHud.tree?.let(::hasHudOptions) == true || selectedHud.canDelete()
+                StudioCategory.Style -> selectedHud !is LegacyHud
+                StudioCategory.Layout -> true
+            }
+        }
+    }
+    val shownCategory = activeCategory.takeIf { it in categories } ?: categories.first()
+    LaunchedEffect(shownCategory) { onCategoryChange(shownCategory) }
     var searchText by remember { mutableStateOf("") }
     val query = searchText.trim()
     val subtitle = remember(selectedHud) {
@@ -3021,9 +3035,6 @@ private fun DesignStudioPanel(
             val modName = hud.configId?.let(::modNameFor)?.takeIf { it != name }
             if (modName != null) "$name / $modName" else name
         }
-    }
-    LaunchedEffect(isLegacy) {
-        if (isLegacy && activeCategory != StudioCategory.Settings) onCategoryChange(StudioCategory.Settings)
     }
     Box(
         modifier = Modifier
@@ -3036,7 +3047,7 @@ private fun DesignStudioPanel(
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(32.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -3077,14 +3088,14 @@ private fun DesignStudioPanel(
                 if (categories.size > 1 && query.isEmpty()) {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         categories.forEach {
-                            Chip(it.title, it == activeCategory, it.icon) { onCategoryChange(it) }
+                            Chip(it.title, it == shownCategory, it.icon) { onCategoryChange(it) }
                         }
                     }
                 }
             }
             Box(modifier = Modifier.fillMaxSize()) {
                 AnimatedContent(
-                    targetState = activeCategory,
+                    targetState = shownCategory,
                     transitionSpec = {
                         val direction = if (targetState.ordinal > initialState.ordinal) 1 else -1
                         if (ReducedMotion.enabled) fadeIn(tween(150)) togetherWith fadeOut(tween(150))
@@ -3105,8 +3116,9 @@ private fun DesignStudioPanel(
                             // like the main config screen, a search spans every category rather than only the open one
                             categories.forEach {
                                 if (query.isNotEmpty() || it == category) when (it) {
-                                    StudioCategory.Designer -> Designer(selectedHud, query)
                                     StudioCategory.Settings -> Settings(selectedHud, query, onDeleted = onBack)
+                                    StudioCategory.Style -> Style(selectedHud, query)
+                                    StudioCategory.Layout -> Layout(selectedHud, query)
                                 }
                             }
                         }

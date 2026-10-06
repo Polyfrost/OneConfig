@@ -887,6 +887,9 @@ private fun SettingLabel(
     }
 }
 
+/** Whether [tree] has any custom options besides the built-in ones */
+internal fun hasHudOptions(tree: Tree): Boolean = buildCategories(tree).any { filterHiddenNodes(it) != null }
+
 @Composable
 fun HudConfigScreen(tree: Tree, searchQuery: String) {
     key(System.identityHashCode(tree)) { HudConfigScreenContent(tree, searchQuery) }
@@ -894,43 +897,37 @@ fun HudConfigScreen(tree: Tree, searchQuery: String) {
 
 @Composable
 private fun HudConfigScreenContent(tree: Tree, searchQuery: String) {
-    val categories = remember(tree) { buildCategories(tree) { !isHudInternal(it) } }
-    var selectedCategory by remember(tree) { mutableStateOf(categories.firstOrNull()) }
-
+    val categories = remember(tree) { buildCategories(tree) }
     val revision = rememberDisplayRevision(categories)
-    val entries = remember(categories, selectedCategory, searchQuery, revision) {
+    val visibleCategories = remember(categories, revision) { categories.filter { filterHiddenNodes(it) != null } }
+    var chosenCategory by remember(tree) { mutableStateOf<CategoryGroup?>(null) }
+    val selectedCategory = chosenCategory?.takeIf { it in visibleCategories } ?: visibleCategories.firstOrNull()
+    val entries = remember(visibleCategories, selectedCategory, searchQuery, revision) {
         if (searchQuery.isEmpty()) {
             selectedCategory?.let(::filterHiddenNodes)?.let(::flattenEntries).orEmpty()
         } else {
-            flattenSearchEntries(filterCategories(categories, searchQuery).mapNotNull(::filterHiddenNodes))
+            flattenSearchEntries(filterCategories(visibleCategories, searchQuery).mapNotNull(::filterHiddenNodes))
         }
     }
-    // the panel's built-in sections may still match so an empty search result here stays silent
-    if (entries.isEmpty() && searchQuery.isNotEmpty()) return
+    // empty draws nothing but stays composed, so the display listeners above notice hidden options appearing
+    if (entries.isEmpty()) return
 
     CompositionLocalProvider(LocalOptionWidth provides 220.dp) {
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
-        if (searchQuery.isEmpty() && categories.size > 1) {
+        if (searchQuery.isEmpty() && visibleCategories.size > 1) {
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                categories.forEach { category ->
+                visibleCategories.forEach { category ->
                     Chip(
                         label = category.name,
                         selected = selectedCategory == category,
-                        onClick = { selectedCategory = category }
+                        onClick = { chosenCategory = category }
                     )
                 }
             }
-        }
-
-        if (entries.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No settings available.", color = LocalTheme.current.textColorSecondary)
-            }
-            return@Column
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -938,10 +935,6 @@ private fun HudConfigScreenContent(tree: Tree, searchQuery: String) {
         }
     }
     }
-}
-
-private fun isHudInternal(node: Node): Boolean {
-    return node.getMetadata<Any?>("hudInternal") != null
 }
 
 /** The HUD editor's column is narrow so any row holding a wide control stacks its label above it */
