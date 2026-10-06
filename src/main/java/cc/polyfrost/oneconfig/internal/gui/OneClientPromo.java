@@ -71,21 +71,36 @@ public class OneClientPromo {
     private final BasicButton downloadButton = new BasicButton(BUTTON_WIDTH, BasicButton.SIZE_40, "Download OneClient", BasicButton.ALIGNMENT_CENTER, ColorPalette.PRIMARY);
     private final BasicButton discordButton = new BasicButton(BUTTON_WIDTH, BasicButton.SIZE_40, "Support / Discord", BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
     private final BasicButton laterButton = new BasicButton(BUTTON_WIDTH, BasicButton.SIZE_40, "Maybe later", BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
-    private final Animation barAnimation = new EaseOutExpo(1500, 0, 1, false);
+    private final BasicButton ignoreButton = new BasicButton(BUTTON_WIDTH, BasicButton.SIZE_40, "Don't show again", BasicButton.ALIGNMENT_CENTER, ColorPalette.PRIMARY_DESTRUCTIVE);
+    private Animation barAnimation = new EaseOutExpo(1500, 0, 1, false);
     private boolean dismissed = false;
+    private boolean reopened = false;
 
     private OneClientPromo() {
         downloadButton.setClickAction(() -> NetworkUtils.browseLink(DOWNLOAD_URL));
         discordButton.setClickAction(() -> NetworkUtils.browseLink(DISCORD_URL));
         laterButton.setClickAction(this::dismiss);
+        ignoreButton.setClickAction(this::ignore);
     }
 
     public boolean isActive() {
-        return OneConfigConfig.oneClientPromo && !dismissed;
+        return reopened || (OneConfigConfig.oneClientPromo && !dismissed);
     }
 
     public void dismiss() {
         dismissed = true;
+        reopened = false;
+    }
+
+    public void ignore() {
+        OneConfigConfig.oneClientPromo = false;
+        OneConfigConfig.getInstance().save();
+        dismiss();
+    }
+
+    public void show() {
+        reopened = true;
+        barAnimation = new EaseOutExpo(1500, 0, 1, false);
     }
 
     public void draw() {
@@ -118,7 +133,7 @@ public class OneClientPromo {
             float buttonY = y + HEIGHT - PADDING - 40;
             downloadButton.draw(vg, contentX, buttonY, inputHandler);
             discordButton.draw(vg, contentX + BUTTON_WIDTH + BUTTON_GAP, buttonY, inputHandler);
-            laterButton.draw(vg, contentX + (BUTTON_WIDTH + BUTTON_GAP) * 2, buttonY, inputHandler);
+            (reopened ? ignoreButton : laterButton).draw(vg, contentX + (BUTTON_WIDTH + BUTTON_GAP) * 2, buttonY, inputHandler);
         });
     }
 
