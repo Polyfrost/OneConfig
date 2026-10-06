@@ -26,6 +26,7 @@
 
 package cc.polyfrost.oneconfig.internal.mixin;
 
+import cc.polyfrost.oneconfig.internal.gui.OneClientPromo;
 import cc.polyfrost.oneconfig.internal.hacks.ByeSkyClientHack;
 import net.minecraft.client.gui.GuiMainMenu;
 import org.spongepowered.asm.mixin.Mixin;
@@ -41,6 +42,20 @@ public class GuiMainMenuMixin {
         if (ByeSkyClientHack.INSTANCE.isSkyClient()) {
             ci.cancel();
             ByeSkyClientHack.INSTANCE.overwriteGui(mouseX, mouseY, partialTicks);
+        }
+    }
+
+    @Inject(method = "drawScreen", at = @At("TAIL"))
+    private void drawOneClientPromo(int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
+        if (OneClientPromo.INSTANCE.isActive()) {
+            OneClientPromo.INSTANCE.draw();
+        }
+    }
+
+    @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
+    private void blockClicksUnderPromo(int mouseX, int mouseY, int mouseButton, CallbackInfo ci) {
+        if (OneClientPromo.INSTANCE.isActive()) {
+            ci.cancel();
         }
     }
 }
