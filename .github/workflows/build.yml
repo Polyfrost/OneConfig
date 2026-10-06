@@ -21,17 +21,19 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v2
+      - name: Set up JDK 8 and 17
+        uses: actions/setup-java@v4
         with:
-          java-version: 17
+          java-version: |
+            8
+            17
           distribution: temurin
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
@@ -46,7 +48,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build
-        run: ./gradlew build --no-daemon
+        run: ./gradlew build --no-daemon -Porg.gradle.java.installations.fromEnv=JAVA_HOME_8_X64
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
