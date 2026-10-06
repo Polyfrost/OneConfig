@@ -110,11 +110,6 @@ enum class ModCategory(
 fun Mods() {
     var activeCategory by remember { mutableStateOf(ModCategory.All) }
 
-    DisposableEffect(Unit) {
-        ShellState.title = "Mods"
-        onDispose { }
-    }
-
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ModCategory.entries.forEach {
@@ -186,13 +181,22 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
         canSwap = { from, to -> sameModGroup(entries, from, to) },
     )
 
+    // The overlay card is drawn as a sibling of the grid, but the page pane that wraps the nav host
+    // clips its content, so it would be cut off at the pane edge. Drop that clip for as long as an
+    // overlay card exists (dragging and the settle-back animation) so it can be seen in full.
+    val overlayActive = reorderState.overlayKey != null
+    DisposableEffect(overlayActive) {
+        ShellState.modDragging = overlayActive
+        onDispose { if (overlayActive) ShellState.modDragging = false }
+    }
+
     Box(modifier = Modifier.weight(1f)) {
         LazyVerticalGrid(
             state = gridState,
             columns = GridCells.Fixed(4),
             verticalArrangement = Arrangement.spacedBy(19.dp),
             horizontalArrangement = Arrangement.spacedBy(19.dp),
-            modifier = Modifier.fillMaxSize().clipToBounds().onGloballyPositioned {
+            modifier = Modifier.fillMaxSize().onGloballyPositioned {
                 animateItems = true
             },
         ) {

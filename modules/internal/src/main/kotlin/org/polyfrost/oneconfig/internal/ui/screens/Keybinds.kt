@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -85,11 +84,6 @@ private val CONFLICT_COLOR = Color(0xFFE0524F)
 @Composable
 fun Keybinds() {
     val revision = ConfigRegistry.revision
-
-    DisposableEffect(Unit) {
-        ShellState.title = "Keybinds"
-        onDispose { }
-    }
 
     val configs = ConfigRegistry.configs.toList()
     val providerRevision = KeybindProviderRegistry.revision.intValue
