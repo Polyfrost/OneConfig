@@ -186,6 +186,12 @@ public class Preferences extends InternalConfig {
     )
     public static float trackerResponseDuration = 60;
 
+    @Switch(
+            name = "Auto Update",
+            description = "Automatically update OneConfig when the game starts"
+    )
+    public static boolean autoUpdate = true;
+
     @Dropdown(
             name = "Release Channel",
             options = {"Releases", "Pre-Releases"}
@@ -216,13 +222,15 @@ public class Preferences extends InternalConfig {
 
     public Preferences() {
         super("Preferences", "Preferences.json");
+        OneConfigConfig.getInstance();
+        autoUpdate = OneConfigConfig.autoUpdate;
+        updateChannel = OneConfigConfig.updateChannel;
         initialize();
+        syncUpdateSettings();
         addListener("enableBlur", () -> BlurHandler.INSTANCE.reloadBlur(Platform.getGuiPlatform().getCurrentScreen()));
         registerKeyBind(oneConfigKeyBind, () -> new TickDelay(() -> Platform.getGuiPlatform().setCurrentScreen(OneConfigGui.create()), 1));
-        addListener("updateChannel", () -> {
-            OneConfigConfig.updateChannel = updateChannel;
-            OneConfigConfig.getInstance().save();
-        });
+        addListener("autoUpdate", Preferences::syncUpdateSettings);
+        addListener("updateChannel", Preferences::syncUpdateSettings);
         addListener("animationType", () -> {
             if (Preferences.guiOpenAnimation) {
                 // Force reset the animation
@@ -233,6 +241,13 @@ public class Preferences extends InternalConfig {
         addDependency("timeUntilReset", "Smart Opening Behavior", () -> openingBehavior == 3);
         addDependency("pageAnimationDuration", "showPageAnimations");
         INSTANCE = this;
+    }
+
+    private static void syncUpdateSettings() {
+        if (OneConfigConfig.autoUpdate == autoUpdate && OneConfigConfig.updateChannel == updateChannel) return;
+        OneConfigConfig.autoUpdate = autoUpdate;
+        OneConfigConfig.updateChannel = updateChannel;
+        OneConfigConfig.getInstance().save();
     }
 
     public static Preferences getInstance() {

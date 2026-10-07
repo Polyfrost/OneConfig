@@ -43,7 +43,6 @@ public class OneConfigConfig extends InternalConfig {
     public static List<OneColor> favoriteColors = new ArrayList<>(6);
     public static List<OneColor> recentColors = new ArrayList<>(6);
     public static boolean australia = false;
-    public static boolean oneClientPromo = true;
 
     private static OneConfigConfig INSTANCE;
 

@@ -27,7 +27,6 @@
 package cc.polyfrost.oneconfig.internal.hacks;
 
 import cc.polyfrost.oneconfig.internal.assets.Colors;
-import cc.polyfrost.oneconfig.internal.gui.OneClientPromo;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
@@ -259,7 +258,6 @@ public class ByeSkyClientHack {
                     contentX + contentW / 2f, y + btnH / 2f, Colors.WHITE_60, btnFontSize, Fonts.MEDIUM);
             if (clicked && continueHovered) {
                 dismissed = true;
-                OneClientPromo.INSTANCE.dismiss();
             }
 
             float totalContentHeight = (y - scrollY) + btnH + 40;
