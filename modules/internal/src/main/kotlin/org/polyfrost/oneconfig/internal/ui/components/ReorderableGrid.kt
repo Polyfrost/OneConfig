@@ -336,17 +336,21 @@ fun Modifier.reorderContainer(state: GridReorderState): Modifier = pointerInput(
         if (!currentEvent.buttons.isPrimaryPressed) return@awaitEachGesture
         val key = state.draggableKeyAt(down.position) ?: return@awaitEachGesture
         val caught = state.isOverSettlingItem(down.position)
+        var last = down.position
         if (caught) {
             down.consume()
         } else {
             do {
                 val change = awaitPressedChange(down.id, consume = false) ?: return@awaitEachGesture
                 val passedSlop = (change.position - down.position).getDistance() > viewConfiguration.touchSlop
-                if (passedSlop) change.consume()
+                if (passedSlop) {
+                    change.consume()
+                    last = change.position
+                }
             } while (!passedSlop)
         }
         if (!state.onDragStart(key)) return@awaitEachGesture
-        var last = down.position
+        state.onDrag(last - down.position)
         var click = caught
         try {
             while (true) {
