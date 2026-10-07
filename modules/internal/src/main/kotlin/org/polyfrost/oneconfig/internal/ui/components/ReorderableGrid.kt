@@ -57,6 +57,8 @@ private val AutoScrollRamp = 240.dp
 /** Distance auto-scroll covers per second at its fastest */
 private val AutoScrollMaxSpeed = 3200.dp
 
+private const val ScrollLiftThreshold = 1f
+
 private val SettleSpec = spring<Offset>(
     dampingRatio = Spring.DampingRatioNoBouncy,
     stiffness = Spring.StiffnessMediumLow,
@@ -327,8 +329,8 @@ fun rememberGridReorderState(
 /**
  * Reads drags for the grid's items, applied to the box wrapping the grid with the grid at its origin
  *
- * A drag starts once the primary button moves past touch slop so items can still be clicked, but an item still
- * settling is caught on press since it would move out from under the pointer first
+ * A drag starts once the primary button moves past touch slop or scrolls so items can still be clicked, but an item
+ * still settling is caught on press since it would move out from under the pointer first
  *
  * Events are read before the grid so it does not scroll along with the drag, but wheel scrolling still reaches it
  */
@@ -342,11 +344,15 @@ fun Modifier.reorderContainer(state: GridReorderState): Modifier = pointerInput(
         if (caught) {
             down.consume()
         } else {
+            var scrolled = 0f
             do {
                 val change = awaitPressedChange(down.id, consume = false) ?: return@awaitEachGesture
-                val passedSlop = (change.position - down.position).getDistance() > viewConfiguration.touchSlop
+                val scroll = currentEvent.type == PointerEventType.Scroll
+                if (scroll) scrolled += abs(change.scrollDelta.y)
+                val passedSlop = scrolled >= ScrollLiftThreshold ||
+                    (change.position - down.position).getDistance() > viewConfiguration.touchSlop
                 if (passedSlop) {
-                    change.consume()
+                    if (!scroll) change.consume()
                     last = change.position
                 }
             } while (!passedSlop)
