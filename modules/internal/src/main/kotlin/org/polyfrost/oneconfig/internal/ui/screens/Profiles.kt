@@ -112,7 +112,6 @@ private data class ProfileActionResult(
 
 private val ProfileCardHeight = 180.dp
 private const val OverlayFrameTimeoutMs = 500L
-private val FavoriteStarColor = Color(0xFFFFD700)
 private val DangerColor = Color(0xFFE35B5B)
 private enum class ProfileEditor { Rename, Clone, Icon, Delete }
 private val ProfileIconOptions = listOf(
@@ -786,7 +785,7 @@ private fun ProfileCard(
                 ActionIcon("close", enabled = !busy, tint = theme.textColorSecondary, onClick = ::closeEditor)
             } else {
                 if (profile.favorite) {
-                    ActionIcon("star-filled", enabled = !busy, tint = FavoriteStarColor) { onFavorite() }
+                    ActionIcon("star-filled", enabled = !busy, tint = theme.favoriteColor) { onFavorite() }
                 }
                 if (profile.active || isHovered || menuOpen) {
                     ActionIcon("settings", enabled = !busy, tint = theme.textColorSecondary, hoveredTint = Accent) {

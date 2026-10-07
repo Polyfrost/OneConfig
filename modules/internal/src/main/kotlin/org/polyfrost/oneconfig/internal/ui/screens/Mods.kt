@@ -8,6 +8,8 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -41,15 +43,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -70,8 +78,8 @@ import org.polyfrost.oneconfig.internal.ui.api.ModOrder
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories
 import org.polyfrost.oneconfig.internal.ui.api.buildModGridEntries
 import org.polyfrost.oneconfig.internal.ui.api.modCardOrder
+import org.polyfrost.oneconfig.internal.ui.api.modFavoriteAt
 import org.polyfrost.oneconfig.internal.ui.api.modGroupBounds
-import org.polyfrost.oneconfig.internal.ui.api.sameModGroup
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
@@ -81,6 +89,7 @@ import org.polyfrost.oneconfig.internal.ui.components.localizedLabel
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberGridReorderState
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.reorderContainer
 import org.polyfrost.oneconfig.internal.ui.components.reorderOverlay
 import org.polyfrost.oneconfig.internal.ui.components.reorderableItem
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
@@ -200,16 +209,44 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
         gridState = gridState,
         onMove = { from, to -> entries.add(to, entries.removeAt(from)) },
         onDrop = { index -> commitDrop(entries, index) },
-        canSwap = { from, to -> sameModGroup(entries, from, to) },
+        dragBounds = { index -> modGroupBounds(entries, index) },
+        onClick = { key -> entries.cardData(key)?.let(::openModCard) },
     )
+    val dropFavorite = reorderState.draggingKey
+        ?.let { key -> entries.indexOfFirst { it.key == key } }
+        ?.takeIf { it >= 0 }
+        ?.let { index -> modFavoriteAt(entries, index, ModFavorites::isFavorite) }
+    // the dragged card's index no longer applies once the list is rebuilt
+    DisposableEffect(entries) {
+        onDispose { reorderState.cancel() }
+    }
 
-    Box(modifier = Modifier.weight(1f)) {
+    // override scroll to stay in place instead of following the first visible item
+    DisposableEffect(favoriteRevision) {
+        gridState.requestScrollToItem(gridState.firstVisibleItemIndex, gridState.firstVisibleItemScrollOffset)
+        onDispose { }
+    }
+
+    val focusManager = LocalFocusManager.current
+    Box(
+        modifier = Modifier
+            .weight(1f)
+            .clipToBounds()
+            // cards can't take focus, so clear it on press to unfocus the search field
+            .pointerInput(focusManager) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                    focusManager.clearFocus()
+                }
+            }
+            .reorderContainer(reorderState),
+    ) {
         LazyVerticalGrid(
             state = gridState,
             columns = GridCells.Fixed(4),
             verticalArrangement = Arrangement.spacedBy(19.dp),
             horizontalArrangement = Arrangement.spacedBy(19.dp),
-            modifier = Modifier.fillMaxSize().clipToBounds().onGloballyPositioned {
+            modifier = Modifier.fillMaxSize().padding(end = 16.dp).onGloballyPositioned {
                 animateItems = true
             },
         ) {
@@ -229,6 +266,8 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
                     is ModGridEntry.Card -> {
                         val mod = entry.data
                         val dragging = reorderState.draggingKey == mod.id
+                        val outlineAlpha = animateFloatAsState(if (dragging) 1f else 0f)
+                        val favoriteSlot = if (dragging) dropFavorite == true else ModFavorites.isFavorite(mod.id)
                         ModCard(
                             mod,
                             modifier = Modifier
@@ -241,7 +280,9 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
                                         Modifier
                                     },
                                 )
+                                .dropSlotOutline(favoriteSlot) { outlineAlpha.value }
                                 .reorderableItem(reorderState, mod.id),
+                            hoverHint = reorderState.overlayKey == null,
                         )
                     }
                 }
@@ -252,12 +293,17 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
             modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
         )
 
-        // drawn outside the grid so the card is not clipped when dragged past a viewport edge
+        // drawn over the grid so it passes above the other cards
         val draggedId = reorderState.overlayKey
-        val dragged = remember(entries, draggedId) {
-            entries.firstNotNullOfOrNull { (it as? ModGridEntry.Card)?.data?.takeIf { mod -> mod.id == draggedId } }
+        val dragged = remember(entries, draggedId) { draggedId?.let(entries::cardData) }
+        if (dragged != null) {
+            ModCard(
+                dragged,
+                modifier = Modifier.reorderOverlay(reorderState),
+                favorite = dropFavorite ?: ModFavorites.isFavorite(dragged.id),
+                interactive = false,
+            )
         }
-        if (dragged != null) ModCard(dragged, modifier = Modifier.reorderOverlay(reorderState))
     }
 }
 
@@ -308,22 +354,47 @@ private val ModCardPlacementSpec = spring(
     visibilityThreshold = IntOffset.VisibilityThreshold,
 )
 
-/**
- * Persists the arrangement after a card is dropped at [index]
- *
- * Dropping a card inside the favourites block favourites it and dragging one out clears it
- */
+private fun List<ModGridEntry>.cardData(key: Any): ConfigData? =
+    firstNotNullOfOrNull { (it as? ModGridEntry.Card)?.data?.takeIf { mod -> mod.id == key } }
+
+private fun openModCard(mod: ConfigData) {
+    val onOpen = mod.onOpen
+    when {
+        onOpen != null -> onOpen()
+        mod.source == ConfigSource.OC -> LocalNavController.wrapper.navigate(ModConfigRoute(mod.id))
+    }
+}
+
+/** Persists the arrangement and the favorite state after a card is dropped at [index] */
 private fun commitDrop(entries: List<ModGridEntry>, index: Int) {
     val dropped = (entries.getOrNull(index) as? ModGridEntry.Card)?.data ?: return
-    val bounds = modGroupBounds(entries, index)
-    val group = entries.slice(bounds).filterIsInstance<ModGridEntry.Card>().map { it.data }
-    val position = index - bounds.first
-    val favoritesElsewhere = group.filterIndexed { i, _ -> i != position }.count { ModFavorites.isFavorite(it.id) }
-    if ((position < favoritesElsewhere) != ModFavorites.isFavorite(dropped.id)) ModFavorites.toggle(dropped.id)
+    if (modFavoriteAt(entries, index, ModFavorites::isFavorite) != ModFavorites.isFavorite(dropped.id)) {
+        ModFavorites.toggle(dropped.id)
+    }
+    val group = entries.slice(modGroupBounds(entries, index)).filterIsInstance<ModGridEntry.Card>().map { it.data }
     ModOrder.reorder(
         group.map { it.id },
         ConfigRegistry.modCardConfigs.sortedWith(modCardOrder()).map { it.id },
     )
+}
+
+/** Dashed outline on the dragged card's slot, in the favorite color while it would land as a [favorite] */
+@Composable
+private fun Modifier.dropSlotOutline(favorite: Boolean, alpha: () -> Float): Modifier {
+    val theme = LocalTheme.current
+    val shape = theme.modCardShape
+    val color = if (favorite) theme.favoriteColor else theme.textColorSecondary
+    return drawWithCache {
+        val outline = shape.createOutline(size, layoutDirection, this)
+        val dash = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx()))
+        val stroke = Stroke(1.5.dp.toPx(), pathEffect = dash)
+        onDrawBehind {
+            val a = alpha()
+            if (a == 0f) return@onDrawBehind
+            drawOutline(outline, color.copy(alpha = 0.08f * a))
+            drawOutline(outline, color.copy(alpha = 0.6f * a), style = stroke)
+        }
+    }
 }
 
 private const val HEADER_CONTENT_TYPE = "header"
@@ -333,10 +404,18 @@ private val ModCardFooterHeight = 36.dp
 
 private val ModCardGlowHeight = 50.dp
 
-private val FavoriteStarColor = Color(0xFFFFD700)
-
+/**
+ * [hoverHint] faintly shows an empty star on hover, and a card that is not [interactive] lets clicks and scrolling
+ * pass through
+ */
 @Composable
-fun ModCard(mod: ConfigData, modifier: Modifier = Modifier) {
+fun ModCard(
+    mod: ConfigData,
+    modifier: Modifier = Modifier,
+    favorite: Boolean = ModFavorites.isFavorite(mod.id),
+    hoverHint: Boolean = true,
+    interactive: Boolean = true,
+) {
     val interactionSource = rememberInteractionSource()
     val theme = LocalTheme.current
 
@@ -346,15 +425,18 @@ fun ModCard(mod: ConfigData, modifier: Modifier = Modifier) {
             .border(1.dp, remember(theme.borderColor) {
                 Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
             }, theme.modCardShape)
-            .onClick(interactionSource) {
-                val onOpen = mod.onOpen
-                when {
-                    onOpen != null -> onOpen()
-                    mod.source == ConfigSource.OC -> LocalNavController.wrapper.navigate(ModConfigRoute(mod.id))
-                }
-            }
+            .then(
+                if (interactive) {
+                    // cards never take focus, otherwise they slide in from off screen when scrolled back into view
+                    Modifier
+                        .focusProperties { canFocus = false }
+                        .onClick(interactionSource) { openModCard(mod) }
+                        .pointerHoverIcon(PointerIcon.Hand)
+                } else {
+                    Modifier
+                },
+            )
             .clip(theme.modCardShape)
-            .pointerHoverIcon(PointerIcon.Hand)
     ) {
         Column(Modifier.fillMaxSize()) {
             Box(
@@ -433,7 +515,10 @@ fun ModCard(mod: ConfigData, modifier: Modifier = Modifier) {
 
         FavoriteStar(
             mod = mod,
+            favorite = favorite,
             cardInteractions = interactionSource,
+            hoverHint = hoverHint,
+            interactive = interactive,
             modifier = Modifier.align(Alignment.TopEnd),
         )
         HideToggle(
@@ -447,30 +532,42 @@ fun ModCard(mod: ConfigData, modifier: Modifier = Modifier) {
 @Composable
 private fun FavoriteStar(
     mod: ConfigData,
+    favorite: Boolean,
     cardInteractions: InteractionSource,
+    hoverHint: Boolean,
+    interactive: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val theme = LocalTheme.current
-    val favorite = ModFavorites.isFavorite(mod.id)
     val interactionSource = rememberInteractionSource()
     val hovered by interactionSource.collectIsHoveredAsState()
     val cardHovered by cardInteractions.collectIsHoveredAsState()
     val alpha by animateFloatAsState(
         when {
-            favorite || hovered -> 1f
+            favorite -> 1f
+            !hoverHint -> 0f
+            hovered -> 1f
             cardHovered -> 0.6f
             else -> 0f
         }
     )
-    val color by animateColorAsState(if (favorite) FavoriteStarColor else theme.textColor)
+    val color by animateColorAsState(if (favorite) theme.favoriteColor else theme.textColor)
 
     Box(
         modifier = modifier
             .padding(4.dp)
             .size(24.dp)
             .alpha(alpha)
-            .onClick(interactionSource) { ModFavorites.toggle(mod.id) }
-            .pointerHoverIcon(PointerIcon.Hand),
+            .then(
+                if (interactive) {
+                    Modifier
+                        .focusProperties { canFocus = false }
+                        .onClick(interactionSource) { ModFavorites.toggle(mod.id) }
+                        .pointerHoverIcon(PointerIcon.Hand)
+                } else {
+                    Modifier
+                },
+            ),
         contentAlignment = Alignment.Center,
     ) {
         Icon(if (favorite) "star-filled" else "star", color = color, modifier = Modifier.size(18.dp))

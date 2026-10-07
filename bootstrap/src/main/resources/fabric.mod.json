@@ -24,5 +24,8 @@
     "oneconfigv1": "${mod_version}",
     "compose-multiplatform": ">=1.0.5",
     "fabric-language-kotlin": ">=1.13.13+kotlin.2.4.10"
+  },
+  "breaks": {
+    "polyplus": "<1.2.49"
   }
 }
