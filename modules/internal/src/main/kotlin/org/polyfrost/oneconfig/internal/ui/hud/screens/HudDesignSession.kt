@@ -23,6 +23,10 @@ internal sealed interface StudioCommand {
     data object SelectAll : StudioCommand
 
     data object Lock : StudioCommand
+
+    data object Undo : StudioCommand
+
+    data object Redo : StudioCommand
 }
 
 object HudDesignSession {
@@ -156,6 +160,22 @@ object HudDesignSession {
         if (!HudManager.isEditorOpen) return false
         if (activeSelection.isEmpty()) return false
         post(StudioCommand.Lock)
+        return true
+    }
+
+    @JvmStatic
+    fun handleUndo(pressed: Boolean): Boolean {
+        if (!pressed) return false
+        if (!HudManager.isEditorOpen) return false
+        post(StudioCommand.Undo)
+        return true
+    }
+
+    @JvmStatic
+    fun handleRedo(pressed: Boolean): Boolean {
+        if (!pressed) return false
+        if (!HudManager.isEditorOpen) return false
+        post(StudioCommand.Redo)
         return true
     }
 }

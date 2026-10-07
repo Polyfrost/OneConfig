@@ -57,6 +57,7 @@ import kotlin.ranges.coerceAtLeast
 import kotlin.ranges.coerceAtMost
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
@@ -943,6 +944,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     var lockedPressHud by remember { mutableStateOf<Hud?>(null) }
     var lockedPressOrigin by remember { mutableStateOf(Offset.Zero) }
     val keyFocusRequester = remember { FocusRequester() }
+    val history = remember { HudHistory() }
+    var pointerDown by remember { mutableStateOf(false) }
     var hudClipboard by remember { mutableStateOf<List<Hud>>(emptyList()) }
     var pasteMenuOffset by remember { mutableStateOf<IntOffset?>(null) }
     var marqueeStart by remember { mutableStateOf<Offset?>(null) }
@@ -1092,12 +1095,38 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                             OneConfigConfig.INSTANCE.save()
                         }
                     }
+
+                    StudioCommand.Undo, StudioCommand.Redo -> {
+                        if (!isDragging && !isResizing) {
+                            val revived = if (command == StudioCommand.Undo) history.undo() else history.redo()
+                            if (revived != null) {
+                                Snapshot.withMutableSnapshot {
+                                    val live = HudManager.activeInstances
+                                    selectedHuds = selectedHuds.filterTo(LinkedHashSet()) { it in live } + revived
+                                    if (hoveredHud !in live) hoveredHud = null
+                                    if (hudContextMenuTarget !in live) hudContextMenuTarget = null
+                                }
+                                UiSounds.play(UiSoundEvent.CLICK)
+                            }
+                        }
+                    }
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
                 LOGGER.error("Failed to handle $command in the HUD Design Studio", e)
             }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            try {
+                history.poll(busy = isDragging || isResizing || pointerDown)
+            } catch (e: Exception) {
+                LOGGER.error("Failed to record HUD history", e)
+            }
+            delay(250)
         }
     }
 
@@ -1649,6 +1678,13 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             .onGloballyPositioned { rootCoords[0] = it }
             .focusRequester(keyFocusRequester)
             .focusable()
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        pointerDown = awaitPointerEvent(PointerEventPass.Initial).changes.any { it.pressed }
+                    }
+                }
+            }
             .onKeyEvent { keyEvent ->
                 if (keyEvent.type != KeyEventType.KeyDown) return@onKeyEvent false
                 if (keyEvent.key == Key.Escape && anchorPickSources.isNotEmpty()) {
@@ -2168,6 +2204,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             if (hud in selectedHuds) selectedHuds.toList() else listOf(hud)
         } ?: emptyList()
 
+        val menuOpen = hudContextMenuTarget != null || pasteMenuOffset != null
+        val canUndo = remember(menuOpen) { menuOpen && history.canUndo }
+        val canRedo = remember(menuOpen) { menuOpen && history.canRedo }
+
         HudCanvasResetMenu(
             hud = hudContextMenuTarget,
             expanded = hudContextMenuTarget != null,
@@ -2227,6 +2267,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             anchorEnabled = contextMenuTargets.isNotEmpty() &&
                 anchorTargetsFor(contextMenuTargets).isNotEmpty(),
             onDelete = { _ -> deleteHuds(contextMenuTargets) },
+            onUndo = { HudDesignSession.handleUndo(true) },
+            undoEnabled = canUndo,
+            onRedo = { HudDesignSession.handleRedo(true) },
+            redoEnabled = canRedo,
         )
 
         HudCanvasPasteMenu(
@@ -2249,6 +2293,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 }
                 UiSounds.play(UiSoundEvent.CLICK)
             },
+            onUndo = { HudDesignSession.handleUndo(true) },
+            undoEnabled = canUndo,
+            onRedo = { HudDesignSession.handleRedo(true) },
+            redoEnabled = canRedo,
         )
     }
 }
