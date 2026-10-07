@@ -363,7 +363,8 @@ fun Modifier.reorderContainer(state: GridReorderState): Modifier = pointerInput(
         try {
             while (true) {
                 val change = awaitPressedChange(down.id, consume = true) ?: break
-                if ((change.position - down.position).getDistance() > viewConfiguration.touchSlop) click = false
+                if (currentEvent.type == PointerEventType.Scroll ||
+                    (change.position - down.position).getDistance() > viewConfiguration.touchSlop) click = false
                 state.onDrag(change.position - last)
                 last = change.position
             }
