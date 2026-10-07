@@ -32,6 +32,8 @@ import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.isPrimaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
@@ -112,6 +114,9 @@ class GridReorderState internal constructor(
     private var settle: Job? = null
     private var dragLoop: Job? = null
 
+    internal var containerCoordinates: LayoutCoordinates? = null
+    internal val itemCoordinates = mutableMapOf<Any, LayoutCoordinates>()
+
     /**
      * Overlay position in the coordinate space of the box wrapping the grid
      *
@@ -142,12 +147,19 @@ class GridReorderState internal constructor(
     private fun infoAt(index: Int): LazyGridItemInfo? =
         gridState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
 
+    private fun drawnBounds(info: LazyGridItemInfo): Rect {
+        val container = containerCoordinates ?: return info.bounds()
+        val item = itemCoordinates[info.key] ?: return info.bounds()
+        return container.localBoundingBoxOf(item, clipBounds = false)
+    }
+
     internal fun isOverSettlingItem(position: Offset): Boolean =
         settling && Rect(overlayOffset, overlaySize.toSize()).contains(position)
 
     internal fun draggableKeyAt(position: Offset): Any? {
         if (isOverSettlingItem(position)) return overlayKey
-        val info = gridState.layoutInfo.visibleItemsInfo.firstOrNull { it.bounds().contains(position) } ?: return null
+        itemCoordinates.values.removeAll { !it.isAttached }
+        val info = gridState.layoutInfo.visibleItemsInfo.firstOrNull { drawnBounds(it).contains(position) } ?: return null
         val bounds = dragBounds(info.index)
         return info.key.takeIf { bounds == null || info.index in bounds }
     }
@@ -155,7 +167,7 @@ class GridReorderState internal constructor(
     /** Lifts the item with [key] into the overlay, from where it is if still settling */
     internal fun onDragStart(key: Any): Boolean {
         val info = gridState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == key } ?: return false
-        val from = if (settling && overlayKey == key) overlayOffset else info.offset.toOffset()
+        val from = if (settling && overlayKey == key) overlayOffset else drawnBounds(info).topLeft
         settle?.cancel()
         settling = false
         draggingKey = key
@@ -348,7 +360,7 @@ fun Modifier.reorderContainer(state: GridReorderState): Modifier = pointerInput(
         }
         if (click) state.onClick(key)
     }
-}
+}.onPlaced { state.containerCoordinates = it }
 
 /** The next change of the pointer while still held, consumed if [consume] unless it is a wheel scroll */
 private suspend fun AwaitPointerEventScope.awaitPressedChange(id: PointerId, consume: Boolean): PointerInputChange? {
@@ -359,8 +371,9 @@ private suspend fun AwaitPointerEventScope.awaitPressedChange(id: PointerId, con
 }
 
 /** Hides the item while the overlay draws it in its place, [key] must be the key it was declared with */
-fun Modifier.reorderableItem(state: GridReorderState, key: Any): Modifier =
-    graphicsLayer { alpha = if (state.overlayKey == key) 0f else 1f }
+fun Modifier.reorderableItem(state: GridReorderState, key: Any): Modifier = this
+    .onPlaced { state.itemCoordinates[key] = it }
+    .graphicsLayer { alpha = if (state.overlayKey == key) 0f else 1f }
 
 /**
  * Positions and sizes the overlay copy of the dragged item
