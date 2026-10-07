@@ -65,6 +65,7 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.api.ModCardTypeCollapseStore
 import org.polyfrost.oneconfig.internal.ui.api.ModFavorites
 import org.polyfrost.oneconfig.internal.ui.api.ModGridEntry
+import org.polyfrost.oneconfig.internal.ui.api.ModHidden
 import org.polyfrost.oneconfig.internal.ui.api.ModOrder
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories
 import org.polyfrost.oneconfig.internal.ui.api.buildModGridEntries
@@ -94,6 +95,7 @@ enum class ModCategory(
     val icon: String?,
     val configCategory: Config.Category?,
     val favoritesOnly: Boolean = false,
+    val hiddenOnly: Boolean = false,
 ) {
     All("All", null, null),
     Favorited("Favorites", "star", null, favoritesOnly = true),
@@ -103,7 +105,8 @@ enum class ModCategory(
     HUD("HUD", "hud", Config.Category.HUD),
     Utility("Utility", "settings", Config.Category.UTILITY),
     QoL("Quality of Life", "qol", Config.Category.QOL),
-    Other("Other", null, Config.Category.OTHER);
+    Other("Other", null, Config.Category.OTHER),
+    Hidden("Hidden", "eye-off", null, hiddenOnly = true);
 }
 
 @Composable
@@ -117,8 +120,16 @@ fun Mods() {
 
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            val cards = ConfigRegistry.modCardConfigs
             ModCategory.entries.forEach {
-                if (it == ModCategory.Favorited || ConfigRegistry.modCardConfigs.any {configData -> configData.category == it.configCategory}) {
+                val shown = when {
+                    it.favoritesOnly || activeCategory == it -> true
+                    it.hiddenOnly -> cards.any { configData -> ModHidden.isHidden(configData.id) }
+                    else -> cards.any { configData ->
+                        configData.category == it.configCategory && !ModHidden.isHidden(configData.id)
+                    }
+                }
+                if (shown) {
                     Chip(
                         label = it.title,
                         selected = activeCategory == it,
@@ -144,13 +155,16 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
     val hudRevision = HudManager.revision
     val categoryRevision = ThirdPartyModCategories.revision
     val favoriteRevision = ModFavorites.revision
+    val hiddenRevision = ModHidden.revision
     val orderRevision = ModOrder.revision
     val typeRevision = ModCardTypes.revision
     val collapseRevision = ModCardTypeCollapseStore.revision
     val filtered = remember(
-        registryRevision, hudRevision, category, categoryRevision, favoriteRevision, orderRevision, typeRevision,
+        registryRevision, hudRevision, category, categoryRevision, favoriteRevision, hiddenRevision, orderRevision,
+        typeRevision,
     ) {
         ConfigRegistry.modCardConfigs
+            .filter { ModHidden.isHidden(it.id) == category.hiddenOnly }
             .let { items ->
                 if (category.configCategory == null) items
                 else items.filter { it.category == category.configCategory }
@@ -161,9 +175,12 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
             }
             .sortedWith(modCardOrder())
     }
-    if (filtered.isEmpty() && category.favoritesOnly) {
+    if (filtered.isEmpty() && (category.favoritesOnly || category.hiddenOnly)) {
         Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No favorite mods.", color = LocalTheme.current.textColorSecondary)
+            Text(
+                if (category.hiddenOnly) "No hidden mods." else "No favorite mods.",
+                color = LocalTheme.current.textColorSecondary,
+            )
         }
         return
     }
@@ -419,6 +436,11 @@ fun ModCard(mod: ConfigData, modifier: Modifier = Modifier) {
             cardInteractions = interactionSource,
             modifier = Modifier.align(Alignment.TopEnd),
         )
+        HideToggle(
+            mod = mod,
+            cardInteractions = interactionSource,
+            modifier = Modifier.align(Alignment.TopStart),
+        )
     }
 }
 
@@ -452,5 +474,36 @@ private fun FavoriteStar(
         contentAlignment = Alignment.Center,
     ) {
         Icon(if (favorite) "star-filled" else "star", color = color, modifier = Modifier.size(18.dp))
+    }
+}
+
+@Composable
+private fun HideToggle(
+    mod: ConfigData,
+    cardInteractions: InteractionSource,
+    modifier: Modifier = Modifier,
+) {
+    val hidden = ModHidden.isHidden(mod.id)
+    val interactionSource = rememberInteractionSource()
+    val hovered by interactionSource.collectIsHoveredAsState()
+    val cardHovered by cardInteractions.collectIsHoveredAsState()
+    val alpha by animateFloatAsState(
+        when {
+            hidden || hovered -> 1f
+            cardHovered -> 0.6f
+            else -> 0f
+        }
+    )
+
+    Box(
+        modifier = modifier
+            .padding(4.dp)
+            .size(24.dp)
+            .alpha(alpha)
+            .onClick(interactionSource) { ModHidden.toggle(mod.id) }
+            .pointerHoverIcon(PointerIcon.Hand),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(if (hidden) "eye-off" else "eye", color = LocalTheme.current.textColor, modifier = Modifier.size(18.dp))
     }
 }
