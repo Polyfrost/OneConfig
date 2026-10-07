@@ -161,7 +161,7 @@ class GridReorderState internal constructor(
     internal fun draggableKeyAt(position: Offset): Any? {
         if (isOverSettlingItem(position)) return overlayKey
         itemCoordinates.values.removeAll { !it.isAttached }
-        val info = gridState.layoutInfo.visibleItemsInfo.firstOrNull { drawnBounds(it).contains(position) } ?: return null
+        val info = gridState.layoutInfo.visibleItemsInfo.lastOrNull { drawnBounds(it).contains(position) } ?: return null
         val bounds = dragBounds(info.index)
         return info.key.takeIf { bounds == null || info.index in bounds }
     }
