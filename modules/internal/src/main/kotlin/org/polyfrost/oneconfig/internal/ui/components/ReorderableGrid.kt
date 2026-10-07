@@ -187,8 +187,10 @@ class GridReorderState internal constructor(
 
     internal fun onDragEnd() {
         val key = draggingKey ?: return
+        settleOnHoveredItem()
         val index = draggingIndex
-        val fromSlot = overlayOffset - trackSlot()
+        // the grid only moves the item to its new slot next frame, so measure from that slot
+        val fromSlot = overlayOffset - (infoAt(index)?.offset?.toOffset() ?: trackSlot())
         stop()
         onDrop(index)
         settling = true
