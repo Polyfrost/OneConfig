@@ -419,7 +419,10 @@ object SkiaCtx {
         queuedHudDraws.clear()
         if (draws.isEmpty()) return
         val surface = resolveHudSurface() ?: return
-        if (hudRealIsGeneral) hudTarget?.let { vulkanService?.transitionSkiaTargetForRendering(it) }
+        if (hudRealIsGeneral) {
+            hudTarget?.let { vulkanService?.transitionSkiaTargetForRendering(it) }
+            hudRealIsGeneral = false
+        }
         flushToTarget(draws, surface)
         hudNeedsSamplingTransition = true
     }
@@ -457,7 +460,10 @@ object SkiaCtx {
         val post = postComposeRender
         val draws = if (post != null) queued + { block.run() } + post else queued + { block.run() }
         val surface = resolveComposeSurface() ?: return
-        if (composeRealIsGeneral) composeTarget?.let { vulkanService?.transitionSkiaTargetForRendering(it) }
+        if (composeRealIsGeneral) {
+            composeTarget?.let { vulkanService?.transitionSkiaTargetForRendering(it) }
+            composeRealIsGeneral = false
+        }
         flushToTarget(draws, surface, flipY = composeOrigin == SurfaceOrigin.BOTTOM_LEFT)
         composeNeedsSamplingTransition = true
         composeDirty = true
