@@ -419,7 +419,7 @@ object SkiaCtx {
         queuedHudDraws.clear()
         if (draws.isEmpty()) return
         val surface = resolveHudSurface() ?: return
-        if (hudRealIsGeneral) hudTarget?.let { vulkanService?.transitionOffscreenForRendering(it) }
+        if (hudRealIsGeneral) hudTarget?.let { vulkanService?.transitionSkiaTargetForRendering(it) }
         flushToTarget(draws, surface)
         hudNeedsSamplingTransition = true
     }
@@ -457,7 +457,7 @@ object SkiaCtx {
         val post = postComposeRender
         val draws = if (post != null) queued + { block.run() } + post else queued + { block.run() }
         val surface = resolveComposeSurface() ?: return
-        if (composeRealIsGeneral) composeTarget?.let { vulkanService?.transitionOffscreenForRendering(it) }
+        if (composeRealIsGeneral) composeTarget?.let { vulkanService?.transitionSkiaTargetForRendering(it) }
         flushToTarget(draws, surface, flipY = composeOrigin == SurfaceOrigin.BOTTOM_LEFT)
         composeNeedsSamplingTransition = true
         composeDirty = true
@@ -539,7 +539,7 @@ object SkiaCtx {
         //? >= 1.21.8 {
         wrapper.setGpuTextureView(rt.getColorTextureView())
         if (hudNeedsSamplingTransition) {
-            vulkanService?.transitionOffscreenForSampling(rt)
+            vulkanService?.transitionSkiaTargetForSampling(rt)
             hudNeedsSamplingTransition = false
             hudRealIsGeneral = true
         }
@@ -608,7 +608,7 @@ object SkiaCtx {
         //? >= 1.21.8 {
         wrapper.setGpuTextureView(rt.getColorTextureView())
         if (composeNeedsSamplingTransition) {
-            vulkanService?.transitionOffscreenForSampling(rt)
+            vulkanService?.transitionSkiaTargetForSampling(rt)
             composeNeedsSamplingTransition = false
             composeRealIsGeneral = true
         }
@@ -690,7 +690,7 @@ object SkiaCtx {
                 GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA,
             )
             if (hudNeedsSamplingTransition) {
-                vulkanService?.transitionOffscreenForSampling(rt)
+                vulkanService?.transitionSkiaTargetForSampling(rt)
                 hudNeedsSamplingTransition = false
                 hudRealIsGeneral = true
             }
