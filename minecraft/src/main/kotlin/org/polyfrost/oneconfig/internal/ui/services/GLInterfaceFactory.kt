@@ -3,10 +3,16 @@ package org.polyfrost.oneconfig.internal.ui.services
 import org.jetbrains.skia.DirectContext
 import org.jetbrains.skia.GLAssembledInterface
 import org.jetbrains.skia.makeGLWithInterface
+import org.lwjgl.system.APIUtil
+import org.lwjgl.system.Callback
+import org.lwjgl.system.CallbackI
 import org.lwjgl.system.FunctionProvider
 import org.lwjgl.system.JNI
 import org.lwjgl.system.MemoryUtil
+import org.lwjgl.system.Pointer
+import org.lwjgl.system.libffi.LibFFI
 import org.slf4j.LoggerFactory
+import java.lang.invoke.MethodHandles
 
 internal object GLInterfaceFactory {
     private val LOG = LoggerFactory.getLogger(GLInterfaceFactory::class.java)
@@ -18,6 +24,10 @@ internal object GLInterfaceFactory {
 
     val sdlVideoDriver: String?
         get() = MemoryUtil.memASCIISafe(call(SDL, "SDL_GetCurrentVideoDriver"))
+
+    private val GET_PROC_CIF by lazy {
+        APIUtil.apiCreateCIF(LibFFI.FFI_DEFAULT_ABI, LibFFI.ffi_type_pointer, LibFFI.ffi_type_pointer, LibFFI.ffi_type_pointer)
+    }
 
     private fun findProcLoader(): Long {
         for (library in arrayOf(SDL, GLFW)) {
@@ -43,7 +53,22 @@ internal object GLInterfaceFactory {
     fun makeDirectContextViaLwjgl(): DirectContext? = try {
         val procLoader = findProcLoader()
         check(procLoader != 0L) { "no GL context?" }
-        val iface = GLAssembledInterface.createFromProcAddress(procLoader)
+        val adapter = object : CallbackI {
+            //? if >=26.1 || =1.8.9 {
+            override fun getDescriptor() = Callback.Descriptor(MethodHandles.lookup(), GET_PROC_CIF)
+            //?} else {
+            /*override fun getCallInterface() = GET_PROC_CIF
+            *///?}
+            override fun callback(ret: Long, args: Long) {
+                val name = MemoryUtil.memGetAddress(MemoryUtil.memGetAddress(args + Pointer.POINTER_SIZE))
+                APIUtil.apiClosureRetP(ret, JNI.invokePP(name, procLoader))
+            }
+        }.address()
+        val iface = try {
+            GLAssembledInterface.createFromNativePointers(MemoryUtil.NULL, adapter)
+        } finally {
+            Callback.free(adapter)
+        }
         DirectContext.makeGLWithInterface(iface).also {
             LOG.info("GLInterfaceFactory: created DirectContext via the window library's proc loader")
         }
