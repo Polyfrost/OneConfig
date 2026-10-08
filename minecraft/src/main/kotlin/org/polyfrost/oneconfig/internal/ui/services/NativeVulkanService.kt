@@ -34,6 +34,8 @@ class NativeVulkanService private constructor(
 
     override val offscreenNeedsPerFrameRewrap = true
 
+    override val mainRTRestoreNeedsColorPass = true
+
     override fun makeDirectContext(): DirectContext {
         val provider = VK.getFunctionProvider()
         val instanceProcAddr = provider.getFunctionAddress("vkGetInstanceProcAddr")
@@ -123,6 +125,9 @@ class NativeVulkanService private constructor(
             srcAccessMask = VK_ACCESS_SHADER_READ_BIT,
             dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT or VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
         )
+        // execute() only queues the barrier for Minecraft's next submit, and Skia submits its own
+        // commands as soon as this returns. Submit now, or Skia renders while the image is still GENERAL.
+        RenderSystem.getDevice().createCommandEncoder().submit()
     }
 
     override fun transitionOffscreenForSampling(target: RenderTarget) {

@@ -8,6 +8,8 @@ import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.Color
 import org.jetbrains.skia.ColorSpace
 import org.jetbrains.skia.DirectContext
+import org.jetbrains.skia.Image
+import org.jetbrains.skia.ImageInfo
 import org.jetbrains.skia.Surface
 import org.jetbrains.skia.SurfaceColorFormat
 import org.jetbrains.skia.SurfaceOrigin
@@ -134,6 +136,8 @@ object SkiaCtx {
 
     private var hudRealIsGeneral = false
     private var composeRealIsGeneral = false
+
+    private val transparentPixel by lazy { Image.makeRaster(ImageInfo.makeN32Premul(1, 1), ByteArray(4), 4) }
 
     //? if < 1.21.8 {
     /*@Volatile
@@ -783,6 +787,13 @@ object SkiaCtx {
             notifDraw?.invoke()
 
             if (isVulkanMode) {
+                // restoreMainRTLayout assumes Skia left the target in COLOR_ATTACHMENT_OPTIMAL. Skia only
+                // moves it there when a draw survives culling, and a zero-opacity notification frame
+                // leaves none. It can't cull an image by its contents, so this transparent pixel always
+                // runs the pass and changes nothing on screen.
+                if (vulkanService?.mainRTRestoreNeedsColorPass == true) {
+                    mainSurface.canvas.drawImage(transparentPixel, 0f, 0f)
+                }
                 directContext.flushAndSubmit(mainSurface, false)
                 vulkanService?.restoreMainRTLayout()
             } else {
