@@ -30,6 +30,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -599,15 +600,17 @@ private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
 
 @Composable
 internal fun rememberDisplay(prop: Property<*>): Property.Display {
-    var display by remember(prop) { mutableStateOf(prop.display) }
+    return key(System.identityHashCode(prop)) {
+        var display by remember { mutableStateOf(prop.display) }
 
-    DisposableEffect(prop) {
-        val listener = Consumer<Property.Display> { display = it }
-        prop.addDisplayListener(listener)
-        onDispose { prop.removeDisplayListener(listener) }
+        DisposableEffect(Unit) {
+            val listener = Consumer<Property.Display> { display = it }
+            prop.addDisplayListener(listener)
+            onDispose { prop.removeDisplayListener(listener) }
+        }
+
+        display
     }
-
-    return display
 }
 
 internal fun displayAlpha(display: Property.Display): Float {
