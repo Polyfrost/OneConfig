@@ -6,6 +6,7 @@ import java.util.function.Function
 import java.util.function.Supplier
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.config.v1.ValueFormatter
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.item.normalizeItemIds
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
@@ -31,6 +32,7 @@ class SliderOptionData(prop: Property<*>) : OptionData(prop) {
     val min: Float get() = prop.getMetadata("min") ?: 0f
     val max: Float get() = prop.getMetadata("max") ?: 100f
     val step: Float get() = prop.getMetadata("step") ?: 0f
+    val format: ((Float) -> String)? get() = prop.valueFormat(prop.type)
 
     @Suppress("UNCHECKED_CAST")
     val numProp: Property<Number> get() = prop as Property<Number>
@@ -46,6 +48,7 @@ class RangeSliderOptionData(prop: Property<*>) : OptionData(prop) {
     val min: Float get() = prop.getMetadata("min") ?: 0f
     val max: Float get() = prop.getMetadata("max") ?: 100f
     val step: Float get() = prop.getMetadata("step") ?: 0f
+    val format: ((Float) -> String)? get() = prop.valueFormat(prop.type.componentType ?: Float::class.java)
 
     /** The current `start to end` or null when the property does not hold a two-element numeric pair */
     fun read(): Pair<Float, Float>? {
@@ -89,6 +92,11 @@ class NumberChainOptionData(prop: Property<*>) : OptionData(prop) {
     fun read(): List<Float> = prop.readNumbers() ?: emptyList()
 
     fun write(values: List<Float>) = prop.writeNumbers(values)
+}
+
+private fun Property<*>.valueFormat(type: Class<*>): ((Float) -> String)? {
+    val formatter = getMetadata<Any>("formatter") as? ValueFormatter ?: return null
+    return { value -> runCatching { formatter.format(value.toNumberType(type)) }.getOrElse { formatSpinnerValue(value) } }
 }
 
 private fun Property<*>.readNumbers(): List<Float>? = when (val value = get()) {
@@ -135,6 +143,7 @@ class InheritableSliderOptionData(prop: Property<*>) : OptionData(prop) {
     val min: Float get() = prop.getMetadata("min") ?: 0f
     val max: Float get() = prop.getMetadata("max") ?: 100f
     val step: Float get() = prop.getMetadata("step") ?: 0f
+    val format: ((Float) -> String)? get() = prop.valueFormat(prop.type)
     val inheritLabel: String
         get() = localizedString(prop.getMetadata("inheritLabelKey"), prop.getMetadata<String>("inheritLabel"))
             .takeIf { it.isNotBlank() } ?: "Inherit"
@@ -168,6 +177,7 @@ class InheritableSliderOptionData(prop: Property<*>) : OptionData(prop) {
 class NumberOptionData(prop: Property<*>) : OptionData(prop) {
     val min: Float get() = prop.getMetadata("min") ?: -10f
     val max: Float get() = prop.getMetadata("max") ?: 100f
+    val format: ((Float) -> String)? get() = prop.valueFormat(prop.type)
     val unit: String? get() = localizedString(prop.getMetadata("unitKey"), prop.getMetadata<String>("unit")).takeIf { it.isNotBlank() }
     val placeholder: String? get() = localizedString(prop.getMetadata("placeholderKey"), prop.getMetadata<String>("placeholder")).takeIf { it.isNotBlank() }
 
@@ -272,6 +282,8 @@ class NumberListOptionData(prop: Property<*>, val style: Style) : ListOptionData
                     step == step.toInt().toFloat()
             return if (whole) Integer::class.java else java.lang.Double::class.java
         }
+
+    val format: ((Float) -> String)? get() = prop.valueFormat(elementType)
 
     fun floats(): List<Float> = elements().map { (it as? Number)?.toFloat() ?: min }
 }

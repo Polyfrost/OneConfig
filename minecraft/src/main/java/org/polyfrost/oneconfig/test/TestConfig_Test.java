@@ -32,6 +32,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.Property;
+import org.polyfrost.oneconfig.api.config.v1.ValueFormatter;
 import org.polyfrost.oneconfig.api.config.v1.annotations.*;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
@@ -104,6 +105,9 @@ public class TestConfig_Test extends Config {
 
     @Slider(title = "we slide", description = "so real", min = 10f, max = 70f)
     public float slide = 40f;
+
+    @Slider(title = "Opacity", description = "Shows its value through a ValueFormatter", min = 0f, max = 100f, formatter = Percent.class)
+    public int opacity = 75;
 
     @Keybind(title = "keybind")
     private final OneConfigKeybind bind = KeybindHelper.builder().ctrl().key(InputConstants.KEY_G).action((Consumer<Boolean>) (it) -> LOGGER.info("Keybind 'keybind' (Ctrl+G) {}", it ? "pressed" : "released")).register();
@@ -337,6 +341,13 @@ public class TestConfig_Test extends Config {
         }
 
         return INSTANCE;
+    }
+
+    public static class Percent implements ValueFormatter {
+        @Override
+        public String format(java.lang.Number value) {
+            return value + "%";
+        }
     }
 
     @Accordion(title = "an accordion", description = "AAAAAAAAAAAAAAAAAAAAAAAAAAH", index = 4)

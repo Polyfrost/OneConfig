@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.FrameRecomposer
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.registerSkikoComposeImplementation
 import androidx.compose.ui.scene.CanvasLayersComposeScene
 import androidx.compose.ui.scene.ComposeScene
 import androidx.compose.ui.scene.SingleComposeSceneRenderingScope
@@ -272,6 +273,8 @@ abstract class ComposeScreen(
         val recomposer = FrameRecomposer(RenderThreadDispatcher + failureHandler) { sceneDirty = true }
         val scope = SingleComposeSceneRenderingScope { sceneDirty = true }
         val sceneContext = SceneContext { showing }
+        // upstream only registers this from its own scene/window constructors, which we bypass
+        registerSkikoComposeImplementation()
         val scene = try {
             CanvasLayersComposeScene(
                 frameRecomposer = recomposer,

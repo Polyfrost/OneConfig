@@ -27,6 +27,7 @@
 package org.polyfrost.oneconfig.api.config.v1.annotations;
 
 import java.lang.annotation.*;
+import org.polyfrost.oneconfig.api.config.v1.ValueFormatter;
 import org.polyfrost.oneconfig.api.config.v1.Visualizer;
 
 @Option(display = Visualizer.SliderVisualizer.class)
@@ -85,5 +86,7 @@ public @interface Slider {
     float max() default 100f;
 
     float step() default 1f;
+
+    Class<? extends ValueFormatter> formatter() default ValueFormatter.class;
 
 }

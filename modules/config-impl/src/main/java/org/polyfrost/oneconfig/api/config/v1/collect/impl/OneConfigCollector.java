@@ -42,6 +42,7 @@ import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.Properties;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
+import org.polyfrost.oneconfig.api.config.v1.ValueFormatter;
 import org.polyfrost.oneconfig.api.config.v1.annotations.*;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
 
@@ -162,6 +163,10 @@ public class OneConfigCollector extends ReflectiveCollector {
                     tempData.put(key + "Key", value);
                 }
             });
+
+            if (tempData.remove("formatter") instanceof Class<?> formatter && formatter != ValueFormatter.class) {
+                tempData.put("formatter", MHUtils.instantiate(formatter, false).getOrThrow());
+            }
 
             property.addMetadata(tempData);
         }
