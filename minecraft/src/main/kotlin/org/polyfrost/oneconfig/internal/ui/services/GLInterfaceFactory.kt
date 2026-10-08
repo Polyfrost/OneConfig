@@ -25,10 +25,6 @@ internal object GLInterfaceFactory {
     val sdlVideoDriver: String?
         get() = MemoryUtil.memASCIISafe(call(SDL, "SDL_GetCurrentVideoDriver"))
 
-    private val GET_PROC_CIF by lazy {
-        APIUtil.apiCreateCIF(LibFFI.FFI_DEFAULT_ABI, LibFFI.ffi_type_pointer, LibFFI.ffi_type_pointer, LibFFI.ffi_type_pointer)
-    }
-
     private fun findProcLoader(): Long {
         for (library in arrayOf(SDL, GLFW)) {
             if (call(library, library.currentContext) == 0L) continue
@@ -53,17 +49,7 @@ internal object GLInterfaceFactory {
     fun makeDirectContextViaLwjgl(): DirectContext? = try {
         val procLoader = findProcLoader()
         check(procLoader != 0L) { "no GL context?" }
-        val adapter = object : CallbackI {
-            //? if >=26.1 || =1.8.9 {
-            override fun getDescriptor() = Callback.Descriptor(MethodHandles.lookup(), GET_PROC_CIF)
-            //?} else {
-            /*override fun getCallInterface() = GET_PROC_CIF
-            *///?}
-            override fun callback(ret: Long, args: Long) {
-                val name = MemoryUtil.memGetAddress(MemoryUtil.memGetAddress(args + Pointer.POINTER_SIZE))
-                APIUtil.apiClosureRetP(ret, JNI.invokePP(name, procLoader))
-            }
-        }.address()
+        val adapter = GrGLGetProc { _, name -> JNI.invokePP(name, procLoader) }.address()
         val iface = try {
             GLAssembledInterface.createFromNativePointers(MemoryUtil.NULL, adapter)
         } finally {
@@ -75,5 +61,32 @@ internal object GLInterfaceFactory {
     } catch (e: Throwable) {
         LOG.warn("GLInterfaceFactory: could not create a GL interface from the window library's proc loader", e)
         null
+    }
+}
+
+// on Java 25+, LWJGL binds upcalls through FFM, which requires a typed @FunctionalInterface rather than a bare CallbackI
+@FunctionalInterface
+private fun interface GrGLGetProc : CallbackI {
+    fun invoke(ctx: Long, name: Long): Long
+
+    //? if >=26.1 || =1.8.9 {
+    override fun getDescriptor() = DESCRIPTOR
+    //?} else {
+    /*override fun getCallInterface() = CIF
+    *///?}
+
+    override fun callback(ret: Long, args: Long) {
+        val ctx = MemoryUtil.memGetAddress(MemoryUtil.memGetAddress(args))
+        val name = MemoryUtil.memGetAddress(MemoryUtil.memGetAddress(args + Pointer.POINTER_SIZE))
+        APIUtil.apiClosureRetP(ret, invoke(ctx, name))
+    }
+
+    companion object {
+        val CIF = APIUtil.apiCreateCIF(LibFFI.FFI_DEFAULT_ABI, LibFFI.ffi_type_pointer, LibFFI.ffi_type_pointer, LibFFI.ffi_type_pointer)
+
+        //? if >=26.3 || =1.8.9 {
+        val DESCRIPTOR = Callback.Descriptor(GrGLGetProc::class.java, MethodHandles.lookup(), CIF)
+        //?} elif >=26.1
+        /*val DESCRIPTOR = Callback.Descriptor(MethodHandles.lookup(), CIF)*/
     }
 }
