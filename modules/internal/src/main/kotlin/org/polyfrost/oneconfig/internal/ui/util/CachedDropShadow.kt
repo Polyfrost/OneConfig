@@ -16,7 +16,6 @@ import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.PaintingStyle
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.alphaMultiplier
 import androidx.compose.ui.graphics.asSkiaBitmap
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -151,7 +150,7 @@ private class CachedDropShadowNode(
         drawIntoCanvas { canvas ->
             paint.colorFilter = filter
             paint.blendMode = shadow.blendMode.toSkia()
-            paint.setAlphaf((shadow.alpha * canvas.alphaMultiplier).coerceIn(0f, 1f))
+            paint.setAlphaf(shadow.alpha.coerceIn(0f, 1f))
             canvas.skiaCanvas.drawImageRect(image, maskSrc, dst, SAMPLING, paint, true)
         }
     }

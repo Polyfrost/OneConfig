@@ -3,10 +3,16 @@ package org.polyfrost.oneconfig.internal.ui.services
 import org.jetbrains.skia.DirectContext
 import org.jetbrains.skia.GLAssembledInterface
 import org.jetbrains.skia.makeGLWithInterface
+import org.lwjgl.system.APIUtil
+import org.lwjgl.system.Callback
+import org.lwjgl.system.CallbackI
 import org.lwjgl.system.FunctionProvider
 import org.lwjgl.system.JNI
 import org.lwjgl.system.MemoryUtil
+import org.lwjgl.system.Pointer
+import org.lwjgl.system.libffi.LibFFI
 import org.slf4j.LoggerFactory
+import java.lang.invoke.MethodHandles
 
 internal object GLInterfaceFactory {
     private val LOG = LoggerFactory.getLogger(GLInterfaceFactory::class.java)
@@ -43,12 +49,44 @@ internal object GLInterfaceFactory {
     fun makeDirectContextViaLwjgl(): DirectContext? = try {
         val procLoader = findProcLoader()
         check(procLoader != 0L) { "no GL context?" }
-        val iface = GLAssembledInterface.createFromProcAddress(procLoader)
+        val adapter = GrGLGetProc { _, name -> JNI.invokePP(name, procLoader) }.address()
+        val iface = try {
+            GLAssembledInterface.createFromNativePointers(MemoryUtil.NULL, adapter)
+        } finally {
+            Callback.free(adapter)
+        }
         DirectContext.makeGLWithInterface(iface).also {
             LOG.info("GLInterfaceFactory: created DirectContext via the window library's proc loader")
         }
     } catch (e: Throwable) {
         LOG.warn("GLInterfaceFactory: could not create a GL interface from the window library's proc loader", e)
         null
+    }
+}
+
+// on Java 25+, LWJGL binds upcalls through FFM, which requires a typed @FunctionalInterface rather than a bare CallbackI
+@FunctionalInterface
+private fun interface GrGLGetProc : CallbackI {
+    fun invoke(ctx: Long, name: Long): Long
+
+    //? if >=26.1 || =1.8.9 {
+    override fun getDescriptor() = DESCRIPTOR
+    //?} else {
+    /*override fun getCallInterface() = CIF
+    *///?}
+
+    override fun callback(ret: Long, args: Long) {
+        val ctx = MemoryUtil.memGetAddress(MemoryUtil.memGetAddress(args))
+        val name = MemoryUtil.memGetAddress(MemoryUtil.memGetAddress(args + Pointer.POINTER_SIZE))
+        APIUtil.apiClosureRetP(ret, invoke(ctx, name))
+    }
+
+    companion object {
+        val CIF = APIUtil.apiCreateCIF(LibFFI.FFI_DEFAULT_ABI, LibFFI.ffi_type_pointer, LibFFI.ffi_type_pointer, LibFFI.ffi_type_pointer)
+
+        //? if >=26.3 || =1.8.9 {
+        val DESCRIPTOR = Callback.Descriptor(GrGLGetProc::class.java, MethodHandles.lookup(), CIF)
+        //?} elif >=26.1
+        /*val DESCRIPTOR = Callback.Descriptor(MethodHandles.lookup(), CIF)*/
     }
 }

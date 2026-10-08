@@ -27,7 +27,9 @@ subprojects {
         maven("https://repo.polyfrost.org/releases")
         maven("https://repo.polyfrost.org/snapshots")
         maven("https://nexus.prsm.wtf/repository/maven-public/maven-repo/releases/")
-
+        maven("https://redirector.kotlinlang.org/maven/compose-dev") {
+            content { includeGroup("org.jetbrains.skiko") }
+        }
         google()
     }
 
