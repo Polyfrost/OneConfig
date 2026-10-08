@@ -27,6 +27,7 @@
 package org.polyfrost.oneconfig.api.config.v1.annotations;
 
 import java.lang.annotation.*;
+import org.polyfrost.oneconfig.api.config.v1.ValueFormatter;
 import org.polyfrost.oneconfig.api.config.v1.Visualizer;
 
 @Option(display = Visualizer.NumberVisualizer.class)
@@ -106,4 +107,7 @@ public @interface Number {
 
     @Deprecated
     String placeholderKey() default "";
+
+    Class<? extends ValueFormatter> formatter() default ValueFormatter.class;
+
 }
