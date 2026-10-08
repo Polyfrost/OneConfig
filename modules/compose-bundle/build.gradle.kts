@@ -21,6 +21,7 @@ val shade: Configuration by configurations.creating {
     exclude(group = "org.jetbrains", module = "annotations")
     // empty relocation shims whose jar filenames collide with the real androidx-coordinate artifacts of the same name and version
     exclude(group = "org.jetbrains.compose.runtime")
+    exclude(group = "org.jetbrains.skiko", module = "skiko-awt-runtime-all")
 }
 
 dependencies {

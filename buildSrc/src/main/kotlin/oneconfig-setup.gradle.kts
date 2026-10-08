@@ -135,6 +135,10 @@ if (loader == "neoforge") {
     }
 }
 
+configurations.configureEach {
+    exclude(group = "org.jetbrains.skiko", module = "skiko-awt-runtime-all")
+}
+
 @JvmName("handleApiDepBundle")
 fun DependencyHandlerScope.handleApiDep(
     dependency: Provider<out ExternalModuleDependencyBundle>,
