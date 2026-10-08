@@ -731,6 +731,16 @@ object HudManager {
         val next = huds.toList()
         if (next.size == mergeExclusions.size && next.indices.all { next[it] === mergeExclusions[it] }) return
         mergeExclusions = next
+        // unlink right away so moving an excluded HUD never drags its neighbours with it
+        Snapshot.withMutableSnapshot {
+            for (hud in activeInstances) {
+                val excluded = isMergeExcluded(hud)
+                hud.clearMergeLinks(
+                    clearX = excluded || hud.mergeLinkX?.parent?.let(::isMergeExcluded) == true,
+                    clearY = excluded || hud.mergeLinkY?.parent?.let(::isMergeExcluded) == true,
+                )
+            }
+        }
         lastMergeKey = null
         invalidate()
     }
