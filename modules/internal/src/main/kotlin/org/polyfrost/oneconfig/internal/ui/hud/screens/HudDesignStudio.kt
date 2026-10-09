@@ -144,17 +144,27 @@ object HudEditorViewport {
     var screenHeight by mutableStateOf(0)
         private set
 
+    // observable mirror of HudManager.guiScreenWidth/Height
+    private var guiWidth by mutableStateOf(0f)
+    private var guiHeight by mutableStateOf(0f)
+
     fun update(width: Int, height: Int) {
-        if (width == screenWidth && height == screenHeight) return
+        val gw = HudManager.guiScreenWidth
+        val gh = HudManager.guiScreenHeight
+        if (width == screenWidth && height == screenHeight && gw == guiWidth && gh == guiHeight) return
         Snapshot.withMutableSnapshot {
             screenWidth = width
             screenHeight = height
+            guiWidth = gw
+            guiHeight = gh
         }
     }
 
     fun observe() {
         @Suppress("UNUSED_EXPRESSION") screenWidth
         @Suppress("UNUSED_EXPRESSION") screenHeight
+        @Suppress("UNUSED_EXPRESSION") guiWidth
+        @Suppress("UNUSED_EXPRESSION") guiHeight
     }
 }
 
@@ -1793,6 +1803,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             modifier = Modifier
                 .fillMaxSize()
                 .drawWithContent {
+                    // read in the draw scope so the cached outlines redraw on viewport changes
+                    HudEditorViewport.observe()
                     drawContent()
                     val mcToScreen = Platform.screen().mcToScreenScale()
                     if (!HudManager.inWorld) {
@@ -2538,6 +2550,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
             .drawWithContent {
                 // HUD contents go under the children because the action bar is a child of this Box and
                 // drawing it first would put it behind every HUD painted here
+                HudEditorViewport.observe()
                 val mcToScreen = Platform.screen().mcToScreenScale()
                 drawIntoCanvas { canvas -> drawHudContents(canvas.skiaCanvas, mcToScreen) }
                 if (isDragging) {
