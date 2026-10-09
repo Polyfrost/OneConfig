@@ -5,9 +5,7 @@ plugins {
 val modrinthId = findProperty("publish.modrinth.compose-bundle")
     ?.toString()
     ?.takeIf { it.isNotBlank() }
-val modrinthToken = findProperty("modrinth.token")
-    ?.toString()
-    ?.takeIf { it.isNotBlank() }
+val modrinthToken = listOf("oneconfig.publish.modrinth.token", "publish.modrinth.token", "modrinth.token").firstNotNullOfOrNull { findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
 
 publishMods {
     displayName = "Compose Multiplatform ${project.version}"
