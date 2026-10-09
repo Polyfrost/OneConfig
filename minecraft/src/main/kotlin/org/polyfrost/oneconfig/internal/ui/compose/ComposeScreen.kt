@@ -70,7 +70,8 @@ import net.minecraft.network.chat.CommonComponents
 //?}
 
 //? if = 1.8.9 {
-/*import com.mojang.blaze3d.platform.GlStateManager
+/*import kotlin.math.sign
+import com.mojang.blaze3d.platform.GlStateManager
 import net.minecraft.client.gui.screens.TitleScreen
 import org.lwjgl.input.Keyboard
 import org.lwjgl.input.Mouse
@@ -739,7 +740,7 @@ abstract class ComposeScreen(
     /*override fun handleMouse() {
         val wheel = Mouse.getEventDWheel()
         if (wheel != 0) {
-            mouseScrolled(wheel)
+            mouseScrolled(wheel.sign)
         }
 
         super.handleMouse()
