@@ -35,6 +35,7 @@ dependencies {
     shade(libs.jetbrains.compose.ui.backhandler)
     shade(libs.jetbrains.skiko.awt)
     shade(libs.jetbrains.skiko.awt.runtime.windows.x64)
+    shade(libs.jetbrains.skiko.awt.runtime.windows.arm64)
     shade(libs.jetbrains.skiko.awt.runtime.linux.x64)
     shade(libs.jetbrains.skiko.awt.runtime.linux.arm64)
     shade(libs.jetbrains.skiko.awt.runtime.macos.x64)
