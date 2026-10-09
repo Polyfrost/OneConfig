@@ -90,6 +90,7 @@ val PolyGlassDark = UITheme(
 
     Color(0xFF000000),
     Color(0xFFFFFFFF),
+    Color(0xFFFFD700),
 
     true,
 
@@ -133,6 +134,7 @@ val PolyGlassLight = UITheme(
 
     Color(0xFF000000),
     Color(0xFF1A2229),
+    Color(0xFFB57D00),
 
     true,
 
@@ -175,6 +177,7 @@ val MinecraftDark = UITheme(
 
     Color(0xFF000000),
     Color(0xFFFFFFFF),
+    Color(0xFFFFD700),
 
     false,
 
@@ -212,6 +215,7 @@ val MinecraftLight = UITheme(
 
     Color(0xFF000000),
     Color(0xFF1A2229),
+    Color(0xFFB57D00),
 
     false,
 

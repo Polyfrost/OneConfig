@@ -96,14 +96,14 @@ class ModCardGroupingTest {
     }
 
     @Test
-    void swapsAreRefusedAcrossAndOntoHeaders() {
-        // [untyped, HEADER, a, b, HEADER, c]
-        List<ModGridEntry> entries = build(Set.of(), "grouping-untyped", "grouping-a", "grouping-b", "grouping-c");
+    void cardIsFavoriteAboveTheOtherFavorites() {
+        // [HEADER, a, b]
+        List<ModGridEntry> entries = build(Set.of(), "grouping-a", "grouping-b");
+        Set<String> onlyA = Set.of("grouping-a");
 
-        assertTrue(ModCardGroupingKt.sameModGroup(entries, 2, 3), "cards of one group may swap");
-        assertFalse(ModCardGroupingKt.sameModGroup(entries, 0, 2), "a header sits between the groups");
-        assertFalse(ModCardGroupingKt.sameModGroup(entries, 2, 1), "a header is never a drop slot");
-        assertFalse(ModCardGroupingKt.sameModGroup(entries, 3, 5), "different groups may not swap");
+        assertTrue(ModCardGroupingKt.modFavoriteAt(entries, 1, onlyA::contains), "a lone favorite dropped in place must stay a favorite");
+        assertFalse(ModCardGroupingKt.modFavoriteAt(entries, 2, onlyA::contains), "a card dropped right after the favorites must keep its state");
+        assertFalse(ModCardGroupingKt.modFavoriteAt(entries, 1, id -> false), "the top of a group with no favorites must not become one");
     }
 
     @Test

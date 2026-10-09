@@ -53,8 +53,7 @@ jobs:
         name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
         with:
-          # one PR comment per run instead of one per Minecraft version
-          add-job-summary-as-pr-comment: ${{ matrix.node && 'on-failure' || 'always' }}
+          add-job-summary-as-pr-comment: never
           add-job-summary: always
           build-scan-publish: true
           build-scan-terms-of-use-url: "https://gradle.com/terms-of-service"

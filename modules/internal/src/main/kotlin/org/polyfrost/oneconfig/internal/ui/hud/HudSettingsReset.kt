@@ -69,7 +69,7 @@ private val POSITION_OPTIONS = setOf("section", "relativeX", "relativeY")
 /** Bumped when any HUD field is reset so bound [remember] state is recreated from the HUD */
 fun hudUiEpoch(hud: Hud): Int = hudUiEpochs[hud] ?: 0
 
-private fun bumpHudUiEpoch(hud: Hud) {
+internal fun bumpHudUiEpoch(hud: Hud) {
     hudUiEpochs[hud] = (hudUiEpochs[hud] ?: 0) + 1
 }
 
@@ -273,6 +273,10 @@ fun HudCanvasResetMenu(
     onAnchor: (Hud) -> Unit = {},
     anchorEnabled: Boolean = true,
     onDelete: (Hud) -> Unit = {},
+    onUndo: () -> Unit = {},
+    undoEnabled: Boolean = false,
+    onRedo: () -> Unit = {},
+    redoEnabled: Boolean = false,
 ) {
     if (hud == null || !expanded) return
     val theme = LocalTheme.current
@@ -292,6 +296,8 @@ fun HudCanvasResetMenu(
     val cutHint = if (showHints) keybindHint(OneConfigConfig.hudCutKeybind) else null
     val pasteHint = if (showHints) keybindHint(OneConfigConfig.hudPasteKeybind) else null
     val deleteHint = if (showHints) keybindHint(OneConfigConfig.hudDeleteKeybind) else null
+    val undoHint = if (showHints) keybindHint(OneConfigConfig.hudUndoKeybind) else null
+    val redoHint = if (showHints) keybindHint(OneConfigConfig.hudRedoKeybind) else null
     Popup(
         alignment = Alignment.TopStart,
         offset = offset,
@@ -382,6 +388,15 @@ fun HudCanvasResetMenu(
                 onDismiss()
             }
             HudMenuDivider()
+            HudMenuRow(icon = "undo", text = "Undo", enabled = undoEnabled, hint = undoHint) {
+                onUndo()
+                onDismiss()
+            }
+            HudMenuRow(icon = "redo", text = "Redo", enabled = redoEnabled, hint = redoHint) {
+                onRedo()
+                onDismiss()
+            }
+            HudMenuDivider()
             HudMenuRow(
                 icon = "refresh",
                 text = "Reset all to default",
@@ -430,11 +445,17 @@ fun HudCanvasPasteMenu(
     onDismiss: () -> Unit,
     onPaste: () -> Unit,
     onSelectAll: () -> Unit,
+    onUndo: () -> Unit = {},
+    undoEnabled: Boolean = false,
+    onRedo: () -> Unit = {},
+    redoEnabled: Boolean = false,
 ) {
     if (!expanded) return
     val theme = LocalTheme.current
     val pasteHint = if (OneConfigConfig.showKeybindHints) keybindHint(OneConfigConfig.hudPasteKeybind) else null
     val selectAllHint = if (OneConfigConfig.showKeybindHints) keybindHint(OneConfigConfig.hudSelectAllKeybind) else null
+    val undoHint = if (OneConfigConfig.showKeybindHints) keybindHint(OneConfigConfig.hudUndoKeybind) else null
+    val redoHint = if (OneConfigConfig.showKeybindHints) keybindHint(OneConfigConfig.hudRedoKeybind) else null
     Popup(
         alignment = Alignment.TopStart,
         offset = offset,
@@ -448,6 +469,15 @@ fun HudCanvasPasteMenu(
                 .border(1.dp, theme.borderColor, theme.popupShape)
                 .padding(MenuPadding),
         ) {
+            HudMenuRow(icon = "undo", text = "Undo", enabled = undoEnabled, hint = undoHint) {
+                onUndo()
+                onDismiss()
+            }
+            HudMenuRow(icon = "redo", text = "Redo", enabled = redoEnabled, hint = redoHint) {
+                onRedo()
+                onDismiss()
+            }
+            HudMenuDivider()
             HudMenuRow(
                 icon = "clipboard",
                 text = "Paste",

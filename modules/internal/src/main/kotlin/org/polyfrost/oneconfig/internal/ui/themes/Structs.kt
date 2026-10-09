@@ -29,6 +29,7 @@ data class UITheme(
 
     val shadowColor: Color,
     val controlThumbColor: Color,
+    val favoriteColor: Color,
 
     val shadowEnabled: Boolean,
 

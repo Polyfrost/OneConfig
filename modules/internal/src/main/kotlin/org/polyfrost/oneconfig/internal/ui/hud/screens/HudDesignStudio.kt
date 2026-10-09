@@ -57,6 +57,7 @@ import kotlin.ranges.coerceAtLeast
 import kotlin.ranges.coerceAtMost
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
@@ -99,8 +100,8 @@ import org.polyfrost.oneconfig.internal.ui.themes.*
 
 private val LOGGER = LogManager.getLogger("OneConfig/HudDesignStudio")
 
-/** How far the cursor must travel while pressing a locked HUD before it counts as a move attempt */
-private const val LOCKED_DRAG_SLOP_PX = 3f
+/** How far the cursor must travel while pressing a HUD before it counts as a drag attempt */
+private const val DRAG_SLOP_PX = 3f
 
 private var lockedHudToast: Notification? = null
 
@@ -143,17 +144,27 @@ object HudEditorViewport {
     var screenHeight by mutableStateOf(0)
         private set
 
+    // observable mirror of HudManager.guiScreenWidth/Height
+    private var guiWidth by mutableStateOf(0f)
+    private var guiHeight by mutableStateOf(0f)
+
     fun update(width: Int, height: Int) {
-        if (width == screenWidth && height == screenHeight) return
+        val gw = HudManager.guiScreenWidth
+        val gh = HudManager.guiScreenHeight
+        if (width == screenWidth && height == screenHeight && gw == guiWidth && gh == guiHeight) return
         Snapshot.withMutableSnapshot {
             screenWidth = width
             screenHeight = height
+            guiWidth = gw
+            guiHeight = gh
         }
     }
 
     fun observe() {
         @Suppress("UNUSED_EXPRESSION") screenWidth
         @Suppress("UNUSED_EXPRESSION") screenHeight
+        @Suppress("UNUSED_EXPRESSION") guiWidth
+        @Suppress("UNUSED_EXPRESSION") guiHeight
     }
 }
 
@@ -209,6 +220,14 @@ private data class SnapGuides(val vertical: Float?, val horizontal: Float?) {
 }
 
 private data class AxisSnap(val position: Float, val line: Float?)
+
+/** An unlocked HUD press that becomes a click or drag depending on whether it moves past [DRAG_SLOP_PX] */
+private class PendingPress(
+    val hud: Hud,
+    val origin: Offset,
+    val wasSelected: Boolean,
+    val narrowsSelection: Boolean,
+)
 
 private fun snapAxis(pos: Float, size: Float, lines: List<Float>, threshold: Float): AxisSnap {
     val center = pos + size / 2f
@@ -915,6 +934,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     var dragStarts by remember { mutableStateOf<Map<Hud, Pair<Float, Float>>>(emptyMap()) }
     // set while the current drag grabbed a whole fused shape rather than the selection itself
     var dragTookWholeMerge by remember { mutableStateOf(false) }
+    var pendingPress by remember { mutableStateOf<PendingPress?>(null) }
     var snapGuides by remember { mutableStateOf(SnapGuides.NONE) }
     var isResizing by remember { mutableStateOf(false) }
     var resizedHud by remember { mutableStateOf<Hud?>(null) }
@@ -943,6 +963,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     var lockedPressHud by remember { mutableStateOf<Hud?>(null) }
     var lockedPressOrigin by remember { mutableStateOf(Offset.Zero) }
     val keyFocusRequester = remember { FocusRequester() }
+    val history = remember { HudHistory() }
+    var pointerDown by remember { mutableStateOf(false) }
     var hudClipboard by remember { mutableStateOf<List<Hud>>(emptyList()) }
     var pasteMenuOffset by remember { mutableStateOf<IntOffset?>(null) }
     var marqueeStart by remember { mutableStateOf<Offset?>(null) }
@@ -1092,12 +1114,38 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                             OneConfigConfig.INSTANCE.save()
                         }
                     }
+
+                    StudioCommand.Undo, StudioCommand.Redo -> {
+                        if (!isDragging && !isResizing && pendingPress == null) {
+                            val revived = if (command == StudioCommand.Undo) history.undo() else history.redo()
+                            if (revived != null) {
+                                Snapshot.withMutableSnapshot {
+                                    val live = HudManager.activeInstances
+                                    selectedHuds = selectedHuds.filterTo(LinkedHashSet()) { it in live } + revived
+                                    if (hoveredHud !in live) hoveredHud = null
+                                    if (hudContextMenuTarget !in live) hudContextMenuTarget = null
+                                }
+                                UiSounds.play(UiSoundEvent.CLICK)
+                            }
+                        }
+                    }
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
                 LOGGER.error("Failed to handle $command in the HUD Design Studio", e)
             }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            try {
+                history.poll(busy = isDragging || isResizing || pointerDown)
+            } catch (e: Exception) {
+                LOGGER.error("Failed to record HUD history", e)
+            }
+            delay(250)
         }
     }
 
@@ -1267,6 +1315,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 return@safePointerEvent
             }
             pressWasSecondary = false
+            pendingPress = null
             val mcToScreen = Platform.screen().mcToScreenScale()
             val singleSelection = selectedHuds.size == 1
             val selected = if (singleSelection) primaryHud() else null
@@ -1320,7 +1369,6 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 }
                 return@safePointerEvent
             }
-            if (hit != null) UiSounds.play(UiSoundEvent.HUD_DRAG_START)
             if (hit != null) event.changes.forEach { it.consume() }
             Snapshot.withMutableSnapshot {
                 if (hit != null) {
@@ -1332,31 +1380,15 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     }
                     selectedHuds = newSelection
                     closeLibrary()
-                    if (newSelection.isNotEmpty()) {
-                        // grabbing an unselected HUD drags the whole fused shape while grabbing an already
-                        // selected one pulls it back out of that shape
-                        val detach = wasSelected
-                        val dragSet = if (detach) {
-                            newSelection
-                        } else {
-                            newSelection + HudManager.mergeGroupOf(hit).filter { !it.locked }
-                        }
-                        HudManager.setMergeExclusions(if (detach) dragSet else emptySet())
-                        dragTookWholeMerge = !detach && dragSet.size > newSelection.size
-                        hit.onEditorDragStart()
-                        dragOffsetX = pos.x * s - hit.x
-                        dragOffsetY = pos.y * s - hit.y
-                        isDragging = true
-                        draggedHud = hit
-                        draggedGroup = dragSet
-                        dragStarts = dragSet.associateWith { it.x to it.y }
-                        hoveredHud = hit
-                    } else {
-                        isDragging = false
-                        draggedHud = null
-                        draggedGroup = emptySet()
-                        dragStarts = emptyMap()
-                    }
+                    pendingPress = PendingPress(
+                        hud = hit,
+                        origin = pos,
+                        wasSelected = wasSelected,
+                        narrowsSelection = wasSelected && !actionPressed && !shift && newSelection.size > 1,
+                    )
+                    dragOffsetX = pos.x * s - hit.x
+                    dragOffsetY = pos.y * s - hit.y
+                    hoveredHud = hit
                 } else {
                     selectedHuds = if (actionPressed || shift) selectedHuds else emptySet()
                     marqueeStart = pos
@@ -1381,6 +1413,35 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 }
                 if (hit != hoveredAnchor) hoveredAnchor = hit
                 return@safePointerEvent
+            }
+            val press = pendingPress
+            if (press != null) {
+                if (event.changes.none { it.pressed }) {
+                    pendingPress = null
+                } else {
+                    if (press.hud !in selectedHuds || press.hud.locked) return@safePointerEvent
+                    if ((pos - press.origin).getDistance() <= DRAG_SLOP_PX) return@safePointerEvent
+                    UiSounds.play(UiSoundEvent.HUD_DRAG_START)
+                    val movable = selectedHuds.filterTo(LinkedHashSet()) { !it.locked }
+                    // grabbing an unselected HUD drags the whole fused shape while grabbing an already selected
+                    // one pulls it back out of that shape
+                    val detach = press.wasSelected
+                    val dragSet = if (detach) {
+                        movable
+                    } else {
+                        movable + HudManager.mergeGroupOf(press.hud).filter { !it.locked }
+                    }
+                    HudManager.setMergeExclusions(if (detach) dragSet else emptySet())
+                    press.hud.onEditorDragStart()
+                    Snapshot.withMutableSnapshot {
+                        pendingPress = null
+                        dragTookWholeMerge = !detach && dragSet.size > movable.size
+                        isDragging = true
+                        draggedHud = press.hud
+                        draggedGroup = dragSet
+                        dragStarts = dragSet.associateWith { it.x to it.y }
+                    }
+                }
             }
             if (isResizing) {
                 if (event.changes.none { it.pressed }) {
@@ -1477,7 +1538,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 if (lockedPressHud != null) {
                     if (event.changes.none { it.pressed }) {
                         lockedPressHud = null
-                    } else if ((pos - lockedPressOrigin).getDistance() > LOCKED_DRAG_SLOP_PX) {
+                    } else if ((pos - lockedPressOrigin).getDistance() > DRAG_SLOP_PX) {
                         // no toast because the canvas hint already says the same thing under the pointer
                         lockedPressHud = null
                     }
@@ -1529,6 +1590,16 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 Snapshot.withMutableSnapshot {
                     if (wasResizedHud != null) selectedHuds = setOf(wasResizedHud)
                     closeLibrary()
+                }
+                return@safePointerEvent
+            }
+            val click = pendingPress
+            if (click != null) {
+                val narrowsSelection = click.narrowsSelection && click.hud in selectedHuds
+                if (!click.wasSelected || narrowsSelection) UiSounds.play(UiSoundEvent.HUD_SELECT)
+                Snapshot.withMutableSnapshot {
+                    pendingPress = null
+                    if (narrowsSelection) selectedHuds = setOf(click.hud)
                 }
                 return@safePointerEvent
             }
@@ -1649,6 +1720,13 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             .onGloballyPositioned { rootCoords[0] = it }
             .focusRequester(keyFocusRequester)
             .focusable()
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        pointerDown = awaitPointerEvent(PointerEventPass.Initial).changes.any { it.pressed }
+                    }
+                }
+            }
             .onKeyEvent { keyEvent ->
                 if (keyEvent.type != KeyEventType.KeyDown) return@onKeyEvent false
                 if (keyEvent.key == Key.Escape && anchorPickSources.isNotEmpty()) {
@@ -1757,6 +1835,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             modifier = Modifier
                 .fillMaxSize()
                 .drawWithContent {
+                    // read in the draw scope so the cached outlines redraw on viewport changes
+                    HudEditorViewport.observe()
                     drawContent()
                     val mcToScreen = Platform.screen().mcToScreenScale()
                     if (!HudManager.inWorld) {
@@ -2168,6 +2248,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             if (hud in selectedHuds) selectedHuds.toList() else listOf(hud)
         } ?: emptyList()
 
+        val menuOpen = hudContextMenuTarget != null || pasteMenuOffset != null
+        val canUndo = remember(menuOpen) { menuOpen && history.canUndo }
+        val canRedo = remember(menuOpen) { menuOpen && history.canRedo }
+
         HudCanvasResetMenu(
             hud = hudContextMenuTarget,
             expanded = hudContextMenuTarget != null,
@@ -2227,6 +2311,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             anchorEnabled = contextMenuTargets.isNotEmpty() &&
                 anchorTargetsFor(contextMenuTargets).isNotEmpty(),
             onDelete = { _ -> deleteHuds(contextMenuTargets) },
+            onUndo = { HudDesignSession.handleUndo(true) },
+            undoEnabled = canUndo,
+            onRedo = { HudDesignSession.handleRedo(true) },
+            redoEnabled = canRedo,
         )
 
         HudCanvasPasteMenu(
@@ -2249,6 +2337,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 }
                 UiSounds.play(UiSoundEvent.CLICK)
             },
+            onUndo = { HudDesignSession.handleUndo(true) },
+            undoEnabled = canUndo,
+            onRedo = { HudDesignSession.handleRedo(true) },
+            redoEnabled = canRedo,
         )
     }
 }
@@ -2456,7 +2548,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                     if (lockedPressHud != null) {
                         if (event.changes.none { it.pressed }) {
                             lockedPressHud = null
-                        } else if ((pos - lockedPressOrigin).getDistance() > LOCKED_DRAG_SLOP_PX) {
+                        } else if ((pos - lockedPressOrigin).getDistance() > DRAG_SLOP_PX) {
                             lockedPressHud = null
                             notifyHudLocked()
                         }
@@ -2490,6 +2582,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
             .drawWithContent {
                 // HUD contents go under the children because the action bar is a child of this Box and
                 // drawing it first would put it behind every HUD painted here
+                HudEditorViewport.observe()
                 val mcToScreen = Platform.screen().mcToScreenScale()
                 drawIntoCanvas { canvas -> drawHudContents(canvas.skiaCanvas, mcToScreen) }
                 if (isDragging) {

@@ -803,6 +803,13 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     internal fun clearMergeLink() = clearMergeLinks(clearX = true, clearY = true)
 
+    /** Drops the merge links without touching the stored position, for a caller about to overwrite it */
+    @ApiStatus.Internal
+    fun dropMergeLinks() {
+        mergeLinkX = null
+        mergeLinkY = null
+    }
+
     /** Drops the merge link on the given axes leaving the HUD where it currently sits on screen */
     internal fun clearMergeLinks(clearX: Boolean, clearY: Boolean) {
         val dropX = clearX && mergeLinkX != null

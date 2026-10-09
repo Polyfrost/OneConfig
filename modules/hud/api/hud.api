@@ -33,6 +33,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun clone ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public fun defaultPosition ()Lkotlin/Pair;
 	public fun deletable ()Z
+	public final fun dropMergeLinks ()V
 	public final fun frameMinimumSize ()Lkotlin/Pair;
 	public final fun getAlignment ()Lorg/polyfrost/compose/layout/PolyAlign;
 	public fun getAlwaysRedraw ()Z

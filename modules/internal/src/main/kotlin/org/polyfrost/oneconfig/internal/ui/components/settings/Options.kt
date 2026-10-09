@@ -88,7 +88,7 @@ fun Option(prop: Property<*>) {
     }
     if (vis != null) {
         val epoch = resetEpochs[prop] ?: 0
-        key(prop, epoch) {
+        key(System.identityHashCode(prop), epoch) {
             vis.visualize(prop)
         }
         return

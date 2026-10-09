@@ -27,6 +27,7 @@
 package org.polyfrost.oneconfig.api.config.v1.annotations;
 
 import java.lang.annotation.*;
+import org.polyfrost.oneconfig.api.config.v1.ValueFormatter;
 import org.polyfrost.oneconfig.api.config.v1.Visualizer;
 
 /**
@@ -97,4 +98,7 @@ public @interface SliderList {
      */
     @Deprecated
     boolean addTextTranslation() default false;
+
+    Class<? extends ValueFormatter> formatter() default ValueFormatter.class;
+
 }
