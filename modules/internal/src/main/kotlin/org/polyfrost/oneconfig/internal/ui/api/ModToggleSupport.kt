@@ -13,6 +13,18 @@ import org.polyfrost.oneconfig.api.ui.v1.ModToggles
 import org.polyfrost.oneconfig.utils.v1.Multithreading
 import org.slf4j.LoggerFactory
 
+/** What the user set for an option whose value is overwritten while its mod is switched off */
+class HeldValue(val value: Any?)
+
+const val HELD_VALUE = "heldValue"
+
+/** The value to show for this option, which stays the user's own while the mod is switched off */
+@Suppress("UNCHECKED_CAST")
+fun <T> Property<T>.shown(): T? {
+    val held = getMetadata<HeldValue>(HELD_VALUE) ?: return get()
+    return held.value as T?
+}
+
 /** Root level option names treated as a mod's master switch, compared without case or an "is" prefix */
 private val MASTER_SWITCH_NAMES = setOf("enabled", "enable", "modenabled")
 

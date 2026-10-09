@@ -66,6 +66,7 @@ import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
+import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
@@ -369,7 +370,7 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
     var expanded by remember(node) {
         mutableStateOf(
             if (node.tree.getMetadata<Boolean>("collapsed") == true) false
-            else node.head?.get() != false
+            else node.head?.shown() != false
         )
     }
     val headerInteraction = rememberInteractionSource()
@@ -424,7 +425,7 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 if (node.head != null) {
-                    var headChecked by remember(node) { mutableStateOf(node.head.get() == true) }
+                    var headChecked by remember(node) { mutableStateOf(node.head.shown() == true) }
                     SwitchControl(headChecked) {
                         headChecked = it
                         node.head.set(it)

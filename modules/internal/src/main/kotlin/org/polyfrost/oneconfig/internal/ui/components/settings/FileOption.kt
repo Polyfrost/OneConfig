@@ -39,6 +39,7 @@ import kotlinx.coroutines.withContext
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.FileOptionData
+import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.IconButton
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
@@ -56,7 +57,7 @@ fun FileOption(data: FileOptionData) {
     val borderColor by animateColorAsState(if (isHovered || isFocused) theme.textColorSecondary else theme.borderColor)
 
     var value by remember(data.prop) {
-        val initial = data.strProp.get() ?: ""
+        val initial = data.strProp.shown() ?: ""
         mutableStateOf(TextFieldValue(initial, selection = TextRange(initial.length)))
     }
     val text = value.text

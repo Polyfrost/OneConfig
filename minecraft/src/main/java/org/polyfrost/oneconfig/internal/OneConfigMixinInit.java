@@ -173,7 +173,11 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         for (String toggle : new String[]{
                 "AppleSkinHud", "AppleSkinTooltip", "BetterScreens", "BetterScreensScale", "BetterScreensServer",
                 "BlockHighlight", "BlockHighlightLegacy", "BlockHighlightOutline", "Blur", "ChatBlockLegacy",
-                "DetailArmorBarRenderer", "LegacySkyblockLocation", "BlurAnimation", "Bobby", "ChatBlockReceiving",
+                "DetailArmorBarRenderer", "LegacySkyblockLocation",
+                "BetterHurtCam", "HyBedWarsConfig", "HyBedWarsHud", "HyBedWarsLocation",
+                "HyBridgeConfig", "HyBridgeLocation", "HyChatterConfig", "HyChatterLocation", "HyChatterWaypoints",
+                "HyInfoLocation", "HyInfoNametags", "HyLobby", "PolyZoom", "Tipper",
+                "Freelook", "BlurAnimation", "Bobby", "ChatBlockReceiving",
                 "ChatBlockSending", "Chatting", "Controlify", "CustomScoreboard", "DetailArmorBar", "DetailArmorBarDurability",
                 "DetailArmorBarInventory", "EffectTimerPlusSave", "Flashback", "FovChanger", "GammaUtilsGamma",
                 "GammaUtilsGammaManager", "GammaUtilsNightVision", "GammaUtilsNightVisionManager", "HyModConfig",

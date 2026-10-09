@@ -40,6 +40,7 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.api.settings.BooleanOptionData
+import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
@@ -92,7 +93,7 @@ fun Option(prop: Property<*>) {
         }
         return
     }
-    val value = prop.get()
+    val value = prop.shown()
     Text(
         when (value) {
             is Boolean -> if (value) "On" else "Off"
@@ -106,7 +107,7 @@ fun Option(prop: Property<*>) {
 
 @Composable
 fun BooleanOption(data: BooleanOptionData) {
-    var checked by remember(data.prop) { mutableStateOf(data.boolProp.get() == true) }
+    var checked by remember(data.prop) { mutableStateOf(data.boolProp.shown() == true) }
     when (data.style) {
         BooleanOptionData.Style.Switch -> SwitchControl(checked) { checked = it; data.boolProp.set(it) }
         BooleanOptionData.Style.Checkbox -> CheckboxControl(checked) { checked = it; data.boolProp.set(it) }

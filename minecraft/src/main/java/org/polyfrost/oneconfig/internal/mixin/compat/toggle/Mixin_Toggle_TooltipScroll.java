@@ -21,4 +21,9 @@ public class Mixin_Toggle_TooltipScroll {
     private static void oneconfig$noOffset(CallbackInfoReturnable<Integer> cir) {
         if (!ModToggles.isEnabled("tooltipscroll")) cir.setReturnValue(0);
     }
+
+    @Inject(method = "hasMoved", at = @At("HEAD"), cancellable = true, require = 0)
+    private static void oneconfig$leaveTooltipInPlace(CallbackInfoReturnable<Boolean> cir) {
+        if (!ModToggles.isEnabled("tooltipscroll")) cir.setReturnValue(true);
+    }
 }

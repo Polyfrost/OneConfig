@@ -9,6 +9,8 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend
+import org.polyfrost.oneconfig.internal.ui.api.HELD_VALUE
+import org.polyfrost.oneconfig.internal.ui.api.HeldValue
 
 /**
  * Switches a mod off by overwriting its options with values that leave the game untouched
@@ -21,6 +23,7 @@ import org.polyfrost.oneconfig.api.config.v1.backend.Backend
  * @param treeIds ids the config may be registered under when it is a OneConfig config
  * @param values option name to its vanilla value where names missing from the mod's version are skipped
  *   and a dot steps into a nested object
+ *   and an enum is named by the first of its `|` separated candidates that exists
  */
 internal class ConfigMask(
     private val className: String,
@@ -76,6 +79,7 @@ internal class ConfigMask(
             try {
                 val original = prop.get()
                 prop.setAsSilently(convert(value, prop.type))
+                prop.addMetadata(HELD_VALUE, HeldValue(original))
                 originals += prop to original
             } catch (t: Throwable) {
                 LOGGER.warn("Could not mask {} of {}", name, className, t)
@@ -85,7 +89,10 @@ internal class ConfigMask(
         val customSave = tree.getMetadata<Any>(CUSTOM_SAVE).takeIf { it !== NO_SAVE }
         tree.addMetadata(CUSTOM_SAVE, NO_SAVE)
         return {
-            originals.forEach { (prop, value) -> prop.setAsSilently(value) }
+            originals.forEach { (prop, value) ->
+                prop.setAsSilently(value)
+                prop.removeMetadata(HELD_VALUE)
+            }
             refreshVisibility(tree)
             if (tree.getMetadata<Any>(CUSTOM_SAVE) === NO_SAVE) {
                 if (customSave != null) tree.addMetadata(CUSTOM_SAVE, customSave) else tree.removeMetadata(CUSTOM_SAVE)
@@ -165,12 +172,13 @@ internal class ConfigMask(
     private fun Tree.isNative(): Boolean =
         getMetadata<Any>(Backend.UI_ONLY_METADATA) != true && getMetadata<Any>(CompatSnapshots.SNAPSHOT_METADATA) != true
 
-    private companion object {
+    companion object {
         val LOGGER = LogManager.getLogger("OneConfig/ModToggles")
         const val CUSTOM_SAVE = "custom_save"
         val NO_SAVE = Runnable { }
         val SINGLETON_FIELDS = setOf("INSTANCE", "instance", "CONFIG", "config")
 
+        @JvmStatic
         fun convert(value: Any?, type: Class<*>): Any? = when {
             value is Number && (type == Boolean::class.javaPrimitiveType || type == java.lang.Boolean::class.java) -> value.toInt() != 0
             value is Number && (type == Float::class.javaPrimitiveType || type == java.lang.Float::class.java) -> value.toFloat()
@@ -179,7 +187,9 @@ internal class ConfigMask(
             value is Number && (type == Long::class.javaPrimitiveType || type == java.lang.Long::class.java) -> value.toLong()
             value is Number && type == PolyColor::class.java -> PolyColor(value.toInt())
             value is Number && type == java.awt.Color::class.java -> java.awt.Color(value.toInt(), true)
-            value is String && type.isEnum -> type.enumConstants.first { (it as Enum<*>).name == value }
+            value is String && type.isEnum -> value.split('|').firstNotNullOf { name ->
+                type.enumConstants.firstOrNull { (it as Enum<*>).name == name }
+            }
             else -> value
         }
     }

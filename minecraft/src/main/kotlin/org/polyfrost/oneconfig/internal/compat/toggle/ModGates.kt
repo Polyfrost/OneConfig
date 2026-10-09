@@ -27,6 +27,7 @@ internal object ModGates {
      * @param mask the options to overwrite while the mod is off
      * @param saveKey the name the mod's config library saves the masked config under
      * @param onToggle run after the switch changed for mods that cache what they render
+     * @param unless a class only an unrelated mod sharing the id has, which is then left alone
      */
     private class Gate(
         val id: String,
@@ -34,6 +35,7 @@ internal object ModGates {
         val mask: ConfigMask? = null,
         val saveKey: String? = null,
         val onToggle: ((Boolean) -> Unit)? = null,
+        val unless: String? = null,
     )
 
     private fun tweaks(name: String) = "dev.microcontrollers.$name.config"
@@ -196,6 +198,8 @@ internal object ModGates {
         ),
         Gate(
             "blur", saveKey = "blur",
+            // LegacyGuiBlur on 1.8.9 shares the id and has an enabled option of its own
+            unless = "eu.midnightdust.blur.BlurConfig",
             mask = ConfigMask(
                 "eu.midnightdust.blur.config.BlurConfig",
                 values = mapOf("useGradient" to false, "blurContainers" to false, "showScreenID" to false),
@@ -273,6 +277,72 @@ internal object ModGates {
         Gate("viewmodel"),
         Gate("flashback"),
         Gate("skyblocker"),
+        Gate("freelook"),
+        Gate(
+            "screenshotmessageenhancer",
+            // 2.x replaces the vanilla screenshot message whatever its options say, so this only strips the extras
+            mask = ConfigMask(
+                "tomeko.screenshotmessageenhancer.config.ScreenshotMessageEnhancerConfig",
+                listOf("screenshotmessageenhancer.json"),
+                listOf(
+                    "modifyScreenshotMessageEnabled", "showCopyButton", "showOpenButton", "showOpenFolderButton",
+                    "showDeleteButton", "showUploadButton", "autoCopyScreenshot", "compressScreenshots",
+                ).associateWith { false } + ("showName" to true),
+            ),
+        ),
+        Gate(
+            "overflowanimations",
+            // only the 1.8.9 build needs this, later ones have a switch that is wired up instead
+            mask = ConfigMask(
+                "org.polyfrost.overflowanimations.config.OverflowAnimationsConfig", listOf("overflowanimations.json"),
+                mapOf(
+                    "capeMovement" to "V1_12", "sneakBobbing" to "VANILLA", "voidFog" to "OFF",
+                    "damageTintStyle" to "VANILLA",
+                ) + listOf(
+                    "sneakAnimation", "sneakEyeHeight", "backwardsWalking", "headRotationInterpolation", "damageTilt",
+                    "slimArmPosition", "itemGlint", "armorGlint", "potionGlint", "fishingRodVersion", "dropSwing",
+                    "usingTextureInGUI", "equipAnimationVersion", "cameraVersion", "thirdPersonCrosshair",
+                    "inventoryEffects", "debugCrosshairStyle", "tabListStyle", "viewBobbingTilt", "useEquipAnimation",
+                    "blockMiningProgress",
+                ).associateWith { "VANILLA|V1_8" } + listOf(
+                    "longUnsneak", "itemPositions", "itemPositionsInThirdPerson", "itemUsageSwinging",
+                    "usageSwingingParticles", "fakeMissPenaltySwing", "fakeMissPenaltyParticles", "blockHitWhileMining",
+                    "modernPotionColors", "fishingRodLineFov", "fixItemUsageVisualInGUI", "damageTintArmor",
+                    "thirdPersonSwordBlockingPosition", "capeSneakPosition", "offsetHurtTiltTime", "disableHurtCamera",
+                    "dinnerboneMode", "dinnerboneModeEntities", "wavyArms", "itemDropsFaceCamera",
+                    "itemDropsFaceCameraRotationFix", "itemDrops2D", "itemFramed2D", "thinBlockPositions",
+                    "thinFishingRodLineThickness", "itemPickupPosition", "mobHeadIcons", "eggSnowballParticles",
+                    "customSwingSpeed", "ignoreHasteSpeed", "ignoreMiningFatigueSpeed", "alwaysUsageSwing",
+                    "disableSwingTranslate", "disableSwingPivot", "itemDrops2DColors", "legacyProjectiles",
+                    "xpOrbPosition", "fireballModel", "disableItemPickupAnimation", "disableHandSway",
+                    "smartSwingScaling", "disableDropSwingInContainers", "resetMiningOnUse", "disableAdventureSwing",
+                    "disableAdventureUsageSwinging", "disableAdventureUsageParticles", "lunarBlockHitPosition",
+                    "lunarItemPositions", "coloredPotionBottles", "customRodLine", "scaleConsumeWithItem",
+                    "disableHeartFlash", "centerScrollableListWidgets", "disableDebugHudBackground",
+                    "debugHudTextShadow", "disconnectServerToTitleScreen", "legacyDebugScreen", "planarSkyFog",
+                    "glintAffectsArmorTint", "damageTintItems", "damageTintCape", "maxGlintProperties", "flameOffset",
+                    "persistentBlockOutline", "fastGrass", "disableRandomBlockRotations",
+                ).associateWith { false } + listOf(
+                    "itemSwingSpeed", "hasteSwingSpeed", "miningFatigueSwingSpeed", "itemPickupOffset",
+                    "fishingRodLineThickness", "consumeScale", "consumeIntensity", "consumeSpeed", "blockingScale",
+                    "droppedScale", "projectileScale", "fireballScale",
+                ).associateWith { 0f } + listOf(
+                    "itemOffset", "itemRotation", "rodLinePosition", "swingPosition", "consumePosition",
+                    "consumeRotation", "blockingPosition", "blockingRotation", "droppedPosition", "droppedRotation",
+                    "projectilePosition", "projectileRotation", "fireballPosition", "fireballRotation",
+                ).flatMap { name -> listOf("X", "Y", "Z").map { "$name$it" to 0f } } + mapOf(
+                    "itemScaleX" to 1f, "itemScaleY" to 1f, "itemScaleZ" to 1f, "reequipSpeed" to 0.4f,
+                ),
+            ),
+        ),
+        Gate("betterhurtcam", cards = listOf("betterhurtcam.toml")),
+        Gate("hybedwars"),
+        Gate("hybridge"),
+        Gate("hychatter"),
+        Gate("hyinfo"),
+        Gate("hylobby"),
+        // its config file kept the name of the mod it replaces
+        Gate("polyzoom", cards = listOf("zoomify")),
     )
 
     private val byId = gates.associateBy { it.id }
@@ -286,7 +356,13 @@ internal object ModGates {
             optionToggle("${tweaks("confirmdisconnect")}.ConfirmDisconnectConfig", "confirmEnabled")
         },
         "voicechat" to { VoiceChatToggle.takeIf { it.available } },
-        "animatium" to { AnimatiumToggle.takeIf { it.available } },
+        "animatium" to {
+            SelfSwitchingMod("org.visuals.legacy.animatium.Animatium", "btw.mixces.animatium.AnimatiumClient")
+                .takeIf { it.available }
+        },
+        "overflowanimations" to {
+            SelfSwitchingMod("org.polyfrost.overflowanimations.OverflowAnimations").takeIf { it.available }
+        },
     )
 
     @JvmStatic
@@ -302,12 +378,16 @@ internal object ModGates {
             }
         }
 
-        val present = gates.filter { it.id in loaded }
+        val present = gates.filter { it.id in loaded && (it.unless == null || !classExists(it.unless)) }
         for (gate in present) {
             ModToggles.manage(gate.id)
             val toggle = ModToggles.toggleFor(gate.id) ?: continue
             gate.cards.forEach { ModToggles.register(it, toggle) }
-            if (!ModToggles.isEnabled(gate.id)) gate.mask?.apply()
+            if (!ModToggles.isEnabled(gate.id)) {
+                gate.mask?.apply()
+                // resources and chunks were built before the mask went on
+                runCatching { gate.onToggle?.invoke(false) }
+            }
         }
 
         ModToggles.addListener { id, enabled ->
@@ -392,6 +472,60 @@ internal object ModGates {
             legacySkyblockLocation.forEach { it.setBoolean(null, false) }
         } catch (_: Throwable) {
         }
+    }
+
+    private val freelook by lazy {
+        runCatching {
+            val type = Class.forName(
+                "org.codeberg.chromatic.freelook.handler.FreelookHandler", true, ModGates::class.java.classLoader,
+            )
+            type.getDeclaredField("freelookToggled").also { it.isAccessible = true } to type.getMethod("stop")
+        }.getOrNull()
+    }
+
+    /** Hands the camera back when Freelook is switched off mid-look */
+    @JvmStatic
+    fun stopFreelook(handler: Any) {
+        try {
+            val (looking, stop) = freelook ?: return
+            if (looking.getBoolean(handler)) stop.invoke(handler)
+        } catch (_: Throwable) {
+        }
+    }
+
+    private fun classExists(name: String): Boolean = runCatching {
+        Class.forName(name, false, ModGates::class.java.classLoader)
+    }.isSuccess
+
+    private val polyZoomState by lazy {
+        runCatching {
+            val type = Class.forName("org.polyfrost.polyzoom.PolyZoom", true, ModGates::class.java.classLoader)
+            listOf("zooming" to false, "secondaryZooming" to false, "scrollSteps" to 0).map { (name, value) ->
+                type.getDeclaredField(name).also { it.isAccessible = true } to value
+            }
+        }.getOrDefault(emptyList())
+    }
+
+    @JvmStatic
+    fun releasePolyZoom(polyZoom: Any) {
+        try {
+            polyZoomState.forEach { (field, value) -> field.set(polyZoom, value) }
+        } catch (_: Throwable) {
+        }
+    }
+
+    private val tipperEnabled by lazy {
+        runCatching {
+            val type = Class.forName("org.codeberg.awruff.tipper.config.TipperConfig", true, ModGates::class.java.classLoader)
+            type.getField("INSTANCE").get(null) to type.getMethod("getEnabled")
+        }.getOrNull()
+    }
+
+    @JvmStatic
+    fun tipperDisabled(): Boolean = try {
+        tipperEnabled?.let { (config, enabled) -> enabled.invoke(config) == false } ?: false
+    } catch (_: Throwable) {
+        false
     }
 
     @JvmStatic
@@ -498,14 +632,15 @@ internal object ModGates {
         }
     }
 
-    private object AnimatiumToggle : ModToggle {
-        private fun find(name: String) = runCatching {
+    /** A mod with static `isEnabled` and `setEnabled` of its own, the way Animatium and its ports have */
+    private class SelfSwitchingMod(typeName: String, legacyTypeName: String? = null) : ModToggle {
+        private fun find(name: String?) = runCatching {
             Class.forName(name, true, ModGates::class.java.classLoader)
         }.getOrNull()
 
-        private val type by lazy { find("org.visuals.legacy.animatium.Animatium") }
+        private val type by lazy { find(typeName)?.takeIf { runCatching { it.getMethod("isEnabled") }.isSuccess } }
 
-        private val legacy by lazy { find("btw.mixces.animatium.AnimatiumClient") }
+        private val legacy by lazy { find(legacyTypeName) }
 
         val available get() = type != null || legacy != null
 
@@ -526,7 +661,7 @@ internal object ModGates {
                     legacy.getMethod("saveEnabledState").invoke(null)
                 }
             } catch (t: Throwable) {
-                LOGGER.error("Failed to switch Animatium", t)
+                LOGGER.error("Failed to switch {}", (type ?: legacy)?.simpleName, t)
                 return
             }
             val reload = runCatching { type?.getMethod("reload") }.getOrNull()
