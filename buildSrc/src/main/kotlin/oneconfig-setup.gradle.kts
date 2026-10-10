@@ -408,6 +408,7 @@ tasks.withType<ProcessResources>() {
     val fabricProperties = buildMap {
         put("mod_version", version)
         put("fabric_mc_version", range)
+        put("loader_version", versionedCatalog.versions["loader"].requiredVersion)
     }
 
     this.inputs.properties(fabricProperties)

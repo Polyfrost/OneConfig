@@ -2,9 +2,9 @@
 
 # Libraries
 # All
-kotlin = "2.4.10"
+kotlin = "2.4.20"
 kotlinx-coroutines = "1.10.2"
-fabric-language-kotlin = "1.13.13+kotlin.2.4.10"
+fabric-language-kotlin = "1.14.1+kotlin.2.4.20"
 google-ksp = "2.3.11"
 annotations = "24.1.0"
 hypixel-modapi = "1.0.1" # modules/utils compile baseline only, the platform selects the runtime version per target
@@ -32,9 +32,9 @@ androidx-compose-runtime = "1.13.0-alpha03"
 compose-navigation = "2.10.0-alpha01"
 skiko = "0.154.0"
 
-lifecycle = "2.11.0-beta01"
+lifecycle = "2.11.0"
 viewmodel = "2.11.0-beta01"
-commonmark = "0.24.0"
+commonmark = "0.30.0"
 
 # Testing
 junit-bom = "5.10.2"
