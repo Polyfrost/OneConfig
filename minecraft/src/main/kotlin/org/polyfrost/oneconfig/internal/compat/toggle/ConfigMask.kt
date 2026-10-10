@@ -23,7 +23,6 @@ import org.polyfrost.oneconfig.internal.ui.api.HeldValue
  * @param treeIds ids the config may be registered under when it is a OneConfig config
  * @param values option name to its vanilla value where names missing from the mod's version are skipped
  *   and a dot steps into a nested object
- *   and an enum is named by the first of its `|` separated candidates that exists
  */
 internal class ConfigMask(
     private val className: String,
@@ -31,6 +30,7 @@ internal class ConfigMask(
     private val values: Map<String, Any?> = emptyMap(),
 ) {
     private var restore: (() -> Unit)? = null
+    private var onFields = false
 
     val applied: Boolean get() = restore != null
 
@@ -38,7 +38,9 @@ internal class ConfigMask(
     fun apply() {
         if (restore != null) return
         restore = try {
-            maskTree() ?: maskFields()
+            val tree = maskTree()
+            onFields = tree == null
+            tree ?: maskFields()
         } catch (t: Throwable) {
             LOGGER.error("Failed to mask the config {}", className, t)
             null
@@ -54,6 +56,18 @@ internal class ConfigMask(
         } catch (t: Throwable) {
             LOGGER.error("Failed to restore the config {}", className, t)
         }
+    }
+
+    /**
+     * Takes a mask written straight into the mod's fields off until [apply] is called again
+     *
+     * @return whether there was one to take off
+     */
+    @Synchronized
+    fun suspend(): Boolean {
+        if (restore == null || !onFields) return false
+        remove()
+        return true
     }
 
     /** Masks again after the mod reloaded its config from disk keeping what it loaded as the user's values */
@@ -172,13 +186,12 @@ internal class ConfigMask(
     private fun Tree.isNative(): Boolean =
         getMetadata<Any>(Backend.UI_ONLY_METADATA) != true && getMetadata<Any>(CompatSnapshots.SNAPSHOT_METADATA) != true
 
-    companion object {
+    private companion object {
         val LOGGER = LogManager.getLogger("OneConfig/ModToggles")
         const val CUSTOM_SAVE = "custom_save"
         val NO_SAVE = Runnable { }
         val SINGLETON_FIELDS = setOf("INSTANCE", "instance", "CONFIG", "config")
 
-        @JvmStatic
         fun convert(value: Any?, type: Class<*>): Any? = when {
             value is Number && (type == Boolean::class.javaPrimitiveType || type == java.lang.Boolean::class.java) -> value.toInt() != 0
             value is Number && (type == Float::class.javaPrimitiveType || type == java.lang.Float::class.java) -> value.toFloat()
@@ -187,9 +200,7 @@ internal class ConfigMask(
             value is Number && (type == Long::class.javaPrimitiveType || type == java.lang.Long::class.java) -> value.toLong()
             value is Number && type == PolyColor::class.java -> PolyColor(value.toInt())
             value is Number && type == java.awt.Color::class.java -> java.awt.Color(value.toInt(), true)
-            value is String && type.isEnum -> value.split('|').firstNotNullOf { name ->
-                type.enumConstants.firstOrNull { (it as Enum<*>).name == name }
-            }
+            value is String && type.isEnum -> type.enumConstants.first { (it as Enum<*>).name == value }
             else -> value
         }
     }

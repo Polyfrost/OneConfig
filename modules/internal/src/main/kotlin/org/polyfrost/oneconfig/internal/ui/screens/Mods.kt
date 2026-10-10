@@ -93,6 +93,7 @@ import org.polyfrost.oneconfig.internal.ui.components.localizedLabel
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberGridReorderState
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.rememberModEnabled
 import org.polyfrost.oneconfig.internal.ui.components.reorderContainer
 import org.polyfrost.oneconfig.internal.ui.components.reorderOverlay
 import org.polyfrost.oneconfig.internal.ui.components.reorderableItem
@@ -429,7 +430,7 @@ fun ModCard(
 
     val toggleRevision = ModToggles.revision
     val toggle = remember(mod, toggleRevision) { mod.toggle }
-    var enabled by remember(toggle, toggleRevision) { mutableStateOf(toggle?.isEnabled() ?: true) }
+    var enabled by rememberModEnabled(toggle)
     val footerColor by animateColorAsState(if (enabled) Accent else theme.textColor.copy(alpha = 0.08f))
     val footerTextColor by animateColorAsState(
         if (enabled) theme.accentTextColor else theme.textColor.copy(alpha = 0.75f)

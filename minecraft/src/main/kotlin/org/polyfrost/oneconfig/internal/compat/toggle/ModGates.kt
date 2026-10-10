@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.compat.toggle
 
 import java.util.concurrent.ConcurrentHashMap
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend
@@ -185,18 +186,6 @@ internal object ModGates {
             ),
         ),
         Gate(
-            "chattweaks",
-            mask = ConfigMask(
-                "org.polyfrost.chattweaks.config.ChatTweaksConfig", listOf("chattweaks.json"),
-                listOf(
-                    "removeBlankMessages", "dontClearChatHistory", "saveChatHistory", "sessionMarkers",
-                    "compactChat", "consecutiveCompactChat", "dontCompactScreenshots", "timestamps",
-                    "onlyNewTimestamps", "secondsOnTimestamps", "shiftChat", "bypassCommandLimit",
-                    "fuzzyAutocomplete", "safeChatClicks", "safeChatClicksHistory", "imagePreview",
-                ).associateWith { false } + ("increaseChatHistoryLimit" to 100),
-            ),
-        ),
-        Gate(
             "blur", saveKey = "blur",
             // LegacyGuiBlur on 1.8.9 shares the id and has an enabled option of its own
             unless = "eu.midnightdust.blur.BlurConfig",
@@ -246,9 +235,6 @@ internal object ModGates {
         Gate("status-effect-bars"),
         Gate("waveycapes"),
         Gate("zoomify"),
-        Gate("overflowparticles"),
-        Gate("chatting"),
-        Gate("redaction"),
         Gate("fovchanger"),
         Gate("chatblock"),
         Gate("hymod"),
@@ -290,59 +276,12 @@ internal object ModGates {
                 ).associateWith { false } + ("showName" to true),
             ),
         ),
-        Gate(
-            "overflowanimations",
-            // only the 1.8.9 build needs this, later ones have a switch that is wired up instead
-            mask = ConfigMask(
-                "org.polyfrost.overflowanimations.config.OverflowAnimationsConfig", listOf("overflowanimations.json"),
-                mapOf(
-                    "capeMovement" to "V1_12", "sneakBobbing" to "VANILLA", "voidFog" to "OFF",
-                    "damageTintStyle" to "VANILLA",
-                ) + listOf(
-                    "sneakAnimation", "sneakEyeHeight", "backwardsWalking", "headRotationInterpolation", "damageTilt",
-                    "slimArmPosition", "itemGlint", "armorGlint", "potionGlint", "fishingRodVersion", "dropSwing",
-                    "usingTextureInGUI", "equipAnimationVersion", "cameraVersion", "thirdPersonCrosshair",
-                    "inventoryEffects", "debugCrosshairStyle", "tabListStyle", "viewBobbingTilt", "useEquipAnimation",
-                    "blockMiningProgress",
-                ).associateWith { "VANILLA|V1_8" } + listOf(
-                    "longUnsneak", "itemPositions", "itemPositionsInThirdPerson", "itemUsageSwinging",
-                    "usageSwingingParticles", "fakeMissPenaltySwing", "fakeMissPenaltyParticles", "blockHitWhileMining",
-                    "modernPotionColors", "fishingRodLineFov", "fixItemUsageVisualInGUI", "damageTintArmor",
-                    "thirdPersonSwordBlockingPosition", "capeSneakPosition", "offsetHurtTiltTime", "disableHurtCamera",
-                    "dinnerboneMode", "dinnerboneModeEntities", "wavyArms", "itemDropsFaceCamera",
-                    "itemDropsFaceCameraRotationFix", "itemDrops2D", "itemFramed2D", "thinBlockPositions",
-                    "thinFishingRodLineThickness", "itemPickupPosition", "mobHeadIcons", "eggSnowballParticles",
-                    "customSwingSpeed", "ignoreHasteSpeed", "ignoreMiningFatigueSpeed", "alwaysUsageSwing",
-                    "disableSwingTranslate", "disableSwingPivot", "itemDrops2DColors", "legacyProjectiles",
-                    "xpOrbPosition", "fireballModel", "disableItemPickupAnimation", "disableHandSway",
-                    "smartSwingScaling", "disableDropSwingInContainers", "resetMiningOnUse", "disableAdventureSwing",
-                    "disableAdventureUsageSwinging", "disableAdventureUsageParticles", "lunarBlockHitPosition",
-                    "lunarItemPositions", "coloredPotionBottles", "customRodLine", "scaleConsumeWithItem",
-                    "disableHeartFlash", "centerScrollableListWidgets", "disableDebugHudBackground",
-                    "debugHudTextShadow", "disconnectServerToTitleScreen", "legacyDebugScreen", "planarSkyFog",
-                    "glintAffectsArmorTint", "damageTintItems", "damageTintCape", "maxGlintProperties", "flameOffset",
-                    "persistentBlockOutline", "fastGrass", "disableRandomBlockRotations",
-                ).associateWith { false } + listOf(
-                    "itemSwingSpeed", "hasteSwingSpeed", "miningFatigueSwingSpeed", "itemPickupOffset",
-                    "fishingRodLineThickness", "consumeScale", "consumeIntensity", "consumeSpeed", "blockingScale",
-                    "droppedScale", "projectileScale", "fireballScale",
-                ).associateWith { 0f } + listOf(
-                    "itemOffset", "itemRotation", "rodLinePosition", "swingPosition", "consumePosition",
-                    "consumeRotation", "blockingPosition", "blockingRotation", "droppedPosition", "droppedRotation",
-                    "projectilePosition", "projectileRotation", "fireballPosition", "fireballRotation",
-                ).flatMap { name -> listOf("X", "Y", "Z").map { "$name$it" to 0f } } + mapOf(
-                    "itemScaleX" to 1f, "itemScaleY" to 1f, "itemScaleZ" to 1f, "reequipSpeed" to 0.4f,
-                ),
-            ),
-        ),
         Gate("betterhurtcam", cards = listOf("betterhurtcam.toml")),
         Gate("hybedwars"),
         Gate("hybridge"),
         Gate("hychatter"),
         Gate("hyinfo"),
         Gate("hylobby"),
-        // its config file kept the name of the mod it replaces
-        Gate("polyzoom", cards = listOf("zoomify")),
     )
 
     private val byId = gates.associateBy { it.id }
@@ -359,9 +298,6 @@ internal object ModGates {
         "animatium" to {
             SelfSwitchingMod("org.visuals.legacy.animatium.Animatium", "btw.mixces.animatium.AnimatiumClient")
                 .takeIf { it.available }
-        },
-        "overflowanimations" to {
-            SelfSwitchingMod("org.polyfrost.overflowanimations.OverflowAnimations").takeIf { it.available }
         },
     )
 
@@ -408,7 +344,20 @@ internal object ModGates {
             override fun onProfileChanged(newProfile: String) {
                 present.forEach { if (!ModToggles.isEnabled(it.id)) it.mask?.apply() }
             }
+
+            override fun onProfileOperationFinished() {
+                present.forEach { if (!ModToggles.isEnabled(it.id)) it.mask?.apply() }
+            }
         })
+
+        CompatSnapshots.setLiveValueScope { read ->
+            val suspended = present.mapNotNull { gate -> gate.mask?.takeIf { it.suspend() } }
+            try {
+                read.run()
+            } finally {
+                suspended.forEach { it.apply() }
+            }
+        }
     }
 
     @JvmStatic
@@ -496,23 +445,6 @@ internal object ModGates {
     private fun classExists(name: String): Boolean = runCatching {
         Class.forName(name, false, ModGates::class.java.classLoader)
     }.isSuccess
-
-    private val polyZoomState by lazy {
-        runCatching {
-            val type = Class.forName("org.polyfrost.polyzoom.PolyZoom", true, ModGates::class.java.classLoader)
-            listOf("zooming" to false, "secondaryZooming" to false, "scrollSteps" to 0).map { (name, value) ->
-                type.getDeclaredField(name).also { it.isAccessible = true } to value
-            }
-        }.getOrDefault(emptyList())
-    }
-
-    @JvmStatic
-    fun releasePolyZoom(polyZoom: Any) {
-        try {
-            polyZoomState.forEach { (field, value) -> field.set(polyZoom, value) }
-        } catch (_: Throwable) {
-        }
-    }
 
     private val tipperEnabled by lazy {
         runCatching {

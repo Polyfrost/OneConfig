@@ -176,21 +176,20 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
                 "DetailArmorBarRenderer", "LegacySkyblockLocation",
                 "BetterHurtCam", "HyBedWarsConfig", "HyBedWarsHud", "HyBedWarsLocation",
                 "HyBridgeConfig", "HyBridgeLocation", "HyChatterConfig", "HyChatterLocation", "HyChatterWaypoints",
-                "HyInfoLocation", "HyInfoNametags", "HyLobby", "PolyZoom", "Tipper",
+                "HyInfoLocation", "HyInfoNametags", "HyLobby", "Tipper",
                 "Freelook", "BlurAnimation", "Bobby", "ChatBlockReceiving",
-                "ChatBlockSending", "Chatting", "Controlify", "CustomScoreboard", "DetailArmorBar", "DetailArmorBarDurability",
+                "ChatBlockSending", "Controlify", "CustomScoreboard", "DetailArmorBar", "DetailArmorBarDurability",
                 "DetailArmorBarInventory", "EffectTimerPlusSave", "Flashback", "FovChanger", "GammaUtilsGamma",
                 "GammaUtilsGammaManager", "GammaUtilsNightVision", "GammaUtilsNightVisionManager", "HyModConfig",
                 "HyModLocation", "Iconographic", "Jade", "LambdaBetterGrassLayer", "LambdaBetterGrassMode", "LegacySkyblock",
-                "MidnightSave", "MountOpacity", "OverflowParticlesConfig", "OverflowParticlesManager",
-                "OverflowParticlesParticle", "PresenceFootsteps", "Redaction", "Sciophobia", "ShulkerBoxTooltip",
+                "MidnightSave", "MountOpacity", "PresenceFootsteps", "Sciophobia", "ShulkerBoxTooltip",
                 "SkyBlockItemList", "SkyBlockPvButton", "SkyBlockPvChat", "SkyBlockPvPartyFinder", "Skyblocker",
                 "StatusEffectBars", "TooltipScroll", "Viewmodel", "VignetteAir", "VignetteHealth", "VignetteHunger",
                 "VignetteTotem", "WWaypoints", "YaclSave", "Zoomify",
         }) {
             mixins.add("compat.toggle.Mixin_Toggle_" + toggle);
         }
-        //? if >= 26.1
+        //? if >= 1.21.1
         mixins.add("compat.toggle.Mixin_Toggle_WaveyCapes");
         //? if >= 1.21.1 && < 1.21.10
         //mixins.add("compat.toggle.Mixin_Toggle_DetailArmorBarVanilla");
