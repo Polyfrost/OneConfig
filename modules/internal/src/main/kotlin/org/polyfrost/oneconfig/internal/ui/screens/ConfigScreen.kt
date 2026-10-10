@@ -67,6 +67,7 @@ import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
+import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
@@ -104,8 +105,18 @@ import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.util.LayoutRef
 
+/**
+ * @param locked shows every option but [lockExempt] dimmed and out of reach, for a mod that is switched off
+ */
 @Composable
-fun ConfigScreen(tree: Tree, initialCategory: String? = null, pageKey: String) {
+fun ConfigScreen(
+    tree: Tree,
+    initialCategory: String? = null,
+    pageKey: String,
+    leading: Property<*>? = null,
+    locked: Boolean = false,
+    lockExempt: Property<*>? = null,
+) {
     val categories = remember(tree) { buildCategories(tree) }
     val localSearchQuery = ShellState.searchQuery.trim()
 
@@ -149,7 +160,9 @@ fun ConfigScreen(tree: Tree, initialCategory: String? = null, pageKey: String) {
 
         val lazyListState = rememberRestorableLazyListState(pageKey, localSearchQuery, search.query)
 
-        if (entries.isEmpty()) {
+        val leadingRow = leading.takeIf { localSearchQuery.isBlank() }
+
+        if (entries.isEmpty() && leadingRow == null) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 val message = when {
                     localSearchQuery.isBlank() -> "No settings available."
@@ -167,7 +180,12 @@ fun ConfigScreen(tree: Tree, initialCategory: String? = null, pageKey: String) {
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(end = 16.dp)
             ) {
-                items(entries) { entry -> ConfigListRow(entry) }
+                if (leadingRow != null) item { SettingRow(leadingRow) }
+                items(entries) { entry ->
+                    val option = ((entry as? ConfigListEntry.Item)?.node as? SettingNode.Leaf)?.prop
+                    val lock = locked && (option == null || option !== lockExempt)
+                    Box(Modifier.alpha(if (lock) 0.45f else 1f).blockInteraction(lock)) { ConfigListRow(entry) }
+                }
             }
             VerticalScrollbar(
                 adapter = rememberScrollbarAdapter(lazyListState),
@@ -353,7 +371,7 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
     var expanded by remember(node) {
         mutableStateOf(
             if (node.tree.getMetadata<Boolean>("collapsed") == true) false
-            else node.head?.get() != false
+            else node.head?.shown() != false
         )
     }
     val headerInteraction = rememberInteractionSource()
@@ -408,7 +426,7 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 if (node.head != null) {
-                    var headChecked by remember(node) { mutableStateOf(node.head.get() == true) }
+                    var headChecked by remember(node) { mutableStateOf(node.head.shown() == true) }
                     SwitchControl(headChecked) {
                         headChecked = it
                         node.head.set(it)

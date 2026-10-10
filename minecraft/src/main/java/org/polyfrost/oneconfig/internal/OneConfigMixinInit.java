@@ -34,6 +34,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
@@ -58,6 +60,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        if (mixinClassName.contains(".compat.toggle.")) return toggleHooksFit(targetClassName, mixinClassName);
         return true;
     }
 
@@ -166,6 +169,31 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? >= 1.21.8 && < 26.2
         //mixins.add("compat.firmament.Mixin_FirmamentContentCapture");
 
+        // master switches for mods that do not have one, see ModGates
+        for (String toggle : new String[]{
+                "AppleSkinHud", "AppleSkinTooltip", "BetterScreens", "BetterScreensScale", "BetterScreensServer",
+                "BlockHighlight", "BlockHighlightLegacy", "BlockHighlightOutline", "Blur", "ChatBlockLegacy",
+                "DetailArmorBarRenderer",
+                "BetterHurtCam", "HyBedWarsConfig", "HyBedWarsHud", "HyBedWarsLocation",
+                "HyBridgeConfig", "HyBridgeLocation", "HyChatterConfig", "HyChatterLocation", "HyChatterWaypoints",
+                "HyInfoLocation", "HyInfoNametags", "HyLobby", "Tipper",
+                "Freelook", "BlurAnimation", "Bobby", "ChatBlockReceiving",
+                "ChatBlockSending", "Controlify", "CustomScoreboard", "DetailArmorBar", "DetailArmorBarDurability",
+                "DetailArmorBarInventory", "EffectTimerPlusSave", "Flashback", "FovChanger", "GammaUtilsGamma",
+                "GammaUtilsGammaManager", "GammaUtilsNightVision", "GammaUtilsNightVisionManager", "HyModConfig",
+                "HyModLocation", "Iconographic", "Jade", "LambdaBetterGrassLayer", "LambdaBetterGrassMode", "LegacySkyblock",
+                "MidnightSave", "MountOpacity", "PresenceFootsteps", "Sciophobia", "ShulkerBoxTooltip",
+                "SkyBlockItemList", "SkyBlockPvButton", "SkyBlockPvChat", "SkyBlockPvPartyFinder", "Skyblocker",
+                "StatusEffectBars", "TooltipScroll", "Viewmodel", "VignetteAir", "VignetteHealth", "VignetteHunger",
+                "VignetteTotem", "WWaypoints", "YaclSave", "Zoomify",
+        }) {
+            mixins.add("compat.toggle.Mixin_Toggle_" + toggle);
+        }
+        //? if >= 1.21.1
+        mixins.add("compat.toggle.Mixin_Toggle_WaveyCapes");
+        //? if >= 1.21.1 && < 1.21.10
+        //mixins.add("compat.toggle.Mixin_Toggle_DetailArmorBarVanilla");
+
         //? modmenu_compat
         mixins.add("compat.Mixin_ModMenu");
 
@@ -260,6 +288,90 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
                     .warn("could not read {} to pick a mixin shape, skipping the mixins that depend on it", className, t);
             return null;
         }
+    }
+
+    private static ClassNode readClass(String className) throws java.io.IOException {
+        try (InputStream in = OneConfigMixinInit.class.getClassLoader()
+                .getResourceAsStream(className.replace('.', '/') + ".class")) {
+            if (in == null) return null;
+            ClassNode node = new ClassNode();
+            new ClassReader(in).accept(node, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+            return node;
+        }
+    }
+
+    /**
+     * The toggle mixins hook other mods by method name and were written against one build of each
+     * <br>
+     * A hook that finds nothing is skipped by Mixin but one whose handler does not fit what it finds
+     * (static against instance or the wrong return type) fails the whole target class, so those
+     * mixins are left out for the build of the mod that is installed
+     */
+    @SuppressWarnings("unchecked")
+    private static boolean toggleHooksFit(String targetClassName, String mixinClassName) {
+        try {
+            ClassNode target = readClass(targetClassName);
+            ClassNode mixin = readClass(mixinClassName);
+            if (target == null || mixin == null) return true;
+            for (MethodNode handler : mixin.methods) {
+                if (handler.visibleAnnotations == null) continue;
+                for (AnnotationNode annotation : handler.visibleAnnotations) {
+                    if (!annotation.desc.endsWith("/injection/Inject;") || annotation.values == null) continue;
+                    int at = annotation.values.indexOf("method");
+                    if (at < 0) continue;
+                    for (String spec : (List<String>) annotation.values.get(at + 1)) {
+                        String problem = hookProblem(target, handler, spec);
+                        if (problem == null) continue;
+                        LogManager.getLogger(OneConfigMixinInit.class).warn(
+                                "Not applying {} to {}: {} {}", mixinClassName, targetClassName, spec, problem);
+                        return false;
+                    }
+                }
+            }
+            return true;
+        } catch (Throwable t) {
+            LogManager.getLogger(OneConfigMixinInit.class)
+                    .warn("could not check {} against {}, skipping it", mixinClassName, targetClassName, t);
+            return false;
+        }
+    }
+
+    private static String hookProblem(ClassNode target, MethodNode handler, String spec) {
+        int paren = spec.indexOf('(');
+        String name = paren < 0 ? spec : spec.substring(0, paren);
+        String desc = paren < 0 ? null : spec.substring(paren);
+        boolean handlerStatic = (handler.access & Opcodes.ACC_STATIC) != 0;
+        boolean returnable = handler.desc.contains("CallbackInfoReturnable;");
+        String returned = returnedType(handler);
+
+        for (MethodNode method : target.methods) {
+            if (!method.name.equals(name) || (desc != null && !method.desc.equals(desc))) continue;
+            if (((method.access & Opcodes.ACC_STATIC) != 0) != handlerStatic) {
+                return handlerStatic ? "is not static in this build" : "is static in this build";
+            }
+            Type type = Type.getReturnType(method.desc);
+            if (!returnable) {
+                if (type.getSort() != Type.VOID) return "returns a value in this build";
+            } else if (type.getSort() == Type.VOID) {
+                return "returns nothing in this build";
+            } else if (returned != null && !returned.equals(type.getDescriptor())) {
+                return "returns " + type.getClassName() + " in this build";
+            } else if (returned == null && type.getSort() != Type.OBJECT && type.getSort() != Type.ARRAY) {
+                return "returns " + type.getClassName() + " in this build";
+            }
+        }
+        return null;
+    }
+
+    /** The primitive a handler's CallbackInfoReturnable is for or null when it is for an object */
+    private static String returnedType(MethodNode handler) {
+        if (handler.signature == null) return null;
+        if (handler.signature.contains("CallbackInfoReturnable<Ljava/lang/Boolean;>")) return "Z";
+        if (handler.signature.contains("CallbackInfoReturnable<Ljava/lang/Float;>")) return "F";
+        if (handler.signature.contains("CallbackInfoReturnable<Ljava/lang/Integer;>")) return "I";
+        if (handler.signature.contains("CallbackInfoReturnable<Ljava/lang/Double;>")) return "D";
+        if (handler.signature.contains("CallbackInfoReturnable<Ljava/lang/Long;>")) return "J";
+        return null;
     }
 
     @Override

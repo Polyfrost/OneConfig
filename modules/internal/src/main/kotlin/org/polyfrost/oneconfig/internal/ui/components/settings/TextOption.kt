@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.TextOptionData
+import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
@@ -52,7 +53,7 @@ fun TextOption(data: TextOptionData) {
         else theme.textColorSecondary
     )
 
-    var text by remember(data.prop) { mutableStateOf(data.strProp.get() ?: "") }
+    var text by remember(data.prop) { mutableStateOf(data.strProp.shown() ?: "") }
     val regex = remember(data.regex) { data.regex?.takeIf { it.isNotBlank() }?.let { runCatching { Regex(it) }.getOrNull() } }
     val valid = regex == null || text.isEmpty() || regex.matches(text)
     val borderColor by animateColorAsState(if (valid) theme.borderColor else ListInvalidColor)

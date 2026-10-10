@@ -75,6 +75,7 @@ object ConfigRegistry {
         private set
 
     init {
+        ModToggleStore.install()
         // Index configs as they come in (compat layers etc...)
         ConfigManager.addTreeRegistrationListener { tree ->
             if (ConfigManager.isRebindingProfiles()) return@addTreeRegistrationListener

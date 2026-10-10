@@ -6,6 +6,7 @@ import java.util.function.Function
 import java.util.function.Supplier
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.api.config.v1.ValueFormatter
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.item.normalizeItemIds
@@ -159,13 +160,13 @@ class InheritableSliderOptionData(prop: Property<*>) : OptionData(prop) {
 
     val isInherited: Boolean
         get() {
-            val value = prop.get() ?: return true
+            val value = prop.shown() ?: return true
             val sentinel = inheritSentinel ?: return false
             return value is Number && sentinel is Number && value.toDouble() == sentinel.toDouble()
         }
 
     /** The explicit value or what it inherits while unset */
-    val shownValue: Float get() = if (isInherited) inheritedValue else (prop.get() as? Number)?.toFloat() ?: inheritedValue
+    val shownValue: Float get() = if (isInherited) inheritedValue else (prop.shown() as? Number)?.toFloat() ?: inheritedValue
 
     @Suppress("UNCHECKED_CAST")
     fun set(value: Float) = (prop as Property<Any>).set(value.toNumberType(prop.type))

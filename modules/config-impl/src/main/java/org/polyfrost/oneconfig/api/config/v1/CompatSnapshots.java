@@ -72,12 +72,25 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     private CompatSnapshots() {
     }
 
+    private static volatile Consumer<Runnable> liveValueScope = Runnable::run;
+
     public static boolean isApplying() {
         return APPLYING_HERE.get();
     }
 
     public static void setDispatcher(Consumer<Runnable> dispatcher) {
         INSTANCE.dispatcher = dispatcher == null ? Runnable::run : dispatcher;
+    }
+
+    /**
+     * Sets what every read of the live option values runs inside
+     * <br>
+     * Lets whoever temporarily overwrites a mod's options put the user's own values back for the duration,
+     * so the substitutes are never mistaken for them
+     */
+    @ApiStatus.Internal
+    public static void setLiveValueScope(Consumer<Runnable> scope) {
+        liveValueScope = scope == null ? Runnable::run : scope;
     }
 
     public static Tree register(Tree tree) {
@@ -241,6 +254,10 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     }
 
     private void applyProfile(Tree tree, String profile) {
+        liveValueScope.accept(() -> applyProfile0(tree, profile));
+    }
+
+    private void applyProfile0(Tree tree, String profile) {
         if (gateClosed(tree)) return;
         captureDefaults(tree);
         ensureKeys(tree);
@@ -316,6 +333,10 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     }
 
     private void captureAll(Tree tree, String profile) {
+        liveValueScope.accept(() -> captureAll0(tree, profile));
+    }
+
+    private void captureAll0(Tree tree, String profile) {
         if (gateClosed(tree)) return;
         captureDefaults(tree);
         ensureKeys(tree);
@@ -334,6 +355,10 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     }
 
     private void captureDefaults(Tree tree) {
+        liveValueScope.accept(() -> captureDefaults0(tree));
+    }
+
+    private void captureDefaults0(Tree tree) {
         if (gateClosed(tree)) return;
         ensureKeys(tree);
         Map<String, Object> snapshot = defaults.computeIfAbsent(tree.getID(), ignored -> new ConcurrentHashMap<>());

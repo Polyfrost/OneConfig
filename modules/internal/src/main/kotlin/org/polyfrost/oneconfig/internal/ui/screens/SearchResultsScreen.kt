@@ -15,14 +15,19 @@ import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.polyfrost.oneconfig.api.ui.v1.ModToggles
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
+import org.polyfrost.oneconfig.internal.ui.api.PropertyModToggle
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
+import org.polyfrost.oneconfig.internal.ui.components.rememberModEnabled
 import org.polyfrost.oneconfig.internal.ui.search.GlobalSettingIndex
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 import org.polyfrost.oneconfig.internal.ui.search.SearchDocument
@@ -58,13 +63,13 @@ fun SearchResultsScreen(query: String) {
     }
     // grouped by owning mod in order of first appearance so a mod is headed once while keeping its best
     // hit's rank and accordions collapse into one row each
-    val groupedOptions: Map<String, List<SettingNode>> = remember(results) {
-        val byGroup = LinkedHashMap<String, MutableList<SettingNode>>()
+    val groupedOptions: Map<String, List<Pair<SettingNode, ConfigData?>>> = remember(results) {
+        val byGroup = LinkedHashMap<String, MutableList<Pair<SettingNode, ConfigData?>>>()
         results.forEach { (row, documents) ->
             if (row == null || documents.isEmpty()) return@forEach
             val node = searchNode(row.node, documents) ?: return@forEach
             val mod = row.modTitle ?: "Other"
-            byGroup.getOrPut(row.groupLabel?.let { "$mod / $it" } ?: mod) { ArrayList() } += node
+            byGroup.getOrPut(row.groupLabel?.let { "$mod / $it" } ?: mod) { ArrayList() } += (node to row.mod)
         }
         byGroup
     }
@@ -128,9 +133,13 @@ fun SearchResultsScreen(query: String) {
                         modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
                     )
                 }
-                nodes.forEachIndexed { idx, node ->
+                nodes.forEachIndexed { idx, (node, mod) ->
                     item(key = "opt:$group:$idx") {
-                        SettingEntryRow(node)
+                        val toggle = remember(mod, ModToggles.revision) { mod?.toggle }
+                        val enabled by rememberModEnabled(toggle)
+                        val ownSwitch = (toggle as? PropertyModToggle)?.property
+                        val lock = !enabled && (node as? SettingNode.Leaf)?.prop !== ownSwitch
+                        Box(Modifier.alpha(if (lock) 0.45f else 1f).blockInteraction(lock)) { SettingEntryRow(node) }
                     }
                 }
             }

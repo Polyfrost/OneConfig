@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.ui.screens
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.VerticalScrollbar
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -48,6 +50,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -67,6 +70,7 @@ import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.ui.v1.ModCardTypes
+import org.polyfrost.oneconfig.api.ui.v1.ModToggles
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
@@ -89,6 +93,7 @@ import org.polyfrost.oneconfig.internal.ui.components.localizedLabel
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberGridReorderState
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.rememberModEnabled
 import org.polyfrost.oneconfig.internal.ui.components.reorderContainer
 import org.polyfrost.oneconfig.internal.ui.components.reorderOverlay
 import org.polyfrost.oneconfig.internal.ui.components.reorderableItem
@@ -404,6 +409,10 @@ private val ModCardFooterHeight = 36.dp
 
 private val ModCardGlowHeight = 50.dp
 
+private val FavoriteStarColor = Color(0xFFFFD700)
+
+private val ModCardSwitchWidth = 30.dp
+
 /**
  * [hoverHint] faintly shows an empty star on hover, and a card that is not [interactive] lets clicks and scrolling
  * pass through
@@ -418,6 +427,22 @@ fun ModCard(
 ) {
     val interactionSource = rememberInteractionSource()
     val theme = LocalTheme.current
+
+    val toggleRevision = ModToggles.revision
+    val toggle = remember(mod, toggleRevision) { mod.toggle }
+    var enabled by rememberModEnabled(toggle)
+    val footerColor by animateColorAsState(if (enabled) Accent else theme.textColor.copy(alpha = 0.08f))
+    val footerTextColor by animateColorAsState(
+        if (enabled) theme.accentTextColor else theme.textColor.copy(alpha = 0.75f)
+    )
+    val glowStrength by animateFloatAsState(if (enabled) 1f else 0f)
+    val open = {
+        val onOpen = mod.onOpen
+        when {
+            onOpen != null -> onOpen()
+            mod.source == ConfigSource.OC -> LocalNavController.wrapper.navigate(ModConfigRoute(mod.id))
+        }
+    }
 
     Box(
         modifier = modifier.fillMaxWidth().height(140.dp)
@@ -464,18 +489,34 @@ fun ModCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = ModCardFooterHeight)
-                    .background(Accent)
+                    .background(footerColor)
                     .padding(horizontal = 8.dp, vertical = 2.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     mod.title,
-                    color = LocalTheme.current.accentTextColor,
+                    color = footerTextColor,
                     fontSize = 16.sp,
                     lineHeight = 16.sp,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth()
+                        .padding(horizontal = if (toggle != null) ModCardSwitchWidth + 4.dp else 0.dp),
                 )
+                if (toggle != null) {
+                    ModCardSwitch(
+                        checked = enabled,
+                        color = footerTextColor,
+                        modifier = Modifier.align(Alignment.CenterEnd),
+                        onCheckedChange = {
+                            if (it && toggle.needsSetup()) {
+                                open()
+                            } else {
+                                toggle.setEnabled(it)
+                                enabled = toggle.isEnabled()
+                            }
+                        },
+                    )
+                }
             }
         }
 
@@ -507,6 +548,7 @@ fun ModCard(
                             glow,
                             topLeft = Offset(0f, glowTop),
                             size = Size(size.width, glowHeight),
+                            alpha = glowStrength,
                         )
                     }
                 }
@@ -525,6 +567,36 @@ fun ModCard(
             mod = mod,
             cardInteractions = interactionSource,
             modifier = Modifier.align(Alignment.TopStart),
+        )
+    }
+}
+
+@Composable
+private fun ModCardSwitch(
+    checked: Boolean,
+    color: Color,
+    modifier: Modifier = Modifier,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    val interactionSource = rememberInteractionSource()
+    val hovered by interactionSource.collectIsHoveredAsState()
+    val trackAlpha by animateFloatAsState(if (hovered) 0.45f else 0.3f)
+    val thumbOffset by animateDpAsState(if (checked) ModCardSwitchWidth - 13.dp else 3.dp, animationSpec = spring())
+
+    Box(
+        modifier = modifier
+            .size(ModCardSwitchWidth, 16.dp)
+            .clip(LocalTheme.current.circleShape)
+            .background(color.copy(alpha = trackAlpha))
+            .onClick(interactionSource) { onCheckedChange(!checked) }
+            .pointerHoverIcon(PointerIcon.Hand),
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .offset(x = thumbOffset)
+                .size(10.dp)
+                .background(color, LocalTheme.current.circleShape),
         )
     }
 }

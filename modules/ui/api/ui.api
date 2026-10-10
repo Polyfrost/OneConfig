@@ -32,6 +32,39 @@ public final class org/polyfrost/oneconfig/api/ui/v1/ModCardTypes {
 	public static final fun types ()Ljava/util/List;
 }
 
+public abstract interface class org/polyfrost/oneconfig/api/ui/v1/ModToggle {
+	public abstract fun isEnabled ()Z
+	public fun needsSetup ()Z
+	public abstract fun setEnabled (Z)V
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/ModToggle$DefaultImpls {
+	public static fun needsSetup (Lorg/polyfrost/oneconfig/api/ui/v1/ModToggle;)Z
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/ModToggles {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/ModToggles;
+	public static final fun addListener (Lorg/polyfrost/oneconfig/api/ui/v1/ModToggles$Listener;)V
+	public static final fun getRevision ()I
+	public static final fun isEnabled (Ljava/lang/String;)Z
+	public static final fun manage ([Ljava/lang/String;)V
+	public static final fun register (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/ModToggle;)V
+	public static final fun removeListener (Lorg/polyfrost/oneconfig/api/ui/v1/ModToggles$Listener;)V
+	public static final fun setEnabled (Ljava/lang/String;Z)V
+	public static final fun setStore (Lorg/polyfrost/oneconfig/api/ui/v1/ModToggles$Store;)V
+	public static final fun toggleFor (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/ModToggle;
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/ui/v1/ModToggles$Listener {
+	public abstract fun onToggle (Ljava/lang/String;Z)V
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/ui/v1/ModToggles$Store {
+	public abstract fun load ()Ljava/util/Set;
+	public abstract fun save (Ljava/util/Set;)V
+}
+
 public final class org/polyfrost/oneconfig/api/ui/v1/OneConfigUI {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/OneConfigUI;

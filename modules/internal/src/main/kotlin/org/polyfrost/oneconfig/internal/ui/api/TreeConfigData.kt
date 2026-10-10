@@ -3,6 +3,8 @@ package org.polyfrost.oneconfig.internal.ui.api
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
+import org.polyfrost.oneconfig.api.ui.v1.ModToggle
+import org.polyfrost.oneconfig.api.ui.v1.ModToggles
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.localizedValue
 
@@ -61,6 +63,9 @@ class TreeConfigData(
     override val description: String?
         get() = tree.getMetadata<String>("mod_card_description")?.nonBlankOrNull()
             ?: modInfo?.description?.nonBlankOrNull()
+
+    override val toggle: ModToggle?
+        get() = ModToggles.toggleFor(id) ?: tree.findMasterSwitch()?.let(::PropertyModToggle)
 
     private var resolvedModInfo: ModInfo? = null
 

@@ -99,6 +99,9 @@ public final class ConfigManager {
         default void onProfileSaving(String profile) {
         }
 
+        default void onProfileOperationFinished() {
+        }
+
         default void onProfileCreated(String profile) {
         }
 
@@ -1105,6 +1108,13 @@ public final class ConfigManager {
         } finally {
             PROFILE_OPERATION_DEADLINE.remove();
             PROFILE_LIFECYCLE_LOCK.unlock();
+            for (ProfileChangeListener listener : profileListeners) {
+                try {
+                    listener.onProfileOperationFinished();
+                } catch (Throwable t) {
+                    LOGGER.error("Profile operation listener failed", t);
+                }
+            }
         }
     }
 
