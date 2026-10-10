@@ -157,6 +157,8 @@ tasks.withType<ProcessResources>().configureEach {
         "mod_description" to (project.findProperty("mod.description") ?: "OneConfig bootstrap loader."),
         "mc_version" to range,
         "compose_version" to composeBundleVersion,
+        "loader_version" to versionedCatalog.versions["loader"].requiredVersion,
+        "flk_version" to versionedCatalog.versions["fabric-language-kotlin"].requiredVersion,
     )
 
     inputs.properties(props)

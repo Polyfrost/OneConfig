@@ -96,7 +96,11 @@ tasks.jar {
 
 tasks.processResources {
     // the version already carries "+compose..." build metadata, and a second '+' would make it non-semver
-    val props = mapOf("version" to "${project.version}.fabric")
+    val props = mapOf(
+        "version" to "${project.version}.fabric",
+        "loader_version" to fabric.versions.loader.get(),
+        "flk_version" to libs.versions.fabric.language.kotlin.get(),
+    )
     inputs.properties(props)
     filesMatching("fabric.mod.json") { expand(props) }
 }
