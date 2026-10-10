@@ -6,6 +6,7 @@ import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend
+import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.ui.v1.ModToggle
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
@@ -28,7 +29,7 @@ internal object ModGates {
      * @param mask the options to overwrite while the mod is off
      * @param saveKey the name the mod's config library saves the masked config under
      * @param onToggle run after the switch changed for mods that cache what they render
-     * @param unless a class only an unrelated mod sharing the id has, which is then left alone
+     * @param unless a class only an unrelated mod sharing the id or an unsupported build has, which is then left alone
      */
     private class Gate(
         val id: String,
@@ -238,24 +239,15 @@ internal object ModGates {
         Gate("fovchanger"),
         Gate("chatblock"),
         Gate("hymod"),
-        Gate(
-            "legacyskyblock",
-            // what builds before 2.0 do without checking that the player is on SkyBlock
-            mask = ConfigMask(
-                "tomeko.legacyskyblock.config.LegacySkyblockConfig", listOf("legacyskyblock.json"),
-                listOf(
-                    "hideGuildMOTDEnabled", "healthVignetteEnabled", "healthVignetteWorkOutsideSkyblock",
-                    "toggleSprintEnabled", "hideAutoTipMessagesEnabled", "autoTipEnabled",
-                    "autoCopyScreenshotEnabled", "modifyScreenshotMessageAddName", "modifyScreenshotMessageAddCopy",
-                    "modifyScreenshotMessageAddOpen", "modifyScreenshotMessageAddOpenFolder",
-                    "modifyScreenshotMessageAddDelete",
-                ).associateWith { false } + ("customChatMessagesToHide" to emptyList<String>()),
-            ),
-            onToggle = { enabled -> if (!enabled) forgetLegacySkyblockLocation() },
-        ),
+        // builds before 2.0 keep their location in a class of their own and are left alone
+        Gate("legacyskyblock", unless = "tomeko.legacyskyblock.utils.HypixelPackets"),
         Gate("skyblockpv"),
         Gate("skyblock-item-list"),
-        Gate("bobby"),
+        Gate(
+            "bobby",
+            // it only decides whether to keep chunks around when a world is joined
+            onToggle = { if (inWorld()) Notifications.info("Bobby", "Rejoin the world for this to take effect.") },
+        ),
         Gate("presencefootsteps"),
         Gate("jade"),
         Gate("iconographic"),
@@ -301,10 +293,7 @@ internal object ModGates {
         },
     )
 
-    @JvmStatic
-    fun register() {
-        val loaded = ModInfo.loadedMods.mapTo(HashSet()) { it.id }
-
+    private fun registerOwnSwitches(loaded: Set<String>) {
         for ((id, create) in ownSwitches) {
             if (id !in loaded) continue
             try {
@@ -313,6 +302,13 @@ internal object ModGates {
                 LOGGER.error("Failed to wire up the switch of {}", id, t)
             }
         }
+    }
+
+    @JvmStatic
+    fun register() {
+        val loaded = ModInfo.loadedMods.mapTo(HashSet()) { it.id }
+
+        registerOwnSwitches(loaded)
 
         val present = gates.filter { it.id in loaded && (it.unless == null || !classExists(it.unless)) }
         for (gate in present) {
@@ -342,6 +338,8 @@ internal object ModGates {
             }
 
             override fun onProfileChanged(newProfile: String) {
+                // a switch that is one of the mod's options belongs to the config of the profile it was read from
+                registerOwnSwitches(loaded)
                 present.forEach { if (!ModToggles.isEnabled(it.id)) it.mask?.apply() }
             }
 
@@ -404,21 +402,6 @@ internal object ModGates {
     fun resetZoomify() {
         try {
             zoomifyState.forEach { (field, value) -> field.set(null, value) }
-        } catch (_: Throwable) {
-        }
-    }
-
-    private val legacySkyblockLocation by lazy {
-        runCatching {
-            val type = Class.forName("tomeko.legacyskyblock.utils.HypixelPackets", true, ModGates::class.java.classLoader)
-            listOf("onHypixel", "inSkyblock", "inDungeons").map(type::getField)
-        }.getOrDefault(emptyList())
-    }
-
-    @JvmStatic
-    fun forgetLegacySkyblockLocation() {
-        try {
-            legacySkyblockLocation.forEach { it.setBoolean(null, false) }
         } catch (_: Throwable) {
         }
     }
@@ -489,6 +472,13 @@ internal object ModGates {
 
     private fun callStatic(className: String, method: String): Any? =
         Class.forName(className, true, ModGates::class.java.classLoader).getMethod(method).invoke(null)
+
+    private fun inWorld(): Boolean {
+        //? if > 1.8.9 {
+        return net.minecraft.client.Minecraft.getInstance().level != null
+        //?} else
+        //return false
+    }
 
     private fun rebuildChunks() {
         //? if >= 26.2 {

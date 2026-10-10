@@ -7,6 +7,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -30,19 +34,19 @@ fun Modifier.onClick(interactionSource: MutableInteractionSource, enabled: Boole
 )
 
 /**
- * Swallows press and release events before children see them so anything below cannot be clicked dragged
- * or focused
- *
- * Hover move and scroll events are left alone so tooltips and page scrolling keep working
+ * Swallows press and release events before children see them so anything below cannot be clicked, dragged,
+ * focused, or keyboard-navved
  */
 fun Modifier.blockInteraction(blocked: Boolean = true): Modifier =
-    if (!blocked) this else pointerInput(Unit) {
-        awaitPointerEventScope {
-            while (true) {
-                val event = awaitPointerEvent(PointerEventPass.Initial)
-                if (event.type == PointerEventType.Press || event.type == PointerEventType.Release) {
-                    event.changes.forEach { it.consume() }
+    if (!blocked) this else focusProperties { canFocus = false }
+        .onPreviewKeyEvent { it.key != Key.Tab && it.key != Key.Escape }
+        .pointerInput(Unit) {
+            awaitPointerEventScope {
+                while (true) {
+                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                    if (event.type == PointerEventType.Press || event.type == PointerEventType.Release) {
+                        event.changes.forEach { it.consume() }
+                    }
                 }
             }
         }
-    }

@@ -173,7 +173,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         for (String toggle : new String[]{
                 "AppleSkinHud", "AppleSkinTooltip", "BetterScreens", "BetterScreensScale", "BetterScreensServer",
                 "BlockHighlight", "BlockHighlightLegacy", "BlockHighlightOutline", "Blur", "ChatBlockLegacy",
-                "DetailArmorBarRenderer", "LegacySkyblockLocation",
+                "DetailArmorBarRenderer",
                 "BetterHurtCam", "HyBedWarsConfig", "HyBedWarsHud", "HyBedWarsLocation",
                 "HyBridgeConfig", "HyBridgeLocation", "HyChatterConfig", "HyChatterLocation", "HyChatterWaypoints",
                 "HyInfoLocation", "HyInfoNametags", "HyLobby", "Tipper",
