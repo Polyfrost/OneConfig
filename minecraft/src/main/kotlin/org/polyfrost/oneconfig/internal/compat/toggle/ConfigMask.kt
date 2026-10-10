@@ -33,6 +33,11 @@ internal class ConfigMask(
 ) {
     private var restore: (() -> Unit)? = null
     private var onFields = false
+    private var fieldOriginals: List<Pair<String, Any?>> = emptyList()
+    private val held = ArrayList<Property<*>>()
+
+    /** The trees another config library's options are shown through, which read the masked fields directly */
+    var compatTrees: () -> List<Tree> = { emptyList() }
 
     val applied: Boolean get() = restore != null
 
@@ -47,6 +52,7 @@ internal class ConfigMask(
             LOGGER.error("Failed to mask the config {}", className, t)
             null
         }
+        holdForDisplay()
     }
 
     @Synchronized
@@ -58,6 +64,38 @@ internal class ConfigMask(
         } catch (t: Throwable) {
             LOGGER.error("Failed to restore the config {}", className, t)
         }
+    }
+
+    /** Lets the options the masked fields are shown through keep showing what the user chose */
+    @Synchronized
+    fun holdForDisplay() {
+        if (restore == null || !onFields) return
+        try {
+            for (tree in compatTrees()) {
+                for ((path, original) in fieldOriginals) {
+                    val prop = tree.find(optionKey(path.substringAfterLast('.'))) ?: continue
+                    if (prop in held) continue
+                    // some options show a field as another type, and a value of the field's type would not fit them
+                    if (original != null && !prop.type.kotlin.javaObjectType.isInstance(original)) continue
+                    prop.addMetadata(HELD_VALUE, HeldValue(original))
+                    held += prop
+                }
+            }
+        } catch (t: Throwable) {
+            LOGGER.warn("Could not keep the options of {} showing the user's values", className, t)
+        }
+    }
+
+    private fun optionKey(name: String) = name.filter(Char::isLetterOrDigit).lowercase()
+
+    private fun Tree.find(key: String): Property<*>? {
+        for (node in map.values) {
+            when (node) {
+                is Property<*> -> if (node.id?.let(::optionKey) == key) return node
+                is Tree -> node.find(key)?.let { return it }
+            }
+        }
+        return null
     }
 
     /**
@@ -162,6 +200,7 @@ internal class ConfigMask(
                 LOGGER.warn("Could not mask {} of {}", path, className, t)
             }
         }
+        fieldOriginals = originals
         return {
             for ((path, value) in originals) {
                 try {
@@ -170,6 +209,9 @@ internal class ConfigMask(
                     LOGGER.warn("Could not restore {} of {}", path, className, t)
                 }
             }
+            held.forEach { it.removeMetadata(HELD_VALUE) }
+            held.clear()
+            fieldOriginals = emptyList()
         }
     }
 

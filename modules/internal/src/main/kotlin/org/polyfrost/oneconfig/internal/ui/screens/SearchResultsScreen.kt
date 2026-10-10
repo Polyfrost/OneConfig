@@ -138,7 +138,8 @@ fun SearchResultsScreen(query: String) {
                         val toggle = remember(mod, ModToggles.revision) { mod?.toggle }
                         val enabled by rememberModEnabled(toggle)
                         val ownSwitch = (toggle as? PropertyModToggle)?.property
-                        val lock = !enabled && (node as? SettingNode.Leaf)?.prop !== ownSwitch
+                        val isOwnSwitch = ownSwitch != null && (node as? SettingNode.Leaf)?.prop === ownSwitch
+                        val lock = !enabled && !isOwnSwitch
                         Box(Modifier.alpha(if (lock) 0.45f else 1f).blockInteraction(lock)) { SettingEntryRow(node) }
                     }
                 }

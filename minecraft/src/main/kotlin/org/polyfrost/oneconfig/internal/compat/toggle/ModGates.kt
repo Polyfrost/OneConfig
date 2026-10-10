@@ -248,7 +248,7 @@ internal object ModGates {
         Gate("jade"),
         Gate("iconographic"),
         Gate("viewmodel"),
-        Gate("flashback"),
+        Gate("flashback", onToggle = { enabled -> if (!enabled) finishFlashbackRecording() }),
         Gate("freelook"),
         Gate(
             "screenshotmessageenhancer",
@@ -307,6 +307,9 @@ internal object ModGates {
         val present = gates.filter { it.id in loaded && (it.unless == null || !classExists(it.unless)) }
         for (gate in present) {
             ModToggles.manage(gate.id)
+            gate.mask?.compatTrees = {
+                ConfigManager.active().trees().filter { it.id == gate.id || it.id in gate.cards }
+            }
             val toggle = ModToggles.toggleFor(gate.id) ?: continue
             gate.cards.forEach { ModToggles.register(it, toggle) }
             if (!ModToggles.isEnabled(gate.id)) {
@@ -318,7 +321,7 @@ internal object ModGates {
 
         ModToggles.addListener { id, enabled ->
             val gate = byId[id] ?: return@addListener
-            if (gate.mask != null) {
+            if (gate.mask != null) synchronized(maskLock) {
                 if (enabled) {
                     gate.mask.remove()
                     // saves made while the mask was on were dropped, so what they meant to write goes out now
@@ -337,29 +340,42 @@ internal object ModGates {
         }
 
         ConfigManager.addProfileChangeListener(object : ConfigManager.ProfileChangeListener {
-            override fun onProfileSaving(profile: String) {
+            override fun onProfileSaving(profile: String) = synchronized(maskLock) {
                 present.forEach { it.mask?.remove() }
             }
 
             override fun onProfileChanged(newProfile: String) {
                 // a switch that is one of the mod's options belongs to the config of the profile it was read from
                 registerOwnSwitches(loaded)
-                present.forEach { if (!ModToggles.isEnabled(it.id)) it.mask?.apply() }
+                maskDisabled(present)
             }
 
-            override fun onProfileOperationFinished() {
-                present.forEach { if (!ModToggles.isEnabled(it.id)) it.mask?.apply() }
-            }
+            override fun onProfileOperationFinished() = maskDisabled(present)
         })
 
+        // profile operations run off the thread the snapshots are applied on, and a mask put on in the middle of
+        // one of these would take the outgoing profile's value for the user's and then be overwritten
         CompatSnapshots.setLiveValueScope { read ->
-            val suspended = present.mapNotNull { gate -> gate.mask?.takeIf { it.suspend() } }
-            try {
-                read.run()
-            } finally {
-                suspended.forEach { it.apply() }
+            synchronized(maskLock) {
+                val suspended = present.mapNotNull { gate -> gate.mask?.takeIf { it.suspend() } }
+                try {
+                    read.run()
+                } finally {
+                    suspended.forEach { it.apply() }
+                }
             }
         }
+
+        // another library's options are often only built once the mod's screen is first asked for
+        ConfigManager.addTreeRegistrationListener { tree ->
+            present.forEach { if (tree.id == it.id || tree.id in it.cards) it.mask?.holdForDisplay() }
+        }
+    }
+
+    private val maskLock = Any()
+
+    private fun maskDisabled(present: List<Gate>) = synchronized(maskLock) {
+        present.forEach { if (!ModToggles.isEnabled(it.id)) it.mask?.apply() }
     }
 
     private fun save(gate: Gate, markDirty: Boolean) {
@@ -490,6 +506,16 @@ internal object ModGates {
 
     private fun callStatic(className: String, method: String): Any? =
         Class.forName(className, true, ModGates::class.java.classLoader).getMethod(method).invoke(null)
+
+    /** Ends a recording in progress the way the mod's own command does, so it is kept */
+    private fun finishFlashbackRecording() {
+        try {
+            val type = Class.forName("com.moulberry.flashback.Flashback", true, ModGates::class.java.classLoader)
+            if (type.getField("RECORDER").get(null) != null) type.getMethod("finishRecordingReplay").invoke(null)
+        } catch (t: Throwable) {
+            LOGGER.warn("Could not finish the Flashback recording in progress", t)
+        }
+    }
 
     private fun inWorld(): Boolean {
         //? if > 1.8.9 {
