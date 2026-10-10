@@ -53,6 +53,8 @@ dependencies {
 }
 
 evaluationDependsOn(platformPath)
+// build metadata is ignored by version comparisons anyway
+val composeBundleVersion = evaluationDependsOn(":modules:compose-bundle").version.toString().substringBefore('+')
 
 afterEvaluate {
     val platform = rootProject.project(platformPath)
@@ -154,6 +156,7 @@ tasks.withType<ProcessResources>().configureEach {
         "mod_version" to project.version,
         "mod_description" to (project.findProperty("mod.description") ?: "OneConfig bootstrap loader."),
         "mc_version" to range,
+        "compose_version" to composeBundleVersion,
     )
 
     inputs.properties(props)

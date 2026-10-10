@@ -1,3 +1,23 @@
-## 1.2.22
-- Fixed Wayland support when using BlazeSDL
-- Improved search results by including aliases
+## 1.3.0
+- Added undo and redo to the HUD editor, with rebindable keybinds
+- Added a Hidden category to the mods list, with a toggle on each mod card to hide it
+- Added value formatters to number and slider options (`ValueFormatter`, available on the annotations, `KtConfig` and the config DSL)
+- Added a favorite color to themes, used by the favorite star
+- Improved mod card dragging: cards now follow the cursor smoothly, and auto scroll speeds up the longer you hold near an edge
+- Fixed the wrong mod card being picked up while cards are animating or overlapping
+- Fixed mod cards dropping into the wrong slot after a quick release
+- Fixed a held mod card not being picked up when scrolling, and opening after it was scrolled
+- Fixed the last favorite being unfavorited when dropped
+- Fixed mod cards sliding in from off-screen
+- Fixed the mods grid scrolling on its own when its cards reorder
+- Fixed the missing scrollbar padding in the mods grid
+- Fixed options sharing display state with other options that compare equal
+- Fixed clicks being treated as drags in the HUD editor
+- Fixed HUDs excluded from merging dragging their neighbors along
+- Fixed HUD editor outlines not redrawing when the GUI size changes
+- Fixed rendering corruption on Vulkan
+- Fixed framebuffers being rebound too late when restoring GL state on 1.8.9
+- Fixed scroll wheel speed on 1.8.9
+- Updated Compose to 1.13.0-alpha02 and Skiko to 0.154.0, now built from upstream
+- Bundled the Windows arm64 Skiko runtime
+- Marked as incompatible with PolyPlus versions below 1.2.49
