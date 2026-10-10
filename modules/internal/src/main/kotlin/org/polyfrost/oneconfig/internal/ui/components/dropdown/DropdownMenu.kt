@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import org.polyfrost.oneconfig.internal.ui.components.LocalShellTransition
 import javax.swing.Box
 import kotlin.math.max
 import kotlin.math.min
@@ -155,10 +156,14 @@ fun SimpleDropdownMenuContent(
     val alpha by transition.animateFloat(transitionSpec = { tween() }) { expanded ->
         if (expanded) 1f else 0f
     }
+    val shell = LocalShellTransition.current
 
     Box(
         modifier = Modifier.graphicsLayer {
-            this.alpha = alpha
+            this.alpha = alpha * shell.alpha
+            val shellScale = shell.scale
+            scaleX = shellScale
+            scaleY = shellScale
             transformOrigin = transformOriginState.value
         }.then(modifier)
     ) {

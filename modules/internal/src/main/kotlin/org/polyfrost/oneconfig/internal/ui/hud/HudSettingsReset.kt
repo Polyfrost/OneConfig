@@ -51,6 +51,7 @@ import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.optionHasDefault
 import org.polyfrost.oneconfig.internal.ui.components.settings.resetOption
@@ -308,6 +309,7 @@ fun HudCanvasResetMenu(
             // without this the separator's fillMaxWidth stretches the menu out to the whole screen
             modifier = Modifier
                 .widthIn(min = 190.dp, max = 240.dp)
+                .shellTransition()
                 .background(theme.popupBackground, theme.popupShape)
                 .border(1.dp, theme.borderColor, theme.popupShape)
                 .padding(MenuPadding),
@@ -465,6 +467,7 @@ fun HudCanvasPasteMenu(
         Column(
             modifier = Modifier
                 .widthIn(min = 190.dp, max = 240.dp)
+                .shellTransition()
                 .background(theme.popupBackground, theme.popupShape)
                 .border(1.dp, theme.borderColor, theme.popupShape)
                 .padding(MenuPadding),

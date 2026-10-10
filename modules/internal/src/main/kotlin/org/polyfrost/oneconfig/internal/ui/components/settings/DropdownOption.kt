@@ -1,10 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
@@ -16,16 +13,14 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.settings.DropdownOptionData
 import org.polyfrost.oneconfig.internal.ui.components.*
+import org.polyfrost.oneconfig.internal.ui.components.dropdown.SimpleDropdownMenu
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.concentric
@@ -38,7 +33,6 @@ private val MenuItemShape @Composable get() = DropdownShape.concentric(MenuPaddi
 fun DropdownOption(data: DropdownOptionData) {
     val theme = LocalTheme.current
     var expanded by remember { mutableStateOf(false) }
-    var triggerHeightPx by remember { mutableStateOf(0) }
 
     val enumClass = when {
         data.prop.type.isEnum -> data.prop.type
@@ -93,7 +87,6 @@ fun DropdownOption(data: DropdownOptionData) {
             modifier = Modifier
                 .width(LocalOptionWidth.current)
                 .height(32.dp)
-                .onSizeChanged { triggerHeightPx = it.height }
                 .background(backgroundColor, DropdownShape)
                 .border(
                     1.dp,
@@ -118,70 +111,61 @@ fun DropdownOption(data: DropdownOptionData) {
             Icon("up", modifier = Modifier.rotate(chevronRotation), color = textColor)
         }
 
-        if (expanded) {
-            Popup(
-                alignment = Alignment.TopStart,
-                offset = IntOffset(0, triggerHeightPx + 10),
-                onDismissRequest = { expanded = false },
-                properties = PopupProperties(focusable = true),
+        SimpleDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            offset = DpOffset(0.dp, 10.dp),
+        ) {
+            val scrollState = rememberScrollState()
+            Box(
+                modifier = Modifier
+                    .width(LocalOptionWidth.current)
+                    .clip(DropdownShape)
+                    .background(theme.componentBackground, DropdownShape)
+                    .border(1.dp, theme.borderColor, DropdownShape)
             ) {
-                AnimatedVisibility(
-                    visible = expanded,
-                    enter = fadeIn(),
-                    exit = fadeOut()
+                val itemShape = MenuItemShape
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = 280.dp)
+                        .fadingEdges(scrollState, theme.componentBackground)
+                        .verticalScroll(scrollState)
+                        .padding(MenuPadding)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    val scrollState = rememberScrollState()
-                    Box(
-                        modifier = Modifier
-                            .width(LocalOptionWidth.current)
-                            .clip(DropdownShape)
-                            .background(theme.componentBackground, DropdownShape)
-                            .border(1.dp, theme.borderColor, DropdownShape)
-                    ) {
-                        val itemShape = MenuItemShape
-                        Column(
+                    options.forEachIndexed { index, option ->
+                        val optionSource = rememberInteractionSource()
+                        val selected = index == selectedIdx
+                        val isHovered by optionSource.collectIsHoveredAsState()
+
+                        val backgroundColor by animateColorAsState(
+                            if (selected) Accent
+                            else if (isHovered) theme.modCardBackground
+                            else theme.modCardBackground.copy(0f)
+                        )
+
+                        Box(
                             modifier = Modifier
-                                .heightIn(max = 280.dp)
-                                .fadingEdges(scrollState, theme.componentBackground)
-                                .verticalScroll(scrollState)
-                                .padding(MenuPadding)
-                                .fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            options.forEachIndexed { index, option ->
-                                val optionSource = rememberInteractionSource()
-                                val selected = index == selectedIdx
-                                val isHovered by optionSource.collectIsHoveredAsState()
-
-                                val backgroundColor by animateColorAsState(
-                                    if (selected) Accent
-                                    else if (isHovered) theme.modCardBackground
-                                    else theme.modCardBackground.copy(0f)
-                                )
-
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(backgroundColor, itemShape)
-                                        .onClick(optionSource) {
-                                            selectedIdx = index
-                                            @Suppress("UNCHECKED_CAST")
-                                            if (enumClass != null) {
-                                                (data.prop as Property<Any>).set(values[index])
-                                            } else if (data.prop.type == String::class.java) {
-                                                (data.prop as Property<Any>).set(optionValues.getOrElse(index) { option })
-                                            } else {
-                                                (data.prop as Property<Any>).set(index)
-                                            }
-                                            expanded = false
-                                        }
-                                        .hoverable(optionSource)
-                                        .pointerHoverIcon(PointerIcon.Hand)
-                                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                                ) {
-                                    Text(option, color = theme.textColor, fontSize = 13.sp)
+                                .fillMaxWidth()
+                                .background(backgroundColor, itemShape)
+                                .onClick(optionSource) {
+                                    selectedIdx = index
+                                    @Suppress("UNCHECKED_CAST")
+                                    if (enumClass != null) {
+                                        (data.prop as Property<Any>).set(values[index])
+                                    } else if (data.prop.type == String::class.java) {
+                                        (data.prop as Property<Any>).set(optionValues.getOrElse(index) { option })
+                                    } else {
+                                        (data.prop as Property<Any>).set(index)
+                                    }
+                                    expanded = false
                                 }
-                            }
+                                .hoverable(optionSource)
+                                .pointerHoverIcon(PointerIcon.Hand)
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                        ) {
+                            Text(option, color = theme.textColor, fontSize = 13.sp)
                         }
                     }
                 }
