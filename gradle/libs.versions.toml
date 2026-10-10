@@ -2,7 +2,7 @@
 
 # Libraries
 # All
-kotlin = "2.4.10"
+kotlin = "2.4.20"
 kotlinx-coroutines = "1.10.2"
 fabric-language-kotlin = "1.14.1+kotlin.2.4.20"
 google-ksp = "2.3.11"
