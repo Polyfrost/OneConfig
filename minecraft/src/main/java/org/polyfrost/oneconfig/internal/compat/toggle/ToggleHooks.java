@@ -71,7 +71,7 @@ public final class ToggleHooks {
         hook("mountopacity", "MountOpacity");
         hook("presencefootsteps", "PresenceFootsteps");
         hook("sciophobia", "Sciophobia");
-        hook("shulkerboxtooltip", "ShulkerBoxTooltip", "ShulkerBoxTooltipJoin");
+        hook("shulkerboxtooltip", "ShulkerBoxTooltip", "ShulkerBoxTooltipJoin", "ShulkerBoxTooltipSave");
         hook("status-effect-bars", "StatusEffectBars");
         // has a switch of its own that one part of it ignores
         hook("tipper", "Tipper");
