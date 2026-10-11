@@ -11,9 +11,10 @@ import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
 /**
  * Registry of the master switches shown on mod cards
  *
- * A config with a root level boolean option called `enabled` gets a switch on its card without
- * registering anything here. Mods without such an option either [register] their own [ModToggle]
- * or ask OneConfig to keep the state for them with [manage] and poll it through [isEnabled]
+ * A config with a boolean field marked `@MasterToggle`, or a root level option called `enabled`, gets a
+ * switch on its card without registering anything here. Mods without such an option either
+ * [register] their own [ModToggle] or ask OneConfig to keep the state for them with [manage] and
+ * poll it through [isEnabled]
  */
 object ModToggles {
     private val LOGGER = LogManager.getLogger("OneConfig/ModToggles")

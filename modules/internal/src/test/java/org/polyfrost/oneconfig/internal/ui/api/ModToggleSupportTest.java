@@ -47,6 +47,15 @@ class ModToggleSupportTest {
     }
 
     @Test
+    void aMarkedOptionWinsOverTheNameAndIsFoundWhenNested() {
+        Property<Boolean> marked = bool("active", true);
+        marked.addMetadata(ModToggleSupportKt.MASTER_TOGGLE, true);
+        Tree tree = Tree.tree("toggle-marked.json").put(bool("enabled", true), Tree.tree("general").put(marked));
+
+        assertSame(marked, ModToggleSupportKt.findMasterSwitch(tree));
+    }
+
+    @Test
     void theToggleWritesThroughToTheOption() {
         Property<Boolean> enabled = bool("enabled", true);
         PropertyModToggle toggle = new PropertyModToggle(enabled);

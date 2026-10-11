@@ -31,14 +31,30 @@ private val MASTER_SWITCH_NAMES = setOf("enabled", "enable", "modenabled")
 private fun masterSwitchName(id: String): String =
     id.filter(Char::isLetterOrDigit).lowercase().let { if (it.startsWith("is")) it.substring(2) else it }
 
+const val MASTER_TOGGLE = "masterToggle"
+
+private fun Tree.findMarkedSwitch(): Property<*>? {
+    for (node in map.values) {
+        val found = when (node) {
+            is Property<*> -> node.takeIf { it.getMetadata<Boolean>(MASTER_TOGGLE) == true }
+            is Tree -> node.findMarkedSwitch()
+            else -> null
+        }
+        if (found != null) return found
+    }
+    return null
+}
+
 /**
  * Finds the boolean option that switches the whole mod on and off
  *
- * Only direct children of the tree are considered so the switch of a single feature or category
- * (which lives in a child tree) is never mistaken for the mod's own
+ * An option marked with `@MasterToggle` is used wherever it sits in the tree. Without one, only direct
+ * children of the tree are matched by name, so the switch of a single feature or category (which
+ * lives in a child tree) is never mistaken for the mod's own
  */
 @Suppress("UNCHECKED_CAST")
 fun Tree.findMasterSwitch(): Property<Boolean>? {
+    findMarkedSwitch()?.let { return it as Property<Boolean> }
     val candidates = map.values.filterIsInstance<Property<*>>().filter {
         it.type == Boolean::class.javaPrimitiveType || it.type == java.lang.Boolean::class.java
     }

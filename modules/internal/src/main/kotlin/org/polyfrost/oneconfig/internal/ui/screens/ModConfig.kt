@@ -12,8 +12,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import java.util.function.Predicate
-import org.polyfrost.oneconfig.api.config.v1.Properties
-import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.PropertyModToggle
@@ -61,37 +59,20 @@ fun ModConfig(id: String, initialCategory: String? = null) {
             Text("This mod manages its own configuration.", color = LocalTheme.current.textColorSecondary)
         }
         else -> {
-            var toggled by remember(id) { mutableIntStateOf(0) }
             val toggleRevision = ModToggles.revision
             val toggle = remember(id, toggleRevision) { config.toggle }
             val ownSwitch = (toggle as? PropertyModToggle)?.property
-            val enabledOption = remember(toggle) {
-                toggle?.takeIf { ownSwitch == null }?.let {
-                    Properties.functional(
-                        { it.isEnabled() },
-                        { enabled ->
-                            if (enabled && it.needsSetup()) externalOpen?.invoke() else it.setEnabled(enabled)
-                            toggled++
-                        },
-                        "enabled", "Enabled", "Turns the whole mod on or off.", Boolean::class.java,
-                    ).apply { addMetadata("visualizer", Visualizer.SwitchVisualizer::class.java) }
-                }
-            }
-
             var ownSwitchFlips by remember(System.identityHashCode(ownSwitch)) { mutableIntStateOf(0) }
             DisposableEffect(System.identityHashCode(ownSwitch)) {
                 val listener = Predicate<Boolean> { ownSwitchFlips++; false }
                 ownSwitch?.addCallback(listener)
                 onDispose { ownSwitch?.removeCallback(listener) }
             }
-            val locked = remember(toggle, toggled, ownSwitchFlips) { toggle?.isEnabled() == false }
+            val locked = remember(toggle, ownSwitchFlips) { toggle?.isEnabled() == false }
 
             // switching a mod can swap the values of its options so the page is rebuilt afterwards
-            key(revision, toggled, tree) {
-                ConfigScreen(
-                    tree, initialCategory, pageKey = id,
-                    leading = enabledOption, locked = locked, lockExempt = ownSwitch,
-                )
+            key(revision, tree) {
+                ConfigScreen(tree, initialCategory, pageKey = id, locked = locked, lockExempt = ownSwitch)
             }
         }
     }

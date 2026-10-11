@@ -189,6 +189,8 @@ public class org/polyfrost/oneconfig/api/config/v1/KtConfig : org/polyfrost/onec
 	protected final synthetic fun keybind (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun keybind$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	protected final fun makeTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
+	protected final synthetic fun masterToggle (Z)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	public static synthetic fun masterToggle$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;ZILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	protected final synthetic fun multiSelectDropdown (Ljava/lang/String;[Ljava/lang/String;[ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun multiSelectDropdown$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;[Ljava/lang/String;[ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	protected final synthetic fun number (Ljava/lang/String;FLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFLjava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
@@ -622,6 +624,9 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun title ()Ljava/lang/String;
 	public abstract fun titleKey ()Ljava/lang/String;
 	public abstract fun titleTranslation ()Z
+}
+
+public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/MasterToggle : java/lang/annotation/Annotation {
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/MultiSelectDropdown : java/lang/annotation/Annotation {

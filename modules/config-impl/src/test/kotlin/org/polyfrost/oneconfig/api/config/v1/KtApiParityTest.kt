@@ -23,6 +23,7 @@ class KtApiParityTest {
         var pct by slider("Percent", 5f) { "$it%" }
         var t by text("Text", regex = "\\d+")
         var colors by colorList("Colors", intArrayOf(-1), alpha = false)
+        var active by masterToggle()
 
         fun builtTree(): Tree = makeTree()
     }
@@ -49,6 +50,11 @@ class KtApiParityTest {
         assertTrue(tree.getProp("s")!!.getMetadata<Visualizer>("visualizer") is Visualizer.SliderVisualizer)
         assertEquals("\\d+", tree.getProp("t")!!.getMetadata<String>("regex"))
         assertTrue(tree.getProp("colors")!!.getMetadata<Any>("noAlpha") != null)
+
+        val active = tree.getProp("active")!!
+        assertTrue(cfg.active)
+        assertEquals(true, active.getMetadata<Boolean>("masterToggle"))
+        assertEquals(true, active.getMetadata<Boolean>("hidden"))
     }
 
     class BadStep : KtConfig("kt_api_parity_bad", "Bad", Category.QOL) {

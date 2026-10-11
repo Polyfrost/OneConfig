@@ -113,12 +113,11 @@ fun ConfigScreen(
     tree: Tree,
     initialCategory: String? = null,
     pageKey: String,
-    leading: Property<*>? = null,
     locked: Boolean = false,
     lockExempt: Property<*>? = null,
 ) {
     key(System.identityHashCode(tree)) {
-        ConfigScreenContent(tree, initialCategory, pageKey, leading, locked, lockExempt)
+        ConfigScreenContent(tree, initialCategory, pageKey, locked, lockExempt)
     }
 }
 
@@ -127,7 +126,6 @@ private fun ConfigScreenContent(
     tree: Tree,
     initialCategory: String?,
     pageKey: String,
-    leading: Property<*>?,
     locked: Boolean,
     lockExempt: Property<*>?,
 ) {
@@ -174,9 +172,7 @@ private fun ConfigScreenContent(
 
         val lazyListState = rememberRestorableLazyListState(pageKey, localSearchQuery, search.query)
 
-        val leadingRow = leading.takeIf { localSearchQuery.isBlank() }
-
-        if (entries.isEmpty() && leadingRow == null) {
+        if (entries.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 val message = when {
                     localSearchQuery.isBlank() -> "No settings available."
@@ -194,7 +190,6 @@ private fun ConfigScreenContent(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(end = 16.dp)
             ) {
-                if (leadingRow != null) item { SettingRow(leadingRow) }
                 items(entries) { entry ->
                     val option = ((entry as? ConfigListEntry.Item)?.node as? SettingNode.Leaf)?.prop
                     val lock = locked && (option == null || option !== lockExempt)
