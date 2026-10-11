@@ -45,6 +45,8 @@ public class TestConfig_Test extends Config {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/TestMod");
     private static TestConfig_Test INSTANCE;
 
+    @Switch(title = "Enabled")
+    public static boolean enabled = true;
     @Switch(
             title = "Chicken",
             subcategory = "Chick"

@@ -79,6 +79,7 @@ import org.polyfrost.oneconfig.internal.ui.api.ModGridEntry
 import org.polyfrost.oneconfig.internal.ui.api.ModHidden
 import org.polyfrost.oneconfig.internal.ui.api.ModOrder
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories
+import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.api.buildModGridEntries
 import org.polyfrost.oneconfig.internal.ui.api.modCardOrder
 import org.polyfrost.oneconfig.internal.ui.api.modFavoriteAt
@@ -574,31 +575,42 @@ fun ModCard(
                 cardInteractions = interactionSource,
             )
         }
-        Box(
-            Modifier.align(Alignment.TopEnd).padding(11.dp).size(ModCardToggleRing),
-            contentAlignment = Alignment.Center,
-        ) {
-            val ring = if (toggle != null) lerp(Accent, ModCardToggleRingShade, 0.42f) else ModCardToggleUnavailable.copy(alpha = 0.5f)
-            val dot = if (toggle != null) Accent else ModCardToggleUnavailable
-            // drawn around one centre, since laying the dot out inside the ring lands it on a pixel boundary off-centre
-            Box(
-                Modifier.fillMaxSize().drawWithCache {
-                    val glowRadius = (ModCardToggleRing / 2 + ModCardToggleGlow).toPx()
-                    val inner = size.minDimension / 2f / glowRadius
-                    val glow = Brush.radialGradient(
-                        inner to ring.copy(alpha = 0.41f),
-                        inner + (1f - inner) * 0.4f to ring.copy(alpha = 0.25f),
-                        inner + (1f - inner) * 0.8f to ring.copy(alpha = 0.09f),
-                        1f to Color.Transparent,
-                        center = size.center, radius = glowRadius,
+        Box(Modifier.align(Alignment.TopEnd).padding(11.dp)) {
+            Tooltip(
+                text = {
+                    Text(
+                        if (toggle != null) "This mod can be toggled on and off." else "This mod doesn't support being toggled.",
+                        color = theme.textColor,
+                        fontSize = 12.sp,
                     )
-                    onDrawBehind {
-                        if (toggle != null) drawCircle(glow, radius = glowRadius)
-                        drawCircle(ring)
-                        drawCircle(dot, radius = ModCardToggleDot.toPx() / 2f)
-                    }
+                },
+                modifier = Modifier,
+                anchor = Alignment.TopCenter,
+            ) {
+                Box(Modifier.size(ModCardToggleRing), contentAlignment = Alignment.Center) {
+                    val ring = if (toggle != null) lerp(Accent, ModCardToggleRingShade, 0.42f) else ModCardToggleUnavailable.copy(alpha = 0.5f)
+                    val dot = if (toggle != null) Accent else ModCardToggleUnavailable
+                    // drawn around one centre, since laying the dot out inside the ring lands it on a pixel boundary off-centre
+                    Box(
+                        Modifier.fillMaxSize().drawWithCache {
+                            val glowRadius = (ModCardToggleRing / 2 + ModCardToggleGlow).toPx()
+                            val inner = size.minDimension / 2f / glowRadius
+                            val glow = Brush.radialGradient(
+                                inner to ring.copy(alpha = 0.41f),
+                                inner + (1f - inner) * 0.4f to ring.copy(alpha = 0.25f),
+                                inner + (1f - inner) * 0.8f to ring.copy(alpha = 0.09f),
+                                1f to Color.Transparent,
+                                center = size.center, radius = glowRadius,
+                            )
+                            onDrawBehind {
+                                if (toggle != null) drawCircle(glow, radius = glowRadius)
+                                drawCircle(ring)
+                                drawCircle(dot, radius = ModCardToggleDot.toPx() / 2f)
+                            }
+                        }
+                    )
                 }
-            )
+            }
         }
     }
 }
