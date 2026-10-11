@@ -238,6 +238,7 @@ internal object ModGates {
         Gate("detailabreconst"),
         Gate("status-effect-bars"),
         Gate("waveycapes"),
+        Gate("skinlayers3d"),
         Gate("zoomify"),
         Gate("fovchanger"),
         Gate("chatblock"),

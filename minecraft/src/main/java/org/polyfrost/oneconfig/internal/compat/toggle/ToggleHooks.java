@@ -72,6 +72,9 @@ public final class ToggleHooks {
         hook("presencefootsteps", "PresenceFootsteps");
         hook("sciophobia", "Sciophobia");
         hook("shulkerboxtooltip", "ShulkerBoxTooltip", "ShulkerBoxTooltipJoin", "ShulkerBoxTooltipSave");
+        hook("skinlayers3d", "SkinLayers", "SkinLayersHeads");
+        //? if >= 1.21.1
+        hook("skinlayers3d", "SkinLayersSkulls");
         hook("status-effect-bars", "StatusEffectBars");
         // has a switch of its own that one part of it ignores
         hook("tipper", "Tipper");
