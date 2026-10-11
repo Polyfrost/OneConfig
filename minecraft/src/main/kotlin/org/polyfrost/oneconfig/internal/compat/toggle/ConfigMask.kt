@@ -114,8 +114,27 @@ internal class ConfigMask(
     @Synchronized
     fun reapply() {
         if (restore == null) return
+        held.forEach { it.removeMetadata(HELD_VALUE) }
+        held.clear()
         restore = null
         apply()
+    }
+
+    /** [reapply] for a mod that only sometimes puts its own values back over a mask written into its fields */
+    @Synchronized
+    fun reapplyIfOverwritten() {
+        if (restore == null || !onFields) return
+        val overwritten = try {
+            val type = Class.forName(className, true, ConfigMask::class.java.classLoader)
+            values.any { (path, value) ->
+                val (field, owner) = resolve(type, path) ?: return@any false
+                field.get(owner) != convert(value, field.type)
+            }
+        } catch (t: Throwable) {
+            LOGGER.warn("Could not check the mask of {}", className, t)
+            false
+        }
+        if (overwritten) reapply()
     }
 
     fun masks(configClassName: String): Boolean = applied && configClassName == className

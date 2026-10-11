@@ -410,6 +410,11 @@ internal object ModGates {
         gates.forEach { gate -> gate.mask?.takeIf { it.masks(configClassName) }?.reapply() }
     }
 
+    @JvmStatic
+    fun remaskIfOverwritten(configClassName: String) = synchronized(maskLock) {
+        gates.forEach { gate -> gate.mask?.takeIf { it.masks(configClassName) }?.reapplyIfOverwritten() }
+    }
+
     private val enumConstants = ConcurrentHashMap<String, Any>()
 
     @JvmStatic

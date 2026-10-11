@@ -182,7 +182,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
                 "DetailArmorBarInventory", "EffectTimerPlusSave", "Flashback", "FovChanger", "GammaUtilsGamma",
                 "GammaUtilsGammaManager", "GammaUtilsNightVision", "GammaUtilsNightVisionManager", "HyModConfig",
                 "HyModLocation", "Iconographic", "Jade", "LambdaBetterGrassLayer", "LambdaBetterGrassMode",
-                "MidnightSave", "MountOpacity", "PresenceFootsteps", "Sciophobia", "ShulkerBoxTooltip",
+                "MidnightSave", "MountOpacity", "PresenceFootsteps", "Sciophobia", "ShulkerBoxTooltip", "ShulkerBoxTooltipJoin",
                 "StatusEffectBars", "TooltipScroll", "Viewmodel", "VignetteAir", "VignetteHealth", "VignetteHunger",
                 "VignetteTotem", "WWaypoints", "YaclSave", "Zoomify",
         }) {
@@ -190,6 +190,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         }
         //? if >= 1.21.1
         mixins.add("compat.toggle.Mixin_Toggle_WaveyCapes");
+        //? if >= 1.21.1
+        mixins.add("compat.toggle.Mixin_Toggle_ZoomifySpyglass");
         //? if >= 1.21.1 && < 1.21.10
         //mixins.add("compat.toggle.Mixin_Toggle_DetailArmorBarVanilla");
 
