@@ -19,6 +19,9 @@ import org.polyfrost.oneconfig.internal.ui.api.PropertyModToggle
  * in the mod's own classes and check [ModToggles.isEnabled], and a [ConfigMask] swaps the options
  * the mod reads from its mixins for vanilla values. Mods that do ship a switch under another name
  * get it wired to the card instead
+ *
+ * The mixins are written against one build of each mod, and a mod whose installed build they do not
+ * all fit is left without a switch rather than given one that only does part of the job, see [ToggleHooks]
  */
 internal object ModGates {
     private val LOGGER = LogManager.getLogger("OneConfig/ModToggles")
@@ -305,6 +308,13 @@ internal object ModGates {
         registerOwnSwitches(loaded)
 
         val present = gates.filter { it.id in loaded && (it.unless == null || !classExists(it.unless)) }
+            .filter { gate ->
+                val problem = unusable(gate) ?: return@filter true
+                LOGGER.warn("Not giving {} a switch: {}", gate.id, problem)
+                // what does fit of its hooks would otherwise keep it half off with nothing to switch it back on
+                if (!ModToggles.isEnabled(gate.id)) ModToggles.setEnabled(gate.id, true)
+                false
+            }
         for (gate in present) {
             ModToggles.manage(gate.id)
             gate.mask?.compatTrees = {
@@ -344,6 +354,10 @@ internal object ModGates {
                 present.forEach { it.mask?.remove() }
             }
 
+            // not every way out of a profile saves it first, and a config rebuilt with its mask still on would
+            // take the substitutes for the user's values
+            override fun onProfileUnloading(profile: String) = onProfileSaving(profile)
+
             override fun onProfileChanged(newProfile: String) {
                 // a switch that is one of the mod's options belongs to the config of the profile it was read from
                 registerOwnSwitches(loaded)
@@ -373,6 +387,14 @@ internal object ModGates {
     }
 
     private val maskLock = Any()
+
+    /** Why [gate] cannot be relied on to switch its mod off, or null when it can */
+    private fun unusable(gate: Gate): String? {
+        if (gate.mask == null && !ToggleHooks.has(gate.id)) return "it has no hooks on this version"
+        ToggleHooks.problem(gate.id)?.let { return it }
+        if (gate.mask?.savedByYacl() == true) ToggleHooks.problem(ToggleHooks.YACL)?.let { return it }
+        return null
+    }
 
     private fun maskDisabled(present: List<Gate>) = synchronized(maskLock) {
         present.forEach { if (!ModToggles.isEnabled(it.id)) it.mask?.apply() }

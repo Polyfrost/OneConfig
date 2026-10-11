@@ -144,6 +144,7 @@ public abstract interface class org/polyfrost/oneconfig/api/config/v1/ConfigMana
 	public fun onProfileRenamed (Ljava/lang/String;Ljava/lang/String;)V
 	public fun onProfileSaving (Ljava/lang/String;)V
 	public fun onProfileSpecificControlsChanged (Z)V
+	public fun onProfileUnloading (Ljava/lang/String;)V
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/config/v1/ConfigManager$TreeRegistrationListener {

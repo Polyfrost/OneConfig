@@ -9,15 +9,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Pseudo
 @Mixin(targets = "eu.midnightdust.lib.config.MidnightConfig", remap = false)
+// on its own so that nothing else in here failing to fit can take the save guard down with it
 public class Mixin_Toggle_MidnightSave {
 
     @Inject(method = "write", at = @At("HEAD"), cancellable = true, require = 0)
     private static void oneconfig$keepMaskOffDisk(String modid, CallbackInfo ci) {
         if (ModGates.blocksSave(modid)) ci.cancel();
-    }
-
-    @Inject(method = "loadValuesFromJson", at = @At("TAIL"), require = 0)
-    private void oneconfig$maskAgain(CallbackInfo ci) {
-        ModGates.remask(((Object) this).getClass().getName());
     }
 }

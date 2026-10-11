@@ -33,6 +33,7 @@ internal class ConfigMask(
 ) {
     private var restore: (() -> Unit)? = null
     private var onFields = false
+    private var maskedTree: Tree? = null
     private var fieldOriginals: List<Pair<String, Any?>> = emptyList()
     private val held = ArrayList<Property<*>>()
 
@@ -43,6 +44,12 @@ internal class ConfigMask(
 
     @Synchronized
     fun apply() {
+        // a tree rebuilt underneath the mask holds values of its own, and the ones kept for the old tree are not its
+        val stale = maskedTree
+        if (restore != null && stale != null && ConfigManager.active().trees().none { it === stale }) {
+            restore = null
+            maskedTree = null
+        }
         if (restore != null) return
         restore = try {
             val tree = maskTree()
@@ -139,6 +146,15 @@ internal class ConfigMask(
 
     fun masks(configClassName: String): Boolean = applied && configClassName == className
 
+    /** Whether YACL is what saves this config, which only a hook into YACL can keep the mask out of */
+    fun savedByYacl(): Boolean = try {
+        Class.forName(className, false, ConfigMask::class.java.classLoader).declaredFields.any(::isYaclHandler)
+    } catch (_: Throwable) {
+        false
+    }
+
+    private fun isYaclHandler(field: Field) = Modifier.isStatic(field.modifiers) && field.type.name == YACL_HANDLER
+
     private fun maskTree(): (() -> Unit)? {
         val manager = ConfigManager.active()
         val tree = manager.trees().firstOrNull { it.id in treeIds && it.isNative() } ?: return null
@@ -161,7 +177,9 @@ internal class ConfigMask(
         refreshVisibility(tree)
         val customSave = tree.getMetadata<Any>(CUSTOM_SAVE).takeIf { it !== NO_SAVE }
         tree.addMetadata(CUSTOM_SAVE, NO_SAVE)
+        maskedTree = tree
         return {
+            maskedTree = null
             originals.forEach { (prop, value) ->
                 prop.setAsSilently(value)
                 prop.removeMetadata(HELD_VALUE)
@@ -256,9 +274,7 @@ internal class ConfigMask(
 
     /** YACL keeps the config in a static `ConfigClassHandler` rather than a singleton */
     private fun yaclHandler(type: Class<*>): Any? =
-        type.declaredFields.firstOrNull {
-            Modifier.isStatic(it.modifiers) && it.type.name == "dev.isxander.yacl3.config.v2.api.ConfigClassHandler"
-        }?.let { it.isAccessible = true; it.get(null) }
+        type.declaredFields.firstOrNull(::isYaclHandler)?.let { it.isAccessible = true; it.get(null) }
 
     private fun singleton(type: Class<*>): Any? =
         type.declaredFields.firstOrNull {
@@ -271,6 +287,7 @@ internal class ConfigMask(
     private companion object {
         val LOGGER = LogManager.getLogger("OneConfig/ModToggles")
         const val CUSTOM_SAVE = "custom_save"
+        const val YACL_HANDLER = "dev.isxander.yacl3.config.v2.api.ConfigClassHandler"
         val NO_SAVE = Runnable { }
         val SINGLETON_FIELDS = setOf("INSTANCE", "instance", "CONFIG", "config")
 

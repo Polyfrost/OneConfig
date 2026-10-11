@@ -99,6 +99,14 @@ public final class ConfigManager {
         default void onProfileSaving(String profile) {
         }
 
+        /**
+         * Called right before the configs are rebound from {@code profile} onto another one
+         * <br>
+         * Unlike {@link #onProfileSaving} this also runs when the profile is left without being saved
+         */
+        default void onProfileUnloading(String profile) {
+        }
+
         default void onProfileOperationFinished() {
         }
 
@@ -1156,6 +1164,14 @@ public final class ConfigManager {
     }
 
     private static void openProfileOnUiThread(String profile, boolean restoreDefaults) {
+        String outgoing = activeProfile();
+        for (ProfileChangeListener listener : profileListeners) {
+            try {
+                listener.onProfileUnloading(outgoing);
+            } catch (Throwable t) {
+                LOGGER.error("Profile unload listener failed", t);
+            }
+        }
         runLockedOnUiThread(() -> openProfile(profile, restoreDefaults), "the profile switch");
     }
 
