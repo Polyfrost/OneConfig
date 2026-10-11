@@ -37,6 +37,7 @@ internal class ConfigMask(
     private var liftedForSave = false
     private var maskedTree: Tree? = null
     private var fieldOriginals: List<Pair<String, Any?>> = emptyList()
+    private var carried: Map<String, Any?> = emptyMap()
     private val held = ArrayList<Property<*>>()
 
     /** The trees another config library's options are shown through, which read the masked fields directly */
@@ -126,13 +127,47 @@ internal class ConfigMask(
         if (restore == null) return
         held.forEach { it.removeMetadata(HELD_VALUE) }
         held.clear()
+        if (onFields) carried = fieldOriginals.toMap()
         restore = null
-        apply()
+        try {
+            apply()
+        } finally {
+            carried = emptyMap()
+        }
+    }
+
+    /**
+     * Takes what the mod's own screen wrote over a mask on its fields as the user's values and masks them again
+     */
+    @Synchronized
+    fun absorbEdits() {
+        if (restore == null || !onFields) return
+        val type = configClass() ?: return
+        var changed = false
+        fieldOriginals = fieldOriginals.map { (path, original) ->
+            try {
+                val (field, owner) = resolve(type, path) ?: return@map path to original
+                val substitute = convert(values[path], field.type)
+                val current = field.get(owner)
+                if (current == substitute) return@map path to original
+                field.set(owner, substitute)
+                changed = true
+                path to current
+            } catch (t: Throwable) {
+                LOGGER.warn("Could not keep the edit to {} of {}", path, className, t)
+                path to original
+            }
+        }
+        if (!changed) return
+        held.forEach { it.removeMetadata(HELD_VALUE) }
+        held.clear()
+        holdForDisplay()
     }
 
     /** [reapply] for a mod that only sometimes puts its own values back over a mask written into its fields */
     @Synchronized
     fun reapplyIfOverwritten() {
+        if (liftedForSave) return applyAfterSave()
         if (restore == null || !onFields) return
         val overwritten = try {
             val type = Class.forName(className, true, ConfigMask::class.java.classLoader)
@@ -265,15 +300,17 @@ internal class ConfigMask(
         for ((path, value) in values) {
             try {
                 val (field, owner) = resolve(type, path) ?: continue
-                originals += path to field.get(owner)
-                field.set(owner, convert(value, field.type))
+                val current = field.get(owner)
+                val substitute = convert(value, field.type)
+                originals += path to if (current == substitute && path in carried) carried[path] else current
+                field.set(owner, substitute)
             } catch (t: Throwable) {
                 LOGGER.warn("Could not mask {} of {}", path, className, t)
             }
         }
         fieldOriginals = originals
         return {
-            for ((path, value) in originals) {
+            for ((path, value) in fieldOriginals) {
                 try {
                     resolve(type, path)?.let { (field, owner) -> field.set(owner, value) }
                 } catch (t: Throwable) {

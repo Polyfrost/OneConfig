@@ -140,7 +140,7 @@ fun SearchResultsScreen(query: String) {
                         val ownSwitch = (toggle as? PropertyModToggle)?.property
                         val isOwnSwitch = ownSwitch != null && (node as? SettingNode.Leaf)?.prop === ownSwitch
                         val lock = !enabled && !isOwnSwitch
-                        Box(Modifier.alpha(if (lock) 0.45f else 1f).blockInteraction(lock)) { SettingEntryRow(node) }
+                        Box(Modifier.alpha(if (lock) 0.45f else 1f).blockInteraction(lock, keyboard = true)) { SettingEntryRow(node) }
                     }
                 }
             }

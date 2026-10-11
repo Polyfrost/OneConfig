@@ -331,15 +331,15 @@ internal object ModGates {
 
         ModToggles.addListener { id, enabled ->
             val gate = byId[id] ?: return@addListener
-            if (gate.mask != null) synchronized(maskLock) {
+            if (gate.mask != null) {
                 if (enabled) {
-                    gate.mask.remove()
+                    synchronized(maskLock) { gate.mask.remove() }
                     // saves made while the mask was on were dropped, so what they meant to write goes out now
                     save(gate, markDirty = true)
                 } else {
                     // edits still waiting to be written would otherwise be lost behind the mask
                     save(gate, markDirty = false)
-                    gate.mask.apply()
+                    synchronized(maskLock) { gate.mask.apply() }
                 }
             }
             try {
@@ -365,9 +365,13 @@ internal object ModGates {
 
         // profile operations run off the thread the snapshots are applied on, and a mask put on in the middle of
         // one of these would take the outgoing profile's value for the user's and then be overwritten
-        CompatSnapshots.setLiveValueScope { read ->
+        CompatSnapshots.setLiveValueScope { id, read ->
+            val masks = present.mapNotNull { gate ->
+                gate.mask?.takeIf { it.applied && (id == null || id == gate.id || id in gate.cards) }
+            }
+            if (masks.isEmpty()) return@setLiveValueScope read.run()
             synchronized(maskLock) {
-                val suspended = present.mapNotNull { gate -> gate.mask?.takeIf { it.suspend() } }
+                val suspended = masks.filter { it.suspend() }
                 try {
                     read.run()
                 } finally {
@@ -401,6 +405,10 @@ internal object ModGates {
         return null
     }
 
+    @JvmStatic
+    fun isMasked(modId: String?): Boolean =
+        if (modId == null) gates.any { it.mask?.applied == true } else byId[modId]?.mask?.applied == true
+
     private fun maskDisabled(present: List<Gate>) = synchronized(maskLock) {
         present.forEach { if (!ModToggles.isEnabled(it.id)) it.mask?.apply() }
     }
@@ -422,14 +430,20 @@ internal object ModGates {
     @JvmStatic
     fun blocksYaclSave(handler: Any): Boolean = try {
         val type = handler.javaClass.getMethod("configClass").invoke(handler) as? Class<*>
-        type != null && gates.any { it.mask?.masks(type.name) == true }
+        type != null && absorbing(gates.filter { it.mask?.masks(type.name) == true })
     } catch (_: Throwable) {
         false
     }
 
     @JvmStatic
     fun blocksSave(saveKey: String?): Boolean =
-        gates.any { it.saveKey == saveKey && it.mask?.applied == true }
+        absorbing(gates.filter { it.saveKey == saveKey && it.mask?.applied == true })
+
+    private fun absorbing(blocking: List<Gate>): Boolean {
+        if (blocking.isEmpty()) return false
+        synchronized(maskLock) { blocking.forEach { it.mask?.absorbEdits() } }
+        return true
+    }
 
     /** Puts the mask back after [configClassName] was reloaded from disk underneath it */
     @JvmStatic
@@ -459,7 +473,7 @@ internal object ModGates {
 
     @JvmStatic
     fun remaskIfOverwritten(configClassName: String) = synchronized(maskLock) {
-        gates.forEach { gate -> gate.mask?.takeIf { it.masks(configClassName) }?.reapplyIfOverwritten() }
+        gates.forEach { gate -> gate.mask?.takeIf { it.isFor(configClassName) }?.reapplyIfOverwritten() }
     }
 
     private val enumConstants = ConcurrentHashMap<String, Any>()

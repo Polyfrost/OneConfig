@@ -25,6 +25,7 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.compat.CompatIds.componentKey
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
+import org.polyfrost.oneconfig.internal.compat.toggle.ModGates
 
 object YACLCompat {
 
@@ -110,8 +111,9 @@ object YACLCompat {
             LOGGER.info("Creating config wrapper for " + mod?.id)
             // the options were built from what the config held, which for a mod that is switched off is not
             // what the user chose, and they keep that copy rather than reading the config again
-            CompatSnapshots.withLiveValues {
-                forgetPendingValues(yaclInstance)
+            val masked = ModGates.isMasked(mod?.id)
+            CompatSnapshots.withLiveValues(mod?.id) {
+                if (masked) forgetPendingValues(yaclInstance)
                 val tree = parseYACLInstance(yaclInstance, mod)
                 if (tree != null) {
                     CompatSnapshots.register(tree)

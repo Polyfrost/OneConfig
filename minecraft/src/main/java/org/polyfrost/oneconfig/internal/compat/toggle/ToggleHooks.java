@@ -40,7 +40,7 @@ public final class ToggleHooks {
     private static final Map<String, List<String>> HOOKS = new LinkedHashMap<>();
 
     /** Hooks that keep a mask from being written to disk, which have to be in place and not merely fit */
-    private static final Set<String> GUARDS = new HashSet<>(Arrays.asList("YaclSave", "MidnightSave", "EffectTimerPlusSave"));
+    private static final Set<String> GUARDS = new HashSet<>(Arrays.asList("YaclSave", "MidnightSave", "EffectTimerPlusSave", "ShulkerBoxTooltipSave"));
 
     static {
         hook("appleskin", "AppleSkinHud", "AppleSkinTooltip");
@@ -112,6 +112,10 @@ public final class ToggleHooks {
         return HOOKS.containsKey(gate);
     }
 
+    /**
+     * Whether any hook of {@code gate} finds a method of the mod to go onto, without which a mod that
+     * is only switched off by its hooks would keep running
+     */
     public static boolean lands(String gate) {
         for (String name : HOOKS.getOrDefault(gate, Collections.emptyList())) {
             try {

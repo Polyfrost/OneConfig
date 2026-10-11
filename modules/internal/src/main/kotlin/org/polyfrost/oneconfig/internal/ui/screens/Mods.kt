@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -39,12 +38,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.focusProperties
@@ -416,6 +412,7 @@ private val FavoriteStarColor = Color(0xFFFFD700)
 
 private val ModCardToggleDot = 6.dp
 private val ModCardToggleRing = 12.dp
+private val ModCardToggleGlow = 5.dp
 private val ModCardToggleUnavailable = Color(0xFF4F505B)
 
 // the accent is darkened towards this for the ring, which for the default accent gives the ring of the design
@@ -582,20 +579,24 @@ fun ModCard(
             contentAlignment = Alignment.Center,
         ) {
             val ring = if (toggle != null) lerp(Accent, ModCardToggleRingShade, 0.42f) else ModCardToggleUnavailable.copy(alpha = 0.5f)
-            if (toggle != null) {
-                Box(
-                    Modifier
-                        .requiredSize(ModCardToggleRing + 4.dp)
-                        .blur(3.dp, BlurredEdgeTreatment.Unbounded)
-                        .background(ring.copy(alpha = 0.5f), theme.circleShape)
-                )
-            }
             val dot = if (toggle != null) Accent else ModCardToggleUnavailable
             // drawn around one centre, since laying the dot out inside the ring lands it on a pixel boundary off-centre
             Box(
-                Modifier.fillMaxSize().drawBehind {
-                    drawCircle(ring)
-                    drawCircle(dot, radius = ModCardToggleDot.toPx() / 2f)
+                Modifier.fillMaxSize().drawWithCache {
+                    val glowRadius = (ModCardToggleRing / 2 + ModCardToggleGlow).toPx()
+                    val inner = size.minDimension / 2f / glowRadius
+                    val glow = Brush.radialGradient(
+                        inner to ring.copy(alpha = 0.41f),
+                        inner + (1f - inner) * 0.4f to ring.copy(alpha = 0.25f),
+                        inner + (1f - inner) * 0.8f to ring.copy(alpha = 0.09f),
+                        1f to Color.Transparent,
+                        center = size.center, radius = glowRadius,
+                    )
+                    onDrawBehind {
+                        if (toggle != null) drawCircle(glow, radius = glowRadius)
+                        drawCircle(ring)
+                        drawCircle(dot, radius = ModCardToggleDot.toPx() / 2f)
+                    }
                 }
             )
         }

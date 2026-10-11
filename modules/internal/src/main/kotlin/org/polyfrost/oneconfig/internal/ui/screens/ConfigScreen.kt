@@ -184,7 +184,7 @@ fun ConfigScreen(
                 items(entries) { entry ->
                     val option = ((entry as? ConfigListEntry.Item)?.node as? SettingNode.Leaf)?.prop
                     val lock = locked && (option == null || option !== lockExempt)
-                    Box(Modifier.alpha(if (lock) 0.45f else 1f).blockInteraction(lock)) { ConfigListRow(entry) }
+                    Box(Modifier.alpha(if (lock) 0.45f else 1f).blockInteraction(lock, keyboard = true)) { ConfigListRow(entry) }
                 }
             }
             VerticalScrollbar(

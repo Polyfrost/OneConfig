@@ -39,6 +39,7 @@ import java.util.TreeMap;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -72,7 +73,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     private CompatSnapshots() {
     }
 
-    private static volatile Consumer<Runnable> liveValueScope = Runnable::run;
+    private static volatile BiConsumer<String, Runnable> liveValueScope = (id, action) -> action.run();
 
     public static boolean isApplying() {
         return APPLYING_HERE.get();
@@ -89,14 +90,17 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
      * so the substitutes are never mistaken for them
      */
     @ApiStatus.Internal
-    public static void setLiveValueScope(Consumer<Runnable> scope) {
-        liveValueScope = scope == null ? Runnable::run : scope;
+    public static void setLiveValueScope(BiConsumer<String, Runnable> scope) {
+        liveValueScope = scope == null ? (id, action) -> action.run() : scope;
     }
 
-    /** Runs {@code action} with the options holding what the user chose, see {@link #setLiveValueScope} */
+    /**
+     * Runs {@code action} with the options of the config {@code id} holding what the user chose, see
+     * {@link #setLiveValueScope}
+     */
     @ApiStatus.Internal
-    public static void withLiveValues(Runnable action) {
-        liveValueScope.accept(action);
+    public static void withLiveValues(String id, Runnable action) {
+        liveValueScope.accept(id, action);
     }
 
     public static Tree register(Tree tree) {
@@ -260,7 +264,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     }
 
     private void applyProfile(Tree tree, String profile) {
-        liveValueScope.accept(() -> applyProfile0(tree, profile));
+        liveValueScope.accept(tree.getID(), () -> applyProfile0(tree, profile));
     }
 
     private void applyProfile0(Tree tree, String profile) {
@@ -339,7 +343,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     }
 
     private void captureAll(Tree tree, String profile) {
-        liveValueScope.accept(() -> captureAll0(tree, profile));
+        liveValueScope.accept(tree.getID(), () -> captureAll0(tree, profile));
     }
 
     private void captureAll0(Tree tree, String profile) {
@@ -361,7 +365,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     }
 
     private void captureDefaults(Tree tree) {
-        liveValueScope.accept(() -> captureDefaults0(tree));
+        liveValueScope.accept(tree.getID(), () -> captureDefaults0(tree));
     }
 
     private void captureDefaults0(Tree tree) {
