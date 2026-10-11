@@ -43,7 +43,8 @@ subprojects {
         "compileOnly"(rootProject.libs.logging.api)
         "testImplementation"(rootProject.libs.bundles.test.core)
         "testImplementation"(platform(rootProject.libs.junit.bom))
-        "api"(rootProject.libs.bundles.adventure)
+        // mods compile against mod-toggles alone, so it brings nothing along
+        if (name != "mod-toggles") "api"(rootProject.libs.bundles.adventure)
     }
 
     configure<TestingExtension> {

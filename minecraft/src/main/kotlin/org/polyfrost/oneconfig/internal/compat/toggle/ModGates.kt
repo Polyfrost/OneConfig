@@ -1,6 +1,8 @@
 package org.polyfrost.oneconfig.internal.compat.toggle
 
 import java.util.concurrent.ConcurrentHashMap
+//? if !neoforge
+import net.fabricmc.loader.api.FabricLoader
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
@@ -8,7 +10,7 @@ import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
-import org.polyfrost.oneconfig.api.ui.v1.ModToggle
+import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
 import org.polyfrost.oneconfig.internal.ui.api.PropertyModToggle
 
@@ -303,14 +305,37 @@ internal object ModGates {
         }
     }
 
+    /** Registers the switches mods ship themselves and returns the ids of those mods */
+    private fun registerProvidedSwitches(): Set<String> {
+        val provided = HashSet<String>()
+        //? if !neoforge {
+        for (container in FabricLoader.getInstance().getEntrypointContainers(ModToggle.ENTRYPOINT, ModToggle::class.java)) {
+            val id = container.provider.metadata.id
+            try {
+                ModToggles.register(id, container.entrypoint)
+                provided += id
+            } catch (t: Throwable) {
+                LOGGER.error("Failed to load the switch {} ships", id, t)
+            }
+        }
+        //?}
+        return provided
+    }
+
     @JvmStatic
     fun register() {
         val loaded = ModInfo.loadedMods.mapTo(HashSet()) { it.id }
 
         registerOwnSwitches(loaded)
+        val provided = registerProvidedSwitches()
 
         val present = gates.filter { it.id in loaded && (it.unless == null || !classExists(it.unless)) }
             .filter { gate ->
+                if (gate.id in provided) {
+                    // a gate switched off before the mod shipped its own switch would keep its hooks off for good
+                    if (!ModToggles.isEnabled(gate.id)) ModToggles.setEnabled(gate.id, true)
+                    return@filter false
+                }
                 val problem = unusable(gate) ?: return@filter true
                 LOGGER.warn("Not giving {} a switch: {}", gate.id, problem)
                 // what does fit of its hooks would otherwise keep it half off with nothing to switch it back on

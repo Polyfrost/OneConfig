@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicLong
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
-import org.polyfrost.oneconfig.api.ui.v1.ModToggle
+import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
 import org.polyfrost.oneconfig.utils.v1.Multithreading
 import org.slf4j.LoggerFactory

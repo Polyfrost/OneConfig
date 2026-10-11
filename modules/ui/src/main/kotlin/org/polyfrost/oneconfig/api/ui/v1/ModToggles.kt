@@ -6,22 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import java.util.concurrent.CopyOnWriteArrayList
 import org.apache.logging.log4j.LogManager
-
-/**
- * The master switch shown on a mod's card
- */
-interface ModToggle {
-    fun isEnabled(): Boolean
-
-    fun setEnabled(enabled: Boolean)
-
-    /**
-     * Whether the mod has to be set up before it can be switched on
-     *
-     * Switching such a mod on opens it from its card instead, the same as clicking the card does
-     */
-    fun needsSetup(): Boolean = false
-}
+import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
 
 /**
  * Registry of the master switches shown on mod cards
