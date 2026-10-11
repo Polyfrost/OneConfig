@@ -100,7 +100,8 @@ public final class ConfigManager {
         }
 
         /**
-         * Called right before the configs are rebound from {@code profile} onto another one
+         * Called on the UI thread right before the configs are rebound from {@code profile}, which a rename
+         * also does
          * <br>
          * Unlike {@link #onProfileSaving} this also runs when the profile is left without being saved
          */
@@ -405,6 +406,14 @@ public final class ConfigManager {
         }
         List<Tree> externalTrees = new ArrayList<>();
         if (active != null) {
+            String outgoing = activeProfile();
+            for (ProfileChangeListener listener : profileListeners) {
+                try {
+                    listener.onProfileUnloading(outgoing);
+                } catch (Throwable t) {
+                    LOGGER.error("Profile unload listener failed", t);
+                }
+            }
             for (Tree t : active.trees()) {
                 String id = t.getID();
                 if (id == null || initializedConfigs.containsKey(id)) continue;
@@ -1164,14 +1173,6 @@ public final class ConfigManager {
     }
 
     private static void openProfileOnUiThread(String profile, boolean restoreDefaults) {
-        String outgoing = activeProfile();
-        for (ProfileChangeListener listener : profileListeners) {
-            try {
-                listener.onProfileUnloading(outgoing);
-            } catch (Throwable t) {
-                LOGGER.error("Profile unload listener failed", t);
-            }
-        }
         runLockedOnUiThread(() -> openProfile(profile, restoreDefaults), "the profile switch");
     }
 

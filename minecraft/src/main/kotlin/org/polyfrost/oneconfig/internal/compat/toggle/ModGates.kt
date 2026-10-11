@@ -323,7 +323,7 @@ internal object ModGates {
             val toggle = ModToggles.toggleFor(gate.id) ?: continue
             gate.cards.forEach { ModToggles.register(it, toggle) }
             if (!ModToggles.isEnabled(gate.id)) {
-                gate.mask?.apply()
+                synchronized(maskLock) { gate.mask?.apply() }
                 // resources and chunks were built before the mask went on
                 runCatching { gate.onToggle?.invoke(false) }
             }
@@ -350,13 +350,9 @@ internal object ModGates {
         }
 
         ConfigManager.addProfileChangeListener(object : ConfigManager.ProfileChangeListener {
-            override fun onProfileSaving(profile: String) = synchronized(maskLock) {
+            override fun onProfileUnloading(profile: String) = synchronized(maskLock) {
                 present.forEach { it.mask?.remove() }
             }
-
-            // not every way out of a profile saves it first, and a config rebuilt with its mask still on would
-            // take the substitutes for the user's values
-            override fun onProfileUnloading(profile: String) = onProfileSaving(profile)
 
             override fun onProfileChanged(newProfile: String) {
                 // a switch that is one of the mod's options belongs to the config of the profile it was read from
@@ -382,7 +378,15 @@ internal object ModGates {
 
         // another library's options are often only built once the mod's screen is first asked for
         ConfigManager.addTreeRegistrationListener { tree ->
-            present.forEach { if (tree.id == it.id || tree.id in it.cards) it.mask?.holdForDisplay() }
+            val masks = present.mapNotNull { gate ->
+                gate.mask?.takeIf { it.applied && (tree.id == gate.id || tree.id in gate.cards || it.isTree(tree)) }
+            }
+            if (masks.isNotEmpty()) synchronized(maskLock) {
+                masks.forEach {
+                    it.adopt(tree)
+                    it.holdForDisplay()
+                }
+            }
         }
     }
 
@@ -391,6 +395,7 @@ internal object ModGates {
     /** Why [gate] cannot be relied on to switch its mod off, or null when it can */
     private fun unusable(gate: Gate): String? {
         if (gate.mask == null && !ToggleHooks.has(gate.id)) return "it has no hooks on this version"
+        if (gate.mask == null && !ToggleHooks.lands(gate.id)) return "none of its hooks find anything in this build"
         ToggleHooks.problem(gate.id)?.let { return it }
         if (gate.mask?.savedByYacl() == true) ToggleHooks.problem(ToggleHooks.YACL)?.let { return it }
         return null
@@ -430,6 +435,26 @@ internal object ModGates {
     @JvmStatic
     fun remask(configClassName: String) = synchronized(maskLock) {
         gates.forEach { gate -> gate.mask?.takeIf { it.masks(configClassName) }?.reapply() }
+    }
+
+    @JvmStatic
+    fun remaskYacl(handler: Any) {
+        val type = try {
+            handler.javaClass.getMethod("configClass").invoke(handler) as? Class<*>
+        } catch (_: Throwable) {
+            null
+        }
+        if (type != null) remask(type.name)
+    }
+
+    @JvmStatic
+    fun unmaskForSave(configClassName: String) = synchronized(maskLock) {
+        gates.forEach { gate -> gate.mask?.takeIf { it.masks(configClassName) }?.liftForSave() }
+    }
+
+    @JvmStatic
+    fun maskAfterSave(configClassName: String) = synchronized(maskLock) {
+        gates.forEach { gate -> gate.mask?.takeIf { it.isFor(configClassName) }?.applyAfterSave() }
     }
 
     @JvmStatic

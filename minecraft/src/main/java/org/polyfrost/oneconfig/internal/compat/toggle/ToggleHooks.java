@@ -82,6 +82,7 @@ public final class ToggleHooks {
         hook("waveycapes", "WaveyCapes");
         hook("wwaypoints", "WWaypoints");
         hook(YACL, "YaclSave");
+        hook("yacl-load", "YaclLoad");
         hook("zoomify", "Zoomify");
         //? if >= 1.21.1
         hook("zoomify", "ZoomifySpyglass");
@@ -109,6 +110,38 @@ public final class ToggleHooks {
 
     public static boolean has(String gate) {
         return HOOKS.containsKey(gate);
+    }
+
+    public static boolean lands(String gate) {
+        for (String name : HOOKS.getOrDefault(gate, Collections.emptyList())) {
+            try {
+                ClassNode mixin = readClass(MIXIN_PACKAGE + PREFIX + name);
+                if (mixin == null) continue;
+                for (String targetName : targets(mixin)) {
+                    ClassNode target = readClass(targetName);
+                    if (target != null && hooksAnything(target, mixin)) return true;
+                }
+            } catch (Throwable t) {
+                LOGGER.warn("could not check the toggle hook {}", name, t);
+            }
+        }
+        return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static boolean hooksAnything(ClassNode target, ClassNode mixin) {
+        for (MethodNode handler : mixin.methods) {
+            if (handler.visibleAnnotations == null) continue;
+            for (AnnotationNode annotation : handler.visibleAnnotations) {
+                if (!annotation.desc.endsWith("/injection/Inject;") || annotation.values == null) continue;
+                int at = annotation.values.indexOf("method");
+                if (at < 0) continue;
+                for (String spec : (List<String>) annotation.values.get(at + 1)) {
+                    if (declares(target, spec)) return true;
+                }
+            }
+        }
+        return false;
     }
 
     /** Whether {@code mixinClassName} can go onto the build of {@code targetClassName} that is installed */

@@ -31,8 +31,10 @@ internal class ConfigMask(
     private val treeIds: List<String> = emptyList(),
     private val values: Map<String, Any?> = emptyMap(),
 ) {
+    @Volatile
     private var restore: (() -> Unit)? = null
     private var onFields = false
+    private var liftedForSave = false
     private var maskedTree: Tree? = null
     private var fieldOriginals: List<Pair<String, Any?>> = emptyList()
     private val held = ArrayList<Property<*>>()
@@ -64,6 +66,7 @@ internal class ConfigMask(
 
     @Synchronized
     fun remove() {
+        liftedForSave = false
         val undo = restore ?: return
         restore = null
         try {
@@ -144,7 +147,42 @@ internal class ConfigMask(
         if (overwritten) reapply()
     }
 
-    fun masks(configClassName: String): Boolean = applied && configClassName == className
+    @Synchronized
+    fun liftForSave() {
+        if (restore == null || !onFields) return
+        val type = configClass() ?: return
+        for ((path, original) in fieldOriginals) {
+            try {
+                val (field, owner) = resolve(type, path) ?: continue
+                if (field.get(owner) == convert(values[path], field.type)) field.set(owner, original)
+            } catch (t: Throwable) {
+                LOGGER.warn("Could not restore {} of {}", path, className, t)
+            }
+        }
+        held.forEach { it.removeMetadata(HELD_VALUE) }
+        held.clear()
+        fieldOriginals = emptyList()
+        restore = null
+        liftedForSave = true
+    }
+
+    @Synchronized
+    fun applyAfterSave() {
+        if (!liftedForSave) return
+        liftedForSave = false
+        apply()
+    }
+
+    @Synchronized
+    fun adopt(tree: Tree) {
+        if (restore != null && onFields && isTree(tree)) reapply()
+    }
+
+    fun isTree(tree: Tree): Boolean = tree.id in treeIds && tree.isNative()
+
+    fun isFor(configClassName: String): Boolean = configClassName == className
+
+    fun masks(configClassName: String): Boolean = applied && isFor(configClassName)
 
     /** Whether YACL is what saves this config, which only a hook into YACL can keep the mask out of */
     fun savedByYacl(): Boolean = try {

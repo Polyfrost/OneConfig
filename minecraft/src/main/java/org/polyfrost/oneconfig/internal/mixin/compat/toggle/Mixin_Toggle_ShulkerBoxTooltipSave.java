@@ -11,8 +11,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(targets = "com.misterpemodder.shulkerboxtooltip.impl.config.ConfigurationHandler", remap = false)
 public class Mixin_Toggle_ShulkerBoxTooltipSave {
 
-    @Inject(method = "saveToFile", at = @At("TAIL"), require = 0)
+    @Inject(method = "saveToFile", at = @At("HEAD"), require = 0)
+    private static void oneconfig$keepMaskOffDisk(CallbackInfo ci) {
+        ModGates.unmaskForSave("com.misterpemodder.shulkerboxtooltip.ShulkerBoxTooltip");
+    }
+
+    @Inject(method = "saveToFile", at = @At("RETURN"), require = 0)
     private static void oneconfig$maskAgain(CallbackInfo ci) {
-        ModGates.remaskIfOverwritten("com.misterpemodder.shulkerboxtooltip.ShulkerBoxTooltip");
+        ModGates.maskAfterSave("com.misterpemodder.shulkerboxtooltip.ShulkerBoxTooltip");
     }
 }
