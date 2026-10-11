@@ -5,6 +5,7 @@ import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
+import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.TreeConfigData
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
@@ -149,10 +150,15 @@ internal class SearchRow(
      */
     val groupLabel: String?,
     val node: SettingNode,
+    val mod: ConfigData? = null,
 )
 
 /** Maps every node the corpus can return back to the row which renders it */
-internal fun buildSearchIndex(categories: List<CategoryGroup>, modTitle: String? = null): Map<Node, SearchRow> {
+internal fun buildSearchIndex(
+    categories: List<CategoryGroup>,
+    modTitle: String? = null,
+    mod: ConfigData? = null,
+): Map<Node, SearchRow> {
     val owners = IdentityHashMap<Node, SearchRow>()
     val singleCategory = categories.size == 1
     categories.forEach { category ->
@@ -163,7 +169,7 @@ internal fun buildSearchIndex(categories: List<CategoryGroup>, modTitle: String?
                 else -> null
             }
             subcategory.nodes.forEach { node ->
-                val row = SearchRow(modTitle, category.name, subcategory.name, groupLabel, node)
+                val row = SearchRow(modTitle, category.name, subcategory.name, groupLabel, node, mod)
                 when (node) {
                     is SettingNode.Leaf -> owners[node.prop] = row
                     is SettingNode.Accordion -> {
@@ -204,7 +210,7 @@ internal object GlobalSettingIndex {
         ConfigRegistry.configs.toList().forEach { config ->
             if (!ConfigRegistry.shouldShowInSearch(config)) return@forEach
             val tree = (config as? TreeConfigData)?.tree ?: return@forEach
-            built += buildSearchIndex(buildCategories(tree), config.title.asRenderText())
+            built += buildSearchIndex(buildCategories(tree), config.title.asRenderText(), config)
         }
         rows = built
     }

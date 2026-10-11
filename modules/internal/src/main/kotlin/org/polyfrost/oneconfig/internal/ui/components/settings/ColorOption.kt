@@ -58,6 +58,7 @@ import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.ColorOptionData
+import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
@@ -185,7 +186,7 @@ fun ColorOption(data: ColorOptionData) {
     val isHovered by interactionSource.collectIsHoveredAsState()
     var expanded by remember { mutableStateOf(false) }
 
-    val initialValue = remember(data.prop) { data.prop.get() }
+    val initialValue = remember(data.prop) { data.prop.shown() }
     val initialColor = remember(data.prop, initialValue) {
         when (val v = initialValue) {
             is Color -> v

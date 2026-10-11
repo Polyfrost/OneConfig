@@ -33,6 +33,7 @@ import java.util.Locale
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.NumberOptionData
+import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
@@ -164,7 +165,7 @@ fun NumberOption(data: NumberOptionData) {
         if (data.min == data.min.roundToInt().toFloat() && data.max == data.max.roundToInt().toFloat()) 1f else 0.1f
     }
     var value by remember(data.prop) {
-        mutableStateOf(data.numProp.get()?.toFloat()?.coerceIn(data.min, data.max) ?: data.min)
+        mutableStateOf(data.numProp.shown()?.toFloat()?.coerceIn(data.min, data.max) ?: data.min)
     }
 
     NumberSpinner(

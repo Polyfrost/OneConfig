@@ -36,6 +36,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.polyfrost.oneconfig.internal.compat.toggle.ToggleHooks;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
@@ -58,6 +59,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        if (ToggleHooks.isToggleMixin(mixinClassName)) return ToggleHooks.fits(targetClassName, mixinClassName);
         return true;
     }
 
@@ -165,6 +167,9 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         // Firmament has no stable release for 26.2 yet
         //? >= 1.21.8 && < 26.2
         //mixins.add("compat.firmament.Mixin_FirmamentContentCapture");
+
+        // master switches for mods that do not have one, see ModGates
+        mixins.addAll(ToggleHooks.mixins());
 
         //? modmenu_compat
         mixins.add("compat.Mixin_ModMenu");

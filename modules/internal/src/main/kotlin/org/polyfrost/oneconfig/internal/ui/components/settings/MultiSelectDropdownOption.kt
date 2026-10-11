@@ -42,6 +42,7 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.settings.MultiSelectDropdownOptionData
+import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
@@ -68,7 +69,7 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
     // otherwise it is an Int holding the selected index where -1 is none
     var selectedFlags by remember(data.prop) {
         if (data.checkable) {
-            val v = data.prop.get()
+            val v = data.prop.shown()
             val arr: BooleanArray = when (v) {
                 is BooleanArray -> v
                 is Array<*> -> BooleanArray(options.size) { i -> v.getOrNull(i) == true }
@@ -82,7 +83,7 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
 
     var selectedIdx by remember(data.prop) {
         if (!data.checkable) {
-            val v = data.prop.get()
+            val v = data.prop.shown()
             mutableStateOf(if (v is Int) v else -1)
         } else {
             mutableStateOf(-1)

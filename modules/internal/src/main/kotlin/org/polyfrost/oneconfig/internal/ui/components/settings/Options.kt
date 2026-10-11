@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateMapOf
@@ -33,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import java.util.function.Predicate
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.Property
@@ -40,6 +42,7 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.api.settings.BooleanOptionData
+import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
@@ -92,7 +95,7 @@ fun Option(prop: Property<*>) {
         }
         return
     }
-    val value = prop.get()
+    val value = prop.shown()
     Text(
         when (value) {
             is Boolean -> if (value) "On" else "Off"
@@ -106,7 +109,13 @@ fun Option(prop: Property<*>) {
 
 @Composable
 fun BooleanOption(data: BooleanOptionData) {
-    var checked by remember(data.prop) { mutableStateOf(data.boolProp.get() == true) }
+    var checked by remember(data.prop) { mutableStateOf(data.boolProp.shown() == true) }
+    // the same option can be flipped from elsewhere on screen, a mod's card for its master switch for one
+    DisposableEffect(data.prop) {
+        val listener = Predicate<Boolean> { value -> checked = value == true; false }
+        data.boolProp.addCallback(listener)
+        onDispose { data.boolProp.removeCallback(listener) }
+    }
     when (data.style) {
         BooleanOptionData.Style.Switch -> SwitchControl(checked) { checked = it; data.boolProp.set(it) }
         BooleanOptionData.Style.Checkbox -> CheckboxControl(checked) { checked = it; data.boolProp.set(it) }

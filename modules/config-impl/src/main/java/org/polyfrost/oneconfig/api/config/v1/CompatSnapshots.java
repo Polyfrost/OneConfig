@@ -39,6 +39,7 @@ import java.util.TreeMap;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -72,12 +73,34 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     private CompatSnapshots() {
     }
 
+    private static volatile BiConsumer<String, Runnable> liveValueScope = (id, action) -> action.run();
+
     public static boolean isApplying() {
         return APPLYING_HERE.get();
     }
 
     public static void setDispatcher(Consumer<Runnable> dispatcher) {
         INSTANCE.dispatcher = dispatcher == null ? Runnable::run : dispatcher;
+    }
+
+    /**
+     * Sets what every read of the live option values runs inside
+     * <br>
+     * Lets whoever temporarily overwrites a mod's options put the user's own values back for the duration,
+     * so the substitutes are never mistaken for them
+     */
+    @ApiStatus.Internal
+    public static void setLiveValueScope(BiConsumer<String, Runnable> scope) {
+        liveValueScope = scope == null ? (id, action) -> action.run() : scope;
+    }
+
+    /**
+     * Runs {@code action} with the options of the config {@code id} holding what the user chose, see
+     * {@link #setLiveValueScope}
+     */
+    @ApiStatus.Internal
+    public static void withLiveValues(String id, Runnable action) {
+        liveValueScope.accept(id, action);
     }
 
     public static Tree register(Tree tree) {
@@ -241,6 +264,10 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     }
 
     private void applyProfile(Tree tree, String profile) {
+        liveValueScope.accept(tree.getID(), () -> applyProfile0(tree, profile));
+    }
+
+    private void applyProfile0(Tree tree, String profile) {
         if (gateClosed(tree)) return;
         captureDefaults(tree);
         ensureKeys(tree);
@@ -316,6 +343,10 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     }
 
     private void captureAll(Tree tree, String profile) {
+        liveValueScope.accept(tree.getID(), () -> captureAll0(tree, profile));
+    }
+
+    private void captureAll0(Tree tree, String profile) {
         if (gateClosed(tree)) return;
         captureDefaults(tree);
         ensureKeys(tree);
@@ -334,6 +365,10 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     }
 
     private void captureDefaults(Tree tree) {
+        liveValueScope.accept(tree.getID(), () -> captureDefaults0(tree));
+    }
+
+    private void captureDefaults0(Tree tree) {
         if (gateClosed(tree)) return;
         ensureKeys(tree);
         Map<String, Object> snapshot = defaults.computeIfAbsent(tree.getID(), ignored -> new ConcurrentHashMap<>());
