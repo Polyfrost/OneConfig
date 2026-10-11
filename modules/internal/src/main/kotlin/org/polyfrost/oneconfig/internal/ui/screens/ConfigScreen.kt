@@ -337,7 +337,9 @@ internal fun ConfigListRow(entry: ConfigListEntry, compact: (SettingNode) -> Boo
 internal fun SettingEntryRow(node: SettingNode, compact: Boolean = false) {
     when (node) {
         is SettingNode.Leaf -> SettingRow(node.prop, compact = compact)
-        is SettingNode.Accordion -> AccordionRow(node, compact = compact)
+        is SettingNode.Accordion -> key(System.identityHashCode(node.tree)) {
+            AccordionRow(node, compact = compact)
+        }
     }
 }
 
