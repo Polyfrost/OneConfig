@@ -961,12 +961,12 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         require(step <= 0f || step <= max - min) { "slider '$name' has step ($step) larger than its range ($min to $max)" }
 
     fun hideIf(option: KProperty<*>, condition: () -> Boolean) {
-        if (tree == null) initialize(false)
+        if (tree == null) runInitialize(false)
         hideIf(option.name) { condition() }
     }
 
     fun hideIf(option: KProperty<*>, condition: KProperty0<Boolean>) {
-        if (tree == null) initialize(false)
+        if (tree == null) runInitialize(false)
         hideIf(option.name) { condition.get() }
     }
 

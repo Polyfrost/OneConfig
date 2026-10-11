@@ -51,6 +51,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
 	protected fun addToInitQueue ()V
 	public static fun captureDefaults (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 	public static fun copyDefault (Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/Object;
+	protected fun disableAllUnless (Ljava/lang/String;)V
 	protected fun getProperty (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	protected static fun getProperty (Lorg/polyfrost/oneconfig/api/config/v1/Tree;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public fun getTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
@@ -60,6 +61,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
 	protected fun loadFrom (Ljava/lang/String;)V
 	protected fun loadFrom (Ljava/nio/file/Path;)V
 	protected fun makeTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
+	protected fun onInitialized (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 	public fun preload ()V
 	public static fun restoreCapturedDefaults (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 	public static fun restoreCapturedDefaults (Lorg/polyfrost/oneconfig/api/config/v1/Tree;Z)V

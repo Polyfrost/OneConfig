@@ -197,7 +197,7 @@ public final class ConfigManager {
             Config config = pendingInitialization.poll();
             if (config == null) continue;
             try {
-                config.initialize(true);
+                config.runInitialize(true);
             } catch (Throwable t) {
                 failedInitialization.add(config.id);
                 Tree half = config.tree;
