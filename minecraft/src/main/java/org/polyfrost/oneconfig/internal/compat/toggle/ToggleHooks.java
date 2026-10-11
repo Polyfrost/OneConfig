@@ -70,6 +70,7 @@ public final class ToggleHooks {
         hook("lambdabettergrass", "LambdaBetterGrassLayer", "LambdaBetterGrassMode");
         hook("mountopacity", "MountOpacity");
         hook("legacy-skin-layers", "LegacySkinLayers");
+        hook("legacy-waveycapes", "LegacyWaveyCapes");
         hook("presencefootsteps", "PresenceFootsteps");
         hook("sciophobia", "Sciophobia");
         hook("shulkerboxtooltip", "ShulkerBoxTooltip", "ShulkerBoxTooltipJoin", "ShulkerBoxTooltipSave");

@@ -240,6 +240,7 @@ internal object ModGates {
         Gate("waveycapes"),
         Gate("skinlayers3d"),
         Gate("legacy-skin-layers", cards = listOf("legacy_skin_layers")),
+        Gate("legacy-waveycapes", cards = listOf("legacy_waveycapes")),
         Gate("zoomify"),
         Gate("fovchanger"),
         Gate("chatblock"),
