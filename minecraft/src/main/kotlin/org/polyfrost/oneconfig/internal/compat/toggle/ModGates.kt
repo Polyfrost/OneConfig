@@ -386,7 +386,7 @@ internal object ModGates {
         }
     }
 
-    private val maskLock = Any()
+    private val maskLock: Any = ConfigManager::class.java
 
     /** Why [gate] cannot be relied on to switch its mod off, or null when it can */
     private fun unusable(gate: Gate): String? {
@@ -428,7 +428,7 @@ internal object ModGates {
 
     /** Puts the mask back after [configClassName] was reloaded from disk underneath it */
     @JvmStatic
-    fun remask(configClassName: String) {
+    fun remask(configClassName: String) = synchronized(maskLock) {
         gates.forEach { gate -> gate.mask?.takeIf { it.masks(configClassName) }?.reapply() }
     }
 

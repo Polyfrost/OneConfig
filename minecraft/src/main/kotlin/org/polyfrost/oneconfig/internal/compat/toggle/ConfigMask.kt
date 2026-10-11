@@ -52,7 +52,7 @@ internal class ConfigMask(
         }
         if (restore != null) return
         restore = try {
-            val tree = maskTree()
+            val tree = maskTree() ?: configClass()?.let { maskTree() }
             onFields = tree == null
             tree ?: maskFields()
         } catch (t: Throwable) {
@@ -221,11 +221,7 @@ internal class ConfigMask(
     }
 
     private fun maskFields(): (() -> Unit)? {
-        val type = try {
-            Class.forName(className, true, ConfigMask::class.java.classLoader)
-        } catch (_: ClassNotFoundException) {
-            return null
-        }
+        val type = configClass() ?: return null
 
         val originals = ArrayList<Pair<String, Any?>>()
         for ((path, value) in values) {
@@ -250,6 +246,12 @@ internal class ConfigMask(
             held.clear()
             fieldOriginals = emptyList()
         }
+    }
+
+    private fun configClass(): Class<*>? = try {
+        Class.forName(className, true, ConfigMask::class.java.classLoader)
+    } catch (_: ClassNotFoundException) {
+        null
     }
 
     private fun resolve(type: Class<*>, path: String): Pair<Field, Any?>? {
