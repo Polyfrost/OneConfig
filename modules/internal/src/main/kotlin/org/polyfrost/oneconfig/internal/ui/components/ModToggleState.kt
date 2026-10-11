@@ -17,7 +17,7 @@ internal fun rememberModEnabled(toggle: ModToggle?): MutableState<Boolean> {
     val state = remember(toggle, revision) { mutableStateOf(toggle?.isEnabled() ?: true) }
     // a switch that is one of the mod's own options changes without ModToggles hearing of it
     val property = (toggle as? PropertyModToggle)?.property
-    DisposableEffect(property, state) {
+    DisposableEffect(System.identityHashCode(property), state) {
         val listener = Predicate<Boolean> { value -> state.value = value != false; false }
         property?.addCallback(listener)
         onDispose { property?.removeCallback(listener) }

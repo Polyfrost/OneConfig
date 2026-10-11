@@ -59,13 +59,13 @@ private val ContextMenuPadding = 4.dp
  * Bumping a counter recomposes the visualizer subtree with a fresh [key] so controls re-read the reset
  * value instead of their cached state
  */
-private val resetEpochs = mutableStateMapOf<Property<*>, Int>()
+private val resetEpochs = mutableStateMapOf<Int, Int>()
 
 /** True if [prop] has a captured default value that can be restored */
 fun optionHasDefault(prop: Property<*>): Boolean = prop.getMetadata<Any?>("default") != null
 
 fun bumpResetEpoch(prop: Property<*>) {
-    resetEpochs[prop] = (resetEpochs[prop] ?: 0) + 1
+    resetEpochs[System.identityHashCode(prop)] = (resetEpochs[System.identityHashCode(prop)] ?: 0) + 1
 }
 
 /** Restore [prop] to the default value captured at config initialization and refresh its UI */
@@ -76,12 +76,12 @@ fun resetOption(prop: Property<*>) {
     // like ColorOption a PolyColor change must refresh the live accent or it only updates once the GUI
     // is reopened
     if (prop.type == PolyColor::class.java) updateAccent()
-    resetEpochs[prop] = (resetEpochs[prop] ?: 0) + 1
+    resetEpochs[System.identityHashCode(prop)] = (resetEpochs[System.identityHashCode(prop)] ?: 0) + 1
 }
 
 @Composable
 fun Option(prop: Property<*>) {
-    val vis = remember(prop) {
+    val vis = remember(System.identityHashCode(prop)) {
         when (val raw = prop.getMetadata<Any>("visualizer")) {
             is Visualizer -> raw
             is Class<*> -> (raw.getDeclaredConstructor().newInstance() as? Visualizer)
@@ -89,7 +89,7 @@ fun Option(prop: Property<*>) {
         }
     }
     if (vis != null) {
-        val epoch = resetEpochs[prop] ?: 0
+        val epoch = resetEpochs[System.identityHashCode(prop)] ?: 0
         key(System.identityHashCode(prop), epoch) {
             vis.visualize(prop)
         }
@@ -174,7 +174,7 @@ fun OptionContextMenu(
 ) {
     if (!expanded) return
     val theme = LocalTheme.current
-    val isKeybind = remember(prop) { prop.get() is OneConfigKeybind }
+    val isKeybind = remember(System.identityHashCode(prop)) { prop.get() is OneConfigKeybind }
     val effectiveReset = onReset ?: if (isKeybind) ({ resetKeybindOption(prop) }) else null
     val effectiveUnbind = onUnbind ?: if (isKeybind) ({ unbindKeybindOption(prop) }) else null
     Popup(

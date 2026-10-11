@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -64,7 +63,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     private static final long DISPATCH_TIMEOUT_SECONDS = 30L;
     private final Map<String, Tree> known = new ConcurrentHashMap<>();
     private final Map<String, Map<String, Object>> defaults = new ConcurrentHashMap<>();
-    private final Map<Property<?>, Boolean> wired = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final String WIRED_METADATA = "oc_compat_snapshot_wired";
     private final Set<Property<?>> applying = Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
     private static final ThreadLocal<Boolean> APPLYING_HERE = ThreadLocal.withInitial(() -> Boolean.FALSE);
     private volatile Consumer<Runnable> dispatcher = Runnable::run;
@@ -418,7 +417,11 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         String treeId = tree.getID();
         forEachProp(tree, p -> {
             if (!isValueProp(p)) return;
-            if (wired.put(p, Boolean.TRUE) != null) return;
+            Integer identity = System.identityHashCode(p);
+            synchronized (p) {
+                if (identity.equals(p.getMetadata(WIRED_METADATA))) return;
+                p.addMetadata(WIRED_METADATA, identity);
+            }
             String key = keyOf(p);
             @SuppressWarnings("unchecked")
             Property<Object> prop = (Property<Object>) p;

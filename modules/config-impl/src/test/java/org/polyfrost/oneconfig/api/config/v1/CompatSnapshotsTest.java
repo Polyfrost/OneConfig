@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.compose.render.PolyColor;
+import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -63,6 +64,27 @@ class CompatSnapshotsTest {
         } finally {
             defaults().remove(TREE_ID);
         }
+    }
+
+    @Test
+    void optionsThatCompareEqualAreEachWired() throws Exception {
+        Property<Boolean> first = Properties.simple("enabled", "Enabled", "", true);
+        Property<Boolean> second = Properties.simple("enabled", "Enabled", "", true);
+        Tree firstTree = Tree.tree(TREE_ID + "_a").put(first);
+        Tree secondTree = Tree.tree(TREE_ID + "_b").put(second);
+        assertEquals(first, second);
+
+        Method wire = CompatSnapshots.class.getDeclaredMethod("wire", Tree.class);
+        wire.setAccessible(true);
+        wire.invoke(CompatSnapshots.INSTANCE, firstTree);
+        wire.invoke(CompatSnapshots.INSTANCE, secondTree);
+        try {
+            second.set(false);
+        } catch (Throwable ignored) {
+        }
+
+        assertEquals(Boolean.TRUE, secondTree.getMetadata(Backend.CUSTOM_SAVE_DIRTY_METADATA),
+                "an option equal to one already wired must still mark its own tree dirty");
     }
 
     @Test

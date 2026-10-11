@@ -117,6 +117,20 @@ fun ConfigScreen(
     locked: Boolean = false,
     lockExempt: Property<*>? = null,
 ) {
+    key(System.identityHashCode(tree)) {
+        ConfigScreenContent(tree, initialCategory, pageKey, leading, locked, lockExempt)
+    }
+}
+
+@Composable
+private fun ConfigScreenContent(
+    tree: Tree,
+    initialCategory: String?,
+    pageKey: String,
+    leading: Property<*>?,
+    locked: Boolean,
+    lockExempt: Property<*>?,
+) {
     val categories = remember(tree) { buildCategories(tree) }
     val localSearchQuery = ShellState.searchQuery.trim()
 
@@ -650,10 +664,10 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
         return
     }
 
-    var menuOpen by remember(prop) { mutableStateOf(false) }
-    var menuOffset by remember(prop) { mutableStateOf(IntOffset.Zero) }
-    val rowOrigin = remember(prop) { LayoutRef(Offset.Zero) }
-    val actionMenuOffset = remember(prop) { LayoutRef(IntOffset.Zero) }
+    var menuOpen by remember(System.identityHashCode(prop)) { mutableStateOf(false) }
+    var menuOffset by remember(System.identityHashCode(prop)) { mutableStateOf(IntOffset.Zero) }
+    val rowOrigin = remember(System.identityHashCode(prop)) { LayoutRef(Offset.Zero) }
+    val actionMenuOffset = remember(System.identityHashCode(prop)) { LayoutRef(IntOffset.Zero) }
     val rowInteraction = rememberInteractionSource()
     val isRowHovered by rowInteraction.collectIsHoveredAsState()
     val showActionButton = OneConfigConfig.showOptionActionButtons && enabled
@@ -811,6 +825,11 @@ private fun SettingLabel(
 
 @Composable
 fun HudConfigScreen(tree: Tree, searchQuery: String) {
+    key(System.identityHashCode(tree)) { HudConfigScreenContent(tree, searchQuery) }
+}
+
+@Composable
+private fun HudConfigScreenContent(tree: Tree, searchQuery: String) {
     val categories = remember(tree) { buildCategories(tree) { !isHudInternal(it) } }
     var selectedCategory by remember(tree) { mutableStateOf(categories.firstOrNull()) }
 

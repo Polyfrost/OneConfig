@@ -227,10 +227,10 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
     val display = rememberDisplay(prop)
     if (display == Property.Display.HIDDEN) return
     val enabled = display != Property.Display.DISABLED
-    var menuOpen by remember(prop) { mutableStateOf(false) }
-    var menuOffset by remember(prop) { mutableStateOf(IntOffset.Zero) }
-    val rowOrigin = remember(prop) { LayoutRef(Offset.Zero) }
-    val actionMenuOffset = remember(prop) { LayoutRef(IntOffset.Zero) }
+    var menuOpen by remember(System.identityHashCode(prop)) { mutableStateOf(false) }
+    var menuOffset by remember(System.identityHashCode(prop)) { mutableStateOf(IntOffset.Zero) }
+    val rowOrigin = remember(System.identityHashCode(prop)) { LayoutRef(Offset.Zero) }
+    val actionMenuOffset = remember(System.identityHashCode(prop)) { LayoutRef(IntOffset.Zero) }
     val rowInteraction = rememberInteractionSource()
     val isRowHovered by rowInteraction.collectIsHoveredAsState()
     val showActionButton = OneConfigConfig.showOptionActionButtons
@@ -245,7 +245,7 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
             .alpha(displayAlpha(display))
             .hoverable(rowInteraction)
             .onGloballyPositioned { rowOrigin.value = it.positionInRoot() }
-            .pointerInput(prop) {
+            .pointerInput(System.identityHashCode(prop)) {
                 awaitPointerEventScope {
                     while (true) {
                         val event = awaitPointerEvent(PointerEventPass.Initial)

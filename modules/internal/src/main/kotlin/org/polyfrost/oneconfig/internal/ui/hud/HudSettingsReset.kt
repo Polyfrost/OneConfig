@@ -193,11 +193,11 @@ fun HudSettingTarget(
         return
     }
 
-    var menuOpen by remember(prop) { mutableStateOf(false) }
-    var menuOffset by remember(prop) { mutableStateOf(IntOffset.Zero) }
+    var menuOpen by remember(System.identityHashCode(prop)) { mutableStateOf(false) }
+    var menuOffset by remember(System.identityHashCode(prop)) { mutableStateOf(IntOffset.Zero) }
 
     Box(
-        modifier = modifier.pointerInput(prop) {
+        modifier = modifier.pointerInput(System.identityHashCode(prop)) {
             awaitPointerEventScope {
                 while (true) {
                     val event = awaitPointerEvent(PointerEventPass.Initial)

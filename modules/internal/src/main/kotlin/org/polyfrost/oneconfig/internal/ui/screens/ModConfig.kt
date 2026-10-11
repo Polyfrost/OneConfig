@@ -78,8 +78,8 @@ fun ModConfig(id: String, initialCategory: String? = null) {
                 }
             }
 
-            var ownSwitchFlips by remember(ownSwitch) { mutableIntStateOf(0) }
-            DisposableEffect(ownSwitch) {
+            var ownSwitchFlips by remember(System.identityHashCode(ownSwitch)) { mutableIntStateOf(0) }
+            DisposableEffect(System.identityHashCode(ownSwitch)) {
                 val listener = Predicate<Boolean> { ownSwitchFlips++; false }
                 ownSwitch?.addCallback(listener)
                 onDispose { ownSwitch?.removeCallback(listener) }
