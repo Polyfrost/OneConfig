@@ -239,6 +239,7 @@ internal object ModGates {
         Gate("status-effect-bars"),
         Gate("waveycapes"),
         Gate("skinlayers3d"),
+        Gate("legacy-skin-layers", cards = listOf("legacy_skin_layers")),
         Gate("zoomify"),
         Gate("fovchanger"),
         Gate("chatblock"),

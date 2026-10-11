@@ -69,6 +69,7 @@ public final class ToggleHooks {
         hook("jade", "Jade");
         hook("lambdabettergrass", "LambdaBetterGrassLayer", "LambdaBetterGrassMode");
         hook("mountopacity", "MountOpacity");
+        hook("legacy-skin-layers", "LegacySkinLayers");
         hook("presencefootsteps", "PresenceFootsteps");
         hook("sciophobia", "Sciophobia");
         hook("shulkerboxtooltip", "ShulkerBoxTooltip", "ShulkerBoxTooltipJoin", "ShulkerBoxTooltipSave");
