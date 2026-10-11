@@ -252,7 +252,6 @@ internal object ModGates {
         ),
         Gate("presencefootsteps"),
         Gate("jade"),
-        Gate("iconographic"),
         Gate("viewmodel"),
         Gate("flashback", onToggle = { enabled -> if (!enabled) finishFlashbackRecording() }),
         Gate("freelook"),

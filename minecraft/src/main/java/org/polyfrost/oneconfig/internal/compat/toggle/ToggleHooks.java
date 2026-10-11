@@ -65,7 +65,6 @@ public final class ToggleHooks {
         hook("hyinfo", "HyInfoLocation", "HyInfoNametags");
         hook("hylobby", "HyLobby");
         hook("hymod", "HyModConfig", "HyModLocation");
-        hook("iconographic", "Iconographic");
         hook("jade", "Jade");
         hook("lambdabettergrass", "LambdaBetterGrassLayer", "LambdaBetterGrassMode");
         hook("mountopacity", "MountOpacity");
