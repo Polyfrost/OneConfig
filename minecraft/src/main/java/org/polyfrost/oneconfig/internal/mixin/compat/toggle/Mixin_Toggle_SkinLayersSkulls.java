@@ -12,12 +12,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(SkullBlockEntity.class)
 public class Mixin_Toggle_SkinLayersSkulls {
 
-    @Inject(method = "getHeadLayers", at = @At("HEAD"), cancellable = true, require = 0, remap = false)
+    @Inject(method = "getHeadLayers", at = @At("HEAD"), cancellable = true, require = 0, expect = 0, remap = false)
     private void oneconfig$noMesh(CallbackInfoReturnable<Object> cir) {
         if (!ModToggles.isEnabled("skinlayers3d")) cir.setReturnValue(null);
     }
 
-    @Inject(method = "setInitialized", at = @At("HEAD"), cancellable = true, require = 0, remap = false)
+    @Inject(method = "setInitialized", at = @At("HEAD"), cancellable = true, require = 0, expect = 0, remap = false)
     private void oneconfig$retryLater(boolean initialized, CallbackInfo ci) {
         if (initialized && !ModToggles.isEnabled("skinlayers3d")) ci.cancel();
     }
