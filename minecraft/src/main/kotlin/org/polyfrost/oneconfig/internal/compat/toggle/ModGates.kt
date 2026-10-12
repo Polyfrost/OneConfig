@@ -216,6 +216,7 @@ internal object ModGates {
             ),
         ),
         Gate("lambdabettergrass", onToggle = { rebuildChunks() }),
+        Gate("lambdynlights", onToggle = { rebuildChunks() }),
         Gate("gammautils", onToggle = {
             callStatic("io.github.sjouwer.gammautils.statuseffect.StatusEffectManager", "updateAllEffects")
         }),

@@ -67,6 +67,7 @@ public final class ToggleHooks {
         hook("hymod", "HyModConfig", "HyModLocation");
         hook("jade", "Jade");
         hook("lambdabettergrass", "LambdaBetterGrassLayer", "LambdaBetterGrassMode");
+        hook("lambdynlights", "LambDynamicLights");
         hook("mountopacity", "MountOpacity");
         hook("legacy-skin-layers", "LegacySkinLayers");
         hook("legacy-waveycapes", "LegacyWaveyCapes");
