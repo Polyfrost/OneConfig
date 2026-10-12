@@ -289,6 +289,8 @@ internal object ModGates {
             optionToggle("${tweaks("confirmdisconnect")}.ConfirmDisconnectConfig", "confirmEnabled")
         },
         "voicechat" to { VoiceChatToggle.takeIf { it.available } },
+        //? if > 1.8.9
+        "ukus-armor-hud" to { org.polyfrost.oneconfig.internal.compat.ArmorHudCompat.modToggle() },
         "animatium" to {
             SelfSwitchingMod("org.visuals.legacy.animatium.Animatium", "btw.mixces.animatium.AnimatiumClient")
                 .takeIf { it.available }
