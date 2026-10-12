@@ -126,7 +126,7 @@ val modPublishTasks = tasks.named("publishMods").get().dependsOn.toList()
 
 tasks.register("publishComposeBundle") {
     group = "publishing"
-    description = "Publishes compose-bundle to the Polyfrost maven repositories and Modrinth."
+    description = "Publishes compose-bundle to the Polyfrost maven repositories, Modrinth and CurseForge."
     dependsOn(tasks.withType<PublishToMavenRepository>(), modPublishTasks)
 }
 

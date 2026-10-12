@@ -171,6 +171,8 @@ val modrinthMinecraftVersionOverride = mapOf(
 
 val modrinthId = listOf("oneconfig.publish.modrinth", "publish.modrinth").firstNotNullOfOrNull { findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
 val modrinthToken = listOf("oneconfig.publish.modrinth.token", "publish.modrinth.token", "modrinth.token").firstNotNullOfOrNull { findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
+val curseforgeId = listOf("oneconfig.publish.curseforge", "publish.curseforge").firstNotNullOfOrNull { findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
+val curseforgeToken = listOf("oneconfig.publish.curseforge.token", "publish.curseforge.token", "curseforge.token").firstNotNullOfOrNull { findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
 val rawMinecraftVersion = versionedCatalog.versions["minecraft"].requiredVersion
 val minecraftVersion = modrinthMinecraftVersionOverride[rawMinecraftVersion] ?: listOf(rawMinecraftVersion)
 val publishJarTaskName = if ("remapJar" in tasks.names) "remapJar" else "jar"
@@ -190,7 +192,7 @@ val validateChangelog by tasks.registering {
 tasks.publishMods.configure {
     dependsOn(validateChangelog)
 }
-tasks.matching { it.name == "publishModrinth" }.configureEach {
+tasks.matching { it.name == "publishModrinth" || it.name == "publishCurseforge" }.configureEach {
     dependsOn(validateChangelog)
 }
 
@@ -204,7 +206,7 @@ publishMods {
 
     modLoaders.add(if (isOrnithe) "ornithe" else "fabric")
 
-    dryRun = modrinthId == null || modrinthToken == null
+    dryRun = modrinthId == null || modrinthToken == null || (curseforgeId != null && curseforgeToken == null)
 
     if (modrinthId != null) {
         modrinth {
@@ -225,4 +227,23 @@ publishMods {
                 ?.let { requires(it) }
         }
     }
+
+    if (curseforgeId != null && !isOrnithe) {
+        curseforge {
+            projectId = curseforgeId
+            accessToken = curseforgeToken.orEmpty()
+
+            minecraftVersions.addAll(minecraftVersion)
+            clientRequired = true
+
+            requires("fabric-api")
+            requires("fabric-language-kotlin")
+            findProperty("publish.curseforge.compose-bundle.slug")
+                ?.toString()
+                ?.takeIf { it.isNotBlank() }
+                ?.let { requires(it) }
+        }
+    }
 }
+
+if (curseforgeId != null && isOrnithe) tasks.register("publishCurseforge")
