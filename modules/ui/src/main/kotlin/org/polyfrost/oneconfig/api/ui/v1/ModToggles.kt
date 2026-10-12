@@ -64,6 +64,12 @@ object ModToggles {
         bump()
     }
 
+    @Suppress("DEPRECATION")
+    @Deprecated("Binary compatibility for mods compiled against 1.4.0", level = DeprecationLevel.HIDDEN)
+    @JvmStatic
+    fun register(modId: String, toggle: org.polyfrost.oneconfig.api.ui.v1.ModToggle) =
+        register(modId, toggle as ModToggle)
+
     /**
      * Shows a switch on the cards of [modIds] whose state is stored by OneConfig
      *
