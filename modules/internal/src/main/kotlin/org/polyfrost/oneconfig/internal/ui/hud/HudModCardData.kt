@@ -114,6 +114,7 @@ internal class HudModCardData(
     override val toggle: ModToggle? = if (isCompatHud(hud)) null else object : ModToggle {
         override fun isEnabled(): Boolean {
             HudManager.revision
+            HudManager.instancesRevision.intValue
             return placed().any { !it.hidden }
         }
 
