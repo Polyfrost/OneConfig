@@ -326,14 +326,16 @@ internal object ModGates {
     fun register() {
         val loaded = ModInfo.loadedMods.mapTo(HashSet()) { it.id }
 
-        registerOwnSwitches(loaded)
         val provided = registerProvidedSwitches()
+        val needingFallback = loaded - provided
+        registerOwnSwitches(needingFallback)
 
         val present = gates.filter { it.id in loaded && (it.unless == null || !classExists(it.unless)) }
             .filter { gate ->
                 if (gate.id in provided) {
                     // a gate switched off before the mod shipped its own switch would keep its hooks off for good
                     if (!ModToggles.isEnabled(gate.id)) ModToggles.setEnabled(gate.id, true)
+                    ModToggles.toggleFor(gate.id)?.let { toggle -> gate.cards.forEach { ModToggles.register(it, toggle) } }
                     return@filter false
                 }
                 val problem = unusable(gate) ?: return@filter true
@@ -383,7 +385,7 @@ internal object ModGates {
 
             override fun onProfileChanged(newProfile: String) {
                 // a switch that is one of the mod's options belongs to the config of the profile it was read from
-                registerOwnSwitches(loaded)
+                registerOwnSwitches(needingFallback)
                 maskDisabled(present)
             }
 
