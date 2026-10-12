@@ -19,7 +19,7 @@ OneConfig may look like a client, but it is a standalone mod. You can [see for y
 
 ### Which versions does it support?
 - Minecraft 1.8.9 on Ornithe.
-- Minecraft 1.21.1, 1.21.4, 1.21.5, 1.21.8, 1.21.10, 1.21.11, 26.1, 26.2 and 26.3 on Fabric.
+- Minecraft 1.21.1-26.3 on Fabric.
 
 OneConfig needs [Compose Multiplatform](https://modrinth.com/mod/compose-multiplatform) and Fabric Language Kotlin. It also needs Fabric API on Fabric and OSL on Ornithe.
 
