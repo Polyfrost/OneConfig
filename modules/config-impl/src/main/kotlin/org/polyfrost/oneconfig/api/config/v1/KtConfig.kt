@@ -89,6 +89,18 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
     ) =
         Provider(def, name, description, category, subcategory, Boolean::class.java, Visualizer.SwitchVisualizer())
 
+    /**
+     * The switch that turns the whole mod on and off, shown on the mod's card and never on the config page
+     *
+     * A config without one falls back to a root level boolean option called `enabled`
+     */
+    @JvmSynthetic
+    protected fun masterToggle(def: Boolean = true) =
+        Provider(def, null, null, null, null, Boolean::class.java, Visualizer.SwitchVisualizer()) {
+            addMetadata("hidden", true)
+            addMetadata("masterToggle", true)
+        }
+
     protected fun color(
         name: String,
         def: PolyColor = PolyColor.rgba(0, 0, 0, 255),

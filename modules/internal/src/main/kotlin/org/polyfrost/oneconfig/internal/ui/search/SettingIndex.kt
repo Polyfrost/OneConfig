@@ -7,6 +7,7 @@ import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
+import org.polyfrost.oneconfig.internal.ui.api.MASTER_TOGGLE
 import org.polyfrost.oneconfig.internal.ui.api.TreeConfigData
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.localizedGroup
@@ -86,7 +87,7 @@ internal fun buildAccordionNode(tree: Tree): SettingNode.Accordion? {
 
 private fun isAccordionToggle(prop: Property<*>): Boolean {
     val isBoolean = prop.type == Boolean::class.java || prop.type == Boolean::class.javaPrimitiveType
-    return isBoolean && prop.getMetadata<Any?>("visualizer") == null
+    return isBoolean && prop.getMetadata<Any?>("visualizer") == null && prop.getMetadata<Any?>(MASTER_TOGGLE) == null
 }
 
 internal fun isRenderableProperty(prop: Property<*>): Boolean {

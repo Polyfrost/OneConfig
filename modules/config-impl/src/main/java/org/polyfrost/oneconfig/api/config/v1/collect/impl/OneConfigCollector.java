@@ -80,6 +80,20 @@ public class OneConfigCollector extends ReflectiveCollector {
 
     @Override
     protected void handleField(@NotNull Field f, @NotNull Object src, @NotNull Tree tree) {
+        if (f.isAnnotationPresent(MasterToggle.class)) {
+            Class<?> fieldType = f.getType();
+            if (fieldType != boolean.class && fieldType != Boolean.class) {
+                throw new IllegalArgumentException(String.format(
+                    "@MasterToggle field '%s' must be a boolean, but was %s.",
+                    f.getName(), fieldType.getTypeName()
+                ));
+            }
+            Property<?> p = Properties.field(null, null, f, src);
+            p.addMetadata("hidden", true);
+            p.addMetadata("masterToggle", true);
+            tree.put(p);
+            return;
+        }
         for (Annotation a : f.getDeclaredAnnotations()) {
             Class<? extends Annotation> type = a.annotationType();
             if (type == Include.class) {

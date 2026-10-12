@@ -6,29 +6,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import java.util.concurrent.CopyOnWriteArrayList
 import org.apache.logging.log4j.LogManager
-
-/**
- * The master switch shown on a mod's card
- */
-interface ModToggle {
-    fun isEnabled(): Boolean
-
-    fun setEnabled(enabled: Boolean)
-
-    /**
-     * Whether the mod has to be set up before it can be switched on
-     *
-     * Switching such a mod on opens it from its card instead, the same as clicking the card does
-     */
-    fun needsSetup(): Boolean = false
-}
+import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
 
 /**
  * Registry of the master switches shown on mod cards
  *
- * A config with a root level boolean option called `enabled` gets a switch on its card without
- * registering anything here. Mods without such an option either [register] their own [ModToggle]
- * or ask OneConfig to keep the state for them with [manage] and poll it through [isEnabled]
+ * A config with a boolean field marked `@MasterToggle`, or a root level option called `enabled`, gets a
+ * switch on its card without registering anything here. Mods without such an option either
+ * [register] their own [ModToggle] or ask OneConfig to keep the state for them with [manage] and
+ * poll it through [isEnabled]
  */
 object ModToggles {
     private val LOGGER = LogManager.getLogger("OneConfig/ModToggles")
@@ -77,6 +63,12 @@ object ModToggles {
         synchronized(lock) { toggles = toggles + (key to toggle) }
         bump()
     }
+
+    @Suppress("DEPRECATION")
+    @Deprecated("Binary compatibility for mods compiled against 1.4.0", level = DeprecationLevel.HIDDEN)
+    @JvmStatic
+    fun register(modId: String, toggle: org.polyfrost.oneconfig.api.ui.v1.ModToggle) =
+        register(modId, toggle as ModToggle)
 
     /**
      * Shows a switch on the cards of [modIds] whose state is stored by OneConfig

@@ -4,11 +4,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Accordion;
+import org.polyfrost.oneconfig.api.config.v1.annotations.MasterToggle;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class MasterToggleTest {
 
@@ -63,6 +66,52 @@ public class MasterToggleTest {
             if (tree == null) return;
             addCallback("migrated", () -> fired++);
         }
+    }
+
+    @SuppressWarnings("unused")
+    public static class AnnotatedConfig extends Config {
+        @MasterToggle
+        public static boolean active = true;
+        @Switch(title = "Other")
+        public static boolean other = true;
+
+        @Accordion(title = "Nested")
+        public static class Nested {
+            @MasterToggle
+            @Switch(title = "Nested toggle")
+            public static boolean nestedToggle = true;
+        }
+
+        public AnnotatedConfig() {
+            super("master_toggle_annotation_test.json", "Master Toggle Annotation", Category.QOL);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class WrongTypeConfig extends Config {
+        @MasterToggle
+        public static String active = "yes";
+
+        public WrongTypeConfig() {
+            super("master_toggle_wrong_type_test.json", "Master Toggle Wrong Type", Category.QOL);
+        }
+    }
+
+    @Test
+    void masterToggleAnnotationMakesAHiddenOption() {
+        AnnotatedConfig config = new AnnotatedConfig();
+        config.preload();
+        for (String id : new String[]{"active", "Nested.nestedToggle"}) {
+            Property<?> toggle = config.getProperty(id);
+            assertEquals(Boolean.TRUE, toggle.getMetadata("masterToggle"));
+            assertEquals(Boolean.TRUE, toggle.getMetadata("hidden"));
+        }
+        assertNull(config.getProperty("other").getMetadata("masterToggle"));
+    }
+
+    @Test
+    void masterToggleAnnotationRejectsNonBooleans() {
+        assertThrows(RuntimeException.class, () -> new WrongTypeConfig().preload());
     }
 
     @Test

@@ -149,6 +149,7 @@ listOf(
     "dependencies",
     //"dependencies:legacy",
     "utils",
+    "mod-toggles",
     "relocator",
     "poly-compose",
     "compose-bundle",
