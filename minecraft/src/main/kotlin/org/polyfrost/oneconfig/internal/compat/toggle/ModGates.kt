@@ -679,9 +679,24 @@ internal object ModGates {
             false
         }
 
+        private val disabledOption by lazy {
+            runCatching {
+                val config = Class.forName("de.maxhenkel.voicechat.VoicechatClient", true, ModGates::class.java.classLoader)
+                    .getField("CLIENT_CONFIG")
+                val entry = config.type.getField("disabled")
+                val get = entry.type.getMethod("get")
+                return@runCatching { get.invoke(entry.get(config.get(null))) }
+            }.getOrNull()
+        }
+
         override fun isEnabled(): Boolean = try {
-            val state = state()
-            state == null || state.javaClass.getMethod("isDisabled").invoke(state) != true
+            val disabledOption = disabledOption
+            if (disabledOption != null) {
+                !needsSetup() && disabledOption() != true
+            } else {
+                val state = state()
+                state == null || state.javaClass.getMethod("isDisabled").invoke(state) != true
+            }
         } catch (_: Throwable) {
             true
         }
