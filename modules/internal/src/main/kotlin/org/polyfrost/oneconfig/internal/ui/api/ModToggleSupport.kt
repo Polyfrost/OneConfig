@@ -33,7 +33,7 @@ private fun masterSwitchName(id: String): String =
 
 const val MASTER_TOGGLE = "masterToggle"
 
-private fun Tree.findMarkedSwitch(): Property<*>? {
+fun Tree.findMarkedSwitch(): Property<*>? {
     for (node in map.values) {
         val found = when (node) {
             is Property<*> -> node.takeIf { it.getMetadata<Boolean>(MASTER_TOGGLE) == true }

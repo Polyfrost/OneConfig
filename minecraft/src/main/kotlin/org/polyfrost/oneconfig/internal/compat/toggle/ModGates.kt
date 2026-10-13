@@ -13,6 +13,7 @@ import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
 import org.polyfrost.oneconfig.internal.ui.api.PropertyModToggle
+import org.polyfrost.oneconfig.internal.ui.api.findMarkedSwitch
 
 /**
  * Gives mods without a master switch of their own one on their mod card
@@ -48,27 +49,6 @@ internal object ModGates {
     private fun tweaks(name: String) = "dev.microcontrollers.$name.config"
 
     private val gates = listOf(
-        Gate(
-            "overlaytweaks",
-            mask = ConfigMask(
-                "${tweaks("overlaytweaks")}.OverlayTweaksConfig", listOf("overlaytweaks.json"),
-                mapOf(
-                    "keepHand" to false, "removeWaterOverlay" to false, "removeFireOverlay" to false,
-                    "removeSubmergedFov" to false, "removeItemTooltip" to false,
-                    "handInvisibilityOpacity" to 0f, "fireOverlayHeight" to 0f, "customShieldHeight" to 0f,
-                    "elderGuardianOpacity" to 55f, "customFireOverlayOpacity" to 89.9f,
-                    "elderGuardianScale" to 1f, "freezingOpacity" to 100f, "netherPortalOpacity" to 100f,
-                    "equipableOpacity" to 100f, "spyglassOpacity" to 100f, "suffocationOverlayBrightness" to 10f,
-                    "itemCooldownColor" to 0x7FFFFFFF, "spyglassColor" to 0xFF000000.toInt(),
-                    "removeWaterFov" to false, "classicDebugStyle" to false, "potionGlint" to false,
-                    "disableHandViewSway" to false, "removeRecipeBookShift" to false, "clickOutOfContainers" to false,
-                    "customVignetteDarkness" to false, "colorShieldCooldown" to false, "pumpkinOpacity" to 100f,
-                    "customShieldOpacity" to 100f, "containerOpacity" to 81.56863f, "containerTextureOpacity" to 100f,
-                    "heartDisplayType" to "DEFAULT", "subtitleColor" to 0xCC000000.toInt(),
-                    "closedCaptionBackgroundColor" to 0xCC000000.toInt(),
-                ),
-            ),
-        ),
         Gate(
             "rendertweaks", cards = listOf("rendertweaksv2"),
             mask = ConfigMask(
@@ -325,11 +305,22 @@ internal object ModGates {
         return provided
     }
 
+    private fun ownMasterSwitches(loaded: Set<String>): Set<String> {
+        val switched = ConfigManager.active().trees().filter {
+            it.getMetadata<Any>(Backend.UI_ONLY_METADATA) != true &&
+                it.getMetadata<Any>(CompatSnapshots.SNAPSHOT_METADATA) != true &&
+                it.findMarkedSwitch() != null
+        }.mapNotNullTo(HashSet()) { it.id }
+        return gates.filter { gate ->
+            gate.id in loaded && switched.any { it.removeSuffix(".json") == gate.id || it in gate.cards }
+        }.mapTo(HashSet()) { it.id }
+    }
+
     @JvmStatic
     fun register() {
         val loaded = ModInfo.loadedMods.mapTo(HashSet()) { it.id }
 
-        val provided = registerProvidedSwitches()
+        val provided = registerProvidedSwitches() + ownMasterSwitches(loaded)
         val needingFallback = loaded - provided
         registerOwnSwitches(needingFallback)
 
