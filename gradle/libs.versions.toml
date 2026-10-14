@@ -22,7 +22,7 @@ lwjgl = "3.3.3"
 mixin-squared = "0.3.7-beta.1"
 
 # Gradle
-kotlinx-abi = "0.18.1"
+kotlinx-abi = "0.18.2"
 
 log4j-api = "2.0-beta9" # used because this is the version that 1.8.9 supports, so we have to compile against the same (annoying)
 
