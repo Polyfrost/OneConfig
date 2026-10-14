@@ -1,6 +1,7 @@
-## 1.4.1
-- Add the `mod-toggles` API so mods can ship their own toggle through the `oneconfig:toggle` entrypoint
-- Add `@MasterToggle` (and `masterToggle()` for KtConfig) to give a OneConfig mod a toggle on its card
-- Add proper toggles to hud elements
-- Fix option display state not updating properly
-- Remove iconographic from mod toggles
+## 1.4.2
+- Support mod toggles for lambdynamiclights and uku Armor HUD
+- Fix Simple Voice Chat mod toggle in certain scenarios
+- Allow explicitly added 3rd party master switches to be overriden
+- Improve performance with some HUDs
+- Fix accordion description pushing some of its toggle off the section
+- Fix HUD elements set to hide in F3 being hidden even when debug renderers were the only F3 elements currently drawing
