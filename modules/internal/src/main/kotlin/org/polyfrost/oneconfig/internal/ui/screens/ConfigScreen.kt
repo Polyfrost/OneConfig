@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.function.Consumer
+import java.util.function.Predicate
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -387,6 +388,7 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
     }
     val headerInteraction = rememberInteractionSource()
     val chevronRotation by animateFloatAsState(if (expanded) 180f else 90f)
+    val headDisplay = node.head?.let { rememberDisplay(it) } ?: Property.Display.SHOWN
 
     Column(
         modifier = Modifier
@@ -410,6 +412,7 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
             modifier = Modifier
                 .fillMaxWidth()
                 .onClick(headerInteraction) { expanded = !expanded }
+                .alpha(displayAlpha(headDisplay))
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -439,10 +442,17 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
             ) {
                 if (node.head != null) {
                     var headChecked by remember(node) { mutableStateOf(node.head.shown() == true) }
-                    SwitchControl(headChecked) {
-                        headChecked = it
-                        node.head.set(it)
-                        expanded = it
+                    DisposableEffect(node.head) {
+                        val listener = Predicate<Boolean> { value -> headChecked = value == true; false }
+                        node.head.addCallback(listener)
+                        onDispose { node.head.removeCallback(listener) }
+                    }
+                    Box(Modifier.blockInteraction(headDisplay == Property.Display.DISABLED)) {
+                        SwitchControl(headChecked) {
+                            headChecked = it
+                            node.head.set(it)
+                            expanded = it
+                        }
                     }
                 }
                 Icon(
