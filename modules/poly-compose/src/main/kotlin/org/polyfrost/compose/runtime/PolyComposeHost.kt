@@ -25,13 +25,13 @@ class PolyComposeClock {
     private val inFrame = AtomicBoolean(false)
 
     fun frame(nanos: Long = System.nanoTime(), notify: Boolean = true): Boolean {
-        if (!inFrame.compareAndSet(false, true)) return recomposerImpl.hasPendingWork
+        if (!inFrame.compareAndSet(false, true)) return false
         try {
             if (notify) Snapshot.sendApplyNotifications()
             val appliedBefore = recomposerImpl.changeCount
             clock.sendFrame(nanos)
             appliedChange = recomposerImpl.changeCount != appliedBefore
-            return appliedChange || recomposerImpl.hasPendingWork
+            return appliedChange
         } finally {
             inFrame.set(false)
         }
