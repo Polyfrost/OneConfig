@@ -31,6 +31,8 @@ private val MASTER_SWITCH_NAMES = setOf("enabled", "enable", "modenabled")
 private fun masterSwitchName(id: String): String =
     id.filter(Char::isLetterOrDigit).lowercase().let { if (it.startsWith("is")) it.substring(2) else it }
 
+fun isMasterSwitchName(name: String): Boolean = masterSwitchName(name) in MASTER_SWITCH_NAMES
+
 const val MASTER_TOGGLE = "masterToggle"
 
 fun Tree.findMarkedSwitch(): Property<*>? {
