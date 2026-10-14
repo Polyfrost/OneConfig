@@ -16,7 +16,7 @@ nightconfig = "3.6.6"
 java-objc-bridge = "1.2"
 
 # Per version
-lwjgl = "3.3.3"
+lwjgl = "3.4.3"
 
 # Legacy only
 mixin-squared = "0.3.7-beta.1"
