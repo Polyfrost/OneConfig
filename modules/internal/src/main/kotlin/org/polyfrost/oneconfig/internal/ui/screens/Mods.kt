@@ -5,7 +5,6 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -16,8 +15,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,7 +27,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -86,6 +84,7 @@ import org.polyfrost.oneconfig.internal.ui.api.modFavoriteAt
 import org.polyfrost.oneconfig.internal.ui.api.modGroupBounds
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
+import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.canRenderIcon
@@ -99,6 +98,7 @@ import org.polyfrost.oneconfig.internal.ui.components.reorderOverlay
 import org.polyfrost.oneconfig.internal.ui.components.reorderableItem
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
+import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyGridState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
@@ -133,7 +133,10 @@ fun Mods() {
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.padding(horizontal = PageGutter),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             val cards = ConfigRegistry.modCardConfigs
             ModCategory.entries.forEach {
                 val shown = when {
@@ -216,6 +219,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
         onDrop = { index -> commitDrop(entries, index) },
         dragBounds = { index -> modGroupBounds(entries, index) },
         onClick = { key -> entries.cardData(key)?.let(::openModCard) },
+        horizontalPadding = PageGutter,
     )
     val dropFavorite = reorderState.draggingKey
         ?.let { key -> entries.indexOfFirst { it.key == key } }
@@ -233,7 +237,9 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
     }
 
     val focusManager = LocalFocusManager.current
-    Box(
+    ScrollbarBox(
+        gridState,
+        PageGutter,
         modifier = Modifier
             .weight(1f)
             .clipToBounds()
@@ -251,7 +257,8 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
             columns = GridCells.Fixed(4),
             verticalArrangement = Arrangement.spacedBy(19.dp),
             horizontalArrangement = Arrangement.spacedBy(19.dp),
-            modifier = Modifier.fillMaxSize().padding(end = 16.dp).onGloballyPositioned {
+            contentPadding = PaddingValues(horizontal = PageGutter),
+            modifier = Modifier.fillMaxSize().onGloballyPositioned {
                 animateItems = true
             },
         ) {
@@ -293,11 +300,6 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
                 }
             }
         }
-        VerticalScrollbar(
-            adapter = rememberScrollbarAdapter(gridState),
-            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
-        )
-
         // drawn over the grid so it passes above the other cards
         val draggedId = reorderState.overlayKey
         val dragged = remember(entries, draggedId) { draggedId?.let(entries::cardData) }
