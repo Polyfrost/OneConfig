@@ -188,6 +188,15 @@ public class OneConfig
                 || scoreboard.getDisplayObjective(DisplaySlot.LIST) != null;
     }
 
+    public static boolean isDebugScreenVisible() {
+        Minecraft minecraft = Minecraft.getInstance();
+        //? if >= 1.21.9 {
+        //~ if < 1.21.11 'isOverlayVisible' -> 'isF3Visible'
+        if (!minecraft.debugEntries.isOverlayVisible()) return false;
+        //?}
+        return minecraft.getDebugOverlay().showDebugScreen();
+    }
+
     private static boolean legacyHudOffscreenReady;
 
     //~ if = 1.8.9 '(GuiGraphicsExtractor graphics)' -> '()'
@@ -217,7 +226,7 @@ public class OneConfig
         //? } else {
         /*HudManager.isGuiHidden = Minecraft.getInstance().options.hideGui;
         *///? }
-        HudManager.isDebugScreenVisible = Minecraft.getInstance().getDebugOverlay().showDebugScreen();
+        HudManager.isDebugScreenVisible = isDebugScreenVisible();
         HudManager.isTabListVisible = isTabListVisible();
         HudManager.isGuiScreenOpen = Platform.screen().current() != null;
         HudManager.isChatScreenOpen = Platform.screen().current() instanceof ChatScreen;
