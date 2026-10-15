@@ -178,4 +178,22 @@ class HudPositionMigrationTest {
         assertEquals(x, hud.getX(), 0.001f, "capturing defaults must not move the HUD");
         assertEquals(y, hud.getY(), 0.001f, "capturing defaults must not move the HUD");
     }
+
+    @Test
+    void cachedPositionFollowsAnchorTarget() throws Exception {
+        HudManager.INSTANCE.initialize();
+        HudManager.isGuiScreenOpen = false;
+
+        Hud hud = HudManager.INSTANCE.getHudsOfType(MigHud.class).get(0);
+        Hud target = HudManager.INSTANCE.getHudsOfType(AnchorHud.class).get(0);
+        target.setAbsolutePosition(300f, 200f);
+        hud.anchorTo(target, HudAnchor.Right, HudAnchor.Left);
+        assertEquals(hud.getX(), hud.getFrameX(), 0.001f);
+
+        int ownBefore = HudKt.getHudStateRevision();
+        target.setAbsolutePosition(100f, 50f);
+        assertTrue(HudKt.getHudStateRevision() > ownBefore);
+        assertEquals(hud.getX(), hud.getFrameX(), 0.001f, "moving the target must refresh the anchored HUD's cached x");
+        assertEquals(hud.getY(), hud.getFrameY(), 0.001f, "moving the target must refresh the anchored HUD's cached y");
+    }
 }

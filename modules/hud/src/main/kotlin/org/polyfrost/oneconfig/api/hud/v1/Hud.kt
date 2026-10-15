@@ -127,9 +127,10 @@ internal fun bumpHudStateRevision() {
     stateRevision.incrementAndGet()
 }
 
-private fun <T> MutableState<T>.put(v: T) {
-    if (Snapshot.withoutReadObservation { value } == v) return
-    value = v
+private val sharedRevision = AtomicInteger()
+
+internal fun bumpSharedHudRevision() {
+    sharedRevision.incrementAndGet()
     bumpHudStateRevision()
 }
 
@@ -1057,7 +1058,28 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @JvmField
     var lastUpdate: Long = Long.MIN_VALUE
 
-    @Transient private var geomRev = -1
+    @Transient @Volatile private var revision = 0
+
+    private fun <T> MutableState<T>.put(v: T) {
+        if (Snapshot.withoutReadObservation { value } == v) return
+        value = v
+        revision++
+        bumpHudStateRevision()
+    }
+
+    private fun chainRevision(): Int {
+        var key = revision
+        var parent = effectiveAnchorParent
+        var depth = 0
+        while (parent != null && depth++ < MAX_ANCHOR_DEPTH) {
+            key = key * 31 + parent.revision
+            parent = parent.effectiveAnchorParent
+        }
+        return key
+    }
+
+    @Transient private var geomShared = -1
+    @Transient private var geomChain = 0
     @Transient private var geomW = Float.NaN
     @Transient private var geomH = Float.NaN
     @Transient private var geomHuds = -1
@@ -1078,7 +1100,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     private val liveGeometry: Boolean get() {
         if (HudManager.isGuiScreenOpen) {
-            geomRev = -1
+            geomShared = -1
             return true
         }
         return hasExternalGeometry
@@ -1087,8 +1109,11 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @get:ApiStatus.Internal
     val hasExternalGeometry: Boolean get() = externalGeometry.get(javaClass)
 
+    internal val followsExternalGeometry: Boolean get() = hasExternalGeometry || findExternalAnchorParent() != null
+
     private fun refreshFrameGeometry() {
-        val rev = hudStateRevision
+        val shared = sharedRevision.get()
+        val chain = chainRevision()
         val sw = HudManager.guiScreenWidth
         val sh = HudManager.guiScreenHeight
         val huds = HudManager.activeInstances.size
@@ -1098,11 +1123,12 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         val parentMoved = parent != null && parentCheckFrame != frame && (parent.x != parentX || parent.y != parentY ||
             parent.scaledWidth != parentW || parent.scaledHeight != parentH)
         parentCheckFrame = frame
-        if (rev == geomRev && sw == geomW && sh == geomH && huds == geomHuds && minW == geomMinW &&
+        if (shared == geomShared && chain == geomChain && sw == geomW && sh == geomH && huds == geomHuds && minW == geomMinW &&
             minH == geomMinH && !parentMoved
         ) return
         if (parentMoved) bumpHudStateRevision()
-        geomRev = hudStateRevision
+        geomShared = shared
+        geomChain = chain
         cachedScale = effectiveScale
         cachedRenderedW = renderedW
         cachedRenderedH = renderedH
@@ -1426,6 +1452,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         isVisible = mutableStateOf(false)
         visibleShadow = false
         externalParent = null
+        geomShared = -1
         bumpHudStateRevision()
         showKey = -1
         toggleKey = -1

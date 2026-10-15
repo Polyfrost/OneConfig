@@ -507,13 +507,13 @@ object HudManager {
     }
 
     private fun layout(hud: Hud, screenWidth: Float, screenHeight: Float, scale: Float): RootNode {
-        val hudScale = hud.frameScale
+        val hudScale = hud.effectiveScale
         val rt = hud.runtime
         rt.layout(screenWidth / scale / hudScale, screenHeight / scale / hudScale)
         val root = rt.root
         val w = root.width * hudScale
         val h = root.height * hudScale
-        if (hud.frameRenderedW != w || hud.frameRenderedH != h) {
+        if (hud.renderedW != w || hud.renderedH != h) {
             Snapshot.withMutableSnapshot {
                 hud.renderedW = w
                 hud.renderedH = h
@@ -620,7 +620,7 @@ object HudManager {
         val scale = Platform.compatibility().options().guiScale
         if (scale != lastGuiScale) {
             lastGuiScale = scale
-            bumpHudStateRevision()
+            bumpSharedHudRevision()
         }
 
         frameId++
@@ -692,7 +692,7 @@ object HudManager {
         var external = false
         for (hud in huds) {
             hudsKey = hudsKey * 31 + System.identityHashCode(hud)
-            if (hud.hasExternalGeometry) external = true
+            if (hud.followsExternalGeometry) external = true
         }
         if (!isGuiScreenOpen && !external && lastMergeKey != null && rev == mergeCheckRev && hudsKey == mergeCheckHuds &&
             screenWidth == mergeCheckW && screenHeight == mergeCheckH && scale == mergeCheckScale
@@ -867,7 +867,7 @@ object HudManager {
         for (i in 0 until n) {
             val hud = list[i]
             val drawn = hud in frameDrawn
-            if (stable && same && zOrderHuds[i] === hud && zOrderDrawn[i] == drawn && !hud.hasExternalGeometry) continue
+            if (stable && same && zOrderHuds[i] === hud && zOrderDrawn[i] == drawn && !hud.followsExternalGeometry) continue
             zOrderDrawn[i] = drawn
             val b = if (drawn) screenBounds(hud) else null
             val x = b?.get(0) ?: Float.NaN
