@@ -689,8 +689,12 @@ object HudManager {
     private fun updateBackgroundGroups(huds: List<Hud>, screenWidth: Float, screenHeight: Float, scale: Float) {
         val rev = hudStateRevision
         var hudsKey = huds.size
-        for (hud in huds) hudsKey = hudsKey * 31 + System.identityHashCode(hud)
-        if (!isGuiScreenOpen && lastMergeKey != null && rev == mergeCheckRev && hudsKey == mergeCheckHuds &&
+        var external = false
+        for (hud in huds) {
+            hudsKey = hudsKey * 31 + System.identityHashCode(hud)
+            if (hud.hasExternalGeometry) external = true
+        }
+        if (!isGuiScreenOpen && !external && lastMergeKey != null && rev == mergeCheckRev && hudsKey == mergeCheckHuds &&
             screenWidth == mergeCheckW && screenHeight == mergeCheckH && scale == mergeCheckScale
         ) return
         mergeCheckRev = rev
@@ -863,7 +867,7 @@ object HudManager {
         for (i in 0 until n) {
             val hud = list[i]
             val drawn = hud in frameDrawn
-            if (stable && same && zOrderHuds[i] === hud && zOrderDrawn[i] == drawn) continue
+            if (stable && same && zOrderHuds[i] === hud && zOrderDrawn[i] == drawn && !hud.hasExternalGeometry) continue
             zOrderDrawn[i] = drawn
             val b = if (drawn) screenBounds(hud) else null
             val x = b?.get(0) ?: Float.NaN

@@ -1102,12 +1102,12 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             minH == geomMinH && !parentMoved
         ) return
         if (parentMoved) bumpHudStateRevision()
+        geomRev = hudStateRevision
         cachedScale = effectiveScale
         cachedRenderedW = renderedW
         cachedRenderedH = renderedH
         cachedX = x
         cachedY = y
-        geomRev = hudStateRevision
         geomW = sw
         geomH = sh
         geomHuds = huds
