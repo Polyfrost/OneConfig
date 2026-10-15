@@ -31,12 +31,14 @@ class HudFrameCacheTest {
     private float savedWidth;
     private float savedHeight;
     private boolean savedGuiOpen;
+    private boolean savedConfigUiOpen;
 
     @BeforeEach
     void saveGlobals() {
         savedWidth = HudManager.guiScreenWidth;
         savedHeight = HudManager.guiScreenHeight;
         savedGuiOpen = HudManager.isGuiScreenOpen;
+        savedConfigUiOpen = HudManager.isConfigUiOpen;
     }
 
     @AfterEach
@@ -44,6 +46,7 @@ class HudFrameCacheTest {
         HudManager.guiScreenWidth = savedWidth;
         HudManager.guiScreenHeight = savedHeight;
         HudManager.isGuiScreenOpen = savedGuiOpen;
+        HudManager.isConfigUiOpen = savedConfigUiOpen;
     }
 
     @Test
@@ -88,6 +91,26 @@ class HudFrameCacheTest {
         assertNotEquals(stamp, styled, "a background change must invalidate the merge check");
         hud.setRelativeX(hud.getRelativeX() + 30f);
         assertNotEquals(styled, hud.getGeometryStamp$hud(), "a move must invalidate it");
+    }
+
+    @Test
+    void cacheStaysOnWithScreenOpenUntilEditing() {
+        ConfigManager.active();
+        HudManager.guiScreenWidth = 960f;
+        HudManager.guiScreenHeight = 540f;
+        HudManager.isGuiScreenOpen = true;
+        HudManager.isConfigUiOpen = false;
+        CacheHud hud = new CacheHud();
+
+        int stamp = hud.getGeometryStamp$hud();
+        assertNotEquals(-1, stamp, "a plain screen like chat keeps the cache on");
+        assertEquals(stamp, hud.getGeometryStamp$hud(), "nothing changed so the cached geometry is reused");
+        hud.setRelativeX(hud.getRelativeX() + 30f);
+        assertNotEquals(stamp, hud.getGeometryStamp$hud(), "a move still invalidates it");
+        assertEquals(hud.getX(), hud.getFrameX());
+
+        HudManager.isConfigUiOpen = true;
+        assertEquals(-1, hud.getGeometryStamp$hud(), "editing turns the cache off");
     }
 
     @Test

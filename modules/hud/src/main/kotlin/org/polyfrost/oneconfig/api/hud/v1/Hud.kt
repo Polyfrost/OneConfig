@@ -1143,7 +1143,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         if (!useGuiScale || chainParents.any { !it.useGuiScale }) Platform.compatibility().options().guiScale else 0f
 
     private fun refreshFrameGeometry(): Boolean {
-        if (HudManager.isGuiScreenOpen) {
+        if (HudManager.isEditing) {
             geomValid = false
             return false
         }
