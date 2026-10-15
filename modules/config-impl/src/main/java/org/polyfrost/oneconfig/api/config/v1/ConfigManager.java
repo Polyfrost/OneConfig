@@ -264,6 +264,13 @@ public final class ConfigManager {
         return pendingInitialization.contains(config);
     }
 
+    @ApiStatus.Internal
+    public static Set<String> pendingConfigIds() {
+        Set<String> ids = new HashSet<>();
+        for (Config config : pendingInitialization) ids.add(config.id);
+        return ids;
+    }
+
     static void reportResetOptions(Config config, List<String> options) {
         Tree tree = config.getTree();
         if (tree == null || tree.getID() == null) return;

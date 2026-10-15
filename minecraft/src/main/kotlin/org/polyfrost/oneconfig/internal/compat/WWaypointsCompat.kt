@@ -47,7 +47,7 @@ object WWaypointsCompat {
 
     @JvmStatic
     fun register() {
-        if (!CompatLoader.hasMod(MOD_ID)) return
+        if (!CompatLoader.hasMod(MOD_ID) || ConfigEntrypoints.provides(MOD_ID)) return
         // priority 0 so this runs before ModMenuCompat.postLoad (1000) and claims the card first
         CompatLoader.requireTranslations(priority = 0, skip = true) {
             runCatching {

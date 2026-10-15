@@ -57,6 +57,7 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsRenderer;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
+import org.polyfrost.oneconfig.internal.compat.ConfigEntrypoints;
 import org.polyfrost.oneconfig.internal.compat.KaleidoCompat;
 import org.polyfrost.oneconfig.internal.compat.toggle.ModGates;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
@@ -436,6 +437,7 @@ public class OneConfig
         registerKeybinds();
         new OneConfigConfig();
         new ThemeConfig();
+        ConfigEntrypoints.registerAll();
         registerCommands();
         registerEventHandlers();
         installNotificationRenderer();

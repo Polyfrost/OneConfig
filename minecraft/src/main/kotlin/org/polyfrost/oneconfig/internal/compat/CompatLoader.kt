@@ -162,6 +162,8 @@ object CompatLoader {
             }
         }
 
+        nativeLoadedConfigs.addAll(ConfigEntrypoints.providerModIds())
+
         register<ResourceFinishedLoading> {
             val pending = list.sortedBy { (key, _) -> key }
             list.clear()
