@@ -1081,7 +1081,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @Transient private var chainRev = -1
     @Transient private var chainHuds = -1
     @Transient private var chainKey = 0
-    @Transient private var chainExternal: Hud? = null
+    @Transient private var chainExternal: List<Hud> = emptyList()
     @Transient private var chainParents: List<Hud> = emptyList()
 
     private fun walkChain() {
@@ -1091,13 +1091,14 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         chainRev = rev
         chainHuds = huds
         var key = revision.get()
-        var external: Hud? = null
+        var external: ArrayList<Hud>? = null
         val parents = ArrayList<Hud>(0)
         fun visit(parent: Hud?) {
             if (parent == null || parent === this || parents.any { it === parent }) return
             parents.add(parent)
+            key = key * 31 + System.identityHashCode(parent)
             key = key * 31 + parent.revision.get()
-            if (external == null && externalGeometry.get(parent.javaClass)) external = parent
+            if (externalGeometry.get(parent.javaClass)) (external ?: ArrayList<Hud>(1).also { external = it }).add(parent)
         }
         var node = this
         var next = 0
@@ -1113,7 +1114,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             node = parents[next++]
         }
         chainKey = key
-        chainExternal = external
+        chainExternal = external ?: emptyList()
         chainParents = parents
     }
 
@@ -1129,10 +1130,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @Transient private var cachedRenderedH = 0f
 
     @Transient private var parentCheckFrame = Long.MIN_VALUE
-    @Transient private var parentX = 0f
-    @Transient private var parentY = 0f
-    @Transient private var parentW = 0f
-    @Transient private var parentH = 0f
+    @Transient private var parentGeom = FloatArray(0)
 
     private val liveGeometry: Boolean get() {
         if (HudManager.isGuiScreenOpen) {
@@ -1148,7 +1146,20 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     internal val followsExternalGeometry: Boolean get() {
         if (hasExternalGeometry) return true
         walkChain()
-        return chainExternal != null
+        return chainExternal.isNotEmpty()
+    }
+
+    private fun externalParentMoved(): Boolean {
+        val ext = chainExternal
+        if (parentGeom.size != ext.size * 4) return true
+        for (i in ext.indices) {
+            val p = ext[i]
+            val o = i * 4
+            if (p.x != parentGeom[o] || p.y != parentGeom[o + 1] ||
+                p.scaledWidth != parentGeom[o + 2] || p.scaledHeight != parentGeom[o + 3]
+            ) return true
+        }
+        return false
     }
 
     private fun refreshFrameGeometry() {
@@ -1159,9 +1170,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             walkChain()
             frameMinimumSize()
             for (p in chainParents) p.frameMinimumSize()
-            val parent = chainExternal
-            parentMoved = parent != null && (parent.x != parentX || parent.y != parentY ||
-                parent.scaledWidth != parentW || parent.scaledHeight != parentH)
+            parentMoved = externalParentMoved()
         }
         walkChain()
         val shared = sharedRevision.get()
@@ -1179,11 +1188,15 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         geomW = sw
         geomH = sh
         geomHuds = huds
-        chainExternal?.let { ext ->
-            parentX = ext.x
-            parentY = ext.y
-            parentW = ext.scaledWidth
-            parentH = ext.scaledHeight
+        val ext = chainExternal
+        if (parentGeom.size != ext.size * 4) parentGeom = FloatArray(ext.size * 4)
+        for (i in ext.indices) {
+            val p = ext[i]
+            val o = i * 4
+            parentGeom[o] = p.x
+            parentGeom[o + 1] = p.y
+            parentGeom[o + 2] = p.scaledWidth
+            parentGeom[o + 3] = p.scaledHeight
         }
     }
 
@@ -1481,8 +1494,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         visibleShadow = false
         revision = AtomicInteger(this@Hud.revision.get())
         chainRev = -1
-        chainExternal = null
+        chainExternal = emptyList()
         chainParents = emptyList()
+        parentGeom = FloatArray(0)
         geomShared = -1
         bumpHudStateRevision()
         showKey = -1

@@ -6,6 +6,7 @@ import kotlin.Unit;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,9 +20,11 @@ class HudFrameCacheTest {
 
     static class ExternalHud extends TextHud {
         float externalX = 10f;
+        float externalY = 10f;
         ExternalHud() { super("external-hud", "External Hud", Hud.Category.getINFO(), "", ""); }
         @Override public String getText() { return "ext"; }
         @Override public float getX() { return externalX; }
+        @Override public float getY() { return externalY; }
     }
 
     @Test
@@ -103,5 +106,39 @@ class HudFrameCacheTest {
         above.setAbsolutePosition(300f, 150f);
         assertNotEquals(before, child.getY(), 0.001f, "the Y merge parent moved so the child must move");
         assertEquals(child.getY(), child.getFrameY(), 0.001f, "the Y merge parent's move must refresh the cached y");
+    }
+
+    @Test
+    void cachedPositionFollowsEveryExternalMergeParent() throws Exception {
+        ConfigManager.active();
+        HudManager.guiScreenWidth = 960f;
+        HudManager.guiScreenHeight = 540f;
+        HudManager.isGuiScreenOpen = false;
+        ExternalHud left = new ExternalHud();
+        ExternalHud above = new ExternalHud();
+        CacheHud child = new CacheHud();
+        left.externalX = 100f;
+        left.externalY = 300f;
+        above.externalX = 300f;
+        above.externalY = 100f;
+        child.setAbsolutePosition(300f, 300f);
+
+        Method apply = null;
+        for (Method m : Hud.class.getDeclaredMethods()) {
+            if (m.getName().startsWith("applyMergeLink")) apply = m;
+        }
+        apply.setAccessible(true);
+        apply.invoke(child, left, HudAnchor.Left, HudAnchor.Right, MergeAxis.X);
+        apply.invoke(child, above, HudAnchor.Top, HudAnchor.Bottom, MergeAxis.Y);
+
+        float before = child.getFrameY();
+        assertEquals(child.getY(), before, 0.001f);
+
+        above.externalY = 150f;
+        Field frameId = HudManager.class.getDeclaredField("frameId");
+        frameId.setAccessible(true);
+        frameId.setLong(HudManager.INSTANCE, frameId.getLong(HudManager.INSTANCE) + 1);
+        assertNotEquals(before, child.getY(), 0.001f, "the Y merge parent moved so the child must move");
+        assertEquals(child.getY(), child.getFrameY(), 0.001f, "a move of any external parent must refresh the cached y");
     }
 }

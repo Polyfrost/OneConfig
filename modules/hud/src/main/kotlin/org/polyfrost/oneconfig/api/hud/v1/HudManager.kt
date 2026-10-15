@@ -858,6 +858,7 @@ object HudManager {
             zOrderBounds = FloatArray(n * 4)
             zOrderDrawn = BooleanArray(n)
         }
+        for (hud in list) if (hud in frameDrawn) hud.frameMinimumSize()
         val rev = hudStateRevision
         val stable = !isGuiScreenOpen && rev == zOrderRev && guiScreenWidth == zOrderW && guiScreenHeight == zOrderH
         zOrderRev = rev
