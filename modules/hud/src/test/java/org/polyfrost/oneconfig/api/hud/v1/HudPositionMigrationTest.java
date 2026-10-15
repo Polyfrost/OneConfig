@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HudPositionMigrationTest {
@@ -23,9 +24,14 @@ class HudPositionMigrationTest {
     }
 
     static class AnchorHud extends TextHud {
+        static float extraMinW = 0f;
         AnchorHud() { super("anchor-hud", "Anchor Hud", Hud.Category.getINFO(), "", ""); }
         @Override public boolean showByDefault() { return true; }
         @Override public String getText() { return "target"; }
+        @Override public kotlin.Pair<Float, Float> minimumSize() {
+            kotlin.Pair<Float, Float> base = super.minimumSize();
+            return new kotlin.Pair<>(base.getFirst() + extraMinW, base.getSecond());
+        }
     }
 
     private static boolean registered = false;
@@ -195,5 +201,30 @@ class HudPositionMigrationTest {
         assertTrue(HudKt.getHudStateRevision() > ownBefore);
         assertEquals(hud.getX(), hud.getFrameX(), 0.001f, "moving the target must refresh the anchored HUD's cached x");
         assertEquals(hud.getY(), hud.getFrameY(), 0.001f, "moving the target must refresh the anchored HUD's cached y");
+    }
+
+    @Test
+    void cachedPositionFollowsAnchorTargetMinimumSize() throws Exception {
+        HudManager.INSTANCE.initialize();
+        HudManager.isGuiScreenOpen = false;
+
+        Hud hud = HudManager.INSTANCE.getHudsOfType(MigHud.class).get(0);
+        Hud target = HudManager.INSTANCE.getHudsOfType(AnchorHud.class).get(0);
+        target.setAbsolutePosition(100f, 200f);
+        hud.anchorTo(target, HudAnchor.Right, HudAnchor.Left);
+        float before = hud.getFrameX();
+        assertEquals(hud.getX(), before, 0.001f);
+
+        Field frameId = HudManager.class.getDeclaredField("frameId");
+        frameId.setAccessible(true);
+        try {
+            AnchorHud.extraMinW = 400f;
+            frameId.setLong(HudManager.INSTANCE, frameId.getLong(HudManager.INSTANCE) + 1);
+            float framed = hud.getFrameX();
+            assertNotEquals(before, framed, 0.001f, "the target grew so the anchored HUD must move");
+            assertEquals(hud.getX(), framed, 0.001f, "a target's minimum size change must refresh the cached x");
+        } finally {
+            AnchorHud.extraMinW = 0f;
+        }
     }
 }

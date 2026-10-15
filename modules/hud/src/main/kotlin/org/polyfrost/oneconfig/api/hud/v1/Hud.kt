@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 import androidx.compose.runtime.Composable
@@ -352,7 +353,11 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         val frame = HudManager.frameId
         if (minSizeFrame != frame) {
             minSizeFrame = frame
-            minSize = minimumSize()
+            val size = minimumSize()
+            if (size != minSize) {
+                minSize = size
+                bumpRevision()
+            }
         }
         return minSize
     }
@@ -1058,24 +1063,45 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @JvmField
     var lastUpdate: Long = Long.MIN_VALUE
 
-    @Transient @Volatile private var revision = 0
+    @Transient private var revision = AtomicInteger()
+
+    private fun bumpRevision() {
+        revision.incrementAndGet()
+        bumpHudStateRevision()
+    }
 
     private fun <T> MutableState<T>.put(v: T) {
         if (Snapshot.withoutReadObservation { value } == v) return
         value = v
-        revision++
-        bumpHudStateRevision()
+        if (Snapshot.isInSnapshot) pendingWrites[this] = this@Hud
+        bumpRevision()
     }
 
-    private fun chainRevision(): Int {
-        var key = revision
+    @Transient private var chainRev = -1
+    @Transient private var chainHuds = -1
+    @Transient private var chainKey = 0
+    @Transient private var chainExternal: Hud? = null
+    @Transient private var chainParents: List<Hud> = emptyList()
+
+    private fun walkChain() {
+        val rev = hudStateRevision
+        val huds = HudManager.activeInstances.size
+        if (rev == chainRev && huds == chainHuds) return
+        chainRev = rev
+        chainHuds = huds
+        var key = revision.get()
+        var external: Hud? = null
+        val parents = ArrayList<Hud>(0)
         var parent = effectiveAnchorParent
-        var depth = 0
-        while (parent != null && depth++ < MAX_ANCHOR_DEPTH) {
-            key = key * 31 + parent.revision
+        while (parent != null && parents.size < MAX_ANCHOR_DEPTH) {
+            parents.add(parent)
+            key = key * 31 + parent.revision.get()
+            if (external == null && externalGeometry.get(parent.javaClass)) external = parent
             parent = parent.effectiveAnchorParent
         }
-        return key
+        chainKey = key
+        chainExternal = external
+        chainParents = parents
     }
 
     @Transient private var geomShared = -1
@@ -1089,10 +1115,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @Transient private var cachedRenderedW = 0f
     @Transient private var cachedRenderedH = 0f
 
-    @Transient private var geomMinW = Float.NaN
-    @Transient private var geomMinH = Float.NaN
     @Transient private var parentCheckFrame = Long.MIN_VALUE
-    @Transient private var externalParent: Hud? = null
     @Transient private var parentX = 0f
     @Transient private var parentY = 0f
     @Transient private var parentW = 0f
@@ -1109,26 +1132,32 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @get:ApiStatus.Internal
     val hasExternalGeometry: Boolean get() = externalGeometry.get(javaClass)
 
-    internal val followsExternalGeometry: Boolean get() = hasExternalGeometry || findExternalAnchorParent() != null
+    internal val followsExternalGeometry: Boolean get() {
+        if (hasExternalGeometry) return true
+        walkChain()
+        return chainExternal != null
+    }
 
     private fun refreshFrameGeometry() {
+        val frame = HudManager.frameId
+        var parentMoved = false
+        if (parentCheckFrame != frame) {
+            parentCheckFrame = frame
+            frameMinimumSize()
+            for (p in chainParents) p.frameMinimumSize()
+            val parent = chainExternal
+            parentMoved = parent != null && (parent.x != parentX || parent.y != parentY ||
+                parent.scaledWidth != parentW || parent.scaledHeight != parentH)
+        }
+        walkChain()
         val shared = sharedRevision.get()
-        val chain = chainRevision()
         val sw = HudManager.guiScreenWidth
         val sh = HudManager.guiScreenHeight
         val huds = HudManager.activeInstances.size
-        val (minW, minH) = frameMinimumSize()
-        val parent = externalParent
-        val frame = HudManager.frameId
-        val parentMoved = parent != null && parentCheckFrame != frame && (parent.x != parentX || parent.y != parentY ||
-            parent.scaledWidth != parentW || parent.scaledHeight != parentH)
-        parentCheckFrame = frame
-        if (shared == geomShared && chain == geomChain && sw == geomW && sh == geomH && huds == geomHuds && minW == geomMinW &&
-            minH == geomMinH && !parentMoved
-        ) return
+        if (shared == geomShared && chainKey == geomChain && sw == geomW && sh == geomH && huds == geomHuds && !parentMoved) return
         if (parentMoved) bumpHudStateRevision()
         geomShared = shared
-        geomChain = chain
+        geomChain = chainKey
         cachedScale = effectiveScale
         cachedRenderedW = renderedW
         cachedRenderedH = renderedH
@@ -1137,26 +1166,12 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         geomW = sw
         geomH = sh
         geomHuds = huds
-        geomMinW = minW
-        geomMinH = minH
-        val ext = findExternalAnchorParent()
-        externalParent = ext
-        if (ext != null) {
+        chainExternal?.let { ext ->
             parentX = ext.x
             parentY = ext.y
             parentW = ext.scaledWidth
             parentH = ext.scaledHeight
         }
-    }
-
-    private fun findExternalAnchorParent(): Hud? {
-        var parent = effectiveAnchorParent
-        var depth = 0
-        while (parent != null && depth++ < MAX_ANCHOR_DEPTH) {
-            if (externalGeometry.get(parent.javaClass)) return parent
-            parent = parent.effectiveAnchorParent
-        }
-        return null
     }
 
     @get:ApiStatus.Internal
@@ -1451,7 +1466,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         unpinPending = false
         isVisible = mutableStateOf(false)
         visibleShadow = false
-        externalParent = null
+        revision = AtomicInteger(this@Hud.revision.get())
+        chainRev = -1
+        chainExternal = null
+        chainParents = emptyList()
         geomShared = -1
         bumpHudStateRevision()
         showKey = -1
@@ -1510,6 +1528,15 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     }
 
     private companion object {
+        private val pendingWrites = ConcurrentHashMap<Any, Hud>()
+
+        init {
+            Snapshot.registerApplyObserver { changed, _ ->
+                if (pendingWrites.isEmpty()) return@registerApplyObserver
+                for (state in changed) pendingWrites.remove(state)?.bumpRevision()
+            }
+        }
+
         private fun sanitizeHudCapturedDefaults(tree: Tree) {
             for (id in listOf("staticW", "staticH")) {
                 val prop = tree.getProp(id) ?: continue

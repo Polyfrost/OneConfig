@@ -1,5 +1,8 @@
 package org.polyfrost.oneconfig.api.hud.v1;
 
+import androidx.compose.runtime.snapshots.MutableSnapshot;
+import androidx.compose.runtime.snapshots.Snapshot;
+import kotlin.Unit;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 
@@ -48,5 +51,26 @@ class HudFrameCacheTest {
         assertEquals(10f, hud.getFrameX());
         hud.externalX = 42f;
         assertEquals(42f, hud.getFrameX(), "a class overriding x never serves a stale cached value");
+    }
+
+    @Test
+    void snapshotWritesRefreshOnApply() {
+        ConfigManager.active();
+        HudManager.guiScreenWidth = 960f;
+        HudManager.guiScreenHeight = 540f;
+        HudManager.isGuiScreenOpen = false;
+        CacheHud hud = new CacheHud();
+        hud.getFrameX();
+
+        MutableSnapshot snapshot = Snapshot.Companion.takeMutableSnapshot(null, null);
+        try {
+            snapshot.enter(() -> { hud.setRelativeX(120f); return Unit.INSTANCE; });
+            assertEquals(0f, hud.getFrameX());
+            snapshot.apply().check();
+        } finally {
+            snapshot.dispose();
+        }
+        assertEquals(120f, hud.getX());
+        assertEquals(hud.getX(), hud.getFrameX(), "applying the snapshot refreshes the cached x");
     }
 }
