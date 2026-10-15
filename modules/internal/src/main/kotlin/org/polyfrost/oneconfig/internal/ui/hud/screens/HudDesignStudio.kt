@@ -2823,6 +2823,8 @@ private fun rememberHudSearchResults(providers: List<Hud>, query: String): List<
 private val Hud.addableToLibrary: Boolean
     get() = multipleInstancesAllowed() || !HudManager.hasHudOfType(this::class.java)
 
+private val HudLibraryGutter = 18.dp
+
 private class HudLibrarySection(val modId: String?, val title: String, val huds: List<Hud>)
 
 /** Map key for a section since the catch-all section has no mod id */
@@ -3016,11 +3018,11 @@ private fun HudLibraryPanel(
             .then(modifier)
             .background(theme.popupBackground, theme.backgroundShape)
             .border(1.dp, theme.borderColor, theme.backgroundShape)
-            .padding(18.dp),
+            .padding(vertical = HudLibraryGutter),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = HudLibraryGutter),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -3031,17 +3033,18 @@ private fun HudLibraryPanel(
             }
         }
         if (suggestEvergreenHud) {
-            EvergreenHudSuggestion(Modifier.fillMaxWidth().weight(1f))
+            EvergreenHudSuggestion(Modifier.fillMaxWidth().weight(1f).padding(horizontal = HudLibraryGutter))
             return@Column
         }
         Text(
             "Click to add  ·  Drag to place it yourself",
+            modifier = Modifier.padding(horizontal = HudLibraryGutter),
             color = theme.textColorSecondary,
             fontSize = 11.sp,
         )
         Box(Modifier.fillMaxWidth().weight(1f)) {
             BoxWithConstraints(Modifier.fillMaxSize()) {
-                val maxCardWidth = maxWidth - 16.dp
+                val maxCardWidth = maxWidth - HudLibraryGutter * 2
                 val density = LocalDensity.current
                 val (items, sectionIndexes, previewsMeasured, previews, geometry) = rememberHudLibraryLayout(sections, maxCardWidth)
                 val completeScroll by rememberUpdatedState(onScrollComplete)
@@ -3074,38 +3077,39 @@ private fun HudLibraryPanel(
                     }
                     completeScroll(target, false)
                 }
-                LazyColumn(
-                    state = scrollState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(end = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    if (sections.isEmpty()) {
-                        item(key = "empty") {
-                            Text(
-                                "No HUDs found",
-                                color = theme.textColorSecondary,
-                                fontSize = 14.sp,
-                            )
+                ScrollbarBox(scrollState, scrollbarAdapter, HudLibraryGutter, Modifier.fillMaxSize()) {
+                    LazyColumn(
+                        state = scrollState,
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = HudLibraryGutter),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        if (sections.isEmpty()) {
+                            item(key = "empty") {
+                                Text(
+                                    "No HUDs found",
+                                    color = theme.textColorSecondary,
+                                    fontSize = 14.sp,
+                                )
+                            }
                         }
-                    }
-                    items.forEach { libraryItem ->
-                        item(key = libraryItem.key, contentType = if (libraryItem.row == null) "header" else "cards") {
-                            val row = libraryItem.row
-                            if (row == null) {
-                                HudLibraryHeader(libraryItem.section, active = libraryItem.section.modId == activeModId)
-                            } else {
-                                Row(
-                                    modifier = Modifier.padding(bottom = libraryItem.bottomPadding),
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                ) {
-                                    row.huds.forEach { hud ->
-                                        key(hud) {
-                                            if (hud is LegacyHud) {
-                                                LegacyHudPreviewCard(hud, geometry.getValue(hud), onDragStart, onCardClick)
-                                            } else {
-                                                ComposeHudPreviewCard(hud, previews.getValue(hud), geometry.getValue(hud), onDragStart, onCardClick)
+                        items.forEach { libraryItem ->
+                            item(key = libraryItem.key, contentType = if (libraryItem.row == null) "header" else "cards") {
+                                val row = libraryItem.row
+                                if (row == null) {
+                                    HudLibraryHeader(libraryItem.section, active = libraryItem.section.modId == activeModId)
+                                } else {
+                                    Row(
+                                        modifier = Modifier.padding(bottom = libraryItem.bottomPadding),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    ) {
+                                        row.huds.forEach { hud ->
+                                            key(hud) {
+                                                if (hud is LegacyHud) {
+                                                    LegacyHudPreviewCard(hud, geometry.getValue(hud), onDragStart, onCardClick)
+                                                } else {
+                                                    ComposeHudPreviewCard(hud, previews.getValue(hud), geometry.getValue(hud), onDragStart, onCardClick)
+                                                }
                                             }
                                         }
                                     }
@@ -3114,10 +3118,6 @@ private fun HudLibraryPanel(
                         }
                     }
                 }
-                VerticalScrollbar(
-                    adapter = scrollbarAdapter,
-                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
-                )
             }
         }
     }

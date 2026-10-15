@@ -68,7 +68,7 @@ fun ItemListOption(data: ItemListOptionData) {
                     .clip(SelectorShape)
                     .background(theme.popupBackground, SelectorShape)
                     .border(1.dp, theme.borderColor, SelectorShape)
-                    .padding(12.dp),
+                    .padding(vertical = 12.dp),
                 onToggle = { id ->
                     val next = toggleItem(state.values, id, data.maxEntries)
                     if (next != state.values) state.replace(next)
