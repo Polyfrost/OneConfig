@@ -120,12 +120,12 @@ private const val MIN_VISIBLE = 12f
 
 internal const val POS_SCHEMA = 1
 
-// every open getter the cached frame geometry reads
+// every open getter the cached frame geometry or the background merge key reads
 // a subclass overriding one of these is read live, so a new open geometry property must be added here
 // or an override of it would be served a stale cached value
 private val GEOMETRY_GETTERS = arrayOf(
     "getX", "getY", "getRelativeX", "getRelativeY", "getRenderedW", "getRenderedH",
-    "getCustomScale", "getScaledWidth", "getScaledHeight", "getStaticW", "getStaticH",
+    "getCustomScale", "getScaledWidth", "getScaledHeight", "getStaticW", "getStaticH", "getHidden",
 )
 
 private val externalGeometry = object : ClassValue<Boolean>() {
@@ -1065,8 +1065,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     private fun <T> MutableState<T>.put(v: T) {
         if (Snapshot.withoutReadObservation { value } == v) return
         value = v
-        if (Snapshot.isInSnapshot) synchronized(pendingWrites) { pendingWrites[this] = WeakReference(this@Hud) }
-        bumpRevision()
+        if (Snapshot.isInSnapshot) synchronized(pendingWrites) { pendingWrites[this] = PendingWrite(this@Hud) }
+        else bumpRevision()
     }
 
     @Transient private var chainHuds = -1
@@ -1111,8 +1111,6 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @Transient private var cachedScale = 1f
     @Transient private var cachedX = 0f
     @Transient private var cachedY = 0f
-    @Transient private var cachedRenderedW = 0f
-    @Transient private var cachedRenderedH = 0f
 
     @Transient private var parentCheckFrame = Long.MIN_VALUE
     @Transient private var parentGeom = FloatArray(0)
@@ -1172,8 +1170,6 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         geomH = sh
         geomGuiScale = guiScaleInput()
         cachedScale = effectiveScale
-        cachedRenderedW = renderedW
-        cachedRenderedH = renderedH
         cachedX = x
         cachedY = y
         val ext = chainExternal
@@ -1199,12 +1195,6 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     @get:ApiStatus.Internal
     val frameY: Float get() = if (refreshFrameGeometry()) cachedY else y
-
-    @get:ApiStatus.Internal
-    val frameRenderedW: Float get() = if (refreshFrameGeometry()) cachedRenderedW else renderedW
-
-    @get:ApiStatus.Internal
-    val frameRenderedH: Float get() = if (refreshFrameGeometry()) cachedRenderedH else renderedH
 
     override fun addToInitQueue() {}
 
@@ -1520,13 +1510,21 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     }
 
     private companion object {
-        private val pendingWrites = WeakHashMap<Any, WeakReference<Hud>>()
+        private class PendingWrite(hud: Hud) : WeakReference<Hud>(hud) {
+            val at = System.nanoTime()
+        }
+
+        private const val PENDING_WRITE_TTL_NANOS = 10_000_000_000L
+
+        private val pendingWrites = WeakHashMap<Any, PendingWrite>()
 
         init {
             Snapshot.registerApplyObserver { changed, _ ->
                 synchronized(pendingWrites) {
                     if (pendingWrites.isEmpty()) return@registerApplyObserver
                     for (state in changed) pendingWrites.remove(state)?.get()?.bumpRevision()
+                    val cutoff = System.nanoTime() - PENDING_WRITE_TTL_NANOS
+                    pendingWrites.values.removeIf { it.at - cutoff < 0 }
                 }
             }
         }

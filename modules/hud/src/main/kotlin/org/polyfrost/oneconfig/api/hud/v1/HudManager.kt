@@ -679,8 +679,7 @@ object HudManager {
      * when a position or size or background style actually changed
      */
     private fun updateBackgroundGroups(huds: List<Hud>, screenWidth: Float, screenHeight: Float, scale: Float) {
-        var stable = !isGuiScreenOpen && lastMergeKey != null && huds.size == mergeCheckHuds.size &&
-            screenWidth == mergeCheckW && screenHeight == mergeCheckH && scale == mergeCheckScale
+        var stable = lastMergeKey != null && huds.size == mergeCheckHuds.size
         if (mergeCheckHuds.size != huds.size) {
             mergeCheckHuds = arrayOfNulls(huds.size)
             mergeCheckStamps = IntArray(huds.size)
@@ -693,9 +692,6 @@ object HudManager {
             mergeCheckStamps[i] = stamp
         }
         if (stable) return
-        mergeCheckW = screenWidth
-        mergeCheckH = screenHeight
-        mergeCheckScale = scale
         val key = HudBackgroundMerge.layoutKey(huds)
         if (key == lastMergeKey) return
         lastMergeKey = key
@@ -737,9 +733,6 @@ object HudManager {
     private var mergeExclusions: List<Hud> = emptyList()
     private var mergeCheckHuds = arrayOfNulls<Hud>(0)
     private var mergeCheckStamps = IntArray(0)
-    private var mergeCheckW = Float.NaN
-    private var mergeCheckH = Float.NaN
-    private var mergeCheckScale = Float.NaN
 
     /**
      * HUDs kept out of merging for now

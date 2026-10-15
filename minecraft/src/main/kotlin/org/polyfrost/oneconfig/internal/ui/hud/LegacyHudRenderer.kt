@@ -76,7 +76,7 @@ object LegacyHudRenderer {
                 val (mw, mh) = hud.frameMinimumSize()
                 val w = mw * hudScale
                 val h = mh * hudScale
-                if (hud.frameRenderedW != w || hud.frameRenderedH != h) {
+                if (hud.renderedW != w || hud.renderedH != h) {
                     Snapshot.withMutableSnapshot {
                         hud.renderedW = w
                         hud.renderedH = h

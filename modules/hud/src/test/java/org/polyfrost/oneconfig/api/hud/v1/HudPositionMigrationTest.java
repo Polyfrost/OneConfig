@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
@@ -36,8 +37,16 @@ class HudPositionMigrationTest {
 
     private static boolean registered = false;
 
+    private boolean savedGuiOpen;
+
+    @AfterEach
+    void restoreGuiOpen() {
+        HudManager.isGuiScreenOpen = savedGuiOpen;
+    }
+
     @BeforeEach
     void setUp() throws Exception {
+        savedGuiOpen = HudManager.isGuiScreenOpen;
         ConfigManager.active();
         ConfigManager.openProfile("");
         if (!registered) {
