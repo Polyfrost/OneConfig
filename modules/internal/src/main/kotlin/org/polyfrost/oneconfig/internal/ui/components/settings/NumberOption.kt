@@ -62,6 +62,13 @@ fun filterNumberInput(input: String): String {
     return sb.toString()
 }
 
+/** How far a spinner's arrows move when the option has no step of its own, whole bounds step by 1 and others by 0.1 */
+fun spinnerStep(step: Float, min: Float, max: Float): Float = when {
+    step > 0f -> step
+    min == min.roundToInt().toFloat() && max == max.roundToInt().toFloat() -> 1f
+    else -> 0.1f
+}
+
 fun formatSpinnerValue(v: Float): String =
     if (v == v.toLong().toFloat()) v.toLong().toString() else String.format(Locale.ROOT, "%.2f", v)
 
@@ -106,14 +113,20 @@ fun NumberSpinner(
     step: Float,
     width: Dp = 87.dp,
     format: ((Float) -> String)? = null,
+    arrowMin: Float = min,
+    arrowMax: Float = max,
+    onEditEnd: (() -> Unit)? = null,
 ) {
     val theme = LocalTheme.current
     var focused by remember { mutableStateOf(false) }
     val formatted = if (format != null && !focused) format(value) else null
     var text by remember(value) { mutableStateOf(formatSpinnerValue(value)) }
 
+    val arrowLo = maxOf(min, arrowMin)
+    val arrowHi = maxOf(arrowLo, minOf(max, arrowMax))
+
     fun commit(v: Float) {
-        val clamped = v.coerceIn(min, max)
+        val clamped = v.coerceIn(arrowLo, arrowHi)
         text = formatSpinnerValue(clamped)
         onValueChange(clamped)
     }
@@ -150,12 +163,15 @@ fun NumberSpinner(
                 }
             },
             modifier = Modifier.trackTextInputFocus()
-                .onFocusChanged { focused = it.isFocused }
+                .onFocusChanged {
+                    if (focused && !it.isFocused) onEditEnd?.invoke()
+                    focused = it.isFocused
+                }
                 .weight(1f)
                 .padding(start = 8.dp, top = 5.dp, bottom = 5.dp),
         )
 
-        SpinnerArrows(value, min, max, step) { commit(it) }
+        SpinnerArrows(value, arrowLo, arrowHi, step) { commit(it) }
     }
 }
 

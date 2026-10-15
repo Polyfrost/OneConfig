@@ -259,6 +259,36 @@ public class TestConfig_Test extends Config {
     )
     public static float[] range = {25f, 75f};
 
+    @RangeNumber(
+            title = "Range Number",
+            description = "Two inputs, no track, for spans too wide to drag.",
+            min = 0f,
+            max = 1000000f
+    )
+    public static int[] rangeNumber = {1200, 36000};
+
+    @RangeSliderList(
+            title = "Range Slider List",
+            description = "A two-handle slider per entry, stored flat as start, end pairs.",
+            category = "Lists",
+            subcategory = "Other Lists",
+            step = 5f,
+            addText = "Add range"
+    )
+    public static float[] rangeSliderList = {0f, 25f, 50f, 75f};
+
+    @RangeNumberList(
+            title = "Range Number List",
+            description = "A pair of inputs per entry.",
+            category = "Lists",
+            subcategory = "Other Lists",
+            min = 0f,
+            max = 72000f,
+            maxEntries = 4,
+            addText = "Add range"
+    )
+    public static int[] rangeNumberList = {0, 600, 1200, 9600};
+
     // everything below is disabled rather than hidden while the master switch is off so that
     // disabled options can be checked for being non-interactable
     @Switch(

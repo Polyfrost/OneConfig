@@ -28,10 +28,12 @@ package org.polyfrost.oneconfig.api.config.v1.collect.impl;
 
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import kotlin.Unit;
@@ -201,7 +203,9 @@ public class OneConfigCollector extends ReflectiveCollector {
                     throw new IllegalArgumentException(String.format("@RangeSlider field '%s' has step (%s) larger than its range (%s to %s, range=%s). The slider will not function correctly.",
                         field.getName(), slider.step(), slider.min(), slider.max(), range));
                 }
+                validateRangeField(field, property, "@RangeSlider");
             }
+            case RangeNumber ignored -> validateRangeField(field, property, "@RangeNumber");
             case SliderList slider -> {
                 float range = slider.max() - slider.min();
                 if (slider.step() > 0f && slider.step() > range) {
@@ -209,6 +213,15 @@ public class OneConfigCollector extends ReflectiveCollector {
                         field.getName(), slider.step(), slider.min(), slider.max(), range));
                 }
             }
+            case RangeSliderList slider -> {
+                float range = slider.max() - slider.min();
+                if (slider.step() > 0f && slider.step() > range) {
+                    throw new IllegalArgumentException(String.format("@RangeSliderList field '%s' has step (%s) larger than its range (%s to %s, range=%s). The sliders will not function correctly.",
+                        field.getName(), slider.step(), slider.min(), slider.max(), range));
+                }
+                validateRangeListField(field, property, "@RangeSliderList");
+            }
+            case RangeNumberList ignored -> validateRangeListField(field, property, "@RangeNumberList");
             case Color color -> {
                 if (!color.alpha()) property.addMetadata("noAlpha", Unit.INSTANCE);
             }
@@ -228,6 +241,39 @@ public class OneConfigCollector extends ReflectiveCollector {
                 map.put(s, property.getID());
             }
         }
+    }
+
+    /** A single range needs exactly a start and end, anything else shows min to max and the first write resizes it */
+    private void validateRangeField(Field field, Property<?> property, String annotationName) {
+        int size = rangeFieldSize(field, property, annotationName);
+        if (size >= 0 && size != 2) {
+            throw new IllegalArgumentException(String.format(
+                "%s field '%s' holds %d values but needs exactly a start and an end.",
+                annotationName, field.getName(), size
+            ));
+        }
+    }
+
+    private void validateRangeListField(Field field, Property<?> property, String annotationName) {
+        int size = rangeFieldSize(field, property, annotationName);
+        if (size >= 0 && size % 2 != 0) {
+            throw new IllegalArgumentException(String.format(
+                "%s field '%s' holds %d values but needs a start and end for every range, so an even count.",
+                annotationName, field.getName(), size
+            ));
+        }
+    }
+
+    /** The number of values a range field holds or -1 while it is null */
+    private int rangeFieldSize(Field field, Property<?> property, String annotationName) {
+        Object value = property.get();
+        if (value == null) return -1;
+        if (value.getClass().isArray()) return Array.getLength(value);
+        if (value instanceof Collection<?> c) return c.size();
+        throw new IllegalArgumentException(String.format(
+            "%s field '%s' must be a numeric array or List, but was %s.",
+            annotationName, field.getName(), field.getGenericType().getTypeName()
+        ));
     }
 
     private void validateItemListField(Field field, ItemList annotation) {
