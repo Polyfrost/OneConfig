@@ -34,6 +34,6 @@ dependencies {
 
     implementation(plugin(neoforge.plugins.moddev))
 
-    implementation("dev.kikugie.stonecutter:dev.kikugie.stonecutter.gradle.plugin:0.9")
+    implementation("dev.kikugie.stonecutter:dev.kikugie.stonecutter.gradle.plugin:0.9.8")
     implementation("me.modmuss50.mod-publish-plugin:me.modmuss50.mod-publish-plugin.gradle.plugin:1.1.0")
 }
