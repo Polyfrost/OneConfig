@@ -6,7 +6,10 @@ import kotlin.Unit;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 
+import java.lang.reflect.Method;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 class HudFrameCacheTest {
     static class CacheHud extends TextHud {
@@ -72,5 +75,33 @@ class HudFrameCacheTest {
         }
         assertEquals(120f, hud.getX());
         assertEquals(hud.getX(), hud.getFrameX(), "applying the snapshot refreshes the cached x");
+    }
+
+    @Test
+    void cachedPositionFollowsEachAxisMergeParent() throws Exception {
+        ConfigManager.active();
+        HudManager.guiScreenWidth = 960f;
+        HudManager.guiScreenHeight = 540f;
+        HudManager.isGuiScreenOpen = false;
+        CacheHud left = new CacheHud();
+        CacheHud above = new CacheHud();
+        CacheHud child = new CacheHud();
+        left.setAbsolutePosition(100f, 300f);
+        above.setAbsolutePosition(300f, 100f);
+        child.setAbsolutePosition(300f, 300f);
+
+        Method apply = null;
+        for (Method m : Hud.class.getDeclaredMethods()) {
+            if (m.getName().startsWith("applyMergeLink")) apply = m;
+        }
+        apply.setAccessible(true);
+        apply.invoke(child, left, HudAnchor.Left, HudAnchor.Right, MergeAxis.X);
+        apply.invoke(child, above, HudAnchor.Top, HudAnchor.Bottom, MergeAxis.Y);
+
+        float before = child.getFrameY();
+        assertEquals(child.getY(), before, 0.001f);
+        above.setAbsolutePosition(300f, 150f);
+        assertNotEquals(before, child.getY(), 0.001f, "the Y merge parent moved so the child must move");
+        assertEquals(child.getY(), child.getFrameY(), 0.001f, "the Y merge parent's move must refresh the cached y");
     }
 }

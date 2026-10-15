@@ -26,7 +26,8 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
-import java.util.concurrent.ConcurrentHashMap
+import java.lang.ref.WeakReference
+import java.util.WeakHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 import androidx.compose.runtime.Composable
@@ -1073,7 +1074,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     private fun <T> MutableState<T>.put(v: T) {
         if (Snapshot.withoutReadObservation { value } == v) return
         value = v
-        if (Snapshot.isInSnapshot) pendingWrites[this] = this@Hud
+        if (Snapshot.isInSnapshot) synchronized(pendingWrites) { pendingWrites[this] = WeakReference(this@Hud) }
         bumpRevision()
     }
 
@@ -1092,12 +1093,24 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         var key = revision.get()
         var external: Hud? = null
         val parents = ArrayList<Hud>(0)
-        var parent = effectiveAnchorParent
-        while (parent != null && parents.size < MAX_ANCHOR_DEPTH) {
+        fun visit(parent: Hud?) {
+            if (parent == null || parent === this || parents.any { it === parent }) return
             parents.add(parent)
             key = key * 31 + parent.revision.get()
             if (external == null && externalGeometry.get(parent.javaClass)) external = parent
-            parent = parent.effectiveAnchorParent
+        }
+        var node = this
+        var next = 0
+        while (true) {
+            val anchor = node.anchorParent
+            if (anchor != null) {
+                visit(anchor)
+            } else {
+                visit(node.mergeLinkX?.parent)
+                visit(node.mergeLinkY?.parent)
+            }
+            if (next == parents.size) break
+            node = parents[next++]
         }
         chainKey = key
         chainExternal = external
@@ -1126,7 +1139,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             geomShared = -1
             return true
         }
-        return hasExternalGeometry
+        return hasExternalGeometry || Snapshot.isInSnapshot
     }
 
     @get:ApiStatus.Internal
@@ -1143,6 +1156,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         var parentMoved = false
         if (parentCheckFrame != frame) {
             parentCheckFrame = frame
+            walkChain()
             frameMinimumSize()
             for (p in chainParents) p.frameMinimumSize()
             val parent = chainExternal
@@ -1155,7 +1169,6 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         val sh = HudManager.guiScreenHeight
         val huds = HudManager.activeInstances.size
         if (shared == geomShared && chainKey == geomChain && sw == geomW && sh == geomH && huds == geomHuds && !parentMoved) return
-        if (parentMoved) bumpHudStateRevision()
         geomShared = shared
         geomChain = chainKey
         cachedScale = effectiveScale
@@ -1528,12 +1541,14 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     }
 
     private companion object {
-        private val pendingWrites = ConcurrentHashMap<Any, Hud>()
+        private val pendingWrites = WeakHashMap<Any, WeakReference<Hud>>()
 
         init {
             Snapshot.registerApplyObserver { changed, _ ->
-                if (pendingWrites.isEmpty()) return@registerApplyObserver
-                for (state in changed) pendingWrites.remove(state)?.bumpRevision()
+                synchronized(pendingWrites) {
+                    if (pendingWrites.isEmpty()) return@registerApplyObserver
+                    for (state in changed) pendingWrites.remove(state)?.get()?.bumpRevision()
+                }
             }
         }
 
