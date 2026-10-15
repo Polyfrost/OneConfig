@@ -66,6 +66,10 @@ import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.Paint
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.RenderContext
+import org.polyfrost.oneconfig.api.config.v1.Config
+import org.polyfrost.oneconfig.api.config.v1.Properties
+import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
@@ -2364,7 +2368,7 @@ internal fun duplicateHud(
         return null
     }
     Snapshot.withMutableSnapshot {
-        fresh.tree.overwrite(copied.tree, true, false, null)
+        fresh.tree.overwrite(detachedValues(copied.tree), true, false, null)
         fresh.hidden = copied.hidden
         fresh.locked = copied.locked
         fresh.staticWidth = copied.staticWidth
@@ -2395,6 +2399,22 @@ internal fun duplicateHud(
     fresh.capturePositionDefaults()
     HudManager.invalidate()
     return fresh
+}
+
+@Suppress("UNCHECKED_CAST")
+private fun detachedValues(tree: Tree): Tree {
+    val out = Tree(tree.id, null, null, null)
+    for ((key, node) in tree.map) {
+        when (node) {
+            is Tree -> out.put(detachedValues(node))
+            is Property<*> -> {
+                if (node.type == Void::class.java) continue
+                val value = node.get() ?: continue
+                out.put(Properties.simple(key, null, null, Config.copyDefault(node.type, value), node.type as Class<Any?>))
+            }
+        }
+    }
+    return out
 }
 
 internal fun duplicateHudGroup(
