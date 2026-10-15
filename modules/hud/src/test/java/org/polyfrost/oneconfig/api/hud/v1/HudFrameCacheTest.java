@@ -54,10 +54,12 @@ class HudFrameCacheTest {
         HudManager.isGuiScreenOpen = false;
         CacheHud hud = new CacheHud();
 
-        int rev = HudKt.getHudStateRevision();
+        int stamp = hud.getGeometryStamp$hud();
         hud.setHidden(true);
+        int hidden = hud.getGeometryStamp$hud();
+        assertNotEquals(stamp, hidden, "a changing write invalidates the cache");
         hud.setHidden(true);
-        assertEquals(rev + 1, HudKt.getHudStateRevision(), "only a changing write bumps the revision");
+        assertEquals(hidden, hud.getGeometryStamp$hud(), "a write of the same value leaves the cache alone");
 
         hud.setSection(Section.TopRight);
         hud.setRelativeX(50f);

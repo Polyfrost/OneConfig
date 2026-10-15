@@ -196,9 +196,7 @@ class HudPositionMigrationTest {
         hud.anchorTo(target, HudAnchor.Right, HudAnchor.Left);
         assertEquals(hud.getX(), hud.getFrameX(), 0.001f);
 
-        int ownBefore = HudKt.getHudStateRevision();
         target.setAbsolutePosition(100f, 50f);
-        assertTrue(HudKt.getHudStateRevision() > ownBefore);
         assertEquals(hud.getX(), hud.getFrameX(), 0.001f, "moving the target must refresh the anchored HUD's cached x");
         assertEquals(hud.getY(), hud.getFrameY(), 0.001f, "moving the target must refresh the anchored HUD's cached y");
     }
@@ -216,12 +214,10 @@ class HudPositionMigrationTest {
         target.setAbsolutePosition(100f, 50f);
         float anchored = hud.getFrameX();
 
-        int rev = HudKt.getHudStateRevision();
         List<Hud> active = HudManager.INSTANCE.getActiveInstances();
         active.remove(target);
         active.add(stranger);
         HudManager.INSTANCE.getInstancesRevision().setIntValue(HudManager.INSTANCE.getInstancesRevision().getIntValue() + 1);
-        assertEquals(rev, HudKt.getHudStateRevision());
 
         assertNotEquals(anchored, hud.getX(), 0.001f, "losing the target must move the HUD");
         assertEquals(hud.getX(), hud.getFrameX(), 0.001f, "swapping a HUD out must refresh the cached x");

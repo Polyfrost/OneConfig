@@ -120,15 +120,9 @@ private const val MIN_VISIBLE = 12f
 
 internal const val POS_SCHEMA = 1
 
-private val stateRevision = AtomicInteger()
-
-@get:ApiStatus.Internal
-val hudStateRevision: Int get() = stateRevision.get()
-
-internal fun bumpHudStateRevision() {
-    stateRevision.incrementAndGet()
-}
-
+// every open getter the cached frame geometry reads
+// a subclass overriding one of these is read live, so a new open geometry property must be added here
+// or an override of it would be served a stale cached value
 private val GEOMETRY_GETTERS = arrayOf(
     "getX", "getY", "getRelativeX", "getRelativeY", "getRenderedW", "getRenderedH",
     "getCustomScale", "getScaledWidth", "getScaledHeight", "getStaticW", "getStaticH",
@@ -615,6 +609,11 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     }
 
     private var pinnedCorner: HudAnchor? = null
+        set(v) {
+            if (field == v) return
+            field = v
+            bumpRevision()
+        }
     private var unpinPending = false
 
     @ApiStatus.Internal
@@ -1061,7 +1060,6 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     private fun bumpRevision() {
         revision.incrementAndGet()
-        bumpHudStateRevision()
     }
 
     private fun <T> MutableState<T>.put(v: T) {
@@ -1071,17 +1069,14 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         bumpRevision()
     }
 
-    @Transient private var chainRev = -1
     @Transient private var chainHuds = -1
     @Transient private var chainExternal: List<Hud> = emptyList()
     @Transient private var chainParents: List<Hud> = emptyList()
 
+    private val instancesRevision: Int get() = Snapshot.withoutReadObservation { HudManager.instancesRevision.intValue }
+
     private fun walkChain() {
-        val rev = hudStateRevision
-        val huds = Snapshot.withoutReadObservation { HudManager.instancesRevision.intValue }
-        if (rev == chainRev && huds == chainHuds) return
-        chainRev = rev
-        chainHuds = huds
+        chainHuds = instancesRevision
         var external: ArrayList<Hud>? = null
         val parents = ArrayList<Hud>(0)
         fun visit(parent: Hud?) {
@@ -1109,7 +1104,6 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @Transient private var geomValid = false
     @Transient private var geomStamp = 0
     @Transient private var geomRev = 0
-    @Transient private var geomParents: List<Hud> = emptyList()
     @Transient private var geomParentRevs = IntArray(0)
     @Transient private var geomW = Float.NaN
     @Transient private var geomH = Float.NaN
@@ -1123,8 +1117,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @Transient private var parentCheckFrame = Long.MIN_VALUE
     @Transient private var parentGeom = FloatArray(0)
 
-    @get:ApiStatus.Internal
-    val hasExternalGeometry: Boolean get() = externalGeometry.get(javaClass)
+    internal val hasExternalGeometry: Boolean get() = externalGeometry.get(javaClass)
 
     private fun externalParentMoved(): Boolean {
         val ext = chainExternal
@@ -1140,14 +1133,16 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     }
 
     private fun chainChanged(): Boolean {
-        if (geomRev != revision.get()) return true
+        if (geomRev != revision.get() || chainHuds != instancesRevision) return true
         val parents = chainParents
-        if (parents.size != geomParents.size) return true
         for (i in parents.indices) {
-            if (parents[i] !== geomParents[i] || parents[i].revision.get() != geomParentRevs[i]) return true
+            if (parents[i].revision.get() != geomParentRevs[i]) return true
         }
         return false
     }
+
+    private fun guiScaleInput(): Float =
+        if (!useGuiScale || chainParents.any { !it.useGuiScale }) Platform.compatibility().options().guiScale else 0f
 
     private fun refreshFrameGeometry(): Boolean {
         if (HudManager.isGuiScreenOpen) {
@@ -1159,25 +1154,23 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         var parentMoved = false
         if (parentCheckFrame != frame) {
             parentCheckFrame = frame
-            walkChain()
             frameMinimumSize()
             for (p in chainParents) p.frameMinimumSize()
             parentMoved = externalParentMoved()
         }
-        walkChain()
         val sw = HudManager.guiScreenWidth
         val sh = HudManager.guiScreenHeight
-        val gui = if (!useGuiScale || chainParents.any { !it.useGuiScale }) Platform.compatibility().options().guiScale else 0f
-        if (geomValid && sw == geomW && sh == geomH && gui == geomGuiScale && !parentMoved && !chainChanged()) return true
+        if (geomValid && sw == geomW && sh == geomH && !parentMoved && !chainChanged() && guiScaleInput() == geomGuiScale) return true
+        walkChain()
+        for (p in chainParents) p.frameMinimumSize()
         val parents = chainParents
         geomValid = true
         geomStamp++
         geomRev = revision.get()
-        geomParents = parents
         geomParentRevs = IntArray(parents.size) { parents[it].revision.get() }
         geomW = sw
         geomH = sh
-        geomGuiScale = gui
+        geomGuiScale = guiScaleInput()
         cachedScale = effectiveScale
         cachedRenderedW = renderedW
         cachedRenderedH = renderedH
@@ -1463,17 +1456,14 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @Suppress("UNCHECKED_CAST")
     override fun clone(): Hud = (super.clone() as Hud).apply {
         _runtime = null
+        revision = AtomicInteger(this@Hud.revision.get())
         pinnedCorner = null
         unpinPending = false
         isVisible = mutableStateOf(false)
-        revision = AtomicInteger(this@Hud.revision.get())
-        chainRev = -1
         chainExternal = emptyList()
         chainParents = emptyList()
         parentGeom = FloatArray(0)
         geomValid = false
-        geomParents = emptyList()
-        bumpHudStateRevision()
         showKey = -1
         toggleKey = -1
         _staticWidth = mutableStateOf(this@Hud.staticWidth)
