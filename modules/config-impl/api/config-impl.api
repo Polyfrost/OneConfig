@@ -87,6 +87,10 @@ public final class org/polyfrost/oneconfig/api/config/v1/Config$Category {
 	public fun toString ()Ljava/lang/String;
 }
 
+public abstract interface class org/polyfrost/oneconfig/api/config/v1/ConfigEntrypoint {
+	public abstract fun registerConfigs ()V
+}
+
 public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public static final field PROFILES_DIR Ljava/nio/file/Path;
 	public static final field PROFILE_LOCAL_METADATA Ljava/lang/String;
@@ -116,6 +120,7 @@ public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public static fun isRebindingProfiles ()Z
 	public fun load (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public static fun openProfile (Ljava/lang/String;)V
+	public static fun pendingConfigIds ()Ljava/util/Set;
 	public static fun profileDir (Ljava/lang/String;)Ljava/nio/file/Path;
 	public static fun profileIcon (Ljava/lang/String;)Ljava/lang/String;
 	public static fun profileIcons ()Ljava/util/Map;
