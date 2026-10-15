@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "2.3.20" // keep compatible with kotlin-dsl
+    kotlin("jvm") version "2.4.21" // keep compatible with kotlin-dsl
     `kotlin-dsl`
 }
 
