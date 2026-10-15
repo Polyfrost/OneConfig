@@ -1086,7 +1086,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     private fun walkChain() {
         val rev = hudStateRevision
-        val huds = HudManager.activeInstances.size
+        val huds = HudManager.instancesModCount
         if (rev == chainRev && huds == chainHuds) return
         chainRev = rev
         chainHuds = huds
@@ -1176,7 +1176,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         val shared = sharedRevision.get()
         val sw = HudManager.guiScreenWidth
         val sh = HudManager.guiScreenHeight
-        val huds = HudManager.activeInstances.size
+        val huds = HudManager.instancesModCount
         if (shared == geomShared && chainKey == geomChain && sw == geomW && sh == geomH && huds == geomHuds && !parentMoved) return
         geomShared = shared
         geomChain = chainKey
@@ -1228,14 +1228,6 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     val frameRenderedH: Float get() {
         if (liveGeometry) return renderedH
         refreshFrameGeometry(); return cachedRenderedH
-    }
-
-    @Transient private var visibleShadow = false
-
-    internal fun markVisible(visible: Boolean) {
-        if (visibleShadow == visible) return
-        visibleShadow = visible
-        isVisible.value = visible
     }
 
     override fun addToInitQueue() {}
@@ -1491,7 +1483,6 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         pinnedCorner = null
         unpinPending = false
         isVisible = mutableStateOf(false)
-        visibleShadow = false
         revision = AtomicInteger(this@Hud.revision.get())
         chainRev = -1
         chainExternal = emptyList()

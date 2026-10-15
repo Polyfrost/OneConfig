@@ -204,6 +204,29 @@ class HudPositionMigrationTest {
     }
 
     @Test
+    void cachedPositionFollowsSwappedAnchorTarget() throws Exception {
+        HudManager.INSTANCE.initialize();
+        HudManager.isGuiScreenOpen = false;
+        Hud stranger = new MigHud();
+
+        Hud hud = HudManager.INSTANCE.getHudsOfType(MigHud.class).get(0);
+        Hud target = HudManager.INSTANCE.getHudsOfType(AnchorHud.class).get(0);
+        target.setAbsolutePosition(300f, 200f);
+        hud.anchorTo(target, HudAnchor.Right, HudAnchor.Left);
+        target.setAbsolutePosition(100f, 50f);
+        float anchored = hud.getFrameX();
+
+        int rev = HudKt.getHudStateRevision();
+        List<Hud> active = HudManager.INSTANCE.getActiveInstances();
+        active.remove(target);
+        active.add(stranger);
+        assertEquals(rev, HudKt.getHudStateRevision());
+
+        assertNotEquals(anchored, hud.getX(), 0.001f, "losing the target must move the HUD");
+        assertEquals(hud.getX(), hud.getFrameX(), 0.001f, "swapping a HUD out must refresh the cached x");
+    }
+
+    @Test
     void cachedPositionFollowsAnchorTargetMinimumSize() throws Exception {
         HudManager.INSTANCE.initialize();
         HudManager.isGuiScreenOpen = false;

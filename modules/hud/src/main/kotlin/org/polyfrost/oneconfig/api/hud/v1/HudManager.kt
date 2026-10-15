@@ -263,7 +263,13 @@ object HudManager {
      * THERE ARE CERTAIN THINGS THAT MUST BE DONE TO PROPERLY REGISTER AN ACTIVE HUD
      */
     @ApiStatus.Internal
-    val activeInstances = ArrayList<Hud>()
+    val activeInstances: ArrayList<Hud> = InstanceList
+
+    private object InstanceList : ArrayList<Hud>() {
+        val mods: Int get() = modCount
+    }
+
+    internal val instancesModCount: Int get() = InstanceList.mods
 
     private class DateTestHud : TextHud.DateTime("Date:", "yyyy-MM-dd", title = "Date")
 
@@ -586,12 +592,12 @@ object HudManager {
                     true
                 }
                 if (!show) {
-                    hud.markVisible(false)
+                    hud.isVisible.value = false
                     continue
                 }
                 frameDrawn[hud] = visible
             }
-            hud.markVisible(visible)
+            hud.isVisible.value = visible
         }
         for (hud in orderedForRender()) {
             val visible = frameDrawn[hud] ?: continue
@@ -905,7 +911,7 @@ object HudManager {
             prepareOrder.clear()
             for (hud in activeInstances) {
                 val visible = hud !is LegacyHudMarker
-                hud.markVisible(visible)
+                hud.isVisible.value = visible
                 if (visible) prepareOrder.add(hud)
             }
             for (hud in prepareOrder) updateIfDue(hud)
@@ -1113,6 +1119,7 @@ object HudManager {
         if (!migrated) return
         layoutRefWidth = screenWidth
         layoutRefHeight = screenHeight
+        bumpHudStateRevision()
         invalidate()
     }
 
