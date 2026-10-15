@@ -58,6 +58,9 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getEffectiveScale ()F
 	public final fun getEffectiveSelfAnchorPoint ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public final fun getFont ()Lorg/polyfrost/oneconfig/api/hud/v1/Font;
+	public final fun getFrameScale ()F
+	public final fun getFrameX ()F
+	public final fun getFrameY ()F
 	public final fun getGrowthAnchor ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public fun getHidden ()Z
 	public final fun getKeepBgWhenHidden ()Z
