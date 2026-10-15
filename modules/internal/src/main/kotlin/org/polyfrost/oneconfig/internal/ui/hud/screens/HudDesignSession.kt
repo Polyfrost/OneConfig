@@ -5,7 +5,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
-import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.hud.resetAllHudProperties
 
 internal sealed interface StudioCommand {
@@ -24,17 +23,13 @@ internal sealed interface StudioCommand {
     data object SelectAll : StudioCommand
 
     data object Lock : StudioCommand
+
+    data object Undo : StudioCommand
+
+    data object Redo : StudioCommand
 }
 
 object HudDesignSession {
-    private var selection: List<Hud> = emptyList()
-
-    private var panelOpen = false
-
-    private var category = StudioCategory.Settings
-
-    private var lastClosedAt = 0L
-
     /** The HUDs currently selected in the design studio so global keybinds can act on them */
     @Volatile
     var activeSelection: List<Hud> = emptyList()
@@ -168,31 +163,19 @@ object HudDesignSession {
         return true
     }
 
-    fun save(selected: List<Hud>, panelOpen: Boolean, category: StudioCategory) {
-        this.selection = selected
-        this.panelOpen = panelOpen
-        this.category = category
-        this.lastClosedAt = System.currentTimeMillis()
+    @JvmStatic
+    fun handleUndo(pressed: Boolean): Boolean {
+        if (!pressed) return false
+        if (!HudManager.isEditorOpen) return false
+        post(StudioCommand.Undo)
+        return true
     }
 
-    fun forget(hud: Hud) {
-        val newSelection = selection - hud
-        if (newSelection.size != selection.size) {
-            selection = newSelection
-            if (newSelection.isEmpty()) panelOpen = false
-        }
+    @JvmStatic
+    fun handleRedo(pressed: Boolean): Boolean {
+        if (!pressed) return false
+        if (!HudManager.isEditorOpen) return false
+        post(StudioCommand.Redo)
+        return true
     }
-
-    fun restoreSelection(): List<Hud> {
-        if (!shouldRestore()) return emptyList()
-        val huds = selection.filter { it in HudManager.activeInstances }
-        if (huds.size != selection.size) selection = huds
-        return huds
-    }
-
-    fun restorePanelOpen(): Boolean = panelOpen
-
-    fun restoreCategory(): StudioCategory = category
-
-    private fun shouldRestore(): Boolean = OneConfigConfig.remembersPageClosedAt(lastClosedAt)
 }

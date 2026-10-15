@@ -33,6 +33,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun clone ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public fun defaultPosition ()Lkotlin/Pair;
 	public fun deletable ()Z
+	public final fun dropMergeLinks ()V
 	public final fun frameMinimumSize ()Lkotlin/Pair;
 	public final fun getAlignment ()Lorg/polyfrost/compose/layout/PolyAlign;
 	public fun getAlwaysRedraw ()Z
@@ -126,6 +127,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun multipleInstancesAllowed ()Z
 	public fun onEditorDragEnd ()V
 	public fun onEditorDragStart ()V
+	public fun pinCorner (Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)V
 	public fun remove ()V
 	public final fun reseedStaticHeight ()V
 	public final fun reseedStaticSizeIfNeeded ()V
@@ -194,9 +196,11 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setVisible (Landroidx/compose/runtime/MutableState;)V
 	public fun setX (F)V
 	public fun setY (F)V
+	public fun settlePin ()V
 	public fun setup ()V
 	public fun shouldShow ()Z
 	public fun showByDefault ()Z
+	public fun unpinCorner ()V
 	public abstract fun update ()Z
 	public final fun updateAndRecalculate ()V
 	public fun updateFrequency ()J
@@ -280,6 +284,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public final fun getActiveInstances ()Ljava/util/ArrayList;
 	public final fun getEditorOpenRevision ()Landroidx/compose/runtime/MutableIntState;
 	public final fun getHudsOfType (Ljava/lang/Class;)Ljava/util/ArrayList;
+	public final fun getInstancesRevision ()Landroidx/compose/runtime/MutableIntState;
 	public final fun getPreviewRevision ()Landroidx/compose/runtime/MutableIntState;
 	public final fun getProvider (Ljava/lang/Class;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public final fun getRenderRevision ()Landroidx/compose/runtime/MutableIntState;

@@ -36,6 +36,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.polyfrost.oneconfig.internal.compat.toggle.ToggleHooks;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
@@ -58,6 +59,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        if (ToggleHooks.isToggleMixin(mixinClassName)) return ToggleHooks.fits(targetClassName, mixinClassName);
         return true;
     }
 
@@ -68,6 +70,11 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
     @Override
     public List<String> getMixins() {
         List<String> mixins = new ArrayList<>();
+
+        //? if = 1.8.9 {
+        /*mixins.add("command.Mixin_LegacyChatCompletion");
+        mixins.add("fixes.Mixin_RememberUnknownOptions");
+        *///?}
 
         //? moul_compat {
         RelocatedMixins.INSTANCE.register(e -> {
@@ -100,6 +107,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
         mixins.add("Mixin_SimpleReloadInstance");
         mixins.add("Mixin_MainMenuFpsUncap");
+        //? if > 1.8.9
+        mixins.add("Mixin_VersionedResourcePacks");
         //? yacl_compat
         mixins.add("compat.yacl.Mixin_YetAnotherConfigLib_Builder");
 
@@ -148,14 +157,19 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? apec_compat
         //mixins.add("compat.apec.Mixin_ApecMenu");
 
+        //? if > 1.8.9 {
         mixins.add("compat.skyhanni.Mixin_SkyHanniRenderData");
 
         mixins.add("compat.armorhud.Mixin_ArmorHudWidgetShown");
 
         mixins.add("compat.firmament.Mixin_FirmamentHudMeta");
+        //?}
         // Firmament has no stable release for 26.2 yet
         //? >= 1.21.8 && < 26.2
         //mixins.add("compat.firmament.Mixin_FirmamentContentCapture");
+
+        // master switches for mods that do not have one, see ModGates
+        mixins.addAll(ToggleHooks.mixins());
 
         //? modmenu_compat
         mixins.add("compat.Mixin_ModMenu");
@@ -182,11 +196,12 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("render.GameRendererAccessor");
         mixins.add("render.GuiRendererAccessor");
         //? }
+        //? if > 1.8.9
         mixins.add("skia.Mixin_ItemAtlasScissor");
         //? if < 1.21.8
         //mixins.add("skia.Mixin_MainTargetRedirect");
         mixins.add("skia.Mixin_DebugOverlayAboveUi");
-        //? < 26.1 {
+        //? if < 26.1 && > 1.8.9 {
         /*mixins.add("skia.Mixin_ScreenshotComposite");
         *///? }
         mixins.add("skia.Mixin_InitSkiaFontRenderer");
@@ -194,7 +209,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
         //? if >= 1.21.10 {
         mixins.add("keybind.Mixin_KeybindCategoryLabel");
-        //?} else
+        //?} elif > 1.8.9
         //mixins.add("keybind.KeyMappingCategoryAccessor");
 
         mixins.add("keybind.Mixin_OneConfigKeybindRebind");

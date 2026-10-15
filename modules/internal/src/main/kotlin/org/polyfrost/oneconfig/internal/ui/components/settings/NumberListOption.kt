@@ -66,6 +66,7 @@ private fun RowScope.NumberEntry(
             max = data.max,
             step = step,
             width = 66.dp,
+            format = data.format,
         )
     } else {
         Box(modifier = Modifier.weight(1f)) {
@@ -75,6 +76,7 @@ private fun RowScope.NumberEntry(
                 min = data.min,
                 max = data.max,
                 step = step,
+                format = data.format,
             )
         }
     }

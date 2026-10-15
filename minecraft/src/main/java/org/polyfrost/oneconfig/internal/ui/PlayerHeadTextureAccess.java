@@ -13,10 +13,12 @@ public final class PlayerHeadTextureAccess {
      * <p>
      * It must be consumed on the client thread before the calling task returns
      */
+    //~ if = 1.8.9 'AbstractTexture' -> 'Texture'
     public static NativeImage readPixels(AbstractTexture texture) {
         if (texture == null) {
             return null;
         }
+        //~ if = 1.8.9 'DynamicTexture' -> 'HttpTexture'
         if (texture instanceof DynamicTexture dynamicTexture) {
             return dynamicTexture.getPixels();
         }

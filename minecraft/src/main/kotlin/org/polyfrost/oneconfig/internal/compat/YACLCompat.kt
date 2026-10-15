@@ -25,6 +25,7 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.compat.CompatIds.componentKey
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
+import org.polyfrost.oneconfig.internal.compat.toggle.ModGates
 
 object YACLCompat {
 
@@ -108,13 +109,36 @@ object YACLCompat {
                 return
             }
             LOGGER.info("Creating config wrapper for " + mod?.id)
-            val tree = parseYACLInstance(yaclInstance, mod)
-            if (tree != null) {
-                CompatSnapshots.register(tree)
-                CompatLoader.markFirstModAsSkip()
+            // the options were built from what the config held, which for a mod that is switched off is not
+            // what the user chose, and they keep that copy rather than reading the config again
+            val masked = ModGates.isMasked(mod?.id)
+            CompatSnapshots.withLiveValues(mod?.id) {
+                if (masked) forgetPendingValues(yaclInstance)
+                val tree = parseYACLInstance(yaclInstance, mod)
+                if (tree != null) {
+                    CompatSnapshots.register(tree)
+                    CompatLoader.markFirstModAsSkip()
+                }
             }
         }.onFailure {
             LOGGER.warn("Failed to parse YACL config", it)
+        }
+    }
+
+    private fun forgetPendingValues(yaclInstance: Any) {
+        fun Any.call(name: String): Any? =
+            javaClass.methods.firstOrNull { it.name == name && it.parameterCount == 0 }?.let {
+                it.isAccessible = true
+                runCatching { it.invoke(this) }.getOrNull()
+            }
+        for (category in yaclInstance.call("categories") as? Collection<*> ?: return) {
+            for (group in category?.call("groups") as? Collection<*> ?: continue) {
+                // a list is a group that is an option itself
+                group?.call("forgetPendingValue")
+                for (option in group?.call("options") as? Collection<*> ?: continue) {
+                    option?.call("forgetPendingValue")
+                }
+            }
         }
     }
 

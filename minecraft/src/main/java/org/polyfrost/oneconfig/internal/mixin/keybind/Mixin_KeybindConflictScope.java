@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(targets = "net.minecraft.client.gui.screens.options.controls.KeyBindsList$KeyEntry")
 public class Mixin_KeybindConflictScope {
     @ModifyExpressionValue(
+        //~ if = 1.8.9 'refreshEntry' -> 'render'
         method = "refreshEntry",
         at = @At(
             value = "FIELD",

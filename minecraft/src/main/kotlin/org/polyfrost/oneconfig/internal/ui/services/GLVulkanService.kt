@@ -13,10 +13,6 @@ import org.slf4j.LoggerFactory
 import org.polyfrost.oneconfig.internal.ui.RenderTargetFbo
 //?}
 
-//? if sdl {
-import org.lwjgl.sdl.SDLVideo.SDL_GetCurrentVideoDriver
-//?}
-
 object GLVulkanService : VulkanService {
     private val LOG = LoggerFactory.getLogger(GLVulkanService::class.java)
     private val client get() = Minecraft.getInstance()
@@ -36,17 +32,7 @@ object GLVulkanService : VulkanService {
     }
 
     private val isGlxBackend: Boolean
-        get() {
-            //? if sdl {
-            val driver = try {
-                SDL_GetCurrentVideoDriver()
-            } catch (_: Throwable) {
-                null
-            }
-            if (driver != null) return !driver.equals("wayland", ignoreCase = true)
-            //?}
-            return true
-        }
+        get() = !GLInterfaceFactory.sdlVideoDriver.equals("wayland", ignoreCase = true)
 
     override fun makeBackendRenderTarget(
         width: Int, height: Int,
@@ -58,8 +44,9 @@ object GLVulkanService : VulkanService {
         //? } else
         //val frameBufferId = target.frameBufferId
 
+        val stencilBits = 8
         return BackendRenderTarget.makeGL(
-            width, height, 0, 8, frameBufferId, FramebufferFormat.GR_GL_RGBA8
+            width, height, 0, stencilBits, frameBufferId, FramebufferFormat.GR_GL_RGBA8
         )
     }
 
@@ -67,8 +54,9 @@ object GLVulkanService : VulkanService {
         width: Int, height: Int,
         vkImageHandle: Long, vkFormat: Int, vkQueueFamily: Int,
     ): BackendRenderTarget {
+        val stencilBits = 8
         return BackendRenderTarget.makeGL(
-            width, height, 0, 8, 0, FramebufferFormat.GR_GL_RGBA8
+            width, height, 0, stencilBits, 0, FramebufferFormat.GR_GL_RGBA8
         )
     }
 
@@ -82,7 +70,8 @@ object GLVulkanService : VulkanService {
         //? } else
         //val fboId = target.frameBufferId
 
-        return BackendRenderTarget.makeGL(width, height, 0, 8, fboId, FramebufferFormat.GR_GL_RGBA8) to
+        val stencilBits = 8
+        return BackendRenderTarget.makeGL(width, height, 0, stencilBits, fboId, FramebufferFormat.GR_GL_RGBA8) to
                 SurfaceColorFormat.RGBA_8888
     }
 

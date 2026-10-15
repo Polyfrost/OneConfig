@@ -17,6 +17,7 @@ import org.spongepowered.asm.mixin.injection.At;
  */
 @Mixin(Options.class)
 public class Mixin_OptionsSkipMirrors {
+    //~ if = 1.8.9 'processOptions' -> 'save'
     @ModifyExpressionValue(method = "processOptions", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Options;keyMappings:[Lnet/minecraft/client/KeyMapping;"))
     private KeyMapping[] oneconfig$skipMirrors(KeyMapping[] mappings) {
         MinecraftKeybindBridgeImpl bridge = MinecraftKeybindBridgeImpl.instance();

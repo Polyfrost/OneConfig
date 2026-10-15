@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.hoverable
@@ -14,9 +13,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,12 +23,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -57,6 +56,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.function.Consumer
+import java.util.function.Predicate
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -66,8 +66,10 @@ import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
+import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
+import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
@@ -98,13 +100,36 @@ import org.polyfrost.oneconfig.internal.ui.search.flattenSearchEntries
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.search.searchNode
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
+import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.util.LayoutRef
 
+/**
+ * @param locked shows every option but [lockExempt] dimmed and out of reach, for a mod that is switched off
+ */
 @Composable
-fun ConfigScreen(tree: Tree, initialCategory: String? = null, pageKey: String) {
+fun ConfigScreen(
+    tree: Tree,
+    initialCategory: String? = null,
+    pageKey: String,
+    locked: Boolean = false,
+    lockExempt: Property<*>? = null,
+) {
+    key(System.identityHashCode(tree)) {
+        ConfigScreenContent(tree, initialCategory, pageKey, locked, lockExempt)
+    }
+}
+
+@Composable
+private fun ConfigScreenContent(
+    tree: Tree,
+    initialCategory: String?,
+    pageKey: String,
+    locked: Boolean,
+    lockExempt: Property<*>?,
+) {
     val categories = remember(tree) { buildCategories(tree) }
     val localSearchQuery = ShellState.searchQuery.trim()
 
@@ -119,7 +144,7 @@ fun ConfigScreen(tree: Tree, initialCategory: String? = null, pageKey: String) {
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
         if (localSearchQuery.isBlank() && categories.size > 1) {
             FlowRow(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = PageGutter),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -160,18 +185,18 @@ fun ConfigScreen(tree: Tree, initialCategory: String? = null, pageKey: String) {
             return@Column
         }
 
-        Box(modifier = Modifier.fillMaxSize()) {
+        ScrollbarBox(lazyListState, PageGutter, Modifier.fillMaxSize()) {
             LazyColumn(
                 state = lazyListState,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(end = 16.dp)
+                contentPadding = PaddingValues(horizontal = PageGutter),
             ) {
-                items(entries) { entry -> ConfigListRow(entry) }
+                items(entries) { entry ->
+                    val option = ((entry as? ConfigListEntry.Item)?.node as? SettingNode.Leaf)?.prop
+                    val lock = locked && (option == null || option !== lockExempt)
+                    Box(Modifier.alpha(if (lock) 0.45f else 1f).blockInteraction(lock, keyboard = true)) { ConfigListRow(entry) }
+                }
             }
-            VerticalScrollbar(
-                adapter = rememberScrollbarAdapter(lazyListState),
-                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
-            )
         }
     }
 }
@@ -287,13 +312,18 @@ private fun Tree.matchesLocalSearch(category: String, subcategory: String, query
         .any { searchMatches(it.asRenderText(), query) }
 }
 
-private fun isWideControl(prop: Property<*>): Boolean {
+/** Width a slider-style control needs beside its track, or null when the control is compact */
+private fun sliderTrailingWidth(prop: Property<*>): Dp? {
     return when (prop.getMetadata<Any?>("visualizer")) {
-        Visualizer.SliderVisualizer::class.java -> true
-        is Visualizer.SliderVisualizer -> true
-        else -> false
+        Visualizer.SliderVisualizer::class.java, is Visualizer.SliderVisualizer -> SLIDER_SPINNER_WIDTH
+        // two spinners, or a spinner plus the inherit chip
+        Visualizer.RangeSliderVisualizer::class.java, is Visualizer.RangeSliderVisualizer,
+        Visualizer.InheritableSliderVisualizer::class.java, is Visualizer.InheritableSliderVisualizer -> SLIDER_SPINNER_WIDTH * 2
+        else -> null
     }
 }
+
+private fun isWideControl(prop: Property<*>): Boolean = sliderTrailingWidth(prop) != null
 
 /**
  * Renders one entry of a flattened settings list
@@ -313,7 +343,9 @@ internal fun ConfigListRow(entry: ConfigListEntry, compact: (SettingNode) -> Boo
 internal fun SettingEntryRow(node: SettingNode, compact: Boolean = false) {
     when (node) {
         is SettingNode.Leaf -> SettingRow(node.prop, compact = compact)
-        is SettingNode.Accordion -> AccordionRow(node, compact = compact)
+        is SettingNode.Accordion -> key(System.identityHashCode(node.tree)) {
+            AccordionRow(node, compact = compact)
+        }
     }
 }
 
@@ -347,11 +379,12 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
     var expanded by remember(node) {
         mutableStateOf(
             if (node.tree.getMetadata<Boolean>("collapsed") == true) false
-            else node.head?.get() != false
+            else node.head?.shown() != false
         )
     }
     val headerInteraction = rememberInteractionSource()
     val chevronRotation by animateFloatAsState(if (expanded) 180f else 90f)
+    val headDisplay = node.head?.let { rememberDisplay(it) } ?: Property.Display.SHOWN
 
     Column(
         modifier = Modifier
@@ -375,11 +408,13 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
             modifier = Modifier
                 .fillMaxWidth()
                 .onClick(headerInteraction) { expanded = !expanded }
+                .alpha(displayAlpha(headDisplay))
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Row(
+                modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -402,11 +437,18 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 if (node.head != null) {
-                    var headChecked by remember(node) { mutableStateOf(node.head.get() == true) }
-                    SwitchControl(headChecked) {
-                        headChecked = it
-                        node.head.set(it)
-                        expanded = it
+                    var headChecked by remember(node) { mutableStateOf(node.head.shown() == true) }
+                    DisposableEffect(node.head) {
+                        val listener = Predicate<Boolean> { value -> headChecked = value == true; false }
+                        node.head.addCallback(listener)
+                        onDispose { node.head.removeCallback(listener) }
+                    }
+                    Box(Modifier.blockInteraction(headDisplay == Property.Display.DISABLED)) {
+                        SwitchControl(headChecked) {
+                            headChecked = it
+                            node.head.set(it)
+                            expanded = it
+                        }
                     }
                 }
                 Icon(
@@ -505,7 +547,7 @@ private val OPTION_ROW_CHROME = 32.dp + 16.dp
 private val SLIDER_SPINNER_WIDTH = 80.dp + 16.dp
 
 private fun optionReservedWidth(prop: Property<*>, optionWidth: Dp): Dp {
-    val control = if (isWideControl(prop)) optionWidth + SLIDER_SPINNER_WIDTH + OPTION_ROW_CHROME else OPTION_CHROME_WIDTH
+    val control = sliderTrailingWidth(prop)?.let { optionWidth + it + OPTION_ROW_CHROME } ?: OPTION_CHROME_WIDTH
     return control + (if (prop.getMetadata<String>("icon") != null) OPTION_ICON_WIDTH else 0.dp)
 }
 
@@ -594,15 +636,17 @@ private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
 
 @Composable
 internal fun rememberDisplay(prop: Property<*>): Property.Display {
-    var display by remember(prop) { mutableStateOf(prop.display) }
+    return key(System.identityHashCode(prop)) {
+        var display by remember { mutableStateOf(prop.display) }
 
-    DisposableEffect(prop) {
-        val listener = Consumer<Property.Display> { display = it }
-        prop.addDisplayListener(listener)
-        onDispose { prop.removeDisplayListener(listener) }
+        DisposableEffect(Unit) {
+            val listener = Consumer<Property.Display> { display = it }
+            prop.addDisplayListener(listener)
+            onDispose { prop.removeDisplayListener(listener) }
+        }
+
+        display
     }
-
-    return display
 }
 
 internal fun displayAlpha(display: Property.Display): Float {
@@ -622,10 +666,10 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
         return
     }
 
-    var menuOpen by remember(prop) { mutableStateOf(false) }
-    var menuOffset by remember(prop) { mutableStateOf(IntOffset.Zero) }
-    val rowOrigin = remember(prop) { LayoutRef(Offset.Zero) }
-    val actionMenuOffset = remember(prop) { LayoutRef(IntOffset.Zero) }
+    var menuOpen by remember(System.identityHashCode(prop)) { mutableStateOf(false) }
+    var menuOffset by remember(System.identityHashCode(prop)) { mutableStateOf(IntOffset.Zero) }
+    val rowOrigin = remember(System.identityHashCode(prop)) { LayoutRef(Offset.Zero) }
+    val actionMenuOffset = remember(System.identityHashCode(prop)) { LayoutRef(IntOffset.Zero) }
     val rowInteraction = rememberInteractionSource()
     val isRowHovered by rowInteraction.collectIsHoveredAsState()
     val showActionButton = OneConfigConfig.showOptionActionButtons && enabled
@@ -782,22 +826,29 @@ private fun SettingLabel(
 }
 
 @Composable
-fun HudConfigScreen(tree: Tree, initialCategory: String? = null) {
-    val filteredTree = remember(tree) {
-        tree
+fun HudConfigScreen(tree: Tree, searchQuery: String) {
+    key(System.identityHashCode(tree)) { HudConfigScreenContent(tree, searchQuery) }
+}
+
+@Composable
+private fun HudConfigScreenContent(tree: Tree, searchQuery: String) {
+    val categories = remember(tree) { buildCategories(tree) { !isHudInternal(it) } }
+    var selectedCategory by remember(tree) { mutableStateOf(categories.firstOrNull()) }
+
+    val revision = rememberDisplayRevision(categories)
+    val entries = remember(categories, selectedCategory, searchQuery, revision) {
+        if (searchQuery.isEmpty()) {
+            selectedCategory?.let(::filterHiddenNodes)?.let(::flattenEntries).orEmpty()
+        } else {
+            flattenSearchEntries(filterCategories(categories, searchQuery).mapNotNull(::filterHiddenNodes))
+        }
     }
-    val categories = remember(filteredTree) { buildCategories(filteredTree) { !isHudInternal(it) } }
-    val localSearchQuery = ShellState.searchQuery.trim()
-    var selectedCategory by remember(filteredTree, initialCategory) {
-        mutableStateOf(
-            categories.firstOrNull { it.name.equals(initialCategory, ignoreCase = true) }
-                ?: categories.firstOrNull()
-        )
-    }
+    // the panel's built-in sections may still match so an empty search result here stays silent
+    if (entries.isEmpty() && searchQuery.isNotEmpty()) return
 
     CompositionLocalProvider(LocalOptionWidth provides 220.dp) {
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
-        if (localSearchQuery.isBlank() && categories.size > 1) {
+        if (searchQuery.isEmpty() && categories.size > 1) {
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -813,20 +864,9 @@ fun HudConfigScreen(tree: Tree, initialCategory: String? = null) {
             }
         }
 
-        val revision = rememberDisplayRevision(categories)
-        val entries = remember(categories, selectedCategory, localSearchQuery, revision) {
-            if (localSearchQuery.isBlank()) {
-                selectedCategory?.let(::filterHiddenNodes)?.let(::flattenEntries).orEmpty()
-            } else {
-                flattenSearchEntries(filterCategories(categories, localSearchQuery).mapNotNull(::filterHiddenNodes))
-            }
-        }
-
         if (entries.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                val message = if (localSearchQuery.isBlank()) "No settings available."
-                else "No settings match \"$localSearchQuery\""
-                Text(message, color = LocalTheme.current.textColorSecondary)
+                Text("No settings available.", color = LocalTheme.current.textColorSecondary)
             }
             return@Column
         }

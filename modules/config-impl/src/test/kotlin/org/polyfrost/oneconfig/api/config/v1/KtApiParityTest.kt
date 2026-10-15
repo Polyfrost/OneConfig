@@ -20,8 +20,10 @@ class KtApiParityTest {
         var multi by multiSelectDropdown("Multi", arrayOf("a", "b", "c"))
         var range by rangeSlider("Range", floatArrayOf(10f, 20f), step = 5f)
         var s by slider("Slider", 5f)
+        var pct by slider("Percent", 5f) { "$it%" }
         var t by text("Text", regex = "\\d+")
         var colors by colorList("Colors", intArrayOf(-1), alpha = false)
+        var active by masterToggle()
 
         fun builtTree(): Tree = makeTree()
     }
@@ -48,6 +50,11 @@ class KtApiParityTest {
         assertTrue(tree.getProp("s")!!.getMetadata<Visualizer>("visualizer") is Visualizer.SliderVisualizer)
         assertEquals("\\d+", tree.getProp("t")!!.getMetadata<String>("regex"))
         assertTrue(tree.getProp("colors")!!.getMetadata<Any>("noAlpha") != null)
+
+        val active = tree.getProp("active")!!
+        assertTrue(cfg.active)
+        assertEquals(true, active.getMetadata<Boolean>("masterToggle"))
+        assertEquals(true, active.getMetadata<Boolean>("hidden"))
     }
 
     class BadStep : KtConfig("kt_api_parity_bad", "Bad", Category.QOL) {
@@ -57,6 +64,16 @@ class KtApiParityTest {
     @Test
     fun sliderStepLargerThanRangeIsRejected() {
         assertThrows(IllegalArgumentException::class.java) { BadStep() }
+    }
+
+    @Test
+    fun formattersReachMetadata() {
+        val tree = Cfg().builtTree()
+        assertEquals("5.0%", tree.getProp("pct")!!.getMetadata<ValueFormatter>("formatter")!!.format(5f))
+        assertNull(tree.getProp("s")!!.getMetadata<ValueFormatter>("formatter"))
+
+        val number = ConfigDSL("dsl_parity").number(5).apply { formatter = ValueFormatter { "$it px" } }
+        assertEquals("5 px", number.property.getMetadata<ValueFormatter>("formatter")!!.format(5))
     }
 
     @Test

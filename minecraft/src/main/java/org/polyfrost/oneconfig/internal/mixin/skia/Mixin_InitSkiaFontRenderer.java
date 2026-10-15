@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Minecraft.class)
 public class Mixin_InitSkiaFontRenderer {
+    //? if > 1.8.9 {
     @Shadow
     @Final
     private ReloadableResourceManager resourceManager;
@@ -20,7 +21,9 @@ public class Mixin_InitSkiaFontRenderer {
     private void impl$registerFontReloadListener(CallbackInfo ci) {
         this.resourceManager.registerReloadListener(SkiaFontRenderer.INSTANCE);
     }
+    //?}
 
+    //~ if = 1.8.9 '<init>' -> 'init'
     @Inject(method = "<init>", at = @At("TAIL"))
     void impl$__init__(CallbackInfo ci) {
         SkiaFontRenderer.INSTANCE.init();

@@ -107,54 +107,41 @@ abstract class TextHud(
                 val fontName = getPoppinsFontName()
                 val fontSize = 8f * textScale
                 val skiaFont = FontManager.getFont(fontSize, fontName)
-                val textScale = skiaFont.measureText(text)
+                val metrics = skiaFont.metrics
+                val lines = text.lines()
+                val lineHeight = skiaFont.spacing
+                val blockW = lines.maxOf { skiaFont.measureTextWidth(it) }
+                val blockH = (lines.size - 1) * lineHeight + (metrics.descent - metrics.ascent)
+                val underlinePos = metrics.underlinePosition ?: (fontSize * 0.08f)
+                val underlineThick = metrics.underlineThickness ?: (fontSize * 0.06f)
+                val shadowCol = if (showShadow) PolyColor(shadowColor, shadowChroma, shadowChromaSpeed) else null
 
-                if (showShadow) {
-                    val shadowCol = PolyColor(shadowColor, shadowChroma, shadowChromaSpeed)
-                    PolyCanvas(
-                        modifier = PolyModifier.size(textScale.width, textScale.height)
-                            .let { if (isStaticValid) it.align(contentAlign) else it }) { x, y, _, _ ->
-                        val baseline = y - skiaFont.metrics.ascent
-                        text(text, x + shadowOffsetX, baseline + shadowOffsetY, shadowCol, skiaFont)
-                        if (textUnderline) {
-                            val underlinePos = skiaFont.metrics.underlinePosition ?: (fontSize * 0.08f)
-                            val underlineThick = skiaFont.metrics.underlineThickness ?: (fontSize * 0.06f)
-                            line(
-                                x + shadowOffsetX,
-                                baseline + shadowOffsetY + underlinePos,
-                                x + shadowOffsetX + textScale.width,
-                                baseline + shadowOffsetY + underlinePos,
-                                shadowCol,
-                                underlineThick
-                            )
+                PolyCanvas(
+                    modifier = PolyModifier.size(blockW, blockH)
+                        .let { if (isStaticValid) it.align(contentAlign) else it }) { x, y, _, _ ->
+                    lines.forEachIndexed { index, lineText ->
+                        if (lineText.isEmpty()) return@forEachIndexed
+                        val baseline = y + index * lineHeight - metrics.ascent
+                        val lineW = skiaFont.measureTextWidth(lineText)
+                        if (shadowCol != null) {
+                            text(lineText, x + shadowOffsetX, baseline + shadowOffsetY, shadowCol, skiaFont)
+                            if (textUnderline) {
+                                line(
+                                    x + shadowOffsetX,
+                                    baseline + shadowOffsetY + underlinePos,
+                                    x + shadowOffsetX + lineW,
+                                    baseline + shadowOffsetY + underlinePos,
+                                    shadowCol,
+                                    underlineThick
+                                )
+                            }
                         }
-                        text(text, x, baseline, fgColor, skiaFont)
+                        text(lineText, x, baseline, fgColor, skiaFont)
                         if (textUnderline) {
-                            val underlinePos = skiaFont.metrics.underlinePosition ?: (fontSize * 0.08f)
-                            val underlineThick = skiaFont.metrics.underlineThickness ?: (fontSize * 0.06f)
                             line(
                                 x,
                                 baseline + underlinePos,
-                                x + textScale.width,
-                                baseline + underlinePos,
-                                fgColor,
-                                underlineThick
-                            )
-                        }
-                    }
-                } else {
-                    PolyCanvas(
-                        modifier = PolyModifier.size(textScale.width, textScale.height)
-                            .let { if (isStaticValid) it.align(contentAlign) else it }) { x, y, _, _ ->
-                        val baseline = y - skiaFont.metrics.ascent
-                        text(text, x, baseline, fgColor, skiaFont)
-                        if (textUnderline) {
-                            val underlinePos = skiaFont.metrics.underlinePosition ?: (fontSize * 0.08f)
-                            val underlineThick = skiaFont.metrics.underlineThickness ?: (fontSize * 0.06f)
-                            line(
-                                x,
-                                baseline + underlinePos,
-                                x + textScale.width,
+                                x + lineW,
                                 baseline + underlinePos,
                                 fgColor,
                                 underlineThick

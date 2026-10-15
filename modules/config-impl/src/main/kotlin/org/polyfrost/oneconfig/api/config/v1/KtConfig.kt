@@ -89,6 +89,18 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
     ) =
         Provider(def, name, description, category, subcategory, Boolean::class.java, Visualizer.SwitchVisualizer())
 
+    /**
+     * The switch that turns the whole mod on and off, shown on the mod's card and never on the config page
+     *
+     * A config without one falls back to a root level boolean option called `enabled`
+     */
+    @JvmSynthetic
+    protected fun masterToggle(def: Boolean = true) =
+        Provider(def, null, null, null, null, Boolean::class.java, Visualizer.SwitchVisualizer()) {
+            addMetadata("hidden", true)
+            addMetadata("masterToggle", true)
+        }
+
     protected fun color(
         name: String,
         def: PolyColor = PolyColor.rgba(0, 0, 0, 255),
@@ -296,7 +308,8 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         min: Float = -10f,
         max: Float = 100f,
         placeholder: String? = null,
-        placeholderKey: String? = "oneconfig.numberinput.placeholder"
+        placeholderKey: String? = "oneconfig.numberinput.placeholder",
+        formatter: ValueFormatter? = null,
     ) = Provider(def, name, description, category, subcategory, Float::class.java, Visualizer.NumberVisualizer()) {
         addMetadata(
             name,
@@ -315,7 +328,30 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         this.addMetadata("max", max)
         this.addMetadata("placeholder", placeholder)
         this.addMetadata("placeholderKey", placeholderKey)
+        this.addMetadata("formatter", formatter)
     }
+
+    @JvmSynthetic
+    @Deprecated(message = "Binary compatibility for mods compiled before formatter was added", level = DeprecationLevel.HIDDEN)
+    protected fun number(
+        name: String,
+        def: Float,
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+
+        unit: String? = null,
+        unitKey: String? = null,
+        min: Float = -10f,
+        max: Float = 100f,
+        placeholder: String? = null,
+        placeholderKey: String? = "oneconfig.numberinput.placeholder",
+    ) = number(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, unit, unitKey, min, max, placeholder, placeholderKey, null)
 
     @JvmSynthetic
     protected fun slider(
@@ -335,6 +371,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         min: Float = -10f,
         max: Float = 100f,
         step: Float = 1f,
+        formatter: ValueFormatter? = null,
     ) = Provider(def, name, description, category, subcategory, Float::class.java, Visualizer.SliderVisualizer()) {
         requireStep(name, min, max, step)
         addMetadata(
@@ -353,7 +390,29 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         this.addMetadata("min", min)
         this.addMetadata("max", max)
         this.addMetadata("step", step)
+        this.addMetadata("formatter", formatter)
     }
+
+    @JvmSynthetic
+    @Deprecated(message = "Binary compatibility for mods compiled before formatter was added", level = DeprecationLevel.HIDDEN)
+    protected fun slider(
+        name: String,
+        def: Float,
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+
+        unit: String? = null,
+        unitKey: String? = null,
+        min: Float = -10f,
+        max: Float = 100f,
+        step: Float = 1f,
+    ) = slider(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, unit, unitKey, min, max, step, null)
 
     @JvmSynthetic
     protected fun keybind(
@@ -639,6 +698,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         min: Float = 0f,
         max: Float = 100f,
         step: Float = 1f,
+        formatter: ValueFormatter? = null,
     ) = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.RangeSliderVisualizer()) {
         addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
         require(def.size == 2) { "rangeSlider '$name' needs a start and end, got ${def.size} values" }
@@ -646,7 +706,26 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         this.addMetadata("min", min)
         this.addMetadata("max", max)
         this.addMetadata("step", step)
+        this.addMetadata("formatter", formatter)
     }
+
+    @JvmSynthetic
+    @Deprecated(message = "Binary compatibility for mods compiled before formatter was added", level = DeprecationLevel.HIDDEN)
+    protected fun rangeSlider(
+        name: String,
+        def: FloatArray,
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        min: Float = 0f,
+        max: Float = 100f,
+        step: Float = 1f,
+    ) = rangeSlider(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, min, max, step, null)
 
     /** A file or folder picker holding the chosen path, [types] are extensions such as `.png` */
     @JvmSynthetic
@@ -721,13 +800,37 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         min: Float = 0f,
         max: Float = 100f,
         step: Float = 0f,
+        formatter: ValueFormatter? = null,
     ) = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.NumberListVisualizer()) {
         addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
             addListMetadata(maxEntries, reorderable, addText, addTextKey)
         this.addMetadata("min", min)
         this.addMetadata("max", max)
         this.addMetadata("step", step)
+        this.addMetadata("formatter", formatter)
     }
+
+    @JvmSynthetic
+    @Deprecated(message = "Binary compatibility for mods compiled before formatter was added", level = DeprecationLevel.HIDDEN)
+    protected fun numberList(
+        name: String,
+        def: FloatArray = FloatArray(0),
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        maxEntries: Int = 0,
+        reorderable: Boolean = true,
+        addText: String? = null,
+        addTextKey: String? = null,
+        min: Float = 0f,
+        max: Float = 100f,
+        step: Float = 0f,
+    ) = numberList(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, maxEntries, reorderable, addText, addTextKey, min, max, step, null)
 
     @JvmSynthetic
     protected fun sliderList(
@@ -748,6 +851,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         min: Float = 0f,
         max: Float = 100f,
         step: Float = 1f,
+        formatter: ValueFormatter? = null,
     ) = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.SliderListVisualizer()) {
         addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
             addListMetadata(maxEntries, reorderable, addText, addTextKey)
@@ -755,7 +859,30 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         this.addMetadata("min", min)
         this.addMetadata("max", max)
         this.addMetadata("step", step)
+        this.addMetadata("formatter", formatter)
     }
+
+    @JvmSynthetic
+    @Deprecated(message = "Binary compatibility for mods compiled before formatter was added", level = DeprecationLevel.HIDDEN)
+    protected fun sliderList(
+        name: String,
+        def: FloatArray = FloatArray(0),
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        maxEntries: Int = 0,
+        reorderable: Boolean = true,
+        addText: String? = null,
+        addTextKey: String? = null,
+        min: Float = 0f,
+        max: Float = 100f,
+        step: Float = 1f,
+    ) = sliderList(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, maxEntries, reorderable, addText, addTextKey, min, max, step, null)
 
     /** A list of ARGB colours */
     @JvmSynthetic
@@ -846,12 +973,12 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         require(step <= 0f || step <= max - min) { "slider '$name' has step ($step) larger than its range ($min to $max)" }
 
     fun hideIf(option: KProperty<*>, condition: () -> Boolean) {
-        if (tree == null) initialize(false)
+        if (tree == null) runInitialize(false)
         hideIf(option.name) { condition() }
     }
 
     fun hideIf(option: KProperty<*>, condition: KProperty0<Boolean>) {
-        if (tree == null) initialize(false)
+        if (tree == null) runInitialize(false)
         hideIf(option.name) { condition.get() }
     }
 

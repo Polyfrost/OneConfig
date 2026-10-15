@@ -85,6 +85,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
+import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -112,7 +113,6 @@ private data class ProfileActionResult(
 
 private val ProfileCardHeight = 180.dp
 private const val OverlayFrameTimeoutMs = 500L
-private val FavoriteStarColor = Color(0xFFFFD700)
 private val DangerColor = Color(0xFFE35B5B)
 private enum class ProfileEditor { Rename, Clone, Icon, Delete }
 private val ProfileIconOptions = listOf(
@@ -238,7 +238,7 @@ fun Profiles() {
         onDispose { }
     }
 
-    Box(modifier = Modifier.fillMaxWidth()) {
+    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = PageGutter)) {
         Column(
             verticalArrangement = Arrangement.spacedBy(19.dp)
         ) {
@@ -786,7 +786,7 @@ private fun ProfileCard(
                 ActionIcon("close", enabled = !busy, tint = theme.textColorSecondary, onClick = ::closeEditor)
             } else {
                 if (profile.favorite) {
-                    ActionIcon("star-filled", enabled = !busy, tint = FavoriteStarColor) { onFavorite() }
+                    ActionIcon("star-filled", enabled = !busy, tint = theme.favoriteColor) { onFavorite() }
                 }
                 if (profile.active || isHovered || menuOpen) {
                     ActionIcon("settings", enabled = !busy, tint = theme.textColorSecondary, hoveredTint = Accent) {

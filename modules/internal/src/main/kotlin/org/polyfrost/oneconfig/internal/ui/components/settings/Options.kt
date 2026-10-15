@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateMapOf
@@ -33,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import java.util.function.Predicate
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.Property
@@ -40,6 +42,7 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.api.settings.BooleanOptionData
+import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
@@ -56,13 +59,13 @@ private val ContextMenuPadding = 4.dp
  * Bumping a counter recomposes the visualizer subtree with a fresh [key] so controls re-read the reset
  * value instead of their cached state
  */
-private val resetEpochs = mutableStateMapOf<Property<*>, Int>()
+private val resetEpochs = mutableStateMapOf<Int, Int>()
 
 /** True if [prop] has a captured default value that can be restored */
 fun optionHasDefault(prop: Property<*>): Boolean = prop.getMetadata<Any?>("default") != null
 
 fun bumpResetEpoch(prop: Property<*>) {
-    resetEpochs[prop] = (resetEpochs[prop] ?: 0) + 1
+    resetEpochs[System.identityHashCode(prop)] = (resetEpochs[System.identityHashCode(prop)] ?: 0) + 1
 }
 
 /** Restore [prop] to the default value captured at config initialization and refresh its UI */
@@ -73,12 +76,12 @@ fun resetOption(prop: Property<*>) {
     // like ColorOption a PolyColor change must refresh the live accent or it only updates once the GUI
     // is reopened
     if (prop.type == PolyColor::class.java) updateAccent()
-    resetEpochs[prop] = (resetEpochs[prop] ?: 0) + 1
+    resetEpochs[System.identityHashCode(prop)] = (resetEpochs[System.identityHashCode(prop)] ?: 0) + 1
 }
 
 @Composable
 fun Option(prop: Property<*>) {
-    val vis = remember(prop) {
+    val vis = remember(System.identityHashCode(prop)) {
         when (val raw = prop.getMetadata<Any>("visualizer")) {
             is Visualizer -> raw
             is Class<*> -> (raw.getDeclaredConstructor().newInstance() as? Visualizer)
@@ -86,13 +89,13 @@ fun Option(prop: Property<*>) {
         }
     }
     if (vis != null) {
-        val epoch = resetEpochs[prop] ?: 0
-        key(prop, epoch) {
+        val epoch = resetEpochs[System.identityHashCode(prop)] ?: 0
+        key(System.identityHashCode(prop), epoch) {
             vis.visualize(prop)
         }
         return
     }
-    val value = prop.get()
+    val value = prop.shown()
     Text(
         when (value) {
             is Boolean -> if (value) "On" else "Off"
@@ -106,7 +109,13 @@ fun Option(prop: Property<*>) {
 
 @Composable
 fun BooleanOption(data: BooleanOptionData) {
-    var checked by remember(data.prop) { mutableStateOf(data.boolProp.get() == true) }
+    var checked by remember(data.prop) { mutableStateOf(data.boolProp.shown() == true) }
+    // the same option can be flipped from elsewhere on screen, a mod's card for its master switch for one
+    DisposableEffect(data.prop) {
+        val listener = Predicate<Boolean> { value -> checked = value == true; false }
+        data.boolProp.addCallback(listener)
+        onDispose { data.boolProp.removeCallback(listener) }
+    }
     when (data.style) {
         BooleanOptionData.Style.Switch -> SwitchControl(checked) { checked = it; data.boolProp.set(it) }
         BooleanOptionData.Style.Checkbox -> CheckboxControl(checked) { checked = it; data.boolProp.set(it) }
@@ -165,7 +174,7 @@ fun OptionContextMenu(
 ) {
     if (!expanded) return
     val theme = LocalTheme.current
-    val isKeybind = remember(prop) { prop.get() is OneConfigKeybind }
+    val isKeybind = remember(System.identityHashCode(prop)) { prop.get() is OneConfigKeybind }
     val effectiveReset = onReset ?: if (isKeybind) ({ resetKeybindOption(prop) }) else null
     val effectiveUnbind = onUnbind ?: if (isKeybind) ({ unbindKeybindOption(prop) }) else null
     Popup(

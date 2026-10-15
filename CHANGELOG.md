@@ -1,7 +1,7 @@
-Unreleased changes:
-- Fixed native file dialogs and message boxes not opening on 26.3
-- Fixed keybinds and the HUD editor not reacting to most screen changes on 26.2 and above
-
-Public API:
-
-- `ScreenOpenEvent` now fires for all screen changes on 26.2 and above, including screens closing
+## 1.4.2
+- Support mod toggles for lambdynamiclights and uku Armor HUD
+- Fix Simple Voice Chat mod toggle in certain scenarios
+- Allow explicitly added 3rd party master switches to be overriden
+- Improve performance with some HUDs
+- Fix accordion description pushing some of its toggle off the section
+- Fix HUD elements set to hide in F3 being hidden even when debug renderers were the only F3 elements currently drawing

@@ -7,7 +7,7 @@ import net.fabricmc.loom.task.NestJarsAction
 // NOTE: bump the prefix whenever the compose version changes: the "+compose.x.y.z" part is semver
 // build metadata, which version comparisons ignore, so updaters and dependency constraints
 // only see the prefix
-version = "1.0.5+compose.${libs.versions.compose.asProvider().get()}"
+version = "1.0.6+compose.${libs.versions.compose.asProvider().get()}"
 
 repositories {
     maven("https://redirector.kotlinlang.org/maven/compose-dev")
@@ -21,6 +21,7 @@ val shade: Configuration by configurations.creating {
     exclude(group = "org.jetbrains", module = "annotations")
     // empty relocation shims whose jar filenames collide with the real androidx-coordinate artifacts of the same name and version
     exclude(group = "org.jetbrains.compose.runtime")
+    exclude(group = "org.jetbrains.skiko", module = "skiko-awt-runtime-all")
 }
 
 dependencies {
@@ -34,6 +35,7 @@ dependencies {
     shade(libs.jetbrains.compose.ui.backhandler)
     shade(libs.jetbrains.skiko.awt)
     shade(libs.jetbrains.skiko.awt.runtime.windows.x64)
+    shade(libs.jetbrains.skiko.awt.runtime.windows.arm64)
     shade(libs.jetbrains.skiko.awt.runtime.linux.x64)
     shade(libs.jetbrains.skiko.awt.runtime.linux.arm64)
     shade(libs.jetbrains.skiko.awt.runtime.macos.x64)
@@ -94,7 +96,11 @@ tasks.jar {
 
 tasks.processResources {
     // the version already carries "+compose..." build metadata, and a second '+' would make it non-semver
-    val props = mapOf("version" to "${project.version}.fabric")
+    val props = mapOf(
+        "version" to "${project.version}.fabric",
+        "loader_version" to fabric.versions.loader.get(),
+        "flk_version" to libs.versions.fabric.language.kotlin.get(),
+    )
     inputs.properties(props)
     filesMatching("fabric.mod.json") { expand(props) }
 }
@@ -120,7 +126,7 @@ val modPublishTasks = tasks.named("publishMods").get().dependsOn.toList()
 
 tasks.register("publishComposeBundle") {
     group = "publishing"
-    description = "Publishes compose-bundle to the Polyfrost maven repositories and Modrinth."
+    description = "Publishes compose-bundle to the Polyfrost maven repositories, Modrinth and CurseForge."
     dependsOn(tasks.withType<PublishToMavenRepository>(), modPublishTasks)
 }
 

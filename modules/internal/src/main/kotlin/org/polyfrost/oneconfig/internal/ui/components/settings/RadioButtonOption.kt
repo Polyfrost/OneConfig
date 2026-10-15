@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.settings.RadioButtonOptionData
+import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
@@ -56,7 +57,7 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
         else -> emptyList()
     }
 
-    val initialValue = data.prop.get()
+    val initialValue = data.prop.shown()
     var selectedIdx by remember(data.prop) {
         mutableStateOf(if (initialValue is Enum<*>) initialValue.ordinal else initialValue as? Int ?: 0)
     }

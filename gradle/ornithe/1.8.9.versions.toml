@@ -1,0 +1,5 @@
+[versions]
+pylon = "0.1.7"
+
+[libraries]
+pylon = { module = "pl.tomgirl:pylon", version.ref = "pylon" }

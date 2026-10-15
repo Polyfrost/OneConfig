@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.compat
 
+//? if > 1.8.9 {
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
@@ -23,6 +24,7 @@ import org.polyfrost.oneconfig.api.hud.v1.OneConfigHudWrapper
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer
 
 object ArmorHudCompat {
@@ -231,6 +233,18 @@ object ArmorHudCompat {
         if (!armorEmpty(player)) return null
         val current = fieldValue(config, WIDGET_SHOWN) ?: return null
         return enumConstants(current)?.firstOrNull { enumName(it) == SHOWN_ALWAYS }?.takeIf { it != current }
+    }
+
+    internal fun modToggle(): ModToggle? {
+        if (config() == null) return null
+        return object : ModToggle {
+            override fun isEnabled() = read("enabled") != false
+
+            override fun setEnabled(enabled: Boolean) {
+                write("enabled", enabled)
+                flush()
+            }
+        }
     }
 
     private fun enumName(value: Any?): String? = (value as? Enum<*>)?.name
@@ -525,3 +539,4 @@ object ArmorHudCompat {
         override fun save() = flush()
     }
 }
+//?}

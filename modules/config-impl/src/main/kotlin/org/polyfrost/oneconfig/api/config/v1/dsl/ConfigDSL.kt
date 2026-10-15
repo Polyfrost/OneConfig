@@ -6,6 +6,7 @@ import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.api.config.v1.ValueFormatter
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.apache.logging.log4j.LogManager
@@ -152,6 +153,10 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
         var placeholderKey: String?
             get() = this["placeholderKey"] as String?
             set(value) { this["placeholderKey"] = value }
+
+        var formatter: ValueFormatter?
+            get() = this["formatter"] as ValueFormatter?
+            set(value) { this["formatter"] = value }
     }
 
     class FloatProp(default: Float) : Prop<Float>(default, Float::class.java) {
@@ -182,6 +187,10 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
         var placeholderKey: String?
             get() = this["placeholderKey"] as String?
             set(value) { this["placeholderKey"] = value }
+
+        var formatter: ValueFormatter?
+            get() = this["formatter"] as ValueFormatter?
+            set(value) { this["formatter"] = value }
     }
 
     class RunnableProp(action: Runnable) : Prop<Runnable>(action, Runnable::class.java) {
@@ -255,6 +264,10 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
         var step: Float?
             get() = this["step"] as Float?
             set(value) { this["step"] = value }
+
+        var formatter: ValueFormatter?
+            get() = this["formatter"] as ValueFormatter?
+            set(value) { this["formatter"] = value }
     }
 
     class FileProp(default: String) : Prop<String>(default, String::class.java) {
@@ -327,6 +340,10 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
         var step: Float?
             get() = this["step"] as Float?
             set(value) { this["step"] = value }
+
+        var formatter: ValueFormatter?
+            get() = this["formatter"] as ValueFormatter?
+            set(value) { this["formatter"] = value }
     }
 
     class ColorListProp(default: IntArray) : ListProp<IntArray>(default, IntArray::class.java) {

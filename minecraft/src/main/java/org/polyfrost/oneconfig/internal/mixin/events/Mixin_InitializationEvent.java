@@ -8,12 +8,19 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+//? if = 1.8.9 {
+/*import org.polyfrost.oneconfig.internal.legacy.command.ClientCommandInternals;
+*///?}
+
 @Mixin(Minecraft.class)
 public class Mixin_InitializationEvent {
 
+    //~ if = 1.8.9 '<init>' -> 'init'
     @Inject(method = "<init>", at = @At("RETURN"))
     private void completedInit(CallbackInfo ci) {
         EventManager.INSTANCE.post(InitializationEvent.INSTANCE);
+        //? if = 1.8.9
+        //ClientCommandInternals.initializeDispatcher();
     }
 
 }

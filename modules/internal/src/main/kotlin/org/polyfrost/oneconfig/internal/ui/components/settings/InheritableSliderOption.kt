@@ -72,6 +72,8 @@ fun InheritableSliderOption(data: InheritableSliderOptionData) {
     ) {
         Box(
             modifier = Modifier
+                // the spinners beside the track outgrow narrow columns like the HUD editor's
+                .weight(1f, fill = false)
                 .width(LocalOptionWidth.current)
                 .height(19.dp)
                 .onSizeChanged { trackWidthPx = it.width.toFloat() }
@@ -148,6 +150,7 @@ fun InheritableSliderOption(data: InheritableSliderOptionData) {
             max = data.max,
             step = if (data.step > 0f) data.step else 1f,
             width = 80.dp,
+            format = data.format,
         )
         InheritChip(label = data.inheritLabel, active = inherited) {
             if (!inherited) {

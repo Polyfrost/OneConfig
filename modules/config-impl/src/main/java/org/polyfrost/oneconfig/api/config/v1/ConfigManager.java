@@ -87,6 +87,7 @@ public final class ConfigManager {
     private static final long MINIMUM_WAIT_NANOS = TimeUnit.MILLISECONDS.toNanos(500L);
     private static final ThreadLocal<Long> PROFILE_OPERATION_DEADLINE = new ThreadLocal<>();
     private static final ThreadLocal<Boolean> REBINDING_PROFILES = ThreadLocal.withInitial(() -> Boolean.FALSE);
+    private static volatile Consumer<Runnable> profileSwitchDispatcher = Runnable::run;
     private static final CopyOnWriteArrayList<ProfileChangeListener> profileListeners = new CopyOnWriteArrayList<>();
     private static final CopyOnWriteArrayList<TreeRegistrationListener> treeListeners = new CopyOnWriteArrayList<>();
 
@@ -96,6 +97,18 @@ public final class ConfigManager {
         void onProfileChanged(String newProfile);
 
         default void onProfileSaving(String profile) {
+        }
+
+        /**
+         * Called on the UI thread right before the configs are rebound from {@code profile}, which a rename
+         * also does
+         * <br>
+         * Unlike {@link #onProfileSaving} this also runs when the profile is left without being saved
+         */
+        default void onProfileUnloading(String profile) {
+        }
+
+        default void onProfileOperationFinished() {
         }
 
         default void onProfileCreated(String profile) {
@@ -196,7 +209,7 @@ public final class ConfigManager {
             Config config = pendingInitialization.poll();
             if (config == null) continue;
             try {
-                config.initialize(true);
+                config.runInitialize(true);
             } catch (Throwable t) {
                 failedInitialization.add(config.id);
                 Tree half = config.tree;
@@ -231,6 +244,11 @@ public final class ConfigManager {
 
     static synchronized void markInitialized(Config config) {
         initializedConfigs.put(config.id, config);
+    }
+
+    @ApiStatus.Internal
+    public static void setProfileSwitchDispatcher(Consumer<Runnable> dispatcher) {
+        profileSwitchDispatcher = dispatcher == null ? Runnable::run : dispatcher;
     }
 
     @ApiStatus.Internal
@@ -377,9 +395,7 @@ public final class ConfigManager {
         // Profile listeners own state which is not part of the config backend (for example,
         // Minecraft controls). Save it while the outgoing profile is still the committed owner.
         if (!previousProfile.equals(alreadySavedProfile)) saveProfileState(previousProfile);
-        synchronized (ConfigManager.class) {
-            openProfile(profile, false);
-        }
+        openProfileOnUiThread(profile, false);
         notifyProfileChanged(profile);
     }
 
@@ -390,6 +406,14 @@ public final class ConfigManager {
         }
         List<Tree> externalTrees = new ArrayList<>();
         if (active != null) {
+            String outgoing = activeProfile();
+            for (ProfileChangeListener listener : profileListeners) {
+                try {
+                    listener.onProfileUnloading(outgoing);
+                } catch (Throwable t) {
+                    LOGGER.error("Profile unload listener failed", t);
+                }
+            }
             for (Tree t : active.trees()) {
                 String id = t.getID();
                 if (id == null || initializedConfigs.containsKey(id)) continue;
@@ -552,14 +576,10 @@ public final class ConfigManager {
             throw new IllegalStateException("Failed to create profile: " + name, e);
         }
         try {
-            synchronized (ConfigManager.class) {
-                openProfile(name, true);
-            }
+            openProfileOnUiThread(name, true);
         } catch (Throwable failure) {
             try {
-                synchronized (ConfigManager.class) {
-                    if (!activeProfile().equals(previousProfile)) openProfile(previousProfile, false);
-                }
+                if (!activeProfile().equals(previousProfile)) openProfileOnUiThread(previousProfile, false);
             } catch (Throwable restoreFailure) {
                 failure.addSuppressed(restoreFailure);
             }
@@ -725,33 +745,35 @@ public final class ConfigManager {
             if (Files.exists(newPath)) throw new IllegalArgumentException("Profile already exists: " + newProfile);
         }
         saveProfileState(profile);
-        boolean activeProfile;
-        synchronized (ConfigManager.class) {
-            if (!Files.isDirectory(oldPath)) throw new IllegalArgumentException("Profile does not exist: " + profile);
-            if (Files.exists(newPath)) throw new IllegalArgumentException("Profile already exists: " + newProfile);
-            activeProfile = activeProfile().equals(profile);
-            boolean favorite = isFavoriteProfile(profile);
-            String icon = profileIcon(profile);
-            if (activeProfile) active.saveAll();
-            try {
-                Files.move(oldPath, newPath);
-            } catch (IOException e) {
-                throw new IllegalStateException("Failed to rename profile: " + profile, e);
-            }
-            if (favorite) {
-                setFavoriteProfile(profile, false);
-                setFavoriteProfile(newProfile, true);
-            }
-            setProfileIcon(profile, null);
-            if (!icon.equals(defaultProfileIcon())) {
-                setProfileIcon(newProfile, icon);
-            }
-            if (activeProfile) {
-                openProfile(newProfile, false);
-            }
-        }
+        boolean activeProfile = activeProfile().equals(profile);
+        String from = profile, to = newProfile;
+        runLockedOnUiThread(() -> moveProfile(from, to, oldPath, newPath, activeProfile), "the profile rename");
         notifyProfileRenamed(profile, newProfile);
         if (activeProfile) notifyProfileChanged(newProfile);
+    }
+
+    private static void moveProfile(String profile, String newProfile, Path oldPath, Path newPath, boolean activeProfile) {
+        if (!Files.isDirectory(oldPath)) throw new IllegalArgumentException("Profile does not exist: " + profile);
+        if (Files.exists(newPath)) throw new IllegalArgumentException("Profile already exists: " + newProfile);
+        boolean favorite = isFavoriteProfile(profile);
+        String icon = profileIcon(profile);
+        if (activeProfile) active.saveAll();
+        try {
+            Files.move(oldPath, newPath);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to rename profile: " + profile, e);
+        }
+        if (favorite) {
+            setFavoriteProfile(profile, false);
+            setFavoriteProfile(newProfile, true);
+        }
+        setProfileIcon(profile, null);
+        if (!icon.equals(defaultProfileIcon())) {
+            setProfileIcon(newProfile, icon);
+        }
+        if (activeProfile) {
+            openProfile(newProfile, false);
+        }
     }
 
     public static void deleteProfile(String profile) {
@@ -765,15 +787,12 @@ public final class ConfigManager {
                 throw new IllegalArgumentException("Profile does not exist: " + profile);
             }
         }
-        boolean switchedToRoot;
+        boolean switchedToRoot = activeProfile().equals(profile);
+        if (switchedToRoot) openProfileOnUiThread("", false);
         IllegalStateException failure = null;
         synchronized (ConfigManager.class) {
-            Path path = profilePath(profile);
-            if (!Files.isDirectory(path)) throw new IllegalArgumentException("Profile does not exist: " + profile);
-            switchedToRoot = activeProfile().equals(profile);
-            if (switchedToRoot) openProfile("", false);
             try {
-                deleteDirectory(path);
+                deleteDirectory(profilePath(profile));
                 setProfileIcon(profile, null);
                 setFavoriteProfile(profile, false);
             } catch (IOException e) {
@@ -1106,6 +1125,13 @@ public final class ConfigManager {
         } finally {
             PROFILE_OPERATION_DEADLINE.remove();
             PROFILE_LIFECYCLE_LOCK.unlock();
+            for (ProfileChangeListener listener : profileListeners) {
+                try {
+                    listener.onProfileOperationFinished();
+                } catch (Throwable t) {
+                    LOGGER.error("Profile operation listener failed", t);
+                }
+            }
         }
     }
 
@@ -1144,6 +1170,18 @@ public final class ConfigManager {
             if (cause instanceof Error) throw (Error) cause;
             throw new IllegalStateException(cause);
         }
+    }
+
+    private static void openProfileOnUiThread(String profile, boolean restoreDefaults) {
+        runLockedOnUiThread(() -> openProfile(profile, restoreDefaults), "the profile switch");
+    }
+
+    private static void runLockedOnUiThread(Runnable action, String what) {
+        dispatchAndWait(profileSwitchDispatcher, () -> {
+            synchronized (ConfigManager.class) {
+                action.run();
+            }
+        }, PROFILE_OPERATION_BUDGET_NANOS, what);
     }
 
     private static String defaultProfileIcon() {

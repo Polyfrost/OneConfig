@@ -34,7 +34,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.*
-import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -57,6 +57,7 @@ import kotlin.ranges.coerceAtLeast
 import kotlin.ranges.coerceAtMost
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
@@ -65,6 +66,10 @@ import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.Paint
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.RenderContext
+import org.polyfrost.oneconfig.api.config.v1.Config
+import org.polyfrost.oneconfig.api.config.v1.Properties
+import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
@@ -99,8 +104,8 @@ import org.polyfrost.oneconfig.internal.ui.themes.*
 
 private val LOGGER = LogManager.getLogger("OneConfig/HudDesignStudio")
 
-/** How far the cursor must travel while pressing a locked HUD before it counts as a move attempt */
-private const val LOCKED_DRAG_SLOP_PX = 3f
+/** How far the cursor must travel while pressing a HUD before it counts as a drag attempt */
+private const val DRAG_SLOP_PX = 3f
 
 private var lockedHudToast: Notification? = null
 
@@ -143,17 +148,27 @@ object HudEditorViewport {
     var screenHeight by mutableStateOf(0)
         private set
 
+    // observable mirror of HudManager.guiScreenWidth/Height
+    private var guiWidth by mutableStateOf(0f)
+    private var guiHeight by mutableStateOf(0f)
+
     fun update(width: Int, height: Int) {
-        if (width == screenWidth && height == screenHeight) return
+        val gw = HudManager.guiScreenWidth
+        val gh = HudManager.guiScreenHeight
+        if (width == screenWidth && height == screenHeight && gw == guiWidth && gh == guiHeight) return
         Snapshot.withMutableSnapshot {
             screenWidth = width
             screenHeight = height
+            guiWidth = gw
+            guiHeight = gh
         }
     }
 
     fun observe() {
         @Suppress("UNUSED_EXPRESSION") screenWidth
         @Suppress("UNUSED_EXPRESSION") screenHeight
+        @Suppress("UNUSED_EXPRESSION") guiWidth
+        @Suppress("UNUSED_EXPRESSION") guiHeight
     }
 }
 
@@ -209,6 +224,14 @@ private data class SnapGuides(val vertical: Float?, val horizontal: Float?) {
 }
 
 private data class AxisSnap(val position: Float, val line: Float?)
+
+/** An unlocked HUD press that becomes a click or drag depending on whether it moves past [DRAG_SLOP_PX] */
+private class PendingPress(
+    val hud: Hud,
+    val origin: Offset,
+    val wasSelected: Boolean,
+    val narrowsSelection: Boolean,
+)
 
 private fun snapAxis(pos: Float, size: Float, lines: List<Float>, threshold: Float): AxisSnap {
     val center = pos + size / 2f
@@ -424,6 +447,7 @@ private fun hitTestAnchorPoint(
 
 private fun drawHudContents(sk: Canvas, mcToScreen: Float) {
     HudManager.renderRevision.intValue
+    HudManager.instancesRevision.intValue
     HudManager.revision
     // HUDs fused with a neighbour do not paint their own background so the merged shapes are laid down
     // here first just like the in-game HUD pass
@@ -661,13 +685,7 @@ private fun resizeHud(
         } else 1f
         val baseScale = startScale.coerceAtLeast(0.001f)
         val newScale = (baseScale * rawFactor).coerceIn(0.25f, 4f)
-        val factor = newScale / baseScale
-        val newWidth = startBounds.width * factor
-        val newHeight = startBounds.height * factor
-        val newX = if (corner.isLeft) anchorX - newWidth else anchorX
-        val newY = if (corner.isTop) anchorY - newHeight else anchorY
         hud.customScale = newScale
-        hud.setAbsolutePosition(newX, newY)
         return
     }
 
@@ -676,13 +694,10 @@ private fun resizeHud(
         val (minStaticW, minStaticH) = hud.minimumSize()
         val newWidth = targetWidth.coerceAtLeast(minStaticW * effectiveScale)
         val newHeight = targetHeight.coerceAtLeast(minStaticH * effectiveScale)
-        val newX = if (corner.isLeft) anchorX - newWidth else anchorX
-        val newY = if (corner.isTop) anchorY - newHeight else anchorY
 
         hud.staticWidth = true
         hud.staticW = newWidth / effectiveScale
         hud.staticH = newHeight / effectiveScale
-        hud.setAbsolutePosition(newX, newY)
         return
     }
 
@@ -700,17 +715,12 @@ private fun resizeHud(
     val maxTextScale = 64f / 14f
     val newTextScale = (startTextScale * rawFactor).coerceIn(minTextScale, maxTextScale)
     val factor = if (startTextScale > 0f) newTextScale / startTextScale else 1f
-    val newWidth = startBounds.width * factor
-    val newHeight = startBounds.height * factor
-    val newX = if (corner.isLeft) anchorX - newWidth else anchorX
-    val newY = if (corner.isTop) anchorY - newHeight else anchorY
 
     hud.textScale = newTextScale
     if (hud.staticWidth && startStaticW > 0f && startStaticH > 0f) {
         hud.staticW = startStaticW * factor
         hud.staticH = startStaticH * factor
     }
-    hud.setAbsolutePosition(newX, newY)
 }
 
 private fun DrawScope.drawSelectedHudBounds(
@@ -900,6 +910,7 @@ private fun placeHudCentered(provider: Hud): Hud? = try {
     instance.setAbsolutePosition((screenW - w) / 2f, (screenH - h) / 2f)
     if (instance !in HudManager.activeInstances) {
         HudManager.activeInstances.add(instance)
+        HudManager.instancesRevision.intValue++
         instance.setup()
         instance.captureStaticSizeDefaults()
         instance.capturePositionDefaults()
@@ -927,6 +938,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     var dragStarts by remember { mutableStateOf<Map<Hud, Pair<Float, Float>>>(emptyMap()) }
     // set while the current drag grabbed a whole fused shape rather than the selection itself
     var dragTookWholeMerge by remember { mutableStateOf(false) }
+    var pendingPress by remember { mutableStateOf<PendingPress?>(null) }
     var snapGuides by remember { mutableStateOf(SnapGuides.NONE) }
     var isResizing by remember { mutableStateOf(false) }
     var resizedHud by remember { mutableStateOf<Hud?>(null) }
@@ -945,6 +957,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     val libraryScrollState = rememberLazyListState()
     var librarySectionIndexes by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
     val chromeRects = remember { mutableStateMapOf<String, Rect>() }
+    val rootCoords = remember { arrayOfNulls<LayoutCoordinates>(1) }
     var panelOffset by remember { mutableStateOf(Offset.Zero) }
     var panelBoxWidth by remember { mutableStateOf(0) }
     var rootSize by remember { mutableStateOf(IntSize.Zero) }
@@ -954,6 +967,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     var lockedPressHud by remember { mutableStateOf<Hud?>(null) }
     var lockedPressOrigin by remember { mutableStateOf(Offset.Zero) }
     val keyFocusRequester = remember { FocusRequester() }
+    val history = remember { HudHistory() }
+    var pointerDown by remember { mutableStateOf(false) }
     var hudClipboard by remember { mutableStateOf<List<Hud>>(emptyList()) }
     var pasteMenuOffset by remember { mutableStateOf<IntOffset?>(null) }
     var marqueeStart by remember { mutableStateOf<Offset?>(null) }
@@ -988,7 +1003,6 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 removed.forEach { hud ->
                     if (hoveredHud === hud) hoveredHud = null
                     HudManager.removeHud(hud, delete = true)
-                    HudDesignSession.forget(hud)
                 }
             }
             UiSounds.play(UiSoundEvent.CLICK)
@@ -1017,24 +1031,11 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     panelOpen = true
                 }
             }
-        } else {
-            val restored = HudDesignSession.restoreSelection()
-            if (restored.isNotEmpty()) {
-                Snapshot.withMutableSnapshot {
-                    selectedHuds = restored.toSet()
-                    if (HudDesignSession.restorePanelOpen()) panelOpen = true
-                    activeCategory = HudDesignSession.restoreCategory()
-                }
-            }
         }
     }
 
-    val savedSelection = rememberUpdatedState(selectedHuds)
-    val savedPanelOpen = rememberUpdatedState(panelOpen)
-    val savedCategory = rememberUpdatedState(activeCategory)
     DisposableEffect(Unit) {
         onDispose {
-            HudDesignSession.save(savedSelection.value.toList(), savedPanelOpen.value, savedCategory.value)
             HudDesignSession.activeSelection = emptyList()
             HudDesignSession.clearCommands()
         }
@@ -1117,12 +1118,38 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                             OneConfigConfig.INSTANCE.save()
                         }
                     }
+
+                    StudioCommand.Undo, StudioCommand.Redo -> {
+                        if (!isDragging && !isResizing && pendingPress == null) {
+                            val revived = if (command == StudioCommand.Undo) history.undo() else history.redo()
+                            if (revived != null) {
+                                Snapshot.withMutableSnapshot {
+                                    val live = HudManager.activeInstances
+                                    selectedHuds = selectedHuds.filterTo(LinkedHashSet()) { it in live } + revived
+                                    if (hoveredHud !in live) hoveredHud = null
+                                    if (hudContextMenuTarget !in live) hudContextMenuTarget = null
+                                }
+                                UiSounds.play(UiSoundEvent.CLICK)
+                            }
+                        }
+                    }
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
                 LOGGER.error("Failed to handle $command in the HUD Design Studio", e)
             }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            try {
+                history.poll(busy = isDragging || isResizing || pointerDown)
+            } catch (e: Exception) {
+                LOGGER.error("Failed to record HUD history", e)
+            }
+            delay(250)
         }
     }
 
@@ -1172,7 +1199,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
     val actionBarGapPx = with(densityObj) { 8.dp.toPx() }
     val libraryChromeVisible = selectedHuds.isEmpty() && !isDragging && !marqueeActive
 
-    fun Modifier.chromeRegion(key: String) = onGloballyPositioned { chromeRects[key] = it.boundsInRoot() }
+    fun Modifier.chromeRegion(key: String) = onGloballyPositioned { coords ->
+        val root = rootCoords[0]?.takeIf { it.isAttached } ?: return@onGloballyPositioned
+        chromeRects[key] = root.localBoundingBoxOf(coords)
+    }
 
     fun Modifier.chromeBlocker(key: String) = this
         .chromeRegion(key)
@@ -1289,6 +1319,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 return@safePointerEvent
             }
             pressWasSecondary = false
+            pendingPress = null
             val mcToScreen = Platform.screen().mcToScreenScale()
             val singleSelection = selectedHuds.size == 1
             val selected = if (singleSelection) primaryHud() else null
@@ -1299,6 +1330,14 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     event.changes.forEach { it.consume() }
                     UiSounds.play(UiSoundEvent.HUD_RESIZE_START)
                     Snapshot.withMutableSnapshot {
+                        selected.pinCorner(
+                            when (handle) {
+                                ResizeCorner.TopLeft -> HudAnchor.BottomRight
+                                ResizeCorner.TopRight -> HudAnchor.BottomLeft
+                                ResizeCorner.BottomLeft -> HudAnchor.TopRight
+                                ResizeCorner.BottomRight -> HudAnchor.TopLeft
+                            }
+                        )
                         isResizing = true
                         resizedHud = selected
                         resizeCorner = handle
@@ -1334,7 +1373,6 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 }
                 return@safePointerEvent
             }
-            if (hit != null) UiSounds.play(UiSoundEvent.HUD_DRAG_START)
             if (hit != null) event.changes.forEach { it.consume() }
             Snapshot.withMutableSnapshot {
                 if (hit != null) {
@@ -1346,31 +1384,15 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                     }
                     selectedHuds = newSelection
                     closeLibrary()
-                    if (newSelection.isNotEmpty()) {
-                        // grabbing an unselected HUD drags the whole fused shape while grabbing an already
-                        // selected one pulls it back out of that shape
-                        val detach = wasSelected
-                        val dragSet = if (detach) {
-                            newSelection
-                        } else {
-                            newSelection + HudManager.mergeGroupOf(hit).filter { !it.locked }
-                        }
-                        HudManager.setMergeExclusions(if (detach) dragSet else emptySet())
-                        dragTookWholeMerge = !detach && dragSet.size > newSelection.size
-                        hit.onEditorDragStart()
-                        dragOffsetX = pos.x * s - hit.x
-                        dragOffsetY = pos.y * s - hit.y
-                        isDragging = true
-                        draggedHud = hit
-                        draggedGroup = dragSet
-                        dragStarts = dragSet.associateWith { it.x to it.y }
-                        hoveredHud = hit
-                    } else {
-                        isDragging = false
-                        draggedHud = null
-                        draggedGroup = emptySet()
-                        dragStarts = emptyMap()
-                    }
+                    pendingPress = PendingPress(
+                        hud = hit,
+                        origin = pos,
+                        wasSelected = wasSelected,
+                        narrowsSelection = wasSelected && !actionPressed && !shift && newSelection.size > 1,
+                    )
+                    dragOffsetX = pos.x * s - hit.x
+                    dragOffsetY = pos.y * s - hit.y
+                    hoveredHud = hit
                 } else {
                     selectedHuds = if (actionPressed || shift) selectedHuds else emptySet()
                     marqueeStart = pos
@@ -1396,9 +1418,39 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 if (hit != hoveredAnchor) hoveredAnchor = hit
                 return@safePointerEvent
             }
+            val press = pendingPress
+            if (press != null) {
+                if (event.changes.none { it.pressed }) {
+                    pendingPress = null
+                } else {
+                    if (press.hud !in selectedHuds || press.hud.locked) return@safePointerEvent
+                    if ((pos - press.origin).getDistance() <= DRAG_SLOP_PX) return@safePointerEvent
+                    UiSounds.play(UiSoundEvent.HUD_DRAG_START)
+                    val movable = selectedHuds.filterTo(LinkedHashSet()) { !it.locked }
+                    // grabbing an unselected HUD drags the whole fused shape while grabbing an already selected
+                    // one pulls it back out of that shape
+                    val detach = press.wasSelected
+                    val dragSet = if (detach) {
+                        movable
+                    } else {
+                        movable + HudManager.mergeGroupOf(press.hud).filter { !it.locked }
+                    }
+                    HudManager.setMergeExclusions(if (detach) dragSet else emptySet())
+                    press.hud.onEditorDragStart()
+                    Snapshot.withMutableSnapshot {
+                        pendingPress = null
+                        dragTookWholeMerge = !detach && dragSet.size > movable.size
+                        isDragging = true
+                        draggedHud = press.hud
+                        draggedGroup = dragSet
+                        dragStarts = dragSet.associateWith { it.x to it.y }
+                    }
+                }
+            }
             if (isResizing) {
                 if (event.changes.none { it.pressed }) {
                     Snapshot.withMutableSnapshot {
+                        resizedHud?.unpinCorner()
                         isResizing = false
                         resizedHud = null
                         resizeCorner = null
@@ -1490,7 +1542,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 if (lockedPressHud != null) {
                     if (event.changes.none { it.pressed }) {
                         lockedPressHud = null
-                    } else if ((pos - lockedPressOrigin).getDistance() > LOCKED_DRAG_SLOP_PX) {
+                    } else if ((pos - lockedPressOrigin).getDistance() > DRAG_SLOP_PX) {
                         // no toast because the canvas hint already says the same thing under the pointer
                         lockedPressHud = null
                     }
@@ -1531,6 +1583,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             val wasResizing = isResizing
             val wasResizedHud = resizedHud
             Snapshot.withMutableSnapshot {
+                wasResizedHud?.unpinCorner()
                 isResizing = false
                 resizedHud = null
                 resizeCorner = null
@@ -1541,6 +1594,16 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 Snapshot.withMutableSnapshot {
                     if (wasResizedHud != null) selectedHuds = setOf(wasResizedHud)
                     closeLibrary()
+                }
+                return@safePointerEvent
+            }
+            val click = pendingPress
+            if (click != null) {
+                val narrowsSelection = click.narrowsSelection && click.hud in selectedHuds
+                if (!click.wasSelected || narrowsSelection) UiSounds.play(UiSoundEvent.HUD_SELECT)
+                Snapshot.withMutableSnapshot {
+                    pendingPress = null
+                    if (narrowsSelection) selectedHuds = setOf(click.hud)
                 }
                 return@safePointerEvent
             }
@@ -1658,8 +1721,16 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
         modifier = Modifier
             .fillMaxSize()
             .onSizeChanged { rootSize = it }
+            .onGloballyPositioned { rootCoords[0] = it }
             .focusRequester(keyFocusRequester)
             .focusable()
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        pointerDown = awaitPointerEvent(PointerEventPass.Initial).changes.any { it.pressed }
+                    }
+                }
+            }
             .onKeyEvent { keyEvent ->
                 if (keyEvent.type != KeyEventType.KeyDown) return@onKeyEvent false
                 if (keyEvent.key == Key.Escape && anchorPickSources.isNotEmpty()) {
@@ -1768,6 +1839,8 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             modifier = Modifier
                 .fillMaxSize()
                 .drawWithContent {
+                    // read in the draw scope so the cached outlines redraw on viewport changes
+                    HudEditorViewport.observe()
                     drawContent()
                     val mcToScreen = Platform.screen().mcToScreenScale()
                     if (!HudManager.inWorld) {
@@ -2120,6 +2193,7 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                                 instance.setAbsolutePosition(initX, initY)
                                 if (instance !in HudManager.activeInstances) {
                                     HudManager.activeInstances.add(instance)
+                                    HudManager.instancesRevision.intValue++
                                     instance.setup()
                                     instance.captureStaticSizeDefaults()
                                     instance.capturePositionDefaults()
@@ -2177,6 +2251,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
         val contextMenuTargets = hudContextMenuTarget?.let { hud ->
             if (hud in selectedHuds) selectedHuds.toList() else listOf(hud)
         } ?: emptyList()
+
+        val menuOpen = hudContextMenuTarget != null || pasteMenuOffset != null
+        val canUndo = remember(menuOpen) { menuOpen && history.canUndo }
+        val canRedo = remember(menuOpen) { menuOpen && history.canRedo }
 
         HudCanvasResetMenu(
             hud = hudContextMenuTarget,
@@ -2237,6 +2315,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             anchorEnabled = contextMenuTargets.isNotEmpty() &&
                 anchorTargetsFor(contextMenuTargets).isNotEmpty(),
             onDelete = { _ -> deleteHuds(contextMenuTargets) },
+            onUndo = { HudDesignSession.handleUndo(true) },
+            undoEnabled = canUndo,
+            onRedo = { HudDesignSession.handleRedo(true) },
+            redoEnabled = canRedo,
         )
 
         HudCanvasPasteMenu(
@@ -2259,6 +2341,10 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
                 }
                 UiSounds.play(UiSoundEvent.CLICK)
             },
+            onUndo = { HudDesignSession.handleUndo(true) },
+            undoEnabled = canUndo,
+            onRedo = { HudDesignSession.handleRedo(true) },
+            redoEnabled = canRedo,
         )
     }
 }
@@ -2282,7 +2368,7 @@ internal fun duplicateHud(
         return null
     }
     Snapshot.withMutableSnapshot {
-        fresh.tree.overwrite(copied.tree, true, false, null)
+        fresh.tree.overwrite(detachedValues(copied.tree), true, false, null)
         fresh.hidden = copied.hidden
         fresh.locked = copied.locked
         fresh.staticWidth = copied.staticWidth
@@ -2305,6 +2391,7 @@ internal fun duplicateHud(
             fresh.setAbsolutePosition(source.x + offset, source.y + offset)
         }
         HudManager.activeInstances.add(fresh)
+        HudManager.instancesRevision.intValue++
     }
     HudManager.markProviderKnown(fresh)
     fresh.setup()
@@ -2312,6 +2399,22 @@ internal fun duplicateHud(
     fresh.capturePositionDefaults()
     HudManager.invalidate()
     return fresh
+}
+
+@Suppress("UNCHECKED_CAST")
+private fun detachedValues(tree: Tree): Tree {
+    val out = Tree(tree.id, null, null, null)
+    for ((key, node) in tree.map) {
+        when (node) {
+            is Tree -> out.put(detachedValues(node))
+            is Property<*> -> {
+                if (node.type == Void::class.java) continue
+                val value = node.get() ?: continue
+                out.put(Properties.simple(key, null, null, Config.copyDefault(node.type, value), node.type as Class<Any?>))
+            }
+        }
+    }
+    return out
 }
 
 internal fun duplicateHudGroup(
@@ -2465,7 +2568,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                     if (lockedPressHud != null) {
                         if (event.changes.none { it.pressed }) {
                             lockedPressHud = null
-                        } else if ((pos - lockedPressOrigin).getDistance() > LOCKED_DRAG_SLOP_PX) {
+                        } else if ((pos - lockedPressOrigin).getDistance() > DRAG_SLOP_PX) {
                             lockedPressHud = null
                             notifyHudLocked()
                         }
@@ -2499,6 +2602,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
             .drawWithContent {
                 // HUD contents go under the children because the action bar is a child of this Box and
                 // drawing it first would put it behind every HUD painted here
+                HudEditorViewport.observe()
                 val mcToScreen = Platform.screen().mcToScreenScale()
                 drawIntoCanvas { canvas -> drawHudContents(canvas.skiaCanvas, mcToScreen) }
                 if (isDragging) {
@@ -2588,7 +2692,6 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                                     ShellState.hudDragging = false
                                 }
                                 HudManager.removeHud(actionBarTarget, delete = true)
-                                HudDesignSession.forget(actionBarTarget)
                             }
                         }
                     },
@@ -2613,6 +2716,8 @@ private fun DesignStudioPanel(
     val theme = LocalTheme.current
     val isLegacy = selectedHud is LegacyHud
     val categories = if (isLegacy) listOf(StudioCategory.Settings) else StudioCategory.entries
+    var searchText by remember { mutableStateOf("") }
+    val query = searchText.trim()
     val subtitle = remember(selectedHud) {
         selectedHud?.let { hud ->
             val name = localizedLabel(hud.title) ?: return@let null
@@ -2646,7 +2751,7 @@ private fun DesignStudioPanel(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     IconButton("close") { onBack() }
-                    SearchBar()
+                    SearchBar(searchText, { searchText = it }, "Search...")
                 }
                 Row(
                     modifier = Modifier
@@ -2672,7 +2777,7 @@ private fun DesignStudioPanel(
                         }
                     }
                 }
-                if (categories.size > 1) {
+                if (categories.size > 1 && query.isEmpty()) {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         categories.forEach {
                             Chip(it.title, it == activeCategory, it.icon) { onCategoryChange(it) }
@@ -2690,29 +2795,26 @@ private fun DesignStudioPanel(
                     },
                     modifier = Modifier.fillMaxSize()
                 ) { category ->
-                    when (category) {
-                        StudioCategory.Designer -> {
-                            val panelScrollState = rememberScrollState()
-                            Box(modifier = Modifier.fillMaxSize()) {
-                                Column(
-                                    modifier = Modifier.fillMaxSize()
-                                        .verticalScroll(panelScrollState)
-                                        .padding(end = 16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                                ) {
-                                    Designer(selectedHud)
+                    val panelScrollState = rememberScrollState()
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Column(
+                            modifier = Modifier.fillMaxSize()
+                                .verticalScroll(panelScrollState)
+                                .padding(end = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(22.dp)
+                        ) {
+                            // like the main config screen, a search spans every category rather than only the open one
+                            categories.forEach {
+                                if (query.isNotEmpty() || it == category) when (it) {
+                                    StudioCategory.Designer -> Designer(selectedHud, query)
+                                    StudioCategory.Settings -> Settings(selectedHud, query, onDeleted = onBack)
                                 }
-                                VerticalScrollbar(
-                                    adapter = rememberScrollbarAdapter(panelScrollState),
-                                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
-                                )
                             }
                         }
-                        StudioCategory.Settings -> {
-                            Box(modifier = Modifier.fillMaxSize()) {
-                                Settings(selectedHud, onDeleted = onBack)
-                            }
-                        }
+                        VerticalScrollbar(
+                            adapter = rememberScrollbarAdapter(panelScrollState),
+                            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
+                        )
                     }
                 }
             }
@@ -2740,6 +2842,8 @@ private fun rememberHudSearchResults(providers: List<Hud>, query: String): List<
 /** One mod's worth of addable HUDs as shown in the continuous library list */
 private val Hud.addableToLibrary: Boolean
     get() = multipleInstancesAllowed() || !HudManager.hasHudOfType(this::class.java)
+
+private val HudLibraryGutter = 18.dp
 
 private class HudLibrarySection(val modId: String?, val title: String, val huds: List<Hud>)
 
@@ -2934,32 +3038,33 @@ private fun HudLibraryPanel(
             .then(modifier)
             .background(theme.popupBackground, theme.backgroundShape)
             .border(1.dp, theme.borderColor, theme.backgroundShape)
-            .padding(18.dp),
+            .padding(vertical = HudLibraryGutter),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = HudLibraryGutter),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text("HUDs", color = theme.textColor, fontSize = 18.sp)
             if (!suggestEvergreenHud) {
-                LibrarySearchBar(searchText, onSearchChange)
+                SearchBar(searchText, onSearchChange, "Search HUDs...")
                 IconButton("close", modifier = Modifier.size(18.dp), onClick = onClose)
             }
         }
         if (suggestEvergreenHud) {
-            EvergreenHudSuggestion(Modifier.fillMaxWidth().weight(1f))
+            EvergreenHudSuggestion(Modifier.fillMaxWidth().weight(1f).padding(horizontal = HudLibraryGutter))
             return@Column
         }
         Text(
             "Click to add  ·  Drag to place it yourself",
+            modifier = Modifier.padding(horizontal = HudLibraryGutter),
             color = theme.textColorSecondary,
             fontSize = 11.sp,
         )
         Box(Modifier.fillMaxWidth().weight(1f)) {
             BoxWithConstraints(Modifier.fillMaxSize()) {
-                val maxCardWidth = maxWidth - 16.dp
+                val maxCardWidth = maxWidth - HudLibraryGutter * 2
                 val density = LocalDensity.current
                 val (items, sectionIndexes, previewsMeasured, previews, geometry) = rememberHudLibraryLayout(sections, maxCardWidth)
                 val completeScroll by rememberUpdatedState(onScrollComplete)
@@ -2992,38 +3097,39 @@ private fun HudLibraryPanel(
                     }
                     completeScroll(target, false)
                 }
-                LazyColumn(
-                    state = scrollState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(end = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    if (sections.isEmpty()) {
-                        item(key = "empty") {
-                            Text(
-                                "No HUDs found",
-                                color = theme.textColorSecondary,
-                                fontSize = 14.sp,
-                            )
+                ScrollbarBox(scrollState, scrollbarAdapter, HudLibraryGutter, Modifier.fillMaxSize()) {
+                    LazyColumn(
+                        state = scrollState,
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = HudLibraryGutter),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        if (sections.isEmpty()) {
+                            item(key = "empty") {
+                                Text(
+                                    "No HUDs found",
+                                    color = theme.textColorSecondary,
+                                    fontSize = 14.sp,
+                                )
+                            }
                         }
-                    }
-                    items.forEach { libraryItem ->
-                        item(key = libraryItem.key, contentType = if (libraryItem.row == null) "header" else "cards") {
-                            val row = libraryItem.row
-                            if (row == null) {
-                                HudLibraryHeader(libraryItem.section, active = libraryItem.section.modId == activeModId)
-                            } else {
-                                Row(
-                                    modifier = Modifier.padding(bottom = libraryItem.bottomPadding),
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                ) {
-                                    row.huds.forEach { hud ->
-                                        key(hud) {
-                                            if (hud is LegacyHud) {
-                                                LegacyHudPreviewCard(hud, geometry.getValue(hud), onDragStart, onCardClick)
-                                            } else {
-                                                ComposeHudPreviewCard(hud, previews.getValue(hud), geometry.getValue(hud), onDragStart, onCardClick)
+                        items.forEach { libraryItem ->
+                            item(key = libraryItem.key, contentType = if (libraryItem.row == null) "header" else "cards") {
+                                val row = libraryItem.row
+                                if (row == null) {
+                                    HudLibraryHeader(libraryItem.section, active = libraryItem.section.modId == activeModId)
+                                } else {
+                                    Row(
+                                        modifier = Modifier.padding(bottom = libraryItem.bottomPadding),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    ) {
+                                        row.huds.forEach { hud ->
+                                            key(hud) {
+                                                if (hud is LegacyHud) {
+                                                    LegacyHudPreviewCard(hud, geometry.getValue(hud), onDragStart, onCardClick)
+                                                } else {
+                                                    ComposeHudPreviewCard(hud, previews.getValue(hud), geometry.getValue(hud), onDragStart, onCardClick)
+                                                }
                                             }
                                         }
                                     }
@@ -3032,10 +3138,6 @@ private fun HudLibraryPanel(
                         }
                     }
                 }
-                VerticalScrollbar(
-                    adapter = scrollbarAdapter,
-                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
-                )
             }
         }
     }
@@ -3329,52 +3431,7 @@ private fun ModFilterIcon(iconName: String, selected: Boolean, onClick: () -> Un
 }
 
 @Composable
-fun SearchBar() {
-    var searchText by remember { mutableStateOf("") }
-    val interactionSource = rememberInteractionSource()
-    val isFocused by interactionSource.collectIsFocusedAsState()
-    val theme = LocalTheme.current
-    val borderColor by animateColorAsState(
-        if (isFocused) theme.textColor.copy(.20f) else theme.textColor.copy(.10f)
-    )
-    val iconColor by animateColorAsState(
-        if (isFocused) theme.textColor.copy(0.70f) else theme.textColor.copy(0.50f)
-    )
-
-    BasicTextField(
-        searchText,
-        { searchText = it },
-        modifier = Modifier.trackTextInputFocus(),
-        interactionSource = interactionSource,
-        textStyle = TextStyle(
-            color = iconColor, fontSize = 12.sp,
-        ),
-        cursorBrush = SolidColor(iconColor),
-    ) { innerTextField ->
-        Row(
-            modifier = Modifier.size(181.dp, 32.dp)
-                .border(1.dp, borderColor, theme.buttonShape)
-                .background(theme.componentBackground, theme.buttonShape),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon("search", color = iconColor, modifier = Modifier.padding(start = 8.dp).size(12.dp))
-            Box(modifier = Modifier.weight(1f)) {
-                if (!isFocused && searchText.isEmpty())
-                    Text("Search ...", color = iconColor, fontSize = 12.sp)
-                innerTextField()
-            }
-            if (searchText.isNotEmpty()) {
-                IconButton("close", modifier = Modifier.padding(end = 4.dp).size(16.dp)) {
-                    searchText = ""
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun LibrarySearchBar(value: String, onValueChange: (String) -> Unit) {
+private fun SearchBar(value: String, onValueChange: (String) -> Unit, placeholder: String) {
     val interactionSource = rememberInteractionSource()
     val isFocused by interactionSource.collectIsFocusedAsState()
     val theme = LocalTheme.current
@@ -3405,7 +3462,7 @@ private fun LibrarySearchBar(value: String, onValueChange: (String) -> Unit) {
             Icon("search", color = iconColor, modifier = Modifier.padding(start = 8.dp).size(12.dp))
             Box(modifier = Modifier.weight(1f)) {
                 if (!isFocused && value.isEmpty())
-                    Text("Search HUDs...", color = iconColor, fontSize = 12.sp)
+                    Text(placeholder, color = iconColor, fontSize = 12.sp)
                 innerTextField()
             }
             if (value.isNotEmpty()) {

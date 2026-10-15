@@ -89,7 +89,7 @@ class HudCompatRestartTest {
     @SuppressWarnings("unchecked")
     private static void wipeCompatMemory() throws Exception {
         Object inst = CompatSnapshots.INSTANCE;
-        for (String name : new String[]{"known", "defaults", "wired", "applying"}) {
+        for (String name : new String[]{"known", "defaults", "applying"}) {
             Field f = CompatSnapshots.class.getDeclaredField(name);
             f.setAccessible(true);
             Object v = f.get(inst);

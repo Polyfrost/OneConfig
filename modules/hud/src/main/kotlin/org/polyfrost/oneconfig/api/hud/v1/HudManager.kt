@@ -163,6 +163,10 @@ object HudManager {
     @ApiStatus.Internal
     val renderRevision = mutableIntStateOf(0)
 
+    /** Compose cannot see changes to [activeInstances] so bump this whenever a HUD is added or removed */
+    @ApiStatus.Internal
+    val instancesRevision = mutableIntStateOf(0)
+
     @ApiStatus.Internal
     val editorOpenRevision = mutableIntStateOf(0)
 
@@ -352,6 +356,7 @@ object HudManager {
             val it = iter.next()
             if (it::class.java == hud::class.java) {
                 iter.remove()
+                instancesRevision.intValue++
                 disposeHudLogging(it, delete)
                 @Suppress("UNCHECKED_CAST")
                 out.add(it as T)
@@ -392,7 +397,7 @@ object HudManager {
 
     fun removeHud(hud: Hud, delete: Boolean = false) {
         if (!hud.isReal) LOGGER.warn("Removing HUD ${hud.title}, which has no config tree")
-        activeInstances.remove(hud)
+        if (activeInstances.remove(hud)) instancesRevision.intValue++
         disposeHudLogging(hud, delete)
     }
 
@@ -514,6 +519,7 @@ object HudManager {
                 hud.renderedH = h
             }
         }
+        hud.settlePin()
         return root
     }
 
@@ -751,6 +757,16 @@ object HudManager {
         val next = huds.toList()
         if (next.size == mergeExclusions.size && next.indices.all { next[it] === mergeExclusions[it] }) return
         mergeExclusions = next
+        // unlink right away so moving an excluded HUD never drags its neighbours with it
+        Snapshot.withMutableSnapshot {
+            for (hud in activeInstances) {
+                val excluded = isMergeExcluded(hud)
+                hud.clearMergeLinks(
+                    clearX = excluded || hud.mergeLinkX?.parent?.let(::isMergeExcluded) == true,
+                    clearY = excluded || hud.mergeLinkY?.parent?.let(::isMergeExcluded) == true,
+                )
+            }
+        }
         lastMergeKey = null
         invalidate()
     }
@@ -971,6 +987,12 @@ object HudManager {
         isEditorOpen = false
         // a drag interrupted by the editor closing must not leave a HUD unable to merge
         setMergeExclusions(emptyList())
+
+        for (hud in activeInstances) {
+            hud.unpinCorner()
+            hud.settlePin()
+        }
+
         if (wasOpen) EventManager.INSTANCE.post(HudEditorToggleEvent.SCREEN_REMOVED)
     }
 
@@ -997,6 +1019,7 @@ object HudManager {
                 continue
             }
             activeInstances.remove(hud)
+            instancesRevision.intValue++
             try {
                 disposeHud(hud, delete = false)
             } catch (failure: Throwable) {
@@ -1119,7 +1142,7 @@ object HudManager {
                     LOGGER.error("Failed to untrack broken HUD tree $treeId", failure)
                 }
             }
-            activeInstances.remove(candidate)
+            if (activeInstances.remove(candidate)) instancesRevision.intValue++
             try {
                 disposeHud(candidate, delete = false)
             } catch (failure: Throwable) {
@@ -1161,6 +1184,7 @@ object HudManager {
                     hud.setAbsolutePosition(absX, absY)
                 }
                 activeInstances.add(hud)
+                instancesRevision.intValue++
                 hud.setup()
                 hud.captureStaticSizeDefaults()
                 hud.capturePositionDefaults()
@@ -1210,6 +1234,7 @@ object HudManager {
                 candidate = hud
                 hud.setAbsolutePosition(dx, dy)
                 activeInstances.add(hud)
+                instancesRevision.intValue++
                 hud.setup()
                 hud.captureStaticSizeDefaults()
                 hud.capturePositionDefaults()

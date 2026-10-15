@@ -36,5 +36,6 @@ dependencies {
     api(libs.jetbrains.compose.ui.tooling.preview)
     api(libs.jetbrains.compose.ui.util)
     api(project(":modules:events"))
+    api(project(":modules:mod-toggles"))
     implementation(project(":modules:notifications"))
 }

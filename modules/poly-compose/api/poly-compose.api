@@ -342,8 +342,12 @@ public final class org/polyfrost/compose/render/FontManager {
 	public final fun getTypeface ()Lorg/jetbrains/skia/Typeface;
 	public final fun loadFromResource (Ljava/lang/String;)V
 	public final fun loadFromResource (Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Z
+	public final fun loadFromResource (Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;Z)Z
 	public static synthetic fun loadFromResource$default (Lorg/polyfrost/compose/render/FontManager;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;ILjava/lang/Object;)Z
+	public static synthetic fun loadFromResource$default (Lorg/polyfrost/compose/render/FontManager;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;ZILjava/lang/Object;)Z
 	public final fun register (Ljava/lang/String;Lorg/jetbrains/skia/Typeface;)V
+	public final fun register (Ljava/lang/String;Lorg/jetbrains/skia/Typeface;Z)V
+	public static synthetic fun register$default (Lorg/polyfrost/compose/render/FontManager;Ljava/lang/String;Lorg/jetbrains/skia/Typeface;ZILjava/lang/Object;)V
 	public final fun setDefault (Ljava/lang/String;)V
 	public final fun setTypeface (Lorg/jetbrains/skia/Typeface;)V
 }

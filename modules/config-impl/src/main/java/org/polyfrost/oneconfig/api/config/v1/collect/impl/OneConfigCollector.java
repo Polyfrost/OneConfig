@@ -42,6 +42,7 @@ import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.Properties;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
+import org.polyfrost.oneconfig.api.config.v1.ValueFormatter;
 import org.polyfrost.oneconfig.api.config.v1.annotations.*;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
 
@@ -79,6 +80,20 @@ public class OneConfigCollector extends ReflectiveCollector {
 
     @Override
     protected void handleField(@NotNull Field f, @NotNull Object src, @NotNull Tree tree) {
+        if (f.isAnnotationPresent(MasterToggle.class)) {
+            Class<?> fieldType = f.getType();
+            if (fieldType != boolean.class && fieldType != Boolean.class) {
+                throw new IllegalArgumentException(String.format(
+                    "@MasterToggle field '%s' must be a boolean, but was %s.",
+                    f.getName(), fieldType.getTypeName()
+                ));
+            }
+            Property<?> p = Properties.field(null, null, f, src);
+            p.addMetadata("hidden", true);
+            p.addMetadata("masterToggle", true);
+            tree.put(p);
+            return;
+        }
         for (Annotation a : f.getDeclaredAnnotations()) {
             Class<? extends Annotation> type = a.annotationType();
             if (type == Include.class) {
@@ -162,6 +177,10 @@ public class OneConfigCollector extends ReflectiveCollector {
                     tempData.put(key + "Key", value);
                 }
             });
+
+            if (tempData.remove("formatter") instanceof Class<?> formatter && formatter != ValueFormatter.class) {
+                tempData.put("formatter", MHUtils.instantiate(formatter, false).getOrThrow());
+            }
 
             property.addMetadata(tempData);
         }
