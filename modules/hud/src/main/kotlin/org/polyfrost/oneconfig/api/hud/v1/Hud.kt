@@ -129,13 +129,6 @@ internal fun bumpHudStateRevision() {
     stateRevision.incrementAndGet()
 }
 
-private val sharedRevision = AtomicInteger()
-
-internal fun bumpSharedHudRevision() {
-    sharedRevision.incrementAndGet()
-    bumpHudStateRevision()
-}
-
 private val GEOMETRY_GETTERS = arrayOf(
     "getX", "getY", "getRelativeX", "getRelativeY", "getRenderedW", "getRenderedH",
     "getCustomScale", "getScaledWidth", "getScaledHeight", "getStaticW", "getStaticH",
@@ -333,12 +326,12 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @get:ApiStatus.Internal
     var layoutRefW: Float
         get() = HudManager.layoutRefWidth
-        set(v) { if (v > 0f && v != HudManager.layoutRefWidth) { HudManager.layoutRefWidth = v; bumpHudStateRevision() } }
+        set(v) { if (v > 0f) HudManager.layoutRefWidth = v }
 
     @get:ApiStatus.Internal
     var layoutRefH: Float
         get() = HudManager.layoutRefHeight
-        set(v) { if (v > 0f && v != HudManager.layoutRefHeight) { HudManager.layoutRefHeight = v; bumpHudStateRevision() } }
+        set(v) { if (v > 0f) HudManager.layoutRefHeight = v }
 
     private var _renderedW: MutableState<Float> = mutableStateOf(0f)
     open var renderedW: Float get() = _renderedW.value; set(v) { _renderedW.put(v) }
@@ -609,7 +602,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     open var hidden: Boolean get() = _hidden.value; set(v) { _hidden.put(v) }
 
     private var _locked: MutableState<Boolean> = mutableStateOf(false)
-    open var locked: Boolean get() = _locked.value; set(v) { _locked.put(v) }
+    open var locked: Boolean get() = _locked.value; set(v) { _locked.value = v }
 
     internal open val persistOwnState: Boolean get() = true
 
@@ -651,7 +644,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     }
 
     private var _alignment: MutableState<PolyAlign> = mutableStateOf(PolyAlign.Center)
-    var alignment: PolyAlign get() = _alignment.value; set(v) { _alignment.put(v) }
+    var alignment: PolyAlign get() = _alignment.value; set(v) { _alignment.value = v }
 
     private var _growthAnchor: MutableState<HudAnchor> = mutableStateOf(HudAnchor.Auto)
     var growthAnchor: HudAnchor get() = _growthAnchor.value; set(v) { _growthAnchor.put(v) }
@@ -930,28 +923,28 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     open var staticH: Float get() = _staticH.value; set(v) { _staticH.put(v) }
 
     private var _font: MutableState<Font> = mutableStateOf(Font.Minecraft)
-    var font: Font get() = _font.value; set(v) { _font.put(v) }
+    var font: Font get() = _font.value; set(v) { _font.value = v }
 
     private var _caseType: MutableState<Int> = mutableStateOf(0)
-    var caseType: Int get() = _caseType.value; set(v) { _caseType.put(v) }
+    var caseType: Int get() = _caseType.value; set(v) { _caseType.value = v }
 
     private var _textScale: MutableState<Float> = mutableStateOf(1f)
-    var textScale: Float get() = _textScale.value; set(v) { _textScale.put(v) }
+    var textScale: Float get() = _textScale.value; set(v) { _textScale.value = v }
 
     private var _textBold: MutableState<Boolean> = mutableStateOf(false)
-    var textBold: Boolean get() = _textBold.value; set(v) { _textBold.put(v) }
+    var textBold: Boolean get() = _textBold.value; set(v) { _textBold.value = v }
 
     private var _textItalic: MutableState<Boolean> = mutableStateOf(false)
-    var textItalic: Boolean get() = _textItalic.value; set(v) { _textItalic.put(v) }
+    var textItalic: Boolean get() = _textItalic.value; set(v) { _textItalic.value = v }
 
     private var _textUnderline: MutableState<Boolean> = mutableStateOf(false)
-    var textUnderline: Boolean get() = _textUnderline.value; set(v) { _textUnderline.put(v) }
+    var textUnderline: Boolean get() = _textUnderline.value; set(v) { _textUnderline.value = v }
 
     private var _textWeight: MutableState<Weight> = mutableStateOf(Weight.Regular)
-    var textWeight: Weight get() = _textWeight.value; set(v) { _textWeight.put(v) }
+    var textWeight: Weight get() = _textWeight.value; set(v) { _textWeight.value = v }
 
     private var _textAlign: MutableState<Int> = mutableStateOf(1)
-    var textAlign: Int get() = _textAlign.value; set(v) { _textAlign.put(v) }
+    var textAlign: Int get() = _textAlign.value; set(v) { _textAlign.value = v }
 
     private var _useGuiScale: MutableState<Boolean> = mutableStateOf(true)
     var useGuiScale: Boolean get() = _useGuiScale.value; set(v) { _useGuiScale.put(v) }
@@ -984,10 +977,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var bgColor: Int get() = _bgColor.value; set(v) { _bgColor.put(v) }
 
     private var _bgChroma: MutableState<Boolean> = mutableStateOf(false)
-    var bgChroma: Boolean get() = _bgChroma.value; set(v) { _bgChroma.put(v) }
+    var bgChroma: Boolean get() = _bgChroma.value; set(v) { _bgChroma.value = v }
 
     private var _bgChromaSpeed: MutableState<Float> = mutableStateOf(1f)
-    var bgChromaSpeed: Float get() = _bgChromaSpeed.value; set(v) { _bgChromaSpeed.put(v) }
+    var bgChromaSpeed: Float get() = _bgChromaSpeed.value; set(v) { _bgChromaSpeed.value = v }
 
     private var _bgRadius: MutableState<Float> = mutableStateOf(4f)
     var bgRadius: Float get() = _bgRadius.value; set(v) { _bgRadius.put(v) }
@@ -1027,31 +1020,31 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     private var _bgMerged: MutableState<Boolean> = mutableStateOf(false)
 
     private var _textColor: MutableState<Int> = mutableStateOf(0xFFFFFFFF.toInt())
-    var textColor: Int get() = _textColor.value; set(v) { _textColor.put(v) }
+    var textColor: Int get() = _textColor.value; set(v) { _textColor.value = v }
 
     private var _textChroma: MutableState<Boolean> = mutableStateOf(false)
-    var textChroma: Boolean get() = _textChroma.value; set(v) { _textChroma.put(v) }
+    var textChroma: Boolean get() = _textChroma.value; set(v) { _textChroma.value = v }
 
     private var _textChromaSpeed: MutableState<Float> = mutableStateOf(1f)
-    var textChromaSpeed: Float get() = _textChromaSpeed.value; set(v) { _textChromaSpeed.put(v) }
+    var textChromaSpeed: Float get() = _textChromaSpeed.value; set(v) { _textChromaSpeed.value = v }
 
     private var _showShadow: MutableState<Boolean> = mutableStateOf(false)
-    var showShadow: Boolean get() = _showShadow.value; set(v) { _showShadow.put(v) }
+    var showShadow: Boolean get() = _showShadow.value; set(v) { _showShadow.value = v }
 
     private var _shadowColor: MutableState<Int> = mutableStateOf(0x40000000)
-    var shadowColor: Int get() = _shadowColor.value; set(v) { _shadowColor.put(v) }
+    var shadowColor: Int get() = _shadowColor.value; set(v) { _shadowColor.value = v }
 
     private var _shadowChroma: MutableState<Boolean> = mutableStateOf(false)
-    var shadowChroma: Boolean get() = _shadowChroma.value; set(v) { _shadowChroma.put(v) }
+    var shadowChroma: Boolean get() = _shadowChroma.value; set(v) { _shadowChroma.value = v }
 
     private var _shadowChromaSpeed: MutableState<Float> = mutableStateOf(1f)
-    var shadowChromaSpeed: Float get() = _shadowChromaSpeed.value; set(v) { _shadowChromaSpeed.put(v) }
+    var shadowChromaSpeed: Float get() = _shadowChromaSpeed.value; set(v) { _shadowChromaSpeed.value = v }
 
     private var _shadowOffsetX: MutableState<Float> = mutableStateOf(2f)
-    var shadowOffsetX: Float get() = _shadowOffsetX.value; set(v) { _shadowOffsetX.put(v) }
+    var shadowOffsetX: Float get() = _shadowOffsetX.value; set(v) { _shadowOffsetX.value = v }
 
     private var _shadowOffsetY: MutableState<Float> = mutableStateOf(2f)
-    var shadowOffsetY: Float get() = _shadowOffsetY.value; set(v) { _shadowOffsetY.put(v) }
+    var shadowOffsetY: Float get() = _shadowOffsetY.value; set(v) { _shadowOffsetY.value = v }
 
     open val alwaysRedraw: Boolean
         get() = bgChroma || textChroma || shadowChroma
@@ -1080,24 +1073,20 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     @Transient private var chainRev = -1
     @Transient private var chainHuds = -1
-    @Transient private var chainKey = 0
     @Transient private var chainExternal: List<Hud> = emptyList()
     @Transient private var chainParents: List<Hud> = emptyList()
 
     private fun walkChain() {
         val rev = hudStateRevision
-        val huds = HudManager.instancesModCount
+        val huds = Snapshot.withoutReadObservation { HudManager.instancesRevision.intValue }
         if (rev == chainRev && huds == chainHuds) return
         chainRev = rev
         chainHuds = huds
-        var key = revision.get()
         var external: ArrayList<Hud>? = null
         val parents = ArrayList<Hud>(0)
         fun visit(parent: Hud?) {
             if (parent == null || parent === this || parents.any { it === parent }) return
             parents.add(parent)
-            key = key * 31 + System.identityHashCode(parent)
-            key = key * 31 + parent.revision.get()
             if (externalGeometry.get(parent.javaClass)) (external ?: ArrayList<Hud>(1).also { external = it }).add(parent)
         }
         var node = this
@@ -1113,16 +1102,18 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             if (next == parents.size) break
             node = parents[next++]
         }
-        chainKey = key
         chainExternal = external ?: emptyList()
         chainParents = parents
     }
 
-    @Transient private var geomShared = -1
-    @Transient private var geomChain = 0
+    @Transient private var geomValid = false
+    @Transient private var geomStamp = 0
+    @Transient private var geomRev = 0
+    @Transient private var geomParents: List<Hud> = emptyList()
+    @Transient private var geomParentRevs = IntArray(0)
     @Transient private var geomW = Float.NaN
     @Transient private var geomH = Float.NaN
-    @Transient private var geomHuds = -1
+    @Transient private var geomGuiScale = Float.NaN
     @Transient private var cachedScale = 1f
     @Transient private var cachedX = 0f
     @Transient private var cachedY = 0f
@@ -1132,22 +1123,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @Transient private var parentCheckFrame = Long.MIN_VALUE
     @Transient private var parentGeom = FloatArray(0)
 
-    private val liveGeometry: Boolean get() {
-        if (HudManager.isGuiScreenOpen) {
-            geomShared = -1
-            return true
-        }
-        return hasExternalGeometry || Snapshot.isInSnapshot
-    }
-
     @get:ApiStatus.Internal
     val hasExternalGeometry: Boolean get() = externalGeometry.get(javaClass)
-
-    internal val followsExternalGeometry: Boolean get() {
-        if (hasExternalGeometry) return true
-        walkChain()
-        return chainExternal.isNotEmpty()
-    }
 
     private fun externalParentMoved(): Boolean {
         val ext = chainExternal
@@ -1162,7 +1139,22 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         return false
     }
 
-    private fun refreshFrameGeometry() {
+    private fun chainChanged(): Boolean {
+        if (geomRev != revision.get()) return true
+        val parents = chainParents
+        if (parents.size != geomParents.size) return true
+        for (i in parents.indices) {
+            if (parents[i] !== geomParents[i] || parents[i].revision.get() != geomParentRevs[i]) return true
+        }
+        return false
+    }
+
+    private fun refreshFrameGeometry(): Boolean {
+        if (HudManager.isGuiScreenOpen) {
+            geomValid = false
+            return false
+        }
+        if (hasExternalGeometry || Snapshot.isInSnapshot) return false
         val frame = HudManager.frameId
         var parentMoved = false
         if (parentCheckFrame != frame) {
@@ -1173,21 +1165,24 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             parentMoved = externalParentMoved()
         }
         walkChain()
-        val shared = sharedRevision.get()
         val sw = HudManager.guiScreenWidth
         val sh = HudManager.guiScreenHeight
-        val huds = HudManager.instancesModCount
-        if (shared == geomShared && chainKey == geomChain && sw == geomW && sh == geomH && huds == geomHuds && !parentMoved) return
-        geomShared = shared
-        geomChain = chainKey
+        val gui = if (!useGuiScale || chainParents.any { !it.useGuiScale }) Platform.compatibility().options().guiScale else 0f
+        if (geomValid && sw == geomW && sh == geomH && gui == geomGuiScale && !parentMoved && !chainChanged()) return true
+        val parents = chainParents
+        geomValid = true
+        geomStamp++
+        geomRev = revision.get()
+        geomParents = parents
+        geomParentRevs = IntArray(parents.size) { parents[it].revision.get() }
+        geomW = sw
+        geomH = sh
+        geomGuiScale = gui
         cachedScale = effectiveScale
         cachedRenderedW = renderedW
         cachedRenderedH = renderedH
         cachedX = x
         cachedY = y
-        geomW = sw
-        geomH = sh
-        geomHuds = huds
         val ext = chainExternal
         if (parentGeom.size != ext.size * 4) parentGeom = FloatArray(ext.size * 4)
         for (i in ext.indices) {
@@ -1198,37 +1193,25 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             parentGeom[o + 2] = p.scaledWidth
             parentGeom[o + 3] = p.scaledHeight
         }
+        return true
     }
 
-    @get:ApiStatus.Internal
-    val frameScale: Float get() {
-        if (liveGeometry) return effectiveScale
-        refreshFrameGeometry(); return cachedScale
-    }
+    internal val geometryStamp: Int get() = if (refreshFrameGeometry()) geomStamp and Int.MAX_VALUE else -1
 
     @get:ApiStatus.Internal
-    val frameX: Float get() {
-        if (liveGeometry) return x
-        refreshFrameGeometry(); return cachedX
-    }
+    val frameScale: Float get() = if (refreshFrameGeometry()) cachedScale else effectiveScale
 
     @get:ApiStatus.Internal
-    val frameY: Float get() {
-        if (liveGeometry) return y
-        refreshFrameGeometry(); return cachedY
-    }
+    val frameX: Float get() = if (refreshFrameGeometry()) cachedX else x
 
     @get:ApiStatus.Internal
-    val frameRenderedW: Float get() {
-        if (liveGeometry) return renderedW
-        refreshFrameGeometry(); return cachedRenderedW
-    }
+    val frameY: Float get() = if (refreshFrameGeometry()) cachedY else y
 
     @get:ApiStatus.Internal
-    val frameRenderedH: Float get() {
-        if (liveGeometry) return renderedH
-        refreshFrameGeometry(); return cachedRenderedH
-    }
+    val frameRenderedW: Float get() = if (refreshFrameGeometry()) cachedRenderedW else renderedW
+
+    @get:ApiStatus.Internal
+    val frameRenderedH: Float get() = if (refreshFrameGeometry()) cachedRenderedH else renderedH
 
     override fun addToInitQueue() {}
 
@@ -1488,7 +1471,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         chainExternal = emptyList()
         chainParents = emptyList()
         parentGeom = FloatArray(0)
-        geomShared = -1
+        geomValid = false
+        geomParents = emptyList()
         bumpHudStateRevision()
         showKey = -1
         toggleKey = -1

@@ -220,6 +220,7 @@ class HudPositionMigrationTest {
         List<Hud> active = HudManager.INSTANCE.getActiveInstances();
         active.remove(target);
         active.add(stranger);
+        HudManager.INSTANCE.getInstancesRevision().setIntValue(HudManager.INSTANCE.getInstancesRevision().getIntValue() + 1);
         assertEquals(rev, HudKt.getHudStateRevision());
 
         assertNotEquals(anchored, hud.getX(), 0.001f, "losing the target must move the HUD");

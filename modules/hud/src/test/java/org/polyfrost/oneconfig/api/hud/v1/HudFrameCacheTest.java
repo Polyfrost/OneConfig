@@ -3,11 +3,12 @@ package org.polyfrost.oneconfig.api.hud.v1;
 import androidx.compose.runtime.snapshots.MutableSnapshot;
 import androidx.compose.runtime.snapshots.Snapshot;
 import kotlin.Unit;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -25,6 +26,24 @@ class HudFrameCacheTest {
         @Override public String getText() { return "ext"; }
         @Override public float getX() { return externalX; }
         @Override public float getY() { return externalY; }
+    }
+
+    private float savedWidth;
+    private float savedHeight;
+    private boolean savedGuiOpen;
+
+    @BeforeEach
+    void saveGlobals() {
+        savedWidth = HudManager.guiScreenWidth;
+        savedHeight = HudManager.guiScreenHeight;
+        savedGuiOpen = HudManager.isGuiScreenOpen;
+    }
+
+    @AfterEach
+    void restoreGlobals() {
+        HudManager.guiScreenWidth = savedWidth;
+        HudManager.guiScreenHeight = savedHeight;
+        HudManager.isGuiScreenOpen = savedGuiOpen;
     }
 
     @Test
@@ -46,7 +65,27 @@ class HudFrameCacheTest {
 
         HudManager.guiScreenWidth = 1920f;
         assertEquals(hud.getX(), hud.getFrameX(), "a screen resize refreshes the cached x");
+    }
+
+    @Test
+    void geometryStampOnlyFollowsOwnChanges() {
+        ConfigManager.active();
         HudManager.guiScreenWidth = 960f;
+        HudManager.guiScreenHeight = 540f;
+        HudManager.isGuiScreenOpen = false;
+        CacheHud hud = new CacheHud();
+        CacheHud other = new CacheHud();
+
+        int stamp = hud.getGeometryStamp$hud();
+        other.setRelativeX(other.getRelativeX() + 30f);
+        other.setRenderedW(other.getRenderedW() + 30f);
+        assertEquals(stamp, hud.getGeometryStamp$hud(), "another HUD changing must not invalidate this one");
+
+        hud.setBgColor(0xFF00FF00);
+        int styled = hud.getGeometryStamp$hud();
+        assertNotEquals(stamp, styled, "a background change must invalidate the merge check");
+        hud.setRelativeX(hud.getRelativeX() + 30f);
+        assertNotEquals(styled, hud.getGeometryStamp$hud(), "a move must invalidate it");
     }
 
     @Test
@@ -93,13 +132,8 @@ class HudFrameCacheTest {
         above.setAbsolutePosition(300f, 100f);
         child.setAbsolutePosition(300f, 300f);
 
-        Method apply = null;
-        for (Method m : Hud.class.getDeclaredMethods()) {
-            if (m.getName().startsWith("applyMergeLink")) apply = m;
-        }
-        apply.setAccessible(true);
-        apply.invoke(child, left, HudAnchor.Left, HudAnchor.Right, MergeAxis.X);
-        apply.invoke(child, above, HudAnchor.Top, HudAnchor.Bottom, MergeAxis.Y);
+        child.applyMergeLink$hud(left, HudAnchor.Left, HudAnchor.Right, MergeAxis.X);
+        child.applyMergeLink$hud(above, HudAnchor.Top, HudAnchor.Bottom, MergeAxis.Y);
 
         float before = child.getFrameY();
         assertEquals(child.getY(), before, 0.001f);
@@ -123,13 +157,8 @@ class HudFrameCacheTest {
         above.externalY = 100f;
         child.setAbsolutePosition(300f, 300f);
 
-        Method apply = null;
-        for (Method m : Hud.class.getDeclaredMethods()) {
-            if (m.getName().startsWith("applyMergeLink")) apply = m;
-        }
-        apply.setAccessible(true);
-        apply.invoke(child, left, HudAnchor.Left, HudAnchor.Right, MergeAxis.X);
-        apply.invoke(child, above, HudAnchor.Top, HudAnchor.Bottom, MergeAxis.Y);
+        child.applyMergeLink$hud(left, HudAnchor.Left, HudAnchor.Right, MergeAxis.X);
+        child.applyMergeLink$hud(above, HudAnchor.Top, HudAnchor.Bottom, MergeAxis.Y);
 
         float before = child.getFrameY();
         assertEquals(child.getY(), before, 0.001f);

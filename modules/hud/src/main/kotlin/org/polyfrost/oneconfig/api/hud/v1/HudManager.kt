@@ -120,8 +120,8 @@ object HudManager {
         if (loadingLayout || systemReposition) return
         val w = guiScreenWidth
         val h = guiScreenHeight
-        if (w > 0f && w != layoutRefWidth) { layoutRefWidth = w; bumpHudStateRevision() }
-        if (h > 0f && h != layoutRefHeight) { layoutRefHeight = h; bumpHudStateRevision() }
+        if (w > 0f) layoutRefWidth = w
+        if (h > 0f) layoutRefHeight = h
     }
 
     @Volatile @JvmField var isDebugScreenVisible: Boolean = false
@@ -208,9 +208,7 @@ object HudManager {
     private var zOrderHuds = arrayOfNulls<Hud>(0)
     private var zOrderBounds = FloatArray(0)
     private var zOrderDrawn = BooleanArray(0)
-    private var zOrderRev = -1
-    private var zOrderW = Float.NaN
-    private var zOrderH = Float.NaN
+    private var zOrderStamps = IntArray(0)
 
     private const val REGISTRY_ID = "hud-registry.json"
     private const val KNOWN_HUDS = "knownHuds"
@@ -263,13 +261,7 @@ object HudManager {
      * THERE ARE CERTAIN THINGS THAT MUST BE DONE TO PROPERLY REGISTER AN ACTIVE HUD
      */
     @ApiStatus.Internal
-    val activeInstances: ArrayList<Hud> = InstanceList
-
-    private object InstanceList : ArrayList<Hud>() {
-        val mods: Int get() = modCount
-    }
-
-    internal val instancesModCount: Int get() = InstanceList.mods
+    val activeInstances = ArrayList<Hud>()
 
     private class DateTestHud : TextHud.DateTime("Date:", "yyyy-MM-dd", title = "Date")
 
@@ -613,8 +605,6 @@ object HudManager {
         return volatileContent
     }
 
-    private var lastGuiScale = Float.NaN
-
     private inline fun prepareFrame(
         screenWidth: Float,
         screenHeight: Float,
@@ -624,10 +614,6 @@ object HudManager {
         drainProfileReload()
         migratePositions(screenWidth, screenHeight)
         val scale = Platform.compatibility().options().guiScale
-        if (scale != lastGuiScale) {
-            lastGuiScale = scale
-            bumpSharedHudRevision()
-        }
 
         frameId++
         Snapshot.sendApplyNotifications()
@@ -693,18 +679,20 @@ object HudManager {
      * when a position or size or background style actually changed
      */
     private fun updateBackgroundGroups(huds: List<Hud>, screenWidth: Float, screenHeight: Float, scale: Float) {
-        val rev = hudStateRevision
-        var hudsKey = huds.size
-        var external = false
-        for (hud in huds) {
-            hudsKey = hudsKey * 31 + System.identityHashCode(hud)
-            if (hud.followsExternalGeometry) external = true
-        }
-        if (!isGuiScreenOpen && !external && lastMergeKey != null && rev == mergeCheckRev && hudsKey == mergeCheckHuds &&
+        var stable = !isGuiScreenOpen && lastMergeKey != null && huds.size == mergeCheckHuds.size &&
             screenWidth == mergeCheckW && screenHeight == mergeCheckH && scale == mergeCheckScale
-        ) return
-        mergeCheckRev = rev
-        mergeCheckHuds = hudsKey
+        if (mergeCheckHuds.size != huds.size) {
+            mergeCheckHuds = arrayOfNulls(huds.size)
+            mergeCheckStamps = IntArray(huds.size)
+        }
+        for (i in huds.indices) {
+            val hud = huds[i]
+            val stamp = hud.geometryStamp
+            if (stamp == -1 || mergeCheckHuds[i] !== hud || mergeCheckStamps[i] != stamp) stable = false
+            mergeCheckHuds[i] = hud
+            mergeCheckStamps[i] = stamp
+        }
+        if (stable) return
         mergeCheckW = screenWidth
         mergeCheckH = screenHeight
         mergeCheckScale = scale
@@ -747,8 +735,8 @@ object HudManager {
     }
 
     private var mergeExclusions: List<Hud> = emptyList()
-    private var mergeCheckRev = -1
-    private var mergeCheckHuds = 0
+    private var mergeCheckHuds = arrayOfNulls<Hud>(0)
+    private var mergeCheckStamps = IntArray(0)
     private var mergeCheckW = Float.NaN
     private var mergeCheckH = Float.NaN
     private var mergeCheckScale = Float.NaN
@@ -863,19 +851,16 @@ object HudManager {
             zOrderHuds = arrayOfNulls(n)
             zOrderBounds = FloatArray(n * 4)
             zOrderDrawn = BooleanArray(n)
+            zOrderStamps = IntArray(n)
         }
-        for (hud in list) if (hud in frameDrawn) hud.frameMinimumSize()
-        val rev = hudStateRevision
-        val stable = !isGuiScreenOpen && rev == zOrderRev && guiScreenWidth == zOrderW && guiScreenHeight == zOrderH
-        zOrderRev = rev
-        zOrderW = guiScreenWidth
-        zOrderH = guiScreenHeight
         var same = zOrderCache.size == n
         for (i in 0 until n) {
             val hud = list[i]
             val drawn = hud in frameDrawn
-            if (stable && same && zOrderHuds[i] === hud && zOrderDrawn[i] == drawn && !hud.followsExternalGeometry) continue
+            val stamp = if (drawn) hud.geometryStamp else 0
+            if (same && zOrderHuds[i] === hud && zOrderDrawn[i] == drawn && stamp != -1 && zOrderStamps[i] == stamp) continue
             zOrderDrawn[i] = drawn
+            zOrderStamps[i] = stamp
             val b = if (drawn) screenBounds(hud) else null
             val x = b?.get(0) ?: Float.NaN
             val y = b?.get(1) ?: Float.NaN
@@ -1119,7 +1104,6 @@ object HudManager {
         if (!migrated) return
         layoutRefWidth = screenWidth
         layoutRefHeight = screenHeight
-        bumpHudStateRevision()
         invalidate()
     }
 
