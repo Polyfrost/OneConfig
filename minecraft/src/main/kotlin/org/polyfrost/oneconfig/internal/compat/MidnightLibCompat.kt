@@ -47,6 +47,7 @@ object MidnightLibCompat {
 
     @JvmStatic
     fun onInit(modid: String, config: Class<*>) {
+        if (ConfigEntrypoints.skipExtraction(modid) { onInit(modid, config) }) return
         if (CompatLoader.nativeLoadedConfigs.contains(modid)) return
         CompatLoader.requireTranslations {
             runCatching {

@@ -44,8 +44,9 @@ internal object OslConfigCompat {
                 LOGGER.debug("Skipping {} scoped OSL config {}", config.scope, config)
                 return
             }
-            if (!seen.add(config)) return
             val mod = CompatLoader.findModByClass(config.javaClass) ?: CompatLoader.findFirstMod()
+            if (ConfigEntrypoints.skipExtraction(mod?.id) { addConfig(config) }) return
+            if (!seen.add(config)) return
             if (mod != null && CompatLoader.nativeLoadedConfigs.contains(mod.id)) return
             CompatLoader.requireTranslations {
                 runCatching { parseConfig(config, mod)?.let(CompatSnapshots::register) }

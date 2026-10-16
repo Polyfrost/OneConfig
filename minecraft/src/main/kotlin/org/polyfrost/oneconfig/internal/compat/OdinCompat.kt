@@ -69,7 +69,7 @@ object OdinCompat {
 
     @JvmStatic
     fun registerTree() {
-        if (ConfigEntrypoints.provides(ODIN_ID)) return
+        if (ConfigEntrypoints.skipExtraction(ODIN_ID, ::registerTree)) return
         if (treeRegistered) {
             if (treeModules >= 0 && treeModules != ModuleManager.modules.size) buildTree()
             return

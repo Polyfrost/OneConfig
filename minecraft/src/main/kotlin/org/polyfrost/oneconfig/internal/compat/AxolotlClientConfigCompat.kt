@@ -36,8 +36,9 @@ internal object AxolotlClientConfigCompat {
     @JvmStatic
     fun addManager(manager: Any) {
         runCatching {
-            if (!seen.add(manager)) return
             val mod = CompatLoader.findFirstMod()
+            if (ConfigEntrypoints.skipExtraction(mod?.id) { addManager(manager) }) return
+            if (!seen.add(manager)) return
             if (mod != null && mod.id !in ownMods && CompatLoader.nativeLoadedConfigs.contains(mod.id)) return
             mod?.id?.let(ownMods::add)
             CompatLoader.requireTranslations(skip = true) {

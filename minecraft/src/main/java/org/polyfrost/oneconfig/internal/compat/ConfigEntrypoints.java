@@ -28,12 +28,14 @@ package org.polyfrost.oneconfig.internal.compat;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
+import kotlin.Unit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -54,14 +56,14 @@ public final class ConfigEntrypoints {
 
     private static List<Provider> providers;
     private static final Set<String> failed = new HashSet<>();
+    private static final Set<String> succeeded = new HashSet<>();
+    private static final Map<String, List<Runnable>> skippedExtractions = new HashMap<>();
     private static boolean registered;
     private static final String OPEN_ORIGINAL_SCREEN = "open_original_screen";
-    // tree id -> id of the mod whose entrypoint created it
     private static final Map<String, String> treeOwners = new ConcurrentHashMap<>();
-    // mod id -> opener the mod gave through Context#originalScreen
     private static final Map<String, Runnable> customOpeners = new ConcurrentHashMap<>();
+    private static final Map<String, Tree> openedTrees = new ConcurrentHashMap<>();
     private static volatile @Nullable String registeringModId;
-    private static volatile boolean treesRegistered;
 
     private ConfigEntrypoints() {
     }
@@ -82,6 +84,12 @@ public final class ConfigEntrypoints {
         return false;
     }
 
+    public static synchronized boolean skipExtraction(@Nullable String modId, Runnable extraction) {
+        if (!provides(modId)) return false;
+        if (!succeeded.contains(modId)) skippedExtractions.computeIfAbsent(modId, k -> new ArrayList<>()).add(extraction);
+        return true;
+    }
+
     public static synchronized void registerAll() {
         if (registered) return;
         registered = true;
@@ -91,13 +99,32 @@ public final class ConfigEntrypoints {
             registeringModId = provider.modId;
             try {
                 provider.factory.get().registerConfigs(new Context(provider.modId));
+                succeeded.add(provider.modId);
+                skippedExtractions.remove(provider.modId);
                 LOGGER.info("Registered OneConfig config from entrypoint {} ({})", provider.name, provider.modId);
             } catch (Throwable t) {
                 LOGGER.error("Mod {} provides a broken OneConfig config entrypoint {}", provider.modId, provider.name, t);
                 failed.add(provider.modId);
                 CompatLoader.INSTANCE.getNativeLoadedConfigs().remove(provider.modId);
+                retrySkippedExtractions(provider.modId);
             } finally {
                 registeringModId = null;
+            }
+        }
+    }
+
+    private static void retrySkippedExtractions(String modId) {
+        List<Runnable> skipped = skippedExtractions.remove(modId);
+        if (skipped == null) return;
+        LOGGER.info("Retrying {} skipped config extraction(s) for {}", skipped.size(), modId);
+        for (Runnable extraction : skipped) {
+            try {
+                CompatLoader.INSTANCE.withForcedModId(modId, () -> {
+                    extraction.run();
+                    return Unit.INSTANCE;
+                });
+            } catch (Throwable t) {
+                LOGGER.error("Failed to retry a skipped config extraction for {}", modId, t);
             }
         }
     }
@@ -107,7 +134,6 @@ public final class ConfigEntrypoints {
     private static void onTreeRegistered(Tree tree) {
         String id = tree.getID();
         if (id == null) return;
-        treesRegistered = true;
         // trees registered directly with the ConfigManager from within the entrypoint
         String current = registeringModId;
         if (current != null) treeOwners.putIfAbsent(id, current);
@@ -120,7 +146,9 @@ public final class ConfigEntrypoints {
         if (failed.contains(modId)) return;
         Runnable opener = customOpeners.get(modId);
         if (opener == null) opener = CompatLoader.INSTANCE.originalScreenOpener(modId);
-        if (opener != null) tree.addMetadata(OPEN_ORIGINAL_SCREEN, opener);
+        if (opener == null) return;
+        tree.addMetadata(OPEN_ORIGINAL_SCREEN, opener);
+        openedTrees.put(tree.getID(), tree);
     }
 
     private static final class Context implements ConfigEntrypoint.Context {
@@ -147,10 +175,9 @@ public final class ConfigEntrypoints {
         @Override
         public void originalScreen(Runnable opener) {
             customOpeners.put(modId, opener);
-            // swap the opener on trees that were already registered with the default one
-            // ConfigManager.active() would set up the profiles early if nothing has been registered yet
-            if (!treesRegistered) return;
-            for (Tree tree : ConfigManager.active().trees()) {
+            // swap the opener on trees that already got the default one, such as a config initialized before
+            // registerAll whose tree ConfigManager.initialize() will not register again
+            for (Tree tree : openedTrees.values()) {
                 if (modId.equals(treeOwners.get(tree.getID()))) attachOpener(tree, modId);
             }
         }
