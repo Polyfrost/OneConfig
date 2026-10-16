@@ -242,9 +242,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
                 LocalViewModelStoreOwner provides OCViewModelStoreOwner
             ) {
                 Theme(pixelGrid = true) {
-                    HudDesignStudio(
-                        onReturnToOneConfig = ::returnToOneConfig
-                    )
+                    HudDesignStudio()
                 }
             }
         }

@@ -6,7 +6,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
@@ -39,6 +38,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -210,7 +210,6 @@ private val snapGuideColor = Color(176, 47, 31)
 private const val CHROME_SETTINGS_PANEL = "settings-panel"
 private const val CHROME_LIBRARY = "library"
 private const val CHROME_LIBRARY_ICONS = "library-icons"
-private const val CHROME_RETURN = "return-chip"
 private const val SIDE_CHROME_DIM_ALPHA = 0.45f
 
 private data class SnapGuides(val vertical: Float?, val horizontal: Float?) {
@@ -919,7 +918,7 @@ private fun placeHudCentered(provider: Hud): Hud? = try {
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
+fun HudDesignStudio() {
     HudEditorViewport.observe()
     var activeCategory by remember { mutableStateOf(StudioCategory.Settings) }
     var selectedHuds by remember { mutableStateOf<Set<Hud>>(emptySet()) }
@@ -1772,65 +1771,6 @@ fun HudDesignStudio(onReturnToOneConfig: (() -> Unit)? = null) {
             }
             .then(pointerModifier)
     ) {
-        if (onReturnToOneConfig != null) {
-            val theme = LocalTheme.current
-            val returnKeyName = OneConfigConfig.oneConfigKeybind.displayName()
-            val returnInteraction = remember { MutableInteractionSource() }
-            val returnHovered by returnInteraction.collectIsHoveredAsState()
-            val returnBackground by animateColorAsState(
-                if (returnHovered) Accent else Color.Black.copy(alpha = 0.55f),
-                animationSpec = tween(120),
-                label = "returnChipBackground"
-            )
-            AnimatedVisibility(
-                visible = !isDragging,
-                modifier = Modifier.align(Alignment.TopStart),
-                enter = slideInHorizontally(initialOffsetX = { -it }),
-                exit = slideOutHorizontally(targetOffsetX = { -it }),
-            ) {
-            DisposableEffect(Unit) { onDispose { chromeRects.remove(CHROME_RETURN) } }
-            Row(
-                modifier = Modifier
-                    .padding(start = 12.dp, top = 12.dp)
-                    .chromeRegion(CHROME_RETURN)
-                    .graphicsLayer { alpha = sideChromeAlpha }
-                    .clip(theme.buttonShape)
-                    .background(returnBackground, theme.buttonShape)
-                    .hoverable(returnInteraction)
-                    .safePointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
-                        if (event.changes.none { it.isConsumed }) {
-                            event.changes.forEach { it.consume() }
-                            UiSounds.play(UiSoundEvent.CLICK)
-                            onReturnToOneConfig()
-                        }
-                    }
-                    .padding(horizontal = 10.dp, vertical = 7.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Icon(
-                    "left-arrow",
-                    color = Color.White,
-                    modifier = Modifier.size(14.dp),
-                )
-                Text(
-                    "OneConfig",
-                    color = Color.White,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center,
-                )
-                Text(
-                    "($returnKeyName)",
-                    color = Color.White.copy(alpha = 0.7f),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Normal,
-                    textAlign = TextAlign.Center,
-                )
-            }
-            }
-        }
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -2834,7 +2774,7 @@ private fun libraryIconFor(modId: String?): String =
 private val LIBRARY_HEADER_HEIGHT = 16.dp
 
 private data class HudLibraryRowKey(val section: String, val firstHud: Hud)
-private data class HudLibraryRow(val huds: List<Hud>, val height: Int)
+private data class HudLibraryRow(val huds: List<Hud>, val height: Int, val widths: List<Int>)
 
 private data class HudLibraryItem(
     val section: HudLibrarySection,
@@ -2846,7 +2786,7 @@ private data class HudLibraryItem(
         ?: "header:${librarySectionKey(section.modId)}"
 }
 
-private data class HudPreviewGeometry(val size: DpSize, val scale: Float)
+private data class HudPreviewGeometry(val size: DpSize, val scale: Float, val cardSize: DpSize)
 
 private data class HudLibraryLayout(
     val items: List<HudLibraryItem>,
@@ -2919,26 +2859,34 @@ private fun HudLibraryHeader(section: HudLibrarySection, active: Boolean) {
     }
 }
 
+private const val ROW_HEIGHT_TOLERANCE = 0.6f
+private const val MAX_CARD_STRETCH = 1.35f
+
 private fun packHudLibraryRows(huds: List<Hud>, sizes: Map<Hud, IntSize>, availableWidth: Int, spacing: Int): List<HudLibraryRow> {
-    val rows = ArrayList<HudLibraryRow>()
-    var row = ArrayList<Hud>()
-    var rowWidth = 0
-    var rowHeight = 0
-    for (hud in huds) {
-        val size = sizes[hud] ?: continue
-        if (row.isNotEmpty() && rowWidth + spacing + size.width > availableWidth) {
-            rows.add(HudLibraryRow(row, rowHeight))
-            row = ArrayList()
-            rowWidth = 0
-            rowHeight = 0
+    val rows = ArrayList<MutableList<Hud>>()
+    val rowWidths = ArrayList<Int>()
+    val rowHeights = ArrayList<Int>()
+    // Tallest first, each HUD takes the first row with room, so small ones fill gaps left in earlier rows.
+    // A row only takes HUDs close to its height to keep cards from stretching much vertically.
+    for (hud in huds.filter { it in sizes }.sortedByDescending { sizes.getValue(it).height }) {
+        val size = sizes.getValue(hud)
+        val index = rows.indices.firstOrNull {
+            rowWidths[it] + spacing + size.width <= availableWidth && size.height >= rowHeights[it] * ROW_HEIGHT_TOLERANCE
         }
-        if (row.isNotEmpty()) rowWidth += spacing
-        row.add(hud)
-        rowWidth += size.width
-        rowHeight = maxOf(rowHeight, size.height)
+        if (index == null) {
+            rows.add(mutableListOf(hud))
+            rowWidths.add(size.width)
+            rowHeights.add(size.height)
+        } else {
+            rows[index].add(hud)
+            rowWidths[index] += spacing + size.width
+        }
     }
-    if (row.isNotEmpty()) rows.add(HudLibraryRow(row, rowHeight))
-    return rows
+    return rows.mapIndexed { i, row ->
+        val natural = row.map { sizes.getValue(it).width }
+        val stretch = ((availableWidth - spacing * (row.size - 1)).toFloat() / natural.sum()).coerceIn(1f, MAX_CARD_STRETCH)
+        HudLibraryRow(row, rowHeights[i], natural.map { (it * stretch).toInt() })
+    }
 }
 
 @Composable
@@ -2951,8 +2899,10 @@ private fun rememberHudLibraryLayout(sections: List<HudLibrarySection>, maxCardW
             if (hud !is LegacyHud) previews[hud] = key(hud) { rememberHudPreview(hud) }
         }
     }
+    val textMeasurer = rememberTextMeasurer()
+    val labelStyle = TextStyle(fontSize = HUD_LABEL_FONT_SIZE, fontFamily = LocalTheme.current.typography.family)
     // Preview dimensions can arrive after composition, repack only when sizes or layout inputs change
-    return remember(sections, previews, maxCardWidth, density) {
+    return remember(sections, previews, maxCardWidth, density, textMeasurer, labelStyle) {
         derivedStateOf {
             val sizes = HashMap<Hud, IntSize>()
             val geometry = HashMap<Hud, HudPreviewGeometry>()
@@ -2966,8 +2916,15 @@ private fun rememberHudLibraryLayout(sections: List<HudLibrarySection>, maxCardW
                     if (naturalW > 0f && naturalH > 0f) {
                         val scale = previewScaleFor(naturalW, naturalH, maxCardWidth, density.density)
                         val size = previewCardSize(naturalW, naturalH, scale, maxCardWidth, density.density, hud is LegacyHud)
-                        geometry[hud] = HudPreviewGeometry(size, scale)
-                        sizes[hud] = with(density) { IntSize(size.width.roundToPx(), size.height.roundToPx()) }
+                        val cardSize = if (hud is LegacyHud) size else {
+                            val labelWidth = with(density) { textMeasurer.measure(hudLabel(hud), labelStyle).size.width.toDp() }
+                            DpSize(
+                                maxOf(size.width, labelWidth + PREVIEW_CARD_PADDING * 2).coerceAtMost(maxCardWidth),
+                                size.height + HUD_LABEL_HEIGHT,
+                            )
+                        }
+                        geometry[hud] = HudPreviewGeometry(size, scale, cardSize)
+                        sizes[hud] = with(density) { IntSize(cardSize.width.roundToPx(), cardSize.height.roundToPx()) }
                     }
                 }
             }
@@ -3097,15 +3054,19 @@ private fun HudLibraryPanel(
                                 HudLibraryHeader(libraryItem.section, active = libraryItem.section.modId == activeModId)
                             } else {
                                 Row(
-                                    modifier = Modifier.padding(bottom = libraryItem.bottomPadding),
+                                    modifier = Modifier
+                                        .padding(bottom = libraryItem.bottomPadding)
+                                        .height(with(density) { row.height.toDp() }),
                                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                                 ) {
-                                    row.huds.forEach { hud ->
+                                    row.huds.forEachIndexed { i, hud ->
                                         key(hud) {
+                                            val hudGeometry = geometry.getValue(hud)
+                                            val cardModifier = Modifier.width(with(density) { row.widths[i].toDp() }).fillMaxHeight()
                                             if (hud is LegacyHud) {
-                                                LegacyHudPreviewCard(hud, geometry.getValue(hud), onDragStart, onCardClick)
+                                                LegacyHudPreviewCard(hud, hudGeometry, onDragStart, onCardClick, cardModifier)
                                             } else {
-                                                ComposeHudPreviewCard(hud, previews.getValue(hud), geometry.getValue(hud), onDragStart, onCardClick)
+                                                ComposeHudPreviewCard(hud, previews.getValue(hud), hudGeometry, onDragStart, onCardClick, cardModifier)
                                             }
                                         }
                                     }
@@ -3202,6 +3163,10 @@ private fun BoxScope.HudCardAddOverlay(visible: Boolean) {
 }
 
 private val PREVIEW_CARD_PADDING = 12.dp
+private val HUD_LABEL_HEIGHT = 20.dp
+private val HUD_LABEL_FONT_SIZE = 11.sp
+
+private fun hudLabel(hud: Hud): String = localizedLabel(hud.title) ?: hud.title
 private val PREVIEW_MAX_CARD_HEIGHT = 160.dp
 private const val LEGACY_PREVIEW_FALLBACK_SIZE = 48f
 
@@ -3229,6 +3194,7 @@ private fun LegacyHudPreviewCard(
     geometry: HudPreviewGeometry,
     onDragStart: (Hud, Float, Float, Float, Float) -> Unit,
     onCardClick: (Hud) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current.density
     val theme = LocalTheme.current
@@ -3240,12 +3206,13 @@ private fun LegacyHudPreviewCard(
     )
     var pressPos by remember { mutableStateOf<Offset?>(null) }
     var dragStarted by remember { mutableStateOf(false) }
+    var cardSize by remember { mutableStateOf(IntSize.Zero) }
 
     val cardPadding = PREVIEW_CARD_PADDING
     val (size, previewScale) = geometry
     Box(
-        modifier = Modifier
-            .size(size)
+        modifier = modifier
+            .onSizeChanged { cardSize = it }
             .background(backgroundColor, theme.buttonShape)
             .border(1.dp, theme.borderColor, theme.buttonShape)
             .clip(theme.buttonShape)
@@ -3271,8 +3238,10 @@ private fun LegacyHudPreviewCard(
                     if (dist > 8f) {
                         dragStarted = true
                         val paddingPx = cardPadding.value * density
-                        val hudLocalX = ((start.x - paddingPx) / previewScale).coerceAtLeast(0f)
-                        val hudLocalY = ((start.y - paddingPx) / previewScale).coerceAtLeast(0f)
+                        val insetX = (cardSize.width - size.width.value * density) / 2f + paddingPx
+                        val insetY = (cardSize.height - size.height.value * density) / 2f + paddingPx
+                        val hudLocalX = ((start.x - insetX) / previewScale).coerceAtLeast(0f)
+                        val hudLocalY = ((start.y - insetY) / previewScale).coerceAtLeast(0f)
                         onDragStart(hud, pos.x, pos.y, hudLocalX, hudLocalY)
                         pressPos = null
                         isHovered = false
@@ -3306,6 +3275,7 @@ private fun ComposeHudPreviewCard(
     geometry: HudPreviewGeometry,
     onDragStart: (Hud, Float, Float, Float, Float) -> Unit,
     onCardClick: (Hud) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current.density
     val theme = LocalTheme.current
@@ -3318,12 +3288,13 @@ private fun ComposeHudPreviewCard(
 
     var pressPos by remember { mutableStateOf<Offset?>(null) }
     var dragStarted by remember { mutableStateOf(false) }
+    var cardSize by remember { mutableStateOf(IntSize.Zero) }
 
     val cardPadding = PREVIEW_CARD_PADDING
     val (size, previewScale) = geometry
     Box(
-        modifier = Modifier
-            .size(size)
+        modifier = modifier
+            .onSizeChanged { cardSize = it }
             .background(backgroundColor, theme.buttonShape)
             .border(1.dp, theme.borderColor, theme.buttonShape)
             .clip(theme.buttonShape)
@@ -3349,8 +3320,10 @@ private fun ComposeHudPreviewCard(
                     if (dist > 8f) {
                         dragStarted = true
                         val paddingPx = cardPadding.value * density
-                        val hudLocalX = ((start.x - paddingPx) / previewScale).coerceAtLeast(0f)
-                        val hudLocalY = ((start.y - paddingPx) / previewScale).coerceAtLeast(0f)
+                        val insetX = (cardSize.width - size.width.value * density) / 2f + paddingPx
+                        val insetY = (cardSize.height - (size.height + HUD_LABEL_HEIGHT).value * density) / 2f + paddingPx
+                        val hudLocalX = ((start.x - insetX) / previewScale).coerceAtLeast(0f)
+                        val hudLocalY = ((start.y - insetY) / previewScale).coerceAtLeast(0f)
                         onDragStart(hud, pos.x, pos.y, hudLocalX, hudLocalY)
                         pressPos = null
                         isHovered = false
@@ -3363,14 +3336,26 @@ private fun ComposeHudPreviewCard(
                 }
                 pressPos = null
                 dragStarted = false
-            }
+            },
     ) {
-        HudPreviewCanvas(
-            preview,
-            previewScale,
-            hud.alwaysRedraw,
-            modifier = Modifier.fillMaxSize().padding(cardPadding),
-        )
+        Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                HudPreviewCanvas(
+                    preview,
+                    previewScale,
+                    hud.alwaysRedraw,
+                    modifier = Modifier.size(size).padding(cardPadding),
+                )
+            }
+            Text(
+                hudLabel(hud),
+                modifier = Modifier.height(HUD_LABEL_HEIGHT).padding(horizontal = cardPadding),
+                color = theme.textColorSecondary,
+                fontSize = HUD_LABEL_FONT_SIZE,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
         HudCardAddOverlay(isHovered)
     }
 }
