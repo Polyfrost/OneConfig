@@ -3046,11 +3046,11 @@ private fun DesignStudioPanel(
             .border(1.dp, theme.borderColor, theme.backgroundShape),
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
+            modifier = Modifier.fillMaxSize().padding(vertical = StudioPanelGutter),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = StudioPanelGutter),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Row(
@@ -3105,12 +3105,12 @@ private fun DesignStudioPanel(
                     modifier = Modifier.fillMaxSize()
                 ) { category ->
                     val panelScrollState = rememberScrollState()
-                    Box(modifier = Modifier.fillMaxSize()) {
+                    ScrollbarBox(panelScrollState, StudioPanelGutter, Modifier.fillMaxSize()) {
                         Column(
                             modifier = Modifier.fillMaxSize()
                                 .wheelScroll(panelScrollState)
                                 .verticalScroll(panelScrollState)
-                                .padding(end = 16.dp),
+                                .padding(horizontal = StudioPanelGutter),
                             verticalArrangement = Arrangement.spacedBy(22.dp)
                         ) {
                             // like the main config screen, a search spans every category rather than only the open one
@@ -3122,10 +3122,6 @@ private fun DesignStudioPanel(
                                 }
                             }
                         }
-                        VerticalScrollbar(
-                            adapter = rememberScrollbarAdapter(panelScrollState),
-                            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
-                        )
                     }
                 }
             }
@@ -3155,6 +3151,8 @@ private val Hud.addableToLibrary: Boolean
     get() = multipleInstancesAllowed() || !HudManager.hasHudOfType(this::class.java)
 
 private val HudLibraryGutter = 18.dp
+
+private val StudioPanelGutter = 16.dp
 
 private class HudLibrarySection(val modId: String?, val title: String, val huds: List<Hud>)
 
