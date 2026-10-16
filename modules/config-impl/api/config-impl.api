@@ -88,7 +88,14 @@ public final class org/polyfrost/oneconfig/api/config/v1/Config$Category {
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/config/v1/ConfigEntrypoint {
-	public abstract fun registerConfigs ()V
+	public static final field ENTRYPOINT Ljava/lang/String;
+	public abstract fun registerConfigs (Lorg/polyfrost/oneconfig/api/config/v1/ConfigEntrypoint$Context;)V
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/config/v1/ConfigEntrypoint$Context {
+	public abstract fun modId ()Ljava/lang/String;
+	public abstract fun originalScreen (Ljava/lang/Runnable;)V
+	public abstract fun register (Lorg/polyfrost/oneconfig/api/config/v1/Config;)Lorg/polyfrost/oneconfig/api/config/v1/Config;
 }
 
 public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
@@ -120,7 +127,6 @@ public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public static fun isRebindingProfiles ()Z
 	public fun load (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public static fun openProfile (Ljava/lang/String;)V
-	public static fun pendingConfigIds ()Ljava/util/Set;
 	public static fun profileDir (Ljava/lang/String;)Ljava/nio/file/Path;
 	public static fun profileIcon (Ljava/lang/String;)Ljava/lang/String;
 	public static fun profileIcons ()Ljava/util/Map;

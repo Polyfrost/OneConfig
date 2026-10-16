@@ -314,6 +314,7 @@ public class OneConfig
         EventManager.register(
                 InitializationEvent.class, e -> {
                     ConfigManager.setProfileSwitchDispatcher(Platform.screen()::runOnUiThread);
+                    ConfigEntrypoints.registerAll();
                     ConfigManager.initialize();
                     KeybindConflicts.unbindMinecraftKeybinds();
                     CompatSnapshots.setDispatcher(r -> {
@@ -437,7 +438,6 @@ public class OneConfig
         registerKeybinds();
         new OneConfigConfig();
         new ThemeConfig();
-        ConfigEntrypoints.registerAll();
         registerCommands();
         registerEventHandlers();
         installNotificationRenderer();
