@@ -72,7 +72,7 @@ object LegacyHudRenderer {
             try {
                 HudManager.updateIfDue(hud)
                 if (!HudManager.isEditing && !hud.shouldShow()) continue
-                val hudScale = hud.effectiveScale
+                val hudScale = hud.frameScale
                 val (mw, mh) = hud.frameMinimumSize()
                 val w = mw * hudScale
                 val h = mh * hudScale
@@ -87,7 +87,7 @@ object LegacyHudRenderer {
                 val pose = graphics.pose()
                 pose.pushMatrix()
                 try {
-                    pose.translate(hud.x, hud.y)
+                    pose.translate(hud.frameX, hud.frameY)
                     if (hudScale != 1f) pose.scale(hudScale, hudScale)
                     hud.render(graphics)
                 } finally {
@@ -97,7 +97,7 @@ object LegacyHudRenderer {
                 /*val pose = graphics.pose()
                 pose.pushPose()
                 try {
-                    pose.translate(hud.x.toDouble(), hud.y.toDouble(), 0.0)
+                    pose.translate(hud.frameX.toDouble(), hud.frameY.toDouble(), 0.0)
                     if (hudScale != 1f) pose.scale(hudScale, hudScale, 1f)
                     hud.render(graphics)
                 } finally {

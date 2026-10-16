@@ -2,7 +2,7 @@ package org.polyfrost.oneconfig.internal.ui.components.item
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.VerticalScrollbar
+import androidx.compose.foundation.LocalScrollbarStyle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.hoverable
@@ -12,10 +12,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,10 +25,10 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,6 +62,7 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.IconButton
+import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.containVerticalScroll
 import org.polyfrost.oneconfig.internal.ui.components.localizedString
@@ -263,41 +263,41 @@ fun ItemGrid(
     cellSize: Dp = ItemTileSize,
     maxHeight: Dp = 300.dp,
     spacing: Dp = 6.dp,
+    gutter: Dp = 12.dp,
     onClick: ((ItemDescriptor) -> Unit)? = null,
 ) {
     val gridState = rememberLazyGridState()
-    val scrollable = gridState.canScrollBackward || gridState.canScrollForward
-    Box(modifier = modifier.fillMaxWidth().heightIn(max = maxHeight)) {
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(cellSize),
-            state = gridState,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(end = if (scrollable) ScrollbarGutter else 0.dp)
+    val scrollbarStyle = LocalScrollbarStyle.current.copy(thickness = ItemGridScrollbarThickness)
+    CompositionLocalProvider(LocalScrollbarStyle provides scrollbarStyle) {
+        ScrollbarBox(
+            gridState,
+            gutter,
+            modifier = modifier.fillMaxWidth().heightIn(max = maxHeight)
                 .containVerticalScroll { gridState.canScrollBackward || gridState.canScrollForward },
-            horizontalArrangement = Arrangement.spacedBy(spacing),
-            verticalArrangement = Arrangement.spacedBy(spacing),
         ) {
-            items(items, key = ItemDescriptor::id) { item ->
-                ItemTile(
-                    item,
-                    modifier = Modifier.fillMaxWidth(),
-                    selected = selected(item),
-                    enabled = enabled(item),
-                    onClick = onClick?.let { click -> { click(item) } },
-                )
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(cellSize),
+                state = gridState,
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = gutter),
+                horizontalArrangement = Arrangement.spacedBy(spacing),
+                verticalArrangement = Arrangement.spacedBy(spacing),
+            ) {
+                items(items, key = ItemDescriptor::id) { item ->
+                    ItemTile(
+                        item,
+                        modifier = Modifier.fillMaxWidth(),
+                        selected = selected(item),
+                        enabled = enabled(item),
+                        onClick = onClick?.let { click -> { click(item) } },
+                    )
+                }
             }
-        }
-        if (scrollable) {
-            VerticalScrollbar(
-                adapter = rememberScrollbarAdapter(gridState),
-                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-            )
         }
     }
 }
 
-private val ScrollbarGutter = 12.dp
+private val ItemGridScrollbarThickness = 6.dp
 
 /** Search box for [ItemGrid] where [autoFocus] is off by default for embedded use */
 @Composable
@@ -361,7 +361,8 @@ fun ItemSearchField(
 /**
  * Header search field and result grid making up the whole item selector for any HUD or screen
  *
- * The [modifier] supplies the chrome so it fits a dropdown a HUD editor panel or a full screen
+ * The [modifier] supplies the chrome, minus [gutter] side padding, so it fits a dropdown a HUD editor panel
+ * or a full screen
  *
  * [selected] and [onToggle] leave the selection with the caller
  *
@@ -378,6 +379,7 @@ fun ItemPicker(
     autoFocusSearch: Boolean = true,
     cellSize: Dp = ItemTileSize,
     gridMaxHeight: Dp = 300.dp,
+    gutter: Dp = 12.dp,
     titleKey: String? = ItemStrings.Title,
     searchPlaceholderKey: String = ItemStrings.Search,
     emptyKey: String = ItemStrings.Empty,
@@ -391,43 +393,48 @@ fun ItemPicker(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        if (header != null) {
-            header()
-        } else if (titleKey != null || onClose != null) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    if (titleKey != null) {
-                        Text(
-                            localizedString(null, titleKey),
-                            color = theme.textColor,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold,
-                        )
+        Column(
+            modifier = Modifier.padding(horizontal = gutter),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            if (header != null) {
+                header()
+            } else if (titleKey != null || onClose != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        if (titleKey != null) {
+                            Text(
+                                localizedString(null, titleKey),
+                                color = theme.textColor,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
+                        if (maxEntries > 0) {
+                            Text(
+                                "${selected.size}/$maxEntries",
+                                color = theme.textColorSecondary,
+                                fontSize = 10.sp,
+                            )
+                        }
                     }
-                    if (maxEntries > 0) {
-                        Text(
-                            "${selected.size}/$maxEntries",
-                            color = theme.textColorSecondary,
-                            fontSize = 10.sp,
-                        )
+                    if (onClose != null) {
+                        IconButton("close", modifier = Modifier.size(18.dp), onClick = onClose)
                     }
-                }
-                if (onClose != null) {
-                    IconButton("close", modifier = Modifier.size(18.dp), onClick = onClose)
                 }
             }
-        }
 
-        ItemSearchField(
-            query,
-            onValueChange = { query = it },
-            autoFocus = autoFocusSearch,
-            placeholderKey = searchPlaceholderKey,
-        )
+            ItemSearchField(
+                query,
+                onValueChange = { query = it },
+                autoFocus = autoFocusSearch,
+                placeholderKey = searchPlaceholderKey,
+            )
+        }
 
         Box(Modifier.fillMaxWidth().height(gridMaxHeight)) {
             when {
@@ -440,6 +447,7 @@ fun ItemPicker(
                     modifier = Modifier.fillMaxSize(),
                     cellSize = cellSize,
                     maxHeight = gridMaxHeight,
+                    gutter = gutter,
                     onClick = { onToggle(it.id) },
                 )
             }

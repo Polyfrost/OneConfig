@@ -66,6 +66,10 @@ import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.Paint
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.RenderContext
+import org.polyfrost.oneconfig.api.config.v1.Config
+import org.polyfrost.oneconfig.api.config.v1.Properties
+import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
@@ -2304,7 +2308,7 @@ internal fun duplicateHud(
         return null
     }
     Snapshot.withMutableSnapshot {
-        fresh.tree.overwrite(copied.tree, true, false, null)
+        fresh.tree.overwrite(detachedValues(copied.tree), true, false, null)
         fresh.hidden = copied.hidden
         fresh.locked = copied.locked
         fresh.staticWidth = copied.staticWidth
@@ -2335,6 +2339,22 @@ internal fun duplicateHud(
     fresh.capturePositionDefaults()
     HudManager.invalidate()
     return fresh
+}
+
+@Suppress("UNCHECKED_CAST")
+private fun detachedValues(tree: Tree): Tree {
+    val out = Tree(tree.id, null, null, null)
+    for ((key, node) in tree.map) {
+        when (node) {
+            is Tree -> out.put(detachedValues(node))
+            is Property<*> -> {
+                if (node.type == Void::class.java) continue
+                val value = node.get() ?: continue
+                out.put(Properties.simple(key, null, null, Config.copyDefault(node.type, value), node.type as Class<Any?>))
+            }
+        }
+    }
+    return out
 }
 
 internal fun duplicateHudGroup(
@@ -2763,6 +2783,8 @@ private fun rememberHudSearchResults(providers: List<Hud>, query: String): List<
 private val Hud.addableToLibrary: Boolean
     get() = multipleInstancesAllowed() || !HudManager.hasHudOfType(this::class.java)
 
+private val HudLibraryGutter = 18.dp
+
 private class HudLibrarySection(val modId: String?, val title: String, val huds: List<Hud>)
 
 /** Map key for a section since the catch-all section has no mod id */
@@ -2973,11 +2995,11 @@ private fun HudLibraryPanel(
             .then(modifier)
             .background(theme.popupBackground, theme.backgroundShape)
             .border(1.dp, theme.borderColor, theme.backgroundShape)
-            .padding(18.dp),
+            .padding(vertical = HudLibraryGutter),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = HudLibraryGutter),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -2988,17 +3010,18 @@ private fun HudLibraryPanel(
             }
         }
         if (suggestEvergreenHud) {
-            EvergreenHudSuggestion(Modifier.fillMaxWidth().weight(1f))
+            EvergreenHudSuggestion(Modifier.fillMaxWidth().weight(1f).padding(horizontal = HudLibraryGutter))
             return@Column
         }
         Text(
             "Click to add  ·  Drag to place it yourself",
+            modifier = Modifier.padding(horizontal = HudLibraryGutter),
             color = theme.textColorSecondary,
             fontSize = 11.sp,
         )
         Box(Modifier.fillMaxWidth().weight(1f)) {
             BoxWithConstraints(Modifier.fillMaxSize()) {
-                val maxCardWidth = maxWidth - 16.dp
+                val maxCardWidth = maxWidth - HudLibraryGutter * 2
                 val density = LocalDensity.current
                 val (items, sectionIndexes, previewsMeasured, previews, geometry) = rememberHudLibraryLayout(sections, maxCardWidth)
                 val completeScroll by rememberUpdatedState(onScrollComplete)
@@ -3031,42 +3054,43 @@ private fun HudLibraryPanel(
                     }
                     completeScroll(target, false)
                 }
-                LazyColumn(
-                    state = scrollState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(end = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    if (sections.isEmpty()) {
-                        item(key = "empty") {
-                            Text(
-                                "No HUDs found",
-                                color = theme.textColorSecondary,
-                                fontSize = 14.sp,
-                            )
+                ScrollbarBox(scrollState, scrollbarAdapter, HudLibraryGutter, Modifier.fillMaxSize()) {
+                    LazyColumn(
+                        state = scrollState,
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = HudLibraryGutter),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        if (sections.isEmpty()) {
+                            item(key = "empty") {
+                                Text(
+                                    "No HUDs found",
+                                    color = theme.textColorSecondary,
+                                    fontSize = 14.sp,
+                                )
+                            }
                         }
-                    }
-                    items.forEach { libraryItem ->
-                        item(key = libraryItem.key, contentType = if (libraryItem.row == null) "header" else "cards") {
-                            val row = libraryItem.row
-                            if (row == null) {
-                                HudLibraryHeader(libraryItem.section, active = libraryItem.section.modId == activeModId)
-                            } else {
-                                Row(
-                                    modifier = Modifier
-                                        .padding(bottom = libraryItem.bottomPadding)
-                                        .height(with(density) { row.height.toDp() }),
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                ) {
-                                    row.huds.forEachIndexed { i, hud ->
-                                        key(hud) {
-                                            val hudGeometry = geometry.getValue(hud)
-                                            val cardModifier = Modifier.width(with(density) { row.widths[i].toDp() }).fillMaxHeight()
-                                            if (hud is LegacyHud) {
-                                                LegacyHudPreviewCard(hud, hudGeometry, onDragStart, onCardClick, cardModifier)
-                                            } else {
-                                                ComposeHudPreviewCard(hud, previews.getValue(hud), hudGeometry, onDragStart, onCardClick, cardModifier)
+                        items.forEach { libraryItem ->
+                            item(key = libraryItem.key, contentType = if (libraryItem.row == null) "header" else "cards") {
+                                val row = libraryItem.row
+                                if (row == null) {
+                                    HudLibraryHeader(libraryItem.section, active = libraryItem.section.modId == activeModId)
+                                } else {
+                                    Row(
+                                        modifier = Modifier
+                                            .padding(bottom = libraryItem.bottomPadding)
+                                            .height(with(density) { row.height.toDp() }),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    ) {
+                                        row.huds.forEachIndexed { i, hud ->
+                                            key(hud) {
+                                                val hudGeometry = geometry.getValue(hud)
+                                                val cardModifier = Modifier.width(with(density) { row.widths[i].toDp() }).fillMaxHeight()
+                                                if (hud is LegacyHud) {
+                                                    LegacyHudPreviewCard(hud, hudGeometry, onDragStart, onCardClick, cardModifier)
+                                                } else {
+                                                    ComposeHudPreviewCard(hud, previews.getValue(hud), hudGeometry, onDragStart, onCardClick, cardModifier)
+                                                }
                                             }
                                         }
                                     }
@@ -3075,10 +3099,6 @@ private fun HudLibraryPanel(
                         }
                     }
                 }
-                VerticalScrollbar(
-                    adapter = scrollbarAdapter,
-                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
-                )
             }
         }
     }

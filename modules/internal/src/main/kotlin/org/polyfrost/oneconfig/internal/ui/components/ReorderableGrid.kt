@@ -36,6 +36,7 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -80,6 +81,8 @@ private val SettleSpec = spring<Offset>(
  * cannot be dragged
  *
  * [onClick] fires for an item clicked while it is still settling, as [reorderContainer] catches that press
+ *
+ * [horizontalPadding] is the grid's horizontal content padding, which [LazyGridItemInfo.offset] does not include
  */
 class GridReorderState internal constructor(
     private val gridState: LazyGridState,
@@ -89,6 +92,7 @@ class GridReorderState internal constructor(
     private val dragBounds: (index: Int) -> IntRange?,
     internal val onClick: (key: Any) -> Unit,
     private val density: () -> Density,
+    private val horizontalPadding: () -> Dp,
 ) {
     var draggingKey by mutableStateOf<Any?>(null)
         private set
@@ -136,7 +140,7 @@ class GridReorderState internal constructor(
         val items = gridState.layoutInfo.visibleItemsInfo
         val own = items.firstOrNull { it.key == overlayKey }
         if (own != null) {
-            slot = own.offset.toOffset()
+            slot = own.slot()
         } else {
             items.firstOrNull { it.key == referenceKey }?.let { slot += it.offset.toOffset() - referenceOffset }
         }
@@ -192,7 +196,7 @@ class GridReorderState internal constructor(
         settleOnHoveredItem()
         val index = draggingIndex
         // the grid only moves the item to its new slot next frame, so measure from that slot
-        val fromSlot = overlayOffset - (infoAt(index)?.offset?.toOffset() ?: trackSlot())
+        val fromSlot = overlayOffset - (infoAt(index)?.slot() ?: trackSlot())
         stop()
         onDrop(index)
         settling = true
@@ -297,6 +301,10 @@ class GridReorderState internal constructor(
             if (depth != 0f) gridState.dispatchRawDelta(ramp * abs(ramp) * maxSpeed * seconds)
         }
     }
+
+    private fun LazyGridItemInfo.slot() = offset.toOffset() + Offset(with(density()) { horizontalPadding().toPx() }, 0f)
+
+    private fun LazyGridItemInfo.bounds() = Rect(slot(), size.toSize())
 }
 
 @Composable
@@ -306,6 +314,7 @@ fun rememberGridReorderState(
     onDrop: (index: Int) -> Unit,
     dragBounds: (index: Int) -> IntRange? = { null },
     onClick: (key: Any) -> Unit = {},
+    horizontalPadding: Dp = 0.dp,
 ): GridReorderState {
     val scope = rememberCoroutineScope()
     val currentOnMove by rememberUpdatedState(onMove)
@@ -313,6 +322,7 @@ fun rememberGridReorderState(
     val currentDragBounds by rememberUpdatedState(dragBounds)
     val currentOnClick by rememberUpdatedState(onClick)
     val currentDensity by rememberUpdatedState(LocalDensity.current)
+    val currentHorizontalPadding by rememberUpdatedState(horizontalPadding)
     return remember(gridState, scope) {
         GridReorderState(
             gridState = gridState,
@@ -322,6 +332,7 @@ fun rememberGridReorderState(
             dragBounds = { index -> currentDragBounds(index) },
             onClick = { key -> currentOnClick(key) },
             density = { currentDensity },
+            horizontalPadding = { currentHorizontalPadding },
         )
     }
 }
@@ -413,8 +424,6 @@ private fun Rect.overlap(other: Rect): Float {
     val height = minOf(bottom, other.bottom) - maxOf(top, other.top)
     return if (width > 0f && height > 0f) width * height else 0f
 }
-
-private fun LazyGridItemInfo.bounds() = Rect(offset.toOffset(), size.toSize())
 
 private fun IntOffset.toOffset() = Offset(x.toFloat(), y.toFloat())
 
