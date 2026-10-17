@@ -349,6 +349,9 @@ public class OneConfigConfig extends Config {
     @Include
     private static float timeBeforeReset = 15f;
 
+    @Include
+    public static boolean hudEditorTourSeen = false;
+
     @Switch(
         title = "oneconfig.preferences.restore_hud_editor.title",
         titleTranslation = true,
@@ -1036,6 +1039,20 @@ public class OneConfigConfig extends Config {
         if (INSTANCE != null && INSTANCE.tree != null) {
             try {
                 INSTANCE.getProperty("showFirstLaunchMessage").setAs(Boolean.FALSE);
+            } catch (Exception ignored) {
+            }
+            INSTANCE.save();
+        }
+    }
+
+    public static void markHudEditorTourSeen() {
+        if (hudEditorTourSeen) {
+            return;
+        }
+        hudEditorTourSeen = true;
+        if (INSTANCE != null && INSTANCE.tree != null) {
+            try {
+                INSTANCE.getProperty("hudEditorTourSeen").setAs(Boolean.TRUE);
             } catch (Exception ignored) {
             }
             INSTANCE.save();
