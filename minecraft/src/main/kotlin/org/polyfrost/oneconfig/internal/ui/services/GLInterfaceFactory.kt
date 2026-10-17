@@ -65,6 +65,8 @@ internal object GLInterfaceFactory {
 }
 
 // on Java 25+, LWJGL binds upcalls through FFM, which requires a typed @FunctionalInterface rather than a bare CallbackI
+// LWJGL takes the first non-default method as the upcall signature, and it can pick the static $jd bridges that Kotlin's compatibility mode adds
+@JvmDefaultWithoutCompatibility
 @FunctionalInterface
 private fun interface GrGLGetProc : CallbackI {
     fun invoke(ctx: Long, name: Long): Long
