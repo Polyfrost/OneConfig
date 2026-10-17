@@ -83,7 +83,7 @@ object KaleidoCompat {
         tree.noCache = true
         tree.saveFunction = Runnable { runCatching { call(config, "save") } }
         mod?.extractIconFile()?.let { tree.addMetadata("icon_path", it) }
-        CompatLoader.originalScreenOpener(modId)?.let { tree.addMetadata("open_original_screen", it) }
+        CompatLoader.originalScreenOpener(modId)?.let { tree.addMetadata(CompatLoader.OPEN_ORIGINAL_SCREEN, it) }
 
         val nodes = call(config, "nodes") as? Iterable<*> ?: return null
         var added = 0

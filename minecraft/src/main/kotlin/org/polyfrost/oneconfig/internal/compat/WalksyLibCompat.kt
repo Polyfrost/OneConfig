@@ -47,8 +47,8 @@ object WalksyLibCompat {
         val container = invoke(mod, "getContainer") ?: return null
         val metadata = invoke(container, "getMetadata") ?: return null
         val modid = invoke(metadata, "getId") as? String ?: return null
-        val retry = Runnable { CompatLoader.requireTranslations(skip = true) { parseMod(mod)?.let(CompatSnapshots::register) } }
-        if (CompatLoader.skipExtraction(modid, mod, retry)) return null
+        // this runs from requireTranslations, which waits for the entrypoints to be decided, so nothing needs retrying
+        if (ConfigEntrypoints.provides(modid) || CompatLoader.nativeLoadedConfigs.contains(modid)) return null
 
         if (invoke(mod, "hasConfig") == false) return null
         val config = invoke(mod, "getConfig") ?: return null
@@ -66,7 +66,7 @@ object WalksyLibCompat {
         tree.noCache = true
         buildSaveFunction(config)?.let { tree.saveFunction = it }
         modInfo?.extractIconFile()?.let { tree.addMetadata("icon_path", it) }
-        CompatLoader.originalScreenOpener(modid)?.let { tree.addMetadata("open_original_screen", it) }
+        CompatLoader.originalScreenOpener(modid)?.let { tree.addMetadata(CompatLoader.OPEN_ORIGINAL_SCREEN, it) }
 
         var added = false
         val usedIds = HashSet<String>()

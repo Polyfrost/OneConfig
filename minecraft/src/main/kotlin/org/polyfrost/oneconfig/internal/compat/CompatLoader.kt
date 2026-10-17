@@ -126,6 +126,9 @@ object CompatLoader {
 
     private const val MOD_MENU_CLASS = "com.terraformersmc.modmenu.ModMenu"
 
+    // the tree metadata holding the opener from originalScreenOpener, read by the "open original" button
+    const val OPEN_ORIGINAL_SCREEN = "open_original_screen"
+
     fun originalScreenOpener(modId: String): Runnable? {
         val hasScreen = runCatching {
             Class.forName(MOD_MENU_CLASS)

@@ -37,7 +37,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -78,10 +77,12 @@ public final class ConfigEntrypoints {
     // keyed so a hook that fires more than once before the mod is decided is only retried once
     private static final Map<String, Map<Object, Skipped>> skippedExtractions = new HashMap<>();
     private static final AtomicBoolean registered = new AtomicBoolean();
-    private static final String OPEN_ORIGINAL_SCREEN = "open_original_screen";
     private static final Map<String, String> treeOwners = new ConcurrentHashMap<>();
+    // configs claimed only because they existed before the entrypoint ran, which do not count when it threw
+    private static final Set<String> earlierConfigs = ConcurrentHashMap.newKeySet();
     private static final Map<String, Runnable> customOpeners = new ConcurrentHashMap<>();
-    private static final Map<String, Optional<Runnable>> defaultOpeners = new ConcurrentHashMap<>();
+    // only found openers are cached, so a mod whose screen was not known yet is looked up again on the next tree
+    private static final Map<String, Runnable> defaultOpeners = new ConcurrentHashMap<>();
     // mods whose entrypoints ran but which are only decided once ConfigManager.initialize() built their configs
     private static final Map<String, Boolean> undecided = new LinkedHashMap<>();
     // per thread so trees and configs made elsewhere while an entrypoint runs are not claimed by it
@@ -211,7 +212,7 @@ public final class ConfigEntrypoints {
             ModInfo owner = CompatLoader.INSTANCE.findModByClass(config.getClass());
             String modId = owner == null ? null : providerOf(owner.getId());
             if (modId == null || !ids.contains(modId)) continue;
-            treeOwners.putIfAbsent(config.id, modId);
+            if (treeOwners.putIfAbsent(config.id, modId) == null) earlierConfigs.add(config.id);
         }
     }
 
@@ -246,7 +247,15 @@ public final class ConfigEntrypoints {
         constructing.forEach((config, construction) -> {
             if (!constructorFailed(t, config.getClass(), construction)) return;
             ConfigManager.cancelInitialization(config);
-            treeOwners.remove(config.id);
+            // another config sharing the id, such as one claimed before the entrypoint ran, keeps its owner
+            boolean shared = false;
+            for (Config other : ConfigManager.pendingConfigs()) {
+                if (other.id.equals(config.id)) {
+                    shared = true;
+                    break;
+                }
+            }
+            if (!shared) treeOwners.remove(config.id);
             LOGGER.warn("Discarding config {} whose constructor failed", config.id);
         });
     }
@@ -328,7 +337,10 @@ public final class ConfigEntrypoints {
     }
 
     private static void decide(String modId, boolean broken) {
-        if (!ownedTrees(modId).isEmpty()) {
+        List<Tree> owned = ownedTrees(modId);
+        // an entrypoint that threw only keeps the configs it registered itself, not ones that existed before it ran
+        if (broken) owned.removeIf(tree -> earlierConfigs.contains(tree.getID()));
+        if (!owned.isEmpty()) {
             // keep what it registered rather than also extracting the original, which would show two cards
             if (broken) LOGGER.warn("Keeping the OneConfig configs {} registered before its entrypoint failed", modId);
             markSucceeded(modId);
@@ -387,9 +399,13 @@ public final class ConfigEntrypoints {
         if (id == null) return;
         // trees registered directly with the ConfigManager from within the entrypoint
         String current = registeringModId.get();
-        if (current != null) treeOwners.putIfAbsent(id, current);
+        if (current != null) {
+            // a tree that another mod registered while this entrypoint called into it, such as through compat, stays its own
+            ModInfo owner = CompatLoader.INSTANCE.findFirstMod();
+            if (owner == null || current.equals(providerOf(owner.getId()))) treeOwners.putIfAbsent(id, current);
+        }
         String modId = treeOwners.get(id);
-        if (modId == null || tree.getMetadata(OPEN_ORIGINAL_SCREEN) != null) return;
+        if (modId == null || tree.getMetadata(CompatLoader.OPEN_ORIGINAL_SCREEN) != null) return;
         attachOpener(tree, modId);
     }
 
@@ -416,9 +432,13 @@ public final class ConfigEntrypoints {
         if (failed.contains(modId)) return;
         Runnable opener = customOpeners.get(modId);
         // looked up once per mod, as trees are registered again on every profile switch
-        if (opener == null) opener = defaultOpeners.computeIfAbsent(modId, id -> Optional.ofNullable(CompatLoader.INSTANCE.originalScreenOpener(id))).orElse(null);
-        if (opener == null) return;
-        tree.addMetadata(OPEN_ORIGINAL_SCREEN, opener);
+        if (opener == null) opener = defaultOpeners.get(modId);
+        if (opener == null) {
+            opener = CompatLoader.INSTANCE.originalScreenOpener(modId);
+            if (opener == null) return;
+            defaultOpeners.putIfAbsent(modId, opener);
+        }
+        tree.addMetadata(CompatLoader.OPEN_ORIGINAL_SCREEN, opener);
     }
 
     private static final class Context implements ConfigEntrypoint.Context {
@@ -446,6 +466,8 @@ public final class ConfigEntrypoints {
                 LOGGER.warn("Mod {} registered config {} which already belongs to {}", modId, config.id, owner);
                 return config;
             }
+            // registered on purpose, so it counts even if the entrypoint throws afterwards
+            earlierConfigs.remove(config.id);
             // the tree normally only exists once the config initializes, where onTreeRegistered picks it up
             Tree tree = config.getTree();
             if (tree != null) attachOpener(tree, modId);

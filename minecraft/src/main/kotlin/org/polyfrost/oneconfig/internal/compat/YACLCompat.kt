@@ -173,7 +173,7 @@ object YACLCompat {
             tree.addMetadata("icon_path", it)
         }
         mod?.id?.let { id ->
-            CompatLoader.originalScreenOpener(id)?.let { tree.addMetadata("open_original_screen", it) }
+            CompatLoader.originalScreenOpener(id)?.let { tree.addMetadata(CompatLoader.OPEN_ORIGINAL_SCREEN, it) }
         }
 
         for (category in categories) {

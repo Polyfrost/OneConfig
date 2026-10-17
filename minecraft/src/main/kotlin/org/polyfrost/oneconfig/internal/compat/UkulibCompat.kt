@@ -96,7 +96,7 @@ object UkulibCompat {
             ?: mod.id
         tree.noCache = true
         mod.extractIconFile()?.let { tree.addMetadata("icon_path", it) }
-        CompatLoader.originalScreenOpener(mod.id)?.let { tree.addMetadata("open_original_screen", it) }
+        CompatLoader.originalScreenOpener(mod.id)?.let { tree.addMetadata(CompatLoader.OPEN_ORIGINAL_SCREEN, it) }
         saveFunction(manager)?.let { tree.saveFunction = it }
         resetFunction(manager)?.let { tree.addMetadata(CompatSnapshots.CUSTOM_RESET_METADATA, it) }
 
