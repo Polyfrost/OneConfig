@@ -45,15 +45,11 @@ object DandelionCompat {
 
     @JvmStatic
     fun initialize(title: Component, categories: MutableList<ConfigCategory>, save: Supplier<Boolean>) {
-        if (ConfigEntrypoints.provides(CompatLoader.findFirstMod()?.id)) return
+        val mod = CompatLoader.findFirstMod()
+        if (ConfigEntrypoints.skipExtraction(mod?.id, categories) { initialize(title, categories, save) }) return
         CompatLoader.requireTranslations {
             LOGGER.info("Dandelion compat loaded for $title")
-            val mod = CompatLoader.findFirstMod()
-            val tree = parseConfig(title, categories, mod, save)
-            if (tree != null) {
-                CompatSnapshots.register(tree)
-                CompatLoader.markFirstModAsSkip()
-            }
+            parseConfig(title, categories, mod, save)?.let(CompatSnapshots::register)
         }
     }
 

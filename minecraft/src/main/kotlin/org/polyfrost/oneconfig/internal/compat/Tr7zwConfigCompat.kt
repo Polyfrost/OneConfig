@@ -42,9 +42,7 @@ object Tr7zwConfigCompat {
                 return
             }
             val mod = CompatLoader.findFirstMod()
-            if (mod != null && CompatLoader.nativeLoadedConfigs.contains(mod.id)) {
-                return
-            }
+            if (CompatLoader.skipExtraction(mod?.id, screen) { parseOptionList(screen, options) }) return
             val tree = createTree(screen, mod)
             val usedIds = HashSet<String>()
             if (!parseOptions(options, tree, usedIds)) return

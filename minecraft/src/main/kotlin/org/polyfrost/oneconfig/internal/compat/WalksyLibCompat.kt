@@ -47,7 +47,8 @@ object WalksyLibCompat {
         val container = invoke(mod, "getContainer") ?: return null
         val metadata = invoke(container, "getMetadata") ?: return null
         val modid = invoke(metadata, "getId") as? String ?: return null
-        if (CompatLoader.nativeLoadedConfigs.contains(modid)) return null
+        val retry = Runnable { CompatLoader.requireTranslations(skip = true) { parseMod(mod)?.let(CompatSnapshots::register) } }
+        if (CompatLoader.skipExtraction(modid, mod, retry)) return null
 
         if (invoke(mod, "hasConfig") == false) return null
         val config = invoke(mod, "getConfig") ?: return null

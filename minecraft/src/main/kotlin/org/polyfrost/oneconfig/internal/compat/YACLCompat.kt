@@ -105,9 +105,7 @@ object YACLCompat {
     fun parseYACL(yaclInstance: Any) {
         runCatching {
             val mod = CompatLoader.findFirstMod()
-            if (mod != null && CompatLoader.nativeLoadedConfigs.contains(mod.id)) {
-                return
-            }
+            if (CompatLoader.skipExtraction(mod?.id, yaclInstance) { parseYACL(yaclInstance) }) return
             LOGGER.info("Creating config wrapper for " + mod?.id)
             // the options were built from what the config held, which for a mod that is switched off is not
             // what the user chose, and they keep that copy rather than reading the config again

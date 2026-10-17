@@ -63,11 +63,17 @@ object KaleidoCompat {
         val family = (call(config, "family") as? String).orEmpty()
         val id = (call(config, "id") as? String).orEmpty()
         if (id.isBlank()) return null
-        if (!registered.add(if (family.isBlank()) id else "$family/$id")) return null
+        val key = if (family.isBlank()) id else "$family/$id"
+        if (!registered.add(key)) return null
 
         val mod = resolveMod(family, id)
         val modId = mod?.id ?: id
-        if (CompatLoader.nativeLoadedConfigs.contains(modId)) return null
+        // the key stays registered while skipped so later scans stop here, and is released for the retry
+        val retry = Runnable {
+            registered.remove(key)
+            CompatLoader.requireTranslations(skip = true) { parseConfig(config)?.let(CompatSnapshots::register) }
+        }
+        if (CompatLoader.skipExtraction(modId, key, retry)) return null
 
         val tree = Tree.tree()
         tree.id = uniqueTreeId(modId, id)

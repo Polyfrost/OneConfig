@@ -71,7 +71,9 @@ object UkulibCompat {
 
     private fun parseScreen(screen: Any) {
         val mod = CompatLoader.findModByClass(screen.javaClass) ?: return
-        if (CompatLoader.nativeLoadedConfigs.contains(mod.id)) return
+        // retried on a render frame like the first parse
+        val retry = Runnable { CompatLoader.queueScreenWarmup { runCatching { parseScreen(screen) } } }
+        if (CompatLoader.skipExtraction(mod.id, screen.javaClass.name, retry)) return
         // the root screen of a mod wins so sub screens opened later do not overwrite it
         if (!parsedMods.add(mod.id)) return
 

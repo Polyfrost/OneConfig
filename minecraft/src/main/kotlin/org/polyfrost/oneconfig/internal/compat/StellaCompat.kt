@@ -53,6 +53,8 @@ object StellaCompat {
 
         CompatLoader.nativeLoadedConfigs.add(Stella.NAMESPACE)
 
+        // this runs from requireTranslations, which waits for the entrypoints to be decided, so nothing needs retrying
+        // the HUDs are still registered as an entrypoint only replaces the config
         val replaced = ConfigEntrypoints.provides(STELLA_ID)
         try {
             if (!replaced) addConfigTree()
