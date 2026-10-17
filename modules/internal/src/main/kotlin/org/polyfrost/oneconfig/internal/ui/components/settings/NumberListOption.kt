@@ -11,7 +11,7 @@ import org.polyfrost.oneconfig.internal.ui.api.settings.NumberListOptionData
 @Composable
 fun NumberListOption(data: NumberListOptionData) {
     val elementType = remember(data.prop) { data.elementType }
-    val state = rememberListEntries(data.prop, data.floats()) { values ->
+    val state = rememberListEntries(data.prop, { data.floats() }) { values ->
         data.setElements(values.map { it.toNumberType(elementType) })
     }
 

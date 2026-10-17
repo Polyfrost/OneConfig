@@ -103,7 +103,8 @@ internal val RangeSeparatorWidth = 20.dp
  * An input for each end of a range laid out in the caller's row
  *
  * Typing is free to pass the other end so a number is never clamped midway through being typed and the pair
- * is put back in order once the input loses focus while the arrows stop at the other end
+ * is put back in order once the input loses focus while the arrows stop at the other end unless the pair is
+ * already out of order
  *
  * [separated] puts a dash between the inputs for rows that have no track to read them against
  */
@@ -128,7 +129,7 @@ internal fun RangeSpinners(
         step = step,
         width = width,
         format = format,
-        arrowMax = end,
+        arrowMax = if (start <= end) end else max,
         onEditEnd = reorder,
     )
     if (separated) {
@@ -144,7 +145,7 @@ internal fun RangeSpinners(
         step = step,
         width = width,
         format = format,
-        arrowMin = start,
+        arrowMin = if (start <= end) start else min,
         onEditEnd = reorder,
     )
 }
@@ -208,9 +209,14 @@ internal fun RangeSliderTrack(
                     var dragStart = minOf(currentStart, currentEnd)
                     var dragEnd = maxOf(currentStart, currentEnd)
                     val pressed = xToValue(down.position.x)
-                    val draggingEnd = abs(pressed - dragEnd) <= abs(pressed - dragStart)
+                    var draggingEnd = if (dragStart == dragEnd) null else abs(pressed - dragEnd) <= abs(pressed - dragStart)
                     fun apply(value: Float) {
-                        if (draggingEnd) dragEnd = value.coerceAtLeast(dragStart) else dragStart = value.coerceAtMost(dragEnd)
+                        if (draggingEnd == null && value != dragStart) draggingEnd = value > dragStart
+                        when (draggingEnd) {
+                            true -> dragEnd = value.coerceAtLeast(dragStart)
+                            false -> dragStart = value.coerceAtMost(dragEnd)
+                            null -> return
+                        }
                         maybeTick(value)
                         currentOnValueChange(dragStart, dragEnd)
                     }

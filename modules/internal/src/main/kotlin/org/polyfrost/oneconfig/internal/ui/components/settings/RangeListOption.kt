@@ -20,7 +20,7 @@ import org.polyfrost.oneconfig.internal.ui.api.settings.RangeOptionData
  */
 @Composable
 fun RangeListOption(data: RangeListOptionData) {
-    val state = rememberListEntries(data.prop, data.ranges()) { ranges ->
+    val state = rememberListEntries(data.prop, { data.ranges() }) { ranges ->
         data.setRanges(ranges.map { (start, end) -> minOf(start, end) to maxOf(start, end) })
     }
 
