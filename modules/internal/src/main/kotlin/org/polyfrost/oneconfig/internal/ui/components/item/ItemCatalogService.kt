@@ -6,14 +6,16 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.Snapshot
-import java.util.Locale
 import java.util.ServiceLoader
 import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.Rect
 import org.polyfrost.oneconfig.api.hud.v1.LocalHud
+import org.polyfrost.oneconfig.internal.ui.components.picker.PickerEntry
+import org.polyfrost.oneconfig.internal.ui.components.picker.filterEntries
+import org.polyfrost.oneconfig.internal.ui.components.picker.toggleEntry
 
 /** A stable item registry ID and the localized name shown to the user */
-data class ItemDescriptor(val id: String, val displayName: String)
+data class ItemDescriptor(override val id: String, override val displayName: String) : PickerEntry
 
 /** An item icon registered with the renderer until [close] is called. */
 interface ItemIconHandle : AutoCloseable {
@@ -104,23 +106,10 @@ fun normalizeItemIds(ids: Iterable<String>): List<String> = ids
     .filter(String::isNotEmpty)
     .distinct()
 
-fun filterItems(items: List<ItemDescriptor>, query: String): List<ItemDescriptor> {
-    val terms = query.trim().lowercase(Locale.ROOT).split(Regex("\\s+")).filter(String::isNotEmpty)
-    if (terms.isEmpty()) return items
-    return items.filter { item ->
-        val haystack = "${item.displayName.lowercase(Locale.ROOT)} ${item.id.lowercase(Locale.ROOT)}"
-        terms.all(haystack::contains)
-    }
-}
+fun filterItems(items: List<ItemDescriptor>, query: String): List<ItemDescriptor> = filterEntries(items, query)
 
 fun toggleItem(
     selected: List<String>,
     id: String,
     maxEntries: Int,
-): List<String> {
-    val normalized = normalizeItemIds(selected)
-    if (id in normalized) return normalized - id
-    if (maxEntries == 1) return listOf(id)
-    if (maxEntries > 0 && normalized.size >= maxEntries) return normalized
-    return normalized + id
-}
+): List<String> = toggleEntry(normalizeItemIds(selected), id, maxEntries)

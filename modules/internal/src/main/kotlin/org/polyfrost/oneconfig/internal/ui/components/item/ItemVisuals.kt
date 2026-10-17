@@ -1,55 +1,22 @@
 package org.polyfrost.oneconfig.internal.ui.components.item
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.LocalScrollbarStyle
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.skiaCanvas
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.onPlaced
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -58,23 +25,27 @@ import kotlin.math.ceil
 import org.jetbrains.skia.Rect
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
-import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
-import org.polyfrost.oneconfig.internal.ui.components.IconButton
-import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
-import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.containVerticalScroll
-import org.polyfrost.oneconfig.internal.ui.components.localizedString
-import org.polyfrost.oneconfig.internal.ui.components.onClick
-import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.components.picker.PickerLabel
+import org.polyfrost.oneconfig.internal.ui.components.picker.PickerMessage
+import org.polyfrost.oneconfig.internal.ui.components.picker.PickerSearchField
+import org.polyfrost.oneconfig.internal.ui.components.picker.PickerTile
+import org.polyfrost.oneconfig.internal.ui.components.picker.PickerTileIcon
+import org.polyfrost.oneconfig.internal.ui.components.picker.PickerTileShape
+import org.polyfrost.oneconfig.internal.ui.components.picker.PickerTileSize
+import org.polyfrost.oneconfig.internal.ui.components.picker.PickerTooltip
+import org.polyfrost.oneconfig.internal.ui.components.picker.TileGrid
+import org.polyfrost.oneconfig.internal.ui.components.picker.TilePicker
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
-val ItemTileShape = RoundedCornerShape(8.dp)
+val ItemTileShape = PickerTileShape
 val ItemIconShape = RoundedCornerShape(5.dp)
 
-val ItemTileSize = 44.dp
+val ItemTileSize = PickerTileSize
+
+internal val ItemTileIcon: PickerTileIcon<ItemDescriptor> = { item, modifier, alpha ->
+    ItemIcon(item.id, modifier, framed = false, alpha = alpha)
+}
 
 fun polyItemRenderSizePx(size: Float, hud: Hud?): Int =
     ceil(size * Platform.compatibility().options().guiScale * (hud?.effectiveScale ?: 1f)).toInt()
@@ -153,25 +124,7 @@ fun ItemLabel(
     nameSize: TextUnit = 12.sp,
     idSize: TextUnit = 10.sp,
     unavailableKey: String = ItemStrings.Unavailable,
-) {
-    Column(modifier = modifier) {
-        Text(
-            item?.displayName ?: id,
-            color = nameColor,
-            fontSize = nameSize,
-            fontWeight = FontWeight.Medium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Text(
-            item?.id ?: localizedString(null, unavailableKey),
-            color = idColor,
-            fontSize = idSize,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
+) = PickerLabel(id, item, modifier, nameColor, idColor, nameSize, idSize, unavailableKey)
 
 /** A square item cell with selection border tick badge and tooltip where a `null` [onClick] is decorative */
 @Composable
@@ -182,45 +135,7 @@ fun ItemTile(
     enabled: Boolean = true,
     tooltip: Boolean = true,
     onClick: (() -> Unit)? = null,
-) {
-    val theme = LocalTheme.current
-    val interaction = rememberInteractionSource()
-    val hovered by interaction.collectIsHoveredAsState()
-    val interactive = enabled && onClick != null
-    val background by animateColorAsState(
-        when {
-            selected -> Accent.copy(alpha = 0.18f).compositeOver(theme.modCardBackground)
-            hovered && interactive -> theme.componentBackground
-            else -> theme.modCardBackground
-        }
-    )
-    val border by animateColorAsState(if (selected) Accent else theme.borderColor)
-    val contentAlpha = if (enabled) 1f else 0.45f
-
-    ItemTooltip(item, enabled = tooltip) {
-        Box(
-            modifier = modifier
-                .aspectRatio(1f)
-                .clip(ItemTileShape)
-                .background(background, ItemTileShape)
-                .border(1.dp, border, ItemTileShape)
-                .hoverable(interaction)
-                .pointerHoverIcon(if (interactive) PointerIcon.Hand else PointerIcon.Default)
-                .then(if (interactive) Modifier.onClick(interaction, onClick) else Modifier)
-                .padding(5.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            ItemIcon(item.id, Modifier.fillMaxSize(), framed = false, alpha = contentAlpha)
-            if (selected) {
-                Icon(
-                    "tick",
-                    modifier = Modifier.align(Alignment.TopEnd).size(11.dp),
-                    color = Accent,
-                )
-            }
-        }
-    }
-}
+) = PickerTile(item, ItemTileIcon, modifier, selected, enabled, tooltip, onClick)
 
 /** Wraps [content] in the name and ID tooltip or renders it bare when [enabled] is false */
 @Composable
@@ -229,29 +144,7 @@ fun ItemTooltip(
     enabled: Boolean = true,
     anchor: Alignment = Alignment.BottomCenter,
     content: @Composable () -> Unit,
-) {
-    if (!enabled) {
-        content()
-        return
-    }
-    val theme = LocalTheme.current
-    Tooltip(
-        text = {
-            Column {
-                Text(
-                    item.displayName,
-                    color = theme.textColor,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium,
-                )
-                Text(item.id, color = theme.textColorSecondary, fontSize = 9.sp)
-            }
-        },
-        modifier = Modifier,
-        anchor = anchor,
-        content = content,
-    )
-}
+) = PickerTooltip(item, enabled, anchor, content)
 
 /** Adaptive grid of [ItemTile]s where [selected] and [enabled] are queried per item so selection rules stay with the caller */
 @Composable
@@ -265,39 +158,7 @@ fun ItemGrid(
     spacing: Dp = 6.dp,
     gutter: Dp = 12.dp,
     onClick: ((ItemDescriptor) -> Unit)? = null,
-) {
-    val gridState = rememberLazyGridState()
-    val scrollbarStyle = LocalScrollbarStyle.current.copy(thickness = ItemGridScrollbarThickness)
-    CompositionLocalProvider(LocalScrollbarStyle provides scrollbarStyle) {
-        ScrollbarBox(
-            gridState,
-            gutter,
-            modifier = modifier.fillMaxWidth().heightIn(max = maxHeight)
-                .containVerticalScroll { gridState.canScrollBackward || gridState.canScrollForward },
-        ) {
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(cellSize),
-                state = gridState,
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = gutter),
-                horizontalArrangement = Arrangement.spacedBy(spacing),
-                verticalArrangement = Arrangement.spacedBy(spacing),
-            ) {
-                items(items, key = ItemDescriptor::id) { item ->
-                    ItemTile(
-                        item,
-                        modifier = Modifier.fillMaxWidth(),
-                        selected = selected(item),
-                        enabled = enabled(item),
-                        onClick = onClick?.let { click -> { click(item) } },
-                    )
-                }
-            }
-        }
-    }
-}
-
-private val ItemGridScrollbarThickness = 6.dp
+) = TileGrid(items, ItemTileIcon, modifier, selected, enabled, cellSize, maxHeight, spacing, gutter, onClick)
 
 /** Search box for [ItemGrid] where [autoFocus] is off by default for embedded use */
 @Composable
@@ -307,56 +168,7 @@ fun ItemSearchField(
     modifier: Modifier = Modifier,
     autoFocus: Boolean = false,
     placeholderKey: String = ItemStrings.Search,
-) {
-    val theme = LocalTheme.current
-    val interaction = rememberInteractionSource()
-    val focused by interaction.collectIsFocusedAsState()
-    val focusRequester = remember { FocusRequester() }
-
-    if (autoFocus) {
-        LaunchedEffect(Unit) {
-            runCatching { focusRequester.requestFocus() }
-        }
-    }
-
-    BasicTextField(
-        value = value,
-        onValueChange = onValueChange,
-        singleLine = true,
-        textStyle = TextStyle(color = theme.textColor, fontSize = 12.sp, fontFamily = theme.typography.family),
-        cursorBrush = SolidColor(theme.textColor),
-        interactionSource = interaction,
-        modifier = modifier.trackTextInputFocus().focusRequester(focusRequester),
-        decorationBox = { inner ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(34.dp)
-                    .clip(ItemTileShape)
-                    .background(theme.componentBackground, ItemTileShape)
-                    .border(1.dp, if (focused) Accent else theme.borderColor, ItemTileShape)
-                    .padding(horizontal = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Icon("search", modifier = Modifier.size(14.dp), color = theme.textColorSecondary)
-                Box(modifier = Modifier.weight(1f)) {
-                    if (value.isEmpty()) {
-                        Text(
-                            localizedString(null, placeholderKey),
-                            color = theme.textColorSecondary,
-                            fontSize = 12.sp,
-                        )
-                    }
-                    inner()
-                }
-                if (value.isNotEmpty()) {
-                    IconButton("close", modifier = Modifier.size(14.dp)) { onValueChange("") }
-                }
-            }
-        },
-    )
-}
+) = PickerSearchField(value, onValueChange, modifier, autoFocus, placeholderKey)
 
 /**
  * Header search field and result grid making up the whole item selector for any HUD or screen
@@ -384,88 +196,27 @@ fun ItemPicker(
     searchPlaceholderKey: String = ItemStrings.Search,
     emptyKey: String = ItemStrings.Empty,
     header: @Composable (ColumnScope.() -> Unit)? = null,
-) {
-    val theme = LocalTheme.current
-    var query by remember { mutableStateOf("") }
-    val filtered = remember(items, query) { filterItems(items, query) }
+) = TilePicker(
+    entries = items,
+    selected = selected,
+    onToggle = onToggle,
+    icon = ItemTileIcon,
+    modifier = modifier,
+    maxEntries = maxEntries,
+    onClose = onClose,
+    autoFocusSearch = autoFocusSearch,
+    cellSize = cellSize,
+    gridMaxHeight = gridMaxHeight,
+    gutter = gutter,
+    titleKey = titleKey,
+    searchPlaceholderKey = searchPlaceholderKey,
+    emptyKey = emptyKey,
+    header = header,
+)
 
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = gutter),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            if (header != null) {
-                header()
-            } else if (titleKey != null || onClose != null) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        if (titleKey != null) {
-                            Text(
-                                localizedString(null, titleKey),
-                                color = theme.textColor,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                        }
-                        if (maxEntries > 0) {
-                            Text(
-                                "${selected.size}/$maxEntries",
-                                color = theme.textColorSecondary,
-                                fontSize = 10.sp,
-                            )
-                        }
-                    }
-                    if (onClose != null) {
-                        IconButton("close", modifier = Modifier.size(18.dp), onClick = onClose)
-                    }
-                }
-            }
-
-            ItemSearchField(
-                query,
-                onValueChange = { query = it },
-                autoFocus = autoFocusSearch,
-                placeholderKey = searchPlaceholderKey,
-            )
-        }
-
-        Box(Modifier.fillMaxWidth().height(gridMaxHeight)) {
-            when {
-                items.isEmpty() -> ItemMessage(emptyKey, height = gridMaxHeight)
-                filtered.isEmpty() -> ItemMessage(emptyKey, height = gridMaxHeight)
-                else -> ItemGrid(
-                    items = filtered,
-                    selected = { it.id in selected },
-                    enabled = { canSelect(selected, it.id, maxEntries) },
-                    modifier = Modifier.fillMaxSize(),
-                    cellSize = cellSize,
-                    maxHeight = gridMaxHeight,
-                    gutter = gutter,
-                    onClick = { onToggle(it.id) },
-                )
-            }
-        }
-    }
-}
-
-/** Centered message for empty and unavailable states */
+@Deprecated("Not item specific", ReplaceWith("PickerMessage(key, modifier, height)", "org.polyfrost.oneconfig.internal.ui.components.picker.PickerMessage"))
 @Composable
-fun ItemMessage(key: String, modifier: Modifier = Modifier, height: Dp = 120.dp) {
-    Box(modifier = modifier.fillMaxWidth().height(height), contentAlignment = Alignment.Center) {
-        Text(
-            localizedString(null, key),
-            color = LocalTheme.current.textColorSecondary,
-            fontSize = 12.sp,
-        )
-    }
-}
+fun ItemMessage(key: String, modifier: Modifier = Modifier, height: Dp = 120.dp) = PickerMessage(key, modifier, height)
 
 /** Default translation keys where every composable taking one accepts an override */
 object ItemStrings {
@@ -475,6 +226,6 @@ object ItemStrings {
     const val Unavailable = "oneconfig.itemlist.unavailable"
 }
 
-/** Whether [id] can be picked where already-selected items stay clickable so they can be deselected */
+@Deprecated("Not item specific", ReplaceWith("canSelect(selected, id, maxEntries)", "org.polyfrost.oneconfig.internal.ui.components.picker.canSelect"))
 fun canSelect(selected: List<String>, id: String, maxEntries: Int): Boolean =
-    id in selected || maxEntries <= 0 || maxEntries == 1 || selected.size < maxEntries
+    org.polyfrost.oneconfig.internal.ui.components.picker.canSelect(selected, id, maxEntries)
