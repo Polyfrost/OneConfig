@@ -19,6 +19,8 @@ class KtApiParityTest {
         val note by info(description = "hello", type = "warning")
         var multi by multiSelectDropdown("Multi", arrayOf("a", "b", "c"))
         var range by rangeSlider("Range", floatArrayOf(10f, 20f), step = 5f)
+        var rangeNum by rangeNumber("Range Number", floatArrayOf(10f, 20f), max = 1000000f)
+        var ranges by rangeSliderList("Ranges", floatArrayOf(0f, 10f, 20f, 30f), maxEntries = 3)
         var s by slider("Slider", 5f)
         var pct by slider("Percent", 5f) { "$it%" }
         var t by text("Text", regex = "\\d+")
@@ -47,6 +49,10 @@ class KtApiParityTest {
         assertArrayEquals(booleanArrayOf(false, false, false), cfg.multi)
         assertEquals(true, tree.getProp("multi")!!.getMetadata<Boolean>("checkable"))
         assertEquals(5f, tree.getProp("range")!!.getMetadata<Float>("step"))
+        assertTrue(tree.getProp("rangeNum")!!.getMetadata<Visualizer>("visualizer") is Visualizer.RangeNumberVisualizer)
+        assertEquals(1000000f, tree.getProp("rangeNum")!!.getMetadata<Float>("max"))
+        assertTrue(tree.getProp("ranges")!!.getMetadata<Visualizer>("visualizer") is Visualizer.RangeSliderListVisualizer)
+        assertEquals(3, tree.getProp("ranges")!!.getMetadata<Int>("maxEntries"))
         assertTrue(tree.getProp("s")!!.getMetadata<Visualizer>("visualizer") is Visualizer.SliderVisualizer)
         assertEquals("\\d+", tree.getProp("t")!!.getMetadata<String>("regex"))
         assertTrue(tree.getProp("colors")!!.getMetadata<Any>("noAlpha") != null)
@@ -112,5 +118,19 @@ class KtApiParityTest {
         assertThrows(IllegalArgumentException::class.java) { dsl.itemList().maxEntries = -1 }
         val list = dsl.draggableList(arrayOf("a"), "a", "b").apply { checkable = true }
         assertEquals(true, list["checkable"])
+    }
+
+    class OddRanges : KtConfig("kt_api_parity_odd_ranges", "Odd", Category.QOL) {
+        var r by rangeNumberList("Ranges", floatArrayOf(1f, 2f, 3f))
+    }
+
+    @Test
+    fun rangeListsNeedPairs() {
+        assertThrows(IllegalArgumentException::class.java) { OddRanges() }
+        val dsl = ConfigDSL("dsl_parity")
+        assertThrows(IllegalArgumentException::class.java) { dsl.rangeSliderList(1f, 2f, 3f) }
+        val sliders = dsl.rangeSliderList(0f, 10f).apply { min = 0f; max = 1f }
+        assertThrows(IllegalArgumentException::class.java) { sliders.step = 5f }
+        dsl.rangeNumberList(0f, 10f).apply { min = 0f; max = 1f; step = 5f }
     }
 }

@@ -37,7 +37,7 @@ fun ItemListOption(data: ItemListOptionData) {
     val theme = LocalTheme.current
     val catalog = rememberItemCatalog(data.prop)
     val itemById = rememberItemCatalogById(catalog)
-    val state = rememberListEntries(data.prop, data.ids()) { data.setIds(it) }
+    val state = rememberListEntries(data.prop, { data.ids() }) { data.setIds(it) }
     var expanded by remember(data.prop) { mutableStateOf(false) }
 
     Box {
