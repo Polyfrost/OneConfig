@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal;
 
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import kotlin.jvm.functions.Function1;
 import org.polyfrost.oneconfig.api.config.v1.Config;
@@ -23,6 +24,7 @@ import org.polyfrost.oneconfig.internal.ui.sound.UiSounds;
 public class OneConfigConfig extends Config {
     private static final Keys KEYS = Platform.compatibility().keys();
     private static final byte HUD_ACTION_MODS = KeybindUtils.getActionModifier();
+    private static final byte HUD_REDO_MODS = (byte) (HUD_ACTION_MODS | KeyModifiers.SHIFT);
 
     // the open action comes from the minecraft module via setOpenAction since it cannot be serialized
     @Keybind(
@@ -155,6 +157,39 @@ public class OneConfigConfig extends Config {
     )
     public static OneConfigKeybind hudSelectAllKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyA()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+
+    @Keybind(
+        title = "oneconfig.preferences.hud_undo_keybind.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.hud_undo_keybind.description",
+        descriptionTranslation = true
+    )
+    public static OneConfigKeybind hudUndoKeybind =
+        new OneConfigKeybind(new int[] {KEYS.getKeyZ()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+
+    @Keybind(
+        title = "oneconfig.preferences.hud_redo_keybind.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.hud_redo_keybind.description",
+        descriptionTranslation = true
+    )
+    public static OneConfigKeybind hudRedoKeybind =
+        new OneConfigKeybind(new int[] {KEYS.getKeyZ()}, null, HUD_REDO_MODS, 0L, pressed -> true);
+
+    @Keybind(
+        title = "oneconfig.preferences.hud_redo_alt_keybind.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.hud_redo_alt_keybind.description",
+        descriptionTranslation = true
+    )
+    public static OneConfigKeybind hudRedoAltKeybind =
+        new OneConfigKeybind(new int[] {KEYS.getKeyY()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Switch(
         title = "oneconfig.preferences.hud_show_keybind_hints.title",
@@ -581,6 +616,12 @@ public class OneConfigConfig extends Config {
         registeredHudSelectAllKeybind = new AtomicReference<>();
     private static final AtomicReference<OneConfigKeybind>
         registeredHudLockKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudUndoKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudRedoKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudRedoAltKeybind = new AtomicReference<>();
 
     public OneConfigConfig() {
         super("oneconfig.json", "assets/oneconfig/brand/oneconfig-icon.svg", "OneConfig", Category.QOL);
@@ -721,6 +762,24 @@ public class OneConfigConfig extends Config {
                 return false;
             });
         refreshHudLockKeybind();
+        addCallback(
+            "hudUndoKeybind", (OneConfigKeybind kb) -> {
+                refreshHudUndoKeybind();
+                return false;
+            });
+        refreshHudUndoKeybind();
+        addCallback(
+            "hudRedoKeybind", (OneConfigKeybind kb) -> {
+                refreshHudRedoKeybind();
+                return false;
+            });
+        refreshHudRedoKeybind();
+        addCallback(
+            "hudRedoAltKeybind", (OneConfigKeybind kb) -> {
+                refreshHudRedoAltKeybind();
+                return false;
+            });
+        refreshHudRedoAltKeybind();
     }
 
     private static final int REMEMBER_NEVER = 0;
@@ -847,6 +906,14 @@ public class OneConfigConfig extends Config {
         OneConfigKeybind src,
         AtomicReference<OneConfigKeybind> slot,
         Function1<Boolean, Boolean> action) {
+        refreshHudEditorKeybind(src, slot, action, false);
+    }
+
+    private static void refreshHudEditorKeybind(
+        OneConfigKeybind src,
+        AtomicReference<OneConfigKeybind> slot,
+        Function1<Boolean, Boolean> action,
+        boolean strictShift) {
         OneConfigKeybind old = slot.getAndSet(null);
         if (old != null) {
             KeybindManager.unregister(old);
@@ -859,7 +926,14 @@ public class OneConfigConfig extends Config {
             src.getMouseBtns(),
             src.getMods(),
             src.getDurationNanos(),
-            action);
+            action) {
+            @Override
+            public boolean test(Set<Integer> downKeys, Set<Integer> downMouse, byte currentMods) {
+                // a keybind matches with extra modifiers held, so Ctrl+Shift+Z would undo as well as redo
+                boolean extraShift = (currentMods & KeyModifiers.SHIFT) != 0 && (getMods() & KeyModifiers.SHIFT) == 0;
+                return !(strictShift && extraShift) && super.test(downKeys, downMouse, currentMods);
+            }
+        };
         KeybindManager.register(keybind);
         slot.set(keybind);
     }
@@ -925,6 +999,28 @@ public class OneConfigConfig extends Config {
             hudLockKeybind,
             registeredHudLockKeybind,
                 HudDesignSession::handleLock);
+    }
+
+    private static void refreshHudUndoKeybind() {
+        refreshHudEditorKeybind(
+            hudUndoKeybind,
+            registeredHudUndoKeybind,
+            HudDesignSession::handleUndo,
+            true);
+    }
+
+    private static void refreshHudRedoKeybind() {
+        refreshHudEditorKeybind(
+            hudRedoKeybind,
+            registeredHudRedoKeybind,
+            HudDesignSession::handleRedo);
+    }
+
+    private static void refreshHudRedoAltKeybind() {
+        refreshHudEditorKeybind(
+            hudRedoAltKeybind,
+            registeredHudRedoAltKeybind,
+            HudDesignSession::handleRedo);
     }
 
     /**

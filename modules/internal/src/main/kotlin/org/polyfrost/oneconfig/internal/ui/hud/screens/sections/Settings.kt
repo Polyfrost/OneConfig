@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,7 +45,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 private val DeleteButtonColor = Color(0xFFE5484D)
 
 @Composable
-fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
+fun Settings(hud: Hud?, query: String, onDeleted: () -> Unit) {
     if (hud == null) return
 
     LaunchedEffect(hud) { repairHudStaticSize(hud) }
@@ -75,156 +74,151 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
         var showInChat by remember { mutableStateOf(hud.showInChat) }
         var locked by remember { mutableStateOf(hud.locked) }
 
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(22.dp),
-        ) {
-            item {
-                Section("Position") {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        ResetHudPositionButton(hud)
-                        HudSettingTarget(hud, "locked") {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                SwitchControl(locked) {
-                                    Snapshot.withMutableSnapshot { locked = it; hud.locked = it }
-                                }
-                                Text("Lock position", color = LocalTheme.current.textColor, fontSize = 14.sp)
-                            }
+        Section("Position", query, "Lock position", "Reset to default position") {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                ResetHudPositionButton(hud)
+                HudSettingTarget(hud, "locked") {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        SwitchControl(locked) {
+                            Snapshot.withMutableSnapshot { locked = it; hud.locked = it }
                         }
+                        Text("Lock position", color = LocalTheme.current.textColor, fontSize = 14.sp)
                     }
                 }
             }
+        }
 
-            if (hud is LegacyHudMarker) {
-                if (hud.supportsScale) item {
-                    Section("Scale") {
-                        HudSettingTarget(hud, "customScale") {
-                            NumberSpinner(
-                                "Scale",
-                                "x",
-                                customScale,
-                                { Snapshot.withMutableSnapshot { customScale = it; hud.customScale = it } },
-                                0.25f,
-                                4f,
-                                0.25f,
-                                width = 176.dp
-                            )
-                        }
+        if (hud is LegacyHudMarker) {
+            if (hud.supportsScale) {
+                Section("Scale", query) {
+                    HudSettingTarget(hud, "customScale") {
+                        NumberSpinner(
+                            "Scale",
+                            "x",
+                            customScale,
+                            { Snapshot.withMutableSnapshot { customScale = it; hud.customScale = it } },
+                            0.25f,
+                            4f,
+                            0.25f,
+                            width = 176.dp
+                        )
                     }
                 }
-            } else {
-                item {
-                    Section("GUI Scale") {
-                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            HudSettingTarget(hud, "useGuiScale") {
+            }
+        } else {
+            Section("GUI Scale", query, "Use Minecraft GUI Scale", "Custom Scale") {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    HudSettingTarget(hud, "useGuiScale") {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            SwitchControl(useGuiScale) {
+                                Snapshot.withMutableSnapshot { useGuiScale = it; hud.useGuiScale = it }
+                            }
+                            Text("Use Minecraft GUI Scale", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                        }
+                    }
+                    HudSettingTarget(hud, "customScale") {
+                        NumberSpinner(
+                            "Custom Scale",
+                            "x",
+                            customScale,
+                            { Snapshot.withMutableSnapshot { customScale = it; hud.customScale = it } },
+                            0.25f,
+                            4f,
+                            0.25f,
+                            width = 176.dp
+                        )
+                    }
+                }
+            }
+        }
+
+        if (hud !is LegacyHudMarker) {
+            Section(
+                "Background", query,
+                "Show Background", "Background Color", "Radius",
+                "Merge With Neighbours", "Merge Diagonally", "Keep Background When Hidden",
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    HudSettingTarget(hud, "showBackground") {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            SwitchControl(showBackground) {
+                                Snapshot.withMutableSnapshot { showBackground = it; hud.showBackground = it }
+                            }
+                            Text("Show Background", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                        }
+                    }
+                    if (showBackground) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            HudSettingTarget(hud, "bgColor") {
+                                ColorButton(
+                                    "Background Color", bgColor,
+                                    chroma = bgChroma, chromaSpeed = bgChromaSpeed,
+                                    onColorChanged = {
+                                        Snapshot.withMutableSnapshot { bgColor = it; hud.bgColor = it.toArgb() }
+                                    },
+                                    onChromaChanged = { en, sp ->
+                                        Snapshot.withMutableSnapshot {
+                                            bgChroma = en; hud.bgChroma = en
+                                            bgChromaSpeed = sp; hud.bgChromaSpeed = sp
+                                        }
+                                    },
+                                )
+                            }
+                            HudSettingTarget(hud, "bgRadius") {
+                                NumberSpinner(
+                                    "Radius", "px",
+                                    bgRadius, { Snapshot.withMutableSnapshot { bgRadius = it; hud.bgRadius = it } },
+                                    0f, 32f, 1f, width = 100.dp
+                                )
+                            }
+                        }
+                        // HUDs drawing their own background opt out of merging so these switches
+                        // have nothing to control
+                        if (hud.canMergeBackground()) {
+                            HudSettingTarget(hud, "mergeBackground") {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 ) {
-                                    SwitchControl(useGuiScale) {
-                                        Snapshot.withMutableSnapshot { useGuiScale = it; hud.useGuiScale = it }
+                                    SwitchControl(mergeBackground) {
+                                        Snapshot.withMutableSnapshot { mergeBackground = it; hud.mergeBackground = it }
                                     }
-                                    Text("Use Minecraft GUI Scale", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                                    Text("Merge With Neighbours", color = LocalTheme.current.textColor, fontSize = 14.sp)
                                 }
                             }
-                            HudSettingTarget(hud, "customScale") {
-                                NumberSpinner(
-                                    "Custom Scale",
-                                    "x",
-                                    customScale,
-                                    { Snapshot.withMutableSnapshot { customScale = it; hud.customScale = it } },
-                                    0.25f,
-                                    4f,
-                                    0.25f,
-                                    width = 176.dp
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (hud !is LegacyHudMarker) {
-            item {
-                Section("Background") {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        HudSettingTarget(hud, "showBackground") {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                SwitchControl(showBackground) {
-                                    Snapshot.withMutableSnapshot { showBackground = it; hud.showBackground = it }
-                                }
-                                Text("Show Background", color = LocalTheme.current.textColor, fontSize = 14.sp)
-                            }
-                        }
-                        if (showBackground) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                HudSettingTarget(hud, "bgColor") {
-                                    ColorButton(
-                                        "Background Color", bgColor,
-                                        chroma = bgChroma, chromaSpeed = bgChromaSpeed,
-                                        onColorChanged = {
-                                            Snapshot.withMutableSnapshot { bgColor = it; hud.bgColor = it.toArgb() }
-                                        },
-                                        onChromaChanged = { en, sp ->
-                                            Snapshot.withMutableSnapshot {
-                                                bgChroma = en; hud.bgChroma = en
-                                                bgChromaSpeed = sp; hud.bgChromaSpeed = sp
-                                            }
-                                        },
-                                    )
-                                }
-                                HudSettingTarget(hud, "bgRadius") {
-                                    NumberSpinner(
-                                        "Radius", "px",
-                                        bgRadius, { Snapshot.withMutableSnapshot { bgRadius = it; hud.bgRadius = it } },
-                                        0f, 32f, 1f, width = 100.dp
-                                    )
-                                }
-                            }
-                            // HUDs drawing their own background opt out of merging so these switches
-                            // have nothing to control
-                            if (hud.canMergeBackground()) {
-                                HudSettingTarget(hud, "mergeBackground") {
+                            if (mergeBackground) {
+                                HudSettingTarget(hud, "mergeDiagonally") {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                                     ) {
-                                        SwitchControl(mergeBackground) {
-                                            Snapshot.withMutableSnapshot { mergeBackground = it; hud.mergeBackground = it }
+                                        SwitchControl(mergeDiagonally) {
+                                            Snapshot.withMutableSnapshot { mergeDiagonally = it; hud.mergeDiagonally = it }
                                         }
-                                        Text("Merge With Neighbours", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                                        Text("Merge Diagonally", color = LocalTheme.current.textColor, fontSize = 14.sp)
                                     }
                                 }
-                                if (mergeBackground) {
-                                    HudSettingTarget(hud, "mergeDiagonally") {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                        ) {
-                                            SwitchControl(mergeDiagonally) {
-                                                Snapshot.withMutableSnapshot { mergeDiagonally = it; hud.mergeDiagonally = it }
-                                            }
-                                            Text("Merge Diagonally", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                                HudSettingTarget(hud, "keepBgWhenHidden") {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    ) {
+                                        SwitchControl(keepBgWhenHidden) {
+                                            Snapshot.withMutableSnapshot { keepBgWhenHidden = it; hud.keepBgWhenHidden = it }
                                         }
-                                    }
-                                    HudSettingTarget(hud, "keepBgWhenHidden") {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                        ) {
-                                            SwitchControl(keepBgWhenHidden) {
-                                                Snapshot.withMutableSnapshot { keepBgWhenHidden = it; hud.keepBgWhenHidden = it }
-                                            }
-                                            Text("Keep Background When Hidden", color = LocalTheme.current.textColor, fontSize = 14.sp)
-                                        }
+                                        Text("Keep Background When Hidden", color = LocalTheme.current.textColor, fontSize = 14.sp)
                                     }
                                 }
                             }
@@ -233,119 +227,108 @@ fun Settings(hud: Hud? = null, onDeleted: () -> Unit = {}) {
                 }
             }
 
-            item {
-                Section("Appearance") {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        HudSettingTarget(hud, "textColor") {
+            Section("Appearance", query, "Text Color", "Text Shadow", "Shadow Color") {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    HudSettingTarget(hud, "textColor") {
+                        ColorButton(
+                            "Text Color", textColor,
+                            chroma = textChroma, chromaSpeed = textChromaSpeed,
+                            onColorChanged = {
+                                Snapshot.withMutableSnapshot { textColor = it; hud.textColor = it.toArgb() }
+                            },
+                            onChromaChanged = { en, sp ->
+                                Snapshot.withMutableSnapshot {
+                                    textChroma = en; hud.textChroma = en
+                                    textChromaSpeed = sp; hud.textChromaSpeed = sp
+                                }
+                            },
+                        )
+                    }
+                    HudSettingTarget(hud, "showShadow") {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            SwitchControl(showShadow) {
+                                Snapshot.withMutableSnapshot { showShadow = it; hud.showShadow = it }
+                            }
+                            Text("Text Shadow", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                        }
+                    }
+                    if (showShadow) {
+                        HudSettingTarget(hud, "shadowColor") {
                             ColorButton(
-                                "Text Color", textColor,
-                                chroma = textChroma, chromaSpeed = textChromaSpeed,
+                                "Shadow Color", shadowColor,
+                                chroma = shadowChroma, chromaSpeed = shadowChromaSpeed,
                                 onColorChanged = {
-                                    Snapshot.withMutableSnapshot { textColor = it; hud.textColor = it.toArgb() }
+                                    Snapshot.withMutableSnapshot { shadowColor = it; hud.shadowColor = it.toArgb() }
                                 },
                                 onChromaChanged = { en, sp ->
                                     Snapshot.withMutableSnapshot {
-                                        textChroma = en; hud.textChroma = en
-                                        textChromaSpeed = sp; hud.textChromaSpeed = sp
+                                        shadowChroma = en; hud.shadowChroma = en
+                                        shadowChromaSpeed = sp; hud.shadowChromaSpeed = sp
                                     }
                                 },
                             )
                         }
-                        HudSettingTarget(hud, "showShadow") {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                SwitchControl(showShadow) {
-                                    Snapshot.withMutableSnapshot { showShadow = it; hud.showShadow = it }
-                                }
-                                Text("Text Shadow", color = LocalTheme.current.textColor, fontSize = 14.sp)
-                            }
-                        }
-                        if (showShadow) {
-                            HudSettingTarget(hud, "shadowColor") {
-                                ColorButton(
-                                    "Shadow Color", shadowColor,
-                                    chroma = shadowChroma, chromaSpeed = shadowChromaSpeed,
-                                    onColorChanged = {
-                                        Snapshot.withMutableSnapshot { shadowColor = it; hud.shadowColor = it.toArgb() }
-                                    },
-                                    onChromaChanged = { en, sp ->
-                                        Snapshot.withMutableSnapshot {
-                                            shadowChroma = en; hud.shadowChroma = en
-                                            shadowChromaSpeed = sp; hud.shadowChromaSpeed = sp
-                                        }
-                                    },
-                                )
-                            }
-                        }
                     }
                 }
             }
 
-            item {
-                Section("Visibility") {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        HudSettingTarget(hud, "showInF3") {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                SwitchControl(showInF3) {
-                                    Snapshot.withMutableSnapshot { showInF3 = it; hud.showInF3 = it }
-                                }
-                                Text("Show in F3 Screen", color = LocalTheme.current.textColor, fontSize = 14.sp)
+            Section("Visibility", query, "Show in F3 Screen", "Show in Tab List", "Show in GUIs", "Show in Chat") {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    HudSettingTarget(hud, "showInF3") {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            SwitchControl(showInF3) {
+                                Snapshot.withMutableSnapshot { showInF3 = it; hud.showInF3 = it }
                             }
+                            Text("Show in F3 Screen", color = LocalTheme.current.textColor, fontSize = 14.sp)
                         }
-                        HudSettingTarget(hud, "showInTab") {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                SwitchControl(showInTab) {
-                                    Snapshot.withMutableSnapshot { showInTab = it; hud.showInTab = it }
-                                }
-                                Text("Show in Tab List", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                    }
+                    HudSettingTarget(hud, "showInTab") {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            SwitchControl(showInTab) {
+                                Snapshot.withMutableSnapshot { showInTab = it; hud.showInTab = it }
                             }
+                            Text("Show in Tab List", color = LocalTheme.current.textColor, fontSize = 14.sp)
                         }
-                        HudSettingTarget(hud, "showInScreens") {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                SwitchControl(showInScreens) {
-                                    Snapshot.withMutableSnapshot { showInScreens = it; hud.showInScreens = it }
-                                }
-                                Text("Show in GUIs", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                    }
+                    HudSettingTarget(hud, "showInScreens") {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            SwitchControl(showInScreens) {
+                                Snapshot.withMutableSnapshot { showInScreens = it; hud.showInScreens = it }
                             }
+                            Text("Show in GUIs", color = LocalTheme.current.textColor, fontSize = 14.sp)
                         }
-                        HudSettingTarget(hud, "showInChat") {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                SwitchControl(showInChat) {
-                                    Snapshot.withMutableSnapshot { showInChat = it; hud.showInChat = it }
-                                }
-                                Text("Show in Chat", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                    }
+                    HudSettingTarget(hud, "showInChat") {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            SwitchControl(showInChat) {
+                                Snapshot.withMutableSnapshot { showInChat = it; hud.showInChat = it }
                             }
+                            Text("Show in Chat", color = LocalTheme.current.textColor, fontSize = 14.sp)
                         }
                     }
                 }
             }
-            }
+        }
 
-            var tree = hud.tree
-            if (tree != null)
-                item {
-                    HudConfigScreen(tree)
-                }
+        hud.tree?.let { HudConfigScreen(it, query) }
 
-            if (hud.canDelete()) {
-                item {
-                    DeleteHudButton(hud, onDeleted)
-                }
-            }
+        if (hud.canDelete() && hudSearchMatches(query, "Delete HUD")) {
+            DeleteHudButton(hud, onDeleted)
         }
     }
 }

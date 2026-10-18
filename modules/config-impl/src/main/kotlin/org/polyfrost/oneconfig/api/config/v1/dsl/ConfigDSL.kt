@@ -6,6 +6,7 @@ import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.api.config.v1.ValueFormatter
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.apache.logging.log4j.LogManager
@@ -72,6 +73,9 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
     /** Holds `[start, end]` */
     fun rangeSlider(start: Float, end: Float): RangeProp = put(RangeProp(floatArrayOf(start, end)), Visualizer.RangeSliderVisualizer())
 
+    /** Holds `[start, end]`, a [rangeSlider] without the track */
+    fun rangeNumber(start: Float, end: Float): RangeProp = put(RangeProp(floatArrayOf(start, end)), Visualizer.RangeNumberVisualizer())
+
     fun file(default: String = ""): FileProp = put(FileProp(default), Visualizer.FileVisualizer())
 
     fun textList(vararg default: String): TextListProp = put(TextListProp(arrayOf(*default)), Visualizer.TextListVisualizer())
@@ -79,6 +83,18 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
     fun numberList(vararg default: Float): NumberListProp = put(NumberListProp(default), Visualizer.NumberListVisualizer())
 
     fun sliderList(vararg default: Float): NumberListProp = put(NumberListProp(default), Visualizer.SliderListVisualizer())
+
+    /** Each range's start then end so `rangeSliderList(0f, 10f, 20f, 30f)` holds 0-10 and 20-30 */
+    fun rangeSliderList(vararg default: Float): NumberListProp {
+        require(default.size % 2 == 0) { "rangeSliderList needs a start and end for every range, got ${default.size} values" }
+        return put(NumberListProp(default), Visualizer.RangeSliderListVisualizer())
+    }
+
+    /** Stored the same way as [rangeSliderList] */
+    fun rangeNumberList(vararg default: Float): NumberListProp {
+        require(default.size % 2 == 0) { "rangeNumberList needs a start and end for every range, got ${default.size} values" }
+        return put(NumberListProp(default), Visualizer.RangeNumberListVisualizer())
+    }
 
     /** ARGB colours */
     fun colorList(vararg default: Int): ColorListProp = put(ColorListProp(default), Visualizer.ColorListVisualizer())
@@ -152,6 +168,10 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
         var placeholderKey: String?
             get() = this["placeholderKey"] as String?
             set(value) { this["placeholderKey"] = value }
+
+        var formatter: ValueFormatter?
+            get() = this["formatter"] as ValueFormatter?
+            set(value) { this["formatter"] = value }
     }
 
     class FloatProp(default: Float) : Prop<Float>(default, Float::class.java) {
@@ -182,6 +202,10 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
         var placeholderKey: String?
             get() = this["placeholderKey"] as String?
             set(value) { this["placeholderKey"] = value }
+
+        var formatter: ValueFormatter?
+            get() = this["formatter"] as ValueFormatter?
+            set(value) { this["formatter"] = value }
     }
 
     class RunnableProp(action: Runnable) : Prop<Runnable>(action, Runnable::class.java) {
@@ -255,6 +279,10 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
         var step: Float?
             get() = this["step"] as Float?
             set(value) { this["step"] = value }
+
+        var formatter: ValueFormatter?
+            get() = this["formatter"] as ValueFormatter?
+            set(value) { this["formatter"] = value }
     }
 
     class FileProp(default: String) : Prop<String>(default, String::class.java) {
@@ -327,6 +355,10 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
         var step: Float?
             get() = this["step"] as Float?
             set(value) { this["step"] = value }
+
+        var formatter: ValueFormatter?
+            get() = this["formatter"] as ValueFormatter?
+            set(value) { this["formatter"] = value }
     }
 
     class ColorListProp(default: IntArray) : ListProp<IntArray>(default, IntArray::class.java) {
@@ -422,7 +454,8 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
 
         private fun requireStep(key: String, value: Any?) {
             val vis = this["visualizer"]
-            if (vis !is Visualizer.SliderVisualizer && vis !is Visualizer.RangeSliderVisualizer && vis !is Visualizer.SliderListVisualizer) return
+            if (vis !is Visualizer.SliderVisualizer && vis !is Visualizer.RangeSliderVisualizer &&
+                vis !is Visualizer.SliderListVisualizer && vis !is Visualizer.RangeSliderListVisualizer) return
             fun num(k: String) = ((if (k == key) value else this[k]) as? Number)?.toFloat()
             val min = num("min") ?: return
             val max = num("max") ?: return

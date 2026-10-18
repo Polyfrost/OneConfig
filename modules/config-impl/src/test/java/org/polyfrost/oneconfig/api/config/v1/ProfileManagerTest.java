@@ -290,6 +290,37 @@ class ProfileManagerTest {
     }
 
     @Test
+    void deletingTheActiveProfileUnloadsItBeforeAnythingIsRebound() {
+        ConfigManager.createProfile(PROFILE_A);
+        List<String> events = new ArrayList<>();
+        ConfigManager.ProfileChangeListener listener = new ConfigManager.ProfileChangeListener() {
+            @Override
+            public void onProfileChanged(String newProfile) {
+                events.add("changed:" + newProfile);
+            }
+
+            @Override
+            public void onProfileSaving(String profile) {
+                events.add("saving:" + profile);
+            }
+
+            @Override
+            public void onProfileUnloading(String profile) {
+                events.add("unloading:" + profile + ":" + ConfigManager.activeProfile());
+            }
+        };
+        ConfigManager.addProfileChangeListener(listener);
+        try {
+            ConfigManager.deleteProfile(PROFILE_A);
+
+            // the profile is not saved on its way out, so this is the only notice a listener gets ahead of the switch
+            assertEquals(List.of("unloading:" + PROFILE_A + ":" + PROFILE_A, "changed:"), events);
+        } finally {
+            ConfigManager.removeProfileChangeListener(listener);
+        }
+    }
+
+    @Test
     void profileListenersCannotStartANestedLifecycleOperation() {
         AtomicReference<Throwable> nestedFailure = new AtomicReference<>();
         ConfigManager.ProfileChangeListener listener = new ConfigManager.ProfileChangeListener() {

@@ -71,7 +71,9 @@ object UkulibCompat {
 
     private fun parseScreen(screen: Any) {
         val mod = CompatLoader.findModByClass(screen.javaClass) ?: return
-        if (CompatLoader.nativeLoadedConfigs.contains(mod.id)) return
+        // retried on a render frame like the first parse
+        val retry = Runnable { CompatLoader.queueScreenWarmup { runCatching { parseScreen(screen) } } }
+        if (CompatLoader.skipExtraction(mod.id, screen.javaClass.name, retry)) return
         // the root screen of a mod wins so sub screens opened later do not overwrite it
         if (!parsedMods.add(mod.id)) return
 
@@ -94,7 +96,7 @@ object UkulibCompat {
             ?: mod.id
         tree.noCache = true
         mod.extractIconFile()?.let { tree.addMetadata("icon_path", it) }
-        CompatLoader.originalScreenOpener(mod.id)?.let { tree.addMetadata("open_original_screen", it) }
+        CompatLoader.originalScreenOpener(mod.id)?.let { tree.addMetadata(CompatLoader.OPEN_ORIGINAL_SCREEN, it) }
         saveFunction(manager)?.let { tree.saveFunction = it }
         resetFunction(manager)?.let { tree.addMetadata(CompatSnapshots.CUSTOM_RESET_METADATA, it) }
 

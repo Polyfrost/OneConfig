@@ -18,7 +18,8 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.NumberChainOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.NumberListOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.NumberOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.RadioButtonOption
-import org.polyfrost.oneconfig.internal.ui.components.settings.RangeSliderOption
+import org.polyfrost.oneconfig.internal.ui.components.settings.RangeListOption
+import org.polyfrost.oneconfig.internal.ui.components.settings.RangeOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.SliderOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.TextListOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.TextOption
@@ -35,7 +36,10 @@ internal object BuiltinVisualizers {
             SliderOption(SliderOptionData(prop))
         })
         Visualizer.register(Visualizer.RangeSliderVisualizer::class.java, Visualizer { prop ->
-            RangeSliderOption(RangeSliderOptionData(prop))
+            RangeOption(RangeOptionData(prop, RangeOptionData.Style.Slider))
+        })
+        Visualizer.register(Visualizer.RangeNumberVisualizer::class.java, Visualizer { prop ->
+            RangeOption(RangeOptionData(prop, RangeOptionData.Style.Spinner))
         })
         Visualizer.register(Visualizer.InheritableSliderVisualizer::class.java, Visualizer { prop ->
             InheritableSliderOption(InheritableSliderOptionData(prop))
@@ -69,6 +73,12 @@ internal object BuiltinVisualizers {
         })
         Visualizer.register(Visualizer.SliderListVisualizer::class.java, Visualizer { prop ->
             NumberListOption(NumberListOptionData(prop, NumberListOptionData.Style.Slider))
+        })
+        Visualizer.register(Visualizer.RangeSliderListVisualizer::class.java, Visualizer { prop ->
+            RangeListOption(RangeListOptionData(prop, RangeOptionData.Style.Slider))
+        })
+        Visualizer.register(Visualizer.RangeNumberListVisualizer::class.java, Visualizer { prop ->
+            RangeListOption(RangeListOptionData(prop, RangeOptionData.Style.Spinner))
         })
         Visualizer.register(Visualizer.DropdownVisualizer::class.java, Visualizer { prop ->
             DropdownOption(DropdownOptionData(prop))

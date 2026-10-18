@@ -34,6 +34,8 @@ class NativeVulkanService private constructor(
 
     override val offscreenNeedsPerFrameRewrap = true
 
+    override val mainRTRestoreNeedsColorPass = true
+
     override fun makeDirectContext(): DirectContext {
         val provider = VK.getFunctionProvider()
         val instanceProcAddr = provider.getFunctionAddress("vkGetInstanceProcAddr")
@@ -92,13 +94,40 @@ class NativeVulkanService private constructor(
     override fun restoreMainRTLayout() {
         transitionImage(
             Minecraft.getInstance().gameRenderer.mainRenderTarget().colorTexture as? VulkanGpuTexture,
-            oldLayout = VK_IMAGE_LAYOUT_GENERAL,
+            oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
             newLayout = VK_IMAGE_LAYOUT_GENERAL,
             srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
             dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
             srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
             dstAccessMask = VK_ACCESS_MEMORY_READ_BIT or VK_ACCESS_MEMORY_WRITE_BIT,
         )
+    }
+
+    override fun transitionSkiaTargetForSampling(target: RenderTarget) {
+        transitionImage(
+            target.colorTexture as? VulkanGpuTexture,
+            oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            newLayout = VK_IMAGE_LAYOUT_GENERAL,
+            srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+        )
+    }
+
+    override fun transitionSkiaTargetForRendering(target: RenderTarget) {
+        transitionImage(
+            target.colorTexture as? VulkanGpuTexture,
+            oldLayout = VK_IMAGE_LAYOUT_GENERAL,
+            newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            srcAccessMask = VK_ACCESS_SHADER_READ_BIT,
+            dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT or VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+        )
+        // execute() only queues the barrier for Minecraft's next submit, and Skia submits its own
+        // commands as soon as this returns. Submit now, or Skia renders while the image is still GENERAL.
+        RenderSystem.getDevice().createCommandEncoder().submit()
     }
 
     override fun transitionOffscreenForSampling(target: RenderTarget) {

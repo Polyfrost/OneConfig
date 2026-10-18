@@ -1,12 +1,13 @@
 package org.polyfrost.oneconfig.internal.ui.hud
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Modifier
-import java.util.concurrent.ConcurrentHashMap
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker
+import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
@@ -107,10 +108,28 @@ internal class HudModCardData(
 
     override val category: Config.Category = Config.Category.HUD
 
+    private fun placed(): List<Hud> =
+        if (activeInstancesSnapshot().any { it === hud }) listOf(hud) else HudManager.getHudsOfType(hud::class.java)
+
+    override val toggle: ModToggle? = if (isCompatHud(hud)) null else object : ModToggle {
+        override fun isEnabled(): Boolean {
+            HudManager.revision
+            HudManager.instancesRevision.intValue
+            return placed().any { !it.hidden }
+        }
+
+        override fun setEnabled(enabled: Boolean) {
+            val huds = placed()
+            Snapshot.withMutableSnapshot { huds.forEach { it.hidden = !enabled } }
+            huds.forEach { runCatching { it.save() } }
+            HudManager.invalidate()
+        }
+
+        override fun needsSetup(): Boolean = placed().isEmpty()
+    }
+
     override val onOpen: () -> Unit = {
-        val existing =
-            if (activeInstancesSnapshot().any { it === hud }) listOf(hud)
-            else HudManager.getHudsOfType(hud::class.java)
+        val existing = placed()
         HudManager.pendingSelection = existing.firstOrNull()
         HudManager.pendingAdd = if (existing.isEmpty()) hud else null
         HudManager.openEditor()

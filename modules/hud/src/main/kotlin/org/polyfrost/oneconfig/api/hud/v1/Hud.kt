@@ -26,11 +26,16 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
+import java.lang.ref.WeakReference
+import java.util.WeakHashMap
+import java.util.concurrent.atomic.AtomicInteger
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshots.Snapshot
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.polyfrost.compose.composables.PolyModifier
@@ -115,6 +120,20 @@ private const val MIN_VISIBLE = 12f
 
 internal const val POS_SCHEMA = 1
 
+// every open getter the cached frame geometry or the background merge key reads
+// a subclass overriding one of these is read live, so a new open geometry property must be added here
+// or an override of it would be served a stale cached value
+private val GEOMETRY_GETTERS = arrayOf(
+    "getX", "getY", "getRelativeX", "getRelativeY", "getRenderedW", "getRenderedH",
+    "getCustomScale", "getScaledWidth", "getScaledHeight", "getStaticW", "getStaticH", "getHidden",
+)
+
+private val externalGeometry = object : ClassValue<Boolean>() {
+    override fun computeValue(type: Class<*>): Boolean = GEOMETRY_GETTERS.any {
+        runCatching { type.getMethod(it).declaringClass != Hud::class.java }.getOrDefault(true)
+    }
+}
+
 @Suppress("EqualsOrHashCode", "UnstableApiUsage")
 abstract class Hud(id: String, title: String, val category: Category) : Cloneable, Config(id, null, title, null) {
     open val description: String? = null
@@ -131,7 +150,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         get() = _staticWidth.value
         set(v) {
             val wasStatic = _staticWidth.value
-            _staticWidth.value = v
+            _staticWidth.put(v)
             if (!wasStatic && v) {
                 val (minW, minH) = minimumSize()
                 if (renderedW > 0f || renderedH > 0f) {
@@ -285,15 +304,15 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var showKey: Int = -1
 
     private var _section: MutableState<Section> = mutableStateOf(Section.TopLeft)
-    var section: Section get() = _section.value; set(v) { _section.value = v }
+    var section: Section get() = _section.value; set(v) { _section.put(v) }
 
     private var _relativeX: MutableState<Float> = mutableStateOf(0f)
 
-    open var relativeX: Float get() = _relativeX.value; set(v) { _relativeX.value = v }
+    open var relativeX: Float get() = _relativeX.value; set(v) { _relativeX.put(v) }
 
     private var _relativeY: MutableState<Float> = mutableStateOf(0f)
 
-    open var relativeY: Float get() = _relativeY.value; set(v) { _relativeY.value = v }
+    open var relativeY: Float get() = _relativeY.value; set(v) { _relativeY.put(v) }
 
     @ApiStatus.Internal
     var posSchema: Int = POS_SCHEMA
@@ -309,10 +328,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         set(v) { if (v > 0f) HudManager.layoutRefHeight = v }
 
     private var _renderedW: MutableState<Float> = mutableStateOf(0f)
-    open var renderedW: Float get() = _renderedW.value; set(v) { _renderedW.value = v }
+    open var renderedW: Float get() = _renderedW.value; set(v) { _renderedW.put(v) }
 
     private var _renderedH: MutableState<Float> = mutableStateOf(0f)
-    open var renderedH: Float get() = _renderedH.value; set(v) { _renderedH.value = v }
+    open var renderedH: Float get() = _renderedH.value; set(v) { _renderedH.put(v) }
 
     private var minSizeFrame = Long.MIN_VALUE
     private var minSize: Pair<Float, Float> = 0f to 0f
@@ -322,7 +341,11 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         val frame = HudManager.frameId
         if (minSizeFrame != frame) {
             minSizeFrame = frame
-            minSize = minimumSize()
+            val size = minimumSize()
+            if (size != minSize) {
+                minSize = size
+                bumpRevision()
+            }
         }
         return minSize
     }
@@ -363,9 +386,13 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         HudAnchor.BottomLeft, HudAnchor.Bottom, HudAnchor.BottomRight -> 1f
     }
 
-    private val anchorFracX: Float get() = fracX(growthAnchor)
+    private val anchorFracX: Float get() = pinnedFracX(growthAnchor)
 
-    private val anchorFracY: Float get() = fracY(growthAnchor)
+    private val anchorFracY: Float get() = pinnedFracY(growthAnchor)
+
+    private fun pinnedFracX(point: HudAnchor): Float = fracX(pinnedCorner ?: point)
+
+    private fun pinnedFracY(point: HudAnchor): Float = fracY(pinnedCorner ?: point)
 
     /** Screen-space X of [point] on this HUD's box such as the middle of its right edge */
     fun anchorPointX(point: HudAnchor): Float = x + fracX(point) * scaledWidth
@@ -400,7 +427,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             resolvingAnchor = true
             try {
                 return a.parent.layoutX(sw) + a.parent.fracX(a.targetPoint) * a.parent.scaledWidth +
-                    a.offset - fracX(a.selfPoint) * scaledWidth
+                    a.offset - pinnedFracX(a.selfPoint) * scaledWidth
             } finally {
                 resolvingAnchor = false
             }
@@ -413,7 +440,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             resolvingAnchor = true
             try {
                 return a.parent.layoutY(sh) + a.parent.fracY(a.targetPoint) * a.parent.scaledHeight +
-                    a.offset - fracY(a.selfPoint) * scaledHeight
+                    a.offset - pinnedFracY(a.selfPoint) * scaledHeight
             } finally {
                 resolvingAnchor = false
             }
@@ -429,7 +456,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         if (a != null) {
             resolvingAnchor = true
             try {
-                return a.parent.anchorPointX(a.targetPoint) + a.offset - fracX(a.selfPoint) * w
+                return a.parent.anchorPointX(a.targetPoint) + a.offset - pinnedFracX(a.selfPoint) * w
             } finally {
                 resolvingAnchor = false
             }
@@ -441,7 +468,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         if (a != null) {
             resolvingAnchor = true
             try {
-                return a.parent.anchorPointY(a.targetPoint) + a.offset - fracY(a.selfPoint) * h
+                return a.parent.anchorPointY(a.targetPoint) + a.offset - pinnedFracY(a.selfPoint) * h
             } finally {
                 resolvingAnchor = false
             }
@@ -484,7 +511,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     protected open fun updateRelativeX(absX: Float) {
         val sw = HudManager.guiScreenWidth
         resolvedAnchorX?.let { a ->
-            val pin = absX + fracX(a.selfPoint) * scaledWidth
+            val pin = absX + pinnedFracX(a.selfPoint) * scaledWidth
             resolvingAnchor = true
             try {
                 val offset = pin - a.parent.anchorPointX(a.targetPoint)
@@ -510,7 +537,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     protected open fun updateRelativeY(absY: Float) {
         val sh = HudManager.guiScreenHeight
         resolvedAnchorY?.let { a ->
-            val pin = absY + fracY(a.selfPoint) * scaledHeight
+            val pin = absY + pinnedFracY(a.selfPoint) * scaledHeight
             resolvingAnchor = true
             try {
                 val offset = pin - a.parent.anchorPointY(a.targetPoint)
@@ -566,7 +593,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     open fun onEditorDragEnd() {}
 
     private var _hidden: MutableState<Boolean> = mutableStateOf(false)
-    open var hidden: Boolean get() = _hidden.value; set(v) { _hidden.value = v }
+    open var hidden: Boolean get() = _hidden.value; set(v) { _hidden.put(v) }
 
     private var _locked: MutableState<Boolean> = mutableStateOf(false)
     open var locked: Boolean get() = _locked.value; set(v) { _locked.value = v }
@@ -581,15 +608,49 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         staticW = width
     }
 
+    private var pinnedCorner: HudAnchor? = null
+        set(v) {
+            if (field == v) return
+            field = v
+            bumpRevision()
+        }
+    private var unpinPending = false
+
+    @ApiStatus.Internal
+    open fun pinCorner(pin: HudAnchor) {
+        val absX = x
+        val absY = y
+        pinnedCorner = pin
+        unpinPending = false
+        updateRelativeX(absX)
+        updateRelativeY(absY)
+    }
+
+    /** Only takes effect on the next [settlePin] because the final size is not laid out yet */
+    @ApiStatus.Internal
+    open fun unpinCorner() {
+        if (pinnedCorner != null) unpinPending = true
+    }
+
+    @ApiStatus.Internal
+    open fun settlePin() {
+        if (!unpinPending) return
+        val absX = rawX
+        val absY = rawY
+        pinnedCorner = null
+        unpinPending = false
+        Snapshot.withMutableSnapshot { setAbsolutePosition(absX, absY) }
+    }
+
     private var _alignment: MutableState<PolyAlign> = mutableStateOf(PolyAlign.Center)
     var alignment: PolyAlign get() = _alignment.value; set(v) { _alignment.value = v }
 
     private var _growthAnchor: MutableState<HudAnchor> = mutableStateOf(HudAnchor.Auto)
-    var growthAnchor: HudAnchor get() = _growthAnchor.value; set(v) { _growthAnchor.value = v }
+    var growthAnchor: HudAnchor get() = _growthAnchor.value; set(v) { _growthAnchor.put(v) }
 
     val effectiveGrowthAnchor: HudAnchor get() {
-        val fx = anchorFracX
-        val fy = anchorFracY
+        val fx = fracX(growthAnchor)
+        val fy = fracY(growthAnchor)
         return when {
             fy == 0f -> when (fx) { 0f -> HudAnchor.TopLeft; 0.5f -> HudAnchor.Top; else -> HudAnchor.TopRight }
             fy == 0.5f -> when (fx) { 0f -> HudAnchor.Left; 0.5f -> HudAnchor.Center; else -> HudAnchor.Right }
@@ -613,12 +674,12 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
      *
      * Prefer [anchorTo] and [clearAnchor] over setting this directly
      */
-    var anchorTargetId: String get() = _anchorTargetId.value; set(v) { _anchorTargetId.value = v }
+    var anchorTargetId: String get() = _anchorTargetId.value; set(v) { _anchorTargetId.put(v) }
 
     private var _anchorPoint: MutableState<HudAnchor> = mutableStateOf(HudAnchor.TopLeft)
 
     /** Which of the nine points on the target HUD's box this HUD is pinned to */
-    var anchorPoint: HudAnchor get() = _anchorPoint.value; set(v) { _anchorPoint.value = v }
+    var anchorPoint: HudAnchor get() = _anchorPoint.value; set(v) { _anchorPoint.put(v) }
 
     private var _selfAnchorPoint: MutableState<HudAnchor> = mutableStateOf(HudAnchor.Auto)
 
@@ -629,7 +690,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
      *
      * [HudAnchor.Auto] uses the growth anchor
      */
-    var selfAnchorPoint: HudAnchor get() = _selfAnchorPoint.value; set(v) { _selfAnchorPoint.value = v }
+    var selfAnchorPoint: HudAnchor get() = _selfAnchorPoint.value; set(v) { _selfAnchorPoint.put(v) }
 
     /** [selfAnchorPoint] with [HudAnchor.Auto] resolved and the merge link taking priority */
     val effectiveSelfAnchorPoint: HudAnchor get() = when {
@@ -650,12 +711,12 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     private var _anchorOffsetX: MutableState<Float> = mutableStateOf(0f)
 
     /** Distance from the target's anchor point to this HUD's own growth anchor along X */
-    var anchorOffsetX: Float get() = _anchorOffsetX.value; set(v) { _anchorOffsetX.value = v }
+    var anchorOffsetX: Float get() = _anchorOffsetX.value; set(v) { _anchorOffsetX.put(v) }
 
     private var _anchorOffsetY: MutableState<Float> = mutableStateOf(0f)
 
     /** Distance from the target's anchor point to this HUD's own growth anchor along Y */
-    var anchorOffsetY: Float get() = _anchorOffsetY.value; set(v) { _anchorOffsetY.value = v }
+    var anchorOffsetY: Float get() = _anchorOffsetY.value; set(v) { _anchorOffsetY.put(v) }
 
     // set while this HUD is asking its target where it is so a chain that loops back here falls
     // through to the screen-relative position instead of recursing forever
@@ -693,14 +754,14 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     internal var mergeLinkX: MergeLink?
         get() = _mergeLinkX.value
-        private set(v) { _mergeLinkX.value = v }
+        private set(v) { _mergeLinkX.put(v) }
 
     @Transient
     private var _mergeLinkY: MutableState<MergeLink?> = mutableStateOf(null)
 
     internal var mergeLinkY: MergeLink?
         get() = _mergeLinkY.value
-        private set(v) { _mergeLinkY.value = v }
+        private set(v) { _mergeLinkY.put(v) }
 
     private fun mergeLink(axis: MergeAxis) = if (axis == MergeAxis.X) mergeLinkX else mergeLinkY
 
@@ -756,18 +817,25 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         ) return
         if (axis == MergeAxis.X) {
             val refW = HudManager.layoutRefWidth.takeIf { it > 0f } ?: HudManager.guiScreenWidth
-            val offset = layoutX(refW) + fracX(selfPoint) * scaledWidth -
+            val offset = layoutX(refW) + pinnedFracX(selfPoint) * scaledWidth -
                 (parent.layoutX(refW) + parent.fracX(targetPoint) * parent.scaledWidth)
             mergeLinkX = MergeLink(parent, selfPoint, targetPoint, offset)
         } else {
             val refH = HudManager.layoutRefHeight.takeIf { it > 0f } ?: HudManager.guiScreenHeight
-            val offset = layoutY(refH) + fracY(selfPoint) * scaledHeight -
+            val offset = layoutY(refH) + pinnedFracY(selfPoint) * scaledHeight -
                 (parent.layoutY(refH) + parent.fracY(targetPoint) * parent.scaledHeight)
             mergeLinkY = MergeLink(parent, selfPoint, targetPoint, offset)
         }
     }
 
     internal fun clearMergeLink() = clearMergeLinks(clearX = true, clearY = true)
+
+    /** Drops the merge links without touching the stored position, for a caller about to overwrite it */
+    @ApiStatus.Internal
+    fun dropMergeLinks() {
+        mergeLinkX = null
+        mergeLinkY = null
+    }
 
     /** Drops the merge link on the given axes leaving the HUD where it currently sits on screen */
     internal fun clearMergeLinks(clearX: Boolean, clearY: Boolean) {
@@ -836,22 +904,22 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     }
 
     private var _padTop: MutableState<Float> = mutableStateOf(0f)
-    var padTop: Float get() = _padTop.value; set(v) { _padTop.value = v }
+    var padTop: Float get() = _padTop.value; set(v) { _padTop.put(v) }
 
     private var _padBottom: MutableState<Float> = mutableStateOf(0f)
-    var padBottom: Float get() = _padBottom.value; set(v) { _padBottom.value = v }
+    var padBottom: Float get() = _padBottom.value; set(v) { _padBottom.put(v) }
 
     private var _padLeft: MutableState<Float> = mutableStateOf(0f)
-    var padLeft: Float get() = _padLeft.value; set(v) { _padLeft.value = v }
+    var padLeft: Float get() = _padLeft.value; set(v) { _padLeft.put(v) }
 
     private var _padRight: MutableState<Float> = mutableStateOf(0f)
-    var padRight: Float get() = _padRight.value; set(v) { _padRight.value = v }
+    var padRight: Float get() = _padRight.value; set(v) { _padRight.put(v) }
 
     private var _staticW: MutableState<Float> = mutableStateOf(200f)
-    open var staticW: Float get() = _staticW.value; set(v) { _staticW.value = v }
+    open var staticW: Float get() = _staticW.value; set(v) { _staticW.put(v) }
 
     private var _staticH: MutableState<Float> = mutableStateOf(48f)
-    open var staticH: Float get() = _staticH.value; set(v) { _staticH.value = v }
+    open var staticH: Float get() = _staticH.value; set(v) { _staticH.put(v) }
 
     private var _font: MutableState<Font> = mutableStateOf(Font.Minecraft)
     var font: Font get() = _font.value; set(v) { _font.value = v }
@@ -878,10 +946,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var textAlign: Int get() = _textAlign.value; set(v) { _textAlign.value = v }
 
     private var _useGuiScale: MutableState<Boolean> = mutableStateOf(true)
-    var useGuiScale: Boolean get() = _useGuiScale.value; set(v) { _useGuiScale.value = v }
+    var useGuiScale: Boolean get() = _useGuiScale.value; set(v) { _useGuiScale.put(v) }
 
     private var _customScale: MutableState<Float> = mutableStateOf(1f)
-    open var customScale: Float get() = _customScale.value; set(v) { _customScale.value = v }
+    open var customScale: Float get() = _customScale.value; set(v) { _customScale.put(v) }
 
     val effectiveScale: Float
         get() {
@@ -902,10 +970,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     }
 
     private var _showBackground: MutableState<Boolean> = mutableStateOf(true)
-    var showBackground: Boolean get() = _showBackground.value; set(v) { _showBackground.value = v }
+    var showBackground: Boolean get() = _showBackground.value; set(v) { _showBackground.put(v) }
 
     private var _bgColor: MutableState<Int> = mutableStateOf(0x80000000.toInt())
-    var bgColor: Int get() = _bgColor.value; set(v) { _bgColor.value = v }
+    var bgColor: Int get() = _bgColor.value; set(v) { _bgColor.put(v) }
 
     private var _bgChroma: MutableState<Boolean> = mutableStateOf(false)
     var bgChroma: Boolean get() = _bgChroma.value; set(v) { _bgChroma.value = v }
@@ -914,19 +982,19 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var bgChromaSpeed: Float get() = _bgChromaSpeed.value; set(v) { _bgChromaSpeed.value = v }
 
     private var _bgRadius: MutableState<Float> = mutableStateOf(4f)
-    var bgRadius: Float get() = _bgRadius.value; set(v) { _bgRadius.value = v }
+    var bgRadius: Float get() = _bgRadius.value; set(v) { _bgRadius.put(v) }
 
     private var _mergeBackground: MutableState<Boolean> = mutableStateOf(true)
 
-    var mergeBackground: Boolean get() = _mergeBackground.value; set(v) { _mergeBackground.value = v }
+    var mergeBackground: Boolean get() = _mergeBackground.value; set(v) { _mergeBackground.put(v) }
 
     private var _mergeDiagonally: MutableState<Boolean> = mutableStateOf(false)
 
-    var mergeDiagonally: Boolean get() = _mergeDiagonally.value; set(v) { _mergeDiagonally.value = v }
+    var mergeDiagonally: Boolean get() = _mergeDiagonally.value; set(v) { _mergeDiagonally.put(v) }
 
     private var _keepBgWhenHidden: MutableState<Boolean> = mutableStateOf(false)
 
-    var keepBgWhenHidden: Boolean get() = _keepBgWhenHidden.value; set(v) { _keepBgWhenHidden.value = v }
+    var keepBgWhenHidden: Boolean get() = _keepBgWhenHidden.value; set(v) { _keepBgWhenHidden.put(v) }
 
     internal val keepsHiddenBackground: Boolean
         get() = hidden && keepBgWhenHidden && showBackground && mergeBackground &&
@@ -945,7 +1013,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
      */
     var bgMerged: Boolean
         get() = _bgMerged.value
-        internal set(v) { _bgMerged.value = v }
+        internal set(v) { _bgMerged.put(v) }
 
     @Transient
     private var _bgMerged: MutableState<Boolean> = mutableStateOf(false)
@@ -987,6 +1055,146 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @ApiStatus.Internal
     @JvmField
     var lastUpdate: Long = Long.MIN_VALUE
+
+    @Transient private var revision = AtomicInteger()
+
+    private fun bumpRevision() {
+        revision.incrementAndGet()
+    }
+
+    private fun <T> MutableState<T>.put(v: T) {
+        if (Snapshot.withoutReadObservation { value } == v) return
+        value = v
+        if (Snapshot.isInSnapshot) synchronized(pendingWrites) { pendingWrites[this] = PendingWrite(this@Hud) }
+        else bumpRevision()
+    }
+
+    @Transient private var chainHuds = -1
+    @Transient private var chainExternal: List<Hud> = emptyList()
+    @Transient private var chainParents: List<Hud> = emptyList()
+
+    private val instancesRevision: Int get() = Snapshot.withoutReadObservation { HudManager.instancesRevision.intValue }
+
+    private fun walkChain() {
+        chainHuds = instancesRevision
+        var external: ArrayList<Hud>? = null
+        val parents = ArrayList<Hud>(0)
+        fun visit(parent: Hud?) {
+            if (parent == null || parent === this || parents.any { it === parent }) return
+            parents.add(parent)
+            if (externalGeometry.get(parent.javaClass)) (external ?: ArrayList<Hud>(1).also { external = it }).add(parent)
+        }
+        var node = this
+        var next = 0
+        while (true) {
+            val anchor = node.anchorParent
+            if (anchor != null) {
+                visit(anchor)
+            } else {
+                visit(node.mergeLinkX?.parent)
+                visit(node.mergeLinkY?.parent)
+            }
+            if (next == parents.size) break
+            node = parents[next++]
+        }
+        chainExternal = external ?: emptyList()
+        chainParents = parents
+    }
+
+    @Transient private var geomValid = false
+    @Transient private var geomStamp = 0
+    @Transient private var geomRev = 0
+    @Transient private var geomParentRevs = IntArray(0)
+    @Transient private var geomW = Float.NaN
+    @Transient private var geomH = Float.NaN
+    @Transient private var geomGuiScale = Float.NaN
+    @Transient private var cachedScale = 1f
+    @Transient private var cachedX = 0f
+    @Transient private var cachedY = 0f
+
+    @Transient private var parentCheckFrame = Long.MIN_VALUE
+    @Transient private var parentGeom = FloatArray(0)
+
+    internal val hasExternalGeometry: Boolean get() = externalGeometry.get(javaClass)
+
+    private fun externalParentMoved(): Boolean {
+        val ext = chainExternal
+        if (parentGeom.size != ext.size * 4) return true
+        for (i in ext.indices) {
+            val p = ext[i]
+            val o = i * 4
+            if (p.x != parentGeom[o] || p.y != parentGeom[o + 1] ||
+                p.scaledWidth != parentGeom[o + 2] || p.scaledHeight != parentGeom[o + 3]
+            ) return true
+        }
+        return false
+    }
+
+    private fun chainChanged(): Boolean {
+        if (geomRev != revision.get() || chainHuds != instancesRevision) return true
+        val parents = chainParents
+        for (i in parents.indices) {
+            if (parents[i].revision.get() != geomParentRevs[i]) return true
+        }
+        return false
+    }
+
+    private fun guiScaleInput(): Float =
+        if (!useGuiScale || chainParents.any { !it.useGuiScale }) Platform.compatibility().options().guiScale else 0f
+
+    private fun refreshFrameGeometry(): Boolean {
+        if (HudManager.isEditing) {
+            geomValid = false
+            return false
+        }
+        if (hasExternalGeometry || Snapshot.isInSnapshot) return false
+        val frame = HudManager.frameId
+        var parentMoved = false
+        if (parentCheckFrame != frame) {
+            parentCheckFrame = frame
+            frameMinimumSize()
+            for (p in chainParents) p.frameMinimumSize()
+            parentMoved = externalParentMoved()
+        }
+        val sw = HudManager.guiScreenWidth
+        val sh = HudManager.guiScreenHeight
+        if (geomValid && sw == geomW && sh == geomH && !parentMoved && !chainChanged() && guiScaleInput() == geomGuiScale) return true
+        walkChain()
+        for (p in chainParents) p.frameMinimumSize()
+        val parents = chainParents
+        geomValid = true
+        geomStamp++
+        geomRev = revision.get()
+        geomParentRevs = IntArray(parents.size) { parents[it].revision.get() }
+        geomW = sw
+        geomH = sh
+        geomGuiScale = guiScaleInput()
+        cachedScale = effectiveScale
+        cachedX = x
+        cachedY = y
+        val ext = chainExternal
+        if (parentGeom.size != ext.size * 4) parentGeom = FloatArray(ext.size * 4)
+        for (i in ext.indices) {
+            val p = ext[i]
+            val o = i * 4
+            parentGeom[o] = p.x
+            parentGeom[o + 1] = p.y
+            parentGeom[o + 2] = p.scaledWidth
+            parentGeom[o + 3] = p.scaledHeight
+        }
+        return true
+    }
+
+    internal val geometryStamp: Int get() = if (refreshFrameGeometry()) geomStamp and Int.MAX_VALUE else -1
+
+    @get:ApiStatus.Internal
+    val frameScale: Float get() = if (refreshFrameGeometry()) cachedScale else effectiveScale
+
+    @get:ApiStatus.Internal
+    val frameX: Float get() = if (refreshFrameGeometry()) cachedX else x
+
+    @get:ApiStatus.Internal
+    val frameY: Float get() = if (refreshFrameGeometry()) cachedY else y
 
     override fun addToInitQueue() {}
 
@@ -1238,7 +1446,14 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @Suppress("UNCHECKED_CAST")
     override fun clone(): Hud = (super.clone() as Hud).apply {
         _runtime = null
+        revision = AtomicInteger(this@Hud.revision.get())
+        pinnedCorner = null
+        unpinPending = false
         isVisible = mutableStateOf(false)
+        chainExternal = emptyList()
+        chainParents = emptyList()
+        parentGeom = FloatArray(0)
+        geomValid = false
         showKey = -1
         toggleKey = -1
         _staticWidth = mutableStateOf(this@Hud.staticWidth)
@@ -1295,6 +1510,25 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     }
 
     private companion object {
+        private class PendingWrite(hud: Hud) : WeakReference<Hud>(hud) {
+            val at = System.nanoTime()
+        }
+
+        private const val PENDING_WRITE_TTL_NANOS = 10_000_000_000L
+
+        private val pendingWrites = WeakHashMap<Any, PendingWrite>()
+
+        init {
+            Snapshot.registerApplyObserver { changed, _ ->
+                synchronized(pendingWrites) {
+                    if (pendingWrites.isEmpty()) return@registerApplyObserver
+                    for (state in changed) pendingWrites.remove(state)?.get()?.bumpRevision()
+                    val cutoff = System.nanoTime() - PENDING_WRITE_TTL_NANOS
+                    pendingWrites.values.removeIf { it.at - cutoff < 0 }
+                }
+            }
+        }
+
         private fun sanitizeHudCapturedDefaults(tree: Tree) {
             for (id in listOf("staticW", "staticH")) {
                 val prop = tree.getProp(id) ?: continue

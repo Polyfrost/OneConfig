@@ -11,6 +11,7 @@ Here is a list of the modules, and a brief description of what they do (For more
 - [config-impl](config-impl/README.md) - The default implementation of the configuration system used in OneConfig.
 - [events](events/README.md) - The event system used in OneConfig.
 - [hud](hud/README.md) - The HUD system used in OneConfig.
+- [mod-toggles](mod-toggles/README.md) - A standalone interface for giving a mod a switch on its OneConfig card.
 - [ui](ui/README.md) - The UI system used in OneConfig.
 - [utils](utils/README.md) - Various utilities used in OneConfig.
 

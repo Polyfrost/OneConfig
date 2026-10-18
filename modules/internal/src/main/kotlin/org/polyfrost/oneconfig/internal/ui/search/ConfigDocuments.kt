@@ -89,6 +89,7 @@ private fun modDocument(config: ConfigData): SearchDocument<ConfigData> {
             description = config.description?.asRenderText()?.takeIf { it.isNotBlank() },
             category = localizedLabel(config.category.name)?.takeIf { it.isNotBlank() },
             subcategory = tree?.subcategory?.asRenderText()?.takeIf { it.isNotBlank() },
+            tags = (tree?.getMetadata<Any?>("aliases") as? Iterable<*>)?.filterIsInstance<String>().orEmpty(),
         ),
         payload = config,
     )
@@ -133,7 +134,7 @@ private fun treeDocuments(
                 subcategory = nodeSubcategory.takeIf { it.isNotBlank() },
                 modTitle = modTitle?.takeIf { it.isNotBlank() },
                 modDescription = modDescription?.takeIf { it.isNotBlank() },
-                tags = searchTags,
+                tags = searchTags + (node.getMetadata<Any?>("aliases") as? Iterable<*>)?.filterIsInstance<String>().orEmpty(),
                 path = path
             ),
             payload = node,

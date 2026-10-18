@@ -6,7 +6,7 @@ import org.polyfrost.oneconfig.internal.OneConfigConfig
 object UiSounds {
     private val service: UiSoundService? by lazy { loadService() }
 
-    private var ambienceRefs = 0
+    private var ambienceActive = false
 
     private fun loadService(): UiSoundService? = try {
         val it = ServiceLoader.load(UiSoundService::class.java, UiSoundService::class.java.classLoader).iterator()
@@ -42,19 +42,23 @@ object UiSounds {
     @JvmStatic
     @Synchronized
     fun acquireAmbience() {
-        if (++ambienceRefs == 1) startAmbienceIfEnabled()
+        if (ambienceActive) return
+        ambienceActive = true
+        startAmbienceIfEnabled()
     }
 
     @JvmStatic
     @Synchronized
     fun releaseAmbience() {
-        if (ambienceRefs > 0 && --ambienceRefs == 0) service?.stopAmbience(false)
+        if (!ambienceActive) return
+        ambienceActive = false
+        service?.stopAmbience(false)
     }
 
     @JvmStatic
     @Synchronized
     fun refreshAmbience() {
-        if (ambienceRefs <= 0) return
+        if (!ambienceActive) return
         if (OneConfigConfig.enableUIAmbience) startAmbienceIfEnabled() else service?.stopAmbience(false)
     }
 
@@ -62,7 +66,7 @@ object UiSounds {
     @Synchronized
     fun onSoundThemeChanged() {
         play(UiSoundEvent.OPEN)
-        if (ambienceRefs > 0) {
+        if (ambienceActive) {
             service?.stopAmbience(true)
             startAmbienceIfEnabled()
         }

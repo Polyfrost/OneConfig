@@ -61,6 +61,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
             return
         }
         val mod = CompatLoader.findFirstMod()
+        if (ConfigEntrypoints.skipExtraction(mod?.id, config) { addConfig(config) }) return
         info("Preparing config wrapper for ${config.id()}!")
         CompatLoader.requireTranslations {
             parseConfig(config, mod).let(CompatSnapshots::register)

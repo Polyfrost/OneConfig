@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.mixin.events;
 import net.minecraft.client.Minecraft;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.HudEvent;
+import org.polyfrost.oneconfig.internal.OneConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -29,7 +30,7 @@ public abstract class Mixin_DebugOpenEvent {
     //?} else
     //@Inject(method = "tick", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Options;debugEnabled:Z", opcode = Opcodes.PUTFIELD, shift = At.Shift.AFTER))
     private void onDebugOpen(CallbackInfo ci) {
-        if (Minecraft.getInstance().getDebugOverlay().showDebugScreen()) {
+        if (OneConfig.isDebugScreenVisible()) {
             EventManager.INSTANCE.post(HudEvent.Debug.OPENED);
         } else EventManager.INSTANCE.post(HudEvent.Debug.CLOSED);
     }
@@ -43,7 +44,7 @@ public abstract class Mixin_DebugOpenEvent {
     @Inject(method = "toggleDebugOverlay", at = @At("TAIL"))
     //? }
     private void onDebugOpen(CallbackInfo ci) {
-        if (Minecraft.getInstance().getDebugOverlay().showDebugScreen()) {
+        if (OneConfig.isDebugScreenVisible()) {
             EventManager.INSTANCE.post(HudEvent.Debug.OPENED);
         } else EventManager.INSTANCE.post(HudEvent.Debug.CLOSED);
     }

@@ -31,6 +31,11 @@ object ConfigRegistry {
         "midnightlib",
         "walksylib",
         "ukulib",
+        "meowdding-lib",
+        "meowdding-lib/config",
+        "architectury",
+        "fzzy_config",
+        "tcdcommons",
         "modernconfig",
         "collective",
         "cloth-config",
@@ -70,6 +75,7 @@ object ConfigRegistry {
         private set
 
     init {
+        ModToggleStore.install()
         // Index configs as they come in (compat layers etc...)
         ConfigManager.addTreeRegistrationListener { tree ->
             if (ConfigManager.isRebindingProfiles()) return@addTreeRegistrationListener

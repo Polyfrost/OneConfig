@@ -14,8 +14,8 @@
   "license": "Apache-2.0",
   "environment": "client",
   "depends": {
-    "fabricloader": ">=0.15.0",
-    "fabric-language-kotlin": ">=1.13.13+kotlin.2.4.10"
+    "fabricloader": ">=${loader_version}",
+    "fabric-language-kotlin": ">=${flk_version}"
   },
   "custom": {
     "modmenu": {

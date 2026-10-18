@@ -39,7 +39,7 @@ private val DefaultEntryColor = Color.White
 
 @Composable
 fun ColorListOption(data: ColorListOptionData) {
-    val state = rememberListEntries(data.prop, data.argb()) { values -> data.setArgb(values) }
+    val state = rememberListEntries(data.prop, { data.argb() }) { values -> data.setArgb(values) }
 
     var openEntry by remember(data.prop) { mutableStateOf(-1) }
 

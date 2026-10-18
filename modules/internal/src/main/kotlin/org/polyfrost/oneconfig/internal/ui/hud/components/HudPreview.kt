@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -103,19 +104,29 @@ internal fun rememberHudPreview(hud: Hud): HudPreviewState {
         }
     }
     LaunchedEffect(state) {
-        if (state.ready) return@LaunchedEffect
-        hud.update()
-        if (hud.staticWidth && hud.staticW > 0f && hud.staticH > 0f) {
-            state.runtime.frame(hud.staticW, hud.staticH)
-            state.naturalWidth = hud.staticW
-            state.naturalHeight = hud.staticH
-        } else {
-            state.runtime.frame(MEASURE_BOUNDS, MEASURE_BOUNDS)
-            state.naturalWidth = state.runtime.root.width
-            state.naturalHeight = state.runtime.root.height
+        val static = hud.staticWidth && hud.staticW > 0f && hud.staticH > 0f
+        if (!state.ready) {
+            hud.update()
+            if (static) {
+                state.runtime.frame(hud.staticW, hud.staticH)
+                state.naturalWidth = hud.staticW
+                state.naturalHeight = hud.staticH
+            } else {
+                state.runtime.frame(MEASURE_BOUNDS, MEASURE_BOUNDS)
+                state.naturalWidth = state.runtime.root.width
+                state.naturalHeight = state.runtime.root.height
+            }
+            // Zero-size previews still count as measured so they don't block shortcut navigation
+            state.measured = true
         }
-        // Zero-size previews still count as measured so they don't block shortcut navigation
-        state.measured = true
+        if (static) return@LaunchedEffect
+        // Values like FPS widen after the first measure. Never shrink, or the library reflows
+        // whenever a value flips between digit counts.
+        snapshotFlow { HudManager.previewRevision.intValue }.collect {
+            state.runtime.layout(MEASURE_BOUNDS, MEASURE_BOUNDS)
+            state.naturalWidth = maxOf(state.naturalWidth, state.runtime.root.width)
+            state.naturalHeight = maxOf(state.naturalHeight, state.runtime.root.height)
+        }
     }
     return state
 }

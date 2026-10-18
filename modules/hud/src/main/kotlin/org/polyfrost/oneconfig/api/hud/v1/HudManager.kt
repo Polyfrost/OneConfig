@@ -207,6 +207,8 @@ object HudManager {
     private var zOrderCache: List<Hud> = emptyList()
     private var zOrderHuds = arrayOfNulls<Hud>(0)
     private var zOrderBounds = FloatArray(0)
+    private var zOrderDrawn = BooleanArray(0)
+    private var zOrderStamps = IntArray(0)
 
     private const val REGISTRY_ID = "hud-registry.json"
     private const val KNOWN_HUDS = "knownHuds"
@@ -515,6 +517,7 @@ object HudManager {
                 hud.renderedH = h
             }
         }
+        hud.settlePin()
         return root
     }
 
@@ -541,12 +544,12 @@ object HudManager {
     }
 
     private fun shouldDraw(hud: Hud): Boolean {
-        if (hud.hidden && !isEditing) return false
+        if (!isEditing && hud.hidden) return false
         return isShown(hud)
     }
 
     private fun keepsBackgroundOnly(hud: Hud): Boolean =
-        hud.hidden && !isEditing && hud.keepsHiddenBackground && isShown(hud)
+        !isEditing && hud.hidden && hud.keepsHiddenBackground && isShown(hud)
 
     /** Everything [shouldDraw] checks apart from the HUD's own hidden flag */
     private fun isShown(hud: Hud): Boolean {
@@ -676,6 +679,19 @@ object HudManager {
      * when a position or size or background style actually changed
      */
     private fun updateBackgroundGroups(huds: List<Hud>, screenWidth: Float, screenHeight: Float, scale: Float) {
+        var stable = lastMergeKey != null && huds.size == mergeCheckHuds.size
+        if (mergeCheckHuds.size != huds.size) {
+            mergeCheckHuds = arrayOfNulls(huds.size)
+            mergeCheckStamps = IntArray(huds.size)
+        }
+        for (i in huds.indices) {
+            val hud = huds[i]
+            val stamp = hud.geometryStamp
+            if (stamp == -1 || mergeCheckHuds[i] !== hud || mergeCheckStamps[i] != stamp) stable = false
+            mergeCheckHuds[i] = hud
+            mergeCheckStamps[i] = stamp
+        }
+        if (stable) return
         val key = HudBackgroundMerge.layoutKey(huds)
         if (key == lastMergeKey) return
         lastMergeKey = key
@@ -715,6 +731,8 @@ object HudManager {
     }
 
     private var mergeExclusions: List<Hud> = emptyList()
+    private var mergeCheckHuds = arrayOfNulls<Hud>(0)
+    private var mergeCheckStamps = IntArray(0)
 
     /**
      * HUDs kept out of merging for now
@@ -730,6 +748,16 @@ object HudManager {
         val next = huds.toList()
         if (next.size == mergeExclusions.size && next.indices.all { next[it] === mergeExclusions[it] }) return
         mergeExclusions = next
+        // unlink right away so moving an excluded HUD never drags its neighbours with it
+        Snapshot.withMutableSnapshot {
+            for (hud in activeInstances) {
+                val excluded = isMergeExcluded(hud)
+                hud.clearMergeLinks(
+                    clearX = excluded || hud.mergeLinkX?.parent?.let(::isMergeExcluded) == true,
+                    clearY = excluded || hud.mergeLinkY?.parent?.let(::isMergeExcluded) == true,
+                )
+            }
+        }
         lastMergeKey = null
         invalidate()
     }
@@ -815,11 +843,18 @@ object HudManager {
         if (zOrderHuds.size < n) {
             zOrderHuds = arrayOfNulls(n)
             zOrderBounds = FloatArray(n * 4)
+            zOrderDrawn = BooleanArray(n)
+            zOrderStamps = IntArray(n)
         }
         var same = zOrderCache.size == n
         for (i in 0 until n) {
             val hud = list[i]
-            val b = drawnBounds(hud)
+            val drawn = hud in frameDrawn
+            val stamp = if (drawn) hud.geometryStamp else 0
+            if (same && zOrderHuds[i] === hud && zOrderDrawn[i] == drawn && stamp != -1 && zOrderStamps[i] == stamp) continue
+            zOrderDrawn[i] = drawn
+            zOrderStamps[i] = stamp
+            val b = if (drawn) screenBounds(hud) else null
             val x = b?.get(0) ?: Float.NaN
             val y = b?.get(1) ?: Float.NaN
             val w = b?.get(2) ?: Float.NaN
@@ -941,6 +976,12 @@ object HudManager {
         isEditorOpen = false
         // a drag interrupted by the editor closing must not leave a HUD unable to merge
         setMergeExclusions(emptyList())
+
+        for (hud in activeInstances) {
+            hud.unpinCorner()
+            hud.settlePin()
+        }
+
         if (wasOpen) EventManager.INSTANCE.post(HudEditorToggleEvent.SCREEN_REMOVED)
     }
 

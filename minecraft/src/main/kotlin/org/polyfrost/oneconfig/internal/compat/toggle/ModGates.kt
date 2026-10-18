@@ -1,0 +1,741 @@
+package org.polyfrost.oneconfig.internal.compat.toggle
+
+import java.util.concurrent.ConcurrentHashMap
+//? if !neoforge
+import net.fabricmc.loader.api.FabricLoader
+import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
+import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.config.v1.backend.Backend
+import org.polyfrost.oneconfig.api.notifications.v1.Notifications
+import org.polyfrost.oneconfig.api.platform.v1.ModInfo
+import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
+import org.polyfrost.oneconfig.api.ui.v1.ModToggles
+import org.polyfrost.oneconfig.internal.ui.api.PropertyModToggle
+import org.polyfrost.oneconfig.internal.ui.api.findMarkedSwitch
+
+/**
+ * Gives mods without a master switch of their own one on their mod card
+ *
+ * A gated mod is switched off in one or both of two ways. The mixins in `mixin.compat.toggle` sit
+ * in the mod's own classes and check [ModToggles.isEnabled], and a [ConfigMask] swaps the options
+ * the mod reads from its mixins for vanilla values. Mods that do ship a switch under another name
+ * get it wired to the card instead
+ *
+ * The mixins are written against one build of each mod, and a mod whose installed build they do not
+ * all fit is left without a switch rather than given one that only does part of the job, see [ToggleHooks]
+ */
+internal object ModGates {
+    private val LOGGER = LogManager.getLogger("OneConfig/ModToggles")
+
+    /**
+     * @param id the loader id of the mod which is also what its mixins pass to [ModToggles.isEnabled]
+     * @param cards further mod card ids showing the same switch such as a renamed config file
+     * @param mask the options to overwrite while the mod is off
+     * @param saveKey the name the mod's config library saves the masked config under
+     * @param onToggle run after the switch changed for mods that cache what they render
+     * @param unless a class only an unrelated mod sharing the id has, which is then left alone
+     */
+    private class Gate(
+        val id: String,
+        val cards: List<String> = emptyList(),
+        val mask: ConfigMask? = null,
+        val saveKey: String? = null,
+        val onToggle: ((Boolean) -> Unit)? = null,
+        val unless: String? = null,
+    )
+
+    private fun tweaks(name: String) = "dev.microcontrollers.$name.config"
+
+    private val gates = listOf(
+        Gate(
+            "rendertweaks", cards = listOf("rendertweaksv2"),
+            mask = ConfigMask(
+                "${tweaks("rendertweaks")}.RenderTweaksConfig", listOf("rendertweaksv2.json"),
+                mapOf(
+                    "disableLightning" to false, "disableFishingLine" to false,
+                    "disableWorldBorderStationary" to false, "disableWorldBorderShrinking" to false,
+                    "disableWorldBorderGrowing" to false, "fishingLineWidthMultiplier" to 1f,
+                    "lightningColor" to 0x4C72727F, "fishingLineColor" to 0xFF000000.toInt(),
+                    "worldBorderStationaryColor" to 0xFF20A0FF.toInt(),
+                    "worldBorderShrinkingColor" to 0xFFFF3030.toInt(),
+                    "worldBorderGrowingColor" to 0xFF40FF80.toInt(),
+                    "lightningChroma" to false, "fishingLineChroma" to false, "worldBorderStationaryChroma" to false,
+                    "worldBorderShrinkingChroma" to false, "worldBorderGrowingChroma" to false,
+                    "lightningAlpha" to 76f, "fishingLineAlpha" to 255f, "worldBorderStationaryAlpha" to 255f,
+                    "worldBorderShrinkingAlpha" to 255f, "worldBorderGrowingAlpha" to 255f,
+                ),
+            ),
+        ),
+        Gate(
+            "droppeditemtweaks", cards = listOf("droppeditemtweaksv2"),
+            mask = ConfigMask(
+                "${tweaks("droppeditemtweaks")}.DroppedItemTweaksConfig", listOf("droppeditemtweaksv2.json"),
+                mapOf("staticItems" to false, "dropStackCount" to 0, "itemScale" to 1f, "uhcOverlay" to 0f),
+            ),
+        ),
+        Gate(
+            "shaketweaks",
+            mask = ConfigMask(
+                "${tweaks("shaketweaks")}.ShakeTweaksConfig", listOf("shaketweaks.json"),
+                listOf(
+                    "disableScreenBobbing", "disableHandBobbing", "disableHorizontalBobbing", "disableMapBobbing",
+                    "disableHandDamage", "disableScreenDamage", "disableHandViewSway",
+                ).associateWith { false },
+            ),
+        ),
+        Gate(
+            "scrolltweaks",
+            mask = ConfigMask(
+                "${tweaks("scrolltweaks")}.ScrollTweaksConfig", listOf("scrolltweaks.json"),
+                mapOf("disableScroll" to false, "reverseScroll" to false, "preventOverflowScroll" to false),
+            ),
+        ),
+        Gate(
+            "crosshairtweaks",
+            mask = ConfigMask(
+                "${tweaks("crosshairtweaks")}.CrosshairTweaksConfig", listOf("crosshairtweaks.json"),
+                listOf(
+                    "disableCrosshair", "hideCrosshairInContainers", "showCrosshairInPerspective",
+                    "hideCrosshairInPerspective", "showCrosshairInSpectator", "removeCrosshairBlendingFirstPerson",
+                    "removeCrosshairBlendingThirdPerson", "disableAttackIndicator",
+                    "removeAttackIndicatorBlendingFirstPerson", "removeAttackIndicatorBlendingThirdPerson",
+                    "debugCrosshairAttackIndicator", "removeCrosshairBlending", "removeAttackIndicatorBlending",
+                    "useNormalCrosshair", "useDebugCrosshair", "fixDebugCooldown",
+                ).associateWith { false } + listOf(
+                    "crosshairOpacity", "attackIndicatorOpacity",
+                    "crosshairOpacityFirstPerson", "crosshairOpacityThirdPerson",
+                    "attackIndicatorOpacityFirstPerson", "attackIndicatorOpacityThirdPerson",
+                ).associateWith { 100f } + ("debugCrosshairSize" to 10),
+            ),
+        ),
+        Gate(
+            "betterscreens",
+            mask = ConfigMask(
+                "${tweaks("betterscreens")}.BetterScreensConfig", listOf("betterscreens.json"),
+                mapOf(
+                    "preventClosingScreens" to false, "dontResetCursor" to false, "replaceOpenToLan" to false,
+                    "removeRecipeBookShift" to false, "removeStatusEffectsShift" to false, "showServerPreview" to false,
+                    "clickOutOfContainers" to false, "containerBackgroundOpacity" to 81.56863f,
+                    "containerTextureOpacity" to 100f, "containerLabelColor" to 0xFF404040.toInt(),
+                    "playerInventoryLabelColor" to 0xFF404040.toInt(), "containerScale" to -1,
+                ),
+            ),
+        ),
+        Gate(
+            "mountopacity",
+            mask = ConfigMask(
+                "${tweaks("mountopacity")}.MountOpacityConfig", listOf("mountopacity.json"),
+                listOf(
+                    "horseOpacity", "pigOpacity", "llamaOpacity", "striderOpacity", "camelOpacity",
+                    "nautilusOpacity", "happyGhastOpacity", "defaultOpacity",
+                ).associateWith { 100f } + mapOf("onlyInFirstPerson" to false, "useLookDirection" to false),
+            ),
+        ),
+        Gate(
+            "betternightvision",
+            mask = ConfigMask(
+                "${tweaks("betternightvision")}.BetterNightVisionConfig", listOf("betternightvision.json"),
+                mapOf("disableNightVision" to false, "cleanerNightVision" to false),
+            ),
+        ),
+        Gate(
+            "sciophobia",
+            mask = ConfigMask(
+                "${tweaks("sciophobia")}.SciophobiaConfig", listOf("sciophobia.json"),
+                mapOf(
+                    "removeShadows" to false, "forceShadows" to false, "alternateShadows" to false,
+                    "fullShadow" to false,
+                ),
+            ),
+        ),
+        Gate(
+            "simpleblockoverlay",
+            mask = ConfigMask(
+                "${tweaks("simpleblockoverlay")}.SimpleBlockOverlayConfig", listOf("simpleblockoverlay.json"),
+                mapOf(
+                    "useVanillaOverlay" to true, "alwaysRenderOutline" to false, "hideBarrierBlocks" to false,
+                    "hideTallGrass" to false, "renderInAdventure" to false, "renderInSpectator" to false,
+                    "renderInHiddenHud" to false,
+                    "disableMod" to true, "customRenderer" to false, "disableOutline" to false,
+                    "disableOverlay" to true, "chroma" to false, "disableDepth" to false,
+                    "solidColor" to 0x66000000,
+                ),
+            ),
+        ),
+        Gate(
+            "vignettetweaks",
+            mask = ConfigMask(
+                "org.codeberg.chromatic.vignettetweaks.config.VignetteConfig", listOf("vignettetweaks.json"),
+                mapOf("type" to 1, "strengthMultiplier" to 1f, "minimumStrength" to 0f, "maximumStrength" to 100f),
+            ),
+        ),
+        Gate(
+            "blur", saveKey = "blur",
+            // LegacyGuiBlur on 1.8.9 shares the id and has an enabled option of its own
+            unless = "eu.midnightdust.blur.BlurConfig",
+            mask = ConfigMask(
+                "eu.midnightdust.blur.config.BlurConfig",
+                values = mapOf("useGradient" to false, "blurContainers" to false, "showScreenID" to false),
+            ),
+        ),
+        Gate(
+            "effecttimerplus", saveKey = "effecttimerplus",
+            mask = ConfigMask(
+                "dev.terminalmc.effecttimerplus.config.Config",
+                values = mapOf("scale" to 1.0, "potencyEnabled" to false, "timerEnabled" to false),
+            ),
+        ),
+        Gate(
+            "shulkerboxtooltip",
+            // left as they are the mod would still hide the vanilla contents tooltip
+            mask = ConfigMask(
+                "com.misterpemodder.shulkerboxtooltip.ShulkerBoxTooltip",
+                values = mapOf("config.tooltip.type" to "VANILLA", "config.tooltip.hideShulkerBoxLore" to false),
+            ),
+        ),
+        Gate("lambdabettergrass", onToggle = { rebuildChunks() }),
+        Gate("lambdynlights", onToggle = { rebuildChunks() }),
+        Gate("gammautils", onToggle = {
+            callStatic("io.github.sjouwer.gammautils.statuseffect.StatusEffectManager", "updateAllEffects")
+        }),
+        Gate("controlify", onToggle = { enabled ->
+            val controlify = callStatic("dev.isxander.controlify.Controlify", "instance")
+            if (enabled && controlify != null) {
+                controlify.javaClass.getMethod("applyControllerSelection", Boolean::class.javaPrimitiveType)
+                    .invoke(controlify, true)
+            }
+        }),
+        Gate("tooltipscroll", onToggle = { callStatic("com.provismet.tooltipscroll.ScrollTracker", "reset") }),
+        Gate(
+            "custom-block-highlight",
+            // the 1.8.9 build hides the vanilla outline from a mixin of its own that reads this option
+            mask = ConfigMask(
+                "tektonikal.customblockhighlight.config.CBHOneConfig", listOf("custom-block-highlight.json"),
+                mapOf("globalModToggle" to false, "vanillaOutline" to true),
+            ),
+        ),
+        Gate("wwaypoints"),
+        Gate("appleskin"),
+        Gate("detailabreconst"),
+        Gate("status-effect-bars"),
+        Gate("waveycapes"),
+        Gate("skinlayers3d"),
+        Gate("legacy-skin-layers", cards = listOf("legacy_skin_layers")),
+        Gate("legacy-waveycapes", cards = listOf("legacy_waveycapes")),
+        Gate("zoomify"),
+        Gate("fovchanger"),
+        Gate("chatblock"),
+        Gate("hymod"),
+        Gate(
+            "bobby",
+            // it only decides whether to keep chunks around when a world is joined
+            onToggle = { if (inWorld()) Notifications.info("Bobby", "Rejoin the world for this to take effect.") },
+        ),
+        Gate("presencefootsteps"),
+        Gate("jade"),
+        Gate("viewmodel"),
+        Gate("flashback", onToggle = { enabled -> if (!enabled) finishFlashbackRecording() }),
+        Gate("freelook"),
+        Gate(
+            "screenshotmessageenhancer",
+            // 2.x replaces the vanilla screenshot message whatever its options say, so this only strips the extras
+            mask = ConfigMask(
+                "tomeko.screenshotmessageenhancer.config.ScreenshotMessageEnhancerConfig",
+                listOf("screenshotmessageenhancer.json"),
+                listOf(
+                    "modifyScreenshotMessageEnabled", "showCopyButton", "showOpenButton", "showOpenFolderButton",
+                    "showDeleteButton", "showUploadButton", "autoCopyScreenshot", "compressScreenshots",
+                ).associateWith { false } + ("showName" to true),
+            ),
+        ),
+        Gate("betterhurtcam", cards = listOf("betterhurtcam.toml")),
+        Gate("hybedwars"),
+        Gate("hybridge"),
+        Gate("hychatter"),
+        Gate("hyinfo"),
+        Gate("hylobby"),
+    )
+
+    private val byId = gates.associateBy { it.id }
+
+    private val ownSwitches: Map<String, () -> ModToggle?> = mapOf(
+        "simplenickhider" to { optionToggle("${tweaks("simplenickhider")}.SimpleNickHiderConfig", "enable") },
+        "numericalenchantments" to {
+            optionToggle("${tweaks("numericalenchantments")}.NumericalEnchantmentsConfig", "enabled")
+        },
+        "confirmdisconnect" to {
+            optionToggle("${tweaks("confirmdisconnect")}.ConfirmDisconnectConfig", "confirmEnabled")
+        },
+        "voicechat" to { VoiceChatToggle.takeIf { it.available } },
+        //? if > 1.8.9
+        "ukus-armor-hud" to { org.polyfrost.oneconfig.internal.compat.ArmorHudCompat.modToggle() },
+        "animatium" to {
+            SelfSwitchingMod("org.visuals.legacy.animatium.Animatium", "btw.mixces.animatium.AnimatiumClient")
+                .takeIf { it.available }
+        },
+    )
+
+    private fun registerOwnSwitches(loaded: Set<String>) {
+        for ((id, create) in ownSwitches) {
+            if (id !in loaded) continue
+            try {
+                create()?.let { ModToggles.register(id, it) }
+            } catch (t: Throwable) {
+                LOGGER.error("Failed to wire up the switch of {}", id, t)
+            }
+        }
+    }
+
+    /** Registers the switches mods ship themselves and returns the ids of those mods */
+    private fun registerProvidedSwitches(): Set<String> {
+        val provided = HashSet<String>()
+        //? if !neoforge {
+        for (container in FabricLoader.getInstance().getEntrypointContainers(ModToggle.ENTRYPOINT, ModToggle::class.java)) {
+            val id = container.provider.metadata.id
+            try {
+                ModToggles.register(id, container.entrypoint)
+                provided += id
+            } catch (t: Throwable) {
+                LOGGER.error("Failed to load the switch {} ships", id, t)
+            }
+        }
+        //?}
+        return provided
+    }
+
+    private fun ownMasterSwitches(loaded: Set<String>): Set<String> {
+        val switched = ConfigManager.active().trees().filter {
+            it.getMetadata<Any>(Backend.UI_ONLY_METADATA) != true &&
+                it.getMetadata<Any>(CompatSnapshots.SNAPSHOT_METADATA) != true &&
+                it.findMarkedSwitch() != null
+        }.mapNotNullTo(HashSet()) { it.id }
+        return gates.filter { gate ->
+            gate.id in loaded && switched.any { it.removeSuffix(".json") == gate.id || it in gate.cards }
+        }.mapTo(HashSet()) { it.id }
+    }
+
+    @JvmStatic
+    fun register() {
+        val loaded = ModInfo.loadedMods.mapTo(HashSet()) { it.id }
+
+        val provided = registerProvidedSwitches() + ownMasterSwitches(loaded)
+        val needingFallback = loaded - provided
+        registerOwnSwitches(needingFallback)
+
+        val present = gates.filter { it.id in loaded && (it.unless == null || !classExists(it.unless)) }
+            .filter { gate ->
+                if (gate.id in provided) {
+                    // a gate switched off before the mod shipped its own switch would keep its hooks off for good
+                    if (!ModToggles.isEnabled(gate.id)) ModToggles.setEnabled(gate.id, true)
+                    ModToggles.toggleFor(gate.id)?.let { toggle -> gate.cards.forEach { ModToggles.register(it, toggle) } }
+                    return@filter false
+                }
+                val problem = unusable(gate) ?: return@filter true
+                LOGGER.warn("Not giving {} a switch: {}", gate.id, problem)
+                // what does fit of its hooks would otherwise keep it half off with nothing to switch it back on
+                if (!ModToggles.isEnabled(gate.id)) ModToggles.setEnabled(gate.id, true)
+                false
+            }
+        for (gate in present) {
+            ModToggles.manage(gate.id)
+            gate.mask?.compatTrees = {
+                ConfigManager.active().trees().filter { it.id == gate.id || it.id in gate.cards }
+            }
+            val toggle = ModToggles.toggleFor(gate.id) ?: continue
+            gate.cards.forEach { ModToggles.register(it, toggle) }
+            if (!ModToggles.isEnabled(gate.id)) {
+                synchronized(maskLock) { gate.mask?.apply() }
+                // resources and chunks were built before the mask went on
+                runCatching { gate.onToggle?.invoke(false) }
+            }
+        }
+
+        ModToggles.addListener { id, enabled ->
+            val gate = byId[id] ?: return@addListener
+            if (gate.mask != null) {
+                if (enabled) {
+                    synchronized(maskLock) { gate.mask.remove() }
+                    // saves made while the mask was on were dropped, so what they meant to write goes out now
+                    save(gate, markDirty = true)
+                } else {
+                    // edits still waiting to be written would otherwise be lost behind the mask
+                    save(gate, markDirty = false)
+                    synchronized(maskLock) { gate.mask.apply() }
+                }
+            }
+            try {
+                gate.onToggle?.invoke(enabled)
+            } catch (t: Throwable) {
+                LOGGER.error("Failed to refresh {} after it was switched {}", id, if (enabled) "on" else "off", t)
+            }
+        }
+
+        ConfigManager.addProfileChangeListener(object : ConfigManager.ProfileChangeListener {
+            override fun onProfileUnloading(profile: String) = synchronized(maskLock) {
+                present.forEach { it.mask?.remove() }
+            }
+
+            override fun onProfileChanged(newProfile: String) {
+                // a switch that is one of the mod's options belongs to the config of the profile it was read from
+                registerOwnSwitches(needingFallback)
+                maskDisabled(present)
+            }
+
+            override fun onProfileOperationFinished() = maskDisabled(present)
+        })
+
+        // profile operations run off the thread the snapshots are applied on, and a mask put on in the middle of
+        // one of these would take the outgoing profile's value for the user's and then be overwritten
+        CompatSnapshots.setLiveValueScope { id, read ->
+            val masks = present.mapNotNull { gate ->
+                gate.mask?.takeIf { it.applied && (id == null || id == gate.id || id in gate.cards) }
+            }
+            if (masks.isEmpty()) return@setLiveValueScope read.run()
+            synchronized(maskLock) {
+                val suspended = masks.filter { it.suspend() }
+                try {
+                    read.run()
+                } finally {
+                    suspended.forEach { it.apply() }
+                }
+            }
+        }
+
+        // another library's options are often only built once the mod's screen is first asked for
+        ConfigManager.addTreeRegistrationListener { tree ->
+            val masks = present.mapNotNull { gate ->
+                gate.mask?.takeIf { it.applied && (tree.id == gate.id || tree.id in gate.cards || it.isTree(tree)) }
+            }
+            if (masks.isNotEmpty()) synchronized(maskLock) {
+                masks.forEach {
+                    it.adopt(tree)
+                    it.holdForDisplay()
+                }
+            }
+        }
+    }
+
+    private val maskLock: Any = ConfigManager::class.java
+
+    /** Why [gate] cannot be relied on to switch its mod off, or null when it can */
+    private fun unusable(gate: Gate): String? {
+        if (gate.mask == null && !ToggleHooks.has(gate.id)) return "it has no hooks on this version"
+        if (gate.mask == null && !ToggleHooks.lands(gate.id)) return "none of its hooks find anything in this build"
+        ToggleHooks.problem(gate.id)?.let { return it }
+        if (gate.mask?.savedByYacl() == true) ToggleHooks.problem(ToggleHooks.YACL)?.let { return it }
+        return null
+    }
+
+    @JvmStatic
+    fun isMasked(modId: String?): Boolean =
+        if (modId == null) gates.any { it.mask?.applied == true } else byId[modId]?.mask?.applied == true
+
+    private fun maskDisabled(present: List<Gate>) = synchronized(maskLock) {
+        present.forEach { if (!ModToggles.isEnabled(it.id)) it.mask?.apply() }
+    }
+
+    private fun save(gate: Gate, markDirty: Boolean) {
+        val manager = ConfigManager.active()
+        for (tree in manager.trees().filter { it.id == gate.id || it.id in gate.cards }) {
+            try {
+                if (markDirty && tree.getMetadata<Any>(Backend.CUSTOM_SAVE_TRACKED_METADATA) == true) {
+                    tree.addMetadata(Backend.CUSTOM_SAVE_DIRTY_METADATA, true)
+                }
+                manager.save(tree)
+            } catch (t: Throwable) {
+                LOGGER.warn("Failed to save the config of {}", gate.id, t)
+            }
+        }
+    }
+
+    @JvmStatic
+    fun blocksYaclSave(handler: Any): Boolean = try {
+        val type = handler.javaClass.getMethod("configClass").invoke(handler) as? Class<*>
+        type != null && absorbing(gates.filter { it.mask?.masks(type.name) == true })
+    } catch (_: Throwable) {
+        false
+    }
+
+    @JvmStatic
+    fun blocksSave(saveKey: String?): Boolean =
+        absorbing(gates.filter { it.saveKey == saveKey && it.mask?.applied == true })
+
+    private fun absorbing(blocking: List<Gate>): Boolean {
+        if (blocking.isEmpty()) return false
+        synchronized(maskLock) { blocking.forEach { it.mask?.absorbEdits() } }
+        return true
+    }
+
+    /** Puts the mask back after [configClassName] was reloaded from disk underneath it */
+    @JvmStatic
+    fun remask(configClassName: String) = synchronized(maskLock) {
+        gates.forEach { gate -> gate.mask?.takeIf { it.masks(configClassName) }?.reapply() }
+    }
+
+    @JvmStatic
+    fun remaskYacl(handler: Any) {
+        val type = try {
+            handler.javaClass.getMethod("configClass").invoke(handler) as? Class<*>
+        } catch (_: Throwable) {
+            null
+        }
+        if (type != null) remask(type.name)
+    }
+
+    @JvmStatic
+    fun unmaskForSave(configClassName: String) = synchronized(maskLock) {
+        gates.forEach { gate -> gate.mask?.takeIf { it.masks(configClassName) }?.liftForSave() }
+    }
+
+    @JvmStatic
+    fun maskAfterSave(configClassName: String) = synchronized(maskLock) {
+        gates.forEach { gate -> gate.mask?.takeIf { it.isFor(configClassName) }?.applyAfterSave() }
+    }
+
+    @JvmStatic
+    fun remaskIfOverwritten(configClassName: String) = synchronized(maskLock) {
+        gates.forEach { gate -> gate.mask?.takeIf { it.isFor(configClassName) }?.reapplyIfOverwritten() }
+    }
+
+    private val enumConstants = ConcurrentHashMap<String, Any>()
+
+    @JvmStatic
+    fun enumConstant(className: String, name: String): Any? = enumConstants["$className.$name"] ?: try {
+        Class.forName(className, true, ModGates::class.java.classLoader).enumConstants
+            ?.firstOrNull { (it as Enum<*>).name == name }
+            ?.also { enumConstants["$className.$name"] = it }
+    } catch (_: Throwable) {
+        null
+    }
+
+    private val zoomifyState by lazy {
+        try {
+            val type = Class.forName("dev.isxander.zoomify.Zoomify", true, ModGates::class.java.classLoader)
+            listOf("zooming" to false, "secondaryZooming" to false, "previousZoomDivisor" to 1.0).map { (name, value) ->
+                type.getDeclaredField(name).also { it.isAccessible = true } to value
+            }
+        } catch (_: Throwable) {
+            emptyList()
+        }
+    }
+
+    @JvmStatic
+    fun resetZoomify() {
+        try {
+            zoomifyState.forEach { (field, value) -> field.set(null, value) }
+        } catch (_: Throwable) {
+        }
+    }
+
+    private val freelook by lazy {
+        runCatching {
+            val type = Class.forName(
+                "org.codeberg.chromatic.freelook.handler.FreelookHandler", true, ModGates::class.java.classLoader,
+            )
+            type.getDeclaredField("freelookToggled").also { it.isAccessible = true } to type.getMethod("stop")
+        }.getOrNull()
+    }
+
+    /** Hands the camera back when Freelook is switched off mid-look */
+    @JvmStatic
+    fun stopFreelook(handler: Any) {
+        try {
+            val (looking, stop) = freelook ?: return
+            if (looking.getBoolean(handler)) stop.invoke(handler)
+        } catch (_: Throwable) {
+        }
+    }
+
+    private fun classExists(name: String): Boolean = runCatching {
+        Class.forName(name, false, ModGates::class.java.classLoader)
+    }.isSuccess
+
+    private val tipperEnabled by lazy {
+        runCatching {
+            val type = Class.forName("org.codeberg.awruff.tipper.config.TipperConfig", true, ModGates::class.java.classLoader)
+            type.getField("INSTANCE").get(null) to type.getMethod("getEnabled")
+        }.getOrNull()
+    }
+
+    @JvmStatic
+    fun tipperDisabled(): Boolean = try {
+        tipperEnabled?.let { (config, enabled) -> enabled.invoke(config) == false } ?: false
+    } catch (_: Throwable) {
+        false
+    }
+
+    @JvmStatic
+    fun dropController(controlify: Any) {
+        try {
+            val current = controlify.javaClass.getMethod("getCurrentController").invoke(controlify) as? java.util.Optional<*>
+            if (current?.isPresent != true) return
+            controlify.javaClass.methods
+                .first { it.name == "setCurrentController" && it.parameterCount == 2 }
+                .invoke(controlify, null, true)
+        } catch (_: Throwable) {
+        }
+    }
+
+    @JvmStatic
+    fun waveyCapesVanillaLayer(): Any? = try {
+        val (instance, capeLayer) = waveyCapes ?: return null
+        instance.get(null)?.let(capeLayer::invoke)
+    } catch (_: Throwable) {
+        null
+    }
+
+    private val waveyCapes by lazy {
+        runCatching {
+            val base = Class.forName("dev.tr7zw.waveycapes.WaveyCapesBase", true, ModGates::class.java.classLoader)
+            base.getField("INSTANCE") to base.getMethod("getCapeLayer")
+        }.getOrNull()
+    }
+
+    private fun callStatic(className: String, method: String): Any? =
+        Class.forName(className, true, ModGates::class.java.classLoader).getMethod(method).invoke(null)
+
+    /** Ends a recording in progress the way the mod's own command does, so it is kept */
+    private fun finishFlashbackRecording() {
+        try {
+            val type = Class.forName("com.moulberry.flashback.Flashback", true, ModGates::class.java.classLoader)
+            if (type.getField("RECORDER").get(null) != null) type.getMethod("finishRecordingReplay").invoke(null)
+        } catch (t: Throwable) {
+            LOGGER.warn("Could not finish the Flashback recording in progress", t)
+        }
+    }
+
+    private fun inWorld(): Boolean {
+        //? if > 1.8.9 {
+        return net.minecraft.client.Minecraft.getInstance().level != null
+        //?} else
+        //return false
+    }
+
+    private fun rebuildChunks() {
+        //? if >= 26.2 {
+        net.minecraft.client.Minecraft.getInstance().levelExtractor.allChanged()
+        //?} elif > 1.8.9 {
+        /*net.minecraft.client.Minecraft.getInstance().levelRenderer.allChanged()
+        *///?}
+    }
+
+    private fun optionToggle(className: String, option: String): ModToggle? {
+        val id = className.substringBeforeLast(".config.").substringAfterLast('.')
+        val tree = ConfigManager.active().trees().firstOrNull {
+            it.id == "$id.json" && it.getMetadata<Any>(Backend.UI_ONLY_METADATA) != true
+        }
+        @Suppress("UNCHECKED_CAST")
+        (tree?.getProp(option) as? Property<Boolean>)?.let { return PropertyModToggle(it) }
+
+        val type = Class.forName(className, true, ModGates::class.java.classLoader)
+        val handler = type.getField("CONFIG").get(null)
+        val field = type.getField(option)
+        val instance = handler.javaClass.getMethod("instance")
+        val save = handler.javaClass.getMethod("save")
+        return object : ModToggle {
+            override fun isEnabled() = field.getBoolean(instance.invoke(handler))
+
+            override fun setEnabled(enabled: Boolean) {
+                field.setBoolean(instance.invoke(handler), enabled)
+                save.invoke(handler)
+            }
+        }
+    }
+
+    private object VoiceChatToggle : ModToggle {
+        private val manager by lazy {
+            runCatching {
+                Class.forName("de.maxhenkel.voicechat.voice.client.ClientManager", true, ModGates::class.java.classLoader)
+                    .getMethod("getPlayerStateManager")
+            }.getOrNull()
+        }
+
+        val available get() = manager != null
+
+        private fun state() = manager?.invoke(null)
+
+        private val onboarding by lazy {
+            runCatching {
+                Class.forName(
+                    "de.maxhenkel.voicechat.gui.onboarding.OnboardingManager", true, ModGates::class.java.classLoader,
+                ).getMethod("isOnboarding")
+            }.getOrNull()
+        }
+
+        override fun needsSetup(): Boolean = try {
+            onboarding?.invoke(null) == true
+        } catch (_: Throwable) {
+            false
+        }
+
+        private val disabledOption by lazy {
+            runCatching {
+                val config = Class.forName("de.maxhenkel.voicechat.VoicechatClient", true, ModGates::class.java.classLoader)
+                    .getField("CLIENT_CONFIG")
+                val entry = config.type.getField("disabled")
+                val get = entry.type.getMethod("get")
+                return@runCatching { get.invoke(entry.get(config.get(null))) }
+            }.getOrNull()
+        }
+
+        override fun isEnabled(): Boolean = try {
+            val disabledOption = disabledOption
+            if (disabledOption != null) {
+                !needsSetup() && disabledOption() != true
+            } else {
+                val state = state()
+                state == null || state.javaClass.getMethod("isDisabled").invoke(state) != true
+            }
+        } catch (_: Throwable) {
+            true
+        }
+
+        override fun setEnabled(enabled: Boolean) {
+            try {
+                val state = state() ?: return
+                state.javaClass.getMethod("setDisabled", Boolean::class.javaPrimitiveType).invoke(state, !enabled)
+            } catch (t: Throwable) {
+                LOGGER.error("Failed to switch Simple Voice Chat", t)
+            }
+        }
+    }
+
+    /** A mod with static `isEnabled` and `setEnabled` of its own, the way Animatium and its ports have */
+    private class SelfSwitchingMod(typeName: String, legacyTypeName: String? = null) : ModToggle {
+        private fun find(name: String?) = runCatching {
+            Class.forName(name, true, ModGates::class.java.classLoader)
+        }.getOrNull()
+
+        private val type by lazy { find(typeName)?.takeIf { runCatching { it.getMethod("isEnabled") }.isSuccess } }
+
+        private val legacy by lazy { find(legacyTypeName) }
+
+        val available get() = type != null || legacy != null
+
+        override fun isEnabled(): Boolean = try {
+            (type ?: legacy)?.getMethod("isEnabled")?.invoke(null) != false
+        } catch (_: Throwable) {
+            true
+        }
+
+        override fun setEnabled(enabled: Boolean) {
+            try {
+                val type = type
+                if (type != null) {
+                    type.getMethod("setEnabled", Boolean::class.javaPrimitiveType).invoke(null, enabled)
+                } else {
+                    val legacy = legacy ?: return
+                    legacy.getField("ENABLED").setBoolean(null, enabled)
+                    legacy.getMethod("saveEnabledState").invoke(null)
+                }
+            } catch (t: Throwable) {
+                LOGGER.error("Failed to switch {}", (type ?: legacy)?.simpleName, t)
+                return
+            }
+            val reload = runCatching { type?.getMethod("reload") }.getOrNull()
+            if (reload != null) runCatching { reload.invoke(null) } else runCatching { rebuildChunks() }
+        }
+    }
+}

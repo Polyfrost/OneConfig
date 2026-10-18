@@ -44,16 +44,14 @@ object DandelionCompat {
     private val LOGGER = LogManager.getLogger("OneConfig/Dandelion-Compat")
 
     @JvmStatic
-    fun initialize(title: Component, categories: MutableList<ConfigCategory>, save: Supplier<Boolean>) =
+    fun initialize(title: Component, categories: MutableList<ConfigCategory>, save: Supplier<Boolean>) {
+        val mod = CompatLoader.findFirstMod()
+        if (ConfigEntrypoints.skipExtraction(mod?.id, categories) { initialize(title, categories, save) }) return
         CompatLoader.requireTranslations {
             LOGGER.info("Dandelion compat loaded for $title")
-            val mod = CompatLoader.findFirstMod()
-            val tree = parseConfig(title, categories, mod, save)
-            if (tree != null) {
-                CompatSnapshots.register(tree)
-                CompatLoader.markFirstModAsSkip()
-            }
+            parseConfig(title, categories, mod, save)?.let(CompatSnapshots::register)
         }
+    }
 
     fun parseConfig(title: Component, categories: List<ConfigCategory>, mod: ModInfo?, save: Supplier<Boolean>): Tree? {
         val tree = Tree.tree()

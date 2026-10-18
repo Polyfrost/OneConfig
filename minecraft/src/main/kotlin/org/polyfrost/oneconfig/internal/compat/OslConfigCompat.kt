@@ -46,7 +46,7 @@ internal object OslConfigCompat {
             }
             if (!seen.add(config)) return
             val mod = CompatLoader.findModByClass(config.javaClass) ?: CompatLoader.findFirstMod()
-            if (mod != null && CompatLoader.nativeLoadedConfigs.contains(mod.id)) return
+            if (CompatLoader.skipExtraction(mod?.id, config) { seen.remove(config); addConfig(config) }) return
             CompatLoader.requireTranslations {
                 runCatching { parseConfig(config, mod)?.let(CompatSnapshots::register) }
                     .onFailure { LOGGER.warn("Failed to parse OSL config {}", config, it) }

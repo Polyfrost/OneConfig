@@ -331,8 +331,8 @@ object SkiaFontRenderer : PreparableReloadListener {
         positions[p + 6] = x0 + shear1
         positions[p + 7] = y1
 
-        val sx1 = srcX + srcW
-        val sy1 = srcY + srcH
+        val sx1 = srcX + srcW - 0.01f
+        val sy1 = srcY + srcH - 0.01f
         texCoords[p] = srcX
         texCoords[p + 1] = srcY
         texCoords[p + 2] = sx1

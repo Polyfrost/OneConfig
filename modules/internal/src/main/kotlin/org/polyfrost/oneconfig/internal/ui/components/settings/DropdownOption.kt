@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.settings.DropdownOptionData
+import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.*
 import org.polyfrost.oneconfig.internal.ui.components.dropdown.SimpleDropdownMenu
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
@@ -52,7 +53,7 @@ fun DropdownOption(data: DropdownOptionData) {
     }
     val optionValues = data.optionValues ?: options
 
-    val initialValue = data.prop.get()
+    val initialValue = data.prop.shown()
     var selectedIdx by remember(data.prop) {
         mutableStateOf(
             when (initialValue) {

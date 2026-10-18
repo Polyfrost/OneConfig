@@ -5,6 +5,7 @@ plugins {
 stonecutter active "26.3-fabric"
 stonecutter tasks {
     order("publishModrinth")
+    order("publishCurseforge")
 }
 
 tasks.register("assembleAllNodes") {
@@ -15,7 +16,7 @@ tasks.register("assembleAllNodes") {
 
 tasks.register("publishMods") {
     group = "publishing"
-    description = "Publishes all bootstrap nodes to Modrinth."
+    description = "Publishes all bootstrap nodes to Modrinth and CurseForge."
     dependsOn(stonecutter.tasks.named("publishMods"))
 }
 
