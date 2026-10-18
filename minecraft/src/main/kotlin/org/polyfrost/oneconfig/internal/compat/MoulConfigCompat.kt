@@ -58,7 +58,7 @@ data object MoulConfigCompat {
 
     private fun register(categories: Collection<ProcessedCategory>, config: MoulConfig, what: String) {
         val mod = CompatLoader.findFirstMod()
-        if (mod != null && CompatLoader.nativeLoadedConfigs.contains(mod.id)) return
+        if (CompatLoader.skipExtraction(mod?.id, config) { register(categories, config, what) }) return
         mod?.id?.let { CompatLoader.nativeLoadedConfigs.add(it) }
         CompatLoader.requireTranslations(skip = true) {
             runCatching {

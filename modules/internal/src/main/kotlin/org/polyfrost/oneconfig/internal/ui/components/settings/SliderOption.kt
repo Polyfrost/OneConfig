@@ -12,10 +12,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.internal.ui.api.settings.SliderOptionData
+import org.polyfrost.oneconfig.internal.ui.api.shown
 
 @Composable
 fun SliderOption(data: SliderOptionData) {
-    var value by remember(data.prop) { mutableStateOf(data.numProp.get()?.toFloat() ?: data.min) }
+    var value by remember(data.prop) { mutableStateOf(data.numProp.shown()?.toFloat() ?: data.min) }
 
     fun update(newValue: Float) {
         value = newValue
@@ -40,6 +41,7 @@ fun SliderOption(data: SliderOptionData) {
             min = data.min,
             max = data.max,
             step = if (data.step > 0f) data.step else 1f,
+            format = data.format,
         )
     }
 }

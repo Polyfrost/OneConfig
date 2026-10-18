@@ -1,5 +1,5 @@
 [versions]
-loader = "0.19.3"
+loader = "0.19.5"
 osl = "0.21.1"
 feather_build = "2"
 ploceus = "1.17.4"

@@ -19,7 +19,7 @@ fun TextListOption(data: TextListOptionData) {
     val regex = remember(data.regex) { data.regex?.let { runCatching { Regex(it) }.getOrNull() } }
     fun isValid(value: String) = value.isEmpty() || regex == null || regex.matches(value)
 
-    val state = rememberListEntries(data.prop, data.strings()) { values ->
+    val state = rememberListEntries(data.prop, { data.strings() }) { values ->
         data.setElements(values.filter { it.isNotBlank() && isValid(it) })
     }
 

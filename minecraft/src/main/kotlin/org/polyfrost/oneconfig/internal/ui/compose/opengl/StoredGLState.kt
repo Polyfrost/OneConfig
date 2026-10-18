@@ -267,15 +267,14 @@ class StoredGLState(private val glVersion: Int) {
     }
 
     fun restore() {
+        GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, props.lastDrawFramebuffer[0])
+        GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, props.lastReadFramebuffer[0])
         GL11.glPopAttrib()
         GL11.glPopClientAttrib()
         if (alphaTestEnabled) GlStateManager.enableAlphaTest() else GlStateManager.disableAlphaTest()
         if (depthTestEnabled) GlStateManager.enableDepthTest() else GlStateManager.disableDepthTest()
 
         with(props) {
-            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, lastDrawFramebuffer[0])
-            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, lastReadFramebuffer[0])
-
             if (!isMacOS) {
                 for (unit in 0..7) {
                     GL33.glBindSampler(unit, 0)

@@ -69,6 +69,8 @@ private const val GLOW_BAKE_SCALE = .25f
 private const val GLOW_BLUR_SIGMA = 300f
 private const val GLOW_RADIUS = 500f
 
+internal val PageGutter = 25.dp
+
 private class GlowCache : RememberObserver {
     private var image: Image? = null
     private var width = -1
@@ -194,10 +196,10 @@ fun Shell(
             val isSearching = isModsMenu && searchQuery.isNotBlank()
             Column(
                 modifier = Modifier.weight(1f)
-                    .padding(horizontal = 25.dp, vertical = 19.dp),
+                    .padding(vertical = 19.dp),
                 verticalArrangement = Arrangement.spacedBy(if (isSearching) 0.dp else 19.dp)
             ) {
-                Header()
+                Header(Modifier.padding(horizontal = PageGutter))
                 Box(
                     modifier = Modifier.weight(1f).fillMaxSize()
                         // a dragged mod card is drawn in an overlay that must be able to leave the page

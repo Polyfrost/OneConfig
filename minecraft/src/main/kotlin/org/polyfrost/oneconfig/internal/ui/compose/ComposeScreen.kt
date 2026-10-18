@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.FrameRecomposer
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.registerSkikoComposeImplementation
 import androidx.compose.ui.scene.CanvasLayersComposeScene
 import androidx.compose.ui.scene.ComposeScene
 import androidx.compose.ui.scene.SingleComposeSceneRenderingScope
@@ -69,7 +70,8 @@ import net.minecraft.network.chat.CommonComponents
 //?}
 
 //? if = 1.8.9 {
-/*import com.mojang.blaze3d.platform.GlStateManager
+/*import kotlin.math.sign
+import com.mojang.blaze3d.platform.GlStateManager
 import net.minecraft.client.gui.screens.TitleScreen
 import org.lwjgl.input.Keyboard
 import org.lwjgl.input.Mouse
@@ -272,6 +274,8 @@ abstract class ComposeScreen(
         val recomposer = FrameRecomposer(RenderThreadDispatcher + failureHandler) { sceneDirty = true }
         val scope = SingleComposeSceneRenderingScope { sceneDirty = true }
         val sceneContext = SceneContext { showing }
+        // upstream only registers this from its own scene/window constructors, which we bypass
+        registerSkikoComposeImplementation()
         val scene = try {
             CanvasLayersComposeScene(
                 frameRecomposer = recomposer,
@@ -736,7 +740,7 @@ abstract class ComposeScreen(
     /*override fun handleMouse() {
         val wheel = Mouse.getEventDWheel()
         if (wheel != 0) {
-            mouseScrolled(wheel)
+            mouseScrolled(wheel.sign)
         }
 
         super.handleMouse()

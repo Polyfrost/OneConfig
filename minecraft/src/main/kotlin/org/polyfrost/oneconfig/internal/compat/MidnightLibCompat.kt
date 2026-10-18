@@ -47,7 +47,7 @@ object MidnightLibCompat {
 
     @JvmStatic
     fun onInit(modid: String, config: Class<*>) {
-        if (CompatLoader.nativeLoadedConfigs.contains(modid)) return
+        if (CompatLoader.skipExtraction(modid, config) { onInit(modid, config) }) return
         CompatLoader.requireTranslations {
             runCatching {
                 parseConfig(modid, config)?.let(CompatSnapshots::register)
@@ -74,7 +74,7 @@ object MidnightLibCompat {
         val write = findWriteMethod(config)
         if (write != null) tree.saveFunction = Runnable { runCatching { write.invoke(null, modid) } }
         mod?.extractIconFile()?.let { tree.addMetadata("icon_path", it) }
-        CompatLoader.originalScreenOpener(modid)?.let { tree.addMetadata("open_original_screen", it) }
+        CompatLoader.originalScreenOpener(modid)?.let { tree.addMetadata(CompatLoader.OPEN_ORIGINAL_SCREEN, it) }
 
         val subcategoryByCategory = HashMap<String, String>()
         val propertyByField = HashMap<String, Property<*>>()

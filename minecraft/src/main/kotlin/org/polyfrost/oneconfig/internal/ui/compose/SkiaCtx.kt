@@ -8,6 +8,8 @@ import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.Color
 import org.jetbrains.skia.ColorSpace
 import org.jetbrains.skia.DirectContext
+import org.jetbrains.skia.Image
+import org.jetbrains.skia.ImageInfo
 import org.jetbrains.skia.Surface
 import org.jetbrains.skia.SurfaceColorFormat
 import org.jetbrains.skia.SurfaceOrigin
@@ -134,6 +136,8 @@ object SkiaCtx {
 
     private var hudRealIsGeneral = false
     private var composeRealIsGeneral = false
+
+    private val transparentPixel by lazy { Image.makeRaster(ImageInfo.makeN32Premul(1, 1), ByteArray(4), 4) }
 
     //? if < 1.21.8 {
     /*@Volatile
@@ -419,7 +423,10 @@ object SkiaCtx {
         queuedHudDraws.clear()
         if (draws.isEmpty()) return
         val surface = resolveHudSurface() ?: return
-        if (hudRealIsGeneral) hudTarget?.let { vulkanService?.transitionOffscreenForRendering(it) }
+        if (hudRealIsGeneral) {
+            hudTarget?.let { vulkanService?.transitionSkiaTargetForRendering(it) }
+            hudRealIsGeneral = false
+        }
         flushToTarget(draws, surface)
         hudNeedsSamplingTransition = true
     }
@@ -457,7 +464,10 @@ object SkiaCtx {
         val post = postComposeRender
         val draws = if (post != null) queued + { block.run() } + post else queued + { block.run() }
         val surface = resolveComposeSurface() ?: return
-        if (composeRealIsGeneral) composeTarget?.let { vulkanService?.transitionOffscreenForRendering(it) }
+        if (composeRealIsGeneral) {
+            composeTarget?.let { vulkanService?.transitionSkiaTargetForRendering(it) }
+            composeRealIsGeneral = false
+        }
         flushToTarget(draws, surface, flipY = composeOrigin == SurfaceOrigin.BOTTOM_LEFT)
         composeNeedsSamplingTransition = true
         composeDirty = true
@@ -539,7 +549,7 @@ object SkiaCtx {
         //? >= 1.21.8 {
         wrapper.setGpuTextureView(rt.getColorTextureView())
         if (hudNeedsSamplingTransition) {
-            vulkanService?.transitionOffscreenForSampling(rt)
+            vulkanService?.transitionSkiaTargetForSampling(rt)
             hudNeedsSamplingTransition = false
             hudRealIsGeneral = true
         }
@@ -608,7 +618,7 @@ object SkiaCtx {
         //? >= 1.21.8 {
         wrapper.setGpuTextureView(rt.getColorTextureView())
         if (composeNeedsSamplingTransition) {
-            vulkanService?.transitionOffscreenForSampling(rt)
+            vulkanService?.transitionSkiaTargetForSampling(rt)
             composeNeedsSamplingTransition = false
             composeRealIsGeneral = true
         }
@@ -690,7 +700,7 @@ object SkiaCtx {
                 GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA,
             )
             if (hudNeedsSamplingTransition) {
-                vulkanService?.transitionOffscreenForSampling(rt)
+                vulkanService?.transitionSkiaTargetForSampling(rt)
                 hudNeedsSamplingTransition = false
                 hudRealIsGeneral = true
             }
@@ -777,6 +787,13 @@ object SkiaCtx {
             notifDraw?.invoke()
 
             if (isVulkanMode) {
+                // restoreMainRTLayout assumes Skia left the target in COLOR_ATTACHMENT_OPTIMAL. Skia only
+                // moves it there when a draw survives culling, and a zero-opacity notification frame
+                // leaves none. It can't cull an image by its contents, so this transparent pixel always
+                // runs the pass and changes nothing on screen.
+                if (vulkanService?.mainRTRestoreNeedsColorPass == true) {
+                    mainSurface.canvas.drawImage(transparentPixel, 0f, 0f)
+                }
                 directContext.flushAndSubmit(mainSurface, false)
                 vulkanService?.restoreMainRTLayout()
             } else {

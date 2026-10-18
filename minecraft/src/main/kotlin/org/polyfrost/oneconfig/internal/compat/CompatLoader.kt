@@ -9,7 +9,6 @@ import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.Event
 import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent
-import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
@@ -24,7 +23,8 @@ object CompatLoader {
 
     private val pathFactory: MutableMap<ModInfo, (String) -> String> = mutableMapOf()
 
-    val nativeLoadedConfigs = mutableListOf<String>()
+    // concurrent as compat hooks may fire on other threads while ConfigEntrypoints un-marks a failed mod
+    val nativeLoadedConfigs: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
     // list of packages that contain known configs/ignored paths
     private val illegalPaths = listOf(
@@ -112,9 +112,22 @@ object CompatLoader {
         }
     }
 
+    /**
+     * Whether an extraction for this mod should not run, as its config entrypoint replaces it (queueing [retry] in
+     * case the entrypoint fails) or another compat already loaded its config
+     *
+     * Compat that handles [nativeLoadedConfigs] itself, such as refreshing an already loaded config or always
+     * re-registering its own tree, calls [ConfigEntrypoints.skipExtraction] directly instead and keeps its own check
+     */
+    fun skipExtraction(modId: String?, key: Any, retry: Runnable): Boolean =
+        ConfigEntrypoints.skipExtraction(modId, key, retry) || (modId != null && modId in nativeLoadedConfigs)
+
     fun hasMod(id: String): Boolean = ModInfo.loadedMods.any { it.id == id }
 
     private const val MOD_MENU_CLASS = "com.terraformersmc.modmenu.ModMenu"
+
+    // the tree metadata holding the opener from originalScreenOpener, read by the "open original" button
+    const val OPEN_ORIGINAL_SCREEN = "open_original_screen"
 
     fun originalScreenOpener(modId: String): Runnable? {
         val hasScreen = runCatching {
@@ -155,6 +168,10 @@ object CompatLoader {
 
     private val list: MutableList<Pair<Int, () -> Unit>> = mutableListOf()
 
+    // guarded by list, as the two events may fire on different threads
+    private var resourcesLoaded = false
+    private var entrypointsDecided = false
+
     init {
         ModInfo.loadedMods.forEach { mod ->
             mod.file?.let {
@@ -162,26 +179,53 @@ object CompatLoader {
             }
         }
 
-        register<ResourceFinishedLoading> {
-            val pending = list.sortedBy { (key, _) -> key }
-            list.clear()
-            pending.forEach { (_, value) -> value() }
+        // filtered so a mod whose entrypoint already failed is never marked again
+        nativeLoadedConfigs.addAll(ConfigEntrypoints.providerModIds().filter(ConfigEntrypoints::provides))
+    }
+
+    /**
+     * Called by OneConfig whenever resources finish loading, rather than from a listener registered here, as this
+     * object may only be created after the first load, which on 1.8.9 happens during init
+     */
+    fun onResourcesLoaded() {
+        synchronized(list) { resourcesLoaded = true }
+        runPending()
+    }
+
+    /**
+     * Called once [ConfigEntrypoints] decided which mods keep their configs, which compat waits for as
+     * Mod Menu would otherwise skip a mod whose entrypoint later fails
+     */
+    fun onEntrypointsDecided() {
+        synchronized(list) { entrypointsDecided = true }
+        runPending()
+    }
+
+    // resources usually finish loading after the entrypoints are decided, but on 1.8.9 they load during init
+    // the compat itself runs outside the lock so it never holds it while calling into mods
+    private fun runPending() {
+        var first = false
+        val pending = synchronized(list) {
+            if (!resourcesLoaded || !entrypointsDecided) return
+            first = !bypassDelay
+            bypassDelay = true
+            list.sortedBy { (key, _) -> key }.also { list.clear() }
+        }
+        // logged once so a startup where the compat never ran is easy to spot
+        if (first) LOGGER.info("Running {} queued config compat(s)", pending.size)
+        // one failing compat must not drop the rest, which were already taken off the list
+        pending.forEach { (_, value) ->
+            runCatching(value).onFailure { LOGGER.error("Failed to load a queued config compat", it) }
         }
     }
 
     fun requireTranslations(priority: Int = 0, skip: Boolean = false, init: () -> Unit) {
         if (!skip) markFirstModAsSkip()
-        if (bypassDelay) {
-            init()
-            return
+        // checked under the lock so an init added while runPending swaps the list is not lost
+        val queued = synchronized(list) {
+            if (!bypassDelay) list.add(priority to init)
+            !bypassDelay
         }
-        list.add(priority to init)
-    }
-
-    private inline fun <reified T> register(noinline runnable: () -> Unit) where T : Event {
-        EventManager.register(T::class.java) { _ ->
-            bypassDelay = true
-            runnable.invoke()
-        }
+        if (!queued) init()
     }
 }

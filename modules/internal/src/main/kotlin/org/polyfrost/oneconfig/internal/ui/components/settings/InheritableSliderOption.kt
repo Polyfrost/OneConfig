@@ -150,6 +150,7 @@ fun InheritableSliderOption(data: InheritableSliderOptionData) {
             max = data.max,
             step = if (data.step > 0f) data.step else 1f,
             width = 80.dp,
+            format = data.format,
         )
         InheritChip(label = data.inheritLabel, active = inherited) {
             if (!inherited) {

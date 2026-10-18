@@ -74,7 +74,7 @@ private class PlatformScreenReaderImpl : PlatformScreenReader {
 }
 
 @OptIn(InternalComposeUiApi::class, ExperimentalComposeUiApi::class)
-private class PlatformImpl : PlatformContext {
+private class PlatformImpl : PlatformContext by PlatformContext.Empty() {
     override val windowInfo: WindowInfo = WindowInfoImpl()
     override val screenReader: PlatformScreenReader = PlatformScreenReaderImpl()
     override val inputModeManager: InputModeManager = InputModeManagerImpl()

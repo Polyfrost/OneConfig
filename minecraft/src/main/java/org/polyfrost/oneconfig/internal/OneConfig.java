@@ -57,7 +57,10 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsRenderer;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
+import org.polyfrost.oneconfig.internal.compat.CompatLoader;
+import org.polyfrost.oneconfig.internal.compat.ConfigEntrypoints;
 import org.polyfrost.oneconfig.internal.compat.KaleidoCompat;
+import org.polyfrost.oneconfig.internal.compat.toggle.ModGates;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories;
@@ -187,6 +190,15 @@ public class OneConfig
                 || scoreboard.getDisplayObjective(DisplaySlot.LIST) != null;
     }
 
+    public static boolean isDebugScreenVisible() {
+        Minecraft minecraft = Minecraft.getInstance();
+        //? if >= 1.21.9 {
+        //~ if < 1.21.11 'isOverlayVisible' -> 'isF3Visible'
+        if (!minecraft.debugEntries.isOverlayVisible()) return false;
+        //?}
+        return minecraft.getDebugOverlay().showDebugScreen();
+    }
+
     private static boolean legacyHudOffscreenReady;
 
     //~ if = 1.8.9 '(GuiGraphicsExtractor graphics)' -> '()'
@@ -216,7 +228,7 @@ public class OneConfig
         //? } else {
         /*HudManager.isGuiHidden = Minecraft.getInstance().options.hideGui;
         *///? }
-        HudManager.isDebugScreenVisible = Minecraft.getInstance().getDebugOverlay().showDebugScreen();
+        HudManager.isDebugScreenVisible = isDebugScreenVisible();
         HudManager.isTabListVisible = isTabListVisible();
         HudManager.isGuiScreenOpen = Platform.screen().current() != null;
         HudManager.isChatScreenOpen = Platform.screen().current() instanceof ChatScreen;
@@ -302,8 +314,18 @@ public class OneConfig
                 });
         EventManager.register(
                 InitializationEvent.class, e -> {
-                    ConfigManager.setProfileSwitchDispatcher(Platform.screen()::runOnUiThread);
-                    ConfigManager.initialize();
+                    try {
+                        ConfigManager.setProfileSwitchDispatcher(Platform.screen()::runOnUiThread);
+                        try {
+                            ConfigEntrypoints.registerAll();
+                        } catch (Throwable t) {
+                            LOGGER.error("Failed to run the OneConfig config entrypoints", t);
+                        }
+                        ConfigManager.initialize();
+                    } finally {
+                        // compat stays queued until this runs
+                        ConfigEntrypoints.finishRegistration();
+                    }
                     KeybindConflicts.unbindMinecraftKeybinds();
                     CompatSnapshots.setDispatcher(r -> {
                         Minecraft mc = Minecraft.getInstance();
@@ -313,6 +335,7 @@ public class OneConfig
                     MinecraftKeybindProfiles.init();
                     ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
                     BuiltinHudRegistrar.register();
+                    ModGates.register();
                     //? if > 1.8.9 {
                     FirmamentHudCompat.register();
                     ArmorHudCompat.register();
@@ -327,6 +350,7 @@ public class OneConfig
         });
         // after loading finishes so translation keys are available
         EventManager.register(ResourceFinishedLoading.class, e -> SearchCorpus.INSTANCE.init());
+        EventManager.register(ResourceFinishedLoading.class, e -> CompatLoader.INSTANCE.onResourcesLoaded());
 //        //#if MC < 1.13
 //        // this is cringe but is better than the alternative of checking every frame in a mixin (that's how vanilla does it lol)
 //        AtomicBoolean active = new AtomicBoolean(false);

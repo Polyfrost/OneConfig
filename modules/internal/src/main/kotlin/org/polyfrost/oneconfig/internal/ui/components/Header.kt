@@ -78,7 +78,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
-fun Header() {
+fun Header(modifier: Modifier = Modifier) {
     val controller = LocalNavController.wrapper
     val closeRequest = LocalCloseRequest.current
     val backStackEntry by LocalNavController.current.currentBackStackEntryAsState()
@@ -91,7 +91,7 @@ fun Header() {
     val canGoForward = controller.canGoForward()
 
     Row(
-        modifier = Modifier.fillMaxWidth().height(36.dp),
+        modifier = modifier.fillMaxWidth().height(36.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {

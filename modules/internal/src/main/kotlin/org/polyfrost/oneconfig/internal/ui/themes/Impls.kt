@@ -90,6 +90,7 @@ val PolyGlassDark = UITheme(
 
     Color(0xFF000000),
     Color(0xFFFFFFFF),
+    Color(0xFFFFD700),
 
     true,
 
@@ -100,8 +101,6 @@ val PolyGlassDark = UITheme(
     RoundedCornerShape(Radii.SM),
     RoundedCornerShape(Radii.MD),
     CircleShape,
-    RoundedCornerShape(4.dp),
-    RoundedCornerShape(8.dp),
 
     UIBranding("assets/oneconfig/brand/oneconfig.svg"),
     UITypography(
@@ -135,6 +134,7 @@ val PolyGlassLight = UITheme(
 
     Color(0xFF000000),
     Color(0xFF1A2229),
+    Color(0xFFB57D00),
 
     true,
 
@@ -145,8 +145,6 @@ val PolyGlassLight = UITheme(
     RoundedCornerShape(Radii.SM),
     RoundedCornerShape(Radii.MD),
     CircleShape,
-    RoundedCornerShape(4.dp),
-    RoundedCornerShape(8.dp),
 
     UIBranding("assets/oneconfig/brand/oneconfig-light.svg"),
     UITypography(
@@ -179,11 +177,10 @@ val MinecraftDark = UITheme(
 
     Color(0xFF000000),
     Color(0xFFFFFFFF),
+    Color(0xFFFFD700),
 
     false,
 
-    RoundedCornerShape(0.dp),
-    RoundedCornerShape(0.dp),
     RoundedCornerShape(0.dp),
     RoundedCornerShape(0.dp),
     RoundedCornerShape(0.dp),
@@ -200,7 +197,7 @@ val MinecraftDark = UITheme(
         )
     ),
     MinecraftIconOverrides
-)
+).withShapes(RoundedCornerShape(0.dp), RoundedCornerShape(0.dp))
 val MinecraftLight = UITheme(
     "minecraft-light", "Minecraft Light",
 
@@ -218,11 +215,10 @@ val MinecraftLight = UITheme(
 
     Color(0xFF000000),
     Color(0xFF1A2229),
+    Color(0xFFB57D00),
 
     false,
 
-    RoundedCornerShape(0.dp),
-    RoundedCornerShape(0.dp),
     RoundedCornerShape(0.dp),
     RoundedCornerShape(0.dp),
     RoundedCornerShape(0.dp),
@@ -239,4 +235,4 @@ val MinecraftLight = UITheme(
         )
     ),
     MinecraftIconOverrides
-)
+).withShapes(RoundedCornerShape(0.dp), RoundedCornerShape(0.dp))
