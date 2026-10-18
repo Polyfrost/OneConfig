@@ -228,7 +228,8 @@ public class OneConfigCollector extends ReflectiveCollector {
             case ColorList color -> {
                 if (!color.alpha()) property.addMetadata("noAlpha", Unit.INSTANCE);
             }
-            case ItemList itemList -> validateItemListField(field, itemList);
+            case ItemList itemList -> validateIdListField(field, "@ItemList", itemList.maxEntries());
+            case EffectList effectList -> validateIdListField(field, "@EffectList", effectList.maxEntries());
             default -> {}
         }
 
@@ -276,20 +277,20 @@ public class OneConfigCollector extends ReflectiveCollector {
         ));
     }
 
-    private void validateItemListField(Field field, ItemList annotation) {
+    private void validateIdListField(Field field, String annotation, int maxEntries) {
         Class<?> type = field.getType();
         boolean stringArray = type.isArray() && type.getComponentType() == String.class;
         boolean stringList = List.class.isAssignableFrom(type) && hasStringListElements(field.getGenericType());
         if (!stringArray && !stringList) {
             throw new IllegalArgumentException(String.format(
-                "@ItemList field '%s' must be a String[] or List<String>, but was %s.",
-                field.getName(), field.getGenericType().getTypeName()
+                "%s field '%s' must be a String[] or List<String>, but was %s.",
+                annotation, field.getName(), field.getGenericType().getTypeName()
             ));
         }
-        if (annotation.maxEntries() < 0) {
+        if (maxEntries < 0) {
             throw new IllegalArgumentException(String.format(
-                "@ItemList field '%s' has a negative maxEntries value (%s).",
-                field.getName(), annotation.maxEntries()
+                "%s field '%s' has a negative maxEntries value (%s).",
+                annotation, field.getName(), maxEntries
             ));
         }
     }

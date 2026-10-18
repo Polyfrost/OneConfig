@@ -10,6 +10,7 @@ import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.api.config.v1.ValueFormatter
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
+import org.polyfrost.oneconfig.internal.ui.components.effect.normalizeEffectIds
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedString
 import org.polyfrost.oneconfig.internal.ui.components.localizedText
@@ -211,16 +212,22 @@ class TextListOptionData(prop: Property<*>) : ListOptionData(prop) {
 }
 
 open class TileListOptionData(prop: Property<*>) : ListOptionData(prop) {
-    fun ids(): List<String> = normalizeIds(
+    fun ids(): List<String> = normalize(
         elements().mapNotNull { it as? String }
     )
 
     fun setIds(values: List<String>) = prop.setIdListElements(
-        normalizeIds(values)
+        normalize(values)
     )
+
+    protected open fun normalize(ids: Iterable<String>): List<String> = normalizeIds(ids)
 }
 
 class ItemListOptionData(prop: Property<*>) : TileListOptionData(prop)
+
+class EffectListOptionData(prop: Property<*>) : TileListOptionData(prop) {
+    override fun normalize(ids: Iterable<String>): List<String> = normalizeEffectIds(ids)
+}
 
 class FileOptionData(prop: Property<*>) : OptionData(prop) {
     val placeholder: String? get() = localizedString(prop.getMetadata("placeholderKey"), prop.getMetadata<String>("placeholder")).takeIf { it.isNotBlank() }

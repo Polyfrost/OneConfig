@@ -7,6 +7,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.ColorListOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.ColorOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.DraggableListOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.DropdownOption
+import org.polyfrost.oneconfig.internal.ui.components.settings.EffectListOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.FileListOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.FileOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.InfoOption
@@ -58,6 +59,9 @@ internal object BuiltinVisualizers {
         })
         Visualizer.register(Visualizer.ItemListVisualizer::class.java, Visualizer { prop ->
             ItemListOption(ItemListOptionData(prop))
+        })
+        Visualizer.register(Visualizer.EffectListVisualizer::class.java, Visualizer { prop ->
+            EffectListOption(EffectListOptionData(prop))
         })
         Visualizer.register(Visualizer.FileVisualizer::class.java, Visualizer { prop ->
             FileOption(FileOptionData(prop))

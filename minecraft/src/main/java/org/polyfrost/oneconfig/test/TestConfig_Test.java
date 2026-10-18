@@ -200,6 +200,25 @@ public class TestConfig_Test extends Config {
     )
     public static String[] singleItem = {"minecraft:ender_pearl"};
 
+    @EffectList(
+            title = "Effect List",
+            description = "Search registered status effects and add several of them to an ordered list.",
+            category = "Lists",
+            subcategory = "Effect List",
+            maxEntries = 6
+    )
+    public static String[] effectList = {"minecraft:speed", "minecraft:night_vision"};
+
+    @EffectList(
+            title = "Single Effect",
+            description = "The same picker limited to one selected effect.",
+            category = "Lists",
+            subcategory = "Effect List",
+            maxEntries = 1,
+            reorderable = false
+    )
+    public static String[] singleEffect = {"minecraft:strength"};
+
     @TestTilePicker_Test(
             title = "Tile Picker",
             description = "Search a set of colors and pick up to three of them.",

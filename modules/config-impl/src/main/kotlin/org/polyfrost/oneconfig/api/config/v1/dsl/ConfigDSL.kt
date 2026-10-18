@@ -104,6 +104,9 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
     /** Namespaced item IDs such as `minecraft:diamond`, a `maxEntries` of 1 makes a single selector */
     fun itemList(vararg default: String): ListProp<Array<String>> = put(ListProp(arrayOf(*default), Array<String>::class.java), Visualizer.ItemListVisualizer())
 
+    /** Namespaced status effect IDs such as `minecraft:speed`, a `maxEntries` of 1 makes a single selector */
+    fun effectList(vararg default: String): ListProp<Array<String>> = put(ListProp(arrayOf(*default), Array<String>::class.java), Visualizer.EffectListVisualizer())
+
     /** Moves the saved value of [this] from any of [names] when loading older configs, needs [Prop.id] set first */
     fun Prop<*>.previousNames(vararg names: String) {
         val id = requireNotNull(id) { "previousNames needs the property id to be set first" }
