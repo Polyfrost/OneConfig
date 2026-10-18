@@ -220,6 +220,16 @@ class ItemListOptionData(prop: Property<*>) : ListOptionData(prop) {
     )
 }
 
+class TileListOptionData(prop: Property<*>) : ListOptionData(prop) {
+    fun ids(): List<String> = normalizeItemIds(
+        elements().mapNotNull { it as? String }
+    )
+
+    fun setIds(values: List<String>) = prop.setItemListElements(
+        normalizeItemIds(values)
+    )
+}
+
 class FileOptionData(prop: Property<*>) : OptionData(prop) {
     val placeholder: String? get() = localizedString(prop.getMetadata("placeholderKey"), prop.getMetadata<String>("placeholder")).takeIf { it.isNotBlank() }
     val directory: Boolean get() = prop.getMetadata("directory") ?: false
