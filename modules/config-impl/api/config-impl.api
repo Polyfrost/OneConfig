@@ -87,14 +87,27 @@ public final class org/polyfrost/oneconfig/api/config/v1/Config$Category {
 	public fun toString ()Ljava/lang/String;
 }
 
+public abstract interface class org/polyfrost/oneconfig/api/config/v1/ConfigEntrypoint {
+	public static final field ENTRYPOINT Ljava/lang/String;
+	public abstract fun registerConfigs (Lorg/polyfrost/oneconfig/api/config/v1/ConfigEntrypoint$Context;)V
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/config/v1/ConfigEntrypoint$Context {
+	public abstract fun modId ()Ljava/lang/String;
+	public abstract fun originalScreen (Ljava/lang/Runnable;)V
+	public abstract fun register (Lorg/polyfrost/oneconfig/api/config/v1/Config;)Lorg/polyfrost/oneconfig/api/config/v1/Config;
+}
+
 public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public static final field PROFILES_DIR Ljava/nio/file/Path;
 	public static final field PROFILE_LOCAL_METADATA Ljava/lang/String;
 	public static fun active ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
 	public static fun activeProfile ()Ljava/lang/String;
+	public static fun addConfigSubmissionListener (Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager$ConfigSubmissionListener;)V
 	public static fun addProfileChangeListener (Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager$ProfileChangeListener;)V
 	public static fun addTreeRegistrationListener (Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager$TreeRegistrationListener;)V
 	public static fun backup ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
+	public static fun cancelInitialization (Lorg/polyfrost/oneconfig/api/config/v1/Config;)V
 	public static fun cloneProfile (Ljava/lang/String;Ljava/lang/String;)V
 	public static fun collect (Ljava/lang/Object;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public static fun core ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
@@ -116,6 +129,7 @@ public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public static fun isRebindingProfiles ()Z
 	public fun load (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public static fun openProfile (Ljava/lang/String;)V
+	public static fun pendingConfigs ()Ljava/util/List;
 	public static fun profileDir (Ljava/lang/String;)Ljava/nio/file/Path;
 	public static fun profileIcon (Ljava/lang/String;)Ljava/lang/String;
 	public static fun profileIcons ()Ljava/util/Map;
@@ -136,6 +150,10 @@ public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public static fun submitForInitialization (Lorg/polyfrost/oneconfig/api/config/v1/Config;)V
 	public fun trees ()Ljava/util/Collection;
 	public fun unregister (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/config/v1/ConfigManager$ConfigSubmissionListener {
+	public abstract fun onConfigSubmitted (Lorg/polyfrost/oneconfig/api/config/v1/Config;)V
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/config/v1/ConfigManager$ProfileChangeListener {

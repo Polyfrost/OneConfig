@@ -69,6 +69,7 @@ object ClothConfigCompat {
         runCatching {
             val mod = CompatLoader.findFirstMod()
             val key = mod?.let { "${it.id}|${screenKey(builder)}" }
+            if (ConfigEntrypoints.skipExtraction(mod?.id, builder) { parseClothBuilder(builder) }) return
             if (mod != null && CompatLoader.nativeLoadedConfigs.contains(mod.id)) {
                 screens[key]?.let { refresh(builder, it) }
                 return

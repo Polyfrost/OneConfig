@@ -38,6 +38,7 @@ internal object AxolotlClientConfigCompat {
         runCatching {
             if (!seen.add(manager)) return
             val mod = CompatLoader.findFirstMod()
+            if (ConfigEntrypoints.skipExtraction(mod?.id, manager) { seen.remove(manager); addManager(manager) }) return
             if (mod != null && mod.id !in ownMods && CompatLoader.nativeLoadedConfigs.contains(mod.id)) return
             mod?.id?.let(ownMods::add)
             CompatLoader.requireTranslations(skip = true) {
@@ -78,7 +79,7 @@ internal object AxolotlClientConfigCompat {
         })
         mod?.extractIconFile()?.let { tree.addMetadata("icon_path", it) }
         mod?.id?.let { id ->
-            CompatLoader.originalScreenOpener(id)?.let { tree.addMetadata("open_original_screen", it) }
+            CompatLoader.originalScreenOpener(id)?.let { tree.addMetadata(CompatLoader.OPEN_ORIGINAL_SCREEN, it) }
         }
 
         val usedIds = HashSet<String>()

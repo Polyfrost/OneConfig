@@ -124,7 +124,8 @@ object ModMenuCompat {
     // a mod can ship both a native OneConfig config and a Mod Menu entrypoint
     // the native one registers under its file id "legacyskyblock.json" while Mod Menu uses the bare
     // loader id "legacyskyblock" so the differing ids would show as two cards
-    // nativeLoadedConfigs only tracks foreign-compat configs so detect the native tree from the registry
+    // nativeLoadedConfigs tracks foreign-compat configs and mods with a config entrypoint, not other native
+    // configs, so detect the native tree from the registry
     private fun hasNativeOcConfig(modId: String): Boolean = runCatching {
         ConfigManager.active().trees().any { tree ->
             val id = tree.id ?: return@any false
@@ -144,7 +145,14 @@ object ModMenuCompat {
     }
 
     private fun Mod.aliasNativeChildConfig(child: Mod) {
-        val tree = runCatching { ConfigManager.active().get(child.id) }.getOrNull() ?: return
+        // a child with a config entrypoint registers its trees under its own config ids rather than its mod id
+        val trees = runCatching {
+            listOfNotNull(ConfigManager.active().get(child.id)) + ConfigEntrypoints.ownedTrees(child.id)
+        }.getOrDefault(emptyList()).distinct()
+        if (trees.isEmpty()) return
+        // several trees keep their own titles and icons so their cards can be told apart
+        if (trees.size > 1) return
+        val tree = trees.single()
         tree.addMetadata("mod_card_title", name)
         ModInfo.loadedMods.firstOrNull { it.id == id }?.extractIconFile()?.let { iconPath ->
             tree.addMetadata("mod_card_icon_path", iconPath)
