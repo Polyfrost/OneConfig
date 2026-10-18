@@ -130,6 +130,7 @@ fun DropdownOption(data: DropdownOptionData) {
                     modifier = Modifier
                         .heightIn(max = 280.dp)
                         .fadingEdges(scrollState, theme.componentBackground)
+                        .wheelScroll(scrollState)
                         .verticalScroll(scrollState)
                         .padding(MenuPadding)
                         .fillMaxWidth(),
