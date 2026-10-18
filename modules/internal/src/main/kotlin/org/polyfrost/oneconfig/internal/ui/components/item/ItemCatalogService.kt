@@ -11,9 +11,6 @@ import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.Rect
 import org.polyfrost.oneconfig.api.hud.v1.LocalHud
 import org.polyfrost.oneconfig.internal.ui.components.picker.PickerEntry
-import org.polyfrost.oneconfig.internal.ui.components.picker.filterEntries
-import org.polyfrost.oneconfig.internal.ui.components.picker.normalizeIds
-import org.polyfrost.oneconfig.internal.ui.components.picker.toggleEntry
 
 /** A stable item registry ID and the localized name shown to the user */
 data class ItemDescriptor(override val id: String, override val displayName: String) : PickerEntry
@@ -101,13 +98,3 @@ fun <T : ItemIconHandle> rememberItemIconHandle(key: Any?, open: (forHud: Boolea
     }
     return icon
 }
-
-fun normalizeItemIds(ids: Iterable<String>): List<String> = normalizeIds(ids)
-
-fun filterItems(items: List<ItemDescriptor>, query: String): List<ItemDescriptor> = filterEntries(items, query)
-
-fun toggleItem(
-    selected: List<String>,
-    id: String,
-    maxEntries: Int,
-): List<String> = toggleEntry(normalizeItemIds(selected), id, maxEntries)

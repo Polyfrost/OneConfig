@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
-import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.settings.TileListOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.dropdown.SimpleDropdownMenu
@@ -42,54 +41,23 @@ fun <T : PickerEntry> TileListOption(
     searchPlaceholderKey: String = PickerStrings.Search,
     emptyKey: String = PickerStrings.Empty,
     unavailableKey: String = PickerStrings.Unavailable,
-) {
-    PickerListOption(
-        prop = data.prop,
-        ids = data::ids,
-        setIds = data::setIds,
-        maxEntries = data.maxEntries,
-        reorderable = data.reorderable,
-        addText = data.addText,
-        entries = entries,
-        icon = icon,
-        rowIcon = { _, entry, modifier ->
-            if (entry != null) icon(entry, modifier, 1f)
-            else Icon("eye-off", modifier = modifier.padding(5.dp), color = LocalTheme.current.textColorSecondary)
-        },
-        titleKey = titleKey,
-        searchPlaceholderKey = searchPlaceholderKey,
-        emptyKey = emptyKey,
-        unavailableKey = unavailableKey,
-    )
-}
-
-@Composable
-internal fun <T : PickerEntry> PickerListOption(
-    prop: Property<*>,
-    ids: () -> List<String>,
-    setIds: (List<String>) -> Unit,
-    maxEntries: Int,
-    reorderable: Boolean,
-    addText: Any,
-    entries: List<T>,
-    icon: PickerTileIcon<T>,
-    rowIcon: @Composable (id: String, entry: T?, modifier: Modifier) -> Unit,
-    titleKey: String?,
-    searchPlaceholderKey: String,
-    emptyKey: String,
-    unavailableKey: String,
+    rowIcon: @Composable (id: String, entry: T?, modifier: Modifier) -> Unit = { _, entry, modifier ->
+        if (entry != null) icon(entry, modifier, 1f)
+        else Icon("eye-off", modifier = modifier.padding(5.dp), color = LocalTheme.current.textColorSecondary)
+    },
 ) {
     val theme = LocalTheme.current
+    val maxEntries = data.maxEntries
     val byId = remember(entries) { entries.associateBy(PickerEntry::id) }
-    val state = rememberListEntries(prop, ids) { setIds(it) }
-    var expanded by remember(prop) { mutableStateOf(false) }
+    val state = rememberListEntries(data.prop, { data.ids() }) { data.setIds(it) }
+    var expanded by remember(data.prop) { mutableStateOf(false) }
 
     Box {
         ListOptionContainer(
             state = state,
-            reorderable = reorderable,
+            reorderable = data.reorderable,
             maxEntries = maxEntries,
-            addText = addText,
+            addText = data.addText,
             onAdd = { expanded = true },
             showAddWhenFull = true,
             entryHeight = TileRowHeight,

@@ -86,13 +86,14 @@ class TestTilePickerVisualizer_Test : Visualizer {
     @Composable
     override fun visualize(prop: Property<*>) {
         val theme = LocalTheme.current
-        var selected by remember(prop) { mutableStateOf((prop.get() as? Array<*>)?.filterIsInstance<String>().orEmpty()) }
+        fun stored() = (prop.get() as? Array<*>)?.filterIsInstance<String>().orEmpty()
+        var selected by remember(prop) { mutableStateOf(stored()) }
 
         TilePicker(
             entries = Swatches,
             selected = selected,
             onToggle = { id ->
-                selected = toggleEntry(selected, id, MAX_SWATCHES)
+                selected = toggleEntry(stored(), id, MAX_SWATCHES)
                 @Suppress("UNCHECKED_CAST")
                 (prop as Property<Any>).set(selected.toTypedArray())
             },

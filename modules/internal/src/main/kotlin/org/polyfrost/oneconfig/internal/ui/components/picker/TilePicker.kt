@@ -204,6 +204,7 @@ fun <T : PickerEntry> TileGrid(
     onClick: ((T) -> Unit)? = null,
 ) {
     val gridState = rememberLazyGridState()
+    val unique = remember(entries) { entries.distinctBy(PickerEntry::id) }
     val scrollbarStyle = LocalScrollbarStyle.current.copy(thickness = TileGridScrollbarThickness)
     CompositionLocalProvider(LocalScrollbarStyle provides scrollbarStyle) {
         ScrollbarBox(
@@ -220,7 +221,7 @@ fun <T : PickerEntry> TileGrid(
                 horizontalArrangement = Arrangement.spacedBy(spacing),
                 verticalArrangement = Arrangement.spacedBy(spacing),
             ) {
-                items(entries, key = PickerEntry::id) { entry ->
+                items(unique, key = PickerEntry::id) { entry ->
                     PickerTile(
                         entry,
                         icon,
@@ -378,7 +379,7 @@ fun <T : PickerEntry> TilePicker(
         }
 
         val density = LocalDensity.current
-        var stableHeight by remember(entries) { mutableStateOf(0.dp) }
+        var stableHeight by remember(entries, gridMaxHeight) { mutableStateOf(0.dp) }
         Box(
             Modifier.fillMaxWidth().heightIn(min = stableHeight).onSizeChanged {
                 val height = with(density) { it.height.toDp() }
