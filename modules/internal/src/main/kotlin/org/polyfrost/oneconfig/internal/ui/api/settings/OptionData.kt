@@ -10,10 +10,10 @@ import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.api.config.v1.ValueFormatter
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
-import org.polyfrost.oneconfig.internal.ui.components.item.normalizeItemIds
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedString
 import org.polyfrost.oneconfig.internal.ui.components.localizedText
+import org.polyfrost.oneconfig.internal.ui.components.picker.normalizeIds
 import org.polyfrost.oneconfig.internal.ui.components.settings.formatSpinnerValue
 import org.polyfrost.oneconfig.internal.ui.components.settings.toNumberType
 
@@ -210,25 +210,17 @@ class TextListOptionData(prop: Property<*>) : ListOptionData(prop) {
     fun strings(): List<String> = elements().map { it?.toString() ?: "" }
 }
 
-class ItemListOptionData(prop: Property<*>) : ListOptionData(prop) {
-    fun ids(): List<String> = normalizeItemIds(
+open class TileListOptionData(prop: Property<*>) : ListOptionData(prop) {
+    fun ids(): List<String> = normalizeIds(
         elements().mapNotNull { it as? String }
     )
 
-    fun setIds(values: List<String>) = prop.setItemListElements(
-        normalizeItemIds(values)
+    fun setIds(values: List<String>) = prop.setIdListElements(
+        normalizeIds(values)
     )
 }
 
-class TileListOptionData(prop: Property<*>) : ListOptionData(prop) {
-    fun ids(): List<String> = normalizeItemIds(
-        elements().mapNotNull { it as? String }
-    )
-
-    fun setIds(values: List<String>) = prop.setItemListElements(
-        normalizeItemIds(values)
-    )
-}
+class ItemListOptionData(prop: Property<*>) : TileListOptionData(prop)
 
 class FileOptionData(prop: Property<*>) : OptionData(prop) {
     val placeholder: String? get() = localizedString(prop.getMetadata("placeholderKey"), prop.getMetadata<String>("placeholder")).takeIf { it.isNotBlank() }
@@ -456,7 +448,7 @@ private fun Property<*>.setListElements(values: List<Any?>) {
 }
 
 @Suppress("UNCHECKED_CAST")
-private fun Property<*>.setItemListElements(values: List<String>) {
+private fun Property<*>.setIdListElements(values: List<String>) {
     if (type.isArray) {
         (this as Property<Any>).set(values.toTypedArray())
         return

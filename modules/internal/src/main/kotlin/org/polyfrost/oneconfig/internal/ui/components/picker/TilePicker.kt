@@ -9,7 +9,6 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -44,6 +43,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -376,42 +377,33 @@ fun <T : PickerEntry> TilePicker(
             )
         }
 
-        BoxWithConstraints(Modifier.fillMaxWidth()) {
-            val height = if (entries.isEmpty()) {
-                minOf(gridMaxHeight, PickerMessageHeight)
+        val density = LocalDensity.current
+        var stableHeight by remember(entries) { mutableStateOf(0.dp) }
+        Box(
+            Modifier.fillMaxWidth().heightIn(min = stableHeight).onSizeChanged {
+                val height = with(density) { it.height.toDp() }
+                if (height > stableHeight) stableHeight = height
+            },
+        ) {
+            if (filtered.isEmpty()) {
+                PickerMessage(emptyKey, height = stableHeight.takeIf { it > 0.dp } ?: minOf(gridMaxHeight, PickerMessageHeight))
             } else {
-                fittedGridHeight(entries.size, maxWidth.value, cellSize.value, TileGridSpacing.value, gutter.value, gridMaxHeight.value).dp
-            }
-            Box(Modifier.fillMaxWidth().height(height)) {
-                when {
-                    entries.isEmpty() || filtered.isEmpty() -> PickerMessage(emptyKey, height = height)
-                    else -> TileGrid(
-                        entries = filtered,
-                        icon = icon,
-                        selected = { it.id in selected },
-                        enabled = { canSelect(selected, it.id, maxEntries) },
-                        modifier = Modifier.fillMaxSize(),
-                        cellSize = cellSize,
-                        maxHeight = gridMaxHeight,
-                        gutter = gutter,
-                        onClick = { onToggle(it.id) },
-                    )
-                }
+                TileGrid(
+                    entries = filtered,
+                    icon = icon,
+                    selected = { it.id in selected },
+                    enabled = { canSelect(selected, it.id, maxEntries) },
+                    cellSize = cellSize,
+                    maxHeight = gridMaxHeight,
+                    gutter = gutter,
+                    onClick = { onToggle(it.id) },
+                )
             }
         }
     }
 }
 
 private val PickerMessageHeight = 120.dp
-
-fun fittedGridHeight(count: Int, width: Float, cellSize: Float, spacing: Float, gutter: Float, maxHeight: Float): Float {
-    if (count <= 0) return 0f
-    val available = (width - gutter * 2).coerceAtLeast(cellSize)
-    val columns = ((available + spacing) / (cellSize + spacing)).toInt().coerceAtLeast(1)
-    val tile = (available - spacing * (columns - 1)) / columns
-    val rows = (count + columns - 1) / columns
-    return minOf(rows * tile + (rows - 1) * spacing + 1f, maxHeight)
-}
 
 /** Centered message for empty and unavailable states */
 @Composable
@@ -438,11 +430,17 @@ fun canSelect(selected: List<String>, id: String, maxEntries: Int): Boolean =
     id in selected || maxEntries <= 0 || maxEntries == 1 || selected.size < maxEntries
 
 fun toggleEntry(selected: List<String>, id: String, maxEntries: Int): List<String> {
-    if (id in selected) return selected - id
+    val current = selected.distinct()
+    if (id in current) return current - id
     if (maxEntries == 1) return listOf(id)
-    if (maxEntries > 0 && selected.size >= maxEntries) return selected
-    return selected + id
+    if (maxEntries > 0 && current.size >= maxEntries) return current
+    return current + id
 }
+
+fun normalizeIds(ids: Iterable<String>): List<String> = ids
+    .map(String::trim)
+    .filter(String::isNotEmpty)
+    .distinct()
 
 fun <T : PickerEntry> filterEntries(entries: List<T>, query: String): List<T> {
     val terms = query.trim().lowercase(Locale.ROOT).split(Regex("\\s+")).filter(String::isNotEmpty)

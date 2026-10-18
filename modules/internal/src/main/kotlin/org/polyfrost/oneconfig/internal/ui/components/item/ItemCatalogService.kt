@@ -12,6 +12,7 @@ import org.jetbrains.skia.Rect
 import org.polyfrost.oneconfig.api.hud.v1.LocalHud
 import org.polyfrost.oneconfig.internal.ui.components.picker.PickerEntry
 import org.polyfrost.oneconfig.internal.ui.components.picker.filterEntries
+import org.polyfrost.oneconfig.internal.ui.components.picker.normalizeIds
 import org.polyfrost.oneconfig.internal.ui.components.picker.toggleEntry
 
 /** A stable item registry ID and the localized name shown to the user */
@@ -101,10 +102,7 @@ fun <T : ItemIconHandle> rememberItemIconHandle(key: Any?, open: (forHud: Boolea
     return icon
 }
 
-fun normalizeItemIds(ids: Iterable<String>): List<String> = ids
-    .map(String::trim)
-    .filter(String::isNotEmpty)
-    .distinct()
+fun normalizeItemIds(ids: Iterable<String>): List<String> = normalizeIds(ids)
 
 fun filterItems(items: List<ItemDescriptor>, query: String): List<ItemDescriptor> = filterEntries(items, query)
 

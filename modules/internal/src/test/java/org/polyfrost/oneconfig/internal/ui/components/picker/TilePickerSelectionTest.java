@@ -35,6 +35,7 @@ class TilePickerSelectionTest {
             List.of("example:red_tag", "example:blue_tag"),
             TilePickerKt.toggleEntry(List.of("example:red_tag", "example:blue_tag"), "other:green_tag", 2)
         );
+        assertEquals(List.of(), TilePickerKt.toggleEntry(List.of("example:red_tag", "example:red_tag"), "example:red_tag", 0));
     }
 
     @Test
@@ -43,14 +44,5 @@ class TilePickerSelectionTest {
         assertTrue(TilePickerKt.canSelect(full, "example:red_tag", 2));
         assertFalse(TilePickerKt.canSelect(full, "other:green_tag", 2));
         assertTrue(TilePickerKt.canSelect(full, "other:green_tag", 0));
-    }
-
-    @Test
-    void fitsGridHeightToTheEntriesUpToTheCap() {
-        float width = 218f + 12f * 2;
-        assertEquals(51f, TilePickerKt.fittedGridHeight(3, width, 44f, 6f, 12f, 300f), 0.01f);
-        assertEquals(51f + 56f, TilePickerKt.fittedGridHeight(5, width, 44f, 6f, 12f, 300f), 0.01f);
-        assertEquals(300f, TilePickerKt.fittedGridHeight(100, width, 44f, 6f, 12f, 300f), 0.01f);
-        assertEquals(0f, TilePickerKt.fittedGridHeight(0, width, 44f, 6f, 12f, 300f), 0.01f);
     }
 }

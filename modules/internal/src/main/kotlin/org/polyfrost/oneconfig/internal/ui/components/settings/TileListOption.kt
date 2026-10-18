@@ -43,7 +43,6 @@ fun <T : PickerEntry> TileListOption(
     emptyKey: String = PickerStrings.Empty,
     unavailableKey: String = PickerStrings.Unavailable,
 ) {
-    val byId = remember(entries) { entries.associateBy(PickerEntry::id) }
     PickerListOption(
         prop = data.prop,
         ids = data::ids,
@@ -53,8 +52,7 @@ fun <T : PickerEntry> TileListOption(
         addText = data.addText,
         entries = entries,
         icon = icon,
-        rowIcon = { id, modifier ->
-            val entry = byId[id]
+        rowIcon = { _, entry, modifier ->
             if (entry != null) icon(entry, modifier, 1f)
             else Icon("eye-off", modifier = modifier.padding(5.dp), color = LocalTheme.current.textColorSecondary)
         },
@@ -75,7 +73,7 @@ internal fun <T : PickerEntry> PickerListOption(
     addText: Any,
     entries: List<T>,
     icon: PickerTileIcon<T>,
-    rowIcon: @Composable (id: String, modifier: Modifier) -> Unit,
+    rowIcon: @Composable (id: String, entry: T?, modifier: Modifier) -> Unit,
     titleKey: String?,
     searchPlaceholderKey: String,
     emptyKey: String,
@@ -97,10 +95,11 @@ internal fun <T : PickerEntry> PickerListOption(
             entryHeight = TileRowHeight,
             containScroll = true,
         ) { entry, ctx ->
-            rowIcon(entry.value, Modifier.size(TileRowIconSize))
+            val resolved = byId[entry.value]
+            rowIcon(entry.value, resolved, Modifier.size(TileRowIconSize))
             PickerLabel(
                 entry.value,
-                byId[entry.value],
+                resolved,
                 modifier = Modifier.weight(1f),
                 nameColor = ctx.contentColor,
                 unavailableKey = unavailableKey,
