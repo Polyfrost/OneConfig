@@ -78,6 +78,7 @@ fun NotificationsCenter() {
                 modifier = Modifier
                     .heightIn(max = 420.dp)
                     .fadingEdges(scrollState, panelBg)
+                    .wheelScroll(scrollState)
                     .verticalScroll(scrollState),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {

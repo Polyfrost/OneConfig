@@ -28,6 +28,8 @@ import java.awt.datatransfer.Transferable
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import kotlin.coroutines.CoroutineContext
+import kotlin.math.abs
+import kotlin.math.round
 import kotlinx.coroutines.CoroutineDispatcher
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.Screen
@@ -35,6 +37,8 @@ import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ui.components.LocalWheelRouter
+import org.polyfrost.oneconfig.internal.ui.components.WheelRouter
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
@@ -63,8 +67,7 @@ import net.minecraft.network.chat.CommonComponents
 //?}
 
 //? if = 1.8.9 {
-/*import kotlin.math.sign
-import com.mojang.blaze3d.platform.GlStateManager
+/*import com.mojang.blaze3d.platform.GlStateManager
 import net.minecraft.client.gui.screens.TitleScreen
 import org.lwjgl.input.Keyboard
 import org.lwjgl.input.Mouse
@@ -307,6 +310,8 @@ abstract class ComposeScreen(
             reportUnavailableAndClose()
             return
         }
+        //? if sdl
+        if (DesktopHelper.isMac) MacScrollEvent.watchWheel()
         //? if = 1.8.9
         //Keyboard.enableRepeatEvents(true)
 
@@ -349,6 +354,8 @@ abstract class ComposeScreen(
             CompositionLocalProvider(
                 LocalClipboardManager provides SystemClipboardManager,
                 LocalClipboard provides SystemClipboard,
+                FixedScrollConfig.provided(),
+                LocalWheelRouter provides wheelRouter,
             ) {
                 compose()
             }
@@ -448,7 +455,10 @@ abstract class ComposeScreen(
     //override fun render(mouseX: Int, mouseY: Int, tickDelta: Float) {
         if (Platform.screen().current<Any?>() !== this) return
         //? if = 1.8.9 {
-        /*if (client.level == null) {
+        /*// read inputs every frame like modern for smooth scrolling
+        handleInputs()
+        if (Platform.screen().current<Any?>() !== this) return
+        if (client.level == null) {
             panorama?.let {
                 panoramaGlState.capture()
                 try {
@@ -548,9 +558,9 @@ abstract class ComposeScreen(
 
     //? if = 1.8.9 {
     /*override fun handleMouse() {
-        val wheel = Mouse.getEventDWheel()
-        if (wheel != 0) {
-            mouseScrolled(wheel.sign)
+        val wheel = Mouse.getEventDWheelPrecise()
+        if (wheel != 0.0) {
+            mouseScrolled(wheel)
         }
 
         super.handleMouse()
@@ -634,16 +644,14 @@ abstract class ComposeScreen(
         //super.mouseReleased(x, y, button)
     }
 
-    protected open val scrollSpeed: Float get() = 1f
-
     //? if > 1.8.9 {
     override fun mouseScrolled(x: Double, y: Double, scrollX: Double, scrollY: Double): Boolean {
         sendScrollEvent(scrollX, scrollY)
         return super.mouseScrolled(x, y, scrollX, scrollY)
     }
     //?} else {
-    /*private fun mouseScrolled(scrollY: Int) {
-        sendScrollEvent(0.0, scrollY.toDouble())
+    /*private fun mouseScrolled(scrollY: Double) {
+        sendScrollEvent(0.0, scrollY)
     }
     *///?}
 
@@ -674,18 +682,50 @@ abstract class ComposeScreen(
         withScene { it.sendPointerEvent(type, button = pointerButton, position = pointerPosition()) }
     }
 
+    private val wheelRouter = WheelRouter()
+
+    private var lastPreciseScrollNanos = 0L
+
     private fun sendScrollEvent(scrollX: Double, scrollY: Double) {
-        val scrollScale = (if (DesktopHelper.isMac) 2f else 8f) * scrollSpeed
+        val now = System.nanoTime()
+        //? if > 1.8.9 {
+        val rawX = RawScroll.x
+        val rawY = RawScroll.y
+        // discrete scrolling asks for every scroll to count as a notch
+        val discrete = client.options.discreteMouseScroll().get()
+        //?} else {
+        /*val rawX = scrollX
+        val rawY = scrollY
+        val discrete = false
+        *///?}
+        //~ if !sdl 'takeScroll(rawX, rawY)' -> 'readScroll()'
+        val macPrecise = if (DesktopHelper.isMac) MacScrollEvent.takeScroll(rawX, rawY) else null
+        val precise = !discrete && isPreciseScroll(rawX, rawY, now, macPrecise)
+        val scrollScale = if (precise) PRECISE_UNIT_DP else WHEEL_UNIT_DP
+
+        //~ if = 1.8.9 '(-scrollX * scrollScale).toFloat()' -> '0f'
+        val delta = Offset((-scrollX * scrollScale).toFloat(), (-scrollY * scrollScale).toFloat())
         val position = pointerPosition()
-        withScene {
-            it.sendPointerEvent(PointerEventType.Move, position)
-            it.sendPointerEvent(
-                eventType = PointerEventType.Scroll,
-                position = position,
-                //~ if = 1.8.9 '(-scrollX * scrollScale).toFloat()' -> '0f'
-                scrollDelta = Offset((-scrollX * scrollScale).toFloat(), (-scrollY * scrollScale).toFloat()),
-            )
+        val dispatch: () -> Unit = {
+            withScene {
+                it.sendPointerEvent(PointerEventType.Move, position)
+                it.sendPointerEvent(PointerEventType.Scroll, position, scrollDelta = delta)
+            }
         }
+        if (precise) dispatch() else wheelRouter.route(delta, dispatch)
+    }
+
+    /** Whether a scroll came from a trackpad, which is applied directly instead of gliding */
+    private fun isPreciseScroll(scrollX: Double, scrollY: Double, now: Long, macPrecise: Boolean?): Boolean {
+        if (macPrecise != null) {
+            if (macPrecise) lastPreciseScrollNanos = now
+            return macPrecise
+        }
+
+        // Trackpads usually send fractional amounts, but Linux high-res wheels do too in 1/120 notch steps
+        val wheelSteps = DesktopHelper.isLinux && isWheelStep(scrollX) && isWheelStep(scrollY)
+        if ((scrollX % 1.0 != 0.0 || scrollY % 1.0 != 0.0) && !wheelSteps) lastPreciseScrollNanos = now
+        return lastPreciseScrollNanos != 0L && now - lastPreciseScrollNanos < PRECISE_SCROLL_HOLD_NANOS
     }
 
     //? >= 1.21.10 {
@@ -946,6 +986,18 @@ abstract class ComposeScreen(
     private companion object {
         const val SETTLE_FRAMES = 4
 
+        const val WHEEL_NOTCH_DP = 150f
+
+        /** Dp per reported wheel unit. Wheels report 1.0 per notch, but per line on macOS. */
+        val WHEEL_UNIT_DP = if (DesktopHelper.isMac) 50f else WHEEL_NOTCH_DP
+
+        /** Dp per reported trackpad unit. Trackpads report 1.0 per notch on Windows, but per 10px on macOS and Wayland. */
+        val PRECISE_UNIT_DP = if (DesktopHelper.isWindows) WHEEL_NOTCH_DP else 10f
+
+        const val PRECISE_SCROLL_HOLD_NANOS = 250_000_000L
+
+        fun isWheelStep(value: Double) = abs(value * 120 - round(value * 120)) < 1e-3
+
         const val MAX_SCENE_REBUILDS = 3
     }
 }
@@ -961,6 +1013,15 @@ internal fun sceneDensity(): Float {
     val contentScale = maxOf(contentScaleX[0], contentScaleY[0]).coerceAtLeast(1f)
     *///?}
     return (contentScale / pixelRatio).coerceAtLeast(1f)
+}
+
+/** The latest scroll, recorded by `Mixin_MouseInputEvent` before wheel sensitivity and discrete scrolling change it */
+internal object RawScroll {
+    @JvmField
+    var x = 0.0
+
+    @JvmField
+    var y = 0.0
 }
 
 internal object RenderThreadDispatcher : CoroutineDispatcher() {
