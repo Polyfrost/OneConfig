@@ -18,6 +18,7 @@ SOURCE_LANGUAGE = "en_us"
 EXCLUDED_NAMESPACES = {"minecraft", "realms"}
 MAX_NESTING = 3
 ATTEMPTS = 3
+MAX_FAILED_SHARE = 0.05
 
 
 def fetch(url):
@@ -156,11 +157,14 @@ def main():
     jars = collect_jars(args.meta_url.rstrip("/"))
     print(f"scanning {len(jars)} unique mod jars")
 
+    failed = []
+
     def scan(item):
         sha1, (path, urls) = item
         data = fetch_verified(urls, sha1)
         if data is None:
-            raise RuntimeError(f"failed to download {path}")
+            failed.append(path)
+            return []
         return scan_jar(data, path)
 
     sources = {}
@@ -176,6 +180,10 @@ def main():
     with ThreadPoolExecutor(max_workers=args.threads) as pool:
         for found in pool.map(scan, jars.items()):
             merge(found)
+    if failed:
+        print(f"warning: skipped {len(failed)} jars that could not be downloaded: {', '.join(sorted(failed))}", file=sys.stderr)
+    if len(failed) > len(jars) * MAX_FAILED_SHARE:
+        raise RuntimeError(f"failed to download {len(failed)} of {len(jars)} jars")
     for root in args.local_resources:
         merge(scan_resources(root))
 

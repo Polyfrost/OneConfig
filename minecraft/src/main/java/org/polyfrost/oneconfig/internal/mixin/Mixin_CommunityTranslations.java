@@ -22,7 +22,7 @@ public class Mixin_CommunityTranslations {
         //at = @At(value = "INVOKE", target = "Lcom/google/common/collect/ImmutableMap;copyOf(Ljava/util/Map;)Lcom/google/common/collect/ImmutableMap;")
     )
     private static void oneconfig$applyCommunityTranslations(ResourceManager resourceManager, List<String> languages, boolean defaultRightToLeft, CallbackInfoReturnable<ClientLanguage> cir, @Local Map<String, String> translations) {
-        CommunityTranslations.apply(languages, resourceManager.getNamespaces(), translations::put);
+        CommunityTranslations.apply(languages, resourceManager.getNamespaces(), translations::get, translations::put);
     }
 }
 //?}

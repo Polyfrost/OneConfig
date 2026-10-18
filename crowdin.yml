@@ -8,3 +8,6 @@ files:
     dest: /mods/%original_file_name%
     translation: /translations/%locale_with_underscore%/%original_file_name%
     update_option: update_as_unapproved
+    languages_mapping:
+      locale_with_underscore:
+        nb: no_NO

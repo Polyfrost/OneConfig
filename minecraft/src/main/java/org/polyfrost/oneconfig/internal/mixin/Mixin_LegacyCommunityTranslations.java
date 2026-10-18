@@ -27,7 +27,7 @@ public class Mixin_LegacyCommunityTranslations {
         at = @At(value = "INVOKE", target = "Lnet/minecraft/client/resource/language/Locale;checkUnicodeUsage()V")
     )
     private void oneconfig$applyCommunityTranslations(ResourceManager resourceManager, List<String> languages, CallbackInfo ci) {
-        CommunityTranslations.apply(languages, resourceManager.getNamespaces(), (key, value) -> translations.put(key, oneconfig$NUMERIC_FORMAT.matcher(value).replaceAll("%$1s")));
+        CommunityTranslations.apply(languages, resourceManager.getNamespaces(), translations::get, (key, value) -> translations.put(key, oneconfig$NUMERIC_FORMAT.matcher(value).replaceAll("%$1s")));
     }
 }
 *///?}
