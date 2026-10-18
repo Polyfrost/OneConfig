@@ -140,7 +140,7 @@ fun Mods() {
             val cards = ConfigRegistry.modCardConfigs
             ModCategory.entries.forEach {
                 val shown = when {
-                    it.favoritesOnly || activeCategory == it -> true
+                    it == ModCategory.All || it.favoritesOnly || activeCategory == it -> true
                     it.hiddenOnly -> cards.any { configData -> ModHidden.isHidden(configData.id) }
                     else -> cards.any { configData ->
                         configData.category == it.configCategory && !ModHidden.isHidden(configData.id)
