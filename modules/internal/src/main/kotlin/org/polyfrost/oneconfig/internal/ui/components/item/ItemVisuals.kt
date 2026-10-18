@@ -56,8 +56,17 @@ fun ItemIcon(
     framed: Boolean = true,
     alpha: Float = 1f,
     placeholder: String = "eye-off",
+) = ItemIcon(rememberItemIconHandle(id), modifier, framed, alpha, placeholder)
+
+/** [itemIcon] drawn like [ItemIcon], or [placeholder] while it is `null` */
+@Composable
+fun ItemIcon(
+    itemIcon: ItemIconHandle?,
+    modifier: Modifier = Modifier,
+    framed: Boolean = true,
+    alpha: Float = 1f,
+    placeholder: String = "eye-off",
 ) {
-    val itemIcon = rememberItemIconHandle(id)
     val theme = LocalTheme.current
     val background = if (framed) Modifier.background(theme.chipBackground) else Modifier
     Box(
