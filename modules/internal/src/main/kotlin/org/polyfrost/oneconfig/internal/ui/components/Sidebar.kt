@@ -30,7 +30,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -220,7 +219,7 @@ private fun NotificationBell() {
         )
 
         if (expanded) {
-            Popup(
+            ShellPopup(
                 // open up and to the right of the bell
                 alignment = Alignment.BottomStart,
                 offset = IntOffset(0, -(bellHeightPx + 12)),

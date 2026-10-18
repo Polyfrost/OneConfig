@@ -36,7 +36,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
+import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import androidx.compose.ui.window.PopupProperties
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.config.v1.Property
@@ -293,7 +293,7 @@ fun HudCanvasResetMenu(
     val cutHint = if (showHints) keybindHint(OneConfigConfig.hudCutKeybind) else null
     val pasteHint = if (showHints) keybindHint(OneConfigConfig.hudPasteKeybind) else null
     val deleteHint = if (showHints) keybindHint(OneConfigConfig.hudDeleteKeybind) else null
-    Popup(
+    ShellPopup(
         alignment = Alignment.TopStart,
         offset = offset,
         onDismissRequest = onDismiss,
@@ -437,7 +437,7 @@ fun HudCanvasPasteMenu(
     val theme = LocalTheme.current
     val pasteHint = if (OneConfigConfig.showKeybindHints) keybindHint(OneConfigConfig.hudPasteKeybind) else null
     val selectAllHint = if (OneConfigConfig.showKeybindHints) keybindHint(OneConfigConfig.hudSelectAllKeybind) else null
-    Popup(
+    ShellPopup(
         alignment = Alignment.TopStart,
         offset = offset,
         onDismissRequest = onDismiss,

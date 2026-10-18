@@ -48,7 +48,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
+import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import androidx.compose.ui.window.PopupProperties
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -263,7 +263,7 @@ fun ColorOption(data: ColorOptionData) {
         }
 
         if (expanded) {
-            Popup(
+            ShellPopup(
                 alignment = Alignment.TopEnd,
                 offset = IntOffset(0, 44),
                 onDismissRequest = { expanded = false },

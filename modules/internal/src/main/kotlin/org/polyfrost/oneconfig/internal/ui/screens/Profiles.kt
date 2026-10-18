@@ -63,7 +63,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
+import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import androidx.compose.ui.window.PopupProperties
 import java.nio.file.Files
 import kotlinx.coroutines.CoroutineStart
@@ -902,7 +902,7 @@ private fun ProfileActionsMenu(
 ) {
     if (!expanded) return
     val theme = LocalTheme.current
-    Popup(
+    ShellPopup(
         alignment = Alignment.TopEnd,
         onDismissRequest = onDismiss,
         properties = PopupProperties(focusable = true),

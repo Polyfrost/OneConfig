@@ -31,7 +31,7 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
+import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import androidx.compose.ui.window.PopupProperties
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Config
@@ -169,7 +169,7 @@ fun OptionContextMenu(
     val isKeybind = remember(prop) { prop.get() is OneConfigKeybind }
     val effectiveReset = onReset ?: if (isKeybind) ({ resetKeybindOption(prop) }) else null
     val effectiveUnbind = onUnbind ?: if (isKeybind) ({ unbindKeybindOption(prop) }) else null
-    Popup(
+    ShellPopup(
         alignment = Alignment.TopStart,
         offset = offset,
         onDismissRequest = onDismiss,
