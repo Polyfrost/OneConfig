@@ -37,12 +37,7 @@ fun Chip(
         if (selected) Accent else if (isHovered) hoverBackground else theme.chipBackground
     )
     val textColor by animateColorAsState(
-        when {
-            selected -> theme.accentTextColor
-            // the half-accent tint can sit closer to either text color depending on theme and accent
-            isHovered -> readableOn(hoverBackground, theme.accentTextColor, theme.textColor)
-            else -> theme.textColor
-        }
+        if (selected) LocalTheme.current.accentTextColor else LocalTheme.current.textColor
     )
 
     Row(
@@ -65,10 +60,3 @@ fun Chip(
         }
     }
 }
-
-private fun readableOn(background: Color, a: Color, b: Color): Color {
-    val bg = background.luminance()
-    return if (contrast(a.luminance(), bg) >= contrast(b.luminance(), bg)) a else b
-}
-
-private fun contrast(l1: Float, l2: Float) = (maxOf(l1, l2) + 0.05f) / (minOf(l1, l2) + 0.05f)

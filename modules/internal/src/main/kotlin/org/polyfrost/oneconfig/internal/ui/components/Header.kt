@@ -247,7 +247,13 @@ private fun OpenOriginalScreenButton(runnable: Runnable) {
                 .padding(horizontal = 16.dp, vertical = 6.dp),
             contentAlignment = Alignment.Center,
         ) {
-            Text("Open original screen", color = theme.accentTextColor, fontSize = 13.sp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Icon("external-link", color = theme.accentTextColor, modifier = Modifier.size(14.dp))
+                Text("Original menu", color = theme.accentTextColor, fontSize = 13.sp)
+            }
         }
     }
 }
