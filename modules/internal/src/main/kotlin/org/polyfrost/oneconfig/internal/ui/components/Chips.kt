@@ -12,6 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
@@ -28,11 +31,18 @@ fun Chip(
 ) {
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
+    val theme = LocalTheme.current
+    val hoverBackground = Accent.copy(alpha = 0.5f).compositeOver(theme.chipBackground)
     val backgroundColor by animateColorAsState(
-        if (selected) Accent else if (isHovered) Accent.copy(alpha = 0.5f) else LocalTheme.current.chipBackground
+        if (selected) Accent else if (isHovered) hoverBackground else theme.chipBackground
     )
     val textColor by animateColorAsState(
-        if (selected) LocalTheme.current.accentTextColor else LocalTheme.current.textColor
+        when {
+            selected -> theme.accentTextColor
+            // the half-accent tint can sit closer to either text color depending on theme and accent
+            isHovered -> readableOn(hoverBackground, theme.accentTextColor, theme.textColor)
+            else -> theme.textColor
+        }
     )
 
     Row(
@@ -55,3 +65,10 @@ fun Chip(
         }
     }
 }
+
+private fun readableOn(background: Color, a: Color, b: Color): Color {
+    val bg = background.luminance()
+    return if (contrast(a.luminance(), bg) >= contrast(b.luminance(), bg)) a else b
+}
+
+private fun contrast(l1: Float, l2: Float) = (maxOf(l1, l2) + 0.05f) / (minOf(l1, l2) + 0.05f)

@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.ui.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -22,6 +23,8 @@ fun IconButton(
     foreground: Color = LocalTheme.current.textColor.copy(0.7f),
     hoveredForeground: Color = LocalTheme.current.textColor,
     enabled: Boolean = true,
+    /** Outlines the button on hover; off by default so small inline icons (field clear buttons) stay bare */
+    hoverBorder: Boolean = false,
     onClick: () -> Unit,
 ) {
     val interactionSource = rememberInteractionSource()
@@ -36,7 +39,7 @@ fun IconButton(
         }
     )
     val borderColor by animateColorAsState(
-        if (enabled && isHovered) LocalTheme.current.borderColor
+        if (hoverBorder && enabled && isHovered) LocalTheme.current.borderColor
         else LocalTheme.current.borderColor.copy(0f)
     )
 
@@ -44,7 +47,11 @@ fun IconButton(
         iconName,
         color = iconColor,
         modifier = Modifier.onClick(interactionSource, enabled, onClick).then(modifier)
-            .border(1.dp, borderColor, LocalTheme.current.buttonShape)
+            // inset the glyph so the outline doesn't hug it; size bordered buttons 8dp larger to keep the icon size
+            .then(
+                if (hoverBorder) Modifier.border(1.dp, borderColor, LocalTheme.current.buttonShape).padding(4.dp)
+                else Modifier
+            )
     )
 }
 

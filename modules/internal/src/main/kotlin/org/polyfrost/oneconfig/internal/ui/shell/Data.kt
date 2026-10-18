@@ -218,6 +218,10 @@ object LocalNavController {
             // plays its pop transitions from a resting state, while the forward enter/exit
             // transition reliably plays (matching the existing forward() path below). The shared
             // transition in Shell mirrors the old pop direction while lastNavWasBack is set.
+            // This leaves the host's own back stack growing by an entry per back press. Don't trim it with
+            // popUpTo here: popping the outgoing entry drops its content mid-transition, so the page snaps
+            // instead of animating. The host is rebuilt every time the menu opens, which bounds the growth
+            // to one session; this wrapper's stacks are the real history.
             ShellState.lastNavWasBack = true
             runCatching { host.navigate(previous.route) }.onFailure {
                 ShellState.lastNavWasBack = false

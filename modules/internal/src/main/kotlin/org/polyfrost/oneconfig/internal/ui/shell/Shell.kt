@@ -245,9 +245,6 @@ fun Shell(
 
                             enterTransition = { if (resolvePageAnimate(targetState.id)) enterSlide() + fadeIn(tween(pageMs())) else EnterTransition.None },
                             exitTransition = { if (resolvePageAnimate(targetState.id)) exitSlide() + fadeOut(tween(pageMs())) else ExitTransition.None },
-
-                            popEnterTransition = { if (OneConfigConfig.showPageAnimations) slideInHorizontally(tween(pageMs())) { -it / 5 } + fadeIn(tween(pageMs())) else EnterTransition.None },
-                            popExitTransition = { if (OneConfigConfig.showPageAnimations) slideOutHorizontally(tween(pageMs())) { it / 5 } + fadeOut(tween(pageMs())) else ExitTransition.None }
                         ) {
                             navigation()
                         }

@@ -102,8 +102,8 @@ fun Header() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                IconButton("left-arrow", Modifier.size(24.dp), enabled = canGoBack) { controller.back() }
-                IconButton("right-arrow", Modifier.size(24.dp), enabled = canGoForward) { controller.forward() }
+                IconButton("left-arrow", Modifier.size(32.dp), enabled = canGoBack, hoverBorder = true) { controller.back() }
+                IconButton("right-arrow", Modifier.size(32.dp), enabled = canGoForward, hoverBorder = true) { controller.forward() }
             }
             Spacer(Modifier.size(24.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -149,8 +149,10 @@ fun Header() {
                 ) {
                     // one Row so the spacer and the button share a single measured node and keep their
                     // horizontal order
+                    // prefer the live action so switching between two mods never shows the previous
+                    // mod's runnable for the frame before the effect updates lastAction
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        lastAction?.let {
+                        (openOriginalScreen ?: lastAction)?.let {
                             Spacer(Modifier.size(8.dp))
                             OpenOriginalScreenButton(it)
                         }
@@ -164,7 +166,7 @@ fun Header() {
             horizontalArrangement = Arrangement.spacedBy(26.dp)
         ) {
             GlobalSearchBar()
-            IconButton("close", Modifier.size(24.dp)) { closeRequest() }
+            IconButton("close", Modifier.size(32.dp), hoverBorder = true) { closeRequest() }
         }
     }
 }
