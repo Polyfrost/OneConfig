@@ -32,7 +32,7 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
+import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import androidx.compose.ui.window.PopupProperties
 import java.util.function.Predicate
 import org.polyfrost.compose.render.PolyColor
@@ -47,6 +47,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.concentric
 import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
@@ -177,7 +178,7 @@ fun OptionContextMenu(
     val isKeybind = remember(System.identityHashCode(prop)) { prop.get() is OneConfigKeybind }
     val effectiveReset = onReset ?: if (isKeybind) ({ resetKeybindOption(prop) }) else null
     val effectiveUnbind = onUnbind ?: if (isKeybind) ({ unbindKeybindOption(prop) }) else null
-    Popup(
+    ShellPopup(
         alignment = Alignment.TopStart,
         offset = offset,
         onDismissRequest = onDismiss,
@@ -186,8 +187,10 @@ fun OptionContextMenu(
         Column(
             // intrinsic width keeps the menu content-sized while rows fillMaxWidth so hover backgrounds
             // span the whole menu instead of each row's own text width
+            //TODO: fix this always moving right
             modifier = Modifier
                 .width(IntrinsicSize.Max)
+                .shellTransition()
                 .background(theme.popupBackground, theme.popupShape)
                 .border(1.dp, theme.borderColor, theme.popupShape)
                 .padding(ContextMenuPadding),

@@ -24,7 +24,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.onSizeChanged
@@ -32,17 +31,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.toRoute
-import java.util.Locale
 import java.util.Locale.getDefault
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
-import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.navigation.NavigationGroups
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
@@ -225,7 +220,7 @@ private fun NotificationBell() {
         )
 
         if (expanded) {
-            Popup(
+            ShellPopup(
                 // open up and to the right of the bell
                 alignment = Alignment.BottomStart,
                 offset = IntOffset(0, -(bellHeightPx + 12)),
@@ -235,7 +230,7 @@ private fun NotificationBell() {
                 },
                 properties = PopupProperties(focusable = true),
             ) {
-                NotificationsCenter()
+                Box(Modifier.shellTransition()) { NotificationsCenter() }
             }
         }
     }
