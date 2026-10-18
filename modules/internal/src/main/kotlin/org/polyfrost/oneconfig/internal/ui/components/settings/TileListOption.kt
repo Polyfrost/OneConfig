@@ -48,7 +48,7 @@ fun <T : PickerEntry> TileListOption(
 ) {
     val theme = LocalTheme.current
     val maxEntries = data.maxEntries
-    val byId = remember(entries) { entries.associateBy(PickerEntry::id) }
+    val byId = remember(entries) { entries.distinctBy(PickerEntry::id).associateBy(PickerEntry::id) }
     val state = rememberListEntries(data.prop, { data.ids() }) { data.setIds(it) }
     var expanded by remember(data.prop) { mutableStateOf(false) }
 

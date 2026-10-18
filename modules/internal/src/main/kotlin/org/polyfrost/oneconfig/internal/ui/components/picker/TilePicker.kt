@@ -9,6 +9,7 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -43,7 +44,6 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -378,33 +378,52 @@ fun <T : PickerEntry> TilePicker(
             )
         }
 
-        val density = LocalDensity.current
-        var stableHeight by remember(entries, gridMaxHeight) { mutableStateOf(0.dp) }
-        Box(
-            Modifier.fillMaxWidth().heightIn(min = stableHeight).onSizeChanged {
-                val height = with(density) { it.height.toDp() }
-                if (height > stableHeight) stableHeight = height
-            },
-        ) {
-            if (filtered.isEmpty()) {
-                PickerMessage(emptyKey, height = stableHeight.takeIf { it > 0.dp } ?: minOf(gridMaxHeight, PickerMessageHeight))
-            } else {
-                TileGrid(
-                    entries = filtered,
-                    icon = icon,
-                    selected = { it.id in selected },
-                    enabled = { canSelect(selected, it.id, maxEntries) },
-                    cellSize = cellSize,
-                    maxHeight = gridMaxHeight,
-                    gutter = gutter,
-                    onClick = { onToggle(it.id) },
-                )
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val density = LocalDensity.current
+            val height = if (entries.isEmpty()) {
+                minOf(gridMaxHeight, PickerMessageHeight)
+            } else with(density) {
+                fittedGridHeight(
+                    entries.size,
+                    constraints.maxWidth,
+                    cellSize.roundToPx(),
+                    TileGridSpacing.roundToPx(),
+                    gutter.roundToPx(),
+                    gridMaxHeight.roundToPx(),
+                ).toDp()
+            }
+            Box(Modifier.fillMaxWidth().height(height)) {
+                if (filtered.isEmpty()) {
+                    PickerMessage(emptyKey, height = height)
+                } else {
+                    TileGrid(
+                        entries = filtered,
+                        icon = icon,
+                        selected = { it.id in selected },
+                        enabled = { canSelect(selected, it.id, maxEntries) },
+                        modifier = Modifier.fillMaxSize(),
+                        cellSize = cellSize,
+                        maxHeight = gridMaxHeight,
+                        gutter = gutter,
+                        onClick = { onToggle(it.id) },
+                    )
+                }
             }
         }
     }
 }
 
 private val PickerMessageHeight = 120.dp
+
+fun fittedGridHeight(count: Int, width: Int, cellSize: Int, spacing: Int, gutter: Int, maxHeight: Int): Int {
+    if (count <= 0) return 0
+    val available = width - gutter * 2
+    val columns = maxOf((available + spacing) / (cellSize + spacing), 1)
+    val withoutSpacing = available - spacing * (columns - 1)
+    val row = withoutSpacing / columns + if (withoutSpacing % columns > 0) 1 else 0
+    val rows = (count + columns - 1) / columns
+    return (rows * row + (rows - 1) * spacing).coerceIn(0, maxHeight)
+}
 
 /** Centered message for empty and unavailable states */
 @Composable
@@ -431,7 +450,7 @@ fun canSelect(selected: List<String>, id: String, maxEntries: Int): Boolean =
     id in selected || maxEntries <= 0 || maxEntries == 1 || selected.size < maxEntries
 
 fun toggleEntry(selected: List<String>, id: String, maxEntries: Int): List<String> {
-    val current = selected.distinct()
+    val current = normalizeIds(selected)
     if (id in current) return current - id
     if (maxEntries == 1) return listOf(id)
     if (maxEntries > 0 && current.size >= maxEntries) return current
