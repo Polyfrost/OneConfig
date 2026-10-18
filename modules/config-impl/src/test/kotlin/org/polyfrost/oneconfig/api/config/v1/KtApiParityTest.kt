@@ -24,6 +24,7 @@ class KtApiParityTest {
         var s by slider("Slider", 5f)
         var pct by slider("Percent", 5f) { "$it%" }
         var t by text("Text", regex = "\\d+")
+        var notes by text("Notes", multiline = true).fullWidth().onChange { }
         var colors by colorList("Colors", intArrayOf(-1), alpha = false)
         var active by masterToggle()
 
@@ -55,6 +56,8 @@ class KtApiParityTest {
         assertEquals(3, tree.getProp("ranges")!!.getMetadata<Int>("maxEntries"))
         assertTrue(tree.getProp("s")!!.getMetadata<Visualizer>("visualizer") is Visualizer.SliderVisualizer)
         assertEquals("\\d+", tree.getProp("t")!!.getMetadata<String>("regex"))
+        assertEquals(true, tree.getProp("notes")!!.getMetadata<Boolean>("fullWidth"))
+        assertNull(tree.getProp("t")!!.getMetadata<Boolean>("fullWidth"))
         assertTrue(tree.getProp("colors")!!.getMetadata<Any>("noAlpha") != null)
 
         val active = tree.getProp("active")!!
@@ -118,6 +121,7 @@ class KtApiParityTest {
         assertThrows(IllegalArgumentException::class.java) { dsl.itemList().maxEntries = -1 }
         assertThrows(IllegalArgumentException::class.java) { dsl.effectList().maxEntries = -1 }
         assertTrue(dsl.effectList("minecraft:speed").property.getMetadata<Visualizer>("visualizer") is Visualizer.EffectListVisualizer)
+        assertEquals(true, dsl.fileList().apply { fullWidth = true }.property.getMetadata<Boolean>("fullWidth"))
         val list = dsl.draggableList(arrayOf("a"), "a", "b").apply { checkable = true }
         assertEquals(true, list["checkable"])
     }

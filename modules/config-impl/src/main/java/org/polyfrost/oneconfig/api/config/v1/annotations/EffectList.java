@@ -67,4 +67,6 @@ public @interface EffectList {
     /** Label of the button that opens the effect selector */
     @TranslatedDefault("oneconfig.effectlist.add")
     String addText() default "oneconfig.effectlist.add";
+
+    boolean fullWidth() default false;
 }
