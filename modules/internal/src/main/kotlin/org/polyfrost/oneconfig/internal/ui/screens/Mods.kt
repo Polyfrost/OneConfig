@@ -127,11 +127,6 @@ enum class ModCategory(
 fun Mods() {
     var activeCategory by remember { mutableStateOf(ModCategory.All) }
 
-    DisposableEffect(Unit) {
-        ShellState.title = "Mods"
-        onDispose { }
-    }
-
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
         Row(
             modifier = Modifier.padding(horizontal = PageGutter),
@@ -230,6 +225,15 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
         onDispose { reorderState.cancel() }
     }
 
+    // The overlay card is drawn as a sibling of the grid, but the page pane that wraps the nav host
+    // clips its content, so it would be cut off at the pane edge. Drop that clip for as long as an
+    // overlay card exists (dragging and the settle-back animation) so it can be seen in full.
+    val overlayActive = reorderState.overlayKey != null
+    DisposableEffect(overlayActive) {
+        ShellState.modDragging = overlayActive
+        onDispose { if (overlayActive) ShellState.modDragging = false }
+    }
+
     // override scroll to stay in place instead of following the first visible item
     DisposableEffect(favoriteRevision) {
         gridState.requestScrollToItem(gridState.firstVisibleItemIndex, gridState.firstVisibleItemScrollOffset)
@@ -242,7 +246,8 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
         PageGutter,
         modifier = Modifier
             .weight(1f)
-            .clipToBounds()
+            // see overlayActive above: the overlay card has to be able to leave the grid while it exists
+            .then(if (overlayActive) Modifier else Modifier.clipToBounds())
             // cards can't take focus, so clear it on press to unfocus the search field
             .pointerInput(focusManager) {
                 awaitEachGesture {

@@ -201,7 +201,10 @@ fun Shell(
             ) {
                 Header(Modifier.padding(horizontal = PageGutter))
                 Box(
-                    modifier = Modifier.weight(1f).fillMaxSize().clipToBounds()
+                    modifier = Modifier.weight(1f).fillMaxSize()
+                        // a dragged mod card is drawn in an overlay that must be able to leave the page
+                        // area; keep the clip otherwise so page content cannot overflow the pane
+                        .then(if (ShellState.modDragging) Modifier else Modifier.clipToBounds())
                         .alpha(if (ShellState.awaitingInitialRoute) 0f else 1f)
                 ) {
                     if (isSearching) {
@@ -226,16 +229,24 @@ fun Shell(
 
                         fun pageMs() = (OneConfigConfig.pageAnimationDuration * 1000f).toInt().coerceAtLeast(1)
 
+                        // Arrow-back routes through navigate() on purpose (this NavHost version never
+                        // plays its pop transitions from a resting state), so the shared enter/exit
+                        // transition mirrors the old pop direction while lastNavWasBack is set.
+                        fun enterSlide() =
+                            if (ShellState.lastNavWasBack) slideInHorizontally(tween(pageMs())) { -it / 5 }
+                            else slideInHorizontally(tween(pageMs())) { it / 5 }
+
+                        fun exitSlide() =
+                            if (ShellState.lastNavWasBack) slideOutHorizontally(tween(pageMs())) { it / 5 }
+                            else slideOutHorizontally(tween(pageMs())) { -it / 5 }
+
                         NavHost(
                             modifier = Modifier.fillMaxSize(),
                             navController = LocalNavController.current,
                             startDestination = ModsGraph,
 
-                            enterTransition = { if (resolvePageAnimate(targetState.id)) slideInHorizontally(tween(pageMs())) { it / 5 } + fadeIn(tween(pageMs())) else EnterTransition.None },
-                            exitTransition = { if (resolvePageAnimate(targetState.id)) slideOutHorizontally(tween(pageMs())) { -it / 5 } + fadeOut(tween(pageMs())) else ExitTransition.None },
-
-                            popEnterTransition = { if (OneConfigConfig.showPageAnimations) slideInHorizontally(tween(pageMs())) { -it / 5 } + fadeIn(tween(pageMs())) else EnterTransition.None },
-                            popExitTransition = { if (OneConfigConfig.showPageAnimations) slideOutHorizontally(tween(pageMs())) { it / 5 } + fadeOut(tween(pageMs())) else ExitTransition.None }
+                            enterTransition = { if (resolvePageAnimate(targetState.id)) enterSlide() + fadeIn(tween(pageMs())) else EnterTransition.None },
+                            exitTransition = { if (resolvePageAnimate(targetState.id)) exitSlide() + fadeOut(tween(pageMs())) else ExitTransition.None },
                         ) {
                             navigation()
                         }

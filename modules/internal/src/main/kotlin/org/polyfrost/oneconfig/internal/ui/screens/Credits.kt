@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -22,7 +21,6 @@ import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.rememberBrandTint
 import org.polyfrost.oneconfig.internal.ui.components.rememberSvgResourcePainter
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -72,11 +70,6 @@ private val creditSections = listOf(
 fun Credits() {
     val theme = LocalTheme.current
     val scrollState = rememberScrollState()
-
-    DisposableEffect(Unit) {
-        ShellState.title = "Credits"
-        onDispose { }
-    }
 
     ScrollbarBox(scrollState, PageGutter, Modifier.fillMaxSize()) {
         Column(
