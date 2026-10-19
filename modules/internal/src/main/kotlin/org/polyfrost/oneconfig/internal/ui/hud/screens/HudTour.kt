@@ -32,7 +32,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -173,19 +172,6 @@ internal fun HudTourOverlay(
         modifier = modifier
             .fillMaxSize()
             .onSizeChanged { rootSize = it }
-            .then(
-                if (step.interactive) {
-                    Modifier
-                } else {
-                    Modifier.pointerInput(Unit) {
-                        awaitPointerEventScope {
-                            while (true) {
-                                awaitPointerEvent().changes.forEach { if (!it.isConsumed) it.consume() }
-                            }
-                        }
-                    }
-                }
-            )
     ) {
         Canvas(Modifier.fillMaxSize()) {
             val radius = CornerRadius(8.dp.toPx())
@@ -218,13 +204,6 @@ internal fun HudTourOverlay(
                 }
                 .graphicsLayer { alpha = if (measured) 1f else 0f }
                 .then(cardModifier)
-                .pointerInput(Unit) {
-                    awaitPointerEventScope {
-                        while (true) {
-                            awaitPointerEvent().changes.forEach { if (!it.isConsumed) it.consume() }
-                        }
-                    }
-                }
                 .onSizeChanged { cardSize = it }
                 .width(TOUR_CARD_WIDTH)
                 .background(theme.popupBackground, theme.popupShape)

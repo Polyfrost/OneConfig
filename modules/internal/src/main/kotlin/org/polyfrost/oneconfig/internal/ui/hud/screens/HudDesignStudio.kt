@@ -80,6 +80,7 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils
+import org.polyfrost.oneconfig.api.ui.v1.keybind.TextInputFocus
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.utils.v1.NetworkUtils
@@ -904,19 +905,11 @@ private fun hasTourMergePair(): Boolean {
 }
 
 private fun canTourMergeInto(mover: Hud, neighbour: Hud): Boolean =
-    neighbour !== mover && tourMergeCompatible(mover, neighbour) &&
+    neighbour !== mover && HudManager.backgroundStylesMatch(mover, neighbour) &&
         HudManager.mergeGroupOf(neighbour).none { it === mover }
 
-private const val TOUR_MERGE_EPS = 0.01f
-
 private fun canTourMerge(hud: Hud): Boolean =
-    hud !is LegacyHud && !hud.locked && !hud.hidden && hud.canMergeBackground() &&
-        hud.showBackground && hud.mergeBackground && hud.hasBackground()
-
-private fun tourMergeCompatible(a: Hud, b: Hud): Boolean =
-    a.bgColor == b.bgColor && a.bgChroma == b.bgChroma &&
-        (!a.bgChroma || abs(a.bgChromaSpeed - b.bgChromaSpeed) <= TOUR_MERGE_EPS) &&
-        abs(a.bgRadius * a.effectiveScale - b.bgRadius * b.effectiveScale) <= TOUR_MERGE_EPS
+    !hud.locked && !hud.hidden && HudManager.isMergeCandidate(hud)
 
 private fun tourMergeHint(mcToScreen: Float): Pair<Rect, Rect>? =
     tourMergeHint(mcToScreen, stacked = true) ?: tourMergeHint(mcToScreen, stacked = false)
@@ -995,7 +988,7 @@ private fun placeHudCentered(provider: Hud): Hud? = try {
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun HudDesignStudio() {
+fun HudDesignStudio(visible: Boolean = true) {
     HudEditorViewport.observe()
     var activeCategory by remember { mutableStateOf(StudioCategory.Settings) }
     var selectedHuds by remember { mutableStateOf<Set<Hud>>(emptySet()) }
@@ -1058,8 +1051,13 @@ fun HudDesignStudio() {
     var tourHud by remember { mutableStateOf<Hud?>(null) }
     var tourTaskDone by remember { mutableStateOf(false) }
     var tourPreviousCategory by remember { mutableStateOf(StudioCategory.Settings) }
+    var tourPreviousSelection by remember { mutableStateOf<Set<Hud>>(emptySet()) }
+    var tourPreviousPanelOpen by remember { mutableStateOf(false) }
     var tourDeferred by remember { mutableStateOf(false) }
     val tourBlocksEditor = tourStep?.interactive == false
+    val tourMergePairExists by remember {
+        derivedStateOf { HudManager.instancesRevision.intValue.let { hasTourMergePair() } }
+    }
 
     // the active HUD of a selection driving the settings panel resize handles action bar and keybinds
     fun primaryHud(): Hud? = selectedHuds.lastOrNull()
@@ -1082,10 +1080,13 @@ fun HudDesignStudio() {
     }
 
     fun startTour() {
-        OneConfigConfig.markHudEditorTourSeen()
         Snapshot.withMutableSnapshot {
             clearTransientEditorState()
-            if (tourStep == null) tourPreviousCategory = activeCategory
+            if (tourStep == null) {
+                tourPreviousCategory = activeCategory
+                tourPreviousSelection = selectedHuds
+                tourPreviousPanelOpen = panelOpen
+            }
             tourHud = null
             tourTaskDone = false
             tourStep = HudTourStep.entries.first()
@@ -1094,14 +1095,22 @@ fun HudDesignStudio() {
     }
 
     fun endTour() {
+        if (tourStep == null) return
+        OneConfigConfig.markHudEditorTourSeen()
         Snapshot.withMutableSnapshot {
             clearTransientEditorState()
             tourStep = null
             tourHud = null
-            selectedHuds = emptySet()
-            panelOpen = false
+            val restored = tourPreviousSelection.filterTo(LinkedHashSet()) { it in HudManager.activeInstances }
+            selectedHuds = restored
+            panelOpen = tourPreviousPanelOpen && restored.isNotEmpty()
             activeCategory = tourPreviousCategory
+            tourPreviousSelection = emptySet()
         }
+    }
+
+    LaunchedEffect(visible) {
+        if (!visible && tourStep != null) endTour()
     }
 
     fun moveTour(delta: Int) {
@@ -1185,11 +1194,13 @@ fun HudDesignStudio() {
     LaunchedEffect(HudManager.editorOpenRevision.intValue) {
         if (OneConfigConfig.hudEditorTourSeen || tourDeferred) return@LaunchedEffect
         snapshotFlow { HudEditorViewport.screenWidth }.first { it > 0 }
-        snapshotFlow {
-            HudManager.instancesRevision.intValue.let {
-                tourStep == null && !isDragging && !isResizing && !pointerDown && hasTourMergePair()
-            }
-        }.first { it }
+        while (true) {
+            snapshotFlow {
+                tourStep == null && !isDragging && !isResizing && !pointerDown && !panelOpen && tourMergePairExists
+            }.first { it }
+            if (!TextInputFocus.isTyping) break
+            delay(250)
+        }
         if (!OneConfigConfig.hudEditorTourSeen) startTour()
     }
 
@@ -1898,7 +1909,7 @@ fun HudDesignStudio() {
                         Key.DirectionRight, Key.Enter -> moveTour(1)
                         Key.DirectionLeft -> moveTour(-1)
                     }
-                    return@onKeyEvent true
+                    return@onKeyEvent keyEvent.key != Key.Escape
                 }
                 if (keyEvent.key == Key.Escape && anchorPickSources.isNotEmpty()) {
                     Snapshot.withMutableSnapshot {
@@ -2453,7 +2464,7 @@ fun HudDesignStudio() {
             undoEnabled = canUndo,
             onRedo = { HudDesignSession.handleRedo(true) },
             redoEnabled = canRedo,
-            onTour = if (pasteMenuOffset != null && hasTourMergePair()) ({ startTour() }) else null,
+            onTour = { startTour() },
         )
 
         var lastTourStep by remember { mutableStateOf(HudTourStep.entries.first()) }
@@ -2470,7 +2481,10 @@ fun HudDesignStudio() {
                     chromeRects.remove(CHROME_TOUR_CARD)
                 }
             }
-            LaunchedEffect(tourBlocksEditor) { if (!tourBlocksEditor) chromeRects.remove(CHROME_TOUR) }
+            LaunchedEffect(tourBlocksEditor, tourStep == null) {
+                if (!tourBlocksEditor) chromeRects.remove(CHROME_TOUR)
+                if (tourStep == null) chromeRects.remove(CHROME_TOUR_CARD)
+            }
             val mcToScreen = Platform.screen().mcToScreenScale()
             val tourHudRect = tourHud?.let { hudBounds(it) }?.let { b ->
                 Rect(b.x, b.y, b.x + b.width, b.y + b.height).scaled(mcToScreen)
@@ -2503,14 +2517,11 @@ fun HudDesignStudio() {
                     onMeasured = { tourMenuSize = it },
                 )
             }
-            val canMergeAny by remember {
-                derivedStateOf { HudManager.instancesRevision.intValue.let { hasTourMergePair() } }
-            }
             val tourTask = if (!lastTourStep.interactive) {
                 null
             } else when {
                 tourTaskDone -> tourString("${lastTourStep.id}.task_done")
-                !canMergeAny -> tourString("${lastTourStep.id}.task_add")
+                !tourMergePairExists -> tourString("${lastTourStep.id}.task_add")
                 else -> tourString("${lastTourStep.id}.task")
             }
             val mergeHint by remember {
@@ -2534,8 +2545,8 @@ fun HudDesignStudio() {
                 taskDone = tourTaskDone,
                 dragHint = mergeHint,
                 avoid = libraryRect,
-                modifier = if (tourBlocksEditor) Modifier.chromeRegion(CHROME_TOUR) else Modifier,
-                cardModifier = Modifier.chromeRegion(CHROME_TOUR_CARD),
+                modifier = if (tourBlocksEditor) Modifier.chromeBlocker(CHROME_TOUR) else Modifier,
+                cardModifier = if (tourStep != null) Modifier.chromeBlocker(CHROME_TOUR_CARD) else Modifier,
                 onBack = { moveTour(-1) },
                 onNext = { moveTour(1) },
                 onSkip = { endTour() },

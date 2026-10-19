@@ -49,6 +49,7 @@ import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.onClick
@@ -313,19 +314,7 @@ fun HudCanvasResetMenu(
             // without this the separator's fillMaxWidth stretches the menu out to the whole screen
             modifier = Modifier
                 .onSizeChanged(onMeasured)
-                .then(
-                    if (preview) {
-                        Modifier.pointerInput(Unit) {
-                            awaitPointerEventScope {
-                                while (true) {
-                                    awaitPointerEvent(PointerEventPass.Initial).changes.forEach { it.consume() }
-                                }
-                            }
-                        }
-                    } else {
-                        Modifier
-                    }
-                )
+                .blockInteraction(preview)
                 .widthIn(min = 190.dp, max = 240.dp)
                 .background(theme.popupBackground, theme.popupShape)
                 .border(1.dp, theme.borderColor, theme.popupShape)

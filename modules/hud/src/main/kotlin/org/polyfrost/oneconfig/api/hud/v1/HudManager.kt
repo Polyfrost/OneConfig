@@ -770,6 +770,14 @@ object HudManager {
     fun mergeGroupOf(hud: Hud): List<Hud> =
         frameGroups.firstOrNull { group -> group.huds.any { it === hud } }?.huds ?: listOf(hud)
 
+    @ApiStatus.Internal
+    @JvmStatic
+    fun isMergeCandidate(hud: Hud): Boolean = HudBackgroundMerge.canMerge(hud)
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun backgroundStylesMatch(a: Hud, b: Hud): Boolean = HudBackgroundMerge.sameStyle(a, b)
+
     /**
      * Holds every HUD in a fused shape against the neighbour it touches at the point where the two meet
      * so a HUD which grows keeps the shape flush
