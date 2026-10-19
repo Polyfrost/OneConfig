@@ -310,9 +310,9 @@ internal object ModGates {
             it.getMetadata<Any>(Backend.UI_ONLY_METADATA) != true &&
                 it.getMetadata<Any>(CompatSnapshots.SNAPSHOT_METADATA) != true &&
                 it.findMarkedSwitch() != null
-        }.mapNotNullTo(HashSet()) { it.id }
+        }.mapNotNullTo(HashSet()) { it.id?.removeSuffix(".json") }
         return gates.filter { gate ->
-            gate.id in loaded && switched.any { it.removeSuffix(".json") == gate.id || it in gate.cards }
+            gate.id in loaded && switched.any { it == gate.id || it in gate.cards }
         }.mapTo(HashSet()) { it.id }
     }
 
