@@ -32,7 +32,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
+import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import androidx.compose.ui.window.PopupProperties
 import org.jetbrains.skia.Paint
 import org.polyfrost.compose.layout.PolyAlign
@@ -436,7 +436,7 @@ internal fun ColorButton(
                     .pointerHoverIcon(PointerIcon.Hand)
             )
             if (expanded) {
-                Popup(
+                ShellPopup(
                     alignment = Alignment.TopStart,
                     offset = IntOffset(0, 40),
                     onDismissRequest = { expanded = false },

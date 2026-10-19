@@ -95,6 +95,7 @@ public class KeyCodes {
         map(mappings, SDL_SCANCODE_KP_7, KEY_NUMPAD7);
         map(mappings, SDL_SCANCODE_KP_8, KEY_NUMPAD8);
         map(mappings, SDL_SCANCODE_KP_9, KEY_NUMPAD9);
+        map(mappings, SDL_SCANCODE_KP_PERIOD, KEY_DECIMAL);
         map(mappings, SDL_SCANCODE_KP_DECIMAL, KEY_DECIMAL);
         map(mappings, SDL_SCANCODE_KP_DIVIDE, KEY_DIVIDE);
         map(mappings, SDL_SCANCODE_KP_MULTIPLY, KEY_MULTIPLY);
@@ -102,6 +103,7 @@ public class KeyCodes {
         map(mappings, SDL_SCANCODE_KP_PLUS, KEY_ADD);
         map(mappings, SDL_SCANCODE_KP_ENTER, KEY_NUMPADENTER);
         map(mappings, SDL_SCANCODE_KP_EQUALS, KEY_NUMPADEQUALS);
+        map(mappings, SDL_SCANCODE_KP_COMMA, KEY_NUMPADCOMMA);
 
         map(mappings, SDL_SCANCODE_LCTRL, KEY_LCONTROL);
         map(mappings, SDL_SCANCODE_LALT, KEY_LMENU);
@@ -110,7 +112,15 @@ public class KeyCodes {
         map(mappings, SDL_SCANCODE_RALT, KEY_RMENU);
         map(mappings, SDL_SCANCODE_MODE, KEY_RMENU);
         map(mappings, SDL_SCANCODE_RGUI, KEY_RMETA);
+        map(mappings, SDL_SCANCODE_APPLICATION, KEY_APPS);
         map(mappings, SDL_SCANCODE_MENU, KEY_APPS);
+
+        map(mappings, SDL_SCANCODE_NONUSBACKSLASH, KEY_WORLD_1);
+        map(mappings, SDL_SCANCODE_NONUSHASH, KEY_BACKSLASH);
+        map(mappings, SDL_SCANCODE_INTERNATIONAL2, KEY_KANA);
+        map(mappings, SDL_SCANCODE_INTERNATIONAL3, KEY_YEN);
+        map(mappings, SDL_SCANCODE_INTERNATIONAL4, KEY_CONVERT);
+        map(mappings, SDL_SCANCODE_INTERNATIONAL5, KEY_NOCONVERT);
 
         return mappings;
     }

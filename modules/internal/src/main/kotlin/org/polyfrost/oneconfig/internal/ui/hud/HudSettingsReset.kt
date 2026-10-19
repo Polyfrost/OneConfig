@@ -36,7 +36,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
+import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import androidx.compose.ui.window.PopupProperties
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.config.v1.Property
@@ -51,6 +51,7 @@ import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.optionHasDefault
 import org.polyfrost.oneconfig.internal.ui.components.settings.resetOption
@@ -298,7 +299,7 @@ fun HudCanvasResetMenu(
     val deleteHint = if (showHints) keybindHint(OneConfigConfig.hudDeleteKeybind) else null
     val undoHint = if (showHints) keybindHint(OneConfigConfig.hudUndoKeybind) else null
     val redoHint = if (showHints) keybindHint(OneConfigConfig.hudRedoKeybind) else null
-    Popup(
+    ShellPopup(
         alignment = Alignment.TopStart,
         offset = offset,
         onDismissRequest = onDismiss,
@@ -308,6 +309,7 @@ fun HudCanvasResetMenu(
             // without this the separator's fillMaxWidth stretches the menu out to the whole screen
             modifier = Modifier
                 .widthIn(min = 190.dp, max = 240.dp)
+                .shellTransition()
                 .background(theme.popupBackground, theme.popupShape)
                 .border(1.dp, theme.borderColor, theme.popupShape)
                 .padding(MenuPadding),
@@ -456,7 +458,7 @@ fun HudCanvasPasteMenu(
     val selectAllHint = if (OneConfigConfig.showKeybindHints) keybindHint(OneConfigConfig.hudSelectAllKeybind) else null
     val undoHint = if (OneConfigConfig.showKeybindHints) keybindHint(OneConfigConfig.hudUndoKeybind) else null
     val redoHint = if (OneConfigConfig.showKeybindHints) keybindHint(OneConfigConfig.hudRedoKeybind) else null
-    Popup(
+    ShellPopup(
         alignment = Alignment.TopStart,
         offset = offset,
         onDismissRequest = onDismiss,
@@ -465,6 +467,7 @@ fun HudCanvasPasteMenu(
         Column(
             modifier = Modifier
                 .widthIn(min = 190.dp, max = 240.dp)
+                .shellTransition()
                 .background(theme.popupBackground, theme.popupShape)
                 .border(1.dp, theme.borderColor, theme.popupShape)
                 .padding(MenuPadding),

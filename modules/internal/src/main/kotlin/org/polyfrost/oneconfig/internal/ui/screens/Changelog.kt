@@ -16,12 +16,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,6 +69,7 @@ import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -230,13 +229,10 @@ private fun MdBlocks(node: Node, styles: MdStyles, modifier: Modifier = Modifier
 
 @Composable
 fun Changelog() {
-    DisposableEffect(Unit) {
-        ShellState.title = "Changelog"
-        onDispose { }
-    }
-
-    val lazyListState = rememberLazyListState()
     val localSearchQuery = ShellState.searchQuery.trim()
+    // back/forward re-navigate rather than pop so nav-host saved state is gone on return; keep the
+    // position in the shell's scroll memory like the other list pages
+    val lazyListState = rememberRestorableLazyListState("changelog", localSearchQuery)
     val visibleSections = remember(localSearchQuery) {
         changelogs.sections.mapIndexed { index, section -> index to section }
             .filter { (_, section) ->
@@ -272,11 +268,6 @@ private fun ChangelogSection.matchesSearch(query: String): Boolean {
 
 @Composable
 fun Changelog(index: Int) {
-    DisposableEffect(Unit) {
-        ShellState.title = "Changelog"
-        onDispose { }
-    }
-
     val data = changelogs.sections.getOrNull(index) ?: return
     val theme = LocalTheme.current
     val styles = MdStyles(

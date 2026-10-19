@@ -18,6 +18,7 @@ object HudEditorRoute
 
 enum class SearchFocus {
     SelectAll,
+
     /** Focuses the search field and leaves its text and cursor alone */
     Focus,
     Unfocus,
@@ -26,18 +27,12 @@ enum class SearchFocus {
 object Lifecycle : LifecycleOwner {
     override val lifecycle = LifecycleRegistry(this)
 }
-object OCViewModelStoreOwner: ViewModelStoreOwner {
+
+object OCViewModelStoreOwner : ViewModelStoreOwner {
     override val viewModelStore: ViewModelStore = ViewModelStore()
 }
+
 object ShellState {
-    var title by mutableStateOf<String?>(null)
-    var titleInfoForTitle by mutableStateOf<String?>(null)
-    var titleAuthors by mutableStateOf<String?>(null)
-    var titleCredits by mutableStateOf<String?>(null)
-    var titleVersion by mutableStateOf<String?>(null)
-
-    var openOriginalScreen by mutableStateOf<Runnable?>(null)
-
     var playerName by mutableStateOf("Player")
 
     /** PNG bytes for the local player's head avatar or null until loaded */
@@ -54,6 +49,12 @@ object ShellState {
     var searchFieldFocused: Boolean = false
 
     var hudDragging by mutableStateOf(false)
+
+    /**
+     * True while a mod card is being dragged (or settling back) so the content pane can drop its
+     * clip and let the overlay card draw outside the grid
+     */
+    var modDragging by mutableStateOf(false)
 
     var shellBounds by mutableStateOf<Rect?>(null)
 
@@ -97,7 +98,15 @@ object ShellState {
     var awaitingInitialRoute by mutableStateOf(false)
 
     var openingTransitionTarget: String? = null
+
+    /**
+     * True while the most recent navigation was arrow-back so the shared enter/exit transition
+     * can mirror the old pop direction. Plain field on purpose: it is only read by NavHost
+     * transition lambdas at navigation time, and must not itself trigger recomposition.
+     */
+    var lastNavWasBack: Boolean = false
 }
+
 object LocalNavController {
     private var _current: NavHostController? = null
 
@@ -135,6 +144,21 @@ object LocalNavController {
         private val backStack = ArrayDeque<Entry>()
         private val forwardStack = ArrayDeque<Entry>()
 
+        // Bumped on every history mutation so composition can observe the (non-snapshot) deques
+        // below; the deques stay ArrayDeque and remain the single source of truth.
+        private var historyRevisionState by mutableStateOf(0)
+
+        /** Read during composition to subscribe to history changes, then query [canGoBack]/[canGoForward] */
+        val historyRevision: Int get() = historyRevisionState
+
+        private fun updateArrows() {
+            historyRevisionState++
+        }
+
+        fun canGoBack(): Boolean = backStack.isNotEmpty()
+
+        fun canGoForward(): Boolean = forwardStack.isNotEmpty()
+
         private var currentEntry = Entry(ModsGraph)
 
         val currentRoute: Any get() = currentEntry.route
@@ -143,6 +167,7 @@ object LocalNavController {
             backStack.clear()
             forwardStack.clear()
             currentEntry = Entry(ModsGraph)
+            updateArrows()
         }
 
         private fun host(): NavHostController? = if (isReady) current else null
@@ -156,7 +181,9 @@ object LocalNavController {
             currentEntry = Entry(route)
             if (clearSearch) ShellState.searchQuery = ""
             ShellState.lastRoute = route
+            ShellState.lastNavWasBack = false
             seedRouteCategory(route)
+            updateArrows()
             host.navigate(route)
         }
 
@@ -172,6 +199,7 @@ object LocalNavController {
             backStack.addLast(currentEntry.copy(categoryKey = pageKey, category = previous))
             currentEntry = currentEntry.copy(categoryKey = pageKey, category = category)
             ShellState.selectedCategories[pageKey] = category
+            updateArrows()
         }
 
         fun back() {
@@ -182,16 +210,29 @@ object LocalNavController {
                 forwardStack.addLast(currentEntry.withCurrentSearch())
                 currentEntry = previous
                 applyCategory(previous)
+                updateArrows()
                 return
             }
             val host = host() ?: return
-            if (host.popBackStack()) {
-                forwardStack.addLast(currentEntry.withCurrentSearch())
-                currentEntry = backStack.removeLast()
-                applyCategory(currentEntry)
-                ShellState.searchQuery = currentEntry.searchQuery
-                ShellState.lastRoute = currentEntry.route
+            // Route back through navigate() instead of popBackStack(): this NavHost version never
+            // plays its pop transitions from a resting state, while the forward enter/exit
+            // transition reliably plays (matching the existing forward() path below). The shared
+            // transition in Shell mirrors the old pop direction while lastNavWasBack is set.
+            // This leaves the host's own back stack growing by an entry per back press. Don't trim it with
+            // popUpTo here: popping the outgoing entry drops its content mid-transition, so the page snaps
+            // instead of animating. The host is rebuilt every time the menu opens, which bounds the growth
+            // to one session; this wrapper's stacks are the real history.
+            ShellState.lastNavWasBack = true
+            runCatching { host.navigate(previous.route) }.onFailure {
+                ShellState.lastNavWasBack = false
+                return
             }
+            forwardStack.addLast(currentEntry.withCurrentSearch())
+            currentEntry = backStack.removeLast()
+            applyCategory(currentEntry)
+            ShellState.searchQuery = currentEntry.searchQuery
+            ShellState.lastRoute = currentEntry.route
+            updateArrows()
         }
 
         fun forward() {
@@ -203,9 +244,14 @@ object LocalNavController {
             currentEntry = next
             if (host != null) seedRouteCategory(next.route)
             applyCategory(next)
-            if (host == null) return
+            if (host == null) {
+                updateArrows()
+                return
+            }
             ShellState.searchQuery = next.searchQuery
             ShellState.lastRoute = next.route
+            ShellState.lastNavWasBack = false
+            updateArrows()
             host.navigate(next.route)
         }
 

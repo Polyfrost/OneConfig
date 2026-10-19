@@ -29,6 +29,7 @@ private val MinecraftIconOverrides = mapOf(
     "dots-grid" to "/assets/oneconfig/ico/minecraft/dots-grid.svg",
     "dots-vertical" to "/assets/oneconfig/ico/minecraft/dots-vertical.svg",
     "down" to "/assets/oneconfig/ico/minecraft/down.svg",
+    "external-link" to "/assets/oneconfig/ico/minecraft/external-link.svg",
     "eye" to "/assets/oneconfig/ico/minecraft/eye.svg",
     "eye-off" to "/assets/oneconfig/ico/minecraft/eye-off.svg",
     "hud" to "/assets/oneconfig/ico/minecraft/hud.svg",

@@ -3268,8 +3268,9 @@ private fun LegacyHudPreviewCard(
                     }
                 }
             }
-            .safePointerEvent(PointerEventType.Release) {
-                if (!dragStarted && pressPos != null) {
+            .safePointerEvent(PointerEventType.Release) { event ->
+                // ignore the fake release Compose sends when a press is interrupted, such as by alt-tabbing
+                if (!dragStarted && pressPos != null && event.changes.none { it.isConsumed }) {
                     onCardClick(hud)
                 }
                 pressPos = null
@@ -3350,8 +3351,9 @@ private fun ComposeHudPreviewCard(
                     }
                 }
             }
-            .safePointerEvent(PointerEventType.Release) {
-                if (!dragStarted && pressPos != null) {
+            .safePointerEvent(PointerEventType.Release) { event ->
+                // ignore the fake release Compose sends when a press is interrupted, such as by alt-tabbing
+                if (!dragStarted && pressPos != null && event.changes.none { it.isConsumed }) {
                     onCardClick(hud)
                 }
                 pressPos = null
