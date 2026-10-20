@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.api.ui.v1.page
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.snapshots.Snapshot
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 
 @ExperimentalOneConfigUiApi
@@ -15,12 +16,12 @@ object OneConfigPages {
     fun register(page: OneConfigPage) {
         synchronized(lock) {
             require(pages.none { it.id == page.id }) { "A page with id ${page.id} is already registered" }
-            pages.add(page)
+            Snapshot.withMutableSnapshot { pages.add(page) }
         }
     }
 
     @JvmStatic
-    fun unregister(id: String): Boolean = synchronized(lock) { pages.removeAll { it.id == id } }
+    fun unregister(id: String): Boolean = synchronized(lock) { Snapshot.withMutableSnapshot { pages.removeAll { it.id == id } } }
 
     @JvmStatic
     fun all(): List<OneConfigPage> =
