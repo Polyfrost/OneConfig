@@ -100,9 +100,9 @@ import org.polyfrost.oneconfig.internal.ui.search.flattenEntries
 import org.polyfrost.oneconfig.internal.ui.search.flattenSearchEntries
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.search.searchNode
-import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.util.LayoutRef
@@ -132,14 +132,15 @@ private fun ConfigScreenContent(
     lockExempt: Property<*>?,
 ) {
     val categories = remember(tree) { buildCategories(tree) }
-    val localSearchQuery = ShellState.searchQuery.trim()
+    val localSearchQuery = pageSearchQuery().trim()
+    val navigation = LocalShell.current.navigation
 
-    val savedCategory = ShellState.selectedCategories[pageKey] ?: initialCategory
+    val savedCategory = navigation.selectedCategory(pageKey) ?: initialCategory
     val selectedCategory = categories.firstOrNull { it.name.equals(savedCategory, ignoreCase = true) }
         ?: categories.firstOrNull()
 
     fun selectCategory(category: CategoryGroup) {
-        LocalNavController.wrapper.selectCategory(pageKey, category.name)
+        navigation.selectCategory(pageKey, category.name)
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {

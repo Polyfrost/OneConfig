@@ -97,9 +97,9 @@ import org.polyfrost.oneconfig.internal.ui.components.reorderContainer
 import org.polyfrost.oneconfig.internal.ui.components.reorderOverlay
 import org.polyfrost.oneconfig.internal.ui.components.reorderableItem
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
-import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.ShellNavigation
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyGridState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -204,6 +204,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
     val entries = remember(flat) { flat.toMutableStateList() }
 
     val gridState = rememberRestorableLazyGridState("mods")
+    val navigation = LocalShell.current.navigation
     val density = LocalDensity.current
     val windowSize = LocalWindowInfo.current.containerSize
     // Only enable placement animations after the grid has been laid out for the current size
@@ -213,7 +214,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
         onMove = { from, to -> entries.add(to, entries.removeAt(from)) },
         onDrop = { index -> commitDrop(entries, index) },
         dragBounds = { index -> modGroupBounds(entries, index) },
-        onClick = { key -> entries.cardData(key)?.let(::openModCard) },
+        onClick = { key -> entries.cardData(key)?.let { openModCard(it, navigation) } },
         horizontalPadding = PageGutter,
     )
     val dropFavorite = reorderState.draggingKey
@@ -229,9 +230,10 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
     // clips its content, so it would be cut off at the pane edge. Drop that clip for as long as an
     // overlay card exists (dragging and the settle-back animation) so it can be seen in full.
     val overlayActive = reorderState.overlayKey != null
+    val layout = LocalShell.current.layout
     DisposableEffect(overlayActive) {
-        ShellState.modDragging = overlayActive
-        onDispose { if (overlayActive) ShellState.modDragging = false }
+        layout.markModDragging(overlayActive)
+        onDispose { if (overlayActive) layout.markModDragging(false) }
     }
 
     // override scroll to stay in place instead of following the first visible item
@@ -369,11 +371,11 @@ private val ModCardPlacementSpec = spring(
 private fun List<ModGridEntry>.cardData(key: Any): ConfigData? =
     firstNotNullOfOrNull { (it as? ModGridEntry.Card)?.data?.takeIf { mod -> mod.id == key } }
 
-private fun openModCard(mod: ConfigData) {
+private fun openModCard(mod: ConfigData, navigation: ShellNavigation) {
     val onOpen = mod.onOpen
     when {
         onOpen != null -> onOpen()
-        mod.source == ConfigSource.OC -> LocalNavController.wrapper.navigate(ModConfigRoute(mod.id))
+        mod.source == ConfigSource.OC -> navigation.navigate(ModConfigRoute(mod.id))
     }
 }
 
@@ -450,11 +452,12 @@ fun ModCard(
         if (enabled) theme.accentTextColor else theme.textColor.copy(alpha = 0.75f)
     )
     val glowStrength by animateFloatAsState(if (enabled) 0.5f else 0f)
+    val navigation = LocalShell.current.navigation
     val open = {
         val onOpen = mod.onOpen
         when {
             onOpen != null -> onOpen()
-            mod.source == ConfigSource.OC -> LocalNavController.wrapper.navigate(ModConfigRoute(mod.id))
+            mod.source == ConfigSource.OC -> navigation.navigate(ModConfigRoute(mod.id))
         }
     }
 
@@ -469,7 +472,7 @@ fun ModCard(
                     // cards never take focus, otherwise they slide in from off screen when scrolled back into view
                     Modifier
                         .focusProperties { canFocus = false }
-                        .onClick(interactionSource) { openModCard(mod) }
+                        .onClick(interactionSource) { openModCard(mod, navigation) }
                         .pointerHoverIcon(PointerIcon.Hand)
                 } else {
                     Modifier

@@ -18,7 +18,7 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession;
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState;
+import org.polyfrost.oneconfig.internal.ui.shell.ShellController;
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds;
 
 public class OneConfigConfig extends Config {
@@ -659,28 +659,25 @@ public class OneConfigConfig extends Config {
             "uiAmbienceVolume",
             "UI Ambience",
             () -> enableUIAmbience ? Property.Display.SHOWN : Property.Display.DISABLED);
-        ShellState.INSTANCE.setFlipTopOptionOrder(flipTopOptionOrder);
+        ShellController.getShared().getAppearance().update(flipTopOptionOrder, pageOpacity, sidebarOpacity, glowOpacity);
         addCallback(
             "flipTopOptionOrder", (Boolean v) -> {
-                ShellState.INSTANCE.setFlipTopOptionOrder(v);
+                ShellController.getShared().getAppearance().update(v, pageOpacity, sidebarOpacity, glowOpacity);
                 return false;
             });
-        ShellState.INSTANCE.setPageOpacity(pageOpacity);
         addCallback(
             "pageOpacity", (java.lang.Number v) -> {
-                ShellState.INSTANCE.setPageOpacity(v.floatValue());
+                ShellController.getShared().getAppearance().update(flipTopOptionOrder, v.floatValue(), sidebarOpacity, glowOpacity);
                 return false;
             });
-        ShellState.INSTANCE.setSidebarOpacity(sidebarOpacity);
         addCallback(
             "sidebarOpacity", (java.lang.Number v) -> {
-                ShellState.INSTANCE.setSidebarOpacity(v.floatValue());
+                ShellController.getShared().getAppearance().update(flipTopOptionOrder, pageOpacity, v.floatValue(), glowOpacity);
                 return false;
             });
-        ShellState.INSTANCE.setGlowOpacity(glowOpacity);
         addCallback(
             "glowOpacity", (java.lang.Number v) -> {
-                ShellState.INSTANCE.setGlowOpacity(v.floatValue());
+                ShellController.getShared().getAppearance().update(flipTopOptionOrder, pageOpacity, sidebarOpacity, v.floatValue());
                 return false;
             });
         addCallback(

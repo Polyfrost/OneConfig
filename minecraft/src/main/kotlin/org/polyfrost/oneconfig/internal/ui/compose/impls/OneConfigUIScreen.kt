@@ -38,9 +38,8 @@ import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.PreferencesGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ThemesGraph
 import org.polyfrost.oneconfig.internal.ui.shell.HudEditorRoute
-import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.SearchFocus
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.ShellController
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 
@@ -63,6 +62,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     companion object {
         private val LOGGER = LogManager.getLogger("OneConfig/UI")
+
+        private val shell: ShellController = ShellController.shared
 
         private var sharedScreen: OneConfigUIScreen? = null
 
@@ -114,9 +115,9 @@ class OneConfigUIScreen @JvmOverloads constructor(
         private data class OpeningRoute(val route: Any, val restored: Boolean = false)
 
         private fun resolveOpeningRoute(): OpeningRoute {
-            val route = ShellState.lastRoute
+            val route = shell.navigation.lastRoute
             // "Reopen HUD editor" is off by default so the editor is never restored as a page
-            if (route == null || !OneConfigConfig.remembersPageClosedAt(ShellState.lastClosedAt) ||
+            if (route == null || !OneConfigConfig.remembersPageClosedAt(shell.session.lastClosedAt) ||
                 (route === HudEditorRoute && !OneConfigConfig.restoreHudEditor)) return OpeningRoute(ModsGraph)
             return OpeningRoute(route, restored = true)
         }
@@ -211,8 +212,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     private fun restorePrewarmNavigation() {
         warmRoute(ModsGraph)
-        LocalNavController.wrapper.reset()
-        ShellState.lastRoute = null
+        shell.navigation.reset()
+        shell.navigation.recordLastRoute(null)
     }
 
     private fun runPrewarm(): Boolean {
@@ -234,7 +235,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
                     }
                     PREWARM_FORGET_FRAME -> restorePrewarmNavigation()
                     in PREWARM_SCROLL_FRAMES -> {
-                        val grid = ShellState.gridStates[MOD_GRID_KEY] ?: return@prewarm
+                        val grid = shell.scroll.grid(MOD_GRID_KEY) ?: return@prewarm
                         val last = (grid.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)
                         val step = frame - PREWARM_SCROLL_FRAMES.first
                         val span = PREWARM_SCROLL_FRAMES.last - PREWARM_SCROLL_FRAMES.first
@@ -252,15 +253,15 @@ class OneConfigUIScreen @JvmOverloads constructor(
     }
 
     private fun scrollModGrid(index: Int) {
-        runCatching { ShellState.gridStates[MOD_GRID_KEY]?.requestScrollToItem(index) }
+        runCatching { shell.scroll.grid(MOD_GRID_KEY)?.requestScrollToItem(index) }
     }
 
     private fun warmRoute(route: Any) {
-        runCatching { if (LocalNavController.isReady) LocalNavController.wrapper.navigate(route) }
+        runCatching { if (shell.navigation.isReady) shell.navigation.navigate(route) }
     }
 
     private fun markClosed() {
-        ShellState.lastClosedAt = System.currentTimeMillis()
+        shell.session.markClosed(System.currentTimeMillis())
     }
 
     override fun init() {
@@ -271,7 +272,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         val isResume = resumeNext
         resumeNext = false
         val (target, targetRestoring) = when {
-            isResume -> (ShellState.lastRoute?.takeIf { it !== HudEditorRoute } ?: ModsGraph) to true
+            isResume -> (shell.navigation.lastRoute?.takeIf { it !== HudEditorRoute } ?: ModsGraph) to true
             initialRoute != null -> initialRoute to false
             initialTreeId != null -> ModConfigRoute(initialTreeId, initialCategory) to false
             else -> {
@@ -283,29 +284,29 @@ class OneConfigUIScreen @JvmOverloads constructor(
         route = target
         restoring = targetRestoring
         openRevision++
-        ShellState.lastRoute = target
+        shell.navigation.recordLastRoute(target)
 
         try {
-            ShellState.playerName = Minecraft.getInstance().user.name
+            shell.session.updatePlayerName(Minecraft.getInstance().user.name)
         } catch (_: Throwable) {
-            ShellState.playerName = "Player"
+            shell.session.updatePlayerName("Player")
         }
-        val keepFocus = if (ShellState.searchFieldFocused) SearchFocus.Focus else SearchFocus.Unfocus
-        ShellState.searchFocus = when {
+        val keepFocus = if (shell.search.fieldFocused) SearchFocus.Focus else SearchFocus.Unfocus
+        shell.search.requestFocus(when {
             isResume -> keepFocus
             OneConfigConfig.instantSearch -> SearchFocus.SelectAll
             targetRestoring -> keepFocus
             else -> SearchFocus.Unfocus
-        }
+        })
         val client = Minecraft.getInstance()
         val cachedHead = PlayerHeadLoader.cachedLocalPlayerHeadPng(client)
         if (cachedHead != null) {
-            ShellState.playerHeadPng = cachedHead
+            shell.session.updatePlayerHead(cachedHead)
         } else {
             Thread {
                 runCatching {
                     val head = PlayerHeadLoader.loadLocalPlayerHeadPng(client) ?: return@runCatching
-                    client.execute { ShellState.playerHeadPng = head }
+                    client.execute { shell.session.updatePlayerHead(head) }
                 }.onFailure { LOGGER.warn("Failed to load player head", it) }
             }.apply {
                 isDaemon = true
@@ -317,12 +318,12 @@ class OneConfigUIScreen @JvmOverloads constructor(
             val loaderStr = Platform.loader().loaderString
             val parts = loaderStr.split("-", limit = 2)
             if (parts.size == 2) {
-                ShellState.versionLabel = "${parts[1].replaceFirstChar { it.uppercase() }} ${parts[0]}"
+                shell.session.updateVersionLabel("${parts[1].replaceFirstChar { it.uppercase() }} ${parts[0]}")
             } else {
-                ShellState.versionLabel = loaderStr
+                shell.session.updateVersionLabel(loaderStr)
             }
         } catch (_: Throwable) {
-            ShellState.versionLabel = "OneConfig"
+            shell.session.updateVersionLabel("OneConfig")
         }
 
         //? if < 1.21.8 {
@@ -343,6 +344,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         openedAt = System.currentTimeMillis()
         UiSounds.play(UiSoundEvent.OPEN)
         UiSounds.acquireAmbience()
+        shell.session.resume()
         super.init()
         requestOpenCallback?.invoke()
     }
@@ -352,16 +354,17 @@ class OneConfigUIScreen @JvmOverloads constructor(
      * rebuild is treated as coming back from another screen which stops the GUI hanging
      */
     override fun onSceneRebuilding() {
-        ShellState.lastRoute?.takeIf { it !== HudEditorRoute }?.let { route = it }
+        shell.navigation.lastRoute?.takeIf { it !== HudEditorRoute }?.let { route = it }
         restoring = true
-        if (ShellState.searchFieldFocused) ShellState.searchFocus = SearchFocus.Focus
+        if (shell.search.fieldFocused) shell.search.requestFocus(SearchFocus.Focus)
     }
 
     override fun removed() {
         SkiaCtx.suppressInGameHudRender = false
         HudManager.overrideShowInScreens = false
         HudManager.isConfigUiOpen = false
-        ShellState.shellBounds = null
+        shell.layout.updateShellBounds(null)
+        shell.session.stop()
         UiSounds.releaseAmbience()
         // writing every registered tree hitches and Minecraft only re-grabs the cursor once this returns
         scheduleSave()
@@ -407,20 +410,20 @@ class OneConfigUIScreen @JvmOverloads constructor(
         ) {
             return handleOneConfigKeybind()
         }
-        if (!closeRequested && LocalNavController.isReady) {
+        if (!closeRequested && shell.navigation.isReady) {
             when (button) {
                 //~ if < 1.21.11 && > 1.8.9 'InputConstants.MOUSE_BUTTON_4' -> 'GLFW.GLFW_MOUSE_BUTTON_4'
                 InputConstants.MOUSE_BUTTON_4 -> {
                     if (KeybindManager.hasTriggeredMouseBind(button)) return true
                     UiSounds.play(UiSoundEvent.CLICK)
-                    LocalNavController.wrapper.back()
+                    shell.navigation.back()
                     return true
                 }
                 //~ if < 1.21.11 && > 1.8.9 'InputConstants.MOUSE_BUTTON_5' -> 'GLFW.GLFW_MOUSE_BUTTON_5'
                 InputConstants.MOUSE_BUTTON_5 -> {
                     if (KeybindManager.hasTriggeredMouseBind(button)) return true
                     UiSounds.play(UiSoundEvent.CLICK)
-                    LocalNavController.wrapper.forward()
+                    shell.navigation.forward()
                     return true
                 }
             }

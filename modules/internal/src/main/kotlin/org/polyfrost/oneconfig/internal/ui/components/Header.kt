@@ -63,17 +63,17 @@ import org.polyfrost.oneconfig.internal.ui.components.dropdown.DropdownPositionP
 import org.polyfrost.oneconfig.internal.ui.navigation.currentPageTitle
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.searchPlaceholder
-import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShellNavController
 import org.polyfrost.oneconfig.internal.ui.shell.SearchFocus
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
 fun Header(modifier: Modifier = Modifier) {
-    val controller = LocalNavController.wrapper
+    val controller = LocalShell.current.navigation
     val closeRequest = LocalCloseRequest.current
-    val backStackEntry by LocalNavController.current.currentBackStackEntryAsState()
+    val backStackEntry by LocalShellNavController.current.currentBackStackEntryAsState()
     val title = remember(backStackEntry, ConfigRegistry.revision) { backStackEntry.headerTitle() }
     val openOriginalScreen = title?.openOriginalScreen
     // historyRevision reads snapshot state so this recomposes and re-queries the stacks whenever the
@@ -166,13 +166,6 @@ fun Header(modifier: Modifier = Modifier) {
 /**
  * The header title and its extra info, resolved purely from the entry currently on top of the back
  * stack.
- *
- * Deliberately derived from the live back-stack entry instead of screen-owned `ShellState` fields: a
- * screen-scoped `DisposableEffect` only clears on dispose, which NavHost delays until the outgoing
- * screen's exit transition finishes, so the outgoing screen's `onDispose` wiped the incoming screen's
- * title info mid-transition (the byline vanished and the "Open original screen" button outlived its
- * page). Deriving it here makes the title a pure function of the current route, so each transition
- * target renders its own content.
  */
 private data class HeaderTitle(
     val text: String,
@@ -313,26 +306,27 @@ private fun searchFieldValue(text: String) = TextFieldValue(text, TextRange(text
 
 @Composable
 fun GlobalSearchBar() {
-    val navController = LocalNavController.current
+    val navController = LocalShellNavController.current
+    val search = LocalShell.current.search
     val backStackEntry by navController.currentBackStackEntryAsState()
     val placeholder = searchPlaceholder(backStackEntry)
 
-    var searchText by remember { mutableStateOf(searchFieldValue(ShellState.searchQuery)) }
+    var searchText by remember { mutableStateOf(searchFieldValue(search.query)) }
     val interactionSource = rememberInteractionSource()
     val isFocused by interactionSource.collectIsFocusedAsState()
 
     val focusRequester = remember { FocusRequester() }
 
-    LaunchedEffect(searchText.text) { ShellState.searchQuery = searchText.text }
-    LaunchedEffect(ShellState.searchQuery) {
-        if (ShellState.searchQuery != searchText.text) searchText = searchFieldValue(ShellState.searchQuery)
+    LaunchedEffect(searchText.text) { search.update(searchText.text) }
+    LaunchedEffect(search.query) {
+        if (search.query != searchText.text) searchText = searchFieldValue(search.query)
     }
-    LaunchedEffect(isFocused) { ShellState.searchFieldFocused = isFocused }
+    LaunchedEffect(isFocused) { search.updateFieldFocused(isFocused) }
 
     val focusManager = LocalFocusManager.current
 
-    LaunchedEffect(ShellState.searchFocus) {
-        val request = ShellState.searchFocus ?: return@LaunchedEffect
+    LaunchedEffect(search.focusRequest) {
+        val request = search.focusRequest ?: return@LaunchedEffect
         withFrameNanos { }
         if (request == SearchFocus.Unfocus) {
             if (isFocused) focusManager.clearFocus()
@@ -348,7 +342,7 @@ fun GlobalSearchBar() {
                 }
             }
         }
-        ShellState.searchFocus = null
+        search.consumeFocusRequest()
     }
 
     val searchTextStyle = TextStyle(

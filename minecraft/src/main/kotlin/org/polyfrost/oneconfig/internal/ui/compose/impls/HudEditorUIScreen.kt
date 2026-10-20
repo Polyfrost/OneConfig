@@ -23,9 +23,8 @@ import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignStudio
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.shell.HudEditorRoute
-import org.polyfrost.oneconfig.internal.ui.shell.Lifecycle
-import org.polyfrost.oneconfig.internal.ui.shell.OCViewModelStoreOwner
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
+import org.polyfrost.oneconfig.internal.ui.shell.ShellController
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Theme
@@ -121,6 +120,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
         closeAnimationMs = 0L
         returningToOneConfig = false
         UiSounds.acquireAmbience()
+        ShellController.shared.session.resume()
         super.init()
         requestOpenCallback?.invoke()
     }
@@ -128,10 +128,11 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
     override fun removed() {
         if (!returningToOneConfig) {
             // off by default so closing the editor leaves the last config page as the route to come back to
-            if (OneConfigConfig.restoreHudEditor) ShellState.lastRoute = HudEditorRoute
-            ShellState.lastClosedAt = System.currentTimeMillis()
+            if (OneConfigConfig.restoreHudEditor) ShellController.shared.navigation.recordLastRoute(HudEditorRoute)
+            ShellController.shared.session.markClosed(System.currentTimeMillis())
         }
         UiSounds.releaseAmbience()
+        ShellController.shared.session.stop()
         HudManager.onEditorScreenRemoved()
         super.removed()
     }
@@ -238,8 +239,9 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
             openKey = HudManager.editorOpenRevision.intValue,
         ) { _ ->
             CompositionLocalProvider(
-                LocalLifecycleOwner provides Lifecycle,
-                LocalViewModelStoreOwner provides OCViewModelStoreOwner
+                LocalLifecycleOwner provides ShellController.shared.session,
+                LocalViewModelStoreOwner provides ShellController.shared.session,
+                LocalShell provides ShellController.shared,
             ) {
                 Theme(pixelGrid = true) {
                     HudDesignStudio(visible)

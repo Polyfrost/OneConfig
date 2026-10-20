@@ -105,7 +105,7 @@ fun Theme(
     designHeight: Dp = DESIGN_HEIGHT_DP.dp,
     content: @Composable () -> Unit,
 ) {
-    updateAccent()
+    LaunchedEffect(Unit) { updateAccent() }
 
     LaunchedEffect(_chroma) {
         while (_chroma) {
