@@ -80,37 +80,40 @@ fun OneConfigInterface(
         val alreadyThere = initialRoute == shell.navigation.currentRoute
         if (!restoring) shell.search.clear()
 
-        if (!alreadyThere) {
-            shell.transitions.beginOpening()
-            // an initial navigation fires a page transition gated by "Show opening page animation" unless
-            // the page is only being put back which should look like it was never left
-            val animateOpening = !restoring && OneConfigConfig.showOpeningPageAnimation
-            // the NavHost only sets its graph once the Shell is composed so wait for it or navigate()
-            // crashes with "must call setGraph() before getGraph()"
-            if (animateOpening) {
-                var attempts = 0
-                while (attempts++ < 600) {
-                    val ready = try {
-                        navController.graph; true
-                    } catch (_: IllegalStateException) {
-                        false
+        try {
+            if (!alreadyThere) {
+                shell.transitions.beginOpening()
+                // an initial navigation fires a page transition gated by "Show opening page animation" unless
+                // the page is only being put back which should look like it was never left
+                val animateOpening = !restoring && OneConfigConfig.showOpeningPageAnimation
+                // the NavHost only sets its graph once the Shell is composed so wait for it or navigate()
+                // crashes with "must call setGraph() before getGraph()"
+                if (animateOpening) {
+                    var attempts = 0
+                    while (attempts++ < 600) {
+                        val ready = try {
+                            navController.graph; true
+                        } catch (_: IllegalStateException) {
+                            false
+                        }
+                        if (ready) break
+                        withFrameNanos { }
                     }
-                    if (ready) break
-                    withFrameNanos { }
+                } else {
+                    withTimeoutOrNull(GRAPH_WAIT_TIMEOUT_MS) {
+                        navController.currentBackStackEntryFlow.first()
+                    }
                 }
-            } else {
-                withTimeoutOrNull(GRAPH_WAIT_TIMEOUT_MS) {
-                    navController.currentBackStackEntryFlow.first()
+                try {
+                    shell.navigation.navigate(initialRoute, clearSearch = !restoring, animate = animateOpening)
+                } catch (t: Throwable) {
+                    LOGGER.error("Failed to open the OneConfig UI on {}, falling back to the mods page", initialRoute, t)
+                    runCatching { shell.navigation.navigate(ModsGraph) }
                 }
             }
-            try {
-                shell.navigation.navigate(initialRoute, clearSearch = !restoring, animate = animateOpening)
-            } catch (t: Throwable) {
-                LOGGER.error("Failed to open the OneConfig UI on {}, falling back to the mods page", initialRoute, t)
-                runCatching { shell.navigation.navigate(ModsGraph) }
-            }
+        } finally {
+            shell.transitions.finishOpening()
         }
-        shell.transitions.finishOpening()
     }
 
     var visible by remember { mutableStateOf(false) }
