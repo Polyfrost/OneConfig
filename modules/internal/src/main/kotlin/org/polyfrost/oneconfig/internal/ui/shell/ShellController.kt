@@ -16,9 +16,12 @@ import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
+
+private val LOGGER = LogManager.getLogger("OneConfig/UI")
 
 class ShellController {
     val session = ShellSession()
@@ -332,14 +335,14 @@ class ShellNavigation internal constructor(
         if (route == currentEntry.route) return
         val host = readyHost() ?: return
         val query = if (clearSearch) "" else search.query
+        transitions.prepare(animate, back = false)
+        host.navigate(route)
         forwardStack.clear()
         backStack.addLast(currentEntry.withCurrentSearch())
         currentEntry = Entry(route, searchQuery = query)
         lastRoute = route
-        transitions.prepare(animate, back = false)
         seedRouteCategory(route)
         updateArrows()
-        host.navigate(route)
         search.bind(host.currentBackStackEntry?.id, query)
     }
 
@@ -380,6 +383,7 @@ class ShellNavigation internal constructor(
         // to one session; this wrapper's stacks are the real history.
         transitions.prepare(OneConfigConfig.showPageAnimations, back = true)
         runCatching { host.navigate(previous.route) }.onFailure {
+            LOGGER.error("Failed to navigate back to {}", previous.route, it)
             transitions.prepare(OneConfigConfig.showPageAnimations, back = false)
             return
         }
