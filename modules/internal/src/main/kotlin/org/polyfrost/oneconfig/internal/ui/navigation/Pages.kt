@@ -79,7 +79,13 @@ object BuiltinPages {
         synchronized(this) {
             if (registered) return
             for (page in all) {
-                if (OneConfigPages.byId(page.id) == null) OneConfigPages.register(page)
+                val existing = OneConfigPages.byId(page.id)
+                if (existing === page) continue
+                if (existing != null) {
+                    LOGGER.warn("Replacing page {} from {} with the built-in OneConfig page because the oneconfig namespace is reserved", page.id, existing.javaClass.name)
+                    OneConfigPages.unregister(page.id)
+                }
+                OneConfigPages.register(page)
             }
             registered = true
         }
