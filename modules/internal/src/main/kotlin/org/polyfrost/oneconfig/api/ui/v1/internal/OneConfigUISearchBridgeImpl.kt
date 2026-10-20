@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
 import java.util.concurrent.ConcurrentHashMap
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.ui.v1.search.SearchDocument as PublicSearchDocument
 import org.polyfrost.oneconfig.api.ui.v1.search.SearchProvider as PublicSearchProvider
 import org.polyfrost.oneconfig.api.ui.v1.search.SearchScope as PublicSearchScope
@@ -10,10 +11,16 @@ import org.polyfrost.oneconfig.internal.ui.search.SearchProvider
 import org.polyfrost.oneconfig.internal.ui.search.SearchProviderRegistry
 import org.polyfrost.oneconfig.internal.ui.search.SearchScope
 
+private val LOGGER = LogManager.getLogger("OneConfig/SearchProviders")
+
 class OneConfigUISearchBridgeImpl : OneConfigUISearchBridge {
     private val adapters = ConcurrentHashMap<PublicSearchProvider, SearchProvider>()
 
     override fun register(provider: PublicSearchProvider) {
+        if (adapters.containsKey(provider)) {
+            LOGGER.debug("Ignoring SearchProvider {} that is already registered", provider.javaClass.name)
+            return
+        }
         val adapter = adapters.computeIfAbsent(provider, ::PublicSearchProviderAdapter)
         SearchProviderRegistry.registerSearchProvider(adapter)
     }
@@ -29,7 +36,10 @@ class OneConfigUISearchBridgeImpl : OneConfigUISearchBridge {
     override fun document(id: String): PublicSearchDocument? = SearchCorpus.corpus[id]?.toPublic()
 }
 
-private class PublicSearchProviderAdapter(private val provider: PublicSearchProvider) : SearchProvider {
+internal fun SearchProvider.displayName(): String =
+    (this as? PublicSearchProviderAdapter)?.provider?.javaClass?.name ?: javaClass.name
+
+private class PublicSearchProviderAdapter(val provider: PublicSearchProvider) : SearchProvider {
     override val priority: Int get() = provider.priority
 
     override fun isAvailable(): Boolean = provider.isAvailable()

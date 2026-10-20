@@ -13,6 +13,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.api.ui.v1.internal.displayName
 
 /** How long to wait for further config registrations before rebuilding */
 private const val REBUILD_DEBOUNCE_MS = 250L
@@ -101,7 +102,7 @@ object SearchCorpus {
         val hits = try {
             provider.search(query, scope)
         } catch (e: Throwable) {
-            LOGGER.error("Search provider ${provider.javaClass.name} failed, falling back to the default", e)
+            LOGGER.error("Search provider ${provider.displayName()} failed, falling back to the default", e)
             if (provider === DefaultSearchProvider) return emptyList()
             runCatching { DefaultSearchProvider.search(query, scope) }.onFailure {
                 LOGGER.error("Default search provider failed", it)
@@ -123,7 +124,7 @@ object SearchCorpus {
         val hits = try {
             provider.searchGrouped(query, scope, grouper)
         } catch (e: Throwable) {
-            LOGGER.error("Search provider ${provider.javaClass.name} failed, falling back to the default", e)
+            LOGGER.error("Search provider ${provider.displayName()} failed, falling back to the default", e)
             if (provider === DefaultSearchProvider) return emptyMap()
             runCatching { DefaultSearchProvider.searchGrouped(query, scope, grouper) }.onFailure {
                 LOGGER.error("Default search provider failed", it)
@@ -142,7 +143,7 @@ object SearchCorpus {
             val documents = rebuildMutex.withLock { corpus.values.toList() }
             if (documents.isEmpty()) return@launch
             runCatching { provider.onCorpusUpdate(documents, emptySet()) }
-                .onFailure { LOGGER.error("Failed to seed search provider ${provider.javaClass.name}", it) }
+                .onFailure { LOGGER.error("Failed to seed search provider ${provider.displayName()}", it) }
         }
     }
 
@@ -210,7 +211,7 @@ object SearchCorpus {
 
             SearchProviderRegistry.all().forEach { provider ->
                 runCatching { provider.onCorpusUpdate(upserted, removed) }
-                    .onFailure { LOGGER.error("Failed to index into ${provider.javaClass.name}", it) }
+                    .onFailure { LOGGER.error("Failed to index into ${provider.displayName()}", it) }
             }
         }
     }
