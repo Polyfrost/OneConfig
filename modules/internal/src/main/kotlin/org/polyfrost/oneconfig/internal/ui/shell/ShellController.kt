@@ -112,7 +112,7 @@ class ShellSearch {
     fun clear() = update("")
 
     fun queryFor(entryId: String?): String =
-        if (entryId == null || entryId == this.entryId) query else byEntry[entryId] ?: ""
+        if (entryId == null || this.entryId == null || entryId == this.entryId) query else byEntry[entryId] ?: ""
 
     fun requestFocus(request: SearchFocus) {
         focusRequest = request
