@@ -32,13 +32,11 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
-import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
-import java.util.Locale.getDefault
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
-import org.polyfrost.oneconfig.internal.ui.navigation.NavigationGroups
+import org.polyfrost.oneconfig.internal.ui.navigation.isOn
+import org.polyfrost.oneconfig.internal.ui.navigation.sidebarSections
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
@@ -100,7 +98,7 @@ private fun TopOptionsSection() {
     NavigationSection {
         NavigationEntry(
             "hud",
-            "Edit HUD",
+            translated("oneconfig.sidebar.edit_hud", "Edit HUD"),
         ) {
             HudManager.openEditor()
         }
@@ -119,20 +117,16 @@ private fun NavigationEntries(showTopOptions: Boolean) {
             TopOptionsSection()
         }
 
-        NavigationGroups.forEach {
+        sidebarSections().forEach {
             val entry by controller.currentBackStackEntryAsState()
-            val currentDestination = entry?.destination
 
-            NavigationSection(it.id) {
-                it.routes.forEach { def ->
-                    val selected = currentDestination?.hierarchy?.any { arche ->
-                        arche.hasRoute(def.route::class)
-                    } ?: false
+            NavigationSection(it.title) {
+                it.entries.forEach { def ->
+                    val selected = entry.isOn(def.route)
 
-                    // todo: i18n
                     NavigationEntry(
                         def.icon,
-                        def.id.replaceFirstChar { char -> if (char.isLowerCase()) char.titlecase(getDefault()) else char.toString() },
+                        def.label,
                         def.route,
                         selected
                     ) {

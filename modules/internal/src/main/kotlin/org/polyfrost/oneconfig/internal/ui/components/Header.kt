@@ -53,7 +53,6 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
@@ -61,15 +60,8 @@ import org.polyfrost.oneconfig.internal.ui.LocalCloseRequest
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.components.dropdown.DropdownPositionProvider
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.ChangeLogEntryRoute
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.ChangeLogRoute
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.CreditsRoute
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.KeybindsRoute
+import org.polyfrost.oneconfig.internal.ui.navigation.currentPageTitle
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsRoute
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.PreferencesRoute
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.ProfilesRoute
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.ThemesRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.searchPlaceholder
 import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
 import org.polyfrost.oneconfig.internal.ui.shell.SearchFocus
@@ -207,17 +199,7 @@ private fun NavBackStackEntry?.headerTitle(): HeaderTitle? {
         )
     }
 
-    return when {
-        destination.hierarchy.any { it.hasRoute(ModsRoute::class) } -> HeaderTitle("Mods")
-        destination.hierarchy.any { it.hasRoute(ProfilesRoute::class) } -> HeaderTitle("Profiles")
-        destination.hierarchy.any { it.hasRoute(KeybindsRoute::class) } -> HeaderTitle("Keybinds")
-        destination.hierarchy.any { it.hasRoute(ThemesRoute::class) } -> HeaderTitle("Themes")
-        destination.hierarchy.any { it.hasRoute(PreferencesRoute::class) } -> HeaderTitle("Preferences")
-        destination.hierarchy.any { it.hasRoute(ChangeLogRoute::class) || it.hasRoute(ChangeLogEntryRoute::class) } ->
-            HeaderTitle("Changelog")
-        destination.hierarchy.any { it.hasRoute(CreditsRoute::class) } -> HeaderTitle("Credits")
-        else -> null
-    }
+    return entry.currentPageTitle()?.let { HeaderTitle(it) }
 }
 
 @Composable
@@ -230,7 +212,7 @@ private fun OpenOriginalScreenButton(runnable: Runnable) {
     Tooltip(
         text = {
             Text(
-                "Opening the original screen may show options that OneConfig doesn't.",
+                translated("oneconfig.header.original_menu.tooltip", "Opening the original screen may show options that OneConfig doesn't."),
                 color = theme.textColor,
                 fontSize = 13.sp,
             )
@@ -252,7 +234,7 @@ private fun OpenOriginalScreenButton(runnable: Runnable) {
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Icon("external-link", color = theme.accentTextColor, modifier = Modifier.size(14.dp))
-                Text("Original menu", color = theme.accentTextColor, fontSize = 13.sp)
+                Text(translated("oneconfig.header.original_menu", "Original menu"), color = theme.accentTextColor, fontSize = 13.sp)
             }
         }
     }
@@ -275,9 +257,9 @@ private fun String.authorByline(): String? {
     val first = authors.firstOrNull() ?: return null
     val remaining = authors.size - 1
     return if (remaining > 0) {
-        "by $first and $remaining more..."
+        translated("oneconfig.header.byline.more", "by %s and %s more...", first, remaining)
     } else {
-        "by $first"
+        translated("oneconfig.header.byline", "by %s", first)
     }
 }
 
@@ -313,13 +295,13 @@ private fun TitleInfoTooltip(title: HeaderTitle) {
                         .padding(horizontal = 12.dp, vertical = 8.dp)
                 ) {
                     if (authors != null) {
-                        Text("Author: $authors", color = LocalTheme.current.textColor, fontSize = 12.sp)
+                        Text(translated("oneconfig.header.author", "Author: %s", authors), color = LocalTheme.current.textColor, fontSize = 12.sp)
                     }
                     if (credits != null) {
-                        Text("Credits: $credits", color = LocalTheme.current.textColor, fontSize = 12.sp)
+                        Text(translated("oneconfig.header.credits", "Credits: %s", credits), color = LocalTheme.current.textColor, fontSize = 12.sp)
                     }
                     if (version != null) {
-                        Text("Version: $version", color = LocalTheme.current.textColor, fontSize = 12.sp)
+                        Text(translated("oneconfig.header.version", "Version: %s", version), color = LocalTheme.current.textColor, fontSize = 12.sp)
                     }
                 }
             }
@@ -333,7 +315,7 @@ private fun searchFieldValue(text: String) = TextFieldValue(text, TextRange(text
 fun GlobalSearchBar() {
     val navController = LocalNavController.current
     val backStackEntry by navController.currentBackStackEntryAsState()
-    val placeholder = searchPlaceholder(backStackEntry?.destination)
+    val placeholder = searchPlaceholder(backStackEntry)
 
     var searchText by remember { mutableStateOf(searchFieldValue(ShellState.searchQuery)) }
     val interactionSource = rememberInteractionSource()

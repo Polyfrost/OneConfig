@@ -83,6 +83,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.search.CategoryGroup
 import org.polyfrost.oneconfig.internal.ui.search.ConfigListEntry
@@ -176,9 +177,9 @@ private fun ConfigScreenContent(
         if (entries.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 val message = when {
-                    localSearchQuery.isBlank() -> "No settings available."
-                    results == null -> "Searching..."
-                    else -> "No settings match \"$localSearchQuery\""
+                    localSearchQuery.isBlank() -> translated("oneconfig.search.no_settings", "No settings available.")
+                    results == null -> translated("oneconfig.search.searching", "Searching...")
+                    else -> translated("oneconfig.search.no_settings_match", "No settings match \"%s\"", localSearchQuery)
                 }
                 Text(message, color = LocalTheme.current.textColorSecondary)
             }

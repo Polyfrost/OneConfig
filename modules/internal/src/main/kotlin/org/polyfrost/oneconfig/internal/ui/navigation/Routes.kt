@@ -1,80 +1,27 @@
 package org.polyfrost.oneconfig.internal.ui.navigation
 
-import androidx.navigation.NavDestination
-import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavDestination.Companion.hierarchy
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.ChangeLogGraph
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.CreditsGraph
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.KeybindsGraph
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.PreferencesGraph
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.ProfilesGraph
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.ThemesGraph
-
+@Deprecated("Register a OneConfigPage through OneConfigPages instead. Removed in OneConfig 1.6.0")
 data class NavigationRoute(
     val id: String,
     val icon: String,
     val route: Any,
 )
 
+@Deprecated("Use PageGroup and OneConfigPages instead. Removed in OneConfig 1.6.0")
 class NavigationGroup(
     val id: String,
-    vararg val routes: NavigationRoute
+    @Suppress("DEPRECATION") vararg val routes: NavigationRoute
 )
 
-val NavigationGroups = listOf(
-    NavigationGroup(
-        id = "Mods & Options",
-        NavigationRoute(
-            id = "mods",
-            icon = "settings",
-            route = ModsGraph
-        ),
-        NavigationRoute(
-            id = "profiles",
-            icon = "profiles",
-            route = ProfilesGraph
-        ),
-        NavigationRoute(
-            id = "keybinds",
-            icon = "keyboard",
-            route = KeybindsGraph
-        )
-    ),
-    NavigationGroup(
-        id = "Personalization",
-        NavigationRoute(
-            id = "themes",
-            icon = "paintbrush",
-            route = ThemesGraph
-        ),
-        NavigationRoute(
-            id = "preferences",
-            icon = "cog",
-            route = PreferencesGraph
-        ),
-    ),
-    NavigationGroup(
-        id = "OneConfig",
-        NavigationRoute(
-            id = "changelog",
-            icon = "refresh",
-            route = ChangeLogGraph
-        ),
-        NavigationRoute(
-            id = "credits",
-            icon = "star",
-            route = CreditsGraph
-        ),
-    )
-)
-
-fun searchPlaceholder(destination: NavDestination?): String {
-    val section = NavigationGroups
-        .asSequence()
-        .flatMap { it.routes.asSequence() }
-        .firstOrNull { def ->
-            destination?.hierarchy?.any { it.hasRoute(def.route::class) } == true
+@Suppress("DEPRECATION")
+@Deprecated("Use OneConfigPages.all() instead. Removed in OneConfig 1.6.0")
+val NavigationGroups: List<NavigationGroup>
+    get() = registeredPages()
+        .filter { it.showInSidebar }
+        .groupBy { it.group }
+        .map { (group, pages) ->
+            NavigationGroup(
+                group.title.fallback,
+                *pages.map { NavigationRoute(it.id.substringAfter(':'), it.icon, pageRoute(it)) }.toTypedArray(),
+            )
         }
-    return if (section != null) "Search ${section.id}..." else "Search..."
-}

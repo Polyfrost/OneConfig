@@ -63,6 +63,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindConflicts
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindEntry
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroup
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroupCollapseStore
@@ -98,10 +99,10 @@ fun Keybinds() {
     if (visibleGroups.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             val message = when {
-                localSearchQuery.isBlank() -> "No keybinds available."
+                localSearchQuery.isBlank() -> translated("oneconfig.search.no_keybinds", "No keybinds available.")
                 // nothing to say until the first search comes back
-                searchResults == null -> "Searching..."
-                else -> "No keybinds match \"$localSearchQuery\""
+                searchResults == null -> translated("oneconfig.search.searching", "Searching...")
+                else -> translated("oneconfig.search.no_keybinds_match", "No keybinds match \"%s\"", localSearchQuery)
             }
             Text(message, color = LocalTheme.current.textColorSecondary, fontSize = 15.sp)
         }

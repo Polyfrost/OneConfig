@@ -27,6 +27,7 @@ import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
 import org.polyfrost.oneconfig.internal.ui.components.rememberModEnabled
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.search.GlobalSettingIndex
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 import org.polyfrost.oneconfig.internal.ui.search.SearchDocument
@@ -82,8 +83,8 @@ fun SearchResultsScreen(query: String) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             // nothing to say until the first search comes back
             searchedQuery?.also {
-                Text("No results for \"$it\"", color = theme.textColorSecondary, fontSize = 15.sp)
-            } ?: Text("Searching...", color = theme.textColorSecondary, fontSize = 15.sp)
+                Text(translated("oneconfig.search.no_results", "No results for \"%s\"", it), color = theme.textColorSecondary, fontSize = 15.sp)
+            } ?: Text(translated("oneconfig.search.searching", "Searching..."), color = theme.textColorSecondary, fontSize = 15.sp)
         }
         return
     }
@@ -98,7 +99,7 @@ fun SearchResultsScreen(query: String) {
             if (matchingMods.isNotEmpty()) {
                 item(key = "header:mods") {
                     Text(
-                        "MODS",
+                        translated("oneconfig.search.mods_header", "MODS"),
                         color = theme.textColorSecondary,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,

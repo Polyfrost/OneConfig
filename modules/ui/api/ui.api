@@ -290,6 +290,76 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/TextInputFocusKt {
 	public static final fun trackTextInputFocus (Landroidx/compose/ui/Modifier;)Landroidx/compose/ui/Modifier;
 }
 
+public final class org/polyfrost/oneconfig/api/ui/v1/page/ModConfigTarget {
+	public static final field $stable I
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCategory ()Ljava/lang/String;
+	public final fun getModId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class org/polyfrost/oneconfig/api/ui/v1/page/OneConfigPage {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/page/PageGroup;)V
+	public abstract fun Content (Landroidx/compose/runtime/Composer;I)V
+	public final fun getGroup ()Lorg/polyfrost/oneconfig/api/ui/v1/page/PageGroup;
+	public final fun getIcon ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/String;
+	public fun getOrder ()I
+	public fun getSearchPlaceholder ()Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;
+	public fun getShowInSidebar ()Z
+	public final fun getTitle ()Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/page/OneConfigPages {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/page/OneConfigPages;
+	public static final fun all ()Ljava/util/List;
+	public static final fun byId (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/page/OneConfigPage;
+	public static final fun modConfig (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/page/ModConfigTarget;
+	public static final fun modConfig (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/page/ModConfigTarget;
+	public static final fun register (Lorg/polyfrost/oneconfig/api/ui/v1/page/OneConfigPage;)V
+	public static final fun unregister (Ljava/lang/String;)Z
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/page/PageGroup {
+	public static final field $stable I
+	public static final field Companion Lorg/polyfrost/oneconfig/api/ui/v1/page/PageGroup$Companion;
+	public static final field MODS_AND_OPTIONS Lorg/polyfrost/oneconfig/api/ui/v1/page/PageGroup;
+	public static final field ONECONFIG Lorg/polyfrost/oneconfig/api/ui/v1/page/PageGroup;
+	public static final field PERSONALIZATION Lorg/polyfrost/oneconfig/api/ui/v1/page/PageGroup;
+	public static final fun create (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;I)Lorg/polyfrost/oneconfig/api/ui/v1/page/PageGroup;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getOrder ()I
+	public final fun getTitle ()Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/page/PageGroup$Companion {
+	public final fun create (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;I)Lorg/polyfrost/oneconfig/api/ui/v1/page/PageGroup;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/page/PageText {
+	public static final field $stable I
+	public static final field Companion Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText$Companion;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFallback ()Ljava/lang/String;
+	public final fun getKey ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static final fun literal (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;
+	public fun toString ()Ljava/lang/String;
+	public static final fun translatable (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/page/PageText$Companion {
+	public final fun literal (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;
+	public final fun translatable (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;
+}
+
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/screen/BlurScreen {
 	public abstract fun hasBackgroundBlur ()Z
 }
