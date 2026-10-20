@@ -10,6 +10,5 @@ abstract class SearchProvider {
 
     abstract fun search(query: String, scopes: Set<SearchScope>): List<String>
 
-    open fun onCorpusUpdate(added: List<SearchDocument>, removed: Set<String>) {
-    }
+    open fun onCorpusUpdate(added: List<SearchDocument>, removed: Set<String>) {}
 }

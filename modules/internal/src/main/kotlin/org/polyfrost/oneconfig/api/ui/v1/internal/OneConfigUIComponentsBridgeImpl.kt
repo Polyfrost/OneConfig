@@ -26,6 +26,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerModel
 import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerPopup as InternalColorPickerPopup
 import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidth
 import org.polyfrost.oneconfig.internal.ui.components.settings.colorToHex as internalColorToHex
+import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery as shellPageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.MinecraftDark
@@ -134,4 +135,7 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
 
     @Composable
     override fun optionWidth(): Dp = LocalOptionWidth.current
+
+    @Composable
+    override fun pageSearchQuery(): String = shellPageSearchQuery()
 }

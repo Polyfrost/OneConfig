@@ -100,6 +100,9 @@ interface OneConfigUIComponentsBridge {
 
     @Composable
     fun optionWidth(): Dp
+
+    @Composable
+    fun pageSearchQuery(): String
 }
 
 @ExperimentalOneConfigUiApi

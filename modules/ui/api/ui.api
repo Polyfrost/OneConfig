@@ -471,6 +471,10 @@ public final class org/polyfrost/oneconfig/api/ui/v1/page/PageGroup$Companion {
 	public final fun create (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;I)Lorg/polyfrost/oneconfig/api/ui/v1/page/PageGroup;
 }
 
+public final class org/polyfrost/oneconfig/api/ui/v1/page/PageSearchQueryKt {
+	public static final fun getCurrentPageSearchQuery (Landroidx/compose/runtime/Composer;I)Ljava/lang/String;
+}
+
 public final class org/polyfrost/oneconfig/api/ui/v1/page/PageText {
 	public static final field $stable I
 	public static final field Companion Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText$Companion;
