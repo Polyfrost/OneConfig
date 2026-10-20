@@ -1,0 +1,99 @@
+name: Crowdin
+
+on:
+  push:
+    branches:
+      - v1
+    paths:
+      - 'minecraft/src/main/resources/assets/oneconfig/lang/en_us.json'
+      - 'crowdin.yml'
+      - '.github/crowdin/**'
+  schedule:
+    - cron: '0 4 * * 1'
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+    inputs:
+      task:
+        description: Task to run
+        type: choice
+        default: all
+        options:
+          - all
+          - sync
+          - release
+
+concurrency:
+  group: crowdin
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    name: Sync sources
+
+    if: >-
+      github.repository == 'Polyfrost/OneConfig' && (github.event_name == 'push' ||
+      github.event.schedule == '0 4 * * 1' ||
+      (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all", "sync"]'), inputs.task)))
+
+    runs-on: ubuntu-26.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+
+      - name: Extract sources
+        run: >-
+          python .github/crowdin/extract_mod_sources.py
+          --output build/crowdin
+          --local-resources minecraft/src/main/resources
+
+      - name: Upload sources and existing translations
+        uses: crowdin/github-action@v3
+        env:
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+        with:
+          upload_sources: true
+          upload_translations: true
+          auto_approve_imported: false
+          import_eq_suggestions: false
+          download_translations: false
+
+  release:
+    name: Release OTA distribution
+
+    needs: sync
+
+    if: >-
+      !cancelled() && needs.sync.result != 'failure' && github.repository == 'Polyfrost/OneConfig' &&
+      (github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all", "release"]'), inputs.task)))
+
+    runs-on: ubuntu-26.04
+
+    steps:
+      - name: Release distributions
+        shell: bash
+        env:
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+        run: |
+          api="https://api.crowdin.com/api/v2/projects/$CROWDIN_PROJECT_ID/distributions"
+          auth="Authorization: Bearer $CROWDIN_PERSONAL_TOKEN"
+          hashes=$(curl -fsS -H "$auth" "$api?limit=500" | jq -r '.data[].data.hash')
+          if [ -z "$hashes" ]; then
+            echo "::warning::No OTA distributions to release"
+            exit 0
+          fi
+          for hash in $hashes; do
+            curl -fsS -X POST -H "$auth" "$api/$hash/release" > /dev/null
+            echo "Released distribution $hash"
+          done
