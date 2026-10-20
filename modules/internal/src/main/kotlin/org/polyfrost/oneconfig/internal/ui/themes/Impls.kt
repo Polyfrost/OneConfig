@@ -74,7 +74,7 @@ private val MinecraftIconOverrides = mapOf(
     "x-circle" to "/assets/oneconfig/ico/minecraft/x-circle.svg",
 )
 
-@Deprecated("Use OneConfigTheme.polyGlassDark. Removed in OneConfig 1.6.0")
+@Deprecated("Use OneConfigTheme.POLY_GLASS_DARK. Removed in OneConfig 1.6.0")
 val PolyGlassDark = UITheme(
     "polyglass-dark", "PolyGlass Dark",
 
@@ -119,7 +119,7 @@ val PolyGlassDark = UITheme(
     )
 )
 
-@Deprecated("Use OneConfigTheme.polyGlassLight. Removed in OneConfig 1.6.0")
+@Deprecated("Use OneConfigTheme.POLY_GLASS_LIGHT. Removed in OneConfig 1.6.0")
 val PolyGlassLight = UITheme(
     "polyglass-light", "PolyGlass Light",
 
@@ -163,7 +163,7 @@ val PolyGlassLight = UITheme(
         )
     )
 )
-@Deprecated("Use OneConfigTheme.minecraftDark. Removed in OneConfig 1.6.0")
+@Deprecated("Use OneConfigTheme.MINECRAFT_DARK. Removed in OneConfig 1.6.0")
 val MinecraftDark = UITheme(
     "minecraft-dark", "Minecraft Dark",
 
@@ -202,7 +202,7 @@ val MinecraftDark = UITheme(
     ),
     MinecraftIconOverrides
 ).withShapes(RoundedCornerShape(0.dp), RoundedCornerShape(0.dp))
-@Deprecated("Use OneConfigTheme.minecraftLight. Removed in OneConfig 1.6.0")
+@Deprecated("Use OneConfigTheme.MINECRAFT_LIGHT. Removed in OneConfig 1.6.0")
 val MinecraftLight = UITheme(
     "minecraft-light", "Minecraft Light",
 
