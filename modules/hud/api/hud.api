@@ -280,6 +280,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static field targetPixelHeight I
 	public static field targetPixelWidth I
 	public final fun addRegistrationListener (Ljava/lang/Runnable;)V
+	public static final fun backgroundStylesMatch (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Z
 	public final fun beginFrame (FFLjava/lang/Runnable;)Z
 	public static synthetic fun beginFrame$default (Lorg/polyfrost/oneconfig/api/hud/v1/HudManager;FFLjava/lang/Runnable;ILjava/lang/Object;)Z
 	public final fun closeEditor ()V
@@ -299,6 +300,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static final fun invalidate ()V
 	public final fun isEditing ()Z
 	public final fun isEditorOpen ()Z
+	public static final fun isMergeCandidate (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Z
 	public static final fun markProviderKnown (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)V
 	public static final fun mergeGroupOf (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Ljava/util/List;
 	public final fun onEditorScreenAdded ()V
