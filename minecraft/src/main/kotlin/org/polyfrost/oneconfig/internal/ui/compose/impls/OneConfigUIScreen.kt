@@ -52,7 +52,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor
 /*import org.lwjgl.glfw.GLFW
 *///?}
 
-class OneConfigUIScreen @Deprecated("Use OneConfigUI.createScreen with OneConfigPages.modConfig. Removed in OneConfig 1.6.0") @JvmOverloads constructor(
+class OneConfigUIScreen @JvmOverloads constructor(
     private val initialTreeId: String? = null,
     private val initialCategory: String? = null,
     private val initialTree: Tree? = null,

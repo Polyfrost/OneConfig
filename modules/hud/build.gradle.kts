@@ -36,10 +36,4 @@ dependencies {
     compileOnly(libs.jetbrains.compose.runtime)
 }
 
-kotlin {
-    compilerOptions {
-        freeCompilerArgs.add("-Xwarning-level=DEPRECATION:disabled")
-    }
-}
-
 

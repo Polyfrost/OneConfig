@@ -17,15 +17,12 @@ import androidx.compose.ui.input.pointer.pointerInput
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 
-@Deprecated("Use rememberInteractionSource from org.polyfrost.oneconfig.api.ui.v1.components. Removed in OneConfig 1.6.0")
 @Composable
 fun rememberInteractionSource() = remember { MutableInteractionSource() }
 
-@Deprecated("Use onClick from org.polyfrost.oneconfig.api.ui.v1.components. Removed in OneConfig 1.6.0")
 fun Modifier.onClick(interactionSource: MutableInteractionSource, onClick: () -> Unit) =
     onClick(interactionSource, true, onClick)
 
-@Deprecated("Use onClick from org.polyfrost.oneconfig.api.ui.v1.components. Removed in OneConfig 1.6.0")
 fun Modifier.onClick(interactionSource: MutableInteractionSource, enabled: Boolean, onClick: () -> Unit) = clickable(
     interactionSource = interactionSource,
     indication = null,

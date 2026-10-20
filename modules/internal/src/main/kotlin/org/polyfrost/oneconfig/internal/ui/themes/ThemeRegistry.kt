@@ -29,14 +29,12 @@ object ThemeRegistry {
         BuiltinVisualizers.register()
     }
 
-    @Deprecated("Use OneConfigTheme.ensureLoaded. Removed in OneConfig 1.6.0")
     fun init() {}
 
     fun register(theme: UITheme) {
         registry += theme
     }
 
-    @Deprecated("Use OneConfigTheme.activate. Removed in OneConfig 1.6.0")
     fun activate(theme: UITheme) {
         val previous = activeTheme
         activeTheme = theme
@@ -52,7 +50,6 @@ object ThemeRegistry {
         }
     }
 
-    @Deprecated("Use OneConfigTheme.ensureLoaded. Removed in OneConfig 1.6.0")
     fun loadFromConfig() {
         try {
             val theme = registry.find { it.name == ThemeConfig.activeTheme }

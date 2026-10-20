@@ -52,7 +52,6 @@ import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.utils.v1.MHUtils
 
-@Suppress("DEPRECATION")
 private fun Throwable.isFatalHudFailure(): Boolean = this is VirtualMachineError || this is ThreadDeath
 
 object HudManager {
@@ -104,10 +103,8 @@ object HudManager {
     @Volatile @JvmField var guiScreenWidth: Float = 960f
     @Volatile @JvmField var guiScreenHeight: Float = 540f
 
-    @Deprecated("Use layoutReferenceWidth. Removed in OneConfig 1.6.0")
     @Volatile @JvmField var layoutRefWidth: Float = 0f
 
-    @Deprecated("Use layoutReferenceHeight. Removed in OneConfig 1.6.0")
     @Volatile @JvmField var layoutRefHeight: Float = 0f
 
     @get:ApiStatus.Experimental
@@ -266,7 +263,6 @@ object HudManager {
      *
      * THERE ARE CERTAIN THINGS THAT MUST BE DONE TO PROPERLY REGISTER AN ACTIVE HUD
      */
-    @Deprecated("Use instances. Removed in OneConfig 1.6.0")
     val activeInstances = ArrayList<Hud>()
 
     @ApiStatus.Experimental

@@ -158,7 +158,6 @@ class SidebarEntry(val icon: String, val label: String, val route: Any)
 
 class SidebarSection(val title: String, val entries: List<SidebarEntry>)
 
-@Suppress("DEPRECATION")
 fun sidebarSections(): List<SidebarSection> {
     val pages = registeredPages()
     val groups = pages.map { it.group }.distinct()

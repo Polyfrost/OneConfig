@@ -74,7 +74,6 @@ fun Modifier.leftBorder(
  *
  * Place on the same node that owns the [verticalScroll] modifier and after it
  */
-@Deprecated("Use fadingEdges from org.polyfrost.oneconfig.api.ui.v1.components. Removed in OneConfig 1.6.0")
 @Composable
 fun Modifier.fadingEdges(
     scrollState: ScrollState,

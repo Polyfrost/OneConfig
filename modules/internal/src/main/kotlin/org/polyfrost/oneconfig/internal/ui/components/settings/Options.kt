@@ -65,7 +65,6 @@ private val resetEpochs = mutableStateMapOf<Int, Int>()
 /** True if [prop] has a captured default value that can be restored */
 fun optionHasDefault(prop: Property<*>): Boolean = prop.getMetadata<Any?>("default") != null
 
-@Deprecated("Use OptionWidgets.refresh. Removed in OneConfig 1.6.0")
 fun bumpResetEpoch(prop: Property<*>) {
     resetEpochs[System.identityHashCode(prop)] = (resetEpochs[System.identityHashCode(prop)] ?: 0) + 1
 }

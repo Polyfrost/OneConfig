@@ -64,7 +64,6 @@ fun Shape.cornerRadiusOrNull(): Dp? {
  * Shapes without a fixed radius are returned unchanged since a circle nested in a circle is already
  * concentric
  */
-@Deprecated("Use concentric from org.polyfrost.oneconfig.api.ui.v1.theme. Removed in OneConfig 1.6.0")
 @Composable
 fun Shape.concentric(inset: Dp, minRadius: Dp = 0.dp): Shape {
     val outer = cornerRadiusOrNull() ?: return this

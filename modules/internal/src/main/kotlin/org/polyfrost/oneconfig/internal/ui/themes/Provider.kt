@@ -34,7 +34,6 @@ private var _accent by mutableStateOf(Color(ThemeConfig.accentColor.argb))
 
 private var _chroma by mutableStateOf(ThemeConfig.accentColor.chroma)
 
-@Deprecated("Use OneConfigTheme.accent. Removed in OneConfig 1.6.0")
 val Accent: Color get() = _accent
 
 fun updateAccent() {
@@ -42,7 +41,6 @@ fun updateAccent() {
     _chroma = ThemeConfig.accentColor.chroma
 }
 
-@Deprecated("Use OneConfigTheme.current. Removed in OneConfig 1.6.0")
 val LocalTheme = compositionLocalOf<UITheme> { error("A UI theme is required but was not provided") }
 
 private const val GRID_ANCHOR_SP = 14f
@@ -97,7 +95,6 @@ internal fun snapScaleToPixelGrid(anchorPx: Float, max: Float): Float {
     return if (scale <= max) scale else max
 }
 
-@Deprecated("Use ProvideOneConfigTheme. Removed in OneConfig 1.6.0")
 @Composable
 fun Theme(content: @Composable () -> Unit) = Theme(pixelGrid = false, content = content)
 

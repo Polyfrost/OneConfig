@@ -10,7 +10,6 @@ enum class SearchFocus {
     Unfocus,
 }
 
-@Deprecated("Read the search query through LocalShell instead. Removed in OneConfig 1.6.0")
 object ShellState {
     var searchQuery: String
         get() = ShellController.shared.search.query

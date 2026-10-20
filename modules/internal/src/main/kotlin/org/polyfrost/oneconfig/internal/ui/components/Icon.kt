@@ -168,7 +168,6 @@ private class RasterIconPainter(private val icon: RasterIcon) : Painter() {
     }
 }
 
-@Deprecated("Use Icon from org.polyfrost.oneconfig.api.ui.v1.components. Removed in OneConfig 1.6.0")
 @Composable
 fun Icon(
     iconName: String,

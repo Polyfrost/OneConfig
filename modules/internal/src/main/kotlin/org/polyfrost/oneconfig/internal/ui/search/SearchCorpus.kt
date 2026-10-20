@@ -38,7 +38,6 @@ object SearchCorpus {
     private val produced = HashMap<SearchDocumentSource, List<SearchDocument<*>>>()
     private var rebuildJob: Job? = null
 
-    @Deprecated("Use SearchProviders.documentIds and SearchProviders.document. Removed in OneConfig 1.6.0")
     @Volatile
     var corpus: Map<String, SearchDocument<*>> = emptyMap()
         private set
