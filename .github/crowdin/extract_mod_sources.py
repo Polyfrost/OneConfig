@@ -16,6 +16,7 @@ LANG_ENTRY = re.compile(r"^assets/([a-z0-9_.-]+)/lang/([A-Za-z]{2,3}_[A-Za-z]{2,
 NESTED_JAR = re.compile(r"^META-INF/(jars|jarjar)/[^/]+\.jar$")
 SOURCE_LANGUAGE = "en_us"
 EXCLUDED_NAMESPACES = {"minecraft", "realms"}
+TRANSLATION_PACKS = ["translations-for-sodium"]
 MAX_NESTING = 3
 ATTEMPTS = 3
 MAX_FAILED_SHARE = 0.05
@@ -134,6 +135,29 @@ def collect_jars(base_url):
     return jars
 
 
+def collect_translation_packs(api_url):
+    found = []
+    for slug in TRANSLATION_PACKS:
+        try:
+            versions = json.loads(fetch(f"{api_url}/project/{slug}/version"))
+        except Exception as error:
+            print(f"warning: failed to list versions of {slug}: {error}", file=sys.stderr)
+            continue
+        if not versions:
+            continue
+        latest = max(versions, key=lambda version: version["date_published"])
+        files = latest.get("files", [])
+        file = next((entry for entry in files if entry.get("primary")), files[0] if files else None)
+        if file is None:
+            continue
+        data = fetch_verified([file["url"]], file.get("hashes", {}).get("sha1"))
+        if data is None:
+            continue
+        print(f"{slug}: {latest['version_number']}")
+        found.extend(lang for lang in scan_jar(data, f"{slug}/{file['filename']}") if lang[1] != SOURCE_LANGUAGE)
+    return found
+
+
 def locale_directory(language):
     code, region = language.split("_", 1)
     return f"{code}_{region.upper()}"
@@ -150,6 +174,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, default=Path("build/crowdin"))
     parser.add_argument("--meta-url", default="https://data-v2.polyfrost.org")
+    parser.add_argument("--modrinth-api", default="https://api.modrinth.com/v2")
     parser.add_argument("--threads", type=int, default=8)
     parser.add_argument("--local-resources", type=Path, action="append", default=[])
     args = parser.parse_args()
@@ -184,6 +209,7 @@ def main():
         print(f"warning: skipped {len(failed)} jars that could not be downloaded: {', '.join(sorted(failed))}", file=sys.stderr)
     if len(failed) > len(jars) * MAX_FAILED_SHARE:
         raise RuntimeError(f"failed to download {len(failed)} of {len(jars)} jars")
+    merge(collect_translation_packs(args.modrinth_api.rstrip("/")))
     for root in args.local_resources:
         merge(scan_resources(root))
 
