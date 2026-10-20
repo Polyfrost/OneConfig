@@ -33,7 +33,9 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
@@ -47,6 +49,7 @@ import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.onClick
@@ -55,6 +58,7 @@ import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.optionHasDefault
 import org.polyfrost.oneconfig.internal.ui.components.settings.resetOption
+import org.polyfrost.oneconfig.internal.ui.hud.screens.tourString
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -278,6 +282,8 @@ fun HudCanvasResetMenu(
     undoEnabled: Boolean = false,
     onRedo: () -> Unit = {},
     redoEnabled: Boolean = false,
+    preview: Boolean = false,
+    onMeasured: (IntSize) -> Unit = {},
 ) {
     if (hud == null || !expanded) return
     val theme = LocalTheme.current
@@ -303,11 +309,13 @@ fun HudCanvasResetMenu(
         alignment = Alignment.TopStart,
         offset = offset,
         onDismissRequest = onDismiss,
-        properties = PopupProperties(focusable = true),
+        properties = PopupProperties(focusable = !preview, dismissOnClickOutside = !preview),
     ) {
         Column(
             // without this the separator's fillMaxWidth stretches the menu out to the whole screen
             modifier = Modifier
+                .onSizeChanged(onMeasured)
+                .blockInteraction(preview)
                 .widthIn(min = 190.dp, max = 240.dp)
                 .shellTransition()
                 .background(theme.popupBackground, theme.popupShape)
@@ -346,13 +354,23 @@ fun HudCanvasResetMenu(
                 }
                 onDismiss()
             }
-            HudMenuRow(
-                icon = "align",
-                text = "Anchor",
-                enabled = anchorEnabled,
+            Box(
+                modifier = if (preview) {
+                    Modifier
+                        .background(Accent.copy(alpha = 0.18f), theme.buttonShape)
+                        .border(1.dp, Accent, theme.buttonShape)
+                } else {
+                    Modifier
+                }
             ) {
-                onAnchor(hud)
-                onDismiss()
+                HudMenuRow(
+                    icon = "align",
+                    text = "Anchor",
+                    enabled = anchorEnabled,
+                ) {
+                    onAnchor(hud)
+                    onDismiss()
+                }
             }
             if (anyAnchored) {
                 HudMenuRow(icon = "x-circle", text = "Remove anchor") {
@@ -451,6 +469,7 @@ fun HudCanvasPasteMenu(
     undoEnabled: Boolean = false,
     onRedo: () -> Unit = {},
     redoEnabled: Boolean = false,
+    onTour: (() -> Unit)? = null,
 ) {
     if (!expanded) return
     val theme = LocalTheme.current
@@ -498,6 +517,13 @@ fun HudCanvasPasteMenu(
             ) {
                 onSelectAll()
                 onDismiss()
+            }
+            if (onTour != null) {
+                HudMenuDivider()
+                HudMenuRow(icon = "info", text = tourString("menu")) {
+                    onDismiss()
+                    onTour()
+                }
             }
         }
     }

@@ -80,6 +80,7 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils
+import org.polyfrost.oneconfig.api.ui.v1.keybind.TextInputFocus
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.utils.v1.NetworkUtils
@@ -214,6 +215,8 @@ private val snapGuideColor = Color(176, 47, 31)
 private const val CHROME_SETTINGS_PANEL = "settings-panel"
 private const val CHROME_LIBRARY = "library"
 private const val CHROME_LIBRARY_ICONS = "library-icons"
+private const val CHROME_TOUR = "tour"
+private const val CHROME_TOUR_CARD = "tour-card"
 private const val SIDE_CHROME_DIM_ALPHA = 0.45f
 
 private data class SnapGuides(val vertical: Float?, val horizontal: Float?) {
@@ -889,6 +892,69 @@ private fun HudActionBar(
     }
 }
 
+private fun pickTourHud(): Hud? {
+    val visible = HudManager.activeInstances.filter { !it.hidden && hudBounds(it) != null }
+    val mergeable = visible.filter(::canTourMerge)
+    return mergeable.firstOrNull { hud -> mergeable.any { canTourMergeInto(hud, it) } }
+        ?: visible.minByOrNull { if (it is LegacyHud) 1 else 0 }
+}
+
+private fun hasTourMergePair(): Boolean {
+    val mergeable = HudManager.activeInstances.filter(::canTourMerge)
+    return mergeable.any { a -> mergeable.any { b -> canTourMergeInto(a, b) } }
+}
+
+private fun canTourMergeInto(mover: Hud, neighbour: Hud): Boolean =
+    neighbour !== mover && HudManager.backgroundStylesMatch(mover, neighbour) &&
+        HudManager.mergeGroupOf(neighbour).none { it === mover }
+
+private fun canTourMerge(hud: Hud): Boolean =
+    !hud.locked && !hud.hidden && HudManager.isMergeCandidate(hud)
+
+private fun tourMergeHint(mcToScreen: Float): Pair<Rect, Rect>? =
+    tourMergeHint(mcToScreen, stacked = true) ?: tourMergeHint(mcToScreen, stacked = false)
+
+private fun tourMergeHint(mcToScreen: Float, stacked: Boolean): Pair<Rect, Rect>? {
+    val candidates = HudManager.activeInstances.filter(::canTourMerge)
+    val screenW = HudManager.guiScreenWidth
+    val screenH = HudManager.guiScreenHeight
+    var best: Pair<Rect, Rect>? = null
+    var bestDistance = Float.MAX_VALUE
+    for (mover in candidates) {
+        val a = hudBounds(mover) ?: continue
+        for (neighbour in candidates) {
+            if (!canTourMergeInto(mover, neighbour)) continue
+            val b = hudBounds(neighbour) ?: continue
+            val slots = if (stacked) {
+                listOf(Offset(b.x, b.y + b.height), Offset(b.x, b.y - a.height))
+            } else {
+                listOf(Offset(b.x + b.width, b.y), Offset(b.x - a.width, b.y))
+            }
+            for (slot in slots) {
+                if (slot.x < 0f || slot.y < 0f || slot.x + a.width > screenW || slot.y + a.height > screenH) continue
+                val distance = hypot(slot.x - a.x, slot.y - a.y)
+                if (distance >= bestDistance) continue
+                bestDistance = distance
+                best = Rect(a.x, a.y, a.x + a.width, a.y + a.height).scaled(mcToScreen) to
+                    Rect(slot.x, slot.y, slot.x + a.width, slot.y + a.height).scaled(mcToScreen)
+            }
+        }
+    }
+    return best
+}
+
+private fun Rect.scaled(factor: Float) = Rect(left * factor, top * factor, right * factor, bottom * factor)
+
+private fun Rect.including(other: Rect) =
+    Rect(minOf(left, other.left), minOf(top, other.top), maxOf(right, other.right), maxOf(bottom, other.bottom))
+
+private fun tourMenuRect(hud: Rect, menu: IntSize, root: IntSize, gap: Float): Rect {
+    val rightX = hud.right + gap
+    val x = if (rightX + menu.width <= root.width - gap) rightX else hud.left - gap - menu.width
+    val y = hud.top.coerceIn(gap, (root.height - menu.height - gap).coerceAtLeast(gap))
+    return Rect(Offset(x.coerceAtLeast(gap), y), Size(menu.width.toFloat(), menu.height.toFloat()))
+}
+
 private fun placeHudCentered(provider: Hud): Hud? = try {
     val instance = if (provider.isReal) provider else provider.make()
     HudManager.markProviderKnown(instance)
@@ -922,7 +988,7 @@ private fun placeHudCentered(provider: Hud): Hud? = try {
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun HudDesignStudio() {
+fun HudDesignStudio(visible: Boolean = true) {
     HudEditorViewport.observe()
     var activeCategory by remember { mutableStateOf(StudioCategory.Settings) }
     var selectedHuds by remember { mutableStateOf<Set<Hud>>(emptySet()) }
@@ -981,6 +1047,17 @@ fun HudDesignStudio() {
     var hoveredAnchor by remember { mutableStateOf<Pair<Hud, HudAnchor>?>(null) }
     // null while the first click is still choosing which point of the HUD being anchored is pinned
     var anchorPickSelf by remember { mutableStateOf<HudAnchor?>(null) }
+    var tourStep by remember { mutableStateOf<HudTourStep?>(null) }
+    var tourHud by remember { mutableStateOf<Hud?>(null) }
+    var tourTaskDone by remember { mutableStateOf(false) }
+    var tourPreviousCategory by remember { mutableStateOf(StudioCategory.Settings) }
+    var tourPreviousSelection by remember { mutableStateOf<Set<Hud>>(emptySet()) }
+    var tourPreviousPanelOpen by remember { mutableStateOf(false) }
+    var tourDeferred by remember { mutableStateOf(false) }
+    val tourBlocksEditor = tourStep?.interactive == false
+    val tourMergePairExists by remember {
+        derivedStateOf { HudManager.instancesRevision.intValue.let { hasTourMergePair() } }
+    }
 
     // the active HUD of a selection driving the settings panel resize handles action bar and keybinds
     fun primaryHud(): Hud? = selectedHuds.lastOrNull()
@@ -992,6 +1069,85 @@ fun HudDesignStudio() {
     }
 
     val panelHud: Hud? = if (panelOpen) primaryHud() else null
+
+    fun clearTransientEditorState() {
+        hudContextMenuTarget = null
+        pasteMenuOffset = null
+        anchorPickSources = emptyList()
+        anchorPickSelf = null
+        hoveredAnchor = null
+        hoveredHud = null
+    }
+
+    fun startTour() {
+        Snapshot.withMutableSnapshot {
+            clearTransientEditorState()
+            if (tourStep == null) {
+                tourPreviousCategory = activeCategory
+                tourPreviousSelection = selectedHuds
+                tourPreviousPanelOpen = panelOpen
+            }
+            tourHud = null
+            tourTaskDone = false
+            tourStep = HudTourStep.entries.first()
+        }
+        keyFocusRequester.requestFocus()
+    }
+
+    fun endTour() {
+        if (tourStep == null) return
+        OneConfigConfig.markHudEditorTourSeen()
+        Snapshot.withMutableSnapshot {
+            clearTransientEditorState()
+            tourStep = null
+            tourHud = null
+            val restored = tourPreviousSelection.filterTo(LinkedHashSet()) { it in HudManager.activeInstances }
+            selectedHuds = restored
+            panelOpen = tourPreviousPanelOpen && restored.isNotEmpty()
+            activeCategory = tourPreviousCategory
+            tourPreviousSelection = emptySet()
+        }
+    }
+
+    LaunchedEffect(visible) {
+        if (!visible && tourStep != null) endTour()
+    }
+
+    fun moveTour(delta: Int) {
+        val step = tourStep ?: return
+        if (delta > 0 && step.interactive && !tourTaskDone) return
+        val next = step.offset(delta)
+        if (next != null) tourStep = next else if (delta > 0) endTour()
+    }
+
+    LaunchedEffect(tourStep) {
+        val step = tourStep ?: return@LaunchedEffect
+        val hud = tourHud?.takeIf { it in HudManager.activeInstances && !it.hidden } ?: pickTourHud()
+        Snapshot.withMutableSnapshot {
+            clearTransientEditorState()
+            tourHud = hud
+            if (step.focus == HudTourFocus.Panel && hud != null) {
+                selectedHuds = setOf(hud)
+                panelOpen = true
+                activeCategory = if (hud is LegacyHud) StudioCategory.Settings else step.category
+            } else {
+                selectedHuds = emptySet()
+                panelOpen = false
+            }
+            if (step.focus == HudTourFocus.Library || step.interactive) libraryVisible = true
+        }
+        if (step.interactive && !tourTaskDone) {
+            var stillMerged = HudManager.activeInstances.filter { it.bgMerged }
+            snapshotFlow {
+                val huds = HudManager.instancesRevision.intValue.let { HudManager.activeInstances.toList() }
+                isDragging to huds.filter { it.bgMerged }
+            }.first { (dragging, merged) ->
+                stillMerged = stillMerged.filter { hud -> merged.any { it === hud } }
+                !dragging && merged.any { hud -> stillMerged.none { it === hud } }
+            }
+            tourTaskDone = true
+        }
+    }
 
     val deleteHuds: (Collection<Hud>) -> Unit = { huds ->
         val removed = huds.filter { it.canDelete() }
@@ -1013,6 +1169,8 @@ fun HudDesignStudio() {
         val pendingAdd = HudManager.pendingAdd
         HudManager.pendingSelection = null
         HudManager.pendingAdd = null
+        tourDeferred = pending != null || pendingAdd != null
+        if (tourDeferred && tourStep != null) endTour()
         if (pendingAdd != null) {
             snapshotFlow { HudEditorViewport.screenWidth }.first { it > 0 }
             val instance = placeHudCentered(pendingAdd)
@@ -1033,6 +1191,19 @@ fun HudDesignStudio() {
         }
     }
 
+    LaunchedEffect(HudManager.editorOpenRevision.intValue) {
+        if (OneConfigConfig.hudEditorTourSeen || tourDeferred) return@LaunchedEffect
+        snapshotFlow { HudEditorViewport.screenWidth }.first { it > 0 }
+        while (true) {
+            snapshotFlow {
+                tourStep == null && !isDragging && !isResizing && !pointerDown && !panelOpen && tourMergePairExists
+            }.first { it }
+            if (!TextInputFocus.isTyping) break
+            delay(250)
+        }
+        if (!OneConfigConfig.hudEditorTourSeen) startTour()
+    }
+
     DisposableEffect(Unit) {
         onDispose {
             HudDesignSession.activeSelection = emptyList()
@@ -1040,10 +1211,10 @@ fun HudDesignStudio() {
         }
     }
 
-    LaunchedEffect(selectedHuds) {
+    LaunchedEffect(selectedHuds, tourBlocksEditor) {
         val primary = primaryHud()
         primary?.let { repairHudStaticSize(it) }
-        HudDesignSession.activeSelection = selectedHuds.toList()
+        HudDesignSession.activeSelection = if (tourBlocksEditor) emptyList() else selectedHuds.toList()
     }
 
     LaunchedEffect(panelOpen) {
@@ -1056,6 +1227,7 @@ fun HudDesignStudio() {
     LaunchedEffect(HudManager.editorOpenRevision.intValue) {
         HudDesignSession.clearCommands()
         for (command in HudDesignSession.commands) {
+            if (tourStep?.interactive == false) continue
             try {
                 when (command) {
                     is StudioCommand.Select -> {
@@ -1732,6 +1904,13 @@ fun HudDesignStudio() {
             }
             .onKeyEvent { keyEvent ->
                 if (keyEvent.type != KeyEventType.KeyDown) return@onKeyEvent false
+                if (tourBlocksEditor) {
+                    when (keyEvent.key) {
+                        Key.DirectionRight, Key.Enter -> moveTour(1)
+                        Key.DirectionLeft -> moveTour(-1)
+                    }
+                    return@onKeyEvent keyEvent.key != Key.Escape
+                }
                 if (keyEvent.key == Key.Escape && anchorPickSources.isNotEmpty()) {
                     Snapshot.withMutableSnapshot {
                         // step back to picking the point on the HUD before dropping the pick entirely
@@ -2285,7 +2464,94 @@ fun HudDesignStudio() {
             undoEnabled = canUndo,
             onRedo = { HudDesignSession.handleRedo(true) },
             redoEnabled = canRedo,
+            onTour = { startTour() },
         )
+
+        var lastTourStep by remember { mutableStateOf(HudTourStep.entries.first()) }
+        tourStep?.let { lastTourStep = it }
+        AnimatedVisibility(
+            visible = tourStep != null,
+            modifier = Modifier.fillMaxSize(),
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
+            DisposableEffect(Unit) {
+                onDispose {
+                    chromeRects.remove(CHROME_TOUR)
+                    chromeRects.remove(CHROME_TOUR_CARD)
+                }
+            }
+            LaunchedEffect(tourBlocksEditor, tourStep == null) {
+                if (!tourBlocksEditor) chromeRects.remove(CHROME_TOUR)
+                if (tourStep == null) chromeRects.remove(CHROME_TOUR_CARD)
+            }
+            val mcToScreen = Platform.screen().mcToScreenScale()
+            val tourHudRect = tourHud?.let { hudBounds(it) }?.let { b ->
+                Rect(b.x, b.y, b.x + b.width, b.y + b.height).scaled(mcToScreen)
+            }
+            var tourMenuSize by remember { mutableStateOf(IntSize.Zero) }
+            val tourMenuGap = with(densityObj) { 8.dp.toPx() }
+            val tourMenuRect = if (lastTourStep.focus == HudTourFocus.AnchorMenu && tourHudRect != null) {
+                tourMenuRect(tourHudRect, tourMenuSize, rootSize, tourMenuGap)
+            } else {
+                null
+            }
+            val focusRect = when (lastTourStep.focus) {
+                HudTourFocus.None -> null
+                HudTourFocus.Library -> chromeRects[CHROME_LIBRARY]
+                HudTourFocus.Panel -> chromeRects[CHROME_SETTINGS_PANEL]
+                HudTourFocus.Hud -> tourHudRect
+                HudTourFocus.AnchorMenu -> tourHudRect?.let { hudRect ->
+                    tourMenuRect?.takeIf { tourMenuSize != IntSize.Zero }?.let { hudRect.including(it) } ?: hudRect
+                }
+            }
+            val previewHud = tourHud
+            if (tourStep?.focus == HudTourFocus.AnchorMenu && previewHud != null && tourMenuRect != null) {
+                HudCanvasResetMenu(
+                    hud = previewHud,
+                    expanded = true,
+                    offset = IntOffset(tourMenuRect.left.roundToInt(), tourMenuRect.top.roundToInt()),
+                    onDismiss = {},
+                    targets = listOf(previewHud),
+                    preview = true,
+                    onMeasured = { tourMenuSize = it },
+                )
+            }
+            val tourTask = if (!lastTourStep.interactive) {
+                null
+            } else when {
+                tourTaskDone -> tourString("${lastTourStep.id}.task_done")
+                !tourMergePairExists -> tourString("${lastTourStep.id}.task_add")
+                else -> tourString("${lastTourStep.id}.task")
+            }
+            val mergeHint by remember {
+                derivedStateOf {
+                    if (tourStep?.interactive == true && !tourTaskDone && !isDragging) {
+                        HudEditorViewport.observe()
+                        HudManager.instancesRevision.intValue.let {
+                            tourMergeHint(Platform.screen().mcToScreenScale())
+                        }
+                    } else {
+                        null
+                    }
+                }
+            }
+            val libraryRect = listOfNotNull(chromeRects[CHROME_LIBRARY], chromeRects[CHROME_LIBRARY_ICONS])
+                .reduceOrNull { a, b -> a.including(b) }
+            HudTourOverlay(
+                step = lastTourStep,
+                focus = focusRect,
+                task = tourTask,
+                taskDone = tourTaskDone,
+                dragHint = mergeHint,
+                avoid = libraryRect,
+                modifier = if (tourBlocksEditor) Modifier.chromeBlocker(CHROME_TOUR) else Modifier,
+                cardModifier = if (tourStep != null) Modifier.chromeBlocker(CHROME_TOUR_CARD) else Modifier,
+                onBack = { moveTour(-1) },
+                onNext = { moveTour(1) },
+                onSkip = { endTour() },
+            )
+        }
     }
 }
 
