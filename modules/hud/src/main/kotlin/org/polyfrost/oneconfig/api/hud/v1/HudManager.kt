@@ -95,21 +95,17 @@ object HudManager {
     val isEditing: Boolean get() = isEditorOpen || isConfigUiOpen
 
     /** `true` only while the HUD editor screen itself is open */
-    @ApiStatus.Internal
     @Volatile var isEditorOpen = false
         private set
 
     /** Set by the OneConfig UI screen while it is open so HUDs behind it still render as previews */
-    @ApiStatus.Internal
     @Volatile @JvmField var isConfigUiOpen = false
 
     @Volatile @JvmField var guiScreenWidth: Float = 960f
     @Volatile @JvmField var guiScreenHeight: Float = 540f
 
-    @ApiStatus.Internal
     @Volatile @JvmField var layoutRefWidth: Float = 0f
 
-    @ApiStatus.Internal
     @Volatile @JvmField var layoutRefHeight: Float = 0f
 
     @Volatile private var loadingLayout = false
@@ -260,7 +256,6 @@ object HudManager {
      *
      * THERE ARE CERTAIN THINGS THAT MUST BE DONE TO PROPERLY REGISTER AN ACTIVE HUD
      */
-    @ApiStatus.Internal
     val activeInstances = ArrayList<Hud>()
 
     private class DateTestHud : TextHud.DateTime("Date:", "yyyy-MM-dd", title = "Date")

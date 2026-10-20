@@ -52,12 +52,10 @@ public class Tree extends Node implements Serializable {
 
     private static final ThreadLocal<List<String>> OVERWRITE_FAILURES = new ThreadLocal<>();
 
-    @ApiStatus.Internal
     public static void beginFailureCollection() {
         OVERWRITE_FAILURES.set(new ArrayList<>(2));
     }
 
-    @ApiStatus.Internal
     public static List<String> endFailureCollection() {
         List<String> out = OVERWRITE_FAILURES.get();
         OVERWRITE_FAILURES.remove();

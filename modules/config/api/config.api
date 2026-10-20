@@ -104,7 +104,6 @@ public class org/polyfrost/oneconfig/api/config/v1/Tree : org/polyfrost/oneconfi
 	public final field map Ljava/util/Map;
 	public fun <init> (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/util/Map;)V
 	public static fun beginFailureCollection ()V
-	public fun clear ()V
 	public fun contentToString ()Ljava/lang/String;
 	public fun deepEquals (Ljava/lang/Object;)Z
 	public static fun endFailureCollection ()Ljava/util/List;
@@ -159,7 +158,6 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/backend/Backend {
 	protected abstract fun save0 (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z
 	public final fun saveAll ()V
 	public final fun saveAll (Ljava/lang/String;)V
-	public final fun unregister (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 }
 
 public final class org/polyfrost/oneconfig/api/config/v1/backend/Backend$RegistrationResult {

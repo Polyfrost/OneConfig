@@ -1,7 +1,3 @@
-public abstract interface annotation class org/polyfrost/oneconfig/api/ClassHasOverwrites : java/lang/annotation/Annotation {
-	public abstract fun value ()[Ljava/lang/String;
-}
-
 public final class org/polyfrost/oneconfig/api/hypixel/v1/HypixelUtils {
 	public static fun getLocation ()Lorg/polyfrost/oneconfig/api/hypixel/v1/HypixelUtils$Location;
 	public static fun getPartyInfo ()Lorg/polyfrost/oneconfig/api/hypixel/v1/HypixelUtils$PartyInfo;
@@ -241,43 +237,6 @@ public final class org/polyfrost/oneconfig/utils/v1/LogScanner {
 	public static fun identifyFromStacktrace (Ljava/lang/Throwable;)Ljava/util/Set;
 }
 
-public final class org/polyfrost/oneconfig/utils/v1/MHUtils {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/utils/v1/MHUtils;
-	public static final field trustedLookup Ljava/lang/invoke/MethodHandles$Lookup;
-	public static final fun getAnnotationValues (Ljava/lang/annotation/Annotation;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun getConstructorHandle (Ljava/lang/Class;[Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun getConstructorHandle (Ljava/lang/reflect/Constructor;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun getConsumerHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun getField (Ljava/lang/Object;Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun getFieldGetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun getFieldGetter (Ljava/lang/String;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun getFieldGetter (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun getFieldInHierarchy (Ljava/lang/Class;Ljava/lang/Object;Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun getFieldSetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun getFieldSetter (Ljava/lang/String;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun getFieldSetter (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun getFunctionHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun getMethodHandle (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun getMethodHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun getMethodHandle (Ljava/lang/reflect/Method;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun getPredicateHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun getStatic (Ljava/lang/Class;Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun getStaticFieldGetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun getStaticFieldSetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun getStaticMethodHandle (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun instantiate (Ljava/lang/Class;Z)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun instantiate (Ljava/lang/Class;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun invoke (Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun invokeCatching (Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun invokeExactCatching (Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun invokeStatic (Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public final fun lmf (Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun removeReflectionFilters ()Z
-	public static final fun setAccessible (Ljava/lang/reflect/AccessibleObject;)Ljava/lang/reflect/AccessibleObject;
-	public static final fun setField (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Object;)Z
-	public static final fun setStatic (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Object;)Z
-}
-
 public final class org/polyfrost/oneconfig/utils/v1/MHUtils$Result {
 	public static final field Companion Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result$Companion;
 	public fun <init> (Ljava/lang/Object;)V
@@ -300,13 +259,6 @@ public final class org/polyfrost/oneconfig/utils/v1/MHUtils$Result$Companion {
 public final class org/polyfrost/oneconfig/utils/v1/MHUtils$Result$Failure {
 	public fun <init> (Ljava/lang/Throwable;)V
 	public final fun getT ()Ljava/lang/Throwable;
-}
-
-public final class org/polyfrost/oneconfig/utils/v1/MacOSClipboard {
-	public static fun clear ()Z
-	public static fun copyImageFromPath (Ljava/lang/String;)Z
-	public static fun getString ()Ljava/lang/String;
-	public static fun setString (Ljava/lang/String;)Z
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/Multithreading {
