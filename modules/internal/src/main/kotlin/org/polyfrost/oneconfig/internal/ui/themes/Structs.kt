@@ -49,7 +49,7 @@ data class UITheme(
 ) : OneConfigUITheme() {
     override val fontFamily: FontFamily get() = typography.family
 
-    override val logoPath: String get() = OneConfigTheme.logoOverride ?: branding.logoPath
+    override val logoPath: String get() = brandedLogoPath(this)
 
     var controlTrackColor: Color = DefaultControlTrackColor
         private set
@@ -83,3 +83,5 @@ data class UIBranding(
 data class UITypography(
     val family: FontFamily,
 )
+
+private fun brandedLogoPath(theme: UITheme): String = OneConfigTheme.logoOverride ?: theme.branding.logoPath
