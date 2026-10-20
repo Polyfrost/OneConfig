@@ -31,7 +31,7 @@ class OneConfigUISearchBridgeImpl : OneConfigUISearchBridge {
         return true
     }
 
-    override fun documentIds(): Set<String> = SearchCorpus.corpus.keys
+    override fun documentIds(): Set<String> = SearchCorpus.corpus.keys.toSet()
 
     override fun document(id: String): PublicSearchDocument? = SearchCorpus.corpus[id]?.toPublic()
 }
