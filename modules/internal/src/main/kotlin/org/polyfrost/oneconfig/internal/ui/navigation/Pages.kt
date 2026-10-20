@@ -1,12 +1,14 @@
 package org.polyfrost.oneconfig.internal.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import java.util.Locale
 import kotlinx.serialization.Serializable
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.ui.v1.page.ModConfigTarget
@@ -31,7 +33,7 @@ import org.polyfrost.oneconfig.internal.ui.screens.Mods
 import org.polyfrost.oneconfig.internal.ui.screens.Preferences
 import org.polyfrost.oneconfig.internal.ui.screens.Profiles
 import org.polyfrost.oneconfig.internal.ui.screens.Themes
-import java.util.Locale
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 
 @Serializable
 data class PageRoute(val pageId: String)
@@ -115,7 +117,16 @@ fun resolveOpenTarget(target: Any?): Any? = when (target) {
 fun NavGraphBuilder.pageDestinations() {
     composable<PageRoute> { entry ->
         val id = entry.toRoute<PageRoute>().pageId
-        OneConfigPages.byId(id)?.Content()
+        val page = OneConfigPages.byId(id)
+        if (page != null) {
+            page.Content()
+            return@composable
+        }
+        val shell = LocalShell.current
+        LaunchedEffect(id) {
+            LOGGER.warn("OneConfig page {} is not registered, opening the mods page instead", id)
+            if (shell.navigation.currentRoute == PageRoute(id)) shell.navigation.navigate(ModsGraph)
+        }
     }
 }
 
