@@ -42,6 +42,7 @@ import org.polyfrost.oneconfig.internal.ui.shell.SearchFocus
 import org.polyfrost.oneconfig.internal.ui.shell.ShellController
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
+import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
 
 //? if > 1.8.9 {
 import net.minecraft.client.gui.GuiGraphicsExtractor
@@ -266,6 +267,7 @@ class OneConfigUIScreen @Deprecated("Use OneConfigUI.createScreen with OneConfig
 
     override fun init() {
         OneConfig.dismissFirstLaunchToast()
+        updateAccent()
         ConfigRegistry.loadFrom(ConfigManager.active(), ConfigSource.OC)
         initialTree?.let { ConfigRegistry.registerTree(it, ConfigSource.OC) }
 

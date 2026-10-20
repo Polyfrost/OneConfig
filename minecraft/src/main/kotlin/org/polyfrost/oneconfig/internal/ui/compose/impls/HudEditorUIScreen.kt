@@ -28,6 +28,7 @@ import org.polyfrost.oneconfig.internal.ui.shell.ShellController
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Theme
+import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
 
 //? if > 1.8.9 {
 import net.minecraft.client.gui.GuiGraphicsExtractor
@@ -113,6 +114,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
 
     override fun init() {
         everOpened = true
+        updateAccent()
         HudManager.onEditorScreenAdded()
         HudManager.editorOpenRevision.intValue++
         closeRequested = false
