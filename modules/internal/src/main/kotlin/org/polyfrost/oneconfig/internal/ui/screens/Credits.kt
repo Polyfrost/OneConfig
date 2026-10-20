@@ -79,11 +79,11 @@ fun Credits() {
                 verticalAlignment = Alignment.Bottom,
                 modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
             ) {
-                rememberSvgResourcePainter(theme.branding.logoPath)?.let { logo ->
+                rememberSvgResourcePainter(theme.logoPath)?.let { logo ->
                     Image(
                         painter = logo,
                         contentDescription = null,
-                        colorFilter = rememberBrandTint(theme.branding.logoPath, Accent),
+                        colorFilter = rememberBrandTint(theme.logoPath, Accent),
                         modifier = Modifier.size(474.dp, 54.dp)
                     )
                 }

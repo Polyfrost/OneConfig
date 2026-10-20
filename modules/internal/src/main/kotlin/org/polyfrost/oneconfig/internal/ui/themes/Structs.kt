@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import java.util.concurrent.ConcurrentHashMap
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
 
 /** Sets a panel background color's alpha from an opacity percentage between 0 and 100 */
@@ -48,7 +49,7 @@ data class UITheme(
 ) : OneConfigUITheme() {
     override val fontFamily: FontFamily get() = typography.family
 
-    override val logoPath: String get() = branding.logoPath
+    override val logoPath: String get() = OneConfigTheme.logoOverride ?: branding.logoPath
 
     var controlTrackColor: Color = DefaultControlTrackColor
         private set

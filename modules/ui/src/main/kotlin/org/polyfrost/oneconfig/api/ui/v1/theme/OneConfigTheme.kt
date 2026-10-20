@@ -1,6 +1,9 @@
 package org.polyfrost.oneconfig.api.ui.v1.theme
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
@@ -40,6 +43,15 @@ object OneConfigTheme {
     @JvmStatic
     fun ensureLoaded() {
         componentsBridge().ensureThemeLoaded()
+    }
+
+    @JvmStatic
+    var logoOverride: String? by mutableStateOf(null)
+        private set
+
+    @JvmStatic
+    fun overrideLogo(path: String?) {
+        logoOverride = path?.takeIf { it.isNotBlank() }
     }
 }
 

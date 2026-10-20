@@ -64,6 +64,8 @@ import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
+import org.polyfrost.oneconfig.api.ui.v1.SettingRowDecorator
+import org.polyfrost.oneconfig.api.ui.v1.SettingRowDecorators
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.api.shown
@@ -488,6 +490,17 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
 
 @Composable
 fun SettingRow(prop: Property<*>, compact: Boolean = false) {
+    DecoratedSettingRow(SettingRowDecorators.all(), 0, prop, compact)
+}
+
+@Composable
+private fun DecoratedSettingRow(decorators: List<SettingRowDecorator>, index: Int, prop: Property<*>, compact: Boolean) {
+    val decorator = decorators.getOrNull(index) ?: return SettingRowContent(prop, compact)
+    decorator.Decorate(prop) { DecoratedSettingRow(decorators, index + 1, prop, compact) }
+}
+
+@Composable
+private fun SettingRowContent(prop: Property<*>, compact: Boolean) {
     val display = rememberDisplay(prop)
     if (display == Property.Display.HIDDEN) {
         return

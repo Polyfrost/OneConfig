@@ -4,6 +4,7 @@ import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
+import org.polyfrost.oneconfig.api.ui.v1.ModCardIcons
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.localizedValue
@@ -37,9 +38,12 @@ class TreeConfigData(
      * "icon_name" metadata or null when the mod has no icon
      */
     override val icon: String?
-        get() = tree.getMetadata<String>("mod_card_icon_path")
-            ?: tree.getMetadata<String>("icon_path")
-            ?: tree.getMetadata<String>("icon_name")
+        get() = ModCardIcons.resolve(
+            id,
+            tree.getMetadata<String>("mod_card_icon_path")
+                ?: tree.getMetadata<String>("icon_path")
+                ?: tree.getMetadata<String>("icon_name"),
+        )
 
     override val authors: String?
         get() = tree.getMetadata<String>("mod_card_authors")?.nonBlankOrNull()

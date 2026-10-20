@@ -14,8 +14,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.TextUnit
-import java.util.ServiceLoader
-import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
 
@@ -104,17 +102,9 @@ interface OneConfigUIComponentsBridge {
     fun optionWidth(): Dp
 }
 
-private val LOGGER = LogManager.getLogger("OneConfig/UI")
-
 @ExperimentalOneConfigUiApi
 private val loadedBridge: OneConfigUIComponentsBridge? by lazy {
-    try {
-        ServiceLoader.load(OneConfigUIComponentsBridge::class.java, OneConfigUIComponentsBridge::class.java.classLoader)
-            .iterator().let { if (it.hasNext()) it.next() else null }
-    } catch (t: Throwable) {
-        LOGGER.warn("Failed to load OneConfigUIComponentsBridge; OneConfig UI components cannot be used", t)
-        null
-    }
+    loadBridge(OneConfigUIComponentsBridge::class.java, "OneConfig UI components cannot be used")
 }
 
 @ExperimentalOneConfigUiApi

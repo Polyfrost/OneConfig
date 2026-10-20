@@ -45,6 +45,7 @@ object KeybindProviderRegistry {
     fun groups(): List<KeybindGroup> = providers.flatMap { it.groups() }
 }
 
+@Deprecated("Use KeybindManager.configKeybinds. Removed in OneConfig 1.6.0")
 fun collectAllKeybindGroups(): List<KeybindGroup> {
     val configGroups = collectKeybindGroups(ConfigRegistry.configs.filterIsInstance<TreeConfigData>())
     return (configGroups + KeybindProviderRegistry.groups()).withUniqueModIds()

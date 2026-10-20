@@ -7,6 +7,7 @@ object SearchProviderRegistry {
     private val providers: CopyOnWriteArrayList<SearchProvider> = CopyOnWriteArrayList()
 
     /** Register a new search provider */
+    @Deprecated("Use SearchProviders.register. Removed in OneConfig 1.6.0")
     fun registerSearchProvider(provider: SearchProvider) {
         if (provider in providers) {
             return
@@ -14,6 +15,10 @@ object SearchProviderRegistry {
         providers.add(provider)
         providers.sortByDescending { it.priority }
         SearchCorpus.seed(provider)
+    }
+
+    internal fun unregisterSearchProvider(provider: SearchProvider) {
+        providers.remove(provider)
     }
 
     /** The highest priority provider that is currently available */

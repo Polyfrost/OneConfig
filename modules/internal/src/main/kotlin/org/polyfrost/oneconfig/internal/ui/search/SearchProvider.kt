@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.ui.search
 
 
 /** A class responsible for searching configs */
+@Deprecated("Extend SearchProvider from org.polyfrost.oneconfig.api.ui.v1.search. Removed in OneConfig 1.6.0")
 interface SearchProvider {
     /** Higher priority providers are used when available */
     val priority: Int

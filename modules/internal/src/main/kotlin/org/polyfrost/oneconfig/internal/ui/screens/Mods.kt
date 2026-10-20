@@ -68,6 +68,8 @@ import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.ui.v1.ModCardTypes
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
+import org.polyfrost.oneconfig.api.ui.v1.ModsPageDecorator
+import org.polyfrost.oneconfig.api.ui.v1.ModsPageDecorators
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
@@ -125,6 +127,17 @@ enum class ModCategory(
 
 @Composable
 fun Mods() {
+    DecoratedModsPage(ModsPageDecorators.all(), 0)
+}
+
+@Composable
+private fun DecoratedModsPage(decorators: List<ModsPageDecorator>, index: Int) {
+    val decorator = decorators.getOrNull(index) ?: return ModsPage()
+    decorator.Decorate { DecoratedModsPage(decorators, index + 1) }
+}
+
+@Composable
+private fun ModsPage() {
     var activeCategory by remember { mutableStateOf(ModCategory.All) }
 
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {

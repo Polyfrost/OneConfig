@@ -23,4 +23,6 @@ class OneConfigUIBridgeImpl : OneConfigUIBridge {
             Platform.screen().display(OneConfigUIScreen.forRoute(target))
         }
     }
+
+    override fun isOneConfigScreen(screen: Any?): Boolean = screen is OneConfigUIScreen
 }
