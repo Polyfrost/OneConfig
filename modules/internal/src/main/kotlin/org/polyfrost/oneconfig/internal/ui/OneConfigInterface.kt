@@ -76,6 +76,7 @@ fun OneConfigInterface(
     }
 
     LaunchedEffect(initialRoute, openRevision) {
+        shell.navigation.attach(navController)
         val alreadyThere = initialRoute == shell.navigation.currentRoute
         if (!restoring) shell.search.clear()
 
