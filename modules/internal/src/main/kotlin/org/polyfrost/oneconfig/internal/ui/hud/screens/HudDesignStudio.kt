@@ -3756,6 +3756,7 @@ private fun SearchBar(
         interactionSource = interactionSource,
         textStyle = TextStyle(
             color = iconColor, fontSize = 12.sp,
+            fontFamily = theme.typography.family,
         ),
         cursorBrush = SolidColor(iconColor)
     ) { innerTextField ->
