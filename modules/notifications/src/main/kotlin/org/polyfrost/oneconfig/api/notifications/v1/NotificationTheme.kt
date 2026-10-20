@@ -72,6 +72,9 @@ object NotificationTheme {
     var radiusProgress by mutableStateOf(3f)
         private set
 
+    var iconFolder by mutableStateOf<String?>(null)
+        private set
+
     fun accentFor(type: NotificationType): PolyColor = when (type) {
         NotificationType.INFO -> textPrimary
         NotificationType.SUCCESS -> success
@@ -108,5 +111,10 @@ object NotificationTheme {
         this.radiusCard = radiusCard
         this.radiusButton = radiusButton
         this.radiusProgress = radiusProgress
+    }
+
+    @ApiStatus.Internal
+    fun useIconFolder(iconFolder: String?) {
+        this.iconFolder = iconFolder
     }
 }

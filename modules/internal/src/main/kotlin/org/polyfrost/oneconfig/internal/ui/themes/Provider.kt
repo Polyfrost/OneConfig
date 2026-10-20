@@ -144,4 +144,5 @@ internal fun syncNotificationTheme(theme: UITheme) {
         radiusButton = if (minecraft) 0f else 4f,
         radiusProgress = if (minecraft) 0f else 3f,
     )
+    NotificationTheme.useIconFolder(if (minecraft) "minecraft" else null)
 }

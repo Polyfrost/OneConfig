@@ -269,11 +269,12 @@ private fun ToastIcon(notification: Notification, a: Float) {
         }
     } else {
         val accent = NotificationTheme.accentFor(notification.type)
+        val iconFolder = NotificationTheme.iconFolder
         val paint = remember { Paint() }
         var filterArgb = 0
         PolyCanvas(modifier = PolyModifier.size(ICON_SIZE, ICON_SIZE).align(PolyAlign.Top)) { x, y, w, h ->
             val pixelSize = Math.ceil((w * ToastViewport.scale * ICON_RASTER_SCALE).toDouble()).toInt()
-            val img = SvgRasterizer.get(notification.type.iconName, pixelSize)
+            val img = SvgRasterizer.get(notification.type.iconName, pixelSize, iconFolder)
             if (img != null) {
                 val argb = accent.argb
                 if (argb != filterArgb) {
