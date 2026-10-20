@@ -254,11 +254,14 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static field overrideShowInScreens Z
 	public final fun getActiveInstances ()Ljava/util/ArrayList;
 	public final fun getHudsOfType (Ljava/lang/Class;)Ljava/util/ArrayList;
+	public static final fun getLayoutReferenceHeight ()F
+	public static final fun getLayoutReferenceWidth ()F
 	public final fun getProvider (Ljava/lang/Class;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public final fun getRevision ()I
 	public final fun hasHudOfType (Ljava/lang/Class;)Z
 	public final fun iconFor (Ljava/lang/String;)Ljava/lang/String;
 	public final fun instanceById (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
+	public static final fun instances ()Ljava/util/List;
 	public static final fun invalidate ()V
 	public final fun isEditing ()Z
 	public final fun isEditorOpen ()Z

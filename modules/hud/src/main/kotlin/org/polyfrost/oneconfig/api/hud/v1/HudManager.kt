@@ -104,9 +104,19 @@ object HudManager {
     @Volatile @JvmField var guiScreenWidth: Float = 960f
     @Volatile @JvmField var guiScreenHeight: Float = 540f
 
+    @Deprecated("Use layoutReferenceWidth. Removed in OneConfig 1.6.0")
     @Volatile @JvmField var layoutRefWidth: Float = 0f
 
+    @Deprecated("Use layoutReferenceHeight. Removed in OneConfig 1.6.0")
     @Volatile @JvmField var layoutRefHeight: Float = 0f
+
+    @get:ApiStatus.Experimental
+    @JvmStatic
+    val layoutReferenceWidth: Float get() = layoutRefWidth
+
+    @get:ApiStatus.Experimental
+    @JvmStatic
+    val layoutReferenceHeight: Float get() = layoutRefHeight
 
     @Volatile private var loadingLayout = false
 
@@ -256,7 +266,12 @@ object HudManager {
      *
      * THERE ARE CERTAIN THINGS THAT MUST BE DONE TO PROPERLY REGISTER AN ACTIVE HUD
      */
+    @Deprecated("Use instances. Removed in OneConfig 1.6.0")
     val activeInstances = ArrayList<Hud>()
+
+    @ApiStatus.Experimental
+    @JvmStatic
+    fun instances(): List<Hud> = activeInstances.toList()
 
     private class DateTestHud : TextHud.DateTime("Date:", "yyyy-MM-dd", title = "Date")
 

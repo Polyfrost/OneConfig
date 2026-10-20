@@ -52,14 +52,28 @@ public class Tree extends Node implements Serializable {
 
     private static final ThreadLocal<List<String>> OVERWRITE_FAILURES = new ThreadLocal<>();
 
+    @Deprecated(since = "1.5.0")
     public static void beginFailureCollection() {
         OVERWRITE_FAILURES.set(new ArrayList<>(2));
     }
 
+    @Deprecated(since = "1.5.0")
     public static List<String> endFailureCollection() {
         List<String> out = OVERWRITE_FAILURES.get();
         OVERWRITE_FAILURES.remove();
         return out == null ? Collections.emptyList() : out;
+    }
+
+    @ApiStatus.Experimental
+    public static List<String> collectFailures(@NotNull Runnable action) {
+        beginFailureCollection();
+        try {
+            action.run();
+        } catch (Throwable t) {
+            endFailureCollection();
+            throw t;
+        }
+        return endFailureCollection();
     }
 
     public Tree(@Nullable String id, @Nullable Object title, @Nullable Object description, @Nullable Map<String, Node> items) {
@@ -190,6 +204,11 @@ public class Tree extends Node implements Serializable {
         }
         theMap.put(n.getID(), n);
         return this;
+    }
+
+    @ApiStatus.Experimental
+    public @Nullable Node remove(@NotNull String id) {
+        return theMap.remove(id);
     }
 
     public Tree set(String id, Node n) {

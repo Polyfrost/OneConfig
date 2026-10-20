@@ -76,6 +76,8 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Property : org/polyf
 	public fun overwrite (Lorg/polyfrost/oneconfig/api/config/v1/Node;ZZLorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 	public static fun recast (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public final fun removeCallback (Ljava/util/function/Predicate;)Z
+	public final fun removeCallbackIf (Ljava/util/function/Predicate;)Z
+	public final fun removeDisplayConditionIf (Ljava/util/function/Predicate;)Z
 	public final fun removeDisplayListener (Ljava/util/function/Consumer;)Z
 	public fun revaluateDisplay ()V
 	public final fun set (Ljava/lang/Object;)Z
@@ -104,6 +106,7 @@ public class org/polyfrost/oneconfig/api/config/v1/Tree : org/polyfrost/oneconfi
 	public final field map Ljava/util/Map;
 	public fun <init> (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/util/Map;)V
 	public static fun beginFailureCollection ()V
+	public static fun collectFailures (Ljava/lang/Runnable;)Ljava/util/List;
 	public fun contentToString ()Ljava/lang/String;
 	public fun deepEquals (Ljava/lang/Object;)Z
 	public static fun endFailureCollection ()Ljava/util/List;
@@ -123,6 +126,7 @@ public class org/polyfrost/oneconfig/api/config/v1/Tree : org/polyfrost/oneconfi
 	public fun overwrite (Lorg/polyfrost/oneconfig/api/config/v1/Tree;Ljava/util/function/Function;ZZLorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 	public fun put (Lorg/polyfrost/oneconfig/api/config/v1/Node;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun put ([Lorg/polyfrost/oneconfig/api/config/v1/Node;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
+	public fun remove (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Node;
 	public fun set (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Node;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun toString ()Ljava/lang/String;
 	public static fun tree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;

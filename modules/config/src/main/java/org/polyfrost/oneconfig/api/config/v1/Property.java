@@ -34,6 +34,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import kotlin.reflect.KMutableProperty0;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
@@ -215,6 +216,18 @@ public abstract class Property<T> extends Node implements Serializable {
             return callbacks.remove(callback);
         }
         return false;
+    }
+
+    @ApiStatus.Experimental
+    public final boolean removeCallbackIf(@NotNull Predicate<? super Predicate<T>> filter) {
+        return callbacks != null && callbacks.removeIf(filter);
+    }
+
+    @ApiStatus.Experimental
+    public final boolean removeDisplayConditionIf(@NotNull Predicate<? super Supplier<Display>> filter) {
+        if (conditions == null || !conditions.removeIf(filter)) return false;
+        revaluateDisplay();
+        return true;
     }
 
     @Override
