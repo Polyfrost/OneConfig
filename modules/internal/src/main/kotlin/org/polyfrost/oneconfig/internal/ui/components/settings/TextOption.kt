@@ -34,6 +34,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
+@Deprecated("Use currentOptionWidth from org.polyfrost.oneconfig.api.ui.v1.components. Removed in OneConfig 1.6.0")
 val LocalOptionWidth = compositionLocalOf { 300.dp }
 
 @Composable

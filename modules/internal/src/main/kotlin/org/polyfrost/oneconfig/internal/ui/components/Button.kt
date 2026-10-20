@@ -16,6 +16,7 @@ enum class IconButtonType {
     Filled;
 }
 
+@Deprecated("Use IconButton from org.polyfrost.oneconfig.api.ui.v1.components. Removed in OneConfig 1.6.0")
 @Composable
 fun IconButton(
     iconName: String,

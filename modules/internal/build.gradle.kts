@@ -53,5 +53,6 @@ kotlin {
     jvmToolchain(21)
     compilerOptions {
         optIn.add("org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi")
+        freeCompilerArgs.add("-Xwarning-level=DEPRECATION:disabled")
     }
 }

@@ -102,6 +102,7 @@ private fun hsbToColor(hue: Float, saturation: Float, brightness: Float, alpha: 
     return Color(r + m, g + m, b + m, alpha)
 }
 
+@Deprecated("Use colorToHex from org.polyfrost.oneconfig.api.ui.v1.components. Removed in OneConfig 1.6.0")
 internal fun colorToHex(color: Color): String {
     val argb = color.toArgb()
     val a = (argb shr 24) and 0xFF
@@ -136,6 +137,7 @@ private fun hexToColor(hex: String): Color? {
     }
 }
 
+@Deprecated("Use ColorPickerModel from org.polyfrost.oneconfig.api.ui.v1.components. Removed in OneConfig 1.6.0")
 internal class ColorPickerModel(initialColor: Color, hasAlpha: Boolean = true) {
     private val hsb = colorToHsb(initialColor)
     var hue by mutableFloatStateOf(hsb[0])
@@ -281,6 +283,7 @@ fun ColorOption(data: ColorOptionData) {
     }
 }
 
+@Deprecated("Use ColorPickerPopup from org.polyfrost.oneconfig.api.ui.v1.components. Removed in OneConfig 1.6.0")
 @Composable
 internal fun ColorPickerPopup(
     model: ColorPickerModel,

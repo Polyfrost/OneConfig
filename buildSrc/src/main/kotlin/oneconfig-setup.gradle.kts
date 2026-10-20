@@ -452,6 +452,9 @@ configure<JavaPluginExtension> {
 
 configure<KotlinJvmExtension> {
     jvmToolchain(javaVersion)
+    compilerOptions {
+        freeCompilerArgs.add("-Xwarning-level=DEPRECATION:disabled")
+    }
 }
 
 tasks.withType<Jar>().configureEach {

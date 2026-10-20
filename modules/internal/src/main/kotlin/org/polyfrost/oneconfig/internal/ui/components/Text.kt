@@ -102,6 +102,7 @@ private fun parseLegacyFormatting(text: String, baseColor: Color): AnnotatedStri
     flush()
 }
 
+@Deprecated("Use Text from org.polyfrost.oneconfig.api.ui.v1.components. Removed in OneConfig 1.6.0")
 @Composable
 fun Text(
     text: Any,

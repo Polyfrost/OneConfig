@@ -106,6 +106,7 @@ fun text(text: Component) = buildAnnotatedString {
     }
 }
 
+@Deprecated("Use Tooltip from org.polyfrost.oneconfig.api.ui.v1.components. Removed in OneConfig 1.6.0")
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
 fun Tooltip(

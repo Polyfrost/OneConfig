@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
+@Deprecated("Use Chip from org.polyfrost.oneconfig.api.ui.v1.components. Removed in OneConfig 1.6.0")
 @Composable
 fun Chip(
     label: String,
