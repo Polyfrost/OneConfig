@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.Density
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
@@ -33,6 +34,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ui.components.LocalSearchFieldFocused
 import org.polyfrost.oneconfig.internal.ui.components.RetainedVisibility
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDragLayer
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
@@ -128,7 +130,13 @@ fun OneConfigInterface(
         else if (opened) onCloseRequest()
     }
 
-    val requestClose: () -> Unit = { visible = false }
+    val searchFocused = remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+    val requestClose: () -> Unit = {
+        // commit any field still being edited before configs save, but keep search focused for reopening
+        if (!searchFocused.value) focusManager.clearFocus()
+        visible = false
+    }
     val requestOpen: () -> Unit = { visible = true }
 
     SideEffect {
@@ -138,6 +146,7 @@ fun OneConfigInterface(
 
     CompositionLocalProvider(
         LocalCloseRequest provides requestClose,
+        LocalSearchFieldFocused provides searchFocused,
         LocalShell provides shell,
         LocalShellNavController provides navController,
     ) {

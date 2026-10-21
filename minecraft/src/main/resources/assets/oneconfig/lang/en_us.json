@@ -82,7 +82,7 @@
   "oneconfig.preferences.show_opening_page_animation.description": "Plays the page animation when the menu is first opened.",
 
   "oneconfig.preferences.instant_search.title": "Instant Search",
-  "oneconfig.preferences.instant_search.description": "Focuses the search bar when the OneConfig menu opens.",
+  "oneconfig.preferences.instant_search.description": "Focuses the search bar when the OneConfig menu opens or you change pages.",
 
   "oneconfig.preferences.show_option_action_buttons.title": "Show Option Action Buttons",
   "oneconfig.preferences.show_option_action_buttons.description": "Shows a more actions button on active option rows. Right-click options still opens the same menu.",

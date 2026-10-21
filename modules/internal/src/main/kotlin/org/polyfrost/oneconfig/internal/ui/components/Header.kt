@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -317,6 +318,7 @@ fun GlobalSearchBar() {
     val isFocused by interactionSource.collectIsFocusedAsState()
 
     val focusRequester = remember { FocusRequester() }
+    val searchFocused = LocalSearchFieldFocused.current
 
     LaunchedEffect(searchText.text) { search.update(searchText.text) }
     LaunchedEffect(search.query) {
@@ -365,7 +367,9 @@ fun GlobalSearchBar() {
         cursorBrush = SolidColor(LocalTheme.current.textColorSecondary),
         textStyle = searchTextStyle,
         interactionSource = interactionSource,
-        modifier = Modifier.trackTextInputFocus().focusRequester(focusRequester)
+        modifier = Modifier.trackTextInputFocus()
+            .focusRequester(focusRequester)
+            .onFocusChanged { searchFocused?.value = it.isFocused }
     ) { innerTextField ->
         Box(
             modifier = Modifier
