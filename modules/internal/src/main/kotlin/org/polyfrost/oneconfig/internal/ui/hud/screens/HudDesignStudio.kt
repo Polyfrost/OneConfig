@@ -98,7 +98,7 @@ import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Designer
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Settings
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 import org.polyfrost.oneconfig.internal.ui.search.SearchScope
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.*
@@ -2679,6 +2679,7 @@ internal fun duplicateHudGroup(
 @Composable
 fun HudDragLayer(modifier: Modifier = Modifier) {
     HudEditorViewport.observe()
+    val shellLayout = LocalShell.current.layout
     var hoveredHud by remember { mutableStateOf<Hud?>(null) }
     var draggedHud by remember { mutableStateOf<Hud?>(null) }
     var isDragging by remember { mutableStateOf(false) }
@@ -2699,12 +2700,12 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
             isDragging = false
             draggedHud = null
             snapGuides = SnapGuides.NONE
-            ShellState.hudDragging = false
+            shellLayout.markHudDragging(false)
         }
         dropped?.onEditorDragEnd()
     }
 
-    fun overShell(px: Float, py: Float) = ShellState.shellBounds?.contains(Offset(px, py)) == true
+    fun overShell(px: Float, py: Float) = shellLayout.shellBounds?.contains(Offset(px, py)) == true
 
     Box(
         modifier = modifier
@@ -2741,7 +2742,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                     isDragging = true
                     draggedHud = hit
                     hoveredHud = hit
-                    ShellState.hudDragging = true
+                    shellLayout.markHudDragging(true)
                 }
             }
             .safePointerEvent(PointerEventType.Move) { event ->
@@ -2895,7 +2896,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                                 if (draggedHud === actionBarTarget) {
                                     draggedHud = null
                                     isDragging = false
-                                    ShellState.hudDragging = false
+                                    shellLayout.markHudDragging(false)
                                 }
                                 HudManager.removeHud(actionBarTarget, delete = true)
                             }

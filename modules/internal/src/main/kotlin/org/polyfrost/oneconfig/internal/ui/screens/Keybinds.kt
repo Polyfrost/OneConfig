@@ -63,6 +63,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindConflicts
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindEntry
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroup
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroupCollapseStore
@@ -74,7 +75,7 @@ import org.polyfrost.oneconfig.internal.ui.search.SearchDocument
 import org.polyfrost.oneconfig.internal.ui.search.SearchScope
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.util.LayoutRef
@@ -88,7 +89,7 @@ fun Keybinds() {
     val configs = ConfigRegistry.configs.toList()
     val providerRevision = KeybindProviderRegistry.revision.intValue
     val groups = remember(revision, providerRevision, configs) { collectAllKeybindGroups() }
-    val localSearchQuery = ShellState.searchQuery.trim()
+    val localSearchQuery = pageSearchQuery().trim()
     val search = rememberKeybindSearchResults(groups, localSearchQuery)
     val searchResults = search.groups
     val visibleGroups = if (localSearchQuery.isBlank()) groups else searchResults.orEmpty()
@@ -98,10 +99,10 @@ fun Keybinds() {
     if (visibleGroups.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             val message = when {
-                localSearchQuery.isBlank() -> "No keybinds available."
+                localSearchQuery.isBlank() -> translated("oneconfig.search.no_keybinds", "No keybinds available.")
                 // nothing to say until the first search comes back
-                searchResults == null -> "Searching..."
-                else -> "No keybinds match \"$localSearchQuery\""
+                searchResults == null -> translated("oneconfig.search.searching", "Searching...")
+                else -> translated("oneconfig.search.no_keybinds_match", "No keybinds match \"%s\"", localSearchQuery)
             }
             Text(message, color = LocalTheme.current.textColorSecondary, fontSize = 15.sp)
         }

@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.ui.components
 
 import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.page.PageText
 
 internal fun translationKeyOrNull(value: Any?): String? {
     val text = (value as? String)?.trim()?.takeIf { it.isNotEmpty() } ?: return null
@@ -47,4 +48,14 @@ fun Node.localizedDescription(): Any? {
 
 fun Node.localizedGroup(metadataKey: String, keyMetadataKey: String, default: String): String {
     return localizedString(getMetadata(keyMetadataKey), getMetadata<String>(metadataKey) ?: default)
+}
+
+fun translated(key: String, fallback: String, vararg args: Any?): String =
+    if (Platform.i18n().hasTranslation(key)) Platform.i18n().translateString(key, *args)
+    else if (args.isEmpty()) fallback
+    else fallback.format(*args)
+
+fun PageText.resolve(): String {
+    val key = key ?: return fallback
+    return translated(key, fallback)
 }

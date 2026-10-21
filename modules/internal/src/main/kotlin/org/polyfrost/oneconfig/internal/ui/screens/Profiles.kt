@@ -86,7 +86,7 @@ import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.concentric
@@ -237,7 +237,7 @@ fun Profiles() {
         Column(
             verticalArrangement = Arrangement.spacedBy(19.dp)
         ) {
-            val localSearchQuery = ShellState.searchQuery.trim()
+            val localSearchQuery = pageSearchQuery().trim()
             val categorizedProfiles = when (activeCategory) {
                 ProfileCategory.All -> profiles
                 ProfileCategory.Favorited -> profiles.filter { it.favorite }

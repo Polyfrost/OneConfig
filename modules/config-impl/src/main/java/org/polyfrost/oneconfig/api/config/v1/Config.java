@@ -103,7 +103,6 @@ public abstract class Config {
         };
     }
 
-    @ApiStatus.Internal
     protected Tree makeTree() {
         return ConfigManager.collect(this, id);
     }
@@ -210,17 +209,14 @@ public abstract class Config {
      * <br>
      * Storing the live reference would alias the working value and make a reset a no-op
      */
-    @ApiStatus.Internal
     public static void captureDefaults(Tree tree) {
         captureDefaults(tree, null, null);
     }
 
-    @ApiStatus.Internal
     public static void restoreCapturedDefaults(Tree tree) {
         restoreCapturedDefaults(tree, false);
     }
 
-    @ApiStatus.Internal
     public static void restoreCapturedDefaults(Tree tree, boolean silent) {
         for (Node node : tree.map.values()) {
             if (node instanceof Property) {

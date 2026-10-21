@@ -181,7 +181,6 @@ public final class ConfigManager {
     /**
      * Returns a reference to the internal config manager which is mounted onto the ./OneConfig directory
      */
-    @ApiStatus.Internal
     public static ConfigManager internal() {
         return internal;
     }
