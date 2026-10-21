@@ -1928,11 +1928,6 @@ fun HudDesignStudio(visible: Boolean = true) {
                 }
                 if (selectedHuds.isEmpty()) return@onKeyEvent false
                 val key = keyEvent.key
-                val hud = primaryHud() ?: return@onKeyEvent false
-                if (selectedHuds.any { it.locked }) {
-                    notifyHudLocked()
-                    return@onKeyEvent true
-                }
                 val step = if (keyEvent.isShiftPressed) 10f else 1f
                 val (dx, dy) = when (key) {
                     Key.DirectionLeft -> -step to 0f
@@ -1941,7 +1936,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                     Key.DirectionDown -> 0f to step
                     else -> return@onKeyEvent false
                 }
-                if (hud.locked) {
+                if (selectedHuds.any { it.locked }) {
                     notifyHudLocked()
                     return@onKeyEvent true
                 }
