@@ -131,7 +131,7 @@ fun NavGraphBuilder.pageDestinations() {
         val shell = LocalShell.current
         LaunchedEffect(id) {
             LOGGER.warn("OneConfig page {} is not registered, opening the mods page instead", id)
-            if (shell.navigation.currentRoute == PageRoute(id)) shell.navigation.navigate(ModsGraph)
+            shell.navigation.discard(PageRoute(id), ModsGraph)
         }
     }
 }

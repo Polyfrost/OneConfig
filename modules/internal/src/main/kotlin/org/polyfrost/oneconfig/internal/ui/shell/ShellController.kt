@@ -346,6 +346,23 @@ class ShellNavigation internal constructor(
         search.bind(host.currentBackStackEntry?.id, query)
     }
 
+    fun discard(route: Any, fallback: Any) {
+        val removed = backStack.removeAll { it.route == route } or forwardStack.removeAll { it.route == route }
+        if (lastRoute == route) lastRoute = fallback
+        if (currentEntry.route != route) {
+            if (removed) updateArrows()
+            return
+        }
+        val host = readyHost() ?: return
+        transitions.prepare(false, back = false)
+        host.navigate(fallback)
+        currentEntry = Entry(fallback)
+        lastRoute = fallback
+        seedRouteCategory(fallback)
+        updateArrows()
+        search.bind(host.currentBackStackEntry?.id, "")
+    }
+
     /**
      * Records an in-page settings tab switch so back and forward walk tabs the same way they walk pages
      *
