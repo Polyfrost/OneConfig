@@ -37,9 +37,11 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -176,6 +178,12 @@ object HudEditorViewport {
 private data class HudBounds(val x: Float, val y: Float, val width: Float, val height: Float)
 
 private val hiddenHudPaint = Paint().apply { setAlphaf(0.35f) }
+
+/** The search field the search keybind focuses */
+private enum class StudioSearch {
+    Panel,
+    Library,
+}
 
 private enum class ResizeCorner {
     TopLeft,
@@ -1015,6 +1023,7 @@ fun HudDesignStudio(visible: Boolean = true) {
     var resizeStartStaticH by remember { mutableStateOf(0f) }
     var libraryVisible by remember { mutableStateOf(true) }
     var searchText by remember { mutableStateOf("") }
+    var searchFocusTarget by remember { mutableStateOf<StudioSearch?>(null) }
     var pendingLibraryScroll by remember { mutableStateOf<String?>(null) }
     // the mod last picked from the icon column kept separate from the scroll-derived section because the
     // list clamps at its end so the final sections can never become the first visible item
@@ -1224,6 +1233,12 @@ fun HudDesignStudio(visible: Boolean = true) {
         }
     }
 
+    val providers = remember { HudManager.providers().toList() }
+    fun libraryHuds() = providers.filter { it.addableToLibrary }
+    fun libraryModIds(huds: List<Hud> = libraryHuds()) = huds.mapNotNull { it.configId }.distinct()
+    val addable = libraryHuds()
+    val modIds = libraryModIds(addable)
+
     LaunchedEffect(HudManager.editorOpenRevision.intValue) {
         HudDesignSession.clearCommands()
         for (command in HudDesignSession.commands) {
@@ -1290,6 +1305,20 @@ fun HudDesignStudio(visible: Boolean = true) {
                         }
                     }
 
+                    StudioCommand.Search -> {
+                        if (!isDragging && !isResizing && !marqueeActive && pendingPress == null) {
+                            Snapshot.withMutableSnapshot {
+                                if (selectedHuds.isNotEmpty()) {
+                                    panelOpen = true
+                                    searchFocusTarget = StudioSearch.Panel
+                                } else if (libraryModIds().isNotEmpty()) {
+                                    libraryVisible = true
+                                    searchFocusTarget = StudioSearch.Library
+                                }
+                            }
+                        }
+                    }
+
                     StudioCommand.Undo, StudioCommand.Redo -> {
                         if (!isDragging && !isResizing && pendingPress == null) {
                             val revived = if (command == StudioCommand.Undo) history.undo() else history.redo()
@@ -1324,9 +1353,6 @@ fun HudDesignStudio(visible: Boolean = true) {
         }
     }
 
-    val providers = remember { HudManager.providers().toList() }
-    val addable = providers.filter { it.addableToLibrary }
-    val modIds = addable.mapNotNull { it.configId }.distinct()
     val modNames = remember(modIds) { modIds.associateWith { modNameFor(it) ?: it } }
     val searchHits = rememberHudSearchResults(providers, searchText)
     val groupedHuds = searchHits?.map { (modId, huds) -> modId to huds.filter { it.addableToLibrary } }
@@ -2243,6 +2269,8 @@ fun HudDesignStudio(visible: Boolean = true) {
                     selectedHud = panelContentHud.value,
                     activeCategory = activeCategory,
                     onCategoryChange = { activeCategory = it },
+                    searchFocusRequested = searchFocusTarget == StudioSearch.Panel,
+                    onSearchFocused = { searchFocusTarget = null },
                     onBack = {
                         Snapshot.withMutableSnapshot {
                             panelOpen = false
@@ -2282,6 +2310,8 @@ fun HudDesignStudio(visible: Boolean = true) {
                         modifier = Modifier.chromeBlocker(CHROME_LIBRARY),
                         searchText = searchText,
                         onSearchChange = { searchText = it },
+                        searchFocusRequested = searchFocusTarget == StudioSearch.Library,
+                        onSearchFocused = { searchFocusTarget = null },
                         onClose = { closeLibrary() },
                         sections = librarySections,
                         suggestEvergreenHud = modIds.isEmpty(),
@@ -2917,6 +2947,8 @@ private fun DesignStudioPanel(
     selectedHud: Hud?,
     activeCategory: StudioCategory,
     onCategoryChange: (StudioCategory) -> Unit,
+    searchFocusRequested: Boolean,
+    onSearchFocused: () -> Unit,
     onBack: () -> Unit,
     onDragPanel: (Offset) -> Unit,
 ) {
@@ -2958,7 +2990,7 @@ private fun DesignStudioPanel(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     IconButton("close") { onBack() }
-                    SearchBar(searchText, { searchText = it }, "Search...")
+                    SearchBar(searchText, { searchText = it }, "Search...", searchFocusRequested, onSearchFocused)
                 }
                 Row(
                     modifier = Modifier
@@ -3242,6 +3274,8 @@ private fun HudLibraryPanel(
     modifier: Modifier = Modifier,
     searchText: String,
     onSearchChange: (String) -> Unit,
+    searchFocusRequested: Boolean,
+    onSearchFocused: () -> Unit,
     onClose: () -> Unit,
     sections: List<HudLibrarySection>,
     suggestEvergreenHud: Boolean,
@@ -3272,7 +3306,7 @@ private fun HudLibraryPanel(
         ) {
             Text("HUDs", color = theme.textColor, fontSize = 18.sp)
             if (!suggestEvergreenHud) {
-                SearchBar(searchText, onSearchChange, "Search HUDs...")
+                SearchBar(searchText, onSearchChange, "Search HUDs...", searchFocusRequested, onSearchFocused)
                 IconButton("close", modifier = Modifier.size(18.dp), onClick = onClose)
             }
         }
@@ -3685,9 +3719,29 @@ private fun ModFilterIcon(iconName: String, selected: Boolean, onClick: () -> Un
 }
 
 @Composable
-private fun SearchBar(value: String, onValueChange: (String) -> Unit, placeholder: String) {
+private fun SearchBar(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    focusRequested: Boolean = false,
+    onFocused: () -> Unit = {},
+) {
     val interactionSource = rememberInteractionSource()
     val isFocused by interactionSource.collectIsFocusedAsState()
+    val focusRequester = remember { FocusRequester() }
+    // holds the selection alongside the caller's text so a focus request can select the query
+    var field by remember { mutableStateOf(TextFieldValue(value)) }
+    val current = field.copy(text = value)
+
+    LaunchedEffect(focusRequested) {
+        if (!focusRequested) return@LaunchedEffect
+        field = current.copy(selection = TextRange(0, value.length))
+        try {
+            focusRequester.requestFocus()
+        } catch (_: IllegalStateException) {
+        }
+        onFocused()
+    }
     val theme = LocalTheme.current
     val borderColor by animateColorAsState(
         if (isFocused) theme.textColor.copy(.20f) else theme.textColor.copy(.10f)
@@ -3697,9 +3751,12 @@ private fun SearchBar(value: String, onValueChange: (String) -> Unit, placeholde
     )
 
     BasicTextField(
-        value,
-        onValueChange,
-        modifier = Modifier.trackTextInputFocus(),
+        current,
+        {
+            field = it
+            if (it.text != value) onValueChange(it.text)
+        },
+        modifier = Modifier.trackTextInputFocus().focusRequester(focusRequester),
         interactionSource = interactionSource,
         textStyle = TextStyle(
             color = iconColor, fontSize = 12.sp,
