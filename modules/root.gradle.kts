@@ -178,7 +178,14 @@ subprojects {
 apiValidation {
     for (project in subprojects) {
         ignoredPackages.add("org.polyfrost.oneconfig.api.${project.name}.v1.internal")
+        for (language in listOf("java", "kotlin")) {
+            val sourceRoot = project.file("src/main/$language")
+            sourceRoot.resolve("org/polyfrost/oneconfig/api").walkTopDown()
+                .filter { it.isDirectory && it.name == "internal" }
+                .forEach { ignoredPackages.add(it.relativeTo(sourceRoot).invariantSeparatorsPath.replace('/', '.')) }
+        }
     }
+    nonPublicMarkers.add("org.jetbrains.annotations.ApiStatus\$Internal")
     ignoredPackages.add("org.polyfrost.oneconfig.api.hypixel.v1.internal")
     ignoredPackages.add("org.polyfrost.oneconfig.api.event.v1.internal")
     ignoredProjects.add("internal")

@@ -64,6 +64,8 @@ import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
+import org.polyfrost.oneconfig.api.ui.v1.SettingRowDecorator
+import org.polyfrost.oneconfig.api.ui.v1.SettingRowDecorators
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.api.shown
@@ -83,6 +85,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.search.CategoryGroup
 import org.polyfrost.oneconfig.internal.ui.search.ConfigListEntry
@@ -99,9 +102,9 @@ import org.polyfrost.oneconfig.internal.ui.search.flattenEntries
 import org.polyfrost.oneconfig.internal.ui.search.flattenSearchEntries
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.search.searchNode
-import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.util.LayoutRef
@@ -131,14 +134,15 @@ private fun ConfigScreenContent(
     lockExempt: Property<*>?,
 ) {
     val categories = remember(tree) { buildCategories(tree) }
-    val localSearchQuery = ShellState.searchQuery.trim()
+    val localSearchQuery = pageSearchQuery().trim()
+    val navigation = LocalShell.current.navigation
 
-    val savedCategory = ShellState.selectedCategories[pageKey] ?: initialCategory
+    val savedCategory = navigation.selectedCategory(pageKey) ?: initialCategory
     val selectedCategory = categories.firstOrNull { it.name.equals(savedCategory, ignoreCase = true) }
         ?: categories.firstOrNull()
 
     fun selectCategory(category: CategoryGroup) {
-        LocalNavController.wrapper.selectCategory(pageKey, category.name)
+        navigation.selectCategory(pageKey, category.name)
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
@@ -176,9 +180,9 @@ private fun ConfigScreenContent(
         if (entries.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 val message = when {
-                    localSearchQuery.isBlank() -> "No settings available."
-                    results == null -> "Searching..."
-                    else -> "No settings match \"$localSearchQuery\""
+                    localSearchQuery.isBlank() -> translated("oneconfig.search.no_settings", "No settings available.")
+                    results == null -> translated("oneconfig.search.searching", "Searching...")
+                    else -> translated("oneconfig.search.no_settings_match", "No settings match \"%s\"", localSearchQuery)
                 }
                 Text(message, color = LocalTheme.current.textColorSecondary)
             }
@@ -486,6 +490,17 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
 
 @Composable
 fun SettingRow(prop: Property<*>, compact: Boolean = false) {
+    DecoratedSettingRow(SettingRowDecorators.all(), 0, prop, compact)
+}
+
+@Composable
+private fun DecoratedSettingRow(decorators: List<SettingRowDecorator>, index: Int, prop: Property<*>, compact: Boolean) {
+    val decorator = decorators.getOrNull(index) ?: return SettingRowContent(prop, compact)
+    decorator.Decorate(prop) { DecoratedSettingRow(decorators, index + 1, prop, compact) }
+}
+
+@Composable
+private fun SettingRowContent(prop: Property<*>, compact: Boolean) {
     val display = rememberDisplay(prop)
     if (display == Property.Display.HIDDEN) {
         return

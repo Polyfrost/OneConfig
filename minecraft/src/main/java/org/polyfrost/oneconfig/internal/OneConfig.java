@@ -77,6 +77,7 @@ import org.polyfrost.oneconfig.internal.ui.keybind.KeybindConflicts;
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry;
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProfiles;
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProvider;
+import org.polyfrost.oneconfig.internal.ui.navigation.BuiltinPages;
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus;
 import org.polyfrost.oneconfig.internal.ui.sound.ExternalSounds;
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry;
@@ -441,6 +442,7 @@ public class OneConfig
         LOGGER.info("Loading OneConfig v{}", v);
         McFontService.INSTANCE.init();
         ThirdPartyModCategories.INSTANCE.init();
+        BuiltinPages.register();
         // force class-load so the hello/disconnect handlers are armed before joining any server
         HypixelUtils.isHypixel();
         ExternalSounds.INSTANCE.ensureDownloaded();

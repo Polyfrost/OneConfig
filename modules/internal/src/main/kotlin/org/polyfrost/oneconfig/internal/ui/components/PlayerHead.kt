@@ -11,14 +11,14 @@ import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import java.io.ByteArrayInputStream
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
 fun PlayerHead(modifier: Modifier = Modifier) {
     val shape = LocalTheme.current.sideBarNavigationEntryShape
     val fallback = painterResource("/assets/oneconfig/images/head.png")
-    val bytes = ShellState.playerHeadPng
+    val bytes = LocalShell.current.session.playerHeadPng
     val painter = remember(bytes) {
         bytes?.let { BitmapPainter(loadImageBitmap(ByteArrayInputStream(it))) }
     }

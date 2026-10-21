@@ -154,7 +154,6 @@ public final class org/polyfrost/oneconfig/api/event/v1/events/MouseInputEvent$M
 	public fun component2 ()F
 	public fun getX ()F
 	public fun getY ()F
-	public static fun post (FF)V
 }
 
 public abstract class org/polyfrost/oneconfig/api/event/v1/events/PacketEvent : org/polyfrost/oneconfig/api/event/v1/events/Event$Cancellable {
@@ -297,7 +296,6 @@ public abstract class org/polyfrost/oneconfig/api/event/v1/invoke/EventHandler :
 	public static fun of (Ljava/lang/Class;Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
 	public static fun of (Ljava/lang/Class;Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
 	public static fun ofRemoving (Ljava/lang/Class;Ljava/util/function/Predicate;)Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
-	public final fun onError ()Z
 	public final fun register ()Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
 	public final fun unregister ()Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
 }

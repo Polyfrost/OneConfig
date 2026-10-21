@@ -66,9 +66,9 @@ import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ChangeLogEntryRoute
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
-import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -229,7 +229,7 @@ private fun MdBlocks(node: Node, styles: MdStyles, modifier: Modifier = Modifier
 
 @Composable
 fun Changelog() {
-    val localSearchQuery = ShellState.searchQuery.trim()
+    val localSearchQuery = pageSearchQuery().trim()
     // back/forward re-navigate rather than pop so nav-host saved state is gone on return; keep the
     // position in the shell's scroll memory like the other list pages
     val lazyListState = rememberRestorableLazyListState("changelog", localSearchQuery)
@@ -332,6 +332,7 @@ fun Changelog(index: Int) {
 @Composable
 fun ChangelogEntry(data: ChangelogSection, index: Int) {
     val theme = LocalTheme.current
+    val navigation = LocalShell.current.navigation
     val styles = MdStyles(
         body = TextStyle(fontFamily = theme.typography.family, fontSize = 13.sp, color = theme.textColorSecondary),
         headingColor = theme.textColor,
@@ -424,7 +425,7 @@ fun ChangelogEntry(data: ChangelogSection, index: Int) {
                     Text(data.date, color = theme.textColorSecondary, fontSize = 12.sp)
                     Box(
                         modifier = Modifier.clickable {
-                            LocalNavController.wrapper.navigate(ChangeLogEntryRoute(index))
+                            navigation.navigate(ChangeLogEntryRoute(index))
                         }.pointerHoverIcon(PointerIcon.Hand)
                     ) {
                         Text("Read more", color = Accent, fontSize = 12.sp, fontWeight = FontWeight.Medium)
