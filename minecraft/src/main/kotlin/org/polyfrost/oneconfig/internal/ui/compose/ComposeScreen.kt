@@ -971,7 +971,17 @@ abstract class ComposeScreen(
     }
 
     private fun dispatchKeyPressed(bindingKey: Int, shortcutKey: Int, modifiers: Int): Boolean {
-        if ((bindingKey == InputConstants.KEY_ESCAPE && KeybindRecordingBus.consumeEscape()) || handleKeyPressed(bindingKey, modifiers)) {
+        if (bindingKey == InputConstants.KEY_ESCAPE) {
+            if (KeybindRecordingBus.consumeEscape()) {
+                consumedKeys += bindingKey
+                return true
+            }
+            if (KeybindRecordingBus.isRecording) {
+                sendKeyPressedEvent(bindingKey, shortcutKey, modifiers)
+                return true
+            }
+        }
+        if (handleKeyPressed(bindingKey, modifiers)) {
             consumedKeys += bindingKey
             return true
         }
