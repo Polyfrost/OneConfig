@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -67,8 +66,8 @@ private val Swatches = listOf(
     Swatch("test:black", "Black", Color(0xFF212121)),
 )
 
-private val SwatchShape = RoundedCornerShape(4.dp)
-private val PickerShape = RoundedCornerShape(12.dp)
+private val SwatchShape @Composable get() = LocalTheme.current.checkBoxShape
+private val PickerShape @Composable get() = LocalTheme.current.popupShape
 private const val MAX_SWATCHES = 3
 
 private val SwatchIcon: PickerTileIcon<Swatch> = { swatch, modifier, alpha ->

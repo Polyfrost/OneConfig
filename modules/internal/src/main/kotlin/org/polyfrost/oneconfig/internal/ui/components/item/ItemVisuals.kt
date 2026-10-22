@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -24,7 +23,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.picker.PickerTileIcon
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
-val ItemIconShape = RoundedCornerShape(5.dp)
+val ItemIconShape @Composable get() = LocalTheme.current.checkBoxShape
 
 internal val ItemTileIcon: PickerTileIcon<ItemDescriptor> = { item, modifier, alpha ->
     ItemIcon(item.id, modifier, framed = false, alpha = alpha)

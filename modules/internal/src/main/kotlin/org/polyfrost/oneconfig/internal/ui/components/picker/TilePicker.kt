@@ -25,7 +25,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -73,7 +72,7 @@ interface PickerEntry {
 
 typealias PickerTileIcon<T> = @Composable (entry: T, modifier: Modifier, alpha: Float) -> Unit
 
-val PickerTileShape = RoundedCornerShape(8.dp)
+val PickerTileShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
 
 val PickerTileSize = 44.dp
 
