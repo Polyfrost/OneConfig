@@ -37,7 +37,7 @@ publishMods {
     version = "v${project.version}"
     type = STABLE
 
-    dryRun = modrinthId == null || modrinthToken == null || (curseforgeId != null && curseforgeToken == null)
+    dryRun = (modrinthId == null || modrinthToken == null) && (curseforgeId == null || curseforgeToken == null)
 
     if (modrinthId != null) {
         val modrinthOptions = modrinthOptions {
