@@ -70,6 +70,7 @@ publishMods {
             file = tasks.named<Jar>("jar").flatMap { it.archiveFile }
             modLoaders.add("fabric")
             minecraftVersions.addAll(fabricMinecraftVersions)
+            minecraftVersions.add("1.8.9")
             clientRequired = true
             requires("fabric-language-kotlin")
         }
