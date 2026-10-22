@@ -116,6 +116,8 @@ class KtApiParityTest {
         dsl.number(5f).apply { min = 0f; max = 1f; step = 5f }
         dsl.button { error("boom") }.property.getMetadata<Runnable>("runnable")!!.run()
         assertThrows(IllegalArgumentException::class.java) { dsl.itemList().maxEntries = -1 }
+        assertThrows(IllegalArgumentException::class.java) { dsl.effectList().maxEntries = -1 }
+        assertTrue(dsl.effectList("minecraft:speed").property.getMetadata<Visualizer>("visualizer") is Visualizer.EffectListVisualizer)
         val list = dsl.draggableList(arrayOf("a"), "a", "b").apply { checkable = true }
         assertEquals(true, list["checkable"])
     }
