@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
@@ -29,7 +28,6 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
@@ -41,10 +39,6 @@ const val THEMES_ID = "themes.json"
 fun Themes() {
     val revision = ConfigRegistry.revision
     val tree = ConfigRegistry.findTree(THEMES_ID)
-    DisposableEffect(Unit) {
-        ShellState.title = "Themes"
-        onDispose {  }
-    }
     Column(
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {

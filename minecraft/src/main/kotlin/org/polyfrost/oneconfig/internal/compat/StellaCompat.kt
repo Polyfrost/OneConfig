@@ -38,6 +38,7 @@ object StellaCompat {
     private val hudProperties = mutableMapOf<String, Property<*>>()
     private val tree = Tree.tree()
     private var initialized = false
+    private const val STELLA_ID = "stella"
 
     @JvmStatic
     fun initialize() {
@@ -52,11 +53,14 @@ object StellaCompat {
 
         CompatLoader.nativeLoadedConfigs.add(Stella.NAMESPACE)
 
+        // this runs from requireTranslations, which waits for the entrypoints to be decided, so nothing needs retrying
+        // the HUDs are still registered as an entrypoint only replaces the config
+        val replaced = ConfigEntrypoints.provides(STELLA_ID)
         try {
-            addConfigTree()
+            if (!replaced) addConfigTree()
             addHuds()
         } catch (_: Throwable) {
-            fallbackTree()
+            if (!replaced) fallbackTree()
             return
         }
 
@@ -85,7 +89,7 @@ object StellaCompat {
     }
 
     private fun addConfigTree() {
-        val info = ModInfo.loadedMods.firstOrNull { it.id == "stella" }
+        val info = ModInfo.loadedMods.firstOrNull { it.id == STELLA_ID }
 
         tree.id = Stella.NAMESPACE
         tree.title = "Stella"
@@ -118,7 +122,7 @@ object StellaCompat {
         val fallback = Tree.tree()
         fallback.id = Stella.NAMESPACE
         fallback.title = "Stella"
-        ModInfo.loadedMods.firstOrNull { it.id == "stella" }?.extractIconFile()?.let { fallback.addMetadata("icon_path", it) }
+        ModInfo.loadedMods.firstOrNull { it.id == STELLA_ID }?.extractIconFile()?.let { fallback.addMetadata("icon_path", it) }
         fallback.addMetadata("on_click") { runCatching { config.open() } }
         fallback.addMetadata(Backend.UI_ONLY_METADATA, true)
         fallback.addMetadata(Backend.UI_PLACEHOLDER_METADATA, true)

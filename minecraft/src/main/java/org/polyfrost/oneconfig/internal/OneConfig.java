@@ -57,6 +57,8 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsRenderer;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
+import org.polyfrost.oneconfig.internal.compat.CompatLoader;
+import org.polyfrost.oneconfig.internal.compat.ConfigEntrypoints;
 import org.polyfrost.oneconfig.internal.compat.KaleidoCompat;
 import org.polyfrost.oneconfig.internal.compat.toggle.ModGates;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
@@ -75,6 +77,7 @@ import org.polyfrost.oneconfig.internal.ui.keybind.KeybindConflicts;
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry;
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProfiles;
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProvider;
+import org.polyfrost.oneconfig.internal.ui.navigation.BuiltinPages;
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus;
 import org.polyfrost.oneconfig.internal.ui.sound.ExternalSounds;
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry;
@@ -312,8 +315,18 @@ public class OneConfig
                 });
         EventManager.register(
                 InitializationEvent.class, e -> {
-                    ConfigManager.setProfileSwitchDispatcher(Platform.screen()::runOnUiThread);
-                    ConfigManager.initialize();
+                    try {
+                        ConfigManager.setProfileSwitchDispatcher(Platform.screen()::runOnUiThread);
+                        try {
+                            ConfigEntrypoints.registerAll();
+                        } catch (Throwable t) {
+                            LOGGER.error("Failed to run the OneConfig config entrypoints", t);
+                        }
+                        ConfigManager.initialize();
+                    } finally {
+                        // compat stays queued until this runs
+                        ConfigEntrypoints.finishRegistration();
+                    }
                     KeybindConflicts.unbindMinecraftKeybinds();
                     CompatSnapshots.setDispatcher(r -> {
                         Minecraft mc = Minecraft.getInstance();
@@ -338,6 +351,7 @@ public class OneConfig
         });
         // after loading finishes so translation keys are available
         EventManager.register(ResourceFinishedLoading.class, e -> SearchCorpus.INSTANCE.init());
+        EventManager.register(ResourceFinishedLoading.class, e -> CompatLoader.INSTANCE.onResourcesLoaded());
 //        //#if MC < 1.13
 //        // this is cringe but is better than the alternative of checking every frame in a mixin (that's how vanilla does it lol)
 //        AtomicBoolean active = new AtomicBoolean(false);
@@ -428,6 +442,7 @@ public class OneConfig
         LOGGER.info("Loading OneConfig v{}", v);
         McFontService.INSTANCE.init();
         ThirdPartyModCategories.INSTANCE.init();
+        BuiltinPages.register();
         // force class-load so the hello/disconnect handlers are armed before joining any server
         HypixelUtils.isHypixel();
         ExternalSounds.INSTANCE.ensureDownloaded();

@@ -16,8 +16,6 @@ import org.polyfrost.oneconfig.api.ui.v1.ModToggles
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.PropertyModToggle
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.asRenderText
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -25,23 +23,6 @@ fun ModConfig(id: String, initialCategory: String? = null) {
     val revision = ConfigRegistry.revision
     val config = ConfigRegistry.findById(id)
     val tree = ConfigRegistry.findTree(id)
-
-    DisposableEffect(id, config?.title, config?.authors, config?.credits, config?.version, tree) {
-        val title = config?.title?.asRenderText()
-        ShellState.title = title
-        ShellState.titleInfoForTitle = title
-        ShellState.titleAuthors = config?.authors
-        ShellState.titleCredits = config?.credits
-        ShellState.titleVersion = config?.version
-        ShellState.openOriginalScreen = tree?.getMetadata<Runnable>("open_original_screen")
-        onDispose {
-            ShellState.titleInfoForTitle = null
-            ShellState.titleAuthors = null
-            ShellState.titleCredits = null
-            ShellState.titleVersion = null
-            ShellState.openOriginalScreen = null
-        }
-    }
 
     val externalOpen = config?.onOpen
 

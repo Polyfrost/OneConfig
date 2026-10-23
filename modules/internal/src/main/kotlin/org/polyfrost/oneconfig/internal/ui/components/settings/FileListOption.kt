@@ -31,7 +31,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 fun FileListOption(data: FileListOptionData) {
     val scope = rememberCoroutineScope()
 
-    val state = rememberListEntries(data.prop, data.strings()) { values ->
+    val state = rememberListEntries(data.prop, { data.strings() }) { values ->
         data.setElements(values.filter { it.isNotBlank() })
     }
 

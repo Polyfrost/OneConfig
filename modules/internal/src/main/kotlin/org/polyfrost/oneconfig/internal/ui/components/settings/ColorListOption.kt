@@ -26,7 +26,7 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
+import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import androidx.compose.ui.window.PopupProperties
 import org.polyfrost.oneconfig.internal.ui.api.settings.ColorListOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
@@ -39,7 +39,7 @@ private val DefaultEntryColor = Color.White
 
 @Composable
 fun ColorListOption(data: ColorListOptionData) {
-    val state = rememberListEntries(data.prop, data.argb()) { values -> data.setArgb(values) }
+    val state = rememberListEntries(data.prop, { data.argb() }) { values -> data.setArgb(values) }
 
     var openEntry by remember(data.prop) { mutableStateOf(-1) }
 
@@ -96,7 +96,7 @@ private fun RowScope.ColorSwatch(
         }
 
         if (expanded) {
-            Popup(
+            ShellPopup(
                 alignment = Alignment.TopEnd,
                 offset = IntOffset(0, 38),
                 onDismissRequest = { onExpandedChange(false) },

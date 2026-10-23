@@ -64,6 +64,8 @@ import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
+import org.polyfrost.oneconfig.api.ui.v1.SettingRowDecorator
+import org.polyfrost.oneconfig.api.ui.v1.SettingRowDecorators
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.api.shown
@@ -83,6 +85,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.search.CategoryGroup
 import org.polyfrost.oneconfig.internal.ui.search.ConfigListEntry
@@ -99,9 +102,9 @@ import org.polyfrost.oneconfig.internal.ui.search.flattenEntries
 import org.polyfrost.oneconfig.internal.ui.search.flattenSearchEntries
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.search.searchNode
-import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.util.LayoutRef
@@ -131,14 +134,15 @@ private fun ConfigScreenContent(
     lockExempt: Property<*>?,
 ) {
     val categories = remember(tree) { buildCategories(tree) }
-    val localSearchQuery = ShellState.searchQuery.trim()
+    val localSearchQuery = pageSearchQuery().trim()
+    val navigation = LocalShell.current.navigation
 
-    val savedCategory = ShellState.selectedCategories[pageKey] ?: initialCategory
+    val savedCategory = navigation.selectedCategory(pageKey) ?: initialCategory
     val selectedCategory = categories.firstOrNull { it.name.equals(savedCategory, ignoreCase = true) }
         ?: categories.firstOrNull()
 
     fun selectCategory(category: CategoryGroup) {
-        LocalNavController.wrapper.selectCategory(pageKey, category.name)
+        navigation.selectCategory(pageKey, category.name)
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
@@ -176,9 +180,9 @@ private fun ConfigScreenContent(
         if (entries.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 val message = when {
-                    localSearchQuery.isBlank() -> "No settings available."
-                    results == null -> "Searching..."
-                    else -> "No settings match \"$localSearchQuery\""
+                    localSearchQuery.isBlank() -> translated("oneconfig.search.no_settings", "No settings available.")
+                    results == null -> translated("oneconfig.search.searching", "Searching...")
+                    else -> translated("oneconfig.search.no_settings_match", "No settings match \"%s\"", localSearchQuery)
                 }
                 Text(message, color = LocalTheme.current.textColorSecondary)
             }
@@ -323,7 +327,9 @@ private fun sliderTrailingWidth(prop: Property<*>): Dp? {
     }
 }
 
-private fun isWideControl(prop: Property<*>): Boolean = sliderTrailingWidth(prop) != null
+private fun isFullWidth(prop: Property<*>): Boolean = prop.getMetadata<Boolean>("fullWidth") == true
+
+private fun isWideControl(prop: Property<*>): Boolean = sliderTrailingWidth(prop) != null || isFullWidth(prop)
 
 /**
  * Renders one entry of a flattened settings list
@@ -486,6 +492,17 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
 
 @Composable
 fun SettingRow(prop: Property<*>, compact: Boolean = false) {
+    DecoratedSettingRow(SettingRowDecorators.all(), 0, prop, compact)
+}
+
+@Composable
+private fun DecoratedSettingRow(decorators: List<SettingRowDecorator>, index: Int, prop: Property<*>, compact: Boolean) {
+    val decorator = decorators.getOrNull(index) ?: return SettingRowContent(prop, compact)
+    decorator.Decorate(prop) { DecoratedSettingRow(decorators, index + 1, prop, compact) }
+}
+
+@Composable
+private fun SettingRowContent(prop: Property<*>, compact: Boolean) {
     val display = rememberDisplay(prop)
     if (display == Property.Display.HIDDEN) {
         return
@@ -706,7 +723,20 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 }
             }
     ) {
-        val stacked = compact || run {
+        val actionButton = @Composable {
+            if (showActionButton) {
+                OptionActionButton(
+                    visible = isRowHovered || menuOpen,
+                    modifier = Modifier.onGloballyPositioned {
+                        val pos = it.positionInRoot() - rowOrigin.value
+                        actionMenuOffset.value = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
+                    },
+                    onClick = ::openMenuFromActionButton,
+                )
+            }
+        }
+        val fullWidth = isFullWidth(prop)
+        val stacked = compact || fullWidth || run {
             val titleWidth = with(density) {
                 measurer.measure(
                     prop.localizedTitle().asRenderText(),
@@ -726,23 +756,24 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                     .padding(start = 16.dp, end = 16.dp, top = verticalPadding, bottom = if (nested) 8.dp else verticalPadding),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                SettingLabel(prop, nested = nested)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
-                ) {
-                    if (showActionButton) {
-                        OptionActionButton(
-                            visible = isRowHovered || menuOpen,
-                            modifier = Modifier.onGloballyPositioned {
-                                val pos = it.positionInRoot() - rowOrigin.value
-                                actionMenuOffset.value = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
-                            },
-                            onClick = ::openMenuFromActionButton,
-                        )
+                if (fullWidth) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        SettingLabel(prop, nested = nested, modifier = Modifier.weight(1f))
+                        actionButton()
                     }
-                    Option(prop)
+                    BoxWithConstraints(Modifier.fillMaxWidth()) {
+                        CompositionLocalProvider(LocalOptionWidth provides maxWidth) { Option(prop) }
+                    }
+                } else {
+                    SettingLabel(prop, nested = nested)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
+                    ) {
+                        actionButton()
+                        Option(prop)
+                    }
                 }
             }
         } else {
@@ -760,16 +791,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                     modifier = Modifier.weight(1f),
                 )
 
-                if (showActionButton) {
-                    OptionActionButton(
-                        visible = isRowHovered || menuOpen,
-                        modifier = Modifier.onGloballyPositioned {
-                            val pos = it.positionInRoot() - rowOrigin.value
-                            actionMenuOffset.value = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
-                        },
-                        onClick = ::openMenuFromActionButton,
-                    )
-                }
+                actionButton()
                 Option(prop)
             }
         }

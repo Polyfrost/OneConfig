@@ -109,4 +109,6 @@ public @interface TextList {
      */
     @Deprecated
     boolean addTextTranslation() default false;
+
+    boolean fullWidth() default false;
 }

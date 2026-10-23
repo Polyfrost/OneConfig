@@ -68,6 +68,8 @@ import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.ui.v1.ModCardTypes
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
+import org.polyfrost.oneconfig.api.ui.v1.ModsPageDecorator
+import org.polyfrost.oneconfig.api.ui.v1.ModsPageDecorators
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
@@ -97,9 +99,9 @@ import org.polyfrost.oneconfig.internal.ui.components.reorderContainer
 import org.polyfrost.oneconfig.internal.ui.components.reorderOverlay
 import org.polyfrost.oneconfig.internal.ui.components.reorderableItem
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
-import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.ShellNavigation
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyGridState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -125,12 +127,18 @@ enum class ModCategory(
 
 @Composable
 fun Mods() {
-    var activeCategory by remember { mutableStateOf(ModCategory.All) }
+    DecoratedModsPage(ModsPageDecorators.all(), 0)
+}
 
-    DisposableEffect(Unit) {
-        ShellState.title = "Mods"
-        onDispose { }
-    }
+@Composable
+private fun DecoratedModsPage(decorators: List<ModsPageDecorator>, index: Int) {
+    val decorator = decorators.getOrNull(index) ?: return ModsPage()
+    decorator.Decorate { DecoratedModsPage(decorators, index + 1) }
+}
+
+@Composable
+private fun ModsPage() {
+    var activeCategory by remember { mutableStateOf(ModCategory.All) }
 
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
         Row(
@@ -140,7 +148,7 @@ fun Mods() {
             val cards = ConfigRegistry.modCardConfigs
             ModCategory.entries.forEach {
                 val shown = when {
-                    it.favoritesOnly || activeCategory == it -> true
+                    it == ModCategory.All || it.favoritesOnly || activeCategory == it -> true
                     it.hiddenOnly -> cards.any { configData -> ModHidden.isHidden(configData.id) }
                     else -> cards.any { configData ->
                         configData.category == it.configCategory && !ModHidden.isHidden(configData.id)
@@ -209,6 +217,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
     val entries = remember(flat) { flat.toMutableStateList() }
 
     val gridState = rememberRestorableLazyGridState("mods")
+    val navigation = LocalShell.current.navigation
     val density = LocalDensity.current
     val windowSize = LocalWindowInfo.current.containerSize
     // Only enable placement animations after the grid has been laid out for the current size
@@ -218,7 +227,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
         onMove = { from, to -> entries.add(to, entries.removeAt(from)) },
         onDrop = { index -> commitDrop(entries, index) },
         dragBounds = { index -> modGroupBounds(entries, index) },
-        onClick = { key -> entries.cardData(key)?.let(::openModCard) },
+        onClick = { key -> entries.cardData(key)?.let { openModCard(it, navigation) } },
         horizontalPadding = PageGutter,
     )
     val dropFavorite = reorderState.draggingKey
@@ -228,6 +237,16 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
     // the dragged card's index no longer applies once the list is rebuilt
     DisposableEffect(entries) {
         onDispose { reorderState.cancel() }
+    }
+
+    // The overlay card is drawn as a sibling of the grid, but the page pane that wraps the nav host
+    // clips its content, so it would be cut off at the pane edge. Drop that clip for as long as an
+    // overlay card exists (dragging and the settle-back animation) so it can be seen in full.
+    val overlayActive = reorderState.overlayKey != null
+    val layout = LocalShell.current.layout
+    DisposableEffect(overlayActive) {
+        layout.markModDragging(overlayActive)
+        onDispose { if (overlayActive) layout.markModDragging(false) }
     }
 
     // override scroll to stay in place instead of following the first visible item
@@ -242,7 +261,8 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
         PageGutter,
         modifier = Modifier
             .weight(1f)
-            .clipToBounds()
+            // see overlayActive above: the overlay card has to be able to leave the grid while it exists
+            .then(if (overlayActive) Modifier else Modifier.clipToBounds())
             // cards can't take focus, so clear it on press to unfocus the search field
             .pointerInput(focusManager) {
                 awaitEachGesture {
@@ -364,11 +384,11 @@ private val ModCardPlacementSpec = spring(
 private fun List<ModGridEntry>.cardData(key: Any): ConfigData? =
     firstNotNullOfOrNull { (it as? ModGridEntry.Card)?.data?.takeIf { mod -> mod.id == key } }
 
-private fun openModCard(mod: ConfigData) {
+private fun openModCard(mod: ConfigData, navigation: ShellNavigation) {
     val onOpen = mod.onOpen
     when {
         onOpen != null -> onOpen()
-        mod.source == ConfigSource.OC -> LocalNavController.wrapper.navigate(ModConfigRoute(mod.id))
+        mod.source == ConfigSource.OC -> navigation.navigate(ModConfigRoute(mod.id))
     }
 }
 
@@ -445,11 +465,12 @@ fun ModCard(
         if (enabled) theme.accentTextColor else theme.textColor.copy(alpha = 0.75f)
     )
     val glowStrength by animateFloatAsState(if (enabled) 0.5f else 0f)
+    val navigation = LocalShell.current.navigation
     val open = {
         val onOpen = mod.onOpen
         when {
             onOpen != null -> onOpen()
-            mod.source == ConfigSource.OC -> LocalNavController.wrapper.navigate(ModConfigRoute(mod.id))
+            mod.source == ConfigSource.OC -> navigation.navigate(ModConfigRoute(mod.id))
         }
     }
 
@@ -464,7 +485,7 @@ fun ModCard(
                     // cards never take focus, otherwise they slide in from off screen when scrolled back into view
                     Modifier
                         .focusProperties { canFocus = false }
-                        .onClick(interactionSource) { openModCard(mod) }
+                        .onClick(interactionSource) { openModCard(mod, navigation) }
                         .pointerHoverIcon(PointerIcon.Hand)
                 } else {
                     Modifier

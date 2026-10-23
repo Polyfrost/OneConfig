@@ -9,4 +9,6 @@ interface OneConfigUIBridge {
 
     /** Shows the OneConfig UI on [route] navigating in place when it is already open */
     fun open(route: Any?)
+
+    fun isOneConfigScreen(screen: Any?): Boolean = false
 }

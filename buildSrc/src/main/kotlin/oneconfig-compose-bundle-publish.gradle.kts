@@ -37,7 +37,7 @@ publishMods {
     version = "v${project.version}"
     type = STABLE
 
-    dryRun = modrinthId == null || modrinthToken == null || (curseforgeId != null && curseforgeToken == null)
+    dryRun = (modrinthId == null || modrinthToken == null) && (curseforgeId == null || curseforgeToken == null)
 
     if (modrinthId != null) {
         val modrinthOptions = modrinthOptions {
@@ -70,6 +70,7 @@ publishMods {
             file = tasks.named<Jar>("jar").flatMap { it.archiveFile }
             modLoaders.add("fabric")
             minecraftVersions.addAll(fabricMinecraftVersions)
+            minecraftVersions.add("1.8.9")
             clientRequired = true
             requires("fabric-language-kotlin")
         }

@@ -27,6 +27,8 @@ internal sealed interface StudioCommand {
     data object Undo : StudioCommand
 
     data object Redo : StudioCommand
+
+    data object Search : StudioCommand
 }
 
 object HudDesignSession {
@@ -176,6 +178,14 @@ object HudDesignSession {
         if (!pressed) return false
         if (!HudManager.isEditorOpen) return false
         post(StudioCommand.Redo)
+        return true
+    }
+
+    @JvmStatic
+    fun handleSearch(pressed: Boolean): Boolean {
+        if (!pressed) return false
+        if (!HudManager.isEditorOpen) return false
+        post(StudioCommand.Search)
         return true
     }
 }

@@ -50,39 +50,10 @@ internal object ModGates {
 
     private val gates = listOf(
         Gate(
-            "rendertweaks", cards = listOf("rendertweaksv2"),
-            mask = ConfigMask(
-                "${tweaks("rendertweaks")}.RenderTweaksConfig", listOf("rendertweaksv2.json"),
-                mapOf(
-                    "disableLightning" to false, "disableFishingLine" to false,
-                    "disableWorldBorderStationary" to false, "disableWorldBorderShrinking" to false,
-                    "disableWorldBorderGrowing" to false, "fishingLineWidthMultiplier" to 1f,
-                    "lightningColor" to 0x4C72727F, "fishingLineColor" to 0xFF000000.toInt(),
-                    "worldBorderStationaryColor" to 0xFF20A0FF.toInt(),
-                    "worldBorderShrinkingColor" to 0xFFFF3030.toInt(),
-                    "worldBorderGrowingColor" to 0xFF40FF80.toInt(),
-                    "lightningChroma" to false, "fishingLineChroma" to false, "worldBorderStationaryChroma" to false,
-                    "worldBorderShrinkingChroma" to false, "worldBorderGrowingChroma" to false,
-                    "lightningAlpha" to 76f, "fishingLineAlpha" to 255f, "worldBorderStationaryAlpha" to 255f,
-                    "worldBorderShrinkingAlpha" to 255f, "worldBorderGrowingAlpha" to 255f,
-                ),
-            ),
-        ),
-        Gate(
             "droppeditemtweaks", cards = listOf("droppeditemtweaksv2"),
             mask = ConfigMask(
                 "${tweaks("droppeditemtweaks")}.DroppedItemTweaksConfig", listOf("droppeditemtweaksv2.json"),
                 mapOf("staticItems" to false, "dropStackCount" to 0, "itemScale" to 1f, "uhcOverlay" to 0f),
-            ),
-        ),
-        Gate(
-            "shaketweaks",
-            mask = ConfigMask(
-                "${tweaks("shaketweaks")}.ShakeTweaksConfig", listOf("shaketweaks.json"),
-                listOf(
-                    "disableScreenBobbing", "disableHandBobbing", "disableHorizontalBobbing", "disableMapBobbing",
-                    "disableHandDamage", "disableScreenDamage", "disableHandViewSway",
-                ).associateWith { false },
             ),
         ),
         Gate(
@@ -108,19 +79,6 @@ internal object ModGates {
                     "crosshairOpacityFirstPerson", "crosshairOpacityThirdPerson",
                     "attackIndicatorOpacityFirstPerson", "attackIndicatorOpacityThirdPerson",
                 ).associateWith { 100f } + ("debugCrosshairSize" to 10),
-            ),
-        ),
-        Gate(
-            "betterscreens",
-            mask = ConfigMask(
-                "${tweaks("betterscreens")}.BetterScreensConfig", listOf("betterscreens.json"),
-                mapOf(
-                    "preventClosingScreens" to false, "dontResetCursor" to false, "replaceOpenToLan" to false,
-                    "removeRecipeBookShift" to false, "removeStatusEffectsShift" to false, "showServerPreview" to false,
-                    "clickOutOfContainers" to false, "containerBackgroundOpacity" to 81.56863f,
-                    "containerTextureOpacity" to 100f, "containerLabelColor" to 0xFF404040.toInt(),
-                    "playerInventoryLabelColor" to 0xFF404040.toInt(), "containerScale" to -1,
-                ),
             ),
         ),
         Gate(
@@ -310,9 +268,9 @@ internal object ModGates {
             it.getMetadata<Any>(Backend.UI_ONLY_METADATA) != true &&
                 it.getMetadata<Any>(CompatSnapshots.SNAPSHOT_METADATA) != true &&
                 it.findMarkedSwitch() != null
-        }.mapNotNullTo(HashSet()) { it.id }
+        }.mapNotNullTo(HashSet()) { it.id?.removeSuffix(".json") }
         return gates.filter { gate ->
-            gate.id in loaded && switched.any { it.removeSuffix(".json") == gate.id || it in gate.cards }
+            gate.id in loaded && switched.any { it == gate.id || it in gate.cards }
         }.mapTo(HashSet()) { it.id }
     }
 

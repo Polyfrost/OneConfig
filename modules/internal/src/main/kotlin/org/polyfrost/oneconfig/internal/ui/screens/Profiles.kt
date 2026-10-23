@@ -29,7 +29,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -63,7 +62,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
+import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import androidx.compose.ui.window.PopupProperties
 import java.nio.file.Files
 import kotlinx.coroutines.CoroutineStart
@@ -84,9 +83,10 @@ import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.concentric
@@ -233,16 +233,11 @@ fun Profiles() {
         }
     }
 
-    DisposableEffect(Unit) {
-        ShellState.title = "Profiles"
-        onDispose { }
-    }
-
     Box(modifier = Modifier.fillMaxWidth().padding(horizontal = PageGutter)) {
         Column(
             verticalArrangement = Arrangement.spacedBy(19.dp)
         ) {
-            val localSearchQuery = ShellState.searchQuery.trim()
+            val localSearchQuery = pageSearchQuery().trim()
             val categorizedProfiles = when (activeCategory) {
                 ProfileCategory.All -> profiles
                 ProfileCategory.Favorited -> profiles.filter { it.favorite }
@@ -901,7 +896,7 @@ private fun ProfileActionsMenu(
 ) {
     if (!expanded) return
     val theme = LocalTheme.current
-    Popup(
+    ShellPopup(
         alignment = Alignment.TopEnd,
         onDismissRequest = onDismiss,
         properties = PopupProperties(focusable = true),
@@ -909,6 +904,7 @@ private fun ProfileActionsMenu(
         Column(
             modifier = Modifier
                 .width(IntrinsicSize.Max)
+                .shellTransition()
                 .background(theme.popupBackground, theme.popupShape)
                 .border(1.dp, theme.borderColor, theme.popupShape)
                 .padding(4.dp),

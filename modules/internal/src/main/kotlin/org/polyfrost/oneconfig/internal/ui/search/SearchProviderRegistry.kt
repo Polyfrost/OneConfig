@@ -16,6 +16,10 @@ object SearchProviderRegistry {
         SearchCorpus.seed(provider)
     }
 
+    internal fun unregisterSearchProvider(provider: SearchProvider) {
+        providers.remove(provider)
+    }
+
     /** The highest priority provider that is currently available */
     internal fun get(): SearchProvider =
         providers.firstOrNull { runCatching { it.isAvailable() }.getOrNull() ?: false } ?: DefaultSearchProvider

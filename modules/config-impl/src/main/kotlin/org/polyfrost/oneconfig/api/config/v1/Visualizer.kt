@@ -98,6 +98,29 @@ fun interface Visualizer {
     }
 
     /**
+     * A start and end pair edited with two number inputs and no track, stored the same way as [RangeSliderVisualizer]
+     */
+    class RangeNumberVisualizer : Visualizer {
+        @Composable override fun visualize(prop: Property<*>) { Visualizer[RangeNumberVisualizer::class.java]?.visualize(prop) }
+    }
+
+    /**
+     * A user-editable list of [RangeSliderVisualizer] rows held in one property as a flat numeric array or list
+     *
+     * Each range takes two consecutive values so `[0, 10, 20, 30]` holds the ranges 0-10 and 20-30
+     */
+    class RangeSliderListVisualizer : Visualizer {
+        @Composable override fun visualize(prop: Property<*>) { Visualizer[RangeSliderListVisualizer::class.java]?.visualize(prop) }
+    }
+
+    /**
+     * A user-editable list of [RangeNumberVisualizer] rows stored the same way as [RangeSliderListVisualizer]
+     */
+    class RangeNumberListVisualizer : Visualizer {
+        @Composable override fun visualize(prop: Property<*>) { Visualizer[RangeNumberListVisualizer::class.java]?.visualize(prop) }
+    }
+
+    /**
      * A slider with a third "inherited" state for overrides that fall back to a broader setting when unset
      *
      * The property stores a sentinel while inheriting which is either `null` or the value of the `inheritSentinel`
@@ -153,6 +176,16 @@ fun interface Visualizer {
      */
     class ItemListVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[ItemListVisualizer::class.java]?.visualize(prop) }
+    }
+
+    /**
+     * A searchable status effect selector backed by a `String[]` or `List<String>` of
+     * namespaced registry IDs
+     *
+     * A `maxEntries` metadata value of one makes it a single selector
+     */
+    class EffectListVisualizer : Visualizer {
+        @Composable override fun visualize(prop: Property<*>) { Visualizer[EffectListVisualizer::class.java]?.visualize(prop) }
     }
 
     class FileVisualizer : Visualizer {
