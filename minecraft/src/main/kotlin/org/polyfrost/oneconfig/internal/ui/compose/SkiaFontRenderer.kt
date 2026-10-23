@@ -41,6 +41,13 @@ object SkiaFontRenderer : PreparableReloadListener {
 
     private const val DEFAULT_OFFSET = 1f
 
+    private val LEGACY_COLORS = intArrayOf(
+        0x000000, 0x0000AA, 0x00AA00, 0x00AAAA,
+        0xAA0000, 0xAA00AA, 0xFFAA00, 0xAAAAAA,
+        0x555555, 0x5555FF, 0x55FF55, 0x55FFFF,
+        0xFF5555, 0xFF55FF, 0xFFFF55, 0xFFFFFF,
+    )
+
     private const val UNIHEX_HEIGHT = 16
     private const val UNIHEX_OVERSAMPLE = 2f
     private const val UNIHEX_OFFSET = 0.5f
@@ -225,6 +232,7 @@ object SkiaFontRenderer : PreparableReloadListener {
                     in '0'..'9', in 'a'..'f' -> {
                         isBold = false
                         isItalic = false
+                        curColor = (color and 0xFF000000.toInt()) or LEGACY_COLORS[Character.digit(code, 16)]
                     }
                 }
                 i += 2

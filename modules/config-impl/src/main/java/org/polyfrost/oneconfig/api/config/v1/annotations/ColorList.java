@@ -102,4 +102,6 @@ public @interface ColorList {
      */
     @Deprecated
     boolean addTextTranslation() default false;
+
+    boolean fullWidth() default false;
 }

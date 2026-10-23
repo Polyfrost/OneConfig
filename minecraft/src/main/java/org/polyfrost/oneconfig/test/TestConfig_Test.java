@@ -70,6 +70,8 @@ public class TestConfig_Test extends Config {
     public static String text = "Hello world!";
     @Text(title = "Multiline Text", description = "Supports line breaks and word wrap", multiline = true)
     public static String multilineText = "Hello world!\nThis is a second line.\noneconfigoneconfigoneconfigoneconfigoneconfigoneconfig";
+    @Text(title = "Full Width Text", description = "The same text box spanning the whole row", multiline = true, fullWidth = true)
+    public static String fullWidthText = "Hello world!\nThis is a second line.\noneconfigoneconfigoneconfigoneconfigoneconfigoneconfig";
     @File(title = "Image", description = "Pick an image file", types = {".png", ".jpg"}, filterName = "Images")
     public static String image = "";
     @File(title = "Directory", description = "Pick a folder", directory = true)
@@ -266,6 +268,15 @@ public class TestConfig_Test extends Config {
             maxEntries = 3
     )
     public static String[] directoryList = {};
+
+    @FileList(
+            title = "Full Width File List",
+            description = "The same file list spanning the whole row so long paths fit.",
+            category = "Lists",
+            subcategory = "Other Lists",
+            fullWidth = true
+    )
+    public static String[] fullWidthFileList = {};
 
     @ColorList(
             title = "Color List",

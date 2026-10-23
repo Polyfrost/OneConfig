@@ -88,6 +88,7 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/Keys {
 	public abstract fun getKeyD ()I
 	public abstract fun getKeyDelete ()I
 	public abstract fun getKeyE ()I
+	public abstract fun getKeyF ()I
 	public abstract fun getKeyH ()I
 	public abstract fun getKeyL ()I
 	public abstract fun getKeyLeftAlt ()I

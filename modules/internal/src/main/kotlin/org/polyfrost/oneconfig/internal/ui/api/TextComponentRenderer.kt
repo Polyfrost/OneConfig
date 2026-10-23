@@ -25,6 +25,7 @@ import net.kyori.adventure.text.ComponentIteratorType
 import net.kyori.adventure.text.event.HoverEvent
 import net.kyori.adventure.text.format.TextDecoration as KyoriDecoration
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.internal.ui.components.parseLegacyFormatting
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -102,7 +103,7 @@ fun text(text: Component) = buildAnnotatedString {
                     })
             } else null,
             fontWeight = if (text.hasDecoration(KyoriDecoration.BOLD)) FontWeight.Bold else null)) {
-        append(Platform.compatibility().resolveComponent(text.children(emptyList())))
+        append(parseLegacyFormatting(Platform.compatibility().resolveComponent(text.children(emptyList())), Color.Unspecified))
     }
 }
 

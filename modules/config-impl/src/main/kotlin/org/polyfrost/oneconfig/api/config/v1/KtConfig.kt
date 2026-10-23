@@ -1171,6 +1171,13 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
     fun <Type : Any> PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>.onChange(callback: (Type) -> Unit) = observable(this, callback)
     fun <Type : Any> PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>.withCallback(callback: (Type) -> Boolean) = callback(this, callback)
 
+    fun <Type : Any> PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>.fullWidth(): PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>> =
+        PropertyDelegateProvider { thisRef, property ->
+            provideDelegate(thisRef, property).also {
+                (thisRef.tree ?: thisRef.pendingTree()).getProp(property.name)?.addMetadata("fullWidth", true)
+            }
+        }
+
     private data class CachedTransformedProvider<Source : Any, Target : Any>(
         val delegate: PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Source>>,
         val to: (Source) -> Target,

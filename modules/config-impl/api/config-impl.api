@@ -143,6 +143,7 @@ public class org/polyfrost/oneconfig/api/config/v1/KtConfig : org/polyfrost/onec
 	public static synthetic fun file$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	protected final synthetic fun fileList (Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZLjava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun fileList$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZLjava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	public final fun fullWidth (Lkotlin/properties/PropertyDelegateProvider;)Lkotlin/properties/PropertyDelegateProvider;
 	protected final fun getProperty (Lkotlin/reflect/KProperty;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public final fun hideIf (Lkotlin/reflect/KProperty;Lkotlin/jvm/functions/Function0;)V
 	public final fun hideIf (Lkotlin/reflect/KProperty;Lkotlin/reflect/KProperty0;)V
@@ -474,6 +475,7 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun categoryTranslation ()Z
 	public abstract fun description ()Ljava/lang/String;
 	public abstract fun descriptionTranslation ()Z
+	public abstract fun fullWidth ()Z
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun maxEntries ()I
 	public abstract fun reorderable ()Z
@@ -495,6 +497,7 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun description ()Ljava/lang/String;
 	public abstract fun descriptionKey ()Ljava/lang/String;
 	public abstract fun descriptionTranslation ()Z
+	public abstract fun fullWidth ()Z
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun options ()[Ljava/lang/String;
 	public abstract fun optionsKey ()[Ljava/lang/String;
@@ -530,6 +533,7 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun addText ()Ljava/lang/String;
 	public abstract fun category ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
+	public abstract fun fullWidth ()Z
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun maxEntries ()I
 	public abstract fun reorderable ()Z
@@ -546,6 +550,7 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun descriptionTranslation ()Z
 	public abstract fun directory ()Z
 	public abstract fun filterName ()Ljava/lang/String;
+	public abstract fun fullWidth ()Z
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun placeholder ()Ljava/lang/String;
 	public abstract fun placeholderKey ()Ljava/lang/String;
@@ -568,6 +573,7 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun descriptionTranslation ()Z
 	public abstract fun directory ()Z
 	public abstract fun filterName ()Ljava/lang/String;
+	public abstract fun fullWidth ()Z
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun maxEntries ()I
 	public abstract fun placeholder ()Ljava/lang/String;
@@ -606,6 +612,7 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun categoryTranslation ()Z
 	public abstract fun description ()Ljava/lang/String;
 	public abstract fun descriptionTranslation ()Z
+	public abstract fun fullWidth ()Z
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun maxEntries ()I
 	public abstract fun reorderable ()Z
@@ -687,6 +694,7 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun description ()Ljava/lang/String;
 	public abstract fun descriptionTranslation ()Z
 	public abstract fun formatter ()Ljava/lang/Class;
+	public abstract fun fullWidth ()Z
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun max ()F
 	public abstract fun maxEntries ()I
@@ -743,6 +751,7 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun category ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
 	public abstract fun formatter ()Ljava/lang/Class;
+	public abstract fun fullWidth ()Z
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun max ()F
 	public abstract fun maxEntries ()I
@@ -770,6 +779,7 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun category ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
 	public abstract fun formatter ()Ljava/lang/Class;
+	public abstract fun fullWidth ()Z
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun max ()F
 	public abstract fun maxEntries ()I
@@ -808,6 +818,7 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun description ()Ljava/lang/String;
 	public abstract fun descriptionTranslation ()Z
 	public abstract fun formatter ()Ljava/lang/Class;
+	public abstract fun fullWidth ()Z
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun max ()F
 	public abstract fun maxEntries ()I
@@ -843,6 +854,7 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun description ()Ljava/lang/String;
 	public abstract fun descriptionKey ()Ljava/lang/String;
 	public abstract fun descriptionTranslation ()Z
+	public abstract fun fullWidth ()Z
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun multiline ()Z
 	public abstract fun placeholder ()Ljava/lang/String;
@@ -863,6 +875,7 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun categoryTranslation ()Z
 	public abstract fun description ()Ljava/lang/String;
 	public abstract fun descriptionTranslation ()Z
+	public abstract fun fullWidth ()Z
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun maxEntries ()I
 	public abstract fun placeholder ()Ljava/lang/String;
@@ -1111,6 +1124,7 @@ public class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop {
 	public final fun getCategoryKey ()Ljava/lang/String;
 	public final fun getDescription ()Ljava/lang/Object;
 	public final fun getDescriptionKey ()Ljava/lang/String;
+	public final fun getFullWidth ()Z
 	public final fun getIcon ()Ljava/lang/String;
 	public final fun getId ()Ljava/lang/String;
 	public final fun getOwner ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
@@ -1125,6 +1139,7 @@ public class org/polyfrost/oneconfig/api/config/v1/dsl/ConfigDSL$Prop {
 	public final fun setCategoryKey (Ljava/lang/String;)V
 	public final fun setDescription (Ljava/lang/Object;)V
 	public final fun setDescriptionKey (Ljava/lang/String;)V
+	public final fun setFullWidth (Z)V
 	public final fun setIcon (Ljava/lang/String;)V
 	public final fun setId (Ljava/lang/String;)V
 	public final fun setOwner (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V

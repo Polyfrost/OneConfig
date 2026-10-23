@@ -19,6 +19,7 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession;
 import org.polyfrost.oneconfig.internal.ui.shell.ShellController;
+import org.polyfrost.oneconfig.internal.ui.shell.ShellState;
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds;
 
 public class OneConfigConfig extends Config {
@@ -373,16 +374,6 @@ public class OneConfigConfig extends Config {
     public static boolean showOpeningPageAnimation = false;
 
     @Switch(
-        title = "oneconfig.preferences.instant_search.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.instant_search.description",
-        descriptionTranslation = true
-    )
-    public static boolean instantSearch = true;
-
-    @Switch(
         title = "oneconfig.preferences.show_option_action_buttons.title",
         titleTranslation = true,
         subcategory = "oneconfig.preferences.category.gui",
@@ -401,6 +392,27 @@ public class OneConfigConfig extends Config {
         descriptionTranslation = true
     )
     public static boolean flipTopOptionOrder = false;
+
+    @Switch(
+        title = "oneconfig.preferences.instant_search.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.search",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.instant_search.description",
+        descriptionTranslation = true
+    )
+    public static boolean instantSearch = true;
+
+    @Keybind(
+        title = "oneconfig.preferences.search_keybind.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.search",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.search_keybind.description",
+        descriptionTranslation = true
+    )
+    public static OneConfigKeybind searchKeybind =
+        new OneConfigKeybind(new int[] {KEYS.getKeyF()}, null, KeybindUtils.getActionModifier(), 0L, pressed -> true);
 
     @Number(
         title = "oneconfig.preferences.search_distance.title",
@@ -599,6 +611,11 @@ public class OneConfigConfig extends Config {
     private static OneConfigKeybind registeredHudDuplicateKeybind;
 
     /**
+     * The keybind registered with the {@link KeybindManager} for focusing the search field
+     */
+    private static OneConfigKeybind registeredSearchKeybind;
+
+    /**
      * The keybinds registered with the {@link KeybindManager} for the remaining HUD editor actions
      */
     private static final AtomicReference<OneConfigKeybind>
@@ -702,6 +719,12 @@ public class OneConfigConfig extends Config {
                 return false;
             });
         refreshKeybind(oneConfigKeybind);
+        addCallback(
+            "searchKeybind", (OneConfigKeybind kb) -> {
+                refreshSearchKeybind();
+                return false;
+            });
+        refreshSearchKeybind();
         addCallback(
             "hudDuplicateKeybind", (OneConfigKeybind kb) -> {
                 refreshHudDuplicateKeybind();
@@ -870,6 +893,32 @@ public class OneConfigConfig extends Config {
             src.getDurationNanos(),
             openAction);
         KeybindManager.register(registeredKeybind);
+    }
+
+    /**
+     * Rebuilds the registered search keybind from {@code searchKeybind}'s GLFW keys and re-registers it
+     * with the {@link KeybindManager}
+     * <p>
+     * The action is resolved here rather than stored on the keybind so it survives deserialization, and it fires
+     * while typing so it still works with a text field focused
+     */
+    private static void refreshSearchKeybind() {
+        if (registeredSearchKeybind != null) {
+            KeybindManager.unregister(registeredSearchKeybind);
+            registeredSearchKeybind = null;
+        }
+        OneConfigKeybind src = searchKeybind;
+        if (src == null || !src.isBound()) {
+            return;
+        }
+        registeredSearchKeybind = new OneConfigKeybind(
+            src.getKeyCodes(),
+            src.getMouseBtns(),
+            src.getMods(),
+            src.getDurationNanos(),
+            ShellState::handleSearchKeybind);
+        registeredSearchKeybind.setFiresWhileTyping(true);
+        KeybindManager.register(registeredSearchKeybind);
     }
 
     /**
