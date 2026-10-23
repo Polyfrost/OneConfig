@@ -339,15 +339,8 @@ fun IconWithIndicator(
     modifier: Modifier = Modifier,
     showIndicator: Boolean = true,
 ) {
-    val resolvedColor = if (color == Color.Unspecified) LocalTheme.current.textColor else color
     Box {
-        val painter = rememberSvgResourcePainter("/assets/oneconfig/ico/$iconName.svg")
-        if (painter != null) Image(
-            painter = painter,
-            contentDescription = null,
-            modifier = modifier.size(18.dp),
-            colorFilter = ColorFilter.tint(resolvedColor)
-        )
+        Icon(iconName, color, modifier)
         if (showIndicator) Box(
             modifier = Modifier.align(Alignment.TopEnd)
                 .offset(2.dp, (-2).dp),
