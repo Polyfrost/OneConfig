@@ -327,7 +327,9 @@ private fun sliderTrailingWidth(prop: Property<*>): Dp? {
     }
 }
 
-private fun isWideControl(prop: Property<*>): Boolean = sliderTrailingWidth(prop) != null
+private fun isFullWidth(prop: Property<*>): Boolean = prop.getMetadata<Boolean>("fullWidth") == true
+
+private fun isWideControl(prop: Property<*>): Boolean = sliderTrailingWidth(prop) != null || isFullWidth(prop)
 
 /**
  * Renders one entry of a flattened settings list
@@ -721,7 +723,20 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 }
             }
     ) {
-        val stacked = compact || run {
+        val actionButton = @Composable {
+            if (showActionButton) {
+                OptionActionButton(
+                    visible = isRowHovered || menuOpen,
+                    modifier = Modifier.onGloballyPositioned {
+                        val pos = it.positionInRoot() - rowOrigin.value
+                        actionMenuOffset.value = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
+                    },
+                    onClick = ::openMenuFromActionButton,
+                )
+            }
+        }
+        val fullWidth = isFullWidth(prop)
+        val stacked = compact || fullWidth || run {
             val titleWidth = with(density) {
                 measurer.measure(
                     prop.localizedTitle().asRenderText(),
@@ -741,23 +756,24 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                     .padding(start = 16.dp, end = 16.dp, top = verticalPadding, bottom = if (nested) 8.dp else verticalPadding),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                SettingLabel(prop, nested = nested)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
-                ) {
-                    if (showActionButton) {
-                        OptionActionButton(
-                            visible = isRowHovered || menuOpen,
-                            modifier = Modifier.onGloballyPositioned {
-                                val pos = it.positionInRoot() - rowOrigin.value
-                                actionMenuOffset.value = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
-                            },
-                            onClick = ::openMenuFromActionButton,
-                        )
+                if (fullWidth) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        SettingLabel(prop, nested = nested, modifier = Modifier.weight(1f))
+                        actionButton()
                     }
-                    Option(prop)
+                    BoxWithConstraints(Modifier.fillMaxWidth()) {
+                        CompositionLocalProvider(LocalOptionWidth provides maxWidth) { Option(prop) }
+                    }
+                } else {
+                    SettingLabel(prop, nested = nested)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
+                    ) {
+                        actionButton()
+                        Option(prop)
+                    }
                 }
             }
         } else {
@@ -775,16 +791,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                     modifier = Modifier.weight(1f),
                 )
 
-                if (showActionButton) {
-                    OptionActionButton(
-                        visible = isRowHovered || menuOpen,
-                        modifier = Modifier.onGloballyPositioned {
-                            val pos = it.positionInRoot() - rowOrigin.value
-                            actionMenuOffset.value = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
-                        },
-                        onClick = ::openMenuFromActionButton,
-                    )
-                }
+                actionButton()
                 Option(prop)
             }
         }

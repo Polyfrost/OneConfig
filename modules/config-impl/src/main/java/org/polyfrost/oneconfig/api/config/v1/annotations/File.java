@@ -113,4 +113,6 @@ public @interface File {
 
     @Deprecated
     String placeholderKey() default "";
+
+    boolean fullWidth() default false;
 }

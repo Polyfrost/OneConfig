@@ -45,10 +45,12 @@ class EffectListTest {
         assertEquals(Visualizer.EffectListVisualizer.class, multiple.getMetadata("visualizer"));
         assertEquals(Integer.valueOf(0), multiple.getMetadata("maxEntries"));
         assertEquals("oneconfig.effectlist.add", multiple.getMetadata("addTextKey"));
+        assertEquals(false, multiple.getMetadata("fullWidth"));
 
         Property<?> single = tree.getProp("single");
         assertEquals(Integer.valueOf(1), single.getMetadata("maxEntries"));
         assertEquals(false, single.getMetadata("reorderable"));
+        assertEquals(true, single.getMetadata("fullWidth"));
     }
 
     @Test
@@ -80,7 +82,7 @@ class EffectListTest {
         @EffectList(title = "Effects")
         private String[] multiple = {"minecraft:speed"};
 
-        @EffectList(title = "Effect", maxEntries = 1, reorderable = false)
+        @EffectList(title = "Effect", maxEntries = 1, reorderable = false, fullWidth = true)
         private List<String> single = new ArrayList<>(List.of("minecraft:night_vision"));
 
         private ValidEffectListConfig() {

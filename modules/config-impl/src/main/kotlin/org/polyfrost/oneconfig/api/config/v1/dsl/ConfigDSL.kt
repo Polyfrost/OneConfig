@@ -445,6 +445,10 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
             get() = this["subcategoryKey"] as String?
             set(value) { this["subcategoryKey"] = value }
 
+        var fullWidth: Boolean
+            get() = this["fullWidth"] as? Boolean ?: false
+            set(value) { this["fullWidth"] = value }
+
         /** Disables this option while [other] is off, or hides it when [hide] */
         fun dependsOn(other: Prop<Boolean>, hide: Boolean = false) {
             property.addDisplayCondition(other.property, hide)

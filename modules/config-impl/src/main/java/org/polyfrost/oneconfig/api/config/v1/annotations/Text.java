@@ -96,4 +96,6 @@ public @interface Text {
 
     @Deprecated
     String placeholderKey() default "";
+
+    boolean fullWidth() default false;
 }
