@@ -5,14 +5,14 @@
 kotlin = "2.4.21"
 kotlinx-coroutines = "1.11.0"
 fabric-language-kotlin = "1.14.1+kotlin.2.4.20"
-google-ksp = "2.3.11"
+google-ksp = "2.3.12"
 annotations = "26.1.0"
 hypixel-modapi = "1.0.1" # modules/utils compile baseline only, the platform selects the runtime version per target
 hypixel-data = "0.2.0" # Dep of hypixel-modapi
 
 # Not in risk of needing to be relaunched / bumped by JiJ
-snakeyaml = "1.31"
-nightconfig = "3.6.6"
+snakeyaml = "1.33"
+nightconfig = "3.9.0"
 java-objc-bridge = "1.2"
 
 # Per version
@@ -29,15 +29,15 @@ log4j-api = "2.0-beta9" # used because this is the version that 1.8.9 supports, 
 # Compose
 compose = "1.13.0-alpha02"
 androidx-compose-runtime = "1.13.0-alpha03"
-compose-navigation = "2.10.0-alpha01"
+compose-navigation = "2.10.0-rc01"
 skiko = "0.154.0"
 
 lifecycle = "2.11.0"
 viewmodel = "2.11.0-beta01"
-commonmark = "0.30.0"
+commonmark = "0.30.1"
 
 # Testing
-junit-bom = "5.10.2"
+junit-bom = "6.1.3"
 log4j-impl = "2.23.1" # unvulnerable version
 
 adventure = "4.25.0"
