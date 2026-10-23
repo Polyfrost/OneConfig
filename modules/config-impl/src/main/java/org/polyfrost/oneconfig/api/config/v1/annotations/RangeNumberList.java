@@ -73,4 +73,5 @@ public @interface RangeNumberList {
 
     Class<? extends ValueFormatter> formatter() default ValueFormatter.class;
 
+    boolean fullWidth() default false;
 }

@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.compat
 
 import java.awt.Color
 import java.lang.reflect.Method
+import java.util.function.BiConsumer
 import java.util.function.BiFunction
 import java.util.function.Consumer
 import java.util.function.Supplier
@@ -38,6 +39,9 @@ object YACLCompat {
         val properties = ArrayList<Property<*>>()
 
         var cachedScreen: Any? = null
+
+        var syncing = false
+        var writing: Any? = null
 
         private val pendingFlags = LinkedHashSet<Any>()
 
@@ -392,12 +396,19 @@ object YACLCompat {
             return
         }
 
-        val setter: (Any?) -> Unit = { value ->
-            val changed = runCatching { baseSetter(value) }
-                .onFailure { LOGGER.warn("Failed to write YACL option '$name'", it) }
-                .getOrDefault(false)
-            if (changed) ctx.pendFlags(filterFlags(resolveFlags(option), option))
-            ctx.revaluateDisplays()
+        val setter: (Any?) -> Unit = setter@{ value ->
+            if (ctx.syncing) return@setter
+            val outer = ctx.writing
+            ctx.writing = option
+            try {
+                val changed = runCatching { baseSetter(value) }
+                    .onFailure { LOGGER.warn("Failed to write YACL option '$name'", it) }
+                    .getOrDefault(false)
+                if (changed) ctx.pendFlags(filterFlags(resolveFlags(option), option))
+                ctx.revaluateDisplays()
+            } finally {
+                ctx.writing = outer
+            }
         }
 
         // value-less options expose a binding whose getValue() throws UnsupportedOperationException
@@ -782,8 +793,33 @@ object YACLCompat {
         root.put(property)
     }
 
+    @Suppress("UNCHECKED_CAST")
+    private fun listenForExternalChanges(property: Property<*>, option: Any, ctx: Ctx) {
+        val addListener = option::class.java.methods.firstOrNull {
+            it.name == "addListener" && it.parameterCount == 1 && it.parameterTypes[0] == BiConsumer::class.java
+        }?.apply { isAccessible = true } ?: return
+        val listener = BiConsumer<Any?, Any?> { _, value ->
+            if (value == null || ctx.syncing || ctx.writing === option) return@BiConsumer
+            val sync = Runnable {
+                ctx.syncing = true
+                try {
+                    runCatching { (property as Property<Any?>).setAsReferential(value) }
+                        .onFailure { LOGGER.debug("Failed to refresh YACL option '${property.id}'", it) }
+                } finally {
+                    ctx.syncing = false
+                }
+                ctx.revaluateDisplays()
+            }
+            val client = Minecraft.getInstance()
+            if (client.isSameThread) sync.run() else client.execute(sync)
+        }
+        runCatching { addListener.invoke(option, listener) }
+            .onFailure { LOGGER.debug("Failed to listen to YACL option '${property.id}'", it) }
+    }
+
     private fun registerProperty(property: Property<*>, option: Any?, ctx: Ctx) {
         ctx.properties.add(property)
+        if (option != null) listenForExternalChanges(property, option, ctx)
         val availableMethod = option?.let {
             it::class.java.methods.firstOrNull { m ->
                 m.name == "available" && m.parameterCount == 0 &&

@@ -101,4 +101,5 @@ public @interface SliderList {
 
     Class<? extends ValueFormatter> formatter() default ValueFormatter.class;
 
+    boolean fullWidth() default false;
 }

@@ -15,6 +15,7 @@ public final class LegacyOptionsFormat {
     private static final String KEY_PREFIX = "key_";
     private static final String LANG_PREFIX = "lang:";
     private static final String AO_PREFIX = "ao:";
+    private static final String CLOUDS_PREFIX = "renderClouds:";
     private static final Map<Integer, String> NAMES = new HashMap<>();
     private static final Map<String, Integer> CODES = new HashMap<>();
 
@@ -187,6 +188,12 @@ public final class LegacyOptionsFormat {
         if (line.startsWith(LANG_PREFIX)) {
             int region = line.lastIndexOf('_') + 1;
             if (region > LANG_PREFIX.length()) return line.substring(0, region) + line.substring(region).toUpperCase(Locale.ROOT);
+        }
+        if (line.startsWith(CLOUDS_PREFIX)) {
+            String value = line.substring(CLOUDS_PREFIX.length());
+            if (value.length() >= 2 && value.startsWith("\"") && value.endsWith("\"")) {
+                return CLOUDS_PREFIX + value.substring(1, value.length() - 1);
+            }
         }
         return line;
     }

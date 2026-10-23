@@ -42,6 +42,7 @@ import net.minecraft.text.Text;
 //~ if = 1.8.9 'ChatComponent' -> 'ChatGui'
 @Mixin(ChatComponent.class)
 public abstract class Mixin_ChatReceiveEvent {
+    @Unique private static volatile boolean ocfg$warned;
     @Unique private ChatEvent.Receive ocfg$chatEvent;
     //~ if = 1.8.9 'Component' -> 'Text'
     @Unique private Component ocfg$nativeMessage;
@@ -95,7 +96,7 @@ public abstract class Mixin_ChatReceiveEvent {
         try {
             adventure = ocfg$toAdventure(message);
         } catch (Throwable t) {
-            ocfg$logger().warn("Failed to convert a chat message for ChatEvent.Receive; passing it through unchanged", t);
+            ocfg$warn("Failed to convert a chat message for ChatEvent.Receive; passing it through unchanged", t);
             return false;
         }
 
@@ -129,7 +130,7 @@ public abstract class Mixin_ChatReceiveEvent {
         try {
             return ocfg$toNative(result);
         } catch (Throwable t) {
-            ocfg$logger().warn("Failed to convert a chat message edited by a ChatEvent.Receive listener", t);
+            ocfg$warn("Failed to convert a chat message edited by a ChatEvent.Receive listener", t);
             return original != null ? original : message;
         }
     }
@@ -140,15 +141,61 @@ public abstract class Mixin_ChatReceiveEvent {
     }
 
     @Unique
+    private static void ocfg$warn(String message, Throwable t) {
+        if (ocfg$warned) {
+            ocfg$logger().debug(message, t);
+        } else {
+            ocfg$warned = true;
+            ocfg$logger().warn(message + " (further failures are only logged at debug level)", t);
+        }
+    }
+
+    @Unique
     //~ if = 1.8.9 'Component component' -> 'Text text'
     private static net.kyori.adventure.text.Component ocfg$toAdventure(Component component) {
-        //? if >=1.21.4 {
-        return MinecraftClientAudiences.of().asAdventure(component);
-        //?} elif > 1.8.9 {
+        //? if >= 26.1 {
+        com.google.gson.JsonElement tree = net.minecraft.network.chat.ComponentSerialization.CODEC
+                .encodeStart(ocfg$registries().createSerializationContext(com.mojang.serialization.JsonOps.INSTANCE), component)
+                .getOrThrow(com.google.gson.JsonParseException::new);
+        ocfg$stripColorAlpha(tree);
+        return net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson().deserializeFromTree(tree);
+        //?} elif >=1.21.4 {
+        /*return MinecraftClientAudiences.of().asAdventure(component);
+        *///?} elif > 1.8.9 {
         /*return component.asComponent();
         *///?} else
         //return FabricClientAudiences.of().asAdventure(text);
     }
+
+    //? if >= 26.1 {
+    @Unique
+    private static net.minecraft.core.RegistryAccess ocfg$registries() {
+        net.minecraft.client.multiplayer.ClientLevel level = net.minecraft.client.Minecraft.getInstance().level;
+        return level != null ? level.registryAccess() : net.minecraft.core.RegistryAccess.fromRegistryOfRegistries(net.minecraft.core.registries.BuiltInRegistries.REGISTRY);
+    }
+
+    @Unique
+    private static void ocfg$stripColorAlpha(com.google.gson.JsonElement element) {
+        if (element.isJsonArray()) {
+            for (com.google.gson.JsonElement child : element.getAsJsonArray()) {
+                ocfg$stripColorAlpha(child);
+            }
+        } else if (element.isJsonObject()) {
+            com.google.gson.JsonObject object = element.getAsJsonObject();
+            for (java.util.Map.Entry<String, com.google.gson.JsonElement> entry : object.entrySet()) {
+                com.google.gson.JsonElement value = entry.getValue();
+                if ("color".equals(entry.getKey()) && value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
+                    String color = value.getAsString();
+                    if (color.length() == 9 && color.charAt(0) == '#') {
+                        entry.setValue(new com.google.gson.JsonPrimitive("#" + color.substring(3)));
+                    }
+                } else {
+                    ocfg$stripColorAlpha(value);
+                }
+            }
+        }
+    }
+    //?}
 
     @Unique
     //~ if = 1.8.9 'static Component' -> 'static Text'

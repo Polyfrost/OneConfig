@@ -84,6 +84,9 @@
   "oneconfig.preferences.instant_search.title": "Instant Search",
   "oneconfig.preferences.instant_search.description": "Focuses the search bar when the OneConfig menu opens.",
 
+  "oneconfig.preferences.search_keybind.title": "Search Keybind",
+  "oneconfig.preferences.search_keybind.description": "Focuses the search bar in the OneConfig menu and HUD editor.",
+
   "oneconfig.preferences.show_option_action_buttons.title": "Show Option Action Buttons",
   "oneconfig.preferences.show_option_action_buttons.description": "Shows a more actions button on active option rows. Right-click options still opens the same menu.",
 
@@ -197,6 +200,11 @@
   "oneconfig.picker.search": "Search by name or ID",
   "oneconfig.picker.empty": "No matches",
   "oneconfig.picker.unavailable": "Unavailable",
+  "oneconfig.effectlist.add": "Choose effects",
+  "oneconfig.effectlist.title": "Select effects",
+  "oneconfig.effectlist.search": "Search by name or ID",
+  "oneconfig.effectlist.empty": "No matching effects",
+  "oneconfig.effectlist.unavailable": "Unavailable effect",
   "oneconfig.itemlist.add": "Choose items",
   "oneconfig.itemlist.title": "Select items",
   "oneconfig.itemlist.search": "Search by name or ID",

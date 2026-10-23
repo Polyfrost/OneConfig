@@ -206,7 +206,7 @@ publishMods {
 
     modLoaders.add(if (isOrnithe) "ornithe" else "fabric")
 
-    dryRun = modrinthId == null || modrinthToken == null || (curseforgeId != null && curseforgeToken == null)
+    dryRun = (modrinthId == null || modrinthToken == null) && (curseforgeId == null || curseforgeToken == null)
 
     if (modrinthId != null) {
         modrinth {

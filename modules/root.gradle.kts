@@ -100,6 +100,9 @@ subprojects {
     val kotlinModuleName = project.name
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
         compilerOptions.moduleName = kotlinModuleName
+        if (name.contains("Test")) {
+            compilerOptions.freeCompilerArgs.add("-Xjspecify-annotations=warn")
+        }
     }
 
     configure<JavaPluginExtension> {

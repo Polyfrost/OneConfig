@@ -108,4 +108,5 @@ public @interface NumberList {
 
     Class<? extends ValueFormatter> formatter() default ValueFormatter.class;
 
+    boolean fullWidth() default false;
 }
