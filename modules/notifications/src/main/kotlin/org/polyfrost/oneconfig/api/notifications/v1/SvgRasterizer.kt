@@ -37,7 +37,9 @@ internal object SvgRasterizer {
 
     private class Optional(val image: Image?)
 
-    fun get(iconName: String, pixelSize: Int): Image? = getByPath("/assets/oneconfig/ico/$iconName.svg", pixelSize)
+    fun get(iconName: String, pixelSize: Int, folder: String? = null): Image? =
+        folder?.let { getByPath("/assets/oneconfig/ico/$it/$iconName.svg", pixelSize) }
+            ?: getByPath("/assets/oneconfig/ico/$iconName.svg", pixelSize)
 
     fun getByPath(resourcePath: String, pixelSize: Int): Image? {
         val size = pixelSize.coerceIn(1, 512)

@@ -64,6 +64,7 @@ public final class org/polyfrost/oneconfig/api/notifications/v1/NotificationThem
 	public final fun getError ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getFontBody ()Ljava/lang/String;
 	public final fun getFontTitle ()Ljava/lang/String;
+	public final fun getIconFolder ()Ljava/lang/String;
 	public final fun getRadiusButton ()F
 	public final fun getRadiusCard ()F
 	public final fun getRadiusProgress ()F
