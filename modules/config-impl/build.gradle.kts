@@ -30,6 +30,7 @@ plugins {
 
 dependencies {
     api(libs.bundles.nightconfig)
+    implementation(libs.snakeyaml)
     api(project(":modules:config"))
     api(project(":modules:poly-compose"))
     api(project(":modules:ui"))
