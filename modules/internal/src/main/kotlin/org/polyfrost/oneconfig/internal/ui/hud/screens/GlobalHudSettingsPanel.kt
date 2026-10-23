@@ -78,7 +78,7 @@ fun GlobalHudSettingsPanel(
                 fontSize = 12.sp,
             )
 
-            Section("Visibility") {
+            Section("Visibility", "") {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     SwitchRow(GlobalHudSettings.enabled, "HUD overlay") {
                         GlobalHudSettingsBridge.setEnabled(it)
@@ -91,7 +91,7 @@ fun GlobalHudSettingsPanel(
                 }
             }
 
-            Section("Text") {
+            Section("Text", "") {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
                         "Replaces each HUD's own font and weight.",
@@ -121,7 +121,7 @@ fun GlobalHudSettingsPanel(
                 }
             }
 
-            Section("Background") {
+            Section("Background", "") {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
                         "Replaces each HUD's background and corner radius.",
@@ -196,9 +196,10 @@ private fun ApplyOverridesButton() {
 
 /** Bakes the active global overrides into every HUD's own stored settings, placed or not yet */
 private fun applyOverridesToAllHuds() {
+    val providers = HudManager.providers().toList()
     val targets = LinkedHashSet<Hud>()
     targets.addAll(HudManager.activeInstances)
-    targets.addAll(HudManager.providers())
+    targets.addAll(providers)
     val applyFont = GlobalHudSettings.overrideFont
     val font = GlobalHudSettings.font
     val applyWeight = GlobalHudSettings.overrideTextWeight
@@ -217,7 +218,7 @@ private fun applyOverridesToAllHuds() {
             if (applyBackground) hud.showBackground = showBackground
             if (applyRadius) hud.bgRadius = radius
             // providers have no tree, so their look is remembered in the registry instead
-            if (hud !in HudManager.activeInstances) HudManager.storeProviderLook(hud)
+            if (providers.any { it === hud }) HudManager.storeProviderLook(hud)
         }
     }
 }

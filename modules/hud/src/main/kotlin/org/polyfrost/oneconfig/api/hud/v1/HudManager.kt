@@ -219,6 +219,7 @@ object HudManager {
 
     private val knownProviders = LinkedHashSet<String>()
     private val providerLooks = HashMap<String, String>()
+    private val providerDefaultLooks = HashMap<String, String>()
     private var registryTree: Tree? = null
 
     private fun registryProperty() = Properties.simple(
@@ -279,19 +280,23 @@ object HudManager {
      */
     @JvmStatic
     fun storeProviderLook(hud: Hud) {
-        val key = hud::class.java.name
-        providerLooks[key] = listOf(
-            key,
-            hud.font.ordinal,
-            hud.textWeight.ordinal,
-            if (hud.showBackground) 1 else 0,
-            hud.bgRadius,
-        ).joinToString("|")
+        providerLooks[hud::class.java.name] = encodeLook(hud)
         saveRegistry()
     }
 
+    private fun encodeLook(hud: Hud): String = listOf(
+        hud::class.java.name,
+        hud.font.ordinal,
+        hud.textWeight.ordinal,
+        if (hud.showBackground) 1 else 0,
+        hud.bgRadius,
+    ).joinToString("|")
+
     private fun applyProviderLook(hud: Hud) {
-        val enc = providerLooks[hud::class.java.name] ?: return
+        applyLook(hud, providerLooks[hud::class.java.name] ?: return)
+    }
+
+    private fun applyLook(hud: Hud, enc: String) {
         val parts = enc.split('|')
         if (parts.size != 5) return
         try {
@@ -349,6 +354,7 @@ object HudManager {
     @JvmStatic
     fun register(hud: Hud) {
         hudProviders[hud::class.java] = hud
+        providerDefaultLooks.putIfAbsent(hud::class.java.name, encodeLook(hud))
         applyProviderLook(hud)
         revision++
         // Providers are commonly registered by later InitializationEvent handlers, after the
@@ -1085,6 +1091,7 @@ object HudManager {
             }
         }
         knownProviders.clear()
+        providerLooks.clear()
         registryTree = null
         zOrderCache = emptyList()
         preparedFrameValid = false
@@ -1103,6 +1110,7 @@ object HudManager {
             if (!provider.profileLocalTree) continue
             try {
                 provider.restoreCapturedDefaults()
+                providerDefaultLooks[provider::class.java.name]?.let { applyLook(provider, it) }
             } catch (failure: Throwable) {
                 if (failure.isFatalHudFailure()) throw failure
                 LOGGER.error("Failed to restore defaults for HUD ${provider.title}", failure)
