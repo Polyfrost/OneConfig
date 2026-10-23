@@ -6,7 +6,7 @@ kotlin = "2.4.21"
 kotlinx-coroutines = "1.11.0"
 fabric-language-kotlin = "1.14.1+kotlin.2.4.20"
 google-ksp = "2.3.11"
-annotations = "24.1.0"
+annotations = "26.1.0"
 hypixel-modapi = "1.0.1" # modules/utils compile baseline only, the platform selects the runtime version per target
 hypixel-data = "0.2.0" # Dep of hypixel-modapi
 
