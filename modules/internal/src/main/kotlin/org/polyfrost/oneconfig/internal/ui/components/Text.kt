@@ -41,7 +41,7 @@ private val LEGACY_COLORS = mapOf(
     'c' to 0xFF5555, 'd' to 0xFF55FF, 'e' to 0xFFFF55, 'f' to 0xFFFFFF,
 )
 
-private fun parseLegacyFormatting(text: String, baseColor: Color): AnnotatedString = buildAnnotatedString {
+internal fun parseLegacyFormatting(text: String, baseColor: Color): AnnotatedString = buildAnnotatedString {
     var color = baseColor
     var bold = false
     var italic = false
