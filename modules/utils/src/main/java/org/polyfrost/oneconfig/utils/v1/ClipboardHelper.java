@@ -44,14 +44,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 
 /**
  * Cross-platform system clipboard access
  * <p>
- * Uses SDL for text when the game window runs on it
+ * Uses SDL when the game window runs on it, otherwise GLFW/AWT on Windows/Linux and NSPasteboard on macOS
  * <p>
- * Otherwise uses GLFW/AWT on Windows/Linux and NSPasteboard on macOS, falling back to SDL for images
+ * Images prefer AWT on Windows and NSPasteboard on macOS, falling back to SDL
  */
 public final class ClipboardHelper {
 
@@ -121,32 +122,13 @@ public final class ClipboardHelper {
         if (image == null) {
             return clear();
         }
-        try {
-            if (IS_MAC) {
-                Path temp = Files.createTempFile("oneconfig-clipboard-", ".png");
-                try {
-                    ImageIO.write(image, "png", temp.toFile());
-                    if (invokeMacBoolean("copyImageFromPath", temp.toAbsolutePath().toString())) {
-                        return true;
-                    }
-                } finally {
-                    Files.deleteIfExists(temp);
-                }
-            } else {
-                Toolkit.getDefaultToolkit().getSystemClipboard()
-                        .setContents(new ImageSelection(image), null);
-                return true;
-            }
-        } catch (Throwable t) {
-            LOGGER.debug("Failed to write clipboard image", t);
+        if (IS_MAC) {
+            return setImageWithMac(image) || setImageWithSdl(image);
         }
-        // SDL comes last as on macOS it only hands images over when something pastes them, so they are lost once the game closes
-        try {
-            return SDL != null && SDL.setImage(image);
-        } catch (Throwable t) {
-            LOGGER.debug("Failed to write SDL clipboard image", t);
-            return false;
+        if (DesktopHelper.isWindows()) {
+            return setImageWithAwt(image) || setImageWithSdl(image);
         }
+        return setImageWithSdl(image) || setImageWithAwt(image);
     }
 
     public static boolean setTransferable(@Nullable Transferable transferable) {
@@ -270,6 +252,41 @@ public final class ClipboardHelper {
             }
         }
         return null;
+    }
+
+    private static boolean setImageWithMac(BufferedImage image) {
+        try {
+            Path temp = Files.createTempFile("oneconfig-clipboard-", ".png");
+            try {
+                ImageIO.write(image, "png", temp.toFile());
+                return invokeMacBoolean("copyImageFromPath", temp.toAbsolutePath().toString());
+            } finally {
+                Files.deleteIfExists(temp);
+            }
+        } catch (Throwable t) {
+            LOGGER.debug("Failed to write macOS clipboard image", t);
+            return false;
+        }
+    }
+
+    private static boolean setImageWithAwt(BufferedImage image) {
+        try {
+            Toolkit.getDefaultToolkit().getSystemClipboard()
+                    .setContents(new ImageSelection(image), null);
+            return true;
+        } catch (Throwable t) {
+            LOGGER.debug("Failed to write AWT clipboard image", t);
+            return false;
+        }
+    }
+
+    private static boolean setImageWithSdl(BufferedImage image) {
+        try {
+            return SDL != null && SDL.setImage(image);
+        } catch (Throwable t) {
+            LOGGER.debug("Failed to write SDL clipboard image", t);
+            return false;
+        }
     }
 
     private static final class ImageSelection implements Transferable {
