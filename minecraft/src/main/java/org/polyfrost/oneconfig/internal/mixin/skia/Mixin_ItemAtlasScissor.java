@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.skia;
 
+//? if > 1.8.9 {
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
@@ -52,3 +53,4 @@ public class Mixin_ItemAtlasScissor {
         original.call(pass, mapped[0], mapped[1], mapped[2], mapped[3]);
     }
 }
+//?}

@@ -54,6 +54,7 @@ public abstract class Config {
     /** code-defined defaults captured at first initialization keyed by dot-separated property path */
     private Map<String, Object> defaultSnapshot;
     private List<Runnable> deferredSetup;
+    private boolean initializing;
 
     public final String id, title, iconPath;
     public final Category category;
@@ -82,19 +83,26 @@ public abstract class Config {
     }
 
     private void whenInitialized(Runnable action) {
-        if (tree == null && ConfigManager.isPendingInitialization(this)) {
-            if (deferredSetup == null) deferredSetup = new ArrayList<>(4);
-            deferredSetup.add(action);
-            return;
-        }
         if (tree == null && ConfigManager.didInitializationFail(this)) {
             ConfigManager.LOGGER.warn("Skipping deferred setup for config {}: its initialization failed", id);
             return;
         }
-        action.run();
+        if (tree != null || !ConfigManager.isPendingInitialization(this)) action.run();
+        if (initializing) return;
+        if (deferredSetup == null) deferredSetup = new ArrayList<>(4);
+        deferredSetup.add(action);
     }
 
-    @ApiStatus.Internal
+    /** for setup which must not be replayed when the tree is rebuilt */
+    private static Runnable once(Runnable action) {
+        boolean[] done = {false};
+        return () -> {
+            if (done[0]) return;
+            done[0] = true;
+            action.run();
+        };
+    }
+
     protected Tree makeTree() {
         return ConfigManager.collect(this, id);
     }
@@ -146,14 +154,35 @@ public abstract class Config {
                 ConfigManager.reportResetOptions(this, resetOptions);
             }
             runDeferredSetup();
+            try {
+                onInitialized(tree);
+            } catch (Throwable t) {
+                ConfigManager.LOGGER.error("failed to apply setup for config {}", id, t);
+            }
+        }
+    }
+
+    /**
+     * Called once each time this config's tree has been built and registered, including after a profile switch which rebuilds the tree
+     * <br>
+     * Unlike an override of {@link #initialize(boolean)} this is not called when initialization is skipped
+     */
+    protected void onInitialized(Tree tree) {
+    }
+
+    final void runInitialize(boolean byConfigManager) {
+        boolean was = initializing;
+        initializing = true;
+        try {
+            initialize(byConfigManager);
+        } finally {
+            initializing = was;
         }
     }
 
     private void runDeferredSetup() {
         if (deferredSetup == null) return;
-        List<Runnable> actions = deferredSetup;
-        deferredSetup = null;
-        for (Runnable action : actions) {
+        for (Runnable action : deferredSetup) {
             try {
                 action.run();
             } catch (Throwable t) {
@@ -180,17 +209,14 @@ public abstract class Config {
      * <br>
      * Storing the live reference would alias the working value and make a reset a no-op
      */
-    @ApiStatus.Internal
     public static void captureDefaults(Tree tree) {
         captureDefaults(tree, null, null);
     }
 
-    @ApiStatus.Internal
     public static void restoreCapturedDefaults(Tree tree) {
         restoreCapturedDefaults(tree, false);
     }
 
-    @ApiStatus.Internal
     public static void restoreCapturedDefaults(Tree tree, boolean silent) {
         for (Node node : tree.map.values()) {
             if (node instanceof Property) {
@@ -327,7 +353,7 @@ public abstract class Config {
     void rebindToActiveProfile(boolean restoreDefaults) {
         if (restoreDefaults) restoreDefaults();
         tree = null;
-        initialize(true);
+        runInitialize(true);
     }
 
     protected void addDependency(String option, String name, Supplier<Property.Display> condition) {
@@ -349,20 +375,20 @@ public abstract class Config {
     protected void restoreDefaults() {
         Tree backup = backupTree();
         if (backup == null) return;
-        tree.overwrite(backup, false);
+        tree.overwrite(backup, true);
     }
 
     protected void restoreProperty(String option) {
         // first restore is slow as the backup tree loads from disc but it then stays in memory
         Tree backup = backupTree();
         if (backup == null) return;
-        getProperty(option).overwrite(getProperty(backup, option), false);
+        getProperty(option).overwrite(getProperty(backup, option), true);
     }
 
     private Tree backupTree() {
         if (tree == null) {
             try {
-                initialize(false);
+                runInitialize(false);
             } catch (Throwable t) {
                 ConfigManager.LOGGER.error("failed to initialize config {} while restoring its defaults", id, t);
             }
@@ -401,6 +427,27 @@ public abstract class Config {
             Property<?> opt = getProperty(option).addDisplayCondition((Property<Boolean>) cond, hide);
             Object title = cond.getTitle();
             opt.getOrPutMetadata("dependencyNames", () -> new ArrayList<String>(3)).add(title != null ? title.toString() : condition);
+        });
+    }
+
+    /**
+     * Gray out every other option in this config, including those in sub-configs, unless the given <b>boolean option</b> is true
+     * <br>
+     * Safe to call from the constructor
+     */
+    @SuppressWarnings("unchecked")
+    protected void disableAllUnless(String toggleOption) {
+        whenInitialized(() -> {
+            Property<?> toggle = getProperty(toggleOption);
+            if (toggle.type != boolean.class) throw new IllegalArgumentException("Condition property must be boolean");
+            disableAllUnless(tree, (Property<Boolean>) toggle);
+        });
+    }
+
+    private static void disableAllUnless(Tree tree, Property<Boolean> toggle) {
+        tree.onAll((id, node) -> {
+            if (node instanceof Tree) disableAllUnless((Tree) node, toggle);
+            else if (node instanceof Property && node != toggle) ((Property<?>) node).addDisplayCondition(toggle, false);
         });
     }
 
@@ -457,15 +504,15 @@ public abstract class Config {
     }
 
     protected void loadFrom(String id) {
-        whenInitialized(() -> {
+        whenInitialized(once(() -> {
             Tree in = ConfigManager.active().get(id);
             if (in == null) return;
             tree.overwrite(in, false, true, tree);
-        });
+        }));
     }
 
     protected void loadFrom(Path p) {
-        whenInitialized(() -> {
+        whenInitialized(once(() -> {
             Tree in;
             try {
                 in = ConfigManager.active().getNoRegister(p);
@@ -474,11 +521,11 @@ public abstract class Config {
             }
             if (in == null) return;
             tree.overwrite(in, false, true, tree);
-        });
+        }));
     }
 
     protected Property<?> getProperty(String option) {
-        if (tree == null) initialize(false);
+        if (tree == null) runInitialize(false);
         return getProperty(tree, option);
     }
 
@@ -503,7 +550,7 @@ public abstract class Config {
      * It will still function correctly and it will appear once some code that loads it is called
      */
     public void preload() {
-        initialize(false);
+        runInitialize(false);
     }
 
     private static String validateIconPath(String path) {

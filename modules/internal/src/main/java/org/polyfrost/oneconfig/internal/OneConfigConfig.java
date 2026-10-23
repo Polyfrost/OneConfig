@@ -1,10 +1,12 @@
 package org.polyfrost.oneconfig.internal;
 
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import kotlin.jvm.functions.Function1;
 import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Dropdown;
+import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Keybind;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
@@ -17,12 +19,14 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
 import org.polyfrost.oneconfig.internal.ui.hud.GlobalHudSettingsBridge;
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession;
+import org.polyfrost.oneconfig.internal.ui.shell.ShellController;
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState;
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds;
 
 public class OneConfigConfig extends Config {
     private static final Keys KEYS = Platform.compatibility().keys();
     private static final byte HUD_ACTION_MODS = KeybindUtils.getActionModifier();
+    private static final byte HUD_REDO_MODS = (byte) (HUD_ACTION_MODS | KeyModifiers.SHIFT);
 
     // the open action comes from the minecraft module via setOpenAction since it cannot be serialized
     @Keybind(
@@ -155,6 +159,39 @@ public class OneConfigConfig extends Config {
     )
     public static OneConfigKeybind hudSelectAllKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyA()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+
+    @Keybind(
+        title = "oneconfig.preferences.hud_undo_keybind.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.hud_undo_keybind.description",
+        descriptionTranslation = true
+    )
+    public static OneConfigKeybind hudUndoKeybind =
+        new OneConfigKeybind(new int[] {KEYS.getKeyZ()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+
+    @Keybind(
+        title = "oneconfig.preferences.hud_redo_keybind.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.hud_redo_keybind.description",
+        descriptionTranslation = true
+    )
+    public static OneConfigKeybind hudRedoKeybind =
+        new OneConfigKeybind(new int[] {KEYS.getKeyZ()}, null, HUD_REDO_MODS, 0L, pressed -> true);
+
+    @Keybind(
+        title = "oneconfig.preferences.hud_redo_alt_keybind.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.hud_redo_alt_keybind.description",
+        descriptionTranslation = true
+    )
+    public static OneConfigKeybind hudRedoAltKeybind =
+        new OneConfigKeybind(new int[] {KEYS.getKeyY()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Switch(
         title = "oneconfig.preferences.hud_show_keybind_hints.title",
@@ -395,21 +432,31 @@ public class OneConfigConfig extends Config {
     public static float uiSharpening = 0.4f;
 
     @Dropdown(
-        title = "oneconfig.preferences.opening_behavior.title",
+        title = "oneconfig.preferences.remember_last_page.title",
         titleTranslation = true,
         subcategory = "oneconfig.preferences.category.gui",
         subcategoryTranslation = true,
         options = {
-            "oneconfig.mods",
-            "oneconfig.preferences",
-            "oneconfig.preferences.opening_behavior.previous_page",
-            "oneconfig.preferences.opening_behavior.smart_reset"
+            "oneconfig.preferences.remember_last_page.never",
+            "oneconfig.preferences.remember_last_page.15_seconds",
+            "oneconfig.preferences.remember_last_page.1_minute",
+            "oneconfig.preferences.remember_last_page.5_minutes",
+            "oneconfig.preferences.remember_last_page.always"
         },
         optionsTranslation = true,
-        description = "oneconfig.preferences.opening_behavior.description",
+        description = "oneconfig.preferences.remember_last_page.description",
         descriptionTranslation = true
     )
-    public static int openingBehavior = 3;
+    public static int rememberLastPage = 1;
+
+    @Include
+    private static int openingBehavior = -1;
+
+    @Include
+    private static float timeBeforeReset = 15f;
+
+    @Include
+    public static boolean hudEditorTourSeen = false;
 
     @Switch(
         title = "oneconfig.preferences.restore_hud_editor.title",
@@ -432,16 +479,6 @@ public class OneConfigConfig extends Config {
     public static boolean showOpeningPageAnimation = false;
 
     @Switch(
-        title = "oneconfig.preferences.instant_search.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.instant_search.description",
-        descriptionTranslation = true
-    )
-    public static boolean instantSearch = true;
-
-    @Switch(
         title = "oneconfig.preferences.show_option_action_buttons.title",
         titleTranslation = true,
         subcategory = "oneconfig.preferences.category.gui",
@@ -461,17 +498,26 @@ public class OneConfigConfig extends Config {
     )
     public static boolean flipTopOptionOrder = false;
 
-    @Slider(
-        title = "oneconfig.preferences.time_before_reset.title",
+    @Switch(
+        title = "oneconfig.preferences.instant_search.title",
         titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.gui",
+        subcategory = "oneconfig.preferences.category.search",
         subcategoryTranslation = true,
-        min = 5f,
-        max = 60f,
-        description = "oneconfig.preferences.time_before_reset.description",
+        description = "oneconfig.preferences.instant_search.description",
         descriptionTranslation = true
     )
-    public static float timeBeforeReset = 15f;
+    public static boolean instantSearch = true;
+
+    @Keybind(
+        title = "oneconfig.preferences.search_keybind.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.search",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.search_keybind.description",
+        descriptionTranslation = true
+    )
+    public static OneConfigKeybind searchKeybind =
+        new OneConfigKeybind(new int[] {KEYS.getKeyF()}, null, KeybindUtils.getActionModifier(), 0L, pressed -> true);
 
     @Number(
         title = "oneconfig.preferences.search_distance.title",
@@ -684,6 +730,11 @@ public class OneConfigConfig extends Config {
     private static OneConfigKeybind registeredHudDuplicateKeybind;
 
     /**
+     * The keybind registered with the {@link KeybindManager} for focusing the search field
+     */
+    private static OneConfigKeybind registeredSearchKeybind;
+
+    /**
      * The keybinds registered with the {@link KeybindManager} for the remaining HUD editor actions
      */
     private static final AtomicReference<OneConfigKeybind>
@@ -704,6 +755,12 @@ public class OneConfigConfig extends Config {
         registeredHudSelectAllKeybind = new AtomicReference<>();
     private static final AtomicReference<OneConfigKeybind>
         registeredHudLockKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudUndoKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudRedoKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudRedoAltKeybind = new AtomicReference<>();
 
     public OneConfigConfig() {
         super("oneconfig.json", "assets/oneconfig/brand/oneconfig-icon.svg", "OneConfig", Category.QOL);
@@ -720,16 +777,11 @@ public class OneConfigConfig extends Config {
             "uiSharpening",
             "Reduced-resolution filter",
             () -> reducedResFilter != 0 ? Property.Display.SHOWN : Property.Display.DISABLED);
-        // opening behavior 3 is smart reset
-        addDependency(
-            "timeBeforeReset",
-            "Opening Behavior",
-            () -> openingBehavior == 3 ? Property.Display.SHOWN : Property.Display.HIDDEN);
-        // opening behaviors 2 and 3 are the ones that restore the previous page
+        migrateOpeningBehavior();
         addDependency(
             "restoreHudEditor",
-            "Opening Behavior",
-            () -> openingBehavior >= 2 ? Property.Display.SHOWN : Property.Display.HIDDEN);
+            "Remember last page",
+            () -> rememberLastPage != REMEMBER_NEVER ? Property.Display.SHOWN : Property.Display.DISABLED);
         addDependency("enableUIMenuSounds", "enableUISounds");
         addDependency("enableUIClickSounds", "enableUISounds");
         addDependency("enableUISliderSounds", "enableUISounds");
@@ -743,28 +795,25 @@ public class OneConfigConfig extends Config {
             "uiAmbienceVolume",
             "UI Ambience",
             () -> enableUIAmbience ? Property.Display.SHOWN : Property.Display.DISABLED);
-        ShellState.INSTANCE.setFlipTopOptionOrder(flipTopOptionOrder);
+        ShellController.getShared().getAppearance().update(flipTopOptionOrder, pageOpacity, sidebarOpacity, glowOpacity);
         addCallback(
             "flipTopOptionOrder", (Boolean v) -> {
-                ShellState.INSTANCE.setFlipTopOptionOrder(v);
+                ShellController.getShared().getAppearance().update(v, pageOpacity, sidebarOpacity, glowOpacity);
                 return false;
             });
-        ShellState.INSTANCE.setPageOpacity(pageOpacity);
         addCallback(
             "pageOpacity", (java.lang.Number v) -> {
-                ShellState.INSTANCE.setPageOpacity(v.floatValue());
+                ShellController.getShared().getAppearance().update(flipTopOptionOrder, v.floatValue(), sidebarOpacity, glowOpacity);
                 return false;
             });
-        ShellState.INSTANCE.setSidebarOpacity(sidebarOpacity);
         addCallback(
             "sidebarOpacity", (java.lang.Number v) -> {
-                ShellState.INSTANCE.setSidebarOpacity(v.floatValue());
+                ShellController.getShared().getAppearance().update(flipTopOptionOrder, pageOpacity, v.floatValue(), glowOpacity);
                 return false;
             });
-        ShellState.INSTANCE.setGlowOpacity(glowOpacity);
         addCallback(
             "glowOpacity", (java.lang.Number v) -> {
-                ShellState.INSTANCE.setGlowOpacity(v.floatValue());
+                ShellController.getShared().getAppearance().update(flipTopOptionOrder, pageOpacity, sidebarOpacity, v.floatValue());
                 return false;
             });
         addCallback(
@@ -789,6 +838,12 @@ public class OneConfigConfig extends Config {
                 return false;
             });
         refreshKeybind(oneConfigKeybind);
+        addCallback(
+            "searchKeybind", (OneConfigKeybind kb) -> {
+                refreshSearchKeybind();
+                return false;
+            });
+        refreshSearchKeybind();
         addCallback(
             "hudDuplicateKeybind", (OneConfigKeybind kb) -> {
                 refreshHudDuplicateKeybind();
@@ -863,6 +918,51 @@ public class OneConfigConfig extends Config {
         addCallback("globalHudRadiusOverride", () -> GlobalHudSettingsBridge.syncFromConfig());
         addCallback("globalHudRadius", () -> GlobalHudSettingsBridge.syncFromConfig());
         GlobalHudSettingsBridge.syncFromConfig();
+        addCallback(
+            "hudUndoKeybind", (OneConfigKeybind kb) -> {
+                refreshHudUndoKeybind();
+                return false;
+            });
+        refreshHudUndoKeybind();
+        addCallback(
+            "hudRedoKeybind", (OneConfigKeybind kb) -> {
+                refreshHudRedoKeybind();
+                return false;
+            });
+        refreshHudRedoKeybind();
+        addCallback(
+            "hudRedoAltKeybind", (OneConfigKeybind kb) -> {
+                refreshHudRedoAltKeybind();
+                return false;
+            });
+        refreshHudRedoAltKeybind();
+    }
+
+    private static final int REMEMBER_NEVER = 0;
+    private static final int REMEMBER_ALWAYS = 4;
+    private static final long[] REMEMBER_LAST_PAGE_SECONDS = {15L, 60L, 300L};
+
+    public static boolean remembersPageClosedAt(long closedAt) {
+        int option = rememberLastPage;
+        if (option <= REMEMBER_NEVER) return false;
+        if (option >= REMEMBER_ALWAYS) return true;
+        return closedAt > 0L && System.currentTimeMillis() - closedAt <= REMEMBER_LAST_PAGE_SECONDS[option - 1] * 1000L;
+    }
+
+    private void migrateOpeningBehavior() {
+        if (openingBehavior < 0) return;
+        switch (openingBehavior) {
+            case 2: // previous page
+                rememberLastPage = REMEMBER_ALWAYS;
+                break;
+            case 3: // smart reset, 37.5 is halfway between 15 seconds and 1 minute
+                rememberLastPage = timeBeforeReset > 37.5f ? 2 : 1;
+                break;
+            default: // mods or preferences
+                rememberLastPage = REMEMBER_NEVER;
+        }
+        openingBehavior = -1;
+        save();
     }
 
     /** When the OneConfig keybind last closed the GUI so the same press cannot immediately reopen it */
@@ -929,6 +1029,32 @@ public class OneConfigConfig extends Config {
     }
 
     /**
+     * Rebuilds the registered search keybind from {@code searchKeybind}'s GLFW keys and re-registers it
+     * with the {@link KeybindManager}
+     * <p>
+     * The action is resolved here rather than stored on the keybind so it survives deserialization, and it fires
+     * while typing so it still works with a text field focused
+     */
+    private static void refreshSearchKeybind() {
+        if (registeredSearchKeybind != null) {
+            KeybindManager.unregister(registeredSearchKeybind);
+            registeredSearchKeybind = null;
+        }
+        OneConfigKeybind src = searchKeybind;
+        if (src == null || !src.isBound()) {
+            return;
+        }
+        registeredSearchKeybind = new OneConfigKeybind(
+            src.getKeyCodes(),
+            src.getMouseBtns(),
+            src.getMods(),
+            src.getDurationNanos(),
+            ShellState::handleSearchKeybind);
+        registeredSearchKeybind.setFiresWhileTyping(true);
+        KeybindManager.register(registeredSearchKeybind);
+    }
+
+    /**
      * Rebuilds the registered duplicate-HUD keybind from {@code hudDuplicateKeybind}'s GLFW keys and re-registers it
      * with the {@link KeybindManager}
      * <p>
@@ -962,6 +1088,14 @@ public class OneConfigConfig extends Config {
         OneConfigKeybind src,
         AtomicReference<OneConfigKeybind> slot,
         Function1<Boolean, Boolean> action) {
+        refreshHudEditorKeybind(src, slot, action, false);
+    }
+
+    private static void refreshHudEditorKeybind(
+        OneConfigKeybind src,
+        AtomicReference<OneConfigKeybind> slot,
+        Function1<Boolean, Boolean> action,
+        boolean strictShift) {
         OneConfigKeybind old = slot.getAndSet(null);
         if (old != null) {
             KeybindManager.unregister(old);
@@ -974,7 +1108,14 @@ public class OneConfigConfig extends Config {
             src.getMouseBtns(),
             src.getMods(),
             src.getDurationNanos(),
-            action);
+            action) {
+            @Override
+            public boolean test(Set<Integer> downKeys, Set<Integer> downMouse, byte currentMods) {
+                // a keybind matches with extra modifiers held, so Ctrl+Shift+Z would undo as well as redo
+                boolean extraShift = (currentMods & KeyModifiers.SHIFT) != 0 && (getMods() & KeyModifiers.SHIFT) == 0;
+                return !(strictShift && extraShift) && super.test(downKeys, downMouse, currentMods);
+            }
+        };
         KeybindManager.register(keybind);
         slot.set(keybind);
     }
@@ -1042,6 +1183,28 @@ public class OneConfigConfig extends Config {
                 HudDesignSession::handleLock);
     }
 
+    private static void refreshHudUndoKeybind() {
+        refreshHudEditorKeybind(
+            hudUndoKeybind,
+            registeredHudUndoKeybind,
+            HudDesignSession::handleUndo,
+            true);
+    }
+
+    private static void refreshHudRedoKeybind() {
+        refreshHudEditorKeybind(
+            hudRedoKeybind,
+            registeredHudRedoKeybind,
+            HudDesignSession::handleRedo);
+    }
+
+    private static void refreshHudRedoAltKeybind() {
+        refreshHudEditorKeybind(
+            hudRedoAltKeybind,
+            registeredHudRedoAltKeybind,
+            HudDesignSession::handleRedo);
+    }
+
     /**
      * Called once after the first-launch message has been shown
      * <p>
@@ -1055,6 +1218,20 @@ public class OneConfigConfig extends Config {
         if (INSTANCE != null && INSTANCE.tree != null) {
             try {
                 INSTANCE.getProperty("showFirstLaunchMessage").setAs(Boolean.FALSE);
+            } catch (Exception ignored) {
+            }
+            INSTANCE.save();
+        }
+    }
+
+    public static void markHudEditorTourSeen() {
+        if (hudEditorTourSeen) {
+            return;
+        }
+        hudEditorTourSeen = true;
+        if (INSTANCE != null && INSTANCE.tree != null) {
+            try {
+                INSTANCE.getProperty("hudEditorTourSeen").setAs(Boolean.TRUE);
             } catch (Exception ignored) {
             }
             INSTANCE.save();

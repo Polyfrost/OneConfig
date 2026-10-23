@@ -97,4 +97,6 @@ public @interface ItemList {
      */
     @Deprecated
     boolean addTextTranslation() default false;
+
+    boolean fullWidth() default false;
 }

@@ -69,6 +69,8 @@ private const val GLOW_BAKE_SCALE = .25f
 private const val GLOW_BLUR_SIGMA = 300f
 private const val GLOW_RADIUS = 500f
 
+internal val PageGutter = 25.dp
+
 private class GlowCache : RememberObserver {
     private var image: Image? = null
     private var width = -1
@@ -93,7 +95,7 @@ private class GlowCache : RememberObserver {
 
         val surface = Surface.makeRasterN32Premul(w, h)
         val sigma = GLOW_BLUR_SIGMA * GLOW_BAKE_SCALE
-        val filter = ImageFilter.makeBlur(sigma, sigma, FilterTileMode.CLAMP)
+        val filter = ImageFilter.makeBlur(sigma, sigma, FilterTileMode.DECAL)
         val paint = Paint().apply {
             imageFilter = filter
             color = 0xFFFFFFFF.toInt()
@@ -143,7 +145,8 @@ fun Shell(
 
     val glowCache = remember { GlowCache() }
 
-    val glowAlpha = (ShellState.glowOpacity / 100f).coerceIn(0f, 1f)
+    val shell = LocalShell.current
+    val glowAlpha = (shell.appearance.glowOpacity / 100f).coerceIn(0f, 1f)
     val glowPaint = remember(Accent) {
         Paint().apply {
             colorFilter = ColorFilter.makeBlend(Accent.copy(alpha = 1f).toArgb(), SkBlendMode.SRC_IN)
@@ -186,54 +189,52 @@ fun Shell(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .background(theme.pageBackground.withOpacityPercent(ShellState.pageOpacity)),
+                .background(theme.pageBackground.withOpacityPercent(shell.appearance.pageOpacity)),
         ) {
-            val backStackEntry by LocalNavController.current.currentBackStackEntryAsState()
+            val backStackEntry by LocalShellNavController.current.currentBackStackEntryAsState()
             val isModsMenu = backStackEntry?.destination?.hasRoute(ModsRoute::class) == true
-            val searchQuery = ShellState.searchQuery
-            val isSearching = searchQuery.isNotBlank() && (ShellState.globalSearchActive || isModsMenu)
+            val searchQuery = shell.search.query
+            val isSearching = isModsMenu && searchQuery.isNotBlank()
             Column(
                 modifier = Modifier.weight(1f)
-                    .padding(horizontal = 25.dp, vertical = 19.dp),
+                    .padding(vertical = 19.dp),
                 verticalArrangement = Arrangement.spacedBy(if (isSearching) 0.dp else 19.dp)
             ) {
-                Header()
+                Header(Modifier.padding(horizontal = PageGutter))
                 Box(
-                    modifier = Modifier.weight(1f).fillMaxSize().clipToBounds()
-                        .alpha(if (ShellState.awaitingInitialRoute) 0f else 1f)
+                    modifier = Modifier.weight(1f).fillMaxSize()
+                        // a dragged mod card is drawn in an overlay that must be able to leave the page
+                        // area; keep the clip otherwise so page content cannot overflow the pane
+                        .then(if (shell.layout.modDragging) Modifier else Modifier.clipToBounds())
+                        .alpha(if (shell.transitions.awaitingInitialRoute) 0f else 1f)
                 ) {
                     if (isSearching) {
                         SearchResultsScreen(searchQuery)
                     } else {
                         // the first transition after the menu opens follows "Show opening page animation"
                         // and later ones follow "Show Page Animations"
-                        fun resolvePageAnimate(targetId: String): Boolean {
-                            // AnimatedContent resolves its transition on first compose before the opening
-                            // navigation happens so that call describes the placeholder start destination
-                            if (ShellState.awaitingInitialRoute) return false
-                            if (ShellState.initialTransitionConsumed) return OneConfigConfig.showPageAnimations
-                            val openingId = ShellState.openingTransitionTarget
-                            if (openingId == null) {
-                                ShellState.openingTransitionTarget = targetId
-                                return ShellState.animateOpeningPage
-                            }
-                            if (targetId == openingId) return ShellState.animateOpeningPage
-                            ShellState.initialTransitionConsumed = true
-                            return OneConfigConfig.showPageAnimations
-                        }
+                        val transitions = shell.transitions
 
                         fun pageMs() = (OneConfigConfig.pageAnimationDuration * 1000f).toInt().coerceAtLeast(1)
 
+                        // Arrow-back routes through navigate() on purpose (this NavHost version never
+                        // plays its pop transitions from a resting state), so the shared enter/exit
+                        // transition mirrors the old pop direction while lastNavWasBack is set.
+                        fun enterSlide() =
+                            if (transitions.lastNavWasBack) slideInHorizontally(tween(pageMs())) { -it / 5 }
+                            else slideInHorizontally(tween(pageMs())) { it / 5 }
+
+                        fun exitSlide() =
+                            if (transitions.lastNavWasBack) slideOutHorizontally(tween(pageMs())) { it / 5 }
+                            else slideOutHorizontally(tween(pageMs())) { -it / 5 }
+
                         NavHost(
                             modifier = Modifier.fillMaxSize(),
-                            navController = LocalNavController.current,
+                            navController = LocalShellNavController.current,
                             startDestination = ModsGraph,
 
-                            enterTransition = { if (resolvePageAnimate(targetState.id)) slideInHorizontally(tween(pageMs())) { it / 5 } + fadeIn(tween(pageMs())) else EnterTransition.None },
-                            exitTransition = { if (resolvePageAnimate(targetState.id)) slideOutHorizontally(tween(pageMs())) { -it / 5 } + fadeOut(tween(pageMs())) else ExitTransition.None },
-
-                            popEnterTransition = { if (OneConfigConfig.showPageAnimations) slideInHorizontally(tween(pageMs())) { -it / 5 } + fadeIn(tween(pageMs())) else EnterTransition.None },
-                            popExitTransition = { if (OneConfigConfig.showPageAnimations) slideOutHorizontally(tween(pageMs())) { it / 5 } + fadeOut(tween(pageMs())) else ExitTransition.None }
+                            enterTransition = { if (transitions.animates()) enterSlide() + fadeIn(tween(pageMs())) else EnterTransition.None },
+                            exitTransition = { if (transitions.animates()) exitSlide() + fadeOut(tween(pageMs())) else ExitTransition.None },
                         ) {
                             navigation()
                         }

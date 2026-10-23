@@ -27,7 +27,9 @@ subprojects {
         maven("https://repo.polyfrost.org/releases")
         maven("https://repo.polyfrost.org/snapshots")
         maven("https://nexus.prsm.wtf/repository/maven-public/maven-repo/releases/")
-
+        maven("https://redirector.kotlinlang.org/maven/compose-dev") {
+            content { includeGroup("org.jetbrains.skiko") }
+        }
         google()
     }
 
@@ -41,7 +43,8 @@ subprojects {
         "compileOnly"(rootProject.libs.logging.api)
         "testImplementation"(rootProject.libs.bundles.test.core)
         "testImplementation"(platform(rootProject.libs.junit.bom))
-        "api"(rootProject.libs.bundles.adventure)
+        // mods compile against mod-toggles alone, so it brings nothing along
+        if (name != "mod-toggles") "api"(rootProject.libs.bundles.adventure)
     }
 
     configure<TestingExtension> {
@@ -56,6 +59,7 @@ subprojects {
 
                     sources {
                         java { srcDir("src/test/java") }
+                        extensions.findByName("kotlin")?.let { (it as SourceDirectorySet).srcDir("src/test/kotlin") }
                         resources { srcDir("src/test/resources") }
                         compileClasspath += test.compileClasspath + main.output
                         runtimeClasspath += test.runtimeClasspath + main.output
@@ -174,7 +178,14 @@ subprojects {
 apiValidation {
     for (project in subprojects) {
         ignoredPackages.add("org.polyfrost.oneconfig.api.${project.name}.v1.internal")
+        for (language in listOf("java", "kotlin")) {
+            val sourceRoot = project.file("src/main/$language")
+            sourceRoot.resolve("org/polyfrost/oneconfig/api").walkTopDown()
+                .filter { it.isDirectory && it.name == "internal" }
+                .forEach { ignoredPackages.add(it.relativeTo(sourceRoot).invariantSeparatorsPath.replace('/', '.')) }
+        }
     }
+    nonPublicMarkers.add("org.jetbrains.annotations.ApiStatus\$Internal")
     ignoredPackages.add("org.polyfrost.oneconfig.api.hypixel.v1.internal")
     ignoredPackages.add("org.polyfrost.oneconfig.api.event.v1.internal")
     ignoredProjects.add("internal")

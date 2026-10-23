@@ -11,6 +11,7 @@ import net.minecraft.client.Minecraft
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
+import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.dsl.category
@@ -20,6 +21,8 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
+import org.polyfrost.oneconfig.internal.ui.api.MASTER_TOGGLE
+import org.polyfrost.oneconfig.internal.ui.api.isMasterSwitchName
 
 object WalksyLibCompat {
 
@@ -29,7 +32,7 @@ object WalksyLibCompat {
     fun onLoad(entryPointList: Any) {
         CompatLoader.requireTranslations {
             runCatching {
-                val getMethod = entryPointList.javaClass.methods.firstOrNull { it.name == "get" && it.parameterCount == 0 } ?: return@runCatching
+                val getMethod = entryPointList.javaClass.methods.firstOrNull { (it.name == "get" || it.name == "getMods") && it.parameterCount == 0 } ?: return@runCatching
                 val mods = getMethod.invoke(entryPointList) as? Collection<*> ?: return@runCatching
                 for (mod in mods) {
                     if (mod == null) continue
@@ -44,10 +47,10 @@ object WalksyLibCompat {
         val container = invoke(mod, "getContainer") ?: return null
         val metadata = invoke(container, "getMetadata") ?: return null
         val modid = invoke(metadata, "getId") as? String ?: return null
-        if (CompatLoader.nativeLoadedConfigs.contains(modid)) return null
+        // this runs from requireTranslations, which waits for the entrypoints to be decided, so nothing needs retrying
+        if (ConfigEntrypoints.provides(modid) || CompatLoader.nativeLoadedConfigs.contains(modid)) return null
 
-        val hasConfig = invoke(mod, "hasConfig") as? Boolean ?: false
-        if (!hasConfig) return null
+        if (invoke(mod, "hasConfig") == false) return null
         val config = invoke(mod, "getConfig") ?: return null
 
         val categories = invoke(config, "categories") as? Collection<*> ?: return null
@@ -63,7 +66,7 @@ object WalksyLibCompat {
         tree.noCache = true
         buildSaveFunction(config)?.let { tree.saveFunction = it }
         modInfo?.extractIconFile()?.let { tree.addMetadata("icon_path", it) }
-        CompatLoader.originalScreenOpener(modid)?.let { tree.addMetadata("open_original_screen", it) }
+        CompatLoader.originalScreenOpener(modid)?.let { tree.addMetadata(CompatLoader.OPEN_ORIGINAL_SCREEN, it) }
 
         var added = false
         val usedIds = HashSet<String>()
@@ -76,7 +79,7 @@ object WalksyLibCompat {
                 if (option != null && parseOption(option, categoryName, null, categoryPath, tree, usedIds)) added = true
             }
 
-            (invoke(category, "optionGroups") as? Collection<*>)?.forEach { group ->
+            ((invoke(category, "optionGroups") ?: invoke(category, "groups")) as? Collection<*>)?.forEach { group ->
                 if (group == null) return@forEach
                 val groupName = invoke(group, "getName") as? String
                 val groupPath = "$categoryPath/${idPart(groupName, "group")}"
@@ -85,6 +88,12 @@ object WalksyLibCompat {
                 }
             }
         }
+
+        val firstCategory = categories.firstNotNullOfOrNull { it?.let { c -> invoke(c, "name") as? String } }
+        tree.map.values.firstOrNull {
+            it is Property<*> && it.type == java.lang.Boolean::class.java && it.category == firstCategory &&
+                isMasterSwitchName(it.title as? String ?: "")
+        }?.addMetadata(MASTER_TOGGLE, true)
 
         return if (added) tree else null
     }
@@ -107,7 +116,7 @@ object WalksyLibCompat {
             return parseButton(option, name, description, uniqueId(usedIds, optionPath), categoryName, subcategoryName, tree)
         }
 
-        if (type.name == COLOR_CLASS) {
+        if (type.name in COLOR_CLASSES) {
             return parseColor(option, type, name, description, uniqueId(usedIds, optionPath), categoryName, subcategoryName, tree)
         }
 
@@ -115,14 +124,20 @@ object WalksyLibCompat {
             return parseSprite(option, type, name, description, uniqueId(usedIds, optionPath), categoryName, subcategoryName, tree)
         }
 
+        if (isTexture(type)) {
+            return parseTexture(option, type, name, description, uniqueId(usedIds, optionPath), categoryName, subcategoryName, tree)
+        }
+
         if (java.util.List::class.java.isAssignableFrom(type)) {
             return parseStringList(option, name, description, uniqueId(usedIds, optionPath), categoryName, subcategoryName, tree)
         }
 
+        val min = invoke(option, "getMin") as? Number
+        val max = invoke(option, "getMax") as? Number
         val visualizer: Class<out Visualizer> = when {
             type == java.lang.Boolean::class.java -> Visualizer.SwitchVisualizer::class.java
-            type == Integer::class.java || type == java.lang.Double::class.java || type == java.lang.Float::class.java ->
-                Visualizer.SliderVisualizer::class.java
+            type in NUMBER_TYPES ->
+                if (min != null && max != null) Visualizer.SliderVisualizer::class.java else Visualizer.NumberVisualizer::class.java
             type == String::class.java -> Visualizer.TextVisualizer::class.java
             Enum::class.java.isAssignableFrom(type) -> Visualizer.DropdownVisualizer::class.java
             else -> return false // pixel grid and other WalksyLib-only types
@@ -151,9 +166,9 @@ object WalksyLibCompat {
         when {
             Enum::class.java.isAssignableFrom(type) ->
                 property.addMetadata("options", type.enumConstants?.map { it.toString() } ?: emptyList<String>())
-            visualizer == Visualizer.SliderVisualizer::class.java -> {
-                (invoke(option, "getMin") as? Number)?.let { property.addMetadata("min", it.toFloat()) }
-                (invoke(option, "getMax") as? Number)?.let { property.addMetadata("max", it.toFloat()) }
+            type in NUMBER_TYPES -> {
+                property.addMetadata("min", min?.toFloat() ?: -Float.MAX_VALUE)
+                property.addMetadata("max", max?.toFloat() ?: Float.MAX_VALUE)
                 (invoke(option, "getIncrement") as? Number)?.let { property.addMetadata("step", it.toFloat()) }
             }
         }
@@ -162,7 +177,15 @@ object WalksyLibCompat {
         return true
     }
 
-    private const val COLOR_CLASS = "main.walksy.lib.core.config.local.options.type.WalksyLibColor"
+    private val NUMBER_TYPES = setOf<Class<*>>(
+        Integer::class.java, java.lang.Long::class.java, java.lang.Short::class.java, java.lang.Byte::class.java,
+        java.lang.Double::class.java, java.lang.Float::class.java,
+    )
+
+    private val COLOR_CLASSES = setOf(
+        "main.walksy.lib.core.config.local.options.type.WalksyLibColor",
+        "main.walksy.lib.api.config.value.WLColor",
+    )
 
     private fun parseColor(
         option: Any,
@@ -324,6 +347,121 @@ object WalksyLibCompat {
         return true
     }
 
+    private const val CACHED_TEXTURES_CLASS = "main.walksy.lib.api.render.CachedTextures"
+    private const val SPRITE_CACHE_CLASS = "main.walksy.lib.core.config.serialization.SpriteCache"
+    private const val CROPPED_TEXTURE_CLASS = "main.walksy.lib.api.config.value.CroppedTexture"
+    private const val DROPPED_PREFIX = "walksylib:dropped/"
+
+    private val cachedTexturesClass: Class<*>? by lazy {
+        runCatching { Class.forName(CACHED_TEXTURES_CLASS, false, WalksyLibCompat::class.java.classLoader) }.getOrNull()
+    }
+
+    private val identifierClass: Class<*>? by lazy {
+        cachedTexturesClass?.methods?.firstOrNull { it.name == "isCacheBacked" && it.parameterCount == 1 }?.parameterTypes?.get(0)
+    }
+
+    private fun isTexture(type: Class<*>): Boolean =
+        type.name == CROPPED_TEXTURE_CLASS || (identifierClass != null && type == identifierClass)
+
+    private fun parseTexture(
+        option: Any,
+        type: Class<*>,
+        name: String,
+        description: String?,
+        id: String,
+        categoryName: String,
+        subcategoryName: String?,
+        tree: Tree,
+    ): Boolean {
+        val optionClass = option::class.java
+        val loader = optionClass.classLoader
+        val getValueM = optionClass.methods.firstOrNull { it.name == "getValue" && it.parameterCount == 0 }
+            ?.apply { isAccessible = true } ?: return false
+        val setValueM = optionClass.methods.firstOrNull { it.name == "setValue" && it.parameterCount == 1 }
+            ?.apply { isAccessible = true } ?: return false
+
+        val cached = cachedTexturesClass ?: return false
+        val importFile = runCatching { cached.getMethod("importFile", Path::class.java) }.getOrNull() ?: return false
+        val ensureLoaded = cached.methods.firstOrNull { it.name == "ensureLoaded" && it.parameterCount == 1 }
+        val directory = runCatching { Class.forName(SPRITE_CACHE_CLASS, false, loader).getMethod("getDirectory") }
+            .getOrNull() ?: return false
+        val cropped = type.name == CROPPED_TEXTURE_CLASS
+        val texture = if (cropped) runCatching { type.getMethod("texture") }.getOrNull() ?: return false else null
+        val of = if (cropped) type.methods.firstOrNull { it.name == "of" && it.parameterCount == 1 } ?: return false else null
+        val crop = if (cropped) runCatching { CROP_BOUNDS.map { type.getMethod(it) } }.getOrNull() ?: return false else null
+        val withCrop = if (cropped) type.methods.firstOrNull { it.name == "withCrop" && it.parameterCount == 4 } ?: return false else null
+        val tryParse = identifierClass?.methods?.firstOrNull {
+            it.name == "tryParse" && it.parameterCount == 1 && it.parameterTypes[0] == String::class.java
+        }
+
+        fun toPath(value: Any?): String {
+            val identifier = (if (texture != null) value?.let { texture.invoke(it) } else value)?.toString() ?: return ""
+            val path = if (!identifier.startsWith(DROPPED_PREFIX)) identifier
+            else (directory.invoke(null) as Path).resolve(identifier.removePrefix(DROPPED_PREFIX)).toString()
+            val bounds = crop?.map { it.invoke(value) as Float }?.takeIf { it != FULL_CROP } ?: return path
+            return "$path#${bounds.joinToString(",")}"
+        }
+
+        val default = invoke(option, "getDefaultValue")
+        val defaultString = runCatching { toPath(default) }.getOrDefault("")
+
+        val property = Properties.functional(
+            { runCatching { toPath(getValueM.invoke(option)) }.getOrNull() ?: "" },
+            { value ->
+                runCatching {
+                    if (value.isBlank() || value == defaultString) {
+                        if (default != null) setValueM.invoke(option, default)
+                        return@runCatching
+                    }
+                    if (value == toPath(getValueM.invoke(option))) return@runCatching
+                    val bounds = if (crop != null) splitCrop(value) else null
+                    val path = bounds?.first ?: value
+                    val source = File(path)
+                    if (!source.isFile && !IDENTIFIER.matches(path)) {
+                        LOGGER.debug("Ignoring WalksyLib texture value {}: not a file or identifier", path)
+                        return@runCatching
+                    }
+                    val identifier = if (source.isFile) importFile.invoke(null, source.toPath())
+                    else tryParse?.invoke(null, path) ?: return@runCatching
+                    var newValue = of?.invoke(null, identifier) ?: identifier
+                    if (bounds != null) newValue = withCrop!!.invoke(newValue, *bounds.second.toTypedArray())
+                    setValueM.invoke(option, newValue)
+                    if (ensureLoaded != null) Minecraft.getInstance().execute {
+                        runCatching { ensureLoaded.invoke(null, identifier) }
+                            .onFailure { LOGGER.warn("Failed to load WalksyLib texture", it) }
+                    }
+                }.onFailure { LOGGER.warn("Failed to set WalksyLib texture value", it) }
+            },
+            id,
+            name,
+            description,
+            String::class.java,
+        )
+
+        property.addMetadata("visualizer", Visualizer.FileVisualizer::class.java)
+        property.addMetadata("types", TEXTURE_TYPES)
+        property.addMetadata("filterName", "Image")
+        property.addMetadata("placeholder", "Select an image")
+        if (default != null) property.addMetadata("default", defaultString)
+        property.category = categoryName
+        property.subcategory = subcategoryName
+        tree.put(property)
+        return true
+    }
+
+    private val TEXTURE_TYPES = arrayOf("png", "jpg", "jpeg", "bmp", "gif")
+
+    private val CROP_BOUNDS = listOf("u0", "v0", "u1", "v1")
+    private val FULL_CROP = listOf(0f, 0f, 1f, 1f)
+
+    private fun splitCrop(value: String): Pair<String, List<Float>>? {
+        val i = value.lastIndexOf('#').takeIf { it >= 0 } ?: return null
+        val bounds = value.substring(i + 1).split(',').map { it.toFloatOrNull() ?: return null }
+        return if (bounds.size == 4) value.substring(0, i) to bounds else null
+    }
+
+    private val IDENTIFIER = Regex("[a-z0-9_.-]+:[a-z0-9_.-][a-z0-9_./-]*")
+
     private fun parseStringList(
         option: Any,
         name: String,
@@ -388,6 +526,9 @@ object WalksyLibCompat {
 
     private fun coerce(value: Any?, type: Class<*>): Any? = when {
         value is Number && type == Integer::class.java -> value.toInt()
+        value is Number && type == java.lang.Long::class.java -> value.toLong()
+        value is Number && type == java.lang.Short::class.java -> value.toInt().coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
+        value is Number && type == java.lang.Byte::class.java -> value.toInt().coerceIn(Byte.MIN_VALUE.toInt(), Byte.MAX_VALUE.toInt()).toByte()
         value is Number && type == java.lang.Double::class.java -> value.toDouble()
         value is Number && type == java.lang.Float::class.java -> value.toFloat()
         else -> value
@@ -404,8 +545,8 @@ object WalksyLibCompat {
             .firstOrNull { it.name == name && it.parameterCount == 0 }
             ?.apply { isAccessible = true }
 
-        val persist = method("onSave")
-        val notify = method("runSave")
+        val persist = method("saveAndNotify") ?: method("onSave")
+        val notify = if (persist?.name == "saveAndNotify") null else method("runSave")
         if (persist == null && notify == null) return null
         return Runnable {
             persist?.let {

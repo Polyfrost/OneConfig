@@ -15,7 +15,6 @@ plugins {
     kotlin("jvm")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
-    id("versioned-catalogues")
     `maven-publish`
     signing
 }
@@ -129,11 +128,15 @@ fun DependencyHandlerScope.handleApiDep(
     this.handleApiDep(project.provider { dependency }, isMod, transitive)
 }
 
-if (loader != "fabric") {
+if (loader == "neoforge") {
     configurations {
         val localRuntime = create("localRuntime")
         named("runtimeClasspath") { this.extendsFrom(localRuntime) }
     }
+}
+
+configurations.configureEach {
+    exclude(group = "org.jetbrains.skiko", module = "skiko-awt-runtime-all")
 }
 
 @JvmName("handleApiDepBundle")
@@ -179,9 +182,18 @@ val firmamentRelocatedConfiguration: Configuration by configurations.creating {
     attributes { attribute(firmamentRelocated, true) }
 }
 
+val skysoftRelocated = registerRelocationAttribute("relocate-skysoft-moulconfig") {
+    relocate("io.github.notenoughupdates.moulconfig", "com.skysoft.deps.softconfig")
+}
+
+val skysoftRelocatedConfiguration: Configuration by configurations.creating {
+    attributes { attribute(skysoftRelocated, true) }
+}
+
 val adventurePlatform = when {
     loader != "fabric" -> null
-    stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "7.0.0"
+    stonecutter.eval(stonecutter.current.version, ">= 26.3") -> "7.2.0"
+    stonecutter.eval(stonecutter.current.version, ">= 26.2") -> "7.1.1"
     stonecutter.eval(stonecutter.current.version, ">= 26.1") -> "6.9.0"
     stonecutter.eval(stonecutter.current.version, ">= 1.21.11") -> "6.8.0"
     stonecutter.eval(stonecutter.current.version, ">= 1.21.10") -> "6.7.0"
@@ -191,33 +203,6 @@ val adventurePlatform = when {
     stonecutter.eval(stonecutter.current.version, ">= 1.21.1") -> "5.14.2"
     else -> error("No adventure-platform-fabric version for ${stonecutter.current.version}")
 }?.let { "net.kyori:adventure-platform-fabric:$it" }
-
-// TODO: remove this hack when adventure-platform-fabric has a proper 26.3 release
-val relaxedAdventurePlatformJar = if (
-    adventurePlatform == null || stonecutter.eval(stonecutter.current.version, "< 26.3")
-) null else {
-    val upstream = configurations.detachedConfiguration(
-        (dependencies.create(adventurePlatform) as ExternalModuleDependency).apply { isTransitive = false }
-    )
-    val devRuntime = configurations.create("adventureDevRuntime")
-    listOf("runtimeClasspath", "testRuntimeClasspath").forEach {
-        configurations.named(it) { extendsFrom(devRuntime) }
-    }
-
-    val modJarTask = if ("remapJar" in tasks.names) "remapJar" else "jar"
-    tasks.matching { it.name == modJarTask }.configureEach {
-        doLast {
-            relaxNestedJar((this as AbstractArchiveTask).archiveFile.get().asFile, "adventure-platform-fabric")
-        }
-    }
-
-    tasks.register("relaxedAdventurePlatformJar") {
-        val output = layout.buildDirectory.file("adventure/adventure-platform-fabric-relaxed.jar")
-        inputs.files(upstream)
-        outputs.file(output)
-        doLast { relaxGameConstraint(upstream.singleFile, output.get().asFile) }
-    }
-}
 
 dependencies {
     listOf("compat", "common-compat").forEach {
@@ -236,7 +221,7 @@ dependencies {
         }
     }
 
-    moulConfig(skyhanniRelocatedConfiguration, firmamentRelocatedConfiguration)
+    moulConfig(skyhanniRelocatedConfiguration, firmamentRelocatedConfiguration, skysoftRelocatedConfiguration)
 
     "api"(versionedCatalog["jetbrains.compose.foundation"])
     "api"(versionedCatalog["jetbrains.compose.material"])
@@ -247,6 +232,7 @@ dependencies {
     "api"(versionedCatalog["jetbrains.compose.ui.backhandler"])
     "api"(versionedCatalog["jetbrains.skiko.awt"])
     "api"(versionedCatalog["jetbrains.skiko.awt.runtime.windows.x64"])
+    "api"(versionedCatalog["jetbrains.skiko.awt.runtime.windows.arm64"])
     "api"(versionedCatalog["jetbrains.skiko.awt.runtime.linux.x64"])
     "api"(versionedCatalog["jetbrains.skiko.awt.runtime.linux.arm64"])
     "api"(versionedCatalog["jetbrains.skiko.awt.runtime.macos.x64"])
@@ -258,14 +244,8 @@ dependencies {
     handleApiDep(versionedCatalog.bundles["adventure"])
 
     if (adventurePlatform != null) {
-        if (relaxedAdventurePlatformJar != null) {
-            "modCompileOnly"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
-            "adventureDevRuntime"(files(relaxedAdventurePlatformJar))
-            "include"(adventurePlatform) { isTransitive = false }
-        } else {
-            "modApi"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
-            "modImplementation"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
-        }
+        "modApi"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
+        "modImplementation"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
     }
 
     handleApiDep(versionedCatalog.bundles["kotlin"])
@@ -273,7 +253,7 @@ dependencies {
     handleApiDep(versionedCatalog.bundles["nightconfig"])
     handleApiDep(versionedCatalog["snakeyaml"])
     handleApiDep(versionedCatalog["java-objc-bridge"])
-    val hypixelModApiVersion = if (stonecutter.eval(stonecutter.current.version, ">= 26.1")) "1.0.2" else "1.0.1"
+    val hypixelModApiVersion = if (stonecutter.eval(stonecutter.current.version, ">= 26.1") || loader == "ornithe") "1.0.2" else "1.0.1"
     handleApiDep("net.hypixel:mod-api:$hypixelModApiVersion")
     handleApiDep(versionedCatalog["hypixel-data"])
 
@@ -289,6 +269,8 @@ dependencies {
         } else {
             "modImplementation"(hypixelFabricMod) { isTransitive = false }
         }
+    } else if (loader == "ornithe") {
+        "modLocalRuntime"("org.polyfrost:mod-api-fabric:1.0.2+build.3+mc1.8.9") { isTransitive = false }
     }
 
     handleApiDep(versionedCatalog["mixin-squared"])
@@ -314,7 +296,7 @@ dependencies {
 
     val libsCatalog = rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs")
     when (loader) {
-        "fabric" -> "modRuntimeOnly"(libsCatalog.findLibrary("devauth-fabric").get())
+        "fabric", "ornithe" -> "modRuntimeOnly"(libsCatalog.findLibrary("devauth-fabric").get())
         "neoforge" -> "runtimeOnly"(libsCatalog.findLibrary("devauth-neoforge").get())
     }
 
@@ -327,9 +309,8 @@ dependencies {
         compileOnly(versionedCatalog["lwjgl-vulkan"])
     }
 
-    if (versionedCatalog.has("skycubed")) {
+    if (versionedCatalog.has("meowdding-lib")) {
         val mcVersion = stonecutter.current.version
-        "modCompileOnly"(versionedCatalog["skycubed"]) { isTransitive = false }
         compileOnly(versionedCatalog["meowdding-lib"]) {
             isTransitive = false
             capabilities { requireCapability("me.owdding.meowdding-lib:meowdding-lib-$mcVersion") }
@@ -427,15 +408,27 @@ tasks.withType<ProcessResources>() {
     val fabricProperties = buildMap {
         put("mod_version", version)
         put("fabric_mc_version", range)
+        put("loader_version", versionedCatalog.versions["loader"].requiredVersion)
     }
 
     this.inputs.properties(fabricProperties)
 
-    this.filesMatching("fabric.mod.json") {
+    this.filesMatching(if (loader == "ornithe") "ornithe.mod.json" else "fabric.mod.json") {
         expand(fabricProperties)
     }
+    if (loader == "ornithe") {
+        exclude("fabric.mod.json")
+        eachFile { if (path == "ornithe.mod.json") path = "fabric.mod.json" }
+    } else {
+        exclude("ornithe.mod.json")
+        // modern font loading rejects its legacy_unicode provider
+        exclude("assets/oneconfig/font/legacy_default.json")
+    }
 
-    val mixinCompat = if (stonecutter.eval(stonecutter.current.version, ">= 26.1")) "JAVA_25" else "JAVA_21"
+    val mixinCompat = if (
+        stonecutter.eval(stonecutter.current.version, ">= 26.1") ||
+        stonecutter.eval(stonecutter.current.version, "= 1.8.9")
+    ) "JAVA_25" else "JAVA_21"
     this.inputs.property("mixin_compat", mixinCompat)
     this.filesMatching("mixins.oneconfigv1*.json") {
         filter { line -> line.replace("\"JAVA_21\"", "\"$mixinCompat\"") }
@@ -443,7 +436,10 @@ tasks.withType<ProcessResources>() {
 }
 
 val minJavaVersion = 21
-val javaVersion = if (stonecutter.eval(stonecutter.current.version, ">= 26.1")) {
+val javaVersion = if (
+    stonecutter.eval(stonecutter.current.version, ">= 26.1") ||
+    stonecutter.eval(stonecutter.current.version, "= 1.8.9")
+) {
     25
 } else {
     21

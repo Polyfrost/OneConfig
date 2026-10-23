@@ -122,7 +122,10 @@ object ExternalSounds {
     }
 
     private const val PACK_META =
+        //? if > 1.8.9 {
         """{"pack":{"description":"OneConfig downloaded sounds","pack_format":64,"supported_formats":{"min_inclusive":0,"max_inclusive":2147483647},"min_format":0,"max_format":2147483647}}"""
+        //?} else
+        //"""{"pack":{"description":"OneConfig downloaded sounds","pack_format":1}}"""
 
     private fun sha1Of(path: Path): String {
         val digest = MessageDigest.getInstance("SHA-1")

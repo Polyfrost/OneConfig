@@ -26,6 +26,7 @@ object KaleidoCompat {
     private const val COMMENTS = "$PKG.api.metadata.Comments"
     private const val DISPLAY_NAME = "$PKG.api.metadata.DisplayName"
     private const val RANGE_CONSTRAINT = "$PKG.api.Constraint\$Range"
+    private const val ALL_CONSTRAINT = "$PKG.api.Constraint\$All"
 
     private const val DEFAULT_CATEGORY = "General"
 
@@ -62,11 +63,17 @@ object KaleidoCompat {
         val family = (call(config, "family") as? String).orEmpty()
         val id = (call(config, "id") as? String).orEmpty()
         if (id.isBlank()) return null
-        if (!registered.add(if (family.isBlank()) id else "$family/$id")) return null
+        val key = if (family.isBlank()) id else "$family/$id"
+        if (!registered.add(key)) return null
 
         val mod = resolveMod(family, id)
         val modId = mod?.id ?: id
-        if (CompatLoader.nativeLoadedConfigs.contains(modId)) return null
+        // the key stays registered while skipped so later scans stop here, and is released for the retry
+        val retry = Runnable {
+            registered.remove(key)
+            CompatLoader.requireTranslations(skip = true) { parseConfig(config)?.let(CompatSnapshots::register) }
+        }
+        if (CompatLoader.skipExtraction(modId, key, retry)) return null
 
         val tree = Tree.tree()
         tree.id = uniqueTreeId(modId, id)
@@ -76,7 +83,7 @@ object KaleidoCompat {
         tree.noCache = true
         tree.saveFunction = Runnable { runCatching { call(config, "save") } }
         mod?.extractIconFile()?.let { tree.addMetadata("icon_path", it) }
-        CompatLoader.originalScreenOpener(modId)?.let { tree.addMetadata("open_original_screen", it) }
+        CompatLoader.originalScreenOpener(modId)?.let { tree.addMetadata(CompatLoader.OPEN_ORIGINAL_SCREEN, it) }
 
         val nodes = call(config, "nodes") as? Iterable<*> ?: return null
         var added = 0
@@ -160,8 +167,8 @@ object KaleidoCompat {
                 visualizer = if (range != null) Visualizer.SliderVisualizer::class.java else Visualizer.NumberVisualizer::class.java
                 val whole = type == Integer::class.java || type == java.lang.Long::class.java ||
                         type == java.lang.Short::class.java || type == java.lang.Byte::class.java
-                extraMetadata["min"] = range?.first?.toFloat() ?: 0f
-                extraMetadata["max"] = range?.second?.toFloat() ?: 100f
+                extraMetadata["min"] = range?.first?.toFloat() ?: -Float.MAX_VALUE
+                extraMetadata["max"] = range?.second?.toFloat() ?: Float.MAX_VALUE
                 if (whole) extraMetadata["step"] = 1f
                 @Suppress("UNCHECKED_CAST")
                 property = functional(value, id, name, description, type as Class<Any>) { coerceNumber(it, type) }
@@ -170,20 +177,28 @@ object KaleidoCompat {
             current is String || default is String -> {
                 visualizer = Visualizer.TextVisualizer::class.java
                 property = functional(value, id, name, description, String::class.java) { it?.toString() ?: "" }
+                regexOf(value)?.let { extraMetadata["regex"] = it }
             }
 
             current is List<*> || default is List<*> -> {
-                val elementType = ((current as? List<*>) ?: (default as? List<*>))
-                    ?.firstOrNull { it != null }?.javaClass ?: return null
+                val elementType = (current ?: default)?.let { call(it, "getType") } as? Class<*>
+                    ?: ((current as? List<*>) ?: (default as? List<*>))?.firstOrNull { it != null }?.javaClass
+                    ?: return null
                 when {
                     Number::class.java.isAssignableFrom(elementType) -> {
                         visualizer = if (range != null) Visualizer.SliderListVisualizer::class.java
                         else Visualizer.NumberListVisualizer::class.java
-                        extraMetadata["min"] = range?.first?.toFloat() ?: 0f
-                        extraMetadata["max"] = range?.second?.toFloat() ?: 100f
+                        extraMetadata["min"] = range?.first?.toFloat() ?: -Float.MAX_VALUE
+                        extraMetadata["max"] = range?.second?.toFloat() ?: Float.MAX_VALUE
+                        if (elementType == Integer::class.java || elementType == java.lang.Long::class.java ||
+                            elementType == java.lang.Short::class.java || elementType == java.lang.Byte::class.java
+                        ) extraMetadata["step"] = 1f
                     }
 
-                    elementType == String::class.java -> visualizer = Visualizer.TextListVisualizer::class.java
+                    elementType == String::class.java -> {
+                        visualizer = Visualizer.TextListVisualizer::class.java
+                        regexOf(value)?.let { extraMetadata["regex"] = it }
+                    }
                     else -> return null
                 }
                 property = listProperty(value, id, name, description, elementType) ?: return null
@@ -233,9 +248,10 @@ object KaleidoCompat {
             setter = { v: List<Any?> ->
                 runCatching {
                     val elements = v.map { coerceElement(it, elementType) }
-                    val fallback = elements.firstOrNull()
-                        ?: (call(value, "getDefaultValue") as? List<*>)?.firstOrNull { it != null }
-                        ?: return@runCatching
+                    val fallback = call(value, "value")?.let { call(it, "getDefaultValue") }
+                        ?: call(value, "getDefaultValue")?.let { call(it, "getDefaultValue") }
+                        ?: elements.firstOrNull()
+                        ?: coerceElement(null, elementType)
                     val array = ReflectArray.newInstance(Any::class.java, elements.size) as Array<Any?>
                     elements.forEachIndexed { index, element -> array[index] = element }
                     setValue(value, create.invoke(null, fallback, array))
@@ -273,16 +289,31 @@ object KaleidoCompat {
     private fun enumClassOf(type: Class<*>): Class<*> =
         if (type.isEnum) type else type.superclass?.takeIf { it.isEnum } ?: type
 
+    private fun constraintsOf(value: Any): List<Any> {
+        val constraints = runCatching { call(value, "constraints") as? Iterable<*> }.getOrNull() ?: return emptyList()
+        return constraints.filterNotNull().map { constraint ->
+            if (!isInstance(ALL_CONSTRAINT, constraint)) constraint
+            else runCatching { readField(constraint, "constraint") }.getOrNull() ?: constraint
+        }
+    }
+
     private fun rangeOf(value: Any): Pair<Number, Number>? {
-        val constraints = runCatching { call(value, "constraints") as? Iterable<*> }.getOrNull() ?: return null
-        for (constraint in constraints) {
-            if (constraint == null || !isInstance(RANGE_CONSTRAINT, constraint)) continue
+        for (constraint in constraintsOf(value)) {
+            if (!isInstance(RANGE_CONSTRAINT, constraint)) continue
             val min = call(constraint, "min") as? Number ?: continue
             val max = call(constraint, "max") as? Number ?: continue
             return min to max
         }
         return null
     }
+
+    private fun regexOf(value: Any): String? = constraintsOf(value).firstNotNullOfOrNull { constraint ->
+        constraint.javaClass.declaredFields.firstOrNull { it.type == java.util.regex.Pattern::class.java }
+            ?.let { runCatching { it.isAccessible = true; (it.get(constraint) as? java.util.regex.Pattern)?.pattern() }.getOrNull() }
+    }
+
+    private fun readField(target: Any, name: String): Any? =
+        target.javaClass.getDeclaredField(name).apply { isAccessible = true }.get(target)
 
     private fun metadataOfType(node: Any, className: String): Any? {
         val map = runCatching { call(node, "metadata") as? Map<*, *> }.getOrNull() ?: return null

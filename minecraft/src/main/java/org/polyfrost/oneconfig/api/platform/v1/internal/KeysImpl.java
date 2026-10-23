@@ -38,6 +38,11 @@ public class KeysImpl implements Keys {
     }
 
     @Override
+    public int getKeyF() {
+        return InputConstants.KEY_F;
+    }
+
+    @Override
     public int getKeyH() {
         return InputConstants.KEY_H;
     }
@@ -60,6 +65,16 @@ public class KeysImpl implements Keys {
     @Override
     public int getKeyX() {
         return InputConstants.KEY_X;
+    }
+
+    @Override
+    public int getKeyY() {
+        return InputConstants.KEY_Y;
+    }
+
+    @Override
+    public int getKeyZ() {
+        return InputConstants.KEY_Z;
     }
 
     @Override

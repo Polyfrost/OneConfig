@@ -1,224 +1,32 @@
 package org.polyfrost.oneconfig.internal.ui.shell
 
-import androidx.compose.foundation.lazy.grid.LazyGridState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.geometry.Rect
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LifecycleRegistry
-import androidx.lifecycle.ViewModelStore
-import androidx.lifecycle.ViewModelStoreOwner
-import androidx.navigation.NavHostController
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
+import org.polyfrost.oneconfig.api.hud.v1.HudManager
+import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 
 object HudEditorRoute
 
-object Lifecycle : LifecycleOwner {
-    override val lifecycle = LifecycleRegistry(this)
+enum class SearchFocus {
+    SelectAll,
+
+    /** Focuses the search field and leaves its text and cursor alone */
+    Focus,
+    Unfocus,
 }
-object OCViewModelStoreOwner: ViewModelStoreOwner {
-    override val viewModelStore: ViewModelStore = ViewModelStore()
-}
+
 object ShellState {
-    var title by mutableStateOf<String?>(null)
-    var titleInfoForTitle by mutableStateOf<String?>(null)
-    var titleAuthors by mutableStateOf<String?>(null)
-    var titleCredits by mutableStateOf<String?>(null)
-    var titleVersion by mutableStateOf<String?>(null)
-
-    var openOriginalScreen by mutableStateOf<Runnable?>(null)
-
-    var playerName by mutableStateOf("Player")
-
-    /** PNG bytes for the local player's head avatar or null until loaded */
-    var playerHeadPng by mutableStateOf<ByteArray?>(null)
-
-    var versionLabel by mutableStateOf("")
-
-    var searchQuery by mutableStateOf("")
-
-    var globalSearchActive by mutableStateOf(false)
-
-    var focusSearchField by mutableStateOf(false)
-
-    /** Whether the search field holds focus mirrored here so a discarded composition can recover it */
-    var searchFieldFocused: Boolean = false
-
-    var showSearchField by mutableStateOf(false)
-
-    var hudDragging by mutableStateOf(false)
-
-    var shellBounds by mutableStateOf<Rect?>(null)
-
-    var flipTopOptionOrder by mutableStateOf(false)
-
-    /** Content-panel background opacity from 0 to 100 mirrored from config so slider changes apply live */
-    var pageOpacity by mutableStateOf(88f)
-
-    /** Sidebar background opacity from 0 to 100 mirrored from config so slider changes apply live */
-    var sidebarOpacity by mutableStateOf(80f)
-
-    /** Accent glow opacity from 0 to 100 for the two blurred circles behind the shell */
-    var glowOpacity by mutableStateOf(25f)
-
-    /** Last top-level route navigated to used by the "Previous page" and "Smart reset" opening behaviors */
-    var lastRoute: Any? = null
-
-    /** Where each scrollable page was left keyed by page key see [rememberRestorableLazyListState] */
-    val scrollAnchors = mutableMapOf<String, ScrollAnchor>()
-
-    val gridStates = mutableMapOf<String, LazyGridState>()
-
-    /** Last selected settings tab per page key restored when a page is reopened or navigated back to */
-    val selectedCategories = mutableStateMapOf<String, String>()
-
-    /** Wall-clock time in ms the menu was last closed used by the "Smart reset" opening behavior */
-    var lastClosedAt: Long = 0L
-
-    /** Whether the initial page transition on open is animated */
-    var animateOpeningPage: Boolean = false
-
-    /** Consumed once per open so the first page transition can be treated specially */
-    var initialTransitionConsumed: Boolean = false
-
-    /**
-     * True while the menu is composed but has not yet navigated to the page it is opening on
-     *
-     * The nav host must be composed before it can be navigated so it briefly holds the mod grid and this
-     * keeps that placeholder from being drawn
-     */
-    var awaitingInitialRoute by mutableStateOf(false)
-
-    var openingTransitionTarget: String? = null
-}
-object LocalNavController {
-    private var _current: NavHostController? = null
-
-    var current: NavHostController
-        get() = _current!!
+    var searchQuery: String
+        get() = ShellController.shared.search.query
         set(value) {
-            if (_current !== value) {
-                _current = value
-                wrapper.reset()
-            }
+            ShellController.shared.search.update(value)
         }
 
-    /** True once a nav host is attached meaning the OC UI is open and navigable */
-    val isReady: Boolean get() = _current?.currentDestination != null
-
-    val wrapper = NavControllerWrapper
-
-    object NavControllerWrapper {
-        /**
-         * One step of history
-         *
-         * [categoryKey] and [category] record the settings tab selected on the page at that point so
-         * switching tabs inside a page is undoable without touching the nav host
-         */
-        private data class Entry(
-            val route: Any,
-            val categoryKey: String? = null,
-            val category: String? = null,
-        )
-
-        private val backStack = ArrayDeque<Entry>()
-        private val forwardStack = ArrayDeque<Entry>()
-
-        private var currentEntry = Entry(ModsGraph)
-
-        val currentRoute: Any get() = currentEntry.route
-
-        fun reset() {
-            backStack.clear()
-            forwardStack.clear()
-            currentEntry = Entry(ModsGraph)
-        }
-
-        private fun host(): NavHostController? = if (isReady) current else null
-
-        /** [clearSearch] is off when the navigation only restores a page the user was already on */
-        fun navigate(route: Any, clearSearch: Boolean = true) {
-            if (route == currentEntry.route) return
-            val host = host() ?: return
-            forwardStack.clear()
-            backStack.addLast(currentEntry)
-            currentEntry = Entry(route)
-            if (clearSearch) {
-                ShellState.searchQuery = ""
-                ShellState.globalSearchActive = false
-                ShellState.showSearchField = false
-            }
-            ShellState.lastRoute = route
-            seedRouteCategory(route)
-            host.navigate(route)
-        }
-
-        /**
-         * Records an in-page settings tab switch so back and forward walk tabs the same way they walk pages
-         *
-         * [pageKey] identifies the page whose tab changed such as a mod id or "preferences"
-         */
-        fun selectCategory(pageKey: String, category: String) {
-            val previous = ShellState.selectedCategories[pageKey]
-            if (previous == category) return
-            forwardStack.clear()
-            backStack.addLast(currentEntry.copy(categoryKey = pageKey, category = previous))
-            currentEntry = currentEntry.copy(categoryKey = pageKey, category = category)
-            ShellState.selectedCategories[pageKey] = category
-        }
-
-        fun back() {
-            val previous = backStack.lastOrNull() ?: return
-            // same page with only the tab changed so restore it in place with no screen transition
-            if (previous.route == currentEntry.route) {
-                backStack.removeLast()
-                forwardStack.addLast(currentEntry)
-                currentEntry = previous
-                applyCategory(previous)
-                return
-            }
-            val host = host() ?: return
-            if (host.popBackStack()) {
-                forwardStack.addLast(currentEntry)
-                currentEntry = backStack.removeLast()
-                applyCategory(currentEntry)
-                ShellState.lastRoute = currentEntry.route
-                ShellState.globalSearchActive = false
-                ShellState.showSearchField = false
-            }
-        }
-
-        fun forward() {
-            val next = forwardStack.lastOrNull() ?: return
-            val samePage = next.route == currentEntry.route
-            val host = if (samePage) null else (host() ?: return)
-            forwardStack.removeLast()
-            backStack.addLast(currentEntry)
-            currentEntry = next
-            if (host != null) seedRouteCategory(next.route)
-            applyCategory(next)
-            if (host == null) return
-            ShellState.lastRoute = next.route
-            ShellState.globalSearchActive = false
-            ShellState.showSearchField = false
-            host.navigate(next.route)
-        }
-
-        /** A route that names a category such as an external deep link overrides the remembered tab */
-        private fun seedRouteCategory(route: Any) {
-            val modConfig = route as? ModConfigRoute ?: return
-            val category = modConfig.category ?: return
-            ShellState.selectedCategories[modConfig.id] = category
-        }
-
-        /** Restores the tab an entry was recorded with where a null category means the page default */
-        private fun applyCategory(entry: Entry) {
-            val key = entry.categoryKey ?: return
-            if (entry.category == null) ShellState.selectedCategories.remove(key)
-            else ShellState.selectedCategories[key] = entry.category
-        }
+    @JvmStatic
+    fun handleSearchKeybind(pressed: Boolean): Boolean {
+        if (KeybindRecordingBus.isRecording) return false
+        if (HudDesignSession.handleSearch(pressed)) return true
+        if (!pressed || !HudManager.isConfigUiOpen) return false
+        ShellController.shared.search.requestFocus(SearchFocus.SelectAll)
+        return true
     }
 }

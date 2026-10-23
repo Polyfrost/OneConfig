@@ -81,10 +81,10 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
 
     override var x: Float
         get() = guard<Float?>("x", null) { wrapper.x }?.also { lastX = it } ?: lastX
-        set(value) { guard("x", Unit) { wrapper.x = value; lastX = value } }
+        set(value) { if (value == x) return; guard("x", Unit) { wrapper.x = value; lastX = value } }
     override var y: Float
         get() = guard<Float?>("y", null) { wrapper.y }?.also { lastY = it } ?: lastY
-        set(value) { guard("y", Unit) { wrapper.y = value; lastY = value } }
+        set(value) { if (value == y) return; guard("y", Unit) { wrapper.y = value; lastY = value } }
     override var relativeX: Float
         get() = x
         set(value) { x = value }
@@ -94,7 +94,7 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
 
     override var customScale: Float
         get() = guard<Float?>("scale", null) { wrapper.scale }?.also { lastScale = it } ?: lastScale
-        set(value) { guard("scale", Unit) { wrapper.scale = value; lastScale = value } }
+        set(value) { keepPinned { guard("scale", Unit) { wrapper.scale = value; lastScale = value } } }
 
     private var lastW = 0f
     private var lastH = 0f
@@ -131,7 +131,27 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
     override val resizeAxes: HudResize get() = guard("resizeAxes", HudResize.None) { wrapper.resizeAxes }
 
     override fun applyEditorWidth(width: Float) {
-        guard("scaledWidth", Unit) { wrapper.scaledWidth = width }
+        keepPinned { guard("scaledWidth", Unit) { wrapper.scaledWidth = width } }
+    }
+
+    // the size updates immediately so no deferred unpin is needed
+    private var pin: HudAnchor? = null
+    private var pinX = 0f
+    private var pinY = 0f
+
+    override fun pinCorner(pin: HudAnchor) {
+        this.pin = pin
+        pinX = anchorPointX(pin)
+        pinY = anchorPointY(pin)
+    }
+    override fun unpinCorner() { pin = null }
+    override fun settlePin() {}
+
+    private inline fun keepPinned(change: () -> Unit) {
+        val pin = pin ?: return change()
+        change()
+        x = pinX - (anchorPointX(pin) - x)
+        y = pinY - (anchorPointY(pin) - y)
     }
 
     override fun updateRelativeX(absX: Float) { x = absX }
@@ -238,6 +258,7 @@ interface OneConfigHudWrapper {
         if (modId != null) HudManager.register(hud, modId) else HudManager.register(hud)
         hud.make()
         HudManager.activeInstances.add(hud)
+        HudManager.instancesRevision.intValue++
         hud.setup()
         val tree = hud.tree
         if (tree != null) {

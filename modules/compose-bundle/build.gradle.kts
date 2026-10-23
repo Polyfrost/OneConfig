@@ -7,7 +7,7 @@ import net.fabricmc.loom.task.NestJarsAction
 // NOTE: bump the prefix whenever the compose version changes: the "+compose.x.y.z" part is semver
 // build metadata, which version comparisons ignore, so updaters and dependency constraints
 // only see the prefix
-version = "1.0.5+compose.${libs.versions.compose.asProvider().get()}"
+version = "1.0.6+compose.${libs.versions.compose.asProvider().get()}"
 
 repositories {
     maven("https://redirector.kotlinlang.org/maven/compose-dev")
@@ -21,15 +21,7 @@ val shade: Configuration by configurations.creating {
     exclude(group = "org.jetbrains", module = "annotations")
     // empty relocation shims whose jar filenames collide with the real androidx-coordinate artifacts of the same name and version
     exclude(group = "org.jetbrains.compose.runtime")
-}
-
-fun isExcludedFromBundle(file: File): Boolean {
-    val artifact = shade.resolvedConfiguration.resolvedArtifacts.find { it.file == file }
-    return artifact?.moduleVersion?.id?.let { id ->
-        id.group == "org.jetbrains.kotlin" ||
-            id.group == "org.jetbrains.kotlinx" ||
-            (id.group == "org.jetbrains" && id.name == "annotations")
-    } ?: false
+    exclude(group = "org.jetbrains.skiko", module = "skiko-awt-runtime-all")
 }
 
 dependencies {
@@ -43,6 +35,7 @@ dependencies {
     shade(libs.jetbrains.compose.ui.backhandler)
     shade(libs.jetbrains.skiko.awt)
     shade(libs.jetbrains.skiko.awt.runtime.windows.x64)
+    shade(libs.jetbrains.skiko.awt.runtime.windows.arm64)
     shade(libs.jetbrains.skiko.awt.runtime.linux.x64)
     shade(libs.jetbrains.skiko.awt.runtime.linux.arm64)
     shade(libs.jetbrains.skiko.awt.runtime.macos.x64)
@@ -65,14 +58,15 @@ private fun createProcessTask(): TaskProvider<NestableJarGenerationTask> {
 val processTask = createProcessTask()
 
 processTask.configure {
+    val shadeArtifacts = shade.incoming.artifacts.resolvedArtifacts
     doFirst {
-        val collisions = shade.resolvedConfiguration.resolvedArtifacts
+        val collisions = shadeArtifacts.get()
             .groupBy { it.file.name }
             .filterValues { it.size > 1 }
         check(collisions.isEmpty()) {
             "Nested jar filename collisions in the compose bundle, exclude the redundant artifacts:\n" +
                 collisions.entries.joinToString("\n") { (name, artifacts) ->
-                    "  $name -> ${artifacts.map { it.moduleVersion.id }}"
+                    "  $name -> ${artifacts.map { it.id.componentIdentifier.displayName }}"
                 }
         }
     }
@@ -101,10 +95,30 @@ tasks.jar {
 }
 
 tasks.processResources {
-    val props = mapOf("version" to project.version)
+    // the version already carries "+compose..." build metadata, and a second '+' would make it non-semver
+    val props = mapOf(
+        "version" to "${project.version}.fabric",
+        "loader_version" to fabric.versions.loader.get(),
+        "flk_version" to libs.versions.fabric.language.kotlin.get(),
+    )
     inputs.properties(props)
     filesMatching("fabric.mod.json") { expand(props) }
 }
+
+// Modrinth requires distinct hashes per upload, so the Ornithe jar only differs in its version metadata
+val ornitheJar by tasks.registering(Zip::class) {
+    val modVersion = project.version.toString()
+    from(zipTree(tasks.jar.flatMap { it.archiveFile }))
+    filesMatching("fabric.mod.json") {
+        filter { it.replace("$modVersion.fabric", "$modVersion.ornithe") }
+    }
+    destinationDirectory = tasks.jar.flatMap { it.destinationDirectory }
+    archiveBaseName = tasks.jar.flatMap { it.archiveBaseName }
+    archiveVersion = tasks.jar.flatMap { it.archiveVersion }
+    archiveClassifier = "ornithe"
+    archiveExtension = "jar"
+}
+tasks.assemble { dependsOn(ornitheJar) }
 
 apply(plugin = "oneconfig-compose-bundle-publish")
 
@@ -112,7 +126,7 @@ val modPublishTasks = tasks.named("publishMods").get().dependsOn.toList()
 
 tasks.register("publishComposeBundle") {
     group = "publishing"
-    description = "Publishes compose-bundle to the Polyfrost maven repositories and Modrinth."
+    description = "Publishes compose-bundle to the Polyfrost maven repositories, Modrinth and CurseForge."
     dependsOn(tasks.withType<PublishToMavenRepository>(), modPublishTasks)
 }
 

@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: api-check
+        name: API Check
+        language: system
+        entry: ./gradlew -p modules apiCheck
+        files: '^modules/.+\.(java|kt)$'
+        pass_filenames: false

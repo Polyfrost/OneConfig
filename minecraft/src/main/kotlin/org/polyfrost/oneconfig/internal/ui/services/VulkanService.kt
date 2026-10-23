@@ -20,9 +20,19 @@ interface VulkanService {
 
     val offscreenNeedsPerFrameRewrap: Boolean get() = false
 
+    /**
+     * True when [restoreMainRTLayout] transitions out of the color attachment layout, so Skia has to
+     * have rendered to the main target that frame
+     */
+    val mainRTRestoreNeedsColorPass: Boolean get() = false
+
     fun transitionOffscreenForSampling(target: RenderTarget) {}
 
     fun transitionOffscreenForRendering(target: RenderTarget) {}
+
+    fun transitionSkiaTargetForSampling(target: RenderTarget) {}
+
+    fun transitionSkiaTargetForRendering(target: RenderTarget) {}
 
     fun clearOffscreenRect(x: Int, y: Int, width: Int, height: Int): Boolean = false
 

@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import net.minecraft.client.Minecraft
-import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import org.jetbrains.skia.Rect
@@ -32,12 +31,17 @@ import org.polyfrost.oneconfig.internal.ui.components.item.MinecraftItemCatalogS
 import org.polyfrost.oneconfig.internal.ui.components.item.polyItemRenderSizePx
 import org.polyfrost.oneconfig.internal.ui.components.item.rememberItemIconHandle
 
+//? if > 1.8.9 {
+import net.minecraft.core.registries.BuiltInRegistries
+//?}
+
 private const val ITEM_SIZE = 16f
 private const val BAR_X = 2f
 private const val BAR_Y = 13f
 private const val BAR_WIDTH = 13f
 
 private val BAR_BACKGROUND = PolyColor(0xFF000000.toInt())
+//? if > 1.8.9 {
 private val COOLDOWN_OVERLAY = PolyColor(0x7FFFFFFF)
 
 private val clientDispatcher by lazy { Minecraft.getInstance().asCoroutineDispatcher() }
@@ -50,6 +54,7 @@ private suspend fun awaitClientTick() {
     val seen = clientTicks.value
     clientTicks.first { it != seen }
 }
+//?}
 
 /** Draws the item identified by its registry ID, or a placeholder while it is unavailable. */
 @Composable
@@ -78,6 +83,7 @@ fun PolyItemIcon(
 /** Draws the default icon for [item]. */
 @Composable
 fun PolyItemIcon(item: Item, size: Float = 16f, modifier: PolyModifier = PolyModifier) {
+    //~ if = 1.8.9 'BuiltInRegistries.ITEM' -> 'Item.REGISTRY'
     val id = remember(item) { BuiltInRegistries.ITEM.getKey(item).toString() }
     PolyItemIcon(id, size, modifier)
 }
@@ -115,6 +121,7 @@ fun PolyItemIcon(
 
         val scale = size / ITEM_SIZE
         ItemDurability(stack, scale)
+        //? if > 1.8.9
         ItemCooldown(stack, scale)
         ItemCount(stack, countOverride, scale)
     }
@@ -133,6 +140,7 @@ private fun ItemDurability(stack: ItemStack, scale: Float) {
     }
 }
 
+//? if > 1.8.9 {
 @Composable
 private fun ItemCooldown(stack: ItemStack, scale: Float) {
     val size = ITEM_SIZE * scale
@@ -177,6 +185,7 @@ private fun cooldownHeight(stack: ItemStack): Int {
     //?}
     return ceil(ITEM_SIZE * cooldown).toInt().coerceIn(0, ITEM_SIZE.toInt())
 }
+//?}
 
 @Composable
 private fun ItemCount(stack: ItemStack, countOverride: String?, scale: Float) {

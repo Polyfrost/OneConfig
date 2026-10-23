@@ -18,10 +18,8 @@ import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.Minecraft
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 
-//? if >= 26.1 {
+//? if >= 26.1 || = 1.8.9 {
 import androidx.compose.ui.platform.PlatformTextInputMethodRequest
-import com.mojang.blaze3d.platform.TextInputManager
-import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.awaitCancellation
 //?}
 
@@ -76,7 +74,7 @@ private class PlatformScreenReaderImpl : PlatformScreenReader {
 }
 
 @OptIn(InternalComposeUiApi::class, ExperimentalComposeUiApi::class)
-private class PlatformImpl : PlatformContext {
+private class PlatformImpl : PlatformContext by PlatformContext.Empty() {
     override val windowInfo: WindowInfo = WindowInfoImpl()
     override val screenReader: PlatformScreenReader = PlatformScreenReaderImpl()
     override val inputModeManager: InputModeManager = InputModeManagerImpl()
@@ -133,35 +131,62 @@ private class PlatformImpl : PlatformContext {
         return Minecraft.getInstance().isWindowActive
     }
 
-    //? if >= 26.1 {
-    private val textInputSessions = AtomicInteger()
-
-    override suspend fun startInputMethod(request: PlatformTextInputMethodRequest): Nothing {
-        textInputSessions.incrementAndGet()
-        //~ if sdl 'startTextInput()' -> 'startTextInput(this)'
-        onClientThread { it.startTextInput(this) }
-        try {
-            awaitCancellation()
-        } finally {
-            if (textInputSessions.decrementAndGet() == 0) {
-                //~ if sdl 'stopTextInput()' -> 'stopTextInput(this)'
-                onClientThread { it.stopTextInput(this) }
-            }
-        }
-    }
-
-    private fun onClientThread(block: (TextInputManager) -> Unit) {
-        val mc = Minecraft.getInstance()
-        mc.execute { block(mc.textInputManager()) }
-    }
-    //?}
-
     private fun allowCursorChanges(): Boolean {
         //? if >= 1.21.10 {
         return Minecraft.getInstance().options.allowCursorChanges().get()
         //?} else
         //return true
     }
+}
+
+/**
+ * A single scene's platform context, sharing [ComposeSceneContextImpl] except for text input
+ *
+ * Text input stays on only while a field is focused and [isShowing] is true, so a hidden retained scene
+ * keeps its focus without leaving input on for other screens
+ *
+ * Client thread only
+ */
+@OptIn(InternalComposeUiApi::class, ExperimentalComposeUiApi::class)
+internal class SceneContext(
+    private val isShowing: () -> Boolean,
+) : PlatformContext by ComposeSceneContextImpl.platformContext {
+    //? if >= 26.1 || = 1.8.9 {
+    private var sessions = 0
+    private var inputActive = false
+    private var closed = false
+
+    override suspend fun startInputMethod(request: PlatformTextInputMethodRequest): Nothing {
+        sessions++
+        sync()
+        try {
+            awaitCancellation()
+        } finally {
+            sessions--
+            sync()
+        }
+    }
+
+    /** Starts or stops text input to match this scene's sessions and whether its screen is showing, only ever stopping input it started */
+    fun sync() {
+        val wanted = !closed && sessions > 0 && isShowing()
+        if (wanted == inputActive) return
+        inputActive = wanted
+        val input = Minecraft.getInstance().textInputManager()
+        //~ if sdl 'TextInput()' -> 'TextInput(this)' {
+        if (wanted) input.startTextInput(this)
+        else input.stopTextInput(this)
+        //~}
+    }
+
+    fun close() {
+        closed = true
+        sync()
+    }
+    //?} else {
+    /*fun sync() {}
+    fun close() {}
+    *///?}
 }
 
 @OptIn(InternalComposeUiApi::class, ExperimentalComposeUiApi::class)

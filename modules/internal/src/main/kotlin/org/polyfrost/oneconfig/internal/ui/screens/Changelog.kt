@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,17 +8,15 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -65,11 +62,14 @@ import org.commonmark.node.Text as CmText
 import org.commonmark.parser.Parser
 import org.polyfrost.oneconfig.internal.ui.api.ChangelogData
 import org.polyfrost.oneconfig.internal.ui.api.ChangelogSection
+import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ChangeLogEntryRoute
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
-import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
+import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
+import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
+import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -229,8 +229,10 @@ private fun MdBlocks(node: Node, styles: MdStyles, modifier: Modifier = Modifier
 
 @Composable
 fun Changelog() {
-    val lazyListState = rememberLazyListState()
-    val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
+    val localSearchQuery = pageSearchQuery().trim()
+    // back/forward re-navigate rather than pop so nav-host saved state is gone on return; keep the
+    // position in the shell's scroll memory like the other list pages
+    val lazyListState = rememberRestorableLazyListState("changelog", localSearchQuery)
     val visibleSections = remember(localSearchQuery) {
         changelogs.sections.mapIndexed { index, section -> index to section }
             .filter { (_, section) ->
@@ -245,20 +247,17 @@ fun Changelog() {
         return
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    ScrollbarBox(lazyListState, PageGutter, Modifier.fillMaxSize()) {
         LazyColumn(
             state = lazyListState,
-            modifier = Modifier.fillMaxSize().padding(end = 16.dp),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = PageGutter),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             visibleSections.forEach { (index, section) ->
                 item { ChangelogEntry(section, index) }
             }
         }
-        VerticalScrollbar(
-            adapter = rememberScrollbarAdapter(lazyListState),
-            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
-        )
     }
 }
 
@@ -283,8 +282,8 @@ fun Changelog(index: Int) {
 
     val scrollState = rememberScrollState()
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(end = 16.dp)) {
+    ScrollbarBox(scrollState, PageGutter, Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(horizontal = PageGutter)) {
             data.headerImageUrl?.let { url ->
                 Box(
                     modifier = Modifier.fillMaxWidth().height(221.dp)
@@ -327,16 +326,13 @@ fun Changelog(index: Int) {
                 MdBlocks(node = doc, styles = styles, modifier = Modifier.fillMaxWidth())
             }
         }
-        VerticalScrollbar(
-            adapter = rememberScrollbarAdapter(scrollState),
-            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
-        )
     }
 }
 
 @Composable
 fun ChangelogEntry(data: ChangelogSection, index: Int) {
     val theme = LocalTheme.current
+    val navigation = LocalShell.current.navigation
     val styles = MdStyles(
         body = TextStyle(fontFamily = theme.typography.family, fontSize = 13.sp, color = theme.textColorSecondary),
         headingColor = theme.textColor,
@@ -429,7 +425,7 @@ fun ChangelogEntry(data: ChangelogSection, index: Int) {
                     Text(data.date, color = theme.textColorSecondary, fontSize = 12.sp)
                     Box(
                         modifier = Modifier.clickable {
-                            LocalNavController.wrapper.navigate(ChangeLogEntryRoute(index))
+                            navigation.navigate(ChangeLogEntryRoute(index))
                         }.pointerHoverIcon(PointerIcon.Hand)
                     ) {
                         Text("Read more", color = Accent, fontSize = 12.sp, fontWeight = FontWeight.Medium)

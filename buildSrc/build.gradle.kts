@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "2.2.10"
+    kotlin("jvm") version "2.3.20" // keep compatible with kotlin-dsl
     `kotlin-dsl`
 }
 
@@ -7,6 +7,7 @@ repositories {
     mavenCentral()
     gradlePluginPortal()
     maven("https://maven.fabricmc.net/")
+    maven("https://maven.ornithemc.net/releases")
     maven("https://repo.polyfrost.org/releases")
     maven("https://maven.modmuss50.me/releases")
 }
@@ -18,7 +19,7 @@ fun plugin(supplier: ProviderConvertible<PluginDependency>): Provider<String> = 
 
 dependencies {
     // Mirroring https://github.com/EssentialGG/essential-gradle-toolkit/blob/master/build.gradle.kts
-    implementation("org.ow2.asm:asm-commons:9.8")
+    implementation("org.ow2.asm:asm-commons:9.11")
     implementation("com.google.guava:guava:33.0.0-jre")
 
     implementation("org.jetbrains.kotlin:kotlin-metadata-jvm:2.2.10")
@@ -29,8 +30,10 @@ dependencies {
     implementation(plugin(fabric.plugins.loom))
     implementation(plugin(fabric.plugins.loom.remap))
 
+    implementation(plugin(ornithe.plugins.ploceus))
+
     implementation(plugin(neoforge.plugins.moddev))
 
-    implementation("dev.kikugie.stonecutter:dev.kikugie.stonecutter.gradle.plugin:0.9")
+    implementation("dev.kikugie.stonecutter:dev.kikugie.stonecutter.gradle.plugin:0.9.8")
     implementation("me.modmuss50.mod-publish-plugin:me.modmuss50.mod-publish-plugin.gradle.plugin:1.1.0")
 }

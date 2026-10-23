@@ -8,9 +8,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,11 +36,10 @@ import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.components.RetainedVisibility
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDragLayer
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
-import org.polyfrost.oneconfig.internal.ui.shell.Lifecycle
-import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
-import org.polyfrost.oneconfig.internal.ui.shell.OCViewModelStoreOwner
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShellNavController
 import org.polyfrost.oneconfig.internal.ui.shell.Shell
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.ShellController
 import org.polyfrost.oneconfig.internal.ui.themes.Theme
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
 
@@ -59,9 +58,7 @@ fun OneConfigInterface(
     windowWidth: Float,
     windowHeight: Float,
     initialRoute: Any = ModsGraph,
-    /** Set when the scene is being rebuilt for a session already in progress so its search survives */
-    resuming: Boolean = false,
-    /** Set when [initialRoute] is a page the user was already on which is put back without a transition */
+    /** Set when [initialRoute] is a page the user was already on which is put back without a transition and keeps its search */
     restoring: Boolean = false,
     openRevision: Int = 0,
     onCloseRequest: () -> Unit = {},
@@ -71,51 +68,51 @@ fun OneConfigInterface(
 ) {
     ThemeRegistry.init()
 
-    LocalNavController.current = rememberNavController()
+    val shell = ShellController.shared
+    val navController = rememberNavController()
+    DisposableEffect(navController) {
+        shell.navigation.attach(navController)
+        onDispose { shell.navigation.detach(navController) }
+    }
 
     LaunchedEffect(initialRoute, openRevision) {
-        val alreadyThere = initialRoute == LocalNavController.wrapper.currentRoute
-        if (!resuming) {
-            ShellState.globalSearchActive = false
-            ShellState.searchQuery = ""
-            ShellState.showSearchField = false
-        }
+        shell.navigation.attach(navController)
+        val alreadyThere = initialRoute == shell.navigation.currentRoute
+        if (!restoring) shell.search.clear()
 
-        ShellState.openingTransitionTarget = null
-        ShellState.awaitingInitialRoute = !alreadyThere
-        if (!alreadyThere) {
-            // an initial navigation fires a page transition gated by "Show opening page animation" unless
-            // the page is only being put back which should look like it was never left
-            ShellState.initialTransitionConsumed = false
-            ShellState.animateOpeningPage = !restoring && OneConfigConfig.showOpeningPageAnimation
-            // the NavHost only sets its graph once the Shell is composed so wait for it or navigate()
-            // crashes with "must call setGraph() before getGraph()"
-            if (ShellState.animateOpeningPage) {
-                var attempts = 0
-                while (attempts++ < 600) {
-                    val ready = try {
-                        LocalNavController.current.graph; true
-                    } catch (_: IllegalStateException) {
-                        false
+        try {
+            if (!alreadyThere) {
+                shell.transitions.beginOpening()
+                // an initial navigation fires a page transition gated by "Show opening page animation" unless
+                // the page is only being put back which should look like it was never left
+                val animateOpening = !restoring && OneConfigConfig.showOpeningPageAnimation
+                // the NavHost only sets its graph once the Shell is composed so wait for it or navigate()
+                // crashes with "must call setGraph() before getGraph()"
+                if (animateOpening) {
+                    var attempts = 0
+                    while (attempts++ < 600) {
+                        val ready = try {
+                            navController.graph; true
+                        } catch (_: IllegalStateException) {
+                            false
+                        }
+                        if (ready) break
+                        withFrameNanos { }
                     }
-                    if (ready) break
-                    withFrameNanos { }
+                } else {
+                    withTimeoutOrNull(GRAPH_WAIT_TIMEOUT_MS) {
+                        navController.currentBackStackEntryFlow.first()
+                    }
                 }
-            } else {
-                withTimeoutOrNull(GRAPH_WAIT_TIMEOUT_MS) {
-                    LocalNavController.current.currentBackStackEntryFlow.first()
+                try {
+                    shell.navigation.navigate(initialRoute, clearSearch = !restoring, animate = animateOpening)
+                } catch (t: Throwable) {
+                    LOGGER.error("Failed to open the OneConfig UI on {}, falling back to the mods page", initialRoute, t)
+                    runCatching { shell.navigation.navigate(ModsGraph) }
                 }
             }
-            try {
-                LocalNavController.wrapper.navigate(initialRoute, clearSearch = !resuming)
-            } catch (t: Throwable) {
-                LOGGER.error("Failed to open the OneConfig UI on {}, falling back to the mods page", initialRoute, t)
-                runCatching { LocalNavController.wrapper.navigate(ModsGraph, clearSearch = !resuming) }
-            }
-            ShellState.awaitingInitialRoute = false
-        } else {
-            // no initial navigation so the first user-driven transition uses the normal setting
-            ShellState.initialTransitionConsumed = true
+        } finally {
+            shell.transitions.finishOpening()
         }
     }
 
@@ -139,7 +136,11 @@ fun OneConfigInterface(
         onOpenReady?.invoke(requestOpen)
     }
 
-    CompositionLocalProvider(LocalCloseRequest provides requestClose) {
+    CompositionLocalProvider(
+        LocalCloseRequest provides requestClose,
+        LocalShell provides shell,
+        LocalShellNavController provides navController,
+    ) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -161,15 +162,15 @@ fun OneConfigInterface(
 
             CompositionLocalProvider(LocalDensity provides adjustedDensity) {
                 CompositionLocalProvider(
-                    LocalLifecycleOwner provides Lifecycle,
-                    LocalViewModelStoreOwner provides OCViewModelStoreOwner,
+                    LocalLifecycleOwner provides shell.session,
+                    LocalViewModelStoreOwner provides shell.session,
                 ) {
                     Theme(pixelGrid = true) {
                         val animMs = (OneConfigConfig.animationTime * 1000f).toInt().coerceAtLeast(1)
                         val enterMs = if (OneConfigConfig.guiOpenAnimation) animMs else 1
                         val exitMs = guiCloseAnimationMillis().toInt().coerceAtLeast(1)
                         val dragAlpha by animateFloatAsState(
-                            targetValue = if (ShellState.hudDragging) OneConfigConfig.hudDragUiOpacity.coerceIn(0f, 1f) else 1f,
+                            targetValue = if (shell.layout.hudDragging) OneConfigConfig.hudDragUiOpacity.coerceIn(0f, 1f) else 1f,
                             animationSpec = tween(150),
                             label = "hudDragShellAlpha"
                         )
@@ -181,12 +182,10 @@ fun OneConfigInterface(
                             alphaMultiplier = dragAlpha,
                             openKey = openRevision,
                             modifier = Modifier.onGloballyPositioned {
-                                ShellState.shellBounds = it.boundsInRoot()
+                                shell.layout.updateShellBounds(it.boundsInRoot())
                             },
-                        ) { alpha ->
-                            CompositionLocalProvider(LocalOneConfigContentAlpha provides alpha) {
-                                Shell(windowWidth, windowHeight, shellBackdrop)
-                            }
+                        ) { _ ->
+                            Shell(windowWidth, windowHeight, shellBackdrop)
                         }
                     }
                 }
@@ -202,5 +201,3 @@ internal const val EDGE_MARGIN_FRACTION = 0.9f
 private val EaseOutExpo = Easing { x -> if (x >= 1f) 1f else 1f - 2f.pow(-10f * x) }
 
 val LocalCloseRequest = staticCompositionLocalOf { {} }
-
-val LocalOneConfigContentAlpha = compositionLocalOf { 1f }

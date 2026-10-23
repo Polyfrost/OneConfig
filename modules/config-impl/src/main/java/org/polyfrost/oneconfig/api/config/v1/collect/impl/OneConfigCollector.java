@@ -28,10 +28,12 @@ package org.polyfrost.oneconfig.api.config.v1.collect.impl;
 
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import kotlin.Unit;
@@ -42,6 +44,7 @@ import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.Properties;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
+import org.polyfrost.oneconfig.api.config.v1.ValueFormatter;
 import org.polyfrost.oneconfig.api.config.v1.annotations.*;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
 
@@ -79,6 +82,20 @@ public class OneConfigCollector extends ReflectiveCollector {
 
     @Override
     protected void handleField(@NotNull Field f, @NotNull Object src, @NotNull Tree tree) {
+        if (f.isAnnotationPresent(MasterToggle.class)) {
+            Class<?> fieldType = f.getType();
+            if (fieldType != boolean.class && fieldType != Boolean.class) {
+                throw new IllegalArgumentException(String.format(
+                    "@MasterToggle field '%s' must be a boolean, but was %s.",
+                    f.getName(), fieldType.getTypeName()
+                ));
+            }
+            Property<?> p = Properties.field(null, null, f, src);
+            p.addMetadata("hidden", true);
+            p.addMetadata("masterToggle", true);
+            tree.put(p);
+            return;
+        }
         for (Annotation a : f.getDeclaredAnnotations()) {
             Class<? extends Annotation> type = a.annotationType();
             if (type == Include.class) {
@@ -163,6 +180,10 @@ public class OneConfigCollector extends ReflectiveCollector {
                 }
             });
 
+            if (tempData.remove("formatter") instanceof Class<?> formatter && formatter != ValueFormatter.class) {
+                tempData.put("formatter", MHUtils.instantiate(formatter, false).getOrThrow());
+            }
+
             property.addMetadata(tempData);
         }
         DependsOn dependsOn = field.getDeclaredAnnotation(DependsOn.class);
@@ -182,7 +203,9 @@ public class OneConfigCollector extends ReflectiveCollector {
                     throw new IllegalArgumentException(String.format("@RangeSlider field '%s' has step (%s) larger than its range (%s to %s, range=%s). The slider will not function correctly.",
                         field.getName(), slider.step(), slider.min(), slider.max(), range));
                 }
+                validateRangeField(field, property, "@RangeSlider");
             }
+            case RangeNumber ignored -> validateRangeField(field, property, "@RangeNumber");
             case SliderList slider -> {
                 float range = slider.max() - slider.min();
                 if (slider.step() > 0f && slider.step() > range) {
@@ -190,13 +213,23 @@ public class OneConfigCollector extends ReflectiveCollector {
                         field.getName(), slider.step(), slider.min(), slider.max(), range));
                 }
             }
+            case RangeSliderList slider -> {
+                float range = slider.max() - slider.min();
+                if (slider.step() > 0f && slider.step() > range) {
+                    throw new IllegalArgumentException(String.format("@RangeSliderList field '%s' has step (%s) larger than its range (%s to %s, range=%s). The sliders will not function correctly.",
+                        field.getName(), slider.step(), slider.min(), slider.max(), range));
+                }
+                validateRangeListField(field, property, "@RangeSliderList");
+            }
+            case RangeNumberList ignored -> validateRangeListField(field, property, "@RangeNumberList");
             case Color color -> {
                 if (!color.alpha()) property.addMetadata("noAlpha", Unit.INSTANCE);
             }
             case ColorList color -> {
                 if (!color.alpha()) property.addMetadata("noAlpha", Unit.INSTANCE);
             }
-            case ItemList itemList -> validateItemListField(field, itemList);
+            case ItemList itemList -> validateIdListField(field, "@ItemList", itemList.maxEntries());
+            case EffectList effectList -> validateIdListField(field, "@EffectList", effectList.maxEntries());
             default -> {}
         }
 
@@ -211,20 +244,53 @@ public class OneConfigCollector extends ReflectiveCollector {
         }
     }
 
-    private void validateItemListField(Field field, ItemList annotation) {
+    /** A single range needs exactly a start and end, anything else shows min to max and the first write resizes it */
+    private void validateRangeField(Field field, Property<?> property, String annotationName) {
+        int size = rangeFieldSize(field, property, annotationName);
+        if (size >= 0 && size != 2) {
+            throw new IllegalArgumentException(String.format(
+                "%s field '%s' holds %d values but needs exactly a start and an end.",
+                annotationName, field.getName(), size
+            ));
+        }
+    }
+
+    private void validateRangeListField(Field field, Property<?> property, String annotationName) {
+        int size = rangeFieldSize(field, property, annotationName);
+        if (size >= 0 && size % 2 != 0) {
+            throw new IllegalArgumentException(String.format(
+                "%s field '%s' holds %d values but needs a start and end for every range, so an even count.",
+                annotationName, field.getName(), size
+            ));
+        }
+    }
+
+    /** The number of values a range field holds or -1 while it is null */
+    private int rangeFieldSize(Field field, Property<?> property, String annotationName) {
+        Object value = property.get();
+        if (value == null) return -1;
+        if (value.getClass().isArray()) return Array.getLength(value);
+        if (value instanceof Collection<?> c) return c.size();
+        throw new IllegalArgumentException(String.format(
+            "%s field '%s' must be a numeric array or List, but was %s.",
+            annotationName, field.getName(), field.getGenericType().getTypeName()
+        ));
+    }
+
+    private void validateIdListField(Field field, String annotation, int maxEntries) {
         Class<?> type = field.getType();
         boolean stringArray = type.isArray() && type.getComponentType() == String.class;
         boolean stringList = List.class.isAssignableFrom(type) && hasStringListElements(field.getGenericType());
         if (!stringArray && !stringList) {
             throw new IllegalArgumentException(String.format(
-                "@ItemList field '%s' must be a String[] or List<String>, but was %s.",
-                field.getName(), field.getGenericType().getTypeName()
+                "%s field '%s' must be a String[] or List<String>, but was %s.",
+                annotation, field.getName(), field.getGenericType().getTypeName()
             ));
         }
-        if (annotation.maxEntries() < 0) {
+        if (maxEntries < 0) {
             throw new IllegalArgumentException(String.format(
-                "@ItemList field '%s' has a negative maxEntries value (%s).",
-                field.getName(), annotation.maxEntries()
+                "%s field '%s' has a negative maxEntries value (%s).",
+                annotation, field.getName(), maxEntries
             ));
         }
     }

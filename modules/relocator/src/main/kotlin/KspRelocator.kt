@@ -6,6 +6,7 @@ import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.FileLocation
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSDeclaration
+import com.google.devtools.ksp.symbol.KSFile
 import java.io.OutputStream
 import javax.annotation.processing.Generated
 import kotlin.io.path.Path
@@ -21,10 +22,9 @@ internal const val mainMixinPath = "org.polyfrost.oneconfig.internal.mixin"
 
 
 /**
- * The relocator for kotlin source files
+ * The relocator for Kotlin source files.
  */
 internal class KspRelocator : SymbolProcessorProvider, SymbolProcessor {
-
     var hasRun = false
     lateinit var logger: KSPLogger
     lateinit var environment: SymbolProcessorEnvironment
@@ -39,13 +39,18 @@ internal class KspRelocator : SymbolProcessorProvider, SymbolProcessor {
         if (hasRun) return emptyList()
         hasRun = true
         val mixinPaths = mutableListOf<String>()
+        val allSources = mutableSetOf<KSFile>()
         Locations.relocations.forEach { (annotation, relocations) ->
             val symbols = resolver.getSymbolsWithAnnotation(annotation.qualifiedName!!)
+                .filterIsInstance<KSDeclaration>().toList()
+            val sources = symbols.mapNotNull { it.containingFile }
+            allSources += sources
+            // copies reference each other by their relocated names, so each one depends on every annotated file
+            // aggregating also makes incremental KSP hand us all of those files again rather than only the dirty ones
+            val dependencies = Dependencies(true, *sources.toTypedArray())
             val files = mutableMapOf<String, MutableList<Relocation>>()
             symbols.forEach { symbol ->
                 val relocateMixin = symbol.isAnnotationPresent(RelocatedMixin::class)
-
-                val symbol = symbol as? KSDeclaration ?: return@forEach
                 val location = Path((symbol.location as FileLocation).filePath)
                 val content = location.readText()
                 val sourcePackage = relocations.sourcePackage
@@ -60,7 +65,7 @@ internal class KspRelocator : SymbolProcessorProvider, SymbolProcessor {
                         mixinPaths.add(packageName.removePrefix(mainMixinPath).removePrefix(".").let { "$it.$newName" })
                     }
                     val meow = environment.codeGenerator.createNewFile(
-                        Dependencies(false),
+                        dependencies,
                         packageName.replace(".", "/"),
                         newName,
                         location.extension
@@ -124,12 +129,10 @@ internal class KspRelocator : SymbolProcessorProvider, SymbolProcessor {
                             .build()
                     )
                     .build()
-            ).build().writeTo(environment.codeGenerator, Dependencies(false))
-
+            ).build().writeTo(environment.codeGenerator, Dependencies(true, *allSources.toTypedArray()))
 
         return emptyList()
     }
 
     data class Relocation(val output: OutputStream, val content: String, val name: String, val originalName: String)
-
 }

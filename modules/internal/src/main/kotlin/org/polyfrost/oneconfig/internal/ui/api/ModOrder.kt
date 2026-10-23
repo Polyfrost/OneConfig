@@ -27,6 +27,7 @@ object ModOrder {
 
     private fun file(): Path = ConfigManager.internal().folder.resolve(FILE_NAME)
 
+    @Synchronized
     private fun ensureLoaded() {
         if (loaded) return
         loaded = true
@@ -43,6 +44,22 @@ object ModOrder {
         }
     }
 
+    @Synchronized
+    fun current(): List<String> {
+        ensureLoaded()
+        return order.toList()
+    }
+
+    @Synchronized
+    fun replace(ids: List<String>) {
+        ensureLoaded()
+        order.clear()
+        order.addAll(ids.map(String::trim).filter { it.isNotEmpty() }.distinct())
+        revision++
+        persist()
+    }
+
+    @Synchronized
     fun indexOf(id: String): Int {
         ensureLoaded()
         val index = order.indexOf(id)
@@ -55,6 +72,7 @@ object ModOrder {
      * [all] is the full mod list in currently displayed order and seeds the stored order the first time an
      * unknown mod is dragged
      */
+    @Synchronized
     fun reorder(visible: List<String>, all: List<String>) {
         ensureLoaded()
         order.addAll(0, all.filter { it !in order })

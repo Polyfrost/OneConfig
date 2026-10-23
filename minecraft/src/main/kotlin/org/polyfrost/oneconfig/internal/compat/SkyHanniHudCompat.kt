@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.compat
 
+//? if > 1.8.9 {
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import kotlin.reflect.KClass
@@ -359,3 +360,4 @@ private class SkyHanniHudWrapper(private val internalName: String) : OneConfigHu
 
     override fun save() = SkyHanniHudCompat.flush()
 }
+//?}

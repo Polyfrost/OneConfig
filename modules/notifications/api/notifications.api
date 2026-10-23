@@ -71,8 +71,6 @@ public final class org/polyfrost/oneconfig/api/notifications/v1/NotificationThem
 	public final fun getSuccess ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getTextPrimary ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getTextSecondary ()Lorg/polyfrost/compose/render/PolyColor;
-	public final fun set (Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Ljava/lang/String;Ljava/lang/String;FFF)V
-	public static synthetic fun set$default (Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationTheme;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Ljava/lang/String;Ljava/lang/String;FFFILjava/lang/Object;)V
 }
 
 public final class org/polyfrost/oneconfig/api/notifications/v1/NotificationToastsKt {
@@ -138,7 +136,6 @@ public final class org/polyfrost/oneconfig/api/notifications/v1/NotificationsMan
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationsManager;
 	public final fun clearAll ()V
 	public final fun clearHistory ()V
-	public final fun contains (Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;)Z
 	public final fun dismiss (J)V
 	public final fun dismiss (Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;)V
 	public static final fun ensureInitialized ()V
@@ -150,11 +147,5 @@ public final class org/polyfrost/oneconfig/api/notifications/v1/NotificationsMan
 	public final fun push (Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;)V
 	public final fun remove (Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;)V
 	public final fun removeFromHistory (Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;)V
-}
-
-public final class org/polyfrost/oneconfig/api/notifications/v1/NotificationsRenderer {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationsRenderer;
-	public static final fun render (Lorg/polyfrost/compose/render/RenderContext;FF)V
 }
 

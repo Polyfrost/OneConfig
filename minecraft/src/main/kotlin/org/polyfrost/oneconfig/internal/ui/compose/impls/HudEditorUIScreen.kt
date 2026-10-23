@@ -9,7 +9,6 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.mojang.blaze3d.platform.InputConstants
-import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
@@ -24,14 +23,18 @@ import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignStudio
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.shell.HudEditorRoute
-import org.polyfrost.oneconfig.internal.ui.shell.Lifecycle
-import org.polyfrost.oneconfig.internal.ui.shell.OCViewModelStoreOwner
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
+import org.polyfrost.oneconfig.internal.ui.shell.ShellController
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Theme
+import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
 
-//? if < 1.21.11 {
+//? if > 1.8.9 {
+import net.minecraft.client.gui.GuiGraphicsExtractor
+//?}
+
+//? if < 1.21.11 && > 1.8.9 {
 /*import org.lwjgl.glfw.GLFW
 *///?}
 
@@ -44,10 +47,14 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
         private var instance: HudEditorUIScreen? = null
 
         @JvmStatic
-        fun open(): HudEditorUIScreen = instance ?: HudEditorUIScreen().also { instance = it }
+        fun open(fromOneConfig: Boolean): HudEditorUIScreen {
+            val screen = instance ?: HudEditorUIScreen().also { instance = it }
+            screen.enteredFromOneConfig = fromOneConfig
+            return screen
+        }
 
         @JvmStatic
-        fun prewarmShared(): Boolean = open().runPrewarm()
+        fun prewarmShared(): Boolean = open(false).runPrewarm()
 
         @JvmStatic
         fun endPrewarmShared() {
@@ -79,6 +86,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
         closeRequestedAt = System.currentTimeMillis()
         closeAnimationMs = guiCloseAnimationMillis()
         UiSounds.play(UiSoundEvent.CLOSE)
+        UiSounds.releaseAmbience()
     }
 
     private fun cancelClose(): Boolean {
@@ -86,10 +94,18 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
         closeRequested = false
         requestOpenCallback?.invoke()
         UiSounds.play(UiSoundEvent.OPEN)
+        UiSounds.acquireAmbience()
         return true
     }
 
     @Volatile private var returningToOneConfig = false
+
+    private var enteredFromOneConfig = false
+
+    private fun returnToOneConfig() {
+        returningToOneConfig = true
+        Platform.screen().display(if (enteredFromOneConfig) OneConfigUIScreen.resume() else OneConfigUIScreen.open())
+    }
 
     private var requestCloseCallback: (() -> Unit)? = null
     private var requestOpenCallback: (() -> Unit)? = null
@@ -98,6 +114,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
 
     override fun init() {
         everOpened = true
+        updateAccent()
         HudManager.onEditorScreenAdded()
         HudManager.editorOpenRevision.intValue++
         closeRequested = false
@@ -105,6 +122,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
         closeAnimationMs = 0L
         returningToOneConfig = false
         UiSounds.acquireAmbience()
+        ShellController.shared.session.resume()
         super.init()
         requestOpenCallback?.invoke()
     }
@@ -112,11 +130,12 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
     override fun removed() {
         if (!returningToOneConfig) {
             // off by default so closing the editor leaves the last config page as the route to come back to
-            if (OneConfigConfig.restoreHudEditor) ShellState.lastRoute = HudEditorRoute
-            ShellState.lastClosedAt = System.currentTimeMillis()
+            if (OneConfigConfig.restoreHudEditor) ShellController.shared.navigation.recordLastRoute(HudEditorRoute)
+            ShellController.shared.session.markClosed(System.currentTimeMillis())
         }
-        HudManager.onEditorScreenRemoved()
         UiSounds.releaseAmbience()
+        ShellController.shared.session.stop()
+        HudManager.onEditorScreenRemoved()
         super.removed()
     }
 
@@ -129,8 +148,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
             beginClose()
             requestCloseCallback?.invoke()
         } else {
-            returningToOneConfig = true
-            Platform.screen().display(OneConfigUIScreen.resume())
+            returnToOneConfig()
         }
         return true
     }
@@ -153,7 +171,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
     override fun handleMouseClicked(button: Int): Boolean {
         if (KeybindRecordingBus.isRecording) return false
         // Only side and extra mouse buttons can trigger the OneConfig keybind
-        //~ if < 1.21.11 'InputConstants.MOUSE_BUTTON_4' -> 'GLFW.GLFW_MOUSE_BUTTON_4'
+        //~ if < 1.21.11 && > 1.8.9 'InputConstants.MOUSE_BUTTON_4' -> 'GLFW.GLFW_MOUSE_BUTTON_4'
         if (button >= InputConstants.MOUSE_BUTTON_4 &&
             KeybindManager.isTriggeredByMouse(OneConfigConfig.oneConfigKeybind, button)
         ) {
@@ -162,12 +180,15 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
         return false
     }
 
+    //? if > 1.8.9 {
     //~ if >= 26.1 'render' -> 'extractRenderState'
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
+    //?} else
+    //override fun render(mouseX: Int, mouseY: Int, tickDelta: Float) {
         // a screen drawn over this one may render it as its parent so skip that pass or it closes the screen above us
         if (Platform.screen().current<Any?>() !== this) return
         if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= closeAnimationMs) {
-            //? if < 1.21.8
+            //? if < 1.21.8 && > 1.8.9
             //renderBackground(ctx, mouseX, mouseY, tickDelta)
             Platform.screen().close()
             return
@@ -182,8 +203,11 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
             ItemCatalog.renderHudIcons()
         }
         HudEditorViewport.update(Platform.screen().windowWidth(), Platform.screen().windowHeight())
+        //? if > 1.8.9 {
         //~ if >= 26.1 'render' -> 'extractRenderState'
         super.extractRenderState(ctx, mouseX, mouseY, tickDelta)
+        //?} else
+        //super.render(mouseX, mouseY, tickDelta)
     }
 
     @Composable
@@ -217,16 +241,12 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
             openKey = HudManager.editorOpenRevision.intValue,
         ) { _ ->
             CompositionLocalProvider(
-                LocalLifecycleOwner provides Lifecycle,
-                LocalViewModelStoreOwner provides OCViewModelStoreOwner
+                LocalLifecycleOwner provides ShellController.shared.session,
+                LocalViewModelStoreOwner provides ShellController.shared.session,
+                LocalShell provides ShellController.shared,
             ) {
                 Theme(pixelGrid = true) {
-                    HudDesignStudio(
-                        onReturnToOneConfig = {
-                            returningToOneConfig = true
-                            Platform.screen().display(OneConfigUIScreen.resume())
-                        }
-                    )
+                    HudDesignStudio(visible)
                 }
             }
         }

@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.withInfiniteAnimationFrameNanos
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,7 +17,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
@@ -50,7 +48,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
+import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import androidx.compose.ui.window.PopupProperties
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -58,10 +56,12 @@ import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.ColorOptionData
+import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
@@ -185,7 +185,7 @@ fun ColorOption(data: ColorOptionData) {
     val isHovered by interactionSource.collectIsHoveredAsState()
     var expanded by remember { mutableStateOf(false) }
 
-    val initialValue = remember(data.prop) { data.prop.get() }
+    val initialValue = remember(data.prop) { data.prop.shown() }
     val initialColor = remember(data.prop, initialValue) {
         when (val v = initialValue) {
             is Color -> v
@@ -193,7 +193,7 @@ fun ColorOption(data: ColorOptionData) {
                 if (data.alpha) it else it.copy(alpha = 1f)
             }
 
-            is Int -> Color(v)
+            is Int -> Color(v).let { if (data.alpha) it else it.copy(alpha = 1f) }
             is java.awt.Color -> Color(
                 v.red / 255f,
                 v.green / 255f,
@@ -224,7 +224,7 @@ fun ColorOption(data: ColorOptionData) {
         currentColor = color
         @Suppress("UNCHECKED_CAST")
         when {
-            data.prop.type == Int::class.java || data.prop.type == Int::class.javaPrimitiveType ->
+            data.prop.type == Int::class.javaObjectType || data.prop.type == Int::class.javaPrimitiveType ->
                 (data.prop as Property<Any>).set(color.toArgb())
 
             data.prop.type == PolyColor::class.java -> {
@@ -264,7 +264,7 @@ fun ColorOption(data: ColorOptionData) {
         }
 
         if (expanded) {
-            Popup(
+            ShellPopup(
                 alignment = Alignment.TopEnd,
                 offset = IntOffset(0, 44),
                 onDismissRequest = { expanded = false },
@@ -308,6 +308,7 @@ internal fun ColorPickerPopup(
     Column(
         modifier = Modifier
             .width(280.dp)
+            .shellTransition()
             .background(theme.popupBackground, PickerShape)
             .border(1.dp, theme.borderColor, PickerShape)
             .padding(16.dp),

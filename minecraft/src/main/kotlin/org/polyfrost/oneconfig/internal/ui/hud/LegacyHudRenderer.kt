@@ -3,11 +3,18 @@ package org.polyfrost.oneconfig.internal.ui.hud
 import androidx.compose.runtime.snapshots.Snapshot
 import java.util.Collections
 import java.util.WeakHashMap
-import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.hud.v1.GlobalHudSettings
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHud
+
+//? if > 1.8.9 {
+import net.minecraft.client.gui.GuiGraphicsExtractor
+//?}
+
+//? if = 1.8.9 {
+/*import com.mojang.blaze3d.platform.GlStateManager
+*///?}
 
 private val LOGGER = LogManager.getLogger("OneConfig/HUD-Render")
 
@@ -36,11 +43,15 @@ object LegacyHudRenderer {
         )
     }
 
+    //~ if = 1.8.9 '(graphics: GuiGraphicsExtractor)' -> '()'
     fun renderLive(graphics: GuiGraphicsExtractor) {
+        //~ if = 1.8.9 'renderLiveHuds(graphics)' -> 'renderLiveHuds()'
         renderLiveHuds(graphics)
+        //~ if = 1.8.9 '.render(graphics)' -> '.render()'
         if (CompatOverlayRenderer.oneConfigScreenOpen()) CompatOverlayRenderer.render(graphics)
     }
 
+    //~ if = 1.8.9 '(graphics: GuiGraphicsExtractor)' -> '()'
     private fun renderLiveHuds(graphics: GuiGraphicsExtractor) {
         frame.clear()
         for (hud in HudManager.activeInstances) {
@@ -63,7 +74,7 @@ object LegacyHudRenderer {
             try {
                 HudManager.updateIfDue(hud)
                 if (!HudManager.isEditing && !hud.shouldShow()) continue
-                val hudScale = hud.effectiveScale
+                val hudScale = hud.frameScale
                 val (mw, mh) = hud.frameMinimumSize()
                 val w = mw * hudScale
                 val h = mh * hudScale
@@ -73,27 +84,37 @@ object LegacyHudRenderer {
                         hud.renderedH = h
                     }
                 }
+                hud.settlePin()
                 //? >= 1.21.8 {
                 val pose = graphics.pose()
                 pose.pushMatrix()
                 try {
-                    pose.translate(hud.x, hud.y)
+                    pose.translate(hud.frameX, hud.frameY)
                     if (hudScale != 1f) pose.scale(hudScale, hudScale)
                     hud.render(graphics)
                 } finally {
                     pose.popMatrix()
                 }
-                //? } else {
+                //? } elif > 1.8.9 {
                 /*val pose = graphics.pose()
                 pose.pushPose()
                 try {
-                    pose.translate(hud.x.toDouble(), hud.y.toDouble(), 0.0)
+                    pose.translate(hud.frameX.toDouble(), hud.frameY.toDouble(), 0.0)
                     if (hudScale != 1f) pose.scale(hudScale, hudScale, 1f)
                     hud.render(graphics)
                 } finally {
                     pose.popPose()
                 }
-                *///? }
+                *///?} else {
+                /*GlStateManager.pushMatrix()
+                try {
+                    GlStateManager.translatef(hud.x, hud.y, 0f)
+                    if (hudScale != 1f) GlStateManager.scalef(hudScale, hudScale, 1f)
+                    hud.render()
+                } finally {
+                    GlStateManager.popMatrix()
+                }
+                *///?}
             } catch (e: Throwable) {
                 reportFailure(hud, e)
             }

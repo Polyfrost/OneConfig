@@ -6,7 +6,6 @@ import kotlin.collections.listOf
 
 plugins {
     java
-    id("versioned-catalogues")
     id("me.modmuss50.mod-publish-plugin")
 }
 
@@ -46,6 +45,7 @@ group = "${rootProject.group}.bootstrap"
 version = rootProject.version
 
 val node = project.name
+val isOrnithe = node.endsWith("-ornithe")
 val platformPath = ":minecraft:$node"
 
 dependencies {
@@ -53,12 +53,15 @@ dependencies {
 }
 
 evaluationDependsOn(platformPath)
+// build metadata is ignored by version comparisons anyway
+val composeBundleVersion = evaluationDependsOn(":modules:compose-bundle").version.toString().substringBefore('+')
 
 afterEvaluate {
     val platform = rootProject.project(platformPath)
 
     fun isExcluded(group: String?, name: String) =
-        (group == "net.fabricmc" && (name == "fabric-loader")) || group == "net.fabricmc.fabric-api"
+        (group == "net.fabricmc" && (name == "fabric-loader")) || group == "net.fabricmc.fabric-api" ||
+            (isOrnithe && ((group == "pl.tomgirl" && name == "pylon") || group == "net.ornithemc.osl-gen2"))
 
     val seen = HashSet<String>()
 
@@ -128,8 +131,10 @@ afterEvaluate {
 
     val hypixelFabricMod = if (versionedCatalog.versions["minecraft"].requiredVersion.startsWith("26")) {
         "maven.modrinth:hypixel-mod-api:1.0.2+build.1+mc26.1"
-    } else {
+    } else if (versionedCatalog.versions["minecraft"].requiredVersion.startsWith("1.21")) {
         "maven.modrinth:hypixel-mod-api:1.0.1+build.1+mc1.21"
+    } else {
+        "org.polyfrost:mod-api-fabric:1.0.2+build.3+mc1.8.9"
     }
     (dependencies.add("include", hypixelFabricMod) as ExternalModuleDependency).isTransitive = false
 }
@@ -151,6 +156,9 @@ tasks.withType<ProcessResources>().configureEach {
         "mod_version" to project.version,
         "mod_description" to (project.findProperty("mod.description") ?: "OneConfig bootstrap loader."),
         "mc_version" to range,
+        "compose_version" to composeBundleVersion,
+        "loader_version" to versionedCatalog.versions["loader"].requiredVersion,
+        "flk_version" to versionedCatalog.versions["fabric-language-kotlin"].requiredVersion,
     )
 
     inputs.properties(props)
@@ -163,6 +171,8 @@ val modrinthMinecraftVersionOverride = mapOf(
 
 val modrinthId = listOf("oneconfig.publish.modrinth", "publish.modrinth").firstNotNullOfOrNull { findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
 val modrinthToken = listOf("oneconfig.publish.modrinth.token", "publish.modrinth.token", "modrinth.token").firstNotNullOfOrNull { findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
+val curseforgeId = listOf("oneconfig.publish.curseforge", "publish.curseforge").firstNotNullOfOrNull { findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
+val curseforgeToken = listOf("oneconfig.publish.curseforge.token", "publish.curseforge.token", "curseforge.token").firstNotNullOfOrNull { findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
 val rawMinecraftVersion = versionedCatalog.versions["minecraft"].requiredVersion
 val minecraftVersion = modrinthMinecraftVersionOverride[rawMinecraftVersion] ?: listOf(rawMinecraftVersion)
 val publishJarTaskName = if ("remapJar" in tasks.names) "remapJar" else "jar"
@@ -170,15 +180,19 @@ val changelogs = rootProject.file("CHANGELOG.md").takeIf { it.exists() }?.readTe
 
 val validateChangelog by tasks.registering {
     description = "Validates that the changelog is written for the current version."
-    if (!changelogs.contains(project.version.toString())) {
-        throw GradleException("Changelog for version ${project.version} not found.")
+    val changelogText = changelogs
+    val modVersion = project.version.toString()
+    doLast {
+        if (!changelogText.contains(modVersion)) {
+            throw GradleException("Changelog for version $modVersion not found.")
+        }
     }
 }
 
 tasks.publishMods.configure {
     dependsOn(validateChangelog)
 }
-tasks.matching { it.name == "publishModrinth" }.configureEach {
+tasks.matching { it.name == "publishModrinth" || it.name == "publishCurseforge" }.configureEach {
     dependsOn(validateChangelog)
 }
 
@@ -190,9 +204,9 @@ publishMods {
     changelog = changelogs
     type = STABLE
 
-    modLoaders.add("fabric")
+    modLoaders.add(if (isOrnithe) "ornithe" else "fabric")
 
-    dryRun = modrinthId == null || modrinthToken == null
+    dryRun = (modrinthId == null || modrinthToken == null) && (curseforgeId == null || curseforgeToken == null)
 
     if (modrinthId != null) {
         modrinth {
@@ -201,7 +215,11 @@ publishMods {
 
             minecraftVersions.addAll(minecraftVersion)
 
-            requires("fabric-api")
+            if (isOrnithe) {
+                requires("osl")
+            } else {
+                requires("fabric-api")
+            }
             requires("fabric-language-kotlin")
             findProperty("publish.modrinth.compose-bundle")
                 ?.toString()
@@ -209,4 +227,23 @@ publishMods {
                 ?.let { requires(it) }
         }
     }
+
+    if (curseforgeId != null && !isOrnithe) {
+        curseforge {
+            projectId = curseforgeId
+            accessToken = curseforgeToken.orEmpty()
+
+            minecraftVersions.addAll(minecraftVersion)
+            clientRequired = true
+
+            requires("fabric-api")
+            requires("fabric-language-kotlin")
+            findProperty("publish.curseforge.compose-bundle.slug")
+                ?.toString()
+                ?.takeIf { it.isNotBlank() }
+                ?.let { requires(it) }
+        }
+    }
 }
+
+if (curseforgeId != null && isOrnithe) tasks.register("publishCurseforge")

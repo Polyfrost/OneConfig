@@ -2,7 +2,6 @@ package org.polyfrost.oneconfig.internal.mixin.events;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.MouseHandler;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.MouseInputEvent;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,7 +14,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.client.input.MouseButtonInfo;
 //?}
 
+//? if > 1.8.9 {
+import net.minecraft.client.MouseHandler;
+//?}
+
+//? if = 1.8.9 {
+/*import org.lwjgl.input.Mouse;
+import org.polyfrost.oneconfig.internal.legacy.KeyCodes;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import pl.tomgirl.pylon.window.DisplaySdl;
+*///?}
+
+//? if > 1.8.9 {
 @Mixin(MouseHandler.class)
+//?} else
+//@Mixin(value = Mouse.class, remap = false)
 public class Mixin_MouseInputEvent {
     //? >= 1.21.10 {
     @Inject(method = "onButton", at = @At("HEAD"))
@@ -35,7 +48,7 @@ public class Mixin_MouseInputEvent {
         }
     }
 
-    //? } else {
+    //?} elif > 1.8.9 {
     /*@Inject(method = "onPress", at = @At("HEAD"))
     private void mouseCallback(long handle, int button, int action, int mods, CallbackInfo ci) {
         EventManager.INSTANCE.post(new MouseInputEvent(button, oneconfig$state(action)));
@@ -46,6 +59,26 @@ public class Mixin_MouseInputEvent {
         if (Minecraft.getInstance().screen != null) {
             MouseInputEvent.Moved.post((float) x, (float) y);
         }
+    }
+    *///?} else {
+    /*@Inject(method = "next", at = @At("RETURN"), remap = false)
+    private static void mouseCallback(CallbackInfoReturnable<Boolean> cir) {
+        if (!cir.getReturnValue()) return;
+
+        int button = Mouse.getEventButton();
+        if (button >= 0) {
+            EventManager.INSTANCE.post(new MouseInputEvent(KeyCodes.mouseFromLegacy(button), Mouse.getEventButtonState() ? 1 : 0));
+            return;
+        }
+
+        if (Mouse.getEventDWheel() != 0 || Minecraft.getInstance().screen == null || Mouse.getEventDX() == 0 && Mouse.getEventDY() == 0) return;
+
+        DisplaySdl display = DisplaySdl.instance();
+        float scaleX = (float) display.getWidth() / display.getWindowWidth();
+        float scaleY = (float) display.getHeight() / display.getWindowHeight();
+        float x = Mouse.getEventX() / scaleX;
+        float y = (display.getHeight() - 1 - Mouse.getEventY()) / scaleY;
+        MouseInputEvent.Moved.post(x, y);
     }
     *///? }
 

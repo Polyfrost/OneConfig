@@ -41,6 +41,7 @@ import androidx.compose.ui.zIndex
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.settings.DraggableListOptionData
+import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
@@ -235,7 +236,7 @@ fun DraggableListOption(data: DraggableListOptionData) {
 /** A single list slot where [id] is stable across reorders so duplicate [value]s stay distinct */
 private data class ListEntry(val id: Int, val value: String)
 
-private fun propValueList(prop: Property<*>): List<String> = when (val v = prop.get()) {
+private fun propValueList(prop: Property<*>): List<String> = when (val v = prop.shown()) {
     is Array<*> -> v.filterIsInstance<String>()
     is List<*> -> v.filterIsInstance<String>()
     else -> emptyList()

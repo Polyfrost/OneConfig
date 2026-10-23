@@ -8,11 +8,14 @@ interface Keys {
     val keyC: Int
     val keyD: Int
     val keyE: Int
+    val keyF: Int
     val keyH: Int
     val keyL: Int
     val keyR: Int
     val keyV: Int
     val keyX: Int
+    val keyY: Int
+    val keyZ: Int
     val keyDelete: Int
     val keyLeftShift: Int
     val keyRightShift: Int

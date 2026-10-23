@@ -6,6 +6,9 @@ moulconfig = "3.11.0"
 skyblocker = "C9ZW1qql"
 stella = "d12aec9c69"
 
+meowdding-lib = "4.2.28"
+skyblock-api = "4.2.30"
+
 [libraries]
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
@@ -13,6 +16,9 @@ moulconfig = { module = "org.notenoughupdates.moulconfig:common", version.ref = 
 skyblocker = { module = "maven.modrinth:skyblocker-liap", version.ref = "skyblocker" }
 #stella = { module = "maven.modrinth:stella", version.ref = "stella"} I prefer modrinth but needed this to work befor I release
 stella = { module = "com.github.Eclipse-5214.stella:stella-26.1", version.ref = "stella" }
+
+meowdding-lib = { module = "me.owdding.meowdding-lib:meowdding-lib", version.ref = "meowdding-lib" }
+skyblock-api = { module = "tech.thatgravyboat:skyblock-api", version.ref = "skyblock-api" }
 
 [bundles]
 compat = ["modmenu", "yacl", "skyblocker", "stella"]

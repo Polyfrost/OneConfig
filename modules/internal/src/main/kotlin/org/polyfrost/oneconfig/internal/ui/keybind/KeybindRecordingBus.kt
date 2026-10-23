@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.keybind
 
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
+
 object KeybindRecordingBus {
     @Volatile
     private var escapeHandler: (() -> Unit)? = null
@@ -24,7 +26,7 @@ object KeybindRecordingBus {
     }
 
     @JvmStatic
-    val isRecording get() = escapeHandler != null
+    val isRecording get() = escapeHandler != null || KeybindManager.isInputCaptured()
 
     @JvmStatic
     fun consumeEscape(): Boolean {

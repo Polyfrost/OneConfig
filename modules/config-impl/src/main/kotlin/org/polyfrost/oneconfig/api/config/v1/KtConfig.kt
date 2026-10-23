@@ -28,6 +28,7 @@ package org.polyfrost.oneconfig.api.config.v1
 
 import kotlin.jvm.java
 import kotlin.properties.PropertyDelegateProvider
+import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty0
@@ -88,6 +89,18 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
     ) =
         Provider(def, name, description, category, subcategory, Boolean::class.java, Visualizer.SwitchVisualizer())
 
+    /**
+     * The switch that turns the whole mod on and off, shown on the mod's card and never on the config page
+     *
+     * A config without one falls back to a root level boolean option called `enabled`
+     */
+    @JvmSynthetic
+    protected fun masterToggle(def: Boolean = true) =
+        Provider(def, null, null, null, null, Boolean::class.java, Visualizer.SwitchVisualizer()) {
+            addMetadata("hidden", true)
+            addMetadata("masterToggle", true)
+        }
+
     protected fun color(
         name: String,
         def: PolyColor = PolyColor.rgba(0, 0, 0, 255),
@@ -112,7 +125,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
             subcategory,
             subcategoryKey
         )
-        this.addMetadata("noAlpha", alpha.takeUnless { it })
+        if (!alpha) this.addMetadata("noAlpha", Unit)
     }
 
     @JvmSynthetic
@@ -187,7 +200,8 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         subcategory: String? = "General",
         subcategoryKey: String? = null,
         placeholder: String? = null,
-        placeholderKey: String? = "oneconfig.textinput.placeholder"
+        placeholderKey: String? = "oneconfig.textinput.placeholder",
+        regex: String? = null
     ) = Provider(def, name, description, category, subcategory, String::class.java, Visualizer.TextVisualizer()) {
         addMetadata(
             name,
@@ -203,7 +217,26 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         this.addMetadata("placeholder", placeholder)
         this.addMetadata("multiline", multiline)
         this.addMetadata("placeholderKey", placeholderKey)
+        this.addMetadata("regex", regex)
     }
+
+    @JvmSynthetic
+    @Deprecated(message = "Binary compatibility for mods compiled before regex was added", level = DeprecationLevel.HIDDEN)
+    protected fun text(
+        name: String,
+        def: String = "",
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        multiline: Boolean = false,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        placeholder: String? = null,
+        placeholderKey: String? = "oneconfig.textinput.placeholder"
+    ) = text(name, def, nameKey, description, descriptionKey, icon, multiline, category, categoryKey, subcategory, subcategoryKey, placeholder, placeholderKey, null)
 
     @JvmSynthetic
     protected fun checkbox(
@@ -275,7 +308,8 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         min: Float = -10f,
         max: Float = 100f,
         placeholder: String? = null,
-        placeholderKey: String? = "oneconfig.numberinput.placeholder"
+        placeholderKey: String? = "oneconfig.numberinput.placeholder",
+        formatter: ValueFormatter? = null,
     ) = Provider(def, name, description, category, subcategory, Float::class.java, Visualizer.NumberVisualizer()) {
         addMetadata(
             name,
@@ -294,7 +328,30 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         this.addMetadata("max", max)
         this.addMetadata("placeholder", placeholder)
         this.addMetadata("placeholderKey", placeholderKey)
+        this.addMetadata("formatter", formatter)
     }
+
+    @JvmSynthetic
+    @Deprecated(message = "Binary compatibility for mods compiled before formatter was added", level = DeprecationLevel.HIDDEN)
+    protected fun number(
+        name: String,
+        def: Float,
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+
+        unit: String? = null,
+        unitKey: String? = null,
+        min: Float = -10f,
+        max: Float = 100f,
+        placeholder: String? = null,
+        placeholderKey: String? = "oneconfig.numberinput.placeholder",
+    ) = number(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, unit, unitKey, min, max, placeholder, placeholderKey, null)
 
     @JvmSynthetic
     protected fun slider(
@@ -314,7 +371,9 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         min: Float = -10f,
         max: Float = 100f,
         step: Float = 1f,
-    ) = Provider(def, name, description, category, subcategory, Float::class.java, Visualizer.NumberVisualizer()) {
+        formatter: ValueFormatter? = null,
+    ) = Provider(def, name, description, category, subcategory, Float::class.java, Visualizer.SliderVisualizer()) {
+        requireStep(name, min, max, step)
         addMetadata(
             name,
             nameKey,
@@ -331,7 +390,29 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         this.addMetadata("min", min)
         this.addMetadata("max", max)
         this.addMetadata("step", step)
+        this.addMetadata("formatter", formatter)
     }
+
+    @JvmSynthetic
+    @Deprecated(message = "Binary compatibility for mods compiled before formatter was added", level = DeprecationLevel.HIDDEN)
+    protected fun slider(
+        name: String,
+        def: Float,
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+
+        unit: String? = null,
+        unitKey: String? = null,
+        min: Float = -10f,
+        max: Float = 100f,
+        step: Float = 1f,
+    ) = slider(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, unit, unitKey, min, max, step, null)
 
     @JvmSynthetic
     protected fun keybind(
@@ -480,13 +561,536 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         return CachedTransformedProvider(property, options::get, options::indexOf)
     }
 
+    /**
+     * A button which runs [action] when clicked
+     *
+     * The delegated property holds no value, use as `val openWiki by button("Open Wiki") { ... }`
+     */
+    @JvmSynthetic
+    protected fun button(
+        name: String,
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        text: String? = null,
+        textKey: String? = null,
+        action: () -> Unit,
+    ) = DummyProvider(name, description, category, subcategory, Visualizer.ButtonVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        this.addMetadata("runnable", Runnable {
+            runCatching(action).onFailure { ConfigManager.LOGGER.error("Failed to run button {}", name, it) }
+        })
+        this.addMetadata("text", text)
+        this.addMetadata("textKey", textKey)
+    }
+
+    /**
+     * A read-only info card, [type] is one of `info`, `success`, `warning` or `error`
+     *
+     * When [name] is null the first line of [description] is used as the heading
+     */
+    @JvmSynthetic
+    protected fun info(
+        name: String? = null,
+        description: String? = null,
+        type: String = "info",
+        nameKey: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+    ) = DummyProvider(name, description, category, subcategory, Visualizer.InfoVisualizer()) {
+        addMetadata("titleKey", nameKey)
+        addMetadata("descriptionKey", descriptionKey)
+        addMetadata("icon", icon)
+        addMetadata("categoryKey", categoryKey)
+        addMetadata("subcategoryKey", subcategoryKey)
+        addMetadata("type", type)
+    }
+
+    /** A dropdown where any number of [options] can be selected, the value holds one flag per option */
+    @JvmSynthetic
+    protected fun multiSelectDropdown(
+        name: String,
+        options: Array<String>,
+        def: BooleanArray = BooleanArray(options.size),
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        optionKeys: Array<String> = arrayOf(),
+    ) = Provider(def, name, description, category, subcategory, BooleanArray::class.java, Visualizer.MultiSelectDropdownVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        this.addMetadata("options", options)
+        this.addMetadata("optionsKey", optionKeys)
+        this.addMetadata("checkable", true)
+    }
+
+    /** A selectable-list dropdown holding the selected index of [options] or -1 for none */
+    @JvmSynthetic
+    protected fun singleSelectDropdown(
+        name: String,
+        options: Array<String>,
+        def: Int = -1,
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        optionKeys: Array<String> = arrayOf(),
+    ) = Provider(def, name, description, category, subcategory, Int::class.java, Visualizer.MultiSelectDropdownVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        this.addMetadata("options", options)
+        this.addMetadata("optionsKey", optionKeys)
+        this.addMetadata("checkable", false)
+    }
+
+    /** A reorderable list, when [checkable] the value is the enabled subset of [options] in order */
+    @JvmSynthetic
+    protected fun draggableList(
+        name: String,
+        def: Array<String>,
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        options: Array<String> = arrayOf(),
+        optionKeys: Array<String> = arrayOf(),
+        checkable: Boolean = false,
+    ) = Provider(def, name, description, category, subcategory, Array<String>::class.java, Visualizer.DraggableListVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        this.addMetadata("options", options)
+        this.addMetadata("optionsKey", optionKeys)
+        this.addMetadata("checkable", checkable)
+    }
+
+    /** A two-handle slider holding `[start, end]` */
+    @JvmSynthetic
+    protected fun rangeSlider(
+        name: String,
+        def: FloatArray,
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        min: Float = 0f,
+        max: Float = 100f,
+        step: Float = 1f,
+        formatter: ValueFormatter? = null,
+    ) = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.RangeSliderVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        require(def.size == 2) { "rangeSlider '$name' needs a start and end, got ${def.size} values" }
+        requireStep(name, min, max, step)
+        this.addMetadata("min", min)
+        this.addMetadata("max", max)
+        this.addMetadata("step", step)
+        this.addMetadata("formatter", formatter)
+    }
+
+    @JvmSynthetic
+    @Deprecated(message = "Binary compatibility for mods compiled before formatter was added", level = DeprecationLevel.HIDDEN)
+    protected fun rangeSlider(
+        name: String,
+        def: FloatArray,
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        min: Float = 0f,
+        max: Float = 100f,
+        step: Float = 1f,
+    ) = rangeSlider(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, min, max, step, null)
+
+    /** Two number inputs holding `[start, end]`, a [rangeSlider] without the track */
+    @JvmSynthetic
+    protected fun rangeNumber(
+        name: String,
+        def: FloatArray,
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        min: Float = 0f,
+        max: Float = 100f,
+        step: Float = 1f,
+        formatter: ValueFormatter? = null,
+    ) = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.RangeNumberVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        require(def.size == 2) { "rangeNumber '$name' needs a start and end, got ${def.size} values" }
+        this.addMetadata("min", min)
+        this.addMetadata("max", max)
+        this.addMetadata("step", step)
+        this.addMetadata("formatter", formatter)
+    }
+
+    /** A file or folder picker holding the chosen path, [types] are extensions such as `.png` */
+    @JvmSynthetic
+    protected fun file(
+        name: String,
+        def: String = "",
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        types: Array<String> = arrayOf(),
+        filterName: String? = null,
+        directory: Boolean = false,
+        placeholder: String? = null,
+        placeholderKey: String? = "oneconfig.filepicker.placeholder",
+    ) = Provider(def, name, description, category, subcategory, String::class.java, Visualizer.FileVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        this.addMetadata("types", types)
+        this.addMetadata("filterName", filterName)
+        this.addMetadata("directory", directory)
+        this.addMetadata("placeholder", placeholder)
+        this.addMetadata("placeholderKey", placeholderKey)
+    }
+
+    @JvmSynthetic
+    protected fun textList(
+        name: String,
+        def: Array<String> = arrayOf(),
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        maxEntries: Int = 0,
+        reorderable: Boolean = true,
+        addText: String? = null,
+        addTextKey: String? = null,
+        placeholder: String? = null,
+        placeholderKey: String? = "oneconfig.textinput.placeholder",
+        regex: String? = null,
+    ) = Provider(def, name, description, category, subcategory, Array<String>::class.java, Visualizer.TextListVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+            addListMetadata(maxEntries, reorderable, addText, addTextKey)
+        this.addMetadata("placeholder", placeholder)
+        this.addMetadata("placeholderKey", placeholderKey)
+        this.addMetadata("regex", regex)
+    }
+
+    @JvmSynthetic
+    protected fun numberList(
+        name: String,
+        def: FloatArray = FloatArray(0),
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        maxEntries: Int = 0,
+        reorderable: Boolean = true,
+        addText: String? = null,
+        addTextKey: String? = null,
+        min: Float = 0f,
+        max: Float = 100f,
+        step: Float = 0f,
+        formatter: ValueFormatter? = null,
+    ) = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.NumberListVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+            addListMetadata(maxEntries, reorderable, addText, addTextKey)
+        this.addMetadata("min", min)
+        this.addMetadata("max", max)
+        this.addMetadata("step", step)
+        this.addMetadata("formatter", formatter)
+    }
+
+    @JvmSynthetic
+    @Deprecated(message = "Binary compatibility for mods compiled before formatter was added", level = DeprecationLevel.HIDDEN)
+    protected fun numberList(
+        name: String,
+        def: FloatArray = FloatArray(0),
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        maxEntries: Int = 0,
+        reorderable: Boolean = true,
+        addText: String? = null,
+        addTextKey: String? = null,
+        min: Float = 0f,
+        max: Float = 100f,
+        step: Float = 0f,
+    ) = numberList(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, maxEntries, reorderable, addText, addTextKey, min, max, step, null)
+
+    @JvmSynthetic
+    protected fun sliderList(
+        name: String,
+        def: FloatArray = FloatArray(0),
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        maxEntries: Int = 0,
+        reorderable: Boolean = true,
+        addText: String? = null,
+        addTextKey: String? = null,
+        min: Float = 0f,
+        max: Float = 100f,
+        step: Float = 1f,
+        formatter: ValueFormatter? = null,
+    ) = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.SliderListVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+            addListMetadata(maxEntries, reorderable, addText, addTextKey)
+        requireStep(name, min, max, step)
+        this.addMetadata("min", min)
+        this.addMetadata("max", max)
+        this.addMetadata("step", step)
+        this.addMetadata("formatter", formatter)
+    }
+
+    @JvmSynthetic
+    @Deprecated(message = "Binary compatibility for mods compiled before formatter was added", level = DeprecationLevel.HIDDEN)
+    protected fun sliderList(
+        name: String,
+        def: FloatArray = FloatArray(0),
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        maxEntries: Int = 0,
+        reorderable: Boolean = true,
+        addText: String? = null,
+        addTextKey: String? = null,
+        min: Float = 0f,
+        max: Float = 100f,
+        step: Float = 1f,
+    ) = sliderList(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, maxEntries, reorderable, addText, addTextKey, min, max, step, null)
+
+    /** A list of two-handle sliders, [def] holds each range's start then end so `[0, 10, 20, 30]` is 0-10 and 20-30 */
+    @JvmSynthetic
+    protected fun rangeSliderList(
+        name: String,
+        def: FloatArray = FloatArray(0),
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        maxEntries: Int = 0,
+        reorderable: Boolean = true,
+        addText: String? = null,
+        addTextKey: String? = null,
+        min: Float = 0f,
+        max: Float = 100f,
+        step: Float = 1f,
+        formatter: ValueFormatter? = null,
+    ) = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.RangeSliderListVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+            addListMetadata(maxEntries, reorderable, addText, addTextKey)
+        require(def.size % 2 == 0) { "rangeSliderList '$name' needs a start and end for every range, got ${def.size} values" }
+        requireStep(name, min, max, step)
+        this.addMetadata("min", min)
+        this.addMetadata("max", max)
+        this.addMetadata("step", step)
+        this.addMetadata("formatter", formatter)
+    }
+
+    /** A list of [rangeNumber] rows stored the same way as [rangeSliderList] */
+    @JvmSynthetic
+    protected fun rangeNumberList(
+        name: String,
+        def: FloatArray = FloatArray(0),
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        maxEntries: Int = 0,
+        reorderable: Boolean = true,
+        addText: String? = null,
+        addTextKey: String? = null,
+        min: Float = 0f,
+        max: Float = 100f,
+        step: Float = 1f,
+        formatter: ValueFormatter? = null,
+    ) = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.RangeNumberListVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+            addListMetadata(maxEntries, reorderable, addText, addTextKey)
+        require(def.size % 2 == 0) { "rangeNumberList '$name' needs a start and end for every range, got ${def.size} values" }
+        this.addMetadata("min", min)
+        this.addMetadata("max", max)
+        this.addMetadata("step", step)
+        this.addMetadata("formatter", formatter)
+    }
+
+    /** A list of ARGB colours */
+    @JvmSynthetic
+    protected fun colorList(
+        name: String,
+        def: IntArray = IntArray(0),
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        maxEntries: Int = 0,
+        reorderable: Boolean = true,
+        addText: String? = null,
+        addTextKey: String? = null,
+        alpha: Boolean = true,
+    ) = Provider(def, name, description, category, subcategory, IntArray::class.java, Visualizer.ColorListVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+            addListMetadata(maxEntries, reorderable, addText, addTextKey)
+        if (!alpha) this.addMetadata("noAlpha", Unit)
+    }
+
+    @JvmSynthetic
+    protected fun fileList(
+        name: String,
+        def: Array<String> = arrayOf(),
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        maxEntries: Int = 0,
+        reorderable: Boolean = true,
+        addText: String? = null,
+        addTextKey: String? = null,
+        types: Array<String> = arrayOf(),
+        filterName: String? = null,
+        directory: Boolean = false,
+        placeholder: String? = null,
+        placeholderKey: String? = "oneconfig.filepicker.placeholder",
+    ) = Provider(def, name, description, category, subcategory, Array<String>::class.java, Visualizer.FileListVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+            addListMetadata(maxEntries, reorderable, addText, addTextKey)
+        this.addMetadata("types", types)
+        this.addMetadata("filterName", filterName)
+        this.addMetadata("directory", directory)
+        this.addMetadata("placeholder", placeholder)
+        this.addMetadata("placeholderKey", placeholderKey)
+    }
+
+    /** Namespaced item IDs such as `minecraft:diamond`, a [maxEntries] of 1 makes a single selector */
+    @JvmSynthetic
+    protected fun itemList(
+        name: String,
+        def: Array<String> = arrayOf(),
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        maxEntries: Int = 0,
+        reorderable: Boolean = true,
+        addText: String? = null,
+        addTextKey: String? = "oneconfig.itemlist.add",
+    ) = Provider(def, name, description, category, subcategory, Array<String>::class.java, Visualizer.ItemListVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        require(maxEntries >= 0) { "itemList '$name' has a negative maxEntries ($maxEntries)" }
+            addListMetadata(maxEntries, reorderable, addText, addTextKey)
+    }
+
+    /** Namespaced status effect IDs such as `minecraft:speed`, a [maxEntries] of 1 makes a single selector */
+    @JvmSynthetic
+    protected fun effectList(
+        name: String,
+        def: Array<String> = arrayOf(),
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        maxEntries: Int = 0,
+        reorderable: Boolean = true,
+        addText: String? = null,
+        addTextKey: String? = "oneconfig.effectlist.add",
+    ) = Provider(def, name, description, category, subcategory, Array<String>::class.java, Visualizer.EffectListVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        require(maxEntries >= 0) { "effectList '$name' has a negative maxEntries ($maxEntries)" }
+            addListMetadata(maxEntries, reorderable, addText, addTextKey)
+    }
+
+    private fun Node.addListMetadata(maxEntries: Int, reorderable: Boolean, addText: String?, addTextKey: String?) {
+        this.addMetadata("maxEntries", maxEntries)
+        this.addMetadata("reorderable", reorderable)
+        this.addMetadata("addText", addText)
+        this.addMetadata("addTextKey", addTextKey)
+    }
+
+    private fun requireStep(name: String, min: Float, max: Float, step: Float) =
+        require(step <= 0f || step <= max - min) { "slider '$name' has step ($step) larger than its range ($min to $max)" }
+
     fun hideIf(option: KProperty<*>, condition: () -> Boolean) {
-        if (tree == null) initialize(false)
+        if (tree == null) runInitialize(false)
         hideIf(option.name) { condition() }
     }
 
     fun hideIf(option: KProperty<*>, condition: KProperty0<Boolean>) {
-        if (tree == null) initialize(false)
+        if (tree == null) runInitialize(false)
         hideIf(option.name) { condition.get() }
     }
 
@@ -523,6 +1127,26 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         }
     }
 
+    /** provider for value-less options such as buttons and info cards, backed by [Properties.dummy] */
+    protected class DummyProvider(
+        private val name: String?,
+        private val description: String?,
+        private val category: String?,
+        private val subcategory: String?,
+        private val visualizer: Visualizer,
+        private val extra: Property<Void>.() -> Unit
+    ) : PropertyDelegateProvider<KtConfig, ReadOnlyProperty<KtConfig, Unit>> {
+        override operator fun provideDelegate(thisRef: KtConfig, property: KProperty<*>): ReadOnlyProperty<KtConfig, Unit> {
+            val p = Properties.dummy(property.name, name, description)
+            p.extra()
+            p.addMetadata("visualizer", visualizer)
+            p.addMetadata("category", category)
+            p.addMetadata("subcategory", subcategory)
+            (thisRef.tree ?: thisRef.pendingTree()).put(p)
+            return ReadOnlyProperty { _, _ -> }
+        }
+    }
+
     fun <Type : Any> observable(
         property: PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>,
         callback: (Type) -> Unit
@@ -546,6 +1170,13 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
     @JvmName("withObservable")
     fun <Type : Any> PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>.onChange(callback: (Type) -> Unit) = observable(this, callback)
     fun <Type : Any> PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>.withCallback(callback: (Type) -> Boolean) = callback(this, callback)
+
+    fun <Type : Any> PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>.fullWidth(): PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>> =
+        PropertyDelegateProvider { thisRef, property ->
+            provideDelegate(thisRef, property).also {
+                (thisRef.tree ?: thisRef.pendingTree()).getProp(property.name)?.addMetadata("fullWidth", true)
+            }
+        }
 
     private data class CachedTransformedProvider<Source : Any, Target : Any>(
         val delegate: PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Source>>,

@@ -29,6 +29,7 @@ private val MinecraftIconOverrides = mapOf(
     "dots-grid" to "/assets/oneconfig/ico/minecraft/dots-grid.svg",
     "dots-vertical" to "/assets/oneconfig/ico/minecraft/dots-vertical.svg",
     "down" to "/assets/oneconfig/ico/minecraft/down.svg",
+    "external-link" to "/assets/oneconfig/ico/minecraft/external-link.svg",
     "eye" to "/assets/oneconfig/ico/minecraft/eye.svg",
     "eye-off" to "/assets/oneconfig/ico/minecraft/eye-off.svg",
     "hud" to "/assets/oneconfig/ico/minecraft/hud.svg",
@@ -90,6 +91,7 @@ val PolyGlassDark = UITheme(
 
     Color(0xFF000000),
     Color(0xFFFFFFFF),
+    Color(0xFFFFD700),
 
     true,
 
@@ -133,6 +135,7 @@ val PolyGlassLight = UITheme(
 
     Color(0xFF000000),
     Color(0xFF1A2229),
+    Color(0xFFB57D00),
 
     true,
 
@@ -175,6 +178,7 @@ val MinecraftDark = UITheme(
 
     Color(0xFF000000),
     Color(0xFFFFFFFF),
+    Color(0xFFFFD700),
 
     false,
 
@@ -194,7 +198,7 @@ val MinecraftDark = UITheme(
         )
     ),
     MinecraftIconOverrides
-)
+).withShapes(RoundedCornerShape(0.dp), RoundedCornerShape(0.dp))
 val MinecraftLight = UITheme(
     "minecraft-light", "Minecraft Light",
 
@@ -212,6 +216,7 @@ val MinecraftLight = UITheme(
 
     Color(0xFF000000),
     Color(0xFF1A2229),
+    Color(0xFFB57D00),
 
     false,
 
@@ -231,4 +236,4 @@ val MinecraftLight = UITheme(
         )
     ),
     MinecraftIconOverrides
-)
+).withShapes(RoundedCornerShape(0.dp), RoundedCornerShape(0.dp))

@@ -20,9 +20,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,6 +33,7 @@ import java.util.Locale
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.NumberOptionData
+import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
@@ -56,6 +60,13 @@ fun filterNumberInput(input: String): String {
         }
     }
     return sb.toString()
+}
+
+/** How far a spinner's arrows move when the option has no step of its own, whole bounds step by 1 and others by 0.1 */
+fun spinnerStep(step: Float, min: Float, max: Float): Float = when {
+    step > 0f -> step
+    min == min.roundToInt().toFloat() && max == max.roundToInt().toFloat() -> 1f
+    else -> 0.1f
 }
 
 fun formatSpinnerValue(v: Float): String =
@@ -101,12 +112,21 @@ fun NumberSpinner(
     max: Float,
     step: Float,
     width: Dp = 87.dp,
+    format: ((Float) -> String)? = null,
+    arrowMin: Float = min,
+    arrowMax: Float = max,
+    onEditEnd: (() -> Unit)? = null,
 ) {
     val theme = LocalTheme.current
+    var focused by remember { mutableStateOf(false) }
+    val formatted = if (format != null && !focused) format(value) else null
     var text by remember(value) { mutableStateOf(formatSpinnerValue(value)) }
 
+    val arrowLo = maxOf(min, arrowMin)
+    val arrowHi = maxOf(arrowLo, minOf(max, arrowMax))
+
     fun commit(v: Float) {
-        val clamped = v.coerceIn(min, max)
+        val clamped = v.coerceIn(arrowLo, arrowHi)
         text = formatSpinnerValue(clamped)
         onValueChange(clamped)
     }
@@ -133,12 +153,25 @@ fun NumberSpinner(
                 fontFamily = theme.typography.family,
             ),
             cursorBrush = SolidColor(theme.textColor),
+            // the field itself stays in the tree while the formatted text covers it so clicking it still focuses it for editing
+            decorationBox = { innerTextField ->
+                Box {
+                    Box(Modifier.alpha(if (formatted == null) 1f else 0f)) { innerTextField() }
+                    if (formatted != null) {
+                        Text(formatted, color = theme.textColor, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                }
+            },
             modifier = Modifier.trackTextInputFocus()
+                .onFocusChanged {
+                    if (focused && !it.isFocused) onEditEnd?.invoke()
+                    focused = it.isFocused
+                }
                 .weight(1f)
                 .padding(start = 8.dp, top = 5.dp, bottom = 5.dp),
         )
 
-        SpinnerArrows(value, min, max, step) { commit(it) }
+        SpinnerArrows(value, arrowLo, arrowHi, step) { commit(it) }
     }
 }
 
@@ -148,7 +181,7 @@ fun NumberOption(data: NumberOptionData) {
         if (data.min == data.min.roundToInt().toFloat() && data.max == data.max.roundToInt().toFloat()) 1f else 0.1f
     }
     var value by remember(data.prop) {
-        mutableStateOf(data.numProp.get()?.toFloat()?.coerceIn(data.min, data.max) ?: data.min)
+        mutableStateOf(data.numProp.shown()?.toFloat()?.coerceIn(data.min, data.max) ?: data.min)
     }
 
     NumberSpinner(
@@ -158,5 +191,6 @@ fun NumberOption(data: NumberOptionData) {
         max = data.max,
         step = step,
         width = 87.dp,
+        format = data.format,
     )
 }

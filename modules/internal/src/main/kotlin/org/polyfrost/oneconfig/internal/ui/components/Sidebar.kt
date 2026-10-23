@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,7 +24,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.onSizeChanged
@@ -31,31 +31,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
-import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.toRoute
-import java.util.Locale
-import java.util.Locale.getDefault
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
-import org.polyfrost.oneconfig.api.platform.v1.Platform
-import org.polyfrost.oneconfig.internal.ui.navigation.NavigationGroups
-import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.navigation.isOn
+import org.polyfrost.oneconfig.internal.ui.navigation.sidebarSections
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShellNavController
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.withOpacityPercent
 
 @Composable
 fun Sidebar() {
-    val flipTopOrder = ShellState.flipTopOptionOrder
+    val appearance = LocalShell.current.appearance
+    val flipTopOrder = appearance.flipTopOptionOrder
     Column(
         modifier = Modifier.fillMaxHeight()
             .width(264.dp)
-            .background(LocalTheme.current.sidebarBackground.withOpacityPercent(ShellState.sidebarOpacity))
+            .background(LocalTheme.current.sidebarBackground.withOpacityPercent(appearance.sidebarOpacity))
             .rightBorder(LocalTheme.current.borderColor, 1f),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
@@ -89,7 +84,7 @@ private fun Navigation(showTopOptions: Boolean) {
 
 @Composable
 private fun Branding() {
-    val logoPath = LocalTheme.current.branding.logoPath
+    val logoPath = LocalTheme.current.logoPath
     val logo = rememberSvgResourcePainter(logoPath) ?: return
     Image(
         painter = logo,
@@ -104,7 +99,7 @@ private fun TopOptionsSection() {
     NavigationSection {
         NavigationEntry(
             "hud",
-            "Edit HUD",
+            translated("oneconfig.sidebar.edit_hud", "Edit HUD"),
         ) {
             HudManager.openEditor()
         }
@@ -113,7 +108,8 @@ private fun TopOptionsSection() {
 
 @Composable
 private fun NavigationEntries(showTopOptions: Boolean) {
-    val controller = LocalNavController.current
+    val controller = LocalShellNavController.current
+    val shell = LocalShell.current
 
     Column(
         verticalArrangement = Arrangement.spacedBy(18.dp),
@@ -123,28 +119,21 @@ private fun NavigationEntries(showTopOptions: Boolean) {
             TopOptionsSection()
         }
 
-        NavigationGroups.forEach {
+        sidebarSections().forEach {
             val entry by controller.currentBackStackEntryAsState()
-            val currentDestination = entry?.destination
 
-            NavigationSection(it.id) {
-                it.routes.forEach { def ->
-                    val selected = currentDestination?.hierarchy?.any { arche ->
-                        arche.hasRoute(def.route::class)
-                    } ?: false
+            NavigationSection(it.title) {
+                it.entries.forEach { def ->
+                    val selected = entry.isOn(def.route)
 
-                    if (selected) {
-                        ShellState.title = def.id.replaceFirstChar { char -> if (char.isLowerCase()) char.titlecase(getDefault()) else char.toString() }
-                    }
-
-                    // todo: i18n
                     NavigationEntry(
                         def.icon,
-                        def.id.replaceFirstChar { char -> if (char.isLowerCase()) char.titlecase(getDefault()) else char.toString() },
+                        def.label,
                         def.route,
                         selected
                     ) {
-                        LocalNavController.wrapper.navigate(def.route)
+                        val nav = shell.navigation
+                        if (nav.currentRoute == def.route) shell.search.clear() else nav.navigate(def.route)
                     }
                 }
             }
@@ -227,7 +216,7 @@ private fun NotificationBell() {
         )
 
         if (expanded) {
-            Popup(
+            ShellPopup(
                 // open up and to the right of the bell
                 alignment = Alignment.BottomStart,
                 offset = IntOffset(0, -(bellHeightPx + 12)),
@@ -237,7 +226,7 @@ private fun NotificationBell() {
                 },
                 properties = PopupProperties(focusable = true),
             ) {
-                NotificationsCenter()
+                Box(Modifier.shellTransition()) { NotificationsCenter() }
             }
         }
     }
@@ -259,13 +248,14 @@ private fun Account() {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                PlayerHead(Modifier.size(32.dp))
+                PlayerHead(Modifier.size(32.dp).offset(x = 2.dp))
                 Column(
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
-                    Text(ShellState.playerName, color = LocalTheme.current.textColor)
+                    val session = LocalShell.current.session
+                    Text(session.playerName, color = LocalTheme.current.textColor)
                     Text(
-                        ShellState.versionLabel.ifBlank { "OneConfig" },
+                        session.versionLabel.ifBlank { "OneConfig" },
                         color = LocalTheme.current.textColorSecondary,
                         fontSize = 11.sp
                     )

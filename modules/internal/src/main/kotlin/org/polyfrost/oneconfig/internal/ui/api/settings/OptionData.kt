@@ -4,13 +4,17 @@ import java.awt.Color
 import java.lang.reflect.Array as ReflectArray
 import java.util.function.Function
 import java.util.function.Supplier
+import kotlin.math.floor
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.internal.ui.api.shown
+import org.polyfrost.oneconfig.api.config.v1.ValueFormatter
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
-import org.polyfrost.oneconfig.internal.ui.components.item.normalizeItemIds
+import org.polyfrost.oneconfig.internal.ui.components.effect.normalizeEffectIds
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedString
 import org.polyfrost.oneconfig.internal.ui.components.localizedText
+import org.polyfrost.oneconfig.internal.ui.components.picker.normalizeIds
 import org.polyfrost.oneconfig.internal.ui.components.settings.formatSpinnerValue
 import org.polyfrost.oneconfig.internal.ui.components.settings.toNumberType
 
@@ -31,6 +35,7 @@ class SliderOptionData(prop: Property<*>) : OptionData(prop) {
     val min: Float get() = prop.getMetadata("min") ?: 0f
     val max: Float get() = prop.getMetadata("max") ?: 100f
     val step: Float get() = prop.getMetadata("step") ?: 0f
+    val format: ((Float) -> String)? get() = prop.valueFormat(prop.type)
 
     @Suppress("UNCHECKED_CAST")
     val numProp: Property<Number> get() = prop as Property<Number>
@@ -41,17 +46,25 @@ class SliderOptionData(prop: Property<*>) : OptionData(prop) {
  *
  * Both ends are written together in the container shape the property already holds so the backing field's
  * type is preserved
+ *
+ * [style] picks between a two-handle track with inputs beside it and the inputs alone
  */
-class RangeSliderOptionData(prop: Property<*>) : OptionData(prop) {
+class RangeOptionData(prop: Property<*>, val style: Style) : OptionData(prop) {
+    enum class Style { Slider, Spinner }
+
     val min: Float get() = prop.getMetadata("min") ?: 0f
     val max: Float get() = prop.getMetadata("max") ?: 100f
     val step: Float get() = prop.getMetadata("step") ?: 0f
+    val format: ((Float) -> String)? get() = prop.valueFormat(prop.type.componentType ?: Float::class.java)
 
-    /** The current `start to end` or null when the property does not hold a two-element numeric pair */
+    /**
+     * The current `start to end` held within [min] and [max] or null when the property does not hold a
+     * two-element numeric pair
+     */
     fun read(): Pair<Float, Float>? {
         val values = prop.readNumbers() ?: return null
         if (values.size < 2) return null
-        return values[0] to values[1]
+        return values[0].withinBounds(min, max) to values[1].withinBounds(min, max)
     }
 
     fun write(start: Float, end: Float) = prop.writeNumbers(listOf(start, end))
@@ -91,6 +104,11 @@ class NumberChainOptionData(prop: Property<*>) : OptionData(prop) {
     fun write(values: List<Float>) = prop.writeNumbers(values)
 }
 
+private fun Property<*>.valueFormat(type: Class<*>): ((Float) -> String)? {
+    val formatter = getMetadata<Any>("formatter") as? ValueFormatter ?: return null
+    return { value -> runCatching { formatter.format(value.toNumberType(type)) }.getOrElse { formatSpinnerValue(value) } }
+}
+
 private fun Property<*>.readNumbers(): List<Float>? = when (val value = get()) {
     is FloatArray -> value.toList()
     is DoubleArray -> value.map { it.toFloat() }
@@ -108,16 +126,16 @@ private fun Property<*>.writeNumbers(values: List<Float>) {
         is FloatArray -> values.toFloatArray()
         is DoubleArray -> values.map { it.toDouble() }.toDoubleArray()
         is IntArray -> values.map { it.roundToInt() }.toIntArray()
-        is LongArray -> values.map { it.toLong() }.toLongArray()
+        is LongArray -> values.map { it.roundedTo(java.lang.Long.TYPE) as Long }.toLongArray()
         is Array<*> -> {
             val component = current.javaClass.componentType
             ReflectArray.newInstance(component, values.size).also { array ->
-                values.forEachIndexed { index, value -> ReflectArray.set(array, index, value.toNumberType(component)) }
+                values.forEachIndexed { index, value -> ReflectArray.set(array, index, value.roundedTo(component)) }
             }
         }
         is List<*> -> {
             val component = (current.firstOrNull() ?: 0f).javaClass
-            values.map { it.toNumberType(component) }
+            values.map { it.roundedTo(component) }
         }
         else -> return
     }
@@ -135,6 +153,7 @@ class InheritableSliderOptionData(prop: Property<*>) : OptionData(prop) {
     val min: Float get() = prop.getMetadata("min") ?: 0f
     val max: Float get() = prop.getMetadata("max") ?: 100f
     val step: Float get() = prop.getMetadata("step") ?: 0f
+    val format: ((Float) -> String)? get() = prop.valueFormat(prop.type)
     val inheritLabel: String
         get() = localizedString(prop.getMetadata("inheritLabelKey"), prop.getMetadata<String>("inheritLabel"))
             .takeIf { it.isNotBlank() } ?: "Inherit"
@@ -150,13 +169,13 @@ class InheritableSliderOptionData(prop: Property<*>) : OptionData(prop) {
 
     val isInherited: Boolean
         get() {
-            val value = prop.get() ?: return true
+            val value = prop.shown() ?: return true
             val sentinel = inheritSentinel ?: return false
             return value is Number && sentinel is Number && value.toDouble() == sentinel.toDouble()
         }
 
     /** The explicit value or what it inherits while unset */
-    val shownValue: Float get() = if (isInherited) inheritedValue else (prop.get() as? Number)?.toFloat() ?: inheritedValue
+    val shownValue: Float get() = if (isInherited) inheritedValue else (prop.shown() as? Number)?.toFloat() ?: inheritedValue
 
     @Suppress("UNCHECKED_CAST")
     fun set(value: Float) = (prop as Property<Any>).set(value.toNumberType(prop.type))
@@ -168,6 +187,7 @@ class InheritableSliderOptionData(prop: Property<*>) : OptionData(prop) {
 class NumberOptionData(prop: Property<*>) : OptionData(prop) {
     val min: Float get() = prop.getMetadata("min") ?: -10f
     val max: Float get() = prop.getMetadata("max") ?: 100f
+    val format: ((Float) -> String)? get() = prop.valueFormat(prop.type)
     val unit: String? get() = localizedString(prop.getMetadata("unitKey"), prop.getMetadata<String>("unit")).takeIf { it.isNotBlank() }
     val placeholder: String? get() = localizedString(prop.getMetadata("placeholderKey"), prop.getMetadata<String>("placeholder")).takeIf { it.isNotBlank() }
 
@@ -191,14 +211,22 @@ class TextListOptionData(prop: Property<*>) : ListOptionData(prop) {
     fun strings(): List<String> = elements().map { it?.toString() ?: "" }
 }
 
-class ItemListOptionData(prop: Property<*>) : ListOptionData(prop) {
-    fun ids(): List<String> = normalizeItemIds(
+open class TileListOptionData(prop: Property<*>) : ListOptionData(prop) {
+    fun ids(): List<String> = normalize(
         elements().mapNotNull { it as? String }
     )
 
-    fun setIds(values: List<String>) = prop.setItemListElements(
-        normalizeItemIds(values)
+    fun setIds(values: List<String>) = prop.setIdListElements(
+        normalize(values)
     )
+
+    protected open fun normalize(ids: Iterable<String>): List<String> = normalizeIds(ids)
+}
+
+class ItemListOptionData(prop: Property<*>) : TileListOptionData(prop)
+
+class EffectListOptionData(prop: Property<*>) : TileListOptionData(prop) {
+    override fun normalize(ids: Iterable<String>): List<String> = normalizeEffectIds(ids)
 }
 
 class FileOptionData(prop: Property<*>) : OptionData(prop) {
@@ -264,16 +292,61 @@ class NumberListOptionData(prop: Property<*>, val style: Style) : ListOptionData
     val max: Float get() = prop.getMetadata("max") ?: 100f
     val step: Float get() = prop.getMetadata("step") ?: 0f
 
-    val elementType: Class<*>
-        get() {
-            if (prop.type.isArray) return prop.type.componentType
-            elements().firstOrNull { it is Number }?.let { return it.javaClass }
-            val whole = min == min.toInt().toFloat() && max == max.toInt().toFloat() &&
-                    step == step.toInt().toFloat()
-            return if (whole) Integer::class.java else java.lang.Double::class.java
-        }
+    val elementType: Class<*> get() = numericElementType(min, max, step)
+
+    val format: ((Float) -> String)? get() = prop.valueFormat(elementType)
 
     fun floats(): List<Float> = elements().map { (it as? Number)?.toFloat() ?: min }
+}
+
+/**
+ * A user-editable list of start/end pairs held flat in a single numeric array or list
+ *
+ * Each range takes two consecutive values so `[0, 10, 20, 30]` reads as 0-10 and 20-30
+ */
+class RangeListOptionData(prop: Property<*>, val style: RangeOptionData.Style) : ListOptionData(prop) {
+    val min: Float get() = prop.getMetadata("min") ?: 0f
+    val max: Float get() = prop.getMetadata("max") ?: 100f
+    val step: Float get() = prop.getMetadata("step") ?: 0f
+
+    val elementType: Class<*> get() = numericElementType(min, max, step)
+
+    val format: ((Float) -> String)? get() = prop.valueFormat(elementType)
+
+    /** Pairs up the stored values held within [min] and [max] ending a trailing start that has no end at [max] */
+    fun ranges(): List<Pair<Float, Float>> {
+        val min = min
+        val max = max
+        return elements().map { ((it as? Number)?.toFloat() ?: min).withinBounds(min, max) }
+            .chunked(2) { it[0] to it.getOrElse(1) { max } }
+    }
+
+    fun setRanges(ranges: List<Pair<Float, Float>>) {
+        val type = elementType
+        setElements(ranges.flatMap { (start, end) -> listOf(start.roundedTo(type), end.roundedTo(type)) })
+    }
+}
+
+/** Clamps without throwing when a misconfigured option has [min] above [max] */
+private fun Float.withinBounds(min: Float, max: Float): Float = coerceAtLeast(min).coerceAtMost(max)
+
+/** Converts to [type] rounding half up for whole number types the same as [roundToInt] does */
+private fun Float.roundedTo(type: Class<*>): Number {
+    val whole = when (type) {
+        Integer.TYPE, Integer::class.java, java.lang.Long.TYPE, java.lang.Long::class.java,
+        java.lang.Short.TYPE, java.lang.Short::class.java, java.lang.Byte.TYPE, java.lang.Byte::class.java -> true
+        else -> false
+    }
+    return (if (whole) floor(this + 0.5f) else this).toNumberType(type)
+}
+
+/** The element type of a numeric list falling back to a guess from the bounds while it is an empty list */
+private fun ListOptionData.numericElementType(min: Float, max: Float, step: Float): Class<*> {
+    if (prop.type.isArray) return prop.type.componentType
+    elements().firstOrNull { it is Number }?.let { return it.javaClass }
+    val whole = min == min.toInt().toFloat() && max == max.toInt().toFloat() &&
+            step == step.toInt().toFloat()
+    return if (whole) Integer::class.java else java.lang.Double::class.java
 }
 
 class DropdownOptionData(prop: Property<*>) : OptionData(prop) {
@@ -295,6 +368,7 @@ class KeybindOptionData(prop: Property<*>) : OptionData(prop)
 
 class ButtonOptionData(prop: Property<*>) : OptionData(prop) {
     val buttonText: Any? get() = localizedText(prop.getMetadata<Any?>("textKey")?.asRenderText(), prop.getMetadata<Any?>("text")?.asRenderText())
+    val confirmText: Any? get() = prop.getMetadata<Any?>("confirmText")?.asRenderText()?.let { localizedText(null, it) }
     val runnable: Runnable? get() = prop.getMetadata("runnable") ?: prop.getAs()
 }
 
@@ -381,7 +455,7 @@ private fun Property<*>.setListElements(values: List<Any?>) {
 }
 
 @Suppress("UNCHECKED_CAST")
-private fun Property<*>.setItemListElements(values: List<String>) {
+private fun Property<*>.setIdListElements(values: List<String>) {
     if (type.isArray) {
         (this as Property<Any>).set(values.toTypedArray())
         return

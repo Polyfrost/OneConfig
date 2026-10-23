@@ -5,6 +5,8 @@ import org.polyfrost.oneconfig.api.config.v1.KtConfig
 
 object TestKtConfig : KtConfig("test-2", "Test Kt Config", Category.QOL) {
 
+    var enabled by masterToggle()
+
     var test by transformed(
         radiobutton(
             "test",

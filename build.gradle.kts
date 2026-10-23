@@ -3,6 +3,7 @@ allprojects {
     repositories {
         mavenCentral()
         maven("https://maven.fabricmc.net/releases")
+        maven("https://maven.ornithemc.net/releases")
     }
 }
 
@@ -32,8 +33,9 @@ tasks.register<Sync>("buildAndCollect") {
 
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
+    val noBootstrapNodes = bootstrapNodes.isEmpty()
     doFirst {
-        if (bootstrapNodes.isEmpty()) {
+        if (noBootstrapNodes) {
             throw GradleException("No bootstrap nodes were registered — check the stonecutter tree in settings.gradle.kts.")
         }
     }

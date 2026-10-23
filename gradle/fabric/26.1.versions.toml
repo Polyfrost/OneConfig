@@ -8,9 +8,8 @@ stella = "d12aec9c69"
 
 vulkanmod = "0.6.8+26.1.2"
 
-skycubed = "zCt0GMWK"
-meowdding-lib = "4.2.5"
-skyblock-api = "4.2.8"
+meowdding-lib = "4.2.28"
+skyblock-api = "4.2.30"
 
 [libraries]
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
@@ -24,7 +23,6 @@ moulconfig = { module = "org.notenoughupdates.moulconfig:common", version.ref = 
 
 vulkanmod = { module = "maven.modrinth:vulkanmod", version.ref = "vulkanmod" }
 
-skycubed = { module = "maven.modrinth:skycubed", version.ref = "skycubed" }
 meowdding-lib = { module = "me.owdding.meowdding-lib:meowdding-lib", version.ref = "meowdding-lib" }
 skyblock-api = { module = "tech.thatgravyboat:skyblock-api", version.ref = "skyblock-api" }
 

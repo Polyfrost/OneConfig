@@ -39,9 +39,11 @@ import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerialize
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Regression test for issue #706 where a bare int such as {@code -65436} stored where a
- * {@link PolyColor} is expected used to crash the whole config load
+ * Regression test for issue #706 where an incompatible value stored where a {@link PolyColor}
+ * is expected used to crash the whole config load
  */
+// the stored value must not be a number or string: those get coerced by PolyColorAdapter once
+// ConfigManager has registered it, which depends on test class execution order
 public class CorruptOptionLoadTest {
 
     static class Holder {
@@ -65,7 +67,7 @@ public class CorruptOptionLoadTest {
     void barePreFixLoadCrashes() throws Exception {
         Path dir = Files.createTempDirectory("oc706-crash");
         Files.write(dir.resolve("706test.json"),
-                "{ \"col\": -65436, \"flag\": true }".getBytes(StandardCharsets.UTF_8));
+                "{ \"col\": true, \"flag\": true }".getBytes(StandardCharsets.UTF_8));
 
         Holder h = new Holder();
         Tree code = codeTree(h);
@@ -77,7 +79,7 @@ public class CorruptOptionLoadTest {
     void withCollectionOnlyTheColorResets() throws Exception {
         Path dir = Files.createTempDirectory("oc706-fix");
         Files.write(dir.resolve("706test.json"),
-                "{ \"col\": -65436, \"flag\": true }".getBytes(StandardCharsets.UTF_8));
+                "{ \"col\": true, \"flag\": true }".getBytes(StandardCharsets.UTF_8));
 
         Holder h = new Holder();
         PolyColor defaultColor = h.col;

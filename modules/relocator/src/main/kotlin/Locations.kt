@@ -9,6 +9,7 @@ internal object Locations {
             "io.github.notenoughupdates.moulconfig",
             TargetLocation("skyhanni", "at.hannibal2.skyhanni.deps.moulconfig", Newer("1.21.4")),
             TargetLocation("firmament", "moe.nea.firmament.deps.moulconfig", Newer("1.21.5")),
+            TargetLocation("skysoft", "com.skysoft.deps.softconfig", Newer("26.1")),
         )
     )
 

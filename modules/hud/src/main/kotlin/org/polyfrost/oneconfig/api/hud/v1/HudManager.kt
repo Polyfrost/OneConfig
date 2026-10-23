@@ -52,7 +52,6 @@ import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.utils.v1.MHUtils
 
-@Suppress("DEPRECATION")
 private fun Throwable.isFatalHudFailure(): Boolean = this is VirtualMachineError || this is ThreadDeath
 
 object HudManager {
@@ -95,22 +94,26 @@ object HudManager {
     val isEditing: Boolean get() = isEditorOpen || isConfigUiOpen
 
     /** `true` only while the HUD editor screen itself is open */
-    @ApiStatus.Internal
     @Volatile var isEditorOpen = false
         private set
 
     /** Set by the OneConfig UI screen while it is open so HUDs behind it still render as previews */
-    @ApiStatus.Internal
     @Volatile @JvmField var isConfigUiOpen = false
 
     @Volatile @JvmField var guiScreenWidth: Float = 960f
     @Volatile @JvmField var guiScreenHeight: Float = 540f
 
-    @ApiStatus.Internal
     @Volatile @JvmField var layoutRefWidth: Float = 0f
 
-    @ApiStatus.Internal
     @Volatile @JvmField var layoutRefHeight: Float = 0f
+
+    @get:ApiStatus.Experimental
+    @JvmStatic
+    val layoutReferenceWidth: Float get() = layoutRefWidth
+
+    @get:ApiStatus.Experimental
+    @JvmStatic
+    val layoutReferenceHeight: Float get() = layoutRefHeight
 
     @Volatile private var loadingLayout = false
 
@@ -163,6 +166,10 @@ object HudManager {
     @ApiStatus.Internal
     val renderRevision = mutableIntStateOf(0)
 
+    /** Compose cannot see changes to [activeInstances] so bump this whenever a HUD is added or removed */
+    @ApiStatus.Internal
+    val instancesRevision = mutableIntStateOf(0)
+
     @ApiStatus.Internal
     val editorOpenRevision = mutableIntStateOf(0)
 
@@ -194,12 +201,17 @@ object HudManager {
 
     private val prepareOrder = ArrayList<Hud>()
 
+    private val frameDrawn = IdentityHashMap<Hud, Boolean>()
+
     private var frameGroups: List<HudBackgroundMerge.Group> = emptyList()
     private var lastMergeKey: Int? = null
 
+    private val renderable = ArrayList<Hud>()
     private var zOrderCache: List<Hud> = emptyList()
     private var zOrderHuds = arrayOfNulls<Hud>(0)
     private var zOrderBounds = FloatArray(0)
+    private var zOrderDrawn = BooleanArray(0)
+    private var zOrderStamps = IntArray(0)
 
     private const val REGISTRY_ID = "hud-registry.json"
     private const val KNOWN_HUDS = "knownHuds"
@@ -302,8 +314,11 @@ object HudManager {
      *
      * THERE ARE CERTAIN THINGS THAT MUST BE DONE TO PROPERLY REGISTER AN ACTIVE HUD
      */
-    @ApiStatus.Internal
     val activeInstances = ArrayList<Hud>()
+
+    @ApiStatus.Experimental
+    @JvmStatic
+    fun instances(): List<Hud> = activeInstances.toList()
 
     private class DateTestHud : TextHud.DateTime("Date:", "yyyy-MM-dd", title = "Date")
 
@@ -397,6 +412,7 @@ object HudManager {
             val it = iter.next()
             if (it::class.java == hud::class.java) {
                 iter.remove()
+                instancesRevision.intValue++
                 disposeHudLogging(it, delete)
                 @Suppress("UNCHECKED_CAST")
                 out.add(it as T)
@@ -437,7 +453,7 @@ object HudManager {
 
     fun removeHud(hud: Hud, delete: Boolean = false) {
         if (!hud.isReal) LOGGER.warn("Removing HUD ${hud.title}, which has no config tree")
-        activeInstances.remove(hud)
+        if (activeInstances.remove(hud)) instancesRevision.intValue++
         disposeHudLogging(hud, delete)
     }
 
@@ -515,8 +531,9 @@ object HudManager {
             inner[1] + inner[3] <= outer[1] + outer[3]
 
     @ApiStatus.Internal
-    fun zOrderedInstances(bounds: (Hud) -> FloatArray? = ::screenBounds): List<Hud> {
-        val list = activeInstances
+    fun zOrderedInstances(bounds: (Hud) -> FloatArray? = ::screenBounds): List<Hud> = zOrdered(activeInstances, bounds)
+
+    private fun zOrdered(list: List<Hud>, bounds: (Hud) -> FloatArray?): List<Hud> {
         val n = list.size
         if (n <= 1) return list
         val b = arrayOfNulls<FloatArray>(n)
@@ -558,6 +575,7 @@ object HudManager {
                 hud.renderedH = h
             }
         }
+        hud.settlePin()
         return root
     }
 
@@ -584,16 +602,15 @@ object HudManager {
     }
 
     private fun shouldDraw(hud: Hud): Boolean {
-        if (hud.hidden && !isEditing) return false
+        if (!isEditing && hud.hidden) return false
         return isShown(hud)
     }
 
     private fun keepsBackgroundOnly(hud: Hud): Boolean =
-        hud.hidden && !isEditing && hud.keepsHiddenBackground && isShown(hud)
+        !isEditing && hud.hidden && hud.keepsHiddenBackground && isShown(hud)
 
     /** Everything [shouldDraw] checks apart from the HUD's own hidden flag */
     private fun isShown(hud: Hud): Boolean {
-        if (hud is LegacyHudMarker) return false
         if (isEditing) return true
         if (!GlobalHudSettings.enabled) return false
         if (isGuiHidden) return false
@@ -611,10 +628,13 @@ object HudManager {
     private fun collectFrameOrder(): Boolean {
         frameOrder.clear()
         layoutOrder.clear()
+        frameDrawn.clear()
         var volatileContent = false
-        for (hud in orderedForRender()) {
+        for (hud in activeInstances) {
+            if (hud is LegacyHudMarker) continue
             val visible = shouldDraw(hud)
-            if (visible || keepsBackgroundOnly(hud)) {
+            val backgroundOnly = !visible && keepsBackgroundOnly(hud)
+            if (visible || backgroundOnly) {
                 updateIfDue(hud)
                 val show = isEditing || try {
                     hud.shouldShow()
@@ -626,12 +646,16 @@ object HudManager {
                     hud.isVisible.value = false
                     continue
                 }
+                frameDrawn[hud] = visible
             }
             hud.isVisible.value = visible
+        }
+        for (hud in orderedForRender()) {
+            val visible = frameDrawn[hud] ?: continue
             if (visible) {
                 frameOrder.add(hud)
                 if (hud.alwaysRedraw) volatileContent = true
-            } else if (keepsBackgroundOnly(hud)) {
+            } else {
                 layoutOrder.add(hud)
                 if (hud.bgChroma) volatileContent = true
             }
@@ -714,6 +738,19 @@ object HudManager {
      * when a position or size or background style actually changed
      */
     private fun updateBackgroundGroups(huds: List<Hud>, screenWidth: Float, screenHeight: Float, scale: Float) {
+        var stable = lastMergeKey != null && huds.size == mergeCheckHuds.size
+        if (mergeCheckHuds.size != huds.size) {
+            mergeCheckHuds = arrayOfNulls(huds.size)
+            mergeCheckStamps = IntArray(huds.size)
+        }
+        for (i in huds.indices) {
+            val hud = huds[i]
+            val stamp = hud.geometryStamp
+            if (stamp == -1 || mergeCheckHuds[i] !== hud || mergeCheckStamps[i] != stamp) stable = false
+            mergeCheckHuds[i] = hud
+            mergeCheckStamps[i] = stamp
+        }
+        if (stable) return
         val key = HudBackgroundMerge.layoutKey(huds)
         if (key == lastMergeKey) return
         lastMergeKey = key
@@ -753,6 +790,8 @@ object HudManager {
     }
 
     private var mergeExclusions: List<Hud> = emptyList()
+    private var mergeCheckHuds = arrayOfNulls<Hud>(0)
+    private var mergeCheckStamps = IntArray(0)
 
     /**
      * HUDs kept out of merging for now
@@ -768,6 +807,16 @@ object HudManager {
         val next = huds.toList()
         if (next.size == mergeExclusions.size && next.indices.all { next[it] === mergeExclusions[it] }) return
         mergeExclusions = next
+        // unlink right away so moving an excluded HUD never drags its neighbours with it
+        Snapshot.withMutableSnapshot {
+            for (hud in activeInstances) {
+                val excluded = isMergeExcluded(hud)
+                hud.clearMergeLinks(
+                    clearX = excluded || hud.mergeLinkX?.parent?.let(::isMergeExcluded) == true,
+                    clearY = excluded || hud.mergeLinkY?.parent?.let(::isMergeExcluded) == true,
+                )
+            }
+        }
         lastMergeKey = null
         invalidate()
     }
@@ -779,6 +828,14 @@ object HudManager {
     @JvmStatic
     fun mergeGroupOf(hud: Hud): List<Hud> =
         frameGroups.firstOrNull { group -> group.huds.any { it === hud } }?.huds ?: listOf(hud)
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun isMergeCandidate(hud: Hud): Boolean = HudBackgroundMerge.canMerge(hud)
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun backgroundStylesMatch(a: Hud, b: Hud): Boolean = HudBackgroundMerge.sameStyle(a, b)
 
     /**
      * Holds every HUD in a fused shape against the neighbour it touches at the point where the two meet
@@ -844,17 +901,28 @@ object HudManager {
     }
 
     private fun orderedForRender(): List<Hud> {
-        val list = activeInstances
+        // legacy and compat HUDs draw through their own renderers, and reading their size or hidden
+        // flag can mean measuring text or going through reflection, so keep them out of this pass
+        val list = renderable
+        list.clear()
+        for (hud in activeInstances) if (hud !is LegacyHudMarker) list.add(hud)
         val n = list.size
         if (n <= 1) return list
         if (zOrderHuds.size < n) {
             zOrderHuds = arrayOfNulls(n)
             zOrderBounds = FloatArray(n * 4)
+            zOrderDrawn = BooleanArray(n)
+            zOrderStamps = IntArray(n)
         }
         var same = zOrderCache.size == n
         for (i in 0 until n) {
             val hud = list[i]
-            val b = screenBounds(hud)
+            val drawn = hud in frameDrawn
+            val stamp = if (drawn) hud.geometryStamp else 0
+            if (same && zOrderHuds[i] === hud && zOrderDrawn[i] == drawn && stamp != -1 && zOrderStamps[i] == stamp) continue
+            zOrderDrawn[i] = drawn
+            zOrderStamps[i] = stamp
+            val b = if (drawn) screenBounds(hud) else null
             val x = b?.get(0) ?: Float.NaN
             val y = b?.get(1) ?: Float.NaN
             val w = b?.get(2) ?: Float.NaN
@@ -874,9 +942,11 @@ object HudManager {
         }
         if (same) return zOrderCache
         invalidate()
-        zOrderCache = zOrderedInstances()
+        zOrderCache = zOrdered(list, ::drawnBounds)
         return zOrderCache
     }
+
+    private fun drawnBounds(hud: Hud): FloatArray? = if (hud in frameDrawn) screenBounds(hud) else null
 
     private fun Float.sameBound(other: Float): Boolean =
         this == other || (this.isNaN() && other.isNaN())
@@ -974,6 +1044,12 @@ object HudManager {
         isEditorOpen = false
         // a drag interrupted by the editor closing must not leave a HUD unable to merge
         setMergeExclusions(emptyList())
+
+        for (hud in activeInstances) {
+            hud.unpinCorner()
+            hud.settlePin()
+        }
+
         if (wasOpen) EventManager.INSTANCE.post(HudEditorToggleEvent.SCREEN_REMOVED)
     }
 
@@ -1000,6 +1076,7 @@ object HudManager {
                 continue
             }
             activeInstances.remove(hud)
+            instancesRevision.intValue++
             try {
                 disposeHud(hud, delete = false)
             } catch (failure: Throwable) {
@@ -1122,7 +1199,7 @@ object HudManager {
                     LOGGER.error("Failed to untrack broken HUD tree $treeId", failure)
                 }
             }
-            activeInstances.remove(candidate)
+            if (activeInstances.remove(candidate)) instancesRevision.intValue++
             try {
                 disposeHud(candidate, delete = false)
             } catch (failure: Throwable) {
@@ -1164,6 +1241,7 @@ object HudManager {
                     hud.setAbsolutePosition(absX, absY)
                 }
                 activeInstances.add(hud)
+                instancesRevision.intValue++
                 hud.setup()
                 hud.captureStaticSizeDefaults()
                 hud.capturePositionDefaults()
@@ -1213,6 +1291,7 @@ object HudManager {
                 candidate = hud
                 hud.setAbsolutePosition(dx, dy)
                 activeInstances.add(hud)
+                instancesRevision.intValue++
                 hud.setup()
                 hud.captureStaticSizeDefaults()
                 hud.capturePositionDefaults()

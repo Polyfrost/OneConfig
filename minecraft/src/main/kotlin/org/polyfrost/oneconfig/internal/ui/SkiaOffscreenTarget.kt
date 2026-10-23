@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui
 
 import com.mojang.blaze3d.pipeline.RenderTarget
-import com.mojang.blaze3d.pipeline.TextureTarget
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.ColorSpace
 import org.jetbrains.skia.Surface
@@ -16,6 +15,10 @@ import org.joml.Vector4f
 
 //? if >= 1.21.5 {
 import com.mojang.blaze3d.systems.RenderSystem
+//?}
+
+//? if > 1.8.9 {
+import com.mojang.blaze3d.pipeline.TextureTarget
 //?}
 
 //? if < 1.21.4 {
@@ -46,6 +49,8 @@ class SkiaOffscreenTarget {
         destroy()
         if (SkiaCtx.vulkanService == null) return false
         try {
+            //? if < 1.21.5
+            //val bound = RenderTargetFbo.saveBoundTarget()
             //? if >= 26.3 {
             val rt = TextureTarget(
                 null, w, h,
@@ -58,13 +63,14 @@ class SkiaOffscreenTarget {
             /*val rt = TextureTarget(null, w, h, true)
             *///?} else if >= 1.21.4 {
             /*val rt = TextureTarget(w, h, true)
-            *///?} else {
+            *///?} elif > 1.8.9 {
             /*val rt = TextureTarget(w, h, true, Minecraft.ON_OSX)
-            *///?}
+            *///?} else
+            //val rt = RenderTarget(w, h, true)
             target = rt
             //? if < 1.21.5 {
             /*rt.setClearColor(0f, 0f, 0f, 0f)
-            RenderTargetFbo.restoreMainTarget()
+            RenderTargetFbo.restoreBoundTarget(bound)
             *///?}
             if (!SkiaCtx.isVulkanMode && RenderTargetFbo.getFboId(rt) <= 0) {
                 destroy()
@@ -103,6 +109,8 @@ class SkiaOffscreenTarget {
 
     fun clearTarget() {
         val rt = target ?: return
+        //? if < 1.21.5
+        //val bound = RenderTargetFbo.saveBoundTarget()
         //? if >= 26.2 {
         val colorTex = rt.colorTexture ?: return
         RenderSystem.getDevice().createCommandEncoder()
@@ -117,11 +125,12 @@ class SkiaOffscreenTarget {
         *///?}
         *///?} elif >= 1.21.4 {
         /*rt.clear()
-        *///?} else {
+        *///?} elif > 1.8.9 {
         /*rt.clear(Minecraft.ON_OSX)
-        *///?}
+        *///?} else
+        //rt.clear()
         //? if < 1.21.5
-        //RenderTargetFbo.restoreMainTarget()
+        //RenderTargetFbo.restoreBoundTarget(bound)
     }
 
     fun ensureSubmitted() {
@@ -135,9 +144,11 @@ class SkiaOffscreenTarget {
 
     fun destroy() {
         releaseSurface()
+        //? if < 1.21.5
+        //val bound = RenderTargetFbo.saveBoundTarget()
         target?.destroyBuffers(); target = null
         //? if < 1.21.5
-        //RenderTargetFbo.restoreMainTarget()
+        //RenderTargetFbo.restoreBoundTarget(bound)
         lastW = -1; lastH = -1
     }
 

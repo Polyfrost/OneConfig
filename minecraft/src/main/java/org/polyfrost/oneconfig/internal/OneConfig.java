@@ -32,11 +32,9 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.world.scores.Scoreboard;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -59,11 +57,10 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsRenderer;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
-import org.polyfrost.oneconfig.internal.compat.ArmorHudCompat;
-import org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat;
+import org.polyfrost.oneconfig.internal.compat.CompatLoader;
+import org.polyfrost.oneconfig.internal.compat.ConfigEntrypoints;
 import org.polyfrost.oneconfig.internal.compat.KaleidoCompat;
-import org.polyfrost.oneconfig.internal.compat.ModMenuShimLoader;
-import org.polyfrost.oneconfig.internal.compat.WWaypointsCompat;
+import org.polyfrost.oneconfig.internal.compat.toggle.ModGates;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories;
@@ -80,15 +77,36 @@ import org.polyfrost.oneconfig.internal.ui.keybind.KeybindConflicts;
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry;
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProfiles;
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProvider;
+import org.polyfrost.oneconfig.internal.ui.navigation.BuiltinPages;
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus;
 import org.polyfrost.oneconfig.internal.ui.sound.ExternalSounds;
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry;
 import org.polyfrost.oneconfig.test.TestMod_Test;
 
+//? if > 1.8.9 {
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.world.scores.DisplaySlot;
+import org.polyfrost.oneconfig.internal.compat.ArmorHudCompat;
+import org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat;
+//?}
+
+//? if = 1.8.9 {
+/*import net.ornithemc.osl.resource.loader.api.client.ClientResourceLoaderEvents;
+import org.polyfrost.oneconfig.internal.ui.compose.SkiaFontRenderer;
+*///?}
+
+//? if fabric {
+import org.polyfrost.oneconfig.internal.compat.ModMenuShimLoader;
+//?}
+
+//? if wwaypoints_compat {
+import org.polyfrost.oneconfig.internal.compat.WWaypointsCompat;
+//?}
+
 //? neoforge
 //@net.neoforged.fml.common.Mod("oneconfigv1")
 public class OneConfig
-        //? fabric
+        //? fabric || ornithe
         implements ClientModInitializer {
     public static final OneConfig INSTANCE = new OneConfig();
     private static final Logger LOGGER = LogManager.getLogger("OneConfig");
@@ -167,14 +185,27 @@ public class OneConfig
         if (!minecraft.isLocalServer()) return true;
 
         Scoreboard scoreboard = minecraft.level.getScoreboard();
+        //~ if = 1.8.9 'player.connection.getListedOnlinePlayers' -> 'getNetworkHandler().getOnlinePlayers'
         return minecraft.player.connection.getListedOnlinePlayers().size() > 1
+                //~ if = 1.8.9 'DisplaySlot.LIST' -> '0'
                 || scoreboard.getDisplayObjective(DisplaySlot.LIST) != null;
+    }
+
+    public static boolean isDebugScreenVisible() {
+        Minecraft minecraft = Minecraft.getInstance();
+        //? if >= 1.21.9 {
+        //~ if < 1.21.11 'isOverlayVisible' -> 'isF3Visible'
+        if (!minecraft.debugEntries.isOverlayVisible()) return false;
+        //?}
+        return minecraft.getDebugOverlay().showDebugScreen();
     }
 
     private static boolean legacyHudOffscreenReady;
 
+    //~ if = 1.8.9 '(GuiGraphicsExtractor graphics)' -> '()'
     public static void render(GuiGraphicsExtractor graphics) {
         prepareHud();
+        //~ if = 1.8.9 '(graphics)' -> '()'
         submitHud(graphics);
     }
 
@@ -198,7 +229,7 @@ public class OneConfig
         //? } else {
         /*HudManager.isGuiHidden = Minecraft.getInstance().options.hideGui;
         *///? }
-        HudManager.isDebugScreenVisible = Minecraft.getInstance().getDebugOverlay().showDebugScreen();
+        HudManager.isDebugScreenVisible = isDebugScreenVisible();
         HudManager.isTabListVisible = isTabListVisible();
         HudManager.isGuiScreenOpen = Platform.screen().current() != null;
         HudManager.isChatScreenOpen = Platform.screen().current() instanceof ChatScreen;
@@ -211,6 +242,8 @@ public class OneConfig
         legacyHudOffscreenReady = !hudRendersLive && LegacyHudOffscreen.INSTANCE.render();
         // records the F3 overlay offscreen so Skia can put it above the Compose UI instead of below the
         // blur and it must run every frame regardless of the HUD dirty gate
+        // 1.8.9 replays the overlay in Mixin_SkiaFrame after Skia finishes drawing instead
+        //? if > 1.8.9
         DebugOverlayOffscreen.INSTANCE.render();
         if (HudManager.INSTANCE.beginFrame(sw, sh, ItemCatalog.INSTANCE::renderHudIcons)) {
             SkiaCtx.INSTANCE.queueHudDraw(() -> {
@@ -223,15 +256,18 @@ public class OneConfig
     }
 
     /** Submits the legacy HUDs (when not captured offscreen) and the Skia HUD blit into the vanilla HUD */
+    //~ if = 1.8.9 '(GuiGraphicsExtractor graphics)' -> '()'
     public static void submitHud(GuiGraphicsExtractor graphics) {
         if (!SkiaCtx.INSTANCE.isReady()) {
             return;
         }
         if (!legacyHudOffscreenReady) {
+            //~ if = 1.8.9 '(graphics)' -> '()'
             LegacyHudRenderer.INSTANCE.renderLive(graphics);
         }
         //~ if < 1.21.8 '.suppressInGameHudRender' -> '.shouldSuppressInGameHudRender()'
         if (!SkiaCtx.INSTANCE.suppressInGameHudRender) {
+            //~ if = 1.8.9 '(graphics)' -> '()'
             SkiaCtx.INSTANCE.blitHud(graphics);
         }
     }
@@ -260,7 +296,7 @@ public class OneConfig
                 HudEditorToggleEvent.class, e -> {
                     if (e.open) {
                         if (!(Platform.screen().current() instanceof HudEditorUIScreen)) {
-                            Platform.screen().display(HudEditorUIScreen.open());
+                            Platform.screen().display(HudEditorUIScreen.open(Platform.screen().current() instanceof OneConfigUIScreen));
                         }
                     } else if (!e.screenAlreadyGone) {
                         if (Platform.screen().current() instanceof HudEditorUIScreen) {
@@ -270,15 +306,27 @@ public class OneConfig
                 });
         // resets the editing flag if another screen replaces the HUD editor without going through
         // HudManager.closeEditor() and null opens are ignored because commands close chat first
+        // closeEditor() would re-enter setScreen(null) mid-switch, which 26.2+ rejects during disconnect
         EventManager.register(
                 ScreenOpenEvent.class, e -> {
                     if (HudManager.INSTANCE.isEditorOpen() && e.getScreen() != null && !(e.getScreen() instanceof HudEditorUIScreen)) {
-                        HudManager.INSTANCE.closeEditor();
+                        HudManager.INSTANCE.onEditorScreenRemoved();
                     }
                 });
         EventManager.register(
                 InitializationEvent.class, e -> {
-                    ConfigManager.initialize();
+                    try {
+                        ConfigManager.setProfileSwitchDispatcher(Platform.screen()::runOnUiThread);
+                        try {
+                            ConfigEntrypoints.registerAll();
+                        } catch (Throwable t) {
+                            LOGGER.error("Failed to run the OneConfig config entrypoints", t);
+                        }
+                        ConfigManager.initialize();
+                    } finally {
+                        // compat stays queued until this runs
+                        ConfigEntrypoints.finishRegistration();
+                    }
                     KeybindConflicts.unbindMinecraftKeybinds();
                     CompatSnapshots.setDispatcher(r -> {
                         Minecraft mc = Minecraft.getInstance();
@@ -288,8 +336,11 @@ public class OneConfig
                     MinecraftKeybindProfiles.init();
                     ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
                     BuiltinHudRegistrar.register();
+                    ModGates.register();
+                    //? if > 1.8.9 {
                     FirmamentHudCompat.register();
                     ArmorHudCompat.register();
+                    //?}
                     //? if wwaypoints_compat
                     WWaypointsCompat.register();
                     ThemeRegistry.INSTANCE.loadFromConfig();
@@ -300,6 +351,7 @@ public class OneConfig
         });
         // after loading finishes so translation keys are available
         EventManager.register(ResourceFinishedLoading.class, e -> SearchCorpus.INSTANCE.init());
+        EventManager.register(ResourceFinishedLoading.class, e -> CompatLoader.INSTANCE.onResourcesLoaded());
 //        //#if MC < 1.13
 //        // this is cringe but is better than the alternative of checking every frame in a mixin (that's how vanilla does it lol)
 //        AtomicBoolean active = new AtomicBoolean(false);
@@ -359,6 +411,12 @@ public class OneConfig
 
         SkikoDataPath.redirect();
 
+        //? if = 1.8.9 {
+        /*ClientResourceLoaderEvents.INIT_RESOURCE_MANAGER.register(
+            resourceManager -> resourceManager.addReloader(SkiaFontRenderer.INSTANCE)
+        );
+        *///?}
+
         // to enable RenderDoc set these JVM arguments
         // -Drenderdoc.enabled=true
         // (Windows) -Drenderdoc.path="C:\Program Files\RenderDoc\renderdoc.dll" (or wherever you installed RenderDoc)
@@ -384,6 +442,7 @@ public class OneConfig
         LOGGER.info("Loading OneConfig v{}", v);
         McFontService.INSTANCE.init();
         ThirdPartyModCategories.INSTANCE.init();
+        BuiltinPages.register();
         // force class-load so the hello/disconnect handlers are armed before joining any server
         HypixelUtils.isHypixel();
         ExternalSounds.INSTANCE.ensureDownloaded();

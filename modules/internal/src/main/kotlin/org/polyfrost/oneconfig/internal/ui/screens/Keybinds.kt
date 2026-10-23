@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.hoverable
@@ -9,17 +8,15 @@ import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -53,6 +50,7 @@ import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.Icon
+import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
@@ -65,6 +63,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindConflicts
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindEntry
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroup
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroupCollapseStore
@@ -75,7 +74,8 @@ import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 import org.polyfrost.oneconfig.internal.ui.search.SearchDocument
 import org.polyfrost.oneconfig.internal.ui.search.SearchScope
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
+import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.util.LayoutRef
@@ -86,15 +86,10 @@ private val CONFLICT_COLOR = Color(0xFFE0524F)
 fun Keybinds() {
     val revision = ConfigRegistry.revision
 
-    DisposableEffect(Unit) {
-        ShellState.title = "Keybinds"
-        onDispose { }
-    }
-
     val configs = ConfigRegistry.configs.toList()
     val providerRevision = KeybindProviderRegistry.revision.intValue
     val groups = remember(revision, providerRevision, configs) { collectAllKeybindGroups() }
-    val localSearchQuery = if (ShellState.globalSearchActive) "" else ShellState.searchQuery.trim()
+    val localSearchQuery = pageSearchQuery().trim()
     val search = rememberKeybindSearchResults(groups, localSearchQuery)
     val searchResults = search.groups
     val visibleGroups = if (localSearchQuery.isBlank()) groups else searchResults.orEmpty()
@@ -104,10 +99,10 @@ fun Keybinds() {
     if (visibleGroups.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             val message = when {
-                localSearchQuery.isBlank() -> "No keybinds available."
+                localSearchQuery.isBlank() -> translated("oneconfig.search.no_keybinds", "No keybinds available.")
                 // nothing to say until the first search comes back
-                searchResults == null -> "Searching..."
-                else -> "No keybinds match \"$localSearchQuery\""
+                searchResults == null -> translated("oneconfig.search.searching", "Searching...")
+                else -> translated("oneconfig.search.no_keybinds_match", "No keybinds match \"%s\"", localSearchQuery)
             }
             Text(message, color = LocalTheme.current.textColorSecondary, fontSize = 15.sp)
         }
@@ -118,10 +113,11 @@ fun Keybinds() {
 
     val searching = localSearchQuery.isNotBlank()
 
-    Box(Modifier.fillMaxSize()) {
+    ScrollbarBox(listState, PageGutter, Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize().padding(end = 16.dp),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = PageGutter),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             visibleGroups.forEach { group ->
@@ -146,10 +142,6 @@ fun Keybinds() {
                 }
             }
         }
-        VerticalScrollbar(
-            adapter = rememberScrollbarAdapter(listState),
-            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-        )
     }
 }
 
@@ -227,10 +219,10 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
     val display = rememberDisplay(prop)
     if (display == Property.Display.HIDDEN) return
     val enabled = display != Property.Display.DISABLED
-    var menuOpen by remember(prop) { mutableStateOf(false) }
-    var menuOffset by remember(prop) { mutableStateOf(IntOffset.Zero) }
-    val rowOrigin = remember(prop) { LayoutRef(Offset.Zero) }
-    val actionMenuOffset = remember(prop) { LayoutRef(IntOffset.Zero) }
+    var menuOpen by remember(System.identityHashCode(prop)) { mutableStateOf(false) }
+    var menuOffset by remember(System.identityHashCode(prop)) { mutableStateOf(IntOffset.Zero) }
+    val rowOrigin = remember(System.identityHashCode(prop)) { LayoutRef(Offset.Zero) }
+    val actionMenuOffset = remember(System.identityHashCode(prop)) { LayoutRef(IntOffset.Zero) }
     val rowInteraction = rememberInteractionSource()
     val isRowHovered by rowInteraction.collectIsHoveredAsState()
     val showActionButton = OneConfigConfig.showOptionActionButtons
@@ -245,7 +237,7 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
             .alpha(displayAlpha(display))
             .hoverable(rowInteraction)
             .onGloballyPositioned { rowOrigin.value = it.positionInRoot() }
-            .pointerInput(prop) {
+            .pointerInput(System.identityHashCode(prop)) {
                 awaitPointerEventScope {
                     while (true) {
                         val event = awaitPointerEvent(PointerEventPass.Initial)
