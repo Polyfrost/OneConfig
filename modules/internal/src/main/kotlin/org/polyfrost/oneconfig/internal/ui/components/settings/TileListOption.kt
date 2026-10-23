@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,7 +29,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 private val TileRowHeight = 44.dp
 private val TileRowIconSize = 30.dp
 private val SelectorWidth = 436.dp
-private val SelectorShape = RoundedCornerShape(12.dp)
+private val SelectorShape @Composable get() = LocalTheme.current.popupShape
 
 @Composable
 fun <T : PickerEntry> TileListOption(
