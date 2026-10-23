@@ -38,19 +38,21 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.ServiceLoader;
 import javax.imageio.ImageIO;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 
 /**
  * Cross-platform system clipboard access
  * <p>
- * Uses GLFW/SDL/AWT on Windows/Linux
+ * Uses SDL when the game window runs on it, otherwise GLFW/AWT on Windows/Linux and NSPasteboard on macOS
  * <p>
- * Uses NSPasteboard on macOS
+ * Images prefer AWT on Windows and NSPasteboard on macOS, falling back to SDL
  */
 public final class ClipboardHelper {
 
@@ -61,8 +63,10 @@ public final class ClipboardHelper {
             .contains("mac");
 
     private static final String MACOS_CLIPBOARD_CLASS = "org.polyfrost.oneconfig.utils.v1.MacOSClipboard";
-    private static final String SDL_CLIPBOARD_CLASS = "org.lwjgl.sdl.SDLClipboard";
     private static final String GLFW_CLASS = "org.lwjgl.glfw.GLFW";
+
+    @Nullable
+    private static final SdlClipboard SDL = loadSdl();
 
     private ClipboardHelper() {
     }
@@ -70,11 +74,13 @@ public final class ClipboardHelper {
     @Nullable
     public static String getString() {
         try {
+            if (SDL != null) {
+                return SDL.getString();
+            }
             if (IS_MAC) {
                 return invokeMacNullable("getString");
             }
-            String nativeValue = getStringFromSdl();
-            if (nativeValue == null) nativeValue = getStringFromGlfw();
+            String nativeValue = getStringFromGlfw();
             if (nativeValue != null) {
                 return nativeValue;
             }
@@ -94,10 +100,13 @@ public final class ClipboardHelper {
             return clear();
         }
         try {
+            if (SDL != null && SDL.setString(value)) {
+                return true;
+            }
             if (IS_MAC) {
                 return invokeMacBoolean("setString", value);
             }
-            if (setStringWithSdl(value) || setStringWithGlfw(value)) {
+            if (setStringWithGlfw(value)) {
                 return true;
             }
             Toolkit.getDefaultToolkit().getSystemClipboard()
@@ -113,23 +122,13 @@ public final class ClipboardHelper {
         if (image == null) {
             return clear();
         }
-        try {
-            if (IS_MAC) {
-                Path temp = Files.createTempFile("oneconfig-clipboard-", ".png");
-                try {
-                    ImageIO.write(image, "png", temp.toFile());
-                    return invokeMacBoolean("copyImageFromPath", temp.toAbsolutePath().toString());
-                } finally {
-                    Files.deleteIfExists(temp);
-                }
-            }
-            Toolkit.getDefaultToolkit().getSystemClipboard()
-                    .setContents(new ImageSelection(image), null);
-            return true;
-        } catch (Throwable t) {
-            LOGGER.debug("Failed to write clipboard image", t);
-            return false;
+        if (IS_MAC) {
+            return setImageWithMac(image) || setImageWithSdl(image);
         }
+        if (DesktopHelper.isWindows()) {
+            return setImageWithAwt(image) || setImageWithSdl(image);
+        }
+        return setImageWithSdl(image) || setImageWithAwt(image);
     }
 
     public static boolean setTransferable(@Nullable Transferable transferable) {
@@ -157,10 +156,13 @@ public final class ClipboardHelper {
 
     public static boolean clear() {
         try {
+            if (SDL != null && SDL.clear()) {
+                return true;
+            }
             if (IS_MAC) {
                 return invokeMacBoolean("clear");
             }
-            if (setStringWithSdl("") || setStringWithGlfw("")) {
+            if (setStringWithGlfw("")) {
                 return true;
             }
             Toolkit.getDefaultToolkit().getSystemClipboard()
@@ -197,26 +199,17 @@ public final class ClipboardHelper {
     }
 
     @Nullable
-    private static String getStringFromSdl() {
+    private static SdlClipboard loadSdl() {
         try {
-            Method method = Class.forName(SDL_CLIPBOARD_CLASS).getMethod("SDL_GetClipboardText");
-            String value = (String) method.invoke(null);
-            return value == null || value.isEmpty() ? null : value;
+            for (SdlClipboard clipboard : ServiceLoader.load(SdlClipboard.class, SdlClipboard.class.getClassLoader())) {
+                if (clipboard.isAvailable()) {
+                    return clipboard;
+                }
+            }
         } catch (Throwable t) {
-            LOGGER.debug("Failed to read SDL clipboard text", t);
-            return null;
+            LOGGER.debug("Failed to load the SDL clipboard", t);
         }
-    }
-
-    private static boolean setStringWithSdl(String value) {
-        try {
-            Class<?> clazz = Class.forName(SDL_CLIPBOARD_CLASS);
-            Method method = clazz.getMethod("SDL_SetClipboardText", CharSequence.class);
-            return Boolean.TRUE.equals(method.invoke(null, value));
-        } catch (Throwable t) {
-            LOGGER.debug("Failed to write SDL clipboard text", t);
-            return false;
-        }
+        return null;
     }
 
     @Nullable
@@ -259,6 +252,41 @@ public final class ClipboardHelper {
             }
         }
         return null;
+    }
+
+    private static boolean setImageWithMac(BufferedImage image) {
+        try {
+            Path temp = Files.createTempFile("oneconfig-clipboard-", ".png");
+            try {
+                ImageIO.write(image, "png", temp.toFile());
+                return invokeMacBoolean("copyImageFromPath", temp.toAbsolutePath().toString());
+            } finally {
+                Files.deleteIfExists(temp);
+            }
+        } catch (Throwable t) {
+            LOGGER.debug("Failed to write macOS clipboard image", t);
+            return false;
+        }
+    }
+
+    private static boolean setImageWithAwt(BufferedImage image) {
+        try {
+            Toolkit.getDefaultToolkit().getSystemClipboard()
+                    .setContents(new ImageSelection(image), null);
+            return true;
+        } catch (Throwable t) {
+            LOGGER.debug("Failed to write AWT clipboard image", t);
+            return false;
+        }
+    }
+
+    private static boolean setImageWithSdl(BufferedImage image) {
+        try {
+            return SDL != null && SDL.setImage(image);
+        } catch (Throwable t) {
+            LOGGER.debug("Failed to write SDL clipboard image", t);
+            return false;
+        }
     }
 
     private static final class ImageSelection implements Transferable {
