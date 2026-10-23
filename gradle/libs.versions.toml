@@ -29,7 +29,7 @@ log4j-api = "2.0-beta9" # used because this is the version that 1.8.9 supports, 
 # Compose
 compose = "1.13.0-alpha02"
 androidx-compose-runtime = "1.13.0-alpha03"
-compose-navigation = "2.10.0-alpha01"
+compose-navigation = "2.10.0-rc01"
 skiko = "0.154.0"
 
 lifecycle = "2.11.0"
