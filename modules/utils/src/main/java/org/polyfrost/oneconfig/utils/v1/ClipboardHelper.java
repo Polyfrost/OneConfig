@@ -38,6 +38,7 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.ServiceLoader;
 import javax.imageio.ImageIO;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,9 +49,9 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform;
 /**
  * Cross-platform system clipboard access
  * <p>
- * Uses GLFW/SDL/AWT on Windows/Linux
+ * Uses SDL for text when the game window runs on it
  * <p>
- * Uses NSPasteboard on macOS
+ * Otherwise uses GLFW/AWT on Windows/Linux and NSPasteboard on macOS, falling back to SDL for images
  */
 public final class ClipboardHelper {
 
@@ -61,8 +62,10 @@ public final class ClipboardHelper {
             .contains("mac");
 
     private static final String MACOS_CLIPBOARD_CLASS = "org.polyfrost.oneconfig.utils.v1.MacOSClipboard";
-    private static final String SDL_CLIPBOARD_CLASS = "org.lwjgl.sdl.SDLClipboard";
     private static final String GLFW_CLASS = "org.lwjgl.glfw.GLFW";
+
+    @Nullable
+    private static final SdlClipboard SDL = loadSdl();
 
     private ClipboardHelper() {
     }
@@ -70,11 +73,13 @@ public final class ClipboardHelper {
     @Nullable
     public static String getString() {
         try {
+            if (SDL != null) {
+                return SDL.getString();
+            }
             if (IS_MAC) {
                 return invokeMacNullable("getString");
             }
-            String nativeValue = getStringFromSdl();
-            if (nativeValue == null) nativeValue = getStringFromGlfw();
+            String nativeValue = getStringFromGlfw();
             if (nativeValue != null) {
                 return nativeValue;
             }
@@ -94,10 +99,13 @@ public final class ClipboardHelper {
             return clear();
         }
         try {
+            if (SDL != null && SDL.setString(value)) {
+                return true;
+            }
             if (IS_MAC) {
                 return invokeMacBoolean("setString", value);
             }
-            if (setStringWithSdl(value) || setStringWithGlfw(value)) {
+            if (setStringWithGlfw(value)) {
                 return true;
             }
             Toolkit.getDefaultToolkit().getSystemClipboard()
@@ -118,16 +126,25 @@ public final class ClipboardHelper {
                 Path temp = Files.createTempFile("oneconfig-clipboard-", ".png");
                 try {
                     ImageIO.write(image, "png", temp.toFile());
-                    return invokeMacBoolean("copyImageFromPath", temp.toAbsolutePath().toString());
+                    if (invokeMacBoolean("copyImageFromPath", temp.toAbsolutePath().toString())) {
+                        return true;
+                    }
                 } finally {
                     Files.deleteIfExists(temp);
                 }
+            } else {
+                Toolkit.getDefaultToolkit().getSystemClipboard()
+                        .setContents(new ImageSelection(image), null);
+                return true;
             }
-            Toolkit.getDefaultToolkit().getSystemClipboard()
-                    .setContents(new ImageSelection(image), null);
-            return true;
         } catch (Throwable t) {
             LOGGER.debug("Failed to write clipboard image", t);
+        }
+        // SDL comes last as on macOS it only hands images over when something pastes them, so they are lost once the game closes
+        try {
+            return SDL != null && SDL.setImage(image);
+        } catch (Throwable t) {
+            LOGGER.debug("Failed to write SDL clipboard image", t);
             return false;
         }
     }
@@ -157,10 +174,13 @@ public final class ClipboardHelper {
 
     public static boolean clear() {
         try {
+            if (SDL != null && SDL.clear()) {
+                return true;
+            }
             if (IS_MAC) {
                 return invokeMacBoolean("clear");
             }
-            if (setStringWithSdl("") || setStringWithGlfw("")) {
+            if (setStringWithGlfw("")) {
                 return true;
             }
             Toolkit.getDefaultToolkit().getSystemClipboard()
@@ -197,26 +217,17 @@ public final class ClipboardHelper {
     }
 
     @Nullable
-    private static String getStringFromSdl() {
+    private static SdlClipboard loadSdl() {
         try {
-            Method method = Class.forName(SDL_CLIPBOARD_CLASS).getMethod("SDL_GetClipboardText");
-            String value = (String) method.invoke(null);
-            return value == null || value.isEmpty() ? null : value;
+            for (SdlClipboard clipboard : ServiceLoader.load(SdlClipboard.class, SdlClipboard.class.getClassLoader())) {
+                if (clipboard.isAvailable()) {
+                    return clipboard;
+                }
+            }
         } catch (Throwable t) {
-            LOGGER.debug("Failed to read SDL clipboard text", t);
-            return null;
+            LOGGER.debug("Failed to load the SDL clipboard", t);
         }
-    }
-
-    private static boolean setStringWithSdl(String value) {
-        try {
-            Class<?> clazz = Class.forName(SDL_CLIPBOARD_CLASS);
-            Method method = clazz.getMethod("SDL_SetClipboardText", CharSequence.class);
-            return Boolean.TRUE.equals(method.invoke(null, value));
-        } catch (Throwable t) {
-            LOGGER.debug("Failed to write SDL clipboard text", t);
-            return false;
-        }
+        return null;
     }
 
     @Nullable
