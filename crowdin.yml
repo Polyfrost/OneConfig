@@ -1,0 +1,13 @@
+project_id_env: CROWDIN_PROJECT_ID
+api_token_env: CROWDIN_PERSONAL_TOKEN
+base_path: build/crowdin
+preserve_hierarchy: true
+
+files:
+  - source: /sources/*.json
+    dest: /mods/%original_file_name%
+    translation: /translations/%locale_with_underscore%/%original_file_name%
+    update_option: update_as_unapproved
+    languages_mapping:
+      locale_with_underscore:
+        nb: no_NO

@@ -17,4 +17,5 @@ fun NavGraphBuilder.navigation() {
     preferencesGraph()
     changeLogGraph()
     creditsGraph()
+    pageDestinations()
 }

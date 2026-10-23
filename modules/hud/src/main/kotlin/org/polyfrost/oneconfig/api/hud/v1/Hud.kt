@@ -314,7 +314,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     open var relativeY: Float get() = _relativeY.value; set(v) { _relativeY.put(v) }
 
-    @ApiStatus.Internal
+    @set:ApiStatus.Internal
     var posSchema: Int = POS_SCHEMA
 
     @get:ApiStatus.Internal

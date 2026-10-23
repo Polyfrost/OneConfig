@@ -26,9 +26,6 @@ data class ScrollAnchor(val index: Int, val offset: Int, val token: Any? = null)
  * Displaying another screen over the OneConfig UI disposes the scene and rebuilds it on the way back which
  * loses everything held in composition
  *
- * Pages that want to come back where they were keep their position in [ShellState.scrollAnchors] under a
- * stable [key] such as a mod id or page name
- *
  * Changing [resetToken] scrolls back to the top of the page
  */
 @Composable
@@ -37,14 +34,15 @@ fun rememberRestorableLazyListState(
     resetToken: Any? = null,
     contentToken: Any? = resetToken,
 ): LazyListState {
-    val anchor = remember(key) { ShellState.scrollAnchors[key]?.takeIf { it.token == resetToken } }
+    val scroll = LocalShell.current.scroll
+    val anchor = remember(key) { scroll.anchor(key)?.takeIf { it.token == resetToken } }
     val state = rememberLazyListState(anchor?.index ?: 0, anchor?.offset ?: 0)
     ScrollToTopOnChange(state, contentToken, initial = resetToken)
     // the effect outlives token changes so read the latest one
     val currentToken by rememberUpdatedState(resetToken)
     LaunchedEffect(state, key) {
         snapshotFlow { ScrollAnchor(state.firstVisibleItemIndex, state.firstVisibleItemScrollOffset) }
-            .collect { ShellState.scrollAnchors[key] = it.copy(token = currentToken) }
+            .collect { scroll.saveAnchor(key, it.copy(token = currentToken)) }
     }
     return state
 }
@@ -64,15 +62,16 @@ private class LastKey(var value: Any?)
 /** [rememberRestorableLazyListState] for a grid */
 @Composable
 fun rememberRestorableLazyGridState(key: String): LazyGridState {
-    val anchor = remember(key) { ShellState.scrollAnchors[key] }
+    val scroll = LocalShell.current.scroll
+    val anchor = remember(key) { scroll.anchor(key) }
     val state = rememberLazyGridState(anchor?.index ?: 0, anchor?.offset ?: 0)
     DisposableEffect(state, key) {
-        ShellState.gridStates[key] = state
-        onDispose { if (ShellState.gridStates[key] === state) ShellState.gridStates.remove(key) }
+        scroll.attachGrid(key, state)
+        onDispose { scroll.detachGrid(key, state) }
     }
     LaunchedEffect(state, key) {
         snapshotFlow { ScrollAnchor(state.firstVisibleItemIndex, state.firstVisibleItemScrollOffset) }
-            .collect { ShellState.scrollAnchors[key] = it }
+            .collect { scroll.saveAnchor(key, it) }
     }
     return state
 }

@@ -90,6 +90,7 @@ public final class ConfigManager {
     private static volatile Consumer<Runnable> profileSwitchDispatcher = Runnable::run;
     private static final CopyOnWriteArrayList<ProfileChangeListener> profileListeners = new CopyOnWriteArrayList<>();
     private static final CopyOnWriteArrayList<TreeRegistrationListener> treeListeners = new CopyOnWriteArrayList<>();
+    private static final CopyOnWriteArrayList<ConfigSubmissionListener> submissionListeners = new CopyOnWriteArrayList<>();
 
     public static final String PROFILE_LOCAL_METADATA = "profileLocal";
 
@@ -128,6 +129,14 @@ public final class ConfigManager {
         void onTreeRegistered(@NotNull Tree tree);
     }
 
+    /**
+     * Called from the {@link Config} base constructor, so only fields set there such as {@link Config#id} can be read
+     */
+    @ApiStatus.Internal
+    public interface ConfigSubmissionListener {
+        void onConfigSubmitted(@NotNull Config config);
+    }
+
     public static void addProfileChangeListener(ProfileChangeListener listener) {
         profileListeners.add(listener);
     }
@@ -135,6 +144,11 @@ public final class ConfigManager {
     @ApiStatus.Internal
     public static void addTreeRegistrationListener(TreeRegistrationListener listener) {
         treeListeners.add(listener);
+    }
+
+    @ApiStatus.Internal
+    public static void addConfigSubmissionListener(ConfigSubmissionListener listener) {
+        submissionListeners.add(listener);
     }
 
     public static void removeProfileChangeListener(ProfileChangeListener listener) {
@@ -167,7 +181,6 @@ public final class ConfigManager {
     /**
      * Returns a reference to the internal config manager which is mounted onto the ./OneConfig directory
      */
-    @ApiStatus.Internal
     public static ConfigManager internal() {
         return internal;
     }
@@ -240,6 +253,13 @@ public final class ConfigManager {
         if (!initialized) {
             pendingInitialization.add(config);
         }
+        for (ConfigSubmissionListener listener : submissionListeners) {
+            try {
+                listener.onConfigSubmitted(config);
+            } catch (Throwable t) {
+                LOGGER.error("config submission listener failed for {}", config.id, t);
+            }
+        }
     }
 
     static synchronized void markInitialized(Config config) {
@@ -258,6 +278,22 @@ public final class ConfigManager {
 
     static void removePendingInitialization(Config config) {
         pendingInitialization.remove(config);
+    }
+
+    /**
+     * Stops a config that is waiting for {@link #initialize()} from being initialized, such as one whose constructor threw
+     */
+    @ApiStatus.Internal
+    public static void cancelInitialization(Config config) {
+        removePendingInitialization(config);
+    }
+
+    /**
+     * The configs created so far that are still waiting for {@link #initialize()}
+     */
+    @ApiStatus.Internal
+    public static List<Config> pendingConfigs() {
+        return new ArrayList<>(pendingInitialization);
     }
 
     static boolean isPendingInitialization(Config config) {

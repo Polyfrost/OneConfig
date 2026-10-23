@@ -108,16 +108,10 @@ internal object HudBackgroundMerge {
     fun computeGroups(huds: List<Hud>, refWidth: Float, refHeight: Float): List<Group> {
         val items = ArrayList<Item>(huds.size)
         for (hud in huds) {
-            if (hud is LegacyHudMarker) continue
-            if (!hud.canMergeBackground()) continue
-            if (!hud.showBackground || !hud.mergeBackground || !hud.hasBackground()) continue
-            if (hud.hidden && !hud.keepBgWhenHidden) continue
-            val w = hud.renderedW
-            val h = hud.renderedH
-            if (w <= 0f || h <= 0f) continue
+            if (!canMerge(hud)) continue
             items.add(
                 Item(
-                    hud, hud.x, hud.y, w, h, hud.bgRadius * hud.effectiveScale,
+                    hud, hud.x, hud.y, hud.renderedW, hud.renderedH, hud.bgRadius * hud.effectiveScale,
                     hud.layoutX(refWidth), hud.layoutY(refHeight),
                 )
             )
@@ -160,6 +154,17 @@ internal object HudBackgroundMerge {
         }
         return out
     }
+
+    fun canMerge(hud: Hud): Boolean =
+        hud !is LegacyHudMarker && hud.canMergeBackground() &&
+            hud.showBackground && hud.mergeBackground && hud.hasBackground() &&
+            (!hud.hidden || hud.keepBgWhenHidden) &&
+            hud.renderedW > 0f && hud.renderedH > 0f
+
+    fun sameStyle(a: Hud, b: Hud): Boolean =
+        a.bgColor == b.bgColor && a.bgChroma == b.bgChroma &&
+            (!a.bgChroma || abs(a.bgChromaSpeed - b.bgChromaSpeed) <= EPS) &&
+            abs(a.bgRadius * a.effectiveScale - b.bgRadius * b.effectiveScale) <= EPS
 
     private class Contact(val other: Int, val pins: Int)
 
@@ -305,10 +310,7 @@ internal object HudBackgroundMerge {
         val layoutRight get() = layoutX + w
         val layoutBottom get() = layoutY + h
 
-        fun sameStyle(other: Item): Boolean =
-            hud.bgColor == other.hud.bgColor && hud.bgChroma == other.hud.bgChroma &&
-                (!hud.bgChroma || abs(hud.bgChromaSpeed - other.hud.bgChromaSpeed) <= EPS) &&
-                abs(radius - other.radius) <= EPS
+        fun sameStyle(other: Item): Boolean = sameStyle(hud, other.hud)
     }
 
     private fun contactPins(a: Item, b: Item): Int {

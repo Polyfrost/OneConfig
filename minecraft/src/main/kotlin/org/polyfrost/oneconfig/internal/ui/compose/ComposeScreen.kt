@@ -606,6 +606,8 @@ abstract class ComposeScreen(
         showing = false
         sceneContextOrNull?.sync()
         ComposeSceneContextImpl.resetPointerIcon()
+        releaseHeldButtons()
+        consumedButtons.clear()
         releaseScene()
         super.removed()
     }
@@ -663,6 +665,8 @@ abstract class ComposeScreen(
         val metricsChanged = syncSceneMetrics()
 
         val focused = client.isWindowActive
+        if (wasFocused && !focused) releaseHeldButtons()
+        wasFocused = focused
         if (focused) {
             val pointerPosition = pointerPosition()
             if (pointerPosition != lastPointer) {
@@ -839,24 +843,29 @@ abstract class ComposeScreen(
 
     protected open fun handleMouseClicked(button: Int): Boolean = false
 
+    private var wasFocused = true
+
+    /**
+     * Compose never receives a release that happens after this screen closes or the window loses focus, so buttons are
+     * treated as held forever blocking all other mouse input
+     */
+    private fun releaseHeldButtons() {
+        // cancel first so these releases only clear the held mouse buttons instead of clicking
+        withScene { it.cancelPointerInput() }
+        sendMouseButtonEvent(PointerEventType.Release, InputConstants.MOUSE_BUTTON_LEFT)
+        sendMouseButtonEvent(PointerEventType.Release, InputConstants.MOUSE_BUTTON_RIGHT)
+        sendMouseButtonEvent(PointerEventType.Release, InputConstants.MOUSE_BUTTON_MIDDLE)
+    }
+
     private fun sendMouseButtonEvent(type: PointerEventType, button: Int) {
-        withScene {
-            it.sendPointerEvent(
-                type,
-                //? if sdl {
-                button = when (button) {
-                    InputConstants.MOUSE_BUTTON_LEFT -> PointerButton.Primary
-                    InputConstants.MOUSE_BUTTON_RIGHT -> PointerButton.Secondary
-                    InputConstants.MOUSE_BUTTON_MIDDLE -> PointerButton.Tertiary
-                    else -> PointerButton(button - 1)
-                },
-                //?} else {
-                /*// PointerButton indices match GLFW button numbers (Primary = 0, Secondary = 1, ...)
-                button = if (button >= 0) PointerButton(button) else null,
-                *///?}
-                position = pointerPosition()
-            )
+        val pointerButton = when (button) {
+            InputConstants.MOUSE_BUTTON_LEFT -> PointerButton.Primary
+            InputConstants.MOUSE_BUTTON_RIGHT -> PointerButton.Secondary
+            InputConstants.MOUSE_BUTTON_MIDDLE -> PointerButton.Tertiary
+            // side buttons are handled before this, and Compose ignores other clicks while one is held
+            else -> return
         }
+        withScene { it.sendPointerEvent(type, button = pointerButton, position = pointerPosition()) }
     }
 
     private fun sendScrollEvent(scrollX: Double, scrollY: Double) {
@@ -962,7 +971,17 @@ abstract class ComposeScreen(
     }
 
     private fun dispatchKeyPressed(bindingKey: Int, shortcutKey: Int, modifiers: Int): Boolean {
-        if ((bindingKey == InputConstants.KEY_ESCAPE && KeybindRecordingBus.consumeEscape()) || handleKeyPressed(bindingKey, modifiers)) {
+        if (bindingKey == InputConstants.KEY_ESCAPE) {
+            if (KeybindRecordingBus.consumeEscape()) {
+                consumedKeys += bindingKey
+                return true
+            }
+            if (KeybindRecordingBus.isRecording) {
+                sendKeyPressedEvent(bindingKey, shortcutKey, modifiers)
+                return true
+            }
+        }
+        if (handleKeyPressed(bindingKey, modifiers)) {
             consumedKeys += bindingKey
             return true
         }

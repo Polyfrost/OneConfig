@@ -125,8 +125,8 @@ internal class ListRowContext(
 )
 
 @Composable
-internal fun <T> rememberListEntries(key: Any?, initial: List<T>, onCommit: (List<T>) -> Unit): ListEntriesState<T> =
-    remember(key) { ListEntriesState(initial, onCommit) }
+internal fun <T> rememberListEntries(key: Any?, initial: () -> List<T>, onCommit: (List<T>) -> Unit): ListEntriesState<T> =
+    remember(key) { ListEntriesState(initial(), onCommit) }
 
 @Composable
 internal fun <T> ListOptionContainer(

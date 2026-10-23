@@ -70,6 +70,8 @@ public class TestConfig_Test extends Config {
     public static String text = "Hello world!";
     @Text(title = "Multiline Text", description = "Supports line breaks and word wrap", multiline = true)
     public static String multilineText = "Hello world!\nThis is a second line.\noneconfigoneconfigoneconfigoneconfigoneconfigoneconfig";
+    @Text(title = "Full Width Text", description = "The same text box spanning the whole row", multiline = true, fullWidth = true)
+    public static String fullWidthText = "Hello world!\nThis is a second line.\noneconfigoneconfigoneconfigoneconfigoneconfigoneconfig";
     @File(title = "Image", description = "Pick an image file", types = {".png", ".jpg"}, filterName = "Images")
     public static String image = "";
     @File(title = "Directory", description = "Pick a folder", directory = true)
@@ -200,6 +202,52 @@ public class TestConfig_Test extends Config {
     )
     public static String[] singleItem = {"minecraft:ender_pearl"};
 
+    @EffectList(
+            title = "Effect List",
+            description = "Search registered status effects and add several of them to an ordered list.",
+            category = "Lists",
+            subcategory = "Effect List",
+            maxEntries = 6
+    )
+    public static String[] effectList = {"minecraft:speed", "minecraft:night_vision"};
+
+    @EffectList(
+            title = "Single Effect",
+            description = "The same picker limited to one selected effect.",
+            category = "Lists",
+            subcategory = "Effect List",
+            maxEntries = 1,
+            reorderable = false
+    )
+    public static String[] singleEffect = {"minecraft:strength"};
+
+    @TestTilePicker_Test(
+            title = "Tile Picker",
+            description = "Search a set of colors and pick up to three of them.",
+            category = "Lists",
+            subcategory = "Tile Picker"
+    )
+    public static String[] tilePicker = {"test:blue"};
+
+    @TestTileList_Test(
+            title = "Swatch List",
+            description = "Search a set of colors and add several of them to an ordered list.",
+            category = "Lists",
+            subcategory = "Tile List",
+            maxEntries = 5
+    )
+    public static String[] swatchList = {"test:red", "test:green"};
+
+    @TestTileList_Test(
+            title = "Single Swatch",
+            description = "The same list limited to one selected color.",
+            category = "Lists",
+            subcategory = "Tile List",
+            maxEntries = 1,
+            reorderable = false
+    )
+    public static String[] singleSwatch = {"test:purple"};
+
     @FileList(
             title = "File List",
             description = "Pick several files. Add, remove and drag to reorder.",
@@ -220,6 +268,15 @@ public class TestConfig_Test extends Config {
             maxEntries = 3
     )
     public static String[] directoryList = {};
+
+    @FileList(
+            title = "Full Width File List",
+            description = "The same file list spanning the whole row so long paths fit.",
+            category = "Lists",
+            subcategory = "Other Lists",
+            fullWidth = true
+    )
+    public static String[] fullWidthFileList = {};
 
     @ColorList(
             title = "Color List",
@@ -258,6 +315,36 @@ public class TestConfig_Test extends Config {
             step = 5f
     )
     public static float[] range = {25f, 75f};
+
+    @RangeNumber(
+            title = "Range Number",
+            description = "Two inputs, no track, for spans too wide to drag.",
+            min = 0f,
+            max = 1000000f
+    )
+    public static int[] rangeNumber = {1200, 36000};
+
+    @RangeSliderList(
+            title = "Range Slider List",
+            description = "A two-handle slider per entry, stored flat as start, end pairs.",
+            category = "Lists",
+            subcategory = "Other Lists",
+            step = 5f,
+            addText = "Add range"
+    )
+    public static float[] rangeSliderList = {0f, 25f, 50f, 75f};
+
+    @RangeNumberList(
+            title = "Range Number List",
+            description = "A pair of inputs per entry.",
+            category = "Lists",
+            subcategory = "Other Lists",
+            min = 0f,
+            max = 72000f,
+            maxEntries = 4,
+            addText = "Add range"
+    )
+    public static int[] rangeNumberList = {0, 600, 1200, 9600};
 
     // everything below is disabled rather than hidden while the master switch is off so that
     // disabled options can be checked for being non-interactable

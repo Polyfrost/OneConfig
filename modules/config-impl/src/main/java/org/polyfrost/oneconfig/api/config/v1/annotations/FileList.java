@@ -124,4 +124,6 @@ public @interface FileList {
      */
     @Deprecated
     boolean addTextTranslation() default false;
+
+    boolean fullWidth() default false;
 }

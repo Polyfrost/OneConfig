@@ -79,6 +79,12 @@ class AnnotationCommandFactory : CommandFactory {
 
             val subTree: LiteralArgumentBuilder<ClientCommandSource> = CommandManager.literal(primaryName)
             setup(false, subTree, MHUtils.instantiate(clz, true), help, "$stem $primaryName")
+
+            val subNode = subTree.build()
+            tree.then(subNode)
+            for (i in 1..<aliases.size) {
+                tree.then(CommandManager.literal(aliases[i]).redirect(subNode))
+            }
         }
 
         for (method in obj.javaClass.declaredMethods) {
@@ -192,21 +198,19 @@ class AnnotationCommandFactory : CommandFactory {
                     isSectionApplied = true
                     help.append(currentSection)
 
-                    theMethod = CommandManager.literal(method.getName())
-                    theMethod.executes { ctx: CommandContext<ClientCommandSource> ->
+                    val executor = com.mojang.brigadier.Command<ClientCommandSource> {
                         try {
                             method.invoke(obj)
-                            return@executes 1
+                            return@Command 1
                         } catch (e: Exception) {
                             LOGGER.error("Failed to execute command!", e)
                             throw RuntimeException(e)
                         }
                     }
 
-                    tree.then(theMethod)
-
-                    for (s in handler.value) {
-                        tree.then(CommandManager.literal(s).then(theMethod))
+                    tree.then(CommandManager.literal(method.name).executes(executor))
+                    for (s in aliases) {
+                        tree.then(CommandManager.literal(s).executes(executor))
                     }
                 }
             }

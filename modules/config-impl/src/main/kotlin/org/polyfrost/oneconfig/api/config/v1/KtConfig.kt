@@ -727,6 +727,32 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         step: Float = 1f,
     ) = rangeSlider(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, min, max, step, null)
 
+    /** Two number inputs holding `[start, end]`, a [rangeSlider] without the track */
+    @JvmSynthetic
+    protected fun rangeNumber(
+        name: String,
+        def: FloatArray,
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        min: Float = 0f,
+        max: Float = 100f,
+        step: Float = 1f,
+        formatter: ValueFormatter? = null,
+    ) = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.RangeNumberVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        require(def.size == 2) { "rangeNumber '$name' needs a start and end, got ${def.size} values" }
+        this.addMetadata("min", min)
+        this.addMetadata("max", max)
+        this.addMetadata("step", step)
+        this.addMetadata("formatter", formatter)
+    }
+
     /** A file or folder picker holding the chosen path, [types] are extensions such as `.png` */
     @JvmSynthetic
     protected fun file(
@@ -884,6 +910,69 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         step: Float = 1f,
     ) = sliderList(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, maxEntries, reorderable, addText, addTextKey, min, max, step, null)
 
+    /** A list of two-handle sliders, [def] holds each range's start then end so `[0, 10, 20, 30]` is 0-10 and 20-30 */
+    @JvmSynthetic
+    protected fun rangeSliderList(
+        name: String,
+        def: FloatArray = FloatArray(0),
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        maxEntries: Int = 0,
+        reorderable: Boolean = true,
+        addText: String? = null,
+        addTextKey: String? = null,
+        min: Float = 0f,
+        max: Float = 100f,
+        step: Float = 1f,
+        formatter: ValueFormatter? = null,
+    ) = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.RangeSliderListVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+            addListMetadata(maxEntries, reorderable, addText, addTextKey)
+        require(def.size % 2 == 0) { "rangeSliderList '$name' needs a start and end for every range, got ${def.size} values" }
+        requireStep(name, min, max, step)
+        this.addMetadata("min", min)
+        this.addMetadata("max", max)
+        this.addMetadata("step", step)
+        this.addMetadata("formatter", formatter)
+    }
+
+    /** A list of [rangeNumber] rows stored the same way as [rangeSliderList] */
+    @JvmSynthetic
+    protected fun rangeNumberList(
+        name: String,
+        def: FloatArray = FloatArray(0),
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        maxEntries: Int = 0,
+        reorderable: Boolean = true,
+        addText: String? = null,
+        addTextKey: String? = null,
+        min: Float = 0f,
+        max: Float = 100f,
+        step: Float = 1f,
+        formatter: ValueFormatter? = null,
+    ) = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.RangeNumberListVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+            addListMetadata(maxEntries, reorderable, addText, addTextKey)
+        require(def.size % 2 == 0) { "rangeNumberList '$name' needs a start and end for every range, got ${def.size} values" }
+        this.addMetadata("min", min)
+        this.addMetadata("max", max)
+        this.addMetadata("step", step)
+        this.addMetadata("formatter", formatter)
+    }
+
     /** A list of ARGB colours */
     @JvmSynthetic
     protected fun colorList(
@@ -959,6 +1048,29 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
     ) = Provider(def, name, description, category, subcategory, Array<String>::class.java, Visualizer.ItemListVisualizer()) {
         addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
         require(maxEntries >= 0) { "itemList '$name' has a negative maxEntries ($maxEntries)" }
+            addListMetadata(maxEntries, reorderable, addText, addTextKey)
+    }
+
+    /** Namespaced status effect IDs such as `minecraft:speed`, a [maxEntries] of 1 makes a single selector */
+    @JvmSynthetic
+    protected fun effectList(
+        name: String,
+        def: Array<String> = arrayOf(),
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        maxEntries: Int = 0,
+        reorderable: Boolean = true,
+        addText: String? = null,
+        addTextKey: String? = "oneconfig.effectlist.add",
+    ) = Provider(def, name, description, category, subcategory, Array<String>::class.java, Visualizer.EffectListVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        require(maxEntries >= 0) { "effectList '$name' has a negative maxEntries ($maxEntries)" }
             addListMetadata(maxEntries, reorderable, addText, addTextKey)
     }
 
@@ -1058,6 +1170,13 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
     @JvmName("withObservable")
     fun <Type : Any> PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>.onChange(callback: (Type) -> Unit) = observable(this, callback)
     fun <Type : Any> PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>.withCallback(callback: (Type) -> Boolean) = callback(this, callback)
+
+    fun <Type : Any> PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>.fullWidth(): PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>> =
+        PropertyDelegateProvider { thisRef, property ->
+            provideDelegate(thisRef, property).also {
+                (thisRef.tree ?: thisRef.pendingTree()).getProp(property.name)?.addMetadata("fullWidth", true)
+            }
+        }
 
     private data class CachedTransformedProvider<Source : Any, Target : Any>(
         val delegate: PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Source>>,

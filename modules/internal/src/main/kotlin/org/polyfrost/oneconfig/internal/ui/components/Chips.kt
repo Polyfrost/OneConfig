@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.ui.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
@@ -11,6 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
@@ -26,8 +30,11 @@ fun Chip(
     onClick: () -> Unit,
 ) {
     val interactionSource = rememberInteractionSource()
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    val theme = LocalTheme.current
+    val hoverBackground = Accent.copy(alpha = 0.5f).compositeOver(theme.chipBackground)
     val backgroundColor by animateColorAsState(
-        if (selected) Accent else LocalTheme.current.chipBackground
+        if (selected) Accent else if (isHovered) hoverBackground else theme.chipBackground
     )
     val textColor by animateColorAsState(
         if (selected) LocalTheme.current.accentTextColor else LocalTheme.current.textColor

@@ -6,23 +6,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.internal.ui.api.settings.NumberListOptionData
 
 @Composable
 fun NumberListOption(data: NumberListOptionData) {
     val elementType = remember(data.prop) { data.elementType }
-    val state = rememberListEntries(data.prop, data.floats()) { values ->
+    val state = rememberListEntries(data.prop, { data.floats() }) { values ->
         data.setElements(values.map { it.toNumberType(elementType) })
     }
 
-    val spinnerStep = remember(data.step, data.min, data.max) {
-        when {
-            data.step > 0f -> data.step
-            data.min == data.min.roundToInt().toFloat() && data.max == data.max.roundToInt().toFloat() -> 1f
-            else -> 0.1f
-        }
-    }
+    val spinnerStep = remember(data.step, data.min, data.max) { spinnerStep(data.step, data.min, data.max) }
 
     ListOptionContainer(
         state = state,

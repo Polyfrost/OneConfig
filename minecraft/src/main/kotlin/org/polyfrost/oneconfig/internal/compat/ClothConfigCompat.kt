@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 import java.util.function.Supplier
+import net.minecraft.client.Minecraft
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
@@ -19,6 +20,8 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.category
 import org.polyfrost.oneconfig.api.config.v1.dsl.noCache
 import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
+import org.polyfrost.oneconfig.api.event.v1.EventManager
+import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
@@ -44,11 +47,29 @@ object ClothConfigCompat {
 
     private val screens = HashMap<String, Screen>()
 
+    private val suppressScreens = AtomicInteger()
+
+    init {
+        EventManager.register(ScreenOpenEvent::class.java, Consumer<ScreenOpenEvent> {
+            if (suppressScreens.get() > 0 && it.getScreen<Any>() != null) it.cancelled = true
+        })
+    }
+
+    private fun runSave(save: Runnable) {
+        suppressScreens.incrementAndGet()
+        try {
+            save.run()
+        } finally {
+            Minecraft.getInstance().execute { suppressScreens.decrementAndGet() }
+        }
+    }
+
     @JvmStatic
     fun parseClothBuilder(builder: Any) {
         runCatching {
             val mod = CompatLoader.findFirstMod()
             val key = mod?.let { "${it.id}|${screenKey(builder)}" }
+            if (ConfigEntrypoints.skipExtraction(mod?.id, builder) { parseClothBuilder(builder) }) return
             if (mod != null && CompatLoader.nativeLoadedConfigs.contains(mod.id)) {
                 screens[key]?.let { refresh(builder, it) }
                 return
@@ -57,7 +78,7 @@ object ClothConfigCompat {
             val tree = parseBuilder(builder, mod) ?: return
             slots.values.forEach(::captureSaves)
             val screen = Screen(slots, savingRunnable(builder))
-            tree.saveFunction = Runnable { screen.save?.run() }
+            tree.saveFunction = Runnable { screen.save?.let(::runSave) }
             if (key != null) screens[key] = screen
             CompatSnapshots.register(tree)
             CompatLoader.markFirstModAsSkip()

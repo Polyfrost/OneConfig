@@ -1,10 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.hoverable
@@ -33,13 +30,10 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.settings.MultiSelectDropdownOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
@@ -47,6 +41,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
 import org.polyfrost.oneconfig.internal.ui.components.onClick
+import org.polyfrost.oneconfig.internal.ui.components.dropdown.SimpleDropdownMenu
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -91,7 +86,6 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
     }
 
     var expanded by remember { mutableStateOf(false) }
-    var triggerHeightPx by remember { mutableStateOf(0) }
 
     val triggerInteraction = rememberInteractionSource()
     val isHovered by triggerInteraction.collectIsHoveredAsState()
@@ -125,7 +119,6 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
             modifier = Modifier
                 .width(LocalOptionWidth.current)
                 .height(32.dp)
-                .onSizeChanged { triggerHeightPx = it.height }
                 .background(backgroundColor, DropdownShape)
                 .border(1.dp, borderColor, DropdownShape)
                 .onClick(triggerInteraction) { expanded = !expanded }
@@ -146,57 +139,62 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
             Icon("up", modifier = Modifier.rotate(chevronRotation), color = textColor)
         }
 
-        if (expanded) {
-            Popup(
-                alignment = Alignment.TopStart,
-                offset = IntOffset(0, triggerHeightPx + 10),
-                onDismissRequest = { expanded = false },
-                properties = PopupProperties(focusable = true),
+        SimpleDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            offset = DpOffset(0.dp, 10.dp),
+        ) {
+            val scrollState = rememberScrollState()
+            Column(
+                modifier = Modifier
+                    .width(LocalOptionWidth.current)
+                    .clip(DropdownShape)
+                    .background(theme.componentBackground, DropdownShape)
+                    .border(1.dp, theme.borderColor, DropdownShape)
+                    .heightIn(max = 280.dp)
+                    .fadingEdges(scrollState, theme.componentBackground)
+                    .verticalScroll(scrollState)
+                    .padding(MenuPadding),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                AnimatedVisibility(
-                    visible = expanded,
-                    enter = fadeIn(),
-                    exit = fadeOut(),
-                ) {
-                    val scrollState = rememberScrollState()
-                    Column(
-                        modifier = Modifier
-                            .width(LocalOptionWidth.current)
-                            .clip(DropdownShape)
-                            .background(theme.componentBackground, DropdownShape)
-                            .border(1.dp, theme.borderColor, DropdownShape)
-                            .heightIn(max = 280.dp)
-                            .fadingEdges(scrollState, theme.componentBackground)
-                            .verticalScroll(scrollState)
-                            .padding(MenuPadding),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        options.forEachIndexed { index, option ->
-                            if (data.checkable) {
-                                CheckableListItem(
-                                    label = option,
-                                    icon = data.icon,
-                                    checked = selectedFlags.getOrElse(index) { false },
-                                    onToggle = {
-                                        val updated = selectedFlags.copyOf()
-                                        updated[index] = !updated[index]
-                                        selectedFlags = updated
-                                        (data.prop as Property<Any>).set(updated)
-                                    },
-                                )
-                            } else {
-                                PlainListItem(
-                                    label = option,
-                                    icon = data.icon,
-                                    selected = selectedIdx == index,
-                                    onSelect = {
-                                        selectedIdx = index
-                                        (data.prop as Property<Any>).set(index)
-                                        expanded = false
-                                    },
-                                )
-                            }
-                        }
+                if (data.checkable && options.size > 1) {
+                    val allSelected = selectedFlags.count { it } == options.size
+                    CheckableListItem(
+                        label = if (allSelected) "Deselect all" else "Select all",
+                        icon = null,
+                        checked = allSelected,
+                        onToggle = {
+                            val updated = BooleanArray(options.size) { !allSelected }
+                            selectedFlags = updated
+                            (data.prop as Property<Any>).set(updated)
+                        },
+                    )
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(theme.borderColor))
+                }
+                options.forEachIndexed { index, option ->
+                    if (data.checkable) {
+                        CheckableListItem(
+                            label = option,
+                            icon = data.icon,
+                            checked = selectedFlags.getOrElse(index) { false },
+                            onToggle = {
+                                val updated = selectedFlags.copyOf()
+                                updated[index] = !updated[index]
+                                selectedFlags = updated
+                                (data.prop as Property<Any>).set(updated)
+                            },
+                        )
+                    } else {
+                        PlainListItem(
+                            label = option,
+                            icon = data.icon,
+                            selected = selectedIdx == index,
+                            onSelect = {
+                                selectedIdx = index
+                                (data.prop as Property<Any>).set(index)
+                                expanded = false
+                            },
+                        )
                     }
                 }
             }

@@ -45,7 +45,6 @@ public final class ToggleHooks {
     static {
         hook("appleskin", "AppleSkinHud", "AppleSkinTooltip");
         hook("betterhurtcam", "BetterHurtCam");
-        hook("betterscreens", "BetterScreens", "BetterScreensScale", "BetterScreensServer");
         hook("blur", "Blur", "BlurAnimation", "MidnightSave", "MidnightLoad");
         hook("bobby", "Bobby");
         hook("chatblock", "ChatBlockLegacy", "ChatBlockReceiving", "ChatBlockSending");

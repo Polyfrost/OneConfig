@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -22,7 +21,6 @@ import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.rememberBrandTint
 import org.polyfrost.oneconfig.internal.ui.components.rememberSvgResourcePainter
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -73,11 +71,6 @@ fun Credits() {
     val theme = LocalTheme.current
     val scrollState = rememberScrollState()
 
-    DisposableEffect(Unit) {
-        ShellState.title = "Credits"
-        onDispose { }
-    }
-
     ScrollbarBox(scrollState, PageGutter, Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(horizontal = PageGutter)
@@ -86,11 +79,11 @@ fun Credits() {
                 verticalAlignment = Alignment.Bottom,
                 modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
             ) {
-                rememberSvgResourcePainter(theme.branding.logoPath)?.let { logo ->
+                rememberSvgResourcePainter(theme.logoPath)?.let { logo ->
                     Image(
                         painter = logo,
                         contentDescription = null,
-                        colorFilter = rememberBrandTint(theme.branding.logoPath, Accent),
+                        colorFilter = rememberBrandTint(theme.logoPath, Accent),
                         modifier = Modifier.size(474.dp, 54.dp)
                     )
                 }
