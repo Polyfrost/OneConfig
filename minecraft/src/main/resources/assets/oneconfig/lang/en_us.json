@@ -149,6 +149,9 @@
   "oneconfig.preferences.show_first_launch_message.title": "Show First Launch Message",
   "oneconfig.preferences.show_first_launch_message.description": "Show the welcome message the first time OneConfig is launched.",
 
+  "oneconfig.preferences.profile_switch_toast.title": "Show Profile Switch Notification",
+  "oneconfig.preferences.profile_switch_toast.description": "Show a notification when a profile keybind switches your profile.",
+
   "oneconfig.notification.first_launch.title": "Welcome to OneConfig!",
   "oneconfig.notification.first_launch.message": "Press '%s' to open OneConfig and access all your mod settings in one place.",
 
@@ -178,6 +181,11 @@
   "oneconfig.hud.tour.fonts.body": "In Designer, Text Options lets you switch between the Minecraft and Poppins fonts, and change the size, weight, style and case.",
   "oneconfig.hud.tour.done.title": "You're all set",
   "oneconfig.hud.tour.done.body": "Right-click empty space and pick Editor Tour to see this again.",
+
+  "oneconfig.credits.translations": "All mod authors and Crowdin translators whose translations OneConfig downloads",
+  "oneconfig.credits.translations.mods": "All mod authors and Crowdin translators whose translations OneConfig downloads (%s)",
+  "oneconfig.credits.translations.packs": "%s, including %s",
+  "oneconfig.credits.translations.pack": "%s by %s",
 
   "oneconfig.combat": "Combat",
   "oneconfig.qol": "Quality of Life",

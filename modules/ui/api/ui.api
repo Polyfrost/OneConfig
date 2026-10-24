@@ -54,6 +54,27 @@ public final class org/polyfrost/oneconfig/api/ui/v1/ModCardTypes {
 	public static final fun types ()Ljava/util/List;
 }
 
+public final class org/polyfrost/oneconfig/api/ui/v1/ModSortMode {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;)V
+	public final fun getConfirmation ()Ljava/lang/String;
+	public final fun getIcon ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getOnSelect ()Lkotlin/jvm/functions/Function0;
+	public final fun getTitle ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/ModSortModes {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/ModSortModes;
+	public static final fun all ()Ljava/util/List;
+	public static final fun currentId ()Ljava/lang/String;
+	public static final fun register (Lorg/polyfrost/oneconfig/api/ui/v1/ModSortMode;)V
+	public static final fun unregister (Lorg/polyfrost/oneconfig/api/ui/v1/ModSortMode;)Z
+}
+
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/ModToggle : org/polyfrost/oneconfig/api/toggle/v1/ModToggle {
 	public fun needsSetup ()Z
 }

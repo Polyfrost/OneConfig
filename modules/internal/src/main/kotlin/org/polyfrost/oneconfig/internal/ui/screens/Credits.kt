@@ -10,12 +10,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
+import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.internal.ui.api.TranslationCredits
 import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.accentGradientFill
@@ -32,7 +35,26 @@ private val oneConfigVersion: String? by lazy {
 
 private data class CreditSection(val title: String, val entries: List<String>)
 
-private val creditSections = listOf(
+private fun translationCredit(): String {
+    val i18n = Platform.i18n()
+    val loaded = ModInfo.loadedMods
+    val mods = (TranslationCredits.namespaces - "oneconfig")
+        .map { namespace -> loaded.firstOrNull { it.id == namespace }?.name ?: namespace }
+        .distinct()
+        .sortedWith(String.CASE_INSENSITIVE_ORDER)
+    val credit = if (mods.isEmpty()) {
+        i18n.translateString("oneconfig.credits.translations")
+    } else {
+        i18n.translateString("oneconfig.credits.translations.mods", mods.joinToString(", "))
+    }
+    val packs = TranslationCredits.packs
+        .filter { pack -> loaded.any { it.id == pack.modId } }
+        .map { i18n.translateString("oneconfig.credits.translations.pack", it.name, it.author) }
+    if (packs.isEmpty()) return credit
+    return i18n.translateString("oneconfig.credits.translations.packs", credit, packs.joinToString(", "))
+}
+
+private fun creditSections() = listOf(
     CreditSection(
         "People",
         listOf(
@@ -61,6 +83,7 @@ private val creditSections = listOf(
             "ImToggle for his contributions to OneConfig/Polyfrost mods",
             "Sk1er for his lasting impact on Minecraft modding",
             "The Polyfrost team for their support and contributions",
+            translationCredit(),
             "All our open source contributors and testers for their help in making modding accessible to everyone",
         )
     ),
@@ -70,6 +93,7 @@ private val creditSections = listOf(
 fun Credits() {
     val theme = LocalTheme.current
     val scrollState = rememberScrollState()
+    val creditSections = remember { creditSections() }
 
     ScrollbarBox(scrollState, PageGutter, Modifier.fillMaxSize()) {
         Column(

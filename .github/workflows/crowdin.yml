@@ -20,7 +20,7 @@ on:
         options:
           - all
           - sync
-          - release
+          - publish
 
 concurrency:
   group: crowdin
@@ -67,33 +67,50 @@ jobs:
           import_eq_suggestions: false
           download_translations: false
 
-  release:
-    name: Release OTA distribution
+  publish:
+    name: Publish translations to R2
 
     needs: sync
 
     if: >-
       !cancelled() && needs.sync.result != 'failure' && github.repository == 'Polyfrost/OneConfig' &&
       (github.event_name == 'schedule' ||
-      (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all", "release"]'), inputs.task)))
+      (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all", "publish"]'), inputs.task)))
 
     runs-on: ubuntu-26.04
 
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_ENDPOINT_URL: ${{ vars.R2_ENDPOINT }}
+      R2_TARGET: s3://${{ vars.R2_BUCKET }}/v1
+
     steps:
-      - name: Release distributions
-        shell: bash
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+
+      - name: Fetch published manifest
+        run: aws s3 cp "$R2_TARGET/manifest.json" build/published/manifest.json || echo "::notice::No published manifest found"
+
+      - name: Build distribution
+        id: build
         env:
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+        run: >-
+          python .github/crowdin/build_distribution.py
+          --output build/distribution
+          --previous build/published/manifest.json
+
+      - name: Upload distribution
+        if: steps.build.outputs.changed == 'true'
         run: |
-          api="https://api.crowdin.com/api/v2/projects/$CROWDIN_PROJECT_ID/distributions"
-          auth="Authorization: Bearer $CROWDIN_PERSONAL_TOKEN"
-          hashes=$(curl -fsS -H "$auth" "$api?limit=500" | jq -r '.data[].data.hash')
-          if [ -z "$hashes" ]; then
-            echo "::warning::No OTA distributions to release"
-            exit 0
-          fi
-          for hash in $hashes; do
-            curl -fsS -X POST -H "$auth" "$api/$hash/release" > /dev/null
-            echo "Released distribution $hash"
-          done
+          aws s3 sync build/distribution/translations "$R2_TARGET/translations" --content-type application/json --cache-control "public, max-age=604800"
+          aws s3 cp build/distribution/manifest.json "$R2_TARGET/manifest.json" --content-type application/json --cache-control "public, max-age=3600"
+          aws s3 sync build/distribution/translations "$R2_TARGET/translations" --delete --size-only

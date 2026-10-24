@@ -54,6 +54,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerIcon
@@ -82,6 +83,7 @@ import org.polyfrost.oneconfig.internal.ui.api.ModFavorites
 import org.polyfrost.oneconfig.internal.ui.api.ModGridEntry
 import org.polyfrost.oneconfig.internal.ui.api.ModHidden
 import org.polyfrost.oneconfig.internal.ui.api.ModOrder
+import org.polyfrost.oneconfig.internal.ui.api.ModSortStore
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.api.buildModGridEntries
@@ -133,7 +135,10 @@ enum class ModCategory(
 
 @Composable
 fun Mods() {
-    DecoratedModsPage(ModsPageDecorators.all(), 0)
+    Box {
+        DecoratedModsPage(ModsPageDecorators.all(), 0)
+        ModSortControl(Modifier.align(Alignment.TopEnd))
+    }
 }
 
 @Composable
@@ -188,11 +193,12 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
     val favoriteRevision = ModFavorites.revision
     val hiddenRevision = ModHidden.revision
     val orderRevision = ModOrder.revision
+    val sortMode = ModSortStore.selectedId
     val typeRevision = ModCardTypes.revision
     val collapseRevision = ModCardTypeCollapseStore.revision
     val filtered = remember(
         registryRevision, hudRevision, category, categoryRevision, favoriteRevision, hiddenRevision, orderRevision,
-        typeRevision,
+        typeRevision, sortMode,
     ) {
         ConfigRegistry.modCardConfigs
             .filter { ModHidden.isHidden(it.id) == category.hiddenOnly }
@@ -404,6 +410,7 @@ private fun commitDrop(entries: List<ModGridEntry>, index: Int) {
     if (modFavoriteAt(entries, index, ModFavorites::isFavorite) != ModFavorites.isFavorite(dropped.id)) {
         ModFavorites.toggle(dropped.id)
     }
+    if (ModSortStore.alphabetical) return
     val group = entries.slice(modGroupBounds(entries, index)).filterIsInstance<ModGridEntry.Card>().map { it.data }
     ModOrder.reorder(
         group.map { it.id },
@@ -638,20 +645,21 @@ fun ModCard(
                                 1f to Color.Transparent,
                                 center = size.center, radius = glowRadius,
                             )
-                            val dotRadius = ModCardToggleDot.toPx() / 2f
+                            val dotSize = ModCardToggleDot.toPx()
+                            val dotInset = (size.minDimension - dotSize) / 2f
+                            val ringOutline = theme.circleShape.createOutline(size, layoutDirection, this)
+                            val dotOutline = theme.circleShape.createOutline(Size(dotSize, dotSize), layoutDirection, this)
                             val ringBrush = Brush.linearGradient(listOf(ringStart, ringEnd), Offset.Zero, Offset(size.width, size.height))
-                            val dotBrush = Brush.linearGradient(
-                                listOf(Accent, AccentEnd),
-                                size.center - Offset(dotRadius, dotRadius),
-                                size.center + Offset(dotRadius, dotRadius),
-                            )
+                            val dotBrush = Brush.linearGradient(listOf(Accent, AccentEnd), Offset.Zero, Offset(dotSize, dotSize))
                             onDrawBehind {
                                 if (toggle != null) drawCircle(glow, radius = glowRadius)
-                                drawCircle(ringBrush)
-                                if (toggle != null) {
-                                    drawCircle(dotBrush, radius = dotRadius)
-                                } else {
-                                    drawCircle(dot, radius = dotRadius)
+                                drawOutline(ringOutline, ringBrush)
+                                translate(dotInset, dotInset) {
+                                    if (toggle != null) {
+                                        drawOutline(dotOutline, dotBrush)
+                                    } else {
+                                        drawOutline(dotOutline, dot)
+                                    }
                                 }
                             }
                         }

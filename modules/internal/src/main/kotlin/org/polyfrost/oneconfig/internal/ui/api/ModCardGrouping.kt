@@ -27,9 +27,10 @@ fun modCardGroupRank(id: String): Int {
 
 fun modCardOrder(): Comparator<ConfigData> {
     val ranks = HashMap<String, Int>()
+    val alphabetical = ModSortStore.alphabetical
     return compareBy<ConfigData> { ranks.getOrPut(it.id) { modCardGroupRank(it.id) } }
         .thenByDescending { ModFavorites.isFavorite(it.id) }
-        .thenBy { ModOrder.indexOf(it.id) }
+        .thenBy { if (alphabetical) 0 else ModOrder.indexOf(it.id) }
         .thenBy { if (isHudModCard(it.id)) 1 else 0 }
         .thenBy(String.CASE_INSENSITIVE_ORDER) { it.title.asRenderText() }
 }
