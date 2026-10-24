@@ -215,8 +215,11 @@ object HudManager {
 
     private const val REGISTRY_ID = "hud-registry.json"
     private const val KNOWN_HUDS = "knownHuds"
+    private const val PROVIDER_LOOKS = "providerLooks"
 
     private val knownProviders = LinkedHashSet<String>()
+    private val providerLooks = HashMap<String, String>()
+    private val providerDefaultLooks = HashMap<String, String>()
     private var registryTree: Tree? = null
 
     private fun registryProperty() = Properties.simple(
@@ -225,12 +228,19 @@ object HudManager {
         emptyArray<String>(), Array<String>::class.java
     )
 
+    private fun looksProperty() = Properties.simple(
+        PROVIDER_LOOKS, "Provider Looks",
+        "Appearance explicitly applied to unplaced HUD providers by the global HUD settings.",
+        emptyArray<String>(), Array<String>::class.java
+    )
+
     private fun loadRegistry() {
         try {
             val mgr = ConfigManager.active()
             val t = mgr.trees().firstOrNull { it.id == REGISTRY_ID }
-                ?: mgr.register(Tree.tree(REGISTRY_ID).put(registryProperty())).get()
+                ?: mgr.register(Tree.tree(REGISTRY_ID).put(registryProperty()).put(looksProperty())).get()
             if (t.getProp(KNOWN_HUDS) == null) t.put(registryProperty())
+            if (t.getProp(PROVIDER_LOOKS) == null) t.put(looksProperty())
             t.addMetadata("hidden", true)
             t.addMetadata(ConfigManager.PROFILE_LOCAL_METADATA, true)
             registryTree = t
@@ -238,6 +248,11 @@ object HudManager {
                 is Array<*> -> known.forEach { if (it != null) knownProviders.add(it.toString()) }
                 is Iterable<*> -> known.forEach { if (it != null) knownProviders.add(it.toString()) }
             }
+            when (val looks = t.getProp(PROVIDER_LOOKS)?.get()) {
+                is Array<*> -> looks.forEach { if (it != null) noteProviderLook(it.toString()) }
+                is Iterable<*> -> looks.forEach { if (it != null) noteProviderLook(it.toString()) }
+            }
+            hudProviders.values.forEach { applyProviderLook(it) }
         } catch (e: Exception) {
             LOGGER.error("Failed to load HUD registry, HUD deletions may not persist", e)
         }
@@ -247,9 +262,50 @@ object HudManager {
         val t = registryTree ?: return
         try {
             t.getProp(KNOWN_HUDS)?.setAs(knownProviders.toTypedArray())
+            t.getProp(PROVIDER_LOOKS)?.setAs(providerLooks.values.toTypedArray())
             ConfigManager.active().save(REGISTRY_ID)
         } catch (e: Exception) {
             LOGGER.error("Failed to save HUD registry", e)
+        }
+    }
+
+    private fun noteProviderLook(encoded: String) {
+        val sep = encoded.indexOf('|')
+        if (sep > 0) providerLooks[encoded.substring(0, sep)] = encoded
+    }
+
+    /**
+     * Remembers [hud]'s current look for its provider class in the registry, providers have no
+     * config tree, so without this an applied look would die with the process
+     */
+    @JvmStatic
+    fun storeProviderLook(hud: Hud) {
+        providerLooks[hud::class.java.name] = encodeLook(hud)
+        saveRegistry()
+    }
+
+    private fun encodeLook(hud: Hud): String = listOf(
+        hud::class.java.name,
+        hud.font.ordinal,
+        hud.textWeight.ordinal,
+        if (hud.showBackground) 1 else 0,
+        hud.bgRadius,
+    ).joinToString("|")
+
+    private fun applyProviderLook(hud: Hud) {
+        applyLook(hud, providerLooks[hud::class.java.name] ?: return)
+    }
+
+    private fun applyLook(hud: Hud, enc: String) {
+        val parts = enc.split('|')
+        if (parts.size != 5) return
+        try {
+            hud.font = Font.entries[parts[1].toInt()]
+            hud.textWeight = Weight.entries[parts[2].toInt()]
+            hud.showBackground = parts[3].toInt() == 1
+            hud.bgRadius = parts[4].toFloat()
+        } catch (e: Throwable) {
+            LOGGER.error("Failed to re-apply the stored provider look of ${hud::class.java.name}", e)
         }
     }
 
@@ -298,6 +354,8 @@ object HudManager {
     @JvmStatic
     fun register(hud: Hud) {
         hudProviders[hud::class.java] = hud
+        providerDefaultLooks.putIfAbsent(hud::class.java.name, encodeLook(hud))
+        applyProviderLook(hud)
         revision++
         // Providers are commonly registered by later InitializationEvent handlers, after the
         // manager has already performed its first load. Coalesce those registrations into one
@@ -560,6 +618,7 @@ object HudManager {
     /** Everything [shouldDraw] checks apart from the HUD's own hidden flag */
     private fun isShown(hud: Hud): Boolean {
         if (isEditing) return true
+        if (!GlobalHudSettings.enabled) return false
         if (isGuiHidden) return false
         if (isDebugScreenVisible && !hud.showInF3) return false
         if (isTabListVisible && !hud.showInTab) return false
@@ -839,6 +898,7 @@ object HudManager {
         key = key * 31L + (if (isChatScreenOpen) 1 else 0)
         key = key * 31L + (if (isGuiHidden) 1 else 0)
         key = key * 31L + (if (overrideShowInScreens) 1 else 0)
+        key = key * 31L + (if (GlobalHudSettings.enabled) 1 else 0)
         key = key * 31L + (if (isEditing) 1 else 0)
         key = key * 31L + (if (inWorld) 1 else 0)
         key = key * 31L + targetPixelWidth
@@ -1031,6 +1091,7 @@ object HudManager {
             }
         }
         knownProviders.clear()
+        providerLooks.clear()
         registryTree = null
         zOrderCache = emptyList()
         preparedFrameValid = false
@@ -1049,6 +1110,7 @@ object HudManager {
             if (!provider.profileLocalTree) continue
             try {
                 provider.restoreCapturedDefaults()
+                providerDefaultLooks[provider::class.java.name]?.let { applyLook(provider, it) }
             } catch (failure: Throwable) {
                 if (failure.isFatalHudFailure()) throw failure
                 LOGGER.error("Failed to restore defaults for HUD ${provider.title}", failure)

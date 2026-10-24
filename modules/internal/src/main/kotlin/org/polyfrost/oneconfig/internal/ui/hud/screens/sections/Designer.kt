@@ -40,6 +40,7 @@ import org.polyfrost.compose.mc.McFontQueue
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.hud.v1.Font
+import org.polyfrost.oneconfig.api.hud.v1.GlobalHudSettings
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
 import org.polyfrost.oneconfig.api.hud.v1.TextHud
@@ -60,6 +61,7 @@ import org.polyfrost.oneconfig.internal.ui.hud.components.NumberSpinnerWithIcon
 import org.polyfrost.oneconfig.internal.ui.hud.components.Radio
 import org.polyfrost.oneconfig.internal.ui.hud.components.RadioValue
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
+import org.polyfrost.oneconfig.internal.ui.hud.screens.GloballyManagedHint
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -244,7 +246,8 @@ fun Designer(hud: Hud?, query: String) {
                 }
             }
             val density = LocalDensity.current.density
-            if (font == Font.Poppins) {
+            val previewFont = if (GlobalHudSettings.overrideFont) GlobalHudSettings.font else font
+            if (previewFont == Font.Poppins) {
                 val fontName = hud.getPoppinsFontName()
                 val skiaFont = FontManager.getFont(14f * textScale, fontName)
                 val metrics = skiaFont.metrics
@@ -299,11 +302,15 @@ fun Designer(hud: Hud?, query: String) {
         }
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             HudSettingTarget(hud, "font") {
-                Dropdown(
-                    "Font",
-                    font,
-                    { Snapshot.withMutableSnapshot { font = it; hud.font = it } }
-                )
+                if (GlobalHudSettings.overrideFont) {
+                    GloballyManagedHint("Font")
+                } else {
+                    Dropdown(
+                        "Font",
+                        font,
+                        { Snapshot.withMutableSnapshot { font = it; hud.font = it } }
+                    )
+                }
             }
             HudSettingTarget(hud, "textScale") {
                 NumberSpinner(
@@ -352,11 +359,15 @@ fun Designer(hud: Hud?, query: String) {
         }
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             HudSettingTarget(hud, "textWeight") {
-                Dropdown(
-                    "Weight",
-                    textWeight,
-                    { Snapshot.withMutableSnapshot { textWeight = it; hud.textWeight = it } }
-                )
+                if (GlobalHudSettings.overrideTextWeight) {
+                    GloballyManagedHint("Weight")
+                } else {
+                    Dropdown(
+                        "Weight",
+                        textWeight,
+                        { Snapshot.withMutableSnapshot { textWeight = it; hud.textWeight = it } }
+                    )
+                }
             }
             HudSettingTarget(hud, "textAlign") {
                 Radio(
