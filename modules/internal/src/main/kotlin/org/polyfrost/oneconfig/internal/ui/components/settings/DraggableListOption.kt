@@ -46,6 +46,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.wheelScroll
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
@@ -134,6 +135,7 @@ fun DraggableListOption(data: DraggableListOptionData) {
                 .fillMaxWidth()
                 .heightIn(max = 280.dp)
                 .fadingEdges(scrollState, theme.componentBackground)
+                .wheelScroll(scrollState)
                 .verticalScroll(scrollState),
         ) {
           Box(

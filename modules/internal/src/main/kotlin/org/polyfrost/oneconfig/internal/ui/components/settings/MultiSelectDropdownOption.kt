@@ -43,6 +43,7 @@ import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.dropdown.SimpleDropdownMenu
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.wheelScroll
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.concentric
@@ -153,6 +154,7 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
                     .border(1.dp, theme.borderColor, DropdownShape)
                     .heightIn(max = 280.dp)
                     .fadingEdges(scrollState, theme.componentBackground)
+                    .wheelScroll(scrollState)
                     .verticalScroll(scrollState)
                     .padding(MenuPadding),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
