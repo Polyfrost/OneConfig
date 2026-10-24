@@ -1,51 +1,32 @@
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import kotlinx.coroutines.delay
-import org.polyfrost.compose.animation.core.animateFloatAsState
-import org.polyfrost.compose.foundation.ScrollState
-import org.polyfrost.compose.foundation.background
-import org.polyfrost.compose.foundation.border
-import org.polyfrost.compose.foundation.hoverable
-import org.polyfrost.compose.foundation.interaction.MutableInteractionSource
-import org.polyfrost.compose.foundation.layout.Box
-import org.polyfrost.compose.foundation.layout.padding
-import org.polyfrost.compose.foundation.shape.RoundedCornerShape
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.BiasAlignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.draw.drawWithContent
-import org.polyfrost.compose.ui.graphics.Brush
-import org.polyfrost.compose.ui.graphics.Color
-import org.polyfrost.compose.ui.graphics.copy
-import org.polyfrost.compose.ui.graphics.Shape
-import org.polyfrost.compose.ui.layout.onPlaced
-import org.polyfrost.compose.ui.text.font.FontWeight
-import org.polyfrost.compose.ui.text.style.BaselineShift
-import org.polyfrost.compose.ui.text.style.TextAlign
-import org.polyfrost.compose.ui.text.style.TextOverflow
-import org.polyfrost.compose.ui.unit.Dp
-import org.polyfrost.compose.ui.unit.DpOffset
-import org.polyfrost.compose.ui.unit.TextUnit
-import org.polyfrost.compose.ui.unit.dp
-import org.polyfrost.compose.ui.window.Popup
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.TextUnit
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
+import org.polyfrost.oneconfig.internal.ui.api.Tooltip as InternalTooltip
 import org.polyfrost.oneconfig.internal.ui.components.Chip as InternalChip
 import org.polyfrost.oneconfig.internal.ui.components.Icon as InternalIcon
 import org.polyfrost.oneconfig.internal.ui.components.IconButton as InternalIconButton
 import org.polyfrost.oneconfig.internal.ui.components.Text as InternalText
+import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerModel
 import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerPopup as InternalColorPickerPopup
 import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidth
 import org.polyfrost.oneconfig.internal.ui.components.settings.colorToHex as internalColorToHex
-import org.polyfrost.oneconfig.internal.ui.shell.LocalPageScope
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery as shellPageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.MinecraftDark
@@ -106,7 +87,7 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
         textAlign: TextAlign,
         maxLines: Int,
         overflow: TextOverflow,
-    ) = InternalText(text, modifier, color, fontSize, lineHeight, fontWeight, textAlign, maxLines, overflow, baselineShift = shift)
+    ) = InternalText(text, modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign, maxLines, overflow)
 
     @Composable
     override fun Chip(label: String, selected: Boolean, icon: String?, onClick: () -> Unit) =
@@ -131,35 +112,7 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
         alignment: Alignment,
         offset: DpOffset,
         content: @Composable () -> Unit,
-    ) {
-        val theme = LocalTheme.current
-        var hovered by remember { mutableStateOf(false) }
-        var shown by remember { mutableStateOf(false) }
-        LaunchedEffect(hovered) {
-            if (!hovered) {
-                shown = false
-                return@LaunchedEffect
-            }
-            delay(200)
-            shown = true
-        }
-        Box(Modifier.hoverable { hovered = it }) {
-            content()
-            if (shown) Popup(
-                alignment = BiasAlignment(-alignment.horizontalBias, -alignment.verticalBias),
-                offset = offset,
-                anchor = anchor,
-            ) {
-                Box(
-                    modifier.background(theme.popupBackground, RoundedCornerShape(8.dp))
-                        .border(1.dp, theme.borderColor, RoundedCornerShape(8.dp))
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                ) {
-                    text()
-                }
-            }
-        }
-    }
+    ) = InternalTooltip(text, modifier, anchor, alignment, offset, content)
 
     override fun onClick(
         modifier: Modifier,
@@ -169,25 +122,8 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
     ): Modifier = modifier.onClick(interactionSource, enabled, onClick)
 
     @Composable
-    override fun fadingEdges(modifier: Modifier, scrollState: ScrollState, color: Color, length: Dp): Modifier {
-        var canScrollBack by remember(scrollState) { mutableStateOf(false) }
-        var canScrollForward by remember(scrollState) { mutableStateOf(false) }
-        val top by animateFloatAsState(if (canScrollBack) 1f else 0f)
-        val bottom by animateFloatAsState(if (canScrollForward) 1f else 0f)
-        val topColor = color.copy(alpha = color.alphaF * top)
-        val bottomColor = color.copy(alpha = color.alphaF * bottom)
-        return modifier
-            .onPlaced {
-                canScrollBack = scrollState.value > 0f
-                canScrollForward = scrollState.value < scrollState.maxValue
-            }
-            .drawWithContent {
-                drawContent()
-                val l = length.value.coerceAtMost(height / 2f)
-                if (topColor.alpha > 0) ctx.rectGradient(x, y, width, l, Brush.verticalGradient(topColor, topColor.copy(alpha = 0f)))
-                if (bottomColor.alpha > 0) ctx.rectGradient(x, y + height - l, width, l, Brush.verticalGradient(bottomColor.copy(alpha = 0f), bottomColor))
-            }
-    }
+    override fun fadingEdges(modifier: Modifier, scrollState: ScrollState, color: Color, length: Dp): Modifier =
+        modifier.fadingEdges(scrollState, color, length)
 
     override fun createColorPicker(initialColor: Color, hasAlpha: Boolean): Any = ColorPickerModel(initialColor, hasAlpha)
 
@@ -201,5 +137,5 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
     override fun optionWidth(): Dp = LocalOptionWidth.current
 
     @Composable
-    override fun pageSearchQuery(): String = LocalPageScope.current?.query ?: ShellState.searchQuery
+    override fun pageSearchQuery(): String = shellPageSearchQuery()
 }

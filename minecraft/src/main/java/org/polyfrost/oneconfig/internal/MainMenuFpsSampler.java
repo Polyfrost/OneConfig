@@ -34,7 +34,7 @@ import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.MainMenuFpsEvent;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
-import org.polyfrost.oneconfig.internal.ui.poly.PolyScreen;
+import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen;
 
 public final class MainMenuFpsSampler {
 
@@ -90,7 +90,7 @@ public final class MainMenuFpsSampler {
         elapsedNanos += gap;
 
         boolean representative = !(screen instanceof LevelLoadingScreen)
-                && !(screen instanceof PolyScreen);
+                && !(screen instanceof ComposeScreen);
         if (representative) {
             fpsSum += Math.max(0, Platform.compatibility().fps());
             sampleCount++;

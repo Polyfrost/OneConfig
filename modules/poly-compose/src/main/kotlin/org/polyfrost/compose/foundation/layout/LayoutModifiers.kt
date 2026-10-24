@@ -1,6 +1,5 @@
 package org.polyfrost.compose.foundation.layout
 
-import androidx.compose.runtime.State
 import org.polyfrost.compose.layout.PolyInsets
 import org.polyfrost.compose.layout.PolyPositionMode
 import org.polyfrost.compose.layout.PolySize
@@ -73,4 +72,3 @@ fun Modifier.absoluteOffset(x: Dp = 0.dp, y: Dp = 0.dp) = layoutElement {
 
 fun Modifier.offset(x: Dp = 0.dp, y: Dp = 0.dp) = layoutElement { offsetX += x.value; offsetY += y.value }
 
-fun Modifier.offsetX(x: State<Float>, target: Float) = layoutElement { animatedOffsetX = x; offsetXTarget = target }

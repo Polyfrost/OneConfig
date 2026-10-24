@@ -1,18 +1,17 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import org.polyfrost.compose.foundation.layout.Arrangement
-import org.polyfrost.compose.foundation.layout.Column
-import org.polyfrost.compose.foundation.layout.Row
-import org.polyfrost.compose.foundation.layout.fillMaxWidth
-import org.polyfrost.compose.foundation.layout.size
-import org.polyfrost.compose.foundation.layout.weight
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.graphics.Color
-import org.polyfrost.compose.ui.text.font.FontWeight
-import org.polyfrost.compose.ui.unit.dp
-import org.polyfrost.compose.ui.unit.sp
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.api.settings.InfoOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
@@ -50,7 +49,6 @@ fun InfoOption(data: InfoOptionData) {
                 fontSize = 16.sp,
                 lineHeight = 19.sp,
                 fontWeight = FontWeight.Medium,
-                softWrap = true,
             )
             data.body?.let {
                 Text(
@@ -59,7 +57,6 @@ fun InfoOption(data: InfoOptionData) {
                     color = theme.textColorSecondary,
                     fontSize = 13.sp,
                     lineHeight = 16.sp,
-                    softWrap = true,
                 )
             }
         }

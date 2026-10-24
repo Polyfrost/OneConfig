@@ -1,19 +1,19 @@
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
-import org.polyfrost.compose.foundation.ScrollState
-import org.polyfrost.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.graphics.Color
-import org.polyfrost.compose.ui.graphics.Shape
-import org.polyfrost.compose.ui.text.font.FontWeight
-import org.polyfrost.compose.ui.text.style.BaselineShift
-import org.polyfrost.compose.ui.text.style.TextAlign
-import org.polyfrost.compose.ui.text.style.TextOverflow
-import org.polyfrost.compose.ui.unit.Dp
-import org.polyfrost.compose.ui.unit.DpOffset
-import org.polyfrost.compose.ui.unit.TextUnit
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.TextUnit
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
 

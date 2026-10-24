@@ -35,6 +35,12 @@ subprojects {
         targetCompatibility = JavaVersion.VERSION_21
     }
 
+    configurations.configureEach {
+        exclude(group = "org.jetbrains.skiko")
+        exclude(group = "org.jetbrains.compose.ui", module = "ui-skiko")
+        exclude(group = "org.jetbrains.compose.ui", module = "ui-skiko-desktop")
+    }
+
     dependencies {
         "implementation"(rootProject.libs.annotations)
         "compileOnly"(rootProject.libs.logging.api)

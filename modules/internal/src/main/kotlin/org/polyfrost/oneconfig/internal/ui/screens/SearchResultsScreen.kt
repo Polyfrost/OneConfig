@@ -1,23 +1,25 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.polyfrost.compose.foundation.layout.Arrangement
-import org.polyfrost.compose.foundation.layout.Box
-import org.polyfrost.compose.foundation.layout.Row
-import org.polyfrost.compose.foundation.layout.fillMaxSize
-import org.polyfrost.compose.foundation.layout.fillMaxWidth
-import org.polyfrost.compose.foundation.layout.height
-import org.polyfrost.compose.foundation.layout.padding
-import org.polyfrost.compose.foundation.layout.weight
-import org.polyfrost.compose.foundation.lazy.LazyColumn
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.draw.alpha
-import org.polyfrost.compose.ui.text.font.FontWeight
-import org.polyfrost.compose.ui.unit.dp
-import org.polyfrost.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.PropertyModToggle
@@ -26,7 +28,6 @@ import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
 import org.polyfrost.oneconfig.internal.ui.components.rememberModEnabled
 import org.polyfrost.oneconfig.internal.ui.components.translated
-import org.polyfrost.oneconfig.internal.ui.poly.GUTTER
 import org.polyfrost.oneconfig.internal.ui.search.GlobalSettingIndex
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 import org.polyfrost.oneconfig.internal.ui.search.SearchDocument
@@ -34,7 +35,7 @@ import org.polyfrost.oneconfig.internal.ui.search.SearchRow
 import org.polyfrost.oneconfig.internal.ui.search.SearchScope
 import org.polyfrost.oneconfig.internal.ui.search.SettingNode
 import org.polyfrost.oneconfig.internal.ui.search.searchNode
-import org.polyfrost.oneconfig.internal.ui.shell.ShellHost
+import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -45,7 +46,7 @@ private val LIST_GAP = 8.dp
 private val MOD_ROW_EXTRA_GAP = MOD_GRID_GAP - LIST_GAP
 
 @Composable
-fun SearchResultsScreen(query: String, host: ShellHost) {
+fun SearchResultsScreen(query: String) {
     val theme = LocalTheme.current
 
     var searchedQuery by remember { mutableStateOf<String?>(null) }
@@ -88,10 +89,11 @@ fun SearchResultsScreen(query: String, host: ShellHost) {
         return
     }
 
-    ScrollbarBox(listState, GUTTER.dp, Modifier.fillMaxSize()) {
+    ScrollbarBox(listState, PageGutter, Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize().padding(horizontal = GUTTER.dp),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = PageGutter),
             verticalArrangement = Arrangement.spacedBy(LIST_GAP),
         ) {
             if (matchingMods.isNotEmpty()) {
@@ -105,18 +107,20 @@ fun SearchResultsScreen(query: String, host: ShellHost) {
                     )
                 }
                 items(modRows.size, key = { "mods-row:$it" }) { index ->
-                    Row(
+                    BoxWithConstraints(
                         Modifier
+                            .fillMaxWidth()
                             .padding(bottom = if (index == modRows.lastIndex) 0.dp else MOD_ROW_EXTRA_GAP)
-                            .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(MOD_GRID_GAP),
                     ) {
-                        modRows[index].forEach { mod ->
-                            key(mod.id) {
-                                Box(Modifier.weight(1f).height(140.dp)) { ModCard(mod, host) }
+                        val cellWidth = with(LocalDensity.current) {
+                            val gap = MOD_GRID_GAP.roundToPx()
+                            ((maxWidth.roundToPx() - gap * (MOD_GRID_COLUMNS - 1)) / MOD_GRID_COLUMNS).toDp()
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(MOD_GRID_GAP)) {
+                            modRows[index].forEach { mod ->
+                                Box(Modifier.width(cellWidth)) { ModCard(mod) }
                             }
                         }
-                        repeat(MOD_GRID_COLUMNS - modRows[index].size) { Box(Modifier.weight(1f).height(140.dp)) }
                     }
                 }
             }
@@ -138,7 +142,7 @@ fun SearchResultsScreen(query: String, host: ShellHost) {
                         val ownSwitch = (toggle as? PropertyModToggle)?.property
                         val isOwnSwitch = ownSwitch != null && (node as? SettingNode.Leaf)?.prop === ownSwitch
                         val lock = !enabled && !isOwnSwitch
-                        Box(Modifier.fillMaxWidth().alpha(if (lock) 0.45f else 1f).blockInteraction(lock, keyboard = true)) { SettingEntryRow(node) }
+                        Box(Modifier.alpha(if (lock) 0.45f else 1f).blockInteraction(lock, keyboard = true)) { SettingEntryRow(node) }
                     }
                 }
             }

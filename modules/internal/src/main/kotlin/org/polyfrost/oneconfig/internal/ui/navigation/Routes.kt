@@ -1,12 +1,9 @@
 package org.polyfrost.oneconfig.internal.ui.navigation
 
-import org.polyfrost.oneconfig.internal.ui.shell.PolyPage
-
 data class NavigationRoute(
     val id: String,
     val icon: String,
-    val route: PolyPage,
-    val arg: Any? = null,
+    val route: Any,
 )
 
 class NavigationGroup(
@@ -21,16 +18,6 @@ val NavigationGroups: List<NavigationGroup>
         .map { (group, pages) ->
             NavigationGroup(
                 group.title.fallback,
-                *pages.map {
-                    val (route, arg) = pageTarget(it)
-                    NavigationRoute(it.id.substringAfter(':'), it.icon, route, arg)
-                }.toTypedArray(),
+                *pages.map { NavigationRoute(it.id.substringAfter(':'), it.icon, pageRoute(it)) }.toTypedArray(),
             )
         }
-
-val PolyPage.hierarchy: PolyPage
-    get() = when (this) {
-        PolyPage.ModConfig -> PolyPage.Mods
-        PolyPage.ChangelogEntry -> PolyPage.Changelog
-        else -> this
-    }

@@ -1,42 +1,40 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import org.polyfrost.compose.foundation.TooltipArea
-import org.polyfrost.compose.foundation.background
-import org.polyfrost.compose.foundation.border
-import org.polyfrost.compose.foundation.layout.Arrangement
-import org.polyfrost.compose.foundation.layout.Box
-import org.polyfrost.compose.foundation.layout.Column
-import org.polyfrost.compose.foundation.layout.Row
-import org.polyfrost.compose.foundation.layout.fillMaxHeight
-import org.polyfrost.compose.foundation.layout.height
-import org.polyfrost.compose.foundation.layout.padding
-import org.polyfrost.compose.foundation.layout.size
-import org.polyfrost.compose.foundation.layout.width
-import org.polyfrost.compose.foundation.shape.RoundedCornerShape
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.graphics.Color
-import org.polyfrost.compose.ui.graphics.copy
-import org.polyfrost.compose.ui.unit.DpOffset
-import org.polyfrost.compose.ui.unit.dp
-import org.polyfrost.compose.ui.unit.sp
-import org.polyfrost.compose.ui.window.Popup
-import org.polyfrost.compose.ui.window.PopupProperties
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.PopupProperties
 import org.polyfrost.oneconfig.api.ui.v1.ModSortMode
 import org.polyfrost.oneconfig.api.ui.v1.ModSortModes
 import org.polyfrost.oneconfig.internal.ui.api.ModSortStore
+import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
+import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.poly.GUTTER
-import org.polyfrost.oneconfig.internal.ui.poly.OpenTransition
+import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.concentric
 
@@ -55,7 +53,7 @@ fun ModSortControl(modifier: Modifier = Modifier) {
         mode.onSelect()
     }
 
-    Box(modifier.padding(end = GUTTER.dp)) {
+    Box(modifier.padding(end = PageGutter)) {
         Row(
             Modifier
                 .height(36.dp)
@@ -71,29 +69,26 @@ fun ModSortControl(modifier: Modifier = Modifier) {
             }
         }
         pending?.let { mode ->
-            Popup(
+            ShellPopup(
                 alignment = Alignment.TopEnd,
-                anchor = Alignment.BottomEnd,
-                offset = DpOffset(0.dp, 6.dp),
+                offset = IntOffset(0, with(LocalDensity.current) { 42.dp.roundToPx() }),
                 onDismissRequest = { pending = null },
                 properties = PopupProperties(focusable = true),
             ) {
-                OpenTransition {
-                    Column(
-                        Modifier
-                            .width(280.dp)
-                            .background(theme.popupBackground, theme.popupShape)
-                            .border(1.dp, theme.borderColor, theme.popupShape)
-                            .padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        Text(mode.confirmation.orEmpty(), color = theme.textColor, fontSize = 13.sp, softWrap = true)
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Chip("Cancel", selected = false) { pending = null }
-                            Chip("Switch", selected = true) {
-                                pending = null
-                                apply(mode)
-                            }
+                Column(
+                    Modifier
+                        .width(280.dp)
+                        .background(theme.popupBackground, theme.popupShape)
+                        .border(1.dp, theme.borderColor, theme.popupShape)
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(mode.confirmation.orEmpty(), color = theme.textColor, fontSize = 13.sp)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Chip("Cancel", selected = false) { pending = null }
+                        Chip("Switch", selected = true) {
+                            pending = null
+                            apply(mode)
                         }
                     }
                 }
@@ -106,19 +101,10 @@ fun ModSortControl(modifier: Modifier = Modifier) {
 private fun SortSegment(mode: ModSortMode, selected: Boolean, onSwitch: () -> Unit) {
     val theme = LocalTheme.current
     val interactionSource = rememberInteractionSource()
-    TooltipArea(
-        tooltip = {
-            val shape = RoundedCornerShape(8.dp)
-            Box(
-                Modifier
-                    .background(theme.popupBackground, shape)
-                    .border(1.dp, theme.borderColor, shape)
-                    .padding(horizontal = 12.dp, vertical = 8.dp)
-            ) {
-                Text(mode.title, color = theme.textColor, fontSize = 12.sp)
-            }
-        },
-        below = true,
+    Tooltip(
+        text = { Text(mode.title, color = theme.textColor, fontSize = 12.sp) },
+        modifier = Modifier,
+        anchor = Alignment.BottomCenter,
     ) {
         Box(
             Modifier

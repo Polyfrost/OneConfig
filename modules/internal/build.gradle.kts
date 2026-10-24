@@ -26,6 +26,7 @@
 
 plugins {
     id("org.jetbrains.kotlin.plugin.compose")
+    alias(libs.plugins.kotlin.serialization)
 }
 
 dependencies {
@@ -35,6 +36,9 @@ dependencies {
     api(project(":modules:notifications"))
     api(libs.jetbrains.compose.runtime)
     api(project(":modules:poly-compose"))
+    api(libs.jetbrains.compose.navigation)
+    api(libs.jetbrains.lifecycle)
+    api(libs.jetbrains.viewmodel)
 
     implementation(libs.commonmark)
 }

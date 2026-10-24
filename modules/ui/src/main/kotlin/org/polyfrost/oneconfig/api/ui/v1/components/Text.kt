@@ -1,14 +1,14 @@
 package org.polyfrost.oneconfig.api.ui.v1.components
 
 import androidx.compose.runtime.Composable
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.graphics.Color
-import org.polyfrost.compose.ui.text.font.FontWeight
-import org.polyfrost.compose.ui.text.style.BaselineShift
-import org.polyfrost.compose.ui.text.style.TextAlign
-import org.polyfrost.compose.ui.text.style.TextOverflow
-import org.polyfrost.compose.ui.unit.TextUnit
-import org.polyfrost.compose.ui.unit.sp
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 

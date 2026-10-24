@@ -1,22 +1,25 @@
 package org.polyfrost.oneconfig.internal.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import org.polyfrost.compose.animation.animateColorAsState
-import org.polyfrost.compose.animation.core.animateFloatAsState
-import org.polyfrost.compose.foundation.background
-import org.polyfrost.compose.foundation.border
-import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
-import org.polyfrost.compose.foundation.layout.Arrangement
-import org.polyfrost.compose.foundation.layout.Row
-import org.polyfrost.compose.foundation.layout.heightIn
-import org.polyfrost.compose.foundation.layout.padding
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.input.pointer.PointerIcon
-import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
-import org.polyfrost.compose.ui.unit.dp
-import org.polyfrost.compose.ui.unit.sp
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -31,18 +34,18 @@ fun Chip(
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
     val theme = LocalTheme.current
-    val hoverBackground = theme.chipBackground.lerp(Accent.withAlpha(255), 0.5f * Accent.alphaF)
-    val backgroundColor = animateColorAsState(
+    val hoverBackground = Accent.copy(alpha = 0.5f).compositeOver(theme.chipBackground)
+    val backgroundColor by animateColorAsState(
         if (isHovered) hoverBackground else theme.chipBackground
     )
     val selectedAlpha by animateFloatAsState(if (selected) 1f else 0f)
-    val textColor = animateColorAsState(
+    val textColor by animateColorAsState(
         if (selected) LocalTheme.current.accentTextColor else LocalTheme.current.textColor
     )
 
     Row(
         modifier = Modifier
-            .heightIn(min = 33.dp)
+            .defaultMinSize(minHeight = 33.dp)
             .background(backgroundColor, LocalTheme.current.sideBarNavigationEntryShape)
             .background(AccentBrush, LocalTheme.current.sideBarNavigationEntryShape, selectedAlpha)
             .border(1.dp, LocalTheme.current.borderColor, LocalTheme.current.sideBarNavigationEntryShape)
@@ -57,7 +60,7 @@ fun Chip(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             icon?.let { Icon(it, color = textColor) }
-            if (label.isNotEmpty()) Text(label, fontSize = 14.sp, color = textColor)
+            Text(label, fontSize = 14.sp, color = textColor)
         }
     }
 }

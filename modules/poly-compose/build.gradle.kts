@@ -31,4 +31,20 @@ plugins {
 dependencies {
     compileOnly(libs.jetbrains.compose.runtime)
     compileOnly(libs.kotlinx.coroutines)
+    api(libs.jetbrains.compose.foundation)
+    api(libs.jetbrains.compose.material)
+    api(libs.jetbrains.compose.ui)
+    api(libs.jetbrains.compose.ui.util)
+    testImplementation(libs.jetbrains.compose.runtime)
+    testImplementation(libs.kotlinx.coroutines)
+}
+
+kotlin {
+    compilerOptions {
+        optIn.addAll(
+            "androidx.compose.ui.InternalComposeUiApi",
+            "androidx.compose.ui.ExperimentalComposeUiApi",
+            "androidx.compose.ui.text.ExperimentalTextApi",
+        )
+    }
 }

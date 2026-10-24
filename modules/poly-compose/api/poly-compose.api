@@ -1,25 +1,263 @@
-public final class org/polyfrost/compose/animation/AnimatedColor : androidx/compose/runtime/State {
+public final class androidx/compose/ui/graphics/PolyGraphicsLayer : androidx/compose/ui/graphics/platform/PlatformGraphicsLayer {
 	public static final field $stable I
-	public final fun getTarget ()Lorg/polyfrost/compose/render/PolyColor;
-	public synthetic fun getValue ()Ljava/lang/Object;
-	public fun getValue ()Lorg/polyfrost/compose/render/PolyColor;
+	public fun <init> ()V
+	public fun discardDisplayList ()V
+	public fun draw (Landroidx/compose/ui/graphics/Canvas;)V
+	public fun getAlpha ()F
+	public fun getAmbientShadowColor-0d7_KjU ()J
+	public fun getBlendMode-0nO6VwU ()I
+	public fun getCameraDistance ()F
+	public fun getColorFilter ()Landroidx/compose/ui/graphics/ColorFilter;
+	public fun getCompositingStrategy-ke2Ky5w ()I
+	public fun getPivotOffset-F1C5BW0 ()J
+	public fun getRenderEffect ()Landroidx/compose/ui/graphics/RenderEffect;
+	public fun getRotationX ()F
+	public fun getRotationY ()F
+	public fun getRotationZ ()F
+	public fun getScaleX ()F
+	public fun getScaleY ()F
+	public fun getShadowElevation ()F
+	public fun getSpotShadowColor-0d7_KjU ()J
+	public fun getTranslationX ()F
+	public fun getTranslationY ()F
+	public fun record (Landroidx/compose/ui/unit/Density;Landroidx/compose/ui/unit/LayoutDirection;Landroidx/compose/ui/graphics/layer/GraphicsLayer;Lkotlin/jvm/functions/Function1;)V
+	public fun setAlpha (F)V
+	public fun setAmbientShadowColor-8_81llA (J)V
+	public fun setBlendMode-s9anfk8 (I)V
+	public fun setBounds-VbeCjmY (JJ)V
+	public fun setCameraDistance (F)V
+	public fun setColorFilter (Landroidx/compose/ui/graphics/ColorFilter;)V
+	public fun setCompositingStrategy-Wpw9cng (I)V
+	public fun setOutline (Landroidx/compose/ui/graphics/Outline;Z)V
+	public fun setOutsets (IIII)V
+	public fun setPivotOffset-k-4lQ0M (J)V
+	public fun setRenderEffect (Landroidx/compose/ui/graphics/RenderEffect;)V
+	public fun setRotationX (F)V
+	public fun setRotationY (F)V
+	public fun setRotationZ (F)V
+	public fun setScaleX (F)V
+	public fun setScaleY (F)V
+	public fun setShadowElevation (F)V
+	public fun setSpotShadowColor-8_81llA (J)V
+	public fun setTranslationX (F)V
+	public fun setTranslationY (F)V
 }
 
-public final class org/polyfrost/compose/animation/AnimatedColorKt {
-	public static final fun animateColorAsState (Lorg/polyfrost/compose/render/PolyColor;Landroidx/compose/runtime/Composer;I)Lorg/polyfrost/compose/animation/AnimatedColor;
+public final class androidx/compose/ui/graphics/SkiaGraphicsContext : androidx/compose/ui/graphics/platform/PlatformGraphicsContext {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (ZZ)V
+	public synthetic fun <init> (ZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun createPlatformGraphicsLayer ()Landroidx/compose/ui/graphics/platform/PlatformGraphicsLayer;
+}
+
+public final class androidx/compose/ui/text/platform/DesktopFont_desktopKt {
+	public static final fun Font-RetOiIg (Ljava/io/File;Landroidx/compose/ui/text/font/FontWeight;I)Landroidx/compose/ui/text/font/Font;
+	public static final fun Font-RetOiIg (Ljava/lang/String;Landroidx/compose/ui/text/font/FontWeight;I)Landroidx/compose/ui/text/font/Font;
+	public static synthetic fun Font-RetOiIg$default (Ljava/io/File;Landroidx/compose/ui/text/font/FontWeight;IILjava/lang/Object;)Landroidx/compose/ui/text/font/Font;
+	public static synthetic fun Font-RetOiIg$default (Ljava/lang/String;Landroidx/compose/ui/text/font/FontWeight;IILjava/lang/Object;)Landroidx/compose/ui/text/font/Font;
+}
+
+public final class androidx/compose/ui/text/platform/FontLoader : androidx/compose/ui/text/font/Font$ResourceLoader, androidx/compose/ui/text/font/FontResourceLoaderWithResolver {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun getFontFamilyResolver ()Landroidx/compose/ui/text/font/FontFamily$Resolver;
+	public fun load (Landroidx/compose/ui/text/font/Font;)Ljava/lang/Object;
+}
+
+public final class androidx/compose/ui/text/platform/PlatformFont_skikoKt {
+	public static final fun Font-wCLgNak (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/text/font/FontWeight;I)Landroidx/compose/ui/text/font/Font;
+	public static final fun Font-wCLgNak (Ljava/lang/String;[BLandroidx/compose/ui/text/font/FontWeight;I)Landroidx/compose/ui/text/font/Font;
+	public static synthetic fun Font-wCLgNak$default (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/text/font/FontWeight;IILjava/lang/Object;)Landroidx/compose/ui/text/font/Font;
+	public static synthetic fun Font-wCLgNak$default (Ljava/lang/String;[BLandroidx/compose/ui/text/font/FontWeight;IILjava/lang/Object;)Landroidx/compose/ui/text/font/Font;
+}
+
+public final class org/polyfrost/compose/animation/AnimateColorKt {
+	public static final fun animateColor (Lorg/polyfrost/compose/animation/core/InfiniteTransition;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/animation/core/InfiniteRepeatableSpec;Ljava/lang/String;Landroidx/compose/runtime/Composer;II)Landroidx/compose/runtime/State;
+}
+
+public abstract interface class org/polyfrost/compose/animation/AnimatedContentScope : org/polyfrost/compose/animation/AnimatedVisibilityScope {
+}
+
+public final class org/polyfrost/compose/animation/AnimatedContentTransitionScope {
+	public static final field $stable I
+	public final fun getInitialState ()Ljava/lang/Object;
+	public final fun getTargetState ()Ljava/lang/Object;
+}
+
+public final class org/polyfrost/compose/animation/AnimatedVisibilityKt {
+	public static final fun AnimatedContent (Ljava/lang/Object;Lorg/polyfrost/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lorg/polyfrost/compose/ui/Alignment;Ljava/lang/String;Lkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;II)V
+	public static final fun AnimatedVisibility (Lorg/polyfrost/compose/foundation/layout/ColumnScope;ZLorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/animation/EnterTransition;Lorg/polyfrost/compose/animation/ExitTransition;Ljava/lang/String;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final fun AnimatedVisibility (Lorg/polyfrost/compose/foundation/layout/RowScope;ZLorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/animation/EnterTransition;Lorg/polyfrost/compose/animation/ExitTransition;Ljava/lang/String;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final fun AnimatedVisibility (ZLorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/animation/EnterTransition;Lorg/polyfrost/compose/animation/ExitTransition;Ljava/lang/String;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final fun Crossfade (Ljava/lang/Object;Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/animation/core/AnimationSpec;Ljava/lang/String;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final fun togetherWith (Lorg/polyfrost/compose/animation/EnterTransition;Lorg/polyfrost/compose/animation/ExitTransition;)Lorg/polyfrost/compose/animation/ContentTransform;
+}
+
+public abstract interface class org/polyfrost/compose/animation/AnimatedVisibilityScope {
+}
+
+public final class org/polyfrost/compose/animation/ContentTransform {
+	public static final field $stable I
+	public fun <init> (Lorg/polyfrost/compose/animation/EnterTransition;Lorg/polyfrost/compose/animation/ExitTransition;)V
+	public final fun getInitialContentExit ()Lorg/polyfrost/compose/animation/ExitTransition;
+	public final fun getTargetContentEnter ()Lorg/polyfrost/compose/animation/EnterTransition;
+}
+
+public final class org/polyfrost/compose/animation/EnterExitTransitionKt {
+	public static final fun expandHorizontally (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lorg/polyfrost/compose/ui/Alignment$Horizontal;ZLkotlin/jvm/functions/Function1;)Lorg/polyfrost/compose/animation/EnterTransition;
+	public static synthetic fun expandHorizontally$default (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lorg/polyfrost/compose/ui/Alignment$Horizontal;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/polyfrost/compose/animation/EnterTransition;
+	public static final fun expandIn (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lorg/polyfrost/compose/ui/Alignment;ZLkotlin/jvm/functions/Function1;)Lorg/polyfrost/compose/animation/EnterTransition;
+	public static synthetic fun expandIn$default (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lorg/polyfrost/compose/ui/Alignment;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/polyfrost/compose/animation/EnterTransition;
+	public static final fun expandVertically (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lorg/polyfrost/compose/ui/Alignment$Vertical;ZLkotlin/jvm/functions/Function1;)Lorg/polyfrost/compose/animation/EnterTransition;
+	public static synthetic fun expandVertically$default (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lorg/polyfrost/compose/ui/Alignment$Vertical;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/polyfrost/compose/animation/EnterTransition;
+	public static final fun fadeIn (Lorg/polyfrost/compose/animation/core/AnimationSpec;F)Lorg/polyfrost/compose/animation/EnterTransition;
+	public static synthetic fun fadeIn$default (Lorg/polyfrost/compose/animation/core/AnimationSpec;FILjava/lang/Object;)Lorg/polyfrost/compose/animation/EnterTransition;
+	public static final fun fadeOut (Lorg/polyfrost/compose/animation/core/AnimationSpec;F)Lorg/polyfrost/compose/animation/ExitTransition;
+	public static synthetic fun fadeOut$default (Lorg/polyfrost/compose/animation/core/AnimationSpec;FILjava/lang/Object;)Lorg/polyfrost/compose/animation/ExitTransition;
+	public static final fun scaleIn (Lorg/polyfrost/compose/animation/core/AnimationSpec;F)Lorg/polyfrost/compose/animation/EnterTransition;
+	public static synthetic fun scaleIn$default (Lorg/polyfrost/compose/animation/core/AnimationSpec;FILjava/lang/Object;)Lorg/polyfrost/compose/animation/EnterTransition;
+	public static final fun scaleOut (Lorg/polyfrost/compose/animation/core/AnimationSpec;F)Lorg/polyfrost/compose/animation/ExitTransition;
+	public static synthetic fun scaleOut$default (Lorg/polyfrost/compose/animation/core/AnimationSpec;FILjava/lang/Object;)Lorg/polyfrost/compose/animation/ExitTransition;
+	public static final fun shrinkHorizontally (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lorg/polyfrost/compose/ui/Alignment$Horizontal;ZLkotlin/jvm/functions/Function1;)Lorg/polyfrost/compose/animation/ExitTransition;
+	public static synthetic fun shrinkHorizontally$default (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lorg/polyfrost/compose/ui/Alignment$Horizontal;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/polyfrost/compose/animation/ExitTransition;
+	public static final fun shrinkOut (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lorg/polyfrost/compose/ui/Alignment;ZLkotlin/jvm/functions/Function1;)Lorg/polyfrost/compose/animation/ExitTransition;
+	public static synthetic fun shrinkOut$default (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lorg/polyfrost/compose/ui/Alignment;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/polyfrost/compose/animation/ExitTransition;
+	public static final fun shrinkVertically (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lorg/polyfrost/compose/ui/Alignment$Vertical;ZLkotlin/jvm/functions/Function1;)Lorg/polyfrost/compose/animation/ExitTransition;
+	public static synthetic fun shrinkVertically$default (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lorg/polyfrost/compose/ui/Alignment$Vertical;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/polyfrost/compose/animation/ExitTransition;
+	public static final fun slideIn (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/compose/animation/EnterTransition;
+	public static synthetic fun slideIn$default (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/polyfrost/compose/animation/EnterTransition;
+	public static final fun slideInHorizontally (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/compose/animation/EnterTransition;
+	public static synthetic fun slideInHorizontally$default (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/polyfrost/compose/animation/EnterTransition;
+	public static final fun slideInVertically (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/compose/animation/EnterTransition;
+	public static synthetic fun slideInVertically$default (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/polyfrost/compose/animation/EnterTransition;
+	public static final fun slideOut (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/compose/animation/ExitTransition;
+	public static synthetic fun slideOut$default (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/polyfrost/compose/animation/ExitTransition;
+	public static final fun slideOutHorizontally (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/compose/animation/ExitTransition;
+	public static synthetic fun slideOutHorizontally$default (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/polyfrost/compose/animation/ExitTransition;
+	public static final fun slideOutVertically (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/compose/animation/ExitTransition;
+	public static synthetic fun slideOutVertically$default (Lorg/polyfrost/compose/animation/core/AnimationSpec;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/polyfrost/compose/animation/ExitTransition;
+}
+
+public final class org/polyfrost/compose/animation/EnterTransition {
+	public static final field $stable I
+	public static final field Companion Lorg/polyfrost/compose/animation/EnterTransition$Companion;
+	public final fun plus (Lorg/polyfrost/compose/animation/EnterTransition;)Lorg/polyfrost/compose/animation/EnterTransition;
+}
+
+public final class org/polyfrost/compose/animation/EnterTransition$Companion {
+	public final fun getNone ()Lorg/polyfrost/compose/animation/EnterTransition;
+}
+
+public final class org/polyfrost/compose/animation/ExitTransition {
+	public static final field $stable I
+	public static final field Companion Lorg/polyfrost/compose/animation/ExitTransition$Companion;
+	public final fun plus (Lorg/polyfrost/compose/animation/ExitTransition;)Lorg/polyfrost/compose/animation/ExitTransition;
+}
+
+public final class org/polyfrost/compose/animation/ExitTransition$Companion {
+	public final fun getNone ()Lorg/polyfrost/compose/animation/ExitTransition;
+}
+
+public final class org/polyfrost/compose/animation/core/Animatable {
+	public static final field $stable I
+	public fun <init> (F)V
+	public final fun animateTo (FLorg/polyfrost/compose/animation/core/AnimationSpec;FLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun animateTo$default (Lorg/polyfrost/compose/animation/core/Animatable;FLorg/polyfrost/compose/animation/core/AnimationSpec;FLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun asState ()Landroidx/compose/runtime/State;
+	public final fun getTargetValue ()F
+	public final fun getValue ()F
+	public final fun getVelocity ()F
+	public final fun isRunning ()Z
+	public final fun snapTo (FLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun stop (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class org/polyfrost/compose/animation/core/AnimateKt {
+	public static final field DefaultDurationMillis I
 	public static final fun animateDpAsState-6mnL1SY (FLorg/polyfrost/compose/animation/core/AnimationSpec;FLandroidx/compose/runtime/Composer;II)Landroidx/compose/runtime/State;
 	public static final fun animateFloatAsState (FLorg/polyfrost/compose/animation/core/AnimationSpec;FLandroidx/compose/runtime/Composer;II)Landroidx/compose/runtime/State;
+	public static final fun infiniteRepeatable (Lorg/polyfrost/compose/animation/core/DurationBasedAnimationSpec;Lorg/polyfrost/compose/animation/core/RepeatMode;)Lorg/polyfrost/compose/animation/core/InfiniteRepeatableSpec;
+	public static synthetic fun infiniteRepeatable$default (Lorg/polyfrost/compose/animation/core/DurationBasedAnimationSpec;Lorg/polyfrost/compose/animation/core/RepeatMode;ILjava/lang/Object;)Lorg/polyfrost/compose/animation/core/InfiniteRepeatableSpec;
 	public static final fun spring (FF)Lorg/polyfrost/compose/animation/core/SpringSpec;
 	public static synthetic fun spring$default (FFILjava/lang/Object;)Lorg/polyfrost/compose/animation/core/SpringSpec;
 	public static final fun springStep (FFFF)[F
-	public static final fun tween (I)Lorg/polyfrost/compose/animation/core/TweenSpec;
-	public static synthetic fun tween$default (IILjava/lang/Object;)Lorg/polyfrost/compose/animation/core/TweenSpec;
+	public static final fun tween (IILorg/polyfrost/compose/animation/core/Easing;)Lorg/polyfrost/compose/animation/core/TweenSpec;
+	public static synthetic fun tween$default (IILorg/polyfrost/compose/animation/core/Easing;ILjava/lang/Object;)Lorg/polyfrost/compose/animation/core/TweenSpec;
 }
 
 public abstract interface class org/polyfrost/compose/animation/core/AnimationSpec {
+}
+
+public final class org/polyfrost/compose/animation/core/CubicBezierEasing : org/polyfrost/compose/animation/core/Easing {
+	public static final field $stable I
+	public fun <init> (FFFF)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun transform (F)F
+}
+
+public abstract interface class org/polyfrost/compose/animation/core/DurationBasedAnimationSpec : org/polyfrost/compose/animation/core/AnimationSpec {
+}
+
+public abstract interface class org/polyfrost/compose/animation/core/Easing {
+	public abstract fun transform (F)F
+}
+
+public final class org/polyfrost/compose/animation/core/EasingKt {
+	public static final fun getEase ()Lorg/polyfrost/compose/animation/core/CubicBezierEasing;
+	public static final fun getEaseIn ()Lorg/polyfrost/compose/animation/core/CubicBezierEasing;
+	public static final fun getEaseInBack ()Lorg/polyfrost/compose/animation/core/CubicBezierEasing;
+	public static final fun getEaseInCubic ()Lorg/polyfrost/compose/animation/core/CubicBezierEasing;
+	public static final fun getEaseInExpo ()Lorg/polyfrost/compose/animation/core/CubicBezierEasing;
+	public static final fun getEaseInOut ()Lorg/polyfrost/compose/animation/core/CubicBezierEasing;
+	public static final fun getEaseInOutBack ()Lorg/polyfrost/compose/animation/core/CubicBezierEasing;
+	public static final fun getEaseInOutCubic ()Lorg/polyfrost/compose/animation/core/CubicBezierEasing;
+	public static final fun getEaseInOutExpo ()Lorg/polyfrost/compose/animation/core/CubicBezierEasing;
+	public static final fun getEaseInOutQuad ()Lorg/polyfrost/compose/animation/core/CubicBezierEasing;
+	public static final fun getEaseInQuad ()Lorg/polyfrost/compose/animation/core/CubicBezierEasing;
+	public static final fun getEaseOut ()Lorg/polyfrost/compose/animation/core/CubicBezierEasing;
+	public static final fun getEaseOutBack ()Lorg/polyfrost/compose/animation/core/CubicBezierEasing;
+	public static final fun getEaseOutCubic ()Lorg/polyfrost/compose/animation/core/CubicBezierEasing;
+	public static final fun getEaseOutExpo ()Lorg/polyfrost/compose/animation/core/CubicBezierEasing;
+	public static final fun getEaseOutQuad ()Lorg/polyfrost/compose/animation/core/CubicBezierEasing;
+	public static final fun getFastOutLinearInEasing ()Lorg/polyfrost/compose/animation/core/CubicBezierEasing;
+	public static final fun getFastOutSlowInEasing ()Lorg/polyfrost/compose/animation/core/CubicBezierEasing;
+	public static final fun getLinearEasing ()Lorg/polyfrost/compose/animation/core/Easing;
+	public static final fun getLinearOutSlowInEasing ()Lorg/polyfrost/compose/animation/core/CubicBezierEasing;
+}
+
+public final class org/polyfrost/compose/animation/core/InfiniteRepeatableSpec : org/polyfrost/compose/animation/core/AnimationSpec {
+	public static final field $stable I
+	public fun <init> (Lorg/polyfrost/compose/animation/core/DurationBasedAnimationSpec;Lorg/polyfrost/compose/animation/core/RepeatMode;)V
+	public synthetic fun <init> (Lorg/polyfrost/compose/animation/core/DurationBasedAnimationSpec;Lorg/polyfrost/compose/animation/core/RepeatMode;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lorg/polyfrost/compose/animation/core/DurationBasedAnimationSpec;
+	public final fun component2 ()Lorg/polyfrost/compose/animation/core/RepeatMode;
+	public final fun copy (Lorg/polyfrost/compose/animation/core/DurationBasedAnimationSpec;Lorg/polyfrost/compose/animation/core/RepeatMode;)Lorg/polyfrost/compose/animation/core/InfiniteRepeatableSpec;
+	public static synthetic fun copy$default (Lorg/polyfrost/compose/animation/core/InfiniteRepeatableSpec;Lorg/polyfrost/compose/animation/core/DurationBasedAnimationSpec;Lorg/polyfrost/compose/animation/core/RepeatMode;ILjava/lang/Object;)Lorg/polyfrost/compose/animation/core/InfiniteRepeatableSpec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAnimation ()Lorg/polyfrost/compose/animation/core/DurationBasedAnimationSpec;
+	public final fun getRepeatMode ()Lorg/polyfrost/compose/animation/core/RepeatMode;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/compose/animation/core/InfiniteTransition {
+	public static final field $stable I
+	public final fun getLabel ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/compose/animation/core/InfiniteTransitionKt {
+	public static final fun animateFloat (Lorg/polyfrost/compose/animation/core/InfiniteTransition;FFLorg/polyfrost/compose/animation/core/InfiniteRepeatableSpec;Ljava/lang/String;Landroidx/compose/runtime/Composer;II)Landroidx/compose/runtime/State;
+	public static final fun rememberInfiniteTransition (Ljava/lang/String;Landroidx/compose/runtime/Composer;II)Lorg/polyfrost/compose/animation/core/InfiniteTransition;
+}
+
+public final class org/polyfrost/compose/animation/core/RepeatMode : java/lang/Enum {
+	public static final field Restart Lorg/polyfrost/compose/animation/core/RepeatMode;
+	public static final field Reverse Lorg/polyfrost/compose/animation/core/RepeatMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/compose/animation/core/RepeatMode;
+	public static fun values ()[Lorg/polyfrost/compose/animation/core/RepeatMode;
 }
 
 public final class org/polyfrost/compose/animation/core/Spring {
@@ -48,31 +286,292 @@ public final class org/polyfrost/compose/animation/core/SpringSpec : org/polyfro
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class org/polyfrost/compose/animation/core/TweenSpec : org/polyfrost/compose/animation/core/AnimationSpec {
+public final class org/polyfrost/compose/animation/core/TweenSpec : org/polyfrost/compose/animation/core/DurationBasedAnimationSpec {
 	public static final field $stable I
 	public fun <init> ()V
-	public fun <init> (I)V
-	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (IILorg/polyfrost/compose/animation/core/Easing;)V
+	public synthetic fun <init> (IILorg/polyfrost/compose/animation/core/Easing;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()I
-	public final fun copy (I)Lorg/polyfrost/compose/animation/core/TweenSpec;
-	public static synthetic fun copy$default (Lorg/polyfrost/compose/animation/core/TweenSpec;IILjava/lang/Object;)Lorg/polyfrost/compose/animation/core/TweenSpec;
+	public final fun component2 ()I
+	public final fun component3 ()Lorg/polyfrost/compose/animation/core/Easing;
+	public final fun copy (IILorg/polyfrost/compose/animation/core/Easing;)Lorg/polyfrost/compose/animation/core/TweenSpec;
+	public static synthetic fun copy$default (Lorg/polyfrost/compose/animation/core/TweenSpec;IILorg/polyfrost/compose/animation/core/Easing;ILjava/lang/Object;)Lorg/polyfrost/compose/animation/core/TweenSpec;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDelay ()I
 	public final fun getDurationMillis ()I
+	public final fun getEasing ()Lorg/polyfrost/compose/animation/core/Easing;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class org/polyfrost/compose/backend/PolyCanvas : org/polyfrost/compose/backend/PolyDrawCanvas {
+	public static final field $stable I
+	public fun <init> (Lorg/polyfrost/compose/render/PolyRenderer;)V
+	public fun clipPath-mtrdD-E (Landroidx/compose/ui/graphics/Path;I)V
+	public fun clipRect-N_I0leg (FFFFI)V
+	public fun clipRect-mtrdD-E (Landroidx/compose/ui/geometry/Rect;I)V
+	public fun concat-58bKbWc ([F)V
+	public fun disableZ ()V
+	public fun drawArc (FFFFFFZLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawArc (Landroidx/compose/ui/geometry/Rect;FFZLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawArcRad (Landroidx/compose/ui/geometry/Rect;FFZLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawCircle-9KIMszo (JFLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawImage-d-4ec7I (Landroidx/compose/ui/graphics/ImageBitmap;JLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawImageRect-HPBpro0 (Landroidx/compose/ui/graphics/ImageBitmap;JJJJLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawLine-Wko1d7g (JJLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawOval (FFFFLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawOval (Landroidx/compose/ui/geometry/Rect;Landroidx/compose/ui/graphics/Paint;)V
+	public fun drawPath (Landroidx/compose/ui/graphics/Path;Landroidx/compose/ui/graphics/Paint;)V
+	public fun drawPoints-O7TthRY (ILjava/util/List;Landroidx/compose/ui/graphics/Paint;)V
+	public fun drawRawPoints-O7TthRY (I[FLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawRect (FFFFLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawRect (Landroidx/compose/ui/geometry/Rect;Landroidx/compose/ui/graphics/Paint;)V
+	public fun drawRoundRect (FFFFFFLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawVertices-TPEHhCM (Landroidx/compose/ui/graphics/Vertices;ILandroidx/compose/ui/graphics/Paint;)V
+	public fun enableZ ()V
+	public final fun getContext ()Lorg/polyfrost/compose/render/RenderContext;
+	public final fun getRenderer ()Lorg/polyfrost/compose/render/PolyRenderer;
+	public fun polyOp (Lkotlin/jvm/functions/Function1;)V
+	public fun restore ()V
+	public fun rotate (F)V
+	public fun save ()V
+	public fun saveLayer (Landroidx/compose/ui/geometry/Rect;Landroidx/compose/ui/graphics/Paint;)V
+	public fun scale (FF)V
+	public fun skew (FF)V
+	public fun skewRad (FF)V
+	public fun translate (FF)V
+}
+
+public final class org/polyfrost/compose/backend/PolyCanvasKt {
+	public static final fun drawPoly (Landroidx/compose/ui/graphics/drawscope/DrawScope;Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class org/polyfrost/compose/backend/PolyCompose {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/compose/backend/PolyCompose;
+	public static final fun install ()V
+}
+
+public final class org/polyfrost/compose/backend/PolyComposePath : androidx/compose/ui/graphics/Path {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun addArc (Landroidx/compose/ui/geometry/Rect;FF)V
+	public fun addArcRad (Landroidx/compose/ui/geometry/Rect;FF)V
+	public fun addOval (Landroidx/compose/ui/geometry/Rect;)V
+	public fun addOval (Landroidx/compose/ui/geometry/Rect;Landroidx/compose/ui/graphics/Path$Direction;)V
+	public fun addPath-Uv8p0NA (Landroidx/compose/ui/graphics/Path;J)V
+	public fun addRect (Landroidx/compose/ui/geometry/Rect;)V
+	public fun addRect (Landroidx/compose/ui/geometry/Rect;Landroidx/compose/ui/graphics/Path$Direction;)V
+	public fun addRoundRect (Landroidx/compose/ui/geometry/RoundRect;)V
+	public fun addRoundRect (Landroidx/compose/ui/geometry/RoundRect;Landroidx/compose/ui/graphics/Path$Direction;)V
+	public fun and (Landroidx/compose/ui/graphics/Path;)Landroidx/compose/ui/graphics/Path;
+	public fun arcTo (Landroidx/compose/ui/geometry/Rect;FFZ)V
+	public fun arcToRad (Landroidx/compose/ui/geometry/Rect;FFZ)V
+	public fun close ()V
+	public fun cubicTo (FFFFFF)V
+	public fun getBounds ()Landroidx/compose/ui/geometry/Rect;
+	public fun getFillType-Rg-k1Os ()I
+	public fun isConvex ()Z
+	public fun isEmpty ()Z
+	public fun iterator ()Landroidx/compose/ui/graphics/PathIterator;
+	public fun iterator (Landroidx/compose/ui/graphics/PathIterator$ConicEvaluation;F)Landroidx/compose/ui/graphics/PathIterator;
+	public fun lineTo (FF)V
+	public fun minus (Landroidx/compose/ui/graphics/Path;)Landroidx/compose/ui/graphics/Path;
+	public fun moveTo (FF)V
+	public fun op-N5in7k0 (Landroidx/compose/ui/graphics/Path;Landroidx/compose/ui/graphics/Path;I)Z
+	public fun or (Landroidx/compose/ui/graphics/Path;)Landroidx/compose/ui/graphics/Path;
+	public fun plus (Landroidx/compose/ui/graphics/Path;)Landroidx/compose/ui/graphics/Path;
+	public fun quadraticBezierTo (FFFF)V
+	public fun quadraticTo (FFFF)V
+	public fun relativeCubicTo (FFFFFF)V
+	public fun relativeLineTo (FF)V
+	public fun relativeMoveTo (FF)V
+	public fun relativeQuadraticBezierTo (FFFF)V
+	public fun relativeQuadraticTo (FFFF)V
+	public fun reset ()V
+	public fun rewind ()V
+	public fun setFillType-oQ8Xj4U (I)V
+	public fun transform-58bKbWc ([F)V
+	public fun translate-k-4lQ0M (J)V
+	public fun xor (Landroidx/compose/ui/graphics/Path;)Landroidx/compose/ui/graphics/Path;
+}
+
+public abstract interface class org/polyfrost/compose/backend/PolyDrawCanvas : androidx/compose/ui/graphics/Canvas {
+	public abstract fun polyOp (Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class org/polyfrost/compose/backend/PolyDrawCanvas$DefaultImpls {
+	public static fun clipRect-mtrdD-E (Lorg/polyfrost/compose/backend/PolyDrawCanvas;Landroidx/compose/ui/geometry/Rect;I)V
+	public static fun drawArc (Lorg/polyfrost/compose/backend/PolyDrawCanvas;Landroidx/compose/ui/geometry/Rect;FFZLandroidx/compose/ui/graphics/Paint;)V
+	public static fun drawArcRad (Lorg/polyfrost/compose/backend/PolyDrawCanvas;Landroidx/compose/ui/geometry/Rect;FFZLandroidx/compose/ui/graphics/Paint;)V
+	public static fun drawOval (Lorg/polyfrost/compose/backend/PolyDrawCanvas;Landroidx/compose/ui/geometry/Rect;Landroidx/compose/ui/graphics/Paint;)V
+	public static fun drawRect (Lorg/polyfrost/compose/backend/PolyDrawCanvas;Landroidx/compose/ui/geometry/Rect;Landroidx/compose/ui/graphics/Paint;)V
+	public static fun skewRad (Lorg/polyfrost/compose/backend/PolyDrawCanvas;FF)V
+}
+
+public final class org/polyfrost/compose/backend/PolyFontSource : androidx/compose/ui/text/font/Font {
+	public static final field $stable I
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/text/font/FontWeight;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKey ()Ljava/lang/String;
+	public fun getLoadingStrategy-PKNRLFQ ()I
+	public fun getStyle-_-LCdwA ()I
+	public fun getVariationSettings ()Landroidx/compose/ui/text/font/FontVariation$Settings;
+	public fun getWeight ()Landroidx/compose/ui/text/font/FontWeight;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/compose/backend/PolyGraphics : androidx/compose/ui/graphics/platform/PlatformGraphics {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/compose/backend/PolyGraphics;
+	public fun colorMatrixFromFilter-8unuwjk (Landroidx/compose/ui/graphics/platform/PlatformColorFilter;)[F
+	public fun createBlurFilter (F)Landroidx/compose/ui/graphics/platform/PlatformBlurFilter;
+	public fun createBlurRenderEffect-8A-3gB4 (Landroidx/compose/ui/graphics/RenderEffect;FFI)Landroidx/compose/ui/graphics/platform/PlatformRenderEffect;
+	public fun createCanvas (Landroidx/compose/ui/graphics/ImageBitmap;)Landroidx/compose/ui/graphics/Canvas;
+	public fun createChainPathEffect (Landroidx/compose/ui/graphics/PathEffect;Landroidx/compose/ui/graphics/PathEffect;)Landroidx/compose/ui/graphics/PathEffect;
+	public fun createColorMatrixColorFilter-jHG-Opc ([F)Landroidx/compose/ui/graphics/platform/PlatformColorFilter;
+	public fun createCompositeShader-7EN7VTw (Landroidx/compose/ui/graphics/Shader;Landroidx/compose/ui/graphics/Shader;I)Landroidx/compose/ui/graphics/Shader;
+	public fun createCornerPathEffect (F)Landroidx/compose/ui/graphics/PathEffect;
+	public fun createDashPathEffect ([FF)Landroidx/compose/ui/graphics/PathEffect;
+	public fun createImageBitmap-x__-hDU (IIIZLandroidx/compose/ui/graphics/colorspace/ColorSpace;)Landroidx/compose/ui/graphics/ImageBitmap;
+	public fun createImageShader-F49vj9s (Landroidx/compose/ui/graphics/ImageBitmap;II)Landroidx/compose/ui/graphics/Shader;
+	public fun createLightingColorFilter--OWjLjI (JJ)Landroidx/compose/ui/graphics/platform/PlatformColorFilter;
+	public fun createLinearGradientShader-VjE6UOU (JJLjava/util/List;Ljava/util/List;I)Landroidx/compose/ui/graphics/Shader;
+	public fun createOffsetRenderEffect-Uv8p0NA (Landroidx/compose/ui/graphics/RenderEffect;J)Landroidx/compose/ui/graphics/platform/PlatformRenderEffect;
+	public fun createPaint ()Landroidx/compose/ui/graphics/Paint;
+	public fun createPath ()Landroidx/compose/ui/graphics/Path;
+	public fun createPathIterator (Landroidx/compose/ui/graphics/Path;Landroidx/compose/ui/graphics/PathIterator$ConicEvaluation;F)Landroidx/compose/ui/graphics/PathIterator;
+	public fun createPathMeasure ()Landroidx/compose/ui/graphics/PathMeasure;
+	public fun createRadialGradientShader-8uybcMk (JFLjava/util/List;Ljava/util/List;I)Landroidx/compose/ui/graphics/Shader;
+	public fun createStampedPathEffect-7aD1DOk (Landroidx/compose/ui/graphics/Path;FFI)Landroidx/compose/ui/graphics/PathEffect;
+	public fun createSweepGradientShader-9KIMszo (JLjava/util/List;Ljava/util/List;)Landroidx/compose/ui/graphics/Shader;
+	public fun createTintColorFilter-xETnrds (JI)Landroidx/compose/ui/graphics/platform/PlatformColorFilter;
+	public fun decodeImageBitmap ([B)Landroidx/compose/ui/graphics/ImageBitmap;
+	public fun isBlendModeSupported-s9anfk8 (I)Z
+	public fun isTileModeSupported-0vamqd0 (I)Z
+	public fun setBlurFilter (Landroidx/compose/ui/graphics/Paint;Landroidx/compose/ui/graphics/platform/PlatformBlurFilter;)V
+	public fun transformShader-EL8BTi8 (Landroidx/compose/ui/graphics/Shader;[F)Landroidx/compose/ui/graphics/Shader;
+}
+
+public final class org/polyfrost/compose/backend/PolyGraphicsKt {
+	public static final fun asComposeImageBitmap (Lorg/polyfrost/compose/ui/graphics/ImageBitmap;)Landroidx/compose/ui/graphics/ImageBitmap;
+}
+
+public final class org/polyfrost/compose/backend/PolyImageBitmap : androidx/compose/ui/graphics/ImageBitmap {
+	public static final field $stable I
+	public fun <init> (Lorg/polyfrost/compose/ui/graphics/ImageBitmap;)V
+	public final fun getBitmap ()Lorg/polyfrost/compose/ui/graphics/ImageBitmap;
+	public fun getColorSpace ()Landroidx/compose/ui/graphics/colorspace/ColorSpace;
+	public fun getConfig-_sVssgQ ()I
+	public fun getHasAlpha ()Z
+	public fun getHeight ()I
+	public fun getWidth ()I
+	public fun prepareToDraw ()V
+	public fun readPixels ([IIIIIII)V
+}
+
+public final class org/polyfrost/compose/backend/PolyPaint : androidx/compose/ui/graphics/Paint {
+	public static final field $stable I
+	public static final field Companion Lorg/polyfrost/compose/backend/PolyPaint$Companion;
+	public fun <init> ()V
+	public final fun argb ()I
+	public fun asFrameworkPaint ()Lorg/jetbrains/skia/Paint;
+	public final fun copy ()Lorg/polyfrost/compose/backend/PolyPaint;
+	public fun getAlpha ()F
+	public fun getBlendMode-0nO6VwU ()I
+	public final fun getBlur ()F
+	public fun getColor-0d7_KjU ()J
+	public fun getColorFilter ()Landroidx/compose/ui/graphics/ColorFilter;
+	public fun getFilterQuality-f-v9h1I ()I
+	public fun getPathEffect ()Landroidx/compose/ui/graphics/PathEffect;
+	public fun getShader ()Landroidx/compose/ui/graphics/Shader;
+	public fun getStrokeCap-KaPHkGw ()I
+	public fun getStrokeJoin-LxFBmk8 ()I
+	public fun getStrokeMiterLimit ()F
+	public fun getStrokeWidth ()F
+	public fun getStyle-TiuSbCo ()I
+	public fun isAntiAlias ()Z
+	public fun setAlpha (F)V
+	public fun setAntiAlias (Z)V
+	public fun setBlendMode-s9anfk8 (I)V
+	public final fun setBlur (F)V
+	public fun setColor-8_81llA (J)V
+	public fun setColorFilter (Landroidx/compose/ui/graphics/ColorFilter;)V
+	public fun setFilterQuality-vDHp3xo (I)V
+	public fun setPathEffect (Landroidx/compose/ui/graphics/PathEffect;)V
+	public fun setShader (Landroidx/compose/ui/graphics/Shader;)V
+	public fun setStrokeCap-BeK7IIE (I)V
+	public fun setStrokeJoin-Ww9F2mQ (I)V
+	public fun setStrokeMiterLimit (F)V
+	public fun setStrokeWidth (F)V
+	public fun setStyle-k9PVt8s (I)V
+}
+
+public final class org/polyfrost/compose/backend/PolyPaint$Companion {
+}
+
+public final class org/polyfrost/compose/backend/PolyText : androidx/compose/ui/text/platform/PlatformText {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/compose/backend/PolyText;
+	public fun createFontFamilyResolver ()Landroidx/compose/ui/text/font/FontFamily$Resolver;
+	public fun createFontFamilyResolver (Lkotlin/coroutines/CoroutineContext;)Landroidx/compose/ui/text/font/FontFamily$Resolver;
+	public fun createParagraph-4FmOz70 (Landroidx/compose/ui/text/ParagraphIntrinsics;IIJ)Landroidx/compose/ui/text/PlatformParagraph;
+	public fun createParagraph-XGqx6AY (Ljava/lang/String;Landroidx/compose/ui/text/TextStyle;Ljava/util/List;Ljava/util/List;IIJLandroidx/compose/ui/unit/Density;Landroidx/compose/ui/text/font/FontFamily$Resolver;)Landroidx/compose/ui/text/PlatformParagraph;
+	public fun createParagraphIntrinsics (Ljava/lang/String;Landroidx/compose/ui/text/TextStyle;Ljava/util/List;Ljava/util/List;Landroidx/compose/ui/unit/Density;Landroidx/compose/ui/text/font/FontFamily$Resolver;)Landroidx/compose/ui/text/ParagraphIntrinsics;
+	public fun findFollowingBreak (Ljava/lang/String;I)I
+	public fun findPrecedingBreak (Ljava/lang/String;I)I
+	public fun getDefaultFontRasterizationSettings ()Landroidx/compose/ui/text/FontRasterizationSettings;
+	public final fun getTypefaces ()Landroidx/compose/ui/text/font/PlatformTypefacesLoader;
+}
+
+public final class org/polyfrost/compose/backend/RecordingCanvas : org/polyfrost/compose/backend/PolyDrawCanvas {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun clipPath-mtrdD-E (Landroidx/compose/ui/graphics/Path;I)V
+	public fun clipRect-N_I0leg (FFFFI)V
+	public fun clipRect-mtrdD-E (Landroidx/compose/ui/geometry/Rect;I)V
+	public fun concat-58bKbWc ([F)V
+	public fun disableZ ()V
+	public fun drawArc (FFFFFFZLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawArc (Landroidx/compose/ui/geometry/Rect;FFZLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawArcRad (Landroidx/compose/ui/geometry/Rect;FFZLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawCircle-9KIMszo (JFLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawImage-d-4ec7I (Landroidx/compose/ui/graphics/ImageBitmap;JLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawImageRect-HPBpro0 (Landroidx/compose/ui/graphics/ImageBitmap;JJJJLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawLine-Wko1d7g (JJLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawOval (FFFFLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawOval (Landroidx/compose/ui/geometry/Rect;Landroidx/compose/ui/graphics/Paint;)V
+	public fun drawPath (Landroidx/compose/ui/graphics/Path;Landroidx/compose/ui/graphics/Paint;)V
+	public fun drawPoints-O7TthRY (ILjava/util/List;Landroidx/compose/ui/graphics/Paint;)V
+	public fun drawRawPoints-O7TthRY (I[FLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawRect (FFFFLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawRect (Landroidx/compose/ui/geometry/Rect;Landroidx/compose/ui/graphics/Paint;)V
+	public fun drawRoundRect (FFFFFFLandroidx/compose/ui/graphics/Paint;)V
+	public fun drawVertices-TPEHhCM (Landroidx/compose/ui/graphics/Vertices;ILandroidx/compose/ui/graphics/Paint;)V
+	public fun enableZ ()V
+	public final fun getDynamic ()Z
+	public final fun getOps ()Ljava/util/ArrayList;
+	public fun polyOp (Lkotlin/jvm/functions/Function1;)V
+	public final fun replay (Lorg/polyfrost/compose/backend/PolyCanvas;)V
+	public fun restore ()V
+	public fun rotate (F)V
+	public fun save ()V
+	public fun saveLayer (Landroidx/compose/ui/geometry/Rect;Landroidx/compose/ui/graphics/Paint;)V
+	public fun scale (FF)V
+	public final fun setDynamic (Z)V
+	public fun skew (FF)V
+	public fun skewRad (FF)V
+	public fun translate (FF)V
+}
+
 public final class org/polyfrost/compose/foundation/BackgroundKt {
-	public static final fun background (Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/animation/AnimatedColor;Lorg/polyfrost/compose/ui/graphics/Shape;)Lorg/polyfrost/compose/ui/Modifier;
 	public static final fun background (Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/ui/graphics/Shape;)Lorg/polyfrost/compose/ui/Modifier;
 	public static final fun background (Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/ui/graphics/Brush;Lorg/polyfrost/compose/ui/graphics/Shape;)Lorg/polyfrost/compose/ui/Modifier;
-	public static synthetic fun background$default (Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/animation/AnimatedColor;Lorg/polyfrost/compose/ui/graphics/Shape;ILjava/lang/Object;)Lorg/polyfrost/compose/ui/Modifier;
 	public static synthetic fun background$default (Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/ui/graphics/Shape;ILjava/lang/Object;)Lorg/polyfrost/compose/ui/Modifier;
 	public static synthetic fun background$default (Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/ui/graphics/Brush;Lorg/polyfrost/compose/ui/graphics/Shape;ILjava/lang/Object;)Lorg/polyfrost/compose/ui/Modifier;
-	public static final fun border-wdELDnY (Lorg/polyfrost/compose/ui/Modifier;FLorg/polyfrost/compose/animation/AnimatedColor;Lorg/polyfrost/compose/ui/graphics/Shape;)Lorg/polyfrost/compose/ui/Modifier;
 	public static final fun border-wdELDnY (Lorg/polyfrost/compose/ui/Modifier;FLorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/ui/graphics/Shape;)Lorg/polyfrost/compose/ui/Modifier;
 	public static final fun border-wdELDnY (Lorg/polyfrost/compose/ui/Modifier;FLorg/polyfrost/compose/ui/graphics/Brush;Lorg/polyfrost/compose/ui/graphics/Shape;)Lorg/polyfrost/compose/ui/Modifier;
-	public static synthetic fun border-wdELDnY$default (Lorg/polyfrost/compose/ui/Modifier;FLorg/polyfrost/compose/animation/AnimatedColor;Lorg/polyfrost/compose/ui/graphics/Shape;ILjava/lang/Object;)Lorg/polyfrost/compose/ui/Modifier;
 	public static synthetic fun border-wdELDnY$default (Lorg/polyfrost/compose/ui/Modifier;FLorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/ui/graphics/Shape;ILjava/lang/Object;)Lorg/polyfrost/compose/ui/Modifier;
 	public static synthetic fun border-wdELDnY$default (Lorg/polyfrost/compose/ui/Modifier;FLorg/polyfrost/compose/ui/graphics/Brush;Lorg/polyfrost/compose/ui/graphics/Shape;ILjava/lang/Object;)Lorg/polyfrost/compose/ui/Modifier;
 }
@@ -92,51 +591,12 @@ public final class org/polyfrost/compose/foundation/ClickableKt {
 }
 
 public final class org/polyfrost/compose/foundation/ImageKt {
+	public static final fun Canvas (Lorg/polyfrost/compose/ui/Modifier;ZLkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Canvas (Lorg/polyfrost/compose/ui/Modifier;ZLkotlin/jvm/functions/Function5;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Image (Lorg/polyfrost/compose/ui/graphics/ImageBitmap;Ljava/lang/String;Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/ui/graphics/ColorFilter;Lorg/polyfrost/compose/ui/graphics/FilterQuality;Landroidx/compose/runtime/Composer;II)V
 }
 
 public abstract interface class org/polyfrost/compose/foundation/Indication {
-}
-
-public final class org/polyfrost/compose/foundation/ScrollKt {
-	public static final fun horizontalScroll (Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/foundation/ScrollState;)Lorg/polyfrost/compose/ui/Modifier;
-	public static final fun rememberScrollState (FLandroidx/compose/runtime/Composer;II)Lorg/polyfrost/compose/foundation/ScrollState;
-	public static final fun verticalScroll (Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/foundation/ScrollState;)Lorg/polyfrost/compose/ui/Modifier;
-}
-
-public final class org/polyfrost/compose/foundation/ScrollState {
-	public static final field $stable I
-	public static final field Companion Lorg/polyfrost/compose/foundation/ScrollState$Companion;
-	public fun <init> ()V
-	public fun <init> (F)V
-	public synthetic fun <init> (FILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun animateBy (F)V
-	public final fun getAnimating ()Z
-	public final fun getContent ()F
-	public final fun getMaxValue ()F
-	public final fun getValue ()F
-	public final fun getViewport ()F
-	public static final fun getWheelStep ()Lkotlin/jvm/functions/Function2;
-	public final fun scrollTo (F)V
-	public static final fun setWheelStep (Lkotlin/jvm/functions/Function2;)V
-	public final fun step (J)Z
-	public static final fun thumb (Lorg/polyfrost/compose/foundation/ScrollState;FF)Lkotlin/Pair;
-	public final fun wheel (F)Z
-}
-
-public final class org/polyfrost/compose/foundation/ScrollState$Companion {
-	public final fun getWheelStep ()Lkotlin/jvm/functions/Function2;
-	public final fun setWheelStep (Lkotlin/jvm/functions/Function2;)V
-	public final fun thumb (Lorg/polyfrost/compose/foundation/ScrollState;FF)Lkotlin/Pair;
-}
-
-public final class org/polyfrost/compose/foundation/TooltipAreaKt {
-	public static final fun TooltipArea (Lkotlin/jvm/functions/Function2;Lorg/polyfrost/compose/ui/Modifier;JZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
-}
-
-public final class org/polyfrost/compose/foundation/VerticalScrollbarKt {
-	public static final fun VerticalScrollbar-JjZR01M (Lorg/polyfrost/compose/foundation/ScrollState;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/ui/Modifier;FFFILandroidx/compose/runtime/Composer;II)V
 }
 
 public abstract class org/polyfrost/compose/foundation/interaction/InteractionSource {
@@ -221,7 +681,6 @@ public final class org/polyfrost/compose/foundation/layout/LayoutModifiersKt {
 	public static synthetic fun heightIn-d0JT6DA$default (Lorg/polyfrost/compose/ui/Modifier;FFILjava/lang/Object;)Lorg/polyfrost/compose/ui/Modifier;
 	public static final fun offset-d0JT6DA (Lorg/polyfrost/compose/ui/Modifier;FF)Lorg/polyfrost/compose/ui/Modifier;
 	public static synthetic fun offset-d0JT6DA$default (Lorg/polyfrost/compose/ui/Modifier;FFILjava/lang/Object;)Lorg/polyfrost/compose/ui/Modifier;
-	public static final fun offsetX (Lorg/polyfrost/compose/ui/Modifier;Landroidx/compose/runtime/State;F)Lorg/polyfrost/compose/ui/Modifier;
 	public static final fun padding (Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/foundation/layout/PaddingValues;)Lorg/polyfrost/compose/ui/Modifier;
 	public static final fun padding-8caNYV8 (Lorg/polyfrost/compose/ui/Modifier;FFFF)Lorg/polyfrost/compose/ui/Modifier;
 	public static synthetic fun padding-8caNYV8$default (Lorg/polyfrost/compose/ui/Modifier;FFFFILjava/lang/Object;)Lorg/polyfrost/compose/ui/Modifier;
@@ -267,36 +726,6 @@ public final class org/polyfrost/compose/foundation/layout/PaddingValues {
 public abstract interface class org/polyfrost/compose/foundation/layout/RowScope {
 }
 
-public final class org/polyfrost/compose/foundation/lazy/LazyColumnKt {
-	public static final fun LazyColumn (Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/foundation/lazy/LazyListState;Lorg/polyfrost/compose/foundation/layout/Arrangement$Vertical;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
-	public static final fun rememberLazyListState (Landroidx/compose/runtime/Composer;I)Lorg/polyfrost/compose/foundation/lazy/LazyListState;
-}
-
-public abstract interface class org/polyfrost/compose/foundation/lazy/LazyItemScope {
-}
-
-public final class org/polyfrost/compose/foundation/lazy/LazyListScope {
-	public static final field $stable I
-	public final fun item (Ljava/lang/Object;Lkotlin/jvm/functions/Function3;)V
-	public static synthetic fun item$default (Lorg/polyfrost/compose/foundation/lazy/LazyListScope;Ljava/lang/Object;Lkotlin/jvm/functions/Function3;ILjava/lang/Object;)V
-	public final fun items (ILkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function4;)V
-	public final fun items (Ljava/util/List;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function4;)V
-	public static synthetic fun items$default (Lorg/polyfrost/compose/foundation/lazy/LazyListScope;ILkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function4;ILjava/lang/Object;)V
-	public static synthetic fun items$default (Lorg/polyfrost/compose/foundation/lazy/LazyListScope;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function4;ILjava/lang/Object;)V
-	public final fun itemsIndexed (Ljava/util/List;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function5;)V
-	public static synthetic fun itemsIndexed$default (Lorg/polyfrost/compose/foundation/lazy/LazyListScope;Ljava/util/List;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function5;ILjava/lang/Object;)V
-}
-
-public final class org/polyfrost/compose/foundation/lazy/LazyListState {
-	public static final field $stable I
-	public static final field DEFAULT_ESTIMATE F
-	public static final field INITIAL_ITEMS I
-	public fun <init> ()V
-	public final fun getFirstIndex ()I
-	public final fun getLastIndex ()I
-	public final fun getScroll ()Lorg/polyfrost/compose/foundation/ScrollState;
-}
-
 public final class org/polyfrost/compose/foundation/shape/RoundedCornerShape : org/polyfrost/compose/ui/graphics/Shape {
 	public static final field $stable I
 	public synthetic fun <init> (FLkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -309,76 +738,6 @@ public final class org/polyfrost/compose/foundation/shape/RoundedCornerShape : o
 
 public final class org/polyfrost/compose/foundation/shape/RoundedCornerShapeKt {
 	public static final fun getCircleShape ()Lorg/polyfrost/compose/foundation/shape/RoundedCornerShape;
-}
-
-public final class org/polyfrost/compose/foundation/text/BasicTextFieldKt {
-	public static final fun BasicTextField (Lorg/polyfrost/compose/foundation/text/TextFieldState;Lorg/polyfrost/compose/render/PolyFont;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lorg/polyfrost/compose/ui/Modifier;Ljava/lang/String;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyFont;Lorg/polyfrost/compose/ui/text/style/TextAlign;ZLkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;III)V
-}
-
-public final class org/polyfrost/compose/foundation/text/TextFieldState {
-	public static final field $stable I
-	public static final field Companion Lorg/polyfrost/compose/foundation/text/TextFieldState$Companion;
-	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;Z)V
-	public synthetic fun <init> (Ljava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun backspace (Z)V
-	public static synthetic fun backspace$default (Lorg/polyfrost/compose/foundation/text/TextFieldState;ZILjava/lang/Object;)V
-	public final fun delete (Z)V
-	public static synthetic fun delete$default (Lorg/polyfrost/compose/foundation/text/TextFieldState;ZILjava/lang/Object;)V
-	public final fun getAnchor ()I
-	public final fun getCaret ()I
-	public final fun getEdits ()I
-	public static final fun getFocusListener ()Lkotlin/jvm/functions/Function2;
-	public final fun getFocused ()Z
-	public final fun getHasSelection ()Z
-	public final fun getMultiline ()Z
-	public final fun getPreedit ()Ljava/lang/String;
-	public final fun getPreeditCaret ()I
-	public final fun getScrollX ()F
-	public final fun getScrollY ()F
-	public final fun getSelectedText ()Ljava/lang/String;
-	public final fun getSelectionEnd ()I
-	public final fun getSelectionStart ()I
-	public final fun getText ()Ljava/lang/String;
-	public final fun indexAt (FLorg/polyfrost/compose/render/PolyFont;)I
-	public final fun indexInLine (IFLorg/polyfrost/compose/render/PolyFont;)I
-	public final fun indexInRange (IIFLorg/polyfrost/compose/render/PolyFont;)I
-	public final fun insert (Ljava/lang/String;)V
-	public final fun lineEnd (I)I
-	public final fun lineOf (Ljava/util/List;I)I
-	public final fun lineStart (I)I
-	public final fun lineStartOf (I)I
-	public final fun lines (Lorg/polyfrost/compose/render/PolyFont;FLjava/lang/String;)Ljava/util/List;
-	public static synthetic fun lines$default (Lorg/polyfrost/compose/foundation/text/TextFieldState;Lorg/polyfrost/compose/render/PolyFont;FLjava/lang/String;ILjava/lang/Object;)Ljava/util/List;
-	public final fun moveCaret (IZ)V
-	public static synthetic fun moveCaret$default (Lorg/polyfrost/compose/foundation/text/TextFieldState;IZILjava/lang/Object;)V
-	public final fun onKey (Lorg/polyfrost/compose/ui/input/key/KeyEvent;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lorg/polyfrost/compose/render/PolyFont;)Z
-	public static synthetic fun onKey$default (Lorg/polyfrost/compose/foundation/text/TextFieldState;Lorg/polyfrost/compose/ui/input/key/KeyEvent;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lorg/polyfrost/compose/render/PolyFont;ILjava/lang/Object;)Z
-	public final fun redo ()Z
-	public final fun replaceText (Ljava/lang/String;)V
-	public final fun requestFocus (Z)V
-	public static synthetic fun requestFocus$default (Lorg/polyfrost/compose/foundation/text/TextFieldState;ZILjava/lang/Object;)V
-	public final fun select (II)V
-	public final fun selectAll ()V
-	public static final fun setFocusListener (Lkotlin/jvm/functions/Function2;)V
-	public final fun setPreedit (Ljava/lang/String;I)V
-	public final fun undo ()Z
-	public final fun wordAt (I)Lkotlin/ranges/IntRange;
-	public final fun wordLeft (I)I
-	public final fun wordRight (I)I
-}
-
-public final class org/polyfrost/compose/foundation/text/TextFieldState$Companion {
-	public final fun getFocusListener ()Lkotlin/jvm/functions/Function2;
-	public final fun setFocusListener (Lkotlin/jvm/functions/Function2;)V
-}
-
-public final class org/polyfrost/compose/foundation/text/TextFieldState$Line {
-	public static final field $stable I
-	public fun <init> (IIZ)V
-	public final fun getEnd ()I
-	public final fun getHard ()Z
-	public final fun getStart ()I
 }
 
 public final class org/polyfrost/compose/foundation/text/TextKt {
@@ -474,11 +833,6 @@ public final class org/polyfrost/compose/layout/PolyLayoutStyle {
 	public fun <init> ()V
 	public final fun getAlign ()Lorg/polyfrost/compose/ui/Alignment;
 	public final fun getAlpha ()F
-	public final fun getAnimatedAlpha ()Landroidx/compose/runtime/State;
-	public final fun getAnimatedBackground ()Landroidx/compose/runtime/State;
-	public final fun getAnimatedBorder ()Landroidx/compose/runtime/State;
-	public final fun getAnimatedOffsetX ()Landroidx/compose/runtime/State;
-	public final fun getAnimating ()Z
 	public final fun getArrangement ()Lorg/polyfrost/compose/layout/PolyArrangement;
 	public final fun getBackground ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getBorderColor ()Lorg/polyfrost/compose/render/PolyColor;
@@ -490,10 +844,6 @@ public final class org/polyfrost/compose/layout/PolyLayoutStyle {
 	public final fun getCrossBias ()F
 	public final fun getCursor ()Lorg/polyfrost/compose/ui/input/pointer/PointerIcon;
 	public final fun getDrawWithContent ()Lkotlin/jvm/functions/Function1;
-	public final fun getDrawnBackground ()Lorg/polyfrost/compose/render/PolyColor;
-	public final fun getDrawnBorderColor ()Lorg/polyfrost/compose/render/PolyColor;
-	public final fun getDrawnOffsetX ()F
-	public final fun getFade ()Lkotlin/jvm/functions/Function1;
 	public final fun getFocusRequest ()Lkotlin/jvm/functions/Function0;
 	public final fun getFocusable ()Z
 	public final fun getGap ()F
@@ -507,25 +857,19 @@ public final class org/polyfrost/compose/layout/PolyLayoutStyle {
 	public final fun getMinHeight ()F
 	public final fun getMinWidth ()F
 	public final fun getOffsetX ()F
-	public final fun getOffsetXTarget ()F
 	public final fun getOffsetY ()F
 	public final fun getOnFocus ()Lkotlin/jvm/functions/Function1;
 	public final fun getOnFocusChanged ()Ljava/util/List;
 	public final fun getOnKey ()Ljava/util/List;
+	public final fun getOnMeasured ()Lkotlin/jvm/functions/Function1;
 	public final fun getOnPlaced ()Lkotlin/jvm/functions/Function1;
 	public final fun getOnPointer ()Ljava/util/List;
-	public final fun getOverlay ()Z
-	public final fun getOverlayAnchor ()Lorg/polyfrost/compose/ui/Alignment;
-	public final fun getOverlayPin ()[F
-	public final fun getOverlayRoomier ()Z
 	public final fun getPadding ()Lorg/polyfrost/compose/layout/PolyInsets;
 	public final fun getPositionMode ()Lorg/polyfrost/compose/layout/PolyPositionMode;
 	public final fun getRadius ()F
 	public final fun getRadiusPercent ()F
 	public final fun getScaleX ()F
 	public final fun getScaleY ()F
-	public final fun getScroll ()Lorg/polyfrost/compose/foundation/ScrollState;
-	public final fun getScrollHorizontal ()Z
 	public final fun getShadows ()Ljava/util/List;
 	public final fun getTag ()Ljava/lang/Object;
 	public final fun getTranslateX ()F
@@ -537,10 +881,6 @@ public final class org/polyfrost/compose/layout/PolyLayoutStyle {
 	public final fun getY ()F
 	public final fun setAlign (Lorg/polyfrost/compose/ui/Alignment;)V
 	public final fun setAlpha (F)V
-	public final fun setAnimatedAlpha (Landroidx/compose/runtime/State;)V
-	public final fun setAnimatedBackground (Landroidx/compose/runtime/State;)V
-	public final fun setAnimatedBorder (Landroidx/compose/runtime/State;)V
-	public final fun setAnimatedOffsetX (Landroidx/compose/runtime/State;)V
 	public final fun setArrangement (Lorg/polyfrost/compose/layout/PolyArrangement;)V
 	public final fun setBackground (Lorg/polyfrost/compose/render/PolyColor;)V
 	public final fun setBorderColor (Lorg/polyfrost/compose/render/PolyColor;)V
@@ -552,7 +892,6 @@ public final class org/polyfrost/compose/layout/PolyLayoutStyle {
 	public final fun setCrossBias (F)V
 	public final fun setCursor (Lorg/polyfrost/compose/ui/input/pointer/PointerIcon;)V
 	public final fun setDrawWithContent (Lkotlin/jvm/functions/Function1;)V
-	public final fun setFade (Lkotlin/jvm/functions/Function1;)V
 	public final fun setFocusRequest (Lkotlin/jvm/functions/Function0;)V
 	public final fun setFocusable (Z)V
 	public final fun setGap (F)V
@@ -566,25 +905,19 @@ public final class org/polyfrost/compose/layout/PolyLayoutStyle {
 	public final fun setMinHeight (F)V
 	public final fun setMinWidth (F)V
 	public final fun setOffsetX (F)V
-	public final fun setOffsetXTarget (F)V
 	public final fun setOffsetY (F)V
 	public final fun setOnFocus (Lkotlin/jvm/functions/Function1;)V
 	public final fun setOnFocusChanged (Ljava/util/List;)V
 	public final fun setOnKey (Ljava/util/List;)V
+	public final fun setOnMeasured (Lkotlin/jvm/functions/Function1;)V
 	public final fun setOnPlaced (Lkotlin/jvm/functions/Function1;)V
 	public final fun setOnPointer (Ljava/util/List;)V
-	public final fun setOverlay (Z)V
-	public final fun setOverlayAnchor (Lorg/polyfrost/compose/ui/Alignment;)V
-	public final fun setOverlayPin ([F)V
-	public final fun setOverlayRoomier (Z)V
 	public final fun setPadding (Lorg/polyfrost/compose/layout/PolyInsets;)V
 	public final fun setPositionMode (Lorg/polyfrost/compose/layout/PolyPositionMode;)V
 	public final fun setRadius (F)V
 	public final fun setRadiusPercent (F)V
 	public final fun setScaleX (F)V
 	public final fun setScaleY (F)V
-	public final fun setScroll (Lorg/polyfrost/compose/foundation/ScrollState;)V
-	public final fun setScrollHorizontal (Z)V
 	public final fun setShadows (Ljava/util/List;)V
 	public final fun setTag (Ljava/lang/Object;)V
 	public final fun setTranslateX (F)V
@@ -671,13 +1004,11 @@ public final class org/polyfrost/compose/node/CanvasNode : org/polyfrost/compose
 public final class org/polyfrost/compose/node/ImageNode : org/polyfrost/compose/node/PolyNode {
 	public static final field $stable I
 	public fun <init> (Lorg/polyfrost/compose/ui/graphics/ImageBitmap;)V
-	public final fun getAnimatedTint ()Landroidx/compose/runtime/State;
 	public final fun getFilterQuality ()Lorg/polyfrost/compose/ui/graphics/FilterQuality;
 	public final fun getImage ()Lorg/polyfrost/compose/ui/graphics/ImageBitmap;
 	public final fun getTint ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun remeasure ()V
 	public fun render (Lorg/polyfrost/compose/render/RenderContext;)V
-	public final fun setAnimatedTint (Landroidx/compose/runtime/State;)V
 	public final fun setFilterQuality (Lorg/polyfrost/compose/ui/graphics/FilterQuality;)V
 	public final fun setImage (Lorg/polyfrost/compose/ui/graphics/ImageBitmap;)V
 	public final fun setTint (Lorg/polyfrost/compose/render/PolyColor;)V
@@ -703,7 +1034,6 @@ public final class org/polyfrost/compose/node/McTextNode : org/polyfrost/compose
 public class org/polyfrost/compose/node/PolyNode {
 	public static final field $stable I
 	public fun <init> ()V
-	protected fun animating ()Z
 	public final fun getChildren ()Ljava/util/List;
 	public final fun getContentHeight ()F
 	public final fun getContentWidth ()F
@@ -743,14 +1073,7 @@ public final class org/polyfrost/compose/node/RootNode : org/polyfrost/compose/n
 	public static final field $stable I
 	public fun <init> ()V
 	public final fun getDensity ()F
-	public final fun getLayoutRequested ()Z
-	public fun render (Lorg/polyfrost/compose/render/RenderContext;)V
 	public final fun setDensity (F)V
-	public final fun setLayoutRequested (Z)V
-}
-
-public final class org/polyfrost/compose/node/RootNodeKt {
-	public static final fun requestLayout (Lorg/polyfrost/compose/node/PolyNode;)V
 }
 
 public final class org/polyfrost/compose/node/SpacerNode : org/polyfrost/compose/node/PolyNode {
@@ -762,7 +1085,6 @@ public final class org/polyfrost/compose/node/SpacerNode : org/polyfrost/compose
 public final class org/polyfrost/compose/node/TextNode : org/polyfrost/compose/node/PolyNode {
 	public static final field $stable I
 	public fun <init> ()V
-	public final fun getAnimatedColor ()Landroidx/compose/runtime/State;
 	public final fun getBaselineShift ()F
 	public final fun getCenter ()Z
 	public final fun getColor ()Lorg/polyfrost/compose/render/PolyColor;
@@ -781,7 +1103,6 @@ public final class org/polyfrost/compose/node/TextNode : org/polyfrost/compose/n
 	public fun measureContent (FF)V
 	public final fun remeasure ()V
 	public fun render (Lorg/polyfrost/compose/render/RenderContext;)V
-	public final fun setAnimatedColor (Landroidx/compose/runtime/State;)V
 	public final fun setBaselineShift (F)V
 	public final fun setCenter (Z)V
 	public final fun setColor (Lorg/polyfrost/compose/render/PolyColor;)V
@@ -797,6 +1118,16 @@ public final class org/polyfrost/compose/node/TextNode : org/polyfrost/compose/n
 	public final fun setSpans (Ljava/util/List;)V
 	public final fun setText (Ljava/lang/String;)V
 	public final fun setWrap (Z)V
+}
+
+public abstract interface class org/polyfrost/compose/render/CapturingRenderer {
+	public abstract fun append (Ljava/lang/Object;)V
+	public abstract fun mark ()Ljava/lang/Object;
+	public abstract fun restoreState (Ljava/lang/Object;)V
+	public abstract fun saveState ()Ljava/lang/Object;
+	public abstract fun since (Ljava/lang/Object;)Ljava/lang/Object;
+	public abstract fun stateKey ()Ljava/lang/Object;
+	public abstract fun valid (Ljava/lang/Object;)Z
 }
 
 public final class org/polyfrost/compose/render/FontManager {
@@ -907,17 +1238,6 @@ public final class org/polyfrost/compose/render/PolyColor$Companion {
 	public final fun lerp (Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;F)Lorg/polyfrost/compose/render/PolyColor;
 	public final fun rgb (III)Lorg/polyfrost/compose/render/PolyColor;
 	public final fun rgba (IIII)Lorg/polyfrost/compose/render/PolyColor;
-}
-
-public final class org/polyfrost/compose/render/PolyFade {
-	public static final field $stable I
-	public fun <init> (Z[F[F)V
-	public final fun alphaAt (F)F
-	public final fun getAlphas ()[F
-	public final fun getStops ()[F
-	public final fun getVertical ()Z
-	public final fun opaque (I)Z
-	public final fun span (F)I
 }
 
 public final class org/polyfrost/compose/render/PolyFont {
@@ -1065,9 +1385,9 @@ public abstract interface class org/polyfrost/compose/render/PolyRenderer {
 	public abstract fun restore ()V
 	public abstract fun save ()V
 	public abstract fun saveLayerAlpha (F)V
-	public fun saveLayerFade (Lorg/polyfrost/compose/render/PolyFade;)V
 	public abstract fun scale (FF)V
 	public abstract fun shadow (FFFFFLorg/polyfrost/compose/ui/graphics/shadow/Shadow;)V
+	public fun strokePolyline ([FZIFI)V
 	public abstract fun text (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;)V
 	public abstract fun textOutline (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;F)V
 	public abstract fun translate (FF)V
@@ -1077,7 +1397,7 @@ public final class org/polyfrost/compose/render/PolyRenderer$DefaultImpls {
 	public static fun image (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/ui/graphics/ImageBitmap;FFFFLorg/polyfrost/compose/ui/graphics/FilterQuality;)V
 	public static synthetic fun image$default (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/ui/graphics/ImageBitmap;FFFFFFFFILorg/polyfrost/compose/ui/graphics/FilterQuality;ILjava/lang/Object;)V
 	public static synthetic fun image$default (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/ui/graphics/ImageBitmap;FFFFLorg/polyfrost/compose/ui/graphics/FilterQuality;ILjava/lang/Object;)V
-	public static fun saveLayerFade (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyFade;)V
+	public static fun strokePolyline (Lorg/polyfrost/compose/render/PolyRenderer;[FZIFI)V
 }
 
 public abstract class org/polyfrost/compose/render/PolyTessellator : org/polyfrost/compose/render/PolyRenderer {
@@ -1105,12 +1425,15 @@ public abstract class org/polyfrost/compose/render/PolyTessellator : org/polyfro
 	public fun rectStrokeGradient (FFFFIIFF)V
 	public fun rectWithHole (FFFFFFFFFI)V
 	public fun restore ()V
+	public final fun restoreState (Ljava/lang/Object;)V
 	public fun save ()V
 	public fun saveLayerAlpha (F)V
-	public fun saveLayerFade (Lorg/polyfrost/compose/render/PolyFade;)V
+	public final fun saveState ()Ljava/lang/Object;
 	public fun scale (FF)V
 	protected final fun setState (Lorg/polyfrost/compose/render/PolyTessellator$State;)V
 	public fun shadow (FFFFFLorg/polyfrost/compose/ui/graphics/shadow/Shadow;)V
+	public fun stateKey ()Ljava/lang/Object;
+	public fun strokePolyline ([FZIFI)V
 	protected abstract fun submit (Ljava/lang/Object;ZZ[F[I[F)V
 	public fun text (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;)V
 	public fun textOutline (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;F)V
@@ -1118,12 +1441,6 @@ public abstract class org/polyfrost/compose/render/PolyTessellator : org/polyfro
 }
 
 public final class org/polyfrost/compose/render/PolyTessellator$Companion {
-}
-
-protected final class org/polyfrost/compose/render/PolyTessellator$Mask {
-	public fun <init> (Lorg/polyfrost/compose/render/PolyFade;Lorg/polyfrost/compose/render/PolyTessellator$Mask;)V
-	public final fun getFade ()Lorg/polyfrost/compose/render/PolyFade;
-	public final fun getParent ()Lorg/polyfrost/compose/render/PolyTessellator$Mask;
 }
 
 protected final class org/polyfrost/compose/render/PolyTessellator$RClip {
@@ -1140,14 +1457,12 @@ protected final class org/polyfrost/compose/render/PolyTessellator$RClip {
 protected final class org/polyfrost/compose/render/PolyTessellator$State {
 	public field alpha F
 	public field clip [F
-	public field mask Lorg/polyfrost/compose/render/PolyTessellator$Mask;
 	public field rclip Lorg/polyfrost/compose/render/PolyTessellator$RClip;
 	public field sx F
 	public field sy F
 	public field tx F
 	public field ty F
-	public fun <init> (FFFFF[FLorg/polyfrost/compose/render/PolyTessellator$RClip;Lorg/polyfrost/compose/render/PolyTessellator$Mask;)V
-	public synthetic fun <init> (FFFFF[FLorg/polyfrost/compose/render/PolyTessellator$RClip;Lorg/polyfrost/compose/render/PolyTessellator$Mask;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (FFFFF[FLorg/polyfrost/compose/render/PolyTessellator$RClip;)V
 	public final fun copy ()Lorg/polyfrost/compose/render/PolyTessellator$State;
 }
 
@@ -1182,9 +1497,10 @@ public final class org/polyfrost/compose/render/RenderContext {
 	public final fun restore ()V
 	public final fun save ()V
 	public final fun saveLayerAlpha (F)V
-	public final fun saveLayerFade (Lorg/polyfrost/compose/render/PolyFade;)V
 	public final fun scale (FF)V
 	public final fun shadow (FFFFFLorg/polyfrost/compose/ui/graphics/shadow/Shadow;)V
+	public final fun strokePolyline ([FZLorg/polyfrost/compose/render/PolyColor;FLorg/polyfrost/compose/ui/graphics/StrokeCap;)V
+	public static synthetic fun strokePolyline$default (Lorg/polyfrost/compose/render/RenderContext;[FZLorg/polyfrost/compose/render/PolyColor;FLorg/polyfrost/compose/ui/graphics/StrokeCap;ILjava/lang/Object;)V
 	public final fun text (Ljava/lang/String;FFLorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyFont;)V
 	public final fun textOutline (Ljava/lang/String;FFLorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyFont;F)V
 	public final fun translate (FF)V
@@ -1220,7 +1536,6 @@ public final class org/polyfrost/compose/runtime/PolyComposeHost {
 	public final fun getHuds ()Lorg/polyfrost/compose/runtime/PolyComposeClock;
 	public final fun getNotifications ()Lorg/polyfrost/compose/runtime/PolyComposeClock;
 	public final fun getPreviews ()Lorg/polyfrost/compose/runtime/PolyComposeClock;
-	public final fun getScreens ()Lorg/polyfrost/compose/runtime/PolyComposeClock;
 }
 
 public final class org/polyfrost/compose/runtime/PolyComposeRuntime {
@@ -1344,12 +1659,10 @@ public final class org/polyfrost/compose/ui/draw/ContentDrawScope {
 
 public final class org/polyfrost/compose/ui/draw/DrawModifiersKt {
 	public static final fun alpha (Lorg/polyfrost/compose/ui/Modifier;F)Lorg/polyfrost/compose/ui/Modifier;
-	public static final fun alpha (Lorg/polyfrost/compose/ui/Modifier;Landroidx/compose/runtime/State;F)Lorg/polyfrost/compose/ui/Modifier;
 	public static final fun clip (Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/ui/graphics/Shape;)Lorg/polyfrost/compose/ui/Modifier;
 	public static synthetic fun clip$default (Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/ui/graphics/Shape;ILjava/lang/Object;)Lorg/polyfrost/compose/ui/Modifier;
 	public static final fun drawWithContent (Lorg/polyfrost/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/compose/ui/Modifier;
 	public static final fun dropShadow (Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/ui/graphics/Shape;Lorg/polyfrost/compose/ui/graphics/shadow/Shadow;)Lorg/polyfrost/compose/ui/Modifier;
-	public static final fun fadeMask (Lorg/polyfrost/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/compose/ui/Modifier;
 	public static final fun scale (Lorg/polyfrost/compose/ui/Modifier;F)Lorg/polyfrost/compose/ui/Modifier;
 }
 
@@ -1370,6 +1683,26 @@ public final class org/polyfrost/compose/ui/focus/FocusState {
 
 public final class org/polyfrost/compose/ui/focus/FocusStateKt {
 	public static final fun onFocusChanged (Lorg/polyfrost/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/compose/ui/Modifier;
+}
+
+public final class org/polyfrost/compose/ui/geometry/CornerRadius {
+	public static final field $stable I
+	public static final field Companion Lorg/polyfrost/compose/ui/geometry/CornerRadius$Companion;
+	public fun <init> (FF)V
+	public synthetic fun <init> (FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun copy (FF)Lorg/polyfrost/compose/ui/geometry/CornerRadius;
+	public static synthetic fun copy$default (Lorg/polyfrost/compose/ui/geometry/CornerRadius;FFILjava/lang/Object;)Lorg/polyfrost/compose/ui/geometry/CornerRadius;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getX ()F
+	public final fun getY ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/compose/ui/geometry/CornerRadius$Companion {
+	public final fun getZero ()Lorg/polyfrost/compose/ui/geometry/CornerRadius;
 }
 
 public final class org/polyfrost/compose/ui/geometry/Offset {
@@ -1456,6 +1789,7 @@ public abstract class org/polyfrost/compose/ui/graphics/Brush {
 	public final fun colorAt (FFFFFF)I
 	public fun getAffine ()Z
 	public abstract fun getColors ()Ljava/util/List;
+	public fun getLinear ()Z
 	public abstract fun getStops ()Ljava/util/List;
 	public static final fun lerpArgb (IIF)I
 	public abstract fun position (FFFFFF)F
@@ -1485,13 +1819,11 @@ public final class org/polyfrost/compose/ui/graphics/BrushKt {
 public final class org/polyfrost/compose/ui/graphics/ColorFilter {
 	public static final field $stable I
 	public static final field Companion Lorg/polyfrost/compose/ui/graphics/ColorFilter$Companion;
-	public synthetic fun <init> (Lorg/polyfrost/compose/render/PolyColor;Landroidx/compose/runtime/State;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getAnimated ()Landroidx/compose/runtime/State;
+	public synthetic fun <init> (Lorg/polyfrost/compose/render/PolyColor;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getColor ()Lorg/polyfrost/compose/render/PolyColor;
 }
 
 public final class org/polyfrost/compose/ui/graphics/ColorFilter$Companion {
-	public final fun tint (Lorg/polyfrost/compose/animation/AnimatedColor;)Lorg/polyfrost/compose/ui/graphics/ColorFilter;
 	public final fun tint (Lorg/polyfrost/compose/render/PolyColor;)Lorg/polyfrost/compose/ui/graphics/ColorFilter;
 }
 
@@ -1519,11 +1851,6 @@ public final class org/polyfrost/compose/ui/graphics/FilterQuality : java/lang/E
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/compose/ui/graphics/FilterQuality;
 	public static fun values ()[Lorg/polyfrost/compose/ui/graphics/FilterQuality;
-}
-
-public final class org/polyfrost/compose/ui/graphics/GraphicsLayerKt {
-	public static final fun graphicsLayer (Lorg/polyfrost/compose/ui/Modifier;FFFFF)Lorg/polyfrost/compose/ui/Modifier;
-	public static synthetic fun graphicsLayer$default (Lorg/polyfrost/compose/ui/Modifier;FFFFFILjava/lang/Object;)Lorg/polyfrost/compose/ui/Modifier;
 }
 
 public final class org/polyfrost/compose/ui/graphics/ImageBitmap {
@@ -1566,7 +1893,50 @@ public final class org/polyfrost/compose/ui/graphics/LinearGradient : org/polyfr
 	public fun getAffine ()Z
 	public final fun getAngle ()F
 	public fun getColors ()Ljava/util/List;
+	public fun getLinear ()Z
 	public fun getStops ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun position (FFFFFF)F
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/compose/ui/graphics/Path {
+	public static final field $stable I
+	public static final field CURVE_SEGMENTS I
+	public fun <init> ()V
+	public final fun addArc (Lorg/polyfrost/compose/ui/geometry/Rect;FF)V
+	public final fun addOval (Lorg/polyfrost/compose/ui/geometry/Rect;)V
+	public final fun addRect (Lorg/polyfrost/compose/ui/geometry/Rect;)V
+	public final fun arcTo (Lorg/polyfrost/compose/ui/geometry/Rect;FFZ)V
+	public final fun close ()V
+	public final fun cubicTo (FFFFFF)V
+	public final fun isEmpty ()Z
+	public final fun lineTo (FF)V
+	public final fun moveTo (FF)V
+	public final fun quadraticTo (FFFF)V
+	public final fun reset ()V
+}
+
+public final class org/polyfrost/compose/ui/graphics/PointGradient : org/polyfrost/compose/ui/graphics/Brush {
+	public static final field $stable I
+	public fun <init> (Ljava/util/List;Ljava/util/List;FFFF)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun copy (Ljava/util/List;Ljava/util/List;FFFF)Lorg/polyfrost/compose/ui/graphics/PointGradient;
+	public static synthetic fun copy$default (Lorg/polyfrost/compose/ui/graphics/PointGradient;Ljava/util/List;Ljava/util/List;FFFFILjava/lang/Object;)Lorg/polyfrost/compose/ui/graphics/PointGradient;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAffine ()Z
+	public fun getColors ()Ljava/util/List;
+	public fun getLinear ()Z
+	public fun getStops ()Ljava/util/List;
+	public final fun getX0 ()F
+	public final fun getX1 ()F
+	public final fun getY0 ()F
+	public final fun getY1 ()F
 	public fun hashCode ()I
 	public fun position (FFFFFF)F
 	public fun toString ()Ljava/lang/String;
@@ -1608,6 +1978,70 @@ public abstract interface class org/polyfrost/compose/ui/graphics/Shape {
 
 public final class org/polyfrost/compose/ui/graphics/Shape$DefaultImpls {
 	public static fun getPercent (Lorg/polyfrost/compose/ui/graphics/Shape;)F
+}
+
+public final class org/polyfrost/compose/ui/graphics/StrokeCap : java/lang/Enum {
+	public static final field Butt Lorg/polyfrost/compose/ui/graphics/StrokeCap;
+	public static final field Round Lorg/polyfrost/compose/ui/graphics/StrokeCap;
+	public static final field Square Lorg/polyfrost/compose/ui/graphics/StrokeCap;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/compose/ui/graphics/StrokeCap;
+	public static fun values ()[Lorg/polyfrost/compose/ui/graphics/StrokeCap;
+}
+
+public final class org/polyfrost/compose/ui/graphics/drawscope/DrawScope {
+	public static final field $stable I
+	public fun <init> (Lorg/polyfrost/compose/render/RenderContext;FFLorg/polyfrost/compose/ui/geometry/Size;)V
+	public final fun drawArc (Lorg/polyfrost/compose/render/PolyColor;FFZLorg/polyfrost/compose/ui/geometry/Offset;Lorg/polyfrost/compose/ui/geometry/Size;FLorg/polyfrost/compose/ui/graphics/drawscope/DrawStyle;)V
+	public static synthetic fun drawArc$default (Lorg/polyfrost/compose/ui/graphics/drawscope/DrawScope;Lorg/polyfrost/compose/render/PolyColor;FFZLorg/polyfrost/compose/ui/geometry/Offset;Lorg/polyfrost/compose/ui/geometry/Size;FLorg/polyfrost/compose/ui/graphics/drawscope/DrawStyle;ILjava/lang/Object;)V
+	public final fun drawCircle (Lorg/polyfrost/compose/render/PolyColor;FLorg/polyfrost/compose/ui/geometry/Offset;FLorg/polyfrost/compose/ui/graphics/drawscope/DrawStyle;)V
+	public static synthetic fun drawCircle$default (Lorg/polyfrost/compose/ui/graphics/drawscope/DrawScope;Lorg/polyfrost/compose/render/PolyColor;FLorg/polyfrost/compose/ui/geometry/Offset;FLorg/polyfrost/compose/ui/graphics/drawscope/DrawStyle;ILjava/lang/Object;)V
+	public final fun drawLine (Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/ui/geometry/Offset;Lorg/polyfrost/compose/ui/geometry/Offset;FLorg/polyfrost/compose/ui/graphics/StrokeCap;F)V
+	public static synthetic fun drawLine$default (Lorg/polyfrost/compose/ui/graphics/drawscope/DrawScope;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/ui/geometry/Offset;Lorg/polyfrost/compose/ui/geometry/Offset;FLorg/polyfrost/compose/ui/graphics/StrokeCap;FILjava/lang/Object;)V
+	public final fun drawOval (Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/ui/geometry/Offset;Lorg/polyfrost/compose/ui/geometry/Size;FLorg/polyfrost/compose/ui/graphics/drawscope/DrawStyle;)V
+	public static synthetic fun drawOval$default (Lorg/polyfrost/compose/ui/graphics/drawscope/DrawScope;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/ui/geometry/Offset;Lorg/polyfrost/compose/ui/geometry/Size;FLorg/polyfrost/compose/ui/graphics/drawscope/DrawStyle;ILjava/lang/Object;)V
+	public final fun drawPath (Lorg/polyfrost/compose/ui/graphics/Path;Lorg/polyfrost/compose/render/PolyColor;FLorg/polyfrost/compose/ui/graphics/drawscope/DrawStyle;)V
+	public static synthetic fun drawPath$default (Lorg/polyfrost/compose/ui/graphics/drawscope/DrawScope;Lorg/polyfrost/compose/ui/graphics/Path;Lorg/polyfrost/compose/render/PolyColor;FLorg/polyfrost/compose/ui/graphics/drawscope/DrawStyle;ILjava/lang/Object;)V
+	public final fun drawRect (Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/ui/geometry/Offset;Lorg/polyfrost/compose/ui/geometry/Size;FLorg/polyfrost/compose/ui/graphics/drawscope/DrawStyle;)V
+	public static synthetic fun drawRect$default (Lorg/polyfrost/compose/ui/graphics/drawscope/DrawScope;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/ui/geometry/Offset;Lorg/polyfrost/compose/ui/geometry/Size;FLorg/polyfrost/compose/ui/graphics/drawscope/DrawStyle;ILjava/lang/Object;)V
+	public final fun drawRoundRect (Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/ui/geometry/Offset;Lorg/polyfrost/compose/ui/geometry/Size;Lorg/polyfrost/compose/ui/geometry/CornerRadius;Lorg/polyfrost/compose/ui/graphics/drawscope/DrawStyle;F)V
+	public static synthetic fun drawRoundRect$default (Lorg/polyfrost/compose/ui/graphics/drawscope/DrawScope;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/ui/geometry/Offset;Lorg/polyfrost/compose/ui/geometry/Size;Lorg/polyfrost/compose/ui/geometry/CornerRadius;Lorg/polyfrost/compose/ui/graphics/drawscope/DrawStyle;FILjava/lang/Object;)V
+	public final fun getCenter ()Lorg/polyfrost/compose/ui/geometry/Offset;
+	public final fun getContext ()Lorg/polyfrost/compose/render/RenderContext;
+	public final fun getSize ()Lorg/polyfrost/compose/ui/geometry/Size;
+	public final fun rotate (FLorg/polyfrost/compose/ui/geometry/Offset;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun rotate$default (Lorg/polyfrost/compose/ui/graphics/drawscope/DrawScope;FLorg/polyfrost/compose/ui/geometry/Offset;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun scale (FFLorg/polyfrost/compose/ui/geometry/Offset;Lkotlin/jvm/functions/Function1;)V
+	public final fun scale (FLorg/polyfrost/compose/ui/geometry/Offset;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun scale$default (Lorg/polyfrost/compose/ui/graphics/drawscope/DrawScope;FFLorg/polyfrost/compose/ui/geometry/Offset;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun scale$default (Lorg/polyfrost/compose/ui/graphics/drawscope/DrawScope;FLorg/polyfrost/compose/ui/geometry/Offset;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun toPx-6Yc6X0A (F)F
+	public final fun translate (FFLkotlin/jvm/functions/Function1;)V
+	public static synthetic fun translate$default (Lorg/polyfrost/compose/ui/graphics/drawscope/DrawScope;FFLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
+public abstract class org/polyfrost/compose/ui/graphics/drawscope/DrawStyle {
+	public static final field $stable I
+}
+
+public final class org/polyfrost/compose/ui/graphics/drawscope/Fill : org/polyfrost/compose/ui/graphics/drawscope/DrawStyle {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/compose/ui/graphics/drawscope/Fill;
+}
+
+public final class org/polyfrost/compose/ui/graphics/drawscope/Stroke : org/polyfrost/compose/ui/graphics/drawscope/DrawStyle {
+	public static final field $stable I
+	public static final field Companion Lorg/polyfrost/compose/ui/graphics/drawscope/Stroke$Companion;
+	public static final field HairlineWidth F
+	public fun <init> ()V
+	public fun <init> (FLorg/polyfrost/compose/ui/graphics/StrokeCap;)V
+	public synthetic fun <init> (FLorg/polyfrost/compose/ui/graphics/StrokeCap;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getCap ()Lorg/polyfrost/compose/ui/graphics/StrokeCap;
+	public final fun getWidth ()F
+}
+
+public final class org/polyfrost/compose/ui/graphics/drawscope/Stroke$Companion {
+	public final fun getDefaultCap ()Lorg/polyfrost/compose/ui/graphics/StrokeCap;
 }
 
 public final class org/polyfrost/compose/ui/graphics/shadow/Shadow {
@@ -1805,24 +2239,10 @@ public final class org/polyfrost/compose/ui/input/pointer/PointerModifiersKt {
 	public static final fun pointerHoverIcon (Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/ui/input/pointer/PointerIcon;)Lorg/polyfrost/compose/ui/Modifier;
 }
 
-public final class org/polyfrost/compose/ui/layout/LayoutCoordinates {
-	public static final field $stable I
-	public final fun getSize ()Lorg/polyfrost/compose/ui/unit/IntSize;
-}
-
 public final class org/polyfrost/compose/ui/layout/LayoutModifiersKt {
-	public static final fun boundsInRoot (Lorg/polyfrost/compose/ui/layout/LayoutCoordinates;)Lorg/polyfrost/compose/ui/geometry/Rect;
-	public static final fun boundsInWindow (Lorg/polyfrost/compose/ui/layout/LayoutCoordinates;)Lorg/polyfrost/compose/ui/geometry/Rect;
 	public static final fun layoutId (Lorg/polyfrost/compose/ui/Modifier;Ljava/lang/Object;)Lorg/polyfrost/compose/ui/Modifier;
-	public static final fun onGloballyPositioned (Lorg/polyfrost/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/compose/ui/Modifier;
 	public static final fun onPlaced (Lorg/polyfrost/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/compose/ui/Modifier;
 	public static final fun onSizeChanged (Lorg/polyfrost/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/compose/ui/Modifier;
-	public static final fun positionInRoot (Lorg/polyfrost/compose/ui/layout/LayoutCoordinates;)Lorg/polyfrost/compose/ui/geometry/Offset;
-	public static final fun positionInWindow (Lorg/polyfrost/compose/ui/layout/LayoutCoordinates;)Lorg/polyfrost/compose/ui/geometry/Offset;
-}
-
-public final class org/polyfrost/compose/ui/platform/CompositionLocalsKt {
-	public static final fun getLocalDensity ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 }
 
 public final class org/polyfrost/compose/ui/text/font/Font {
@@ -1922,20 +2342,6 @@ public final class org/polyfrost/compose/ui/text/style/TextOverflow : java/lang/
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/compose/ui/text/style/TextOverflow;
 	public static fun values ()[Lorg/polyfrost/compose/ui/text/style/TextOverflow;
-}
-
-public class org/polyfrost/compose/ui/unit/Density {
-	public static final field $stable I
-	public fun <init> (FF)V
-	public synthetic fun <init> (FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getDensity ()F
-	public final fun getFontScale ()F
-	public final fun roundToPx-6Yc6X0A (F)I
-	public final fun toDp-HbGG2Lo (F)F
-	public final fun toDp-HbGG2Lo (I)F
-	public final fun toPx-6Yc6X0A (F)F
-	public final fun toPx-rbs5kbs (F)F
-	public final fun toSize (Lorg/polyfrost/compose/ui/unit/DpSize;)Lorg/polyfrost/compose/ui/geometry/Size;
 }
 
 public final class org/polyfrost/compose/ui/unit/Dp : java/lang/Comparable {
@@ -2085,27 +2491,5 @@ public final class org/polyfrost/compose/ui/unit/TextUnit {
 
 public final class org/polyfrost/compose/ui/unit/TextUnit$Companion {
 	public final fun getUnspecified-BEtwwSU ()F
-}
-
-public final class org/polyfrost/compose/ui/window/PopupKt {
-	public static final fun Popup (Lorg/polyfrost/compose/ui/Alignment;Lorg/polyfrost/compose/ui/unit/DpOffset;Lkotlin/jvm/functions/Function0;Lorg/polyfrost/compose/ui/window/PopupProperties;Lorg/polyfrost/compose/ui/Alignment;ZZLorg/polyfrost/compose/ui/Modifier;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
-}
-
-public final class org/polyfrost/compose/ui/window/PopupProperties {
-	public static final field $stable I
-	public fun <init> ()V
-	public fun <init> (ZZZ)V
-	public synthetic fun <init> (ZZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Z
-	public final fun component2 ()Z
-	public final fun component3 ()Z
-	public final fun copy (ZZZ)Lorg/polyfrost/compose/ui/window/PopupProperties;
-	public static synthetic fun copy$default (Lorg/polyfrost/compose/ui/window/PopupProperties;ZZZILjava/lang/Object;)Lorg/polyfrost/compose/ui/window/PopupProperties;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getDismissOnBackPress ()Z
-	public final fun getDismissOnClickOutside ()Z
-	public final fun getFocusable ()Z
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
 }
 

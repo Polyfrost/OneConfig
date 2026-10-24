@@ -38,3 +38,9 @@ data class Rect(val left: Float, val top: Float, val right: Float, val bottom: F
         val Zero = Rect(0f, 0f, 0f, 0f)
     }
 }
+
+data class CornerRadius(val x: Float, val y: Float = x) {
+    companion object {
+        val Zero = CornerRadius(0f)
+    }
+}

@@ -1,12 +1,12 @@
 package org.polyfrost.oneconfig.internal.ui.themes
 
-import org.polyfrost.compose.foundation.shape.CircleShape
-import org.polyfrost.compose.foundation.shape.RoundedCornerShape
-import org.polyfrost.compose.ui.graphics.Color
-import org.polyfrost.compose.ui.text.font.Font
-import org.polyfrost.compose.ui.text.font.FontFamily
-import org.polyfrost.compose.ui.text.font.FontWeight
-import org.polyfrost.compose.ui.unit.dp
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.platform.Font
+import androidx.compose.ui.unit.dp
 
 private val MinecraftIconOverrides = mapOf(
     "cog" to "/assets/oneconfig/ico/minecraft/cog.svg",
@@ -106,12 +106,14 @@ val PolyGlassDark = UITheme(
     UIBranding("assets/oneconfig/brand/oneconfig.svg"),
     UITypography(
         family = FontFamily(
-            Font("poppins-black", FontWeight.Black),
-            Font("poppins", FontWeight.Normal),
-            Font("poppins-medium", FontWeight.Medium),
-            Font("poppins-semibold", FontWeight.SemiBold),
-            Font("poppins-bold", FontWeight.Bold),
-            Font("poppins-thin", FontWeight.Thin)
+            Font("assets/oneconfig/fonts/Poppins/Poppins-Black.ttf", FontWeight.Black),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-ExtraBold.ttf", FontWeight.ExtraBold),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-ExtraLight.ttf", FontWeight.ExtraLight),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-Regular.ttf", FontWeight.Normal),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-Light.ttf", FontWeight.Light),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-Medium.ttf", FontWeight.Medium),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-SemiBold.ttf", FontWeight.SemiBold),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-Thin.ttf", FontWeight.Thin)
         )
     )
 )
@@ -148,12 +150,14 @@ val PolyGlassLight = UITheme(
     UIBranding("assets/oneconfig/brand/oneconfig-light.svg"),
     UITypography(
         family = FontFamily(
-            Font("poppins-black", FontWeight.Black),
-            Font("poppins", FontWeight.Normal),
-            Font("poppins-medium", FontWeight.Medium),
-            Font("poppins-semibold", FontWeight.SemiBold),
-            Font("poppins-bold", FontWeight.Bold),
-            Font("poppins-thin", FontWeight.Thin)
+            Font("assets/oneconfig/fonts/Poppins/Poppins-Black.ttf", FontWeight.Black),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-ExtraBold.ttf", FontWeight.ExtraBold),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-ExtraLight.ttf", FontWeight.ExtraLight),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-Regular.ttf", FontWeight.Normal),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-Light.ttf", FontWeight.Light),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-Medium.ttf", FontWeight.Medium),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-SemiBold.ttf", FontWeight.SemiBold),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-Thin.ttf", FontWeight.Thin)
         )
     )
 )
@@ -189,8 +193,8 @@ val MinecraftDark = UITheme(
     UIBranding("assets/oneconfig/brand/oneconfig-mc.svg"),
     UITypography(
         family = FontFamily(
-            Font("minecraft-bold", FontWeight.Bold),
-            Font("minecraft", FontWeight.Normal)
+            Font("assets/oneconfig/fonts/minecraft/Minecraft-Bold.otf", FontWeight.Bold),
+            Font("assets/oneconfig/fonts/minecraft/Minecraft-Regular.otf", FontWeight.Normal)
         )
     ),
     MinecraftIconOverrides
@@ -227,8 +231,8 @@ val MinecraftLight = UITheme(
     UIBranding("assets/oneconfig/brand/oneconfig-mc-light.svg"),
     UITypography(
         family = FontFamily(
-            Font("minecraft-bold", FontWeight.Bold),
-            Font("minecraft", FontWeight.Normal)
+            Font("assets/oneconfig/fonts/minecraft/Minecraft-Bold.otf", FontWeight.Bold),
+            Font("assets/oneconfig/fonts/minecraft/Minecraft-Regular.otf", FontWeight.Normal)
         )
     ),
     MinecraftIconOverrides

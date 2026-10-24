@@ -12,8 +12,9 @@ import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
+import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
-import org.polyfrost.oneconfig.internal.ui.poly.ShellScreen
+import org.polyfrost.oneconfig.internal.ui.shell.ShellController
 
 object ModMenuCompat {
     val mods: MutableList<Mod> = mutableListOf()
@@ -92,7 +93,9 @@ object ModMenuCompat {
                     }
 
                     when {
-                        showOc -> ShellScreen.show(ModConfigRoute(mod.id))
+                        showOc && ShellController.shared.navigation.isReady ->
+                            ShellController.shared.navigation.navigate(ModConfigRoute(mod.id))
+                        showOc -> Platform.screen().display(OneConfigUIScreen(initialTreeId = mod.id))
                         foreignScreen != null -> Platform.screen().display(foreignScreen)
                     }
                 }

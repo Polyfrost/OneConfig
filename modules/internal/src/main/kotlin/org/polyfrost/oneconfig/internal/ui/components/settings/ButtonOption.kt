@@ -1,29 +1,27 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import org.polyfrost.compose.animation.animateColorAsState
-import org.polyfrost.compose.animation.core.animateFloatAsState
-import org.polyfrost.compose.foundation.background
-import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
-import org.polyfrost.compose.foundation.layout.Box
-import org.polyfrost.compose.foundation.layout.padding
-import org.polyfrost.compose.foundation.layout.widthIn
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.draw.alpha
-import org.polyfrost.compose.ui.graphics.Color
-import org.polyfrost.compose.ui.graphics.copy
-import org.polyfrost.compose.ui.input.pointer.PointerIcon
-import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
-import org.polyfrost.compose.ui.unit.dp
-import org.polyfrost.compose.ui.unit.sp
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.api.settings.ButtonOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.background
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
@@ -41,7 +39,7 @@ fun ButtonOption(data: ButtonOptionData) {
     val confirmText = data.confirmText
     var firstClickAt by remember { mutableStateOf<Long?>(null) }
     val confirming = firstClickAt != null
-    val bgColor = animateColorAsState(
+    val bgColor by animateColorAsState(
         when {
             !confirming -> Color.Transparent
             isHovered -> DangerColor.copy(alpha = 0.75f)

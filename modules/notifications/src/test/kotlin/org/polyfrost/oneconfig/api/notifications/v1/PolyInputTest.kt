@@ -4,10 +4,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.polyfrost.compose.foundation.ScrollState
 import org.polyfrost.compose.foundation.clickable
 import org.polyfrost.compose.foundation.layout.size
-import org.polyfrost.compose.foundation.verticalScroll
 import org.polyfrost.compose.input.PolyInput
 import org.polyfrost.compose.layout.LayoutType
 import org.polyfrost.compose.layout.PolyLayoutEngine
@@ -40,16 +38,13 @@ class PolyInputTest {
     }
 
     @Test
-    fun clickHoverScrollAndClip() {
+    fun clickHoverAndClip() {
         var clicks = 0
         var hovered = false
-        val state = ScrollState()
         val button = node(Modifier.size(50.dp, 20.dp).clickable(onHover = { hovered = it }) { clicks++ })
-        val filler = node(Modifier.size(50.dp, 200.dp))
-        val root = node(Modifier.size(100.dp, 100.dp).verticalScroll(state), button, filler)
+        val root = node(Modifier.size(100.dp, 100.dp), button)
+        root.style.clipToBounds = true
         PolyLayoutEngine.layout(root, 100f, 100f)
-        assertEquals(220f, state.content)
-        assertEquals(120f, state.maxValue)
 
         val input = PolyInput(root)
         input.move(10f, 10f)
@@ -64,14 +59,6 @@ class PolyInputTest {
         input.release(0)
         assertEquals(1, clicks)
 
-        assertTrue(input.scroll(-1f))
-        var t = 0L
-        while (state.step(t)) t += 16_000_000L
-        assertTrue(state.value > 0f)
-        state.scrollTo(1000f)
-        assertEquals(120f, state.value)
-
-        PolyLayoutEngine.layout(root, 100f, 100f)
         input.move(10f, -50f)
         assertFalse(hovered)
         assertFalse(input.press(0))

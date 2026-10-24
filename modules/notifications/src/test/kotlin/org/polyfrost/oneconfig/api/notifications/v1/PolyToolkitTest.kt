@@ -7,32 +7,23 @@ import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.polyfrost.compose.animation.core.springStep
-import org.polyfrost.compose.foundation.ScrollState
 import org.polyfrost.compose.foundation.clickable
 import org.polyfrost.compose.foundation.focusable
 import org.polyfrost.compose.foundation.hoverable
-import org.polyfrost.compose.foundation.layout.Arrangement
 import org.polyfrost.compose.foundation.layout.align
 import org.polyfrost.compose.foundation.layout.Box
 import org.polyfrost.compose.foundation.layout.Column
-import org.polyfrost.compose.foundation.layout.fillMaxSize
 import org.polyfrost.compose.foundation.layout.height
 import org.polyfrost.compose.foundation.layout.padding
 import org.polyfrost.compose.foundation.layout.size
 import org.polyfrost.compose.foundation.layout.weight
 import org.polyfrost.compose.foundation.layout.widthIn
-import org.polyfrost.compose.foundation.lazy.LazyColumn
-import org.polyfrost.compose.foundation.lazy.LazyListState
-import org.polyfrost.compose.foundation.text.TextFieldState
-import org.polyfrost.compose.foundation.verticalScroll
 import org.polyfrost.compose.input.PolyInput
 import org.polyfrost.compose.layout.LayoutType
 import org.polyfrost.compose.layout.PolyArrangement
 import org.polyfrost.compose.layout.PolyLayoutEngine
-import org.polyfrost.compose.layout.PolySize
 import org.polyfrost.compose.node.PolyNode
 import org.polyfrost.compose.node.TextNode
-import org.polyfrost.compose.node.requestLayout
 import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.runtime.PolyComposeClock
 import org.polyfrost.compose.runtime.PolyComposeRuntime
@@ -159,117 +150,6 @@ class PolyToolkitTest {
     private fun press(key: Int, mods: Int = 0) = KeyEvent(KeyEventType.KeyDown, key, mods)
 
     @Test
-    fun textFieldEditing() {
-        var clip: String? = null
-        val read = { clip }
-        val write = { s: String -> clip = s }
-        val shortcut = if (KeyEvent.MAC) KeyEvent.SUPER else KeyEvent.CONTROL
-        val word = if (KeyEvent.MAC) KeyEvent.ALT else KeyEvent.CONTROL
-        val s = TextFieldState()
-        for (c in "hello world") s.onKey(KeyEvent(KeyEventType.Char, 0, 0, c.code), read, write)
-        assertEquals("hello world", s.text)
-        s.onKey(KeyEvent(KeyEventType.Char, 0, 0, 0x1F600), read, write)
-        assertEquals("hello world😀", s.text)
-        s.onKey(press(KeyEvent.KEY_BACKSPACE), read, write)
-        assertEquals("hello world", s.text)
-
-        s.onKey(press(KeyEvent.KEY_LEFT, word or KeyEvent.SHIFT), read, write)
-        assertEquals("world", s.selectedText)
-        s.onKey(press(67, shortcut), read, write)
-        assertEquals("world", clip)
-        s.onKey(press(88, shortcut), read, write)
-        assertEquals("hello ", s.text)
-        s.onKey(press(KeyEvent.KEY_HOME), read, write)
-        s.onKey(press(86, shortcut), read, write)
-        assertEquals("worldhello ", s.text)
-        assertEquals(5, s.caret)
-
-        s.onKey(press(65, shortcut), read, write)
-        assertEquals(s.text, s.selectedText)
-        s.onKey(press(KeyEvent.KEY_DELETE), read, write)
-        assertEquals("", s.text)
-        clip = "a\nb"
-        s.onKey(press(86, shortcut), read, write)
-        assertEquals("a b", s.text)
-        assertFalse(s.onKey(press(KeyEvent.KEY_TAB), read, write))
-
-        assertEquals(1, s.indexAt(7f, PolyFont("x", 10f)))
-        assertEquals(0..1, s.wordAt(0))
-    }
-
-    @Test
-    fun textFieldUndoRedo() {
-        val read = { null }
-        val write = { _: String -> }
-        val shortcut = if (KeyEvent.MAC) KeyEvent.SUPER else KeyEvent.CONTROL
-        fun type(s: TextFieldState, t: String) = t.forEach { s.onKey(KeyEvent(KeyEventType.Char, 0, 0, it.code), read, write) }
-        val s = TextFieldState()
-        type(s, "hello")
-        s.onKey(press(KeyEvent.KEY_END), read, write)
-        type(s, " world")
-        s.onKey(press(KeyEvent.KEY_BACKSPACE), read, write)
-        assertEquals("hello worl", s.text)
-
-        s.onKey(press(KeyEvent.KEY_Z, shortcut), read, write)
-        assertEquals("hello world", s.text)
-        s.onKey(press(KeyEvent.KEY_Z, shortcut), read, write)
-        assertEquals("hello", s.text)
-        assertEquals(5, s.caret)
-        s.onKey(press(KeyEvent.KEY_Z, shortcut), read, write)
-        assertEquals("", s.text)
-        assertFalse(s.undo())
-
-        s.onKey(press(KeyEvent.KEY_Z, shortcut or KeyEvent.SHIFT), read, write)
-        assertEquals("hello", s.text)
-        s.onKey(press(KeyEvent.KEY_Y, shortcut), read, write)
-        assertEquals("hello world", s.text)
-        type(s, "!")
-        assertFalse(s.redo())
-        s.replaceText("x")
-        assertFalse(s.undo())
-    }
-
-    @Test
-    fun textFieldPreeditAndLines() {
-        val read = { null }
-        val write = { _: String -> }
-        val s = TextFieldState("ab")
-        s.onKey(KeyEvent(KeyEventType.Preedit, 0, 0, 1, "にほ"), read, write)
-        assertEquals("にほ", s.preedit)
-        assertEquals("ab", s.text)
-        assertTrue(s.onKey(press(KeyEvent.KEY_BACKSPACE), read, write))
-        assertEquals("ab", s.text)
-        s.onKey(KeyEvent(KeyEventType.Preedit, 0, 0, 0, ""), read, write)
-        s.onKey(KeyEvent(KeyEventType.Char, 0, 0, '日'.code), read, write)
-        assertEquals("ab日", s.text)
-        assertEquals("", s.preedit)
-
-        assertFalse(s.onKey(press(KeyEvent.KEY_ENTER), read, write))
-        val m = TextFieldState("one\ntwo", multiline = true)
-        m.moveCaret(1)
-        m.onKey(press(KeyEvent.KEY_DOWN), read, write)
-        assertEquals(5, m.caret)
-        m.onKey(press(KeyEvent.KEY_END), read, write)
-        m.onKey(press(KeyEvent.KEY_ENTER), read, write)
-        m.insert("x\r\ny")
-        assertEquals("one\ntwo\nx\ny", m.text)
-        m.onKey(press(KeyEvent.KEY_UP), read, write, PolyFont("x", 10f))
-        assertEquals(9, m.caret)
-        m.onKey(press(KeyEvent.KEY_HOME), read, write)
-        assertEquals(8, m.caret)
-        assertEquals(8, m.lineStartOf(2))
-        assertEquals(10, m.lineStartOf(9))
-
-        val w = TextFieldState("hello world foo\nab\nabcdefghij", multiline = true)
-        val ls = w.lines(PolyFont("x", 10f), 30f)
-        assertEquals(listOf(0 to 6, 6 to 12, 12 to 15, 16 to 18, 19 to 25, 25 to 29), ls.map { it.start to it.end })
-        assertEquals(listOf(false, false, true, true, false, true), ls.map { it.hard })
-        assertEquals(1, w.lineOf(ls, 6))
-        assertEquals(2, w.lineOf(ls, 15))
-        assertEquals(1, w.lines(PolyFont("x", 10f), 0f, "a b").size)
-    }
-
-    @Test
     fun inertSubtreeTakesNoFocusKeysOrPointer() {
         var keys = 0
         var clicks = 0
@@ -295,107 +175,6 @@ class PolyToolkitTest {
         input.key(2, 0)
         assertNull(input.focused)
         assertEquals(0, keys)
-    }
-
-    @Test
-    fun focusTraversalKeysAndOverlays() {
-        val keys = ArrayList<String>()
-        var focusA = false
-        val a = box(Modifier.size(10.dp, 10.dp).focusable { focusA = it }.onKeyDown { k, _ -> keys += "a$k"; k == 1 })
-        val b = box(Modifier.size(10.dp, 10.dp).focusable().onKeyDown { k, _ -> keys += "b$k"; k == 3 })
-        var rootKeys = 0
-        val root = node(LayoutType.Column, Modifier.size(100.dp, 100.dp).onKeyDown { k, _ -> k == 2 && run { rootKeys++; true } }, a, b)
-        PolyLayoutEngine.layout(root, 100f, 100f)
-        val input = PolyInput(root)
-
-        assertTrue(input.key(KeyEvent.KEY_TAB, 0))
-        assertSame(a, input.focused)
-        assertTrue(focusA)
-        keys.clear()
-        input.key(2, 0)
-        assertEquals(listOf("a2"), keys)
-        assertEquals(1, rootKeys)
-        input.key(KeyEvent.KEY_TAB, 0)
-        assertSame(b, input.focused)
-        assertFalse(focusA)
-        input.key(KeyEvent.KEY_TAB, KeyEvent.SHIFT)
-        assertSame(a, input.focused)
-
-        input.move(5f, 15f)
-        input.press(0)
-        input.release(0)
-        assertSame(b, input.focused)
-
-        var dismissed = 0
-        var under = 0
-        val popupChild = box(Modifier.size(30.dp, 30.dp).clickable { })
-        val popup = box(Modifier.onPointerEvent { it.type == PointerEventType.Outside && run { dismissed++; true } }, popupChild)
-        popup.style.overlay = true
-        popup.style.x = 50f
-        popup.style.y = 50f
-        val clipped = box(Modifier.size(20.dp, 20.dp).onPointerEvent { it.type == PointerEventType.Press && run { under++; true } }, popup)
-        clipped.style.clipToBounds = true
-        val root2 = node(LayoutType.Column, Modifier.size(100.dp, 100.dp), clipped)
-        PolyLayoutEngine.layout(root2, 100f, 100f)
-        assertEquals(50f, popup.x)
-        val input2 = PolyInput(root2)
-        input2.move(60f, 60f)
-        assertTrue(input2.press(0))
-        input2.release(0)
-        assertEquals(0, dismissed)
-        input2.move(5f, 5f)
-        assertTrue(input2.press(0))
-        assertEquals(1, dismissed)
-        assertEquals(0, under)
-
-        val menu = box(Modifier.size(40.dp, 50.dp))
-        menu.style.overlay = true
-        menu.style.overlayAnchor = Alignment.BottomStart
-        menu.style.y = 10f
-        val anchor = box(Modifier.size(40.dp, 20.dp), menu)
-        PolyLayoutEngine.layout(node(LayoutType.Column, Modifier.size(100.dp, 100.dp), box(Modifier.size(10.dp, 70.dp)), anchor), 100f, 100f)
-        assertEquals(70f, anchor.y)
-        assertEquals(10f, menu.y)
-    }
-
-    @Test
-    fun focusRequesterAndPinnedOverlay() {
-        val requester = FocusRequester()
-        var fieldFocused = false
-        val field = box(Modifier.size(10.dp, 10.dp).focusable { fieldFocused = it })
-        val editor = box(Modifier.size(50.dp, 50.dp).focusRequester(requester).focusable())
-        val root = node(LayoutType.Column, Modifier.size(100.dp, 100.dp), field, editor)
-        PolyLayoutEngine.layout(root, 100f, 100f)
-        val input = PolyInput(root)
-        input.focus(field)
-        input.refresh()
-        assertSame(field, input.focused)
-        requester.requestFocus()
-        Modifier.size(50.dp, 50.dp).focusRequester(requester).focusable().applyTo(editor.style)
-        input.refresh()
-        assertSame(editor, input.focused)
-        assertFalse(fieldFocused)
-        Modifier.size(50.dp, 50.dp).focusRequester(requester).focusable().applyTo(editor.style)
-        input.focus(field)
-        input.refresh()
-        assertSame(field, input.focused)
-
-        val pin = floatArrayOf(Float.NaN, 0f, 0f, 0f)
-        val menu = box(Modifier.size(40.dp, 20.dp))
-        menu.style.overlay = true
-        menu.style.overlayAnchor = Alignment.BottomStart
-        menu.style.overlayPin = pin
-        val anchor = box(Modifier.size(40.dp, 20.dp), menu)
-        val root2 = node(LayoutType.Column, Modifier.size(100.dp, 100.dp), anchor)
-        PolyLayoutEngine.layout(root2, 100f, 100f)
-        assertEquals(20f, menu.y)
-        Modifier.size(40.dp, 50.dp).applyTo(anchor.style)
-        PolyLayoutEngine.layout(root2, 100f, 100f)
-        assertEquals(50f, anchor.height)
-        assertEquals(20f, menu.y)
-        menu.style.overlayPin = null
-        PolyLayoutEngine.layout(root2, 100f, 100f)
-        assertEquals(50f, menu.y)
     }
 
     @Test
@@ -448,35 +227,6 @@ class PolyToolkitTest {
     }
 
     @Test
-    fun lazyColumnComposesOnlyNearTheViewport() {
-        val clock = PolyComposeClock()
-        val runtime = PolyComposeRuntime(clock)
-        val state = LazyListState()
-        val items = (0 until 1000).toList()
-        runtime.root.style.width = PolySize.Fill
-        runtime.root.style.height = PolySize.Fill
-        runtime.setContent {
-            LazyColumn(Modifier.fillMaxSize(), state = state, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(items, key = { it }) {
-                    Box(Modifier.size(100.dp, 40.dp))
-                }
-            }
-        }
-        var t = 1L
-        repeat(4) { runtime.update(200f, 200f, t); t += 16_000_000L }
-        val list = runtime.root.children.single()
-        assertTrue(list.children.size < 30, "composed ${list.children.size}")
-        assertEquals(1000 * 50f - 10f, state.scroll.content, 1f)
-
-        state.scroll.scrollTo(25_000f)
-        repeat(4) { runtime.update(200f, 200f, t); t += 16_000_000L }
-        assertTrue(state.firstIndex in 480..500, "first ${state.firstIndex}")
-        val top = list.children.first { it.y + it.height > list.y && it.style.tag != null }
-        assertEquals(0f, abs(top.y - list.y) % 50f, 0.5f)
-        runtime.dispose()
-    }
-
-    @Test
     fun springSettles() {
         var x = 1f
         var v = 0f
@@ -501,31 +251,55 @@ class PolyToolkitTest {
     }
 
     @Test
-    fun screenUpdateLaysOutOnlyWhenSomethingMoved() {
-        val clock = PolyComposeClock()
-        val runtime = PolyComposeRuntime(clock)
-        val scroll = ScrollState()
-        runtime.setContent {
-            Column(modifier = Modifier.size(100.dp, 100.dp).verticalScroll(scroll)) { repeat(10) { Box(Modifier.size(100.dp, 50.dp)) } }
-        }
-        var t = 1L
-        fun frame() = runtime.update(200f, 200f, t).also { t += 16_000_000L }
-        repeat(3) { frame() }
-        val first = runtime.root.children.single().children.first()
-        first.y = -1f
-        assertFalse(frame())
-        assertEquals(-1f, first.y)
-        scroll.scrollTo(60f)
-        assertTrue(frame())
-        assertEquals(-60f, first.y)
-        first.y = -1f
-        first.requestLayout()
-        assertTrue(frame())
-        assertEquals(-60f, first.y)
-        scroll.wheel(1f)
-        while (scroll.animating) assertTrue(frame())
-        assertEquals(-scroll.value, first.y)
-        assertFalse(frame())
-        runtime.dispose()
+    fun focusTraversalAndKeys() {
+        val keys = ArrayList<String>()
+        var focusA = false
+        val a = box(Modifier.size(10.dp, 10.dp).focusable { focusA = it }.onKeyDown { k, _ -> keys += "a$k"; k == 1 })
+        val b = box(Modifier.size(10.dp, 10.dp).focusable().onKeyDown { k, _ -> keys += "b$k"; k == 3 })
+        var rootKeys = 0
+        val root = node(LayoutType.Column, Modifier.size(100.dp, 100.dp).onKeyDown { k, _ -> k == 2 && run { rootKeys++; true } }, a, b)
+        PolyLayoutEngine.layout(root, 100f, 100f)
+        val input = PolyInput(root)
+
+        assertTrue(input.key(KeyEvent.KEY_TAB, 0))
+        assertSame(a, input.focused)
+        assertTrue(focusA)
+        keys.clear()
+        input.key(2, 0)
+        assertEquals(listOf("a2"), keys)
+        assertEquals(1, rootKeys)
+        input.key(KeyEvent.KEY_TAB, 0)
+        assertSame(b, input.focused)
+        assertFalse(focusA)
+        input.key(KeyEvent.KEY_TAB, KeyEvent.SHIFT)
+        assertSame(a, input.focused)
+
+        input.move(5f, 15f)
+        input.press(0)
+        input.release(0)
+        assertSame(b, input.focused)
+    }
+
+    @Test
+    fun focusRequesterMovesFocus() {
+        val requester = FocusRequester()
+        var fieldFocused = false
+        val field = box(Modifier.size(10.dp, 10.dp).focusable { fieldFocused = it })
+        val editor = box(Modifier.size(50.dp, 50.dp).focusRequester(requester).focusable())
+        val root = node(LayoutType.Column, Modifier.size(100.dp, 100.dp), field, editor)
+        PolyLayoutEngine.layout(root, 100f, 100f)
+        val input = PolyInput(root)
+        input.focus(field)
+        input.refresh()
+        assertSame(field, input.focused)
+        requester.requestFocus()
+        Modifier.size(50.dp, 50.dp).focusRequester(requester).focusable().applyTo(editor.style)
+        input.refresh()
+        assertSame(editor, input.focused)
+        assertFalse(fieldFocused)
+        Modifier.size(50.dp, 50.dp).focusRequester(requester).focusable().applyTo(editor.style)
+        input.focus(field)
+        input.refresh()
+        assertSame(field, input.focused)
     }
 }

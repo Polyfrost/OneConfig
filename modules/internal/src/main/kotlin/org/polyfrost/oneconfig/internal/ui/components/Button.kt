@@ -1,20 +1,20 @@
 package org.polyfrost.oneconfig.internal.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import org.polyfrost.compose.animation.animateColorAsState
-import org.polyfrost.compose.foundation.border
-import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
-import org.polyfrost.compose.foundation.layout.Box
-import org.polyfrost.compose.foundation.layout.padding
-import org.polyfrost.compose.foundation.layout.size
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.graphics.Color
-import org.polyfrost.compose.ui.graphics.copy
-import org.polyfrost.compose.ui.input.pointer.PointerIcon
-import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
-import org.polyfrost.compose.ui.unit.dp
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+
+enum class IconButtonType {
+    Ghost,
+    Filled;
+}
 
 @Composable
 fun IconButton(
@@ -30,29 +30,27 @@ fun IconButton(
 
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val iconColor = animateColorAsState(
+    val iconColor by animateColorAsState(
         if (!enabled) {
             LocalTheme.current.textColorSecondary.copy(alpha = 0.35f)
         } else {
             if (isHovered) hoveredForeground else foreground
         }
     )
-    val borderColor = animateColorAsState(
+    val borderColor by animateColorAsState(
         if (hoverBorder && enabled && isHovered) LocalTheme.current.borderColor
-        else Color.Transparent
+        else LocalTheme.current.borderColor.copy(0f)
     )
 
-    if (!hoverBorder) {
-        Icon(iconName, color = iconColor, modifier = Modifier.onClick(interactionSource, enabled, onClick).then(modifier))
-        return
-    }
-    Box(
-        Modifier.onClick(interactionSource, enabled, onClick).then(modifier)
-            .border(1.dp, borderColor, LocalTheme.current.buttonShape).padding(4.dp)
-            .then(if (enabled) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier)
-    ) {
-        Icon(iconName, color = iconColor, modifier = Modifier.size((modifier.sizeDp() - 8f).dp))
-    }
+    Icon(
+        iconName,
+        color = iconColor,
+        modifier = Modifier.onClick(interactionSource, enabled, onClick).then(modifier)
+            .then(
+                if (hoverBorder) Modifier.border(1.dp, borderColor, LocalTheme.current.buttonShape).padding(4.dp)
+                else Modifier
+            )
+    )
 }
 
 @Composable
@@ -68,7 +66,7 @@ fun SelectableIconButton(
 
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val iconColor = animateColorAsState(
+    val iconColor by animateColorAsState(
         if (isHovered || selected) hoveredForeground else foreground
     )
 

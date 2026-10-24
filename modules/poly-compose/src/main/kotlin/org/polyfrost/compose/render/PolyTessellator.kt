@@ -3,7 +3,6 @@ package org.polyfrost.compose.render
 import org.polyfrost.compose.ui.graphics.ImageBitmap
 import org.polyfrost.compose.ui.graphics.Brush
 import org.polyfrost.compose.ui.graphics.FilterQuality
-import org.polyfrost.compose.ui.graphics.LinearGradient
 import org.polyfrost.compose.ui.graphics.shadow.Shadow
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -20,12 +19,10 @@ import kotlin.math.sqrt
 abstract class PolyTessellator : PolyRenderer {
     protected class State(
         @JvmField var sx: Float, @JvmField var sy: Float, @JvmField var tx: Float, @JvmField var ty: Float,
-        @JvmField var alpha: Float, @JvmField var clip: FloatArray?, @JvmField var rclip: RClip?, @JvmField var mask: Mask? = null,
+        @JvmField var alpha: Float, @JvmField var clip: FloatArray?, @JvmField var rclip: RClip?,
     ) {
-        fun copy() = State(sx, sy, tx, ty, alpha, clip, rclip, mask)
+        fun copy() = State(sx, sy, tx, ty, alpha, clip, rclip)
     }
-
-    protected class Mask(val fade: PolyFade, val parent: Mask?)
 
     protected class RClip(val edge: FloatArray, val inner: FloatArray, val outer: FloatArray, val parent: RClip?, val safe: FloatArray, val box: FloatArray) {
         val invLen = FloatArray(edge.size / 2) { e ->
@@ -54,8 +51,7 @@ abstract class PolyTessellator : PolyRenderer {
 
     override fun rect(x: Float, y: Float, w: Float, h: Float, color: Int, radius: Float) {
         if (w <= 0f || h <= 0f) return
-        val r = rrectPoints(x, y, w, h, radius)
-        unclipped(x, y, w, h, radius) { fillPolygonPx(r, r.size / 2, color, convex = true) }
+        clippedFill(x, y, w, h, radius) { fillPolygonPx(it, it.size / 2, color, convex = true) }
     }
 
     override fun rectWithHole(x: Float, y: Float, w: Float, h: Float, holeX: Float, holeY: Float, holeW: Float, holeH: Float, holeRadius: Float, color: Int) {
@@ -100,11 +96,10 @@ abstract class PolyTessellator : PolyRenderer {
 
     override fun rectGradient(x: Float, y: Float, w: Float, h: Float, gradient: Brush, radius: Float) {
         if (w <= 0f || h <= 0f) return
-        val r = rrectPoints(x, y, w, h, radius)
         val s = state
         val tex: ImageBitmap
         val uv: (Float, Float, FloatArray) -> Unit
-        if (gradient is LinearGradient) {
+        if (gradient.linear) {
             tex = ramp(gradient)
             uv = { fx, fy, out -> out[0] = (0.5f + 255f * gradient.position((fx - s.tx) / s.sx, (fy - s.ty) / s.sy, x, y, w, h)) / 256f; out[1] = 0.5f }
         } else {
@@ -114,7 +109,7 @@ abstract class PolyTessellator : PolyRenderer {
         val g = PolyGlyphPage.bitmap(tex)
         begin(g?.page ?: bitmapTexture(tex), false)
         val pageUv: (Float, Float, FloatArray) -> Unit = if (g == null) uv else { fx, fy, out -> uv(fx, fy, out); out[0] = g.u(out[0]); out[1] = g.v(out[1]) }
-        unclipped(x, y, w, h, radius) { fillPolygonPx(r, r.size / 2, -1, convex = true, uv = pageUv, keepBatch = true) }
+        clippedFill(x, y, w, h, radius) { fillPolygonPx(it, it.size / 2, -1, convex = true, uv = pageUv, keepBatch = true) }
     }
 
     override fun rectStroke(x: Float, y: Float, w: Float, h: Float, color: Int, strokeWidth: Float, radius: Float) =
@@ -159,6 +154,70 @@ abstract class PolyTessellator : PolyRenderer {
             transformInPlace(loop)
             fillPolygonPx(loop, loop.size / 2, color, convex = false)
         }
+    }
+
+    override fun strokePolyline(points: FloatArray, closed: Boolean, color: Int, strokeWidth: Float, cap: Int) {
+        if (points.size < 4 || strokeWidth <= 0f) return
+        val p = dedupe(points)
+        val loop = (closed || hypot(points[0] - points[points.size - 2], points[1] - points[points.size - 1]) <= 1e-3f) && p.size >= 6
+        transformInPlace(p)
+        val n = p.size / 2
+        if (n < 2) return
+        val swPx = strokeWidth * scaleAvg()
+        val c = mulAlpha(color, if (swPx < 1f) swPx else 1f)
+        val half = max(swPx, 1f) / 2f
+        if (!loop && cap == CAP_SQUARE) {
+            fun extend(i: Int, from: Int) {
+                val dx = p[i * 2] - p[from * 2]; val dy = p[i * 2 + 1] - p[from * 2 + 1]
+                val l = hypot(dx, dy)
+                p[i * 2] += dx / l * half; p[i * 2 + 1] += dy / l * half
+            }
+            extend(0, 1)
+            extend(n - 1, n - 2)
+        }
+        val left = FloatArray(n * 2)
+        val right = FloatArray(n * 2)
+        for (i in 0 until n) {
+            val prev = if (loop || i > 0) (i + n - 1) % n else -1
+            val next = if (loop || i < n - 1) (i + 1) % n else -1
+            var mx = 0f; var my = 0f
+            if (prev >= 0) {
+                val dx = p[i * 2] - p[prev * 2]; val dy = p[i * 2 + 1] - p[prev * 2 + 1]
+                val l = hypot(dx, dy)
+                mx -= dy / l; my += dx / l
+            }
+            if (next >= 0) {
+                val dx = p[next * 2] - p[i * 2]; val dy = p[next * 2 + 1] - p[i * 2 + 1]
+                val l = hypot(dx, dy)
+                mx -= dy / l; my += dx / l
+            }
+            if (prev >= 0 && next >= 0) { mx /= 2f; my /= 2f }
+            val d2 = mx * mx + my * my
+            val k = if (d2 > 1e-6f) min(1f / d2, 4f) * half else half
+            left[i * 2] = p[i * 2] + mx * k; left[i * 2 + 1] = p[i * 2 + 1] + my * k
+            right[i * 2] = p[i * 2] - mx * k; right[i * 2 + 1] = p[i * 2 + 1] - my * k
+        }
+        if (loop) {
+            val leftOuter = abs(signedArea(left, n)) >= abs(signedArea(right, n))
+            strokeRing(if (leftOuter) left else right, if (leftOuter) right else left, n, c, band = half * 2f > 1.001f)
+            return
+        }
+        val segs = if (cap == CAP_ROUND) max(4, min(32, ceil(sqrt(half) * 3.2f).toInt())) else 0
+        val out = FloatArray((n * 2 + (segs - 1).coerceAtLeast(0) * 2) * 2)
+        var o = 0
+        fun cap(i: Int, from: FloatArray) {
+            val cx = p[i * 2]; val cy = p[i * 2 + 1]
+            val a0 = kotlin.math.atan2(from[i * 2 + 1] - cy, from[i * 2] - cx)
+            for (s in 1 until segs) {
+                val a = a0 - Math.PI.toFloat() * s / segs
+                out[o++] = cx + cos(a) * half; out[o++] = cy + sin(a) * half
+            }
+        }
+        for (i in 0 until n) { out[o++] = left[i * 2]; out[o++] = left[i * 2 + 1] }
+        cap(n - 1, left)
+        for (i in n - 1 downTo 0) { out[o++] = right[i * 2]; out[o++] = right[i * 2 + 1] }
+        cap(0, right)
+        fillPolygonPx(out, o / 2, c, convex = false)
     }
 
     override fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont) = glyphs(text, x, y, color, font, 0f, false)
@@ -296,6 +355,19 @@ abstract class PolyTessellator : PolyRenderer {
         }
     }
 
+    open fun stateKey(): Any {
+        val s = state
+        val out = arrayListOf(s.sx, s.sy, s.tx, s.ty, s.alpha)
+        s.clip?.forEach(out::add) ?: out.add(-1f)
+        var c = s.rclip
+        while (c != null) { c.box.forEach(out::add); c = c.parent }
+        return out
+    }
+
+    fun saveState(): Any = state.copy()
+
+    fun restoreState(saved: Any) { state = (saved as State).copy() }
+
     override fun save() {
         stack.addLast(state)
         state = state.copy()
@@ -308,16 +380,6 @@ abstract class PolyTessellator : PolyRenderer {
     override fun saveLayerAlpha(alpha: Float) {
         save()
         state.alpha *= alpha
-    }
-
-    override fun saveLayerFade(fade: PolyFade) {
-        save()
-        val s = if (fade.vertical) state.sy else state.sx
-        val t = if (fade.vertical) state.ty else state.tx
-        val stops = FloatArray(fade.stops.size) { fade.stops[it] * s + t }
-        val px = if (s >= 0f) PolyFade(fade.vertical, stops, fade.alphas)
-        else PolyFade(fade.vertical, stops.reversedArray(), fade.alphas.reversedArray())
-        state.mask = Mask(px, state.mask)
     }
 
     override fun translate(dx: Float, dy: Float) {
@@ -368,6 +430,60 @@ abstract class PolyTessellator : PolyRenderer {
         val ax = x * state.sx + state.tx; val bx = (x + w) * state.sx + state.tx
         val ay = y * state.sy + state.ty; val by = (y + h) * state.sy + state.ty
         return floatArrayOf(min(ax, bx), min(ay, by), max(ax, bx), max(ay, by), r * abs(state.sx), r * abs(state.sy))
+    }
+
+    private inline fun clippedFill(x: Float, y: Float, w: Float, h: Float, radius: Float, fill: (FloatArray) -> Unit) {
+        val saved = state.rclip
+        if (saved == null || state.sx <= 0f || state.sy <= 0f) {
+            val r = rrectPoints(x, y, w, h, radius)
+            return unclipped(x, y, w, h, radius) { fill(r) }
+        }
+        val b = boxPx(x, y, w, h, radius)
+        val k = saved.box
+        val e = 1e-3f
+        val covers = b[0] <= k[0] + e && b[1] <= k[1] + e && b[2] >= k[2] - e && b[3] >= k[3] - e && b[4] <= k[4] + e && b[5] <= k[5] + e
+        val sf = saved.safe
+        val safe = (b[0] >= sf[0] && b[1] >= sf[1] && b[2] <= sf[2] && b[3] <= sf[3]) || (b[0] >= sf[4] && b[1] >= sf[5] && b[2] <= sf[6] && b[3] <= sf[7])
+        if (!covers && (safe || b[4] > 0.5f || b[5] > 0.5f)) {
+            val r = rrectPoints(x, y, w, h, radius)
+            return unclipped(x, y, w, h, radius) { fill(r) }
+        }
+        val poly = if (covers) saved.edge else clipToBox(saved.edge, b[0], b[1], b[2], b[3])
+        if (poly.size < 6) return
+        state.rclip = saved.parent
+        try {
+            unclipped((k[0] - state.tx) / state.sx, (k[1] - state.ty) / state.sy, (k[2] - k[0]) / state.sx, (k[3] - k[1]) / state.sy, k[4] / state.sx) { fill(poly) }
+        } finally {
+            state.rclip = saved
+        }
+    }
+
+    private fun clipToBox(p: FloatArray, l: Float, t: Float, r: Float, b: Float): FloatArray {
+        var cur = p
+        for (side in 0 until 4) {
+            val n = cur.size / 2
+            if (n == 0) break
+            val bound = when (side) { 0 -> l; 1 -> t; 2 -> r; else -> b }
+            val axis = side % 2
+            val keepAbove = side < 2
+            fun inside(i: Int) = if (keepAbove) cur[i * 2 + axis] >= bound else cur[i * 2 + axis] <= bound
+            val out = FloatArray((n + 1) * 2)
+            var k = 0
+            for (i in 0 until n) {
+                val j = (i + 1) % n
+                val ii = inside(i); val ij = inside(j)
+                if (ii) { out[k++] = cur[i * 2]; out[k++] = cur[i * 2 + 1] }
+                if (ii != ij) {
+                    val a0 = cur[i * 2 + axis]; val a1 = cur[j * 2 + axis]
+                    val f = (bound - a0) / (a1 - a0)
+                    val x = cur[i * 2] + (cur[j * 2] - cur[i * 2]) * f
+                    val y = cur[i * 2 + 1] + (cur[j * 2 + 1] - cur[i * 2 + 1]) * f
+                    if (axis == 0) { out[k++] = bound; out[k++] = y } else { out[k++] = x; out[k++] = bound }
+                }
+            }
+            cur = out.copyOf(k)
+        }
+        return cur
     }
 
     private inline fun unclipped(x: Float, y: Float, w: Float, h: Float, radius: Float, draw: () -> Unit) {
@@ -714,9 +830,7 @@ abstract class PolyTessellator : PolyRenderer {
         }
         var rclip = state.rclip
         while (rclip != null && quadInside(rclip)) rclip = rclip.parent
-        var mask = state.mask
-        while (mask != null && maskOpaque(mask.fade)) mask = mask.parent
-        if (crosses == 0 && rclip == null && mask == null) {
+        if (crosses == 0 && rclip == null) {
             for (i in 0 until 4) emit(qx[i], qy[i], qu[i], qv[i], qc[i])
         } else {
             val quad = Poly()
@@ -724,35 +838,8 @@ abstract class PolyTessellator : PolyRenderer {
             var polys = listOf(quad)
             if (crosses != 0) polys = boxCut(quad, box!!, crosses)
             if (rclip != null && polys.isNotEmpty()) polys = clipQuad(polys, rclip)
-            while (mask != null) {
-                val m = mask.fade
-                polys = polys.flatMap { faded(it, m) }
-                mask = mask.parent
-            }
             for (p in polys) emitFan(p)
         }
-    }
-
-    private fun maskOpaque(fade: PolyFade): Boolean {
-        val pos = if (fade.vertical) qy else qx
-        val span = fade.span(pos[0])
-        return fade.opaque(span) && (1 until 4).all { fade.span(pos[it]) == span }
-    }
-
-    private fun faded(p: Poly, fade: PolyFade): List<Poly> {
-        val out = ArrayList<Poly>()
-        var rest = p
-        for (stop in fade.stops) {
-            if (rest.size < 3) break
-            val before = Poly()
-            rest = splitAxis(rest, fade.vertical, stop, before)
-            if (before.size >= 3) out.add(before)
-        }
-        if (rest.size >= 3) out.add(rest)
-        for (piece in out) for (i in 0 until piece.size) {
-            piece.c[i] = coverColor(piece.c[i], fade.alphaAt(if (fade.vertical) piece.y[i] else piece.x[i]), batchPremul)
-        }
-        return out
     }
 
     private fun clearOutside(box: FloatArray): Boolean {
@@ -953,13 +1040,15 @@ abstract class PolyTessellator : PolyRenderer {
             override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, V>?) = size > max
         }
 
-        private val ramps = lru<Brush, ImageBitmap>(64)
+        private val ramps = lru<Pair<List<PolyColor>, List<Float>?>, ImageBitmap>(64)
         private val boxRasters = lru<Pair<Brush, Int>, ImageBitmap>(32)
         private val masks = lru<Long, ShadowMask>(32)
         private val mcOutlines = lru<String, FloatArray>(256)
         private val mcRasters = HashMap<Pair<PolyGlyphPage.Face, Int>, PolyGlyphPage.Raster?>()
 
         private const val MC_GRID = 2
+        private const val CAP_ROUND = 1
+        private const val CAP_SQUARE = 2
 
         private fun mcOutline(r: PolyGlyphPage.Rasterizer, text: String): FloatArray {
             val placed = ArrayList<PolyGlyphPage.Raster>()
@@ -1055,7 +1144,7 @@ abstract class PolyTessellator : PolyRenderer {
             return ImageBitmap(w, h, px)
         }
 
-        private fun ramp(g: Brush): ImageBitmap = ramps.getOrPut(g) { bitmapOf(256, 1) { x, _ -> g.sample(x / 255f) } }
+        private fun ramp(g: Brush): ImageBitmap = ramps.getOrPut(g.colors to g.stops) { bitmapOf(256, 1) { x, _ -> g.sample(x / 255f) } }
 
         private fun boxRaster(g: Brush, aspect: Float): ImageBitmap {
             val q = (aspect * 16f).roundToInt().coerceIn(1, 1024)

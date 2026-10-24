@@ -1,91 +1,77 @@
 package org.polyfrost.oneconfig.internal.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import org.polyfrost.compose.animation.animateColorAsState
-import org.polyfrost.compose.animation.core.animateFloatAsState
-import org.polyfrost.compose.foundation.background
-import org.polyfrost.compose.foundation.border
-import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
-import org.polyfrost.compose.foundation.layout.Arrangement
-import org.polyfrost.compose.foundation.layout.Box
-import org.polyfrost.compose.foundation.layout.Column
-import org.polyfrost.compose.foundation.layout.Row
-import org.polyfrost.compose.foundation.layout.align
-import org.polyfrost.compose.foundation.layout.fillMaxHeight
-import org.polyfrost.compose.foundation.layout.fillMaxSize
-import org.polyfrost.compose.foundation.layout.fillMaxWidth
-import org.polyfrost.compose.foundation.layout.height
-import org.polyfrost.compose.foundation.layout.offset
-import org.polyfrost.compose.foundation.layout.padding
-import org.polyfrost.compose.foundation.layout.size
-import org.polyfrost.compose.foundation.layout.weight
-import org.polyfrost.compose.foundation.layout.width
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.draw.dropShadow
-import org.polyfrost.compose.ui.graphics.Color
-import org.polyfrost.compose.ui.graphics.copy
-import org.polyfrost.compose.ui.graphics.graphicsLayer
-import org.polyfrost.compose.ui.graphics.shadow.Shadow
-import org.polyfrost.compose.ui.input.pointer.PointerIcon
-import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
-import org.polyfrost.compose.ui.platform.LocalDensity
-import org.polyfrost.compose.ui.text.font.FontWeight
-import org.polyfrost.compose.ui.unit.DpOffset
-import org.polyfrost.compose.ui.unit.dp
-import org.polyfrost.compose.ui.unit.sp
-import org.polyfrost.compose.ui.window.Popup
-import org.polyfrost.compose.ui.window.PopupProperties
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.PopupProperties
+import androidx.navigation.compose.currentBackStackEntryAsState
+import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.internal.ui.navigation.isOn
 import org.polyfrost.oneconfig.internal.ui.navigation.sidebarSections
-import org.polyfrost.oneconfig.internal.ui.poly.OpenTransition
-import org.polyfrost.oneconfig.internal.ui.poly.SvgImage
-import org.polyfrost.oneconfig.internal.ui.shell.ShellHost
-import org.polyfrost.oneconfig.internal.ui.shell.ShellNav
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
-import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShellNavController
 import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.withOpacityPercent
 
-internal val SidebarWidth = 264.dp
-
 @Composable
-fun Sidebar(nav: ShellNav, host: ShellHost, clearSearch: () -> Unit) {
-    val flipTopOrder = ShellState.flipTopOptionOrder
-    Row(
+fun Sidebar() {
+    val appearance = LocalShell.current.appearance
+    val flipTopOrder = appearance.flipTopOptionOrder
+    Column(
         modifier = Modifier.fillMaxHeight()
-            .width(SidebarWidth)
-            .background(LocalTheme.current.sidebarBackground.withOpacityPercent(ShellState.sidebarOpacity)),
+            .width(264.dp)
+            .background(LocalTheme.current.sidebarBackground.withOpacityPercent(appearance.sidebarOpacity))
+            .rightBorder(LocalTheme.current.borderColor, 1f),
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Column(
-            modifier = Modifier.weight(1f).fillMaxHeight(),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Navigation(nav, host, clearSearch, showTopOptions = !flipTopOrder)
-            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                if (flipTopOrder) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 18.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        TopOptionsSection(host)
-                    }
+        Navigation(showTopOptions = !flipTopOrder)
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            if (flipTopOrder) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 18.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    TopOptionsSection()
                 }
-                Account()
             }
+            Account()
         }
-        Box(Modifier.width(1.dp).fillMaxHeight().background(LocalTheme.current.borderColor))
     }
 }
 
 @Composable
-private fun Navigation(nav: ShellNav, host: ShellHost, clearSearch: () -> Unit, showTopOptions: Boolean) {
+private fun Navigation(showTopOptions: Boolean) {
     Column(
         modifier = Modifier.fillMaxWidth()
             .padding(top = 28.dp),
@@ -93,45 +79,62 @@ private fun Navigation(nav: ShellNav, host: ShellHost, clearSearch: () -> Unit, 
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Branding()
-        NavigationEntries(nav, host, clearSearch, showTopOptions)
+        NavigationEntries(showTopOptions)
     }
 }
 
 @Composable
 private fun Branding() {
     val logoPath = LocalTheme.current.logoPath
-    val tint = rememberAccentBrandTint(logoPath)
-    SvgImage(logoPath, 167f, 19f, LocalDensity.current.density, recolor = tint)
+    val logo = rememberSvgResourcePainter(logoPath) ?: return
+    Image(
+        painter = logo,
+        contentDescription = null,
+        colorFilter = rememberAccentBrandTint(logoPath),
+        modifier = Modifier.size(167.dp, 19.dp).accentGradientFill()
+    )
 }
 
 @Composable
-private fun TopOptionsSection(host: ShellHost) {
+private fun TopOptionsSection() {
     NavigationSection {
         NavigationEntry(
             "hud",
             translated("oneconfig.sidebar.edit_hud", "Edit HUD"),
         ) {
-            host.editHud()
+            HudManager.openEditor()
         }
     }
 }
 
 @Composable
-private fun NavigationEntries(nav: ShellNav, host: ShellHost, clearSearch: () -> Unit, showTopOptions: Boolean) {
+private fun NavigationEntries(showTopOptions: Boolean) {
+    val controller = LocalShellNavController.current
+    val shell = LocalShell.current
+
     Column(
         verticalArrangement = Arrangement.spacedBy(18.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (showTopOptions) {
-            TopOptionsSection(host)
+            TopOptionsSection()
         }
 
         sidebarSections().forEach {
+            val entry by controller.currentBackStackEntryAsState()
+
             NavigationSection(it.title) {
                 it.entries.forEach { def ->
-                    val selected = nav.isOn(def.route, def.arg)
-                    NavigationEntry(def.icon, def.label, selected) {
-                        if (selected && nav.current == def.route) clearSearch() else nav.navigate(def.route, def.arg)
+                    val selected = entry.isOn(def.route)
+
+                    NavigationEntry(
+                        def.icon,
+                        def.label,
+                        def.route,
+                        selected
+                    ) {
+                        val nav = shell.navigation
+                        if (nav.currentRoute == def.route) shell.search.clear() else nav.navigate(def.route)
                     }
                 }
             }
@@ -158,27 +161,27 @@ private fun NavigationSection(title: String? = null, content: @Composable () -> 
 }
 
 @Composable
-private fun NavigationEntry(icon: String, title: String, isSelected: Boolean = false, onSelect: () -> Unit) {
+private fun NavigationEntry(icon: String, title: String, route: Any? = null, isSelected: Boolean = false, onSelect: (Any?) -> Unit) {
     val interactionSource = rememberInteractionSource()
 
     val isHovered by interactionSource.collectIsHoveredAsState()
 
     val selectedAlpha by animateFloatAsState(if (isSelected) 1f else 0f)
-    val textAndIconColor = animateColorAsState(
+    val textAndIconColor by animateColorAsState(
         if (isSelected) LocalTheme.current.accentTextColor
         else if (isHovered) LocalTheme.current.textColor
         else LocalTheme.current.textColor.copy(0.8f)
     )
-    val borderColor = animateColorAsState(
+    val borderColor by animateColorAsState(
         if (isHovered || isSelected) LocalTheme.current.borderColor
-        else Color.Transparent
+        else LocalTheme.current.borderColor.copy(0f)
     )
 
     Row(
         modifier = Modifier.size(225.dp, 33.dp)
             .background(AccentBrush, LocalTheme.current.sideBarNavigationEntryShape, selectedAlpha)
             .border(1.dp, borderColor, LocalTheme.current.sideBarNavigationEntryShape)
-            .onClick(interactionSource) { onSelect() }
+            .onClick(interactionSource) { onSelect(route) }
             .pointerHoverIcon(PointerIcon.Hand),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -191,40 +194,37 @@ private fun NavigationEntry(icon: String, title: String, isSelected: Boolean = f
 @Composable
 private fun NotificationBell() {
     var expanded by remember { mutableStateOf(false) }
+    var bellHeightPx by remember { mutableStateOf(0) }
     val interactionSource = rememberInteractionSource()
 
     Box(
         modifier = Modifier
+            .onSizeChanged { bellHeightPx = it.height }
             .onClick(interactionSource) {
                 expanded = !expanded
                 if (!expanded) NotificationsManager.markAllRead()
             }
             .pointerHoverIcon(PointerIcon.Hand)
     ) {
-        Icon("bell", color = LocalTheme.current.textColor, modifier = Modifier.size(18.dp))
-        if (NotificationsManager.unreadCount > 0) {
-            val circle = LocalTheme.current.circleShape
-            Box(
-                Modifier.size(8.dp).align(Alignment.TopEnd).graphicsLayer(translationX = 2f, translationY = -2f)
-                    .dropShadow(circle, Shadow(radius = 7.dp, color = Accent))
-            ) {
-                Box(Modifier.size(6.dp).align(Alignment.Center).background(Accent, circle))
-            }
-        }
+        IconWithIndicator(
+            iconName = "bell",
+            color = LocalTheme.current.textColor,
+            modifier = Modifier.size(18.dp),
+            showIndicator = NotificationsManager.unreadCount > 0,
+        )
 
         if (expanded) {
-            Popup(
+            ShellPopup(
                 // open up and to the right of the bell
                 alignment = Alignment.BottomStart,
-                offset = DpOffset(0.dp, (-12).dp),
+                offset = IntOffset(0, -(bellHeightPx + 12)),
                 onDismissRequest = {
                     expanded = false
                     NotificationsManager.markAllRead()
                 },
                 properties = PopupProperties(focusable = true),
-                anchor = Alignment.TopStart,
             ) {
-                OpenTransition { NotificationsCenter() }
+                Box(Modifier.shellTransition()) { NotificationsCenter() }
             }
         }
     }
@@ -232,10 +232,11 @@ private fun NotificationBell() {
 
 @Composable
 private fun Account() {
-    Column(
-        modifier = Modifier.fillMaxWidth().height(73.dp),
+    Box(
+        modifier = Modifier.fillMaxWidth().height(73.dp)
+            .topBorder(LocalTheme.current.borderColor, 1f),
+        contentAlignment = Alignment.Center
     ) {
-        Box(Modifier.fillMaxWidth().height(1.dp).background(LocalTheme.current.borderColor))
         Row(
             Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -249,9 +250,10 @@ private fun Account() {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
-                    Text(ShellState.playerName, color = LocalTheme.current.textColor)
+                    val session = LocalShell.current.session
+                    Text(session.playerName, color = LocalTheme.current.textColor)
                     Text(
-                        ShellState.versionLabel.ifEmpty { "OneConfig" },
+                        session.versionLabel.ifBlank { "OneConfig" },
                         color = LocalTheme.current.textColorSecondary,
                         fontSize = 11.sp
                     )

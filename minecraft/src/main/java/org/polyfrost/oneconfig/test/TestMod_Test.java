@@ -35,6 +35,7 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
 
 public final class TestMod_Test {
     public static void initialize() {
+        ComposeUiCheck_Test.INSTANCE.initialize();
         EventManager.register(InitializationEvent.class, () -> {
             System.err.println("TestMod::init");
             CommandManager.register(new TestCommand_Test());

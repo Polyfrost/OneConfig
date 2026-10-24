@@ -66,8 +66,8 @@ import org.polyfrost.oneconfig.internal.ui.compose.McFontService;
 //? if >= 1.21.11
 import org.polyfrost.oneconfig.internal.ui.compose.BlazeHud;
 import org.polyfrost.oneconfig.internal.ui.compose.GlHost;
-import org.polyfrost.oneconfig.internal.ui.poly.PolyHudEditorScreen;
-import org.polyfrost.oneconfig.internal.ui.poly.ShellScreen;
+import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
+import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen;
 import org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar;
 import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudRenderer;
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindConflicts;
@@ -107,7 +107,7 @@ public class OneConfig
 
     private static void registerCommands() {
         Command<FabricClientCommandSource> executor = (c) -> {
-            ShellScreen.openLastSession();
+            OneConfigUIScreen.openLastSession();
             return Command.SINGLE_SUCCESS;
         };
 
@@ -129,13 +129,13 @@ public class OneConfig
                 )
                 .then(CommandManager.literal("credits")
                         .executes((ctx) -> {
-                            Platform.screen().display(org.polyfrost.oneconfig.internal.ui.poly.CreditsScreen.open());
+                            Platform.screen().display(OneConfigUIScreen.forRoute(org.polyfrost.oneconfig.internal.ui.navigation.graph.CreditsGraph.INSTANCE));
                             return Command.SINGLE_SUCCESS;
                         })
                 )
                 .then(CommandManager.literal("keybinds")
                         .executes((ctx) -> {
-                            Platform.screen().display(org.polyfrost.oneconfig.internal.ui.poly.KeybindsScreen.open());
+                            Platform.screen().display(OneConfigUIScreen.forRoute(org.polyfrost.oneconfig.internal.ui.navigation.graph.KeybindsGraph.INSTANCE));
                             return Command.SINGLE_SUCCESS;
                         })
                 )
@@ -164,7 +164,7 @@ public class OneConfig
                 return true;
             }
             try {
-                ShellScreen.openLastSession();
+                OneConfigUIScreen.openLastSession();
             } catch (Throwable t) {
                 //~ if >= 26.2 'gui.getChat' -> 'gui.hud.getChat'
                 Minecraft.getInstance().gui.hud.getChat()
@@ -185,7 +185,7 @@ public class OneConfig
      * tab list stays hidden even while the key is down
      */
     private static boolean isHudEditor(Object screen) {
-        return screen instanceof PolyHudEditorScreen;
+        return screen instanceof HudEditorUIScreen;
     }
 
     private static boolean isTabListVisible() {
@@ -282,7 +282,7 @@ public class OneConfig
                 HudEditorToggleEvent.class, e -> {
                     if (e.open) {
                         if (!isHudEditor(Platform.screen().current())) {
-                            Platform.screen().display(new PolyHudEditorScreen());
+                            Platform.screen().display(HudEditorUIScreen.open(Platform.screen().current() instanceof OneConfigUIScreen));
                         }
                     } else if (!e.screenAlreadyGone) {
                         if (isHudEditor(Platform.screen().current())) {
@@ -366,7 +366,7 @@ public class OneConfig
         firstLaunchToast = Notifications.builder(title, message)
                 .icon(Notifications.icon("/assets/oneconfig/brand/oneconfig-icon.svg", 64))
                 .persistent()
-                .onClick(ShellScreen::openLastSession)
+                .onClick(OneConfigUIScreen::openLastSession)
                 .send();
     }
 

@@ -8,6 +8,8 @@ import org.polyfrost.compose.node.ImageNode
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.runtime.PolyApplier
 import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.geometry.Size
+import org.polyfrost.compose.ui.graphics.drawscope.DrawScope
 import org.polyfrost.compose.ui.graphics.ColorFilter
 import org.polyfrost.compose.ui.graphics.FilterQuality
 import org.polyfrost.compose.ui.graphics.ImageBitmap
@@ -24,7 +26,7 @@ fun Image(
         factory = { ImageNode(bitmap).also { it.style.layoutType = LayoutType.Box } },
         update = {
             set(bitmap) { image = it; remeasure() }
-            set(colorFilter) { tint = it?.color; animatedTint = it?.animated }
+            set(colorFilter) { tint = it?.color }
             set(filterQuality) { this.filterQuality = it }
             set(modifier) { it.applyTo(style); autoWidth = false; autoHeight = false; remeasure() }
         },
@@ -46,3 +48,7 @@ fun Canvas(
         },
     )
 }
+
+@Composable
+fun Canvas(modifier: Modifier, live: Boolean = false, onDraw: DrawScope.() -> Unit) =
+    Canvas(modifier, live) { x, y, w, h -> DrawScope(this, x, y, Size(w, h)).onDraw() }

@@ -50,8 +50,6 @@ object PolyComposeHost {
 
     val notifications = PolyComposeClock()
 
-    val screens = PolyComposeClock()
-
     internal val recomposer: CompositionContext get() = huds.recomposer
 
     fun frame(nanos: Long = System.nanoTime()) {

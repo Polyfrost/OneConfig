@@ -1,9 +1,9 @@
 package org.polyfrost.oneconfig.api.ui.v1.components
 
 import androidx.compose.runtime.Composable
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.unit.DpOffset
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.DpOffset
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 

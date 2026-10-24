@@ -1,33 +1,31 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
-import org.polyfrost.compose.animation.animateColorAsState
-import org.polyfrost.compose.animation.core.animateDpAsState
-import org.polyfrost.compose.animation.core.spring
-import org.polyfrost.compose.foundation.background
-import org.polyfrost.compose.foundation.border
-import org.polyfrost.compose.foundation.hoverable
-import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
-import org.polyfrost.compose.foundation.layout.*
-import org.polyfrost.compose.render.PolyFont
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.draw.clip
-import org.polyfrost.compose.ui.input.pointer.PointerIcon
-import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
-import org.polyfrost.compose.ui.layout.onSizeChanged
-import org.polyfrost.compose.ui.platform.LocalDensity
-import org.polyfrost.compose.ui.text.font.FontWeight
-import org.polyfrost.compose.ui.unit.coerceAtLeast
-import org.polyfrost.compose.ui.unit.dp
-import org.polyfrost.compose.ui.unit.min
-import org.polyfrost.compose.ui.unit.sp
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.coerceAtLeast
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.settings.RadioButtonOptionData
+import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.poly.richText
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.concentric
@@ -41,7 +39,6 @@ private val RadioItemMinHeight = 32.dp
 fun RadioButtonOption(data: RadioButtonOptionData) {
     val theme = LocalTheme.current
     val density = LocalDensity.current
-    val optionWidth = LocalOptionWidth.current
 
     val enumClass = when {
         data.prop.type.isEnum -> data.prop.type
@@ -60,22 +57,19 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
         else -> emptyList()
     }
 
-    val value = rememberPropValue(data.prop)
-    val selectedIdx = if (value is Enum<*>) value.ordinal else value as? Int ?: 0
+    val initialValue = data.prop.shown()
+    var selectedIdx by remember(data.prop) {
+        mutableStateOf(if (initialValue is Enum<*>) initialValue.ordinal else initialValue as? Int ?: 0)
+    }
 
     // each item's width is measured so the indicator can slide between them
-    val font = theme.typography.family.resolve(FontWeight.Normal)
-    val itemWidths = remember(options, font, optionWidth) {
-        val measure = PolyFont(font, 12f)
-        val share = (optionWidth - RadioPadding * 2) / options.size.coerceAtLeast(1)
-        options.map { min((measure.measureTextWidth(richText(it, font, font, font).first) + 16f).dp, share) }
-    }
+    val itemWidths = remember(options.size) { Array(options.size) { mutableIntStateOf(0) } }
     var rowHeight by remember(options.size) { mutableIntStateOf(0) }
-    val indicatorReady = selectedIdx in itemWidths.indices
+    val indicatorReady = selectedIdx in itemWidths.indices && itemWidths[selectedIdx].intValue > 0
 
     Box(
         modifier = Modifier
-            .widthIn(max = optionWidth)
+            .widthIn(max = LocalOptionWidth.current)
             .border(1.dp, theme.borderColor, RadioShape)
             .clip(RadioShape)
             .background(theme.componentBackground),
@@ -85,11 +79,11 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
         ) {
             if (indicatorReady) {
                 val indicatorOffset by animateDpAsState(
-                    targetValue = itemWidths.take(selectedIdx).fold(0.dp) { acc, w -> acc + w },
+                    targetValue = with(density) { itemWidths.take(selectedIdx).sumOf { it.intValue }.toDp() },
                     animationSpec = spring(),
                 )
                 val indicatorWidth by animateDpAsState(
-                    targetValue = itemWidths[selectedIdx],
+                    targetValue = with(density) { itemWidths[selectedIdx].intValue.toDp() },
                     animationSpec = spring(),
                 )
                 val indicatorHeight by animateDpAsState(
@@ -100,7 +94,7 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
                     modifier = Modifier
                         .height(indicatorHeight)
                         .width(indicatorWidth)
-                        .offset(x = indicatorOffset)
+                        .offset { IntOffset(indicatorOffset.roundToPx(), 0) }
                         .clip(RadioItemShape)
                         .background(Accent),
                 )
@@ -114,13 +108,15 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
                     val interactionSource = rememberInteractionSource()
                     val isHovered by interactionSource.collectIsHoveredAsState()
                     val selected = index == selectedIdx
-                    val color = animateColorAsState(
+                    val color by animateColorAsState(
                         if (selected || isHovered) theme.textColor else theme.textColorSecondary
                     )
                     Box(
                         modifier = Modifier
-                            .width(itemWidths[index])
+                            .weight(1f, fill = false)
+                            .onSizeChanged { itemWidths[index].intValue = it.width }
                             .onClick(interactionSource) {
+                                selectedIdx = index
                                 @Suppress("UNCHECKED_CAST")
                                 if (enumClass != null) {
                                     (data.prop as Property<Any>).set(values[index])
@@ -136,10 +132,8 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
                     ) {
                         Text(
                             option,
-                            Modifier.widthIn(max = itemWidths[index] - 16.dp),
                             color = color,
                             fontSize = 12.sp,
-                            softWrap = true,
                         )
                     }
                 }

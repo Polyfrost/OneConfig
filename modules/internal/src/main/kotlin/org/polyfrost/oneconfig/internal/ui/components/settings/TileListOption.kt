@@ -1,22 +1,20 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import org.polyfrost.compose.foundation.background
-import org.polyfrost.compose.foundation.border
-import org.polyfrost.compose.foundation.layout.Box
-import org.polyfrost.compose.foundation.layout.padding
-import org.polyfrost.compose.foundation.layout.size
-import org.polyfrost.compose.foundation.layout.weight
-import org.polyfrost.compose.foundation.layout.width
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.draw.clip
-import org.polyfrost.compose.ui.unit.DpOffset
-import org.polyfrost.compose.ui.unit.dp
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.internal.ui.api.settings.TileListOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.dropdown.SimpleDropdownMenu
@@ -44,9 +42,7 @@ fun <T : PickerEntry> TileListOption(
     unavailableKey: String = PickerStrings.Unavailable,
     rowIcon: @Composable (id: String, entry: T?, modifier: Modifier) -> Unit = { _, entry, modifier ->
         if (entry != null) icon(entry, modifier, 1f)
-        else Box(modifier, contentAlignment = Alignment.Center) {
-            Icon("eye-off", modifier = Modifier.size(TileRowIconSize - 10.dp), color = LocalTheme.current.textColorSecondary)
-        }
+        else Icon("eye-off", modifier = modifier.padding(5.dp), color = LocalTheme.current.textColorSecondary)
     },
 ) {
     val theme = LocalTheme.current
@@ -64,6 +60,7 @@ fun <T : PickerEntry> TileListOption(
             onAdd = { expanded = true },
             showAddWhenFull = true,
             entryHeight = TileRowHeight,
+            containScroll = true,
         ) { entry, ctx ->
             val resolved = byId[entry.value]
             rowIcon(entry.value, resolved, Modifier.size(TileRowIconSize))
@@ -92,7 +89,6 @@ fun <T : PickerEntry> TileListOption(
                     if (maxEntries == 1) expanded = false
                 },
                 icon = icon,
-                width = SelectorWidth,
                 modifier = Modifier
                     .clip(SelectorShape)
                     .background(theme.popupBackground, SelectorShape)

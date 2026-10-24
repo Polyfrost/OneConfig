@@ -2,8 +2,8 @@ package org.polyfrost.oneconfig.api.ui.v1.item
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.Modifier
 import net.minecraft.world.item.ItemStack
-import org.polyfrost.compose.ui.Modifier
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemIcon
 import org.polyfrost.oneconfig.internal.ui.components.item.MinecraftItemCatalogService

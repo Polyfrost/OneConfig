@@ -1,32 +1,30 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
-import org.polyfrost.compose.animation.animateColorAsState
-import org.polyfrost.compose.animation.core.animateFloatAsState
-import org.polyfrost.compose.foundation.*
-import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
-import org.polyfrost.compose.foundation.layout.*
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.draw.clip
-import org.polyfrost.compose.ui.graphics.copy
-import org.polyfrost.compose.ui.input.pointer.PointerIcon
-import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
-import org.polyfrost.compose.ui.layout.onPlaced
-import org.polyfrost.compose.ui.text.style.TextOverflow
-import org.polyfrost.compose.ui.unit.DpOffset
-import org.polyfrost.compose.ui.unit.dp
-import org.polyfrost.compose.ui.unit.sp
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.settings.DropdownOptionData
+import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.*
 import org.polyfrost.oneconfig.internal.ui.components.dropdown.SimpleDropdownMenu
-import org.polyfrost.oneconfig.internal.ui.poly.FadingEdges
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.concentric
-import org.polyfrost.oneconfig.internal.ui.components.Icon
-import org.polyfrost.compose.foundation.layout.size
 
 private val MenuPadding = 4.dp
 private val DropdownShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
@@ -55,26 +53,30 @@ fun DropdownOption(data: DropdownOptionData) {
     }
     val optionValues = data.optionValues ?: options
 
-    val value = rememberPropValue(data.prop)
-    val selectedIdx = when (value) {
-        is Enum<*> -> values.indexOf(value).takeIf { it >= 0 } ?: 0
-        is String -> optionValues.indexOf(value).takeIf { it >= 0 } ?: 0
-        else -> value as? Int ?: 0
+    val initialValue = data.prop.shown()
+    var selectedIdx by remember(data.prop) {
+        mutableStateOf(
+            when (initialValue) {
+                is Enum<*> -> values.indexOf(initialValue).takeIf { it >= 0 } ?: 0
+                is String -> optionValues.indexOf(initialValue).takeIf { it >= 0 } ?: 0
+                else -> initialValue as? Int ?: 0
+            }
+        )
     }
     val selectedName = options.getOrElse(selectedIdx) { "—" }
 
     val triggerInteraction = rememberInteractionSource()
     val isHovered by triggerInteraction.collectIsHoveredAsState()
-    val borderColor = animateColorAsState(
+    val borderColor by animateColorAsState(
         if (expanded) Accent
         else theme.borderColor
     )
-    val textColor = animateColorAsState(
+    val textColor by animateColorAsState(
         if (isHovered || expanded) theme.textColor
         else theme.textColorSecondary
     )
-    val backgroundColor = animateColorAsState(
-        if (expanded) theme.componentBackground.lerp(Accent.withAlpha(255), 0.2f)
+    val backgroundColor by animateColorAsState(
+        if (expanded) Accent.copy(0.2f).compositeOver(theme.componentBackground)
         else theme.componentBackground
     )
     val chevronRotation by animateFloatAsState(
@@ -101,13 +103,13 @@ fun DropdownOption(data: DropdownOptionData) {
         ) {
             Text(
                 selectedName,
-                modifier = Modifier.weight(1f).padding(end = 8.dp),
+                modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp),
                 color = textColor,
                 fontSize = 13.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Icon("up", textColor, Modifier.size(18.dp), rotation = chevronRotation)
+            Icon("up", modifier = Modifier.rotate(chevronRotation), color = textColor)
         }
 
         SimpleDropdownMenu(
@@ -116,7 +118,6 @@ fun DropdownOption(data: DropdownOptionData) {
             offset = DpOffset(0.dp, 10.dp),
         ) {
             val scrollState = rememberScrollState()
-            var menuHeight by remember { mutableFloatStateOf(0f) }
             Box(
                 modifier = Modifier
                     .width(LocalOptionWidth.current)
@@ -128,7 +129,7 @@ fun DropdownOption(data: DropdownOptionData) {
                 Column(
                     modifier = Modifier
                         .heightIn(max = 280.dp)
-                        .onPlaced { menuHeight = it.height }
+                        .fadingEdges(scrollState, theme.componentBackground)
                         .verticalScroll(scrollState)
                         .padding(MenuPadding)
                         .fillMaxWidth(),
@@ -139,7 +140,7 @@ fun DropdownOption(data: DropdownOptionData) {
                         val selected = index == selectedIdx
                         val isHovered by optionSource.collectIsHoveredAsState()
 
-                        val backgroundColor = animateColorAsState(
+                        val backgroundColor by animateColorAsState(
                             if (selected) Accent
                             else if (isHovered) theme.modCardBackground
                             else theme.modCardBackground.copy(0f)
@@ -150,6 +151,7 @@ fun DropdownOption(data: DropdownOptionData) {
                                 .fillMaxWidth()
                                 .background(backgroundColor, itemShape)
                                 .onClick(optionSource) {
+                                    selectedIdx = index
                                     @Suppress("UNCHECKED_CAST")
                                     if (enumClass != null) {
                                         (data.prop as Property<Any>).set(values[index])
@@ -168,7 +170,6 @@ fun DropdownOption(data: DropdownOptionData) {
                         }
                     }
                 }
-                FadingEdges(scrollState, theme.componentBackground, Modifier.fillMaxWidth().height(menuHeight.dp))
             }
         }
     }

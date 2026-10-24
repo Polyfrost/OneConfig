@@ -36,9 +36,6 @@ object HudDesignSession {
     @Volatile
     var activeSelection: List<Hud> = emptyList()
 
-    @JvmStatic
-    var pointer: () -> Pair<Float, Float>? = { null }
-
     private val commandQueue = Channel<StudioCommand>(Channel.UNLIMITED)
 
     /**

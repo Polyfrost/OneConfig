@@ -1,11 +1,11 @@
 package org.polyfrost.oneconfig.api.ui.v1.components
 
-import org.polyfrost.compose.foundation.ScrollState
+import androidx.compose.foundation.ScrollState
 import androidx.compose.runtime.Composable
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.graphics.Color
-import org.polyfrost.compose.ui.unit.Dp
-import org.polyfrost.compose.ui.unit.dp
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 

@@ -1,0 +1,229 @@
+package org.polyfrost.oneconfig.internal.ui.compose.impls
+
+import androidx.compose.animation.core.EaseIn
+import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import com.mojang.blaze3d.platform.InputConstants
+import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.api.hud.v1.HudManager
+import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
+import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ui.components.RetainedVisibility
+import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
+import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
+import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
+import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignStudio
+import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
+import org.polyfrost.oneconfig.internal.ui.shell.HudEditorRoute
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
+import org.polyfrost.oneconfig.internal.ui.shell.ShellController
+import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
+import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
+import org.polyfrost.oneconfig.internal.ui.themes.Theme
+import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
+
+//? if > 1.8.9 {
+import net.minecraft.client.gui.GuiGraphicsExtractor
+//?}
+
+//? if < 1.21.11 && > 1.8.9 {
+/*import org.lwjgl.glfw.GLFW
+*///?}
+
+private val LOGGER = LogManager.getLogger("OneConfig/HudEditor")
+
+class HudEditorUIScreen private constructor() : ComposeScreen() {
+    companion object {
+        private var instance: HudEditorUIScreen? = null
+
+        @JvmStatic
+        fun open(fromOneConfig: Boolean): HudEditorUIScreen {
+            val screen = instance ?: HudEditorUIScreen().also { instance = it }
+            screen.enteredFromOneConfig = fromOneConfig
+            return screen
+        }
+    }
+
+    @Volatile private var everOpened = false
+
+    override val retainsScene: Boolean get() = true
+
+    @Volatile private var closeRequested = false
+    @Volatile private var closeRequestedAt = 0L
+    @Volatile private var closeAnimationMs = 0L
+
+    private fun beginClose() {
+        if (closeRequested) return
+        closeRequested = true
+        closeRequestedAt = System.currentTimeMillis()
+        closeAnimationMs = guiCloseAnimationMillis()
+        UiSounds.play(UiSoundEvent.CLOSE)
+        UiSounds.releaseAmbience()
+    }
+
+    private fun cancelClose(): Boolean {
+        if (!closeRequested) return false
+        closeRequested = false
+        requestOpenCallback?.invoke()
+        UiSounds.play(UiSoundEvent.OPEN)
+        UiSounds.acquireAmbience()
+        return true
+    }
+
+    @Volatile private var returningToOneConfig = false
+
+    private var enteredFromOneConfig = false
+
+    private fun returnToOneConfig() {
+        returningToOneConfig = true
+        Platform.screen().display(if (enteredFromOneConfig) OneConfigUIScreen.resume() else OneConfigUIScreen.open())
+    }
+
+    private var requestCloseCallback: (() -> Unit)? = null
+    private var requestOpenCallback: (() -> Unit)? = null
+
+    override val scrollSpeed: Float get() = 0.5f
+
+    override fun init() {
+        everOpened = true
+        updateAccent()
+        HudManager.onEditorScreenAdded()
+        HudManager.editorOpenRevision.intValue++
+        closeRequested = false
+        closeRequestedAt = 0L
+        closeAnimationMs = 0L
+        returningToOneConfig = false
+        UiSounds.acquireAmbience()
+        ShellController.shared.session.resume()
+        super.init()
+        requestOpenCallback?.invoke()
+    }
+
+    override fun removed() {
+        if (!returningToOneConfig) {
+            if (OneConfigConfig.restoreHudEditor) ShellController.shared.navigation.recordLastRoute(HudEditorRoute)
+            ShellController.shared.session.markClosed(System.currentTimeMillis())
+        }
+        UiSounds.releaseAmbience()
+        ShellController.shared.session.stop()
+        HudManager.onEditorScreenRemoved()
+        super.removed()
+    }
+
+    override fun isPauseScreen(): Boolean = OneConfigConfig.pauseGame
+
+    private fun handleOneConfigKeybind(): Boolean {
+        if (closeRequested) return cancelClose()
+        if (OneConfigConfig.keybindClosesGui) {
+            OneConfigConfig.notifyKeybindClosedGui()
+            beginClose()
+            requestCloseCallback?.invoke()
+        } else {
+            returnToOneConfig()
+        }
+        return true
+    }
+
+    override fun handleKeyPressed(key: Int, modifiers: Int): Boolean {
+        if (key == InputConstants.KEY_ESCAPE) {
+            if (!closeRequested) {
+                beginClose()
+                requestCloseCallback?.invoke()
+            }
+            return true
+        }
+        val toggleKey = OneConfigConfig.oneConfigKeybind.keyCodes?.firstOrNull()
+        if (toggleKey != null && key == toggleKey && !KeybindRecordingBus.isRecording) {
+            return handleOneConfigKeybind()
+        }
+        return false
+    }
+
+    override fun handleMouseClicked(button: Int): Boolean {
+        if (KeybindRecordingBus.isRecording) return false
+        //~ if < 1.21.11 && > 1.8.9 'InputConstants.MOUSE_BUTTON_4' -> 'GLFW.GLFW_MOUSE_BUTTON_4'
+        if (button >= InputConstants.MOUSE_BUTTON_4 &&
+            KeybindManager.isTriggeredByMouse(OneConfigConfig.oneConfigKeybind, button)
+        ) {
+            return handleOneConfigKeybind()
+        }
+        return false
+    }
+
+    //? if > 1.8.9 {
+    //~ if >= 26.1 'render' -> 'extractRenderState'
+    override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
+    //?} else
+    //override fun render(mouseX: Int, mouseY: Int, tickDelta: Float) {
+        if (Platform.screen().current<Any?>() !== this) return
+        if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= closeAnimationMs) {
+            //? if < 1.21.8 && > 1.8.9
+            //renderBackground(ctx, mouseX, mouseY, tickDelta)
+            Platform.screen().close()
+            return
+        }
+        if (client.level == null) {
+            HudManager.inWorld = false
+            val sw = Platform.screen().guiWidth().toFloat()
+            val sh = Platform.screen().guiHeight().toFloat()
+            HudManager.guiScreenWidth = sw
+            HudManager.guiScreenHeight = sh
+            HudManager.prepare(sw, sh)
+            ItemCatalog.renderHudIcons()
+        }
+        HudEditorViewport.update(Platform.screen().windowWidth(), Platform.screen().windowHeight())
+        //? if > 1.8.9 {
+        //~ if >= 26.1 'render' -> 'extractRenderState'
+        super.extractRenderState(ctx, mouseX, mouseY, tickDelta)
+        //?} else
+        //super.render(mouseX, mouseY, tickDelta)
+    }
+
+    @Composable
+    override fun compose() {
+        DisposableEffect(Unit) {
+            onDispose {
+                if (Platform.screen().current<Any?>() !== this@HudEditorUIScreen) {
+                    HudManager.onEditorScreenRemoved()
+                }
+            }
+        }
+
+        var visible by remember { mutableStateOf(false) }
+        LaunchedEffect(Unit) { visible = true }
+
+        val requestClose: () -> Unit = { visible = false }
+        val requestOpen: () -> Unit = { visible = true }
+        SideEffect {
+            requestCloseCallback = requestClose
+            requestOpenCallback = requestOpen
+        }
+
+        val exitMs = guiCloseAnimationMillis().toInt().coerceAtLeast(1)
+        RetainedVisibility(
+            visible = visible,
+            enter = tween(200, easing = EaseOutCubic),
+            exit = tween(exitMs, easing = EaseIn),
+            modifier = Modifier.fillMaxSize(),
+            hiddenScale = 0.92f,
+            openKey = HudManager.editorOpenRevision.intValue,
+        ) { _ ->
+            CompositionLocalProvider(
+                LocalLifecycleOwner provides ShellController.shared.session,
+                LocalViewModelStoreOwner provides ShellController.shared.session,
+                LocalShell provides ShellController.shared,
+            ) {
+                Theme(pixelGrid = true) {
+                    HudDesignStudio(visible)
+                }
+            }
+        }
+    }
+}

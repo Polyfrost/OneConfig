@@ -4,19 +4,15 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.polyfrost.compose.foundation.background
-import org.polyfrost.compose.foundation.layout.offsetX
 import org.polyfrost.compose.foundation.layout.size
-import org.polyfrost.compose.foundation.verticalScroll
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.render.PolyGlyphPage
 import org.polyfrost.compose.render.PolyRenderer
 import org.polyfrost.compose.render.PolyTessellator
 import org.polyfrost.compose.ui.draw.alpha
 import org.polyfrost.compose.ui.draw.drawWithContent
-import org.polyfrost.compose.ui.draw.dropShadow
 import org.polyfrost.compose.ui.graphics.Brush
 import org.polyfrost.compose.ui.graphics.ImageBitmap
-import org.polyfrost.compose.ui.graphics.RectangleShape
 import org.polyfrost.compose.ui.graphics.shadow.Shadow
 import org.polyfrost.compose.ui.unit.DpOffset
 import org.polyfrost.compose.ui.unit.dp
@@ -57,78 +53,6 @@ class PolyTessellatorTest {
         val round = alphas(true)
         assertEquals(listOf(255, 255, 255, 255, 255), listOf(round[1], round[3], round[4], round[5], round[7]))
         assertTrue(round[0] in 100..200)
-    }
-
-    @Test
-    fun scrollSkipsChildrenOutsideViewport() {
-        val scroll = org.polyfrost.compose.foundation.ScrollState()
-        val list = org.polyfrost.compose.node.PolyNode()
-        list.style.layoutType = org.polyfrost.compose.layout.LayoutType.Column
-        org.polyfrost.compose.ui.Modifier.size(100.dp, 100.dp).verticalScroll(scroll).applyTo(list.style)
-        repeat(4) { i ->
-            val item = org.polyfrost.compose.node.PolyNode()
-            var m = org.polyfrost.compose.ui.Modifier.size(100.dp, 100.dp).background(PolyColor(-1))
-            if (i == 2) m = m.dropShadow(RectangleShape, Shadow(radius = 8.dp, color = PolyColor(0x80000000.toInt()), offset = DpOffset(0.dp, 4.dp)))
-            m.applyTo(item.style)
-            item.parent = list
-            list.children += item
-        }
-        org.polyfrost.compose.layout.PolyLayoutEngine.layout(list, 100f, 100f)
-        scroll.scrollTo(100f)
-        org.polyfrost.compose.layout.PolyLayoutEngine.layout(list, 100f, 100f)
-        val r = Recorder().also { list.render(org.polyfrost.compose.render.RenderContext(it)) }
-        assertEquals(listOf(0f, 100f), r.rectYs)
-    }
-
-    @Test
-    fun animatedAlphaDrawsLiveOnlyInFlight() {
-        val alpha = androidx.compose.runtime.mutableFloatStateOf(0.3f)
-        val node = org.polyfrost.compose.node.PolyNode()
-        org.polyfrost.compose.ui.Modifier.background(PolyColor(-1)).alpha(alpha, 0.6f).applyTo(node.style)
-        node.width = 10f; node.height = 10f
-        fun draw() = Recorder().also { node.renderFaded(org.polyfrost.compose.render.RenderContext(it)) }
-        val flying = draw()
-        assertEquals(1, flying.lives)
-        assertTrue(flying.done().first().colors[0] ushr 24 < 128)
-        alpha.floatValue = 0.6f
-        val settled = draw()
-        assertEquals(0, settled.lives)
-        assertTrue(settled.done().first().colors[0] ushr 24 > 128)
-    }
-
-    @Test
-    fun animatedOffsetDrawsLiveOnlyInFlight() {
-        val x = androidx.compose.runtime.mutableFloatStateOf(3f)
-        val node = org.polyfrost.compose.node.PolyNode()
-        org.polyfrost.compose.ui.Modifier.background(PolyColor(-1)).offsetX(x, 24f).applyTo(node.style)
-        node.x = 24f; node.width = 10f; node.height = 10f
-        fun draw() = Recorder().also { node.renderFaded(org.polyfrost.compose.render.RenderContext(it)) }
-        fun Batch.minX() = (0 until colors.size).minOf { verts[it * 4] }
-        val flying = draw()
-        assertEquals(1, flying.lives)
-        assertEquals(2.5f, flying.done().first().minX(), 0.01f)
-        x.floatValue = 24f
-        val settled = draw()
-        assertEquals(0, settled.lives)
-        assertEquals(23.5f, settled.done().first().minX(), 0.01f)
-    }
-
-    @Test
-    fun animatedBackgroundDrawsLiveOnlyInFlight() {
-        val target = PolyColor(0xFF0000FF.toInt())
-        val color = androidx.compose.runtime.mutableStateOf(PolyColor(0xFFFF0000.toInt()))
-        val node = org.polyfrost.compose.node.PolyNode()
-        node.style.background = target
-        node.style.animatedBackground = color
-        node.width = 10f; node.height = 10f
-        fun draw() = Recorder().also { node.renderFaded(org.polyfrost.compose.render.RenderContext(it)) }
-        val flying = draw()
-        assertEquals(1, flying.lives)
-        assertEquals(0xFFFF0000.toInt(), flying.done().first().colors[0])
-        color.value = PolyColor(0xFF0000FF.toInt())
-        val settled = draw()
-        assertEquals(0, settled.lives)
-        assertEquals(0xFF0000FF.toInt(), settled.done().first().colors[0])
     }
 
     private fun assertWinding(b: Batch) {
@@ -183,6 +107,16 @@ class PolyTessellatorTest {
         val shaped = Recorder().run { scale(2f, 2f); clipRRect(0f, 0f, 100f, 50f, 10f); rect(0f, 0f, 100f, 50f, -1, 10f); done().single() }
         val free = Recorder().run { scale(2f, 2f); clipRect(0f, 0f, 100f, 50f); rect(0f, 0f, 100f, 50f, -1, 10f); done().single() }
         assertEquals(free.verts.toList(), shaped.verts.toList())
+        val covering = Recorder().run { scale(2f, 2f); clipRRect(0f, 0f, 100f, 50f, 10f); rect(-5f, -5f, 110f, 60f, -1, 4f); done().single() }
+        assertEquals(free.verts.toList(), covering.verts.toList())
+        val footer = Recorder().run { clipRRect(0f, 0f, 100f, 50f, 10f); rect(0f, 30f, 100f, 20f, -1, 0f); done() }
+        footer.forEach(::assertWinding)
+        assertEquals(255, footer.alphaAt(50.2f, 40.2f))
+        assertEquals(255, footer.alphaAt(4.2f, 40.2f))
+        assertEquals(0, footer.alphaAt(1.2f, 48.8f), "outside the rounded corner")
+        assertEquals(0, footer.alphaAt(50.2f, 28.2f), "above the rect")
+        for (p in 0 until 100) assertTrue(footer.alphaAt(p + 0.37f, 30f + p * 0.19f) <= 256, "overlap at $p")
+        assertTrue(footer.sumOf { it.colors.size } < Recorder().run { clipRRect(0f, 0f, 100f, 50f, 10f); clipRect(-1f, 29f, 102f, 30f); rect(-1f, 0f, 102f, 60f, -1, 0f); done() }.sumOf { it.colors.size } + 64)
 
         val corner = draw(10f, 0f, 0f, 20f, 20f)
         assertWinding(corner)
@@ -228,28 +162,6 @@ class PolyTessellatorTest {
             val dx = x - 6f; val dy = y - 6f
             if (dx > 0f && dy > 0f && b.colors[i] ushr 24 != 0) assertTrue(kotlin.math.hypot(dx, dy) <= 4.6f, "($x, $y) past the outer corner")
         }
-    }
-
-    @Test
-    fun fadeMaskCutsAndFades() {
-        val r = Recorder()
-        r.translate(0f, 10f)
-        r.saveLayerFade(org.polyfrost.compose.render.PolyFade(true, floatArrayOf(5f, 15f), floatArrayOf(1f, 0f)))
-        r.rect(0f, 0f, 10f, 20f, -1, 0f)
-        r.rect(0f, 0f, 10f, 4f, -1, 0f)
-        r.restore()
-        val b = r.done().single()
-        assertWinding(b)
-        for (i in 0 until b.colors.size) {
-            val x = b.verts[i * 4]
-            val y = b.verts[i * 4 + 1]
-            if (x !in 0f..10f || y !in 10f..30f) continue
-            val a = (b.colors[i] ushr 24) / 255f
-            val expected = ((25f - y) / 10f).coerceIn(0f, 1f)
-            assertEquals(expected, a, 0.01f, "alpha at ($x, $y)")
-        }
-        val ys = (0 until b.colors.size).map { b.verts[it * 4 + 1] }.toSet()
-        assertTrue(15f in ys && 25f in ys, "cut at both stops")
     }
 
     @Test
@@ -447,5 +359,66 @@ class PolyTessellatorTest {
         val b = Recorder().also { node.renderFaded(org.polyfrost.compose.render.RenderContext(it)) }.done().single()
         assertEquals(0xFFFF0000.toInt(), b.colors.first())
         assertEquals(0xFF0000FF.toInt(), b.colors.last { it ushr 24 == 0xFF })
+    }
+
+    private fun Batch.solidArea(): Float {
+        var sum = 0f
+        for (q in 0 until colors.size / 4) {
+            if ((0 until 4).any { colors[q * 4 + it] ushr 24 != 255 }) continue
+            var a = 0f
+            for (i in 0 until 4) {
+                val p = (q * 4 + i) * 4; val n = (q * 4 + (i + 1) % 4) * 4
+                a += verts[p] * verts[n + 1] - verts[n] * verts[p + 1]
+            }
+            sum += -a / 2f
+        }
+        return sum
+    }
+
+    private fun List<Batch>.bounds(): FloatArray {
+        val out = floatArrayOf(Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE)
+        for (b in this) for (v in 0 until b.verts.size / 4) {
+            val x = b.verts[v * 4]; val y = b.verts[v * 4 + 1]
+            out[0] = minOf(out[0], x); out[1] = minOf(out[1], y); out[2] = maxOf(out[2], x); out[3] = maxOf(out[3], y)
+        }
+        return out
+    }
+
+    @Test
+    fun polylineStrokesMiterAndCap() {
+        val l = Recorder().run { strokePolyline(floatArrayOf(0f, 0f, 100f, 0f, 100f, 50f), false, -1, 10f, 0); done().single() }
+        assertWinding(l)
+        assertTrue(l.solidArea() in 1300f..1500f, "area ${l.solidArea()}")
+        assertEquals(105.5f, listOf(l).bounds()[2], 0.01f)
+        assertEquals(-5.5f, listOf(l).bounds()[1], 0.01f)
+
+        fun capStart(cap: Int) = Recorder().run { strokePolyline(floatArrayOf(10f, 10f, 50f, 10f), false, -1, 10f, cap); done() }.bounds()[0]
+        assertEquals(9.5f, capStart(0), 0.01f)
+        assertEquals(4.5f, capStart(1), 0.2f)
+        assertEquals(4.5f, capStart(2), 0.01f)
+    }
+
+    @Test
+    fun closedPolylineStrokesARing() {
+        val ring = Recorder().run { strokePolyline(floatArrayOf(0f, 0f, 100f, 0f, 100f, 100f, 0f, 100f), true, -1, 10f, 0); done().single() }
+        assertWinding(ring)
+        assertTrue(ring.solidArea() in 3600f..4000f, "area ${ring.solidArea()}")
+        assertEquals(-5.5f, listOf(ring).bounds()[0], 0.01f)
+    }
+
+    @Test
+    fun drawScopeRotatesGeometry() {
+        val r = Recorder()
+        val scope = org.polyfrost.compose.ui.graphics.drawscope.DrawScope(org.polyfrost.compose.render.RenderContext(r), 0f, 0f, org.polyfrost.compose.ui.geometry.Size(100f, 100f))
+        scope.rotate(90f) { drawLine(PolyColor.WHITE, org.polyfrost.compose.ui.geometry.Offset(10f, 50f), org.polyfrost.compose.ui.geometry.Offset(90f, 50f), strokeWidth = 2f) }
+        val b = r.done().bounds()
+        assertEquals(48.5f, b[0], 0.01f); assertEquals(51.5f, b[2], 0.01f)
+        assertEquals(9.5f, b[1], 0.01f); assertEquals(90.5f, b[3], 0.01f)
+
+        val arc = Recorder()
+        org.polyfrost.compose.ui.graphics.drawscope.DrawScope(org.polyfrost.compose.render.RenderContext(arc), 0f, 0f, org.polyfrost.compose.ui.geometry.Size(100f, 100f))
+            .drawArc(PolyColor.WHITE, 0f, 90f, false, style = org.polyfrost.compose.ui.graphics.drawscope.Stroke(4f))
+        val ab = arc.done().bounds()
+        assertTrue(ab[0] > 45f && ab[1] > 45f && ab[2] in 101f..103f && ab[3] in 101f..103f, ab.toList().toString())
     }
 }

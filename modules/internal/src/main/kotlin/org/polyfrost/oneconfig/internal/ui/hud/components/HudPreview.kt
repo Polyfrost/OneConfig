@@ -1,26 +1,40 @@
 package org.polyfrost.oneconfig.internal.ui.hud.components
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.snapshots.Snapshot
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.apache.logging.log4j.LogManager
-import org.polyfrost.compose.foundation.Canvas
-import org.polyfrost.compose.foundation.layout.Box
+import org.polyfrost.compose.backend.drawPoly
+import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.runtime.PolyComposeHost
 import org.polyfrost.compose.runtime.PolyComposeRuntime
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.platform.LocalDensity
-import org.polyfrost.compose.ui.text.style.TextAlign
-import org.polyfrost.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
-import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.localizedValue
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -127,51 +141,66 @@ internal fun HudPreviewCanvas(
     alwaysRedraw: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val density = LocalDensity.current.density / Platform.screen().surfaceRatio()
-    HudManager.previewRevision.intValue
-
-    Canvas(modifier, live = alwaysRedraw) { x, y, width, height ->
-        val s = scale / density
-        save()
-        clipRect(x, y, width, height)
-        translate(x, y)
-        this.scale(s, s)
-        Snapshot.withoutReadObservation {
-            state.runtime.root.render(this)
+    var animationRevision by remember { mutableIntStateOf(0) }
+    LaunchedEffect(alwaysRedraw) {
+        if (!alwaysRedraw) return@LaunchedEffect
+        while (true) {
+            withFrameNanos { animationRevision++ }
         }
-        restore()
     }
+
+    Canvas(modifier) {
+        HudManager.previewRevision.intValue
+        if (alwaysRedraw) animationRevision
+        val w = size.width
+        val h = size.height
+        drawPoly { ctx ->
+            val r = ctx.renderer
+            r.save()
+            r.clipRect(0f, 0f, w, h)
+            r.scale(scale, scale)
+            Snapshot.withoutReadObservation { state.runtime.root.render(ctx) }
+            r.restore()
+        }
+    }
+}
+
+private object IntrinsicSafeMeasurePolicy : MeasurePolicy {
+    override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
+        val placeables = measurables.map { it.measure(constraints) }
+        val width = placeables.maxOfOrNull { it.width } ?: constraints.minWidth
+        val height = placeables.maxOfOrNull { it.height } ?: constraints.minHeight
+        return layout(width, height) { placeables.forEach { it.place(0, 0) } }
+    }
+
+    override fun IntrinsicMeasureScope.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int) = 0
+    override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int) = 0
+    override fun IntrinsicMeasureScope.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int) = 0
+    override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int) = 0
 }
 
 @Composable
 internal fun HudPreview(hud: Hud, modifier: Modifier = Modifier) {
     val state = rememberHudPreview(hud)
-    val density = LocalDensity.current.density / Platform.screen().surfaceRatio()
-    HudManager.previewRevision.intValue
+    val density = LocalDensity.current.density
 
-    if (!state.ready) {
-        Box(modifier, contentAlignment = Alignment.Center) {
-            Text(
-                localizedValue(hud.title) ?: hud.title,
-                color = LocalTheme.current.textColor,
-                fontSize = 16.sp,
-                textAlign = TextAlign.Center,
-            )
+    Layout(modifier = modifier, measurePolicy = IntrinsicSafeMeasurePolicy, content = {
+        BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            val availableW = maxWidth.value * density
+            val availableH = maxHeight.value * density
+            if (!state.ready || availableW <= 0f || availableH <= 0f) {
+                Text(
+                    localizedValue(hud.title) ?: hud.title,
+                    color = LocalTheme.current.textColor,
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.Center,
+                )
+                return@BoxWithConstraints
+            }
+            val scale = hudPreviewScale(state.naturalWidth, state.naturalHeight, availableW, availableH)
+            val w = (state.naturalWidth * scale / density).dp
+            val h = (state.naturalHeight * scale / density).dp
+            HudPreviewCanvas(state, scale, hud.alwaysRedraw, Modifier.size(w, h))
         }
-        return
-    }
-    val naturalW = state.naturalWidth
-    val naturalH = state.naturalHeight
-    Canvas(modifier, live = hud.alwaysRedraw) { x, y, availableW, availableH ->
-        if (availableW <= 0f || availableH <= 0f) return@Canvas
-        val scale = hudPreviewScale(naturalW, naturalH, availableW * density, availableH * density) / density
-        save()
-        clipRect(x, y, availableW, availableH)
-        translate(x + (availableW - naturalW * scale) / 2f, y + (availableH - naturalH * scale) / 2f)
-        this.scale(scale, scale)
-        Snapshot.withoutReadObservation {
-            state.runtime.root.render(this)
-        }
-        restore()
-    }
+    })
 }

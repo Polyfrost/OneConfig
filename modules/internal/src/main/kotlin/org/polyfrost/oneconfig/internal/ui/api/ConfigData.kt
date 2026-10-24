@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.api
 
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
@@ -23,4 +25,6 @@ interface ConfigData {
     val onOpen: (() -> Unit)? get() = null
 
     val toggle: ModToggle? get() = ModToggles.toggleFor(id)
+
+    val preview: (@Composable (Modifier) -> Unit)? get() = null
 }

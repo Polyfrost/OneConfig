@@ -1,9 +1,9 @@
 package org.polyfrost.oneconfig.api.ui.v1.components
 
-import org.polyfrost.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import org.polyfrost.compose.ui.Modifier
+import androidx.compose.ui.Modifier
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 

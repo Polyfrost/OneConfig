@@ -1,19 +1,16 @@
 package org.polyfrost.oneconfig.internal.ui.components.effect
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import org.polyfrost.compose.foundation.Image
-import org.polyfrost.compose.foundation.layout.Box
-import org.polyfrost.compose.foundation.layout.size
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.draw.alpha
-import org.polyfrost.compose.ui.graphics.FilterQuality
-import org.polyfrost.compose.ui.graphics.copy
-import org.polyfrost.compose.ui.unit.dp
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.FilterQuality
+import org.polyfrost.compose.backend.asComposeImageBitmap
+import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.picker.PickerTileIcon
-import org.polyfrost.oneconfig.internal.ui.components.sizeDp
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 /** The catalog deduplicated and sorted by display name so grid positions never jump */
@@ -39,19 +36,16 @@ fun EffectIcon(
     placeholder: String = "eye-off",
 ) {
     val revision = EffectCatalog.revision
-    val bitmap = remember(id, revision) { EffectCatalog.icon(id) }
+    val bitmap = remember(id, revision) { EffectCatalog.icon(id)?.asComposeImageBitmap() }
     if (bitmap == null) {
-        val secondary = LocalTheme.current.textColorSecondary
-        Box(modifier, contentAlignment = Alignment.Center) {
-            Icon(
-                placeholder,
-                modifier = Modifier.size((modifier.sizeDp(18f) - 4f).coerceAtLeast(0f).dp),
-                color = secondary.copy(alpha = secondary.alphaF * alpha),
-            )
-        }
+        Icon(
+            placeholder,
+            modifier = modifier.aspectRatio(1f).padding(2.dp),
+            color = LocalTheme.current.textColorSecondary.copy(alpha = alpha),
+        )
         return
     }
-    Image(bitmap, null, modifier.alpha(alpha), filterQuality = FilterQuality.None)
+    Image(bitmap, contentDescription = null, modifier = modifier.aspectRatio(1f), alpha = alpha, filterQuality = FilterQuality.None)
 }
 
 internal val EffectTileIcon: PickerTileIcon<EffectDescriptor> = { effect, modifier, alpha ->

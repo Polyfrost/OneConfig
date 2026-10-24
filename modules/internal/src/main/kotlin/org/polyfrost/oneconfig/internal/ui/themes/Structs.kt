@@ -1,11 +1,10 @@
 package org.polyfrost.oneconfig.internal.ui.themes
 
-import org.polyfrost.compose.foundation.shape.RoundedCornerShape
-import org.polyfrost.compose.ui.graphics.Color
-import org.polyfrost.compose.ui.graphics.copy
-import org.polyfrost.compose.ui.graphics.Shape
-import org.polyfrost.compose.ui.text.font.FontFamily
-import org.polyfrost.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.dp
 import java.util.concurrent.ConcurrentHashMap
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme

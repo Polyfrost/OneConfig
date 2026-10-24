@@ -68,13 +68,6 @@ class PolyInput(private val root: PolyNode) {
         lastPressButton = button
 
         val path = hitPath()
-        val overlays = ArrayList<PolyNode>()
-        collectOverlays(root, overlays)
-        for (o in overlays.asReversed()) {
-            if (o in path) break
-            if (send(o, PointerEvent(PointerEventType.Outside, x, y, button, modifiers = modifiers))) return true
-        }
-
         path.lastOrNull { it.style.focusable }?.let { focus(it) }
         val ev = PointerEvent(PointerEventType.Press, x, y, button, clicks = clicks, modifiers = modifiers)
         val node = path.lastOrNull { it.style.onPointer.isNotEmpty() && send(it, ev) } ?: return false
@@ -108,9 +101,6 @@ class PolyInput(private val root: PolyNode) {
 
     fun dispatch(ev: KeyEvent): Boolean {
         changed = true
-        val overlays = ArrayList<PolyNode>()
-        collectOverlays(root, overlays)
-        overlays.lastOrNull { it.style.onKey.isNotEmpty() }?.let { if (sendKey(it, ev)) return true }
         if (focused?.let(::inert) == true) focus(null)
         val f = focused
         if (f != null) {
@@ -131,7 +121,6 @@ class PolyInput(private val root: PolyNode) {
         focused = node
         old?.style?.let { s -> s.onFocus?.invoke(false); s.onFocusChanged.forEach { it(false) } }
         node?.style?.let { s -> s.onFocus?.invoke(true); s.onFocusChanged.forEach { it(true) } }
-        node?.let(::bringIntoView)
     }
 
     fun moveFocus(forward: Boolean): Boolean {
@@ -162,23 +151,6 @@ class PolyInput(private val root: PolyNode) {
     private fun attached(node: PolyNode): Boolean {
         var n = node
         while (true) n = n.parent ?: return n === root
-    }
-
-    private fun bringIntoView(node: PolyNode) {
-        var p = node.parent
-        while (p != null) {
-            val s = p.style.scroll
-            if (s != null && !p.style.scrollHorizontal) {
-                val top = p.y + p.style.padding.top
-                val bottom = p.y + p.height - p.style.padding.bottom
-                when {
-                    node.y < top -> s.animateBy(node.y - top)
-                    node.y + node.height > bottom -> s.animateBy(minOf(node.y + node.height - bottom, node.y - top))
-                }
-                return
-            }
-            p = p.parent
-        }
     }
 
     private fun focusables(node: PolyNode, out: MutableList<PolyNode>) {
@@ -228,27 +200,17 @@ class PolyInput(private val root: PolyNode) {
     private fun hitPath(): List<PolyNode> {
         val path = ArrayList<PolyNode>()
         if (x.isNaN()) return path
-        val overlays = ArrayList<PolyNode>()
-        collectOverlays(root, overlays)
-        for (o in overlays.asReversed()) if (hit(o, x, y, path, overlayRoot = true)) return path
-        hit(root, x, y, path, overlayRoot = false)
+        hit(root, x, y, path)
         return path
     }
 
-    private fun collectOverlays(node: PolyNode, out: MutableList<PolyNode>) {
-        for (c in node.children) {
-            if (c.style.overlay) out.add(c)
-            collectOverlays(c, out)
-        }
-    }
-
-    private fun hit(node: PolyNode, x: Float, y: Float, path: MutableList<PolyNode>, overlayRoot: Boolean): Boolean {
-        if (node.style.overlay && !overlayRoot || node.style.inert) return false
+    private fun hit(node: PolyNode, x: Float, y: Float, path: MutableList<PolyNode>): Boolean {
+        if (node.style.inert) return false
         val inside = x >= node.x && y >= node.y && x < node.x + node.width && y < node.y + node.height
-        if ((node.style.clipToBounds || overlayRoot) && !inside) return false
+        if (node.style.clipToBounds && !inside) return false
         path.add(node)
-        for (i in node.children.indices.reversed()) if (hit(node.children[i], x, y, path, false)) return true
-        if (inside && (node.style.onPointer.isNotEmpty() || node.style.focusable || node.style.cursor != null || overlayRoot || node === root)) return true
+        for (i in node.children.indices.reversed()) if (hit(node.children[i], x, y, path)) return true
+        if (inside && (node.style.onPointer.isNotEmpty() || node.style.focusable || node.style.cursor != null || node === root)) return true
         path.removeAt(path.size - 1)
         return false
     }

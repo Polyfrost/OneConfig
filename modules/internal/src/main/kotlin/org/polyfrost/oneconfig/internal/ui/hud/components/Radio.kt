@@ -1,24 +1,25 @@
 package org.polyfrost.oneconfig.internal.ui.hud.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.snapshots.Snapshot
-import org.polyfrost.compose.foundation.background
-import org.polyfrost.compose.foundation.border
-import org.polyfrost.compose.foundation.layout.Arrangement
-import org.polyfrost.compose.foundation.layout.Box
-import org.polyfrost.compose.foundation.layout.Column
-import org.polyfrost.compose.foundation.layout.Row
-import org.polyfrost.compose.foundation.layout.padding
-import org.polyfrost.compose.foundation.layout.size
-import org.polyfrost.compose.foundation.shape.RoundedCornerShape
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.graphics.Color
-import org.polyfrost.compose.ui.graphics.copy
-import org.polyfrost.compose.ui.unit.dp
-import org.polyfrost.compose.ui.unit.sp
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.components.SelectableIconButton
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.onClick
+import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 interface RadioValue {
@@ -47,7 +48,12 @@ inline fun <reified E> Radio(
                 enumValues<E>().forEach { it as RadioValue
                     Box(
                         modifier = Modifier
-                            .size(36.dp),
+                            .size(36.dp)
+                            .onClick(rememberInteractionSource()) {
+                                Snapshot.withMutableSnapshot {
+                                    onChange(it)
+                                }
+                            },
                         contentAlignment = Alignment.Center,
                     ) {
                         SelectableIconButton(

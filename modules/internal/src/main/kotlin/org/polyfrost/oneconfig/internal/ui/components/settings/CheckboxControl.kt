@@ -1,29 +1,28 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import org.polyfrost.compose.animation.animateColorAsState
-import org.polyfrost.compose.animation.core.animateFloatAsState
-import org.polyfrost.compose.foundation.background
-import org.polyfrost.compose.foundation.border
-import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
-import org.polyfrost.compose.foundation.layout.Arrangement
-import org.polyfrost.compose.foundation.layout.Box
-import org.polyfrost.compose.foundation.layout.Row
-import org.polyfrost.compose.foundation.layout.size
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.draw.alpha
-import org.polyfrost.compose.ui.draw.clip
-import org.polyfrost.compose.ui.input.pointer.PointerIcon
-import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
-import org.polyfrost.compose.ui.unit.dp
-import org.polyfrost.compose.ui.unit.sp
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.background
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
@@ -41,16 +40,13 @@ fun CheckboxIndicator(
     val isHovered by interactionSource.collectIsHoveredAsState()
 
     val accentAlpha by animateFloatAsState(if (checked) 1f else 0f)
-    val borderColor = animateColorAsState(
+    val borderColor by animateColorAsState(
         when {
             checked -> Accent
             isHovered -> theme.textColorSecondary
             else -> theme.borderColor
         }
     )
-    val tickTarget = if (checked) 1f else 0f
-    val tickAlpha = animateFloatAsState(tickTarget)
-    val tickVisible by remember { derivedStateOf { tickAlpha.value > 0.01f } }
 
     Box(
         modifier = modifier
@@ -63,8 +59,8 @@ fun CheckboxIndicator(
             .pointerHoverIcon(PointerIcon.Hand),
         contentAlignment = Alignment.Center,
     ) {
-        if (tickVisible) {
-            Icon("tick", modifier = Modifier.size(26.dp).alpha(tickAlpha, tickTarget), color = theme.textColor)
+        AnimatedVisibility(checked, enter = fadeIn(), exit = fadeOut()) {
+            Icon("tick", modifier = Modifier.size(26.dp), color = theme.textColor)
         }
     }
 }

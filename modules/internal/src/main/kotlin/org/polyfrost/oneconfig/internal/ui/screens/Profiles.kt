@@ -1,15 +1,69 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.center
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
+import androidx.compose.ui.window.PopupProperties
 import java.nio.file.Files
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -18,70 +72,24 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import org.polyfrost.compose.animation.animateColorAsState
-import org.polyfrost.compose.animation.core.animateFloatAsState
-import org.polyfrost.compose.foundation.Canvas
-import org.polyfrost.compose.foundation.background
-import org.polyfrost.compose.foundation.border
-import org.polyfrost.compose.foundation.hoverable
-import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
-import org.polyfrost.compose.foundation.layout.Arrangement
-import org.polyfrost.compose.foundation.layout.Box
-import org.polyfrost.compose.foundation.layout.BoxScope
-import org.polyfrost.compose.foundation.layout.Column
-import org.polyfrost.compose.foundation.layout.ColumnScope
-import org.polyfrost.compose.foundation.layout.Row
-import org.polyfrost.compose.foundation.layout.Spacer
-import org.polyfrost.compose.foundation.layout.align
-import org.polyfrost.compose.foundation.layout.fillMaxSize
-import org.polyfrost.compose.foundation.layout.fillMaxWidth
-import org.polyfrost.compose.foundation.layout.height
-import org.polyfrost.compose.foundation.layout.padding
-import org.polyfrost.compose.foundation.layout.size
-import org.polyfrost.compose.foundation.layout.weight
-import org.polyfrost.compose.foundation.layout.width
-import org.polyfrost.compose.foundation.rememberScrollState
-import org.polyfrost.compose.foundation.text.BasicTextField
-import org.polyfrost.compose.foundation.text.TextFieldState
-import org.polyfrost.compose.foundation.verticalScroll
-import org.polyfrost.compose.render.PolyFont
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.draw.alpha
-import org.polyfrost.compose.ui.draw.clip
-import org.polyfrost.compose.ui.draw.scale
-import org.polyfrost.compose.ui.graphics.Brush
-import org.polyfrost.compose.ui.graphics.Color
-import org.polyfrost.compose.ui.graphics.RadialGradient
-import org.polyfrost.compose.ui.graphics.copy
-import org.polyfrost.compose.ui.input.key.KeyEvent
-import org.polyfrost.compose.ui.input.key.KeyEventType
-import org.polyfrost.compose.ui.input.pointer.PointerIcon
-import org.polyfrost.compose.ui.input.pointer.onPointerEvent
-import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
-import org.polyfrost.oneconfig.internal.ui.components.Chip
-import org.polyfrost.compose.ui.text.font.FontWeight
-import org.polyfrost.compose.ui.text.style.TextAlign
-import org.polyfrost.compose.ui.text.style.TextOverflow
-import org.polyfrost.compose.ui.unit.Dp
-import org.polyfrost.compose.ui.unit.dp
-import org.polyfrost.compose.ui.unit.sp
-import org.polyfrost.compose.ui.window.Popup
-import org.polyfrost.compose.ui.window.PopupProperties
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi
+import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
+import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindOption
+import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.internal.ui.keybind.ProfileKeybinds
-import org.polyfrost.oneconfig.internal.ui.poly.GUTTER
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
+import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
+import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.concentric
@@ -124,10 +132,10 @@ private val ProfileIconOptions = listOf(
 )
 
 @Composable
-fun Profiles(query: String) {
+fun Profiles() {
     var activeCategory by remember { mutableStateOf(ProfileCategory.All) }
     var profiles by remember { mutableStateOf(emptyList<UiProfile>()) }
-    val newProfileName = remember { TextFieldState() }
+    var newProfileName by remember { mutableStateOf("") }
     var createError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     var busy by remember { mutableStateOf(false) }
@@ -228,12 +236,11 @@ fun Profiles(query: String) {
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = PageGutter)) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(horizontal = GUTTER.dp),
             verticalArrangement = Arrangement.spacedBy(19.dp)
         ) {
-            val localSearchQuery = query.trim()
+            val localSearchQuery = pageSearchQuery().trim()
             val categorizedProfiles = when (activeCategory) {
                 ProfileCategory.All -> profiles
                 ProfileCategory.Favorited -> profiles.filter { it.favorite }
@@ -300,12 +307,13 @@ fun Profiles(query: String) {
                 busy = busy,
                 createTick = createTick,
                 onNewProfileNameChange = {
+                    newProfileName = it
                     createError = null
                 },
                 onCreateProfile = {
-                    val profileName = newProfileName.text
+                    val profileName = newProfileName
                     runProfileAction(onSuccess = {
-                        newProfileName.replaceText("")
+                        newProfileName = ""
                         createError = null
                         createTick++
                     }, onError = { createError = it }) {
@@ -374,7 +382,7 @@ private suspend fun awaitOverlayDrawn() {
 private fun BoxScope.ProfileBusyOverlay() {
     val theme = LocalTheme.current
     Box(
-        modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)).onPointerEvent { true },
+        modifier = Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.55f)),
         contentAlignment = Alignment.Center,
     ) {
         Column(
@@ -428,7 +436,7 @@ private fun ColumnScope.ProfilesGrid(
     existingProfileIds: Set<String>,
     showCreateProfile: Boolean,
     emptyMessage: String,
-    newProfileName: TextFieldState,
+    newProfileName: String,
     createError: String?,
     busy: Boolean,
     createTick: Int,
@@ -458,15 +466,15 @@ private fun ColumnScope.ProfilesGrid(
     }
 
     if (profiles.isEmpty() && !showCreateProfile) {
-        Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(emptyMessage, color = LocalTheme.current.textColorSecondary)
         }
         return
     }
 
-    ProfileGrid(
+    LazyVerticalGrid(
         modifier = Modifier.weight(1f),
-        columns = 5,
+        columns = GridCells.Fixed(5),
         verticalArrangement = Arrangement.spacedBy(19.dp),
         horizontalArrangement = Arrangement.spacedBy(19.dp),
     ) {
@@ -539,43 +547,6 @@ private fun ColumnScope.ProfilesGrid(
     }
 }
 
-private class ProfileGridScope {
-    val cells = ArrayList<Pair<Any, @Composable () -> Unit>>()
-
-    fun item(key: Any, content: @Composable () -> Unit) {
-        cells += key to content
-    }
-
-    fun <T> items(items: List<T>, key: (T) -> Any, itemContent: @Composable (T) -> Unit) {
-        for (item in items) {
-            val content: @Composable () -> Unit = { itemContent(item) }
-            cells += key(item) to content
-        }
-    }
-}
-
-@Composable
-private fun ProfileGrid(
-    modifier: Modifier,
-    columns: Int,
-    verticalArrangement: Arrangement.Vertical,
-    horizontalArrangement: Arrangement.Horizontal,
-    content: ProfileGridScope.() -> Unit,
-) {
-    val cells = ProfileGridScope().apply(content).cells
-    Column(
-        modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
-        verticalArrangement = verticalArrangement,
-    ) {
-        for (row in cells.chunked(columns)) Row(Modifier.fillMaxWidth(), horizontalArrangement = horizontalArrangement) {
-            for ((id, cell) in row) key(id) {
-                Box(Modifier.weight(1f)) { cell() }
-            }
-            repeat(columns - row.size) { Box(Modifier.weight(1f)) }
-        }
-    }
-}
-
 private fun nextCloneName(profileName: String, profileIds: Set<String>): String {
     val base = "$profileName copy"
     if (base.lowercase() !in profileIds) return base
@@ -586,7 +557,7 @@ private fun nextCloneName(profileName: String, profileIds: Set<String>): String 
 
 @Composable
 private fun CreateProfileCard(
-    value: TextFieldState,
+    value: String,
     error: String?,
     busy: Boolean,
     creating: Boolean,
@@ -606,10 +577,10 @@ private fun CreateProfileCard(
     val borderColor by animateColorAsState(
         if (creating || isHovered) Accent else theme.borderColor
     )
-    val iconBackground = animateColorAsState(
+    val iconBackground by animateColorAsState(
         if (creating || isHovered) Accent.copy(alpha = 0.18f) else theme.textColor.copy(alpha = 0.06f)
     )
-    val iconColor = animateColorAsState(
+    val iconColor by animateColorAsState(
         if (creating || isHovered) Accent else theme.textColorSecondary
     )
 
@@ -630,19 +601,24 @@ private fun CreateProfileCard(
             .pointerHoverIcon(PointerIcon.Hand)
     ) {
         val vignetteColor = theme.textColor
-        Canvas(Modifier.fillMaxSize()) { x, y, w, h ->
-            rectGradient(
-                x, y, w, h,
-                RadialGradient(
-                    colors = listOf(
-                        vignetteColor.copy(alpha = 0f),
-                        vignetteColor.copy(alpha = 0.02f),
-                        vignetteColor.copy(alpha = 0.05f)
-                    ),
-                    radius = 0.9f
-                )
-            )
-        }
+        Box(
+            Modifier
+                .fillMaxSize()
+                .drawWithCache {
+                    val gradient = Brush.radialGradient(
+                        colors = listOf(
+                            vignetteColor.copy(alpha = 0f),
+                            vignetteColor.copy(alpha = 0.02f),
+                            vignetteColor.copy(alpha = 0.05f)
+                        ),
+                        center = size.center,
+                        radius = size.minDimension * 0.9f
+                    )
+                    onDrawBehind {
+                        drawRect(gradient)
+                    }
+                }
+        )
 
         if (creating) {
             Row(
@@ -661,7 +637,6 @@ private fun CreateProfileCard(
                     onCreate()
                 }
                 ActionIcon("close", enabled = !busy, tint = theme.textColorSecondary) {
-                    value.replaceText("")
                     onValueChange("")
                     onCreatingChange(false)
                 }
@@ -724,13 +699,13 @@ private fun ProfileCard(
     val isHovered by interactionSource.collectIsHoveredAsState()
     val theme = LocalTheme.current
     val shape = theme.modCardShape
-    val editName = remember(profile.id) { TextFieldState(profile.name) }
+    var editName by remember(profile.id) { mutableStateOf(profile.name) }
     var editError by remember(profile.id) { mutableStateOf<String?>(null) }
     val keybindProp = remember(profile.id) { ProfileKeybinds.property(profile.id) }
 
     fun closeEditor() {
         onEditorChange(null)
-        editName.replaceText(profile.name)
+        editName = profile.name
         editError = null
     }
 
@@ -743,14 +718,14 @@ private fun ProfileCard(
         }
         val onError = { message: String -> editError = message }
         when (editor) {
-            ProfileEditor.Rename -> onRename(editName.text, onSuccess, onError)
-            ProfileEditor.Clone -> onClone(editName.text, onSuccess, onError)
+            ProfileEditor.Rename -> onRename(editName, onSuccess, onError)
+            ProfileEditor.Clone -> onClone(editName, onSuccess, onError)
             else -> Unit
         }
     }
 
     val selectionBorderColor by animateColorAsState(
-        if (profile.active) Accent else Accent.copy(alpha = 0f)
+        if (profile.active) Accent else Color.Transparent
     )
 
     Box(
@@ -758,6 +733,7 @@ private fun ProfileCard(
             .fillMaxWidth()
             .height(ProfileCardHeight)
             .background(theme.modCardBackground, shape)
+            .border(3.dp, selectionBorderColor, shape)
             .border(
                 1.dp, Brush.verticalGradient(
                     listOf(theme.borderColor, theme.borderColor.copy(0f))
@@ -770,20 +746,24 @@ private fun ProfileCard(
             .pointerHoverIcon(PointerIcon.Hand)
     ) {
         val vignetteColor = theme.textColor
-        Canvas(Modifier.fillMaxSize()) { x, y, w, h ->
-            rectGradient(
-                x, y, w, h,
-                RadialGradient(
-                    colors = listOf(
-                        vignetteColor.copy(alpha = 0f),
-                        vignetteColor.copy(alpha = 0.02f),
-                        vignetteColor.copy(alpha = 0.05f)
-                    ),
-                    radius = 0.9f
-                )
-            )
-        }
-        Box(Modifier.fillMaxSize().border(3.dp, selectionBorderColor, shape))
+        Box(
+            Modifier
+                .fillMaxSize()
+                .drawWithCache {
+                    val gradient = Brush.radialGradient(
+                        colors = listOf(
+                            vignetteColor.copy(alpha = 0f),
+                            vignetteColor.copy(alpha = 0.02f),
+                            vignetteColor.copy(alpha = 0.05f)
+                        ),
+                        center = size.center,
+                        radius = size.minDimension * 0.9f
+                    )
+                    onDrawBehind {
+                        drawRect(gradient)
+                    }
+                }
+        )
 
         Row(
             modifier = Modifier
@@ -821,12 +801,12 @@ private fun ProfileCard(
             enabled = !busy,
             onDismiss = { onMenuOpenChange(false) },
             onClone = {
-                editName.replaceText(suggestedCloneName)
+                editName = suggestedCloneName
                 editError = null
                 onEditorChange(ProfileEditor.Clone)
             },
             onRename = {
-                editName.replaceText(profile.name)
+                editName = profile.name
                 editError = null
                 onEditorChange(ProfileEditor.Rename)
             },
@@ -843,26 +823,25 @@ private fun ProfileCard(
         )
 
         Column(
-            modifier = Modifier.align(Alignment.Center).fillMaxWidth(),
+            modifier = Modifier.align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             val compact = editor != null && editor != ProfileEditor.Delete
             Icon(profile.icon, modifier = Modifier.size(if (compact) 42.dp else 64.dp), color = theme.textColor)
             Spacer(Modifier.height(if (compact) 14.dp else 24.dp))
             when (editor) {
-                ProfileEditor.Rename, ProfileEditor.Clone -> key(editor) {
-                    ProfileTextField(
-                        value = editName,
-                        placeholder = "Profile name",
-                        width = 150.dp,
-                        error = editError,
-                        enabled = !busy,
-                        onValueChange = {
-                            editError = null
-                        },
-                        onSubmit = ::submitName,
-                    )
-                }
+                ProfileEditor.Rename, ProfileEditor.Clone -> ProfileTextField(
+                    value = editName,
+                    placeholder = "Profile name",
+                    width = 150.dp,
+                    error = editError,
+                    enabled = !busy,
+                    onValueChange = {
+                        editName = it
+                        editError = null
+                    },
+                    onSubmit = ::submitName,
+                )
                 ProfileEditor.Icon -> ProfileIconPicker(
                     selectedIcon = profile.icon,
                     enabled = !busy,
@@ -879,22 +858,21 @@ private fun ProfileCard(
                     },
                 )
                 ProfileEditor.Delete, null -> {
-                    Box(
+                    BasicText(
+                        profile.name,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 18.dp),
-                    ) {
-                        Text(
-                            profile.name,
-                            modifier = Modifier.align(Alignment.Center),
+                        style = TextStyle(
                             color = theme.textColor,
                             fontSize = 18.sp,
+                            fontFamily = theme.typography.family,
                             fontWeight = FontWeight.Medium,
                             textAlign = TextAlign.Center,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
             if (editor == ProfileEditor.Icon && editError != null) {
@@ -928,18 +906,14 @@ private fun ProfileActionsMenu(
 ) {
     if (!expanded) return
     val theme = LocalTheme.current
-    val labelFont = PolyFont(theme.typography.family.resolve(FontWeight.Normal), 13f)
-    val labels = listOf("Clone", if (profile.favorite) "Remove favorite" else "Favorite", "Export / share") +
-        if (profile.editable) listOf("Rename", "Change icon", "Delete") else emptyList()
-    val menuWidth = labels.maxOf { labelFont.measureTextWidth(it) } + 14f + 8f + 20f + 8f
-    Popup(
+    ShellPopup(
         alignment = Alignment.TopEnd,
         onDismissRequest = onDismiss,
         properties = PopupProperties(focusable = true),
     ) {
         Column(
             modifier = Modifier
-                .width(menuWidth.dp)
+                .width(IntrinsicSize.Max)
                 .shellTransition()
                 .background(theme.popupBackground, theme.popupShape)
                 .border(1.dp, theme.borderColor, theme.popupShape)
@@ -983,12 +957,6 @@ private fun ProfileActionsMenu(
 }
 
 @Composable
-private fun Modifier.shellTransition(): Modifier {
-    val t by animateFloatAsState(1f, initialValue = 0f)
-    return alpha(t).scale(0.92f + 0.08f * t)
-}
-
-@Composable
 private fun ProfileMenuItem(
     icon: String,
     label: String,
@@ -1002,12 +970,15 @@ private fun ProfileMenuItem(
     val baseColor = if (danger) DangerColor else theme.textColor
     val color = if (enabled) baseColor else theme.textColorSecondary
     val shape = theme.popupShape.concentric(4.dp)
-    val hoverBackground = animateColorAsState(
-        baseColor.copy(alpha = if (enabled && isHovered) 0.10f else 0f)
+    val hoverBackground by animateColorAsState(
+        targetValue = baseColor.copy(alpha = if (enabled && isHovered) 0.10f else 0f),
+        animationSpec = tween(120),
+        label = "profileMenuItemHover",
     )
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(shape)
             .background(hoverBackground, shape)
             .then(
                 if (enabled) Modifier
@@ -1060,15 +1031,15 @@ private fun ProfileIconChoice(
     val interactionSource = rememberInteractionSource()
     val theme = LocalTheme.current
     val isHovered by interactionSource.collectIsHoveredAsState()
-    val backgroundColor = animateColorAsState(
+    val backgroundColor by animateColorAsState(
         if (selected) Accent.copy(alpha = if (enabled) 0.22f else 0.10f)
         else if (enabled && isHovered) theme.textColor.copy(alpha = 0.08f)
-        else theme.textColor.copy(alpha = 0f)
+        else Color.Transparent
     )
-    val borderColor = animateColorAsState(
+    val borderColor by animateColorAsState(
         if (selected && enabled) Accent else theme.borderColor.copy(alpha = 0f)
     )
-    val iconColor = animateColorAsState(
+    val iconColor by animateColorAsState(
         if (enabled && (selected || isHovered)) theme.textColor else theme.textColorSecondary
     )
 
@@ -1099,7 +1070,7 @@ private fun ActionIcon(
 ) {
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
-    val iconColor = animateColorAsState(
+    val iconColor by animateColorAsState(
         if (enabled && isHovered) hoveredTint else tint
     )
 
@@ -1120,7 +1091,7 @@ private fun ActionIcon(
 
 @Composable
 private fun ProfileTextField(
-    value: TextFieldState,
+    value: String,
     placeholder: String,
     width: Dp,
     error: String? = null,
@@ -1129,10 +1100,11 @@ private fun ProfileTextField(
     onSubmit: () -> Unit,
 ) {
     val theme = LocalTheme.current
-    val clipboard = LocalUiClipboard.current
-    val isFocused = value.focused
+    val interactionSource = rememberInteractionSource()
+    val focusRequester = remember { FocusRequester() }
+    val isFocused by interactionSource.collectIsFocusedAsState()
     val shape = theme.sideBarNavigationEntryShape
-    val borderColor = animateColorAsState(
+    val borderColor by animateColorAsState(
         if (error != null) DangerColor
         else if (isFocused) Accent
         else theme.borderColor
@@ -1142,59 +1114,69 @@ private fun ProfileTextField(
         modifier = Modifier.width(width),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(
-            modifier = Modifier
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            enabled = enabled,
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { if (enabled) onSubmit() }),
+            textStyle = TextStyle(
+                color = theme.textColor,
+                fontSize = 14.sp,
+                fontFamily = theme.typography.family,
+            ),
+            interactionSource = interactionSource,
+            cursorBrush = SolidColor(theme.textColor),
+            modifier = Modifier.trackTextInputFocus()
                 .fillMaxWidth()
+                .focusRequester(focusRequester)
+                .onPreviewKeyEvent { event ->
+                    if (enabled && event.type == KeyEventType.KeyDown &&
+                        (event.key == Key.Enter || event.key == Key.NumPadEnter)
+                    ) {
+                        onSubmit()
+                        true
+                    } else {
+                        false
+                    }
+                }
                 .background(theme.modCardBackground, shape)
                 .border(1.dp, borderColor, shape)
                 .padding(horizontal = 12.dp, vertical = 7.dp),
-        ) {
-            BasicTextField(
-                value,
-                PolyFont(theme.typography.family.resolve(FontWeight.Normal), 14f),
-                color = theme.textColor,
-                caretColor = theme.textColor,
-                selectionColor = Accent.copy(alpha = 0.4f),
-                readClipboard = clipboard.read,
-                writeClipboard = clipboard.write,
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = placeholder,
-                placeholderColor = theme.textColorSecondary,
-                onKey = { event ->
-                    if (event.type == KeyEventType.KeyDown && event.key == KeyEvent.KEY_ENTER) {
-                        if (enabled) onSubmit()
-                        true
-                    } else if (!enabled) {
-                        false
-                    } else {
-                        val before = value.text
-                        value.onKey(event, clipboard.read, clipboard.write).also {
-                            if (value.text != before) onValueChange(value.text)
-                        }
+            decorationBox = { innerTextField ->
+                Box {
+                    if (value.isEmpty()) {
+                        Text(
+                            placeholder,
+                            color = theme.textColorSecondary,
+                            fontSize = 14.sp,
+                        )
                     }
-                },
-            )
-        }
+                    innerTextField()
+                }
+            },
+        )
         if (error != null) ProfileError(error, width)
     }
 
     LaunchedEffect(Unit) {
-        value.requestFocus()
+        runCatching { focusRequester.requestFocus() }
     }
 }
 
 @Composable
 private fun ProfileError(message: String, width: Dp) {
-    Box(Modifier.width(width).padding(top = 4.dp)) {
-        Text(
-            text = message,
-            modifier = Modifier.fillMaxWidth().align(Alignment.TopCenter),
+    BasicText(
+        text = message,
+        modifier = Modifier.width(width).padding(top = 4.dp),
+        style = TextStyle(
             color = DangerColor,
             fontSize = 10.sp,
+            fontFamily = LocalTheme.current.typography.family,
             textAlign = TextAlign.Center,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            softWrap = true,
-        )
-    }
+        ),
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+    )
 }

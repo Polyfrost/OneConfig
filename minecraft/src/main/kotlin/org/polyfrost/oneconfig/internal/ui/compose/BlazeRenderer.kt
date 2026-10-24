@@ -57,6 +57,7 @@ import org.joml.Matrix4f
 import org.lwjgl.system.MemoryUtil
 import org.polyfrost.compose.render.PolyGlyphPage
 import org.polyfrost.compose.render.PolyTessellator
+import org.polyfrost.compose.render.CapturingRenderer
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.ui.graphics.ImageBitmap
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
@@ -73,8 +74,9 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boolean = false) : PolyTessellator(), TextureRenderer {
+class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boolean = false) : PolyTessellator(), TextureRenderer, CapturingRenderer {
     private val ops = ArrayList<(GuiGraphicsExtractor) -> Unit>()
+    private val bitmapLog = ArrayList<ImageBitmap>()
 
     val bitmaps = HashSet<ImageBitmap>()
     private val elementPose = Matrix3x2f().scale(1f / guiScale)
@@ -83,8 +85,39 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
 
     override fun bitmapTexture(bitmap: ImageBitmap): Any {
         bitmaps.add(bitmap)
-        return BitmapTextures.get(bitmap)
+        val ref = BitmapTextures.get(bitmap)
+        bitmapLog.add(bitmap)
+        return ref
     }
+
+    private class Captured(val ops: List<(GuiGraphicsExtractor) -> Unit>, val bitmaps: List<ImageBitmap>, val refs: List<AbstractTextureRef>)
+
+    override fun mark(): Any {
+        flush()
+        return intArrayOf(ops.size, bitmapLog.size)
+    }
+
+    override fun since(mark: Any): Any {
+        flush()
+        val m = mark as IntArray
+        val bmps = ArrayList(bitmapLog.subList(m[1], bitmapLog.size))
+        return Captured(ArrayList(ops.subList(m[0], ops.size)), bmps, bmps.map(BitmapTextures::get))
+    }
+
+    override fun valid(captured: Any): Boolean {
+        val c = captured as Captured
+        return c.bitmaps.indices.all { BitmapTextures.get(c.bitmaps[it]) === c.refs[it] }
+    }
+
+    override fun append(captured: Any) {
+        flush()
+        val c = captured as Captured
+        ops.addAll(c.ops)
+        bitmaps.addAll(c.bitmaps)
+        bitmapLog.addAll(c.bitmaps)
+    }
+
+    override fun stateKey(): Any = listOf(super.stateKey(), guiScale, screenW, screenH)
 
     override fun submit(texture: Any, premultiplied: Boolean, nearest: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray) {
         val box = rectGui(bounds[0], bounds[1], bounds[2], bounds[3]) ?: return

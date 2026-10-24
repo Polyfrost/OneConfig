@@ -1,34 +1,33 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import org.polyfrost.compose.animation.animateColorAsState
-import org.polyfrost.compose.animation.core.animateDpAsState
-import org.polyfrost.compose.foundation.background
-import org.polyfrost.compose.foundation.border
-import org.polyfrost.compose.foundation.clickable
-import org.polyfrost.compose.foundation.horizontalScroll
-import org.polyfrost.compose.foundation.layout.Arrangement
-import org.polyfrost.compose.foundation.layout.Box
-import org.polyfrost.compose.foundation.layout.Column
-import org.polyfrost.compose.foundation.layout.Row
-import org.polyfrost.compose.foundation.layout.fillMaxSize
-import org.polyfrost.compose.foundation.layout.fillMaxWidth
-import org.polyfrost.compose.foundation.layout.padding
-import org.polyfrost.compose.foundation.layout.weight
-import org.polyfrost.compose.foundation.rememberScrollState
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.input.pointer.PointerIcon
-import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
-import org.polyfrost.compose.ui.platform.LocalDensity
-import org.polyfrost.compose.ui.unit.dp
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.poly.GUTTER
-import org.polyfrost.oneconfig.internal.ui.poly.SvgImage
+import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
@@ -37,35 +36,28 @@ import org.polyfrost.oneconfig.internal.ui.themes.UITheme
 const val THEMES_ID = "themes.json"
 
 @Composable
-fun Themes(
-    initialCategory: String? = null,
-    searchQuery: String = "",
-    onCategory: ((from: String?, to: String) -> Unit)? = null,
-) {
+fun Themes() {
     val revision = ConfigRegistry.revision
     val tree = ConfigRegistry.findTree(THEMES_ID)
     Column(
-        modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = GUTTER.dp),
+        LazyRow(
             horizontalArrangement = Arrangement.spacedBy(26.dp),
+            contentPadding = PaddingValues(horizontal = PageGutter),
         ) {
-            ThemeRegistry.registry.forEach {
-                key(it.name) { ThemeCard(it) }
+            items(ThemeRegistry.registry) {
+                ThemeCard(it)
             }
         }
         if (tree == null) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("No preferences available.", color = LocalTheme.current.textColorSecondary)
             }
-            return@Column
+            return
         }
-        Box(Modifier.weight(1f).fillMaxWidth()) {
-            key(revision, tree) {
-                ConfigScreen(tree, initialCategory, pageKey = THEMES_ID, searchQuery = searchQuery, onCategory = onCategory)
-            }
+        key(revision, tree) {
+            ConfigScreen(tree, pageKey = THEMES_ID)
         }
     }
 }
@@ -73,9 +65,9 @@ fun Themes(
 @Composable
 private fun ThemeCard(theme: UITheme) {
     val interactionSource = rememberInteractionSource()
-    val isSelected = theme == ThemeRegistry.activeTheme
+    val isSelected = theme == LocalTheme.current
 
-    val borderColor = animateColorAsState(
+    val borderColor by animateColorAsState(
         if (isSelected) Accent else LocalTheme.current.borderColor
     )
     val borderWidth by animateDpAsState(
@@ -95,11 +87,10 @@ private fun ThemeCard(theme: UITheme) {
         verticalArrangement = Arrangement.spacedBy(14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        SvgImage(
-            "/assets/oneconfig/images/${theme.previewImage}.svg",
-            168f,
-            108f,
-            LocalDensity.current.density,
+        Image(
+            painter = painterResource("/assets/oneconfig/images/${theme.previewImage}.svg"),
+            contentDescription = null,
+            modifier = Modifier.size(168.dp, 108.dp)
         )
         Text(theme.name, color = LocalTheme.current.textColor)
     }

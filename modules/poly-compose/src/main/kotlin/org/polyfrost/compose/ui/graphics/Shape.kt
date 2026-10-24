@@ -11,9 +11,8 @@ object RectangleShape : Shape {
     override val radius get() = 0f
 }
 
-class ColorFilter private constructor(val color: PolyColor, val animated: androidx.compose.runtime.State<PolyColor>?) {
+class ColorFilter private constructor(val color: PolyColor) {
     companion object {
-        fun tint(color: PolyColor) = ColorFilter(color, null)
-        fun tint(color: org.polyfrost.compose.animation.AnimatedColor) = ColorFilter(color.target, color)
+        fun tint(color: PolyColor) = ColorFilter(color)
     }
 }

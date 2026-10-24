@@ -87,7 +87,7 @@ afterEvaluate {
     // the *-desktop artifacts are added non-transitively so alone they lack androidx.compose.* classes
     fun isShadedInComposeBundle(group: String?): Boolean {
         group ?: return false
-        return group.startsWith("org.jetbrains.compose")
+        return group.startsWith("org.jetbrains.compose") || group.startsWith("org.jetbrains.androidx")
     }
 
     fun isHypixelProvidedElsewhere(group: String?, name: String) =

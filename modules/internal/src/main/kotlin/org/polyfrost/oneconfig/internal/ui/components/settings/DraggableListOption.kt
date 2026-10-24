@@ -1,50 +1,51 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import kotlin.math.abs
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import kotlin.math.roundToInt
-import org.polyfrost.compose.animation.animateColorAsState
-import org.polyfrost.compose.animation.core.animateFloatAsState
-import org.polyfrost.compose.foundation.background
-import org.polyfrost.compose.foundation.border
-import org.polyfrost.compose.foundation.hoverable
-import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
-import org.polyfrost.compose.foundation.layout.Arrangement
-import org.polyfrost.compose.foundation.layout.Box
-import org.polyfrost.compose.foundation.layout.Row
-import org.polyfrost.compose.foundation.layout.fillMaxWidth
-import org.polyfrost.compose.foundation.layout.height
-import org.polyfrost.compose.foundation.layout.heightIn
-import org.polyfrost.compose.foundation.layout.offset
-import org.polyfrost.compose.foundation.layout.padding
-import org.polyfrost.compose.foundation.layout.size
-import org.polyfrost.compose.foundation.layout.weight
-import org.polyfrost.compose.foundation.layout.width
-import org.polyfrost.compose.foundation.rememberScrollState
-import org.polyfrost.compose.foundation.verticalScroll
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.draw.clip
-import org.polyfrost.compose.ui.input.pointer.PointerEvent
-import org.polyfrost.compose.ui.input.pointer.PointerEventType
-import org.polyfrost.compose.ui.input.pointer.PointerIcon
-import org.polyfrost.compose.ui.input.pointer.onPointerEvent
-import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
-import org.polyfrost.compose.ui.text.style.TextOverflow
-import org.polyfrost.compose.ui.unit.dp
-import org.polyfrost.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.settings.DraggableListOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.poly.FadingEdges
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
@@ -60,6 +61,7 @@ private val ListItemSpacing = 14.dp
 @Composable
 fun DraggableListOption(data: DraggableListOptionData) {
     val theme = LocalTheme.current
+    val density = LocalDensity.current
 
     val allOptions: List<String> = remember(data.prop) {
         data.options?.toList() ?: propValueList(data.prop)
@@ -87,17 +89,14 @@ fun DraggableListOption(data: DraggableListOptionData) {
         mutableStateOf(items.filter { it.value in enabled }.map { it.id }.toSet())
     }
 
-    var pressedIndex by remember { mutableStateOf(-1) }
-    var pressY by remember { mutableStateOf(0f) }
     var draggingIndex by remember { mutableStateOf(-1) }
     var dragAccum by remember { mutableStateOf(0f) }
     val itemHeight = if (data.checkable) CheckableListItemHeight else PlainListItemHeight
-    val stride = (itemHeight + ListItemSpacing).value
-    fun targetIndex(accum: Float) = (draggingIndex + (accum / stride).roundToInt()).coerceIn(0, items.lastIndex)
+    val stridePx = with(density) { (itemHeight + ListItemSpacing).toPx() }
     val dragTargetIndex = if (draggingIndex == -1) {
         -1
     } else {
-        targetIndex(dragAccum)
+        (draggingIndex + (dragAccum / stridePx).roundToInt()).coerceIn(0, items.lastIndex)
     }
     val contentHeight = itemHeight * items.size + ListItemSpacing * (items.size - 1).coerceAtLeast(0)
 
@@ -108,44 +107,17 @@ fun DraggableListOption(data: DraggableListOptionData) {
 
     var lastTickIndex by remember { mutableStateOf(-1) }
 
-    fun onHandlePointer(index: Int, e: PointerEvent): Boolean = when (e.type) {
-        PointerEventType.Press -> e.button == 0 && run { pressedIndex = index; pressY = e.y; true }
-        PointerEventType.Move -> {
-            if (pressedIndex == -1) return false
-            if (draggingIndex == -1) {
-                if (abs(e.y - pressY) < 4f) return true
-                draggingIndex = pressedIndex
-                lastTickIndex = pressedIndex
-            }
-            dragAccum = (e.y - pressY).coerceIn(
-                -draggingIndex * stride,
-                (items.lastIndex - draggingIndex) * stride,
-            )
-            val target = targetIndex(dragAccum)
-            if (target != lastTickIndex) {
-                lastTickIndex = target
-                UiSounds.play(UiSoundEvent.SLIDER_TICK)
-            }
-            true
+    val draggableState = rememberDraggableState { delta ->
+        if (draggingIndex == -1) return@rememberDraggableState
+        dragAccum = (dragAccum + delta).coerceIn(
+            -draggingIndex * stridePx,
+            (items.lastIndex - draggingIndex) * stridePx,
+        )
+        val target = (draggingIndex + (dragAccum / stridePx).roundToInt()).coerceIn(0, items.lastIndex)
+        if (target != lastTickIndex) {
+            lastTickIndex = target
+            UiSounds.play(UiSoundEvent.SLIDER_TICK)
         }
-        PointerEventType.Release -> e.button == 0 && run {
-            pressedIndex = -1
-            if (draggingIndex != -1) {
-                if (dragTargetIndex != draggingIndex) {
-                    val list = items.toMutableList()
-                    val moved = list.removeAt(draggingIndex)
-                    list.add(dragTargetIndex, moved)
-                    items = list
-                    save(list)
-                } else {
-                    save()
-                }
-                draggingIndex = -1
-                dragAccum = 0f
-            }
-            true
-        }
-        else -> false
     }
 
     Box(
@@ -161,6 +133,7 @@ fun DraggableListOption(data: DraggableListOptionData) {
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(max = 280.dp)
+                .fadingEdges(scrollState, theme.componentBackground)
                 .verticalScroll(scrollState),
         ) {
           Box(
@@ -168,36 +141,35 @@ fun DraggableListOption(data: DraggableListOptionData) {
                 .fillMaxWidth()
                 .height(contentHeight),
           ) {
-            val order = if (draggingIndex == -1) items.indices.toList() else items.indices.filter { it != draggingIndex } + draggingIndex
-            for (index in order) {
-                val item = items[index]
+            items.forEachIndexed { index, item ->
                 key(item.id) {
                     val isDragging = draggingIndex == index
                     val rowInteraction = rememberInteractionSource()
                     val isHovered by rowInteraction.collectIsHoveredAsState()
-                    val baseOffset = index * stride
+                    val baseOffset = index * stridePx
                     val targetOffset = when {
                         isDragging -> baseOffset + dragAccum
                         draggingIndex == -1 -> baseOffset
-                        dragTargetIndex > draggingIndex && index in (draggingIndex + 1)..dragTargetIndex -> baseOffset - stride
-                        dragTargetIndex < draggingIndex && index in dragTargetIndex until draggingIndex -> baseOffset + stride
+                        dragTargetIndex > draggingIndex && index in (draggingIndex + 1)..dragTargetIndex -> baseOffset - stridePx
+                        dragTargetIndex < draggingIndex && index in dragTargetIndex until draggingIndex -> baseOffset + stridePx
                         else -> baseOffset
                     }
                     val animatedOffset by animateFloatAsState(targetOffset)
                     val visualOffset = if (isDragging) targetOffset else animatedOffset
 
-                    val bgColor = animateColorAsState(
+                    val bgColor by animateColorAsState(
                         if (isDragging) Accent else theme.componentBackground
                     )
-                    val contentColor = animateColorAsState(
+                    val contentColor by animateColorAsState(
                         if (isDragging || isHovered) theme.textColor else theme.textColorSecondary
                     )
 
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .offset(y = visualOffset.dp)
+                            .offset { IntOffset(0, visualOffset.roundToInt()) }
                             .height(itemHeight)
+                            .zIndex(if (isDragging) 1f else 0f)
                             .clip(ListItemShape)
                             .background(bgColor, ListItemShape)
                             .border(1.dp, theme.borderColor, ListItemShape)
@@ -211,7 +183,24 @@ fun DraggableListOption(data: DraggableListOptionData) {
                             modifier = Modifier
                                 .size(16.dp)
                                 .pointerHoverIcon(PointerIcon.Hand)
-                                .onPointerEvent { onHandlePointer(index, it) },
+                                .draggable(
+                                    orientation = Orientation.Vertical,
+                                    state = draggableState,
+                                    onDragStarted = { draggingIndex = index; dragAccum = 0f; lastTickIndex = index },
+                                    onDragStopped = {
+                                        if (dragTargetIndex != draggingIndex) {
+                                            val list = items.toMutableList()
+                                            val moved = list.removeAt(draggingIndex)
+                                            list.add(dragTargetIndex, moved)
+                                            items = list
+                                            save(list)
+                                        } else {
+                                            save()
+                                        }
+                                        draggingIndex = -1
+                                        dragAccum = 0f
+                                    },
+                                ),
                             color = contentColor,
                         )
 
@@ -230,7 +219,7 @@ fun DraggableListOption(data: DraggableListOptionData) {
 
                         Text(
                             optionLabels[item.value] ?: item.value,
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f, fill = false),
                             color = contentColor,
                             fontSize = 13.sp,
                             maxLines = 1,
@@ -241,13 +230,6 @@ fun DraggableListOption(data: DraggableListOptionData) {
             }
           }
         }
-        FadingEdges(
-            scrollState,
-            theme.componentBackground,
-            Modifier
-                .fillMaxWidth()
-                .height(minOf(contentHeight, 280.dp)),
-        )
     }
 }
 

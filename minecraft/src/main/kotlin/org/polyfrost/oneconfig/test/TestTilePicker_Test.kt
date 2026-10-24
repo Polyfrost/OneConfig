@@ -1,19 +1,21 @@
 package org.polyfrost.oneconfig.test
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import org.polyfrost.compose.foundation.background
-import org.polyfrost.compose.foundation.border
-import org.polyfrost.compose.foundation.layout.Box
-import org.polyfrost.compose.foundation.layout.padding
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.draw.alpha
-import org.polyfrost.compose.ui.draw.clip
-import org.polyfrost.compose.ui.graphics.Color
-import org.polyfrost.compose.ui.unit.dp
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.annotations.Option
@@ -71,6 +73,7 @@ private const val MAX_SWATCHES = 3
 private val SwatchIcon: PickerTileIcon<Swatch> = { swatch, modifier, alpha ->
     Box(
         modifier
+            .aspectRatio(1f)
             .alpha(alpha)
             .clip(SwatchShape)
             .background(swatch.color, SwatchShape)
@@ -94,8 +97,8 @@ class TestTilePickerVisualizer_Test : Visualizer {
                 (prop as Property<Any>).set(selected.toTypedArray())
             },
             icon = SwatchIcon,
-            width = LocalOptionWidth.current,
             modifier = Modifier
+                .width(LocalOptionWidth.current)
                 .clip(PickerShape)
                 .background(theme.popupBackground, PickerShape)
                 .border(1.dp, theme.borderColor, PickerShape)

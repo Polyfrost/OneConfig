@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -7,11 +9,9 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import java.util.function.Predicate
-import org.polyfrost.compose.foundation.layout.Box
-import org.polyfrost.compose.foundation.layout.fillMaxSize
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.PropertyModToggle
@@ -19,12 +19,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
-fun ModConfig(
-    id: String,
-    initialCategory: String? = null,
-    searchQuery: String = "",
-    onCategory: ((from: String?, to: String) -> Unit)? = null,
-) {
+fun ModConfig(id: String, initialCategory: String? = null) {
     val revision = ConfigRegistry.revision
     val config = ConfigRegistry.findById(id)
     val tree = ConfigRegistry.findTree(id)
@@ -58,7 +53,7 @@ fun ModConfig(
 
             // switching a mod can swap the values of its options so the page is rebuilt afterwards
             key(revision, tree) {
-                ConfigScreen(tree, initialCategory, pageKey = id, locked = locked, lockExempt = ownSwitch, searchQuery = searchQuery, onCategory = onCategory)
+                ConfigScreen(tree, initialCategory, pageKey = id, locked = locked, lockExempt = ownSwitch)
             }
         }
     }

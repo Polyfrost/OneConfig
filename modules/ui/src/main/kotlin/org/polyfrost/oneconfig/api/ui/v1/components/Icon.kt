@@ -1,8 +1,8 @@
 package org.polyfrost.oneconfig.api.ui.v1.components
 
 import androidx.compose.runtime.Composable
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.graphics.Color
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 

@@ -14,6 +14,8 @@ sealed class Brush {
 
     open val affine: Boolean get() = false
 
+    open val linear: Boolean get() = false
+
     fun colorAt(px: Float, py: Float, x: Float, y: Float, w: Float, h: Float): Int = sample(position(px, py, x, y, w, h))
 
     fun sample(t: Float): Int {
@@ -70,6 +72,7 @@ data class LinearGradient(
     val angle: Float = 0f,
 ) : Brush() {
     override val affine get() = colors.size <= 2 && stops == null
+    override val linear get() = true
 
     override fun position(px: Float, py: Float, x: Float, y: Float, w: Float, h: Float): Float {
         val rad = Math.toRadians(angle.toDouble())
@@ -94,6 +97,23 @@ data class RadialGradient(
         val r = radius * minOf(w, h)
         if (r <= 0f) return 1f
         return hypot(px - (x + centerX * w), py - (y + centerY * h)) / r
+    }
+}
+
+data class PointGradient(
+    override val colors: List<PolyColor>,
+    override val stops: List<Float>?,
+    val x0: Float, val y0: Float, val x1: Float, val y1: Float,
+) : Brush() {
+    override val affine get() = colors.size <= 2 && stops == null
+    override val linear get() = true
+
+    override fun position(px: Float, py: Float, x: Float, y: Float, w: Float, h: Float): Float {
+        val dx = x1 - x0
+        val dy = y1 - y0
+        val len2 = dx * dx + dy * dy
+        if (len2 <= 0f) return 0f
+        return ((px - x0) * dx + (py - y0) * dy) / len2
     }
 }
 

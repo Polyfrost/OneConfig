@@ -3,6 +3,7 @@ package org.polyfrost.compose.render
 import org.polyfrost.compose.ui.graphics.ImageBitmap
 import org.polyfrost.compose.ui.graphics.Brush
 import org.polyfrost.compose.ui.graphics.FilterQuality
+import org.polyfrost.compose.ui.graphics.StrokeCap
 import org.polyfrost.compose.ui.graphics.shadow.Shadow
 
 class RenderContext(val renderer: PolyRenderer) {
@@ -44,6 +45,11 @@ class RenderContext(val renderer: PolyRenderer) {
         renderer.fillPath(path, color.argb)
     }
 
+    fun strokePolyline(points: FloatArray, closed: Boolean, color: PolyColor, strokeWidth: Float, cap: StrokeCap = StrokeCap.Butt) {
+        if (color.alpha == 0) return
+        renderer.strokePolyline(points, closed, color.argb, strokeWidth, cap.ordinal)
+    }
+
     fun text(text: String, x: Float, y: Float, color: PolyColor, font: PolyFont) {
         if (color.alpha == 0 || text.isEmpty()) return
         renderer.text(text, x, y, color.argb, font)
@@ -76,12 +82,6 @@ class RenderContext(val renderer: PolyRenderer) {
 
     fun saveLayerAlpha(alpha: Float) {
         renderer.saveLayerAlpha(alpha)
-        absXStack.addLast(_absX)
-        absYStack.addLast(_absY)
-    }
-
-    fun saveLayerFade(fade: PolyFade) {
-        renderer.saveLayerFade(fade)
         absXStack.addLast(_absX)
         absYStack.addLast(_absY)
     }

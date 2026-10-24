@@ -1,30 +1,30 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import org.polyfrost.compose.foundation.layout.Arrangement
-import org.polyfrost.compose.foundation.layout.Box
-import org.polyfrost.compose.foundation.layout.Column
-import org.polyfrost.compose.foundation.layout.Row
-import org.polyfrost.compose.foundation.layout.fillMaxSize
-import org.polyfrost.compose.foundation.layout.padding
-import org.polyfrost.compose.foundation.rememberScrollState
-import org.polyfrost.compose.foundation.verticalScroll
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.platform.LocalDensity
-import org.polyfrost.compose.ui.text.font.FontWeight
-import org.polyfrost.compose.ui.unit.dp
-import org.polyfrost.compose.ui.unit.sp
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.api.TranslationCredits
 import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.accentGradientFill
 import org.polyfrost.oneconfig.internal.ui.components.rememberAccentBrandTint
-import org.polyfrost.oneconfig.internal.ui.poly.GUTTER
-import org.polyfrost.oneconfig.internal.ui.poly.PolyWindow
-import org.polyfrost.oneconfig.internal.ui.poly.SvgImage
+import org.polyfrost.oneconfig.internal.ui.components.rememberSvgResourcePainter
+import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val oneConfigVersion: String? by lazy {
@@ -90,31 +90,27 @@ private fun creditSections() = listOf(
 )
 
 @Composable
-fun CreditsWindow(onClose: () -> Unit) {
-    PolyWindow(onClose) {
-        Box(Modifier.fillMaxSize().padding(top = 19.dp, bottom = 19.dp)) {
-            Credits()
-        }
-    }
-}
-
-@Composable
 fun Credits() {
     val theme = LocalTheme.current
-    val pxPerDp = LocalDensity.current.density
     val scrollState = rememberScrollState()
     val creditSections = remember { creditSections() }
 
-    ScrollbarBox(scrollState, GUTTER.dp, Modifier.fillMaxSize()) {
+    ScrollbarBox(scrollState, PageGutter, Modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(horizontal = GUTTER.dp)
+            modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(horizontal = PageGutter)
         ) {
             Row(
                 verticalAlignment = Alignment.Bottom,
                 modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
             ) {
-                val logoTint = rememberAccentBrandTint(theme.logoPath)
-                SvgImage(theme.logoPath, 474f, 54f, pxPerDp, recolor = logoTint)
+                rememberSvgResourcePainter(theme.logoPath)?.let { logo ->
+                    Image(
+                        painter = logo,
+                        contentDescription = null,
+                        colorFilter = rememberAccentBrandTint(theme.logoPath),
+                        modifier = Modifier.size(474.dp, 54.dp).accentGradientFill()
+                    )
+                }
                 oneConfigVersion?.let { version ->
                     Text(
                         "v$version",
@@ -129,7 +125,13 @@ fun Credits() {
                 modifier = Modifier.padding(bottom = 8.dp)
             ) {
                 Text("by ", color = theme.textColorSecondary, fontSize = 13.sp)
-                SvgImage("assets/oneconfig/brand/by-polyfrost.svg", 139f, 24f, pxPerDp)
+                rememberSvgResourcePainter("assets/oneconfig/brand/by-polyfrost.svg")?.let { poly ->
+                    Image(
+                        painter = poly,
+                        contentDescription = "Polyfrost",
+                        modifier = Modifier.size(139.dp, 24.dp)
+                    )
+                }
             }
             creditSections.forEach { section ->
                 Text(
@@ -152,7 +154,13 @@ fun Credits() {
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(top = 24.dp, bottom = 8.dp)
             )
-            SvgImage("assets/oneconfig/brand/atmofrost.svg", 100f, 41f, pxPerDp, Modifier.padding(bottom = 16.dp))
+            rememberSvgResourcePainter("assets/oneconfig/brand/atmofrost.svg")?.let { atmofrost ->
+                Image(
+                    painter = atmofrost,
+                    contentDescription = "Atmofrost",
+                    modifier = Modifier.padding(bottom = 16.dp).size(100.dp, 41.dp)
+                )
+            }
         }
     }
 }

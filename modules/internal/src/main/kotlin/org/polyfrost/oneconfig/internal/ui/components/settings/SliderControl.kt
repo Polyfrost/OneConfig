@@ -1,52 +1,33 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import kotlin.math.min
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
-import org.polyfrost.compose.animation.core.animateFloatAsState
-import org.polyfrost.compose.animation.core.spring
-import org.polyfrost.compose.foundation.Canvas
-import org.polyfrost.compose.foundation.layout.height
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.graphics.Color
-import org.polyfrost.compose.ui.input.pointer.PointerEvent
-import org.polyfrost.compose.ui.input.pointer.PointerEventType
-import org.polyfrost.compose.ui.input.pointer.onPointerEvent
-import org.polyfrost.compose.ui.unit.Dp
-import org.polyfrost.compose.ui.unit.dp
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-import org.polyfrost.oneconfig.internal.ui.themes.cornerRadiusOrNull
-
-internal class SliderTicker {
-    private var lastTickValue = Float.NaN
-    private var lastTickAt = 0L
-
-    fun maybeTick(newValue: Float) {
-        if (newValue == lastTickValue) return
-        lastTickValue = newValue
-        val now = System.currentTimeMillis()
-        if (now - lastTickAt >= 70L) {
-            lastTickAt = now
-            UiSounds.play(UiSoundEvent.SLIDER_TICK)
-        }
-    }
-}
-
-private fun snap(raw: Float, min: Float, max: Float, step: Float): Float {
-    val clamped = raw.coerceIn(min, max)
-    if (step <= 0f) return clamped
-    return (min + ((clamped - min) / step).roundToInt() * step).coerceIn(min, max)
-}
-
-internal fun xToValue(x: Float, trackWidth: Float, thumbWidth: Float, min: Float, max: Float, step: Float): Float {
-    val usable = (trackWidth - thumbWidth).coerceAtLeast(1f)
-    return snap(min + ((x - thumbWidth / 2f) / usable).coerceIn(0f, 1f) * (max - min), min, max, step)
-}
 
 /**
  * The draggable track of a slider without any surrounding label or value field
@@ -63,44 +44,75 @@ fun SliderControl(
     modifier: Modifier = Modifier,
     thumbSize: Dp = 19.dp,
     trackHeight: Dp = 5.dp,
-    trackColor: Color = LocalTheme.current.controlTrackColor,
-    fillColor: Color? = null,
-    thumbColor: Color = LocalTheme.current.controlThumbColor,
 ) {
     val theme = LocalTheme.current
-    val ticker = remember { SliderTicker() }
-    val span = (max - min).takeIf { it != 0f } ?: 1f
+    var trackWidthPx by remember { mutableStateOf(0f) }
     val fraction by animateFloatAsState(
-        ((value - min) / span).coerceIn(0f, 1f),
+        ((value - min) / (max - min)).coerceIn(0f, 1f),
         animationSpec = spring(),
     )
-    val thumb = thumbSize.value
-    val track = trackHeight.value
-    val trackRadius = min(theme.checkBoxShape.radius, track / 2f)
-    val thumbRadius = min(theme.circleShape.cornerRadiusOrNull()?.value ?: Float.MAX_VALUE, thumb / 2f)
 
-    fun drag(e: PointerEvent) =
-        xToValue(e.x - e.node.x, e.node.width, thumb, min, max, step).let { ticker.maybeTick(it); onValueChange(it) }
-
-    Canvas(
-        modifier
+    Box(
+        modifier = modifier
             .height(thumbSize)
-            .onPointerEvent { e ->
-                when (e.type) {
-                    PointerEventType.Press -> e.button == 0 && run { drag(e); true }
-                    PointerEventType.Move -> { drag(e); true }
-                    PointerEventType.Release -> true
-                    else -> false
+            .onSizeChanged { trackWidthPx = it.width.toFloat() }
+            .pointerInput(min, max, step) {
+                val thumbPx = thumbSize.toPx()
+                var lastTickValue = Float.NaN
+                var lastTickAt = 0L
+                fun maybeTick(newValue: Float) {
+                    if (newValue == lastTickValue) return
+                    lastTickValue = newValue
+                    val now = System.currentTimeMillis()
+                    if (now - lastTickAt >= 70L) {
+                        lastTickAt = now
+                        UiSounds.play(UiSoundEvent.SLIDER_TICK)
+                    }
+                }
+                fun snap(raw: Float): Float {
+                    val clamped = raw.coerceIn(min, max)
+                    if (step <= 0f) return clamped
+                    return (min + ((clamped - min) / step).roundToInt() * step).coerceIn(min, max)
+                }
+                fun xToValue(x: Float): Float {
+                    val usable = (trackWidthPx - thumbPx).coerceAtLeast(1f)
+                    return snap(min + ((x - thumbPx / 2f) / usable).coerceIn(0f, 1f) * (max - min))
+                }
+                awaitEachGesture {
+                    val down = awaitFirstDown()
+                    xToValue(down.position.x).let { maybeTick(it); onValueChange(it) }
+                    do {
+                        val event = awaitPointerEvent()
+                        event.changes.forEach { ch ->
+                            if (ch.pressed) {
+                                xToValue(ch.position.x).let { maybeTick(it); onValueChange(it) }
+                                ch.consume()
+                            }
+                        }
+                    } while (event.changes.any { it.pressed })
                 }
             }
-    ) { x, y, w, h ->
-        val trackY = y + (h - track) / 2f
-        rect(x, trackY, w, track, trackColor, trackRadius)
-        val filled = fraction * w
-        if (filled > 0f) {
-            val r = min(trackRadius, filled / 2f)
-            if (fillColor != null) rect(x, trackY, filled, track, fillColor, r) else rectGradient(x, trackY, filled, track, AccentBrush, r)
-        }
-        rect(x + fraction * (w - thumb), y + (h - thumb) / 2f, thumb, thumb, thumbColor, thumbRadius)
+    ) {
+        Box(
+            Modifier
+                .fillMaxWidth().height(trackHeight)
+                .align(Alignment.CenterStart)
+                .clip(theme.checkBoxShape)
+                .background(theme.controlTrackColor)
+        )
+        Box(
+            Modifier
+                .fillMaxWidth(fraction).height(trackHeight)
+                .align(Alignment.CenterStart)
+                .clip(theme.checkBoxShape)
+                .background(AccentBrush)
+        )
+        Box(
+            Modifier
+                .align(Alignment.CenterStart)
+                .offset { IntOffset((fraction * (trackWidthPx - thumbSize.toPx())).toInt(), 0) }
+                .size(thumbSize)
+                .background(theme.controlThumbColor, theme.circleShape)
+        )
     }
 }

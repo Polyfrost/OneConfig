@@ -21,7 +21,6 @@ class TextNode : PolyNode() {
     var text: String = ""
     var color: PolyColor = PolyColor.WHITE
 
-    var animatedColor: androidx.compose.runtime.State<PolyColor>? = null
     var fontSize: Float = 12f
     var shadow: Boolean = false
     var shadowColor: PolyColor = PolyColor(0x80000000.toInt())
@@ -146,10 +145,8 @@ class TextNode : PolyNode() {
         return line
     }
 
-    override fun animating() = super.animating() || animatedColor.let { it != null && it.value != color }
 
     override fun render(ctx: RenderContext) {
-        val color = animatedColor?.value ?: color
         val font = font()
         val m = font.metrics
         val ls = lines

@@ -1,8 +1,8 @@
 package org.polyfrost.oneconfig.api.ui.v1.theme
 
-import org.polyfrost.compose.ui.graphics.Color
-import org.polyfrost.compose.ui.graphics.Shape
-import org.polyfrost.compose.ui.text.font.FontFamily
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.text.font.FontFamily
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 
 @ExperimentalOneConfigUiApi

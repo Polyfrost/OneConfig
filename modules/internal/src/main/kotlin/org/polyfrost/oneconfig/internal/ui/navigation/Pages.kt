@@ -1,20 +1,42 @@
 package org.polyfrost.oneconfig.internal.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
+import java.util.Locale
+import kotlinx.serialization.Serializable
 import org.apache.logging.log4j.LogManager
-import org.polyfrost.oneconfig.api.ui.v1.page.ModConfigTarget as PublicModConfigTarget
+import org.polyfrost.oneconfig.api.ui.v1.page.ModConfigTarget
 import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPage
 import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPages
 import org.polyfrost.oneconfig.api.ui.v1.page.PageGroup
 import org.polyfrost.oneconfig.api.ui.v1.page.PageText
-import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.resolve
 import org.polyfrost.oneconfig.internal.ui.components.translated
-import org.polyfrost.oneconfig.internal.ui.shell.LocalPageScope
-import org.polyfrost.oneconfig.internal.ui.shell.ModConfigTarget
-import org.polyfrost.oneconfig.internal.ui.shell.Page
-import org.polyfrost.oneconfig.internal.ui.shell.PolyPage
-import org.polyfrost.oneconfig.internal.ui.shell.ShellNav
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.ChangeLogGraph
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.CreditsGraph
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.KeybindsGraph
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.PreferencesGraph
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.ProfilesGraph
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.ThemesGraph
+import org.polyfrost.oneconfig.internal.ui.screens.Changelog
+import org.polyfrost.oneconfig.internal.ui.screens.Credits
+import org.polyfrost.oneconfig.internal.ui.screens.Keybinds
+import org.polyfrost.oneconfig.internal.ui.screens.Mods
+import org.polyfrost.oneconfig.internal.ui.screens.Preferences
+import org.polyfrost.oneconfig.internal.ui.screens.Profiles
+import org.polyfrost.oneconfig.internal.ui.screens.Themes
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
+
+@Serializable
+data class PageRoute(val pageId: String)
 
 internal class BuiltinPage(
     key: String,
@@ -22,7 +44,8 @@ internal class BuiltinPage(
     icon: String,
     group: PageGroup,
     override val order: Int,
-    val route: PolyPage,
+    val route: Any,
+    private val content: @Composable () -> Unit,
 ) : OneConfigPage(
     "oneconfig:$key",
     PageText.translatable("oneconfig.page.$key.title", englishTitle),
@@ -33,21 +56,18 @@ internal class BuiltinPage(
         PageText.translatable("oneconfig.page.$key.search", "Search $englishTitle...")
 
     @Composable
-    override fun Content() {
-        val scope = LocalPageScope.current ?: return
-        Page(route, null, scope.host, scope.query, scope.nav)
-    }
+    override fun Content() = content()
 }
 
 object BuiltinPages {
     internal val all: List<BuiltinPage> = listOf(
-        BuiltinPage("mods", "Mods", "settings", PageGroup.MODS_AND_OPTIONS, 100, PolyPage.Mods),
-        BuiltinPage("profiles", "Profiles", "profiles", PageGroup.MODS_AND_OPTIONS, 200, PolyPage.Profiles),
-        BuiltinPage("keybinds", "Keybinds", "keyboard", PageGroup.MODS_AND_OPTIONS, 300, PolyPage.Keybinds),
-        BuiltinPage("themes", "Themes", "paintbrush", PageGroup.PERSONALIZATION, 100, PolyPage.Themes),
-        BuiltinPage("preferences", "Preferences", "cog", PageGroup.PERSONALIZATION, 200, PolyPage.Preferences),
-        BuiltinPage("changelog", "Changelog", "refresh", PageGroup.ONECONFIG, 100, PolyPage.Changelog),
-        BuiltinPage("credits", "Credits", "star", PageGroup.ONECONFIG, 200, PolyPage.Credits),
+        BuiltinPage("mods", "Mods", "settings", PageGroup.MODS_AND_OPTIONS, 100, ModsGraph) { Mods() },
+        BuiltinPage("profiles", "Profiles", "profiles", PageGroup.MODS_AND_OPTIONS, 200, ProfilesGraph) { Profiles() },
+        BuiltinPage("keybinds", "Keybinds", "keyboard", PageGroup.MODS_AND_OPTIONS, 300, KeybindsGraph) { Keybinds() },
+        BuiltinPage("themes", "Themes", "paintbrush", PageGroup.PERSONALIZATION, 100, ThemesGraph) { Themes() },
+        BuiltinPage("preferences", "Preferences", "cog", PageGroup.PERSONALIZATION, 200, PreferencesGraph) { Preferences() },
+        BuiltinPage("changelog", "Changelog", "refresh", PageGroup.ONECONFIG, 100, ChangeLogGraph) { Changelog() },
+        BuiltinPage("credits", "Credits", "star", PageGroup.ONECONFIG, 200, CreditsGraph) { Credits() },
     )
 
     @Volatile
@@ -79,59 +99,86 @@ fun registeredPages(): List<OneConfigPage> {
     return OneConfigPages.all()
 }
 
-fun pageTarget(page: OneConfigPage): Pair<PolyPage, Any?> =
-    (page as? BuiltinPage)?.let { it.route to null } ?: (PolyPage.Page to page.id)
+fun pageRoute(page: OneConfigPage): Any = (page as? BuiltinPage)?.route ?: PageRoute(page.id)
 
-fun resolveOpenTarget(target: Any?): Pair<PolyPage, Any?>? = when (target) {
+fun resolveOpenTarget(target: Any?): Any? = when (target) {
     is String -> {
         BuiltinPages.register()
-        OneConfigPages.byId(target)?.let(::pageTarget) ?: run {
+        OneConfigPages.byId(target)?.let(::pageRoute) ?: run {
             LOGGER.error("Cannot open unknown OneConfig page {}, opening the mods page instead", target)
-            PolyPage.Mods to null
+            ModsGraph
         }
     }
     is OneConfigPage -> {
         BuiltinPages.register()
-        if (OneConfigPages.byId(target.id) === target) pageTarget(target) else {
+        if (OneConfigPages.byId(target.id) === target) pageRoute(target) else {
             LOGGER.error("Cannot open OneConfig page {} because it is not registered, opening the mods page instead", target.id)
-            PolyPage.Mods to null
+            ModsGraph
         }
     }
-    is PublicModConfigTarget -> ConfigRegistry.findById(target.modId)
-        ?.let { PolyPage.ModConfig to ModConfigTarget(it, target.category) }
-        ?: (PolyPage.Mods to null)
-    else -> null
+    is ModConfigTarget -> ModConfigRoute(target.modId, target.category)
+    else -> target
 }
 
-fun ShellNav.isOn(route: PolyPage, arg: Any? = null): Boolean =
-    current.hierarchy == route && (route != PolyPage.Page || this.arg == arg)
+fun NavGraphBuilder.pageDestinations() {
+    composable<PageRoute> { entry ->
+        val id = entry.toRoute<PageRoute>().pageId
+        val page = OneConfigPages.byId(id)
+        if (page != null) {
+            page.Content()
+            return@composable
+        }
+        val shell = LocalShell.current
+        LaunchedEffect(id) {
+            LOGGER.warn("OneConfig page {} is not registered, opening the mods page instead", id)
+            shell.navigation.discard(PageRoute(id), ModsGraph)
+        }
+    }
+}
 
-fun pageFor(page: PolyPage, arg: Any? = null): OneConfigPage? =
-    if (page == PolyPage.Page) (arg as? String)?.let(OneConfigPages::byId)
-    else registeredPages().firstOrNull { it is BuiltinPage && it.route == page.hierarchy }
+fun NavBackStackEntry?.isOn(route: Any): Boolean {
+    val entry = this ?: return false
+    val destination = entry.destination
+    if (route is PageRoute) {
+        return destination.hasRoute(PageRoute::class) && runCatching { entry.toRoute<PageRoute>().pageId }.getOrNull() == route.pageId
+    }
+    return destination.hierarchy.any { it.hasRoute(route::class) }
+}
 
-fun ShellNav.currentPage(): OneConfigPage? = pageFor(current, arg)
+fun NavBackStackEntry?.currentPage(): OneConfigPage? {
+    val entry = this ?: return null
+    if (entry.destination.hasRoute(PageRoute::class)) {
+        val id = runCatching { entry.toRoute<PageRoute>().pageId }.getOrNull() ?: return null
+        return OneConfigPages.byId(id)
+    }
+    return registeredPages().firstOrNull { it is BuiltinPage && entry.isOn(it.route) }
+}
 
-fun ShellNav.currentPageTitle(): String? = currentPage()?.title?.resolve()
-
-class SidebarEntry(val icon: String, val label: String, val route: PolyPage, val arg: Any? = null)
+class SidebarEntry(val icon: String, val label: String, val route: Any)
 
 class SidebarSection(val title: String, val entries: List<SidebarEntry>)
 
-fun sidebarSections(): List<SidebarSection> = registeredPages()
-    .filter { it.showInSidebar }
-    .groupBy { it.group }
-    .map { (group, pages) ->
-        SidebarSection(group.title.resolve(), pages.map {
-            val (route, arg) = pageTarget(it)
-            SidebarEntry(it.icon, it.title.resolve(), route, arg)
-        })
+fun sidebarSections(): List<SidebarSection> {
+    val pages = registeredPages()
+    val groups = pages.map { it.group }.distinct()
+    return NavigationGroups.map { group ->
+        SidebarSection(
+            groups.firstOrNull { it.title.fallback == group.id }?.title?.resolve() ?: group.id,
+            group.routes.map { def ->
+                val page = pages.firstOrNull { pageRoute(it) == def.route }
+                val label = page?.title?.resolve()
+                    ?: def.id.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+                SidebarEntry(def.icon, label, def.route)
+            },
+        )
     }
-
-fun searchPlaceholder(page: PolyPage, arg: Any? = null): String {
-    val target = pageFor(page, arg)
-    return searchPlaceholder(target, target?.title?.resolve())
 }
+
+fun NavBackStackEntry?.currentPageTitle(): String? =
+    currentPage()?.title?.resolve()
+        ?: sidebarSections().asSequence().flatMap { it.entries }.firstOrNull { isOn(it.route) }?.label
+
+fun searchPlaceholder(entry: NavBackStackEntry?): String = searchPlaceholder(entry.currentPage(), entry.currentPageTitle())
 
 fun searchPlaceholder(page: OneConfigPage?, title: String?): String {
     page?.searchPlaceholder?.let { return it.resolve() }

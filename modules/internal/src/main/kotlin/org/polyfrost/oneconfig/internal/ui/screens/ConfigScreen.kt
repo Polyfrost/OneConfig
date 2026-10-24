@@ -1,62 +1,65 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.center
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.isSecondaryPressed
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import java.util.function.Consumer
 import java.util.function.Predicate
-import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.polyfrost.compose.animation.core.animateFloatAsState
-import org.polyfrost.compose.foundation.Canvas
-import org.polyfrost.compose.foundation.TooltipArea
-import org.polyfrost.compose.foundation.background
-import org.polyfrost.compose.foundation.border
-import org.polyfrost.compose.foundation.hoverable
-import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
-import org.polyfrost.compose.foundation.layout.Arrangement
-import org.polyfrost.compose.foundation.layout.Box
-import org.polyfrost.compose.foundation.layout.Column
-import org.polyfrost.compose.foundation.layout.Row
-import org.polyfrost.compose.foundation.layout.Spacer
-import org.polyfrost.compose.foundation.layout.align
-import org.polyfrost.compose.foundation.layout.fillMaxSize
-import org.polyfrost.compose.foundation.layout.fillMaxWidth
-import org.polyfrost.compose.foundation.layout.height
-import org.polyfrost.compose.foundation.layout.padding
-import org.polyfrost.compose.foundation.layout.size
-import org.polyfrost.compose.foundation.layout.weight
-import org.polyfrost.compose.foundation.layout.widthIn
-import org.polyfrost.compose.foundation.lazy.LazyColumn
-import org.polyfrost.compose.foundation.shape.RoundedCornerShape
-import org.polyfrost.compose.render.PolyFont
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.draw.alpha
-import org.polyfrost.compose.ui.draw.clip
-import org.polyfrost.compose.ui.geometry.Offset
-import org.polyfrost.compose.ui.graphics.Brush
-import org.polyfrost.compose.ui.graphics.copy
-import org.polyfrost.compose.ui.input.pointer.PointerEventType
-import org.polyfrost.compose.ui.input.pointer.onPointerEvent
-import org.polyfrost.compose.ui.layout.onGloballyPositioned
-import org.polyfrost.compose.ui.layout.onPlaced
-import org.polyfrost.compose.ui.layout.positionInRoot
-import org.polyfrost.compose.ui.platform.LocalDensity
-import org.polyfrost.compose.ui.text.font.FontWeight
-import org.polyfrost.compose.ui.unit.Dp
-import org.polyfrost.compose.ui.unit.IntOffset
-import org.polyfrost.compose.ui.unit.dp
-import org.polyfrost.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -64,6 +67,7 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.ui.v1.SettingRowDecorator
 import org.polyfrost.oneconfig.api.ui.v1.SettingRowDecorators
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
@@ -83,9 +87,6 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
-import org.polyfrost.oneconfig.internal.ui.poly.AnimatedVisibility
-import org.polyfrost.oneconfig.internal.ui.poly.GUTTER
-import org.polyfrost.oneconfig.internal.ui.poly.richText
 import org.polyfrost.oneconfig.internal.ui.search.CategoryGroup
 import org.polyfrost.oneconfig.internal.ui.search.ConfigListEntry
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
@@ -101,9 +102,12 @@ import org.polyfrost.oneconfig.internal.ui.search.flattenEntries
 import org.polyfrost.oneconfig.internal.ui.search.flattenSearchEntries
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.search.searchNode
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
+import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
+import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.util.LayoutRef
 
 @Composable
 fun ConfigScreen(
@@ -112,11 +116,9 @@ fun ConfigScreen(
     pageKey: String,
     locked: Boolean = false,
     lockExempt: Property<*>? = null,
-    searchQuery: String = "",
-    onCategory: ((from: String?, to: String) -> Unit)? = null,
 ) {
     key(System.identityHashCode(tree)) {
-        ConfigScreenContent(tree, initialCategory, pageKey, locked, lockExempt, searchQuery, onCategory)
+        ConfigScreenContent(tree, initialCategory, pageKey, locked, lockExempt)
     }
 }
 
@@ -127,29 +129,33 @@ private fun ConfigScreenContent(
     pageKey: String,
     locked: Boolean,
     lockExempt: Property<*>?,
-    searchQuery: String,
-    onCategory: ((from: String?, to: String) -> Unit)?,
 ) {
     val categories = remember(tree) { buildCategories(tree) }
-    val localSearchQuery = searchQuery.trim()
+    val localSearchQuery = pageSearchQuery().trim()
+    val navigation = LocalShell.current.navigation
 
-    val savedCategory = initialCategory ?: ShellState.selectedCategories[pageKey]
+    val savedCategory = navigation.selectedCategory(pageKey) ?: initialCategory
     val selectedCategory = categories.firstOrNull { it.name.equals(savedCategory, ignoreCase = true) }
         ?: categories.firstOrNull()
 
     fun selectCategory(category: CategoryGroup) {
-        ShellState.selectedCategories[pageKey] = category.name
-        if (category != selectedCategory) onCategory?.invoke(selectedCategory?.name, category.name)
+        navigation.selectCategory(pageKey, category.name)
     }
 
-    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(19.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
         if (localSearchQuery.isBlank() && categories.size > 1) {
-            CategoryChips(categories, gutter = GUTTER.dp) { category ->
-                Chip(
-                    label = category.name,
-                    selected = selectedCategory == category,
-                    onClick = { selectCategory(category) }
-                )
+            FlowRow(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = PageGutter),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                categories.forEach { category ->
+                    Chip(
+                        label = category.name,
+                        selected = selectedCategory == category,
+                        onClick = { selectCategory(category) }
+                    )
+                }
             }
         }
 
@@ -166,7 +172,7 @@ private fun ConfigScreenContent(
             }
         }
 
-        val lazyListState = rememberRestorableLazyListState("$pageKey/${selectedCategory?.name}", localSearchQuery, search.query)
+        val lazyListState = rememberRestorableLazyListState(pageKey, localSearchQuery, search.query)
 
         if (entries.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -180,52 +186,18 @@ private fun ConfigScreenContent(
             return@Column
         }
 
-        ScrollbarBox(lazyListState, GUTTER.dp, Modifier.weight(1f).fillMaxWidth().clip()) {
+        ScrollbarBox(lazyListState, PageGutter, Modifier.fillMaxSize()) {
             LazyColumn(
-                Modifier.fillMaxSize().padding(horizontal = GUTTER.dp),
                 state = lazyListState,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(horizontal = PageGutter),
             ) {
-                items(entries, key = ::entryKey) { entry ->
+                items(entries) { entry ->
                     val option = ((entry as? ConfigListEntry.Item)?.node as? SettingNode.Leaf)?.prop
                     val lock = locked && (option == null || option !== lockExempt)
-                    Box(Modifier.fillMaxWidth().alpha(if (lock) 0.45f else 1f).blockInteraction(lock, keyboard = true)) { ConfigListRow(entry) }
+                    Box(Modifier.alpha(if (lock) 0.45f else 1f).blockInteraction(lock, keyboard = true)) { ConfigListRow(entry) }
                 }
             }
-        }
-    }
-}
-
-private fun entryKey(entry: ConfigListEntry): Any = when (entry) {
-    is ConfigListEntry.CategoryHeader -> "c:" + entry.title
-    is ConfigListEntry.SubcategoryHeader -> "s:" + entry.title
-    is ConfigListEntry.Item -> when (val node = entry.node) {
-        is SettingNode.Leaf -> node.prop
-        is SettingNode.Accordion -> node.tree
-    }
-}
-
-@Composable
-private fun CategoryChips(categories: List<CategoryGroup>, gutter: Dp, chip: @Composable (CategoryGroup) -> Unit) {
-    val theme = LocalTheme.current
-    var width by remember { mutableFloatStateOf(0f) }
-    val font = PolyFont(theme.typography.family.resolve(FontWeight.Normal), 14f)
-    val lines = remember(categories, width, font) {
-        val out = ArrayList<MutableList<CategoryGroup>>()
-        var used = Float.MAX_VALUE
-        for (category in categories) {
-            val w = font.measureTextWidth(category.name) + 24f
-            if (width <= 0f || used + 8f + w > width) { out += ArrayList<CategoryGroup>(); used = w } else used += 8f + w
-            out.last() += category
-        }
-        out
-    }
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = gutter).onPlaced { width = it.width - 2 * gutter.value },
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        for (line in lines) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            for (category in line) key(category.name) { chip(category) }
         }
     }
 }
@@ -417,7 +389,7 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
     val chevronRotation by animateFloatAsState(if (expanded) 180f else 90f)
     val headDisplay = node.head?.let { rememberDisplay(it) } ?: Property.Display.SHOWN
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
@@ -425,89 +397,91 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
             .border(1.dp, remember(theme.borderColor) {
                 Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
             }, shape)
+            .drawWithCache {
+                val color = theme.textColor
+                val gradient = Brush.radialGradient(
+                    colors = listOf(color.copy(0f), color.copy(0.02f), color.copy(0.05f)),
+                    center = Offset(size.width / 2f, 0f),
+                    radius = size.width * 0.8f,
+                )
+                onDrawBehind { drawRect(gradient) }
+            }
     ) {
-        val color = theme.textColor
-        Canvas(Modifier.fillMaxSize()) { x, y, w, h ->
-            if (w <= 0f || h <= 0f) return@Canvas
-            val gradient = Brush.radialGradient(
-                colors = listOf(color.copy(0f), color.copy(0.02f), color.copy(0.05f)),
-                centerY = 0f,
-                radius = 0.8f * w / min(w, h),
-            )
-            rectGradient(x, y, w, h, gradient, shape.radius)
-        }
-        Column(Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .onClick(headerInteraction) { expanded = !expanded }
+                .alpha(displayAlpha(headDisplay))
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onClick(headerInteraction) { expanded = !expanded }
-                    .alpha(displayAlpha(headDisplay))
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    node.tree.getMetadata<String>("icon")?.let { Icon(it, color = theme.textColor, modifier = Modifier.size(32.dp)) }
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(
-                            node.tree.localizedTitle(),
-                            color = theme.textColor,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            softWrap = true,
-                        )
-                        node.tree.localizedDescription()?.let {
-                            Text(it, color = theme.textColorSecondary, fontSize = 13.sp, softWrap = true)
-                        }
+                node.tree.getMetadata<String>("icon")?.let { Icon(it, color = theme.textColor, modifier = Modifier.size(32.dp)) }
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        node.tree.localizedTitle(),
+                        color = theme.textColor,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    node.tree.localizedDescription()?.let {
+                        Text(it, color = theme.textColorSecondary, fontSize = 13.sp)
                     }
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    if (node.head != null) {
-                        var headChecked by remember(node) { mutableStateOf(node.head.shown() == true) }
-                        DisposableEffect(node.head) {
-                            val listener = Predicate<Boolean> { value -> headChecked = value == true; false }
-                            node.head.addCallback(listener)
-                            onDispose { node.head.removeCallback(listener) }
-                        }
-                        SwitchControl(headChecked) {
-                            if (headDisplay != Property.Display.DISABLED) {
-                                headChecked = it
-                                node.head.set(it)
-                                expanded = it
-                            }
-                        }
-                    }
-                    Icon("up", theme.textColorSecondary, Modifier.size(12.dp), rotation = chevronRotation)
                 }
             }
 
-            var bodyHeight by remember { mutableFloatStateOf(0f) }
-            AnimatedVisibility(visible = expanded) { open ->
-                Box(if (open >= 1f) Modifier.fillMaxWidth() else Modifier.fillMaxWidth().height((bodyHeight * open).dp).clip()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(
-                                width = 1.dp,
-                                brush = remember(theme.borderColor) {
-                                    Brush.verticalGradient(listOf(theme.borderColor.copy(0f), theme.borderColor))
-                                },
-                                shape = shape
-                            )
-                            .padding(bottom = 12.dp)
-                            .onPlaced { bodyHeight = it.height }
-                    ) {
-                        AccordionOptionsGrid(node.body, compact = compact)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                if (node.head != null) {
+                    var headChecked by remember(node) { mutableStateOf(node.head.shown() == true) }
+                    DisposableEffect(node.head) {
+                        val listener = Predicate<Boolean> { value -> headChecked = value == true; false }
+                        node.head.addCallback(listener)
+                        onDispose { node.head.removeCallback(listener) }
+                    }
+                    Box(Modifier.blockInteraction(headDisplay == Property.Display.DISABLED)) {
+                        SwitchControl(headChecked) {
+                            headChecked = it
+                            node.head.set(it)
+                            expanded = it
+                        }
                     }
                 }
+                Icon(
+                    "up",
+                    color = theme.textColorSecondary,
+                    modifier = Modifier
+                        .size(12.dp)
+                        .rotate(chevronRotation),
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically(),
+            exit = shrinkVertically(),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(
+                        width = 1.dp,
+                        brush = remember(theme.borderColor) {
+                            Brush.verticalGradient(listOf(theme.borderColor.copy(0f), theme.borderColor))
+                        },
+                        shape = shape
+                    )
+                    .padding(bottom = 12.dp)
+            ) {
+                AccordionOptionsGrid(node.body, compact = compact)
             }
         }
     }
@@ -542,18 +516,20 @@ private fun SettingRowContent(prop: Property<*>, compact: Boolean) {
             }, theme.modCardShape)
     ) {
         val vignetteColor = theme.textColor
-        Canvas(Modifier.fillMaxSize()) { x, y, w, h ->
-            if (w <= 0f || h <= 0f) return@Canvas
-            val gradient = Brush.radialGradient(
-                colors = listOf(
-                    vignetteColor.copy(alpha = 0f),
-                    vignetteColor.copy(alpha = 0.02f),
-                    vignetteColor.copy(alpha = 0.05f)
-                ),
-                radius = 0.9f
-            )
-            rectGradient(x, y, w, h, gradient, theme.modCardShape.radius)
-        }
+        Box(
+            Modifier.fillMaxSize().drawWithCache {
+                val gradient = Brush.radialGradient(
+                    colors = listOf(
+                        vignetteColor.copy(alpha = 0f),
+                        vignetteColor.copy(alpha = 0.02f),
+                        vignetteColor.copy(alpha = 0.05f)
+                    ),
+                    center = size.center,
+                    radius = size.minDimension * 0.9f
+                )
+                onDrawBehind { drawRect(gradient) }
+            }
+        )
         SettingContent(prop, compact = compact, enabled = display != Property.Display.DISABLED)
     }
 }
@@ -566,8 +542,8 @@ private fun AccordionSettingRow(prop: Property<*>, display: Property.Display, mo
 }
 
 @Composable
-private fun rememberVisibleOptions(body: List<Property<*>>): List<kotlin.Pair<Property<*>, Property.Display>> {
-    val visible = ArrayList<kotlin.Pair<Property<*>, Property.Display>>(body.size)
+private fun rememberVisibleOptions(body: List<Property<*>>): List<Pair<Property<*>, Property.Display>> {
+    val visible = ArrayList<Pair<Property<*>, Property.Display>>(body.size)
     for (prop in body) {
         val display = rememberDisplay(prop)
         if (display != Property.Display.HIDDEN) visible += prop to display
@@ -588,9 +564,6 @@ private fun optionReservedWidth(prop: Property<*>, optionWidth: Dp): Dp {
     val control = sliderTrailingWidth(prop)?.let { optionWidth + it + OPTION_ROW_CHROME } ?: OPTION_CHROME_WIDTH
     return control + (if (prop.getMetadata<String>("icon") != null) OPTION_ICON_WIDTH else 0.dp)
 }
-
-private fun titleWidth(font: PolyFont, prop: Property<*>): Dp =
-    font.measureTextWidth(richText(prop.localizedTitle(), font.name, font.name, font.name).first).dp
 
 private sealed interface OptionRow {
     data class Pair(val first: Property<*>, val second: Property<*>) : OptionRow
@@ -622,40 +595,50 @@ private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
     val visibleProps = remember(visible) { visible.map { it.first } }
 
     if (compact) {
-        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
+        Column(verticalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
             visible.forEach { (prop, display) ->
-                key(prop) { AccordionSettingRow(prop, display, Modifier.fillMaxWidth(), compact = true) }
+                AccordionSettingRow(prop, display, Modifier.fillMaxWidth(), compact = true)
             }
         }
         return
     }
 
     val theme = LocalTheme.current
+    val density = LocalDensity.current
+    val measurer = rememberTextMeasurer()
     val optionWidth = LocalOptionWidth.current
-    var maxWidth by remember { mutableFloatStateOf(0f) }
-    val columnWidth = (maxWidth.dp - OPTION_ROW_GAP) / 2
-    val titleFont = PolyFont(theme.typography.family.resolve(FontWeight.Medium), 15f)
-    val rows = remember(visibleProps, columnWidth, optionWidth, titleFont) {
-        buildOptionRows(visibleProps) { prop ->
-            titleWidth(titleFont, prop) + optionReservedWidth(prop, optionWidth) > columnWidth
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val columnWidth = (maxWidth - OPTION_ROW_GAP) / 2
+        val titleStyle = remember(theme) {
+            TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Medium, fontFamily = theme.typography.family)
         }
-    }
-    Column(Modifier.fillMaxWidth().onPlaced { maxWidth = it.width }, verticalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
-        if (maxWidth <= 0f) return@Column
-        rows.forEach { row ->
-            when (row) {
-                is OptionRow.Single -> key(row.prop) {
-                    if (row.wide) {
-                        AccordionSettingRow(row.prop, displays.getValue(row.prop), Modifier.fillMaxWidth())
-                    } else {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
-                            AccordionSettingRow(row.prop, displays.getValue(row.prop), Modifier.weight(1f))
-                            Spacer(Modifier.weight(1f))
+        val rows = remember(visibleProps, columnWidth, optionWidth, titleStyle) {
+            buildOptionRows(visibleProps) { prop ->
+                val titleWidth = with(density) {
+                    measurer.measure(
+                        prop.localizedTitle().asRenderText(),
+                        style = titleStyle,
+                        softWrap = false,
+                        maxLines = 1,
+                    ).size.width.toDp()
+                }
+                titleWidth + optionReservedWidth(prop, optionWidth) > columnWidth
+            }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
+            rows.forEach { row ->
+                when (row) {
+                    is OptionRow.Single -> {
+                        if (row.wide) {
+                            AccordionSettingRow(row.prop, displays.getValue(row.prop), Modifier.fillMaxWidth())
+                        } else {
+                            Row(horizontalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
+                                AccordionSettingRow(row.prop, displays.getValue(row.prop), Modifier.weight(1f))
+                                Spacer(Modifier.weight(1f))
+                            }
                         }
                     }
-                }
-                is OptionRow.Pair -> key(row.first, row.second) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
+                    is OptionRow.Pair -> Row(horizontalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
                         AccordionSettingRow(row.first, displays.getValue(row.first), Modifier.weight(1f))
                         AccordionSettingRow(row.second, displays.getValue(row.second), Modifier.weight(1f))
                     }
@@ -699,39 +682,42 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
 
     var menuOpen by remember(System.identityHashCode(prop)) { mutableStateOf(false) }
     var menuOffset by remember(System.identityHashCode(prop)) { mutableStateOf(IntOffset.Zero) }
-    val rowOrigin = remember(System.identityHashCode(prop)) { arrayOf(Offset.Zero) }
-    val actionMenuOffset = remember(System.identityHashCode(prop)) { arrayOf(IntOffset.Zero) }
+    val rowOrigin = remember(System.identityHashCode(prop)) { LayoutRef(Offset.Zero) }
+    val actionMenuOffset = remember(System.identityHashCode(prop)) { LayoutRef(IntOffset.Zero) }
     val rowInteraction = rememberInteractionSource()
     val isRowHovered by rowInteraction.collectIsHoveredAsState()
     val showActionButton = OneConfigConfig.showOptionActionButtons && enabled
     LaunchedEffect(enabled) { if (!enabled) menuOpen = false }
     fun openMenuFromActionButton() {
-        menuOffset = actionMenuOffset[0]
+        menuOffset = actionMenuOffset.value
         menuOpen = true
     }
 
     val density = LocalDensity.current
+    val measurer = rememberTextMeasurer()
     val optionWidth = LocalOptionWidth.current
-    val titleFont = PolyFont(theme.typography.family.resolve(FontWeight.Medium), 15f)
-    val propTitleWidth = titleWidth(titleFont, prop)
-    var maxWidth by remember(System.identityHashCode(prop)) { mutableFloatStateOf(0f) }
-    var squeezed by remember(System.identityHashCode(prop), maxWidth) { mutableStateOf(false) }
+    val titleStyle = remember(theme) {
+        TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Medium, fontFamily = theme.typography.family)
+    }
 
-    Box(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
             .hoverable(rowInteraction)
-            .onGloballyPositioned { rowOrigin[0] = it.positionInRoot() }
-            .onPlaced { maxWidth = it.width }
-            .onPointerEvent { event ->
-                if (!enabled || event.type != PointerEventType.Press || event.button != 1 || KeybindRecordingBus.isRecording) {
-                    return@onPointerEvent false
+            .onGloballyPositioned { rowOrigin.value = it.positionInRoot() }
+            .pointerInput(prop, enabled) {
+                if (!enabled) return@pointerInput
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed && !KeybindRecordingBus.isRecording) {
+                            val pos = event.changes.first().position
+                            menuOffset = IntOffset(pos.x.roundToInt(), pos.y.roundToInt())
+                            menuOpen = true
+                            event.changes.forEach { it.consume() }
+                        }
+                    }
                 }
-                menuOffset = with(density) {
-                    IntOffset((event.x - event.node.x).dp.roundToPx(), (event.y - event.node.y).dp.roundToPx())
-                }
-                menuOpen = true
-                true
             }
     ) {
         val actionButton = @Composable {
@@ -739,16 +725,25 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 OptionActionButton(
                     visible = isRowHovered || menuOpen,
                     modifier = Modifier.onGloballyPositioned {
-                        val pos = it.positionInRoot() - rowOrigin[0]
-                        actionMenuOffset[0] = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
+                        val pos = it.positionInRoot() - rowOrigin.value
+                        actionMenuOffset.value = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
                     },
                     onClick = ::openMenuFromActionButton,
                 )
             }
         }
         val fullWidth = isFullWidth(prop)
-        val stacked = compact || fullWidth || squeezed ||
-            (maxWidth > 0f && propTitleWidth + optionReservedWidth(prop, optionWidth) > maxWidth.dp)
+        val stacked = compact || fullWidth || run {
+            val titleWidth = with(density) {
+                measurer.measure(
+                    prop.localizedTitle().asRenderText(),
+                    style = titleStyle,
+                    softWrap = false,
+                    maxLines = 1,
+                ).size.width.toDp()
+            }
+            titleWidth + optionReservedWidth(prop, optionWidth) > maxWidth
+        }
 
         if (stacked) {
             Column(
@@ -759,13 +754,12 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 if (fullWidth) {
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         SettingLabel(prop, nested = nested, modifier = Modifier.weight(1f))
                         actionButton()
                     }
-                    var fullOptionWidth by remember { mutableFloatStateOf(0f) }
-                    Box(Modifier.fillMaxWidth().onPlaced { fullOptionWidth = it.width }) {
-                        CompositionLocalProvider(LocalOptionWidth provides if (fullOptionWidth > 0f) fullOptionWidth.dp else optionWidth) { Option(prop) }
+                    BoxWithConstraints(Modifier.fillMaxWidth()) {
+                        CompositionLocalProvider(LocalOptionWidth provides maxWidth) { Option(prop) }
                     }
                 } else {
                     SettingLabel(prop, nested = nested)
@@ -791,7 +785,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 SettingLabel(
                     prop = prop,
                     nested = nested,
-                    modifier = Modifier.weight(1f).onPlaced { if (it.width < min(propTitleWidth.value, 120f)) squeezed = true },
+                    modifier = Modifier.weight(1f),
                 )
 
                 actionButton()
@@ -818,30 +812,24 @@ private fun SettingLabel(
         prop.getMetadata<String>("icon")?.let {
             Icon(it, color = theme.textColor, modifier = Modifier.size(32.dp))
         }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             val title = @Composable {
                 Text(
                     prop.localizedTitle(),
                     color = theme.textColor,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
-                    softWrap = true,
                 )
             }
             val description = prop.localizedDescription()?.takeUnless { it.isEmptyText() }
 
             if (nested && description != null) {
-                TooltipArea(
-                    tooltip = {
-                        Box(
-                            Modifier.widthIn(max = 260.dp)
-                                .background(theme.popupBackground, RoundedCornerShape(8.dp))
-                                .border(1.dp, theme.borderColor, RoundedCornerShape(8.dp))
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                        ) {
-                            Text(description, color = theme.textColor, fontSize = 12.sp, softWrap = true)
-                        }
+                Tooltip(
+                    text = {
+                        Text(description, color = theme.textColor, fontSize = 12.sp)
                     },
+                    modifier = Modifier.widthIn(max = 260.dp),
+                    anchor = Alignment.TopCenter,
                 ) {
                     title()
                 }
@@ -850,7 +838,7 @@ private fun SettingLabel(
             }
 
             if (!nested) {
-                description?.let { Text(it, color = theme.textColorSecondary, fontSize = 13.sp, softWrap = true) }
+                description?.let { Text(it, color = theme.textColorSecondary, fontSize = 13.sp) }
             }
         }
     }
@@ -878,28 +866,32 @@ private fun HudConfigScreenContent(tree: Tree, searchQuery: String) {
     if (entries.isEmpty() && searchQuery.isNotEmpty()) return
 
     CompositionLocalProvider(LocalOptionWidth provides 220.dp) {
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(19.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
         if (searchQuery.isEmpty() && categories.size > 1) {
-            CategoryChips(categories, gutter = 0.dp) { category ->
-                Chip(
-                    label = category.name,
-                    selected = selectedCategory == category,
-                    onClick = { selectedCategory = category }
-                )
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                categories.forEach { category ->
+                    Chip(
+                        label = category.name,
+                        selected = selectedCategory == category,
+                        onClick = { selectedCategory = category }
+                    )
+                }
             }
         }
 
         if (entries.isEmpty()) {
-            Text(
-                "No settings available.",
-                color = LocalTheme.current.textColorSecondary,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No settings available.", color = LocalTheme.current.textColorSecondary)
+            }
             return@Column
         }
 
-        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            entries.forEach { entry -> key(entryKey(entry)) { ConfigListRow(entry, ::hasWideControl) } }
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            entries.forEach { entry -> ConfigListRow(entry, ::hasWideControl) }
         }
     }
     }
