@@ -46,6 +46,17 @@ class RenderContext(val canvas: Canvas) {
         canvas.drawString(text, x, y, font, paint)
     }
 
+    fun textOutline(text: String, x: Float, y: Float, color: PolyColor, font: Font, width: Float) {
+        if (color.alpha == 0 || text.isEmpty()) return
+        paint.color = color.argb
+        paint.mode = PaintMode.STROKE
+        paint.strokeWidth = width * 2f
+        paint.strokeJoin = PaintStrokeJoin.ROUND
+        canvas.drawString(text, x, y, font, paint)
+        paint.strokeJoin = PaintStrokeJoin.MITER
+        paint.mode = PaintMode.FILL
+    }
+
     fun measureText(text: String, font: Font): Float = font.measureTextWidth(text)
 
     fun save() {

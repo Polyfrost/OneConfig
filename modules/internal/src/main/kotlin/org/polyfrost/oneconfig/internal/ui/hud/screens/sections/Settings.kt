@@ -65,6 +65,7 @@ fun Settings(hud: Hud?, query: String, onDeleted: () -> Unit) {
         var textChroma by remember { mutableStateOf(hud.textChroma) }
         var textChromaSpeed by remember { mutableStateOf(hud.textChromaSpeed) }
         var showShadow by remember { mutableStateOf(hud.showShadow) }
+        var fullShadow by remember { mutableStateOf(hud.fullShadow) }
         var shadowColor by remember { mutableStateOf(Color(hud.shadowColor)) }
         var shadowChroma by remember { mutableStateOf(hud.shadowChroma) }
         var shadowChromaSpeed by remember { mutableStateOf(hud.shadowChromaSpeed) }
@@ -227,7 +228,7 @@ fun Settings(hud: Hud?, query: String, onDeleted: () -> Unit) {
                 }
             }
 
-            Section("Appearance", query, "Text Color", "Text Shadow", "Shadow Color") {
+            Section("Appearance", query, "Text Color", "Text Shadow", "Full Shadow", "Shadow Color") {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     HudSettingTarget(hud, "textColor") {
                         ColorButton(
@@ -256,6 +257,17 @@ fun Settings(hud: Hud?, query: String, onDeleted: () -> Unit) {
                         }
                     }
                     if (showShadow) {
+                        HudSettingTarget(hud, "fullShadow") {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                SwitchControl(fullShadow) {
+                                    Snapshot.withMutableSnapshot { fullShadow = it; hud.fullShadow = it }
+                                }
+                                Text("Full Shadow", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                            }
+                        }
                         HudSettingTarget(hud, "shadowColor") {
                             ColorButton(
                                 "Shadow Color", shadowColor,

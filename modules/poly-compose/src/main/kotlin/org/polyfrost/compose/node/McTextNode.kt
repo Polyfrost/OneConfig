@@ -10,6 +10,7 @@ class McTextNode : PolyNode() {
     var color: PolyColor = PolyColor.WHITE
     var shadow: Boolean = true
     var scale: Float = 1f
+    var outlineColor: PolyColor? = null
 
     fun remeasure() {
         val lines = text.lines()
@@ -20,6 +21,13 @@ class McTextNode : PolyNode() {
     override fun render(ctx: RenderContext) {
         val renderer = McFontQueue.renderer
         // read color.argb at draw time so chroma colours keep cycling every frame
-        if (renderer != null) renderer(ctx.canvas, text, x, y, color.argb, shadow, scale)
+        if (renderer == null) return
+        val outline = outlineColor
+        val outlineRenderer = McFontQueue.outlineRenderer
+        if (outline != null && outlineRenderer != null) {
+            outlineRenderer(ctx.canvas, text, x, y, color.argb, outline.argb, scale)
+        } else {
+            renderer(ctx.canvas, text, x, y, color.argb, shadow, scale)
+        }
     }
 }
