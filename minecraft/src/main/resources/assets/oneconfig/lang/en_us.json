@@ -179,6 +179,11 @@
   "oneconfig.hud.tour.done.title": "You're all set",
   "oneconfig.hud.tour.done.body": "Right-click empty space and pick Editor Tour to see this again.",
 
+  "oneconfig.credits.translations": "All mod authors and Crowdin translators whose translations OneConfig downloads",
+  "oneconfig.credits.translations.mods": "All mod authors and Crowdin translators whose translations OneConfig downloads (%s)",
+  "oneconfig.credits.translations.packs": "%s, including %s",
+  "oneconfig.credits.translations.pack": "%s by %s",
+
   "oneconfig.combat": "Combat",
   "oneconfig.qol": "Quality of Life",
   "oneconfig.hypixel": "Hypixel",
