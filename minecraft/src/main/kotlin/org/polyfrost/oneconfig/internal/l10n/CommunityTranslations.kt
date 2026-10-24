@@ -19,7 +19,7 @@ import java.util.function.BiConsumer
 import java.util.function.Function
 
 object CommunityTranslations {
-    private const val DISTRIBUTION_URL = "https://translations.polyfrost.org/v1"
+    private const val DISTRIBUTION_URL = "https://translations.r2.polyfrost.org/v1"
     private const val SOURCE_LANGUAGE = "en_us"
     private val MANIFEST_TTL = TimeUnit.HOURS.toMillis(6)
     private val RETRY_DELAY = TimeUnit.MINUTES.toMillis(10)
