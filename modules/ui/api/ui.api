@@ -1,3 +1,25 @@
+public abstract interface annotation class org/polyfrost/oneconfig/api/ui/v1/ExperimentalOneConfigUiApi : java/lang/annotation/Annotation {
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/ui/v1/ModCardIconProvider {
+	public abstract fun iconFor (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/ModCardIcons {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/ModCardIcons;
+	public static final fun register (Lorg/polyfrost/oneconfig/api/ui/v1/ModCardIconProvider;)V
+	public static final fun resolve (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public static final fun unregister (Lorg/polyfrost/oneconfig/api/ui/v1/ModCardIconProvider;)Z
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/ModCardOrder {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/ModCardOrder;
+	public static final fun current ()Ljava/util/List;
+	public static final fun replace (Ljava/util/List;)V
+}
+
 public final class org/polyfrost/oneconfig/api/ui/v1/ModCardType {
 	public static final field $stable I
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
@@ -32,6 +54,27 @@ public final class org/polyfrost/oneconfig/api/ui/v1/ModCardTypes {
 	public static final fun types ()Ljava/util/List;
 }
 
+public final class org/polyfrost/oneconfig/api/ui/v1/ModSortMode {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;)V
+	public final fun getConfirmation ()Ljava/lang/String;
+	public final fun getIcon ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getOnSelect ()Lkotlin/jvm/functions/Function0;
+	public final fun getTitle ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/ModSortModes {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/ModSortModes;
+	public static final fun all ()Ljava/util/List;
+	public static final fun currentId ()Ljava/lang/String;
+	public static final fun register (Lorg/polyfrost/oneconfig/api/ui/v1/ModSortMode;)V
+	public static final fun unregister (Lorg/polyfrost/oneconfig/api/ui/v1/ModSortMode;)Z
+}
+
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/ModToggle : org/polyfrost/oneconfig/api/toggle/v1/ModToggle {
 	public fun needsSetup ()Z
 }
@@ -64,12 +107,27 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/ModToggles$Sto
 	public abstract fun save (Ljava/util/Set;)V
 }
 
+public abstract class org/polyfrost/oneconfig/api/ui/v1/ModsPageDecorator {
+	public static final field $stable I
+	public fun <init> ()V
+	public abstract fun Decorate (Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/ModsPageDecorators {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/ModsPageDecorators;
+	public static final fun all ()Ljava/util/List;
+	public static final fun register (Lorg/polyfrost/oneconfig/api/ui/v1/ModsPageDecorator;)V
+	public static final fun unregister (Lorg/polyfrost/oneconfig/api/ui/v1/ModsPageDecorator;)Z
+}
+
 public final class org/polyfrost/oneconfig/api/ui/v1/OneConfigUI {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/OneConfigUI;
 	public static final fun createScreen ()Ljava/lang/Object;
 	public static final fun createScreen (Ljava/lang/Object;)Ljava/lang/Object;
 	public static synthetic fun createScreen$default (Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun isOneConfigScreen (Ljava/lang/Object;)Z
 	public static final fun open ()V
 	public static final fun open (Ljava/lang/Object;)V
 	public static synthetic fun open$default (Ljava/lang/Object;ILjava/lang/Object;)V
@@ -77,7 +135,32 @@ public final class org/polyfrost/oneconfig/api/ui/v1/OneConfigUI {
 
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/OneConfigUIBridge {
 	public abstract fun createScreen (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun isOneConfigScreen (Ljava/lang/Object;)Z
 	public abstract fun open (Ljava/lang/Object;)V
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/OneConfigUIBridge$DefaultImpls {
+	public static fun isOneConfigScreen (Lorg/polyfrost/oneconfig/api/ui/v1/OneConfigUIBridge;Ljava/lang/Object;)Z
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/OptionWidgets {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/OptionWidgets;
+	public static final fun refresh (Lorg/polyfrost/oneconfig/api/config/v1/Property;)V
+}
+
+public abstract class org/polyfrost/oneconfig/api/ui/v1/SettingRowDecorator {
+	public static final field $stable I
+	public fun <init> ()V
+	public abstract fun Decorate (Lorg/polyfrost/oneconfig/api/config/v1/Property;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/SettingRowDecorators {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/SettingRowDecorators;
+	public static final fun all ()Ljava/util/List;
+	public static final fun register (Lorg/polyfrost/oneconfig/api/ui/v1/SettingRowDecorator;)V
+	public static final fun unregister (Lorg/polyfrost/oneconfig/api/ui/v1/SettingRowDecorator;)Z
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/NanoSvgApi {
@@ -153,11 +236,76 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/TinyFdApi 
 	public abstract fun showNotification (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
 }
 
+public final class org/polyfrost/oneconfig/api/ui/v1/components/BordersKt {
+	public static final fun fadingEdges (Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/foundation/ScrollState;Lorg/polyfrost/compose/render/PolyColor;Landroidx/compose/runtime/Composer;I)Lorg/polyfrost/compose/ui/Modifier;
+	public static final fun fadingEdges-yQkpF9s (Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/foundation/ScrollState;Lorg/polyfrost/compose/render/PolyColor;FLandroidx/compose/runtime/Composer;I)Lorg/polyfrost/compose/ui/Modifier;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/components/ButtonKt {
+	public static final fun IconButton (Ljava/lang/String;Lorg/polyfrost/compose/ui/Modifier;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
+	public static final fun IconButton (Ljava/lang/String;Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;ZZLkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
+	public static final fun IconButton (Ljava/lang/String;Lorg/polyfrost/compose/ui/Modifier;ZLkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/components/ChipsKt {
+	public static final fun Chip (Ljava/lang/String;ZLjava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
+	public static final fun Chip (Ljava/lang/String;ZLkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/components/ColorPickerKt {
+	public static final fun ColorPickerPopup (Lorg/polyfrost/oneconfig/api/ui/v1/components/ColorPickerModel;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
+	public static final fun ColorPickerPopup (Lorg/polyfrost/oneconfig/api/ui/v1/components/ColorPickerModel;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;ZLandroidx/compose/runtime/Composer;I)V
+	public static final fun colorToHex (Lorg/polyfrost/compose/render/PolyColor;)Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/components/ColorPickerModel {
+	public static final field $stable I
+	public fun <init> (Lorg/polyfrost/compose/render/PolyColor;)V
+	public fun <init> (Lorg/polyfrost/compose/render/PolyColor;Z)V
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/components/CommonKt {
+	public static final fun onClick (Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function0;)Lorg/polyfrost/compose/ui/Modifier;
+	public static final fun onClick (Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/foundation/interaction/MutableInteractionSource;ZLkotlin/jvm/functions/Function0;)Lorg/polyfrost/compose/ui/Modifier;
+	public static final fun rememberInteractionSource (Landroidx/compose/runtime/Composer;I)Lorg/polyfrost/compose/foundation/interaction/MutableInteractionSource;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/components/IconKt {
+	public static final fun Icon (Ljava/lang/String;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public static final fun Icon (Ljava/lang/String;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/ui/Modifier;ZLandroidx/compose/runtime/Composer;I)V
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/components/OptionWidthKt {
+	public static final fun getCurrentOptionWidth (Landroidx/compose/runtime/Composer;I)F
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/components/TextKt {
+	public static final fun Text (Ljava/lang/Object;Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/render/PolyColor;Landroidx/compose/runtime/Composer;I)V
+	public static final fun Text-3Ssv5nY (Ljava/lang/Object;Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/render/PolyColor;FILandroidx/compose/runtime/Composer;I)V
+	public static final fun Text-lB5bGRI (Ljava/lang/Object;Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/render/PolyColor;FLandroidx/compose/runtime/Composer;I)V
+	public static final fun Text-pGzueUc (Ljava/lang/Object;Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/render/PolyColor;FLorg/polyfrost/compose/ui/unit/TextUnit;Lorg/polyfrost/compose/ui/text/style/BaselineShift;ILorg/polyfrost/compose/ui/text/style/TextAlign;ILorg/polyfrost/compose/ui/text/style/TextOverflow;Landroidx/compose/runtime/Composer;I)V
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/components/TooltipKt {
+	public static final fun Tooltip (Lkotlin/jvm/functions/Function2;Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/ui/Alignment;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
+	public static final fun Tooltip (Lkotlin/jvm/functions/Function2;Lorg/polyfrost/compose/ui/Modifier;Lorg/polyfrost/compose/ui/Alignment;Lorg/polyfrost/compose/ui/Alignment;Lorg/polyfrost/compose/ui/unit/DpOffset;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
+}
+
 public final class org/polyfrost/oneconfig/api/ui/v1/keybind/BindNotInScreen : org/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind {
 	public static final field $stable I
 	public fun <init> ([I[IBJLkotlin/jvm/functions/Function1;)V
 	public fun copyWith ([I[IB)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
 	public fun test (Ljava/util/Set;Ljava/util/Set;B)Z
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/keybind/ConfigKeybind {
+	public static final field $stable I
+	public final fun getKeybind ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
+	public final fun getModId ()Ljava/lang/String;
+	public final fun getModTitle ()Ljava/lang/String;
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeyModifiers {
@@ -203,11 +351,14 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper$Compa
 public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindManager {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindManager;
+	public static final fun addInputCapture (Ljava/util/function/BooleanSupplier;)V
 	public static final fun addMenuEditListener (Lkotlin/jvm/functions/Function1;)V
 	public static final fun addRebindListener (Lkotlin/jvm/functions/Function2;)V
 	public static final fun builder ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
+	public static final fun configKeybinds ()Ljava/util/List;
 	public static final fun findConflicts (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Ljava/util/List;
 	public static final fun hasTriggeredMouseBind (I)Z
+	public static final fun isInputCaptured ()Z
 	public static final fun isRegistered (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Z
 	public static final fun isTriggeredByMouse (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;I)Z
 	public static final fun notifyMenuEdit (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
@@ -217,6 +368,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindManager {
 	public static synthetic fun rebindFromMinecraft$default (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;[I[IBILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
 	public static final fun refreshMinecraftBinding (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
 	public static final fun register (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
+	public static final fun removeInputCapture (Ljava/util/function/BooleanSupplier;)Z
 	public static final fun replace (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
 	public static final fun unregister (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
 }
@@ -225,6 +377,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindUtils {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindUtils;
 	public static final fun getActionModifier ()B
+	public static final fun isActionModifierPressed (I)Z
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/keybind/MinecraftKeybindBridge {
@@ -278,21 +431,204 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/TextInputFocus {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/keybind/TextInputFocus;
 	public static final fun acquire (Ljava/lang/Object;)V
-	public static final fun clear ()V
 	public static final fun isTyping ()Z
 	public static final fun release (Ljava/lang/Object;)V
 }
 
-public abstract interface class org/polyfrost/oneconfig/api/ui/v1/keybind/internal/KeybindCodec {
-	public abstract fun keyCode (Ljava/lang/String;)Ljava/lang/Integer;
-	public abstract fun keyName (I)Ljava/lang/String;
-	public abstract fun legacyKeyName (I)Ljava/lang/String;
-	public abstract fun legacyMouseName (I)Ljava/lang/String;
-	public abstract fun mouseButton (Ljava/lang/String;)Ljava/lang/Integer;
-	public abstract fun mouseName (I)Ljava/lang/String;
+public final class org/polyfrost/oneconfig/api/ui/v1/keybind/TextInputFocusKt {
+	public static final fun trackTextInputFocus (Lorg/polyfrost/compose/ui/Modifier;)Lorg/polyfrost/compose/ui/Modifier;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/page/ModConfigTarget {
+	public static final field $stable I
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCategory ()Ljava/lang/String;
+	public final fun getModId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class org/polyfrost/oneconfig/api/ui/v1/page/OneConfigPage {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/page/PageGroup;)V
+	public abstract fun Content (Landroidx/compose/runtime/Composer;I)V
+	public final fun getGroup ()Lorg/polyfrost/oneconfig/api/ui/v1/page/PageGroup;
+	public final fun getIcon ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/String;
+	public fun getOrder ()I
+	public fun getSearchPlaceholder ()Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;
+	public fun getShowInSidebar ()Z
+	public final fun getTitle ()Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/page/OneConfigPages {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/page/OneConfigPages;
+	public static final fun all ()Ljava/util/List;
+	public static final fun byId (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/page/OneConfigPage;
+	public static final fun modConfig (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/page/ModConfigTarget;
+	public static final fun modConfig (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/page/ModConfigTarget;
+	public static final fun register (Lorg/polyfrost/oneconfig/api/ui/v1/page/OneConfigPage;)V
+	public static final fun unregister (Ljava/lang/String;)Z
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/page/PageGroup {
+	public static final field $stable I
+	public static final field Companion Lorg/polyfrost/oneconfig/api/ui/v1/page/PageGroup$Companion;
+	public static final field MODS_AND_OPTIONS Lorg/polyfrost/oneconfig/api/ui/v1/page/PageGroup;
+	public static final field ONECONFIG Lorg/polyfrost/oneconfig/api/ui/v1/page/PageGroup;
+	public static final field PERSONALIZATION Lorg/polyfrost/oneconfig/api/ui/v1/page/PageGroup;
+	public static final fun create (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;I)Lorg/polyfrost/oneconfig/api/ui/v1/page/PageGroup;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getOrder ()I
+	public final fun getTitle ()Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/page/PageGroup$Companion {
+	public final fun create (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;I)Lorg/polyfrost/oneconfig/api/ui/v1/page/PageGroup;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/page/PageSearchQueryKt {
+	public static final fun getCurrentPageSearchQuery (Landroidx/compose/runtime/Composer;I)Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/page/PageText {
+	public static final field $stable I
+	public static final field Companion Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText$Companion;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFallback ()Ljava/lang/String;
+	public final fun getKey ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static final fun literal (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;
+	public fun toString ()Ljava/lang/String;
+	public static final fun translatable (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/page/PageText$Companion {
+	public final fun literal (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;
+	public final fun translatable (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/screen/BlurScreen {
 	public abstract fun hasBackgroundBlur ()Z
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/search/SearchDocument {
+	public static final field $stable I
+	public final fun getId ()Ljava/lang/String;
+	public final fun getMetadata ()Lorg/polyfrost/oneconfig/api/ui/v1/search/SearchMetadata;
+	public final fun getScopes ()Ljava/util/Set;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/search/SearchMetadata {
+	public static final field $stable I
+	public final fun getCategory ()Ljava/lang/String;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getDistinctSubcategory ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getModDescription ()Ljava/lang/String;
+	public final fun getModTitle ()Ljava/lang/String;
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getSection ()Ljava/lang/String;
+	public final fun getSubcategory ()Ljava/lang/String;
+	public final fun getTags ()Ljava/util/List;
+	public final fun getTitle ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class org/polyfrost/oneconfig/api/ui/v1/search/SearchProvider {
+	public static final field $stable I
+	public fun <init> ()V
+	public abstract fun getPriority ()I
+	public abstract fun isAvailable ()Z
+	public fun onCorpusUpdate (Ljava/util/List;Ljava/util/Set;)V
+	public abstract fun search (Ljava/lang/String;Ljava/util/Set;)Ljava/util/List;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/search/SearchProviders {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/search/SearchProviders;
+	public static final fun document (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/search/SearchDocument;
+	public static final fun documentIds ()Ljava/util/Set;
+	public static final fun register (Lorg/polyfrost/oneconfig/api/ui/v1/search/SearchProvider;)V
+	public static final fun unregister (Lorg/polyfrost/oneconfig/api/ui/v1/search/SearchProvider;)Z
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/search/SearchScope {
+	public static final field $stable I
+	public static final field Companion Lorg/polyfrost/oneconfig/api/ui/v1/search/SearchScope$Companion;
+	public static final field HUDS Lorg/polyfrost/oneconfig/api/ui/v1/search/SearchScope;
+	public static final field KEYBINDS Lorg/polyfrost/oneconfig/api/ui/v1/search/SearchScope;
+	public static final field MODS Lorg/polyfrost/oneconfig/api/ui/v1/search/SearchScope;
+	public static final field OPTIONS Lorg/polyfrost/oneconfig/api/ui/v1/search/SearchScope;
+	public static final fun config (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/search/SearchScope;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKey ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/search/SearchScope$Companion {
+	public final fun config (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/search/SearchScope;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/theme/OneConfigTheme {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigTheme;
+	public static final fun activate (Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;)V
+	public static final fun builtIn ()Ljava/util/List;
+	public static final fun ensureLoaded ()V
+	public final fun getAccent (Landroidx/compose/runtime/Composer;I)Lorg/polyfrost/compose/render/PolyColor;
+	public static final fun getActive ()Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;
+	public final fun getCurrent (Landroidx/compose/runtime/Composer;I)Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;
+	public static final fun getLogoOverride ()Ljava/lang/String;
+	public static final fun getMINECRAFT_DARK ()Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;
+	public static final fun getMINECRAFT_LIGHT ()Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;
+	public static final fun getPOLY_GLASS_DARK ()Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;
+	public static final fun getPOLY_GLASS_LIGHT ()Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;
+	public static final fun overrideLogo (Ljava/lang/String;)V
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/theme/OneConfigThemeKt {
+	public static final fun ProvideOneConfigTheme (Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
+}
+
+public abstract class org/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme {
+	public static final field $stable I
+	public fun <init> ()V
+	public abstract fun getAccentTextColor ()Lorg/polyfrost/compose/render/PolyColor;
+	public abstract fun getBackgroundShape ()Lorg/polyfrost/compose/ui/graphics/Shape;
+	public abstract fun getBorderColor ()Lorg/polyfrost/compose/render/PolyColor;
+	public abstract fun getButtonShape ()Lorg/polyfrost/compose/ui/graphics/Shape;
+	public abstract fun getCheckBoxShape ()Lorg/polyfrost/compose/ui/graphics/Shape;
+	public abstract fun getChipBackground ()Lorg/polyfrost/compose/render/PolyColor;
+	public abstract fun getCircleShape ()Lorg/polyfrost/compose/ui/graphics/Shape;
+	public abstract fun getComponentBackground ()Lorg/polyfrost/compose/render/PolyColor;
+	public abstract fun getControlThumbColor ()Lorg/polyfrost/compose/render/PolyColor;
+	public abstract fun getFavoriteColor ()Lorg/polyfrost/compose/render/PolyColor;
+	public abstract fun getFontFamily ()Lorg/polyfrost/compose/ui/text/font/FontFamily;
+	public abstract fun getLogoPath ()Ljava/lang/String;
+	public abstract fun getModCardBackground ()Lorg/polyfrost/compose/render/PolyColor;
+	public abstract fun getModCardShape ()Lorg/polyfrost/compose/ui/graphics/Shape;
+	public abstract fun getName ()Ljava/lang/String;
+	public abstract fun getPageBackground ()Lorg/polyfrost/compose/render/PolyColor;
+	public abstract fun getPopupBackground ()Lorg/polyfrost/compose/render/PolyColor;
+	public abstract fun getPopupShape ()Lorg/polyfrost/compose/ui/graphics/Shape;
+	public abstract fun getShadowColor ()Lorg/polyfrost/compose/render/PolyColor;
+	public abstract fun getShadowEnabled ()Z
+	public abstract fun getSideBarNavigationEntryShape ()Lorg/polyfrost/compose/ui/graphics/Shape;
+	public abstract fun getSidebarBackground ()Lorg/polyfrost/compose/render/PolyColor;
+	public abstract fun getTextColor ()Lorg/polyfrost/compose/render/PolyColor;
+	public abstract fun getTextColorSecondary ()Lorg/polyfrost/compose/render/PolyColor;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/theme/RadiiKt {
+	public static final fun concentric-9mi6HAM (Lorg/polyfrost/compose/ui/graphics/Shape;FFLandroidx/compose/runtime/Composer;I)Lorg/polyfrost/compose/ui/graphics/Shape;
+	public static final fun concentric-wdELDnY (Lorg/polyfrost/compose/ui/graphics/Shape;FLandroidx/compose/runtime/Composer;I)Lorg/polyfrost/compose/ui/graphics/Shape;
 }
 

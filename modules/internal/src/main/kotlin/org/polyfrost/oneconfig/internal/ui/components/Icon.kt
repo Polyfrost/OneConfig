@@ -17,10 +17,15 @@ import kotlin.math.roundToInt
 import org.polyfrost.compose.foundation.Image
 import org.polyfrost.compose.foundation.layout.Box
 import org.polyfrost.compose.foundation.layout.size
+import org.polyfrost.compose.ui.graphics.FilterQuality
 import org.polyfrost.compose.ui.graphics.ImageBitmap
 import org.polyfrost.compose.ui.unit.dp
 import org.polyfrost.oneconfig.api.notifications.v1.SvgMask
 import org.polyfrost.oneconfig.internal.ui.poly.SvgImage
+import org.polyfrost.oneconfig.internal.ui.poly.brandTint
+import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.AccentEnd
+import org.polyfrost.oneconfig.internal.ui.themes.AccentGradient
 
 private object IconResourceMarker
 
@@ -107,7 +112,32 @@ fun Icon(
     rotation: Float = 0f,
 ) = IconImage(iconName, color.target, color, modifier, rotation)
 
-private class RasterIcon(val bitmap: ImageBitmap?)
+@Composable
+fun rememberAccentBrandTint(path: String): ((ImageBitmap) -> ImageBitmap)? {
+    val end = if (AccentGradient) AccentEnd else null
+    return remember(path, Accent, end) { brandTint(path, Accent, end) }
+}
+
+private class RasterIcon(val bitmap: ImageBitmap?, val pixelArt: Boolean = false)
+
+private fun ImageBitmap.isPixelArt(): Boolean {
+    if (width <= 64 && height <= 64) return true
+    val grid = intArrayOf(2, 3, 5, 7, 11, 13, 17, 19).firstOrNull { width % it == 0 && height % it == 0 } ?: return false
+    fun argb(x: Int, y: Int): Int {
+        val o = (y * width + x) * 4
+        return ((pixels[o + 3].toInt() and 0xFF) shl 24) or ((pixels[o].toInt() and 0xFF) shl 16) or
+            ((pixels[o + 1].toInt() and 0xFF) shl 8) or (pixels[o + 2].toInt() and 0xFF)
+    }
+    for (i in 0 until 10) {
+        val x = width / 10 * i
+        for (cell in 0 until height / grid) {
+            val base = cell * grid
+            val c = argb(x, base)
+            for (d in 1 until grid) if (argb(x, base + d) != c) return false
+        }
+    }
+    return true
+}
 
 private val rasterIcons = ConcurrentHashMap<String, RasterIcon>()
 
@@ -123,16 +153,19 @@ private fun IconImage(iconName: String, color: Color, animated: AnimatedColor?, 
         else SvgImage(path, size, size, pxPerDp, modifier, tint = color.argb, rotation = deg)
         return
     }
-    val bitmap = remember(path) {
+    val icon = remember(path) {
         rasterIcons.getOrPut(path) {
             val bytes = File(path).takeIf { it.isAbsolute && it.isFile }?.readBytes() ?: IconResource.bytes(path)
-            RasterIcon(bytes?.let { b ->
-                if (path.endsWith(".svg", ignoreCase = true)) SvgMask.rasterize(String(b), (size * pxPerDp).roundToInt(), color.argb)
-                else runCatching { ImageBitmap.decode(b) }.getOrNull()
-            })
-        }.bitmap
+            if (path.endsWith(".svg", ignoreCase = true)) {
+                RasterIcon(bytes?.let { SvgMask.rasterize(String(it), (size * pxPerDp).roundToInt(), color.argb) })
+            } else {
+                val decoded = bytes?.let { runCatching { ImageBitmap.decode(it) }.getOrNull() }
+                RasterIcon(decoded, decoded?.isPixelArt() == true)
+            }
+        }
     }
     Box(modifier.size(size.dp)) {
-        if (bitmap != null) Image(bitmap, null, Modifier.size(size.dp))
+        val image = icon.bitmap
+        if (image != null) Image(image, null, Modifier.size(size.dp), filterQuality = if (icon.pixelArt) FilterQuality.None else FilterQuality.Medium)
     }
 }

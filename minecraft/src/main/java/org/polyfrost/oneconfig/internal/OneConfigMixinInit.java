@@ -109,6 +109,12 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("Mixin_MainMenuFpsUncap");
         //? if > 1.8.9
         mixins.add("Mixin_VersionedResourcePacks");
+        //? if > 1.8.9
+        mixins.add("fixes.Mixin_SkipMalformedOptions");
+        //? if > 1.8.9
+        mixins.add("Mixin_CommunityTranslations");
+        //? if = 1.8.9
+        //mixins.add("Mixin_LegacyCommunityTranslations");
         //? yacl_compat
         mixins.add("compat.yacl.Mixin_YetAnotherConfigLib_Builder");
 

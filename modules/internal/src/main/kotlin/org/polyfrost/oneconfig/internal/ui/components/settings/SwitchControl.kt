@@ -24,9 +24,10 @@ import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
 import org.polyfrost.compose.ui.unit.dp
 import org.polyfrost.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.background
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -34,7 +35,7 @@ fun SwitchControl(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val trackColor = animateColorAsState(if (checked) Accent else LocalTheme.current.controlTrackColor)
+    val accentAlpha by animateFloatAsState(if (checked) 1f else 0f)
     val thumbX = if (checked) 24f else 3f
     val thumbOffset = animateFloatAsState(thumbX, animationSpec = spring())
     val borderColor = animateColorAsState(
@@ -49,7 +50,8 @@ fun SwitchControl(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
         Box(
             modifier = Modifier
                 .size(42.dp, 21.dp)
-                .background(trackColor, LocalTheme.current.circleShape)
+                .background(LocalTheme.current.controlTrackColor, LocalTheme.current.circleShape)
+                .background(AccentBrush, LocalTheme.current.circleShape, accentAlpha)
                 .border(1.dp, borderColor, LocalTheme.current.circleShape)
                 .onClick(interactionSource) { onCheckedChange(!checked) }
                 .pointerHoverIcon(PointerIcon.Hand),

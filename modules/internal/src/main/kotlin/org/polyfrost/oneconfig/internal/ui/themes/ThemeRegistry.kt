@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.api.settings.BuiltinVisualizers
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
@@ -27,6 +28,10 @@ object ThemeRegistry {
         syncNotificationTheme(PolyGlassDark)
 
         BuiltinVisualizers.register()
+
+        ConfigManager.addProfileChangeListener {
+            Platform.screen().runOnUiThread { loadFromConfig() }
+        }
     }
 
     fun init() {}
@@ -51,6 +56,7 @@ object ThemeRegistry {
     }
 
     fun loadFromConfig() {
+        updateAccent()
         try {
             val theme = registry.find { it.name == ThemeConfig.activeTheme }
                 ?: registry.find { it.name == DEFAULT_THEME_NAME }

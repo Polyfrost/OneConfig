@@ -18,7 +18,7 @@ import org.polyfrost.compose.ui.unit.Dp
 import org.polyfrost.compose.ui.unit.dp
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
-import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.cornerRadiusOrNull
 
@@ -64,7 +64,7 @@ fun SliderControl(
     thumbSize: Dp = 19.dp,
     trackHeight: Dp = 5.dp,
     trackColor: Color = LocalTheme.current.controlTrackColor,
-    fillColor: Color = Accent,
+    fillColor: Color? = null,
     thumbColor: Color = LocalTheme.current.controlThumbColor,
 ) {
     val theme = LocalTheme.current
@@ -97,7 +97,10 @@ fun SliderControl(
         val trackY = y + (h - track) / 2f
         rect(x, trackY, w, track, trackColor, trackRadius)
         val filled = fraction * w
-        if (filled > 0f) rect(x, trackY, filled, track, fillColor, min(trackRadius, filled / 2f))
+        if (filled > 0f) {
+            val r = min(trackRadius, filled / 2f)
+            if (fillColor != null) rect(x, trackY, filled, track, fillColor, r) else rectGradient(x, trackY, filled, track, AccentBrush, r)
+        }
         rect(x + fraction * (w - thumb), y + (h - thumb) / 2f, thumb, thumb, thumbColor, thumbRadius)
     }
 }

@@ -34,7 +34,6 @@ import org.polyfrost.compose.foundation.layout.padding
 import org.polyfrost.compose.foundation.layout.weight
 import org.polyfrost.compose.foundation.layout.width
 import org.polyfrost.compose.foundation.lazy.LazyColumn
-import org.polyfrost.compose.foundation.lazy.LazyListState
 import org.polyfrost.compose.foundation.rememberScrollState
 import org.polyfrost.compose.foundation.verticalScroll
 import org.polyfrost.compose.node.PolyTextSpan
@@ -66,6 +65,7 @@ import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.shell.PolyPage
 import org.polyfrost.oneconfig.internal.ui.shell.ShellHost
 import org.polyfrost.oneconfig.internal.ui.shell.ShellNav
+import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -271,7 +271,7 @@ private fun MdBlocks(node: Node, styles: MdStyles, modifier: Modifier = Modifier
 @Composable
 fun Changelog(searchQuery: String, nav: ShellNav) {
     val localSearchQuery = searchQuery.trim()
-    val lazyListState = remember(localSearchQuery) { LazyListState() }
+    val lazyListState = rememberRestorableLazyListState("changelog", localSearchQuery)
     val visibleSections = remember(localSearchQuery) {
         changelogs.sections.mapIndexed { index, section -> index to section }
             .filter { (_, section) ->

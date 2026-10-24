@@ -9,7 +9,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import org.polyfrost.compose.animation.animateColorAsState
 import org.polyfrost.compose.animation.core.animateFloatAsState
 import org.polyfrost.compose.animation.core.spring
 import org.polyfrost.compose.foundation.TooltipArea
@@ -49,11 +48,13 @@ import org.polyfrost.compose.ui.unit.sp
 import org.polyfrost.compose.ui.window.Popup
 import org.polyfrost.compose.ui.window.PopupProperties
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
+import org.polyfrost.oneconfig.internal.ui.navigation.currentPageTitle
 import org.polyfrost.oneconfig.internal.ui.navigation.searchPlaceholder
 import org.polyfrost.oneconfig.internal.ui.screens.LocalUiClipboard
 import org.polyfrost.oneconfig.internal.ui.shell.ModConfigTarget
 import org.polyfrost.oneconfig.internal.ui.shell.ShellNav
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -115,7 +116,7 @@ fun Header(nav: ShellNav, search: TextFieldState, closeRequest: () -> Unit, modi
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(26.dp)
         ) {
-            GlobalSearchBar(search, searchPlaceholder(nav.current))
+            GlobalSearchBar(search, searchPlaceholder(nav.current, nav.arg))
             IconButton("close", Modifier.size(32.dp), hoverBorder = true) { closeRequest() }
         }
     }
@@ -129,7 +130,7 @@ private data class HeaderTitle(
 )
 
 private fun ShellNav.headerTitle(): HeaderTitle {
-    val config = (arg as? ModConfigTarget)?.mod ?: return HeaderTitle(current.title)
+    val config = (arg as? ModConfigTarget)?.mod ?: return HeaderTitle(currentPageTitle() ?: current.title)
     return HeaderTitle(
         text = config.title.asRenderText(),
         authors = config.authors,
@@ -163,14 +164,14 @@ private fun OpenOriginalScreenButton(runnable: Runnable?) {
     val theme = LocalTheme.current
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
-    val bgColor = animateColorAsState(if (isHovered) Accent.copy(alpha = Accent.alphaF * 0.75f) else Accent)
+    val accentAlpha by animateFloatAsState(if (isHovered) 0.75f else 1f)
 
     TooltipArea(
         tooltip = {
             val tipShape = RoundedCornerShape(8.dp)
             Box(Modifier.widthIn(max = 260.dp).background(theme.popupBackground, tipShape).border(1.dp, theme.borderColor, tipShape).padding(horizontal = 12.dp, vertical = 8.dp)) {
                 Text(
-                    "Opening the original screen may show options that OneConfig doesn't.",
+                    translated("oneconfig.header.original_menu.tooltip", "Opening the original screen may show options that OneConfig doesn't."),
                     color = theme.textColor,
                     fontSize = 13.sp,
                     softWrap = true,
@@ -182,7 +183,7 @@ private fun OpenOriginalScreenButton(runnable: Runnable?) {
         Box(
             modifier = Modifier
                 .pointerHoverIcon(PointerIcon.Hand)
-                .background(bgColor, theme.buttonShape)
+                .background(AccentBrush, theme.buttonShape, accentAlpha)
                 .onClick(interactionSource, runnable != null) { runnable?.run() }
                 .border(1.dp, LocalTheme.current.borderColor, LocalTheme.current.buttonShape)
                 .padding(horizontal = 16.dp, vertical = 6.dp),
@@ -193,7 +194,7 @@ private fun OpenOriginalScreenButton(runnable: Runnable?) {
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Icon("external-link", color = theme.accentTextColor, modifier = Modifier.size(14.dp))
-                Text("Original menu", color = theme.accentTextColor, fontSize = 13.sp)
+                Text(translated("oneconfig.header.original_menu", "Original menu"), color = theme.accentTextColor, fontSize = 13.sp)
             }
         }
     }
@@ -216,9 +217,9 @@ private fun String.authorByline(): String? {
     val first = authors.firstOrNull() ?: return null
     val remaining = authors.size - 1
     return if (remaining > 0) {
-        "by $first and $remaining more..."
+        translated("oneconfig.header.byline.more", "by %s and %s more...", first, remaining)
     } else {
-        "by $first"
+        translated("oneconfig.header.byline", "by %s", first)
     }
 }
 
@@ -255,13 +256,13 @@ private fun TitleInfoTooltip(title: HeaderTitle) {
                         .padding(horizontal = 12.dp, vertical = 8.dp)
                 ) {
                     if (authors != null) {
-                        Text("Author: $authors", color = LocalTheme.current.textColor, fontSize = 12.sp, softWrap = true)
+                        Text(translated("oneconfig.header.author", "Author: %s", authors), color = LocalTheme.current.textColor, fontSize = 12.sp, softWrap = true)
                     }
                     if (credits != null) {
-                        Text("Credits: $credits", color = LocalTheme.current.textColor, fontSize = 12.sp, softWrap = true)
+                        Text(translated("oneconfig.header.credits", "Credits: %s", credits), color = LocalTheme.current.textColor, fontSize = 12.sp, softWrap = true)
                     }
                     if (version != null) {
-                        Text("Version: $version", color = LocalTheme.current.textColor, fontSize = 12.sp, softWrap = true)
+                        Text(translated("oneconfig.header.version", "Version: %s", version), color = LocalTheme.current.textColor, fontSize = 12.sp, softWrap = true)
                     }
                 }
             }

@@ -27,7 +27,7 @@ import org.polyfrost.compose.ui.unit.dp
 import org.polyfrost.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.api.settings.RangeOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 /**
@@ -207,7 +207,7 @@ internal fun RangeSliderTrack(
         val usable = (w - thumbW).coerceAtLeast(0f)
         val startTip = startFraction * usable + thumbW
         val endTip = endFraction * usable
-        if (endTip > startTip) rect(x + startTip, trackY, endTip - startTip, track, Accent, min(trackRadius, (endTip - startTip) / 2f))
+        if (endTip > startTip) rectGradient(x + startTip, trackY, endTip - startTip, track, AccentBrush, min(trackRadius, (endTip - startTip) / 2f))
         val thumbY = y + (h - thumbH) / 2f
         fillPath(triangleThumb(x + startFraction * usable, thumbY, thumbW, thumbH, pointsLeft = false), theme.controlThumbColor)
         fillPath(triangleThumb(x + endFraction * usable, thumbY, thumbW, thumbH, pointsLeft = true), theme.controlThumbColor)

@@ -21,6 +21,10 @@ class PolyColor @JvmOverloads constructor(
 
     val rawArgb: Int get() = staticArgb
 
+    var gradientEnabled: Boolean = false
+
+    var gradientArgb: Int = argb
+
     val alpha: Int get() = (argb ushr 24) and 0xFF
     val red: Int get() = (argb ushr 16) and 0xFF
     val green: Int get() = (argb ushr 8) and 0xFF
@@ -39,7 +43,18 @@ class PolyColor @JvmOverloads constructor(
     fun withBlue(b: Int): PolyColor = PolyColor((argb and 0xFFFFFF00.toInt()) or (b.coerceIn(0, 255)), chroma, chromaSpeed)
 
     @JvmOverloads
-    fun withChroma(chroma: Boolean, speed: Float = chromaSpeed): PolyColor = PolyColor(staticArgb, chroma, speed)
+    fun withChroma(chroma: Boolean, speed: Float = chromaSpeed): PolyColor =
+        PolyColor(staticArgb, chroma, speed).also {
+            it.gradientArgb = gradientArgb
+            it.gradientEnabled = gradientEnabled
+        }
+
+    @JvmOverloads
+    fun withGradient(enabled: Boolean, argb: Int = gradientArgb): PolyColor =
+        PolyColor(staticArgb, chroma, chromaSpeed).also {
+            it.gradientArgb = argb
+            it.gradientEnabled = enabled
+        }
 
     fun multiplyAlpha(factor: Float): PolyColor = withAlpha((alpha * factor).roundToInt().coerceIn(0, 255))
 
@@ -82,13 +97,16 @@ class PolyColor @JvmOverloads constructor(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is PolyColor) return false
-        return staticArgb == other.staticArgb && chroma == other.chroma && chromaSpeed == other.chromaSpeed
+        return staticArgb == other.staticArgb && chroma == other.chroma && chromaSpeed == other.chromaSpeed &&
+            gradientEnabled == other.gradientEnabled && (!gradientEnabled || gradientArgb == other.gradientArgb)
     }
 
     override fun hashCode(): Int {
         var result = staticArgb
         result = 31 * result + chroma.hashCode()
         result = 31 * result + chromaSpeed.hashCode()
+        result = 31 * result + gradientEnabled.hashCode()
+        if (gradientEnabled) result = 31 * result + gradientArgb
         return result
     }
 

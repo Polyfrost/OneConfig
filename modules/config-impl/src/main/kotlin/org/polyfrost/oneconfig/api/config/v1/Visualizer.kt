@@ -178,6 +178,16 @@ fun interface Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[ItemListVisualizer::class.java]?.visualize(prop) }
     }
 
+    /**
+     * A searchable status effect selector backed by a `String[]` or `List<String>` of
+     * namespaced registry IDs
+     *
+     * A `maxEntries` metadata value of one makes it a single selector
+     */
+    class EffectListVisualizer : Visualizer {
+        @Composable override fun visualize(prop: Property<*>) { Visualizer[EffectListVisualizer::class.java]?.visualize(prop) }
+    }
+
     class FileVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[FileVisualizer::class.java]?.visualize(prop) }
     }

@@ -18,6 +18,7 @@ fun SimpleDropdownMenu(
     focusable: Boolean = true,
     modifier: Modifier = Modifier,
     offset: DpOffset = DpOffset(0.dp, 0.dp),
+    pinAnchor: Boolean = false,
     content: @Composable BoxScope.() -> Unit
 ) {
     val alpha by animateFloatAsState(if (expanded) 1f else 0f, tween())
@@ -30,6 +31,7 @@ fun SimpleDropdownMenu(
             properties = PopupProperties(focusable = focusable),
             anchor = Alignment.BottomStart,
             roomier = true,
+            pinAnchor = pinAnchor,
         ) {
             SimpleDropdownMenuContent(
                 alpha = alpha,

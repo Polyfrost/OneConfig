@@ -62,7 +62,7 @@ fun Modifier.hoverable(onHover: (Boolean) -> Unit) = element {
 }
 
 fun Modifier.focusable(request: (() -> Boolean)? = null, onFocus: ((Boolean) -> Unit)? = null) =
-    layoutElement { focusable = true; this.onFocus = onFocus; focusRequest = request }
+    layoutElement { focusable = true; this.onFocus = onFocus; if (request != null) focusRequest = request }
 
 fun Modifier.focusable(enabled: Boolean = true, interactionSource: MutableInteractionSource?) =
     if (!enabled) this else layoutElement { focusable = true; onFocus = { f -> interactionSource?.focused?.value = f } }

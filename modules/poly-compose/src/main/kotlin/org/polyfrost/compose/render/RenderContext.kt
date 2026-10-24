@@ -2,6 +2,7 @@ package org.polyfrost.compose.render
 
 import org.polyfrost.compose.ui.graphics.ImageBitmap
 import org.polyfrost.compose.ui.graphics.Brush
+import org.polyfrost.compose.ui.graphics.FilterQuality
 import org.polyfrost.compose.ui.graphics.shadow.Shadow
 
 class RenderContext(val renderer: PolyRenderer) {
@@ -16,6 +17,11 @@ class RenderContext(val renderer: PolyRenderer) {
     fun rect(x: Float, y: Float, w: Float, h: Float, color: PolyColor, radius: Float = 0f) {
         if (color.alpha == 0) return
         renderer.rect(x, y, w, h, color.argb, radius)
+    }
+
+    fun rectWithHole(x: Float, y: Float, w: Float, h: Float, holeX: Float, holeY: Float, holeW: Float, holeH: Float, holeRadius: Float, color: PolyColor) {
+        if (color.alpha == 0) return
+        renderer.rectWithHole(x, y, w, h, holeX, holeY, holeW, holeH, holeRadius, color.argb)
     }
 
     fun rectStroke(x: Float, y: Float, w: Float, h: Float, color: PolyColor, strokeWidth: Float, radius: Float = 0f) {
@@ -43,9 +49,19 @@ class RenderContext(val renderer: PolyRenderer) {
         renderer.text(text, x, y, color.argb, font)
     }
 
+    fun textOutline(text: String, x: Float, y: Float, color: PolyColor, font: PolyFont, width: Float) {
+        if (color.alpha == 0 || text.isEmpty() || width <= 0f) return
+        renderer.textOutline(text, x, y, color.argb, font, width)
+    }
+
     fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) {
         if (text.isEmpty()) return
         renderer.mcText(text, x, y, color, shadow, scale)
+    }
+
+    fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float) {
+        if (text.isEmpty()) return
+        renderer.mcTextOutline(text, x, y, color, outlineColor, scale)
     }
 
     fun measureText(text: String, font: PolyFont): Float = font.measureTextWidth(text)
@@ -82,11 +98,15 @@ class RenderContext(val renderer: PolyRenderer) {
         _absY += dy
     }
 
-    fun image(bitmap: ImageBitmap, x: Float, y: Float, w: Float, h: Float) = renderer.image(bitmap, x, y, w, h)
+    fun image(bitmap: ImageBitmap, x: Float, y: Float, w: Float, h: Float, filterQuality: FilterQuality = FilterQuality.Low) =
+        renderer.image(bitmap, x, y, w, h, filterQuality)
 
-    fun image(bitmap: ImageBitmap, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, tint: PolyColor) {
+    fun image(
+        bitmap: ImageBitmap, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, tint: PolyColor,
+        filterQuality: FilterQuality = FilterQuality.Low,
+    ) {
         if (tint.alpha == 0) return
-        renderer.image(bitmap, x, y, w, h, u0, v0, u1, v1, tint.argb)
+        renderer.image(bitmap, x, y, w, h, u0, v0, u1, v1, tint.argb, filterQuality)
     }
 
     fun rectGradient(x: Float, y: Float, w: Float, h: Float, gradient: Brush, radius: Float = 0f) =

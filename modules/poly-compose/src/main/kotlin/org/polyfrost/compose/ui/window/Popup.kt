@@ -1,6 +1,7 @@
 package org.polyfrost.compose.ui.window
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import org.polyfrost.compose.foundation.layout.Box
 import org.polyfrost.compose.foundation.layout.BoxScope
 import org.polyfrost.compose.ui.Alignment
@@ -20,13 +21,16 @@ fun Popup(
     properties: PopupProperties = PopupProperties(),
     anchor: Alignment = alignment,
     roomier: Boolean = false,
+    pinAnchor: Boolean = false,
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
 ) {
+    val pin = if (pinAnchor) remember { floatArrayOf(Float.NaN, 0f, 0f, 0f) } else null
     var m = modifier.layoutElement {
         overlay = true
         overlayAnchor = anchor
         overlayRoomier = roomier
+        overlayPin = pin
         align = alignment
         x = offset.x.value
         y = offset.y.value

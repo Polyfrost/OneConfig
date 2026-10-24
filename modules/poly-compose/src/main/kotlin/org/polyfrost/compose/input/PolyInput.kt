@@ -129,8 +129,8 @@ class PolyInput(private val root: PolyNode) {
         if (node === old) return
         changed = true
         focused = node
-        old?.style?.onFocus?.invoke(false)
-        node?.style?.onFocus?.invoke(true)
+        old?.style?.let { s -> s.onFocus?.invoke(false); s.onFocusChanged.forEach { it(false) } }
+        node?.style?.let { s -> s.onFocus?.invoke(true); s.onFocusChanged.forEach { it(true) } }
         node?.let(::bringIntoView)
     }
 

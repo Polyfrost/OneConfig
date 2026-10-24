@@ -1,7 +1,11 @@
 package org.polyfrost.compose.render
 
 import org.polyfrost.compose.ui.graphics.ImageBitmap
+import kotlin.math.abs
+import kotlin.math.ceil
 import kotlin.math.max
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 object PolyGlyphPage {
     interface Rasterizer {
@@ -92,12 +96,46 @@ object PolyGlyphPage {
     val pages: List<Page> get() = _pages
 
     private val atlases = HashMap<Pair<Face, Int>, HashMap<Int, Glyph?>>()
+    private val outlineAtlases = HashMap<Triple<Face, Int, Int>, HashMap<Int, Glyph?>>()
 
     fun atlas(face: Face, bucket: Int): HashMap<Int, Glyph?> = atlases.getOrPut(face to bucket) { HashMap() }
 
-    fun glyph(atlas: HashMap<Int, Glyph?>, face: Face, bucket: Int, id: Int): Glyph? = atlas.getOrPut(id) {
+    fun atlas(face: Face, bucket: Int, outlinePx: Float, round: Boolean): HashMap<Int, Glyph?> {
+        if (outlinePx <= 0f) return atlas(face, bucket)
+        val q = max(1, (outlinePx * 4f).roundToInt())
+        return outlineAtlases.getOrPut(Triple(face, bucket, if (round) q else -q)) { HashMap() }
+    }
+
+    fun glyph(atlas: HashMap<Int, Glyph?>, face: Face, bucket: Int, id: Int, outlinePx: Float = 0f, round: Boolean = false): Glyph? = atlas.getOrPut(id) {
         val r = face.raster(id, bucket / 4f) ?: return@getOrPut null
-        place(r)
+        if (outlinePx <= 0f) place(r) else place(dilate(r, max(1, (outlinePx * 4f).roundToInt()) / 4f, round))
+    }
+
+    private fun dilate(r: Raster, radius: Float, round: Boolean): Raster {
+        val e = ceil(radius).toInt()
+        val w = r.w + e * 2
+        val h = r.h + e * 2
+        val weights = FloatArray((e * 2 + 1) * (e * 2 + 1)) { k ->
+            val dx = abs(k % (e * 2 + 1) - e).toFloat()
+            val dy = abs(k / (e * 2 + 1) - e).toFloat()
+            (radius + 1f - if (round) sqrt(dx * dx + dy * dy) else max(dx, dy)).coerceIn(0f, 1f)
+        }
+        val out = ByteArray(w * h)
+        for (y in 0 until h) for (x in 0 until w) {
+            var a = 0f
+            for (ky in 0..e * 2) {
+                val sy = y - ky
+                if (sy !in 0 until r.h) continue
+                for (kx in 0..e * 2) {
+                    val sx = x - kx
+                    if (sx !in 0 until r.w) continue
+                    val v = (r.coverage[sy * r.w + sx].toInt() and 0xFF) * weights[ky * (e * 2 + 1) + kx]
+                    if (v > a) a = v
+                }
+            }
+            out[y * w + x] = a.roundToInt().toByte()
+        }
+        return Raster(r.offX - e, r.offY - e, w, h, out)
     }
 
     private const val BITMAP_MAX = 256

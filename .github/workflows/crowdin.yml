@@ -1,0 +1,116 @@
+name: Crowdin
+
+on:
+  push:
+    branches:
+      - v1
+    paths:
+      - 'minecraft/src/main/resources/assets/oneconfig/lang/en_us.json'
+      - 'crowdin.yml'
+      - '.github/crowdin/**'
+  schedule:
+    - cron: '0 4 * * 1'
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+    inputs:
+      task:
+        description: Task to run
+        type: choice
+        default: all
+        options:
+          - all
+          - sync
+          - publish
+
+concurrency:
+  group: crowdin
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    name: Sync sources
+
+    if: >-
+      github.repository == 'Polyfrost/OneConfig' && (github.event_name == 'push' ||
+      github.event.schedule == '0 4 * * 1' ||
+      (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all", "sync"]'), inputs.task)))
+
+    runs-on: ubuntu-26.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+
+      - name: Extract sources
+        run: >-
+          python .github/crowdin/extract_mod_sources.py
+          --output build/crowdin
+          --local-resources minecraft/src/main/resources
+
+      - name: Upload sources and existing translations
+        uses: crowdin/github-action@v3
+        env:
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+        with:
+          upload_sources: true
+          upload_translations: true
+          auto_approve_imported: false
+          import_eq_suggestions: false
+          download_translations: false
+
+  publish:
+    name: Publish translations to R2
+
+    needs: sync
+
+    if: >-
+      !cancelled() && needs.sync.result != 'failure' && github.repository == 'Polyfrost/OneConfig' &&
+      (github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all", "publish"]'), inputs.task)))
+
+    runs-on: ubuntu-26.04
+
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_ENDPOINT_URL: ${{ vars.R2_ENDPOINT }}
+      R2_TARGET: s3://${{ vars.R2_BUCKET }}/v1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+
+      - name: Fetch published manifest
+        run: aws s3 cp "$R2_TARGET/manifest.json" build/published/manifest.json || echo "::notice::No published manifest found"
+
+      - name: Build distribution
+        id: build
+        env:
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+        run: >-
+          python .github/crowdin/build_distribution.py
+          --output build/distribution
+          --previous build/published/manifest.json
+
+      - name: Upload distribution
+        if: steps.build.outputs.changed == 'true'
+        run: |
+          aws s3 sync build/distribution/translations "$R2_TARGET/translations" --content-type application/json --cache-control "public, max-age=604800"
+          aws s3 cp build/distribution/manifest.json "$R2_TARGET/manifest.json" --content-type application/json --cache-control "public, max-age=3600"
+          aws s3 sync build/distribution/translations "$R2_TARGET/translations" --delete --size-only

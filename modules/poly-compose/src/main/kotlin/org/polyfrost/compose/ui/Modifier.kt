@@ -52,11 +52,13 @@ open class Modifier internal constructor(internal val block: PolyLayoutStyle.() 
         style.weightFill = true
         style.focusable = false
         style.onFocus = null
+        style.onFocusChanged = emptyList()
         style.focusRequest = null
         style.inert = false
         style.overlay = false
         style.overlayAnchor = Alignment.TopStart
         style.overlayRoomier = false
+        style.overlayPin = null
         style.onPlaced = null
         style.scaleX = 1f
         style.scaleY = 1f
@@ -66,6 +68,7 @@ open class Modifier internal constructor(internal val block: PolyLayoutStyle.() 
         style.offsetY = 0f
         style.cursor = null
         style.fade = null
+        style.drawWithContent = null
         style.innerStarted = false
         style.layoutType = lt
         style.gap = g

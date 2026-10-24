@@ -73,10 +73,13 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi
+import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindOption
+import org.polyfrost.oneconfig.internal.ui.keybind.ProfileKeybinds
 import org.polyfrost.oneconfig.internal.ui.poly.GUTTER
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
@@ -723,6 +726,7 @@ private fun ProfileCard(
     val shape = theme.modCardShape
     val editName = remember(profile.id) { TextFieldState(profile.name) }
     var editError by remember(profile.id) { mutableStateOf<String?>(null) }
+    val keybindProp = remember(profile.id) { ProfileKeybinds.property(profile.id) }
 
     fun closeEditor() {
         onEditorChange(null)
@@ -898,6 +902,12 @@ private fun ProfileCard(
             }
             if (editor == ProfileEditor.Delete) {
                 Text("Delete this profile?", modifier = Modifier.padding(top = 4.dp), color = DangerColor, fontSize = 13.sp)
+            }
+        }
+
+        if (editor == null && (profile.active || isHovered || menuOpen || keybindProp.get()?.isBound == true)) {
+            Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 6.dp)) {
+                KeybindOption(KeybindOptionData(keybindProp))
             }
         }
     }

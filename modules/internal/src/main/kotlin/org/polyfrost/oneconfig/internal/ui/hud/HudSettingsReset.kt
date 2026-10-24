@@ -35,11 +35,13 @@ import org.polyfrost.compose.ui.input.pointer.PointerEventType
 import org.polyfrost.compose.ui.input.pointer.PointerIcon
 import org.polyfrost.compose.ui.input.pointer.onPointerEvent
 import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
+import org.polyfrost.compose.ui.layout.onSizeChanged
 import org.polyfrost.compose.ui.platform.LocalDensity
 import org.polyfrost.compose.ui.text.font.FontWeight
 import org.polyfrost.compose.ui.unit.Dp
 import org.polyfrost.compose.ui.unit.DpOffset
 import org.polyfrost.compose.ui.unit.IntOffset
+import org.polyfrost.compose.ui.unit.IntSize
 import org.polyfrost.compose.ui.unit.dp
 import org.polyfrost.compose.ui.unit.sp
 import org.polyfrost.compose.ui.window.Popup
@@ -51,6 +53,7 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
@@ -58,6 +61,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.optionHasDefault
 import org.polyfrost.oneconfig.internal.ui.components.settings.resetOption
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudAlign
 import org.polyfrost.oneconfig.internal.ui.hud.screens.alignHuds
+import org.polyfrost.oneconfig.internal.ui.hud.screens.tourString
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.poly.OpenTransition
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
@@ -293,6 +297,8 @@ fun HudCanvasResetMenu(
     undoEnabled: Boolean = false,
     onRedo: () -> Unit = {},
     redoEnabled: Boolean = false,
+    preview: Boolean = false,
+    onMeasured: (IntSize) -> Unit = {},
 ) {
     if (hud == null || !expanded) return
     val theme = LocalTheme.current
@@ -335,10 +341,12 @@ fun HudCanvasResetMenu(
         alignment = Alignment.TopStart,
         offset = with(density) { DpOffset(offset.x.toDp(), offset.y.toDp()) },
         onDismissRequest = onDismiss,
-        properties = PopupProperties(focusable = true),
+        properties = PopupProperties(focusable = !preview, dismissOnClickOutside = !preview),
     ) {
         OpenTransition(
             modifier = Modifier
+                .onSizeChanged(onMeasured)
+                .blockInteraction(preview)
                 .background(theme.popupBackground, theme.popupShape)
                 .border(1.dp, theme.borderColor, theme.popupShape)
                 .padding(MenuPadding),
@@ -386,14 +394,24 @@ fun HudCanvasResetMenu(
                     UiSounds.play(UiSoundEvent.CLICK)
                     alignHuds(actionTargets, align)
                 }
-                HudMenuRow(
-                    icon = "align",
-                    text = "Anchor",
-                    width = rowWidth,
-                    enabled = anchorEnabled,
+                Box(
+                    modifier = if (preview) {
+                        Modifier
+                            .background(Accent.copy(alpha = 0.18f), theme.buttonShape)
+                            .border(1.dp, Accent, theme.buttonShape)
+                    } else {
+                        Modifier
+                    },
                 ) {
-                    onDismiss()
-                    onAnchor(hud)
+                    HudMenuRow(
+                        icon = "align",
+                        text = "Anchor",
+                        width = rowWidth,
+                        enabled = anchorEnabled,
+                    ) {
+                        onDismiss()
+                        onAnchor(hud)
+                    }
                 }
                 if (anyAnchored) {
                     HudMenuRow(icon = "x-circle", text = "Remove anchor", width = rowWidth) {
@@ -496,6 +514,7 @@ fun HudCanvasPasteMenu(
     undoEnabled: Boolean = false,
     onRedo: () -> Unit = {},
     redoEnabled: Boolean = false,
+    onTour: (() -> Unit)? = null,
 ) {
     if (!expanded) return
     val theme = LocalTheme.current
@@ -504,7 +523,8 @@ fun HudCanvasPasteMenu(
     val undoHint = if (OneConfigConfig.showKeybindHints) keybindHint(OneConfigConfig.hudUndoKeybind) else null
     val redoHint = if (OneConfigConfig.showKeybindHints) keybindHint(OneConfigConfig.hudRedoKeybind) else null
     val font = theme.typography.family.resolve(FontWeight.Normal)
-    val rowWidth = listOf("Undo" to undoHint, "Redo" to redoHint, "Paste" to pasteHint, "Select All" to selectAllHint)
+    val rows = listOf("Undo" to undoHint, "Redo" to redoHint, "Paste" to pasteHint, "Select All" to selectAllHint)
+    val rowWidth = (if (onTour != null) rows + (tourString("menu") to null) else rows)
         .maxOf { (text, hint) -> menuRowWidth(font, text, hint) }.coerceIn(190f, 240f).dp
     val density = LocalDensity.current
     Popup(
@@ -548,6 +568,13 @@ fun HudCanvasPasteMenu(
                 ) {
                     onDismiss()
                     onSelectAll()
+                }
+                if (onTour != null) {
+                    HudMenuDivider(rowWidth)
+                    HudMenuRow(icon = "info", text = tourString("menu"), width = rowWidth) {
+                        onDismiss()
+                        onTour()
+                    }
                 }
             }
         }

@@ -9,4 +9,6 @@ class OneConfigUIBridgeImpl : OneConfigUIBridge {
     override fun open(route: Any?) {
         if (route == null) ShellScreen.openLastSession() else ShellScreen.show(route)
     }
+
+    override fun isOneConfigScreen(screen: Any?): Boolean = ShellScreen.isShell(screen)
 }

@@ -15,6 +15,7 @@ import org.polyfrost.compose.foundation.layout.padding
 import org.polyfrost.compose.foundation.layout.size
 import org.polyfrost.compose.ui.Alignment
 import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.graphics.Brush
 import org.polyfrost.compose.ui.graphics.Color
 import org.polyfrost.compose.ui.graphics.copy
 import org.polyfrost.compose.ui.graphics.toArgb
@@ -38,6 +39,7 @@ import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.resetHudPosition
 import org.polyfrost.oneconfig.internal.ui.screens.HudConfigScreen
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.AccentEnd
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val DeleteButtonColor = Color(0xFFE5484D)
@@ -202,7 +204,7 @@ fun Settings(hud: Hud?, query: String, onDeleted: () -> Unit) {
                 }
             }
 
-            Section("Appearance", query, "Text Color", "Text Shadow", "Shadow Color") {
+            Section("Appearance", query, "Text Color", "Text Shadow", "Full Shadow", "Shadow Color") {
                 Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     HudSettingTarget(hud, "textColor") {
                         ColorButton(
@@ -231,6 +233,17 @@ fun Settings(hud: Hud?, query: String, onDeleted: () -> Unit) {
                         }
                     }
                     if (hud.showShadow) {
+                        HudSettingTarget(hud, "fullShadow") {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                SwitchControl(hud.fullShadow) {
+                                    Snapshot.withMutableSnapshot { hud.fullShadow = it }
+                                }
+                                Text("Full Shadow", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                            }
+                        }
                         HudSettingTarget(hud, "shadowColor") {
                             ColorButton(
                                 "Shadow Color", Color(hud.shadowColor),
@@ -314,17 +327,25 @@ private fun ResetHudPositionButton(hud: Hud) {
     val enabled = hudHasPositionDefaults(hud)
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
-    val bgColor = when {
-        !enabled -> theme.borderColor
-        isHovered -> Accent.copy(alpha = Accent.alphaF * 0.75f)
-        else -> Accent
-    }
+    val accentAlpha = if (isHovered) 0.75f else 1f
     val textColor = if (enabled) theme.accentTextColor else theme.textColorSecondary
 
     Box(
         modifier = Modifier
             .then(if (enabled) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier)
-            .background(bgColor, theme.buttonShape)
+            .then(
+                if (enabled) {
+                    Modifier.background(
+                        Brush.horizontalGradient(
+                            Accent.copy(alpha = Accent.alphaF * accentAlpha),
+                            AccentEnd.copy(alpha = AccentEnd.alphaF * accentAlpha),
+                        ),
+                        theme.buttonShape,
+                    )
+                } else {
+                    Modifier.background(theme.borderColor, theme.buttonShape)
+                },
+            )
             .then(
                 if (enabled) {
                     Modifier.onClick(interactionSource) { resetHudPosition(hud) }

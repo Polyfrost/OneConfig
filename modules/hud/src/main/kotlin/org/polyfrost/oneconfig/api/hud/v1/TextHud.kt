@@ -115,6 +115,7 @@ abstract class TextHud(
                 val underlinePos = metrics.underlinePosition
                 val underlineThick = metrics.underlineThickness
                 val shadowCol = if (showShadow) PolyColor(shadowColor, shadowChroma, shadowChromaSpeed) else null
+                val outline = textScale
 
                 Canvas(
                     modifier = Modifier.size(blockW.dp, blockH.dp)
@@ -123,7 +124,19 @@ abstract class TextHud(
                         if (lineText.isEmpty()) return@forEachIndexed
                         val baseline = y + index * lineHeight - metrics.ascent
                         val lineW = polyFont.measureTextWidth(lineText)
-                        if (shadowCol != null) {
+                        if (shadowCol != null && fullShadow) {
+                            textOutline(lineText, x, baseline, shadowCol, polyFont, outline)
+                            if (textUnderline) {
+                                line(
+                                    x - outline,
+                                    baseline + underlinePos,
+                                    x + lineW + outline,
+                                    baseline + underlinePos,
+                                    shadowCol,
+                                    underlineThick + outline * 2f
+                                )
+                            }
+                        } else if (shadowCol != null) {
                             text(lineText, x + shadowOffsetX, baseline + shadowOffsetY, shadowCol, polyFont)
                             if (textUnderline) {
                                 line(
@@ -162,7 +175,8 @@ abstract class TextHud(
                     text = formatted,
                     modifier = if (isStaticValid) Modifier.align(contentAlign) else Modifier,
                     color = fgColor,
-                    shadow = showShadow,
+                    shadow = showShadow && !fullShadow,
+                    outlineColor = if (showShadow && fullShadow) PolyColor(shadowColor, shadowChroma, shadowChromaSpeed) else null,
                     scale = textScale,
                 )
             }

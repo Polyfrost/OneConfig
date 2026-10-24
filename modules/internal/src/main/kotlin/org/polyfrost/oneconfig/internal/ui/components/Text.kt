@@ -8,6 +8,7 @@ import org.polyfrost.compose.animation.AnimatedColor
 import org.polyfrost.compose.ui.Modifier
 import org.polyfrost.compose.ui.graphics.Color
 import org.polyfrost.compose.ui.text.font.FontWeight
+import org.polyfrost.compose.ui.text.style.BaselineShift
 import org.polyfrost.compose.ui.text.style.TextAlign
 import org.polyfrost.compose.ui.text.style.TextOverflow
 import org.polyfrost.compose.ui.unit.TextUnit
@@ -42,7 +43,8 @@ fun Text(
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = TextOverflow.Clip,
     softWrap: Boolean = false,
-) = ThemedText(text, modifier, color, null, fontSize, lineHeight, fontWeight, textAlign, maxLines, overflow, softWrap)
+    baselineShift: BaselineShift = BaselineShift.None,
+) = ThemedText(text, modifier, color, null, fontSize, lineHeight, fontWeight, textAlign, maxLines, overflow, softWrap, baselineShift)
 
 @Composable
 fun Text(
@@ -56,12 +58,14 @@ fun Text(
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = TextOverflow.Clip,
     softWrap: Boolean = false,
-) = ThemedText(text, modifier, color.target, color, fontSize, lineHeight, fontWeight, textAlign, maxLines, overflow, softWrap)
+    baselineShift: BaselineShift = BaselineShift.None,
+) = ThemedText(text, modifier, color.target, color, fontSize, lineHeight, fontWeight, textAlign, maxLines, overflow, softWrap, baselineShift)
 
 @Composable
 private fun ThemedText(
     text: Any, modifier: Modifier, color: Color, animated: AnimatedColor?, fontSize: TextUnit, lineHeight: TextUnit?,
     fontWeight: FontWeight, textAlign: TextAlign, maxLines: Int, overflow: TextOverflow, softWrap: Boolean,
+    baselineShift: BaselineShift,
 ) {
     val theme = LocalTheme.current
     val family = theme.typography.family
@@ -71,6 +75,7 @@ private fun ThemedText(
     val (s, spans) = remember(text, font, bold, italic) { richText(text, font, bold, italic) }
     val ellipsis = overflow == TextOverflow.Ellipsis
     val center = textAlign == TextAlign.Center
-    if (animated != null) UiText(s, animated, fontSize.value, font, modifier, softWrap, spans, maxLines, ellipsis, lineHeight?.value, center)
-    else UiText(s, color, fontSize.value, font, modifier, softWrap, spans, maxLines, ellipsis, lineHeight?.value, center)
+    val shift = baselineShift.multiplier
+    if (animated != null) UiText(s, animated, fontSize.value, font, modifier, softWrap, spans, maxLines, ellipsis, lineHeight?.value, center, shift)
+    else UiText(s, color, fontSize.value, font, modifier, softWrap, spans, maxLines, ellipsis, lineHeight?.value, center, shift)
 }

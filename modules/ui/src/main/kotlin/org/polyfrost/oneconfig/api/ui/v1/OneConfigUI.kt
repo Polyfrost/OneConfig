@@ -73,4 +73,8 @@ object OneConfigUI {
     @JvmStatic
     @JvmOverloads
     fun createScreen(route: Any? = null): Any? = bridge?.createScreen(route)
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    fun isOneConfigScreen(screen: Any?): Boolean = bridge?.isOneConfigScreen(screen) ?: false
 }

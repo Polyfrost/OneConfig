@@ -12,6 +12,7 @@ import org.polyfrost.compose.render.PolyGlyphPage
 import org.polyfrost.compose.render.PolyRenderer
 import org.polyfrost.compose.render.PolyTessellator
 import org.polyfrost.compose.ui.draw.alpha
+import org.polyfrost.compose.ui.draw.drawWithContent
 import org.polyfrost.compose.ui.draw.dropShadow
 import org.polyfrost.compose.ui.graphics.Brush
 import org.polyfrost.compose.ui.graphics.ImageBitmap
@@ -22,12 +23,12 @@ import org.polyfrost.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
 class PolyTessellatorTest {
-    private class Batch(val texture: Any, val verts: FloatArray, val colors: IntArray)
+    private class Batch(val texture: Any, val verts: FloatArray, val colors: IntArray, val nearest: Boolean = false)
 
     private class Recorder : PolyTessellator() {
         val batches = ArrayList<Batch>()
-        override fun submit(texture: Any, premultiplied: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray) {
-            batches.add(Batch(texture, verts, colors))
+        override fun submit(texture: Any, premultiplied: Boolean, nearest: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray) {
+            batches.add(Batch(texture, verts, colors, nearest))
         }
         override fun bitmapTexture(bitmap: ImageBitmap) = bitmap
         override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) = Unit
@@ -36,6 +37,26 @@ class PolyTessellatorTest {
         val rectYs = ArrayList<Float>()
         override fun rect(x: Float, y: Float, w: Float, h: Float, color: Int, radius: Float) { rectYs += y; super.rect(x, y, w, h, color, radius) }
         fun done() = also { flush() }.batches
+    }
+
+    @Test
+    fun outlineGlyphGrowsCoverage() {
+        val face = object : PolyGlyphPage.Face {
+            override fun glyph(codepoint: Int) = 1
+            override fun advance(glyph: Int) = 1f
+            override fun raster(glyph: Int, pixelSize: Float) = PolyGlyphPage.Raster(2, 3, 1, 1, byteArrayOf(-1))
+        }
+        fun alphas(round: Boolean): List<Int> {
+            val g = PolyGlyphPage.glyph(PolyGlyphPage.atlas(face, 4, 1f, round), face, 4, 1, 1f, round)!!
+            assertEquals(listOf(1, 2, 3, 3), listOf(g.offX, g.offY, g.w, g.h))
+            val x0 = (g.u0 * PolyGlyphPage.SIZE).roundToInt()
+            val y0 = (g.v0 * PolyGlyphPage.SIZE).roundToInt()
+            return (0 until 9).map { g.page.pixels[(y0 + it / 3) * PolyGlyphPage.SIZE + x0 + it % 3] ushr 24 }
+        }
+        assertEquals(List(9) { 255 }, alphas(false))
+        val round = alphas(true)
+        assertEquals(listOf(255, 255, 255, 255, 255), listOf(round[1], round[3], round[4], round[5], round[7]))
+        assertTrue(round[0] in 100..200)
     }
 
     @Test
@@ -341,5 +362,90 @@ class PolyTessellatorTest {
         assertTrue(b.colors.take(4).all { it == 0x8000FF00.toInt() })
         val big = ImageBitmap(300, 2, ByteArray(300 * 2 * 4))
         assertEquals(big, Recorder().apply { image(big, 0f, 0f, 8f, 8f, 0f, 0f, 1f, 1f, -1) }.done().single().texture)
+    }
+
+    private fun List<Batch>.alphaAt(px: Float, py: Float): Int {
+        var sum = 0f
+        for (b in this) for (q in 0 until b.colors.size / 4) for (tri in arrayOf(intArrayOf(0, 1, 2), intArrayOf(0, 2, 3))) {
+            val i = IntArray(3) { q * 4 + tri[it] }
+            val x = FloatArray(3) { b.verts[i[it] * 4] }; val y = FloatArray(3) { b.verts[i[it] * 4 + 1] }
+            val d = (y[1] - y[2]) * (x[0] - x[2]) + (x[2] - x[1]) * (y[0] - y[2])
+            if (kotlin.math.abs(d) < 1e-6f) continue
+            val l0 = ((y[1] - y[2]) * (px - x[2]) + (x[2] - x[1]) * (py - y[2])) / d
+            val l1 = ((y[2] - y[0]) * (px - x[2]) + (x[0] - x[2]) * (py - y[2])) / d
+            val l2 = 1f - l0 - l1
+            if (l0 < 0f || l1 < 0f || l2 < 0f) continue
+            sum += l0 * (b.colors[i[0]] ushr 24) + l1 * (b.colors[i[1]] ushr 24) + l2 * (b.colors[i[2]] ushr 24)
+        }
+        return sum.roundToInt()
+    }
+
+    @Test
+    fun rectWithHoleLeavesARoundedHole() {
+        val b = Recorder().run { rectWithHole(0f, 0f, 100f, 100f, 30f, 30f, 40f, 40f, 8f, -1); done() }
+        b.forEach(::assertWinding)
+        assertEquals(255, b.alphaAt(10.5f, 10.5f))
+        assertEquals(255, b.alphaAt(31.2f, 31.2f), "rounded corner of the hole")
+        assertEquals(255, b.alphaAt(68.8f, 68.8f), "rounded corner of the hole")
+        assertEquals(0, b.alphaAt(50.2f, 50.2f))
+        assertEquals(0, b.alphaAt(45.2f, 31.2f))
+        for (p in 0 until 100) assertTrue(b.alphaAt(p + 0.37f, 20f + p * 0.61f) <= 256, "overlap at $p")
+        val past = Recorder().run { rectWithHole(0f, 0f, 100f, 100f, 80f, 40f, 40f, 20f, 8f, -1); done() }
+        assertEquals(0, past.alphaAt(95.2f, 50.2f))
+        assertEquals(255, past.alphaAt(50.2f, 50.2f))
+        assertTrue(past.all { b -> (0 until b.colors.size).all { b.verts[it * 4] <= 100.01f } }, "drawn past the clip")
+    }
+
+    @Test
+    fun mcOutlineCoversEachPixelOnce() {
+        val face = object : PolyGlyphPage.Face {
+            override fun glyph(codepoint: Int) = 1
+            override fun advance(glyph: Int) = 0.2f
+            override fun raster(glyph: Int, pixelSize: Float) = PolyGlyphPage.Raster(0, -4, 2, 4, ByteArray(8) { -1 })
+        }
+        val old = PolyGlyphPage.rasterizer
+        PolyGlyphPage.rasterizer = object : PolyGlyphPage.Rasterizer { override fun face(name: String) = face.takeIf { name == "minecraft" } }
+        try {
+            val b = Recorder().run { mcTextOutline("ab", 10f, 20f, -1, 0x40000000, 1f); done() }
+            b.forEach(::assertWinding)
+            var covered = 0
+            for (py in 0 until 40) for (px in 0 until 40) {
+                val a = b.alphaAt(px + 0.5f, py + 0.5f)
+                assertTrue(a == 0 || a == 0x40, "alpha $a at ($px, $py)")
+                if (a > 0) covered++
+            }
+            assertEquals(5 * 4, covered)
+            assertEquals(0x40, b.alphaAt(9.5f, 24.5f))
+            assertEquals(0, b.alphaAt(14.5f, 24.5f))
+        } finally {
+            PolyGlyphPage.rasterizer = old
+        }
+    }
+
+    @Test
+    fun nearestImagesBatchApart() {
+        val bmp = ImageBitmap(4, 4, ByteArray(64) { -1 })
+        val b = Recorder().run {
+            image(bmp, 0f, 0f, 8f, 8f, org.polyfrost.compose.ui.graphics.FilterQuality.None)
+            image(bmp, 8f, 0f, 8f, 8f)
+            done()
+        }
+        assertEquals(listOf(true, false), b.map { it.nearest })
+        assertEquals(b[0].texture, b[1].texture)
+    }
+
+    @Test
+    fun drawWithContentDrawsOverChildren() {
+        val node = org.polyfrost.compose.node.PolyNode()
+        org.polyfrost.compose.ui.Modifier.drawWithContent { drawContent(); ctx.rect(x, y, width, 1f, PolyColor(0xFF0000FF.toInt())) }.applyTo(node.style)
+        node.width = 10f; node.height = 10f
+        val child = org.polyfrost.compose.node.PolyNode()
+        org.polyfrost.compose.ui.Modifier.background(PolyColor(0xFFFF0000.toInt())).applyTo(child.style)
+        child.width = 10f; child.height = 10f
+        child.parent = node
+        node.children += child
+        val b = Recorder().also { node.renderFaded(org.polyfrost.compose.render.RenderContext(it)) }.done().single()
+        assertEquals(0xFFFF0000.toInt(), b.colors.first())
+        assertEquals(0xFF0000FF.toInt(), b.colors.last { it ushr 24 == 0xFF })
     }
 }

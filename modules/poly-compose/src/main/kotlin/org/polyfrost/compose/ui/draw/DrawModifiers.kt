@@ -3,6 +3,7 @@ package org.polyfrost.compose.ui.draw
 import androidx.compose.runtime.State
 import org.polyfrost.compose.node.PolyNode
 import org.polyfrost.compose.render.PolyFade
+import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.ui.Modifier
 import org.polyfrost.compose.ui.applyShape
 import org.polyfrost.compose.ui.element
@@ -20,5 +21,16 @@ fun Modifier.clip(shape: Shape = RectangleShape) = element { clipToBounds = true
 fun Modifier.dropShadow(shape: Shape, shadow: Shadow) = element { shadows = shadows + shadow; applyShape(shape) }
 
 fun Modifier.scale(scale: Float) = layoutElement { scaleX = scale; scaleY = scale }
+
+class ContentDrawScope(val ctx: RenderContext, private val node: PolyNode) {
+    val x get() = node.x
+    val y get() = node.y
+    val width get() = node.width
+    val height get() = node.height
+
+    fun drawContent() = node.render(ctx)
+}
+
+fun Modifier.drawWithContent(onDraw: ContentDrawScope.() -> Unit) = element { drawWithContent = onDraw }
 
 fun Modifier.fadeMask(mask: (PolyNode) -> PolyFade?) = element { fade = mask }

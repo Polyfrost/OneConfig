@@ -42,6 +42,8 @@ class TextNode : PolyNode() {
 
     var center: Boolean = false
 
+    var baselineShift: Float = 0f
+
     private class Run(val text: String, val x: Float, val span: PolyTextSpan?)
     private class Line(val runs: List<Run>, val width: Float)
 
@@ -68,7 +70,7 @@ class TextNode : PolyNode() {
     private fun baseline(font: PolyFont, i: Int): Float {
         val m = font.metrics
         val lh = lineHeight(font)
-        return i * lh + (lh - naturalHeight(font)) / 2f - m.ascent + if (leading) m.leading / 2f else 0f
+        return i * lh + (lh - naturalHeight(font)) / 2f - m.ascent - baselineShift * fontSize + if (leading) m.leading / 2f else 0f
     }
 
     override fun measureContent(maxWidth: Float, maxHeight: Float) {

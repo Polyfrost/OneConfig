@@ -10,6 +10,7 @@ import org.polyfrost.compose.runtime.PolyApplier
 import org.polyfrost.compose.ui.Modifier
 import org.polyfrost.compose.ui.text.font.FontFamily
 import org.polyfrost.compose.ui.text.font.FontWeight
+import org.polyfrost.compose.ui.text.style.BaselineShift
 import org.polyfrost.compose.ui.text.style.TextAlign
 import org.polyfrost.compose.ui.text.style.TextOverflow
 import org.polyfrost.compose.ui.unit.TextUnit
@@ -29,6 +30,7 @@ fun Text(
     softWrap: Boolean = false,
     maxLines: Int = Int.MAX_VALUE,
     spans: List<PolyTextSpan>? = null,
+    baselineShift: BaselineShift = BaselineShift.None,
 ) {
     val font = fontFamily.resolve(fontWeight)
     ComposeNode<TextNode, PolyApplier>(
@@ -44,6 +46,7 @@ fun Text(
             set(softWrap) { wrap = it; remeasure() }
             set(maxLines) { this.maxLines = it; remeasure() }
             set(spans) { this.spans = it; remeasure() }
+            set(baselineShift) { this.baselineShift = it.multiplier }
             set(modifier) { it.applyTo(style); remeasure() }
         },
     )

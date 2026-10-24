@@ -4,6 +4,8 @@ import java.lang.ref.WeakReference
 import java.util.Collections
 import java.util.WeakHashMap
 import org.jetbrains.annotations.ApiStatus
+import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.layoutElement
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 
 object TextInputFocus {
@@ -38,4 +40,9 @@ object TextInputFocus {
     }
 
     private fun currentScreen(): Any = Platform.screen().current<Any?>() ?: NO_SCREEN
+}
+
+fun Modifier.trackTextInputFocus(): Modifier = layoutElement {
+    val token = this
+    onFocusChanged += { focused -> if (focused) TextInputFocus.acquire(token) else TextInputFocus.release(token) }
 }

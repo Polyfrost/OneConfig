@@ -260,9 +260,12 @@ private fun ToastIcon(notification: Notification, a: Float) {
         }
     } else {
         val accent = NotificationTheme.accentFor(notification.type).argb
+        val iconFolder = NotificationTheme.iconFolder
         Canvas(modifier = Modifier.size(ICON_SIZE.dp, ICON_SIZE.dp).align(Alignment.Top)) { x, y, w, h ->
             val pixelSize = Math.ceil((w * ToastViewport.scale * ICON_RASTER_SCALE).toDouble()).toInt()
-            val img = SvgMask.get("/assets/oneconfig/ico/${notification.type.iconName}.svg", pixelSize, accent)
+            val name = notification.type.iconName
+            val img = iconFolder?.let { SvgMask.get("/assets/oneconfig/ico/$it/$name.svg", pixelSize, accent) }
+                ?: SvgMask.get("/assets/oneconfig/ico/$name.svg", pixelSize, accent)
             if (img != null) fadedImage(img, x, y, w, h, a)
         }
     }

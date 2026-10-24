@@ -242,17 +242,23 @@ fun Designer(hud: Hud?, query: String) {
                 }
                 val scale = hud.textScale / density
                 val textW = McFontQueue.measureTextWidth(mcText, scale)
-                val textH = McFontQueue.measureTextHeight(scale)
+                val textH = McFontQueue.measureBlockHeight(mcText.lines().size, scale)
                 val showShadow = hud.showShadow
+                val fullShadow = hud.fullShadow
+                val shadowColor = hud.shadowColor
                 Canvas(modifier = Modifier.size(textW.dp, textH.dp)) { x, y, _, _ ->
-                    this.mcText(
-                        mcText,
-                        x,
-                        y,
-                        textColor.argb,
-                        showShadow,
-                        scale
-                    )
+                    if (showShadow && fullShadow) {
+                        mcTextOutline(mcText, x, y, textColor.argb, shadowColor, scale)
+                    } else {
+                        this.mcText(
+                            mcText,
+                            x,
+                            y,
+                            textColor.argb,
+                            showShadow,
+                            scale
+                        )
+                    }
                 }
             }
         }

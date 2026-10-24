@@ -6,6 +6,7 @@ data class NavigationRoute(
     val id: String,
     val icon: String,
     val route: PolyPage,
+    val arg: Any? = null,
 )
 
 class NavigationGroup(
@@ -13,52 +14,19 @@ class NavigationGroup(
     vararg val routes: NavigationRoute
 )
 
-val NavigationGroups = listOf(
-    NavigationGroup(
-        id = "Mods & Options",
-        NavigationRoute(
-            id = "mods",
-            icon = "settings",
-            route = PolyPage.Mods
-        ),
-        NavigationRoute(
-            id = "profiles",
-            icon = "profiles",
-            route = PolyPage.Profiles
-        ),
-        NavigationRoute(
-            id = "keybinds",
-            icon = "keyboard",
-            route = PolyPage.Keybinds
-        )
-    ),
-    NavigationGroup(
-        id = "Personalization",
-        NavigationRoute(
-            id = "themes",
-            icon = "paintbrush",
-            route = PolyPage.Themes
-        ),
-        NavigationRoute(
-            id = "preferences",
-            icon = "cog",
-            route = PolyPage.Preferences
-        ),
-    ),
-    NavigationGroup(
-        id = "OneConfig",
-        NavigationRoute(
-            id = "changelog",
-            icon = "refresh",
-            route = PolyPage.Changelog
-        ),
-        NavigationRoute(
-            id = "credits",
-            icon = "star",
-            route = PolyPage.Credits
-        ),
-    )
-)
+val NavigationGroups: List<NavigationGroup>
+    get() = registeredPages()
+        .filter { it.showInSidebar }
+        .groupBy { it.group }
+        .map { (group, pages) ->
+            NavigationGroup(
+                group.title.fallback,
+                *pages.map {
+                    val (route, arg) = pageTarget(it)
+                    NavigationRoute(it.id.substringAfter(':'), it.icon, route, arg)
+                }.toTypedArray(),
+            )
+        }
 
 val PolyPage.hierarchy: PolyPage
     get() = when (this) {
@@ -66,13 +34,3 @@ val PolyPage.hierarchy: PolyPage
         PolyPage.ChangelogEntry -> PolyPage.Changelog
         else -> this
     }
-
-fun searchPlaceholder(destination: PolyPage): String {
-    val section = NavigationGroups
-        .asSequence()
-        .flatMap { it.routes.asSequence() }
-        .firstOrNull { def ->
-            destination.hierarchy == def.route
-        }
-    return if (section != null) "Search ${section.id}..." else "Search..."
-}

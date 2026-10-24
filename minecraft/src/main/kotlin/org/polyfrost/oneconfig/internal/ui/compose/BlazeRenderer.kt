@@ -33,6 +33,20 @@ import net.minecraft.client.renderer.state.gui.GuiElementRenderState
 *///?}
 import net.minecraft.client.renderer.RenderPipelines
 import net.minecraft.client.renderer.texture.DynamicTexture
+import net.minecraft.client.gui.render.GuiRenderer
+import net.minecraft.network.chat.TextColor
+import org.polyfrost.oneconfig.api.event.v1.EventManager
+import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
+import org.polyfrost.oneconfig.internal.ui.OffscreenTarget
+import org.polyfrost.oneconfig.internal.ui.hud.GuiTargetRedirect
+//? if >= 26.1 {
+import net.minecraft.client.renderer.state.gui.GuiRenderState
+//?} else
+//import net.minecraft.client.gui.render.state.GuiRenderState
+//? if < 26.2 {
+/*import net.minecraft.client.renderer.fog.FogRenderer
+import org.polyfrost.oneconfig.internal.mixin.render.GameRendererAccessor
+*///?}
 import net.minecraft.locale.Language
 import net.minecraft.network.chat.FormattedText
 import org.joml.Matrix3x2f
@@ -72,12 +86,12 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         return BitmapTextures.get(bitmap)
     }
 
-    override fun submit(texture: Any, premultiplied: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray) {
+    override fun submit(texture: Any, premultiplied: Boolean, nearest: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray) {
         val box = rectGui(bounds[0], bounds[1], bounds[2], bounds[3]) ?: return
         val setup = when (texture) {
-            is AbstractTextureRef -> texture.setup()
-            is GpuTextureView -> TextureSetup.singleTexture(texture, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR))
-            is PolyGlyphPage.Page -> GlyphAtlas.page(texture).setup()
+            is AbstractTextureRef -> texture.setup(nearest)
+            is GpuTextureView -> TextureSetup.singleTexture(texture, sampler(nearest))
+            is PolyGlyphPage.Page -> GlyphAtlas.page(texture).setup(nearest)
             else -> GlyphAtlas.page(PolyGlyphPage.pages[0]).setup()
         }
         val pipeline = if (premultiplied) RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA else RenderPipelines.GUI_TEXTURED
@@ -116,6 +130,31 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
             }
             ops.add(draw)
         }
+    }
+
+    override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float) {
+        val a = mulAlpha(outlineColor, state.alpha) ushr 24
+        val clip = state.clip
+        val scissor = clip?.let { rectGui(it[0], it[1], it[2], it[3]) }
+        if (a != 0 && (clip == null || scissor != null)) {
+            flush()
+            val s = state
+            val ox = x * s.sx + s.tx
+            val oy = y * s.sy + s.ty
+            val px = floor(ox)
+            val py = floor(oy)
+            val outline = McOutlines.get(text, outlineColor and 0xFFFFFF, scale * s.sx, scale * s.sy, ox - px, oy - py)
+            if (outline != null) {
+                val x0 = px - outline.pad
+                val y0 = py - outline.pad
+                val bounds = rectGui(x0, y0, x0 + outline.w, y0 + outline.h)
+                if (bounds != null) {
+                    val color4 = (a shl 24) or (a shl 16) or (a shl 8) or a
+                    ops.add { g -> outline.draw(g, elementPose, x0, y0, color4, bounds, scissor) }
+                }
+            }
+        }
+        mcText(text, x, y, color, false, scale)
     }
 
     private fun bakeText(font: Font, seq: FormattedCharSequence, m: Matrix3x2f, color: Int, shadow: Boolean, scissor: ScreenRectangle?): List<Mesh>? {
@@ -263,6 +302,140 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
 }
 
 private const val FULL_BRIGHT = 0xF000F0
+
+internal object McOutlines {
+    private const val MAX_ENTRIES = 32
+    private const val MAX_POOLED = 8
+    private const val PAD_FONT_PX = 2f
+    private val OFFSETS = floatArrayOf(-1f, -1f, 0f, -1f, 1f, -1f, -1f, 0f, 1f, 0f, -1f, 1f, 0f, 1f, 1f, 1f)
+
+    internal data class Key(val text: String, val rgb: Int, val kx: Float, val ky: Float, val fx: Float, val fy: Float)
+
+    private val entries = LinkedHashMap<Key, Outline>(16, 0.75f, true)
+    private val pool = ArrayList<OffscreenTarget>()
+    private var gui: Pair<GuiRenderState, GuiRenderer>? = null
+
+    init {
+        EventManager.register(ResourceFinishedLoading::class.java, Runnable { entries.values.forEach { it.dirty = true } })
+    }
+
+    fun get(text: String, rgb: Int, kx: Float, ky: Float, fx: Float, fy: Float): Outline? {
+        if (kx <= 0f || ky <= 0f) return null
+        val key = Key(text, rgb, kx, ky, (fx * 8f).roundToInt() / 8f, (fy * 8f).roundToInt() / 8f)
+        entries[key]?.let { return it }
+        val font = Minecraft.getInstance().font
+        val lines = text.lines()
+        val width = lines.maxOf { font.width(visualOrder(it)) }
+        val pad = ceil(PAD_FONT_PX * max(kx, ky))
+        val w = ceil(pad * 2f + width * kx + 1f)
+        val h = ceil(pad * 2f + lines.size * font.lineHeight * ky + 1f)
+        val outline = Outline(key, lines, pad, w, h)
+        entries[key] = outline
+        evict()
+        return outline
+    }
+
+    private fun evict() {
+        if (entries.size <= MAX_ENTRIES) return
+        val now = System.nanoTime()
+        val it = entries.values.iterator()
+        while (entries.size > MAX_ENTRIES && it.hasNext()) {
+            val outline = it.next()
+            if (now - outline.lastUsed < 1_000_000_000L) break
+            it.remove()
+            outline.release()
+        }
+    }
+
+    private fun visualOrder(line: String): FormattedCharSequence = Language.getInstance().getVisualOrder(FormattedText.of(line))
+
+    private fun uncolored(seq: FormattedCharSequence) = FormattedCharSequence { sink ->
+        seq.accept { index, style, codePoint -> sink.accept(index, style.withColor(null as TextColor?), codePoint) }
+    }
+
+    class Outline internal constructor(internal val key: Key, private val lines: List<String>, val pad: Float, val w: Float, val h: Float) {
+        private val obfuscated = key.text.contains("§k", ignoreCase = true)
+        private var target: OffscreenTarget? = null
+        internal var dirty = true
+        internal var lastUsed = System.nanoTime()
+
+        fun draw(g: GuiGraphicsExtractor, pose: Matrix3x2f, x0: Float, y0: Float, color: Int, bounds: ScreenRectangle, scissor: ScreenRectangle?) {
+            lastUsed = System.nanoTime()
+            if (target == null) entries.putIfAbsent(key, this)
+            if (dirty || obfuscated || target?.target == null) render()
+            val rt = target?.target ?: return
+            val view = rt.colorTextureView ?: return
+            val u1 = w / rt.width
+            val v1 = 1f - h / rt.height
+            val x1 = x0 + w
+            val y1 = y0 + h
+            val verts = floatArrayOf(x0, y0, 0f, 1f, x0, y1, 0f, v1, x1, y1, u1, v1, x1, y0, u1, 1f)
+            val setup = TextureSetup.singleTexture(view, sampler(true))
+            val mesh = BlazeRenderer.Mesh(RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA, setup, pose, verts, IntArray(4) { color }, bounds, false, scissor)
+            //~ if >= 26.1 'submitGuiElement' -> 'addGuiElement'
+            g.guiRenderState.addGuiElement(mesh)
+        }
+
+        internal fun release() {
+            val t = target ?: return
+            target = null
+            if (pool.size < MAX_POOLED) pool.add(t) else t.dispose()
+        }
+
+        private fun render() {
+            val offscreen = target ?: (pool.removeLastOrNull() ?: OffscreenTarget()).also { target = it }
+            if (!offscreen.resolve(w.toInt(), h.toInt())) return
+            val rt = offscreen.target ?: return
+            offscreen.clear()
+            val mc = Minecraft.getInstance()
+            val (state, renderer) = gui ?: GuiRenderState().let { s -> (s to createGuiRenderer(mc, s)).also { gui = it } }
+            val graphics = GuiGraphicsExtractor(mc, state, rt.width, rt.height)
+            val font = mc.font
+            val color = 0xFF000000.toInt() or key.rgb
+            val ox = pad + key.fx
+            val oy = pad + key.fy
+            lines.forEachIndexed { index, line ->
+                if (line.isEmpty()) return@forEachIndexed
+                val seq = uncolored(visualOrder(line))
+                for (i in OFFSETS.indices step 2) {
+                    val pose = graphics.pose()
+                    pose.pushMatrix()
+                    pose.translate(ox, oy).scale(key.kx, key.ky).translate(OFFSETS[i], OFFSETS[i + 1] + index * font.lineHeight)
+                    //~ if >= 26.1 'drawString' -> 'text'
+                    graphics.text(font, seq, 0, 0, color, false)
+                    pose.popMatrix()
+                }
+            }
+            val previousTarget = GuiTargetRedirect.target
+            val previousSize = GuiTargetRedirect.itemRenderSizePx
+            GuiTargetRedirect.target = rt
+            GuiTargetRedirect.itemRenderSizePx = 1
+            try {
+                //? if >= 26.2 {
+                renderer.render()
+                //?} else {
+                /*renderer.render((mc.gameRenderer as GameRendererAccessor).`oneconfig$getFogRenderer`().getBuffer(FogRenderer.FogMode.NONE))
+                *///?}
+            } finally {
+                GuiTargetRedirect.itemRenderSizePx = previousSize
+                GuiTargetRedirect.target = previousTarget
+            }
+            //? if >= 26.1 {
+            renderer.endFrame()
+            //?} else
+            //renderer.incrementFrameNumber()
+            dirty = false
+        }
+    }
+
+    private fun createGuiRenderer(mc: Minecraft, state: GuiRenderState): GuiRenderer {
+        //? if >= 26.2 {
+        return GuiRenderer(state, mc.gameRenderer.featureRenderDispatcher(), emptyList())
+        //?} else {
+        /*return GuiRenderer(state, mc.renderBuffers().bufferSource(), mc.gameRenderer.getSubmitNodeStorage(), mc.gameRenderer.getFeatureRenderDispatcher(), emptyList())
+        *///?}
+    }
+}
 
 //? if >= 26.2 {
 private const val TEXT_LIGHTMAP = false
@@ -449,8 +622,10 @@ internal class Recording {
 
 
 class AbstractTextureRef(val texture: DynamicTexture) {
-    fun setup(): TextureSetup = TextureSetup.singleTexture(texture.textureView, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR))
+    fun setup(nearest: Boolean = false): TextureSetup = TextureSetup.singleTexture(texture.textureView, sampler(nearest))
 }
+
+private fun sampler(nearest: Boolean) = RenderSystem.getSamplerCache().getClampToEdge(if (nearest) FilterMode.NEAREST else FilterMode.LINEAR)
 
 internal object GlyphAtlas {
     private const val SIZE = PolyGlyphPage.SIZE

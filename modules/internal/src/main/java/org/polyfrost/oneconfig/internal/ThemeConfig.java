@@ -10,7 +10,7 @@ public class ThemeConfig extends Config {
     @Text(title = "Active Theme")
     public static String activeTheme = "PolyGlass Dark";
 
-    @Color(title = "Accent Color", description = "The accent color of the OneConfig Interface", icon = "paintbrush")
+    @Color(title = "Accent Color", description = "The accent color of the OneConfig Interface", icon = "paintbrush", gradient = true)
     public static PolyColor accentColor = new PolyColor(0xFF2B4BFF);
 
     @Switch(title = "Animations", description = "Smooth, clean animations in the OneConfig Interface", icon = "refresh")

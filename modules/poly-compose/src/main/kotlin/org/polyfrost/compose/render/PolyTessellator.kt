@@ -2,6 +2,7 @@ package org.polyfrost.compose.render
 
 import org.polyfrost.compose.ui.graphics.ImageBitmap
 import org.polyfrost.compose.ui.graphics.Brush
+import org.polyfrost.compose.ui.graphics.FilterQuality
 import org.polyfrost.compose.ui.graphics.LinearGradient
 import org.polyfrost.compose.ui.graphics.shadow.Shadow
 import kotlin.math.abs
@@ -41,12 +42,13 @@ abstract class PolyTessellator : PolyRenderer {
     private var count = 0
     private var batchTexture: Any = PolyGlyphPage.pages[0]
     private var batchPremul = false
+    private var batchNearest = false
     private var minX = Float.MAX_VALUE
     private var minY = Float.MAX_VALUE
     private var maxX = -Float.MAX_VALUE
     private var maxY = -Float.MAX_VALUE
 
-    protected abstract fun submit(texture: Any, premultiplied: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray)
+    protected abstract fun submit(texture: Any, premultiplied: Boolean, nearest: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray)
 
     protected abstract fun bitmapTexture(bitmap: ImageBitmap): Any
 
@@ -54,6 +56,46 @@ abstract class PolyTessellator : PolyRenderer {
         if (w <= 0f || h <= 0f) return
         val r = rrectPoints(x, y, w, h, radius)
         unclipped(x, y, w, h, radius) { fillPolygonPx(r, r.size / 2, color, convex = true) }
+    }
+
+    override fun rectWithHole(x: Float, y: Float, w: Float, h: Float, holeX: Float, holeY: Float, holeW: Float, holeH: Float, holeRadius: Float, color: Int) {
+        if (w <= 0f || h <= 0f) return
+        if (holeW <= 0f || holeH <= 0f || holeX >= x + w || holeY >= y + h || holeX + holeW <= x || holeY + holeH <= y) return rect(x, y, w, h, color, 0f)
+        val c = mulAlpha(color, state.alpha)
+        if (c ushr 24 == 0) return
+        val m = 2f / scaleAvg()
+        val l = min(x, holeX - m); val t = min(y, holeY - m)
+        val r = max(x + w, holeX + holeW + m); val b = max(y + h, holeY + holeH + m)
+        val clipped = l < x || t < y || r > x + w || b > y + h
+        if (clipped) { save(); clipRect(x, y, w, h) }
+        val outer = floatArrayOf(l, t, r, t, r, b, l, b).also(::transformInPlace)
+        val hole = rrectPoints(holeX, holeY, holeW, holeH, holeRadius)
+        val n = hole.size / 2
+        val per = n / 4
+        val dir = if (signedArea(outer, 4) > 0f) 1f else -1f
+        val oIn = FloatArray(8); val oOut = FloatArray(8)
+        val hIn = FloatArray(n * 2); val hOut = FloatArray(n * 2)
+        offsetPolygon(outer, 4, dir, oIn, oOut)
+        offsetPolygon(hole, n, -dir, hIn, hOut)
+        begin(whitePage(), false)
+        val wuv = PolyGlyphPage.WHITE_UV
+        val clear = c and 0x00FFFFFF
+        fun q(a: FloatArray, i: Int, ca: Int, b: FloatArray, j: Int, cb: Int, d: FloatArray, k: Int, cd: Int, e: FloatArray, o: Int, ce: Int) = quadVerts(
+            a[i * 2], a[i * 2 + 1], wuv, wuv, ca, b[j * 2], b[j * 2 + 1], wuv, wuv, cb,
+            d[k * 2], d[k * 2 + 1], wuv, wuv, cd, e[o * 2], e[o * 2 + 1], wuv, wuv, ce,
+        )
+        for (k in 0 until 4) {
+            val base = k * per
+            val next = (k + 1) % 4
+            for (i in 0 until per - 1) q(oIn, k, c, hIn, base + i, c, hIn, base + i + 1, c, hIn, base + i + 1, c)
+            q(oIn, k, c, hIn, base + per - 1, c, hIn, next * per, c, oIn, next, c)
+            q(oIn, k, c, oOut, k, clear, oOut, next, clear, oIn, next, c)
+        }
+        for (i in 0 until n) {
+            val j = (i + 1) % n
+            q(hIn, i, c, hOut, i, clear, hOut, j, clear, hIn, j, c)
+        }
+        if (clipped) restore()
     }
 
     override fun rectGradient(x: Float, y: Float, w: Float, h: Float, gradient: Brush, radius: Float) {
@@ -119,19 +161,24 @@ abstract class PolyTessellator : PolyRenderer {
         }
     }
 
-    override fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont) {
+    override fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont) = glyphs(text, x, y, color, font, 0f, false)
+
+    override fun textOutline(text: String, x: Float, y: Float, color: Int, font: PolyFont, width: Float) =
+        glyphs(text, x, y, color, font, width * scaleAvg(), true)
+
+    private fun glyphs(text: String, x: Float, y: Float, color: Int, font: PolyFont, outlinePx: Float, round: Boolean) {
         val face = PolyGlyphPage.rasterizer?.face(font.name) ?: return
         val c = mulAlpha(color, state.alpha)
         if (c ushr 24 == 0) return
         val bucket = (font.size * scaleAvg() * 4f).roundToInt()
-        val atlas = PolyGlyphPage.atlas(face, bucket)
+        val atlas = PolyGlyphPage.atlas(face, bucket, outlinePx, round)
         var penX = x
         var i = 0
         while (i < text.length) {
             val cp = text.codePointAt(i)
             i += Character.charCount(cp)
             val id = face.glyph(cp)
-            val g = PolyGlyphPage.glyph(atlas, face, bucket, id)
+            val g = PolyGlyphPage.glyph(atlas, face, bucket, id, outlinePx, round)
             if (g != null) {
                 val px = (penX * state.sx + state.tx).roundToInt() + g.offX
                 val py = (y * state.sy + state.ty).roundToInt() + g.offY
@@ -148,6 +195,26 @@ abstract class PolyTessellator : PolyRenderer {
             if (shadow) mcLine(line, x + scale, top + scale, color, scale, true)
             mcLine(line, x, top, color, scale, false)
         }
+    }
+
+    override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float) {
+        val c = mulAlpha(outlineColor, state.alpha)
+        val rects = if (c ushr 24 == 0) null else PolyGlyphPage.rasterizer?.let { r -> mcOutlines.getOrPut(text) { mcOutline(r, text) } }
+        if (rects != null && rects.isNotEmpty()) {
+            begin(whitePage(), false)
+            val s = state
+            val wuv = PolyGlyphPage.WHITE_UV
+            var i = 0
+            while (i < rects.size) {
+                val ax = ((x + rects[i] * scale) * s.sx + s.tx).roundToInt().toFloat()
+                val ay = ((y + rects[i + 1] * scale) * s.sy + s.ty).roundToInt().toFloat()
+                val bx = ((x + rects[i + 2] * scale) * s.sx + s.tx).roundToInt().toFloat()
+                val by = ((y + rects[i + 3] * scale) * s.sy + s.ty).roundToInt().toFloat()
+                if (ax != bx && ay != by) quadPx(min(ax, bx), min(ay, by), max(ax, bx), max(ay, by), wuv, wuv, wuv, wuv, c)
+                i += 4
+            }
+        }
+        mcText(text, x, y, color, false, scale)
     }
 
     private fun mcLine(line: String, x: Float, top: Float, color: Int, scale: Float, shadow: Boolean) {
@@ -185,11 +252,11 @@ abstract class PolyTessellator : PolyRenderer {
         }
     }
 
-    override fun image(bitmap: ImageBitmap, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, tint: Int) {
+    override fun image(bitmap: ImageBitmap, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, tint: Int, filterQuality: FilterQuality) {
         val c = mulAlpha(tint, state.alpha)
         if (c ushr 24 == 0) return
         val g = PolyGlyphPage.bitmap(bitmap)
-        begin(g?.page ?: bitmapTexture(bitmap), false)
+        begin(g?.page ?: bitmapTexture(bitmap), false, filterQuality == FilterQuality.None)
         val x0 = x * state.sx + state.tx
         val y0 = y * state.sy + state.ty
         if (g == null) quadPx(x0, y0, x0 + w * state.sx, y0 + h * state.sy, u0, v0, u1, v1, c)
@@ -323,10 +390,11 @@ abstract class PolyTessellator : PolyRenderer {
 
     private fun whitePage(): Any = batchTexture as? PolyGlyphPage.Page ?: PolyGlyphPage.pages[0]
 
-    protected fun begin(texture: Any, premultiplied: Boolean) {
-        if (count > 0 && (texture !== batchTexture || premultiplied != batchPremul)) flush()
+    protected fun begin(texture: Any, premultiplied: Boolean, nearest: Boolean = false) {
+        if (count > 0 && (texture !== batchTexture || premultiplied != batchPremul || nearest != batchNearest)) flush()
         batchTexture = texture
         batchPremul = premultiplied
+        batchNearest = nearest
     }
 
     protected fun quadPx(x0: Float, y0: Float, x1: Float, y1: Float, u0: Float, v0: Float, u1: Float, v1: Float, color: Int) {
@@ -338,7 +406,7 @@ abstract class PolyTessellator : PolyRenderer {
 
     protected fun flush() {
         if (count == 0) return
-        submit(batchTexture, batchPremul, verts.copyOf(count * 4), colors.copyOf(count), floatArrayOf(minX, minY, maxX, maxY))
+        submit(batchTexture, batchPremul, batchNearest, verts.copyOf(count * 4), colors.copyOf(count), floatArrayOf(minX, minY, maxX, maxY))
         count = 0
         minX = Float.MAX_VALUE; minY = Float.MAX_VALUE; maxX = -Float.MAX_VALUE; maxY = -Float.MAX_VALUE
     }
@@ -888,6 +956,94 @@ abstract class PolyTessellator : PolyRenderer {
         private val ramps = lru<Brush, ImageBitmap>(64)
         private val boxRasters = lru<Pair<Brush, Int>, ImageBitmap>(32)
         private val masks = lru<Long, ShadowMask>(32)
+        private val mcOutlines = lru<String, FloatArray>(256)
+        private val mcRasters = HashMap<Pair<PolyGlyphPage.Face, Int>, PolyGlyphPage.Raster?>()
+
+        private const val MC_GRID = 2
+
+        private fun mcOutline(r: PolyGlyphPage.Rasterizer, text: String): FloatArray {
+            val placed = ArrayList<PolyGlyphPage.Raster>()
+            val at = ArrayList<Int>()
+            text.lines().forEachIndexed { index, line ->
+                val baseline = (index * 9 + 7) * MC_GRID
+                var pen = 0f
+                var bold = false
+                var i = 0
+                while (i < line.length) {
+                    val cp = line.codePointAt(i)
+                    i += Character.charCount(cp)
+                    if (cp == 0xA7 && i < line.length) {
+                        val code = MC_CODES.indexOf(line[i++].lowercaseChar())
+                        if (code == 16) bold = true else if (code in 0..15 || code == 17) bold = false
+                        continue
+                    }
+                    val main = r.face(if (bold) "minecraft-bold" else "minecraft")
+                    val face: PolyGlyphPage.Face
+                    val em: Float
+                    if (main != null && main.glyph(cp) != 0) { face = main; em = 10f } else { face = r.face("unifont") ?: continue; em = 8f }
+                    val id = face.glyph(cp)
+                    val g = mcRasters.getOrPut(face to id) { face.raster(id, em * MC_GRID) }
+                    if (g != null && g.w > 0 && g.h > 0) {
+                        placed += g
+                        at += (pen * MC_GRID).roundToInt() + g.offX
+                        at += baseline + g.offY
+                    }
+                    pen += face.advance(id) * em
+                }
+            }
+            if (placed.isEmpty()) return FloatArray(0)
+            val grow = MC_GRID
+            var x0 = Int.MAX_VALUE; var y0 = Int.MAX_VALUE; var x1 = Int.MIN_VALUE; var y1 = Int.MIN_VALUE
+            for (k in placed.indices) {
+                x0 = min(x0, at[k * 2]); y0 = min(y0, at[k * 2 + 1])
+                x1 = max(x1, at[k * 2] + placed[k].w); y1 = max(y1, at[k * 2 + 1] + placed[k].h)
+            }
+            x0 -= grow; y0 -= grow; x1 += grow; y1 += grow
+            val w = x1 - x0
+            val h = y1 - y0
+            val ink = BooleanArray(w * h)
+            for (k in placed.indices) {
+                val g = placed[k]
+                val gx = at[k * 2] - x0
+                val gy = at[k * 2 + 1] - y0
+                for (py in 0 until g.h) for (px in 0 until g.w) {
+                    if ((g.coverage[py * g.w + px].toInt() and 0xFF) >= 128) ink[(gy + py) * w + gx + px] = true
+                }
+            }
+            val wide = BooleanArray(w * h)
+            for (py in 0 until h) for (px in 0 until w) {
+                if (!ink[py * w + px]) continue
+                for (d in max(0, px - grow)..min(w - 1, px + grow)) wide[py * w + d] = true
+            }
+            val grown = BooleanArray(w * h)
+            for (py in 0 until h) for (px in 0 until w) {
+                if (!wide[py * w + px]) continue
+                for (d in max(0, py - grow)..min(h - 1, py + grow)) grown[d * w + px] = true
+            }
+            val out = ArrayList<Float>()
+            var open = HashMap<Long, Int>()
+            for (py in 0..h) {
+                val next = HashMap<Long, Int>()
+                if (py < h) {
+                    var px = 0
+                    while (px < w) {
+                        if (!grown[py * w + px]) { px++; continue }
+                        val start = px
+                        while (px < w && grown[py * w + px]) px++
+                        val key = (start.toLong() shl 32) or px.toLong()
+                        next[key] = open.remove(key) ?: py
+                    }
+                }
+                for ((key, top) in open) {
+                    out += ((key ushr 32).toInt() + x0).toFloat() / MC_GRID
+                    out += (top + y0).toFloat() / MC_GRID
+                    out += (key.toInt() + x0).toFloat() / MC_GRID
+                    out += (py + y0).toFloat() / MC_GRID
+                }
+                open = next
+            }
+            return out.toFloatArray()
+        }
 
         private fun bitmapOf(w: Int, h: Int, argb: (Int, Int) -> Int): ImageBitmap {
             val px = ByteArray(w * h * 4)

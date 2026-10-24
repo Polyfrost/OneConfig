@@ -8,7 +8,6 @@ import org.polyfrost.compose.foundation.background
 import org.polyfrost.compose.foundation.layout.Box
 import org.polyfrost.compose.foundation.layout.fillMaxSize
 import org.polyfrost.compose.foundation.layout.size
-import org.polyfrost.compose.foundation.shape.RoundedCornerShape
 import org.polyfrost.compose.ui.Alignment
 import org.polyfrost.compose.ui.Modifier
 import org.polyfrost.compose.ui.draw.clip
@@ -23,7 +22,7 @@ import org.polyfrost.oneconfig.internal.ui.components.picker.PickerTileIcon
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.components.sizeDp
 
-val ItemIconShape = RoundedCornerShape(5.dp)
+val ItemIconShape @Composable get() = LocalTheme.current.checkBoxShape
 
 internal val ItemTileIcon: PickerTileIcon<ItemDescriptor> = { item, modifier, alpha ->
     ItemIcon(item.id, modifier, framed = false, alpha = alpha)
@@ -50,8 +49,17 @@ fun ItemIcon(
     framed: Boolean = true,
     alpha: Float = 1f,
     placeholder: String = "eye-off",
+) = ItemIcon(rememberItemIconHandle(id), modifier, framed, alpha, placeholder)
+
+/** [itemIcon] drawn like [ItemIcon], or [placeholder] while it is `null` */
+@Composable
+fun ItemIcon(
+    itemIcon: ItemIconHandle?,
+    modifier: Modifier = Modifier,
+    framed: Boolean = true,
+    alpha: Float = 1f,
+    placeholder: String = "eye-off",
 ) {
-    val itemIcon = rememberItemIconHandle(id)
     val theme = LocalTheme.current
     val density = LocalDensity.current.density
     val background = if (framed) Modifier.background(theme.chipBackground, ItemIconShape) else Modifier

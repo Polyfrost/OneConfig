@@ -42,8 +42,8 @@ import org.polyfrost.compose.foundation.layout.padding
 import org.polyfrost.compose.foundation.layout.size
 import org.polyfrost.compose.foundation.layout.weight
 import org.polyfrost.compose.foundation.lazy.LazyColumn
-import org.polyfrost.compose.foundation.lazy.LazyListState
 import org.polyfrost.compose.foundation.shape.RoundedCornerShape
+import org.polyfrost.compose.render.PolyFade
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.ui.Alignment
 import org.polyfrost.compose.ui.Modifier
@@ -53,6 +53,7 @@ import org.polyfrost.compose.ui.graphics.Brush
 import org.polyfrost.compose.ui.graphics.Color
 import org.polyfrost.compose.ui.graphics.LinearGradient
 import org.polyfrost.compose.ui.graphics.RadialGradient
+import org.polyfrost.compose.ui.graphics.Shape
 import org.polyfrost.compose.ui.graphics.copy
 import org.polyfrost.compose.ui.graphics.graphicsLayer
 import org.polyfrost.compose.ui.input.pointer.PointerIcon
@@ -69,6 +70,8 @@ import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker
 import org.polyfrost.oneconfig.api.ui.v1.ModCardTypes
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
+import org.polyfrost.oneconfig.api.ui.v1.ModsPageDecorator
+import org.polyfrost.oneconfig.api.ui.v1.ModsPageDecorators
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
@@ -77,6 +80,7 @@ import org.polyfrost.oneconfig.internal.ui.api.ModFavorites
 import org.polyfrost.oneconfig.internal.ui.api.ModGridEntry
 import org.polyfrost.oneconfig.internal.ui.api.ModHidden
 import org.polyfrost.oneconfig.internal.ui.api.ModOrder
+import org.polyfrost.oneconfig.internal.ui.api.ModSortStore
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories
 import org.polyfrost.oneconfig.internal.ui.api.buildModGridEntries
 import org.polyfrost.oneconfig.internal.ui.api.modCardOrder
@@ -87,6 +91,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
+import org.polyfrost.oneconfig.internal.ui.components.background
 import org.polyfrost.oneconfig.internal.ui.components.canRenderIcon
 import org.polyfrost.oneconfig.internal.ui.components.localizedLabel
 import org.polyfrost.oneconfig.internal.ui.components.onClick
@@ -102,7 +107,11 @@ import org.polyfrost.oneconfig.internal.ui.hud.components.rememberHudPreview
 import org.polyfrost.oneconfig.internal.ui.poly.GUTTER
 import org.polyfrost.oneconfig.internal.ui.shell.ShellHost
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
+import org.polyfrost.oneconfig.internal.ui.themes.AccentEnd
+import org.polyfrost.oneconfig.internal.ui.themes.AccentGradient
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 enum class ModCategory(
@@ -126,6 +135,20 @@ enum class ModCategory(
 
 @Composable
 fun Mods(host: ShellHost) {
+    Box(Modifier.fillMaxSize()) {
+        DecoratedModsPage(ModsPageDecorators.all(), 0, host)
+        ModSortControl(Modifier.align(Alignment.TopEnd))
+    }
+}
+
+@Composable
+private fun DecoratedModsPage(decorators: List<ModsPageDecorator>, index: Int, host: ShellHost) {
+    val decorator = decorators.getOrNull(index) ?: return ModsPage(host)
+    decorator.Decorate { DecoratedModsPage(decorators, index + 1, host) }
+}
+
+@Composable
+private fun ModsPage(host: ShellHost) {
     var activeCategory by remember { mutableStateOf(ModCategory.All) }
 
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(19.dp)) {
@@ -170,11 +193,12 @@ fun ColumnScope.ModsGrid(category: ModCategory, host: ShellHost) {
     val favoriteRevision = ModFavorites.revision
     val hiddenRevision = ModHidden.revision
     val orderRevision = ModOrder.revision
+    val sortMode = ModSortStore.selectedId
     val typeRevision = ModCardTypes.revision
     val collapseRevision = ModCardTypeCollapseStore.revision
     val filtered = remember(
         registryRevision, hudRevision, category, categoryRevision, favoriteRevision, hiddenRevision, orderRevision,
-        typeRevision,
+        typeRevision, sortMode,
     ) {
         ConfigRegistry.modCardConfigs
             .filter { ModHidden.isHidden(it.id) == category.hiddenOnly }
@@ -206,7 +230,7 @@ fun ColumnScope.ModsGrid(category: ModCategory, host: ShellHost) {
     }
     val entries = remember(flat) { flat.toMutableStateList() }
 
-    val gridState = rememberRestorableLazyGridState("mods")
+    val gridState = rememberRestorableLazyListState("mods")
     val density = LocalDensity.current
     val placement = remember(entries, density.density) { Placement() }
     val reorderState = rememberGridReorderState(
@@ -222,6 +246,12 @@ fun ColumnScope.ModsGrid(category: ModCategory, host: ShellHost) {
         ?.let { key -> entries.indexOfFirst { it.key == key } }
         ?.takeIf { it >= 0 }
         ?.let { index -> modFavoriteAt(entries, index, ModFavorites::isFavorite) }
+
+    val overlayActive = reorderState.overlayKey != null
+    DisposableEffect(overlayActive) {
+        ShellState.modDragging = overlayActive
+        onDispose { if (overlayActive) ShellState.modDragging = false }
+    }
 
     LaunchedEffect(placement.offsets.isNotEmpty()) {
         var last = withFrameNanos { it }
@@ -406,18 +436,6 @@ private class Placement {
     }
 }
 
-@Composable
-private fun rememberRestorableLazyGridState(key: String): LazyListState {
-    val state = remember { LazyListState() }
-    DisposableEffect(state) { onDispose { ShellState.scrollPositions[key] = state.scroll.value } }
-    LaunchedEffect(state) {
-        val to = ShellState.scrollPositions[key]?.takeIf { it > 0f } ?: return@LaunchedEffect
-        repeat(3) { if (state.scroll.maxValue < to) withFrameNanos { } }
-        state.scroll.scrollTo(to)
-    }
-    return state
-}
-
 private fun List<ModGridEntry>.cardData(key: Any): ConfigData? =
     firstNotNullOfOrNull { (it as? ModGridEntry.Card)?.data?.takeIf { mod -> mod.id == key } }
 
@@ -435,6 +453,7 @@ private fun commitDrop(entries: List<ModGridEntry>, index: Int) {
     if (modFavoriteAt(entries, index, ModFavorites::isFavorite) != ModFavorites.isFavorite(dropped.id)) {
         ModFavorites.toggle(dropped.id)
     }
+    if (ModSortStore.alphabetical) return
     val group = entries.slice(modGroupBounds(entries, index)).filterIsInstance<ModGridEntry.Card>().map { it.data }
     ModOrder.reorder(
         group.map { it.id },
@@ -512,6 +531,8 @@ private val ModCardToggleUnavailable = Color(0xFF4F505B)
 // the accent is darkened towards this for the ring, which for the default accent gives the ring of the design
 private val ModCardToggleRingShade = Color(0xFF181600)
 
+private fun Shape.cornerFor(size: Float): Float = if (percent >= 0f) size * percent / 100f else min(radius, size / 2f)
+
 @Composable
 fun ModCard(
     mod: ConfigData,
@@ -529,7 +550,7 @@ fun ModCard(
     val toggleRevision = ModToggles.revision
     val toggle = remember(mod, toggleRevision) { mod.toggle }
     var enabled by rememberModEnabled(toggle)
-    val footerColor = animateColorAsState(if (enabled) Accent else theme.textColor.copy(alpha = 0.08f))
+    val footerAccent by animateFloatAsState(if (enabled) 1f else 0f)
     val footerTextColor = animateColorAsState(
         if (enabled) theme.accentTextColor else theme.textColor.copy(alpha = 0.75f)
     )
@@ -593,7 +614,8 @@ fun ModCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = ModCardFooterHeight)
-                    .background(footerColor)
+                    .background(theme.textColor.copy(alpha = 0.08f * (1f - footerAccent)))
+                    .background(AccentBrush, alpha = footerAccent)
                     .then(
                         if (toggle != null && interactive) {
                             Modifier
@@ -628,6 +650,8 @@ fun ModCard(
         if (LocalTheme.current.shadowEnabled) {
             val vignetteColor = theme.textColor
             val glowColor = Accent
+            val glowEnd = AccentEnd
+            val glowGradient = AccentGradient
             val radius = theme.modCardShape.radius
             Canvas(Modifier.fillMaxSize()) { x, y, w, h ->
                 val vignette = RadialGradient(
@@ -642,12 +666,19 @@ fun ModCard(
             }
             Canvas(Modifier.fillMaxSize().alpha(glowStrength, if (enabled) 1f else 0f)) { x, y, w, h ->
                 val glowHeight = min(ModCardGlowHeight.value, h)
-                val glow = LinearGradient(
-                    listOf(glowColor.copy(0f), glowColor.copy(0.1f), glowColor.copy(0.2f)),
-                    listOf(0f, 0.4f, 1f),
-                    angle = 90f,
-                )
-                rectGradient(x, y + h - glowHeight, w, glowHeight, glow, radius)
+                if (!glowGradient) {
+                    val glow = LinearGradient(
+                        listOf(glowColor.copy(0f), glowColor.copy(0.1f), glowColor.copy(0.2f)),
+                        listOf(0f, 0.4f, 1f),
+                        angle = 90f,
+                    )
+                    rectGradient(x, y + h - glowHeight, w, glowHeight, glow, radius)
+                } else {
+                    val top = y + h - glowHeight
+                    saveLayerFade(PolyFade(true, floatArrayOf(top, top + glowHeight * 0.4f, y + h), floatArrayOf(0f, 0.5f, 1f)))
+                    rectGradient(x, top, w, glowHeight, Brush.horizontalGradient(glowColor.copy(alpha = 0.2f), glowEnd.copy(alpha = 0.2f)), radius)
+                    restore()
+                }
             }
         }
         Row(Modifier.padding(4.dp)) {
@@ -682,12 +713,15 @@ fun ModCard(
                 },
             ) {
                 val accent = Accent
+                val accentEnd = AccentEnd
+                val circle = theme.circleShape
                 Canvas(Modifier.size(ModCardToggleRing)) { x, y, _, _ ->
                     val ringRadius = ModCardToggleRing.value / 2f
                     val cx = x + ringRadius
                     val cy = y + ringRadius
-                    val ring = if (toggle != null) accent.lerp(ModCardToggleRingShade, 0.42f) else ModCardToggleUnavailable.withAlpha(0.5f)
-                    val dot = if (toggle != null) accent else ModCardToggleUnavailable
+                    val ringStart = if (toggle != null) accent.lerp(ModCardToggleRingShade, 0.42f) else ModCardToggleUnavailable.withAlpha(0.5f)
+                    val ringEnd = if (toggle != null) accentEnd.lerp(ModCardToggleRingShade, 0.42f) else ringStart
+                    val ring = ringStart.lerp(ringEnd, 0.5f)
                     if (toggle != null) {
                         val glowRadius = (ModCardToggleRing / 2 + ModCardToggleGlow).value
                         val inner = ringRadius / glowRadius
@@ -697,9 +731,15 @@ fun ModCard(
                         )
                         rectGradient(cx - glowRadius, cy - glowRadius, glowRadius * 2f, glowRadius * 2f, glow, glowRadius)
                     }
-                    rect(cx - ringRadius, cy - ringRadius, ringRadius * 2f, ringRadius * 2f, ring, ringRadius)
+                    val ringSize = ringRadius * 2f
+                    rectGradient(cx - ringRadius, cy - ringRadius, ringSize, ringSize, Brush.linearGradient(listOf(ringStart, ringEnd)), circle.cornerFor(ringSize))
                     val dotRadius = ModCardToggleDot.value / 2f
-                    rect(cx - dotRadius, cy - dotRadius, dotRadius * 2f, dotRadius * 2f, dot, dotRadius)
+                    val dotSize = dotRadius * 2f
+                    if (toggle != null) {
+                        rectGradient(cx - dotRadius, cy - dotRadius, dotSize, dotSize, Brush.linearGradient(listOf(accent, accentEnd)), circle.cornerFor(dotSize))
+                    } else {
+                        rect(cx - dotRadius, cy - dotRadius, dotSize, dotSize, ModCardToggleUnavailable, circle.cornerFor(dotSize))
+                    }
                 }
             }
         }

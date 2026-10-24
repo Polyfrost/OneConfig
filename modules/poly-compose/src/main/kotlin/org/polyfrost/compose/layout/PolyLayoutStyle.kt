@@ -7,6 +7,7 @@ import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.render.PolyFade
 import org.polyfrost.compose.ui.Alignment
 import org.polyfrost.compose.ui.graphics.Brush
+import org.polyfrost.compose.ui.draw.ContentDrawScope
 import org.polyfrost.compose.ui.graphics.shadow.Shadow
 import org.polyfrost.compose.ui.input.key.KeyEvent
 import org.polyfrost.compose.ui.input.pointer.PointerEvent
@@ -86,6 +87,7 @@ class PolyLayoutStyle {
 
     var focusable: Boolean = false
     var onFocus: ((Boolean) -> Unit)? = null
+    var onFocusChanged: List<(Boolean) -> Unit> = emptyList()
 
     var focusRequest: (() -> Boolean)? = null
 
@@ -96,6 +98,8 @@ class PolyLayoutStyle {
     var overlayAnchor: Alignment = Alignment.TopStart
 
     var overlayRoomier: Boolean = false
+
+    var overlayPin: FloatArray? = null
 
     var onPlaced: ((PolyNode) -> Unit)? = null
 
@@ -108,6 +112,8 @@ class PolyLayoutStyle {
     var offsetY: Float = 0f
 
     var fade: ((PolyNode) -> PolyFade?)? = null
+
+    var drawWithContent: (ContentDrawScope.() -> Unit)? = null
 
     var cursor: PointerIcon? = null
 

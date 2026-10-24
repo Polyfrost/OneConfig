@@ -30,7 +30,9 @@ plugins {
 
 dependencies {
     api(libs.jetbrains.compose.runtime)
+    api(project(":modules:config"))
     api(project(":modules:events"))
     api(project(":modules:mod-toggles"))
+    api(project(":modules:poly-compose"))
     implementation(project(":modules:notifications"))
 }

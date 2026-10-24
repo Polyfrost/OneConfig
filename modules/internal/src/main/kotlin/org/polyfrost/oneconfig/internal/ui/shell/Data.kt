@@ -5,7 +5,11 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import org.polyfrost.compose.foundation.text.TextFieldState
+import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
+import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 
 object HudEditorRoute
 
@@ -21,6 +25,8 @@ enum class PolyPage(val title: String, val icon: String) {
     Credits("Credits", "star"),
 
     ModConfig("Mods", "settings"),
+
+    Page("", ""),
 }
 
 data class ModConfigTarget(val mod: ConfigData, val category: String?)
@@ -35,6 +41,8 @@ object ShellState {
 
     var hudDragging by mutableStateOf(false)
 
+    var modDragging by mutableStateOf(false)
+
     var flipTopOptionOrder by mutableStateOf(false)
 
     /** Content-panel background opacity from 0 to 100 mirrored from config so slider changes apply live */
@@ -48,8 +56,6 @@ object ShellState {
 
     var lastPage: Pair<PolyPage, Any?>? = null
 
-    val scrollPositions = HashMap<String, Float>()
-
     /** Last selected settings tab per page key restored when a page is reopened or navigated back to */
     val selectedCategories = mutableStateMapOf<String, String>()
 
@@ -57,6 +63,29 @@ object ShellState {
     var lastClosedAt: Long = 0L
 
     var lastWasHudEditor = false
+
+    var lastSearch = ""
+    var lastSearchFocused = false
+
+    internal var searchField: TextFieldState? = null
+
+    var searchQuery: String
+        get() = searchField?.text ?: ""
+        set(value) {
+            val field = searchField ?: return
+            field.replaceText(value)
+            field.moveCaret(value.length)
+        }
+
+    @JvmStatic
+    fun handleSearchKeybind(pressed: Boolean): Boolean {
+        if (KeybindRecordingBus.isRecording) return false
+        if (HudDesignSession.handleSearch(pressed)) return true
+        if (!pressed || !HudManager.isConfigUiOpen) return false
+        val field = searchField ?: return false
+        field.requestFocus(selectAll = true)
+        return true
+    }
 }
 
 class ShellNav(start: PolyPage, startArg: Any? = null) {
@@ -80,6 +109,10 @@ class ShellNav(start: PolyPage, startArg: Any? = null) {
     val search: String get() = currentEntry.search
 
     var currentSearch: () -> String = { "" }
+
+    fun restoreSearch(text: String) {
+        currentEntry.search = text
+    }
 
     var direction = 1
         private set
@@ -109,6 +142,15 @@ class ShellNav(start: PolyPage, startArg: Any? = null) {
         backStack.add(currentEntry.withCurrentSearch())
         direction = 1
         currentEntry = next
+    }
+
+    fun discard(page: PolyPage, arg: Any?, fallback: PolyPage) {
+        backStack.removeAll { it.page == page && it.arg == arg }
+        forwardStack.removeAll { it.page == page && it.arg == arg }
+        if (current == page && this.arg == arg) {
+            direction = 1
+            currentEntry = Entry(fallback, null)
+        }
     }
 
     private fun Entry.withCurrentSearch() = also { it.search = currentSearch() }

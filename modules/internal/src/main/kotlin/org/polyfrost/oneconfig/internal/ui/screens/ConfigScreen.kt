@@ -10,7 +10,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import java.util.function.Consumer
 import java.util.function.Predicate
 import kotlin.math.min
@@ -38,7 +37,6 @@ import org.polyfrost.compose.foundation.layout.size
 import org.polyfrost.compose.foundation.layout.weight
 import org.polyfrost.compose.foundation.layout.widthIn
 import org.polyfrost.compose.foundation.lazy.LazyColumn
-import org.polyfrost.compose.foundation.lazy.LazyListState
 import org.polyfrost.compose.foundation.shape.RoundedCornerShape
 import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.ui.Alignment
@@ -63,6 +61,8 @@ import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
+import org.polyfrost.oneconfig.api.ui.v1.SettingRowDecorator
+import org.polyfrost.oneconfig.api.ui.v1.SettingRowDecorators
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Chip
@@ -81,6 +81,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.poly.AnimatedVisibility
 import org.polyfrost.oneconfig.internal.ui.poly.GUTTER
@@ -101,6 +102,7 @@ import org.polyfrost.oneconfig.internal.ui.search.flattenSearchEntries
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.search.searchNode
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
+import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -164,23 +166,14 @@ private fun ConfigScreenContent(
             }
         }
 
-        val lazyListState = remember(pageKey, selectedCategory, localSearchQuery, search.query) { LazyListState() }
-        val scrollKey = "$pageKey/${selectedCategory?.name}".takeIf { localSearchQuery.isBlank() }
-        if (scrollKey != null) DisposableEffect(lazyListState, scrollKey) {
-            onDispose { ShellState.scrollPositions[scrollKey] = lazyListState.scroll.value }
-        }
-        LaunchedEffect(lazyListState, scrollKey) {
-            val to = scrollKey?.let { ShellState.scrollPositions[it] }?.takeIf { it > 0f } ?: return@LaunchedEffect
-            repeat(3) { if (lazyListState.scroll.maxValue < to) withFrameNanos { } }
-            lazyListState.scroll.scrollTo(to)
-        }
+        val lazyListState = rememberRestorableLazyListState("$pageKey/${selectedCategory?.name}", localSearchQuery, search.query)
 
         if (entries.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 val message = when {
-                    localSearchQuery.isBlank() -> "No settings available."
-                    results == null -> "Searching..."
-                    else -> "No settings match \"$localSearchQuery\""
+                    localSearchQuery.isBlank() -> translated("oneconfig.search.no_settings", "No settings available.")
+                    results == null -> translated("oneconfig.search.searching", "Searching...")
+                    else -> translated("oneconfig.search.no_settings_match", "No settings match \"%s\"", localSearchQuery)
                 }
                 Text(message, color = LocalTheme.current.textColorSecondary)
             }
@@ -359,7 +352,9 @@ private fun sliderTrailingWidth(prop: Property<*>): Dp? {
     }
 }
 
-private fun isWideControl(prop: Property<*>): Boolean = sliderTrailingWidth(prop) != null
+private fun isFullWidth(prop: Property<*>): Boolean = prop.getMetadata<Boolean>("fullWidth") == true
+
+private fun isWideControl(prop: Property<*>): Boolean = sliderTrailingWidth(prop) != null || isFullWidth(prop)
 
 /**
  * Renders one entry of a flattened settings list
@@ -520,6 +515,17 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
 
 @Composable
 fun SettingRow(prop: Property<*>, compact: Boolean = false) {
+    DecoratedSettingRow(SettingRowDecorators.all(), 0, prop, compact)
+}
+
+@Composable
+private fun DecoratedSettingRow(decorators: List<SettingRowDecorator>, index: Int, prop: Property<*>, compact: Boolean) {
+    val decorator = decorators.getOrNull(index) ?: return SettingRowContent(prop, compact)
+    decorator.Decorate(prop) { DecoratedSettingRow(decorators, index + 1, prop, compact) }
+}
+
+@Composable
+private fun SettingRowContent(prop: Property<*>, compact: Boolean) {
     val display = rememberDisplay(prop)
     if (display == Property.Display.HIDDEN) {
         return
@@ -728,7 +734,20 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 true
             }
     ) {
-        val stacked = compact || squeezed ||
+        val actionButton = @Composable {
+            if (showActionButton) {
+                OptionActionButton(
+                    visible = isRowHovered || menuOpen,
+                    modifier = Modifier.onGloballyPositioned {
+                        val pos = it.positionInRoot() - rowOrigin[0]
+                        actionMenuOffset[0] = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
+                    },
+                    onClick = ::openMenuFromActionButton,
+                )
+            }
+        }
+        val fullWidth = isFullWidth(prop)
+        val stacked = compact || fullWidth || squeezed ||
             (maxWidth > 0f && propTitleWidth + optionReservedWidth(prop, optionWidth) > maxWidth.dp)
 
         if (stacked) {
@@ -739,23 +758,25 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                     .padding(start = 16.dp, end = 16.dp, top = verticalPadding, bottom = if (nested) 8.dp else verticalPadding),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                SettingLabel(prop, nested = nested)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
-                ) {
-                    if (showActionButton) {
-                        OptionActionButton(
-                            visible = isRowHovered || menuOpen,
-                            modifier = Modifier.onGloballyPositioned {
-                                val pos = it.positionInRoot() - rowOrigin[0]
-                                actionMenuOffset[0] = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
-                            },
-                            onClick = ::openMenuFromActionButton,
-                        )
+                if (fullWidth) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        SettingLabel(prop, nested = nested, modifier = Modifier.weight(1f))
+                        actionButton()
                     }
-                    Option(prop)
+                    var fullOptionWidth by remember { mutableFloatStateOf(0f) }
+                    Box(Modifier.fillMaxWidth().onPlaced { fullOptionWidth = it.width }) {
+                        CompositionLocalProvider(LocalOptionWidth provides if (fullOptionWidth > 0f) fullOptionWidth.dp else optionWidth) { Option(prop) }
+                    }
+                } else {
+                    SettingLabel(prop, nested = nested)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
+                    ) {
+                        actionButton()
+                        Option(prop)
+                    }
                 }
             }
         } else {
@@ -773,16 +794,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                     modifier = Modifier.weight(1f).onPlaced { if (it.width < min(propTitleWidth.value, 120f)) squeezed = true },
                 )
 
-                if (showActionButton) {
-                    OptionActionButton(
-                        visible = isRowHovered || menuOpen,
-                        modifier = Modifier.onGloballyPositioned {
-                            val pos = it.positionInRoot() - rowOrigin[0]
-                            actionMenuOffset[0] = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
-                        },
-                        onClick = ::openMenuFromActionButton,
-                    )
-                }
+                actionButton()
                 Option(prop)
             }
         }

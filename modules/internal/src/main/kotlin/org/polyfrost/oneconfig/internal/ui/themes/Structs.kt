@@ -7,6 +7,8 @@ import org.polyfrost.compose.ui.graphics.Shape
 import org.polyfrost.compose.ui.text.font.FontFamily
 import org.polyfrost.compose.ui.unit.dp
 import java.util.concurrent.ConcurrentHashMap
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
 
 /** Sets a panel background color's alpha from an opacity percentage between 0 and 100 */
 fun Color.withOpacityPercent(percent: Float): Color =
@@ -14,38 +16,42 @@ fun Color.withOpacityPercent(percent: Float): Color =
 
 data class UITheme(
     val previewImage: String,
-    val name: String,
+    override val name: String,
 
-    val pageBackground: Color,
-    val sidebarBackground: Color,
-    val chipBackground: Color,
-    val modCardBackground: Color,
-    val componentBackground: Color,
-    val popupBackground: Color,
+    override val pageBackground: Color,
+    override val sidebarBackground: Color,
+    override val chipBackground: Color,
+    override val modCardBackground: Color,
+    override val componentBackground: Color,
+    override val popupBackground: Color,
 
-    val borderColor: Color,
-    val textColor: Color,
-    val textColorSecondary: Color,
-    val accentTextColor: Color,
+    override val borderColor: Color,
+    override val textColor: Color,
+    override val textColorSecondary: Color,
+    override val accentTextColor: Color,
 
-    val shadowColor: Color,
-    val controlThumbColor: Color,
-    val favoriteColor: Color,
+    override val shadowColor: Color,
+    override val controlThumbColor: Color,
+    override val favoriteColor: Color,
 
-    val shadowEnabled: Boolean,
+    override val shadowEnabled: Boolean,
 
-    val backgroundShape: Shape,
-    val sideBarNavigationEntryShape: Shape,
-    val modCardShape: Shape,
-    val checkBoxShape: Shape,
-    val buttonShape: Shape,
-    val popupShape: Shape,
-    val circleShape: Shape,
+    override val backgroundShape: Shape,
+    override val sideBarNavigationEntryShape: Shape,
+    override val modCardShape: Shape,
+    override val checkBoxShape: Shape,
+    override val buttonShape: Shape,
+    override val popupShape: Shape,
+    override val circleShape: Shape,
 
     val branding: UIBranding,
     val typography: UITypography,
     val iconOverrides: Map<String, String> = emptyMap(),
-) {
+) : OneConfigUITheme() {
+    override val fontFamily: FontFamily get() = typography.family
+
+    override val logoPath: String get() = brandedLogoPath(this)
+
     var controlTrackColor: Color = DefaultControlTrackColor
         private set
 
@@ -78,3 +84,5 @@ data class UIBranding(
 data class UITypography(
     val family: FontFamily,
 )
+
+private fun brandedLogoPath(theme: UITheme): String = OneConfigTheme.logoOverride ?: theme.branding.logoPath

@@ -2,10 +2,13 @@ package org.polyfrost.compose.render
 
 import org.polyfrost.compose.ui.graphics.ImageBitmap
 import org.polyfrost.compose.ui.graphics.Brush
+import org.polyfrost.compose.ui.graphics.FilterQuality
 import org.polyfrost.compose.ui.graphics.shadow.Shadow
 
 interface PolyRenderer {
     fun rect(x: Float, y: Float, w: Float, h: Float, color: Int, radius: Float)
+
+    fun rectWithHole(x: Float, y: Float, w: Float, h: Float, holeX: Float, holeY: Float, holeW: Float, holeH: Float, holeRadius: Float, color: Int)
     fun rectGradient(x: Float, y: Float, w: Float, h: Float, gradient: Brush, radius: Float)
 
     fun shadow(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: Shadow)
@@ -17,11 +20,16 @@ interface PolyRenderer {
 
     fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont)
 
+    fun textOutline(text: String, x: Float, y: Float, color: Int, font: PolyFont, width: Float)
+
     fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float)
 
-    fun image(bitmap: ImageBitmap, x: Float, y: Float, w: Float, h: Float) = image(bitmap, x, y, w, h, 0f, 0f, 1f, 1f, -1)
+    fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float)
 
-    fun image(bitmap: ImageBitmap, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, tint: Int)
+    fun image(bitmap: ImageBitmap, x: Float, y: Float, w: Float, h: Float, filterQuality: FilterQuality = FilterQuality.Low) =
+        image(bitmap, x, y, w, h, 0f, 0f, 1f, 1f, -1, filterQuality)
+
+    fun image(bitmap: ImageBitmap, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, tint: Int, filterQuality: FilterQuality = FilterQuality.Low)
 
     fun live(draw: (PolyRenderer) -> Unit)
 

@@ -23,9 +23,11 @@ import org.polyfrost.compose.ui.unit.dp
 import org.polyfrost.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.background
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -38,7 +40,7 @@ fun CheckboxIndicator(
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val bgColor = animateColorAsState(if (checked) Accent else theme.componentBackground)
+    val accentAlpha by animateFloatAsState(if (checked) 1f else 0f)
     val borderColor = animateColorAsState(
         when {
             checked -> Accent
@@ -54,7 +56,8 @@ fun CheckboxIndicator(
         modifier = modifier
             .size(24.dp)
             .clip(theme.checkBoxShape)
-            .background(bgColor)
+            .background(theme.componentBackground)
+            .background(AccentBrush, alpha = accentAlpha)
             .border(1.5.dp, borderColor, theme.checkBoxShape)
             .onClick(interactionSource, onToggle)
             .pointerHoverIcon(PointerIcon.Hand),

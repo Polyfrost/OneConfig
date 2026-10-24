@@ -12,7 +12,6 @@ import org.polyfrost.compose.foundation.layout.padding
 import org.polyfrost.compose.foundation.layout.size
 import org.polyfrost.compose.foundation.layout.weight
 import org.polyfrost.compose.foundation.layout.width
-import org.polyfrost.compose.foundation.shape.RoundedCornerShape
 import org.polyfrost.compose.ui.Alignment
 import org.polyfrost.compose.ui.Modifier
 import org.polyfrost.compose.ui.draw.clip
@@ -32,7 +31,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 private val TileRowHeight = 44.dp
 private val TileRowIconSize = 30.dp
 private val SelectorWidth = 436.dp
-private val SelectorShape = RoundedCornerShape(12.dp)
+private val SelectorShape @Composable get() = LocalTheme.current.popupShape
 
 @Composable
 fun <T : PickerEntry> TileListOption(
@@ -82,6 +81,7 @@ fun <T : PickerEntry> TileListOption(
             onDismissRequest = { expanded = false },
             offset = DpOffset((-16).dp, 8.dp),
             modifier = Modifier.width(SelectorWidth),
+            pinAnchor = true,
         ) {
             TilePicker(
                 entries = entries,

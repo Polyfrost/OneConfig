@@ -96,7 +96,8 @@ fun UiText(
     ellipsis: Boolean = false,
     lineHeight: Float? = null,
     center: Boolean = false,
-) = UiText(text, color, null, size, font, modifier, wrap, spans, maxLines, ellipsis, lineHeight, center)
+    baselineShift: Float = 0f,
+) = UiText(text, color, null, size, font, modifier, wrap, spans, maxLines, ellipsis, lineHeight, center, baselineShift)
 
 @Composable
 fun UiText(
@@ -111,12 +112,13 @@ fun UiText(
     ellipsis: Boolean = false,
     lineHeight: Float? = null,
     center: Boolean = false,
-) = UiText(text, color.target, color, size, font, modifier, wrap, spans, maxLines, ellipsis, lineHeight, center)
+    baselineShift: Float = 0f,
+) = UiText(text, color.target, color, size, font, modifier, wrap, spans, maxLines, ellipsis, lineHeight, center, baselineShift)
 
 @Composable
 private fun UiText(
     text: String, color: PolyColor, animated: AnimatedColor?, size: Float, font: String, modifier: Modifier, wrap: Boolean,
-    spans: List<PolyTextSpan>?, maxLines: Int, ellipsis: Boolean, lineHeight: Float?, center: Boolean,
+    spans: List<PolyTextSpan>?, maxLines: Int, ellipsis: Boolean, lineHeight: Float?, center: Boolean, baselineShift: Float,
 ) {
     ComposeNode<TextNode, PolyApplier>(
         factory = { TextNode().also { it.leading = true } },
@@ -132,6 +134,7 @@ private fun UiText(
             set(ellipsis) { this.ellipsis = it; remeasure() }
             set(lineHeight) { this.lineHeight = it; remeasure() }
             set(center) { this.center = it; remeasure() }
+            set(baselineShift) { this.baselineShift = it }
             set(modifier) { modifier.applyTo(style); remeasure() }
         },
     )
@@ -155,13 +158,16 @@ fun richText(text: Any, regular: String, bold: String, italic: String): Pair<Str
     }
 }
 
-private fun legacySpans(text: String, regular: String, boldFont: String, italicFont: String): List<PolyTextSpan> {
+private fun legacySpans(
+    text: String, regular: String, boldFont: String, italicFont: String,
+    baseColor: PolyColor? = null, baseUnderline: Boolean = false, baseStrike: Boolean = false,
+): List<PolyTextSpan> {
     val out = ArrayList<PolyTextSpan>()
-    var color: PolyColor? = null
+    var color: PolyColor? = baseColor
     var bold = false
     var italic = false
-    var strike = false
-    var underline = false
+    var strike = baseStrike
+    var underline = baseUnderline
     val pending = StringBuilder()
     fun flush() {
         if (pending.isEmpty()) return
@@ -180,7 +186,7 @@ private fun legacySpans(text: String, regular: String, boldFont: String, italicF
                 code == 'o' -> { flush(); italic = true }
                 code == 'm' -> { flush(); strike = true }
                 code == 'n' -> { flush(); underline = true }
-                code == 'r' -> { flush(); color = null; bold = false; italic = false; strike = false; underline = false }
+                code == 'r' -> { flush(); color = baseColor; bold = false; italic = false; strike = baseStrike; underline = baseUnderline }
                 code == 'k' -> flush()
                 else -> pending.append(c).append(text[i + 1])
             }
@@ -195,19 +201,18 @@ private fun legacySpans(text: String, regular: String, boldFont: String, italicF
 }
 
 private fun componentSpans(comp: Component, regular: String, bold: String, italic: String): Pair<String, List<PolyTextSpan>?> {
-    val spans = comp.iterable(ComponentIteratorType.DEPTH_FIRST).map {
+    val spans = comp.iterable(ComponentIteratorType.DEPTH_FIRST).flatMap {
         val font = when {
             it.hasDecoration(TextDecoration.BOLD) -> bold
             it.hasDecoration(TextDecoration.ITALIC) -> italic
             else -> regular
         }
-        PolyTextSpan(
-            Platform.compatibility().resolveComponent(it.children(emptyList())),
-            it.color()?.let { c -> PolyColor(0xFF000000.toInt() or c.value()) },
-            font,
-            it.hasDecoration(TextDecoration.UNDERLINED),
-            it.hasDecoration(TextDecoration.STRIKETHROUGH),
-        )
+        val text = Platform.compatibility().resolveComponent(it.children(emptyList()))
+        val color = it.color()?.let { c -> PolyColor(0xFF000000.toInt() or c.value()) }
+        val underline = it.hasDecoration(TextDecoration.UNDERLINED)
+        val strike = it.hasDecoration(TextDecoration.STRIKETHROUGH)
+        if (text.indexOf(LEGACY_CHAR) >= 0) legacySpans(text, font, bold, italic, color, underline, strike)
+        else listOf(PolyTextSpan(text, color, font, underline, strike))
     }.filter { it.text.isNotEmpty() }
     return spans.joinToString("") { it.text } to spans
 }
@@ -286,7 +291,7 @@ private const val LUM_R = 0.2126f
 private const val LUM_G = 0.7152f
 private const val LUM_B = 0.0722f
 
-fun brandTint(svgPath: String, tint: PolyColor): ((ImageBitmap) -> ImageBitmap)? {
+fun brandTint(svgPath: String, tint: PolyColor, tintEnd: PolyColor? = null): ((ImageBitmap) -> ImageBitmap)? {
     val svg = SvgMask::class.java.getResourceAsStream(if (svgPath.startsWith("/")) svgPath else "/$svgPath")?.use { String(it.readBytes()) } ?: return null
     val peak = Regex("#([0-9a-fA-F]{6})\\b").findAll(svg).mapNotNull { m ->
         val rgb = m.groupValues[1].toInt(16)
@@ -295,14 +300,17 @@ fun brandTint(svgPath: String, tint: PolyColor): ((ImageBitmap) -> ImageBitmap)?
         val b = (rgb and 0xFF) / 255f
         if (r == g && g == b) null else LUM_R * r + LUM_G * g + LUM_B * b
     }.maxOrNull() ?: return null
-    val tr = tint.red / 255f / peak
-    val tg = tint.green / 255f / peak
-    val tb = tint.blue / 255f / peak
+    val end = tintEnd ?: tint
     return { src ->
         val px = src.pixels.copyOf()
+        val span = (src.width - 1).coerceAtLeast(1).toFloat()
         for (i in 0 until px.size / 4) {
             val o = i * 4
             if (px[o + 3].toInt() == 0) continue
+            val f = (i % src.width) / span
+            val tr = (tint.red + (end.red - tint.red) * f) / 255f / peak
+            val tg = (tint.green + (end.green - tint.green) * f) / 255f / peak
+            val tb = (tint.blue + (end.blue - tint.blue) * f) / 255f / peak
             val lum = LUM_R * (px[o].toInt() and 0xFF) + LUM_G * (px[o + 1].toInt() and 0xFF) + LUM_B * (px[o + 2].toInt() and 0xFF)
             px[o] = (tr * lum).roundToInt().coerceIn(0, 255).toByte()
             px[o + 1] = (tg * lum).roundToInt().coerceIn(0, 255).toByte()

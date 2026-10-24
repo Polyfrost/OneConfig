@@ -23,12 +23,14 @@ fun SliderOption(data: SliderOptionData) {
         data.numProp.set(newValue.toNumberType(data.prop.type))
     }
 
+    val shown = value.coerceAtLeast(data.min).coerceAtMost(data.max)
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         SliderControl(
-            value = value,
+            value = shown,
             onValueChange = ::update,
             min = data.min,
             max = data.max,
@@ -36,7 +38,7 @@ fun SliderOption(data: SliderOptionData) {
             modifier = Modifier.width(LocalOptionWidth.current),
         )
         NumberSpinner(
-            value = value,
+            value = shown,
             onValueChange = ::update,
             min = data.min,
             max = data.max,

@@ -104,4 +104,6 @@ public @interface DraggableList {
 
     /** Show checkboxes to enable or disable individual items */
     boolean checkable() default false;
+
+    boolean fullWidth() default false;
 }

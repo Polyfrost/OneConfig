@@ -68,7 +68,7 @@ interface PickerEntry {
 
 typealias PickerTileIcon<T> = @Composable (entry: T, modifier: Modifier, alpha: Float) -> Unit
 
-val PickerTileShape = RoundedCornerShape(8.dp)
+val PickerTileShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
 
 val PickerTileSize = 44.dp
 

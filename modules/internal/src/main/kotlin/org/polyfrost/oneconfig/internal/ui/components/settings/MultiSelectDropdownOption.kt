@@ -148,6 +148,16 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
                         .padding(MenuPadding),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
+                    if (data.checkable && options.size > 1) {
+                        val allSelected = selectedFlags.count { it } == options.size
+                        CheckableListItem(
+                            label = if (allSelected) "Deselect all" else "Select all",
+                            icon = null,
+                            checked = allSelected,
+                            onToggle = { (data.prop as Property<Any>).set(BooleanArray(options.size) { !allSelected }) },
+                        )
+                        Box(Modifier.fillMaxWidth().height(1.dp).background(theme.borderColor))
+                    }
                     options.forEachIndexed { index, option ->
                         if (data.checkable) {
                             CheckableListItem(

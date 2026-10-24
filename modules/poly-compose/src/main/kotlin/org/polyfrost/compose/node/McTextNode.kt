@@ -10,15 +10,18 @@ class McTextNode : PolyNode() {
     var color: PolyColor = PolyColor.WHITE
     var shadow: Boolean = true
     var scale: Float = 1f
+    var outlineColor: PolyColor? = null
 
     fun remeasure() {
         val lines = text.lines()
         style.width = PolySize.Px(lines.maxOf {  McFontQueue.measureTextWidth(it, scale) })
-        style.height = PolySize.Px(lines.size * McFontQueue.measureTextHeight(scale))
+        style.height = PolySize.Px(McFontQueue.measureBlockHeight(lines.size, scale))
     }
 
     override fun render(ctx: RenderContext) {
         // read color.argb at draw time so chroma colours keep cycling every frame
-        ctx.mcText(text, x, y, color.argb, shadow, scale)
+        val outline = outlineColor
+        if (outline != null) ctx.mcTextOutline(text, x, y, color.argb, outline.argb, scale)
+        else ctx.mcText(text, x, y, color.argb, shadow, scale)
     }
 }

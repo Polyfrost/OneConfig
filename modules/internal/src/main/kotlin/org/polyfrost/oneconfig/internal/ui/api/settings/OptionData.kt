@@ -8,8 +8,10 @@ import kotlin.math.floor
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.shown
+import org.polyfrost.oneconfig.api.config.v1.SliderBounds
 import org.polyfrost.oneconfig.api.config.v1.ValueFormatter
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
+import org.polyfrost.oneconfig.internal.ui.components.effect.normalizeEffectIds
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedString
 import org.polyfrost.oneconfig.internal.ui.components.localizedText
@@ -31,8 +33,8 @@ class BooleanOptionData(prop: Property<*>, val style: Style) : OptionData(prop) 
 }
 
 class SliderOptionData(prop: Property<*>) : OptionData(prop) {
-    val min: Float get() = prop.getMetadata("min") ?: 0f
-    val max: Float get() = prop.getMetadata("max") ?: 100f
+    val min: Float get() = prop.boundedMin(prop.getMetadata("min") ?: 0f)
+    val max: Float get() = prop.boundedMax(prop.getMetadata("max") ?: 100f)
     val step: Float get() = prop.getMetadata("step") ?: 0f
     val format: ((Float) -> String)? get() = prop.valueFormat(prop.type)
 
@@ -51,8 +53,8 @@ class SliderOptionData(prop: Property<*>) : OptionData(prop) {
 class RangeOptionData(prop: Property<*>, val style: Style) : OptionData(prop) {
     enum class Style { Slider, Spinner }
 
-    val min: Float get() = prop.getMetadata("min") ?: 0f
-    val max: Float get() = prop.getMetadata("max") ?: 100f
+    val min: Float get() = prop.boundedMin(prop.getMetadata("min") ?: 0f)
+    val max: Float get() = prop.boundedMax(prop.getMetadata("max") ?: 100f)
     val step: Float get() = prop.getMetadata("step") ?: 0f
     val format: ((Float) -> String)? get() = prop.valueFormat(prop.type.componentType ?: Float::class.java)
 
@@ -103,6 +105,12 @@ class NumberChainOptionData(prop: Property<*>) : OptionData(prop) {
     fun write(values: List<Float>) = prop.writeNumbers(values)
 }
 
+private fun Property<*>.boundedMin(annotated: Float): Float =
+    getMetadata<Any>("bounds").let { if (it is SliderBounds) runCatching { it.min(annotated) }.getOrDefault(annotated) else annotated }
+
+private fun Property<*>.boundedMax(annotated: Float): Float =
+    getMetadata<Any>("bounds").let { if (it is SliderBounds) runCatching { it.max(annotated) }.getOrDefault(annotated) else annotated }
+
 private fun Property<*>.valueFormat(type: Class<*>): ((Float) -> String)? {
     val formatter = getMetadata<Any>("formatter") as? ValueFormatter ?: return null
     return { value -> runCatching { formatter.format(value.toNumberType(type)) }.getOrElse { formatSpinnerValue(value) } }
@@ -149,8 +157,8 @@ private fun Property<*>.writeNumbers(values: List<Float>) {
  * [inheritedValue] may be given as a `Supplier` so it tracks whatever it inherits from
  */
 class InheritableSliderOptionData(prop: Property<*>) : OptionData(prop) {
-    val min: Float get() = prop.getMetadata("min") ?: 0f
-    val max: Float get() = prop.getMetadata("max") ?: 100f
+    val min: Float get() = prop.boundedMin(prop.getMetadata("min") ?: 0f)
+    val max: Float get() = prop.boundedMax(prop.getMetadata("max") ?: 100f)
     val step: Float get() = prop.getMetadata("step") ?: 0f
     val format: ((Float) -> String)? get() = prop.valueFormat(prop.type)
     val inheritLabel: String
@@ -211,16 +219,22 @@ class TextListOptionData(prop: Property<*>) : ListOptionData(prop) {
 }
 
 open class TileListOptionData(prop: Property<*>) : ListOptionData(prop) {
-    fun ids(): List<String> = normalizeIds(
+    fun ids(): List<String> = normalize(
         elements().mapNotNull { it as? String }
     )
 
     fun setIds(values: List<String>) = prop.setIdListElements(
-        normalizeIds(values)
+        normalize(values)
     )
+
+    protected open fun normalize(ids: Iterable<String>): List<String> = normalizeIds(ids)
 }
 
 class ItemListOptionData(prop: Property<*>) : TileListOptionData(prop)
+
+class EffectListOptionData(prop: Property<*>) : TileListOptionData(prop) {
+    override fun normalize(ids: Iterable<String>): List<String> = normalizeEffectIds(ids)
+}
 
 class FileOptionData(prop: Property<*>) : OptionData(prop) {
     val placeholder: String? get() = localizedString(prop.getMetadata("placeholderKey"), prop.getMetadata<String>("placeholder")).takeIf { it.isNotBlank() }
@@ -281,8 +295,8 @@ class ColorListOptionData(prop: Property<*>) : ListOptionData(prop) {
 class NumberListOptionData(prop: Property<*>, val style: Style) : ListOptionData(prop) {
     enum class Style { Slider, Spinner }
 
-    val min: Float get() = prop.getMetadata("min") ?: 0f
-    val max: Float get() = prop.getMetadata("max") ?: 100f
+    val min: Float get() = prop.boundedMin(prop.getMetadata("min") ?: 0f)
+    val max: Float get() = prop.boundedMax(prop.getMetadata("max") ?: 100f)
     val step: Float get() = prop.getMetadata("step") ?: 0f
 
     val elementType: Class<*> get() = numericElementType(min, max, step)
@@ -298,8 +312,8 @@ class NumberListOptionData(prop: Property<*>, val style: Style) : ListOptionData
  * Each range takes two consecutive values so `[0, 10, 20, 30]` reads as 0-10 and 20-30
  */
 class RangeListOptionData(prop: Property<*>, val style: RangeOptionData.Style) : ListOptionData(prop) {
-    val min: Float get() = prop.getMetadata("min") ?: 0f
-    val max: Float get() = prop.getMetadata("max") ?: 100f
+    val min: Float get() = prop.boundedMin(prop.getMetadata("min") ?: 0f)
+    val max: Float get() = prop.boundedMax(prop.getMetadata("max") ?: 100f)
     val step: Float get() = prop.getMetadata("step") ?: 0f
 
     val elementType: Class<*> get() = numericElementType(min, max, step)
@@ -355,6 +369,7 @@ class RadioButtonOptionData(prop: Property<*>) : OptionData(prop) {
 
 class ColorOptionData(prop: Property<*>) : OptionData(prop) {
     val alpha = prop.getMetadata<Any>("noAlpha") == null
+    val gradient = prop.getMetadata<Any>("gradient") != null
 }
 
 class KeybindOptionData(prop: Property<*>) : OptionData(prop)

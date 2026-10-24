@@ -2,6 +2,7 @@ package org.polyfrost.compose.node
 
 import org.polyfrost.compose.layout.PolyLayoutStyle
 import org.polyfrost.compose.render.RenderContext
+import org.polyfrost.compose.ui.draw.ContentDrawScope
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -66,7 +67,7 @@ open class PolyNode {
         val dx = s.drawnOffsetX
         val transformed = s.scaleX != 1f || s.scaleY != 1f || s.translateX != 0f || s.translateY != 0f || dx != 0f
         val fade = s.fade?.invoke(this)
-        if (a >= 1f && !transformed && fade == null) return render(ctx)
+        if (a >= 1f && !transformed && fade == null) return draw(ctx)
         if (a < 1f) ctx.saveLayerAlpha(a) else ctx.save()
         if (transformed) {
             val cx = x + width / 2f
@@ -79,8 +80,13 @@ open class PolyNode {
             val o = if (fade.vertical) y else x
             ctx.saveLayerFade(org.polyfrost.compose.render.PolyFade(fade.vertical, FloatArray(fade.stops.size) { fade.stops[it] + o }, fade.alphas))
         }
-        render(ctx)
+        draw(ctx)
         if (fade != null) ctx.restore()
         ctx.restore()
+    }
+
+    private fun draw(ctx: RenderContext) {
+        val over = style.drawWithContent ?: return render(ctx)
+        ContentDrawScope(ctx, this).over()
     }
 }

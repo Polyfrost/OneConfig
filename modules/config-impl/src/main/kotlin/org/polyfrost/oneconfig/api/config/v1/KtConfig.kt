@@ -1051,6 +1051,29 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
             addListMetadata(maxEntries, reorderable, addText, addTextKey)
     }
 
+    /** Namespaced status effect IDs such as `minecraft:speed`, a [maxEntries] of 1 makes a single selector */
+    @JvmSynthetic
+    protected fun effectList(
+        name: String,
+        def: Array<String> = arrayOf(),
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        maxEntries: Int = 0,
+        reorderable: Boolean = true,
+        addText: String? = null,
+        addTextKey: String? = "oneconfig.effectlist.add",
+    ) = Provider(def, name, description, category, subcategory, Array<String>::class.java, Visualizer.EffectListVisualizer()) {
+        addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        require(maxEntries >= 0) { "effectList '$name' has a negative maxEntries ($maxEntries)" }
+            addListMetadata(maxEntries, reorderable, addText, addTextKey)
+    }
+
     private fun Node.addListMetadata(maxEntries: Int, reorderable: Boolean, addText: String?, addTextKey: String?) {
         this.addMetadata("maxEntries", maxEntries)
         this.addMetadata("reorderable", reorderable)
@@ -1147,6 +1170,13 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
     @JvmName("withObservable")
     fun <Type : Any> PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>.onChange(callback: (Type) -> Unit) = observable(this, callback)
     fun <Type : Any> PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>.withCallback(callback: (Type) -> Boolean) = callback(this, callback)
+
+    fun <Type : Any> PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>.fullWidth(): PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>> =
+        PropertyDelegateProvider { thisRef, property ->
+            provideDelegate(thisRef, property).also {
+                (thisRef.tree ?: thisRef.pendingTree()).getProp(property.name)?.addMetadata("fullWidth", true)
+            }
+        }
 
     private data class CachedTransformedProvider<Source : Any, Target : Any>(
         val delegate: PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Source>>,

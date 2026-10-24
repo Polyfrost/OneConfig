@@ -2,7 +2,6 @@ package org.polyfrost.compose.mc
 
 import org.polyfrost.compose.render.PolyGlyphPage
 
-
 object McFontQueue {
     var measureWidth: ((text: String, scale: Float) -> Float)? = null
     var measureHeight: ((scale: Float) -> Float)? = null
@@ -13,6 +12,9 @@ object McFontQueue {
 
     fun measureTextHeight(scale: Float): Float =
         measureHeight?.invoke(scale) ?: (9f * scale)
+
+    fun measureBlockHeight(lines: Int, scale: Float): Float =
+        lines * measureTextHeight(scale) - scale
 
     private fun bundledWidth(text: String, scale: Float): Float {
         val r = PolyGlyphPage.rasterizer ?: return text.length * 6f * scale

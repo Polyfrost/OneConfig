@@ -14,6 +14,7 @@ fun McText(
     color: PolyColor = PolyColor.WHITE,
     shadow: Boolean = true,
     scale: Float = 1f,
+    outlineColor: PolyColor? = null,
 ) {
     ComposeNode<McTextNode, PolyApplier>(
         factory = { McTextNode() },
@@ -22,6 +23,7 @@ fun McText(
             set(scale) { this.scale = it; remeasure() }
             set(color) { this.color = it }
             set(shadow) { this.shadow = it }
+            set(outlineColor) { this.outlineColor = it }
             set(modifier) { it.applyTo(style); remeasure() }
         },
     )

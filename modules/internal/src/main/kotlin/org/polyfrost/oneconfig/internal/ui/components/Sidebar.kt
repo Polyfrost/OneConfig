@@ -5,8 +5,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import java.util.Locale.getDefault
 import org.polyfrost.compose.animation.animateColorAsState
+import org.polyfrost.compose.animation.core.animateFloatAsState
 import org.polyfrost.compose.foundation.background
 import org.polyfrost.compose.foundation.border
 import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
@@ -41,15 +41,15 @@ import org.polyfrost.compose.ui.unit.sp
 import org.polyfrost.compose.ui.window.Popup
 import org.polyfrost.compose.ui.window.PopupProperties
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
-import org.polyfrost.oneconfig.internal.ui.navigation.NavigationGroups
-import org.polyfrost.oneconfig.internal.ui.navigation.hierarchy
+import org.polyfrost.oneconfig.internal.ui.navigation.isOn
+import org.polyfrost.oneconfig.internal.ui.navigation.sidebarSections
 import org.polyfrost.oneconfig.internal.ui.poly.OpenTransition
 import org.polyfrost.oneconfig.internal.ui.poly.SvgImage
-import org.polyfrost.oneconfig.internal.ui.poly.brandTint
 import org.polyfrost.oneconfig.internal.ui.shell.ShellHost
 import org.polyfrost.oneconfig.internal.ui.shell.ShellNav
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.withOpacityPercent
 
@@ -99,8 +99,8 @@ private fun Navigation(nav: ShellNav, host: ShellHost, clearSearch: () -> Unit, 
 
 @Composable
 private fun Branding() {
-    val logoPath = LocalTheme.current.branding.logoPath
-    val tint = remember(logoPath, Accent) { brandTint(logoPath, Accent) }
+    val logoPath = LocalTheme.current.logoPath
+    val tint = rememberAccentBrandTint(logoPath)
     SvgImage(logoPath, 167f, 19f, LocalDensity.current.density, recolor = tint)
 }
 
@@ -109,7 +109,7 @@ private fun TopOptionsSection(host: ShellHost) {
     NavigationSection {
         NavigationEntry(
             "hud",
-            "Edit HUD",
+            translated("oneconfig.sidebar.edit_hud", "Edit HUD"),
         ) {
             host.editHud()
         }
@@ -126,19 +126,12 @@ private fun NavigationEntries(nav: ShellNav, host: ShellHost, clearSearch: () ->
             TopOptionsSection(host)
         }
 
-        NavigationGroups.forEach {
-            NavigationSection(it.id) {
-                it.routes.forEach { def ->
-                    val selected = nav.current.hierarchy == def.route
-
-                    // todo: i18n
-                    NavigationEntry(
-                        def.icon,
-                        def.id.replaceFirstChar { char -> if (char.isLowerCase()) char.titlecase(getDefault()) else char.toString() },
-                        def.route,
-                        selected
-                    ) {
-                        if (nav.current == def.route) clearSearch() else nav.navigate(def.route)
+        sidebarSections().forEach {
+            NavigationSection(it.title) {
+                it.entries.forEach { def ->
+                    val selected = nav.isOn(def.route, def.arg)
+                    NavigationEntry(def.icon, def.label, selected) {
+                        if (selected && nav.current == def.route) clearSearch() else nav.navigate(def.route, def.arg)
                     }
                 }
             }
@@ -165,15 +158,12 @@ private fun NavigationSection(title: String? = null, content: @Composable () -> 
 }
 
 @Composable
-private fun NavigationEntry(icon: String, title: String, route: Any? = null, isSelected: Boolean = false, onSelect: (Any?) -> Unit) {
+private fun NavigationEntry(icon: String, title: String, isSelected: Boolean = false, onSelect: () -> Unit) {
     val interactionSource = rememberInteractionSource()
 
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val backgroundColor = animateColorAsState(
-        if (isSelected) Accent
-        else Accent.copy(0f)
-    )
+    val selectedAlpha by animateFloatAsState(if (isSelected) 1f else 0f)
     val textAndIconColor = animateColorAsState(
         if (isSelected) LocalTheme.current.accentTextColor
         else if (isHovered) LocalTheme.current.textColor
@@ -186,9 +176,9 @@ private fun NavigationEntry(icon: String, title: String, route: Any? = null, isS
 
     Row(
         modifier = Modifier.size(225.dp, 33.dp)
-            .background(backgroundColor, LocalTheme.current.sideBarNavigationEntryShape)
+            .background(AccentBrush, LocalTheme.current.sideBarNavigationEntryShape, selectedAlpha)
             .border(1.dp, borderColor, LocalTheme.current.sideBarNavigationEntryShape)
-            .onClick(interactionSource) { onSelect(route) }
+            .onClick(interactionSource) { onSelect() }
             .pointerHoverIcon(PointerIcon.Hand),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)

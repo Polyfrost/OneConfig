@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.ui.themes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -12,16 +13,28 @@ import kotlinx.coroutines.delay
 import kotlin.math.floor
 import kotlin.math.round
 import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.ui.graphics.Brush
 import org.polyfrost.compose.ui.graphics.Color
+import org.polyfrost.compose.ui.graphics.SolidColor
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationTheme
 import org.polyfrost.oneconfig.internal.ThemeConfig
 
 private var _accent by mutableStateOf(Color(ThemeConfig.accentColor.argb))
 
+private var _accentEnd by mutableStateOf<Color?>(null)
+
 val Accent: Color get() = _accent
 
+val AccentEnd: Color get() = _accentEnd ?: _accent
+
+val AccentGradient: Boolean get() = _accentEnd != null
+
+val AccentBrush: Brush get() = _accentEnd?.let { Brush.horizontalGradient(listOf(_accent, it)) } ?: SolidColor(_accent)
+
 fun updateAccent() {
-    _accent = Color(ThemeConfig.accentColor.argb)
+    val accentColor = ThemeConfig.accentColor
+    _accent = Color(accentColor.argb)
+    _accentEnd = if (accentColor.gradientEnabled && !accentColor.chroma) Color(accentColor.gradientArgb) else null
 }
 
 val LocalTheme = compositionLocalOf<UITheme> { error("A UI theme is required but was not provided") }
@@ -41,6 +54,8 @@ internal fun snapScaleToPixelGrid(anchorPx: Float, max: Float): Float {
 
 @Composable
 fun Theme(content: @Composable () -> Unit) {
+    SideEffect { updateAccent() }
+
     LaunchedEffect(Unit) {
         while (true) {
             if (ThemeConfig.accentColor.chroma) withFrameNanos { updateAccent() } else delay(250)
@@ -70,4 +85,5 @@ internal fun syncNotificationTheme(theme: UITheme) {
         radiusButton = if (minecraft) 0f else 4f,
         radiusProgress = if (minecraft) 0f else 3f,
     )
+    NotificationTheme.useIconFolder(if (minecraft) "minecraft" else null)
 }

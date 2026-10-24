@@ -39,3 +39,5 @@ class ImageBitmap(val width: Int, val height: Int, val pixels: ByteArray) {
         }
     }
 }
+
+enum class FilterQuality { None, Low, Medium, High }

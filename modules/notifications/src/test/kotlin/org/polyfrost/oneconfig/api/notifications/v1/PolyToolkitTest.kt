@@ -38,6 +38,9 @@ import org.polyfrost.compose.runtime.PolyComposeClock
 import org.polyfrost.compose.runtime.PolyComposeRuntime
 import org.polyfrost.compose.ui.Alignment
 import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.focus.FocusRequester
+import org.polyfrost.compose.ui.focus.onFocusChanged
+import org.polyfrost.compose.ui.focus.focusRequester
 import org.polyfrost.compose.ui.input.key.KeyEvent
 import org.polyfrost.compose.ui.input.key.KeyEventType
 import org.polyfrost.compose.ui.input.key.onKeyDown
@@ -353,6 +356,61 @@ class PolyToolkitTest {
         PolyLayoutEngine.layout(node(LayoutType.Column, Modifier.size(100.dp, 100.dp), box(Modifier.size(10.dp, 70.dp)), anchor), 100f, 100f)
         assertEquals(70f, anchor.y)
         assertEquals(10f, menu.y)
+    }
+
+    @Test
+    fun focusRequesterAndPinnedOverlay() {
+        val requester = FocusRequester()
+        var fieldFocused = false
+        val field = box(Modifier.size(10.dp, 10.dp).focusable { fieldFocused = it })
+        val editor = box(Modifier.size(50.dp, 50.dp).focusRequester(requester).focusable())
+        val root = node(LayoutType.Column, Modifier.size(100.dp, 100.dp), field, editor)
+        PolyLayoutEngine.layout(root, 100f, 100f)
+        val input = PolyInput(root)
+        input.focus(field)
+        input.refresh()
+        assertSame(field, input.focused)
+        requester.requestFocus()
+        Modifier.size(50.dp, 50.dp).focusRequester(requester).focusable().applyTo(editor.style)
+        input.refresh()
+        assertSame(editor, input.focused)
+        assertFalse(fieldFocused)
+        Modifier.size(50.dp, 50.dp).focusRequester(requester).focusable().applyTo(editor.style)
+        input.focus(field)
+        input.refresh()
+        assertSame(field, input.focused)
+
+        val pin = floatArrayOf(Float.NaN, 0f, 0f, 0f)
+        val menu = box(Modifier.size(40.dp, 20.dp))
+        menu.style.overlay = true
+        menu.style.overlayAnchor = Alignment.BottomStart
+        menu.style.overlayPin = pin
+        val anchor = box(Modifier.size(40.dp, 20.dp), menu)
+        val root2 = node(LayoutType.Column, Modifier.size(100.dp, 100.dp), anchor)
+        PolyLayoutEngine.layout(root2, 100f, 100f)
+        assertEquals(20f, menu.y)
+        Modifier.size(40.dp, 50.dp).applyTo(anchor.style)
+        PolyLayoutEngine.layout(root2, 100f, 100f)
+        assertEquals(50f, anchor.height)
+        assertEquals(20f, menu.y)
+        menu.style.overlayPin = null
+        PolyLayoutEngine.layout(root2, 100f, 100f)
+        assertEquals(50f, menu.y)
+    }
+
+    @Test
+    fun onFocusChangedChainsWithFocusable() {
+        val seen = ArrayList<String>()
+        val field = box(
+            Modifier.onFocusChanged { seen += "a${it.isFocused}" }.size(10.dp, 10.dp)
+                .focusable { seen += "f$it" }.onFocusChanged { seen += "b${it.isFocused}" },
+        )
+        val root = node(LayoutType.Column, Modifier.size(100.dp, 100.dp), field)
+        PolyLayoutEngine.layout(root, 100f, 100f)
+        val input = PolyInput(root)
+        input.focus(field)
+        input.focus(null)
+        assertEquals(listOf("ftrue", "atrue", "btrue", "ffalse", "afalse", "bfalse"), seen)
     }
 
     @Test

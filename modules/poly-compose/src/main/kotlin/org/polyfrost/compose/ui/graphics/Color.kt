@@ -24,6 +24,14 @@ val PolyColor.isUnspecified get() = this == PolyColor.Unspecified
 
 fun PolyColor.takeOrElse(block: () -> PolyColor) = if (isSpecified) this else block()
 
+fun PolyColor.compositeOver(background: PolyColor): PolyColor {
+    val fg = alphaF
+    val bg = background.alphaF * (1f - fg)
+    val a = fg + bg
+    if (a <= 0f) return Color(0f, 0f, 0f, 0f)
+    return Color((redF * fg + background.redF * bg) / a, (greenF * fg + background.greenF * bg) / a, (blueF * fg + background.blueF * bg) / a, a)
+}
+
 private fun linear(c: Float) = if (c <= 0.04045f) c / 12.92f else ((c + 0.055f) / 1.055f).toDouble().pow(2.4).toFloat()
 
 private fun gamma(c: Float) = if (c <= 0.0031308f) c * 12.92f else (1.055 * c.toDouble().pow(1 / 2.4) - 0.055).toFloat()

@@ -1,9 +1,11 @@
 package org.polyfrost.oneconfig.internal.ui.shell
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
@@ -11,11 +13,13 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import kotlin.math.exp
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.compose.animation.core.animateFloatAsState
 import org.polyfrost.compose.animation.core.tween
 import org.polyfrost.compose.foundation.Canvas
@@ -50,6 +54,7 @@ import org.polyfrost.compose.ui.input.pointer.onPointerEvent
 import org.polyfrost.compose.ui.platform.LocalDensity
 import org.polyfrost.compose.ui.unit.DpOffset
 import org.polyfrost.compose.ui.unit.dp
+import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPages
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.components.Header
@@ -80,6 +85,8 @@ private const val GLOW_EXTENT = GLOW_RADIUS + 3f * GLOW_BLUR_SIGMA
 private val GLOW_CENTRES = listOf(147f to -199f, 893f to 736f)
 
 internal val PageGutter = 25.dp
+
+private val LOGGER = LogManager.getLogger("OneConfig/UI")
 
 private val glowDisc: ImageBitmap by lazy {
     val n = 128
@@ -126,6 +133,8 @@ class ShellHost(
     val pageAnimations: Boolean = OneConfigConfig.showPageAnimations,
     val openingPageAnimation: Boolean = OneConfigConfig.showOpeningPageAnimation,
     val surfaceRatio: Float = 1f,
+    val restoring: Boolean = false,
+    val resumed: Boolean = false,
 ) {
     val hudFrame = mutableIntStateOf(0)
 }
@@ -170,16 +179,26 @@ fun Shell(host: ShellHost, start: PolyPage = PolyPage.Mods, startArg: Any? = nul
         host.openModConfig = { mod, category -> nav.navigate(PolyPage.ModConfig, ModConfigTarget(mod, category)) }
         host.navigate = nav::navigate
     }
-    val search = remember { TextFieldState() }
+    val search = remember {
+        TextFieldState(if (host.restoring) ShellState.lastSearch else "").also { nav.restoreSearch(it.text) }
+    }
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         visible = true
         UiSounds.play(UiSoundEvent.OPEN)
-        if (OneConfigConfig.instantSearch) search.requestFocus(selectAll = true)
+        when {
+            host.resumed -> if (ShellState.lastSearchFocused) search.requestFocus()
+            OneConfigConfig.instantSearch -> search.requestFocus(selectAll = true)
+            host.restoring -> if (ShellState.lastSearchFocused) search.requestFocus()
+        }
+        snapshotFlow { search.focused }.collect { ShellState.lastSearchFocused = it }
     }
     DisposableEffect(Unit) {
         UiSounds.acquireAmbience()
+        ShellState.searchField = search
         onDispose {
+            if (ShellState.searchField === search) ShellState.searchField = null
+            ShellState.lastSearch = search.text
             UiSounds.releaseAmbience()
             ShellState.lastClosedAt = System.currentTimeMillis()
         }
@@ -246,15 +265,17 @@ fun Shell(host: ShellHost, start: PolyPage = PolyPage.Mods, startArg: Any? = nul
 
 @Composable
 private fun Pages(nav: ShellNav, host: ShellHost, query: String) {
-    val opening = remember { booleanArrayOf(host.openingPageAnimation && nav.canGoBack()) }
+    val opening = remember { booleanArrayOf(host.openingPageAnimation && !host.restoring && nav.canGoBack()) }
     var shown by remember { mutableStateOf(if (opening[0]) PolyPage.Mods to null else nav.current to nav.arg) }
     var leaving by remember { mutableStateOf<Pair<PolyPage, Any?>?>(null) }
+    var leavingQuery by remember { mutableStateOf("") }
     var progress by remember { mutableFloatStateOf(1f) }
     val dir = nav.direction
     LaunchedEffect(nav.current, nav.arg) {
         if (nav.current to nav.arg == shown) return@LaunchedEffect
         if (pageKey(nav.current, nav.arg) == pageKey(shown.first, shown.second)) { shown = nav.current to nav.arg; return@LaunchedEffect }
         leaving = shown
+        leavingQuery = query
         shown = nav.current to nav.arg
         val animate = opening[0] || host.pageAnimations
         opening[0] = false
@@ -268,10 +289,10 @@ private fun Pages(nav: ShellNav, host: ShellHost, query: String) {
         leaving = null
     }
     val slide = (WINDOW_WIDTH - SidebarWidth.value) / 5f
-    Box(Modifier.weight(1f).fillMaxWidth().clip()) {
+    Box(Modifier.weight(1f).fillMaxWidth().then(if (ShellState.modDragging) Modifier else Modifier.clip())) {
         leaving?.let { old ->
             Box(Modifier.fillMaxSize().alpha(1f - progress).graphicsLayer(translationX = -dir * slide * progress)) {
-                key(pageKey(old.first, old.second)) { Page(old.first, old.second, host, "", nav) }
+                key(pageKey(old.first, old.second)) { Page(old.first, old.second, host, leavingQuery, nav) }
             }
         }
         Box(Modifier.fillMaxSize().alpha(if (leaving != null) progress else 1f).graphicsLayer(translationX = if (leaving != null) dir * slide * (1f - progress) else 0f)) {
@@ -282,12 +303,23 @@ private fun Pages(nav: ShellNav, host: ShellHost, query: String) {
 
 private fun pageKey(page: PolyPage, arg: Any?): Any? = when (page) {
     PolyPage.ModConfig -> page to (arg as? ModConfigTarget)?.mod
-    PolyPage.ChangelogEntry -> page to arg
+    PolyPage.ChangelogEntry, PolyPage.Page -> page to arg
     else -> page
 }
 
+internal class PageScope(val host: ShellHost, val nav: ShellNav, val query: String)
+
+internal val LocalPageScope = compositionLocalOf<PageScope?> { null }
+
 @Composable
-private fun Page(page: PolyPage, arg: Any?, host: ShellHost, query: String, nav: ShellNav) {
+internal fun Page(page: PolyPage, arg: Any?, host: ShellHost, query: String, nav: ShellNav) {
+    CompositionLocalProvider(LocalPageScope provides remember(host, nav, query) { PageScope(host, nav, query) }) {
+        PageContent(page, arg, host, query, nav)
+    }
+}
+
+@Composable
+private fun PageContent(page: PolyPage, arg: Any?, host: ShellHost, query: String, nav: ShellNav) {
     when (page) {
         PolyPage.Mods -> if (query.isNotEmpty()) SearchResultsScreen(query, host) else Mods(host)
         PolyPage.Keybinds -> Keybinds(query)
@@ -298,6 +330,14 @@ private fun Page(page: PolyPage, arg: Any?, host: ShellHost, query: String, nav:
         PolyPage.Themes -> Themes(arg as? String, query, nav::tab)
         PolyPage.Profiles -> Profiles(query)
         PolyPage.ModConfig -> (arg as? ModConfigTarget)?.let { t -> ModConfig(t.mod.id, t.category, query) { from, to -> nav.tab(t.copy(category = from), t.copy(category = to)) } }
+        PolyPage.Page -> {
+            val page = (arg as? String)?.let(OneConfigPages::byId)
+            if (page != null) page.Content()
+            else LaunchedEffect(arg) {
+                LOGGER.warn("OneConfig page {} is not registered, opening the mods page instead", arg)
+                nav.discard(PolyPage.Page, arg, PolyPage.Mods)
+            }
+        }
         else -> {}
     }
 }

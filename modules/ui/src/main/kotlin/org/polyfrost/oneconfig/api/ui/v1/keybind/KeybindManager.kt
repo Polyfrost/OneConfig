@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.api.ui.v1.keybind
 
 import java.util.ServiceLoader
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.function.BooleanSupplier
 import kotlin.experimental.and
 import kotlin.experimental.inv
 import kotlin.experimental.or
@@ -12,6 +13,8 @@ import org.polyfrost.oneconfig.api.event.v1.events.MouseInputEvent
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent
 import org.polyfrost.oneconfig.api.event.v1.events.WindowFocusEvent
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.internal.keybindBridge
 
 @Suppress("UnstableApiUsage")
 object KeybindManager {
@@ -38,6 +41,8 @@ object KeybindManager {
 
     /** Listeners notified when a keybind is edited in-place from Minecraft's Controls menu (same instance) */
     private val menuEditListeners = ArrayList<(OneConfigKeybind) -> Unit>()
+
+    private val inputCaptures = CopyOnWriteArrayList<BooleanSupplier>()
 
     private val downKeys = HashSet<Int>()
     private val downMouse = HashSet<Int>()
@@ -189,6 +194,31 @@ object KeybindManager {
     fun findConflicts(bind: OneConfigKeybind): List<OneConfigKeybind> {
         if (!bind.isBound) return emptyList()
         return binds.filter { it.conflictsWith(bind) }
+    }
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    fun configKeybinds(): List<ConfigKeybind> = keybindBridge()?.configKeybinds() ?: emptyList()
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    fun addInputCapture(capture: BooleanSupplier) {
+        if (!inputCaptures.addIfAbsent(capture)) LOGGER.debug("Ignoring input capture {} that is already registered", capture.javaClass.name)
+    }
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    fun removeInputCapture(capture: BooleanSupplier): Boolean = inputCaptures.remove(capture)
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    fun isInputCaptured(): Boolean = inputCaptures.any { capture ->
+        try {
+            capture.asBoolean
+        } catch (t: Throwable) {
+            LOGGER.error("Input capture {} failed", capture.javaClass.name, t)
+            false
+        }
     }
 
     /** True when a registered keybind containing [button] matches the current input state */

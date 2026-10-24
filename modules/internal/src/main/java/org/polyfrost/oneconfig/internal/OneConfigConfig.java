@@ -18,6 +18,7 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession;
+import org.polyfrost.oneconfig.internal.ui.shell.ShellController;
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState;
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds;
 
@@ -349,6 +350,9 @@ public class OneConfigConfig extends Config {
     @Include
     private static float timeBeforeReset = 15f;
 
+    @Include
+    public static boolean hudEditorTourSeen = false;
+
     @Switch(
         title = "oneconfig.preferences.restore_hud_editor.title",
         titleTranslation = true,
@@ -370,16 +374,6 @@ public class OneConfigConfig extends Config {
     public static boolean showOpeningPageAnimation = false;
 
     @Switch(
-        title = "oneconfig.preferences.instant_search.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.instant_search.description",
-        descriptionTranslation = true
-    )
-    public static boolean instantSearch = true;
-
-    @Switch(
         title = "oneconfig.preferences.show_option_action_buttons.title",
         titleTranslation = true,
         subcategory = "oneconfig.preferences.category.gui",
@@ -398,6 +392,27 @@ public class OneConfigConfig extends Config {
         descriptionTranslation = true
     )
     public static boolean flipTopOptionOrder = false;
+
+    @Switch(
+        title = "oneconfig.preferences.instant_search.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.search",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.instant_search.description",
+        descriptionTranslation = true
+    )
+    public static boolean instantSearch = true;
+
+    @Keybind(
+        title = "oneconfig.preferences.search_keybind.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.search",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.search_keybind.description",
+        descriptionTranslation = true
+    )
+    public static OneConfigKeybind searchKeybind =
+        new OneConfigKeybind(new int[] {KEYS.getKeyF()}, null, KeybindUtils.getActionModifier(), 0L, pressed -> true);
 
     @Number(
         title = "oneconfig.preferences.search_distance.title",
@@ -573,6 +588,16 @@ public class OneConfigConfig extends Config {
     )
     public static boolean showFirstLaunchMessage = true;
 
+    @Switch(
+        title = "oneconfig.preferences.profile_switch_toast.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.general",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.profile_switch_toast.description",
+        descriptionTranslation = true
+    )
+    public static boolean profileSwitchToast = true;
+
     /**
      * The live instance used to persist programmatic changes such as {@link #markFirstLaunchShown()}
      */
@@ -594,6 +619,11 @@ public class OneConfigConfig extends Config {
      * The keybind registered with the {@link KeybindManager} for duplicating the selected HUD in the design studio
      */
     private static OneConfigKeybind registeredHudDuplicateKeybind;
+
+    /**
+     * The keybind registered with the {@link KeybindManager} for focusing the search field
+     */
+    private static OneConfigKeybind registeredSearchKeybind;
 
     /**
      * The keybinds registered with the {@link KeybindManager} for the remaining HUD editor actions
@@ -656,28 +686,25 @@ public class OneConfigConfig extends Config {
             "uiAmbienceVolume",
             "UI Ambience",
             () -> enableUIAmbience ? Property.Display.SHOWN : Property.Display.DISABLED);
-        ShellState.INSTANCE.setFlipTopOptionOrder(flipTopOptionOrder);
+        ShellController.getShared().getAppearance().update(flipTopOptionOrder, pageOpacity, sidebarOpacity, glowOpacity);
         addCallback(
             "flipTopOptionOrder", (Boolean v) -> {
-                ShellState.INSTANCE.setFlipTopOptionOrder(v);
+                ShellController.getShared().getAppearance().update(v, pageOpacity, sidebarOpacity, glowOpacity);
                 return false;
             });
-        ShellState.INSTANCE.setPageOpacity(pageOpacity);
         addCallback(
             "pageOpacity", (java.lang.Number v) -> {
-                ShellState.INSTANCE.setPageOpacity(v.floatValue());
+                ShellController.getShared().getAppearance().update(flipTopOptionOrder, v.floatValue(), sidebarOpacity, glowOpacity);
                 return false;
             });
-        ShellState.INSTANCE.setSidebarOpacity(sidebarOpacity);
         addCallback(
             "sidebarOpacity", (java.lang.Number v) -> {
-                ShellState.INSTANCE.setSidebarOpacity(v.floatValue());
+                ShellController.getShared().getAppearance().update(flipTopOptionOrder, pageOpacity, v.floatValue(), glowOpacity);
                 return false;
             });
-        ShellState.INSTANCE.setGlowOpacity(glowOpacity);
         addCallback(
             "glowOpacity", (java.lang.Number v) -> {
-                ShellState.INSTANCE.setGlowOpacity(v.floatValue());
+                ShellController.getShared().getAppearance().update(flipTopOptionOrder, pageOpacity, sidebarOpacity, v.floatValue());
                 return false;
             });
         addCallback(
@@ -702,6 +729,12 @@ public class OneConfigConfig extends Config {
                 return false;
             });
         refreshKeybind(oneConfigKeybind);
+        addCallback(
+            "searchKeybind", (OneConfigKeybind kb) -> {
+                refreshSearchKeybind();
+                return false;
+            });
+        refreshSearchKeybind();
         addCallback(
             "hudDuplicateKeybind", (OneConfigKeybind kb) -> {
                 refreshHudDuplicateKeybind();
@@ -873,6 +906,32 @@ public class OneConfigConfig extends Config {
     }
 
     /**
+     * Rebuilds the registered search keybind from {@code searchKeybind}'s GLFW keys and re-registers it
+     * with the {@link KeybindManager}
+     * <p>
+     * The action is resolved here rather than stored on the keybind so it survives deserialization, and it fires
+     * while typing so it still works with a text field focused
+     */
+    private static void refreshSearchKeybind() {
+        if (registeredSearchKeybind != null) {
+            KeybindManager.unregister(registeredSearchKeybind);
+            registeredSearchKeybind = null;
+        }
+        OneConfigKeybind src = searchKeybind;
+        if (src == null || !src.isBound()) {
+            return;
+        }
+        registeredSearchKeybind = new OneConfigKeybind(
+            src.getKeyCodes(),
+            src.getMouseBtns(),
+            src.getMods(),
+            src.getDurationNanos(),
+            ShellState::handleSearchKeybind);
+        registeredSearchKeybind.setFiresWhileTyping(true);
+        KeybindManager.register(registeredSearchKeybind);
+    }
+
+    /**
      * Rebuilds the registered duplicate-HUD keybind from {@code hudDuplicateKeybind}'s GLFW keys and re-registers it
      * with the {@link KeybindManager}
      * <p>
@@ -1036,6 +1095,20 @@ public class OneConfigConfig extends Config {
         if (INSTANCE != null && INSTANCE.tree != null) {
             try {
                 INSTANCE.getProperty("showFirstLaunchMessage").setAs(Boolean.FALSE);
+            } catch (Exception ignored) {
+            }
+            INSTANCE.save();
+        }
+    }
+
+    public static void markHudEditorTourSeen() {
+        if (hudEditorTourSeen) {
+            return;
+        }
+        hudEditorTourSeen = true;
+        if (INSTANCE != null && INSTANCE.tree != null) {
+            try {
+                INSTANCE.getProperty("hudEditorTourSeen").setAs(Boolean.TRUE);
             } catch (Exception ignored) {
             }
             INSTANCE.save();

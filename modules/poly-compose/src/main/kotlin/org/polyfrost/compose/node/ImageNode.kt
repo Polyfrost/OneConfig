@@ -1,5 +1,6 @@
 package org.polyfrost.compose.node
 
+import org.polyfrost.compose.ui.graphics.FilterQuality
 import org.polyfrost.compose.ui.graphics.ImageBitmap
 import org.polyfrost.compose.layout.PolySize
 import org.polyfrost.compose.render.PolyColor
@@ -12,6 +13,7 @@ class ImageNode(
     internal var autoHeight = false
 
     var tint: PolyColor? = null
+    var filterQuality = FilterQuality.Low
     var animatedTint: androidx.compose.runtime.State<PolyColor>? = null
 
     override fun animating() = super.animating() || animatedTint.let { it != null && it.value != tint }
@@ -31,7 +33,7 @@ class ImageNode(
             if (s.radius > 0f) ctx.clipRRect(x, y, width, height, s.radius) else ctx.clipRect(x, y, width, height)
         }
         val tint = animatedTint?.value ?: tint
-        if (tint != null) ctx.image(image, x, y, width, height, 0f, 0f, 1f, 1f, tint) else ctx.image(image, x, y, width, height)
+        if (tint != null) ctx.image(image, x, y, width, height, 0f, 0f, 1f, 1f, tint, filterQuality) else ctx.image(image, x, y, width, height, filterQuality)
         if (s.clipToBounds) ctx.restore()
 
         val border = s.drawnBorderColor

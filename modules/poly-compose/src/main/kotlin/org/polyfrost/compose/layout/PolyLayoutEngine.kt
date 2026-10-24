@@ -180,11 +180,22 @@ object PolyLayoutEngine {
             if (child.style.overlay) {
                 val cs = child.style
                 val align = cs.align ?: Alignment.TopStart
-                val ax = node.x + fx(cs.overlayAnchor) * node.width + cs.x - fx(align) * child.width
-                var ay = node.y + fy(cs.overlayAnchor) * node.height + cs.y - fy(align) * child.height
-                val up = node.y + (1f - fy(cs.overlayAnchor)) * node.height - cs.y - (1f - fy(align)) * child.height
+                val pin = cs.overlayPin
+                if (pin != null && pin[0].isNaN()) {
+                    pin[0] = node.x
+                    pin[1] = node.y
+                    pin[2] = node.width
+                    pin[3] = node.height
+                }
+                val nx = if (pin != null) pin[0] else node.x
+                val ny = if (pin != null) pin[1] else node.y
+                val nw = if (pin != null) pin[2] else node.width
+                val nh = if (pin != null) pin[3] else node.height
+                val ax = nx + fx(cs.overlayAnchor) * nw + cs.x - fx(align) * child.width
+                var ay = ny + fy(cs.overlayAnchor) * nh + cs.y - fy(align) * child.height
+                val up = ny + (1f - fy(cs.overlayAnchor)) * nh - cs.y - (1f - fy(align)) * child.height
                 if (cs.overlayRoomier) {
-                    if (node.y - cs.y > rootH - (node.y + node.height) - cs.y) ay = up
+                    if (ny - cs.y > rootH - (ny + nh) - cs.y) ay = up
                 } else if (ay + child.height > rootH && up >= 0f) {
                     ay = up
                 }

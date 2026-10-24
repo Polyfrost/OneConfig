@@ -12,7 +12,6 @@ import org.polyfrost.compose.foundation.layout.height
 import org.polyfrost.compose.foundation.layout.padding
 import org.polyfrost.compose.foundation.layout.weight
 import org.polyfrost.compose.foundation.lazy.LazyColumn
-import org.polyfrost.compose.foundation.lazy.LazyListState
 import org.polyfrost.compose.ui.Alignment
 import org.polyfrost.compose.ui.Modifier
 import org.polyfrost.compose.ui.draw.alpha
@@ -26,6 +25,7 @@ import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
 import org.polyfrost.oneconfig.internal.ui.components.rememberModEnabled
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.poly.GUTTER
 import org.polyfrost.oneconfig.internal.ui.search.GlobalSettingIndex
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
@@ -35,6 +35,7 @@ import org.polyfrost.oneconfig.internal.ui.search.SearchScope
 import org.polyfrost.oneconfig.internal.ui.search.SettingNode
 import org.polyfrost.oneconfig.internal.ui.search.searchNode
 import org.polyfrost.oneconfig.internal.ui.shell.ShellHost
+import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private const val MOD_GRID_COLUMNS = 4
@@ -75,14 +76,14 @@ fun SearchResultsScreen(query: String, host: ShellHost) {
 
     val modRows = remember(matchingMods) { matchingMods.chunked(MOD_GRID_COLUMNS) }
 
-    val listState = remember(query, searchedQuery) { LazyListState() }
+    val listState = rememberRestorableLazyListState("global-search", query, searchedQuery)
 
     if (matchingMods.isEmpty() && groupedOptions.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             // nothing to say until the first search comes back
             searchedQuery?.also {
-                Text("No results for \"$it\"", color = theme.textColorSecondary, fontSize = 15.sp)
-            } ?: Text("Searching...", color = theme.textColorSecondary, fontSize = 15.sp)
+                Text(translated("oneconfig.search.no_results", "No results for \"%s\"", it), color = theme.textColorSecondary, fontSize = 15.sp)
+            } ?: Text(translated("oneconfig.search.searching", "Searching..."), color = theme.textColorSecondary, fontSize = 15.sp)
         }
         return
     }
@@ -96,7 +97,7 @@ fun SearchResultsScreen(query: String, host: ShellHost) {
             if (matchingMods.isNotEmpty()) {
                 item(key = "header:mods") {
                     Text(
-                        "MODS",
+                        translated("oneconfig.search.mods_header", "MODS"),
                         color = theme.textColorSecondary,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,

@@ -31,8 +31,8 @@ class GlRenderer private constructor(private val inLive: Boolean) : PolyTessella
 
     override fun bitmapTexture(bitmap: ImageBitmap): Any = GlTextures.bitmap(bitmap)
 
-    override fun submit(texture: Any, premultiplied: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray) {
-        batches.add(GlProgram.Batch(texture, premultiplied, verts, colors))
+    override fun submit(texture: Any, premultiplied: Boolean, nearest: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray) {
+        batches.add(GlProgram.Batch(texture, premultiplied, nearest, verts, colors))
     }
 
     override fun live(draw: (PolyRenderer) -> Unit) {
@@ -73,7 +73,7 @@ class GlRenderer private constructor(private val inLive: Boolean) : PolyTessella
 }
 
 internal object GlProgram {
-    class Batch(val texture: Any, val premultiplied: Boolean, val verts: FloatArray, val colors: IntArray)
+    class Batch(val texture: Any, val premultiplied: Boolean, val nearest: Boolean, val verts: FloatArray, val colors: IntArray)
     class Segment(val at: Int, val batches: List<Batch>)
 
     private val LOG = LoggerFactory.getLogger(GlProgram::class.java)
@@ -173,7 +173,9 @@ internal object GlProgram {
         fun drawBatch(b: Batch, first: Int) {
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, GlTextures.id(b.texture))
             GL20.glUniform1i(uPremul, if (b.premultiplied) 1 else 0)
+            if (b.nearest) filter(GL11.GL_NEAREST)
             GL11.glDrawElements(GL11.GL_TRIANGLES, b.colors.size / 4 * 6, GL11.GL_UNSIGNED_INT, first * 6L * 4L)
+            if (b.nearest) filter(GL11.GL_LINEAR)
         }
 
         var first = 0
@@ -191,6 +193,11 @@ internal object GlProgram {
         GL20.glDisableVertexAttribArray(1)
         GL20.glDisableVertexAttribArray(2)
         if (core) GL30.glBindVertexArray(0)
+    }
+
+    private fun filter(mode: Int) {
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, mode)
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, mode)
     }
 
     private fun upload(at: Int, batches: List<Batch>): Int {
