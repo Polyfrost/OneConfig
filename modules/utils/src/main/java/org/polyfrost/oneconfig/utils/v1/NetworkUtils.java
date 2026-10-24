@@ -38,6 +38,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.zip.GZIPInputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -143,6 +144,7 @@ public final class NetworkUtils {
         connection.setReadTimeout(timeout);
         connection.setConnectTimeout(timeout);
         connection.setDoOutput(true);
-        return connection.getInputStream();
+        InputStream stream = connection.getInputStream();
+        return "gzip".equalsIgnoreCase(connection.getContentEncoding()) ? new GZIPInputStream(stream) : stream;
     }
 }
