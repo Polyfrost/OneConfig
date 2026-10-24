@@ -125,6 +125,7 @@ fun Designer(hud: Hud?, query: String) {
     }
     var textColor by remember { mutableStateOf(Color(hud.textColor)) }
     var showShadow by remember { mutableStateOf(hud.showShadow) }
+    var fullShadow by remember { mutableStateOf(hud.fullShadow) }
 
     Section("Size & Alignment", query, "Static Size", "Width", "Height") {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -284,13 +285,30 @@ fun Designer(hud: Hud?, query: String) {
                 val textH = mcText.lines().size * McFontQueue.measureTextHeight(scale)
                 Canvas(modifier = Modifier.size((textW / density).dp, (textH / density).dp)) {
                     drawIntoCanvas { canvas ->
+                        if (showShadow && fullShadow) {
+                            val plainText = Regex("(?i)§[0-9a-f]").replace(mcText, "§r")
+                            for (offX in -1..1) {
+                                for (offY in -1..1) {
+                                    if (offX == 0 && offY == 0) continue
+                                    McFontQueue.renderer?.invoke(
+                                        canvas.nativeCanvas,
+                                        plainText,
+                                        offX * scale,
+                                        offY * scale,
+                                        hud.shadowColor,
+                                        false,
+                                        scale
+                                    )
+                                }
+                            }
+                        }
                         McFontQueue.renderer?.invoke(
                             canvas.nativeCanvas,
                             mcText,
                             0f,
                             0f,
                             textColor.toArgb(),
-                            showShadow,
+                            showShadow && !fullShadow,
                             scale
                         )
                     }

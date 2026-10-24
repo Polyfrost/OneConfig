@@ -115,6 +115,13 @@ abstract class TextHud(
                 val underlinePos = metrics.underlinePosition ?: (fontSize * 0.08f)
                 val underlineThick = metrics.underlineThickness ?: (fontSize * 0.06f)
                 val shadowCol = if (showShadow) PolyColor(shadowColor, shadowChroma, shadowChromaSpeed) else null
+                val outline = textScale
+                val shadowOffsets =
+                    if (fullShadow) listOf(
+                        -outline to -outline, 0f to -outline, outline to -outline,
+                        -outline to 0f, outline to 0f,
+                        -outline to outline, 0f to outline, outline to outline,
+                    ) else listOf(shadowOffsetX to shadowOffsetY)
 
                 PolyCanvas(
                     modifier = PolyModifier.size(blockW, blockH)
@@ -124,16 +131,18 @@ abstract class TextHud(
                         val baseline = y + index * lineHeight - metrics.ascent
                         val lineW = skiaFont.measureTextWidth(lineText)
                         if (shadowCol != null) {
-                            text(lineText, x + shadowOffsetX, baseline + shadowOffsetY, shadowCol, skiaFont)
-                            if (textUnderline) {
-                                line(
-                                    x + shadowOffsetX,
-                                    baseline + shadowOffsetY + underlinePos,
-                                    x + shadowOffsetX + lineW,
-                                    baseline + shadowOffsetY + underlinePos,
-                                    shadowCol,
-                                    underlineThick
-                                )
+                            for ((offX, offY) in shadowOffsets) {
+                                text(lineText, x + offX, baseline + offY, shadowCol, skiaFont)
+                                if (textUnderline) {
+                                    line(
+                                        x + offX,
+                                        baseline + offY + underlinePos,
+                                        x + offX + lineW,
+                                        baseline + offY + underlinePos,
+                                        shadowCol,
+                                        underlineThick
+                                    )
+                                }
                             }
                         }
                         text(lineText, x, baseline, fgColor, skiaFont)
@@ -161,7 +170,8 @@ abstract class TextHud(
                 PolyMcText(
                     text = formatted,
                     color = fgColor,
-                    shadow = showShadow,
+                    shadow = showShadow && !fullShadow,
+                    outlineColor = if (showShadow && fullShadow) PolyColor(shadowColor, shadowChroma, shadowChromaSpeed) else null,
                     scale = textScale,
                     modifier = if (isStaticValid) PolyModifier.align(contentAlign) else PolyModifier,
                 )
