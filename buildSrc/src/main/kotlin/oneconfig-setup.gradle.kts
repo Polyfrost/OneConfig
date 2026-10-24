@@ -17,6 +17,7 @@ plugins {
     id("com.google.devtools.ksp")
     `maven-publish`
     signing
+    id("oneconfig-lint")
 }
 
 repositories {

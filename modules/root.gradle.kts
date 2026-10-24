@@ -15,6 +15,7 @@ subprojects {
     apply(plugin = "jvm-test-suite")
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
+    apply(plugin = "oneconfig-lint")
 
     group = rootProject.group
     version = rootProject.version
