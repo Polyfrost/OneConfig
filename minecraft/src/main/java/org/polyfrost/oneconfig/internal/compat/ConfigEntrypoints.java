@@ -52,6 +52,7 @@ import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 //? if !neoforge {
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
 import net.fabricmc.loader.api.entrypoint.EntrypointContainer;
 //?}
 
@@ -529,8 +530,8 @@ public final class ConfigEntrypoints {
 
     //? if !neoforge {
     // a nested mod that provides an entrypoint itself is left as its own provider
-    private static void collectNested(net.fabricmc.loader.api.ModContainer container, String providerId, Set<String> ids, Map<String, String> nested) {
-        for (net.fabricmc.loader.api.ModContainer child : container.getContainedMods()) {
+    private static void collectNested(ModContainer container, String providerId, Set<String> ids, Map<String, String> nested) {
+        for (ModContainer child : container.getContainedMods()) {
             String childId = child.getMetadata().getId();
             if (ids.contains(childId) || nested.putIfAbsent(childId, providerId) != null) continue;
             collectNested(child, providerId, ids, nested);

@@ -1,3 +1,4 @@
+import com.google.devtools.ksp.gradle.KspExtension
 import dev.kikugie.stonecutter.build.StonecutterBuildExtension
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
@@ -351,7 +352,7 @@ dependencies {
 }
 
 if (enableMoulRelocatorKsp) {
-    extensions.configure<com.google.devtools.ksp.gradle.KspExtension> {
+    extensions.configure<KspExtension> {
         arg("relocator.mcVersion", stonecutter.current.version)
     }
 } else {

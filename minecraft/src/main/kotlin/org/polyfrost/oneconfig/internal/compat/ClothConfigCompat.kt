@@ -8,6 +8,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
+import java.util.function.Function
 import java.util.function.Supplier
 import net.minecraft.client.Minecraft
 import org.apache.logging.log4j.LogManager
@@ -485,7 +486,7 @@ object ClothConfigCompat {
                 ?.let { invokeNoArg(it, "getTopRenderer") }
                 ?.let { runCatching { readField(it, "toTextFunction") }.getOrNull() }
             else -> null
-        }) as? java.util.function.Function<Any?, Any?> ?: return null
+        }) as? Function<Any?, Any?> ?: return null
         return { v -> runCatching { resolveComponent(fn.apply(v)) }.getOrNull()?.takeIf { it.isNotBlank() } }
     }
 

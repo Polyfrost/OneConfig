@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import kotlin.OverloadResolutionByLambdaReturnType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
@@ -457,7 +458,7 @@ public abstract class Config {
      * The name of the option should be the name of the field
      */
     @SuppressWarnings("unchecked")
-    @kotlin.OverloadResolutionByLambdaReturnType
+    @OverloadResolutionByLambdaReturnType
     protected <T> void addCallback(String option, Predicate<T> callback) {
         whenInitialized(() -> ((Property<T>) getProperty(option)).addCallback(callback));
     }
