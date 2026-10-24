@@ -527,7 +527,8 @@ class PolyToolkitTest {
         assertEquals(-60f, first.y)
         scroll.wheel(1f)
         while (scroll.animating) assertTrue(frame())
-        assertEquals(-scroll.value, first.y)
+        // the zero delta treats -0f (wheel step scrolled back to the top) as equal to 0f
+        assertEquals(-scroll.value, first.y, 0f)
         assertFalse(frame())
         runtime.dispose()
     }
