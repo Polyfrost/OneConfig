@@ -315,7 +315,7 @@ internal object KeptMeshes {
     }
 
     private fun kept(element: GuiElementRenderState): BlazeRenderer.Mesh? {
-        if (element !is BlazeRenderer.Mesh || element.gpu == null) return null
+        if (element !is BlazeRenderer.Mesh || element.gpu == null || element.lastDrawn == frame) return null
         element.lastDrawn = frame
         RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS).getBuffer(element.vertexCount / 4 * 6)
         return element
