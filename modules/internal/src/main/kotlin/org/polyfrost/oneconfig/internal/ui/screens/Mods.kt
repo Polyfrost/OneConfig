@@ -78,6 +78,7 @@ import org.polyfrost.oneconfig.internal.ui.api.ModFavorites
 import org.polyfrost.oneconfig.internal.ui.api.ModGridEntry
 import org.polyfrost.oneconfig.internal.ui.api.ModHidden
 import org.polyfrost.oneconfig.internal.ui.api.ModOrder
+import org.polyfrost.oneconfig.internal.ui.api.ModSortStore
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.api.buildModGridEntries
@@ -127,7 +128,10 @@ enum class ModCategory(
 
 @Composable
 fun Mods() {
-    DecoratedModsPage(ModsPageDecorators.all(), 0)
+    Box {
+        DecoratedModsPage(ModsPageDecorators.all(), 0)
+        ModSortControl(Modifier.align(Alignment.TopEnd))
+    }
 }
 
 @Composable
@@ -182,11 +186,12 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
     val favoriteRevision = ModFavorites.revision
     val hiddenRevision = ModHidden.revision
     val orderRevision = ModOrder.revision
+    val sortMode = ModSortStore.selectedId
     val typeRevision = ModCardTypes.revision
     val collapseRevision = ModCardTypeCollapseStore.revision
     val filtered = remember(
         registryRevision, hudRevision, category, categoryRevision, favoriteRevision, hiddenRevision, orderRevision,
-        typeRevision,
+        typeRevision, sortMode,
     ) {
         ConfigRegistry.modCardConfigs
             .filter { ModHidden.isHidden(it.id) == category.hiddenOnly }
@@ -398,6 +403,7 @@ private fun commitDrop(entries: List<ModGridEntry>, index: Int) {
     if (modFavoriteAt(entries, index, ModFavorites::isFavorite) != ModFavorites.isFavorite(dropped.id)) {
         ModFavorites.toggle(dropped.id)
     }
+    if (ModSortStore.alphabetical) return
     val group = entries.slice(modGroupBounds(entries, index)).filterIsInstance<ModGridEntry.Card>().map { it.data }
     ModOrder.reorder(
         group.map { it.id },
