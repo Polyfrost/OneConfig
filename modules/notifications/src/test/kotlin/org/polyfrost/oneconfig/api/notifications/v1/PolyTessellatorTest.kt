@@ -308,6 +308,24 @@ class PolyTessellatorTest {
     }
 
     @Test
+    fun bigShadowMaskIsDownsampledButKeepsItsExtent() {
+        val r = Recorder()
+        r.shadow(0f, 0f, 400f, 300f, 20f, Shadow(radius = 50.dp, color = PolyColor(0x80000000.toInt())))
+        val b = r.done().single()
+        assertEquals(9 * 4, b.colors.size)
+        val page = b.texture as PolyGlyphPage.Page
+        val s = PolyGlyphPage.SIZE
+        fun a(q: Int, v: Int) = page.pixels[(b.verts[(q * 4 + v) * 4 + 3] * s).toInt() * s + (b.verts[(q * 4 + v) * 4 + 2] * s).toInt()] ushr 24
+        assertTrue(a(4, 0) > 250, "centre ${a(4, 0)}")
+        assertTrue(a(0, 0) < 3, "corner ${a(0, 0)}")
+        val xs = b.verts.filterIndexed { i, _ -> i % 4 == 0 }
+        assertEquals(200f, (xs.min() + xs.max()) / 2f, 1e-3f)
+        assertTrue(xs.min() in -100f..-80f, "extent ${xs.min()}")
+        val us = b.verts.filterIndexed { i, _ -> i % 4 == 2 }
+        assertTrue((us.max() - us.min()) * s < 128f, "mask ${(us.max() - us.min()) * s} texels wide")
+    }
+
+    @Test
     fun imageCarriesUvAndTint() {
         val r = Recorder()
         val bmp = ImageBitmap(4, 4, ByteArray(64) { -1 })

@@ -216,9 +216,9 @@ abstract class PolyTessellator : PolyRenderer {
         val y0 = by - e
         val x3 = bx + bw + e
         val y3 = by + bh + e
-        val kx = min(m.slice + 0.5f, (x3 - x0) * s / 2f)
-        val ky = min(m.slice + 0.5f, (y3 - y0) * s / 2f)
-        val mw = m.bitmap.width.toFloat()
+        val kx = min(m.slice, (x3 - x0) * s / 2f)
+        val ky = min(m.slice, (y3 - y0) * s / 2f)
+        val mw = m.width
         val xs = floatArrayOf(x0, x0 + kx / s, x3 - kx / s, x3)
         val ys = floatArrayOf(y0, y0 + ky / s, y3 - ky / s, y3)
         val us = floatArrayOf(0f, kx / mw, 1f - kx / mw, 1f)
@@ -878,7 +878,7 @@ abstract class PolyTessellator : PolyRenderer {
         return out
     }
 
-    private class ShadowMask(val bitmap: ImageBitmap, val slice: Int, val extent: Int)
+    private class ShadowMask(val bitmap: ImageBitmap, val slice: Float, val extent: Float, val width: Float)
 
     companion object {
         private fun <K, V> lru(max: Int) = object : LinkedHashMap<K, V>(16, 0.75f, true) {
@@ -911,20 +911,29 @@ abstract class PolyTessellator : PolyRenderer {
             }
         }
 
-        private fun shadowMask(rPx: Int, sigmaQ: Int): ShadowMask = masks.getOrPut((rPx.toLong() shl 32) or sigmaQ.toLong()) {
+        private const val MAX_MASK_SIGMA = 6f
+
+        private fun shadowMask(rPx: Int, sigmaQ: Int): ShadowMask {
+            val d = max(1, ceil(sigmaQ / 2f / MAX_MASK_SIGMA).toInt())
+            val rT = (rPx.toFloat() / d).roundToInt()
+            val qT = max(1, (sigmaQ.toFloat() / d).roundToInt())
+            return masks.getOrPut((rT.toLong() shl 32) or (qT.toLong() shl 16) or d.toLong()) { shadowMask(rT, qT, d) }
+        }
+
+        private fun shadowMask(rT: Int, sigmaQ: Int, d: Int): ShadowMask {
             val sigma = sigmaQ / 2f
             val e = ceil(sigma * 3f).toInt()
-            val core = 2 * (rPx + e) + 1
+            val core = 2 * (rT + e) + 1
             val m = core + 2 * e
             val cov = FloatArray(m * m)
-            val lo = e.toFloat(); val hi = (e + core).toFloat(); val r = rPx.toFloat()
+            val lo = e.toFloat(); val hi = (e + core).toFloat(); val r = rT.toFloat()
             for (y in 0 until m) for (x in 0 until m) {
                 val px = x + 0.5f; val py = y + 0.5f
                 val qx = max(max(lo + r - px, px - (hi - r)), 0f)
                 val qy = max(max(lo + r - py, py - (hi - r)), 0f)
                 val inX = min(px - lo, hi - px); val inY = min(py - lo, hi - py)
-                val d = if (qx > 0f && qy > 0f) hypot(qx, qy) - r else -min(inX, inY)
-                cov[y * m + x] = (0.5f - d).coerceIn(0f, 1f)
+                val dist = if (qx > 0f && qy > 0f) hypot(qx, qy) - r else -min(inX, inY)
+                cov[y * m + x] = (0.5f - dist).coerceIn(0f, 1f)
             }
             val k = FloatArray(e * 2 + 1) { exp(-((it - e) * (it - e)) / (2f * sigma * sigma)) }
             val sum = k.sum()
@@ -940,7 +949,7 @@ abstract class PolyTessellator : PolyRenderer {
                 for (i in k.indices) { val sy = y + i - e; if (sy in 0 until m) a += tmp[sy * m + x] * k[i] }
                 ((a * 255f).roundToInt().coerceIn(0, 255) shl 24) or 0xFFFFFF
             }
-            ShadowMask(bmp, rPx + 2 * e, e)
+            return ShadowMask(bmp, (rT + 2 * e + 0.5f) * d, (e * d).toFloat(), (m * d).toFloat())
         }
     }
 }
