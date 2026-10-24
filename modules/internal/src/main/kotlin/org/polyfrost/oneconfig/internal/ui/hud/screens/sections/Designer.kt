@@ -1,17 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.hud.screens.sections
 
-import androidx.compose.animation.core.withInfiniteAnimationFrameNanos
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -19,38 +7,51 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
-import androidx.compose.ui.window.PopupProperties
-import org.jetbrains.skia.Paint
-import org.polyfrost.compose.layout.PolyAlign
+import org.polyfrost.compose.animation.animateColorAsState
+import org.polyfrost.compose.foundation.Canvas
+import org.polyfrost.compose.foundation.background
+import org.polyfrost.compose.foundation.border
+import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
+import org.polyfrost.compose.foundation.layout.Arrangement
+import org.polyfrost.compose.foundation.layout.Box
+import org.polyfrost.compose.foundation.layout.Column
+import org.polyfrost.compose.foundation.layout.Row
+import org.polyfrost.compose.foundation.layout.fillMaxWidth
+import org.polyfrost.compose.foundation.layout.height
+import org.polyfrost.compose.foundation.layout.padding
+import org.polyfrost.compose.foundation.layout.size
+import org.polyfrost.compose.foundation.layout.weight
 import org.polyfrost.compose.mc.McFontQueue
-import org.polyfrost.compose.render.FontManager
-import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.render.PolyFont
+import org.polyfrost.compose.ui.Alignment
+import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.graphics.Color
+import org.polyfrost.compose.ui.graphics.copy
+import org.polyfrost.compose.ui.input.pointer.PointerIcon
+import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
+import org.polyfrost.compose.ui.platform.LocalDensity
+import org.polyfrost.compose.ui.text.font.FontWeight
+import org.polyfrost.compose.ui.unit.DpOffset
+import org.polyfrost.compose.ui.unit.dp
+import org.polyfrost.compose.ui.unit.sp
+import org.polyfrost.compose.ui.window.Popup
+import org.polyfrost.compose.ui.window.PopupProperties
 import org.polyfrost.oneconfig.api.hud.v1.Font
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
 import org.polyfrost.oneconfig.api.hud.v1.TextHud
-import org.polyfrost.oneconfig.api.hud.v1.Weight
+import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.SelectableIconButton
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.settings.ChromaColorAnimation
 import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerModel
 import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerPopup
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
+import org.polyfrost.oneconfig.internal.ui.components.settings.colorToHex
+import org.polyfrost.oneconfig.internal.ui.components.settings.luminance
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
 import org.polyfrost.oneconfig.internal.ui.hud.components.AlignmentPicker
@@ -91,43 +92,19 @@ fun Designer(hud: Hud?, query: String) {
     LaunchedEffect(hud) { repairHudStaticSize(hud) }
 
     HudSettingsContent(hud) {
-    var staticWidth by remember { mutableStateOf(hud.staticWidth) }
-    var staticW by remember { mutableStateOf(hud.staticW) }
-    var staticH by remember { mutableStateOf(hud.staticH) }
-    var alignment by remember { mutableStateOf(hud.alignment) }
-    var growthAnchor by remember { mutableStateOf(hud.effectiveGrowthAnchor) }
-    val growthAlign = growthAnchor.toAlign() ?: PolyAlign.Center
-    var padLeft by remember { mutableStateOf(hud.padLeft) }
-    var padRight by remember { mutableStateOf(hud.padRight) }
-    var padTop by remember { mutableStateOf(hud.padTop) }
-    var padBottom by remember { mutableStateOf(hud.padBottom) }
-    var font by remember { mutableStateOf(hud.font) }
-    var textScale by remember { mutableStateOf(hud.textScale) }
-    var textBold by remember { mutableStateOf(hud.textBold) }
-    var textItalic by remember { mutableStateOf(hud.textItalic) }
-    var textUnderline by remember { mutableStateOf(hud.textUnderline) }
-    var textWeight by remember { mutableStateOf(hud.textWeight) }
-    var caseType by remember {
-        mutableStateOf(
-            CaseType.entries[hud.caseType.coerceIn(
-                0,
-                CaseType.entries.lastIndex
-            )]
-        )
-    }
-    var textAlign by remember {
-        mutableStateOf(
-            AlignType.entries[hud.textAlign.coerceIn(
-                0,
-                AlignType.entries.lastIndex
-            )]
-        )
-    }
-    var textColor by remember { mutableStateOf(Color(hud.textColor)) }
-    var showShadow by remember { mutableStateOf(hud.showShadow) }
+    val staticWidth = hud.staticWidth
+    val growthAlign = hud.effectiveGrowthAnchor.toAlign() ?: Alignment.Center
+    val caseType = CaseType.entries[hud.caseType.coerceIn(
+        0,
+        CaseType.entries.lastIndex
+    )]
+    val textAlign = AlignType.entries[hud.textAlign.coerceIn(
+        0,
+        AlignType.entries.lastIndex
+    )]
 
     Section("Size & Alignment", query, "Static Size", "Width", "Height") {
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             HudSettingTarget(hud, "staticWidth") {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -135,13 +112,8 @@ fun Designer(hud: Hud?, query: String) {
                 ) {
                     SwitchControl(staticWidth) {
                         Snapshot.withMutableSnapshot {
-                            staticWidth = it; hud.staticWidth = it
-                            if (it) {
-                                staticW = hud.staticW
-                                staticH = hud.staticH
-                            } else {
-                                hud.updateAndRecalculate()
-                            }
+                            hud.staticWidth = it
+                            if (!it) hud.updateAndRecalculate()
                         }
                     }
                     Text("Static Size", color = LocalTheme.current.textColor, fontSize = 14.sp)
@@ -153,14 +125,14 @@ fun Designer(hud: Hud?, query: String) {
                     HudSettingTarget(hud, "staticW") {
                         NumberSpinner(
                             "Width", "px",
-                            staticW, { Snapshot.withMutableSnapshot { staticW = it; hud.staticW = it } },
+                            hud.staticW, { Snapshot.withMutableSnapshot { hud.staticW = it } },
                             20f, 2000f, 1f, width = 128.dp
                         )
                     }
                     HudSettingTarget(hud, "staticH") {
                         NumberSpinner(
                             "Height", "px",
-                            staticH, { Snapshot.withMutableSnapshot { staticH = it; hud.staticH = it } },
+                            hud.staticH, { Snapshot.withMutableSnapshot { hud.staticH = it } },
                             8f, 2000f, 1f, width = 128.dp
                         )
                     }
@@ -169,25 +141,26 @@ fun Designer(hud: Hud?, query: String) {
 
             HudSettingTarget(hud, if (staticWidth) "alignment" else "growthAnchor") {
             Row(
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                AlignmentPicker(if (staticWidth) alignment else growthAlign) {
+                AlignmentPicker(if (staticWidth) hud.alignment else growthAlign) {
                     Snapshot.withMutableSnapshot {
                         if (staticWidth) {
-                            alignment = it
                             hud.alignment = it
                         } else {
-                            growthAnchor = HudAnchor.of(it)
-                            hud.setGrowthAnchorKeepingPosition(growthAnchor)
+                            hud.setGrowthAnchorKeepingPosition(HudAnchor.of(it))
                         }
                     }
                 }
                 Text(
                     if (staticWidth) "Aligns the content inside the fixed box"
                     else "Pins this corner or edge in place;\nthe HUD only grows away from it",
+                    modifier = Modifier.weight(1f),
                     color = LocalTheme.current.textColorSecondary,
-                    fontSize = 12.sp
+                    fontSize = 12.sp,
+                    softWrap = true,
                 )
             }
             }
@@ -195,31 +168,31 @@ fun Designer(hud: Hud?, query: String) {
     }
 
     Section("Padding", query, "Edge padding") {
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text("Edge padding", color = LocalTheme.current.textColor, fontSize = 14.sp)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 HudSettingTarget(hud, "padLeft") {
                     NumberSpinnerWithIcon(
                         "pad-left", "px",
-                        padLeft, { Snapshot.withMutableSnapshot { padLeft = it; hud.padLeft = it } }, 0f, 100f, 1f
+                        hud.padLeft, { Snapshot.withMutableSnapshot { hud.padLeft = it } }, 0f, 100f, 1f
                     )
                 }
                 HudSettingTarget(hud, "padRight") {
                     NumberSpinnerWithIcon(
                         "pad-right", "px",
-                        padRight, { Snapshot.withMutableSnapshot { padRight = it; hud.padRight = it } }, 0f, 100f, 1f
+                        hud.padRight, { Snapshot.withMutableSnapshot { hud.padRight = it } }, 0f, 100f, 1f
                     )
                 }
                 HudSettingTarget(hud, "padTop") {
                     NumberSpinnerWithIcon(
                         "pad-top", "px",
-                        padTop, { Snapshot.withMutableSnapshot { padTop = it; hud.padTop = it } }, 0f, 100f, 1f
+                        hud.padTop, { Snapshot.withMutableSnapshot { hud.padTop = it } }, 0f, 100f, 1f
                     )
                 }
                 HudSettingTarget(hud, "padBottom") {
                     NumberSpinnerWithIcon(
                         "pad-bottom", "px",
-                        padBottom, { Snapshot.withMutableSnapshot { padBottom = it; hud.padBottom = it } }, 0f, 100f, 1f
+                        hud.padBottom, { Snapshot.withMutableSnapshot { hud.padBottom = it } }, 0f, 100f, 1f
                     )
                 }
             }
@@ -243,57 +216,43 @@ fun Designer(hud: Hud?, query: String) {
                     else -> raw
                 }
             }
-            val density = LocalDensity.current.density
-            if (font == Font.Poppins) {
+            val density = LocalDensity.current.density / Platform.screen().surfaceRatio()
+            val textColor = Color(hud.textColor)
+            if (hud.font == Font.Poppins) {
                 val fontName = hud.getPoppinsFontName()
-                val skiaFont = FontManager.getFont(14f * textScale, fontName)
-                val metrics = skiaFont.metrics
-                val previewLines = previewText.lines()
-                val lineHeight = skiaFont.spacing
-                val textW = previewLines.maxOf { skiaFont.measureTextWidth(it) }
-                val textH = (previewLines.size - 1) * lineHeight + (metrics.descent - metrics.ascent)
-                Canvas(modifier = Modifier.size((textW / density).dp, (textH / density).dp)) {
-                    drawIntoCanvas { canvas ->
-                        val paint = Paint().apply { color = textColor.toArgb() }
-                        previewLines.forEachIndexed { index, lineText ->
-                            if (lineText.isEmpty()) return@forEachIndexed
-                            val baseline = index * lineHeight - metrics.ascent
-                            canvas.nativeCanvas.drawString(lineText, 0f, baseline, skiaFont, paint)
-                            if (textUnderline) {
-                                val underlinePos = metrics.underlinePosition ?: (14f * textScale * 0.08f)
-                                val underlineThick = metrics.underlineThickness ?: (14f * textScale * 0.06f)
-                                val linePaint = Paint().apply {
-                                    color = textColor.toArgb()
-                                    strokeWidth = underlineThick
-                                }
-                                val lineW = skiaFont.measureTextWidth(lineText)
-                                canvas.nativeCanvas.drawLine(0f, baseline + underlinePos, lineW, baseline + underlinePos, linePaint)
-                            }
-                        }
+                val polyFont = PolyFont(fontName, 14f * hud.textScale / density)
+                val metrics = polyFont.metrics
+                val textW = polyFont.measureTextWidth(previewText)
+                val textH = metrics.descent - metrics.ascent
+                val textUnderline = hud.textUnderline
+                Canvas(modifier = Modifier.size(textW.dp, textH.dp)) { x, y, _, _ ->
+                    val baseline = y - metrics.ascent
+                    text(previewText, x, baseline, textColor, polyFont)
+                    if (textUnderline) {
+                        val underlinePos = metrics.underlinePosition
+                        line(x, baseline + underlinePos, x + textW, baseline + underlinePos, textColor, metrics.underlineThickness)
                     }
                 }
             } else {
                 val mcText = buildString {
-                    if (textBold) append("§l")
-                    if (textItalic) append("§o")
-                    if (textUnderline) append("§n")
+                    if (hud.textBold) append("§l")
+                    if (hud.textItalic) append("§o")
+                    if (hud.textUnderline) append("§n")
                     append(previewText)
                 }
-                val scale = textScale
-                val textW = mcText.lines().maxOf { McFontQueue.measureTextWidth(it, scale) }
-                val textH = mcText.lines().size * McFontQueue.measureTextHeight(scale)
-                Canvas(modifier = Modifier.size((textW / density).dp, (textH / density).dp)) {
-                    drawIntoCanvas { canvas ->
-                        McFontQueue.renderer?.invoke(
-                            canvas.nativeCanvas,
-                            mcText,
-                            0f,
-                            0f,
-                            textColor.toArgb(),
-                            showShadow,
-                            scale
-                        )
-                    }
+                val scale = hud.textScale / density
+                val textW = McFontQueue.measureTextWidth(mcText, scale)
+                val textH = McFontQueue.measureTextHeight(scale)
+                val showShadow = hud.showShadow
+                Canvas(modifier = Modifier.size(textW.dp, textH.dp)) { x, y, _, _ ->
+                    this.mcText(
+                        mcText,
+                        x,
+                        y,
+                        textColor.argb,
+                        showShadow,
+                        scale
+                    )
                 }
             }
         }
@@ -301,18 +260,18 @@ fun Designer(hud: Hud?, query: String) {
             HudSettingTarget(hud, "font") {
                 Dropdown(
                     "Font",
-                    font,
-                    { Snapshot.withMutableSnapshot { font = it; hud.font = it } }
+                    hud.font,
+                    { Snapshot.withMutableSnapshot { hud.font = it } }
                 )
             }
             HudSettingTarget(hud, "textScale") {
                 NumberSpinner(
                     "Font size", "align", "px",
-                    textScale * 14f, { Snapshot.withMutableSnapshot { val s = it / 14f; textScale = s; hud.textScale = s } },
+                    hud.textScale * 14f, { Snapshot.withMutableSnapshot { hud.textScale = it / 14f } },
                     6f, 64f, 1f, width = 112.dp
                 )
             }
-            HudSettingTarget(hud, "textBold") {
+            HudSettingTarget(hud, "textBold", "textItalic") {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Modifiers", color = LocalTheme.current.textColor, fontSize = 14.sp)
                 Box(
@@ -327,21 +286,21 @@ fun Designer(hud: Hud?, query: String) {
                     ) {
                         SelectableIconButton(
                             Modifiers.Bold.icon,
-                            selected = textBold,
+                            selected = hud.textBold,
                             modifier = Modifier.size(18.dp),
                             onClick = {
                                 Snapshot.withMutableSnapshot {
-                                    textBold = !textBold; hud.textBold = textBold
+                                    hud.textBold = !hud.textBold
                                 }
                             }
                         )
                         SelectableIconButton(
                             Modifiers.Italic.icon,
-                            selected = textItalic,
+                            selected = hud.textItalic,
                             modifier = Modifier.size(18.dp),
                             onClick = {
                                 Snapshot.withMutableSnapshot {
-                                    textItalic = !textItalic; hud.textItalic = textItalic
+                                    hud.textItalic = !hud.textItalic
                                 }
                             }
                         )
@@ -354,21 +313,21 @@ fun Designer(hud: Hud?, query: String) {
             HudSettingTarget(hud, "textWeight") {
                 Dropdown(
                     "Weight",
-                    textWeight,
-                    { Snapshot.withMutableSnapshot { textWeight = it; hud.textWeight = it } }
+                    hud.textWeight,
+                    { Snapshot.withMutableSnapshot { hud.textWeight = it } }
                 )
             }
             HudSettingTarget(hud, "textAlign") {
                 Radio(
                     "Align",
                     textAlign,
-                ) { a -> Snapshot.withMutableSnapshot { textAlign = a; hud.textAlign = a.ordinal } }
+                ) { a -> Snapshot.withMutableSnapshot { hud.textAlign = a.ordinal } }
             }
             HudSettingTarget(hud, "caseType") {
                 Radio(
                     "Case Type",
                     caseType,
-                ) { c -> Snapshot.withMutableSnapshot { caseType = c; hud.caseType = c.ordinal } }
+                ) { c -> Snapshot.withMutableSnapshot { hud.caseType = c.ordinal } }
             }
         }
     }
@@ -383,8 +342,8 @@ internal fun hudSearchMatches(query: String, vararg labels: String) =
 @Composable
 fun Section(title: String, query: String, vararg labels: String, content: @Composable () -> Unit) {
     if (!hudSearchMatches(query, title, *labels)) return
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(title.uppercase(), color = LocalTheme.current.textColorSecondary, fontSize = 12.sp)
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(title.uppercase(), color = LocalTheme.current.textColorSecondary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
         content()
     }
 }
@@ -406,45 +365,44 @@ internal fun ColorButton(
         }
     }
     val theme = LocalTheme.current
+    val interactionSource = rememberInteractionSource()
+    val isHovered by interactionSource.collectIsHoveredAsState()
 
-    // the chroma swatch cycles with the same PolyColor.argb math the HUD uses at render time so the
-    // preview matches in-game and the stored base colour is never mutated
     var displayColor by remember { mutableStateOf(color) }
-    val baseArgb = color.toArgb()
-    LaunchedEffect(pickerModel.chromaEnabled, pickerModel.chromaSpeed, baseArgb) {
-        if (!pickerModel.chromaEnabled) {
-            displayColor = Color(baseArgb)
-            return@LaunchedEffect
-        }
-        while (true) {
-            withInfiniteAnimationFrameNanos {
-                displayColor = Color(PolyColor(baseArgb, true, pickerModel.chromaSpeed).argb)
-            }
-        }
-    }
+    ChromaColorAnimation(pickerModel) { displayColor = it }
+    val shownColor = if (pickerModel.chromaEnabled) displayColor else color
+    val textColor = animateColorAsState(if (shownColor.luminance() > 0.6f) Color.Black else Color.White)
+    val borderColor = animateColorAsState(
+        if (isHovered || expanded) theme.textColor.copy(0.3f) else theme.borderColor
+    )
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(label, color = theme.textColor, fontSize = 14.sp)
         Box {
-            Box(
+            Row(
                 modifier = Modifier
-                    .size(32.dp)
-                    .clip(theme.sideBarNavigationEntryShape)
-                    .background(displayColor)
-                    .border(1.dp, theme.borderColor, theme.sideBarNavigationEntryShape)
-                    .onClick(rememberInteractionSource()) { expanded = !expanded }
+                    .onClick(interactionSource) { expanded = !expanded }
                     .pointerHoverIcon(PointerIcon.Hand)
-            )
+                    .background(shownColor, theme.sideBarNavigationEntryShape)
+                    .border(1.dp, borderColor, theme.sideBarNavigationEntryShape)
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Icon("paintbrush", color = textColor, modifier = Modifier.size(14.dp))
+                Text("#${colorToHex(shownColor)}", color = textColor, fontSize = 13.sp)
+            }
             if (expanded) {
-                ShellPopup(
-                    alignment = Alignment.TopStart,
-                    offset = IntOffset(0, 40),
+                Popup(
+                    alignment = Alignment.TopEnd,
+                    offset = DpOffset(0.dp, 44.dp),
                     onDismissRequest = { expanded = false },
                     properties = PopupProperties(focusable = true),
                 ) {
                     ColorPickerPopup(
                         model = pickerModel,
                         onColorChanged = { c ->
+                            displayColor = c
                             onColorChanged(c)
                             onChromaChanged(pickerModel.chromaEnabled, pickerModel.chromaSpeed)
                         },

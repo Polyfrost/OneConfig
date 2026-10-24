@@ -38,7 +38,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.scores.Scoreboard;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.polyfrost.compose.render.RenderContext;
 import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
@@ -52,9 +51,7 @@ import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent;
 import org.polyfrost.oneconfig.api.hypixel.v1.HypixelUtils;
 import org.polyfrost.oneconfig.api.notifications.v1.Notification;
-import org.polyfrost.oneconfig.api.notifications.v1.NotificationType;
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
-import org.polyfrost.oneconfig.api.notifications.v1.NotificationsRenderer;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.internal.compat.CompatLoader;
@@ -66,12 +63,12 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories;
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog;
 import org.polyfrost.oneconfig.internal.ui.compose.McFontService;
-import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
-import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
-import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen;
+//? if >= 1.21.11
+import org.polyfrost.oneconfig.internal.ui.compose.BlazeHud;
+import org.polyfrost.oneconfig.internal.ui.compose.GlHost;
+import org.polyfrost.oneconfig.internal.ui.poly.PolyHudEditorScreen;
+import org.polyfrost.oneconfig.internal.ui.poly.ShellScreen;
 import org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar;
-import org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen;
-import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudOffscreen;
 import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudRenderer;
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindConflicts;
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry;
@@ -88,11 +85,6 @@ import net.minecraft.world.scores.DisplaySlot;
 import org.polyfrost.oneconfig.internal.compat.ArmorHudCompat;
 import org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat;
 //?}
-
-//? if = 1.8.9 {
-/*import net.ornithemc.osl.resource.loader.api.client.ClientResourceLoaderEvents;
-import org.polyfrost.oneconfig.internal.ui.compose.SkiaFontRenderer;
-*///?}
 
 //? if fabric {
 import org.polyfrost.oneconfig.internal.compat.ModMenuShimLoader;
@@ -113,7 +105,7 @@ public class OneConfig
 
     private static void registerCommands() {
         Command<FabricClientCommandSource> executor = (c) -> {
-            OneConfigUIScreen.openLastSession();
+            ShellScreen.openLastSession();
             return Command.SINGLE_SUCCESS;
         };
 
@@ -132,7 +124,20 @@ public class OneConfig
                             HudManager.INSTANCE.openEditor();
                             return Command.SINGLE_SUCCESS;
                         })
-                ).build();
+                )
+                .then(CommandManager.literal("credits")
+                        .executes((ctx) -> {
+                            Platform.screen().display(org.polyfrost.oneconfig.internal.ui.poly.CreditsScreen.open());
+                            return Command.SINGLE_SUCCESS;
+                        })
+                )
+                .then(CommandManager.literal("keybinds")
+                        .executes((ctx) -> {
+                            Platform.screen().display(org.polyfrost.oneconfig.internal.ui.poly.KeybindsScreen.open());
+                            return Command.SINGLE_SUCCESS;
+                        })
+                )
+                .build();
         CommandManager.INSTANCE.register(node);
         CommandManager.INSTANCE.register(CommandManager.literal("ocfg").executes(executor).redirect(node));
     }
@@ -157,7 +162,7 @@ public class OneConfig
                 return true;
             }
             try {
-                OneConfigUIScreen.openLastSession();
+                ShellScreen.openLastSession();
             } catch (Throwable t) {
                 //~ if >= 26.2 'gui.getChat' -> 'gui.hud.getChat'
                 Minecraft.getInstance().gui.hud.getChat()
@@ -177,6 +182,10 @@ public class OneConfig
      * In a single player world with no other listed players and no LIST scoreboard objective the
      * tab list stays hidden even while the key is down
      */
+    private static boolean isHudEditor(Object screen) {
+        return screen instanceof PolyHudEditorScreen;
+    }
+
     private static boolean isTabListVisible() {
         Minecraft minecraft = Minecraft.getInstance();
         if (!minecraft.options.keyPlayerList.isDown()) return false;
@@ -199,7 +208,6 @@ public class OneConfig
         return minecraft.getDebugOverlay().showDebugScreen();
     }
 
-    private static boolean legacyHudOffscreenReady;
 
     //~ if = 1.8.9 '(GuiGraphicsExtractor graphics)' -> '()'
     public static void render(GuiGraphicsExtractor graphics) {
@@ -212,10 +220,7 @@ public class OneConfig
      * Runs the offscreen passes before vanilla extracts the HUD to maintain compatibility with Gnetum
      */
     public static void prepareHud() {
-        legacyHudOffscreenReady = false;
-        if (!SkiaCtx.INSTANCE.isReady()) {
-            return;
-        }
+        if (GlHost.INSTANCE.unavailableReason() != null) return;
 
         float sw = Platform.screen().guiWidth();
         float sh = Platform.screen().guiHeight();
@@ -236,49 +241,29 @@ public class OneConfig
         HudManager.targetPixelWidth = Platform.screen().viewportWidth();
         HudManager.targetPixelHeight = Platform.screen().viewportHeight();
 
-        //~ if < 1.21.8 '.suppressInGameHudRender' -> '.shouldSuppressInGameHudRender()'
-        boolean hudRendersLive = !SkiaCtx.INSTANCE.suppressInGameHudRender;
-        legacyHudOffscreenReady = !hudRendersLive && LegacyHudOffscreen.INSTANCE.render();
-        // records the F3 overlay offscreen so Skia can put it above the Compose UI instead of below the
-        // blur and it must run every frame regardless of the HUD dirty gate
-        // 1.8.9 replays the overlay in Mixin_SkiaFrame after Skia finishes drawing instead
-        //? if > 1.8.9
-        DebugOverlayOffscreen.INSTANCE.render();
-        if (HudManager.INSTANCE.beginFrame(sw, sh, ItemCatalog.INSTANCE::renderHudIcons)) {
-            SkiaCtx.INSTANCE.queueHudDraw(() -> {
-                var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
+        //? if >= 1.21.11 {
+        if (HudManager.INSTANCE.beginFrame(sw, sh, ItemCatalog.INSTANCE::renderHudIcons, true)) BlazeHud.markDirty();
+        //?} else {
+        /*if (HudManager.INSTANCE.beginFrame(sw, sh, ItemCatalog.INSTANCE::renderHudIcons, false)) {
+            GlHost.INSTANCE.drawHudGl(ctx -> {
                 HudManager.INSTANCE.render(ctx, sw, sh);
+                return kotlin.Unit.INSTANCE;
             });
-            // renders into the offscreen TextureTarget which the mixin blits onto MC's render target
-            SkiaCtx.INSTANCE.drawNow();
         }
+        *///?}
     }
 
-    /** Submits the legacy HUDs (when not captured offscreen) and the Skia HUD blit into the vanilla HUD */
     //~ if = 1.8.9 '(GuiGraphicsExtractor graphics)' -> '()'
     public static void submitHud(GuiGraphicsExtractor graphics) {
-        if (!SkiaCtx.INSTANCE.isReady()) {
-            return;
-        }
-        if (!legacyHudOffscreenReady) {
-            //~ if = 1.8.9 '(graphics)' -> '()'
-            LegacyHudRenderer.INSTANCE.renderLive(graphics);
-        }
-        //~ if < 1.21.8 '.suppressInGameHudRender' -> '.shouldSuppressInGameHudRender()'
-        if (!SkiaCtx.INSTANCE.suppressInGameHudRender) {
-            //~ if = 1.8.9 '(graphics)' -> '()'
-            SkiaCtx.INSTANCE.blitHud(graphics);
-        }
-    }
-
-    private static void installNotificationRenderer() {
-        SkiaCtx.INSTANCE.setNotifRenderer(() -> {
-            float sw = Platform.screen().guiWidth();
-            float sh = Platform.screen().guiHeight();
-            if (sw <= 0f || sh <= 0f) return;
-            var ctx = new RenderContext(SkiaCtx.INSTANCE.getCanvas());
-            NotificationsRenderer.render(ctx, sw, sh);
-        });
+        //~ if = 1.8.9 '(graphics)' -> '()'
+        LegacyHudRenderer.INSTANCE.renderLive(graphics);
+        if (GlHost.INSTANCE.unavailableReason() != null) return;
+        //? if >= 1.21.11 {
+        BlazeHud.render(graphics);
+        //?} else {
+        /*//~ if = 1.8.9 '(graphics)' -> '()'
+        GlHost.INSTANCE.blitHud(graphics);
+        *///?}
     }
 
     private static void registerEventHandlers() {
@@ -294,11 +279,11 @@ public class OneConfig
         EventManager.register(
                 HudEditorToggleEvent.class, e -> {
                     if (e.open) {
-                        if (!(Platform.screen().current() instanceof HudEditorUIScreen)) {
-                            Platform.screen().display(HudEditorUIScreen.open(Platform.screen().current() instanceof OneConfigUIScreen));
+                        if (!isHudEditor(Platform.screen().current())) {
+                            Platform.screen().display(new PolyHudEditorScreen());
                         }
                     } else if (!e.screenAlreadyGone) {
-                        if (Platform.screen().current() instanceof HudEditorUIScreen) {
+                        if (isHudEditor(Platform.screen().current())) {
                             Platform.screen().display(null, 0);
                         }
                     }
@@ -308,7 +293,7 @@ public class OneConfig
         // closeEditor() would re-enter setScreen(null) mid-switch, which 26.2+ rejects during disconnect
         EventManager.register(
                 ScreenOpenEvent.class, e -> {
-                    if (HudManager.INSTANCE.isEditorOpen() && e.getScreen() != null && !(e.getScreen() instanceof HudEditorUIScreen)) {
+                    if (HudManager.INSTANCE.isEditorOpen() && e.getScreen() != null && !isHudEditor(e.getScreen())) {
                         HudManager.INSTANCE.onEditorScreenRemoved();
                     }
                 });
@@ -375,14 +360,11 @@ public class OneConfig
         String keyName = OneConfigConfig.oneConfigKeybind.displayName();
         String title = Platform.i18n().translateString("oneconfig.notification.first_launch.title");
         String message = Platform.i18n().translateString("oneconfig.notification.first_launch.message", keyName);
-        firstLaunchToast = Notifications.send(
-                title,
-                message,
-                NotificationType.INFO,
-                Notifications.icon("/assets/oneconfig/brand/oneconfig-icon.svg", 64),
-                -1f,
-                null,
-                OneConfigUIScreen::openLastSession);
+        firstLaunchToast = Notifications.builder(title, message)
+                .icon(Notifications.icon("/assets/oneconfig/brand/oneconfig-icon.svg", 64))
+                .persistent()
+                .onClick(ShellScreen::openLastSession)
+                .send();
     }
 
     public static void dismissFirstLaunchToast() {
@@ -407,14 +389,6 @@ public class OneConfig
             LOGGER.error("Attempted to initialize oneconfig twice! this will be ignored");
             return;
         }
-
-        SkikoDataPath.redirect();
-
-        //? if = 1.8.9 {
-        /*ClientResourceLoaderEvents.INIT_RESOURCE_MANAGER.register(
-            resourceManager -> resourceManager.addReloader(SkiaFontRenderer.INSTANCE)
-        );
-        *///?}
 
         // to enable RenderDoc set these JVM arguments
         // -Drenderdoc.enabled=true
@@ -451,7 +425,6 @@ public class OneConfig
         new ThemeConfig();
         registerCommands();
         registerEventHandlers();
-        installNotificationRenderer();
         MainMenuFpsSampler.init();
         //? fabric
         ModMenuShimLoader.enable();

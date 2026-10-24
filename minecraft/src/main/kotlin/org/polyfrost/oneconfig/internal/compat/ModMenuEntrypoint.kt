@@ -6,14 +6,14 @@ import com.terraformersmc.modmenu.api.ModMenuApi
 import net.minecraft.client.gui.screens.Screen
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
-import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
+import org.polyfrost.oneconfig.internal.ui.poly.ShellScreen
 
 internal object ModMenuEntrypoint : ModMenuApi {
 
     override fun getModConfigScreenFactory(): ConfigScreenFactory<*> {
         if (CompatLoader.hasMod(ROOT_MOD_ID)) return ConfigScreenFactory<Screen> { null }
         return try {
-            ConfigScreenFactory { OneConfigUIScreen.open() }
+            ConfigScreenFactory { ShellScreen.open() }
         } catch (e: LinkageError) {
             reportUnlinkable(e)
             ConfigScreenFactory<Screen> { null }
@@ -24,8 +24,8 @@ internal object ModMenuEntrypoint : ModMenuApi {
         return try {
             val factories = ConfigManager.active().trees()
                 .filter { it.id != null }
-                .associateTo(mutableMapOf()) { it.id to ConfigScreenFactory { _ -> OneConfigUIScreen(initialTree = it) } }
-            factories.putIfAbsent(ROOT_MOD_ID, ConfigScreenFactory { _ -> OneConfigUIScreen.open() })
+                .associateTo(mutableMapOf()) { it.id to ConfigScreenFactory { _ -> ShellScreen.forTree(it) } }
+            factories.putIfAbsent(ROOT_MOD_ID, ConfigScreenFactory { _ -> ShellScreen.open() })
             factories
         } catch (e: LinkageError) {
             reportUnlinkable(e)
@@ -36,7 +36,7 @@ internal object ModMenuEntrypoint : ModMenuApi {
     private fun reportUnlinkable(e: LinkageError) {
         LOGGER.error(
             "OneConfig's screen class could not be linked, so its ModMenu entries are unavailable. " +
-                "This is usually another mod's mixin failing to apply to OneConfigUIScreen - check the " +
+                "This is usually another mod's mixin failing to apply to PolyScreen - check the " +
                 "log above for the Mixin error naming the responsible mod.",
             e,
         )

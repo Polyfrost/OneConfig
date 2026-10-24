@@ -1,10 +1,11 @@
 package org.polyfrost.oneconfig.internal.ui.themes
 
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.unit.dp
+import org.polyfrost.compose.foundation.shape.RoundedCornerShape
+import org.polyfrost.compose.ui.graphics.Color
+import org.polyfrost.compose.ui.graphics.copy
+import org.polyfrost.compose.ui.graphics.Shape
+import org.polyfrost.compose.ui.text.font.FontFamily
+import org.polyfrost.compose.ui.unit.dp
 import java.util.concurrent.ConcurrentHashMap
 
 /** Sets a panel background color's alpha from an opacity percentage between 0 and 100 */

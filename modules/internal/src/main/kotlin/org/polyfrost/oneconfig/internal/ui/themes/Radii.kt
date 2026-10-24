@@ -1,14 +1,11 @@
 package org.polyfrost.oneconfig.internal.ui.themes
 
-import androidx.compose.foundation.shape.CornerBasedShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
+import org.polyfrost.compose.foundation.shape.RoundedCornerShape
+import org.polyfrost.compose.ui.graphics.Shape
+import org.polyfrost.compose.ui.unit.Dp
+import org.polyfrost.compose.ui.unit.coerceAtLeast
+import org.polyfrost.compose.ui.unit.dp
 
 /**
  * The corner radius scale
@@ -33,24 +30,8 @@ object Radii {
     val LG = 20.dp
 }
 
-// large reference size so dp-based corners resolve independently of layout size
-private val REF_SIZE = Size(1_000_000f, 1_000_000f)
-
-/**
- * Returns the radius of this shape in [Dp] or `null` if it is not a fixed-radius rounded rectangle
- *
- * Percent-based corners such as `CircleShape` resolve to huge values at [REF_SIZE]
- */
 @Composable
-fun Shape.cornerRadiusOrNull(): Dp? {
-    if (this !is CornerBasedShape) return null
-    val density = LocalDensity.current
-    val px = remember(this, density) {
-        runCatching { topStart.toPx(REF_SIZE, density) }.getOrDefault(Float.NaN)
-    }
-    if (px.isNaN() || px >= REF_SIZE.minDimension / 2f) return null
-    return with(density) { px.toDp() }
-}
+fun Shape.cornerRadiusOrNull(): Dp? = if (percent >= 0f) null else radius.dp
 
 /**
  * The radius a nested shape should use so the two stay concentric

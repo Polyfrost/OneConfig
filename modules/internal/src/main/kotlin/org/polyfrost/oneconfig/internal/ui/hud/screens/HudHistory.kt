@@ -24,6 +24,7 @@ private const val OWN_STATE_PREFIX = "\u0000"
 // layoutRefW, layoutRefH and posSchema change with the window and the layout pass, so they are never a user edit
 private val IGNORED_OPTIONS = setOf("layoutRefW", "layoutRefH", "posSchema", "hudClass")
 private val POSITION_OPTIONS = setOf("section", "relativeX", "relativeY")
+private val DERIVED_WHEN_ANCHORED = setOf("relativeX", "relativeY")
 
 private class OwnState(val id: String, val get: (Hud) -> Any?, val set: (Hud, Any?) -> Unit)
 
@@ -36,7 +37,7 @@ private val OWN_STATE = listOf(
     OwnState("customScale", { it.customScale }) { hud, v -> hud.customScale = v as Float },
 )
 
-private class Value(val stored: Any?, val key: Any?)
+private class Value(val stored: Any?, val key: Any?, val derived: Boolean = false)
 
 private class Entry(val hudClass: Class<out Hud>, val values: Map<String, Value>)
 
@@ -52,6 +53,7 @@ private fun sameLayout(a: Layout, b: Layout): Boolean {
         if (entry.hudClass != other.hudClass || entry.values.size != other.values.size) return false
         for ((path, value) in entry.values) {
             val otherValue = other.values[path] ?: return false
+            if (value.derived || otherValue.derived) continue
             if (!sameValue(value.key, otherValue.key)) return false
         }
     }
@@ -87,10 +89,11 @@ private fun capture(): Layout {
         val tree = hud.tree ?: continue
         val id = tree.id ?: continue
         val values = LinkedHashMap<String, Value>()
+        val anchored = hud.effectiveAnchorParent != null
         forEachOption(tree) { path, prop ->
             val value = prop.get()
             values[path] = if (value == null || WrappingUtils.isSimpleClass(prop.type)) {
-                Value(value, value)
+                Value(value, value, anchored && path in DERIVED_WHEN_ANCHORED)
             } else {
                 Value(Config.copyDefault(prop.type, value), comparable(prop))
             }
@@ -98,7 +101,7 @@ private fun capture(): Layout {
         for (state in OWN_STATE) {
             if (state.id in values) continue
             val value = state.get(hud)
-            values[OWN_STATE_PREFIX + state.id] = Value(value, value)
+            values[OWN_STATE_PREFIX + state.id] = Value(value, value, anchored && state.id in DERIVED_WHEN_ANCHORED)
         }
         huds[id] = Entry(hud.javaClass, values)
     }
@@ -111,7 +114,9 @@ private fun write(hud: Hud, entry: Entry): Boolean {
     forEachOption(hud.tree) { path, prop -> options[path] = prop }
     var changed = false
     var linksDropped = false
+    val anchored = hud.effectiveAnchorParent != null
     for ((path, value) in entry.values) {
+        if (value.derived && anchored) continue
         if (path.startsWith(OWN_STATE_PREFIX)) {
             val state = OWN_STATE.first { OWN_STATE_PREFIX + it.id == path }
             if (sameValue(state.get(hud), value.stored)) continue

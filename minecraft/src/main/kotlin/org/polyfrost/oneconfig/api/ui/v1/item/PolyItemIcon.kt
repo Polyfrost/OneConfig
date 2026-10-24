@@ -13,15 +13,15 @@ import kotlinx.coroutines.withContext
 import net.minecraft.client.Minecraft
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
-import org.jetbrains.skia.Rect
-import org.polyfrost.compose.composables.PolyBox
-import org.polyfrost.compose.composables.PolyCanvas
-import org.polyfrost.compose.composables.PolyMcText
-import org.polyfrost.compose.composables.PolyModifier
-import org.polyfrost.compose.composables.absoluteAt
-import org.polyfrost.compose.composables.size
+import org.polyfrost.compose.foundation.Canvas
+import org.polyfrost.compose.foundation.layout.Box
+import org.polyfrost.compose.foundation.layout.absoluteOffset
+import org.polyfrost.compose.foundation.layout.size
 import org.polyfrost.compose.mc.McFontQueue
+import org.polyfrost.compose.mc.McText
 import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.unit.dp
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
@@ -61,7 +61,7 @@ private suspend fun awaitClientTick() {
 fun PolyItemIcon(
     id: String,
     size: Float = 16f,
-    modifier: PolyModifier = PolyModifier,
+    modifier: Modifier = Modifier,
     placeholderColor: PolyColor = PolyColor(0xFFAAAAAA.toInt()),
 ) {
     val itemIcon = rememberItemIconHandle(id)
@@ -69,20 +69,20 @@ fun PolyItemIcon(
     SideEffect {
         itemIcon?.setRenderSizePx(polyItemRenderSizePx(size, hud))
     }
-    PolyCanvas(modifier = modifier.size(size, size)) { x, y, w, h ->
+    Canvas(modifier = modifier.size(size.dp, size.dp)) { x, y, w, h ->
         if (itemIcon == null) {
             rectStroke(x, y, w, h, placeholderColor, strokeWidth = 1f, radius = 1f)
             line(x, y, x + w, y + h, placeholderColor, strokeWidth = 1f)
         } else {
             itemIcon.setRenderSizePx(polyItemRenderSizePx(w, hud))
-            itemIcon.draw(canvas, Rect.makeLTRB(x, y, x + w, y + h))
+            itemIcon.draw(this, x, y, w, h)
         }
     }
 }
 
 /** Draws the default icon for [item]. */
 @Composable
-fun PolyItemIcon(item: Item, size: Float = 16f, modifier: PolyModifier = PolyModifier) {
+fun PolyItemIcon(item: Item, size: Float = 16f, modifier: Modifier = Modifier) {
     //~ if = 1.8.9 'BuiltInRegistries.ITEM' -> 'Item.REGISTRY'
     val id = remember(item) { BuiltInRegistries.ITEM.getKey(item).toString() }
     PolyItemIcon(id, size, modifier)
@@ -97,7 +97,7 @@ fun PolyItemIcon(item: Item, size: Float = 16f, modifier: PolyModifier = PolyMod
 fun PolyItemIcon(
     stack: ItemStack,
     size: Float = 16f,
-    modifier: PolyModifier = PolyModifier,
+    modifier: Modifier = Modifier,
     decorations: Boolean = true,
     countOverride: String? = null,
 ) {
@@ -111,13 +111,13 @@ fun PolyItemIcon(
         icon?.setRenderSizePx(polyItemRenderSizePx(size, hud))
     }
 
-    PolyBox(modifier = modifier.size(size, size)) {
-        PolyCanvas(modifier = PolyModifier.size(size, size)) { x, y, w, h ->
-            if (icon == null) return@PolyCanvas
+    Box(modifier = modifier.size(size.dp, size.dp)) {
+        Canvas(modifier = Modifier.size(size.dp, size.dp)) { x, y, w, h ->
+            if (icon == null) return@Canvas
             icon.setRenderSizePx(polyItemRenderSizePx(w, hud))
-            icon.draw(canvas, Rect.makeLTRB(x, y, x + w, y + h))
+            icon.draw(this, x, y, w, h)
         }
-        if (!visible || !decorations || stack.isEmpty) return@PolyBox
+        if (!visible || !decorations || stack.isEmpty) return@Box
 
         val scale = size / ITEM_SIZE
         ItemDurability(stack, scale)
@@ -134,7 +134,7 @@ private fun ItemDurability(stack: ItemStack, scale: Float) {
     val color = PolyColor(0xFF000000.toInt() or (stack.barColor and 0xFFFFFF))
 
     val size = ITEM_SIZE * scale
-    PolyCanvas(PolyModifier.size(size, size)) { x, y, _, _ ->
+    Canvas(Modifier.size(size.dp, size.dp)) { x, y, _, _ ->
         rect(x + BAR_X * scale, y + BAR_Y * scale, BAR_WIDTH * scale, 2f * scale, BAR_BACKGROUND)
         rect(x + BAR_X * scale, y + BAR_Y * scale, filled * scale, scale, color)
     }
@@ -161,7 +161,7 @@ private fun ItemCooldown(stack: ItemStack, scale: Float) {
         }
     }
 
-    PolyCanvas(PolyModifier.size(size, size)) { x, y, _, _ ->
+    Canvas(Modifier.size(size.dp, size.dp)) { x, y, _, _ ->
         val overlayHeight = height[0]
         if (overlayHeight > 0) {
             rect(x, y + (ITEM_SIZE - overlayHeight) * scale, size, overlayHeight * scale, COOLDOWN_OVERLAY)
@@ -191,11 +191,11 @@ private fun cooldownHeight(stack: ItemStack): Int {
 private fun ItemCount(stack: ItemStack, countOverride: String?, scale: Float) {
     val text = countOverride ?: stack.count.takeIf { it > 1 }?.toString() ?: return
     val width = McFontQueue.measureTextWidth(text, 1f)
-    PolyMcText(
+    McText(
         text = text,
         color = PolyColor.WHITE,
         shadow = true,
         scale = scale,
-        modifier = PolyModifier.absoluteAt((17f - width) * scale, 9f * scale),
+        modifier = Modifier.absoluteOffset(((17f - width) * scale).dp, (9f * scale).dp),
     )
 }

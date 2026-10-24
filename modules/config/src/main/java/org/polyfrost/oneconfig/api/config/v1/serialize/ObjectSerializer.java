@@ -50,6 +50,9 @@ public class ObjectSerializer {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Config");
     private static final IdentityHashMap<Class<?>, Field[]> CLASS_FIELD_CACHE = new IdentityHashMap<>(32);
     private static final IdentityHashMap<Class<?>, Boolean> IMMUTABLE_CACHE = new IdentityHashMap<>(32);
+    private static final Map<String, String> RENAMED_CLASSES = Collections.singletonMap(
+            "org.polyfrost.compose.layout.PolyAlign", "org.polyfrost.oneconfig.api.hud.v1.HudAnchor"
+    );
     /**
      * objects currently being reflectively serialized on this thread used to break reference cycles
      * such as Minecraft Item -> Holder.Reference -> Item which would otherwise blow the stack
@@ -342,7 +345,7 @@ public class ObjectSerializer {
         }
         Class<?> cls;
         try {
-            cls = Class.forName(clsName, true, ObjectSerializer.class.getClassLoader());
+            cls = Class.forName(RENAMED_CLASSES.getOrDefault(clsName, clsName), true, ObjectSerializer.class.getClassLoader());
         } catch (Exception e) {
             throw new SerializationException("Failed to deserialize object: Class " + clsName + " not found, potential classloading issue?", e);
         }

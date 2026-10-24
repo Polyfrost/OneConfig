@@ -34,9 +34,8 @@ import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.event.v1.EventDelay;
 import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent;
 import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
-import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen;
-import org.polyfrost.oneconfig.internal.ui.compose.ComposeSupport;
-import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
+import org.polyfrost.oneconfig.internal.ui.compose.GlHost;
+import org.polyfrost.oneconfig.internal.ui.poly.PolyScreen;
 //? if = 1.8.9
 //import org.polyfrost.oneconfig.internal.legacy.LegacyPanoramaTracker;
 
@@ -90,19 +89,13 @@ public class ScreenPlatformImpl implements ScreenPlatform {
 
     @Override
     public void display(@Nullable Object screen, int frames) {
-        if (screen instanceof ComposeScreen) {
-            String unavailable = ComposeSupport.INSTANCE.unavailableReason();
-            if (unavailable != null) {
-                showMessage(unavailable);
-                return;
-            }
-            if (!SkiaCtx.INSTANCE.isReady()) {
-                showMessage(SkiaCtx.INSTANCE.unavailableReason());
-                return;
-            }
-        }
         if (!Minecraft.getInstance().isSameThread()) {
             Minecraft.getInstance().schedule(() -> display(screen, frames));
+            return;
+        }
+        String unavailable = screen instanceof PolyScreen ? GlHost.INSTANCE.unavailableReason() : null;
+        if (unavailable != null) {
+            showMessage(unavailable);
             return;
         }
         //? if >= 26.2 {
@@ -114,7 +107,7 @@ public class ScreenPlatformImpl implements ScreenPlatform {
         /*if (frames < 1) Minecraft.getInstance().setScreen((Screen) screen);
         else EventDelay.of(FramebufferRenderEvent.End.class, frames, () -> Minecraft.getInstance().setScreen((Screen) screen));
         *///?} else {
-        /*Object target = (screen == null && Minecraft.getInstance().level == null && current() instanceof ComposeScreen)
+        /*Object target = (screen == null && Minecraft.getInstance().level == null && current() instanceof PolyScreen)
                 ? LegacyPanoramaTracker.current() : screen;
         if (frames < 1) Minecraft.getInstance().setScreen((Screen) target);
         else EventDelay.of(FramebufferRenderEvent.End.class, frames, () -> Minecraft.getInstance().setScreen((Screen) target));

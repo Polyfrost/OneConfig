@@ -35,27 +35,13 @@ import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
-import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
+import org.polyfrost.oneconfig.internal.ui.poly.ShellScreen
 
 fun Screen.openScreen(frames: Int = 1) = Platform.screen().display(this, frames)
 
-fun Tree.createScreen(): Screen {
-    val treeId = id
-    if (treeId != null) {
-        ConfigRegistry.registerTree(this, ConfigSource.OC)
-        return OneConfigUIScreen(treeId, null, this)
-    }
-    return OneConfigUIScreen.open()
-}
+fun Tree.createScreen(): Screen = ShellScreen.forTree(this)
 
-fun Tree.createScreen(initialCategory: String): Screen {
-    val treeId = id
-    if (treeId != null) {
-        ConfigRegistry.registerTree(this, ConfigSource.OC)
-        return OneConfigUIScreen(treeId, initialCategory, this)
-    }
-    return OneConfigUIScreen.open()
-}
+fun Tree.createScreen(initialCategory: String): Screen = ShellScreen.forTree(this, initialCategory)
 
 fun Tree.openUI() = Platform.screen().display(createScreen())
 
@@ -66,7 +52,7 @@ fun Config.createScreen(): Screen {
         preload()
         this.tree
     }
-    return tree?.createScreen() ?: OneConfigUIScreen.open()
+    return tree?.createScreen() ?: ShellScreen.open()
 }
 
 fun Config.createScreen(initialCategory: String): Screen {
@@ -74,7 +60,7 @@ fun Config.createScreen(initialCategory: String): Screen {
         preload()
         this.tree
     }
-    return tree?.createScreen(initialCategory) ?: OneConfigUIScreen.open()
+    return tree?.createScreen(initialCategory) ?: ShellScreen.open()
 }
 
 fun Config.openUI() = Platform.screen().display(createScreen())

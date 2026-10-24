@@ -1,20 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.hud
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -23,39 +8,60 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.isSecondaryPressed
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
-import androidx.compose.ui.window.PopupProperties
-import kotlin.math.roundToInt
+import org.polyfrost.compose.animation.core.animateFloatAsState
+import org.polyfrost.compose.animation.core.tween
+import org.polyfrost.compose.foundation.TooltipArea
+import org.polyfrost.compose.foundation.background
+import org.polyfrost.compose.foundation.border
+import org.polyfrost.compose.foundation.clickable
+import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
+import org.polyfrost.compose.foundation.layout.Arrangement
+import org.polyfrost.compose.foundation.layout.Box
+import org.polyfrost.compose.foundation.layout.Column
+import org.polyfrost.compose.foundation.layout.Row
+import org.polyfrost.compose.foundation.layout.height
+import org.polyfrost.compose.foundation.layout.padding
+import org.polyfrost.compose.foundation.layout.size
+import org.polyfrost.compose.foundation.layout.weight
+import org.polyfrost.compose.foundation.layout.width
+import org.polyfrost.compose.foundation.layout.widthIn
+import org.polyfrost.compose.foundation.shape.RoundedCornerShape
+import org.polyfrost.compose.render.PolyFont
+import org.polyfrost.compose.ui.Alignment
+import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.graphics.Color
+import org.polyfrost.compose.ui.graphics.copy
+import org.polyfrost.compose.ui.input.pointer.PointerEventType
+import org.polyfrost.compose.ui.input.pointer.PointerIcon
+import org.polyfrost.compose.ui.input.pointer.onPointerEvent
+import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
+import org.polyfrost.compose.ui.platform.LocalDensity
+import org.polyfrost.compose.ui.text.font.FontWeight
+import org.polyfrost.compose.ui.unit.Dp
+import org.polyfrost.compose.ui.unit.DpOffset
+import org.polyfrost.compose.ui.unit.IntOffset
+import org.polyfrost.compose.ui.unit.dp
+import org.polyfrost.compose.ui.unit.sp
+import org.polyfrost.compose.ui.window.Popup
+import org.polyfrost.compose.ui.window.PopupProperties
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.OneConfigConfig
-import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
-import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.components.shellTransition
-import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.optionHasDefault
 import org.polyfrost.oneconfig.internal.ui.components.settings.resetOption
+import org.polyfrost.oneconfig.internal.ui.hud.screens.HudAlign
+import org.polyfrost.oneconfig.internal.ui.hud.screens.alignHuds
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
+import org.polyfrost.oneconfig.internal.ui.poly.OpenTransition
+import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
+import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.concentric
@@ -180,63 +186,78 @@ private fun resetTreeDefaults(hud: Hud, tree: Tree) {
     }
 }
 
-/** Wraps a HUD settings control so right-click offers "Reset to default" for [optionId] */
 @Composable
 fun HudSettingTarget(
     hud: Hud,
-    optionId: String,
+    vararg optionIds: String,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    val prop = remember(hud, optionId) { hudProperty(hud, optionId) }
+    val props = remember(hud, *optionIds) { optionIds.mapNotNull { id -> hudProperty(hud, id)?.let { id to it } } }
+    val prop = props.firstOrNull()?.second
     if (prop == null) {
         Box(modifier) { content() }
         return
     }
 
     var menuOpen by remember(System.identityHashCode(prop)) { mutableStateOf(false) }
-    var menuOffset by remember(System.identityHashCode(prop)) { mutableStateOf(IntOffset.Zero) }
+    var menuOffset by remember(System.identityHashCode(prop)) { mutableStateOf(DpOffset.Zero) }
 
     Box(
-        modifier = modifier.pointerInput(System.identityHashCode(prop)) {
-            awaitPointerEventScope {
-                while (true) {
-                    val event = awaitPointerEvent(PointerEventPass.Initial)
-                    if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed && !KeybindRecordingBus.isRecording) {
-                        val pos = event.changes.first().position
-                        menuOffset = IntOffset(pos.x.roundToInt(), pos.y.roundToInt())
-                        menuOpen = true
-                        event.changes.forEach { it.consume() }
-                    }
-                }
+        modifier = modifier.onPointerEvent { event ->
+            if (event.type == PointerEventType.Press && event.button == 1 && !KeybindRecordingBus.isRecording) {
+                menuOffset = DpOffset((event.x - event.node.x).dp, (event.y - event.node.y).dp)
+                menuOpen = true
+                true
+            } else {
+                false
             }
         },
     ) {
-        val description = prop.localizedDescription()?.takeUnless { it.isEmptyText() }
+        val theme = LocalTheme.current
+        val description = remember(prop) { prop.localizedDescription()?.takeUnless { it.isEmptyText() } }
         if (description != null) {
-            Tooltip(
-                text = {
-                    Text(description, color = LocalTheme.current.textColor, fontSize = 12.sp)
+            TooltipArea(
+                tooltip = {
+                    Box(
+                        modifier = Modifier
+                            .widthIn(max = 260.dp)
+                            .background(theme.popupBackground, RoundedCornerShape(8.dp))
+                            .border(1.dp, theme.borderColor, RoundedCornerShape(8.dp))
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                    ) {
+                        Text(description, color = theme.textColor, fontSize = 12.sp, softWrap = true)
+                    }
                 },
-                modifier = Modifier.widthIn(max = 260.dp),
-                anchor = Alignment.TopCenter,
             ) {
                 content()
             }
         } else {
             content()
         }
-        OptionContextMenu(
-            prop = prop,
-            expanded = menuOpen,
-            offset = menuOffset,
-            onDismiss = { menuOpen = false },
-            resetEnabled = canResetHudOption(hud, prop, optionId),
-            onReset = {
-                performHudOptionReset(hud, prop, optionId)
-                finishHudReset(hud)
-            },
-        )
+        if (menuOpen) {
+            val font = theme.typography.family.resolve(FontWeight.Normal)
+            Popup(offset = menuOffset, onDismissRequest = { menuOpen = false }) {
+                Column(
+                    modifier = Modifier
+                        .background(theme.popupBackground, theme.popupShape)
+                        .border(1.dp, theme.borderColor, theme.popupShape)
+                        .padding(MenuPadding),
+                ) {
+                    HudMenuRow(
+                        icon = "refresh",
+                        text = "Reset to default",
+                        width = menuRowWidth(font, "Reset to default", null).dp,
+                        enabled = props.any { (id, p) -> canResetHudOption(hud, p, id) },
+                    ) {
+                        UiSounds.play(UiSoundEvent.CLICK)
+                        for ((id, p) in props) if (canResetHudOption(hud, p, id)) performHudOptionReset(hud, p, id)
+                        finishHudReset(hud)
+                        menuOpen = false
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -250,12 +271,6 @@ fun HudSettingsContent(hud: Hud, content: @Composable () -> Unit) {
 
 private val DeleteMenuColor = Color(0xFFE5484D)
 
-/**
- * Right-click menu on a HUD element in the design studio canvas
- *
- * Mirrors the hover action bar so the buttons stay reachable when HUDs are packed too tightly for the bar
- * to be aimed at
- */
 @Composable
 fun HudCanvasResetMenu(
     hud: Hud?,
@@ -299,124 +314,155 @@ fun HudCanvasResetMenu(
     val deleteHint = if (showHints) keybindHint(OneConfigConfig.hudDeleteKeybind) else null
     val undoHint = if (showHints) keybindHint(OneConfigConfig.hudUndoKeybind) else null
     val redoHint = if (showHints) keybindHint(OneConfigConfig.hudRedoKeybind) else null
-    ShellPopup(
+    val font = theme.typography.family.resolve(FontWeight.Normal)
+    val rowWidth = listOf(
+        "Settings" to settingsHint,
+        (if (allHidden) "Show" else "Hide") to visibilityHint,
+        (if (allLocked) "Unlock" else "Lock") to lockHint,
+        "Anchor" to null,
+        "Remove anchor" to null,
+        "Copy" to copyHint,
+        "Cut" to cutHint,
+        "Paste" to pasteHint,
+        "Duplicate" to duplicateHint,
+        "Undo" to undoHint,
+        "Redo" to redoHint,
+        "Reset all to default" to resetHint,
+        "Delete HUD" to deleteHint,
+    ).maxOf { (text, hint) -> menuRowWidth(font, text, hint) }.coerceIn(190f, 240f).dp
+    val density = LocalDensity.current
+    Popup(
         alignment = Alignment.TopStart,
-        offset = offset,
+        offset = with(density) { DpOffset(offset.x.toDp(), offset.y.toDp()) },
         onDismissRequest = onDismiss,
         properties = PopupProperties(focusable = true),
     ) {
-        Column(
-            // without this the separator's fillMaxWidth stretches the menu out to the whole screen
+        OpenTransition(
             modifier = Modifier
-                .widthIn(min = 190.dp, max = 240.dp)
-                .shellTransition()
                 .background(theme.popupBackground, theme.popupShape)
                 .border(1.dp, theme.borderColor, theme.popupShape)
                 .padding(MenuPadding),
         ) {
-            HudMenuRow(
-                icon = "settings",
-                text = "Settings",
-                enabled = settingsEnabled,
-                hint = settingsHint,
-            ) {
-                onSettings(hud)
-                onDismiss()
-            }
-            HudMenuRow(
-                icon = if (allHidden) "eye-off" else "eye",
-                text = if (allHidden) "Show" else "Hide",
-                hint = visibilityHint,
-            ) {
-                Snapshot.withMutableSnapshot {
-                    val hide = actionTargets.any { !it.hidden }
-                    actionTargets.forEach { it.hidden = hide }
-                }
-                onDismiss()
-            }
-            HudMenuRow(
-                icon = if (allLocked) "lock" else "unlock",
-                text = if (allLocked) "Unlock" else "Lock",
-                color = if (allLocked) Accent else null,
-                hint = lockHint,
-            ) {
-                Snapshot.withMutableSnapshot {
-                    val lock = actionTargets.any { !it.locked }
-                    actionTargets.forEach { it.locked = lock }
-                }
-                onDismiss()
-            }
-            HudMenuRow(
-                icon = "align",
-                text = "Anchor",
-                enabled = anchorEnabled,
-            ) {
-                onAnchor(hud)
-                onDismiss()
-            }
-            if (anyAnchored) {
-                HudMenuRow(icon = "x-circle", text = "Remove anchor") {
-                    Snapshot.withMutableSnapshot {
-                        actionTargets.forEach { it.clearAnchor() }
-                    }
-                    onDismiss()
-                }
-            }
-            HudMenuDivider()
-            HudMenuRow(icon = "copy", text = "Copy", hint = copyHint) {
-                onCopy(hud)
-                onDismiss()
-            }
-            HudMenuRow(icon = "scissors", text = "Cut", hint = cutHint) {
-                onCut(hud)
-                onDismiss()
-            }
-            HudMenuRow(
-                icon = "clipboard",
-                text = "Paste",
-                enabled = pasteEnabled,
-                hint = pasteHint,
-            ) {
-                onPaste(hud)
-                onDismiss()
-            }
-            HudMenuRow(
-                icon = "copy-plus",
-                text = "Duplicate",
-                enabled = duplicateEnabled,
-                hint = duplicateHint,
-            ) {
-                onDuplicate(hud)
-                onDismiss()
-            }
-            HudMenuDivider()
-            HudMenuRow(icon = "undo", text = "Undo", enabled = undoEnabled, hint = undoHint) {
-                onUndo()
-                onDismiss()
-            }
-            HudMenuRow(icon = "redo", text = "Redo", enabled = redoEnabled, hint = redoHint) {
-                onRedo()
-                onDismiss()
-            }
-            HudMenuDivider()
-            HudMenuRow(
-                icon = "refresh",
-                text = "Reset all to default",
-                enabled = resetEnabled,
-                hint = resetHint,
-            ) {
-                actionTargets.forEach { resetAllHudProperties(it) }
-                onDismiss()
-            }
-            if (deletable) {
+            Column {
                 HudMenuRow(
-                    icon = "trash",
-                    text = "Delete HUD",
-                    color = DeleteMenuColor,
-                    hint = deleteHint,
+                    icon = "settings",
+                    text = "Settings",
+                    width = rowWidth,
+                    enabled = settingsEnabled,
+                    hint = settingsHint,
                 ) {
-                    onDelete(hud)
                     onDismiss()
+                    onSettings(hud)
+                }
+                HudMenuRow(
+                    icon = if (allHidden) "eye-off" else "eye",
+                    text = if (allHidden) "Show" else "Hide",
+                    width = rowWidth,
+                    hint = visibilityHint,
+                ) {
+                    onDismiss()
+                    UiSounds.play(UiSoundEvent.CLICK)
+                    Snapshot.withMutableSnapshot {
+                        val hide = actionTargets.any { !it.hidden }
+                        actionTargets.forEach { it.hidden = hide }
+                    }
+                }
+                HudMenuRow(
+                    icon = if (allLocked) "lock" else "unlock",
+                    text = if (allLocked) "Unlock" else "Lock",
+                    width = rowWidth,
+                    color = if (allLocked) Accent else null,
+                    hint = lockHint,
+                ) {
+                    onDismiss()
+                    UiSounds.play(UiSoundEvent.CLICK)
+                    Snapshot.withMutableSnapshot {
+                        val lock = actionTargets.any { !it.locked }
+                        actionTargets.forEach { it.locked = lock }
+                    }
+                }
+                HudAlignRow(rowWidth) { align ->
+                    onDismiss()
+                    UiSounds.play(UiSoundEvent.CLICK)
+                    alignHuds(actionTargets, align)
+                }
+                HudMenuRow(
+                    icon = "align",
+                    text = "Anchor",
+                    width = rowWidth,
+                    enabled = anchorEnabled,
+                ) {
+                    onDismiss()
+                    onAnchor(hud)
+                }
+                if (anyAnchored) {
+                    HudMenuRow(icon = "x-circle", text = "Remove anchor", width = rowWidth) {
+                        onDismiss()
+                        Snapshot.withMutableSnapshot {
+                            actionTargets.forEach { it.clearAnchor() }
+                        }
+                    }
+                }
+                HudMenuDivider(rowWidth)
+                HudMenuRow(icon = "copy", text = "Copy", width = rowWidth, hint = copyHint) {
+                    onDismiss()
+                    onCopy(hud)
+                }
+                HudMenuRow(icon = "scissors", text = "Cut", width = rowWidth, hint = cutHint) {
+                    onDismiss()
+                    onCut(hud)
+                }
+                HudMenuRow(
+                    icon = "clipboard",
+                    text = "Paste",
+                    width = rowWidth,
+                    enabled = pasteEnabled,
+                    hint = pasteHint,
+                ) {
+                    onDismiss()
+                    onPaste(hud)
+                }
+                HudMenuRow(
+                    icon = "copy-plus",
+                    text = "Duplicate",
+                    width = rowWidth,
+                    enabled = duplicateEnabled,
+                    hint = duplicateHint,
+                ) {
+                    onDismiss()
+                    onDuplicate(hud)
+                }
+                HudMenuDivider(rowWidth)
+                HudMenuRow(icon = "undo", text = "Undo", width = rowWidth, enabled = undoEnabled, hint = undoHint) {
+                    onDismiss()
+                    onUndo()
+                }
+                HudMenuRow(icon = "redo", text = "Redo", width = rowWidth, enabled = redoEnabled, hint = redoHint) {
+                    onDismiss()
+                    onRedo()
+                }
+                HudMenuDivider(rowWidth)
+                HudMenuRow(
+                    icon = "refresh",
+                    text = "Reset all to default",
+                    width = rowWidth,
+                    enabled = resetEnabled,
+                    hint = resetHint,
+                ) {
+                    onDismiss()
+                    actionTargets.forEach { resetAllHudProperties(it) }
+                }
+                if (deletable) {
+                    HudMenuRow(
+                        icon = "trash",
+                        text = "Delete HUD",
+                        width = rowWidth,
+                        color = DeleteMenuColor,
+                        hint = deleteHint,
+                    ) {
+                        onDismiss()
+                        onDelete(hud)
+                    }
                 }
             }
         }
@@ -424,12 +470,12 @@ fun HudCanvasResetMenu(
 }
 
 @Composable
-private fun HudMenuDivider() {
+private fun HudMenuDivider(width: Dp) {
     val theme = LocalTheme.current
     Box(
         modifier = Modifier
             .padding(vertical = 4.dp)
-            .fillMaxWidth()
+            .width(width)
             .height(1.dp)
             .background(theme.borderColor)
     )
@@ -438,7 +484,6 @@ private fun HudMenuDivider() {
 private fun keybindHint(keybind: OneConfigKeybind?): String? =
     keybind?.takeIf { it.isBound }?.displayName()
 
-/** Context popup shown on empty canvas space when there is a HUD in the clipboard */
 @Composable
 fun HudCanvasPasteMenu(
     expanded: Boolean,
@@ -458,55 +503,65 @@ fun HudCanvasPasteMenu(
     val selectAllHint = if (OneConfigConfig.showKeybindHints) keybindHint(OneConfigConfig.hudSelectAllKeybind) else null
     val undoHint = if (OneConfigConfig.showKeybindHints) keybindHint(OneConfigConfig.hudUndoKeybind) else null
     val redoHint = if (OneConfigConfig.showKeybindHints) keybindHint(OneConfigConfig.hudRedoKeybind) else null
-    ShellPopup(
+    val font = theme.typography.family.resolve(FontWeight.Normal)
+    val rowWidth = listOf("Undo" to undoHint, "Redo" to redoHint, "Paste" to pasteHint, "Select All" to selectAllHint)
+        .maxOf { (text, hint) -> menuRowWidth(font, text, hint) }.coerceIn(190f, 240f).dp
+    val density = LocalDensity.current
+    Popup(
         alignment = Alignment.TopStart,
-        offset = offset,
+        offset = with(density) { DpOffset(offset.x.toDp(), offset.y.toDp()) },
         onDismissRequest = onDismiss,
         properties = PopupProperties(focusable = true),
     ) {
-        Column(
+        OpenTransition(
             modifier = Modifier
-                .widthIn(min = 190.dp, max = 240.dp)
-                .shellTransition()
                 .background(theme.popupBackground, theme.popupShape)
                 .border(1.dp, theme.borderColor, theme.popupShape)
                 .padding(MenuPadding),
         ) {
-            HudMenuRow(icon = "undo", text = "Undo", enabled = undoEnabled, hint = undoHint) {
-                onUndo()
-                onDismiss()
-            }
-            HudMenuRow(icon = "redo", text = "Redo", enabled = redoEnabled, hint = redoHint) {
-                onRedo()
-                onDismiss()
-            }
-            HudMenuDivider()
-            HudMenuRow(
-                icon = "clipboard",
-                text = "Paste",
-                enabled = pasteEnabled,
-                hint = pasteHint,
-            ) {
-                onPaste()
-                onDismiss()
-            }
-            HudMenuRow(
-                icon = "select-all",
-                text = "Select All",
-                enabled = true,
-                hint = selectAllHint,
-            ) {
-                onSelectAll()
-                onDismiss()
+            Column {
+                HudMenuRow(icon = "undo", text = "Undo", width = rowWidth, enabled = undoEnabled, hint = undoHint) {
+                    onDismiss()
+                    onUndo()
+                }
+                HudMenuRow(icon = "redo", text = "Redo", width = rowWidth, enabled = redoEnabled, hint = redoHint) {
+                    onDismiss()
+                    onRedo()
+                }
+                HudMenuDivider(rowWidth)
+                HudMenuRow(
+                    icon = "clipboard",
+                    text = "Paste",
+                    width = rowWidth,
+                    enabled = pasteEnabled,
+                    hint = pasteHint,
+                ) {
+                    onDismiss()
+                    onPaste()
+                }
+                HudMenuRow(
+                    icon = "select-all",
+                    text = "Select All",
+                    width = rowWidth,
+                    enabled = true,
+                    hint = selectAllHint,
+                ) {
+                    onDismiss()
+                    onSelectAll()
+                }
             }
         }
     }
 }
 
+private fun menuRowWidth(font: String, text: String, hint: String?): Float =
+    10f + 14f + 8f + PolyFont(font, 13f).measureTextWidth(text) + (hint?.let { 8f + PolyFont(font, 10f).measureTextWidth(it) } ?: 0f) + 10f
+
 @Composable
 private fun HudMenuRow(
     icon: String,
     text: String,
+    width: Dp,
     enabled: Boolean = true,
     color: Color? = null,
     hint: String? = null,
@@ -514,27 +569,21 @@ private fun HudMenuRow(
 ) {
     val theme = LocalTheme.current
     val rowColor = color ?: if (enabled) theme.textColor else theme.textColorSecondary
-    val hintColor = if (enabled) theme.textColorSecondary else theme.textColorSecondary.copy(alpha = 0.5f)
+    val hintColor = if (enabled) theme.textColorSecondary else theme.textColorSecondary.copy(alpha = theme.textColorSecondary.alphaF * 0.5f)
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
-    val hoverBgColor by animateColorAsState(
-        targetValue = if (enabled && isHovered) {
-            theme.textColor.copy(alpha = 0.10f)
-        } else {
-            theme.textColor.copy(alpha = 0f)
-        },
+    val hoverAlpha by animateFloatAsState(
+        targetValue = if (enabled && isHovered) 0.10f else 0f,
         animationSpec = tween(120),
-        label = "hudMenuRowHover"
     )
     val itemShape = theme.popupShape.concentric(MenuPadding)
     Row(
         modifier = Modifier
-            .clip(itemShape)
-            .background(hoverBgColor, itemShape)
+            .width(width)
+            .background(theme.textColor.copy(alpha = hoverAlpha), itemShape)
             .then(
                 if (enabled) {
-                    Modifier.onClick(interactionSource, onClick = onClick)
-                        .hoverable(interactionSource)
+                    Modifier.clickable(interactionSource, indication = null, onClick = onClick)
                         .pointerHoverIcon(PointerIcon.Hand)
                 } else {
                     Modifier
@@ -548,6 +597,46 @@ private fun HudMenuRow(
         Text(text, color = rowColor, fontSize = 13.sp, modifier = Modifier.weight(1f))
         if (hint != null) {
             Text(hint, color = hintColor, fontSize = 10.sp)
+        }
+    }
+}
+
+@Composable
+private fun HudAlignRow(width: Dp, onAlign: (HudAlign) -> Unit) {
+    val theme = LocalTheme.current
+    Row(
+        modifier = Modifier
+            .width(width)
+            .padding(horizontal = 4.dp, vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        for (align in HudAlign.entries) {
+            val interactionSource = rememberInteractionSource()
+            val isHovered by interactionSource.collectIsHoveredAsState()
+            val hoverAlpha by animateFloatAsState(if (isHovered) 0.10f else 0f, tween(120))
+            TooltipArea(
+                tooltip = {
+                    Box(
+                        modifier = Modifier
+                            .background(theme.popupBackground, RoundedCornerShape(8.dp))
+                            .border(1.dp, theme.borderColor, RoundedCornerShape(8.dp))
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                    ) {
+                        Text(align.label, color = theme.textColor, fontSize = 12.sp)
+                    }
+                },
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .background(theme.textColor.copy(alpha = hoverAlpha), RoundedCornerShape(4.dp))
+                        .pointerHoverIcon(PointerIcon.Hand)
+                        .clickable(interactionSource, indication = null) { onAlign(align) },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(align.icon, theme.textColor, Modifier.size(14.dp), rotation = align.rotation.toFloat())
+                }
+            }
         }
     }
 }

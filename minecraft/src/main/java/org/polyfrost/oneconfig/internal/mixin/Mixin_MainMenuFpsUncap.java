@@ -2,7 +2,7 @@ package org.polyfrost.oneconfig.internal.mixin;
 
 import net.minecraft.client.Minecraft;
 import org.polyfrost.oneconfig.internal.MainMenuFpsSampler;
-import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen;
+import org.polyfrost.oneconfig.internal.ui.poly.PolyScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -37,7 +37,7 @@ public class Mixin_MainMenuFpsUncap {
         Object screen = minecraft.gui.screen();
         //?} else
         //Object screen = minecraft.screen;
-        if (minecraft.level == null && screen instanceof ComposeScreen) {
+        if (minecraft.level == null && screen instanceof PolyScreen) {
             //? if >= 26.3 {
             VideoMode videoMode = minecraft.getWindow().getActiveVideoMode();
             int refreshRate = videoMode == null ? 0 : (int) videoMode.getRefreshRate();

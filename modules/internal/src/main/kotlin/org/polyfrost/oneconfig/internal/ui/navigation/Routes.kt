@@ -1,20 +1,11 @@
 package org.polyfrost.oneconfig.internal.ui.navigation
 
-import androidx.navigation.NavDestination
-import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavDestination.Companion.hierarchy
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.ChangeLogGraph
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.CreditsGraph
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.KeybindsGraph
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.PreferencesGraph
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.ProfilesGraph
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.ThemesGraph
+import org.polyfrost.oneconfig.internal.ui.shell.PolyPage
 
 data class NavigationRoute(
     val id: String,
     val icon: String,
-    val route: Any,
+    val route: PolyPage,
 )
 
 class NavigationGroup(
@@ -28,17 +19,17 @@ val NavigationGroups = listOf(
         NavigationRoute(
             id = "mods",
             icon = "settings",
-            route = ModsGraph
+            route = PolyPage.Mods
         ),
         NavigationRoute(
             id = "profiles",
             icon = "profiles",
-            route = ProfilesGraph
+            route = PolyPage.Profiles
         ),
         NavigationRoute(
             id = "keybinds",
             icon = "keyboard",
-            route = KeybindsGraph
+            route = PolyPage.Keybinds
         )
     ),
     NavigationGroup(
@@ -46,12 +37,12 @@ val NavigationGroups = listOf(
         NavigationRoute(
             id = "themes",
             icon = "paintbrush",
-            route = ThemesGraph
+            route = PolyPage.Themes
         ),
         NavigationRoute(
             id = "preferences",
             icon = "cog",
-            route = PreferencesGraph
+            route = PolyPage.Preferences
         ),
     ),
     NavigationGroup(
@@ -59,22 +50,29 @@ val NavigationGroups = listOf(
         NavigationRoute(
             id = "changelog",
             icon = "refresh",
-            route = ChangeLogGraph
+            route = PolyPage.Changelog
         ),
         NavigationRoute(
             id = "credits",
             icon = "star",
-            route = CreditsGraph
+            route = PolyPage.Credits
         ),
     )
 )
 
-fun searchPlaceholder(destination: NavDestination?): String {
+val PolyPage.hierarchy: PolyPage
+    get() = when (this) {
+        PolyPage.ModConfig -> PolyPage.Mods
+        PolyPage.ChangelogEntry -> PolyPage.Changelog
+        else -> this
+    }
+
+fun searchPlaceholder(destination: PolyPage): String {
     val section = NavigationGroups
         .asSequence()
         .flatMap { it.routes.asSequence() }
         .firstOrNull { def ->
-            destination?.hierarchy?.any { it.hasRoute(def.route::class) } == true
+            destination.hierarchy == def.route
         }
     return if (section != null) "Search ${section.id}..." else "Search..."
 }

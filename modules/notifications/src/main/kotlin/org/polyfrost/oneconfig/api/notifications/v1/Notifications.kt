@@ -28,7 +28,7 @@ package org.polyfrost.oneconfig.api.notifications.v1
 
 import java.util.concurrent.Callable
 import org.apache.logging.log4j.LogManager
-import org.jetbrains.skia.Image
+import org.polyfrost.compose.ui.graphics.ImageBitmap
 
 /**
  * Utility for sending notifications
@@ -66,15 +66,18 @@ object Notifications {
         title: String,
         message: String,
         type: NotificationType = NotificationType.INFO,
-        icon: Image? = null,
+        icon: ImageBitmap? = null,
         duration: Float = Notification.DEFAULT_DURATION,
         progress: Callable<Float>? = null,
         onClick: Runnable? = null,
         actions: List<NotificationAction> = emptyList(),
     ): Notification {
-        val notification = Notification(title, message, type, icon, duration, progress, actions, onClick)
+        return push(Notification(title, message, type, icon, duration, progress, actions, onClick))
+    }
+
+    private fun push(notification: Notification): Notification {
         NotificationsManager.push(notification)
-        LOGGER.info("Pushed notification #{} ({}): {}", notification.id, type, title)
+        LOGGER.info("Pushed notification #{} ({}): {}", notification.id, notification.type, notification.title)
         return notification
     }
 
@@ -111,21 +114,21 @@ object Notifications {
 
     @JvmStatic
     @JvmOverloads
-    fun icon(resourcePath: String, size: Int = 64): Image? = SvgRasterizer.getByPath(resourcePath, size)
+    fun icon(resourcePath: String, size: Int = 64): ImageBitmap? = SvgMask.get(resourcePath, size)
 
     @JvmStatic
     fun builder(title: String, message: String): Builder = Builder(title, message)
 
     class Builder internal constructor(private val title: String, private val message: String) {
         private var type: NotificationType = NotificationType.INFO
-        private var icon: Image? = null
+        private var icon: ImageBitmap? = null
         private var duration: Float = Notification.DEFAULT_DURATION
         private var progress: Callable<Float>? = null
         private var onClick: Runnable? = null
         private val actions = ArrayList<NotificationAction>()
 
         fun type(type: NotificationType) = apply { this.type = type }
-        fun icon(icon: Image?) = apply { this.icon = icon }
+        fun icon(icon: ImageBitmap?) = apply { this.icon = icon }
         fun duration(duration: Float) = apply { this.duration = duration }
 
         /**
@@ -145,6 +148,7 @@ object Notifications {
         /**
          * Builds and pushes the notification
          */
-        fun send(): Notification = send(title, message, type, icon, duration, progress, onClick, actions.toList())
+        fun send(): Notification =
+            push(Notification(title, message, type, icon, duration, progress, actions.toList(), onClick))
     }
 }

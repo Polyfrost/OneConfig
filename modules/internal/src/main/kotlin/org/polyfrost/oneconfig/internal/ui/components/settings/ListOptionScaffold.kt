@@ -1,56 +1,55 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
+import kotlin.math.abs
 import kotlin.math.roundToInt
+import org.polyfrost.compose.animation.animateColorAsState
+import org.polyfrost.compose.animation.core.animateFloatAsState
+import org.polyfrost.compose.foundation.background
+import org.polyfrost.compose.foundation.border
+import org.polyfrost.compose.foundation.hoverable
+import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
+import org.polyfrost.compose.foundation.layout.Arrangement
+import org.polyfrost.compose.foundation.layout.Box
+import org.polyfrost.compose.foundation.layout.Column
+import org.polyfrost.compose.foundation.layout.Row
+import org.polyfrost.compose.foundation.layout.RowScope
+import org.polyfrost.compose.foundation.layout.fillMaxWidth
+import org.polyfrost.compose.foundation.layout.height
+import org.polyfrost.compose.foundation.layout.heightIn
+import org.polyfrost.compose.foundation.layout.offset
+import org.polyfrost.compose.foundation.layout.padding
+import org.polyfrost.compose.foundation.layout.size
+import org.polyfrost.compose.foundation.layout.weight
+import org.polyfrost.compose.foundation.layout.width
+import org.polyfrost.compose.foundation.rememberScrollState
+import org.polyfrost.compose.foundation.text.TextFieldState
+import org.polyfrost.compose.foundation.verticalScroll
+import org.polyfrost.compose.ui.Alignment
+import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.draw.clip
+import org.polyfrost.compose.ui.graphics.Color
+import org.polyfrost.compose.ui.input.key.KeyEvent
+import org.polyfrost.compose.ui.input.pointer.PointerEvent
+import org.polyfrost.compose.ui.input.pointer.PointerEventType
+import org.polyfrost.compose.ui.input.pointer.PointerIcon
+import org.polyfrost.compose.ui.input.pointer.onPointerEvent
+import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
+import org.polyfrost.compose.ui.text.style.TextOverflow
+import org.polyfrost.compose.ui.unit.Dp
+import org.polyfrost.compose.ui.unit.dp
+import org.polyfrost.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.containVerticalScroll
-import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.poly.FadingEdges
+import org.polyfrost.oneconfig.internal.ui.screens.UiClipboard
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -117,10 +116,9 @@ internal class ListEntriesState<T>(initial: List<T>, private val onCommit: (List
     }
 }
 
-/** Per-row state handed to the row content so it can match the row's hover and focus styling */
 internal class ListRowContext(
     val contentColor: Color,
-    val fieldInteraction: MutableInteractionSource,
+    val onFieldFocus: (Boolean) -> Unit,
     val focused: Boolean,
 )
 
@@ -138,36 +136,56 @@ internal fun <T> ListOptionContainer(
     showAddWhenFull: Boolean = false,
     entryHeight: Dp = ListEntryHeight,
     maxHeight: Dp = 280.dp,
-    containScroll: Boolean = false,
     invalid: (T) -> Boolean = { false },
     row: @Composable RowScope.(entry: ListRowEntry<T>, ctx: ListRowContext) -> Unit,
 ) {
     val theme = LocalTheme.current
-    val density = LocalDensity.current
     val entries = state.entries
 
+    var pressedIndex by remember { mutableStateOf(-1) }
+    var pressY by remember { mutableStateOf(0f) }
     var draggingIndex by remember { mutableStateOf(-1) }
     var dragAccum by remember { mutableStateOf(0f) }
     var lastTickIndex by remember { mutableStateOf(-1) }
-    val stridePx = with(density) { (entryHeight + ListEntrySpacing).toPx() }
+    val stride = (entryHeight + ListEntrySpacing).value
+    fun targetIndex(accum: Float) = (draggingIndex + (accum / stride).roundToInt()).coerceIn(0, entries.lastIndex)
     val dragTargetIndex = if (draggingIndex == -1) {
         -1
     } else {
-        (draggingIndex + (dragAccum / stridePx).roundToInt()).coerceIn(0, entries.lastIndex)
+        targetIndex(dragAccum)
     }
     val contentHeight = entryHeight * entries.size + ListEntrySpacing * (entries.size - 1).coerceAtLeast(0)
 
-    val draggableState = rememberDraggableState { delta ->
-        if (draggingIndex == -1) return@rememberDraggableState
-        dragAccum = (dragAccum + delta).coerceIn(
-            -draggingIndex * stridePx,
-            (entries.lastIndex - draggingIndex) * stridePx,
-        )
-        val target = (draggingIndex + (dragAccum / stridePx).roundToInt()).coerceIn(0, entries.lastIndex)
-        if (target != lastTickIndex) {
-            lastTickIndex = target
-            UiSounds.play(UiSoundEvent.SLIDER_TICK)
+    fun onHandlePointer(index: Int, e: PointerEvent): Boolean = when (e.type) {
+        PointerEventType.Press -> e.button == 0 && run { pressedIndex = index; pressY = e.y; true }
+        PointerEventType.Move -> {
+            if (pressedIndex == -1) return false
+            if (draggingIndex == -1) {
+                if (abs(e.y - pressY) < 4f) return true
+                draggingIndex = pressedIndex
+                lastTickIndex = pressedIndex
+            }
+            dragAccum = (e.y - pressY).coerceIn(
+                -draggingIndex * stride,
+                (entries.lastIndex - draggingIndex) * stride,
+            )
+            val target = targetIndex(dragAccum)
+            if (target != lastTickIndex) {
+                lastTickIndex = target
+                UiSounds.play(UiSoundEvent.SLIDER_TICK)
+            }
+            true
         }
+        PointerEventType.Release -> e.button == 0 && run {
+            pressedIndex = -1
+            if (draggingIndex != -1) {
+                if (dragTargetIndex != draggingIndex) state.move(draggingIndex, dragTargetIndex)
+                draggingIndex = -1
+                dragAccum = 0f
+            }
+            true
+        }
+        else -> false
     }
 
     Column(
@@ -181,64 +199,58 @@ internal fun <T> ListOptionContainer(
     ) {
         if (entries.isNotEmpty()) {
             val scrollState = rememberScrollState()
-            val containmentModifier = if (containScroll) {
-                Modifier.containVerticalScroll(scrollState)
-            } else {
-                Modifier
-            }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = maxHeight)
-                    .fadingEdges(scrollState, theme.componentBackground)
-                    .then(containmentModifier)
-                    .verticalScroll(scrollState),
-            ) {
+            Box(modifier = Modifier.fillMaxWidth()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(contentHeight),
+                        .heightIn(max = maxHeight)
+                        .verticalScroll(scrollState),
                 ) {
-                    entries.forEachIndexed { index, entry ->
-                        key(entry.id) {
-                            val isDragging = draggingIndex == index
-                            val baseOffset = index * stridePx
-                            val targetOffset = when {
-                                isDragging -> baseOffset + dragAccum
-                                draggingIndex == -1 -> baseOffset
-                                dragTargetIndex > draggingIndex && index in (draggingIndex + 1)..dragTargetIndex -> baseOffset - stridePx
-                                dragTargetIndex < draggingIndex && index in dragTargetIndex until draggingIndex -> baseOffset + stridePx
-                                else -> baseOffset
-                            }
-                            val animatedOffset by animateFloatAsState(targetOffset)
-                            val visualOffset = if (isDragging) targetOffset else animatedOffset
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(contentHeight),
+                    ) {
+                        val order = if (draggingIndex == -1) entries.indices.toList() else entries.indices.filter { it != draggingIndex } + draggingIndex
+                        for (index in order) {
+                            val entry = entries[index]
+                            key(entry.id) {
+                                val isDragging = draggingIndex == index
+                                val baseOffset = index * stride
+                                val targetOffset = when {
+                                    isDragging -> baseOffset + dragAccum
+                                    draggingIndex == -1 -> baseOffset
+                                    dragTargetIndex > draggingIndex && index in (draggingIndex + 1)..dragTargetIndex -> baseOffset - stride
+                                    dragTargetIndex < draggingIndex && index in dragTargetIndex until draggingIndex -> baseOffset + stride
+                                    else -> baseOffset
+                                }
+                                val animatedOffset by animateFloatAsState(targetOffset)
+                                val visualOffset = if (isDragging) targetOffset else animatedOffset
 
-                            EntryRow(
-                                valid = !invalid(entry.value),
-                                dragging = isDragging,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(entryHeight)
-                                    .offset { IntOffset(0, visualOffset.roundToInt()) }
-                                    .zIndex(if (isDragging) 1f else 0f),
-                                dragHandle = if (!reorderable) null else { handleModifier ->
-                                    handleModifier.draggable(
-                                        orientation = Orientation.Vertical,
-                                        state = draggableState,
-                                        onDragStarted = { draggingIndex = index; dragAccum = 0f; lastTickIndex = index },
-                                        onDragStopped = {
-                                            if (dragTargetIndex != draggingIndex) state.move(draggingIndex, dragTargetIndex)
-                                            draggingIndex = -1
-                                            dragAccum = 0f
-                                        },
-                                    )
-                                },
-                                onRemove = { state.remove(entry.id) },
-                                content = { ctx -> row(entry, ctx) },
-                            )
+                                EntryRow(
+                                    valid = !invalid(entry.value),
+                                    dragging = isDragging,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(entryHeight)
+                                        .offset(y = visualOffset.dp),
+                                    dragHandle = if (!reorderable) null else { handleModifier ->
+                                        handleModifier.onPointerEvent { onHandlePointer(index, it) }
+                                    },
+                                    onRemove = { state.remove(entry.id) },
+                                    content = { ctx -> row(entry, ctx) },
+                                )
+                            }
                         }
                     }
                 }
+                FadingEdges(
+                    scrollState,
+                    theme.componentBackground,
+                    Modifier
+                        .fillMaxWidth()
+                        .height(minOf(contentHeight, maxHeight)),
+                )
             }
         }
 
@@ -260,13 +272,12 @@ private fun EntryRow(
     val theme = LocalTheme.current
     val rowInteraction = rememberInteractionSource()
     val isHovered by rowInteraction.collectIsHoveredAsState()
-    val fieldInteraction = rememberInteractionSource()
-    val isFocused by fieldInteraction.collectIsFocusedAsState()
+    var isFocused by remember { mutableStateOf(false) }
 
     val contentColor by animateColorAsState(
         if (dragging || isHovered || isFocused) theme.textColor else theme.textColorSecondary
     )
-    val borderColor by animateColorAsState(if (valid) theme.borderColor else ListInvalidColor)
+    val borderColor = animateColorAsState(if (valid) theme.borderColor else ListInvalidColor)
 
     Row(
         modifier = modifier
@@ -290,7 +301,7 @@ private fun EntryRow(
             )
         }
 
-        content(ListRowContext(contentColor, fieldInteraction, isFocused))
+        content(ListRowContext(contentColor, { isFocused = it }, isFocused))
 
         Icon(
             "trash",
@@ -308,13 +319,12 @@ private fun AddEntryButton(label: Any, entryHeight: Dp, onClick: () -> Unit) {
     val theme = LocalTheme.current
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
-    val contentColor by animateColorAsState(if (isHovered) theme.textColor else theme.textColorSecondary)
+    val contentColor = animateColorAsState(if (isHovered) theme.textColor else theme.textColorSecondary)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(entryHeight)
-            .clip(EntryShape)
             .border(1.dp, theme.borderColor, EntryShape)
             .pointerHoverIcon(PointerIcon.Hand)
             .hoverable(interactionSource)
@@ -326,7 +336,7 @@ private fun AddEntryButton(label: Any, entryHeight: Dp, onClick: () -> Unit) {
         Icon("plus", modifier = Modifier.size(16.dp), color = contentColor)
         Text(
             label,
-            modifier = Modifier.weight(1f, fill = false),
+            modifier = Modifier.weight(1f),
             color = contentColor,
             fontSize = 13.sp,
             maxLines = 1,
@@ -334,3 +344,11 @@ private fun AddEntryButton(label: Any, entryHeight: Dp, onClick: () -> Unit) {
         )
     }
 }
+
+internal fun textKeys(clipboard: UiClipboard, state: TextFieldState, onEdit: (String) -> Unit): (KeyEvent) -> Boolean = { ev ->
+    val before = state.text
+    val used = state.onKey(ev, clipboard.read, clipboard.write)
+    if (used && state.text != before) onEdit(state.text)
+    used
+}
+

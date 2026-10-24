@@ -1,85 +1,60 @@
 package org.polyfrost.oneconfig.internal.ui.themes
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
+import org.polyfrost.compose.foundation.shape.RoundedCornerShape
+import org.polyfrost.compose.ui.graphics.Shape
+import org.polyfrost.compose.ui.graphics.lerp
+import org.polyfrost.compose.ui.unit.dp
+import org.polyfrost.oneconfig.internal.ui.shell.fastOutSlowIn
 
-private const val THEME_ANIM_MS = 350
+private const val THEME_ANIM_MS = 350f
 
-/**
- * Animates every interpolatable property of [target] such as colors and corner radii so a theme switch
- * transitions smoothly
- *
- * Fonts branding boolean flags and circle shapes switch instantly
- */
+private class ThemeTween(var from: UITheme, var to: UITheme)
+
 @Composable
 fun animateTheme(target: UITheme): UITheme {
-    val spec = tween<Float>(THEME_ANIM_MS)
-    val colorSpec = tween<Color>(THEME_ANIM_MS)
-
-    val pageBackground by animateColorAsState(target.pageBackground, colorSpec, label = "pageBackground")
-    val sidebarBackground by animateColorAsState(target.sidebarBackground, colorSpec, label = "sidebarBackground")
-    val chipBackground by animateColorAsState(target.chipBackground, colorSpec, label = "chipBackground")
-    val controlTrackColor by animateColorAsState(target.controlTrackColor, colorSpec, label = "controlTrackColor")
-    val modCardBackground by animateColorAsState(target.modCardBackground, colorSpec, label = "modCardBackground")
-    val componentBackground by animateColorAsState(target.componentBackground, colorSpec, label = "componentBackground")
-    val popupBackground by animateColorAsState(target.popupBackground, colorSpec, label = "popupBackground")
-
-    val borderColor by animateColorAsState(target.borderColor, colorSpec, label = "borderColor")
-    val textColor by animateColorAsState(target.textColor, colorSpec, label = "textColor")
-    val textColorSecondary by animateColorAsState(target.textColorSecondary, colorSpec, label = "textColorSecondary")
-    val accentTextColor by animateColorAsState(target.accentTextColor, colorSpec, label = "accentTextColor")
-
-    val shadowColor by animateColorAsState(target.shadowColor, colorSpec, label = "shadowColor")
-    val controlThumbColor by animateColorAsState(target.controlThumbColor, colorSpec, label = "controlThumbColor")
-    val favoriteColor by animateColorAsState(target.favoriteColor, colorSpec, label = "favoriteColor")
-
-    val backgroundShape = animateCornerShape(target.backgroundShape, spec)
-    val sideBarNavigationEntryShape = animateCornerShape(target.sideBarNavigationEntryShape, spec)
-    val modCardShape = animateCornerShape(target.modCardShape, spec)
-    val checkBoxShape = animateCornerShape(target.checkBoxShape, spec)
-    val buttonShape = animateCornerShape(target.buttonShape, spec)
-    val popupShape = animateCornerShape(target.popupShape, spec)
-
-    return target.copy(
-        pageBackground = pageBackground,
-        sidebarBackground = sidebarBackground,
-        chipBackground = chipBackground,
-        modCardBackground = modCardBackground,
-        componentBackground = componentBackground,
-        popupBackground = popupBackground,
-        borderColor = borderColor,
-        textColor = textColor,
-        textColorSecondary = textColorSecondary,
-        accentTextColor = accentTextColor,
-        shadowColor = shadowColor,
-        controlThumbColor = controlThumbColor,
-        favoriteColor = favoriteColor,
-        backgroundShape = backgroundShape,
-        sideBarNavigationEntryShape = sideBarNavigationEntryShape,
-        modCardShape = modCardShape,
-        checkBoxShape = checkBoxShape,
-        buttonShape = buttonShape,
-        popupShape = popupShape,
-    ).withControlTrackColor(controlTrackColor)
+    val tween = remember { ThemeTween(target, target) }
+    val t = remember { mutableFloatStateOf(1f) }
+    LaunchedEffect(target) {
+        if (tween.to == target) return@LaunchedEffect
+        tween.from = blendTheme(tween.from, tween.to, fastOutSlowIn(t.floatValue))
+        tween.to = target
+        t.floatValue = 0f
+        val start = withFrameNanos { it }
+        while (t.floatValue < 1f) t.floatValue = ((withFrameNanos { it } - start) / 1e6f / THEME_ANIM_MS).coerceIn(0f, 1f)
+    }
+    val e = fastOutSlowIn(t.floatValue)
+    if (e >= 1f) return tween.to
+    return blendTheme(tween.from, tween.to, e)
 }
 
-/**
- * Animates the corner radius of a [RoundedCornerShape]-style target
- *
- * Shapes without a fixed radius such as `CircleShape` are left untouched so circles stay circular
- */
-@Composable
-private fun animateCornerShape(target: Shape, spec: AnimationSpec<Float>): Shape {
-    val targetRadius = target.cornerRadiusOrNull() ?: return target
-    val animated by animateFloatAsState(targetRadius.value, spec, label = "cornerRadius")
-    return RoundedCornerShape(animated.dp)
+private fun blendTheme(from: UITheme, to: UITheme, f: Float) = to.copy(
+    pageBackground = lerp(from.pageBackground, to.pageBackground, f),
+    sidebarBackground = lerp(from.sidebarBackground, to.sidebarBackground, f),
+    chipBackground = lerp(from.chipBackground, to.chipBackground, f),
+    modCardBackground = lerp(from.modCardBackground, to.modCardBackground, f),
+    componentBackground = lerp(from.componentBackground, to.componentBackground, f),
+    popupBackground = lerp(from.popupBackground, to.popupBackground, f),
+    borderColor = lerp(from.borderColor, to.borderColor, f),
+    textColor = lerp(from.textColor, to.textColor, f),
+    textColorSecondary = lerp(from.textColorSecondary, to.textColorSecondary, f),
+    accentTextColor = lerp(from.accentTextColor, to.accentTextColor, f),
+    shadowColor = lerp(from.shadowColor, to.shadowColor, f),
+    controlThumbColor = lerp(from.controlThumbColor, to.controlThumbColor, f),
+    favoriteColor = lerp(from.favoriteColor, to.favoriteColor, f),
+    backgroundShape = lerpShape(from.backgroundShape, to.backgroundShape, f),
+    sideBarNavigationEntryShape = lerpShape(from.sideBarNavigationEntryShape, to.sideBarNavigationEntryShape, f),
+    modCardShape = lerpShape(from.modCardShape, to.modCardShape, f),
+    checkBoxShape = lerpShape(from.checkBoxShape, to.checkBoxShape, f),
+    buttonShape = lerpShape(from.buttonShape, to.buttonShape, f),
+    popupShape = lerpShape(from.popupShape, to.popupShape, f),
+).withControlTrackColor(lerp(from.controlTrackColor, to.controlTrackColor, f))
+
+private fun lerpShape(from: Shape, to: Shape, f: Float): Shape {
+    if (from.percent >= 0f || to.percent >= 0f) return to
+    return RoundedCornerShape((from.radius + (to.radius - from.radius) * f).dp)
 }

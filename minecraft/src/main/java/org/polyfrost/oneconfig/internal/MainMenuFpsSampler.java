@@ -34,10 +34,9 @@ import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.MainMenuFpsEvent;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
-import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen;
+import org.polyfrost.oneconfig.internal.ui.poly.PolyScreen;
 
 public final class MainMenuFpsSampler {
-    private static final String POLYPLUS_PACKAGE = "org.polyfrost.polyplus.";
 
     private static final long MAX_TICK_GAP_NANOS = 250L * 1_000_000L;
 
@@ -91,7 +90,7 @@ public final class MainMenuFpsSampler {
         elapsedNanos += gap;
 
         boolean representative = !(screen instanceof LevelLoadingScreen)
-                && (!(screen instanceof ComposeScreen) || screen.getClass().getName().startsWith(POLYPLUS_PACKAGE));
+                && !(screen instanceof PolyScreen);
         if (representative) {
             fpsSum += Math.max(0, Platform.compatibility().fps());
             sampleCount++;

@@ -34,6 +34,10 @@ dependencies {
     api(project(":modules:events"))
 
     compileOnly(libs.jetbrains.compose.runtime)
-    compileOnly(libs.jetbrains.skiko.awt)
     compileOnly(libs.kotlinx.coroutines)
+}
+
+dependencies {
+    testImplementation(libs.jetbrains.compose.runtime)
+    testImplementation(libs.kotlinx.coroutines)
 }

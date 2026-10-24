@@ -1,47 +1,52 @@
 package org.polyfrost.oneconfig.internal.ui.hud.components
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.DropdownMenuItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.DpOffset
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import org.polyfrost.oneconfig.internal.ui.components.Icon
+import org.polyfrost.compose.animation.animateColorAsState
+import org.polyfrost.compose.animation.core.animateFloatAsState
+import org.polyfrost.compose.foundation.background
+import org.polyfrost.compose.foundation.border
+import org.polyfrost.compose.foundation.hoverable
+import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
+import org.polyfrost.compose.foundation.layout.Arrangement
+import org.polyfrost.compose.foundation.layout.Box
+import org.polyfrost.compose.foundation.layout.Column
+import org.polyfrost.compose.foundation.layout.Row
+import org.polyfrost.compose.foundation.layout.fillMaxWidth
+import org.polyfrost.compose.foundation.layout.height
+import org.polyfrost.compose.foundation.layout.heightIn
+import org.polyfrost.compose.foundation.layout.padding
+import org.polyfrost.compose.foundation.layout.weight
+import org.polyfrost.compose.foundation.layout.width
+import org.polyfrost.compose.foundation.rememberScrollState
+import org.polyfrost.compose.foundation.verticalScroll
+import org.polyfrost.compose.ui.Alignment
+import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.draw.clip
+import org.polyfrost.compose.ui.graphics.copy
+import org.polyfrost.compose.ui.input.pointer.PointerIcon
+import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
+import org.polyfrost.compose.ui.layout.onPlaced
+import org.polyfrost.compose.ui.text.style.TextOverflow
+import org.polyfrost.compose.ui.unit.Dp
+import org.polyfrost.compose.ui.unit.DpOffset
+import org.polyfrost.compose.ui.unit.dp
+import org.polyfrost.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.dropdown.SimpleDropdownMenu
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.poly.FadingEdges
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.concentric
+import org.polyfrost.oneconfig.internal.ui.components.Icon
+import org.polyfrost.compose.foundation.layout.size
 
 @Composable
 inline fun <reified E : Enum<E>> Dropdown(
@@ -52,13 +57,20 @@ inline fun <reified E : Enum<E>> Dropdown(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
+    val theme = LocalTheme.current
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
     val chevronRotation by animateFloatAsState(
         if (expanded) 0f else 180f
     )
-    val textColor by animateColorAsState(
+    val textColor = animateColorAsState(
         if (isHovered || expanded) LocalTheme.current.textColor else LocalTheme.current.textColorSecondary
+    )
+    val borderColor = animateColorAsState(
+        if (expanded) Accent else theme.borderColor
+    )
+    val backgroundColor = animateColorAsState(
+        if (expanded) theme.componentBackground.lerp(Accent.withAlpha(255), 0.2f) else theme.componentBackground
     )
 
     Column(
@@ -68,53 +80,65 @@ inline fun <reified E : Enum<E>> Dropdown(
         Box {
             Row(
                 modifier = Modifier.width(width)
-                    .height(34.dp)
-                    .background(Color(0x192126).copy(1f), RoundedCornerShape(8.dp))
-                    .border(1.dp, LocalTheme.current.borderColor, RoundedCornerShape(8.dp))
-                    .onClick(interactionSource) { expanded = true }
-                    .pointerHoverIcon(PointerIcon.Hand),
+                    .height(32.dp)
+                    .background(backgroundColor, theme.sideBarNavigationEntryShape)
+                    .border(1.dp, borderColor, theme.sideBarNavigationEntryShape)
+                    .onClick(interactionSource) { expanded = !expanded }
+                    .pointerHoverIcon(PointerIcon.Hand)
+                    .padding(horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
                     value.name,
                     color = textColor,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontSize = 13.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
-                        .padding(start = 12.dp)
+                        .weight(1f)
+                        .padding(end = 8.dp)
                 )
-                Icon(
-                    "up", color = textColor, modifier = Modifier
-                        .padding(end = 12.dp).size(12.dp).rotate(chevronRotation)
-                )
+                Icon("up", textColor, Modifier.size(18.dp), rotation = chevronRotation)
             }
             SimpleDropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
-                modifier = Modifier
-                    .background(Color(0xFF101B1F), RoundedCornerShape(8.dp))
-                    .border(1.dp, LocalTheme.current.borderColor, RoundedCornerShape(8.dp)),
                 offset = DpOffset(0.dp, 10.dp)
             ) {
-                Column(
+                val scrollState = rememberScrollState()
+                var menuHeight by remember { mutableFloatStateOf(0f) }
+                Box(
                     modifier = Modifier
-                        .padding(4.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                        .width(width)
+                        .clip(theme.sideBarNavigationEntryShape)
+                        .background(theme.componentBackground, theme.sideBarNavigationEntryShape)
+                        .border(1.dp, theme.borderColor, theme.sideBarNavigationEntryShape)
                 ) {
-                    enumValues<E>().forEach {
-                        DropdownItem(
-                            it,
-                            it == value,
-                            {
-                                Snapshot.withMutableSnapshot {
-                                    onValueChange(it)
-                                }
-                                expanded = false
-                            },
-                            width
-                        )
+                    Column(
+                        modifier = Modifier
+                            .heightIn(max = 280.dp)
+                            .onPlaced { menuHeight = it.height }
+                            .verticalScroll(scrollState)
+                            .padding(4.dp)
+                            .fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        enumValues<E>().forEach {
+                            DropdownItem(
+                                it,
+                                it == value,
+                                {
+                                    Snapshot.withMutableSnapshot {
+                                        onValueChange(it)
+                                    }
+                                    expanded = false
+                                },
+                                width
+                            )
+                        }
                     }
+                    FadingEdges(scrollState, theme.componentBackground, Modifier.fillMaxWidth().height(menuHeight.dp))
                 }
             }
         }
@@ -128,31 +152,29 @@ fun <E : Enum<E>> DropdownItem(
     onClick: () -> Unit,
     width: Dp,
 ) {
+    val theme = LocalTheme.current
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val backgroundColor by animateColorAsState(
+    val backgroundColor = animateColorAsState(
         if (selected) Accent
-        else if (isHovered) Color(0x192126).copy(1f)
-        else Color(0x192126).copy(0f)
+        else if (isHovered) theme.modCardBackground
+        else theme.modCardBackground.copy(0f)
     )
+    val itemShape = theme.sideBarNavigationEntryShape.concentric(4.dp)
 
-    Row(
-        modifier = Modifier.width(width)
-            .height(32.dp)
-            .background(backgroundColor, RoundedCornerShape(6.dp))
+    Box(
+        modifier = Modifier.width(width - 8.dp)
+            .background(backgroundColor, itemShape)
             .onClick(interactionSource, onClick = onClick)
             .hoverable(interactionSource)
-            .pointerHoverIcon(PointerIcon.Hand),
-        verticalAlignment = Alignment.CenterVertically,
+            .pointerHoverIcon(PointerIcon.Hand)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
     ) {
         Text(
             e.name,
             color = LocalTheme.current.textColor,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier
-                .padding(start = 12.dp)
+            fontSize = 13.sp,
         )
     }
 }

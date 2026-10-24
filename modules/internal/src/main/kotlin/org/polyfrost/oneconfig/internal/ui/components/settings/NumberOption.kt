@@ -1,43 +1,52 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import java.util.Locale
 import kotlin.math.roundToInt
-import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
+import org.polyfrost.compose.animation.animateColorAsState
+import org.polyfrost.compose.foundation.background
+import org.polyfrost.compose.foundation.border
+import org.polyfrost.compose.foundation.hoverable
+import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
+import org.polyfrost.compose.foundation.layout.Box
+import org.polyfrost.compose.foundation.layout.Column
+import org.polyfrost.compose.foundation.layout.Row
+import org.polyfrost.compose.foundation.layout.fillMaxWidth
+import org.polyfrost.compose.foundation.layout.padding
+import org.polyfrost.compose.foundation.layout.size
+import org.polyfrost.compose.foundation.layout.weight
+import org.polyfrost.compose.foundation.layout.width
+import org.polyfrost.compose.foundation.text.BasicTextField
+import org.polyfrost.compose.foundation.text.TextFieldState
+import org.polyfrost.compose.render.PolyFont
+import org.polyfrost.compose.ui.Alignment
+import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.graphics.Color
+import org.polyfrost.compose.ui.graphics.copy
+import org.polyfrost.compose.ui.input.key.KeyEvent
+import org.polyfrost.compose.ui.input.key.KeyEventType
+import org.polyfrost.compose.ui.input.pointer.PointerEvent
+import org.polyfrost.compose.ui.input.pointer.PointerEventType
+import org.polyfrost.compose.ui.input.pointer.onPointerEvent
+import org.polyfrost.compose.ui.text.font.FontWeight
+import org.polyfrost.compose.ui.text.style.TextOverflow
+import org.polyfrost.compose.ui.unit.Dp
+import org.polyfrost.compose.ui.unit.dp
+import org.polyfrost.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.api.settings.NumberOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.screens.LocalUiClipboard
+import org.polyfrost.oneconfig.internal.ui.screens.UiClipboard
+import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 fun Float.toNumberType(type: Class<*>): Number = when (type) {
@@ -72,14 +81,28 @@ fun spinnerStep(step: Float, min: Float, max: Float): Float = when {
 fun formatSpinnerValue(v: Float): String =
     if (v == v.toLong().toFloat()) v.toLong().toString() else String.format(Locale.ROOT, "%.2f", v)
 
+private fun TextFieldState.setText(s: String) { replaceText(s); moveCaret(s.length) }
+
+internal fun focusOnPress(e: PointerEvent, state: TextFieldState) =
+    e.type == PointerEventType.Press && e.button == 0 && run { state.requestFocus(); true }
+
+internal fun editKeys(clipboard: UiClipboard, state: TextFieldState, onEnter: (() -> Unit)? = null, font: PolyFont? = null, onEdit: () -> Unit): (KeyEvent) -> Boolean = { ev ->
+    if (onEnter != null && ev.type == KeyEventType.KeyDown && ev.key == KeyEvent.KEY_ENTER) { onEnter(); true } else {
+        val before = state.text
+        val used = state.onKey(ev, clipboard.read, clipboard.write, font)
+        if (used && state.text != before) onEdit()
+        used
+    }
+}
+
 @Composable
 private fun SpinnerArrow(icon: String, enabled: Boolean, onClick: () -> Unit) {
     val theme = LocalTheme.current
     val hoverInteraction = rememberInteractionSource()
     val hovered by hoverInteraction.collectIsHoveredAsState()
-    val color by animateColorAsState(
+    val color = animateColorAsState(
         when {
-            !enabled -> theme.textColorSecondary.copy(alpha = 0.4f)
+            !enabled -> theme.textColorSecondary.copy(alpha = theme.textColorSecondary.alphaF * 0.4f)
             hovered -> theme.textColor
             else -> theme.textColorSecondary
         }
@@ -118,16 +141,24 @@ fun NumberSpinner(
     onEditEnd: (() -> Unit)? = null,
 ) {
     val theme = LocalTheme.current
-    var focused by remember { mutableStateOf(false) }
+    val clipboard = LocalUiClipboard.current
+    val state = remember { TextFieldState(formatSpinnerValue(value)) }
+    val focused = state.focused
     val formatted = if (format != null && !focused) format(value) else null
-    var text by remember(value) { mutableStateOf(formatSpinnerValue(value)) }
+    val font = PolyFont(theme.typography.family.resolve(FontWeight.Normal), 13f)
+    val wasFocused = remember { booleanArrayOf(false) }
+    LaunchedEffect(value, focused) {
+        if (!focused) state.setText(formatSpinnerValue(value))
+        if (wasFocused[0] && !focused) onEditEnd?.invoke()
+        wasFocused[0] = focused
+    }
 
     val arrowLo = maxOf(min, arrowMin)
     val arrowHi = maxOf(arrowLo, minOf(max, arrowMax))
 
     fun commit(v: Float) {
         val clamped = v.coerceIn(arrowLo, arrowHi)
-        text = formatSpinnerValue(clamped)
+        state.setText(formatSpinnerValue(clamped))
         onValueChange(clamped)
     }
 
@@ -138,38 +169,31 @@ fun NumberSpinner(
             .border(1.dp, theme.borderColor, theme.sideBarNavigationEntryShape),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        BasicTextField(
-            value = text,
-            onValueChange = { input ->
-                val filtered = filterNumberInput(input)
-                text = filtered
-                filtered.toFloatOrNull()?.coerceIn(min, max)?.let(onValueChange)
-            },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            textStyle = TextStyle(
-                color = theme.textColor,
-                fontSize = 13.sp,
-                fontFamily = theme.typography.family,
-            ),
-            cursorBrush = SolidColor(theme.textColor),
-            // the field itself stays in the tree while the formatted text covers it so clicking it still focuses it for editing
-            decorationBox = { innerTextField ->
-                Box {
-                    Box(Modifier.alpha(if (formatted == null) 1f else 0f)) { innerTextField() }
-                    if (formatted != null) {
-                        Text(formatted, color = theme.textColor, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                }
-            },
-            modifier = Modifier.trackTextInputFocus()
-                .onFocusChanged {
-                    if (focused && !it.isFocused) onEditEnd?.invoke()
-                    focused = it.isFocused
-                }
+        Box(
+            modifier = Modifier
                 .weight(1f)
+                .onPointerEvent { focusOnPress(it, state) }
                 .padding(start = 8.dp, top = 5.dp, bottom = 5.dp),
-        )
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            if (formatted != null) {
+                Text(formatted, color = theme.textColor, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            BasicTextField(
+                state, font,
+                color = if (formatted == null) theme.textColor else Color.Transparent,
+                caretColor = theme.textColor,
+                selectionColor = Accent.copy(alpha = 0.4f),
+                readClipboard = clipboard.read,
+                writeClipboard = clipboard.write,
+                modifier = Modifier.fillMaxWidth(),
+                onKey = editKeys(clipboard, state) {
+                    val filtered = filterNumberInput(state.text)
+                    if (filtered != state.text) state.replaceText(filtered)
+                    filtered.toFloatOrNull()?.coerceIn(min, max)?.let(onValueChange)
+                },
+            )
+        }
 
         SpinnerArrows(value, arrowLo, arrowHi, step) { commit(it) }
     }
@@ -181,7 +205,7 @@ fun NumberOption(data: NumberOptionData) {
         if (data.min == data.min.roundToInt().toFloat() && data.max == data.max.roundToInt().toFloat()) 1f else 0.1f
     }
     var value by remember(data.prop) {
-        mutableStateOf(data.numProp.shown()?.toFloat()?.coerceIn(data.min, data.max) ?: data.min)
+        mutableFloatStateOf(data.numProp.shown()?.toFloat()?.coerceIn(data.min, data.max) ?: data.min)
     }
 
     NumberSpinner(

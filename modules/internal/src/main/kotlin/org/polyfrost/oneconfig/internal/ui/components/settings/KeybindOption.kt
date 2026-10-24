@@ -1,15 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -18,22 +8,27 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEvent
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.input.key.utf16CodePoint
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import org.polyfrost.compose.animation.animateColorAsState
+import org.polyfrost.compose.foundation.background
+import org.polyfrost.compose.foundation.border
+import org.polyfrost.compose.foundation.focusable
+import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
+import org.polyfrost.compose.foundation.layout.Arrangement
+import org.polyfrost.compose.foundation.layout.Row
+import org.polyfrost.compose.foundation.layout.padding
+import org.polyfrost.compose.foundation.layout.size
+import org.polyfrost.compose.foundation.layout.widthIn
+import org.polyfrost.compose.ui.Alignment
+import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.graphics.Color
+import org.polyfrost.compose.ui.graphics.copy
+import org.polyfrost.compose.ui.input.key.KeyEvent
+import org.polyfrost.compose.ui.input.key.KeyEventType
+import org.polyfrost.compose.ui.input.key.onKeyEvent
+import org.polyfrost.compose.ui.input.pointer.PointerIcon
+import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
+import org.polyfrost.compose.ui.unit.dp
+import org.polyfrost.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
@@ -101,12 +96,6 @@ fun unbindKeybindOption(prop: Property<*>) {
     bumpResetEpoch(prop)
 }
 
-private fun KeyEvent.awtKeyEventId(): Int? = runCatching {
-    val internal = nativeKeyEvent
-    val field = internal.javaClass.getDeclaredField("nativeEvent").apply { isAccessible = true }
-    (field.get(internal) as? java.awt.event.KeyEvent)?.id
-}.getOrNull()
-
 @Composable
 fun KeybindOption(data: KeybindOptionData) {
     val theme = LocalTheme.current
@@ -114,12 +103,10 @@ fun KeybindOption(data: KeybindOptionData) {
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
     var recording by remember(data.prop) { mutableStateOf(false) }
-    val focusRequester = remember(data.prop) { FocusRequester() }
 
-    var currentKeybind by remember(data.prop) {
-        mutableStateOf(data.prop.get() as? OneConfigKeybind)
-    }
-    var displayName by remember(data.prop) { mutableStateOf(keybindDisplayName(currentKeybind)) }
+    val bindRevision = KeybindConflicts.revision.intValue
+    val currentKeybind = remember(data.prop, bindRevision) { data.prop.get() as? OneConfigKeybind }
+    val displayName = keybindDisplayName(currentKeybind)
 
     val recordedKeys = remember(data.prop) { mutableStateListOf<Int>() }
     val heldKeys = remember(data.prop) { HashSet<Int>() }
@@ -131,9 +118,7 @@ fun KeybindOption(data: KeybindOptionData) {
     // setting the property may mutate the keybind in place or swap in a fresh instance and
     // KeybindManager.replace handles both so the bind keeps firing without a mod change callback
     fun applyKeybind(keys: IntArray?, mouse: IntArray?, mods: Byte = KeyModifiers.NONE) {
-        val applied = writeKeybind(data.prop, keys, mouse, mods)
-        currentKeybind = applied
-        displayName = keybindDisplayName(applied)
+        writeKeybind(data.prop, keys, mouse, mods)
     }
 
     fun commitRecording() {
@@ -148,14 +133,14 @@ fun KeybindOption(data: KeybindOptionData) {
         recording = false
     }
 
-    val bgColor by animateColorAsState(
+    val bgColor = animateColorAsState(
         when {
             recording -> Accent.copy(alpha = 0.2f)
             isHovered -> theme.componentBackground.copy(alpha = 0.8f)
             else -> theme.componentBackground
         }
     )
-    val borderColor by animateColorAsState(
+    val borderColor = animateColorAsState(
         when {
             recording -> Accent
             hasConflict -> CONFLICT_COLOR
@@ -163,7 +148,7 @@ fun KeybindOption(data: KeybindOptionData) {
             else -> theme.borderColor
         }
     )
-    val textColor by animateColorAsState(
+    val textColor = animateColorAsState(
         when {
             recording -> Accent
             hasConflict -> CONFLICT_COLOR
@@ -177,7 +162,6 @@ fun KeybindOption(data: KeybindOptionData) {
             heldKeys.clear()
             recordedMouse.clear()
             heldMouse.clear()
-            focusRequester.requestFocus()
         }
     }
 
@@ -220,25 +204,23 @@ fun KeybindOption(data: KeybindOptionData) {
             .widthIn(max = LocalOptionWidth.current)
             .onKeyEvent { event ->
                 if (!recording) return@onKeyEvent false
-                if (event.awtKeyEventId() == java.awt.event.KeyEvent.KEY_TYPED) return@onKeyEvent true
                 when (event.type) {
+                    KeyEventType.Char, KeyEventType.Preedit -> return@onKeyEvent true
                     KeyEventType.KeyDown -> {
-                        if (event.key == Key.Escape) {
+                        if (event.key == KeyEvent.KEY_ESCAPE) {
                             applyKeybind(null, null)
                             recording = false
                             return@onKeyEvent true
                         }
-                        if (event.key == Key.Backspace || event.key == Key.Delete) {
+                        if (event.key == KeyEvent.KEY_BACKSPACE || event.key == KeyEvent.KEY_DELETE) {
                             if (recordedKeys.isEmpty()) {
                                 applyKeybind(null, null)
                                 recording = false
                                 return@onKeyEvent true
                             }
                         }
-                        // ComposeScreen carries the raw platform key code in the event's codePoint which avoids a
-                        // lossy AWT round-trip
                         // a code <= 0 is an unknown key or a character event and would match nothing or everything
-                        val keyCode = event.utf16CodePoint
+                        val keyCode = event.key
                         if (keyCode <= 0) return@onKeyEvent true
                         if (singleKey) {
                             applyKeybind(intArrayOf(keyCode), null)
@@ -250,16 +232,14 @@ fun KeybindOption(data: KeybindOptionData) {
                         return@onKeyEvent true
                     }
                     KeyEventType.KeyUp -> {
-                        heldKeys.remove(event.utf16CodePoint)
+                        heldKeys.remove(event.key)
                         if (heldKeys.isEmpty() && heldMouse.isEmpty() && (recordedKeys.isNotEmpty() || recordedMouse.isNotEmpty())) {
                             commitRecording()
                         }
                         return@onKeyEvent true
                     }
-                    else -> return@onKeyEvent false
                 }
             }
-            .focusRequester(focusRequester)
             .focusable()
             .background(bgColor, KeybindShape)
             .border(1.dp, borderColor, KeybindShape)
@@ -283,6 +263,7 @@ fun KeybindOption(data: KeybindOptionData) {
             },
             color = textColor,
             fontSize = 13.sp,
+            softWrap = true,
         )
     }
 }

@@ -215,3 +215,5 @@ fun interface Visualizer {
         operator fun get(cls: Class<out Visualizer>): Visualizer? = registry[cls]
     }
 }
+
+fun interface PolyVisualizer : Visualizer

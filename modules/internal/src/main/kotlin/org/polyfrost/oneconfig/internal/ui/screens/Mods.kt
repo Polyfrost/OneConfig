@@ -1,71 +1,72 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.VisibilityThreshold
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.interaction.InteractionSource
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.toMutableStateList
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.center
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawOutline
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.withFrameNanos
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.hypot
+import kotlin.math.min
+import kotlin.math.sin
+import org.polyfrost.compose.animation.animateColorAsState
+import org.polyfrost.compose.animation.core.animateFloatAsState
+import org.polyfrost.compose.animation.core.spring
+import org.polyfrost.compose.animation.core.springStep
+import org.polyfrost.compose.foundation.Canvas
+import org.polyfrost.compose.foundation.TooltipArea
+import org.polyfrost.compose.foundation.background
+import org.polyfrost.compose.foundation.border
+import org.polyfrost.compose.foundation.hoverable
+import org.polyfrost.compose.foundation.interaction.InteractionSource
+import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
+import org.polyfrost.compose.foundation.layout.Arrangement
+import org.polyfrost.compose.foundation.layout.Box
+import org.polyfrost.compose.foundation.layout.Column
+import org.polyfrost.compose.foundation.layout.ColumnScope
+import org.polyfrost.compose.foundation.layout.Row
+import org.polyfrost.compose.foundation.layout.align
+import org.polyfrost.compose.foundation.layout.fillMaxSize
+import org.polyfrost.compose.foundation.layout.fillMaxWidth
+import org.polyfrost.compose.foundation.layout.height
+import org.polyfrost.compose.foundation.layout.heightIn
+import org.polyfrost.compose.foundation.layout.padding
+import org.polyfrost.compose.foundation.layout.size
+import org.polyfrost.compose.foundation.layout.weight
+import org.polyfrost.compose.foundation.lazy.LazyColumn
+import org.polyfrost.compose.foundation.lazy.LazyListState
+import org.polyfrost.compose.foundation.shape.RoundedCornerShape
+import org.polyfrost.compose.render.RenderContext
+import org.polyfrost.compose.ui.Alignment
+import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.draw.alpha
+import org.polyfrost.compose.ui.draw.clip
+import org.polyfrost.compose.ui.graphics.Brush
+import org.polyfrost.compose.ui.graphics.Color
+import org.polyfrost.compose.ui.graphics.LinearGradient
+import org.polyfrost.compose.ui.graphics.RadialGradient
+import org.polyfrost.compose.ui.graphics.copy
+import org.polyfrost.compose.ui.graphics.graphicsLayer
+import org.polyfrost.compose.ui.input.pointer.PointerIcon
+import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
+import org.polyfrost.compose.ui.layout.onPlaced
+import org.polyfrost.compose.ui.platform.LocalDensity
+import org.polyfrost.compose.ui.text.font.FontWeight
+import org.polyfrost.compose.ui.text.style.TextAlign
+import org.polyfrost.compose.ui.unit.dp
+import org.polyfrost.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Config
+import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
+import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker
 import org.polyfrost.oneconfig.api.ui.v1.ModCardTypes
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
@@ -77,7 +78,6 @@ import org.polyfrost.oneconfig.internal.ui.api.ModGridEntry
 import org.polyfrost.oneconfig.internal.ui.api.ModHidden
 import org.polyfrost.oneconfig.internal.ui.api.ModOrder
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories
-import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.api.buildModGridEntries
 import org.polyfrost.oneconfig.internal.ui.api.modCardOrder
 import org.polyfrost.oneconfig.internal.ui.api.modFavoriteAt
@@ -96,11 +96,12 @@ import org.polyfrost.oneconfig.internal.ui.components.rememberModEnabled
 import org.polyfrost.oneconfig.internal.ui.components.reorderContainer
 import org.polyfrost.oneconfig.internal.ui.components.reorderOverlay
 import org.polyfrost.oneconfig.internal.ui.components.reorderableItem
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
-import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
-import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
+import org.polyfrost.oneconfig.internal.ui.hud.HudModCardData
+import org.polyfrost.oneconfig.internal.ui.hud.components.hudPreviewScale
+import org.polyfrost.oneconfig.internal.ui.hud.components.rememberHudPreview
+import org.polyfrost.oneconfig.internal.ui.poly.GUTTER
+import org.polyfrost.oneconfig.internal.ui.shell.ShellHost
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
-import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyGridState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -124,12 +125,12 @@ enum class ModCategory(
 }
 
 @Composable
-fun Mods() {
+fun Mods(host: ShellHost) {
     var activeCategory by remember { mutableStateOf(ModCategory.All) }
 
-    Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
+    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(19.dp)) {
         Row(
-            modifier = Modifier.padding(horizontal = PageGutter),
+            modifier = Modifier.padding(horizontal = GUTTER.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             val cards = ConfigRegistry.modCardConfigs
@@ -157,12 +158,12 @@ fun Mods() {
                 }
             }
         }
-        ModsGrid(activeCategory)
+        ModsGrid(activeCategory, host)
     }
 }
 
 @Composable
-fun ColumnScope.ModsGrid(category: ModCategory) {
+fun ColumnScope.ModsGrid(category: ModCategory, host: ShellHost) {
     val registryRevision = ConfigRegistry.revision
     val hudRevision = HudManager.revision
     val categoryRevision = ThirdPartyModCategories.revision
@@ -187,12 +188,14 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
             }
             .sortedWith(modCardOrder())
     }
-    if (filtered.isEmpty() && (category.favoritesOnly || category.hiddenOnly)) {
-        Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(
-                if (category.hiddenOnly) "No hidden mods." else "No favorite mods.",
-                color = LocalTheme.current.textColorSecondary,
-            )
+    if (filtered.isEmpty()) {
+        Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            if (category.favoritesOnly || category.hiddenOnly) {
+                Text(
+                    if (category.hiddenOnly) "No hidden mods." else "No favorite mods.",
+                    color = LocalTheme.current.textColorSecondary,
+                )
+            }
         }
         return
     }
@@ -205,102 +208,99 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
 
     val gridState = rememberRestorableLazyGridState("mods")
     val density = LocalDensity.current
-    val windowSize = LocalWindowInfo.current.containerSize
-    // Only enable placement animations after the grid has been laid out for the current size
-    var animateItems by remember(windowSize, density) { mutableStateOf(false) }
+    val placement = remember(entries, density.density) { Placement() }
     val reorderState = rememberGridReorderState(
         gridState = gridState,
+        items = entries,
+        key = { it.key },
         onMove = { from, to -> entries.add(to, entries.removeAt(from)) },
         onDrop = { index -> commitDrop(entries, index) },
         dragBounds = { index -> modGroupBounds(entries, index) },
-        onClick = { key -> entries.cardData(key)?.let(::openModCard) },
-        horizontalPadding = PageGutter,
+        onClick = { key -> entries.cardData(key)?.let { openModCard(it, host) } },
     )
     val dropFavorite = reorderState.draggingKey
         ?.let { key -> entries.indexOfFirst { it.key == key } }
         ?.takeIf { it >= 0 }
         ?.let { index -> modFavoriteAt(entries, index, ModFavorites::isFavorite) }
-    // the dragged card's index no longer applies once the list is rebuilt
-    DisposableEffect(entries) {
-        onDispose { reorderState.cancel() }
-    }
 
-    // The overlay card is drawn as a sibling of the grid, but the page pane that wraps the nav host
-    // clips its content, so it would be cut off at the pane edge. Drop that clip for as long as an
-    // overlay card exists (dragging and the settle-back animation) so it can be seen in full.
-    val overlayActive = reorderState.overlayKey != null
-    DisposableEffect(overlayActive) {
-        ShellState.modDragging = overlayActive
-        onDispose { if (overlayActive) ShellState.modDragging = false }
-    }
-
-    // override scroll to stay in place instead of following the first visible item
-    DisposableEffect(favoriteRevision) {
-        gridState.requestScrollToItem(gridState.firstVisibleItemIndex, gridState.firstVisibleItemScrollOffset)
-        onDispose { }
-    }
-
-    val focusManager = LocalFocusManager.current
-    ScrollbarBox(
-        gridState,
-        PageGutter,
-        modifier = Modifier
-            .weight(1f)
-            // see overlayActive above: the overlay card has to be able to leave the grid while it exists
-            .then(if (overlayActive) Modifier else Modifier.clipToBounds())
-            // cards can't take focus, so clear it on press to unfocus the search field
-            .pointerInput(focusManager) {
-                awaitEachGesture {
-                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-                    focusManager.clearFocus()
+    LaunchedEffect(placement.offsets.isNotEmpty()) {
+        var last = withFrameNanos { it }
+        while (placement.offsets.isNotEmpty()) {
+            val now = withFrameNanos { it }
+            val dt = ((now - last) / 1e9f).coerceIn(0f, 0.05f)
+            last = now
+            for (k in placement.offsets.keys.toList()) {
+                val o = placement.offsets[k] ?: continue
+                val v = placement.velocity.getOrPut(k) { FloatArray(2) }
+                val sx = springStep(o[0], v[0], 20f, dt)
+                val sy = springStep(o[1], v[1], 20f, dt)
+                v[0] = sx[1]
+                v[1] = sy[1]
+                if (abs(sx[0]) < 0.5f && abs(sy[0]) < 0.5f) {
+                    placement.offsets.remove(k)
+                    placement.velocity.remove(k)
+                } else {
+                    placement.offsets[k] = floatArrayOf(sx[0], sy[0])
                 }
             }
+        }
+    }
+
+    val rows = gridRows(entries)
+    ScrollbarBox(
+        gridState,
+        GUTTER.dp,
+        modifier = Modifier
+            .weight(1f)
+            .fillMaxWidth()
             .reorderContainer(reorderState),
     ) {
-        LazyVerticalGrid(
+        LazyColumn(
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = GUTTER.dp)
+                .onPlaced {
+                    reorderState.viewportStart = it.y
+                    reorderState.viewportEnd = it.y + it.height
+                },
             state = gridState,
-            columns = GridCells.Fixed(4),
-            verticalArrangement = Arrangement.spacedBy(19.dp),
-            horizontalArrangement = Arrangement.spacedBy(19.dp),
-            contentPadding = PaddingValues(horizontal = PageGutter),
-            modifier = Modifier.fillMaxSize().onGloballyPositioned {
-                animateItems = true
-            },
+            verticalArrangement = Arrangement.spacedBy(ModGridGap),
         ) {
-            items(
-                entries,
-                key = { it.key },
-                contentType = { if (it is ModGridEntry.Header) HEADER_CONTENT_TYPE else CARD_CONTENT_TYPE },
-                span = { if (it is ModGridEntry.Header) GridItemSpan(maxLineSpan) else GridItemSpan(1) },
-            ) { entry ->
-                when (entry) {
-                    is ModGridEntry.Header -> ModTypeHeader(
-                        entry,
-                        modifier = if (animateItems) Modifier.animateItem(placementSpec = ModCardPlacementSpec) else Modifier,
-                        onToggle = { ModCardTypeCollapseStore.toggle(entry.type.id) },
+            items(rows, key = { it.key }) { row ->
+                when (row) {
+                    is GridRow.Header -> ModTypeHeader(
+                        row.entry,
+                        onToggle = { ModCardTypeCollapseStore.setCollapsed(row.entry.type.id, row.entry.expanded) },
                     )
 
-                    is ModGridEntry.Card -> {
-                        val mod = entry.data
-                        val dragging = reorderState.draggingKey == mod.id
-                        val outlineAlpha = animateFloatAsState(if (dragging) 1f else 0f)
-                        val favoriteSlot = if (dragging) dropFavorite == true else ModFavorites.isFavorite(mod.id)
-                        ModCard(
-                            mod,
-                            modifier = Modifier
-                                .then(
-                                    if (animateItems) {
-                                        Modifier.animateItem(
-                                            placementSpec = if (dragging) null else ModCardPlacementSpec,
-                                        )
-                                    } else {
-                                        Modifier
-                                    },
+                    is GridRow.Cards -> Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(ModGridGap)) {
+                        for (entry in row.cards) key(entry.key) {
+                            val mod = entry.data
+                            val dragging = reorderState.draggingKey == mod.id
+                            val lifted = reorderState.overlayKey == mod.id
+                            val favoriteSlot = if (dragging) dropFavorite == true else ModFavorites.isFavorite(mod.id)
+                            val offset = placement.offsets[mod.id]
+                            Box(
+                                Modifier
+                                    .weight(1f)
+                                    .height(ModCardHeight)
+                                    .onPlaced { placement.placed(mod.id, it.x, it.y + gridState.scroll.value) }
+                                    .graphicsLayer(
+                                        translationX = if (lifted) 0f else offset?.get(0) ?: 0f,
+                                        translationY = if (lifted) 0f else offset?.get(1) ?: 0f,
+                                    ),
+                            ) {
+                                if (lifted) DropSlotOutline(favoriteSlot, dragging)
+                                ModCard(
+                                    mod,
+                                    host,
+                                    modifier = Modifier.reorderableItem(reorderState, mod.id),
+                                    hoverHint = reorderState.overlayKey == null,
+                                    clickToOpen = false,
                                 )
-                                .dropSlotOutline(favoriteSlot) { outlineAlpha.value }
-                                .reorderableItem(reorderState, mod.id),
-                            hoverHint = reorderState.overlayKey == null,
-                        )
+                            }
+                        }
+                        repeat(MOD_GRID_COLUMNS - row.cards.size) { Box(Modifier.weight(1f).height(ModCardHeight)) }
                     }
                 }
             }
@@ -309,12 +309,14 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
         val draggedId = reorderState.overlayKey
         val dragged = remember(entries, draggedId) { draggedId?.let(entries::cardData) }
         if (dragged != null) {
-            ModCard(
-                dragged,
-                modifier = Modifier.reorderOverlay(reorderState),
-                favorite = dropFavorite ?: ModFavorites.isFavorite(dragged.id),
-                interactive = false,
-            )
+            Box(Modifier.reorderOverlay(reorderState)) {
+                ModCard(
+                    dragged,
+                    host,
+                    favorite = dropFavorite ?: ModFavorites.isFavorite(dragged.id),
+                    interactive = false,
+                )
+            }
         }
     }
 }
@@ -323,7 +325,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
 private fun ModTypeHeader(entry: ModGridEntry.Header, modifier: Modifier = Modifier, onToggle: () -> Unit) {
     val theme = LocalTheme.current
     val interactionSource = rememberInteractionSource()
-    val chevronRotation by animateFloatAsState(if (entry.expanded) 180f else 90f)
+    val chevronRotation by animateFloatAsState(if (entry.expanded) 180f else 90f, spring(visibilityThreshold = 0.5f))
 
     Row(
         modifier = modifier
@@ -346,11 +348,7 @@ private fun ModTypeHeader(entry: ModGridEntry.Header, modifier: Modifier = Modif
         if (!entry.expanded && entry.cardCount > 0) {
             Text("(${entry.cardCount})", color = theme.textColorSecondary, fontSize = 11.sp)
         }
-        Icon(
-            "up",
-            color = theme.textColorSecondary,
-            modifier = Modifier.size(12.dp).rotate(chevronRotation),
-        )
+        Icon("up", theme.textColorSecondary, Modifier.size(12.dp), rotation = chevronRotation)
         Rule(Modifier.weight(1f))
     }
 }
@@ -360,20 +358,74 @@ private fun Rule(modifier: Modifier) {
     Box(modifier.height(1.dp).background(LocalTheme.current.borderColor))
 }
 
-private val ModCardPlacementSpec = spring(
-    dampingRatio = Spring.DampingRatioNoBouncy,
-    stiffness = Spring.StiffnessMediumLow,
-    visibilityThreshold = IntOffset.VisibilityThreshold,
-)
+private sealed class GridRow {
+    abstract val key: Any
+
+    class Header(val entry: ModGridEntry.Header) : GridRow() {
+        override val key get() = entry.key
+    }
+
+    class Cards(val cards: List<ModGridEntry.Card>, val n: Int) : GridRow() {
+        override val key get() = "row$n"
+    }
+}
+
+private fun gridRows(entries: List<ModGridEntry>): List<GridRow> {
+    val rows = ArrayList<GridRow>()
+    var run = ArrayList<ModGridEntry.Card>()
+    fun flush() {
+        if (run.isNotEmpty()) rows.add(GridRow.Cards(run, rows.size))
+        run = ArrayList()
+    }
+    for (entry in entries) when (entry) {
+        is ModGridEntry.Header -> {
+            flush()
+            rows.add(GridRow.Header(entry))
+        }
+        is ModGridEntry.Card -> {
+            run.add(entry)
+            if (run.size == MOD_GRID_COLUMNS) flush()
+        }
+    }
+    flush()
+    return rows
+}
+
+private class Placement {
+    val last = HashMap<Any, FloatArray>()
+    val offsets = mutableStateMapOf<Any, FloatArray>()
+    val velocity = HashMap<Any, FloatArray>()
+
+    fun placed(key: Any, x: Float, contentY: Float) {
+        val prev = last.put(key, floatArrayOf(x, contentY)) ?: return
+        val dx = prev[0] - x
+        val dy = prev[1] - contentY
+        if (abs(dx) < 0.5f && abs(dy) < 0.5f) return
+        val cur = offsets[key]
+        offsets[key] = floatArrayOf(dx + (cur?.get(0) ?: 0f), dy + (cur?.get(1) ?: 0f))
+    }
+}
+
+@Composable
+private fun rememberRestorableLazyGridState(key: String): LazyListState {
+    val state = remember { LazyListState() }
+    DisposableEffect(state) { onDispose { ShellState.scrollPositions[key] = state.scroll.value } }
+    LaunchedEffect(state) {
+        val to = ShellState.scrollPositions[key]?.takeIf { it > 0f } ?: return@LaunchedEffect
+        repeat(3) { if (state.scroll.maxValue < to) withFrameNanos { } }
+        state.scroll.scrollTo(to)
+    }
+    return state
+}
 
 private fun List<ModGridEntry>.cardData(key: Any): ConfigData? =
     firstNotNullOfOrNull { (it as? ModGridEntry.Card)?.data?.takeIf { mod -> mod.id == key } }
 
-private fun openModCard(mod: ConfigData) {
+private fun openModCard(mod: ConfigData, host: ShellHost) {
     val onOpen = mod.onOpen
     when {
         onOpen != null -> onOpen()
-        mod.source == ConfigSource.OC -> LocalNavController.wrapper.navigate(ModConfigRoute(mod.id))
+        mod.source == ConfigSource.OC -> host.openModConfig(mod, null)
     }
 }
 
@@ -392,31 +444,65 @@ private fun commitDrop(entries: List<ModGridEntry>, index: Int) {
 
 /** Dashed outline on the dragged card's slot, in the favorite color while it would land as a [favorite] */
 @Composable
-private fun Modifier.dropSlotOutline(favorite: Boolean, alpha: () -> Float): Modifier {
+private fun DropSlotOutline(favorite: Boolean, dragging: Boolean) {
     val theme = LocalTheme.current
-    val shape = theme.modCardShape
+    val radius = theme.modCardShape.radius
     val color = if (favorite) theme.favoriteColor else theme.textColorSecondary
-    return drawWithCache {
-        val outline = shape.createOutline(size, layoutDirection, this)
-        val dash = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx()))
-        val stroke = Stroke(1.5.dp.toPx(), pathEffect = dash)
-        onDrawBehind {
-            val a = alpha()
-            if (a == 0f) return@onDrawBehind
-            drawOutline(outline, color.copy(alpha = 0.08f * a))
-            drawOutline(outline, color.copy(alpha = 0.6f * a), style = stroke)
+    val alpha by animateFloatAsState(if (dragging) 1f else 0f, initialValue = 0f)
+    Canvas(Modifier.fillMaxSize()) { x, y, w, h ->
+        if (alpha == 0f) return@Canvas
+        rect(x, y, w, h, color.withAlpha(0.08f * alpha), radius)
+        dashedRRect(x, y, w, h, radius, color.withAlpha(0.6f * alpha), 1.5f, 6f, 4f)
+    }
+}
+
+private fun RenderContext.dashedRRect(x: Float, y: Float, w: Float, h: Float, r: Float, color: Color, stroke: Float, on: Float, off: Float) {
+    val rr = min(r, min(w, h) / 2f)
+    val pts = ArrayList<Float>()
+    fun corner(cx: Float, cy: Float, from: Float) {
+        for (i in 0..8) {
+            val t = Math.toRadians((from + 90.0 * i / 8)).toFloat()
+            pts += cx + rr * cos(t)
+            pts += cy + rr * sin(t)
+        }
+    }
+    corner(x + w - rr, y + rr, 270f)
+    corner(x + w - rr, y + h - rr, 0f)
+    corner(x + rr, y + h - rr, 90f)
+    corner(x + rr, y + rr, 180f)
+    pts += pts[0]
+    pts += pts[1]
+    var drawing = true
+    var left = on
+    for (i in 0 until pts.size / 2 - 1) {
+        val ax = pts[i * 2]
+        val ay = pts[i * 2 + 1]
+        val dx = pts[i * 2 + 2] - ax
+        val dy = pts[i * 2 + 3] - ay
+        val len = hypot(dx, dy)
+        var t = 0f
+        while (t < len) {
+            val step = min(left, len - t)
+            if (drawing) line(ax + dx * t / len, ay + dy * t / len, ax + dx * (t + step) / len, ay + dy * (t + step) / len, color, stroke)
+            t += step
+            left -= step
+            if (left <= 0f) {
+                drawing = !drawing
+                left = if (drawing) on else off
+            }
         }
     }
 }
 
-private const val HEADER_CONTENT_TYPE = "header"
-private const val CARD_CONTENT_TYPE = "card"
+private const val MOD_GRID_COLUMNS = 4
+
+private val ModGridGap = 19.dp
+
+private val ModCardHeight = 140.dp
 
 private val ModCardFooterHeight = 36.dp
 
 private val ModCardGlowHeight = 50.dp
-
-private val FavoriteStarColor = Color(0xFFFFD700)
 
 private val ModCardToggleDot = 6.dp
 private val ModCardToggleRing = 12.dp
@@ -426,17 +512,15 @@ private val ModCardToggleUnavailable = Color(0xFF4F505B)
 // the accent is darkened towards this for the ring, which for the default accent gives the ring of the design
 private val ModCardToggleRingShade = Color(0xFF181600)
 
-/**
- * [hoverHint] faintly shows an empty star on hover, and a card that is not [interactive] lets clicks and scrolling
- * pass through
- */
 @Composable
 fun ModCard(
     mod: ConfigData,
+    host: ShellHost,
     modifier: Modifier = Modifier,
     favorite: Boolean = ModFavorites.isFavorite(mod.id),
     hoverHint: Boolean = true,
     interactive: Boolean = true,
+    clickToOpen: Boolean = true,
 ) {
     val interactionSource = rememberInteractionSource()
     val footerInteractions = rememberInteractionSource()
@@ -445,31 +529,32 @@ fun ModCard(
     val toggleRevision = ModToggles.revision
     val toggle = remember(mod, toggleRevision) { mod.toggle }
     var enabled by rememberModEnabled(toggle)
-    val footerColor by animateColorAsState(if (enabled) Accent else theme.textColor.copy(alpha = 0.08f))
-    val footerTextColor by animateColorAsState(
+    val footerColor = animateColorAsState(if (enabled) Accent else theme.textColor.copy(alpha = 0.08f))
+    val footerTextColor = animateColorAsState(
         if (enabled) theme.accentTextColor else theme.textColor.copy(alpha = 0.75f)
     )
-    val glowStrength by animateFloatAsState(if (enabled) 0.5f else 0f)
+    val glowStrength = animateFloatAsState(if (enabled) 1f else 0f)
     val open = {
         val onOpen = mod.onOpen
         when {
             onOpen != null -> onOpen()
-            mod.source == ConfigSource.OC -> LocalNavController.wrapper.navigate(ModConfigRoute(mod.id))
+            mod.source == ConfigSource.OC -> host.openModConfig(mod, null)
         }
     }
 
     Box(
-        modifier = modifier.fillMaxWidth().height(140.dp)
+        modifier = modifier.fillMaxWidth().height(ModCardHeight)
             .background(theme.modCardBackground, theme.modCardShape)
             .border(1.dp, remember(theme.borderColor) {
                 Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
             }, theme.modCardShape)
             .then(
                 if (interactive) {
-                    // cards never take focus, otherwise they slide in from off screen when scrolled back into view
                     Modifier
-                        .focusProperties { canFocus = false }
-                        .onClick(interactionSource) { openModCard(mod) }
+                        .then(
+                            if (clickToOpen) Modifier.onClick(interactionSource) { openModCard(mod, host) }
+                            else Modifier.hoverable(interactionSource),
+                        )
                         .pointerHoverIcon(PointerIcon.Hand)
                 } else {
                     Modifier
@@ -482,19 +567,24 @@ fun ModCard(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                val preview = mod.preview
                 val icon = remember(mod.icon) { mod.icon?.takeIf(::canRenderIcon) }
-                if (preview != null) {
-                    preview(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp))
+                if (mod is HudModCardData && mod.hud !is LegacyHudMarker) {
+                    HudCardPreview(
+                        LocalDensity.current.density / host.surfaceRatio,
+                        mod.hud,
+                        mod.title.asRenderText(),
+                        Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp),
+                    )
                 } else if (icon != null) {
                     Icon(icon, color = theme.textColor, modifier = Modifier.size(48.dp))
                 } else {
                     Text(
-                        remember(mod.title) { mod.title.asRenderText() },
+                        mod.title,
                         color = theme.textColor,
                         fontSize = 16.sp,
                         lineHeight = 18.sp,
                         fontWeight = FontWeight.Medium,
+                        softWrap = true,
                         modifier = Modifier.padding(horizontal = 12.dp),
                     )
                 }
@@ -507,7 +597,6 @@ fun ModCard(
                     .then(
                         if (toggle != null && interactive) {
                             Modifier
-                                .focusProperties { canFocus = false }
                                 .onClick(footerInteractions) {
                                     if (!enabled && toggle.needsSetup()) {
                                         open()
@@ -530,6 +619,7 @@ fun ModCard(
                     fontSize = 16.sp,
                     lineHeight = 16.sp,
                     textAlign = TextAlign.Center,
+                    softWrap = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -537,37 +627,28 @@ fun ModCard(
 
         if (LocalTheme.current.shadowEnabled) {
             val vignetteColor = theme.textColor
-            Box(
-                Modifier.fillMaxSize().drawWithCache {
-                    val vignette = Brush.radialGradient(
-                        colors = listOf(
-                            vignetteColor.copy(alpha = 0f),
-                            vignetteColor.copy(alpha = 0.04f),
-                            vignetteColor.copy(alpha = 0.08f)
-                        ),
-                        center = size.center,
-                        radius = size.minDimension * 0.9f
-                    )
-                    val glowHeight = ModCardGlowHeight.toPx().coerceAtMost(size.height)
-                    val glowTop = size.height - glowHeight
-                    val glow = Brush.verticalGradient(
-                        0f to Accent.copy(0f),
-                        0.4f to Accent.copy(0.2f),
-                        1f to Accent.copy(0.4f),
-                        startY = glowTop,
-                        endY = size.height,
-                    )
-                    onDrawBehind {
-                        drawRect(vignette)
-                        drawRect(
-                            glow,
-                            topLeft = Offset(0f, glowTop),
-                            size = Size(size.width, glowHeight),
-                            alpha = glowStrength,
-                        )
-                    }
-                }
-            )
+            val glowColor = Accent
+            val radius = theme.modCardShape.radius
+            Canvas(Modifier.fillMaxSize()) { x, y, w, h ->
+                val vignette = RadialGradient(
+                    listOf(
+                        vignetteColor.copy(alpha = 0f),
+                        vignetteColor.copy(alpha = 0.04f),
+                        vignetteColor.copy(alpha = 0.08f)
+                    ),
+                    radius = 0.9f
+                )
+                rectGradient(x, y, w, h, vignette, radius)
+            }
+            Canvas(Modifier.fillMaxSize().alpha(glowStrength, if (enabled) 1f else 0f)) { x, y, w, h ->
+                val glowHeight = min(ModCardGlowHeight.value, h)
+                val glow = LinearGradient(
+                    listOf(glowColor.copy(0f), glowColor.copy(0.1f), glowColor.copy(0.2f)),
+                    listOf(0f, 0.4f, 1f),
+                    angle = 90f,
+                )
+                rectGradient(x, y + h - glowHeight, w, glowHeight, glow, radius)
+            }
         }
         Row(Modifier.padding(4.dp)) {
             FavoriteStar(
@@ -583,39 +664,42 @@ fun ModCard(
             )
         }
         Box(Modifier.align(Alignment.TopEnd).padding(11.dp)) {
-            Tooltip(
-                text = {
-                    Text(
-                        if (toggle != null) "This mod can be toggled on and off." else "This mod doesn't support being toggled.",
-                        color = theme.textColor,
-                        fontSize = 12.sp,
-                    )
-                },
-                modifier = Modifier,
-                anchor = Alignment.TopCenter,
-            ) {
-                Box(Modifier.size(ModCardToggleRing), contentAlignment = Alignment.Center) {
-                    val ring = if (toggle != null) lerp(Accent, ModCardToggleRingShade, 0.42f) else ModCardToggleUnavailable.copy(alpha = 0.5f)
-                    val dot = if (toggle != null) Accent else ModCardToggleUnavailable
-                    // drawn around one centre, since laying the dot out inside the ring lands it on a pixel boundary off-centre
+            TooltipArea(
+                tooltip = {
+                    val shape = RoundedCornerShape(8.dp)
                     Box(
-                        Modifier.fillMaxSize().drawWithCache {
-                            val glowRadius = (ModCardToggleRing / 2 + ModCardToggleGlow).toPx()
-                            val inner = size.minDimension / 2f / glowRadius
-                            val glow = Brush.radialGradient(
-                                inner to ring.copy(alpha = 0.41f),
-                                inner + (1f - inner) * 0.4f to ring.copy(alpha = 0.25f),
-                                inner + (1f - inner) * 0.8f to ring.copy(alpha = 0.09f),
-                                1f to Color.Transparent,
-                                center = size.center, radius = glowRadius,
-                            )
-                            onDrawBehind {
-                                if (toggle != null) drawCircle(glow, radius = glowRadius)
-                                drawCircle(ring)
-                                drawCircle(dot, radius = ModCardToggleDot.toPx() / 2f)
-                            }
-                        }
-                    )
+                        Modifier
+                            .background(theme.popupBackground, shape)
+                            .border(1.dp, theme.borderColor, shape)
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            if (toggle != null) "This mod can be toggled on and off." else "This mod doesn't support being toggled.",
+                            color = theme.textColor,
+                            fontSize = 12.sp,
+                        )
+                    }
+                },
+            ) {
+                val accent = Accent
+                Canvas(Modifier.size(ModCardToggleRing)) { x, y, _, _ ->
+                    val ringRadius = ModCardToggleRing.value / 2f
+                    val cx = x + ringRadius
+                    val cy = y + ringRadius
+                    val ring = if (toggle != null) accent.lerp(ModCardToggleRingShade, 0.42f) else ModCardToggleUnavailable.withAlpha(0.5f)
+                    val dot = if (toggle != null) accent else ModCardToggleUnavailable
+                    if (toggle != null) {
+                        val glowRadius = (ModCardToggleRing / 2 + ModCardToggleGlow).value
+                        val inner = ringRadius / glowRadius
+                        val glow = RadialGradient(
+                            listOf(ring.withAlpha(0.41f), ring.withAlpha(0.25f), ring.withAlpha(0.09f), ring.withAlpha(0)),
+                            listOf(inner, inner + (1f - inner) * 0.4f, inner + (1f - inner) * 0.8f, 1f),
+                        )
+                        rectGradient(cx - glowRadius, cy - glowRadius, glowRadius * 2f, glowRadius * 2f, glow, glowRadius)
+                    }
+                    rect(cx - ringRadius, cy - ringRadius, ringRadius * 2f, ringRadius * 2f, ring, ringRadius)
+                    val dotRadius = ModCardToggleDot.value / 2f
+                    rect(cx - dotRadius, cy - dotRadius, dotRadius * 2f, dotRadius * 2f, dot, dotRadius)
                 }
             }
         }
@@ -635,25 +719,23 @@ private fun FavoriteStar(
     val interactionSource = rememberInteractionSource()
     val hovered by interactionSource.collectIsHoveredAsState()
     val cardHovered by cardInteractions.collectIsHoveredAsState()
-    val alpha by animateFloatAsState(
-        when {
-            favorite -> 1f
-            !hoverHint -> 0f
-            hovered -> 1f
-            cardHovered -> 0.6f
-            else -> 0f
-        }
-    )
-    val color by animateColorAsState(if (favorite) theme.favoriteColor else theme.textColor)
+    val targetAlpha = when {
+        favorite -> 1f
+        !hoverHint -> 0f
+        hovered -> 1f
+        cardHovered -> 0.6f
+        else -> 0f
+    }
+    val alpha = animateFloatAsState(targetAlpha)
+    val color = animateColorAsState(if (favorite) theme.favoriteColor else theme.textColor)
 
     Box(
         modifier = modifier
             .size(24.dp)
-            .alpha(alpha)
+            .alpha(alpha, targetAlpha)
             .then(
                 if (interactive) {
                     Modifier
-                        .focusProperties { canFocus = false }
                         .onClick(interactionSource) { ModFavorites.toggle(mod.id) }
                         .pointerHoverIcon(PointerIcon.Hand)
                 } else {
@@ -676,22 +758,45 @@ private fun HideToggle(
     val interactionSource = rememberInteractionSource()
     val hovered by interactionSource.collectIsHoveredAsState()
     val cardHovered by cardInteractions.collectIsHoveredAsState()
-    val alpha by animateFloatAsState(
-        when {
-            hidden || hovered -> 1f
-            cardHovered -> 0.6f
-            else -> 0f
-        }
-    )
+    val targetAlpha = when {
+        hidden || hovered -> 1f
+        cardHovered -> 0.6f
+        else -> 0f
+    }
+    val alpha = animateFloatAsState(targetAlpha)
 
     Box(
         modifier = modifier
             .size(24.dp)
-            .alpha(alpha)
+            .alpha(alpha, targetAlpha)
             .onClick(interactionSource) { ModHidden.toggle(mod.id) }
             .pointerHoverIcon(PointerIcon.Hand),
         contentAlignment = Alignment.Center,
     ) {
         Icon(if (hidden) "eye-off" else "eye", color = LocalTheme.current.textColor, modifier = Modifier.size(18.dp))
     }
+}
+
+@Composable
+internal fun HudCardPreview(pxPerDp: Float, hud: Hud, title: String, modifier: Modifier) {
+    val state = rememberHudPreview(hud)
+    @Suppress("UNUSED_VARIABLE") val revision = HudManager.previewRevision.intValue
+    if (!state.ready) {
+        Box(modifier, contentAlignment = Alignment.Center) {
+            Text(title, color = LocalTheme.current.textColor, fontSize = 16.sp)
+        }
+        return
+    }
+    val nw = state.naturalWidth
+    val nh = state.naturalHeight
+    val draw: RenderContext.(Float, Float, Float, Float) -> Unit = { x, y, w, h ->
+        val s = hudPreviewScale(nw, nh, w * pxPerDp, h * pxPerDp) / pxPerDp
+        save()
+        clipRect(x, y, w, h)
+        translate(x + (w - nw * s) / 2f, y + (h - nh * s) / 2f)
+        scale(s, s)
+        Snapshot.withoutReadObservation { state.runtime.root.render(this) }
+        restore()
+    }
+    if (hud.alwaysRedraw) Canvas(modifier, live = true, onDraw = draw) else Canvas(modifier, onDraw = draw)
 }

@@ -39,6 +39,8 @@ class PolyComposeClock {
 
     var appliedChange = false
         private set
+
+    val changeCount: Long get() = recomposerImpl.changeCount
 }
 
 object PolyComposeHost {
@@ -47,6 +49,8 @@ object PolyComposeHost {
     val previews = PolyComposeClock()
 
     val notifications = PolyComposeClock()
+
+    val screens = PolyComposeClock()
 
     internal val recomposer: CompositionContext get() = huds.recomposer
 

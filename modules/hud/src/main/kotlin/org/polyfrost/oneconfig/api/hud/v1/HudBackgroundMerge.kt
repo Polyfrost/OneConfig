@@ -31,9 +31,8 @@ import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.min
 import kotlin.math.roundToInt
-import org.jetbrains.skia.PaintMode
-import org.jetbrains.skia.PathBuilder
 import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.render.PolyPath
 import org.polyfrost.compose.render.RenderContext
 
 internal enum class MergeAxis { X, Y }
@@ -92,16 +91,12 @@ internal object HudBackgroundMerge {
         private val radius: Float,
         private val loops: List<FloatArray>,
     ) {
+        private val path by lazy(LazyThreadSafetyMode.NONE) {
+            PolyPath().also { pb -> for (loop in loops) emitLoop(pb, loop, radius) }
+        }
+
         fun draw(ctx: RenderContext) {
-            val color = PolyColor(bgColor, chroma, chromaSpeed)
-            if (color.alpha == 0) return
-            val paint = ctx.paint
-            paint.color = color.argb
-            paint.mode = PaintMode.FILL
-            PathBuilder().use { pb ->
-                for (loop in loops) emitLoop(pb, loop, radius)
-                pb.snapshot().use { ctx.canvas.drawPath(it, paint) }
-            }
+            ctx.fillPath(path, PolyColor(bgColor, chroma, chromaSpeed))
         }
     }
 
@@ -462,7 +457,7 @@ internal object HudBackgroundMerge {
         return out.toFloatArray()
     }
 
-    private fun emitLoop(pb: PathBuilder, loop: FloatArray, radius: Float) {
+    private fun emitLoop(pb: PolyPath, loop: FloatArray, radius: Float) {
         val n = loop.size / 2
         if (n < 3) return
         fun px(k: Int) = loop[(k % n) * 2]
@@ -484,7 +479,7 @@ internal object HudBackgroundMerge {
                 pb.tangentArcTo(cx, cy, mx, my, r)
             }
         }
-        pb.closePath()
+        pb.close()
     }
 
     fun layoutKey(huds: List<Hud>): Int {

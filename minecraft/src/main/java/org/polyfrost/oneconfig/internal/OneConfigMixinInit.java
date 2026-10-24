@@ -183,13 +183,10 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
         mixins.add("events.Mixin_ModernWindowFocusEvent");
 
-        mixins.add("skia.Mixin_InitSkia");
         mixins.add("skia.Mixin_SkiaFrame");
-        mixins.add("skia.Mixin_SkiaFrameVk");
         //? >= 26.1 {
         mixins.add("blaze3d.GpuDeviceAccessor");
         mixins.add("blaze3d.GlDeviceAccessor");
-        mixins.add("skia.Mixin_SkiaFramePresent");
         //? }
         //? >= 1.21.8 {
         mixins.add("skia.Mixin_GuiRendererLegacyTarget");
@@ -200,12 +197,12 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("skia.Mixin_ItemAtlasScissor");
         //? if < 1.21.8
         //mixins.add("skia.Mixin_MainTargetRedirect");
-        mixins.add("skia.Mixin_DebugOverlayAboveUi");
-        //? if < 26.1 && > 1.8.9 {
-        /*mixins.add("skia.Mixin_ScreenshotComposite");
-        *///? }
-        mixins.add("skia.Mixin_InitSkiaFontRenderer");
-        mixins.add("skia.Mixin_StartupWarmupOverlay");
+        //? if >= 1.21.11 {
+        mixins.add("skia.Mixin_BlazeToasts");
+        mixins.add("render.BufferBuilderAccessor");
+        mixins.add("render.RenderPipelinesAccessor");
+        mixins.add("render.Mixin_GuiRendererKeptMeshes");
+        //?}
 
         //? if >= 1.21.10 {
         mixins.add("keybind.Mixin_KeybindCategoryLabel");
@@ -216,16 +213,6 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("keybind.Mixin_KeyMappingResetDetect");
         mixins.add("keybind.Mixin_OptionsSaveDetect");
         mixins.add("keybind.Mixin_OptionsSkipMirrors");
-
-        //? cinnabar
-        //mixins.add("skia.Mixin_CinnabarSkiaFlush");
-
-        if (isClassPresent("net.vulkanmod.vulkan.Renderer")) {
-            mixins.add("skia.Mixin_VulkanModSkiaFlush");
-            //? >= 1.21.10 {
-            mixins.add("skia.Mixin_VulkanModBlurSnapshot");
-            //? }
-        }
 
         {
             Logger logger = LogManager.getLogger(OneConfigMixinInit.class);
@@ -239,15 +226,6 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         }
 
         return mixins;
-    }
-
-    private static boolean isClassPresent(String className) {
-        try {
-            Class.forName(className, false, OneConfigMixinInit.class.getClassLoader());
-            return true;
-        } catch (Throwable t) {
-            return false;
-        }
     }
 
     private static Boolean declaresStaticMethod(String className, String methodName) {

@@ -29,21 +29,21 @@ package org.polyfrost.oneconfig.api.hud.v1
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.util.fastFilterNotNull
-import androidx.compose.ui.util.fastJoinToString
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import org.jetbrains.annotations.ApiStatus
-import org.polyfrost.compose.composables.PolyBox
-import org.polyfrost.compose.composables.PolyCanvas
-import org.polyfrost.compose.composables.PolyMcText
-import org.polyfrost.compose.composables.PolyModifier
-import org.polyfrost.compose.composables.align
-import org.polyfrost.compose.composables.padding
-import org.polyfrost.compose.composables.size
-import org.polyfrost.compose.layout.PolyInsets
-import org.polyfrost.compose.render.FontManager
+import org.polyfrost.compose.foundation.Canvas
+import org.polyfrost.compose.foundation.layout.Box
+import org.polyfrost.compose.foundation.layout.PaddingValues
+import org.polyfrost.compose.foundation.layout.align
+import org.polyfrost.compose.foundation.layout.padding
+import org.polyfrost.compose.foundation.layout.size
+import org.polyfrost.compose.foundation.layout.wrapContentSize
+import org.polyfrost.compose.mc.McText
+import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.unit.dp
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text as TextAnnotation
 
@@ -88,7 +88,7 @@ abstract class TextHud(
         }
 
         val contentAlign = alignment
-        val padInsets = PolyInsets(padLeft, padTop, padRight, padBottom)
+        val padInsets = PaddingValues(padLeft.dp, padTop.dp, padRight.dp, padBottom.dp)
         // PolyColor.argb cycles on the current time when chroma is on so it keeps animating
         // at render time without needing recomposition
         val fgColor = PolyColor(textColor, textChroma, textChromaSpeed)
@@ -99,32 +99,32 @@ abstract class TextHud(
         // which hudBackground() accounts for
         val bgModifier = hudBackground()
         val outerModifier =
-            if (isStaticValid) bgModifier.size(staticW, staticH).padding(padInsets)
-            else bgModifier.padding(padInsets)
+            if (isStaticValid) bgModifier.size(staticW.dp, staticH.dp).padding(padInsets)
+            else bgModifier.wrapContentSize().padding(padInsets)
 
-        PolyBox(modifier = outerModifier) {
+        Box(modifier = outerModifier) {
             if (font == Font.Poppins) {
                 val fontName = getPoppinsFontName()
                 val fontSize = 8f * textScale
-                val skiaFont = FontManager.getFont(fontSize, fontName)
-                val metrics = skiaFont.metrics
+                val polyFont = PolyFont(fontName, fontSize)
+                val metrics = polyFont.metrics
                 val lines = text.lines()
-                val lineHeight = skiaFont.spacing
-                val blockW = lines.maxOf { skiaFont.measureTextWidth(it) }
+                val lineHeight = metrics.spacing
+                val blockW = lines.maxOf { polyFont.measureTextWidth(it) }
                 val blockH = (lines.size - 1) * lineHeight + (metrics.descent - metrics.ascent)
-                val underlinePos = metrics.underlinePosition ?: (fontSize * 0.08f)
-                val underlineThick = metrics.underlineThickness ?: (fontSize * 0.06f)
+                val underlinePos = metrics.underlinePosition
+                val underlineThick = metrics.underlineThickness
                 val shadowCol = if (showShadow) PolyColor(shadowColor, shadowChroma, shadowChromaSpeed) else null
 
-                PolyCanvas(
-                    modifier = PolyModifier.size(blockW, blockH)
+                Canvas(
+                    modifier = Modifier.size(blockW.dp, blockH.dp)
                         .let { if (isStaticValid) it.align(contentAlign) else it }) { x, y, _, _ ->
                     lines.forEachIndexed { index, lineText ->
                         if (lineText.isEmpty()) return@forEachIndexed
                         val baseline = y + index * lineHeight - metrics.ascent
-                        val lineW = skiaFont.measureTextWidth(lineText)
+                        val lineW = polyFont.measureTextWidth(lineText)
                         if (shadowCol != null) {
-                            text(lineText, x + shadowOffsetX, baseline + shadowOffsetY, shadowCol, skiaFont)
+                            text(lineText, x + shadowOffsetX, baseline + shadowOffsetY, shadowCol, polyFont)
                             if (textUnderline) {
                                 line(
                                     x + shadowOffsetX,
@@ -136,7 +136,7 @@ abstract class TextHud(
                                 )
                             }
                         }
-                        text(lineText, x, baseline, fgColor, skiaFont)
+                        text(lineText, x, baseline, fgColor, polyFont)
                         if (textUnderline) {
                             line(
                                 x,
@@ -158,12 +158,12 @@ abstract class TextHud(
                     if (textBold || textItalic || textUnderline) append("§r")
                 }
 
-                PolyMcText(
+                McText(
                     text = formatted,
+                    modifier = if (isStaticValid) Modifier.align(contentAlign) else Modifier,
                     color = fgColor,
                     shadow = showShadow,
                     scale = textScale,
-                    modifier = if (isStaticValid) PolyModifier.align(contentAlign) else PolyModifier,
                 )
             }
         }
@@ -172,11 +172,11 @@ abstract class TextHud(
     open val concatString: String get() = ""
 
     open fun concat(prefix: String, value: String?, suffix: String): String {
-        return arrayListOf(
-            prefix.takeIf { it.isNotEmpty() },
-            value?.takeIf { it.isNotEmpty() },
-            suffix.takeIf { it.isNotEmpty() }
-        ).fastFilterNotNull().fastJoinToString(concatString)
+        val separator = concatString
+        var out = prefix
+        if (!value.isNullOrEmpty()) out = if (out.isEmpty()) value else out + separator + value
+        if (suffix.isNotEmpty()) out = if (out.isEmpty()) suffix else out + separator + suffix
+        return out
     }
 
     /**
@@ -253,11 +253,21 @@ abstract class TextHud(
                 }
             }
 
-        override fun updateFrequency(): Long = when {
-            'S' in template -> 100_000_000L
-            's' in template -> 1_000_000_000L
-            'm' in template -> 60_000_000_000L
-            else -> 300_000_000_000L
+        private var frequencyTemplate: String? = null
+        private var frequency = 0L
+
+        override fun updateFrequency(): Long {
+            val t = template
+            if (t !== frequencyTemplate) {
+                frequencyTemplate = t
+                frequency = when {
+                    'S' in t -> 100_000_000L
+                    's' in t -> 1_000_000_000L
+                    'm' in t -> 60_000_000_000L
+                    else -> 300_000_000_000L
+                }
+            }
+            return frequency
         }
 
         override fun setup() {

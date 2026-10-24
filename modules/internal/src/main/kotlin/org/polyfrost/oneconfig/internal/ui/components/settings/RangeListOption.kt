@@ -1,14 +1,12 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import org.polyfrost.compose.foundation.layout.Row
+import org.polyfrost.compose.foundation.layout.weight
+import org.polyfrost.compose.ui.Alignment
+import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.unit.dp
 import org.polyfrost.oneconfig.internal.ui.api.settings.RangeListOptionData
 import org.polyfrost.oneconfig.internal.ui.api.settings.RangeOptionData
 
@@ -45,7 +43,7 @@ fun RangeListOption(data: RangeListOptionData) {
 }
 
 @Composable
-private fun RowScope.RangeEntry(
+private fun RangeEntry(
     data: RangeListOptionData,
     start: Float,
     end: Float,
@@ -67,16 +65,15 @@ private fun RowScope.RangeEntry(
         )
         RangeSpinners(start, end, onValueChange, data.min, data.max, step, width = 56.dp, format = data.format)
     } else {
-        BoxWithConstraints(modifier = Modifier.weight(1f)) {
-            val spinnerWidth = (maxWidth - RangeSeparatorWidth) / 2
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                RangeSpinners(
-                    start, end, onValueChange, data.min, data.max, step,
-                    width = spinnerWidth,
-                    format = data.format,
-                    separated = true,
-                )
-            }
+        val maxWidth = LocalOptionWidth.current - 16.dp - 20.dp - 26.dp * (if (data.reorderable) 2 else 1)
+        val spinnerWidth = (maxWidth - RangeSeparatorWidth) / 2
+        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+            RangeSpinners(
+                start, end, onValueChange, data.min, data.max, step,
+                width = spinnerWidth,
+                format = data.format,
+                separated = true,
+            )
         }
     }
 }

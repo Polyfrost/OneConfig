@@ -1,28 +1,27 @@
 package org.polyfrost.oneconfig.internal.ui.components.item
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.skiaCanvas
-import androidx.compose.ui.layout.onPlaced
-import androidx.compose.ui.unit.dp
 import kotlin.math.ceil
-import org.jetbrains.skia.Rect
+import org.polyfrost.compose.foundation.Canvas
+import org.polyfrost.compose.foundation.background
+import org.polyfrost.compose.foundation.layout.Box
+import org.polyfrost.compose.foundation.layout.fillMaxSize
+import org.polyfrost.compose.foundation.layout.size
+import org.polyfrost.compose.foundation.shape.RoundedCornerShape
+import org.polyfrost.compose.ui.Alignment
+import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.draw.clip
+import org.polyfrost.compose.ui.graphics.copy
+import org.polyfrost.compose.ui.layout.onPlaced
+import org.polyfrost.compose.ui.platform.LocalDensity
+import org.polyfrost.compose.ui.unit.dp
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.picker.PickerTileIcon
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.components.sizeDp
 
 val ItemIconShape = RoundedCornerShape(5.dp)
 
@@ -44,11 +43,6 @@ fun rememberItemCatalog(key: Any? = Unit): List<ItemDescriptor> = remember(key) 
         }
 }
 
-/**
- * The icon for [id] showing [placeholder] until the catalog resolves it or if the item is unknown
- *
- * [framed] adds the theme chip background
- */
 @Composable
 fun ItemIcon(
     id: String,
@@ -59,33 +53,28 @@ fun ItemIcon(
 ) {
     val itemIcon = rememberItemIconHandle(id)
     val theme = LocalTheme.current
-    val background = if (framed) Modifier.background(theme.chipBackground) else Modifier
+    val density = LocalDensity.current.density
+    val background = if (framed) Modifier.background(theme.chipBackground, ItemIconShape) else Modifier
     Box(
         modifier = modifier
-            .aspectRatio(1f)
             .clip(ItemIconShape)
             .then(background),
         contentAlignment = Alignment.Center,
     ) {
         if (itemIcon != null) {
+            val inset = if (framed) 2f else 1f
             // Register at placement so icons revealed by a scroll are in the atlas before this frame draws.
-            Canvas(modifier = Modifier.fillMaxSize().padding(if (framed) 2.dp else 1.dp).onPlaced { coords ->
-                val surfaceScale = Platform.screen().surfaceRatio().coerceAtLeast(0.0001f)
-                itemIcon.setRenderSizePx(ceil(maxOf(coords.size.width, coords.size.height) * surfaceScale).toInt())
-            }) {
-                drawIntoCanvas { canvas ->
-                    itemIcon.draw(
-                        canvas.skiaCanvas,
-                        Rect.makeWH(size.width, size.height),
-                        alpha,
-                    )
-                }
+            Canvas(modifier = Modifier.fillMaxSize().onPlaced { node ->
+                itemIcon.setRenderSizePx(ceil((maxOf(node.width, node.height) - 2 * inset) * density).toInt())
+            }) { x, y, w, h ->
+                itemIcon.draw(this, x + inset, y + inset, w - 2 * inset, h - 2 * inset, alpha)
             }
         } else {
+            val padding = if (framed) 6.dp else 5.dp
             Icon(
                 placeholder,
-                modifier = Modifier.fillMaxSize().padding(if (framed) 6.dp else 5.dp),
-                color = theme.textColorSecondary.copy(alpha = alpha),
+                modifier = Modifier.size(modifier.sizeDp().dp - padding * 2),
+                color = theme.textColorSecondary.copy(alpha = theme.textColorSecondary.alphaF * alpha),
             )
         }
     }

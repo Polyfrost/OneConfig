@@ -1,24 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.withInfiniteAnimationFrameNanos
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -26,52 +7,96 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
-import androidx.compose.ui.window.PopupProperties
+import androidx.compose.runtime.withFrameNanos
+import org.polyfrost.compose.animation.animateColorAsState
+import org.polyfrost.compose.foundation.Canvas
+import org.polyfrost.compose.foundation.Image
+import org.polyfrost.compose.foundation.background
+import org.polyfrost.compose.foundation.border
+import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
+import org.polyfrost.compose.foundation.layout.Arrangement
+import org.polyfrost.compose.foundation.layout.Box
+import org.polyfrost.compose.foundation.layout.Column
+import org.polyfrost.compose.foundation.layout.Row
+import org.polyfrost.compose.foundation.layout.fillMaxSize
+import org.polyfrost.compose.foundation.layout.fillMaxWidth
+import org.polyfrost.compose.foundation.layout.height
+import org.polyfrost.compose.foundation.layout.padding
+import org.polyfrost.compose.foundation.layout.size
+import org.polyfrost.compose.foundation.layout.weight
+import org.polyfrost.compose.foundation.layout.width
+import org.polyfrost.compose.foundation.text.BasicTextField
+import org.polyfrost.compose.foundation.text.TextFieldState
+import org.polyfrost.compose.render.PolyFont
+import org.polyfrost.compose.render.RenderContext
+import org.polyfrost.compose.ui.Alignment
+import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.draw.clip
+import org.polyfrost.compose.ui.graphics.Brush
+import org.polyfrost.compose.ui.graphics.Color
+import org.polyfrost.compose.ui.graphics.ImageBitmap
+import org.polyfrost.compose.ui.graphics.LinearGradient
+import org.polyfrost.compose.ui.graphics.copy
+import org.polyfrost.compose.ui.graphics.toArgb
+import org.polyfrost.compose.ui.input.pointer.PointerEventType
+import org.polyfrost.compose.ui.input.pointer.PointerIcon
+import org.polyfrost.compose.ui.input.pointer.onPointerEvent
+import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
+import org.polyfrost.compose.ui.platform.LocalDensity
+import org.polyfrost.compose.ui.text.font.FontWeight
+import org.polyfrost.compose.ui.text.style.TextAlign
+import org.polyfrost.compose.ui.unit.Dp
+import org.polyfrost.compose.ui.unit.DpOffset
+import org.polyfrost.compose.ui.unit.dp
+import org.polyfrost.compose.ui.unit.sp
+import org.polyfrost.compose.ui.window.Popup
+import org.polyfrost.compose.ui.window.PopupProperties
 import kotlin.math.abs
+import kotlin.math.min
+import kotlin.math.pow
 import kotlin.math.roundToInt
+import kotlin.reflect.KProperty
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Property
-import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.ColorOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.components.shellTransition
+import org.polyfrost.oneconfig.internal.ui.screens.LocalUiClipboard
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.cornerRadiusOrNull
 import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
 
 private val PickerShape @Composable get() = LocalTheme.current.popupShape
 
+private val HueGradient = LinearGradient(
+    listOf(Color.Red, Color.Yellow, Color.Green, Color.Cyan, Color.Blue, Color.Magenta, Color.Red)
+)
+
+private val HueDisc: ImageBitmap by lazy {
+    val n = 64
+    val px = ByteArray(n * n * 4)
+    val c = n / 2f
+    for (y in 0 until n) for (x in 0 until n) {
+        val dx = x + 0.5f - c
+        val dy = y + 0.5f - c
+        val cover = (c - kotlin.math.hypot(dx, dy) + 0.5f).coerceIn(0f, 1f)
+        val deg = (Math.toDegrees(kotlin.math.atan2(dy, dx).toDouble()).toFloat() + 360f) % 360f
+        val rgb = hsbToColor(deg, 1f, 1f).toArgb()
+        val o = (y * n + x) * 4
+        px[o] = (rgb shr 16).toByte(); px[o + 1] = (rgb shr 8).toByte(); px[o + 2] = rgb.toByte()
+        px[o + 3] = (cover * 255f).roundToInt().toByte()
+    }
+    ImageBitmap(n, n, px)
+}
+
 private fun colorToHsb(color: Color): FloatArray {
-    val r = color.red
-    val g = color.green
-    val b = color.blue
+    val r = color.redF
+    val g = color.greenF
+    val b = color.blueF
     val max = maxOf(r, g, b)
     val min = minOf(r, g, b)
     val delta = max - min
@@ -136,12 +161,17 @@ private fun hexToColor(hex: String): Color? {
     }
 }
 
+internal fun Color.luminance(): Float {
+    fun linear(c: Float) = if (c <= 0.04045f) c / 12.92f else ((c + 0.055f) / 1.055f).pow(2.4f)
+    return 0.2126f * linear(redF) + 0.7152f * linear(greenF) + 0.0722f * linear(blueF)
+}
+
 internal class ColorPickerModel(initialColor: Color, hasAlpha: Boolean = true) {
     private val hsb = colorToHsb(initialColor)
     var hue by mutableFloatStateOf(hsb[0])
     var saturation by mutableFloatStateOf(hsb[1])
     var brightness by mutableFloatStateOf(hsb[2])
-    var alpha by mutableFloatStateOf(initialColor.alpha)
+    var alpha by mutableFloatStateOf(initialColor.alphaF)
     var chromaEnabled by mutableStateOf(false)
     val alphaEnabled = hasAlpha
     var chromaSpeed by mutableFloatStateOf(1f)
@@ -153,7 +183,7 @@ internal class ColorPickerModel(initialColor: Color, hasAlpha: Boolean = true) {
         hue = newHsb[0]
         saturation = newHsb[1]
         brightness = newHsb[2]
-        alpha = color.alpha
+        alpha = color.alphaF
     }
 }
 
@@ -162,11 +192,11 @@ internal fun ChromaColorAnimation(
     model: ColorPickerModel,
     onColorChanged: (Color) -> Unit,
 ) {
-    LaunchedEffect(model.chromaEnabled, model.chromaSpeed) {
+    LaunchedEffect(model, model.chromaEnabled, model.chromaSpeed) {
         if (!model.chromaEnabled) return@LaunchedEffect
-        var lastNanos = withInfiniteAnimationFrameNanos { it }
+        var lastNanos = withFrameNanos { it }
         while (true) {
-            withInfiniteAnimationFrameNanos { frameNanos ->
+            withFrameNanos { frameNanos ->
                 val dt = (frameNanos - lastNanos) / 1_000_000_000f
                 lastNanos = frameNanos
                 model.hue = (model.hue + (360f / PolyColor.CHROMA_CYCLE_SECONDS.toFloat()) * model.chromaSpeed * dt) % 360f
@@ -188,7 +218,6 @@ fun ColorOption(data: ColorOptionData) {
     val initialValue = remember(data.prop) { data.prop.shown() }
     val initialColor = remember(data.prop, initialValue) {
         when (val v = initialValue) {
-            is Color -> v
             is PolyColor -> Color(v.argb).let {
                 if (data.alpha) it else it.copy(alpha = 1f)
             }
@@ -212,11 +241,11 @@ fun ColorOption(data: ColorOptionData) {
             chromaSpeed = color?.chromaSpeed ?: 1f
         }
     }
-    val textColor by animateColorAsState(
+    val textColor = animateColorAsState(
         if (currentColor.luminance() > 0.6f) Color.Black else Color.White
     )
 
-    val borderColor by animateColorAsState(
+    val borderColor = animateColorAsState(
         if (isHovered || expanded) theme.textColor.copy(0.3f) else theme.borderColor
     )
 
@@ -238,8 +267,6 @@ fun ColorOption(data: ColorOptionData) {
                 val argb = color.toArgb()
                 (data.prop as Property<Any>).set(java.awt.Color(argb, true))
             }
-
-            else -> (data.prop as Property<Any>).set(color)
         }
     }
 
@@ -264,9 +291,9 @@ fun ColorOption(data: ColorOptionData) {
         }
 
         if (expanded) {
-            ShellPopup(
+            Popup(
                 alignment = Alignment.TopEnd,
-                offset = IntOffset(0, 44),
+                offset = DpOffset(0.dp, 44.dp),
                 onDismissRequest = { expanded = false },
                 properties = PopupProperties(focusable = true),
             ) {
@@ -289,26 +316,30 @@ internal fun ColorPickerPopup(
     chromaCapable: Boolean = true,
 ) {
     val theme = LocalTheme.current
+    val density = LocalDensity.current
     val hue = model.hue
     val saturation = model.saturation
     val brightness = model.brightness
     val alpha = model.alpha
     val chromaEnabled = model.chromaEnabled
     val chromaSpeed = model.chromaSpeed
-    var hexText by remember(model) { mutableStateOf(colorToHex(model.currentColor())) }
-    var alphaText by remember(model) { mutableStateOf((model.alpha * 100f).roundToInt().toString()) }
-    var speedText by remember(model) { mutableStateOf("%.1f".format(model.chromaSpeed)) }
+    val hexField = remember(model) { FieldText(colorToHex(model.currentColor())) }
+    val alphaField = remember(model) { FieldText((model.alpha * 100f).roundToInt().toString()) }
+    val speedField = remember(model) { FieldText("%.1f".format(model.chromaSpeed)) }
+    var hexText by hexField
+    var alphaText by alphaField
+    var speedText by speedField
 
     LaunchedEffect(model.chromaEnabled, model.hue) {
         if (model.chromaEnabled) hexText = colorToHex(model.currentColor())
     }
 
     val currentColor = model.currentColor()
+    val circleRadius = theme.circleShape.cornerRadiusOrNull()?.value ?: Float.POSITIVE_INFINITY
 
     Column(
         modifier = Modifier
             .width(280.dp)
-            .shellTransition()
             .background(theme.popupBackground, PickerShape)
             .border(1.dp, theme.borderColor, PickerShape)
             .padding(16.dp),
@@ -329,113 +360,42 @@ internal fun ColorPickerPopup(
             )
         }
 
-        var sbPaneSize by remember { mutableStateOf(Size.Zero) }
-        Box(
+        DragArea(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(160.dp)
-                .clip(LocalTheme.current.sideBarNavigationEntryShape)
-                .onSizeChanged { sbPaneSize = Size(it.width.toFloat(), it.height.toFloat()) }
-                .drawWithCache {
-                    val hueColor = hsbToColor(hue, 1f, 1f)
-                    val horizontalGradient = Brush.horizontalGradient(listOf(Color.White, hueColor))
-                    val verticalGradient = Brush.verticalGradient(listOf(Color.Transparent, Color.Black))
-                    onDrawBehind {
-                        drawRect(horizontalGradient)
-                        drawRect(verticalGradient)
-                    }
-                }
-                .pointerInput(Unit) {
-                    awaitEachGesture {
-                        val down = awaitFirstDown()
-                        fun update(x: Float, y: Float) {
-                            model.saturation = (x / sbPaneSize.width).coerceIn(0f, 1f)
-                            model.brightness = 1f - (y / sbPaneSize.height).coerceIn(0f, 1f)
-                            val c = model.currentColor()
-                            hexText = colorToHex(c)
-                            onColorChanged(c)
-                        }
-                        update(down.position.x, down.position.y)
-                        do {
-                            val event = awaitPointerEvent()
-                            event.changes.forEach { ch ->
-                                if (ch.pressed) {
-                                    update(ch.position.x, ch.position.y)
-                                    ch.consume()
-                                }
-                            }
-                        } while (event.changes.any { it.pressed })
-                    }
-                }
-        ) {
-            val selectorX = (saturation * sbPaneSize.width).coerceIn(0f, sbPaneSize.width)
-            val selectorY = ((1f - brightness) * sbPaneSize.height).coerceIn(0f, sbPaneSize.height)
-            Box(
-                modifier = Modifier
-                    .offset {
-                        IntOffset(
-                            (selectorX - 7.dp.toPx()).roundToInt(),
-                            (selectorY - 7.dp.toPx()).roundToInt()
-                        )
-                    }
-                    .size(14.dp)
-                    .border(2.dp, Color.White, LocalTheme.current.circleShape)
-                    .background(currentColor, LocalTheme.current.circleShape)
-            )
+                .clip(LocalTheme.current.sideBarNavigationEntryShape),
+            onDrag = { x, y ->
+                model.saturation = x
+                model.brightness = 1f - y
+                val c = model.currentColor()
+                hexText = colorToHex(c)
+                onColorChanged(c)
+            },
+        ) { x, y, w, h ->
+            rectGradient(x, y, w, h, Brush.horizontalGradient(Color.White, hsbToColor(hue, 1f, 1f)))
+            rectGradient(x, y, w, h, Brush.verticalGradient(Color.Transparent, Color.Black))
+            val selectorX = x + saturation * w - 7f
+            val selectorY = y + (1f - brightness) * h - 7f
+            val r = min(circleRadius, 7f)
+            rect(selectorX, selectorY, 14f, 14f, currentColor, r)
+            rectStroke(selectorX, selectorY, 14f, 14f, Color.White, 2f, r)
         }
 
-        Box(
+        DragArea(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(16.dp)
-                .clip(LocalTheme.current.sideBarNavigationEntryShape)
-                .drawWithCache {
-                    val hueGradient = Brush.horizontalGradient(
-                        listOf(
-                            Color.Red, Color.Yellow, Color.Green, Color.Cyan,
-                            Color.Blue, Color.Magenta, Color.Red
-                        )
-                    )
-                    onDrawBehind { drawRect(hueGradient) }
-                }
-                .pointerInput(Unit) {
-                    awaitEachGesture {
-                        val down = awaitFirstDown()
-                        fun update(x: Float) {
-                            model.hue = ((x / size.width) * 360f).coerceIn(0f, 360f)
-                            val c = model.currentColor()
-                            hexText = colorToHex(c)
-                            onColorChanged(c)
-                        }
-                        update(down.position.x)
-                        do {
-                            val event = awaitPointerEvent()
-                            event.changes.forEach { ch ->
-                                if (ch.pressed) {
-                                    update(ch.position.x)
-                                    ch.consume()
-                                }
-                            }
-                        } while (event.changes.any { it.pressed })
-                    }
-                }
-        ) {
-            var hueBarWidth by remember { mutableStateOf(0f) }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(16.dp)
-                    .onSizeChanged { hueBarWidth = it.width.toFloat() }
-            )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .offset { IntOffset(((hue / 360f) * hueBarWidth - 5.dp.toPx()).roundToInt().coerceAtLeast(0), 0) }
-                    .size(10.dp, 10.dp)
-                    .clip(LocalTheme.current.circleShape)
-                    .background(Color.White)
-                    .border(1.dp, Color.White.copy(0.5f), LocalTheme.current.checkBoxShape)
-            )
+                .clip(LocalTheme.current.sideBarNavigationEntryShape),
+            onDrag = { x, _ ->
+                model.hue = x * 360f
+                val c = model.currentColor()
+                hexText = colorToHex(c)
+                onColorChanged(c)
+            },
+        ) { x, y, w, h ->
+            rectGradient(x, y, w, h, HueGradient)
+            thumb(x, y, w, hue / 360f, circleRadius)
         }
 
         if (model.alphaEnabled) {
@@ -446,7 +406,7 @@ internal fun ColorPickerPopup(
             ) {
                 Text("Opacity", color = theme.textColorSecondary, fontSize = 12.sp)
                 SliderValueField(
-                    text = alphaText,
+                    field = alphaField,
                     suffix = "%",
                     onValueChange = { input ->
                         val filtered = input.filter { it.isDigit() }.take(3)
@@ -460,70 +420,35 @@ internal fun ColorPickerPopup(
                     },
                 )
             }
-            Box(
+            DragArea(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(16.dp)
-                    .clip(LocalTheme.current.sideBarNavigationEntryShape)
-                    .drawWithCache {
-                        val opaqueColor = hsbToColor(hue, saturation, brightness, 1f)
-                        val alphaGradient = Brush.horizontalGradient(
-                            listOf(opaqueColor.copy(alpha = 0f), opaqueColor)
+                    .clip(LocalTheme.current.sideBarNavigationEntryShape),
+                onDrag = { x, _ ->
+                    model.alpha = x
+                    alphaText = (model.alpha * 100f).roundToInt().toString()
+                    val c = model.currentColor()
+                    hexText = colorToHex(c)
+                    onColorChanged(c)
+                },
+            ) { x, y, w, h ->
+                val cellSize = 6f / density.density
+                for (row in 0..(h / cellSize).toInt()) {
+                    for (col in 0..(w / cellSize).toInt()) {
+                        val isLight = (row + col) % 2 == 0
+                        rect(
+                            x + col * cellSize,
+                            y + row * cellSize,
+                            cellSize,
+                            cellSize,
+                            if (isLight) Color(0xFFCCCCCC) else Color(0xFF999999),
                         )
-                        onDrawBehind {
-                            val cellSize = 6f
-                            for (row in 0..(size.height / cellSize).toInt()) {
-                                for (col in 0..(size.width / cellSize).toInt()) {
-                                    val isLight = (row + col) % 2 == 0
-                                    drawRect(
-                                        if (isLight) Color(0xFFCCCCCC) else Color(0xFF999999),
-                                        topLeft = Offset(col * cellSize, row * cellSize),
-                                        size = Size(cellSize, cellSize)
-                                    )
-                                }
-                            }
-                            drawRect(alphaGradient)
-                        }
                     }
-                    .pointerInput(Unit) {
-                        awaitEachGesture {
-                            val down = awaitFirstDown()
-                            fun update(x: Float) {
-                                model.alpha = (x / size.width).coerceIn(0f, 1f)
-                                alphaText = (model.alpha * 100f).roundToInt().toString()
-                                val c = model.currentColor()
-                                hexText = colorToHex(c)
-                                onColorChanged(c)
-                            }
-                            update(down.position.x)
-                            do {
-                                val event = awaitPointerEvent()
-                                event.changes.forEach { ch ->
-                                    if (ch.pressed) {
-                                        update(ch.position.x)
-                                        ch.consume()
-                                    }
-                                }
-                            } while (event.changes.any { it.pressed })
-                        }
-                    }
-            ) {
-                var alphaBarWidth by remember { mutableStateOf(0f) }
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(16.dp)
-                        .onSizeChanged { alphaBarWidth = it.width.toFloat() }
-                )
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .offset { IntOffset(((alpha) * alphaBarWidth - 5.dp.toPx()).roundToInt().coerceAtLeast(0), 0) }
-                        .size(10.dp, 10.dp)
-                        .clip(LocalTheme.current.circleShape)
-                        .background(Color.White)
-                        .border(1.dp, Color.White.copy(0.5f), LocalTheme.current.checkBoxShape)
-                )
+                }
+                val opaqueColor = hsbToColor(hue, saturation, brightness, 1f)
+                rectGradient(x, y, w, h, Brush.horizontalGradient(opaqueColor.copy(alpha = 0f), opaqueColor))
+                thumb(x, y, w, alpha, circleRadius)
             }
         }
 
@@ -539,19 +464,7 @@ internal fun ColorPickerPopup(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(14.dp)
-                            .clip(LocalTheme.current.circleShape)
-                            .background(
-                                Brush.sweepGradient(
-                                    listOf(
-                                        Color.Red, Color.Yellow, Color.Green,
-                                        Color.Cyan, Color.Blue, Color.Magenta, Color.Red
-                                    )
-                                )
-                            )
-                    )
+                    Image(HueDisc, null, Modifier.size(14.dp))
                     Text("Chroma", color = theme.textColor, fontSize = 13.sp)
                 }
                 SwitchControl(chromaEnabled) {
@@ -562,7 +475,10 @@ internal fun ColorPickerPopup(
         }
 
         if (chromaCapable && chromaEnabled) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -570,7 +486,7 @@ internal fun ColorPickerPopup(
                 ) {
                     Text("Speed", color = theme.textColorSecondary, fontSize = 12.sp)
                     SliderValueField(
-                        text = speedText,
+                        field = speedField,
                         suffix = "x",
                         onValueChange = { input ->
                             val filtered = filterNumberInput(input).take(4)
@@ -582,58 +498,19 @@ internal fun ColorPickerPopup(
                         },
                     )
                 }
-                Box(
+                DragArea(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(16.dp)
-                        .clip(LocalTheme.current.sideBarNavigationEntryShape)
-                        .drawWithCache {
-                            val gradient = Brush.horizontalGradient(
-                                listOf(theme.componentBackground, Accent)
-                            )
-                            onDrawBehind { drawRect(gradient) }
-                        }
-                        .pointerInput(Unit) {
-                            awaitEachGesture {
-                                val down = awaitFirstDown()
-                                fun update(x: Float) {
-                                    model.chromaSpeed = ((x / size.width) * 4f).coerceIn(0.1f, 4f)
-                                    speedText = "%.1f".format(model.chromaSpeed)
-                                    onColorChanged(model.currentColor())
-                                }
-                                update(down.position.x)
-                                do {
-                                    val event = awaitPointerEvent()
-                                    event.changes.forEach { ch ->
-                                        if (ch.pressed) {
-                                            update(ch.position.x); ch.consume()
-                                        }
-                                    }
-                                } while (event.changes.any { it.pressed })
-                            }
-                        }
-                ) {
-                    var speedBarWidth by remember { mutableStateOf(0f) }
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(16.dp)
-                            .onSizeChanged { speedBarWidth = it.width.toFloat() }
-                    )
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .offset {
-                                IntOffset(
-                                    (((chromaSpeed - 0.1f) / 3.9f) * speedBarWidth - 5.dp.toPx())
-                                        .roundToInt().coerceAtLeast(0), 0
-                                )
-                            }
-                            .size(10.dp, 10.dp)
-                            .clip(LocalTheme.current.circleShape)
-                            .background(Color.White)
-                            .border(1.dp, Color.White.copy(0.5f), LocalTheme.current.checkBoxShape)
-                    )
+                        .clip(LocalTheme.current.sideBarNavigationEntryShape),
+                    onDrag = { x, _ ->
+                        model.chromaSpeed = (x * 4f).coerceIn(0.1f, 4f)
+                        speedText = "%.1f".format(model.chromaSpeed)
+                        onColorChanged(model.currentColor())
+                    },
+                ) { x, y, w, h ->
+                    rectGradient(x, y, w, h, Brush.horizontalGradient(theme.componentBackground, Accent))
+                    thumb(x, y, w, (chromaSpeed - 0.1f) / 3.9f, circleRadius)
                 }
             }
         }
@@ -651,50 +528,103 @@ internal fun ColorPickerPopup(
                     .border(1.dp, theme.borderColor, LocalTheme.current.sideBarNavigationEntryShape)
             )
 
-            BasicTextField(
-                value = hexText,
-                onValueChange = { input ->
-                    val filtered = input.filter { it.isLetterOrDigit() }.take(8)
-                    hexText = filtered
-                    hexToColor(filtered)?.let { c ->
-                        model.applyFrom(c)
-                        onColorChanged(c)
-                    }
-                },
-                singleLine = true,
-                textStyle = TextStyle(
-                    color = theme.textColor,
-                    fontSize = 13.sp,
-                    fontFamily = theme.typography.family,
-                ),
-                cursorBrush = SolidColor(theme.textColor),
-                modifier = Modifier.trackTextInputFocus()
+            hexField.OnValueChange { input ->
+                val filtered = input.filter { it.isLetterOrDigit() }.take(8)
+                hexText = filtered
+                hexToColor(filtered)?.let { c ->
+                    model.applyFrom(c)
+                    onColorChanged(c)
+                }
+            }
+            Row(
+                modifier = Modifier
                     .weight(1f)
                     .background(theme.componentBackground, LocalTheme.current.sideBarNavigationEntryShape)
                     .border(1.dp, theme.borderColor, LocalTheme.current.sideBarNavigationEntryShape)
                     .padding(horizontal = 10.dp, vertical = 7.dp),
-                decorationBox = { innerTextField ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text("#", color = theme.textColorSecondary, fontSize = 13.sp)
-                        innerTextField()
-                    }
-                },
-            )
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text("#", color = theme.textColorSecondary, fontSize = 13.sp)
+                FieldTextInput(hexField, 13f, Modifier.weight(1f))
+            }
         }
     }
 }
 
+private class FieldText(initial: String) {
+    val state = TextFieldState(initial)
+    var last = initial
+        private set
+
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): String = last
+
+    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String) {
+        last = value
+        if (state.text != value) state.replaceText(value)
+    }
+}
+
+@Composable
+private fun FieldText.OnValueChange(onValueChange: (String) -> Unit) {
+    val text = state.text
+    LaunchedEffect(this, text) {
+        if (text != last) onValueChange(text)
+    }
+}
+
+@Composable
+private fun FieldTextInput(field: FieldText, fontSize: Float, modifier: Modifier, textAlign: TextAlign = TextAlign.Start) {
+    val theme = LocalTheme.current
+    val clipboard = LocalUiClipboard.current
+    BasicTextField(
+        field.state,
+        PolyFont(theme.typography.family.resolve(FontWeight.Normal), fontSize),
+        color = theme.textColor,
+        caretColor = theme.textColor,
+        selectionColor = Accent.withAlpha(0.4f),
+        readClipboard = clipboard.read,
+        writeClipboard = clipboard.write,
+        modifier = modifier,
+        align = textAlign,
+    )
+}
+
+@Composable
+private fun DragArea(
+    modifier: Modifier,
+    onDrag: (x: Float, y: Float) -> Unit,
+    onDraw: RenderContext.(x: Float, y: Float, width: Float, height: Float) -> Unit,
+) {
+    val dragging = remember { BooleanArray(1) }
+    Box(
+        modifier = modifier.onPointerEvent { e ->
+            val n = e.node
+            fun send() = onDrag(((e.x - n.x) / n.width).coerceIn(0f, 1f), ((e.y - n.y) / n.height).coerceIn(0f, 1f))
+            when (e.type) {
+                PointerEventType.Press -> e.button == 0 && run { dragging[0] = true; send(); true }
+                PointerEventType.Move -> dragging[0] && run { send(); true }
+                PointerEventType.Release -> dragging[0].also { dragging[0] = false }
+                else -> false
+            }
+        }
+    ) {
+        Canvas(Modifier.fillMaxSize(), onDraw = onDraw)
+    }
+}
+
+private fun RenderContext.thumb(x: Float, y: Float, w: Float, fraction: Float, circleRadius: Float) =
+    rect(x + (fraction * w - 5f).coerceAtLeast(0f), y + 3f, 10f, 10f, Color.White, min(circleRadius, 5f))
+
 @Composable
 private fun SliderValueField(
-    text: String,
+    field: FieldText,
     onValueChange: (String) -> Unit,
     suffix: String = "",
     width: Dp = 56.dp,
 ) {
     val theme = LocalTheme.current
+    field.OnValueChange(onValueChange)
     Row(
         modifier = Modifier
             .width(width)
@@ -703,20 +633,7 @@ private fun SliderValueField(
             .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        BasicTextField(
-            value = text,
-            onValueChange = onValueChange,
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            textStyle = TextStyle(
-                color = theme.textColor,
-                fontSize = 12.sp,
-                fontFamily = theme.typography.family,
-                textAlign = TextAlign.End,
-            ),
-            cursorBrush = SolidColor(theme.textColor),
-            modifier = Modifier.trackTextInputFocus().weight(1f),
-        )
+        FieldTextInput(field, 12f, Modifier.weight(1f), TextAlign.End)
         if (suffix.isNotEmpty()) {
             Text(
                 suffix,

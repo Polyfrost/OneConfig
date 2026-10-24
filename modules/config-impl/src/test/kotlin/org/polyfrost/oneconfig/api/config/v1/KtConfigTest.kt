@@ -26,8 +26,7 @@
 
 package org.polyfrost.oneconfig.api.config.v1
 
-import androidx.compose.ui.graphics.Path
-import org.jetbrains.skia.paragraph.Direction
+import java.time.DayOfWeek
 
 class KtConfigTest : KtConfig("super.json", "Super Config", Category.QOL) {
 
@@ -39,8 +38,8 @@ class KtConfigTest : KtConfig("super.json", "Super Config", Category.QOL) {
 
     var test by radiobutton(
         "test",
-        Path.Direction.CounterClockwise,
-        arrayOf(Path.Direction.CounterClockwise)
+        DayOfWeek.MONDAY,
+        arrayOf(DayOfWeek.MONDAY)
     ) { "$it.mrow" }
 
     init {

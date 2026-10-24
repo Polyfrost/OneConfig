@@ -1,30 +1,27 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import org.polyfrost.compose.foundation.layout.RowScope
+import org.polyfrost.compose.foundation.layout.size
+import org.polyfrost.compose.foundation.layout.weight
+import org.polyfrost.compose.foundation.text.TextFieldState
+import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.input.pointer.PointerIcon
+import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
+import org.polyfrost.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi
-import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.FileListOptionData
 import org.polyfrost.oneconfig.internal.ui.components.IconButton
-import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -89,27 +86,19 @@ private fun RowScope.PathField(
     ctx: ListRowContext,
     onValueChange: (String) -> Unit,
 ) {
-    val theme = LocalTheme.current
-    BasicTextField(
-        value = value,
+    val field = remember { TextFieldState(value) }
+    LaunchedEffect(value) {
+        if (field.text != value) {
+            field.replaceText(value)
+            field.moveCaret(value.length)
+        }
+    }
+    SideEffect { ctx.onFieldFocus(field.focused) }
+    PathTextField(
+        state = field,
+        placeholder = placeholder,
+        fontSize = 13f,
+        modifier = Modifier.weight(1f),
         onValueChange = onValueChange,
-        singleLine = true,
-        textStyle = TextStyle(
-            color = theme.textColor,
-            fontSize = 13.sp,
-            fontFamily = theme.typography.family,
-        ),
-        interactionSource = ctx.fieldInteraction,
-        cursorBrush = SolidColor(theme.textColor),
-        visualTransformation = rememberPathTransformation(),
-        modifier = Modifier.trackTextInputFocus().weight(1f),
-        decorationBox = { innerTextField ->
-            Box {
-                if (value.isEmpty() && placeholder != null && !ctx.focused) {
-                    Text(placeholder, color = theme.textColorSecondary, fontSize = 13.sp)
-                }
-                innerTextField()
-            }
-        },
     )
 }

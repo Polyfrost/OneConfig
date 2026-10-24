@@ -1,21 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -23,32 +7,53 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.center
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.isSecondaryPressed
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.staticCompositionLocalOf
 import java.util.IdentityHashMap
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.polyfrost.compose.animation.core.animateFloatAsState
+import org.polyfrost.compose.foundation.Canvas
+import org.polyfrost.compose.foundation.background
+import org.polyfrost.compose.foundation.border
+import org.polyfrost.compose.foundation.hoverable
+import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
+import org.polyfrost.compose.foundation.layout.Arrangement
+import org.polyfrost.compose.foundation.layout.Box
+import org.polyfrost.compose.foundation.layout.Column
+import org.polyfrost.compose.foundation.layout.Row
+import org.polyfrost.compose.foundation.layout.absoluteOffset
+import org.polyfrost.compose.foundation.layout.fillMaxSize
+import org.polyfrost.compose.foundation.layout.fillMaxWidth
+import org.polyfrost.compose.foundation.layout.padding
+import org.polyfrost.compose.foundation.layout.size
+import org.polyfrost.compose.foundation.layout.weight
+import org.polyfrost.compose.foundation.lazy.LazyColumn
+import org.polyfrost.compose.foundation.lazy.LazyListState
+import org.polyfrost.compose.foundation.text.TextFieldState
+import org.polyfrost.compose.ui.Alignment
+import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.draw.alpha
+import org.polyfrost.compose.ui.geometry.Offset
+import org.polyfrost.compose.ui.graphics.Brush
+import org.polyfrost.compose.ui.graphics.Color
+import org.polyfrost.compose.ui.graphics.RadialGradient
+import org.polyfrost.compose.ui.graphics.copy
+import org.polyfrost.compose.ui.input.pointer.PointerEventType
+import org.polyfrost.compose.ui.input.pointer.onPointerEvent
+import org.polyfrost.compose.ui.layout.onGloballyPositioned
+import org.polyfrost.compose.ui.layout.positionInRoot
+import org.polyfrost.compose.ui.platform.LocalDensity
+import org.polyfrost.compose.ui.text.font.FontWeight
+import org.polyfrost.compose.ui.unit.IntOffset
+import org.polyfrost.compose.ui.unit.dp
+import org.polyfrost.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
+import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
+import org.polyfrost.oneconfig.internal.ui.components.GlobalSearchBar
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
@@ -60,7 +65,7 @@ import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindConflicts
-import org.polyfrost.oneconfig.internal.ui.components.settings.Option
+import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindEntry
@@ -69,31 +74,29 @@ import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroupCollapseStore
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.keybind.collectAllKeybindGroups
+import org.polyfrost.oneconfig.internal.ui.poly.PolyWindow
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 import org.polyfrost.oneconfig.internal.ui.search.SearchDocument
 import org.polyfrost.oneconfig.internal.ui.search.SearchScope
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
-import org.polyfrost.oneconfig.internal.ui.shell.ShellState
-import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-import org.polyfrost.oneconfig.internal.ui.util.LayoutRef
 
 private val CONFLICT_COLOR = Color(0xFFE0524F)
 
 @Composable
-fun Keybinds() {
+fun Keybinds(searchQuery: String) {
     val revision = ConfigRegistry.revision
 
     val configs = ConfigRegistry.configs.toList()
     val providerRevision = KeybindProviderRegistry.revision.intValue
     val groups = remember(revision, providerRevision, configs) { collectAllKeybindGroups() }
-    val localSearchQuery = ShellState.searchQuery.trim()
+    val localSearchQuery = searchQuery.trim()
     val search = rememberKeybindSearchResults(groups, localSearchQuery)
     val searchResults = search.groups
     val visibleGroups = if (localSearchQuery.isBlank()) groups else searchResults.orEmpty()
 
-    val listState = rememberRestorableLazyListState("keybinds", localSearchQuery, search.query)
+    val listState = remember(localSearchQuery, search.query) { LazyListState() }
 
     if (visibleGroups.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -115,8 +118,7 @@ fun Keybinds() {
     ScrollbarBox(listState, PageGutter, Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = PageGutter),
+            modifier = Modifier.fillMaxSize().padding(horizontal = PageGutter),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             visibleGroups.forEach { group ->
@@ -202,11 +204,7 @@ private fun KeybindGroupHeader(group: KeybindGroup, expanded: Boolean, onToggle:
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
         )
-        Icon(
-            "up",
-            color = theme.textColorSecondary,
-            modifier = Modifier.size(12.dp).rotate(chevronRotation),
-        )
+        Icon("up", theme.textColorSecondary, Modifier.size(12.dp), rotation = chevronRotation)
     }
 }
 
@@ -220,34 +218,32 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
     val enabled = display != Property.Display.DISABLED
     var menuOpen by remember(System.identityHashCode(prop)) { mutableStateOf(false) }
     var menuOffset by remember(System.identityHashCode(prop)) { mutableStateOf(IntOffset.Zero) }
-    val rowOrigin = remember(System.identityHashCode(prop)) { LayoutRef(Offset.Zero) }
-    val actionMenuOffset = remember(System.identityHashCode(prop)) { LayoutRef(IntOffset.Zero) }
+    val rowOrigin = remember(System.identityHashCode(prop)) { arrayOf(Offset.Zero) }
+    val actionMenuOffset = remember(System.identityHashCode(prop)) { arrayOf(IntOffset.Zero) }
     val rowInteraction = rememberInteractionSource()
     val isRowHovered by rowInteraction.collectIsHoveredAsState()
     val showActionButton = OneConfigConfig.showOptionActionButtons
     fun openMenuFromActionButton() {
-        menuOffset = actionMenuOffset.value
+        menuOffset = actionMenuOffset[0]
         menuOpen = true
     }
+    val density = LocalDensity.current
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .alpha(displayAlpha(display))
             .hoverable(rowInteraction)
-            .onGloballyPositioned { rowOrigin.value = it.positionInRoot() }
-            .pointerInput(System.identityHashCode(prop)) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent(PointerEventPass.Initial)
-                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed && !KeybindRecordingBus.isRecording) {
-                            val pos = event.changes.first().position
-                            menuOffset = IntOffset(pos.x.roundToInt(), pos.y.roundToInt())
-                            menuOpen = true
-                            event.changes.forEach { it.consume() }
-                        }
-                    }
+            .onGloballyPositioned { rowOrigin[0] = it.positionInRoot() }
+            .onPointerEvent { event ->
+                if (event.type != PointerEventType.Press || event.button != 1 || KeybindRecordingBus.isRecording) {
+                    return@onPointerEvent false
                 }
+                menuOffset = with(density) {
+                    IntOffset((event.x - event.node.x).dp.roundToPx(), (event.y - event.node.y).dp.roundToPx())
+                }
+                menuOpen = true
+                true
             }
             .background(theme.modCardBackground, shape)
             .border(
@@ -257,20 +253,17 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
             )
     ) {
         val vignetteColor = theme.textColor
-        Box(
-            Modifier.fillMaxSize().drawWithCache {
-                val gradient = Brush.radialGradient(
-                    colors = listOf(
-                        vignetteColor.copy(alpha = 0f),
-                        vignetteColor.copy(alpha = 0.02f),
-                        vignetteColor.copy(alpha = 0.05f),
-                    ),
-                    center = size.center,
-                    radius = size.minDimension * 0.9f,
-                )
-                onDrawBehind { drawRect(gradient) }
-            }
-        )
+        Canvas(Modifier.fillMaxSize()) { x, y, w, h ->
+            val gradient = RadialGradient(
+                colors = listOf(
+                    vignetteColor.copy(alpha = 0f),
+                    vignetteColor.copy(alpha = 0.02f),
+                    vignetteColor.copy(alpha = 0.05f),
+                ),
+                radius = 0.9f,
+            )
+            rectGradient(x, y, w, h, gradient)
+        }
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -290,14 +283,16 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
                         color = theme.textColor,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
+                        softWrap = true,
                     )
                     prop.localizedDescription()?.takeUnless { it.isEmptyText() }?.let {
-                        Text(it, color = theme.textColorSecondary, fontSize = 13.sp)
+                        Text(it, color = theme.textColorSecondary, fontSize = 13.sp, softWrap = true)
                     }
                     Text(
                         "${entry.category} / ${entry.subcategory}",
                         color = theme.textColorSecondary,
                         fontSize = 11.sp,
+                        softWrap = true,
                     )
                     if (conflictsWith.isNotEmpty()) {
                         val names = conflictsWith.joinToString(", ") { KeybindConflicts.displayName(it) }
@@ -310,6 +305,7 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
                                 "Conflicts with $names",
                                 color = CONFLICT_COLOR,
                                 fontSize = 11.sp,
+                                softWrap = true,
                             )
                         }
                     }
@@ -319,17 +315,47 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
                 OptionActionButton(
                     visible = isRowHovered || menuOpen,
                     modifier = Modifier.onGloballyPositioned {
-                        val pos = it.positionInRoot() - rowOrigin.value
-                        actionMenuOffset.value = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
+                        val pos = it.positionInRoot() - rowOrigin[0]
+                        actionMenuOffset[0] = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
                     },
                     onClick = ::openMenuFromActionButton,
                 )
             }
-            Box(Modifier.blockInteraction(!enabled)) {
-                Option(prop)
+            if (prop.get() is OneConfigKeybind) {
+                Box(Modifier.blockInteraction(!enabled)) {
+                    KeybindOption(KeybindOptionData(prop))
+                }
+            } else {
+                val shown = prop.get()
+                Text(
+                    when (shown) {
+                        is Boolean -> if (shown) "On" else "Off"
+                        null -> "—"
+                        else -> shown.toString()
+                    },
+                    color = theme.textColorSecondary,
+                )
             }
         }
 
         OptionContextMenu(prop, menuOpen, menuOffset, onDismiss = { menuOpen = false })
     }
 }
+
+const val KEYBINDS_PAGE_TOP = 19f + 32f + 16f
+
+class UiClipboard(val read: () -> String?, val write: (String) -> Unit)
+
+val LocalUiClipboard = staticCompositionLocalOf { UiClipboard({ null }, {}) }
+
+@Composable
+fun KeybindsWindow(onClose: () -> Unit) {
+    val search = remember { TextFieldState() }
+    PolyWindow(onClose) {
+        GlobalSearchBar(search, "Search keybinds...", Modifier.absoluteOffset(PageGutter, 19.dp))
+        Box(Modifier.fillMaxSize().padding(top = KEYBINDS_PAGE_TOP.dp, bottom = 19.dp)) {
+            Keybinds(search.text.trim())
+        }
+    }
+}
+

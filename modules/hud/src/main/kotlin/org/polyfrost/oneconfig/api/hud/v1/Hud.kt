@@ -38,11 +38,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.Snapshot
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
-import org.polyfrost.compose.composables.PolyModifier
-import org.polyfrost.compose.composables.background
-import org.polyfrost.compose.layout.PolyAlign
+import org.polyfrost.compose.foundation.background
+import org.polyfrost.compose.foundation.shape.RoundedCornerShape
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.runtime.PolyComposeRuntime
+import org.polyfrost.compose.ui.Alignment
+import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.unit.dp
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties.ktProperty
@@ -82,31 +84,28 @@ enum class HudAnchor {
     Left, Center, Right,
     BottomLeft, Bottom, BottomRight;
 
-    fun toAlign(): PolyAlign? = when (this) {
+    fun toAlign(): Alignment? = when (this) {
         Auto -> null
-        TopLeft -> PolyAlign.TopLeft
-        Top -> PolyAlign.Top
-        TopRight -> PolyAlign.TopRight
-        Left -> PolyAlign.Left
-        Center -> PolyAlign.Center
-        Right -> PolyAlign.Right
-        BottomLeft -> PolyAlign.BottomLeft
-        Bottom -> PolyAlign.Bottom
-        BottomRight -> PolyAlign.BottomRight
+        TopLeft -> Alignment.TopStart
+        Top -> Alignment.TopCenter
+        TopRight -> Alignment.TopEnd
+        Left -> Alignment.CenterStart
+        Center -> Alignment.Center
+        Right -> Alignment.CenterEnd
+        BottomLeft -> Alignment.BottomStart
+        Bottom -> Alignment.BottomCenter
+        BottomRight -> Alignment.BottomEnd
     }
 
     companion object {
         @JvmStatic
-        fun of(align: PolyAlign): HudAnchor = when (align) {
-            PolyAlign.TopLeft -> TopLeft
-            PolyAlign.Top -> Top
-            PolyAlign.TopRight -> TopRight
-            PolyAlign.Left -> Left
-            PolyAlign.Center -> Center
-            PolyAlign.Right -> Right
-            PolyAlign.BottomLeft -> BottomLeft
-            PolyAlign.Bottom -> Bottom
-            PolyAlign.BottomRight -> BottomRight
+        fun of(align: Alignment): HudAnchor {
+            val h = align.horizontalBias
+            return when {
+                align.verticalBias < 0f -> if (h < 0f) TopLeft else if (h > 0f) TopRight else Top
+                align.verticalBias > 0f -> if (h < 0f) BottomLeft else if (h > 0f) BottomRight else Bottom
+                else -> if (h < 0f) Left else if (h > 0f) Right else Center
+            }
         }
     }
 }
@@ -132,6 +131,12 @@ private val externalGeometry = object : ClassValue<Boolean>() {
     override fun computeValue(type: Class<*>): Boolean = GEOMETRY_GETTERS.any {
         runCatching { type.getMethod(it).declaringClass != Hud::class.java }.getOrDefault(true)
     }
+}
+
+private val stateOnlyMinimumSize = object : ClassValue<Boolean>() {
+    override fun computeValue(type: Class<*>): Boolean = runCatching {
+        type.getMethod("minimumSize").declaringClass.let { it == Hud::class.java || it == TextHud::class.java }
+    }.getOrDefault(false)
 }
 
 @Suppress("EqualsOrHashCode", "UnstableApiUsage")
@@ -642,8 +647,10 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         Snapshot.withMutableSnapshot { setAbsolutePosition(absX, absY) }
     }
 
-    private var _alignment: MutableState<PolyAlign> = mutableStateOf(PolyAlign.Center)
-    var alignment: PolyAlign get() = _alignment.value; set(v) { _alignment.value = v }
+    private var _alignment: MutableState<HudAnchor> = mutableStateOf(HudAnchor.Center)
+    var alignment: Alignment get() = _alignment.value.toAlign() ?: Alignment.Center; set(v) { _alignment.value = HudAnchor.of(v) }
+
+    internal var alignmentAnchor: HudAnchor get() = _alignment.value; set(v) { _alignment.value = v }
 
     private var _growthAnchor: MutableState<HudAnchor> = mutableStateOf(HudAnchor.Auto)
     var growthAnchor: HudAnchor get() = _growthAnchor.value; set(v) { _growthAnchor.put(v) }
@@ -1073,7 +1080,6 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @Transient private var chainExternal: List<Hud> = emptyList()
     @Transient private var chainParents: List<Hud> = emptyList()
 
-    private val instancesRevision: Int get() = Snapshot.withoutReadObservation { HudManager.instancesRevision.intValue }
 
     private fun walkChain() {
         chainHuds = instancesRevision
@@ -1142,12 +1148,21 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     private fun guiScaleInput(): Float =
         if (!useGuiScale || chainParents.any { !it.useGuiScale }) Platform.compatibility().options().guiScale else 0f
 
+    @Transient private var geomWrites = -1
+    @Transient private var geomStateOnly = false
+    @Transient private var geomScaleFromOption = false
+
     private fun refreshFrameGeometry(): Boolean {
         if (HudManager.isEditing) {
             geomValid = false
             return false
         }
         if (hasExternalGeometry || Snapshot.isInSnapshot) return false
+        val writes = stateWrites.get()
+        if (geomValid && geomStateOnly && writes == geomWrites &&
+            HudManager.guiScreenWidth == geomW && HudManager.guiScreenHeight == geomH &&
+            (!geomScaleFromOption || Platform.compatibility().options().guiScale == geomGuiScale)
+        ) return true
         val frame = HudManager.frameId
         var parentMoved = false
         if (parentCheckFrame != frame) {
@@ -1158,8 +1173,14 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         }
         val sw = HudManager.guiScreenWidth
         val sh = HudManager.guiScreenHeight
-        if (geomValid && sw == geomW && sh == geomH && !parentMoved && !chainChanged() && guiScaleInput() == geomGuiScale) return true
+        if (geomValid && sw == geomW && sh == geomH && !parentMoved && !chainChanged() && guiScaleInput() == geomGuiScale) {
+            geomWrites = writes
+            return true
+        }
         walkChain()
+        geomWrites = writes
+        geomStateOnly = chainExternal.isEmpty() && stateOnlyMinimumSize.get(javaClass) &&
+            chainParents.all { stateOnlyMinimumSize.get(it.javaClass) }
         for (p in chainParents) p.frameMinimumSize()
         val parents = chainParents
         geomValid = true
@@ -1169,6 +1190,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         geomW = sw
         geomH = sh
         geomGuiScale = guiScaleInput()
+        geomScaleFromOption = !useGuiScale || chainParents.any { !it.useGuiScale }
         cachedScale = effectiveScale
         cachedX = x
         cachedY = y
@@ -1209,6 +1231,19 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @Transient
     @ApiStatus.Internal
     var isVisible = mutableStateOf(false)
+
+    @Transient
+    private var visibleState: Any? = null
+    @Transient
+    private var visibleWritten = false
+
+    internal fun setVisible(visible: Boolean) {
+        val state = isVisible
+        if (state === visibleState && visible == visibleWritten) return
+        visibleState = state
+        visibleWritten = visible
+        state.value = visible
+    }
 
     @Transient
     private var capturedDefaults: Tree? = null
@@ -1259,7 +1294,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             }
             tree["toggleKey"] = ktProperty(out::toggleKey).apply { addDisplayCondition(hideFromConfigUi) }
             tree["showKey"] = ktProperty(out::showKey).apply { addDisplayCondition(hideFromConfigUi) }
-            tree["alignment"] = ktProperty(out::alignment).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["alignment"] = ktProperty(out::alignmentAnchor).apply { addDisplayCondition(hideFromConfigUi) }
             tree["growthAnchor"] = ktProperty(out::growthAnchor).apply {
                 description = "The point this HUD stays pinned to when its size changes, so it only ever grows away from that point."
                 addDisplayCondition(hideFromConfigUi)
@@ -1394,9 +1429,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
      * neighbour shape (see [bgMerged])
      */
     @JvmOverloads
-    fun hudBackground(modifier: PolyModifier = PolyModifier): PolyModifier =
+    fun hudBackground(modifier: Modifier = Modifier): Modifier =
         if (showBackground && hasBackground() && !bgMerged) {
-            modifier.background(PolyColor(bgColor, bgChroma, bgChromaSpeed), bgRadius)
+            modifier.background(PolyColor(bgColor, bgChroma, bgChromaSpeed), RoundedCornerShape(bgRadius.dp))
         } else {
             modifier
         }
@@ -1462,7 +1497,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         _relativeY = mutableStateOf(this@Hud.relativeY)
         _renderedW = mutableStateOf(0f)
         _renderedH = mutableStateOf(0f)
-        _alignment = mutableStateOf(this@Hud.alignment)
+        _alignment = mutableStateOf(this@Hud.alignmentAnchor)
         _growthAnchor = mutableStateOf(this@Hud.growthAnchor)
         _anchorTargetId = mutableStateOf(this@Hud.anchorTargetId)
         _anchorPoint = mutableStateOf(this@Hud.anchorPoint)
@@ -1518,8 +1553,24 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
         private val pendingWrites = WeakHashMap<Any, PendingWrite>()
 
+        private val stateWrites = AtomicInteger()
+
+        private var instancesRevisionCache = 0
+        private var instancesRevisionWrites = -1
+
+        val instancesRevision: Int get() {
+            val writes = stateWrites.get()
+            if (writes != instancesRevisionWrites) {
+                instancesRevisionCache = Snapshot.withoutReadObservation { HudManager.instancesRevision.intValue }
+                instancesRevisionWrites = writes
+            }
+            return instancesRevisionCache
+        }
+
         init {
+            Snapshot.registerGlobalWriteObserver { stateWrites.incrementAndGet() }
             Snapshot.registerApplyObserver { changed, _ ->
+                if (changed.isNotEmpty()) stateWrites.incrementAndGet()
                 synchronized(pendingWrites) {
                     if (pendingWrites.isEmpty()) return@registerApplyObserver
                     for (state in changed) pendingWrites.remove(state)?.get()?.bumpRevision()
@@ -1551,3 +1602,4 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         override fun hashCode() = id.toInt()
     }
 }
+

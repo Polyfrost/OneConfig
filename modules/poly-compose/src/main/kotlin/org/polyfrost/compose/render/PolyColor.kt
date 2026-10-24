@@ -76,7 +76,6 @@ class PolyColor @JvmOverloads constructor(
 
     fun invert(): PolyColor = rgb(255 - red, 255 - green, 255 - blue).withAlpha(alpha)
 
-    fun toSkiaColor(): Int = argb
 
     override fun toString(): String = "PolyColor(#%08X)".format(argb.toLong() and 0xFFFFFFFFL)
 
@@ -97,6 +96,21 @@ class PolyColor @JvmOverloads constructor(
         const val CHROMA_CYCLE_SECONDS = 10.0
 
         val TRANSPARENT get() = PolyColor(0x00000000)
+
+        val Unspecified get() = PolyColor(0x00000000, false, -1f)
+        val Transparent get() = PolyColor(0x00000000)
+        val White get() = PolyColor(0xFFFFFFFF.toInt())
+        val Black get() = PolyColor(0xFF000000.toInt())
+        val Red get() = PolyColor(0xFFFF0000.toInt())
+        val Green get() = PolyColor(0xFF00FF00.toInt())
+        val Blue get() = PolyColor(0xFF0000FF.toInt())
+        val Yellow get() = PolyColor(0xFFFFFF00.toInt())
+        val Cyan get() = PolyColor(0xFF00FFFF.toInt())
+        val Magenta get() = PolyColor(0xFFFF00FF.toInt())
+        val Gray get() = PolyColor(0xFF888888.toInt())
+        val LightGray get() = PolyColor(0xFFCCCCCC.toInt())
+        val DarkGray get() = PolyColor(0xFF444444.toInt())
+
         val WHITE get() = PolyColor(0xFFFFFFFF.toInt())
         val BLACK get() = PolyColor(0xFF000000.toInt())
         val RED get() = PolyColor(0xFFFF4444.toInt())

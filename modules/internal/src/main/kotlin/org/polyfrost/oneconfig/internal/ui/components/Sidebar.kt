@@ -1,77 +1,91 @@
 package org.polyfrost.oneconfig.internal.ui.components
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.PopupProperties
-import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.compose.currentBackStackEntryAsState
 import java.util.Locale.getDefault
-import org.polyfrost.oneconfig.api.hud.v1.HudManager
+import org.polyfrost.compose.animation.animateColorAsState
+import org.polyfrost.compose.foundation.background
+import org.polyfrost.compose.foundation.border
+import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
+import org.polyfrost.compose.foundation.layout.Arrangement
+import org.polyfrost.compose.foundation.layout.Box
+import org.polyfrost.compose.foundation.layout.Column
+import org.polyfrost.compose.foundation.layout.Row
+import org.polyfrost.compose.foundation.layout.align
+import org.polyfrost.compose.foundation.layout.fillMaxHeight
+import org.polyfrost.compose.foundation.layout.fillMaxSize
+import org.polyfrost.compose.foundation.layout.fillMaxWidth
+import org.polyfrost.compose.foundation.layout.height
+import org.polyfrost.compose.foundation.layout.offset
+import org.polyfrost.compose.foundation.layout.padding
+import org.polyfrost.compose.foundation.layout.size
+import org.polyfrost.compose.foundation.layout.weight
+import org.polyfrost.compose.foundation.layout.width
+import org.polyfrost.compose.ui.Alignment
+import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.draw.dropShadow
+import org.polyfrost.compose.ui.graphics.Color
+import org.polyfrost.compose.ui.graphics.copy
+import org.polyfrost.compose.ui.graphics.graphicsLayer
+import org.polyfrost.compose.ui.graphics.shadow.Shadow
+import org.polyfrost.compose.ui.input.pointer.PointerIcon
+import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
+import org.polyfrost.compose.ui.platform.LocalDensity
+import org.polyfrost.compose.ui.text.font.FontWeight
+import org.polyfrost.compose.ui.unit.DpOffset
+import org.polyfrost.compose.ui.unit.dp
+import org.polyfrost.compose.ui.unit.sp
+import org.polyfrost.compose.ui.window.Popup
+import org.polyfrost.compose.ui.window.PopupProperties
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.internal.ui.navigation.NavigationGroups
-import org.polyfrost.oneconfig.internal.ui.shell.LocalNavController
+import org.polyfrost.oneconfig.internal.ui.navigation.hierarchy
+import org.polyfrost.oneconfig.internal.ui.poly.OpenTransition
+import org.polyfrost.oneconfig.internal.ui.poly.SvgImage
+import org.polyfrost.oneconfig.internal.ui.poly.brandTint
+import org.polyfrost.oneconfig.internal.ui.shell.ShellHost
+import org.polyfrost.oneconfig.internal.ui.shell.ShellNav
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.withOpacityPercent
 
+internal val SidebarWidth = 264.dp
+
 @Composable
-fun Sidebar() {
+fun Sidebar(nav: ShellNav, host: ShellHost, clearSearch: () -> Unit) {
     val flipTopOrder = ShellState.flipTopOptionOrder
-    Column(
+    Row(
         modifier = Modifier.fillMaxHeight()
-            .width(264.dp)
-            .background(LocalTheme.current.sidebarBackground.withOpacityPercent(ShellState.sidebarOpacity))
-            .rightBorder(LocalTheme.current.borderColor, 1f),
-        verticalArrangement = Arrangement.SpaceBetween
+            .width(SidebarWidth)
+            .background(LocalTheme.current.sidebarBackground.withOpacityPercent(ShellState.sidebarOpacity)),
     ) {
-        Navigation(showTopOptions = !flipTopOrder)
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            if (flipTopOrder) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 18.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    TopOptionsSection()
+        Column(
+            modifier = Modifier.weight(1f).fillMaxHeight(),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Navigation(nav, host, clearSearch, showTopOptions = !flipTopOrder)
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                if (flipTopOrder) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 18.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        TopOptionsSection(host)
+                    }
                 }
+                Account()
             }
-            Account()
         }
+        Box(Modifier.width(1.dp).fillMaxHeight().background(LocalTheme.current.borderColor))
     }
 }
 
 @Composable
-private fun Navigation(showTopOptions: Boolean) {
+private fun Navigation(nav: ShellNav, host: ShellHost, clearSearch: () -> Unit, showTopOptions: Boolean) {
     Column(
         modifier = Modifier.fillMaxWidth()
             .padding(top = 28.dp),
@@ -79,55 +93,43 @@ private fun Navigation(showTopOptions: Boolean) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Branding()
-        NavigationEntries(showTopOptions)
+        NavigationEntries(nav, host, clearSearch, showTopOptions)
     }
 }
 
 @Composable
 private fun Branding() {
     val logoPath = LocalTheme.current.branding.logoPath
-    val logo = rememberSvgResourcePainter(logoPath) ?: return
-    Image(
-        painter = logo,
-        contentDescription = null,
-        colorFilter = rememberBrandTint(logoPath, Accent),
-        modifier = Modifier.size(167.dp, 19.dp)
-    )
+    val tint = remember(logoPath, Accent) { brandTint(logoPath, Accent) }
+    SvgImage(logoPath, 167f, 19f, LocalDensity.current.density, recolor = tint)
 }
 
 @Composable
-private fun TopOptionsSection() {
+private fun TopOptionsSection(host: ShellHost) {
     NavigationSection {
         NavigationEntry(
             "hud",
             "Edit HUD",
         ) {
-            HudManager.openEditor()
+            host.editHud()
         }
     }
 }
 
 @Composable
-private fun NavigationEntries(showTopOptions: Boolean) {
-    val controller = LocalNavController.current
-
+private fun NavigationEntries(nav: ShellNav, host: ShellHost, clearSearch: () -> Unit, showTopOptions: Boolean) {
     Column(
         verticalArrangement = Arrangement.spacedBy(18.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (showTopOptions) {
-            TopOptionsSection()
+            TopOptionsSection(host)
         }
 
         NavigationGroups.forEach {
-            val entry by controller.currentBackStackEntryAsState()
-            val currentDestination = entry?.destination
-
             NavigationSection(it.id) {
                 it.routes.forEach { def ->
-                    val selected = currentDestination?.hierarchy?.any { arche ->
-                        arche.hasRoute(def.route::class)
-                    } ?: false
+                    val selected = nav.current.hierarchy == def.route
 
                     // todo: i18n
                     NavigationEntry(
@@ -136,8 +138,7 @@ private fun NavigationEntries(showTopOptions: Boolean) {
                         def.route,
                         selected
                     ) {
-                        val nav = LocalNavController.wrapper
-                        if (nav.currentRoute == def.route) ShellState.searchQuery = "" else nav.navigate(def.route)
+                        if (nav.current == def.route) clearSearch() else nav.navigate(def.route)
                     }
                 }
             }
@@ -169,18 +170,18 @@ private fun NavigationEntry(icon: String, title: String, route: Any? = null, isS
 
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val backgroundColor by animateColorAsState(
+    val backgroundColor = animateColorAsState(
         if (isSelected) Accent
         else Accent.copy(0f)
     )
-    val textAndIconColor by animateColorAsState(
+    val textAndIconColor = animateColorAsState(
         if (isSelected) LocalTheme.current.accentTextColor
         else if (isHovered) LocalTheme.current.textColor
         else LocalTheme.current.textColor.copy(0.8f)
     )
-    val borderColor by animateColorAsState(
+    val borderColor = animateColorAsState(
         if (isHovered || isSelected) LocalTheme.current.borderColor
-        else LocalTheme.current.borderColor.copy(0f)
+        else Color.Transparent
     )
 
     Row(
@@ -200,37 +201,40 @@ private fun NavigationEntry(icon: String, title: String, route: Any? = null, isS
 @Composable
 private fun NotificationBell() {
     var expanded by remember { mutableStateOf(false) }
-    var bellHeightPx by remember { mutableStateOf(0) }
     val interactionSource = rememberInteractionSource()
 
     Box(
         modifier = Modifier
-            .onSizeChanged { bellHeightPx = it.height }
             .onClick(interactionSource) {
                 expanded = !expanded
                 if (!expanded) NotificationsManager.markAllRead()
             }
             .pointerHoverIcon(PointerIcon.Hand)
     ) {
-        IconWithIndicator(
-            iconName = "bell",
-            color = LocalTheme.current.textColor,
-            modifier = Modifier.size(18.dp),
-            showIndicator = NotificationsManager.unreadCount > 0,
-        )
+        Icon("bell", color = LocalTheme.current.textColor, modifier = Modifier.size(18.dp))
+        if (NotificationsManager.unreadCount > 0) {
+            val circle = LocalTheme.current.circleShape
+            Box(
+                Modifier.size(8.dp).align(Alignment.TopEnd).graphicsLayer(translationX = 2f, translationY = -2f)
+                    .dropShadow(circle, Shadow(radius = 7.dp, color = Accent))
+            ) {
+                Box(Modifier.size(6.dp).align(Alignment.Center).background(Accent, circle))
+            }
+        }
 
         if (expanded) {
-            ShellPopup(
+            Popup(
                 // open up and to the right of the bell
                 alignment = Alignment.BottomStart,
-                offset = IntOffset(0, -(bellHeightPx + 12)),
+                offset = DpOffset(0.dp, (-12).dp),
                 onDismissRequest = {
                     expanded = false
                     NotificationsManager.markAllRead()
                 },
                 properties = PopupProperties(focusable = true),
+                anchor = Alignment.TopStart,
             ) {
-                Box(Modifier.shellTransition()) { NotificationsCenter() }
+                OpenTransition { NotificationsCenter() }
             }
         }
     }
@@ -238,11 +242,10 @@ private fun NotificationBell() {
 
 @Composable
 private fun Account() {
-    Box(
-        modifier = Modifier.fillMaxWidth().height(73.dp)
-            .topBorder(LocalTheme.current.borderColor, 1f),
-        contentAlignment = Alignment.Center
+    Column(
+        modifier = Modifier.fillMaxWidth().height(73.dp),
     ) {
+        Box(Modifier.fillMaxWidth().height(1.dp).background(LocalTheme.current.borderColor))
         Row(
             Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -258,7 +261,7 @@ private fun Account() {
                 ) {
                     Text(ShellState.playerName, color = LocalTheme.current.textColor)
                     Text(
-                        ShellState.versionLabel.ifBlank { "OneConfig" },
+                        ShellState.versionLabel.ifEmpty { "OneConfig" },
                         color = LocalTheme.current.textColorSecondary,
                         fontSize = 11.sp
                     )

@@ -200,33 +200,6 @@ public class TestConfig_Test extends Config {
     )
     public static String[] singleItem = {"minecraft:ender_pearl"};
 
-    @TestTilePicker_Test(
-            title = "Tile Picker",
-            description = "Search a set of colors and pick up to three of them.",
-            category = "Lists",
-            subcategory = "Tile Picker"
-    )
-    public static String[] tilePicker = {"test:blue"};
-
-    @TestTileList_Test(
-            title = "Swatch List",
-            description = "Search a set of colors and add several of them to an ordered list.",
-            category = "Lists",
-            subcategory = "Tile List",
-            maxEntries = 5
-    )
-    public static String[] swatchList = {"test:red", "test:green"};
-
-    @TestTileList_Test(
-            title = "Single Swatch",
-            description = "The same list limited to one selected color.",
-            category = "Lists",
-            subcategory = "Tile List",
-            maxEntries = 1,
-            reorderable = false
-    )
-    public static String[] singleSwatch = {"test:purple"};
-
     @FileList(
             title = "File List",
             description = "Pick several files. Add, remove and drag to reorder.",

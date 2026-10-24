@@ -1,6 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.skia;
 
-import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
+import org.polyfrost.oneconfig.internal.ui.compose.GlHost;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -13,7 +13,6 @@ import com.mojang.blaze3d.platform.Window;
 
 //? if = 1.8.9 {
 /*import net.minecraft.client.Minecraft;
-import org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen;
 *///?}
 
 //~ if = 1.8.9 'Window' -> 'Minecraft'
@@ -28,12 +27,12 @@ public class Mixin_SkiaFrame {
 
     @Inject(method = "refreshFramebufferSize", at = @At("TAIL"))
     void impl$onResize(CallbackInfo ci) {
-        SkiaCtx.INSTANCE.recreateSurface(this.framebufferWidth, this.framebufferHeight);
+        GlHost.INSTANCE.recreateSurface(this.framebufferWidth, this.framebufferHeight);
     }
     //?} else {
     /*@Inject(method = "resize", at = @At("TAIL"))
     void impl$onResize(int width, int height, CallbackInfo ci) {
-        SkiaCtx.INSTANCE.recreateSurface(width, height);
+        GlHost.INSTANCE.recreateSurface(width, height);
     }
     *///?}
 
@@ -45,11 +44,7 @@ public class Mixin_SkiaFrame {
     ^///?} else
     //@Inject(method = "runGame", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/pipeline/RenderTarget;draw(II)V"))
     void impl$onDraw(CallbackInfo ci) {
-        if (!SkiaCtx.INSTANCE.isVulkanMode()) {
-            SkiaCtx.INSTANCE.draw();
-        }
-        //? if = 1.8.9
-        //DebugOverlayOffscreen.INSTANCE.render();
+        GlHost.INSTANCE.draw();
     }
     *///? }
 }

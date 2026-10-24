@@ -31,8 +31,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicLong
-import org.jetbrains.skia.Image
 import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.ui.graphics.ImageBitmap
 
 /**
  * The visual category of a [Notification]
@@ -81,7 +81,7 @@ class Notification @JvmOverloads constructor(
     val title: String,
     val message: String,
     val type: NotificationType = NotificationType.INFO,
-    val icon: Image? = null,
+    val icon: ImageBitmap? = null,
     val duration: Float = DEFAULT_DURATION,
     val progress: Callable<Float>? = null,
     val actions: List<NotificationAction> = emptyList(),

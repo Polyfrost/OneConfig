@@ -1,10 +1,10 @@
 package org.polyfrost.compose.render
 
-import org.jetbrains.skia.*
+import org.polyfrost.compose.ui.graphics.ImageBitmap
+import org.polyfrost.compose.ui.graphics.Brush
+import org.polyfrost.compose.ui.graphics.shadow.Shadow
 
-class RenderContext(val canvas: Canvas) {
-    val paint = Paint()
-
+class RenderContext(val renderer: PolyRenderer) {
     private var _absX = 0f
     private var _absY = 0f
     private val absXStack = ArrayDeque<Float>()
@@ -15,75 +15,90 @@ class RenderContext(val canvas: Canvas) {
 
     fun rect(x: Float, y: Float, w: Float, h: Float, color: PolyColor, radius: Float = 0f) {
         if (color.alpha == 0) return
-        paint.color = color.argb
-        paint.mode = PaintMode.FILL
-        if (radius > 0f) canvas.drawRRect(RRect.makeXYWH(x, y, w, h, radius), paint)
-        else canvas.drawRect(Rect.makeXYWH(x, y, w, h), paint)
+        renderer.rect(x, y, w, h, color.argb, radius)
     }
 
     fun rectStroke(x: Float, y: Float, w: Float, h: Float, color: PolyColor, strokeWidth: Float, radius: Float = 0f) {
         if (color.alpha == 0) return
-        paint.color = color.argb
-        paint.mode = PaintMode.STROKE
-        paint.strokeWidth = strokeWidth
-        if (radius > 0f) canvas.drawRRect(RRect.makeXYWH(x, y, w, h, radius), paint)
-        else canvas.drawRect(Rect.makeXYWH(x, y, w, h), paint)
-        paint.mode = PaintMode.FILL
+        renderer.rectStroke(x, y, w, h, color.argb, strokeWidth, radius)
+    }
+
+    fun rectStrokeGradient(x: Float, y: Float, w: Float, h: Float, top: PolyColor, bottom: PolyColor, strokeWidth: Float, radius: Float = 0f) {
+        if (top.alpha == 0 && bottom.alpha == 0) return
+        renderer.rectStrokeGradient(x, y, w, h, top.argb, bottom.argb, strokeWidth, radius)
     }
 
     fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: PolyColor, strokeWidth: Float = 1f) {
         if (color.alpha == 0) return
-        paint.color = color.argb
-        paint.mode = PaintMode.STROKE
-        paint.strokeWidth = strokeWidth
-        canvas.drawLine(x1, y1, x2, y2, paint)
-        paint.mode = PaintMode.FILL
+        renderer.line(x1, y1, x2, y2, color.argb, strokeWidth)
     }
 
-    fun text(text: String, x: Float, y: Float, color: PolyColor, font: Font) {
+    fun fillPath(path: PolyPath, color: PolyColor) {
+        if (color.alpha == 0) return
+        renderer.fillPath(path, color.argb)
+    }
+
+    fun text(text: String, x: Float, y: Float, color: PolyColor, font: PolyFont) {
         if (color.alpha == 0 || text.isEmpty()) return
-        paint.color = color.argb
-        canvas.drawString(text, x, y, font, paint)
+        renderer.text(text, x, y, color.argb, font)
     }
 
-    fun measureText(text: String, font: Font): Float = font.measureTextWidth(text)
+    fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) {
+        if (text.isEmpty()) return
+        renderer.mcText(text, x, y, color, shadow, scale)
+    }
+
+    fun measureText(text: String, font: PolyFont): Float = font.measureTextWidth(text)
+
+    fun live(draw: RenderContext.() -> Unit) = renderer.live { RenderContext(it).draw() }
 
     fun save() {
-        canvas.save()
+        renderer.save()
+        absXStack.addLast(_absX)
+        absYStack.addLast(_absY)
+    }
+
+    fun saveLayerAlpha(alpha: Float) {
+        renderer.saveLayerAlpha(alpha)
+        absXStack.addLast(_absX)
+        absYStack.addLast(_absY)
+    }
+
+    fun saveLayerFade(fade: PolyFade) {
+        renderer.saveLayerFade(fade)
         absXStack.addLast(_absX)
         absYStack.addLast(_absY)
     }
 
     fun restore() {
-        canvas.restore()
+        renderer.restore()
         _absX = absXStack.removeLast()
         _absY = absYStack.removeLast()
     }
 
     fun translate(dx: Float, dy: Float) {
-        canvas.translate(dx, dy)
+        renderer.translate(dx, dy)
         _absX += dx
         _absY += dy
     }
 
-    fun image(image: Image, x: Float, y: Float, w: Float, h: Float, paint: Paint) {
-        paint.isAntiAlias = true
-        canvas.drawImageRect(
-            image,
-            Rect.makeWH(image.width.toFloat(), image.height.toFloat()),
-            Rect.makeXYWH(x, y, w, h),
-            IMAGE_SAMPLING,
-            paint,
-            true,
-        )
+    fun image(bitmap: ImageBitmap, x: Float, y: Float, w: Float, h: Float) = renderer.image(bitmap, x, y, w, h)
+
+    fun image(bitmap: ImageBitmap, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, tint: PolyColor) {
+        if (tint.alpha == 0) return
+        renderer.image(bitmap, x, y, w, h, u0, v0, u1, v1, tint.argb)
     }
 
-    fun scale(sx: Float, sy: Float) = canvas.scale(sx, sy)
+    fun rectGradient(x: Float, y: Float, w: Float, h: Float, gradient: Brush, radius: Float = 0f) =
+        renderer.rectGradient(x, y, w, h, gradient, radius)
 
-    fun clipRect(x: Float, y: Float, w: Float, h: Float) = canvas.clipRect(Rect.makeXYWH(x, y, w, h))
-    fun clipRRect(x: Float, y: Float, w: Float, h: Float, radius: Float) = canvas.clipRRect(RRect.makeXYWH(x, y, w, h, radius), true)
-
-    private companion object {
-        private val IMAGE_SAMPLING: SamplingMode = FilterMipmap(FilterMode.LINEAR, MipmapMode.NONE)
+    fun shadow(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: Shadow) {
+        if (shadow.drawColor.alpha == 0) return
+        renderer.shadow(x, y, w, h, radius, shadow)
     }
+
+    fun scale(sx: Float, sy: Float) = renderer.scale(sx, sy)
+
+    fun clipRect(x: Float, y: Float, w: Float, h: Float) = renderer.clipRect(x, y, w, h)
+    fun clipRRect(x: Float, y: Float, w: Float, h: Float, radius: Float) = renderer.clipRRect(x, y, w, h, radius)
 }

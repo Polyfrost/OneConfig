@@ -1,11 +1,12 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import org.polyfrost.compose.foundation.layout.Box
+import org.polyfrost.compose.foundation.layout.RowScope
+import org.polyfrost.compose.foundation.layout.weight
+import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.unit.dp
 import org.polyfrost.oneconfig.internal.ui.api.settings.NumberListOptionData
 
 @Composable
@@ -22,7 +23,7 @@ fun NumberListOption(data: NumberListOptionData) {
         reorderable = data.reorderable,
         maxEntries = data.maxEntries,
         addText = data.addText,
-        onAdd = { state.add(data.min.coerceIn(data.min, data.max)) },
+        onAdd = { state.add(data.min) },
     ) { entry, _ ->
         NumberEntry(
             data = data,
@@ -41,17 +42,16 @@ private fun RowScope.NumberEntry(
     onValueChange: (Float) -> Unit,
 ) {
     if (data.style == NumberListOptionData.Style.Slider) {
-        Box(modifier = Modifier.weight(1f)) {
-            SliderControl(
-                value = value,
-                onValueChange = onValueChange,
-                min = data.min,
-                max = data.max,
-                step = data.step,
-                thumbSize = 14.dp,
-                trackHeight = 4.dp,
-            )
-        }
+        SliderControl(
+            value = value,
+            onValueChange = onValueChange,
+            min = data.min,
+            max = data.max,
+            step = data.step,
+            modifier = Modifier.weight(1f),
+            thumbSize = 14.dp,
+            trackHeight = 4.dp,
+        )
         NumberSpinner(
             value = value,
             onValueChange = onValueChange,

@@ -31,6 +31,11 @@ dependencies {
     }
 
     modApi(versionedCatalog["pylon"])
+    val lwjglStb = "org.lwjgl:lwjgl-stb:3.4.3"
+    api(lwjglStb) { isTransitive = false }
+    for (natives in listOf("linux", "macos", "macos-arm64", "windows")) {
+        api("$lwjglStb:natives-$natives") { isTransitive = false }
+    }
 
     api("com.mojang:brigadier:1.0.18")
 }

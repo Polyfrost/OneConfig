@@ -1,48 +1,49 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.compositeOver
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.DpOffset
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import org.polyfrost.compose.animation.animateColorAsState
+import org.polyfrost.compose.animation.core.animateFloatAsState
+import org.polyfrost.compose.foundation.background
+import org.polyfrost.compose.foundation.border
+import org.polyfrost.compose.foundation.hoverable
+import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
+import org.polyfrost.compose.foundation.layout.Arrangement
+import org.polyfrost.compose.foundation.layout.Box
+import org.polyfrost.compose.foundation.layout.Column
+import org.polyfrost.compose.foundation.layout.Row
+import org.polyfrost.compose.foundation.layout.fillMaxWidth
+import org.polyfrost.compose.foundation.layout.height
+import org.polyfrost.compose.foundation.layout.heightIn
+import org.polyfrost.compose.foundation.layout.padding
+import org.polyfrost.compose.foundation.layout.size
+import org.polyfrost.compose.foundation.layout.weight
+import org.polyfrost.compose.foundation.layout.width
+import org.polyfrost.compose.foundation.rememberScrollState
+import org.polyfrost.compose.foundation.verticalScroll
+import org.polyfrost.compose.ui.Alignment
+import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.draw.clip
+import org.polyfrost.compose.ui.graphics.copy
+import org.polyfrost.compose.ui.input.pointer.PointerIcon
+import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
+import org.polyfrost.compose.ui.layout.onPlaced
+import org.polyfrost.compose.ui.text.style.TextOverflow
+import org.polyfrost.compose.ui.unit.DpOffset
+import org.polyfrost.compose.ui.unit.dp
+import org.polyfrost.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.settings.MultiSelectDropdownOptionData
-import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.dropdown.SimpleDropdownMenu
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.poly.FadingEdges
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.concentric
@@ -62,42 +63,27 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
 
     // checkable means the property is an Array<Boolean> indexed by option
     // otherwise it is an Int holding the selected index where -1 is none
-    var selectedFlags by remember(data.prop) {
-        if (data.checkable) {
-            val v = data.prop.shown()
-            val arr: BooleanArray = when (v) {
-                is BooleanArray -> v
-                is Array<*> -> BooleanArray(options.size) { i -> v.getOrNull(i) == true }
-                else -> BooleanArray(options.size)
-            }
-            mutableStateOf(arr.copyOf())
-        } else {
-            mutableStateOf(BooleanArray(0))
-        }
+    val value = rememberPropValue(data.prop)
+    val selectedFlags: BooleanArray = when (value) {
+        is BooleanArray -> value
+        is Array<*> -> BooleanArray(options.size) { i -> value.getOrNull(i) == true }
+        else -> BooleanArray(options.size)
     }
-
-    var selectedIdx by remember(data.prop) {
-        if (!data.checkable) {
-            val v = data.prop.shown()
-            mutableStateOf(if (v is Int) v else -1)
-        } else {
-            mutableStateOf(-1)
-        }
-    }
+    val selectedIdx = value as? Int ?: -1
 
     var expanded by remember { mutableStateOf(false) }
 
     val triggerInteraction = rememberInteractionSource()
     val isHovered by triggerInteraction.collectIsHoveredAsState()
 
-    val borderColor by animateColorAsState(
+    val borderColor = animateColorAsState(
         if (expanded) Accent else theme.borderColor
     )
-    val textColor by animateColorAsState(
+    val textColor = animateColorAsState(
         if (isHovered || expanded) theme.textColor else theme.textColorSecondary
     )
-    val backgroundColor by animateColorAsState(
-        if (expanded) Accent.copy(0.2f).compositeOver(theme.componentBackground)
+    val backgroundColor = animateColorAsState(
+        if (expanded) theme.componentBackground.lerp(Accent.withAlpha(255), 0.2f)
         else theme.componentBackground
     )
     val chevronRotation by animateFloatAsState(if (expanded) 0f else 180f)
@@ -130,13 +116,13 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
         ) {
             Text(
                 triggerLabel,
-                modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp),
+                modifier = Modifier.weight(1f).padding(end = 8.dp),
                 color = textColor,
                 fontSize = 13.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Icon("up", modifier = Modifier.rotate(chevronRotation), color = textColor)
+            Icon("up", textColor, Modifier.size(18.dp), rotation = chevronRotation)
         }
 
         SimpleDropdownMenu(
@@ -145,44 +131,49 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
             offset = DpOffset(0.dp, 10.dp),
         ) {
             val scrollState = rememberScrollState()
-            Column(
+            var menuHeight by remember { mutableFloatStateOf(0f) }
+            Box(
                 modifier = Modifier
                     .width(LocalOptionWidth.current)
                     .clip(DropdownShape)
                     .background(theme.componentBackground, DropdownShape)
                     .border(1.dp, theme.borderColor, DropdownShape)
-                    .heightIn(max = 280.dp)
-                    .fadingEdges(scrollState, theme.componentBackground)
-                    .verticalScroll(scrollState)
-                    .padding(MenuPadding),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                options.forEachIndexed { index, option ->
-                    if (data.checkable) {
-                        CheckableListItem(
-                            label = option,
-                            icon = data.icon,
-                            checked = selectedFlags.getOrElse(index) { false },
-                            onToggle = {
-                                val updated = selectedFlags.copyOf()
-                                updated[index] = !updated[index]
-                                selectedFlags = updated
-                                (data.prop as Property<Any>).set(updated)
-                            },
-                        )
-                    } else {
-                        PlainListItem(
-                            label = option,
-                            icon = data.icon,
-                            selected = selectedIdx == index,
-                            onSelect = {
-                                selectedIdx = index
-                                (data.prop as Property<Any>).set(index)
-                                expanded = false
-                            },
-                        )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 280.dp)
+                        .onPlaced { menuHeight = it.height }
+                        .verticalScroll(scrollState)
+                        .padding(MenuPadding),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    options.forEachIndexed { index, option ->
+                        if (data.checkable) {
+                            CheckableListItem(
+                                label = option,
+                                icon = data.icon,
+                                checked = selectedFlags.getOrElse(index) { false },
+                                onToggle = {
+                                    val updated = selectedFlags.copyOf(options.size)
+                                    updated[index] = !updated[index]
+                                    (data.prop as Property<Any>).set(updated)
+                                },
+                            )
+                        } else {
+                            PlainListItem(
+                                label = option,
+                                icon = data.icon,
+                                selected = selectedIdx == index,
+                                onSelect = {
+                                    (data.prop as Property<Any>).set(index)
+                                    expanded = false
+                                },
+                            )
+                        }
                     }
                 }
+                FadingEdges(scrollState, theme.componentBackground, Modifier.fillMaxWidth().height(menuHeight.dp))
             }
         }
     }
@@ -199,17 +190,16 @@ private fun CheckableListItem(
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val bgColor by animateColorAsState(
+    val bgColor = animateColorAsState(
         if (isHovered) theme.modCardBackground else theme.modCardBackground.copy(0f)
     )
-    val contentColor by animateColorAsState(
+    val contentColor = animateColorAsState(
         if (isHovered) theme.textColor else theme.textColorSecondary
     )
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(ItemShape)
             .background(bgColor, ItemShape)
             .onClick(interactionSource, onToggle)
             .hoverable(interactionSource)
@@ -237,19 +227,18 @@ private fun PlainListItem(
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val bgColor by animateColorAsState(
+    val bgColor = animateColorAsState(
         if (selected) Accent
         else if (isHovered) theme.modCardBackground
         else theme.modCardBackground.copy(0f)
     )
-    val contentColor by animateColorAsState(
+    val contentColor = animateColorAsState(
         if (selected || isHovered) theme.textColor else theme.textColorSecondary
     )
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(ItemShape)
             .background(bgColor, ItemShape)
             .onClick(interactionSource, onSelect)
             .hoverable(interactionSource)

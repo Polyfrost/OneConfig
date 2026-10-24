@@ -1,26 +1,28 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import org.polyfrost.compose.animation.animateColorAsState
+import org.polyfrost.compose.animation.core.animateFloatAsState
+import org.polyfrost.compose.animation.core.spring
+import org.polyfrost.compose.foundation.background
+import org.polyfrost.compose.foundation.border
+import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
+import org.polyfrost.compose.foundation.layout.Arrangement
+import org.polyfrost.compose.foundation.layout.Box
+import org.polyfrost.compose.foundation.layout.Row
+import org.polyfrost.compose.foundation.layout.align
+import org.polyfrost.compose.foundation.layout.offset
+import org.polyfrost.compose.foundation.layout.offsetX
+import org.polyfrost.compose.foundation.layout.size
+import org.polyfrost.compose.ui.Alignment
+import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.graphics.Color
+import org.polyfrost.compose.ui.graphics.copy
+import org.polyfrost.compose.ui.input.pointer.PointerIcon
+import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
+import org.polyfrost.compose.ui.unit.dp
+import org.polyfrost.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
@@ -32,9 +34,10 @@ fun SwitchControl(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val trackColor by animateColorAsState(if (checked) Accent else LocalTheme.current.controlTrackColor)
-    val thumbOffset by animateDpAsState(if (checked) 24.dp else 3.dp, animationSpec = spring())
-    val borderColor by animateColorAsState(
+    val trackColor = animateColorAsState(if (checked) Accent else LocalTheme.current.controlTrackColor)
+    val thumbX = if (checked) 24f else 3f
+    val thumbOffset = animateFloatAsState(thumbX, animationSpec = spring())
+    val borderColor = animateColorAsState(
         if (isHovered) LocalTheme.current.textColor.copy(alpha = 0.15f) else Color.Transparent
     )
 
@@ -46,8 +49,7 @@ fun SwitchControl(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
         Box(
             modifier = Modifier
                 .size(42.dp, 21.dp)
-                .clip(LocalTheme.current.circleShape)
-                .background(trackColor)
+                .background(trackColor, LocalTheme.current.circleShape)
                 .border(1.dp, borderColor, LocalTheme.current.circleShape)
                 .onClick(interactionSource) { onCheckedChange(!checked) }
                 .pointerHoverIcon(PointerIcon.Hand),
@@ -55,7 +57,8 @@ fun SwitchControl(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .offset(x = thumbOffset)
+                    .offset(x = thumbX.dp)
+                    .offsetX(thumbOffset, thumbX)
                     .size(15.dp)
                     .background(LocalTheme.current.controlThumbColor, LocalTheme.current.circleShape),
             )

@@ -1,61 +1,56 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
+import kotlin.math.abs
 import kotlin.math.roundToInt
-import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
+import org.polyfrost.compose.animation.animateColorAsState
+import org.polyfrost.compose.animation.core.animateFloatAsState
+import org.polyfrost.compose.foundation.background
+import org.polyfrost.compose.foundation.border
+import org.polyfrost.compose.foundation.hoverable
+import org.polyfrost.compose.foundation.interaction.collectIsHoveredAsState
+import org.polyfrost.compose.foundation.layout.Arrangement
+import org.polyfrost.compose.foundation.layout.Box
+import org.polyfrost.compose.foundation.layout.Column
+import org.polyfrost.compose.foundation.layout.Row
+import org.polyfrost.compose.foundation.layout.Spacer
+import org.polyfrost.compose.foundation.layout.absoluteOffset
+import org.polyfrost.compose.foundation.layout.fillMaxWidth
+import org.polyfrost.compose.foundation.layout.height
+import org.polyfrost.compose.foundation.layout.offset
+import org.polyfrost.compose.foundation.layout.padding
+import org.polyfrost.compose.foundation.layout.size
+import org.polyfrost.compose.foundation.layout.weight
+import org.polyfrost.compose.foundation.layout.width
+import org.polyfrost.compose.foundation.text.BasicTextField
+import org.polyfrost.compose.foundation.text.TextFieldState
+import org.polyfrost.compose.render.PolyFont
+import org.polyfrost.compose.ui.Alignment
+import org.polyfrost.compose.ui.Modifier
+import org.polyfrost.compose.ui.draw.clip
+import org.polyfrost.compose.ui.graphics.copy
+import org.polyfrost.compose.ui.input.pointer.PointerEventType
+import org.polyfrost.compose.ui.input.pointer.PointerIcon
+import org.polyfrost.compose.ui.input.pointer.onPointerEvent
+import org.polyfrost.compose.ui.input.pointer.pointerHoverIcon
+import org.polyfrost.compose.ui.layout.onPlaced
+import org.polyfrost.compose.ui.text.font.FontWeight
+import org.polyfrost.compose.ui.unit.dp
+import org.polyfrost.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.api.settings.NumberChainOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.screens.LocalUiClipboard
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
@@ -63,11 +58,17 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val ChainShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
 
-/** Compose's default text cursor thickness */
 private val CaretWidth = 2.dp
 
 /** One slot in the chain where [id] is stable across reorders so equal values stay distinct rows */
 private data class ChainEntry(val id: Int, val value: Float)
+
+private class ChainDrag {
+    var pressedIndex = -1
+    var pressY = 0f
+    var lastY = 0f
+    var lastTickIndex = -1
+}
 
 /**
  * An ordered chain of numbers where the handle reorders a row clicking edits its value in place and the
@@ -78,48 +79,32 @@ private data class ChainEntry(val id: Int, val value: Float)
 @Composable
 fun NumberChainOption(data: NumberChainOptionData) {
     val theme = LocalTheme.current
-    val density = LocalDensity.current
 
     val idGen = remember(data.prop) { intArrayOf(0) }
     var entries by remember(data.prop) {
         mutableStateOf(data.read().map { ChainEntry(idGen[0]++, it) })
     }
-    var editingId by remember(data.prop) { mutableStateOf(-1) }
+    var editingId by remember(data.prop) { mutableIntStateOf(-1) }
 
-    var draggingIndex by remember { mutableStateOf(-1) }
-    var dragAccum by remember { mutableStateOf(0f) }
-    var rowHeightPx by remember { mutableStateOf(36) }
-    val spacingPx = with(density) { 8.dp.roundToPx() }
-    val stridePx = (rowHeightPx + spacingPx).toFloat()
+    var draggingIndex by remember { mutableIntStateOf(-1) }
+    var dragAccum by remember { mutableFloatStateOf(0f) }
+    var rowHeight by remember { mutableFloatStateOf(36f) }
+    val drag = remember { ChainDrag() }
+    val spacing = 8f
+    val stride = rowHeight + spacing
     val locked = data.lockedLeading
     val firstMovable = locked.coerceAtMost(entries.size)
     val dragTargetIndex = if (draggingIndex == -1) {
         -1
     } else {
-        (draggingIndex + (dragAccum / stridePx).roundToInt()).coerceIn(firstMovable, entries.lastIndex)
+        (draggingIndex + (dragAccum / stride).roundToInt()).coerceIn(firstMovable, entries.lastIndex)
     }
-    val contentHeight = with(density) {
-        (rowHeightPx * entries.size + spacingPx * (entries.size - 1).coerceAtLeast(0)).toDp()
-    }
+    val contentHeight = (rowHeight * entries.size + spacing * (entries.size - 1).coerceAtLeast(0)).dp
 
     // the property's setter is free to normalize so re-read rather than trusting what was written
     fun commit(next: List<ChainEntry>) {
         data.write(next.map { it.value })
         entries = data.read().map { ChainEntry(idGen[0]++, it) }
-    }
-
-    var lastTickIndex by remember { mutableStateOf(-1) }
-    val draggableState = rememberDraggableState { delta ->
-        if (draggingIndex == -1) return@rememberDraggableState
-        dragAccum = (dragAccum + delta).coerceIn(
-            -(draggingIndex - firstMovable) * stridePx,
-            (entries.lastIndex - draggingIndex) * stridePx,
-        )
-        val target = (draggingIndex + (dragAccum / stridePx).roundToInt()).coerceIn(firstMovable, entries.lastIndex)
-        if (target != lastTickIndex) {
-            lastTickIndex = target
-            UiSounds.play(UiSoundEvent.SLIDER_TICK)
-        }
     }
 
     Column(
@@ -132,24 +117,25 @@ fun NumberChainOption(data: NumberChainOptionData) {
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Box(modifier = Modifier.fillMaxWidth().height(contentHeight)) {
-            entries.forEachIndexed { index, entry ->
+            for (index in entries.indices.sortedBy { it == draggingIndex }) {
+                val entry = entries[index]
                 key(entry.id) {
                     val movable = index >= locked
                     val isDragging = draggingIndex == index
                     val rowInteraction = rememberInteractionSource()
                     val isHovered by rowInteraction.collectIsHoveredAsState()
-                    val baseOffset = index * stridePx
+                    val baseOffset = index * stride
                     val targetOffset = when {
                         isDragging -> baseOffset + dragAccum
                         draggingIndex == -1 -> baseOffset
-                        dragTargetIndex > draggingIndex && index in (draggingIndex + 1)..dragTargetIndex -> baseOffset - stridePx
-                        dragTargetIndex < draggingIndex && index in dragTargetIndex until draggingIndex -> baseOffset + stridePx
+                        dragTargetIndex > draggingIndex && index in (draggingIndex + 1)..dragTargetIndex -> baseOffset - stride
+                        dragTargetIndex < draggingIndex && index in dragTargetIndex until draggingIndex -> baseOffset + stride
                         else -> baseOffset
                     }
-                    val animatedOffset by animateFloatAsState(targetOffset)
+                    val animatedOffset by animateFloatAsState(targetOffset, initialValue = targetOffset)
                     val visualOffset = if (isDragging) targetOffset else animatedOffset
-                    val bgColor by animateColorAsState(if (isDragging) Accent else theme.chipBackground)
-                    val contentColor by animateColorAsState(
+                    val bgColor = animateColorAsState(if (isDragging) Accent else theme.chipBackground)
+                    val contentColor = animateColorAsState(
                         when {
                             !movable -> theme.textColorSecondary
                             isDragging || isHovered -> theme.textColor
@@ -160,9 +146,8 @@ fun NumberChainOption(data: NumberChainOptionData) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .offset { IntOffset(0, visualOffset.roundToInt()) }
-                            .onSizeChanged { if (index == 0) rowHeightPx = it.height }
-                            .zIndex(if (isDragging) 1f else 0f)
+                            .absoluteOffset(y = visualOffset.dp)
+                            .onPlaced { if (index == 0) rowHeight = it.height }
                             .clip(ChainShape)
                             .background(bgColor, ChainShape)
                             .border(1.dp, theme.borderColor, ChainShape)
@@ -178,22 +163,48 @@ fun NumberChainOption(data: NumberChainOptionData) {
                                 .then(
                                     if (!movable) Modifier else Modifier
                                         .pointerHoverIcon(PointerIcon.Hand)
-                                        .draggable(
-                                            orientation = Orientation.Vertical,
-                                            state = draggableState,
-                                            onDragStarted = {
-                                                draggingIndex = index; dragAccum = 0f; lastTickIndex = index
-                                            },
-                                            onDragStopped = {
-                                                if (dragTargetIndex != draggingIndex && draggingIndex >= 0) {
-                                                    val list = entries.toMutableList()
-                                                    list.add(dragTargetIndex, list.removeAt(draggingIndex))
-                                                    commit(list)
+                                        .onPointerEvent { e ->
+                                            when (e.type) {
+                                                PointerEventType.Press -> e.button == 0 && run {
+                                                    drag.pressedIndex = index
+                                                    drag.pressY = e.y
+                                                    drag.lastY = e.y
+                                                    drag.lastTickIndex = index
+                                                    true
                                                 }
-                                                draggingIndex = -1
-                                                dragAccum = 0f
-                                            },
-                                        )
+                                                PointerEventType.Move -> {
+                                                    if (draggingIndex == -1 && drag.pressedIndex != -1 && abs(e.y - drag.pressY) >= 4f) {
+                                                        draggingIndex = drag.pressedIndex
+                                                        dragAccum = 0f
+                                                    }
+                                                    if (draggingIndex != -1) {
+                                                        dragAccum = (dragAccum + e.y - drag.lastY).coerceIn(
+                                                            -(draggingIndex - firstMovable) * stride,
+                                                            (entries.lastIndex - draggingIndex) * stride,
+                                                        )
+                                                        val target = (draggingIndex + (dragAccum / stride).roundToInt()).coerceIn(firstMovable, entries.lastIndex)
+                                                        if (target != drag.lastTickIndex) {
+                                                            drag.lastTickIndex = target
+                                                            UiSounds.play(UiSoundEvent.SLIDER_TICK)
+                                                        }
+                                                    }
+                                                    drag.lastY = e.y
+                                                    true
+                                                }
+                                                PointerEventType.Release -> {
+                                                    drag.pressedIndex = -1
+                                                    if (dragTargetIndex != draggingIndex && draggingIndex >= 0) {
+                                                        val list = entries.toMutableList()
+                                                        list.add(dragTargetIndex, list.removeAt(draggingIndex))
+                                                        commit(list)
+                                                    }
+                                                    draggingIndex = -1
+                                                    dragAccum = 0f
+                                                    true
+                                                }
+                                                else -> false
+                                            }
+                                        }
                                 ),
                             color = contentColor,
                         )
@@ -251,7 +262,7 @@ fun NumberChainOption(data: NumberChainOptionData) {
         if (entries.size < data.maxEntries) {
             val addInteraction = rememberInteractionSource()
             val addHovered by addInteraction.collectIsHoveredAsState()
-            val addColor by animateColorAsState(if (addHovered) theme.textColor else theme.textColorSecondary)
+            val addColor = animateColorAsState(if (addHovered) theme.textColor else theme.textColorSecondary)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -283,48 +294,42 @@ private fun ChainValueEditor(
     onCommit: (Float) -> Unit,
 ) {
     val theme = LocalTheme.current
-    val density = LocalDensity.current
-    val measurer = rememberTextMeasurer()
-    val focusRequester = remember { FocusRequester() }
-    var text by remember { mutableStateOf(formatSpinnerValue(initial)) }
-    var focused by remember { mutableStateOf(false) }
+    val clipboard = LocalUiClipboard.current
+    val state = remember { TextFieldState(formatSpinnerValue(initial)).also { it.requestFocus() } }
+    val focused = remember { booleanArrayOf(false) }
+    val font = PolyFont(theme.typography.family.resolve(FontWeight.Normal), 13f)
 
-    val style = remember(theme) {
-        TextStyle(color = theme.textColor, fontSize = 13.sp, fontFamily = theme.typography.family)
-    }
     // a text field fills whatever width it is given so the unit sits against a field measured to its text
     // the field keeps room for a caret past the last digit which the unit is shifted back across
-    val fieldWidth = with(density) { measurer.measure(text, style).size.width.toDp() } + CaretWidth
+    val fieldWidth = font.measureTextWidth(state.text).dp + CaretWidth
 
-    fun commit() = onCommit(text.toFloatOrNull()?.coerceIn(min, max) ?: initial)
+    fun commit() = onCommit(state.text.toFloatOrNull()?.coerceIn(min, max) ?: initial)
 
-    BasicTextField(
-        value = text,
-        onValueChange = { text = filterNumberInput(it) },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-        keyboardActions = KeyboardActions(onDone = { commit() }),
-        textStyle = style,
-        cursorBrush = SolidColor(theme.textColor),
-        decorationBox = { innerTextField ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.width(fieldWidth)) { innerTextField() }
-                if (unit != null) {
-                    Text(
-                        unit,
-                        color = theme.textColor,
-                        fontSize = 13.sp,
-                        modifier = Modifier.offset(x = -CaretWidth),
-                    )
-                }
-            }
-        },
-        modifier = modifier.trackTextInputFocus()
-            .focusRequester(focusRequester)
-            .onFocusChanged { state ->
-                if (state.isFocused) focused = true else if (focused) commit()
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        BasicTextField(
+            state, font,
+            color = theme.textColor,
+            caretColor = theme.textColor,
+            selectionColor = Accent.copy(alpha = 0.4f),
+            readClipboard = clipboard.read,
+            writeClipboard = clipboard.write,
+            modifier = Modifier.width(fieldWidth),
+            onKey = editKeys(clipboard, state, onEnter = ::commit) {
+                val filtered = filterNumberInput(state.text)
+                if (filtered != state.text) state.replaceText(filtered)
             },
-    )
+        )
+        if (unit != null) {
+            Text(
+                unit,
+                color = theme.textColor,
+                fontSize = 13.sp,
+                modifier = Modifier.offset(x = -CaretWidth),
+            )
+        }
+    }
 
-    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+    LaunchedEffect(state.focused) {
+        if (state.focused) focused[0] = true else if (focused[0]) commit()
+    }
 }

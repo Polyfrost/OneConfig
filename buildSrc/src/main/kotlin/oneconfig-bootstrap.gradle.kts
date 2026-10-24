@@ -84,13 +84,10 @@ afterEvaluate {
         "net.fabricmc:fabric-language-kotlin"
     )
 
-    // compose/skiko classes ship inside the shaded :modules:compose-bundle jar
     // the *-desktop artifacts are added non-transitively so alone they lack androidx.compose.* classes
     fun isShadedInComposeBundle(group: String?): Boolean {
         group ?: return false
-        return group.startsWith("org.jetbrains.compose") ||
-            group == "org.jetbrains.skiko" ||
-            group.startsWith("org.jetbrains.androidx")
+        return group.startsWith("org.jetbrains.compose")
     }
 
     fun isHypixelProvidedElsewhere(group: String?, name: String) =
@@ -102,9 +99,13 @@ afterEvaluate {
         if (isHypixelProvidedElsewhere(dep.group, dep.name)) return
         if (isShadedInComposeBundle(dep.group)) return
         val coord = "${dep.group}:${dep.name}:${dep.version}"
-        if (!seen.add(coord)) return
         if (kotlinLibs.contains(coord.substringBeforeLast(":"))) return
-        (dependencies.add("include", coord) as ExternalModuleDependency).isTransitive = false
+        val classifiers = dep.artifacts.mapNotNull { it.classifier }.ifEmpty { listOf(null) }
+        for (classifier in classifiers) {
+            val full = if (classifier == null) coord else "$coord:$classifier"
+            if (!seen.add(full)) continue
+            (dependencies.add("include", full) as ExternalModuleDependency).isTransitive = false
+        }
     }
 
     // compose-bundle ships as its own Fabric mod on Modrinth so it must not be JiJ'd

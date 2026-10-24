@@ -30,6 +30,5 @@ plugins {
 
 dependencies {
     compileOnly(libs.jetbrains.compose.runtime)
-    compileOnly(libs.jetbrains.skiko.awt)
     compileOnly(libs.kotlinx.coroutines)
 }

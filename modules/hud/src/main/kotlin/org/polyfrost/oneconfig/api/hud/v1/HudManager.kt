@@ -39,7 +39,6 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.skia.Paint
 import org.polyfrost.compose.node.RootNode
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.runtime.PolyComposeHost
@@ -82,7 +81,7 @@ object HudManager {
             applyPendingProfileReload()
         }
     }
-    private val hiddenHudPaint by lazy { Paint().apply { setAlphaf(0.35f) } }
+    private const val HIDDEN_HUD_ALPHA = 0.35f
 
     /**
      * `true` while HUDs are being shown for editing or preview
@@ -507,7 +506,7 @@ object HudManager {
     private fun layout(hud: Hud, screenWidth: Float, screenHeight: Float, scale: Float): RootNode {
         val hudScale = hud.effectiveScale
         val rt = hud.runtime
-        rt.layout(screenWidth / scale / hudScale, screenHeight / scale / hudScale)
+        rt.layoutIfChanged(screenWidth / scale / hudScale, screenHeight / scale / hudScale)
         val root = rt.root
         val w = root.width * hudScale
         val h = root.height * hudScale
@@ -584,12 +583,12 @@ object HudManager {
                     true
                 }
                 if (!show) {
-                    hud.isVisible.value = false
+                    hud.setVisible(false)
                     continue
                 }
                 frameDrawn[hud] = visible
             }
-            hud.isVisible.value = visible
+            hud.setVisible(visible)
         }
         for (hud in orderedForRender()) {
             val visible = frameDrawn[hud] ?: continue
@@ -637,7 +636,8 @@ object HudManager {
     }
 
     @ApiStatus.Internal
-    fun beginFrame(screenWidth: Float, screenHeight: Float, beforeDirtyCheck: Runnable? = null): Boolean {
+    @JvmOverloads
+    fun beginFrame(screenWidth: Float, screenHeight: Float, beforeDirtyCheck: Runnable? = null, alwaysRender: Boolean = false): Boolean {
         var volatileContent = false
         val scale = prepareFrame(screenWidth, screenHeight, {
             volatileContent = collectFrameOrder()
@@ -652,11 +652,11 @@ object HudManager {
         lastFrameHeight = screenHeight
         lastFrameScale = scale
 
-        val neverCache = redrawCacheDisabled || volatileContent || isEditing
+        val neverCache = redrawCacheDisabled || volatileContent
 
         val dirty = contentDirty || keyChanged || neverCache
         contentDirty = false
-        preparedFrameValid = dirty
+        preparedFrameValid = dirty || alwaysRender
         return dirty
     }
 
@@ -748,6 +748,7 @@ object HudManager {
         val next = huds.toList()
         if (next.size == mergeExclusions.size && next.indices.all { next[it] === mergeExclusions[it] }) return
         mergeExclusions = next
+        invalidate()
         // unlink right away so moving an excluded HUD never drags its neighbours with it
         Snapshot.withMutableSnapshot {
             for (hud in activeInstances) {
@@ -889,7 +890,7 @@ object HudManager {
             prepareOrder.clear()
             for (hud in activeInstances) {
                 val visible = hud !is LegacyHudMarker
-                hud.isVisible.value = visible
+                hud.setVisible(visible)
                 if (visible) prepareOrder.add(hud)
             }
             for (hud in prepareOrder) updateIfDue(hud)
@@ -928,9 +929,9 @@ object HudManager {
                 ctx.translate(hud.x, hud.y)
                 if (hudScale != 1f) ctx.scale(hudScale, hudScale)
                 if (hud.hidden && isEditing) {
-                    ctx.canvas.saveLayer(null, hiddenHudPaint)
+                    ctx.saveLayerAlpha(HIDDEN_HUD_ALPHA)
                     root.render(ctx)
-                    ctx.canvas.restore()
+                    ctx.restore()
                 } else {
                     root.render(ctx)
                 }
