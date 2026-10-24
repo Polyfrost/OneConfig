@@ -23,6 +23,9 @@ mixin-squared = "0.3.7-beta.1"
 
 # Gradle
 kotlinx-abi = "0.18.2"
+detekt = "2.0.0-alpha.6"
+errorprone = "2.51.0"
+errorprone-plugin = "5.1.1"
 
 log4j-api = "2.0-beta9" # used because this is the version that 1.8.9 supports, so we have to compile against the same (annoying)
 
@@ -60,6 +63,8 @@ logging-api = { module = "org.apache.logging.log4j:log4j-api", version.ref = "lo
 logging-impl = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j-impl" }
 
 lwjgl-vulkan = { module = "org.lwjgl:lwjgl-vulkan", version.ref = "lwjgl" }
+
+errorprone-core = { module = "com.google.errorprone:error_prone_core", version.ref = "errorprone" }
 
 snakeyaml = { module = "org.yaml:snakeyaml", version.ref = "snakeyaml" }
 nightconfig = { module = "com.electronwill.night-config:core", version.ref = "nightconfig" }
@@ -128,5 +133,7 @@ kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlinx-api-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "kotlinx-abi" }
+detekt = { id = "dev.detekt", version.ref = "detekt" }
+errorprone = { id = "net.ltgt.errorprone", version.ref = "errorprone-plugin" }
 
 google-ksp = { id = "com.google.devtools.ksp", version.ref = "google-ksp" }

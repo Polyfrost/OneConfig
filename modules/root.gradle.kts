@@ -1,5 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     alias(libs.plugins.kotlinx.api.validator)
     id("org.jetbrains.gradle.plugin.idea-ext")
@@ -15,6 +17,7 @@ subprojects {
     apply(plugin = "jvm-test-suite")
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
+    apply(plugin = "oneconfig-lint")
 
     group = rootProject.group
     version = rootProject.version
@@ -95,7 +98,7 @@ subprojects {
     base.archivesName = name
 
     val kotlinModuleName = project.name
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    tasks.withType<KotlinCompile>().configureEach {
         compilerOptions.moduleName = kotlinModuleName
         if (name.contains("Test")) {
             compilerOptions.freeCompilerArgs.add("-Xjspecify-annotations=warn")

@@ -31,6 +31,7 @@ import net.minecraft.client.Minecraft
 /**
  * Gets the current [Minecraft] instance
  */
-@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+// InlineOnly is stdlib-internal, and importing it would need these visibility suppressions file-wide
+@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UnnecessaryFullyQualifiedName")
 @kotlin.internal.InlineOnly
 inline val mc: Minecraft get() = Minecraft.getInstance()

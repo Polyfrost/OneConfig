@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import kotlin.math.abs
+import java.util.ArrayDeque
 import kotlin.math.roundToInt
 import org.polyfrost.compose.animation.animateColorAsState
 import org.polyfrost.compose.animation.core.animateFloatAsState
@@ -101,9 +102,9 @@ internal class ListEntriesState<T>(initial: List<T>, private val onCommit: (List
     }
 
     fun replace(values: List<T>) {
-        val existing = HashMap<T, java.util.ArrayDeque<ListRowEntry<T>>>()
+        val existing = HashMap<T, ArrayDeque<ListRowEntry<T>>>()
         entries.forEach { entry ->
-            existing.getOrPut(entry.value) { java.util.ArrayDeque() }.addLast(entry)
+            existing.getOrPut(entry.value) { ArrayDeque() }.addLast(entry)
         }
         apply(values.map { value ->
             existing[value]?.pollFirst() ?: ListRowEntry(nextId++, value)

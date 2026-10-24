@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import kotlin.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,9 +30,9 @@ class HudPositionMigrationTest {
         AnchorHud() { super("anchor-hud", "Anchor Hud", Hud.Category.getINFO(), "", ""); }
         @Override public boolean showByDefault() { return true; }
         @Override public String getText() { return "target"; }
-        @Override public kotlin.Pair<Float, Float> minimumSize() {
-            kotlin.Pair<Float, Float> base = super.minimumSize();
-            return new kotlin.Pair<>(base.getFirst() + extraMinW, base.getSecond());
+        @Override public Pair<Float, Float> minimumSize() {
+            Pair<Float, Float> base = super.minimumSize();
+            return new Pair<>(base.getFirst() + extraMinW, base.getSecond());
         }
     }
 

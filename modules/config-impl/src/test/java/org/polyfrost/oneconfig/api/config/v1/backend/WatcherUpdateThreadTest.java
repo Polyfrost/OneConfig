@@ -93,7 +93,7 @@ public class WatcherUpdateThreadTest {
         backend.register(tree);
 
         Thread[] callbackThread = new Thread[1];
-        ((org.polyfrost.oneconfig.api.config.v1.Property<Boolean>) tree.getProp("flag")).addCallback(v -> {
+        ((Property<Boolean>) tree.getProp("flag")).addCallback(v -> {
             callbackThread[0] = Thread.currentThread();
             return false;
         });

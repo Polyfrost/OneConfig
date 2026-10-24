@@ -8,6 +8,7 @@ import org.lwjgl.opengl.GL12;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.io.IOException;
 import java.nio.IntBuffer;
 import java.nio.file.Path;
 
@@ -48,7 +49,7 @@ public class NativeImage implements AutoCloseable {
         return (color & 0xFF00FF00) | ((color & 0xFF) << 16) | ((color >>> 16) & 0xFF);
     }
 
-    public void writeToFile(Path path) throws java.io.IOException {
+    public void writeToFile(Path path) throws IOException {
         ImageIO.write(image, "png", path.toFile());
     }
 

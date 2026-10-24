@@ -566,8 +566,8 @@ private fun AccordionSettingRow(prop: Property<*>, display: Property.Display, mo
 }
 
 @Composable
-private fun rememberVisibleOptions(body: List<Property<*>>): List<kotlin.Pair<Property<*>, Property.Display>> {
-    val visible = ArrayList<kotlin.Pair<Property<*>, Property.Display>>(body.size)
+private fun rememberVisibleOptions(body: List<Property<*>>): List<Pair<Property<*>, Property.Display>> {
+    val visible = ArrayList<Pair<Property<*>, Property.Display>>(body.size)
     for (prop in body) {
         val display = rememberDisplay(prop)
         if (display != Property.Display.HIDDEN) visible += prop to display
