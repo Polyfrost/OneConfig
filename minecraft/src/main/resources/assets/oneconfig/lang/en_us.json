@@ -149,6 +149,9 @@
   "oneconfig.preferences.show_first_launch_message.title": "Show First Launch Message",
   "oneconfig.preferences.show_first_launch_message.description": "Show the welcome message the first time OneConfig is launched.",
 
+  "oneconfig.preferences.profile_switch_toast.title": "Show Profile Switch Notification",
+  "oneconfig.preferences.profile_switch_toast.description": "Show a notification when a profile keybind switches your profile.",
+
   "oneconfig.notification.first_launch.title": "Welcome to OneConfig!",
   "oneconfig.notification.first_launch.message": "Press '%s' to open OneConfig and access all your mod settings in one place.",
 

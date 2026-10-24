@@ -76,6 +76,7 @@ import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudRenderer;
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindConflicts;
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry;
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProfiles;
+import org.polyfrost.oneconfig.internal.ui.keybind.ProfileKeybinds;
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProvider;
 import org.polyfrost.oneconfig.internal.ui.navigation.BuiltinPages;
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus;
@@ -334,6 +335,7 @@ public class OneConfig
                         else r.run();
                     });
                     MinecraftKeybindProfiles.init();
+                    ProfileKeybinds.init();
                     ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
                     BuiltinHudRegistrar.register();
                     ModGates.register();
