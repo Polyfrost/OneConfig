@@ -243,11 +243,13 @@ public final class org/polyfrost/compose/mc/McFontQueue {
 	public static final field INSTANCE Lorg/polyfrost/compose/mc/McFontQueue;
 	public final fun getMeasureHeight ()Lkotlin/jvm/functions/Function1;
 	public final fun getMeasureWidth ()Lkotlin/jvm/functions/Function2;
+	public final fun getOutlineRenderer ()Lkotlin/jvm/functions/Function7;
 	public final fun getRenderer ()Lkotlin/jvm/functions/Function7;
 	public final fun measureTextHeight (F)F
 	public final fun measureTextWidth (Ljava/lang/String;F)F
 	public final fun setMeasureHeight (Lkotlin/jvm/functions/Function1;)V
 	public final fun setMeasureWidth (Lkotlin/jvm/functions/Function2;)V
+	public final fun setOutlineRenderer (Lkotlin/jvm/functions/Function7;)V
 	public final fun setRenderer (Lkotlin/jvm/functions/Function7;)V
 }
 
@@ -552,6 +554,7 @@ public final class org/polyfrost/compose/render/RenderContext {
 	public final fun save ()V
 	public final fun scale (FF)Lorg/jetbrains/skia/Canvas;
 	public final fun text (Ljava/lang/String;FFLorg/polyfrost/compose/render/PolyColor;Lorg/jetbrains/skia/Font;)V
+	public final fun textOutline (Ljava/lang/String;FFLorg/polyfrost/compose/render/PolyColor;Lorg/jetbrains/skia/Font;F)V
 	public final fun translate (FF)V
 }
 

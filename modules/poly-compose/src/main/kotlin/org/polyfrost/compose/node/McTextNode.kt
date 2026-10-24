@@ -23,20 +23,11 @@ class McTextNode : PolyNode() {
         // read color.argb at draw time so chroma colours keep cycling every frame
         if (renderer == null) return
         val outline = outlineColor
-        if (outline != null) {
-            val plainText = COLOR_CODE.replace(text, "§r")
-            val outlineArgb = outline.argb
-            for (offX in -1..1) {
-                for (offY in -1..1) {
-                    if (offX == 0 && offY == 0) continue
-                    renderer(ctx.canvas, plainText, x + offX * scale, y + offY * scale, outlineArgb, false, scale)
-                }
-            }
+        val outlineRenderer = McFontQueue.outlineRenderer
+        if (outline != null && outlineRenderer != null) {
+            outlineRenderer(ctx.canvas, text, x, y, color.argb, outline.argb, scale)
+        } else {
+            renderer(ctx.canvas, text, x, y, color.argb, shadow, scale)
         }
-        renderer(ctx.canvas, text, x, y, color.argb, shadow, scale)
-    }
-
-    private companion object {
-        val COLOR_CODE = Regex("(?i)§[0-9a-f]")
     }
 }

@@ -116,12 +116,6 @@ abstract class TextHud(
                 val underlineThick = metrics.underlineThickness ?: (fontSize * 0.06f)
                 val shadowCol = if (showShadow) PolyColor(shadowColor, shadowChroma, shadowChromaSpeed) else null
                 val outline = textScale
-                val shadowOffsets =
-                    if (fullShadow) listOf(
-                        -outline to -outline, 0f to -outline, outline to -outline,
-                        -outline to 0f, outline to 0f,
-                        -outline to outline, 0f to outline, outline to outline,
-                    ) else listOf(shadowOffsetX to shadowOffsetY)
 
                 PolyCanvas(
                     modifier = PolyModifier.size(blockW, blockH)
@@ -130,19 +124,29 @@ abstract class TextHud(
                         if (lineText.isEmpty()) return@forEachIndexed
                         val baseline = y + index * lineHeight - metrics.ascent
                         val lineW = skiaFont.measureTextWidth(lineText)
-                        if (shadowCol != null) {
-                            for ((offX, offY) in shadowOffsets) {
-                                text(lineText, x + offX, baseline + offY, shadowCol, skiaFont)
-                                if (textUnderline) {
-                                    line(
-                                        x + offX,
-                                        baseline + offY + underlinePos,
-                                        x + offX + lineW,
-                                        baseline + offY + underlinePos,
-                                        shadowCol,
-                                        underlineThick
-                                    )
-                                }
+                        if (shadowCol != null && fullShadow) {
+                            textOutline(lineText, x, baseline, shadowCol, skiaFont, outline)
+                            if (textUnderline) {
+                                line(
+                                    x - outline,
+                                    baseline + underlinePos,
+                                    x + lineW + outline,
+                                    baseline + underlinePos,
+                                    shadowCol,
+                                    underlineThick + outline * 2f
+                                )
+                            }
+                        } else if (shadowCol != null) {
+                            text(lineText, x + shadowOffsetX, baseline + shadowOffsetY, shadowCol, skiaFont)
+                            if (textUnderline) {
+                                line(
+                                    x + shadowOffsetX,
+                                    baseline + shadowOffsetY + underlinePos,
+                                    x + shadowOffsetX + lineW,
+                                    baseline + shadowOffsetY + underlinePos,
+                                    shadowCol,
+                                    underlineThick
+                                )
                             }
                         }
                         text(lineText, x, baseline, fgColor, skiaFont)
