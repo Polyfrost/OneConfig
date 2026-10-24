@@ -369,6 +369,7 @@ class RadioButtonOptionData(prop: Property<*>) : OptionData(prop) {
 
 class ColorOptionData(prop: Property<*>) : OptionData(prop) {
     val alpha = prop.getMetadata<Any>("noAlpha") == null
+    val gradient = prop.getMetadata<Any>("gradient") != null
 }
 
 class KeybindOptionData(prop: Property<*>) : OptionData(prop)

@@ -13,7 +13,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -34,11 +36,24 @@ private var _accent by mutableStateOf(Color(ThemeConfig.accentColor.argb))
 
 private var _chroma by mutableStateOf(ThemeConfig.accentColor.chroma)
 
+private var _accentEnd by mutableStateOf<Color?>(null)
+
 val Accent: Color get() = _accent
 
+val AccentEnd: Color get() = _accentEnd ?: _accent
+
+val AccentGradient: Boolean get() = _accentEnd != null
+
+val AccentBrush: Brush get() = accentHorizontalBrush()
+
+fun accentHorizontalBrush(startX: Float = 0f, endX: Float = Float.POSITIVE_INFINITY): Brush =
+    _accentEnd?.let { Brush.horizontalGradient(listOf(_accent, it), startX, endX) } ?: SolidColor(_accent)
+
 fun updateAccent() {
-    _accent = Color(ThemeConfig.accentColor.argb)
-    _chroma = ThemeConfig.accentColor.chroma
+    val accentColor = ThemeConfig.accentColor
+    _accent = Color(accentColor.argb)
+    _chroma = accentColor.chroma
+    _accentEnd = if (accentColor.gradientEnabled && !accentColor.chroma) Color(accentColor.gradientArgb) else null
 }
 
 val LocalTheme = compositionLocalOf<UITheme> { error("A UI theme is required but was not provided") }

@@ -228,6 +228,7 @@ public class OneConfigCollector extends ReflectiveCollector {
             case RangeNumberList ignored -> validateRangeListField(field, property, "@RangeNumberList");
             case Color color -> {
                 if (!color.alpha()) property.addMetadata("noAlpha", Unit.INSTANCE);
+                if (color.gradient()) property.addMetadata("gradient", Unit.INSTANCE);
             }
             case ColorList color -> {
                 if (!color.alpha()) property.addMetadata("noAlpha", Unit.INSTANCE);

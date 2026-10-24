@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.ui.components
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -67,7 +68,7 @@ import org.polyfrost.oneconfig.internal.ui.navigation.searchPlaceholder
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShellNavController
 import org.polyfrost.oneconfig.internal.ui.shell.SearchFocus
-import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -201,7 +202,7 @@ private fun OpenOriginalScreenButton(runnable: Runnable) {
     val theme = LocalTheme.current
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
-    val bgColor by animateColorAsState(if (isHovered) Accent.copy(alpha = 0.75f) else Accent)
+    val accentAlpha by animateFloatAsState(if (isHovered) 0.75f else 1f)
 
     Tooltip(
         text = {
@@ -217,7 +218,7 @@ private fun OpenOriginalScreenButton(runnable: Runnable) {
         Box(
             modifier = Modifier
                 .pointerHoverIcon(PointerIcon.Hand)
-                .background(bgColor, theme.buttonShape)
+                .background(AccentBrush, theme.buttonShape, accentAlpha)
                 .onClick(interactionSource) { runnable.run() }
                 .border(1.dp, LocalTheme.current.borderColor, LocalTheme.current.buttonShape)
                 .padding(horizontal = 16.dp, vertical = 6.dp),

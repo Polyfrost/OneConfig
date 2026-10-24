@@ -42,7 +42,7 @@ import org.polyfrost.oneconfig.internal.ui.api.settings.RangeOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
-import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 /**
@@ -252,7 +252,7 @@ internal fun RangeSliderTrack(
                 )
                 .height(trackHeight)
                 .clip(theme.checkBoxShape)
-                .background(Accent)
+                .background(AccentBrush)
         )
         listOf(startFraction to false, endFraction to true).forEach { (fraction, pointsLeft) ->
             TriangleThumb(

@@ -389,6 +389,8 @@ public final class org/polyfrost/compose/render/PolyColor {
 	public final fun getBlueF ()F
 	public final fun getChroma ()Z
 	public final fun getChromaSpeed ()F
+	public final fun getGradientArgb ()I
+	public final fun getGradientEnabled ()Z
 	public final fun getGreen ()I
 	public final fun getGreenF ()F
 	public final fun getRawArgb ()I
@@ -402,6 +404,8 @@ public final class org/polyfrost/compose/render/PolyColor {
 	public final fun setArgb (I)V
 	public final fun setChroma (Z)V
 	public final fun setChromaSpeed (F)V
+	public final fun setGradientArgb (I)V
+	public final fun setGradientEnabled (Z)V
 	public final fun toSkiaColor ()I
 	public fun toString ()Ljava/lang/String;
 	public final fun withAlpha (F)Lorg/polyfrost/compose/render/PolyColor;
@@ -410,6 +414,9 @@ public final class org/polyfrost/compose/render/PolyColor {
 	public final fun withChroma (Z)Lorg/polyfrost/compose/render/PolyColor;
 	public final fun withChroma (ZF)Lorg/polyfrost/compose/render/PolyColor;
 	public static synthetic fun withChroma$default (Lorg/polyfrost/compose/render/PolyColor;ZFILjava/lang/Object;)Lorg/polyfrost/compose/render/PolyColor;
+	public final fun withGradient (Z)Lorg/polyfrost/compose/render/PolyColor;
+	public final fun withGradient (ZI)Lorg/polyfrost/compose/render/PolyColor;
+	public static synthetic fun withGradient$default (Lorg/polyfrost/compose/render/PolyColor;ZIILjava/lang/Object;)Lorg/polyfrost/compose/render/PolyColor;
 	public final fun withGreen (I)Lorg/polyfrost/compose/render/PolyColor;
 	public final fun withRed (I)Lorg/polyfrost/compose/render/PolyColor;
 }
