@@ -82,7 +82,7 @@
   "oneconfig.preferences.show_opening_page_animation.description": "Plays the page animation when the menu is first opened.",
 
   "oneconfig.preferences.instant_search.title": "Instant Search",
-  "oneconfig.preferences.instant_search.description": "Focuses the search bar when the OneConfig menu opens.",
+  "oneconfig.preferences.instant_search.description": "Focuses the search bar when the OneConfig menu opens or you change pages.",
 
   "oneconfig.preferences.search_keybind.title": "Search Keybind",
   "oneconfig.preferences.search_keybind.description": "Focuses the search bar in the OneConfig menu and HUD editor.",

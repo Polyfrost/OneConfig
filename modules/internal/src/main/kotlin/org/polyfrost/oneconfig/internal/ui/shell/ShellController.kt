@@ -344,6 +344,7 @@ class ShellNavigation internal constructor(
         seedRouteCategory(route)
         updateArrows()
         search.bind(host.currentBackStackEntry?.id, query)
+        if (clearSearch) instantSearch()
     }
 
     fun discard(route: Any, fallback: Any) {
@@ -409,6 +410,7 @@ class ShellNavigation internal constructor(
         applyCategory(currentEntry)
         search.bind(host.currentBackStackEntry?.id, currentEntry.searchQuery)
         lastRoute = currentEntry.route
+        instantSearch()
         updateArrows()
     }
 
@@ -430,6 +432,11 @@ class ShellNavigation internal constructor(
         updateArrows()
         host.navigate(next.route)
         search.bind(host.currentBackStackEntry?.id, next.searchQuery)
+        instantSearch()
+    }
+
+    private fun instantSearch() {
+        if (OneConfigConfig.instantSearch) search.requestFocus(SearchFocus.SelectAll)
     }
 
     /** A route that names a category such as an external deep link overrides the remembered tab */

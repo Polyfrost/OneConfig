@@ -258,7 +258,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
     }
 
     private fun warmRoute(route: Any) {
-        runCatching { if (shell.navigation.isReady) shell.navigation.navigate(route) }
+        runCatching { if (shell.navigation.isReady) shell.navigation.navigate(route, clearSearch = false) }
     }
 
     private fun markClosed() {
