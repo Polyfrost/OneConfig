@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -20,6 +21,7 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -34,8 +36,9 @@ fun Chip(
     val theme = LocalTheme.current
     val hoverBackground = Accent.copy(alpha = 0.5f).compositeOver(theme.chipBackground)
     val backgroundColor by animateColorAsState(
-        if (selected) Accent else if (isHovered) hoverBackground else theme.chipBackground
+        if (isHovered) hoverBackground else theme.chipBackground
     )
+    val selectedAlpha by animateFloatAsState(if (selected) 1f else 0f)
     val textColor by animateColorAsState(
         if (selected) LocalTheme.current.accentTextColor else LocalTheme.current.textColor
     )
@@ -44,6 +47,7 @@ fun Chip(
         modifier = Modifier
             .defaultMinSize(minHeight = 33.dp)
             .background(backgroundColor, LocalTheme.current.sideBarNavigationEntryShape)
+            .background(AccentBrush, LocalTheme.current.sideBarNavigationEntryShape, selectedAlpha)
             .border(1.dp, LocalTheme.current.borderColor, LocalTheme.current.sideBarNavigationEntryShape)
             .pointerHoverIcon(PointerIcon.Hand)
             .onClick(interactionSource) { onClick() },

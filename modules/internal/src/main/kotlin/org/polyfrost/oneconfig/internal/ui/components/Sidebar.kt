@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -40,6 +41,7 @@ import org.polyfrost.oneconfig.internal.ui.navigation.sidebarSections
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShellNavController
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.withOpacityPercent
 
@@ -165,10 +167,7 @@ private fun NavigationEntry(icon: String, title: String, route: Any? = null, isS
 
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val backgroundColor by animateColorAsState(
-        if (isSelected) Accent
-        else Accent.copy(0f)
-    )
+    val selectedAlpha by animateFloatAsState(if (isSelected) 1f else 0f)
     val textAndIconColor by animateColorAsState(
         if (isSelected) LocalTheme.current.accentTextColor
         else if (isHovered) LocalTheme.current.textColor
@@ -181,7 +180,7 @@ private fun NavigationEntry(icon: String, title: String, route: Any? = null, isS
 
     Row(
         modifier = Modifier.size(225.dp, 33.dp)
-            .background(backgroundColor, LocalTheme.current.sideBarNavigationEntryShape)
+            .background(AccentBrush, LocalTheme.current.sideBarNavigationEntryShape, selectedAlpha)
             .border(1.dp, borderColor, LocalTheme.current.sideBarNavigationEntryShape)
             .onClick(interactionSource) { onSelect(route) }
             .pointerHoverIcon(PointerIcon.Hand),

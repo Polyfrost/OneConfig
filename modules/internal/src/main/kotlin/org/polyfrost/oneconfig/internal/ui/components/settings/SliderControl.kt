@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
-import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 /**
@@ -105,7 +105,7 @@ fun SliderControl(
                 .fillMaxWidth(fraction).height(trackHeight)
                 .align(Alignment.CenterStart)
                 .clip(theme.checkBoxShape)
-                .background(Accent)
+                .background(AccentBrush)
         )
         Box(
             Modifier

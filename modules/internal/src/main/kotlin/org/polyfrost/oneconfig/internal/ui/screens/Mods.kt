@@ -104,6 +104,7 @@ import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.shell.ShellNavigation
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyGridState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.accentHorizontalBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 enum class ModCategory(
@@ -612,7 +613,7 @@ fun ModCard(
             ) {
                 Box(Modifier.size(ModCardToggleRing), contentAlignment = Alignment.Center) {
                     val ring = if (toggle != null) lerp(Accent, ModCardToggleRingShade, 0.42f) else ModCardToggleUnavailable.copy(alpha = 0.5f)
-                    val dot = if (toggle != null) Accent else ModCardToggleUnavailable
+                    val dot = ModCardToggleUnavailable
                     // drawn around one centre, since laying the dot out inside the ring lands it on a pixel boundary off-centre
                     Box(
                         Modifier.fillMaxSize().drawWithCache {
@@ -628,7 +629,12 @@ fun ModCard(
                             onDrawBehind {
                                 if (toggle != null) drawCircle(glow, radius = glowRadius)
                                 drawCircle(ring)
-                                drawCircle(dot, radius = ModCardToggleDot.toPx() / 2f)
+                                val dotRadius = ModCardToggleDot.toPx() / 2f
+                                if (toggle != null) {
+                                    drawCircle(accentHorizontalBrush(center.x - dotRadius, center.x + dotRadius), radius = dotRadius)
+                                } else {
+                                    drawCircle(dot, radius = dotRadius)
+                                }
                             }
                         }
                     )

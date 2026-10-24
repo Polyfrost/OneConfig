@@ -458,6 +458,7 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun description ()Ljava/lang/String;
 	public abstract fun descriptionKey ()Ljava/lang/String;
 	public abstract fun descriptionTranslation ()Z
+	public abstract fun gradient ()Z
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun subcategory ()Ljava/lang/String;
 	public abstract fun subcategoryKey ()Ljava/lang/String;
