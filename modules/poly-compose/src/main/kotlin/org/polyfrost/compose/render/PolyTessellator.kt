@@ -1,5 +1,8 @@
 package org.polyfrost.compose.render
 
+import kotlin.math.acos
+import kotlin.math.atan2
+import kotlin.math.tan
 import org.polyfrost.compose.ui.graphics.ImageBitmap
 import org.polyfrost.compose.ui.graphics.Brush
 import org.polyfrost.compose.ui.graphics.FilterQuality
@@ -627,17 +630,17 @@ abstract class PolyTessellator : PolyRenderer {
                 val ux = ax / la; val uy = ay / la
                 val vx = bx / lb; val vy = by / lb
                 val cosT = (ux * vx + uy * vy).coerceIn(-1f, 1f)
-                val theta = kotlin.math.acos(cosT)
+                val theta = acos(cosT)
                 if (theta < 1e-4f || theta > Math.PI.toFloat() - 1e-4f) { add(x1, y1); return }
-                val dist = radius / kotlin.math.tan(theta / 2f)
+                val dist = radius / tan(theta / 2f)
                 val t0x = x1 + ux * dist; val t0y = y1 + uy * dist
                 val t1x = x1 + vx * dist; val t1y = y1 + vy * dist
                 val bisx = ux + vx; val bisy = uy + vy
                 val bl = hypot(bisx, bisy)
                 val cd = radius / sin(theta / 2f)
                 val ccx = x1 + bisx / bl * cd; val ccy = y1 + bisy / bl * cd
-                val a0 = kotlin.math.atan2(t0y - ccy, t0x - ccx)
-                var a1 = kotlin.math.atan2(t1y - ccy, t1x - ccx)
+                val a0 = atan2(t0y - ccy, t0x - ccx)
+                var a1 = atan2(t1y - ccy, t1x - ccx)
                 var sweep = a1 - a0
                 while (sweep > Math.PI) sweep -= (2 * Math.PI).toFloat()
                 while (sweep < -Math.PI) sweep += (2 * Math.PI).toFloat()

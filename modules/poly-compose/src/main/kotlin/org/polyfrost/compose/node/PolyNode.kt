@@ -1,6 +1,7 @@
 package org.polyfrost.compose.node
 
 import org.polyfrost.compose.layout.PolyLayoutStyle
+import org.polyfrost.compose.render.PolyFade
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.ui.draw.ContentDrawScope
 import kotlin.math.abs
@@ -78,7 +79,7 @@ open class PolyNode {
         }
         if (fade != null) {
             val o = if (fade.vertical) y else x
-            ctx.saveLayerFade(org.polyfrost.compose.render.PolyFade(fade.vertical, FloatArray(fade.stops.size) { fade.stops[it] + o }, fade.alphas))
+            ctx.saveLayerFade(PolyFade(fade.vertical, FloatArray(fade.stops.size) { fade.stops[it] + o }, fade.alphas))
         }
         draw(ctx)
         if (fade != null) ctx.restore()

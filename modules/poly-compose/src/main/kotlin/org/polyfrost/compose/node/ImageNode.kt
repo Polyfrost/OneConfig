@@ -1,5 +1,6 @@
 package org.polyfrost.compose.node
 
+import androidx.compose.runtime.State
 import org.polyfrost.compose.ui.graphics.FilterQuality
 import org.polyfrost.compose.ui.graphics.ImageBitmap
 import org.polyfrost.compose.layout.PolySize
@@ -14,7 +15,7 @@ class ImageNode(
 
     var tint: PolyColor? = null
     var filterQuality = FilterQuality.Low
-    var animatedTint: androidx.compose.runtime.State<PolyColor>? = null
+    var animatedTint: State<PolyColor>? = null
 
     override fun animating() = super.animating() || animatedTint.let { it != null && it.value != tint }
 

@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.poly
 
+import kotlin.math.abs
+import kotlin.math.sqrt
 import org.polyfrost.oneconfig.internal.ui.screens.*
 import org.polyfrost.oneconfig.internal.ui.components.settings.*
 import androidx.compose.runtime.Composable
@@ -364,8 +366,8 @@ fun FadingEdges(scroll: ScrollState, color: PolyColor, modifier: Modifier = Modi
         last[0] = now
         for ((i, target) in floatArrayOf(if (scroll.value > 0.5f) 1f else 0f, if (scroll.value < scroll.maxValue - 0.5f) 1f else 0f).withIndex()) {
             if (dt < 0f) { anim[i * 2] = target; continue }
-            val v = springStep(anim[i * 2] - target, anim[i * 2 + 1], kotlin.math.sqrt(1500f), dt)
-            val settled = kotlin.math.abs(v[0]) < 0.01f && kotlin.math.abs(v[1]) < 0.01f
+            val v = springStep(anim[i * 2] - target, anim[i * 2 + 1], sqrt(1500f), dt)
+            val settled = abs(v[0]) < 0.01f && abs(v[1]) < 0.01f
             anim[i * 2] = if (settled) target else target + v[0]
             anim[i * 2 + 1] = if (settled) 0f else v[1]
         }

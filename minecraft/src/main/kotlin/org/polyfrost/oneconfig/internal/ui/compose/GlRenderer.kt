@@ -261,7 +261,7 @@ internal object GlTextures {
 
     private val bitmaps = IdentityHashMap<ImageBitmap, Tex>()
     private val external = HashMap<Int, Tex>()
-    private val pages = java.util.IdentityHashMap<PolyGlyphPage.Page, IntArray>()
+    private val pages = IdentityHashMap<PolyGlyphPage.Page, IntArray>()
     private var frame = 0L
 
     fun bitmap(bitmap: ImageBitmap): Tex = bitmaps.getOrPut(bitmap) { Tex(bitmap, 0, frame) }.also { it.lastUsed = frame }

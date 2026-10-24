@@ -1,6 +1,7 @@
 package org.polyfrost.compose.ui.unit
 
 import kotlin.math.roundToInt
+import org.polyfrost.compose.ui.geometry.Size
 
 open class Density(val density: Float, val fontScale: Float = 1f) {
     fun Dp.toPx() = value * density
@@ -8,5 +9,5 @@ open class Density(val density: Float, val fontScale: Float = 1f) {
     fun TextUnit.toPx() = value * density * fontScale
     fun Int.toDp() = Dp(this / density)
     fun Float.toDp() = Dp(this / density)
-    fun DpSize.toSize() = org.polyfrost.compose.ui.geometry.Size(width.toPx(), height.toPx())
+    fun DpSize.toSize() = Size(width.toPx(), height.toPx())
 }

@@ -1,20 +1,33 @@
 package org.polyfrost.oneconfig.api.notifications.v1
 
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import kotlin.math.abs
+import kotlin.math.hypot
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.polyfrost.compose.foundation.ScrollState
 import org.polyfrost.compose.foundation.background
 import org.polyfrost.compose.foundation.layout.offsetX
 import org.polyfrost.compose.foundation.layout.size
 import org.polyfrost.compose.foundation.verticalScroll
+import org.polyfrost.compose.layout.LayoutType
+import org.polyfrost.compose.layout.PolyLayoutEngine
+import org.polyfrost.compose.node.PolyNode
 import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.render.PolyFade
+import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.PolyGlyphPage
 import org.polyfrost.compose.render.PolyRenderer
 import org.polyfrost.compose.render.PolyTessellator
+import org.polyfrost.compose.render.RenderContext
+import org.polyfrost.compose.ui.Modifier
 import org.polyfrost.compose.ui.draw.alpha
 import org.polyfrost.compose.ui.draw.drawWithContent
 import org.polyfrost.compose.ui.draw.dropShadow
 import org.polyfrost.compose.ui.graphics.Brush
+import org.polyfrost.compose.ui.graphics.FilterQuality
 import org.polyfrost.compose.ui.graphics.ImageBitmap
 import org.polyfrost.compose.ui.graphics.RectangleShape
 import org.polyfrost.compose.ui.graphics.shadow.Shadow
@@ -61,32 +74,32 @@ class PolyTessellatorTest {
 
     @Test
     fun scrollSkipsChildrenOutsideViewport() {
-        val scroll = org.polyfrost.compose.foundation.ScrollState()
-        val list = org.polyfrost.compose.node.PolyNode()
-        list.style.layoutType = org.polyfrost.compose.layout.LayoutType.Column
-        org.polyfrost.compose.ui.Modifier.size(100.dp, 100.dp).verticalScroll(scroll).applyTo(list.style)
+        val scroll = ScrollState()
+        val list = PolyNode()
+        list.style.layoutType = LayoutType.Column
+        Modifier.size(100.dp, 100.dp).verticalScroll(scroll).applyTo(list.style)
         repeat(4) { i ->
-            val item = org.polyfrost.compose.node.PolyNode()
-            var m = org.polyfrost.compose.ui.Modifier.size(100.dp, 100.dp).background(PolyColor(-1))
+            val item = PolyNode()
+            var m = Modifier.size(100.dp, 100.dp).background(PolyColor(-1))
             if (i == 2) m = m.dropShadow(RectangleShape, Shadow(radius = 8.dp, color = PolyColor(0x80000000.toInt()), offset = DpOffset(0.dp, 4.dp)))
             m.applyTo(item.style)
             item.parent = list
             list.children += item
         }
-        org.polyfrost.compose.layout.PolyLayoutEngine.layout(list, 100f, 100f)
+        PolyLayoutEngine.layout(list, 100f, 100f)
         scroll.scrollTo(100f)
-        org.polyfrost.compose.layout.PolyLayoutEngine.layout(list, 100f, 100f)
-        val r = Recorder().also { list.render(org.polyfrost.compose.render.RenderContext(it)) }
+        PolyLayoutEngine.layout(list, 100f, 100f)
+        val r = Recorder().also { list.render(RenderContext(it)) }
         assertEquals(listOf(0f, 100f), r.rectYs)
     }
 
     @Test
     fun animatedAlphaDrawsLiveOnlyInFlight() {
-        val alpha = androidx.compose.runtime.mutableFloatStateOf(0.3f)
-        val node = org.polyfrost.compose.node.PolyNode()
-        org.polyfrost.compose.ui.Modifier.background(PolyColor(-1)).alpha(alpha, 0.6f).applyTo(node.style)
+        val alpha = mutableFloatStateOf(0.3f)
+        val node = PolyNode()
+        Modifier.background(PolyColor(-1)).alpha(alpha, 0.6f).applyTo(node.style)
         node.width = 10f; node.height = 10f
-        fun draw() = Recorder().also { node.renderFaded(org.polyfrost.compose.render.RenderContext(it)) }
+        fun draw() = Recorder().also { node.renderFaded(RenderContext(it)) }
         val flying = draw()
         assertEquals(1, flying.lives)
         assertTrue(flying.done().first().colors[0] ushr 24 < 128)
@@ -98,11 +111,11 @@ class PolyTessellatorTest {
 
     @Test
     fun animatedOffsetDrawsLiveOnlyInFlight() {
-        val x = androidx.compose.runtime.mutableFloatStateOf(3f)
-        val node = org.polyfrost.compose.node.PolyNode()
-        org.polyfrost.compose.ui.Modifier.background(PolyColor(-1)).offsetX(x, 24f).applyTo(node.style)
+        val x = mutableFloatStateOf(3f)
+        val node = PolyNode()
+        Modifier.background(PolyColor(-1)).offsetX(x, 24f).applyTo(node.style)
         node.x = 24f; node.width = 10f; node.height = 10f
-        fun draw() = Recorder().also { node.renderFaded(org.polyfrost.compose.render.RenderContext(it)) }
+        fun draw() = Recorder().also { node.renderFaded(RenderContext(it)) }
         fun Batch.minX() = (0 until colors.size).minOf { verts[it * 4] }
         val flying = draw()
         assertEquals(1, flying.lives)
@@ -116,12 +129,12 @@ class PolyTessellatorTest {
     @Test
     fun animatedBackgroundDrawsLiveOnlyInFlight() {
         val target = PolyColor(0xFF0000FF.toInt())
-        val color = androidx.compose.runtime.mutableStateOf(PolyColor(0xFFFF0000.toInt()))
-        val node = org.polyfrost.compose.node.PolyNode()
+        val color = mutableStateOf(PolyColor(0xFFFF0000.toInt()))
+        val node = PolyNode()
         node.style.background = target
         node.style.animatedBackground = color
         node.width = 10f; node.height = 10f
-        fun draw() = Recorder().also { node.renderFaded(org.polyfrost.compose.render.RenderContext(it)) }
+        fun draw() = Recorder().also { node.renderFaded(RenderContext(it)) }
         val flying = draw()
         assertEquals(1, flying.lives)
         assertEquals(0xFFFF0000.toInt(), flying.done().first().colors[0])
@@ -189,7 +202,7 @@ class PolyTessellatorTest {
         assertTrue(corner.colors.size > draw(0f, 0f, 0f, 20f, 20f).colors.size, "corner rect not cut")
         for (i in corner.colors.indices) {
             val dx = 20f - corner.verts[i * 4]; val dy = 20f - corner.verts[i * 4 + 1]
-            if (dx > 0f && dy > 0f && corner.colors[i] ushr 24 != 0) assertTrue(kotlin.math.hypot(dx, dy) <= 20.6f, "vertex past the corner")
+            if (dx > 0f && dy > 0f && corner.colors[i] ushr 24 != 0) assertTrue(hypot(dx, dy) <= 20.6f, "vertex past the corner")
         }
     }
 
@@ -226,7 +239,7 @@ class PolyTessellatorTest {
             val x = b.verts[i * 4]; val y = b.verts[i * 4 + 1]
             assertTrue(x in 4.4f..10.6f && y in 4.4f..10.6f, "vertex ($x, $y) outside the intersection")
             val dx = x - 6f; val dy = y - 6f
-            if (dx > 0f && dy > 0f && b.colors[i] ushr 24 != 0) assertTrue(kotlin.math.hypot(dx, dy) <= 4.6f, "($x, $y) past the outer corner")
+            if (dx > 0f && dy > 0f && b.colors[i] ushr 24 != 0) assertTrue(hypot(dx, dy) <= 4.6f, "($x, $y) past the outer corner")
         }
     }
 
@@ -234,7 +247,7 @@ class PolyTessellatorTest {
     fun fadeMaskCutsAndFades() {
         val r = Recorder()
         r.translate(0f, 10f)
-        r.saveLayerFade(org.polyfrost.compose.render.PolyFade(true, floatArrayOf(5f, 15f), floatArrayOf(1f, 0f)))
+        r.saveLayerFade(PolyFade(true, floatArrayOf(5f, 15f), floatArrayOf(1f, 0f)))
         r.rect(0f, 0f, 10f, 20f, -1, 0f)
         r.rect(0f, 0f, 10f, 4f, -1, 0f)
         r.restore()
@@ -264,7 +277,7 @@ class PolyTessellatorTest {
         try {
             val text = String(IntArray(300) { 0x4E00 + it }, 0, 300)
             val r = Recorder()
-            r.text(text, 0f, 64f, -1, org.polyfrost.compose.render.PolyFont("cjk", 16f))
+            r.text(text, 0f, 64f, -1, PolyFont("cjk", 16f))
             val batches = r.done()
             assertEquals(300, batches.sumOf { it.colors.size / 4 })
             val pages = batches.map { it.texture }.distinct()
@@ -370,7 +383,7 @@ class PolyTessellatorTest {
             val i = IntArray(3) { q * 4 + tri[it] }
             val x = FloatArray(3) { b.verts[i[it] * 4] }; val y = FloatArray(3) { b.verts[i[it] * 4 + 1] }
             val d = (y[1] - y[2]) * (x[0] - x[2]) + (x[2] - x[1]) * (y[0] - y[2])
-            if (kotlin.math.abs(d) < 1e-6f) continue
+            if (abs(d) < 1e-6f) continue
             val l0 = ((y[1] - y[2]) * (px - x[2]) + (x[2] - x[1]) * (py - y[2])) / d
             val l1 = ((y[2] - y[0]) * (px - x[2]) + (x[0] - x[2]) * (py - y[2])) / d
             val l2 = 1f - l0 - l1
@@ -426,7 +439,7 @@ class PolyTessellatorTest {
     fun nearestImagesBatchApart() {
         val bmp = ImageBitmap(4, 4, ByteArray(64) { -1 })
         val b = Recorder().run {
-            image(bmp, 0f, 0f, 8f, 8f, org.polyfrost.compose.ui.graphics.FilterQuality.None)
+            image(bmp, 0f, 0f, 8f, 8f, FilterQuality.None)
             image(bmp, 8f, 0f, 8f, 8f)
             done()
         }
@@ -436,15 +449,15 @@ class PolyTessellatorTest {
 
     @Test
     fun drawWithContentDrawsOverChildren() {
-        val node = org.polyfrost.compose.node.PolyNode()
-        org.polyfrost.compose.ui.Modifier.drawWithContent { drawContent(); ctx.rect(x, y, width, 1f, PolyColor(0xFF0000FF.toInt())) }.applyTo(node.style)
+        val node = PolyNode()
+        Modifier.drawWithContent { drawContent(); ctx.rect(x, y, width, 1f, PolyColor(0xFF0000FF.toInt())) }.applyTo(node.style)
         node.width = 10f; node.height = 10f
-        val child = org.polyfrost.compose.node.PolyNode()
-        org.polyfrost.compose.ui.Modifier.background(PolyColor(0xFFFF0000.toInt())).applyTo(child.style)
+        val child = PolyNode()
+        Modifier.background(PolyColor(0xFFFF0000.toInt())).applyTo(child.style)
         child.width = 10f; child.height = 10f
         child.parent = node
         node.children += child
-        val b = Recorder().also { node.renderFaded(org.polyfrost.compose.render.RenderContext(it)) }.done().single()
+        val b = Recorder().also { node.renderFaded(RenderContext(it)) }.done().single()
         assertEquals(0xFFFF0000.toInt(), b.colors.first())
         assertEquals(0xFF0000FF.toInt(), b.colors.last { it ushr 24 == 0xFF })
     }

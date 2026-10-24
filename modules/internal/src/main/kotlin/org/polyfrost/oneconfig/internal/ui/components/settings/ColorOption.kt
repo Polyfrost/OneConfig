@@ -8,6 +8,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
+import kotlin.math.atan2
+import kotlin.math.hypot
 import org.polyfrost.compose.animation.animateColorAsState
 import org.polyfrost.compose.foundation.Canvas
 import org.polyfrost.compose.foundation.Image
@@ -84,8 +86,8 @@ private val HueDisc: ImageBitmap by lazy {
     for (y in 0 until n) for (x in 0 until n) {
         val dx = x + 0.5f - c
         val dy = y + 0.5f - c
-        val cover = (c - kotlin.math.hypot(dx, dy) + 0.5f).coerceIn(0f, 1f)
-        val deg = (Math.toDegrees(kotlin.math.atan2(dy, dx).toDouble()).toFloat() + 360f) % 360f
+        val cover = (c - hypot(dx, dy) + 0.5f).coerceIn(0f, 1f)
+        val deg = (Math.toDegrees(atan2(dy, dx).toDouble()).toFloat() + 360f) % 360f
         val rgb = hsbToColor(deg, 1f, 1f).toArgb()
         val o = (y * n + x) * 4
         px[o] = (rgb shr 16).toByte(); px[o + 1] = (rgb shr 8).toByte(); px[o + 2] = rgb.toByte()

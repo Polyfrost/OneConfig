@@ -1,6 +1,21 @@
 package org.polyfrost.oneconfig.internal.ui.poly
 
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.api.hud.v1.HudManager
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
+import org.polyfrost.oneconfig.api.ui.v1.keybind.TextInputFocus
+import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ui.PlayerHeadLoader
+import org.polyfrost.oneconfig.internal.ui.UiConfigSave
+import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
+import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
+import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.internal.ui.hud.screens.*
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
+import org.polyfrost.oneconfig.internal.ui.navigation.resolveOpenTarget
 import org.polyfrost.oneconfig.internal.ui.screens.*
 import org.polyfrost.oneconfig.internal.ui.shell.*
 import androidx.compose.runtime.Composable
@@ -23,7 +38,10 @@ import org.polyfrost.compose.runtime.PolyComposeHost
 import org.polyfrost.compose.ui.platform.LocalDensity
 import org.polyfrost.compose.ui.unit.Density
 import org.polyfrost.oneconfig.internal.ui.screens.LocalUiClipboard
+import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
+import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Theme
+import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
 import org.polyfrost.compose.runtime.PolyComposeRuntime
 import org.polyfrost.compose.ui.Modifier
 import org.polyfrost.compose.ui.draw.alpha
@@ -41,6 +59,8 @@ import net.minecraft.client.input.CharacterEvent
 import net.minecraft.client.input.KeyEvent
 import net.minecraft.client.input.MouseButtonEvent
 //?}
+//? if >= 26.1
+import net.minecraft.client.input.PreeditEvent
 //? if >= 1.21.9 {
 import com.mojang.blaze3d.platform.cursor.CursorTypes
 import org.polyfrost.compose.ui.input.pointer.PointerIcon
@@ -99,8 +119,8 @@ open class PolyScreen(title: String, private val content: @Composable PolyScreen
 
     private fun oneConfigKeybind(key: Int = -1, button: Int = -1): Boolean {
         if (KeybindRecordingBus.isRecording) return false
-        val bind = org.polyfrost.oneconfig.internal.OneConfigConfig.oneConfigKeybind
-        val hit = if (button >= 3) org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager.isTriggeredByMouse(bind, button)
+        val bind = OneConfigConfig.oneConfigKeybind
+        val hit = if (button >= 3) KeybindManager.isTriggeredByMouse(bind, button)
         else key >= 0 && key == bind.keyCodes?.firstOrNull()
         return hit && onOneConfigKeybind()
     }
@@ -173,7 +193,7 @@ open class PolyScreen(title: String, private val content: @Composable PolyScreen
             redraw = true
             input.refresh()
         }
-        if (org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog.renderIcons()) redraw = true
+        if (ItemCatalog.renderIcons()) redraw = true
         val dirty = redraw || input.changed
         redraw = false
         input.changed = false
@@ -280,7 +300,7 @@ open class PolyScreen(title: String, private val content: @Composable PolyScreen
     }
 
     //? >= 26.1 {
-    override fun preeditUpdated(event: net.minecraft.client.input.PreeditEvent?): Boolean =
+    override fun preeditUpdated(event: PreeditEvent?): Boolean =
         input.preedit(event?.fullText() ?: "", event?.caretPosition() ?: 0) || super.preeditUpdated(event)
     //?}
     //?} elif > 1.8.9 {
@@ -355,8 +375,8 @@ open class PolyScreen(title: String, private val content: @Composable PolyScreen
     companion object {
         init {
             TextFieldState.focusListener = { field, focused ->
-                if (focused) org.polyfrost.oneconfig.api.ui.v1.keybind.TextInputFocus.acquire(field)
-                else org.polyfrost.oneconfig.api.ui.v1.keybind.TextInputFocus.release(field)
+                if (focused) TextInputFocus.acquire(field)
+                else TextInputFocus.release(field)
             }
             //? if >= 1.21.9 || = 1.8.9 {
             UiKeyEvent.SHIFT = InputConstants.MOD_SHIFT
@@ -433,7 +453,7 @@ object KeybindsScreen {
     @JvmStatic
     fun open(): Screen {
         return object : PolyScreen("Keybinds", { KeybindsWindow { Platform.screen().close() } }) {
-            override fun onRemoved() = org.polyfrost.oneconfig.internal.ui.UiConfigSave.schedule()
+            override fun onRemoved() = UiConfigSave.schedule()
         }
     }
 }
@@ -441,9 +461,9 @@ object KeybindsScreen {
 object ShellScreen {
     @JvmStatic
     fun openLastSession() {
-        val restore = org.polyfrost.oneconfig.internal.OneConfigConfig.remembersPageClosedAt(ShellState.lastClosedAt)
-        if (restore && ShellState.lastWasHudEditor && org.polyfrost.oneconfig.internal.OneConfigConfig.restoreHudEditor) {
-            return org.polyfrost.oneconfig.api.hud.v1.HudManager.openEditor()
+        val restore = OneConfigConfig.remembersPageClosedAt(ShellState.lastClosedAt)
+        if (restore && ShellState.lastWasHudEditor && OneConfigConfig.restoreHudEditor) {
+            return HudManager.openEditor()
         }
         Platform.screen().display(if (restore) restore(resumed = false) else open())
     }
@@ -458,17 +478,17 @@ object ShellScreen {
 
     @JvmStatic
     fun forRoute(route: Any?): Screen {
-        org.polyfrost.oneconfig.internal.ui.navigation.resolveOpenTarget(route)?.let { (page, arg) -> return open(page, arg) }
-        if (route is org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute) {
-            val mod = org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry.findById(route.id) ?: return open()
+        resolveOpenTarget(route)?.let { (page, arg) -> return open(page, arg) }
+        if (route is ModConfigRoute) {
+            val mod = ConfigRegistry.findById(route.id) ?: return open()
             return open(PolyPage.ModConfig, ModConfigTarget(mod, route.category))
         }
-        if (route === org.polyfrost.oneconfig.internal.ui.shell.HudEditorRoute) return PolyHudEditorScreen()
+        if (route === HudEditorRoute) return PolyHudEditorScreen()
         return open(pageFor(route))
     }
 
     private fun pageFor(route: Any?): PolyPage {
-        val g = org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute::class.java.packageName
+        val g = ModConfigRoute::class.java.packageName
         val name = route?.takeIf { it.javaClass.packageName == g }?.javaClass?.simpleName?.removeSuffix("Graph")?.removeSuffix("Route")
         return when (name) {
             "Profiles" -> PolyPage.Profiles
@@ -486,10 +506,10 @@ object ShellScreen {
     @JvmStatic
     fun show(route: Any?) {
         val host = shownHost
-        if (host != null && route !== org.polyfrost.oneconfig.internal.ui.shell.HudEditorRoute) {
-            org.polyfrost.oneconfig.internal.ui.navigation.resolveOpenTarget(route)?.let { (page, arg) -> return host.navigate(page, arg) }
-            if (route !is org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute) return host.navigate(pageFor(route), null)
-            val mod = org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry.findById(route.id)
+        if (host != null && route !== HudEditorRoute) {
+            resolveOpenTarget(route)?.let { (page, arg) -> return host.navigate(page, arg) }
+            if (route !is ModConfigRoute) return host.navigate(pageFor(route), null)
+            val mod = ConfigRegistry.findById(route.id)
             if (mod != null) return host.openModConfig(mod, route.category)
         }
         Platform.screen().display(forRoute(route))
@@ -500,10 +520,10 @@ object ShellScreen {
 
     @JvmStatic
     @JvmOverloads
-    fun forTree(tree: org.polyfrost.oneconfig.api.config.v1.Tree, category: String? = null): Screen {
+    fun forTree(tree: Tree, category: String? = null): Screen {
         val id = tree.id ?: return open()
-        org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry.registerTree(tree, org.polyfrost.oneconfig.internal.ui.api.ConfigSource.OC)
-        return forRoute(org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute(id, category))
+        ConfigRegistry.registerTree(tree, ConfigSource.OC)
+        return forRoute(ModConfigRoute(id, category))
     }
 
     @JvmStatic
@@ -513,23 +533,23 @@ object ShellScreen {
     private fun open(start: PolyPage, startArg: Any?, restoring: Boolean, resumed: Boolean): Screen {
         refreshShellAccount()
         val host = ShellHost(
-            editHud = { org.polyfrost.oneconfig.api.hud.v1.HudManager.openEditor() },
+            editHud = { HudManager.openEditor() },
             close = { Platform.screen().close() },
             surfaceRatio = Platform.screen().surfaceRatio(),
             restoring = restoring,
             resumed = resumed,
         )
-        val hm = org.polyfrost.oneconfig.api.hud.v1.HudManager
+        val hm = HudManager
         return object : PolyScreen("OneConfig", {
             Shell(host, start, startArg)
         }), ShellScreenMarker {
-            override val menuBlur get() = org.polyfrost.oneconfig.internal.OneConfigConfig.enableBackgroundBlur
+            override val menuBlur get() = OneConfigConfig.enableBackgroundBlur
             override val shellScale get() = true
-            override fun isPauseScreen() = org.polyfrost.oneconfig.internal.OneConfigConfig.pauseGame
+            override fun isPauseScreen() = OneConfigConfig.pauseGame
 
             override fun onOneConfigKeybind(): Boolean {
-                if (org.polyfrost.oneconfig.internal.OneConfigConfig.keybindClosesGui) {
-                    org.polyfrost.oneconfig.internal.OneConfigConfig.notifyKeybindClosedGui()
+                if (OneConfigConfig.keybindClosesGui) {
+                    OneConfigConfig.notifyKeybindClosedGui()
                     host.toggleClose()
                 } else {
                     hm.openEditor()
@@ -538,7 +558,7 @@ object ShellScreen {
             }
 
             override fun init() {
-                org.polyfrost.oneconfig.internal.ui.themes.updateAccent()
+                updateAccent()
                 hm.overrideShowInScreens = true
                 hm.isConfigUiOpen = true
                 ShellState.lastWasHudEditor = false
@@ -550,7 +570,7 @@ object ShellScreen {
                 if (shownHost === host) shownHost = null
                 hm.overrideShowInScreens = false
                 hm.isConfigUiOpen = false
-                org.polyfrost.oneconfig.internal.ui.UiConfigSave.schedule()
+                UiConfigSave.schedule()
             }
 
             private var lastHudKey = 0L
@@ -561,7 +581,7 @@ object ShellScreen {
                     hm.inWorld = false
                     hm.guiScreenWidth = Platform.screen().guiWidth().toFloat()
                     hm.guiScreenHeight = Platform.screen().guiHeight().toFloat()
-                    dirty = hm.beginFrame(hm.guiScreenWidth, hm.guiScreenHeight, { org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog.renderHudIcons() }, true)
+                    dirty = hm.beginFrame(hm.guiScreenWidth, hm.guiScreenHeight, { ItemCatalog.renderHudIcons() }, true)
                 }
                 val key = hudEditorFrameKey()
                 if (key != lastHudKey) { lastHudKey = key; host.hudFrame.intValue++; hm.invalidate() }
@@ -580,15 +600,15 @@ private interface ShellScreenMarker
 internal fun refreshShellAccount() {
     val client = Minecraft.getInstance()
     ShellState.playerName = runCatching { client.user.name }.getOrDefault("Player")
-    val cachedHead = org.polyfrost.oneconfig.internal.ui.PlayerHeadLoader.cachedLocalPlayerHeadPng(client)
+    val cachedHead = PlayerHeadLoader.cachedLocalPlayerHeadPng(client)
     if (cachedHead != null) {
         ShellState.playerHeadPng = cachedHead
     } else {
         Thread {
             runCatching {
-                val head = org.polyfrost.oneconfig.internal.ui.PlayerHeadLoader.loadLocalPlayerHeadPng(client) ?: return@runCatching
+                val head = PlayerHeadLoader.loadLocalPlayerHeadPng(client) ?: return@runCatching
                 client.execute { ShellState.playerHeadPng = head }
-            }.onFailure { org.apache.logging.log4j.LogManager.getLogger("OneConfig").warn("Failed to load player head", it) }
+            }.onFailure { LogManager.getLogger("OneConfig").warn("Failed to load player head", it) }
         }.apply {
             isDaemon = true
             name = "OneConfig-PlayerHead"
@@ -608,27 +628,27 @@ class PolyHudEditorScreen : PolyScreen("Edit HUD", {
         HudDesignStudio(hudEditorFrame.intValue, hudEditorVisible.value)
     }
 }) {
-    private val hm = org.polyfrost.oneconfig.api.hud.v1.HudManager
+    private val hm = HudManager
     private var lastKey = 0L
 
     private var openedAt = 0L
     private var closeAt = 0L
     private var returningToOneConfig = false
-    private val closeMs = if (org.polyfrost.oneconfig.internal.OneConfigConfig.guiClosingAnimation) (org.polyfrost.oneconfig.internal.OneConfigConfig.animationTime * 1000f).toInt().coerceIn(1, 160) else 0
+    private val closeMs = if (OneConfigConfig.guiClosingAnimation) (OneConfigConfig.animationTime * 1000f).toInt().coerceIn(1, 160) else 0
 
     override val shellScale get() = true
     override val scrollSpeed get() = 0.5f
-    override fun isPauseScreen() = org.polyfrost.oneconfig.internal.OneConfigConfig.pauseGame
+    override fun isPauseScreen() = OneConfigConfig.pauseGame
 
     override fun onOneConfigKeybind(): Boolean {
         if (closeAt != 0L) {
             closeAt = 0L
             hudEditorVisible.value = true
             openedAt = System.nanoTime() - 200_000_000L
-            org.polyfrost.oneconfig.internal.ui.sound.UiSounds.play(org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent.OPEN)
-            org.polyfrost.oneconfig.internal.ui.sound.UiSounds.acquireAmbience()
-        } else if (org.polyfrost.oneconfig.internal.OneConfigConfig.keybindClosesGui) {
-            org.polyfrost.oneconfig.internal.OneConfigConfig.notifyKeybindClosedGui()
+            UiSounds.play(UiSoundEvent.OPEN)
+            UiSounds.acquireAmbience()
+        } else if (OneConfigConfig.keybindClosesGui) {
+            OneConfigConfig.notifyKeybindClosedGui()
             requestClose()
         } else {
             returningToOneConfig = true
@@ -639,36 +659,36 @@ class PolyHudEditorScreen : PolyScreen("Edit HUD", {
 
     override fun requestClose() {
         if (closeAt != 0L) return
-        org.polyfrost.oneconfig.internal.ui.sound.UiSounds.play(org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent.CLOSE)
-        org.polyfrost.oneconfig.internal.ui.sound.UiSounds.releaseAmbience()
+        UiSounds.play(UiSoundEvent.CLOSE)
+        UiSounds.releaseAmbience()
         hudEditorVisible.value = false
         if (closeMs <= 0) return Platform.screen().close()
         closeAt = System.nanoTime()
     }
 
     override fun init() {
-        org.polyfrost.oneconfig.internal.ui.themes.updateAccent()
+        updateAccent()
         hudEditorVisible.value = closeAt == 0L
         if (openedAt == 0L) {
             openedAt = System.nanoTime()
             hudEditorFade.floatValue = 0f
-            org.polyfrost.oneconfig.internal.ui.sound.UiSounds.play(org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent.OPEN)
+            UiSounds.play(UiSoundEvent.OPEN)
         }
-        org.polyfrost.oneconfig.internal.ui.sound.UiSounds.acquireAmbience()
+        UiSounds.acquireAmbience()
         hm.onEditorScreenAdded()
-        org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession.pointer = { pointer() }
+        HudDesignSession.pointer = { pointer() }
         super.init()
     }
 
     override fun onRemoved() {
-        org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession.pointer = { null }
+        HudDesignSession.pointer = { null }
         if (!returningToOneConfig) {
-            ShellState.lastWasHudEditor = org.polyfrost.oneconfig.internal.OneConfigConfig.restoreHudEditor
+            ShellState.lastWasHudEditor = OneConfigConfig.restoreHudEditor
             ShellState.lastClosedAt = System.currentTimeMillis()
         }
-        org.polyfrost.oneconfig.internal.ui.sound.UiSounds.releaseAmbience()
+        UiSounds.releaseAmbience()
         hm.onEditorScreenRemoved()
-        org.polyfrost.oneconfig.internal.ui.UiConfigSave.schedule()
+        UiConfigSave.schedule()
     }
 
     override fun beforeFrame(): Boolean {
@@ -687,7 +707,7 @@ class PolyHudEditorScreen : PolyScreen("Edit HUD", {
             hm.inWorld = false
             hm.guiScreenWidth = Platform.screen().guiWidth().toFloat()
             hm.guiScreenHeight = Platform.screen().guiHeight().toFloat()
-            dirty = hm.beginFrame(hm.guiScreenWidth, hm.guiScreenHeight, { org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog.renderHudIcons() }, true)
+            dirty = hm.beginFrame(hm.guiScreenWidth, hm.guiScreenHeight, { ItemCatalog.renderHudIcons() }, true)
         }
         val key = hudEditorFrameKey()
         if (key != lastKey) {
@@ -703,10 +723,10 @@ class PolyHudEditorScreen : PolyScreen("Edit HUD", {
     }
 
     companion object {
-        private val hudEditorFrame = androidx.compose.runtime.mutableIntStateOf(0)
+        private val hudEditorFrame = mutableIntStateOf(0)
 
         private val hudEditorFade = mutableFloatStateOf(0f)
 
-        private val hudEditorVisible = androidx.compose.runtime.mutableStateOf(true)
+        private val hudEditorVisible = mutableStateOf(true)
     }
 }

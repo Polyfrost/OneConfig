@@ -1,5 +1,7 @@
 package org.polyfrost.compose.ui.graphics
 
+import androidx.compose.runtime.State
+import org.polyfrost.compose.animation.AnimatedColor
 import org.polyfrost.compose.render.PolyColor
 
 interface Shape {
@@ -11,9 +13,9 @@ object RectangleShape : Shape {
     override val radius get() = 0f
 }
 
-class ColorFilter private constructor(val color: PolyColor, val animated: androidx.compose.runtime.State<PolyColor>?) {
+class ColorFilter private constructor(val color: PolyColor, val animated: State<PolyColor>?) {
     companion object {
         fun tint(color: PolyColor) = ColorFilter(color, null)
-        fun tint(color: org.polyfrost.compose.animation.AnimatedColor) = ColorFilter(color.target, color)
+        fun tint(color: AnimatedColor) = ColorFilter(color.target, color)
     }
 }

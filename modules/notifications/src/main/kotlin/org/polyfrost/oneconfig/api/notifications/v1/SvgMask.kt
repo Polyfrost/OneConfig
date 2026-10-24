@@ -1,6 +1,8 @@
 package org.polyfrost.oneconfig.api.notifications.v1
 
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.cos
+import kotlin.math.sin
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.compose.ui.graphics.ImageBitmap
 import kotlin.math.max
@@ -42,7 +44,7 @@ object SvgMask {
                 val cy = attr(el, "cy")?.toFloatOrNull() ?: 0f
                 val rx = (attr(el, "rx") ?: attr(el, "r"))?.toFloatOrNull() ?: return@mapNotNull null
                 val ry = (attr(el, "ry") ?: attr(el, "r"))?.toFloatOrNull() ?: return@mapNotNull null
-                listOf(FloatArray(66) { i -> val a = (i / 2) * (2 * Math.PI / 32); if (i % 2 == 0) cx + rx * kotlin.math.cos(a).toFloat() else cy + ry * kotlin.math.sin(a).toFloat() })
+                listOf(FloatArray(66) { i -> val a = (i / 2) * (2 * Math.PI / 32); if (i % 2 == 0) cx + rx * cos(a).toFloat() else cy + ry * sin(a).toFloat() })
             } else if (m.groupValues[1] == "rect") {
                 val x = attr(el, "x")?.toFloatOrNull() ?: 0f
                 val y = attr(el, "y")?.toFloatOrNull() ?: 0f

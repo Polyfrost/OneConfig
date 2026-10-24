@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import java.io.DataInputStream
 import java.util.function.Predicate
 import org.polyfrost.compose.animation.core.animateFloatAsState
 import org.polyfrost.compose.animation.core.tween
@@ -279,7 +280,7 @@ private fun canVisualize(vis: Visualizer): Boolean =
 private fun linksResolve(cls: Class<*>): Boolean = runCatching {
     val loader = cls.classLoader ?: return true
     val bytes = loader.getResourceAsStream(cls.name.substringBefore("$$").replace('.', '/') + ".class")?.use { it.readBytes() } ?: return false
-    val d = java.io.DataInputStream(bytes.inputStream())
+    val d = DataInputStream(bytes.inputStream())
     d.skipBytes(8)
     val n = d.readUnsignedShort()
     val utf = arrayOfNulls<String>(n)

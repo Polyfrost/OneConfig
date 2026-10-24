@@ -1,5 +1,6 @@
 package org.polyfrost.compose.node
 
+import androidx.compose.runtime.State
 import org.polyfrost.compose.layout.PolyLayoutEngine
 import org.polyfrost.compose.layout.PolySize
 import kotlin.math.ceil
@@ -21,7 +22,7 @@ class TextNode : PolyNode() {
     var text: String = ""
     var color: PolyColor = PolyColor.WHITE
 
-    var animatedColor: androidx.compose.runtime.State<PolyColor>? = null
+    var animatedColor: State<PolyColor>? = null
     var fontSize: Float = 12f
     var shadow: Boolean = false
     var shadowColor: PolyColor = PolyColor(0x80000000.toInt())

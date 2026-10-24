@@ -66,6 +66,8 @@ import org.polyfrost.oneconfig.internal.ui.compose.McFontService;
 //? if >= 1.21.11
 import org.polyfrost.oneconfig.internal.ui.compose.BlazeHud;
 import org.polyfrost.oneconfig.internal.ui.compose.GlHost;
+import org.polyfrost.oneconfig.internal.ui.poly.CreditsScreen;
+import org.polyfrost.oneconfig.internal.ui.poly.KeybindsScreen;
 import org.polyfrost.oneconfig.internal.ui.poly.PolyHudEditorScreen;
 import org.polyfrost.oneconfig.internal.ui.poly.ShellScreen;
 import org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar;
@@ -91,6 +93,10 @@ import org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat;
 //? if fabric {
 import org.polyfrost.oneconfig.internal.compat.ModMenuShimLoader;
 //?}
+
+//? if < 1.21.11 {
+/*import kotlin.Unit;
+*///?}
 
 //? if wwaypoints_compat {
 import org.polyfrost.oneconfig.internal.compat.WWaypointsCompat;
@@ -129,13 +135,13 @@ public class OneConfig
                 )
                 .then(CommandManager.literal("credits")
                         .executes((ctx) -> {
-                            Platform.screen().display(org.polyfrost.oneconfig.internal.ui.poly.CreditsScreen.open());
+                            Platform.screen().display(CreditsScreen.open());
                             return Command.SINGLE_SUCCESS;
                         })
                 )
                 .then(CommandManager.literal("keybinds")
                         .executes((ctx) -> {
-                            Platform.screen().display(org.polyfrost.oneconfig.internal.ui.poly.KeybindsScreen.open());
+                            Platform.screen().display(KeybindsScreen.open());
                             return Command.SINGLE_SUCCESS;
                         })
                 )
@@ -249,7 +255,7 @@ public class OneConfig
         /*if (HudManager.INSTANCE.beginFrame(sw, sh, ItemCatalog.INSTANCE::renderHudIcons, false)) {
             GlHost.INSTANCE.drawHudGl(ctx -> {
                 HudManager.INSTANCE.render(ctx, sw, sh);
-                return kotlin.Unit.INSTANCE;
+                return Unit.INSTANCE;
             });
         }
         *///?}
