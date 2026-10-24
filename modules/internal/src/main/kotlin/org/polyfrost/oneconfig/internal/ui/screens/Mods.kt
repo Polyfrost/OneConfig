@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerIcon
@@ -625,10 +626,14 @@ fun ModCard(
                                 1f to Color.Transparent,
                                 center = size.center, radius = glowRadius,
                             )
+                            val dotSize = ModCardToggleDot.toPx()
+                            val dotInset = (size.minDimension - dotSize) / 2f
+                            val ringOutline = theme.circleShape.createOutline(size, layoutDirection, this)
+                            val dotOutline = theme.circleShape.createOutline(Size(dotSize, dotSize), layoutDirection, this)
                             onDrawBehind {
                                 if (toggle != null) drawCircle(glow, radius = glowRadius)
-                                drawCircle(ring)
-                                drawCircle(dot, radius = ModCardToggleDot.toPx() / 2f)
+                                drawOutline(ringOutline, ring)
+                                translate(dotInset, dotInset) { drawOutline(dotOutline, dot) }
                             }
                         }
                     )
