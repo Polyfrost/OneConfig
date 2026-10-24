@@ -4,6 +4,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.internal.ui.api.TranslationCredits
 import org.polyfrost.oneconfig.utils.v1.JsonUtils
 import org.polyfrost.oneconfig.utils.v1.Multithreading
 import org.polyfrost.oneconfig.utils.v1.NetworkUtils
@@ -46,17 +47,22 @@ object CommunityTranslations {
             if (wanted.isEmpty()) return
             val present = namespaces.toSet()
             val manifest = readManifest()
+            val applied = HashSet<String>()
             if (manifest != null) {
                 for (language in wanted) {
                     for (namespace in manifest.files[language]?.keys.orEmpty()) {
                         if (namespace !in present) continue
                         readTranslations(language, namespace, manifest.timestamp)?.forEach { (key, value) ->
                             val current = existing.apply(key)
-                            if (current == null || arity(current) == arity(value)) sink.accept(key, value)
+                            if (current == null || arity(current) == arity(value)) {
+                                sink.accept(key, value)
+                                applied.add(namespace)
+                            }
                         }
                     }
                 }
             }
+            TranslationCredits.namespaces = applied
             if (!isUpToDate(manifest, wanted, present) && System.currentTimeMillis() - lastFailure >= RETRY_DELAY) {
                 Multithreading.submit {
                     if (synchronized(refreshLock) { refresh(wanted, present) }) reloadLanguages()
