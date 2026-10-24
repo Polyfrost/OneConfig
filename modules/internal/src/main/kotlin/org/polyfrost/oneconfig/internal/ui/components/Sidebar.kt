@@ -40,7 +40,6 @@ import org.polyfrost.oneconfig.internal.ui.navigation.isOn
 import org.polyfrost.oneconfig.internal.ui.navigation.sidebarSections
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShellNavController
-import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.withOpacityPercent
@@ -91,8 +90,8 @@ private fun Branding() {
     Image(
         painter = logo,
         contentDescription = null,
-        colorFilter = rememberBrandTint(logoPath, Accent),
-        modifier = Modifier.size(167.dp, 19.dp)
+        colorFilter = rememberAccentBrandTint(logoPath),
+        modifier = Modifier.size(167.dp, 19.dp).accentGradientFill()
     )
 }
 

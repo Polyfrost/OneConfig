@@ -13,13 +13,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asSkiaBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
@@ -39,6 +44,8 @@ import org.jetbrains.skia.Paint as SkPaint
 import org.jetbrains.skia.Rect as SkRect
 import org.jetbrains.skia.SamplingMode
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.AccentEnd
+import org.polyfrost.oneconfig.internal.ui.themes.AccentGradient
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.utils.v1.Multithreading
 
@@ -295,6 +302,17 @@ fun rememberBrandTint(path: String, tint: Color): ColorFilter? = remember(path, 
         )
     )
 }
+
+@Composable
+fun rememberAccentBrandTint(path: String): ColorFilter? = rememberBrandTint(path, if (AccentGradient) Color.White else Accent)
+
+fun Modifier.accentGradientFill(): Modifier =
+    if (!AccentGradient) this
+    else graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+        .drawWithContent {
+            drawContent()
+            drawRect(Brush.horizontalGradient(listOf(Accent, AccentEnd)), blendMode = BlendMode.Modulate)
+        }
 
 @Composable
 private fun rememberIconRasterPainter(path: String): Painter? {

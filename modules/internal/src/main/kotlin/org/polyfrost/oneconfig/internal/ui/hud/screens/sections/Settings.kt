@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.hud.screens.sections
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -39,7 +40,7 @@ import org.polyfrost.oneconfig.internal.ui.hud.hudHasPositionDefaults
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.resetHudPosition
 import org.polyfrost.oneconfig.internal.ui.screens.HudConfigScreen
-import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val DeleteButtonColor = Color(0xFFE5484D)
@@ -339,11 +340,12 @@ private fun ResetHudPositionButton(hud: Hud) {
     val enabled = hudHasPositionDefaults(hud)
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
-    val bgColor by animateColorAsState(
+    val disabledAlpha by animateFloatAsState(if (enabled) 0f else 1f)
+    val accentAlpha by animateFloatAsState(
         when {
-            !enabled -> theme.borderColor
-            isHovered -> Accent.copy(alpha = 0.75f)
-            else -> Accent
+            !enabled -> 0f
+            isHovered -> 0.75f
+            else -> 1f
         },
     )
     val textColor = if (enabled) theme.accentTextColor else theme.textColorSecondary
@@ -351,7 +353,8 @@ private fun ResetHudPositionButton(hud: Hud) {
     Box(
         modifier = Modifier
             .then(if (enabled) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier)
-            .background(bgColor, theme.buttonShape)
+            .background(theme.borderColor.copy(alpha = theme.borderColor.alpha * disabledAlpha), theme.buttonShape)
+            .background(AccentBrush, theme.buttonShape, alpha = accentAlpha)
             .then(
                 if (enabled) {
                     Modifier.onClick(interactionSource) { resetHudPosition(hud) }

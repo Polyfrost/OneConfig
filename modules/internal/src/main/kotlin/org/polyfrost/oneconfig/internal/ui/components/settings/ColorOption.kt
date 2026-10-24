@@ -253,19 +253,26 @@ fun ColorOption(data: ColorOptionData) {
         if (data.prop.type == PolyColor::class.java) updateAccent()
     }
 
+    val showGradient = data.gradient && pickerModel.gradientEnabled && !pickerModel.chromaEnabled
+    val swatch = if (showGradient) Brush.horizontalGradient(listOf(currentColor, pickerModel.gradientColor)) else SolidColor(currentColor)
+
     Box {
         Row(
             modifier = Modifier
                 .onClick(interactionSource) { expanded = !expanded }
                 .pointerHoverIcon(PointerIcon.Hand)
-                .background(currentColor, LocalTheme.current.sideBarNavigationEntryShape)
+                .background(swatch, LocalTheme.current.sideBarNavigationEntryShape)
                 .border(1.dp, borderColor, LocalTheme.current.sideBarNavigationEntryShape)
                 .padding(horizontal = 12.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Icon("paintbrush", color = textColor, modifier = Modifier.size(14.dp))
-            Text("#${colorToHex(currentColor)}", color = textColor, fontSize = 13.sp)
+            Text(
+                if (showGradient) "#${colorToHex(currentColor)} → #${colorToHex(pickerModel.gradientColor)}" else "#${colorToHex(currentColor)}",
+                color = textColor,
+                fontSize = 13.sp,
+            )
         }
 
         if (expanded) {

@@ -40,6 +40,10 @@ private var _accentEnd by mutableStateOf<Color?>(null)
 
 val Accent: Color get() = _accent
 
+val AccentEnd: Color get() = _accentEnd ?: _accent
+
+val AccentGradient: Boolean get() = _accentEnd != null
+
 val AccentBrush: Brush get() = accentHorizontalBrush()
 
 fun accentHorizontalBrush(startX: Float = 0f, endX: Float = Float.POSITIVE_INFINITY): Brush =

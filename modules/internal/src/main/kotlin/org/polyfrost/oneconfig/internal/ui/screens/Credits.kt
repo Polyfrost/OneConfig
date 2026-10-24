@@ -18,10 +18,10 @@ import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.rememberBrandTint
+import org.polyfrost.oneconfig.internal.ui.components.accentGradientFill
+import org.polyfrost.oneconfig.internal.ui.components.rememberAccentBrandTint
 import org.polyfrost.oneconfig.internal.ui.components.rememberSvgResourcePainter
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
-import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val oneConfigVersion: String? by lazy {
@@ -83,8 +83,8 @@ fun Credits() {
                     Image(
                         painter = logo,
                         contentDescription = null,
-                        colorFilter = rememberBrandTint(theme.logoPath, Accent),
-                        modifier = Modifier.size(474.dp, 54.dp)
+                        colorFilter = rememberAccentBrandTint(theme.logoPath),
+                        modifier = Modifier.size(474.dp, 54.dp).accentGradientFill()
                     )
                 }
                 oneConfigVersion?.let { version ->

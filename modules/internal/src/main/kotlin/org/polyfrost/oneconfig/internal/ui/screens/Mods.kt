@@ -45,9 +45,13 @@ import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositeShader
+import androidx.compose.ui.graphics.LinearGradientShader
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
@@ -104,7 +108,8 @@ import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.shell.ShellNavigation
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyGridState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
-import org.polyfrost.oneconfig.internal.ui.themes.accentHorizontalBrush
+import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
+import org.polyfrost.oneconfig.internal.ui.themes.AccentEnd
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 enum class ModCategory(
@@ -461,7 +466,7 @@ fun ModCard(
     val toggleRevision = ModToggles.revision
     val toggle = remember(mod, toggleRevision) { mod.toggle }
     var enabled by rememberModEnabled(toggle)
-    val footerColor by animateColorAsState(if (enabled) Accent else theme.textColor.copy(alpha = 0.08f))
+    val footerAccent by animateFloatAsState(if (enabled) 1f else 0f)
     val footerTextColor by animateColorAsState(
         if (enabled) theme.accentTextColor else theme.textColor.copy(alpha = 0.75f)
     )
@@ -520,7 +525,8 @@ fun ModCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = ModCardFooterHeight)
-                    .background(footerColor)
+                    .background(theme.textColor.copy(alpha = 0.08f * (1f - footerAccent)))
+                    .background(AccentBrush, alpha = footerAccent)
                     .then(
                         if (toggle != null && interactive) {
                             Modifier
@@ -567,12 +573,16 @@ fun ModCard(
                     )
                     val glowHeight = ModCardGlowHeight.toPx().coerceAtMost(size.height)
                     val glowTop = size.height - glowHeight
-                    val glow = Brush.verticalGradient(
-                        0f to Accent.copy(0f),
-                        0.4f to Accent.copy(0.2f),
-                        1f to Accent.copy(0.4f),
-                        startY = glowTop,
-                        endY = size.height,
+                    val glow = ShaderBrush(
+                        CompositeShader(
+                            LinearGradientShader(Offset.Zero, Offset(size.width, 0f), listOf(Accent, AccentEnd)),
+                            LinearGradientShader(
+                                Offset(0f, glowTop), Offset(0f, size.height),
+                                listOf(Color.Black.copy(0f), Color.Black.copy(0.2f), Color.Black.copy(0.4f)),
+                                listOf(0f, 0.4f, 1f),
+                            ),
+                            BlendMode.DstIn,
+                        )
                     )
                     onDrawBehind {
                         drawRect(vignette)
@@ -612,7 +622,9 @@ fun ModCard(
                 anchor = Alignment.TopCenter,
             ) {
                 Box(Modifier.size(ModCardToggleRing), contentAlignment = Alignment.Center) {
-                    val ring = if (toggle != null) lerp(Accent, ModCardToggleRingShade, 0.42f) else ModCardToggleUnavailable.copy(alpha = 0.5f)
+                    val ringStart = if (toggle != null) lerp(Accent, ModCardToggleRingShade, 0.42f) else ModCardToggleUnavailable.copy(alpha = 0.5f)
+                    val ringEnd = if (toggle != null) lerp(AccentEnd, ModCardToggleRingShade, 0.42f) else ringStart
+                    val ring = lerp(ringStart, ringEnd, 0.5f)
                     val dot = ModCardToggleUnavailable
                     // drawn around one centre, since laying the dot out inside the ring lands it on a pixel boundary off-centre
                     Box(
@@ -626,12 +638,18 @@ fun ModCard(
                                 1f to Color.Transparent,
                                 center = size.center, radius = glowRadius,
                             )
+                            val dotRadius = ModCardToggleDot.toPx() / 2f
+                            val ringBrush = Brush.linearGradient(listOf(ringStart, ringEnd), Offset.Zero, Offset(size.width, size.height))
+                            val dotBrush = Brush.linearGradient(
+                                listOf(Accent, AccentEnd),
+                                size.center - Offset(dotRadius, dotRadius),
+                                size.center + Offset(dotRadius, dotRadius),
+                            )
                             onDrawBehind {
                                 if (toggle != null) drawCircle(glow, radius = glowRadius)
-                                drawCircle(ring)
-                                val dotRadius = ModCardToggleDot.toPx() / 2f
+                                drawCircle(ringBrush)
                                 if (toggle != null) {
-                                    drawCircle(accentHorizontalBrush(center.x - dotRadius, center.x + dotRadius), radius = dotRadius)
+                                    drawCircle(dotBrush, radius = dotRadius)
                                 } else {
                                     drawCircle(dot, radius = dotRadius)
                                 }
