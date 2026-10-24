@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import kotlin.OverloadResolutionByLambdaReturnType;
 import kotlin.reflect.KMutableProperty0;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -191,7 +192,7 @@ public abstract class Property<T> extends Node implements Serializable {
      *                 <br>
      *                 Return true if you wish to cancel the setting of the property
      */
-    @kotlin.OverloadResolutionByLambdaReturnType
+    @OverloadResolutionByLambdaReturnType
     public final Property<T> addCallback(@NotNull Predicate<T> callback) {
         if (callbacks == null) callbacks = new ArrayList<>(2);
         callbacks.add(callback);
@@ -199,12 +200,12 @@ public abstract class Property<T> extends Node implements Serializable {
     }
 
     @SafeVarargs
-    @kotlin.OverloadResolutionByLambdaReturnType
+    @OverloadResolutionByLambdaReturnType
     public final Property<T> addCallback(@NotNull Predicate<T>... callbacks) {
         return addCallback(Arrays.asList(callbacks));
     }
 
-    @kotlin.OverloadResolutionByLambdaReturnType
+    @OverloadResolutionByLambdaReturnType
     public final Property<T> addCallback(@NotNull Collection<Predicate<T>> callbacks) {
         if (this.callbacks == null) this.callbacks = new ArrayList<>(callbacks);
         else this.callbacks.addAll(callbacks);

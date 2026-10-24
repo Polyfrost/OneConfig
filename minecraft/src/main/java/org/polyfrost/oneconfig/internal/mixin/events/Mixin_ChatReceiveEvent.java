@@ -13,8 +13,20 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 //? if >= 26.1 {
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.mojang.serialization.JsonOps;
+import java.util.Map;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.chat.GuiMessageSource;
 import net.minecraft.client.multiplayer.chat.GuiMessageTag;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.ComponentSerialization;
 //?}
 
 //? if >= 1.21.4 {
@@ -154,11 +166,11 @@ public abstract class Mixin_ChatReceiveEvent {
     //~ if = 1.8.9 'Component component' -> 'Text text'
     private static net.kyori.adventure.text.Component ocfg$toAdventure(Component component) {
         //? if >= 26.1 {
-        com.google.gson.JsonElement tree = net.minecraft.network.chat.ComponentSerialization.CODEC
-                .encodeStart(ocfg$registries().createSerializationContext(com.mojang.serialization.JsonOps.INSTANCE), component)
-                .getOrThrow(com.google.gson.JsonParseException::new);
+        JsonElement tree = ComponentSerialization.CODEC
+                .encodeStart(ocfg$registries().createSerializationContext(JsonOps.INSTANCE), component)
+                .getOrThrow(JsonParseException::new);
         ocfg$stripColorAlpha(tree);
-        return net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson().deserializeFromTree(tree);
+        return GsonComponentSerializer.gson().deserializeFromTree(tree);
         //?} elif >=1.21.4 {
         /*return MinecraftClientAudiences.of().asAdventure(component);
         *///?} elif > 1.8.9 {
@@ -169,25 +181,25 @@ public abstract class Mixin_ChatReceiveEvent {
 
     //? if >= 26.1 {
     @Unique
-    private static net.minecraft.core.RegistryAccess ocfg$registries() {
-        net.minecraft.client.multiplayer.ClientLevel level = net.minecraft.client.Minecraft.getInstance().level;
-        return level != null ? level.registryAccess() : net.minecraft.core.RegistryAccess.fromRegistryOfRegistries(net.minecraft.core.registries.BuiltInRegistries.REGISTRY);
+    private static RegistryAccess ocfg$registries() {
+        ClientLevel level = Minecraft.getInstance().level;
+        return level != null ? level.registryAccess() : RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
     }
 
     @Unique
-    private static void ocfg$stripColorAlpha(com.google.gson.JsonElement element) {
+    private static void ocfg$stripColorAlpha(JsonElement element) {
         if (element.isJsonArray()) {
-            for (com.google.gson.JsonElement child : element.getAsJsonArray()) {
+            for (JsonElement child : element.getAsJsonArray()) {
                 ocfg$stripColorAlpha(child);
             }
         } else if (element.isJsonObject()) {
-            com.google.gson.JsonObject object = element.getAsJsonObject();
-            for (java.util.Map.Entry<String, com.google.gson.JsonElement> entry : object.entrySet()) {
-                com.google.gson.JsonElement value = entry.getValue();
+            JsonObject object = element.getAsJsonObject();
+            for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
+                JsonElement value = entry.getValue();
                 if ("color".equals(entry.getKey()) && value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
                     String color = value.getAsString();
                     if (color.length() == 9 && color.charAt(0) == '#') {
-                        entry.setValue(new com.google.gson.JsonPrimitive("#" + color.substring(3)));
+                        entry.setValue(new JsonPrimitive("#" + color.substring(3)));
                     }
                 } else {
                     ocfg$stripColorAlpha(value);

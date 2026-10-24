@@ -1,8 +1,11 @@
 package org.polyfrost.oneconfig.internal.compat.toggle
 
+import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
 //? if !neoforge
 import net.fabricmc.loader.api.FabricLoader
+//? if > 1.8.9
+import net.minecraft.client.Minecraft
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
@@ -12,6 +15,8 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
+//? if > 1.8.9
+import org.polyfrost.oneconfig.internal.compat.ArmorHudCompat
 import org.polyfrost.oneconfig.internal.ui.api.PropertyModToggle
 import org.polyfrost.oneconfig.internal.ui.api.findMarkedSwitch
 
@@ -228,7 +233,7 @@ internal object ModGates {
         },
         "voicechat" to { VoiceChatToggle.takeIf { it.available } },
         //? if > 1.8.9
-        "ukus-armor-hud" to { org.polyfrost.oneconfig.internal.compat.ArmorHudCompat.modToggle() },
+        "ukus-armor-hud" to { ArmorHudCompat.modToggle() },
         "animatium" to {
             SelfSwitchingMod("org.visuals.legacy.animatium.Animatium", "btw.mixces.animatium.AnimatiumClient")
                 .takeIf { it.available }
@@ -527,7 +532,7 @@ internal object ModGates {
     @JvmStatic
     fun dropController(controlify: Any) {
         try {
-            val current = controlify.javaClass.getMethod("getCurrentController").invoke(controlify) as? java.util.Optional<*>
+            val current = controlify.javaClass.getMethod("getCurrentController").invoke(controlify) as? Optional<*>
             if (current?.isPresent != true) return
             controlify.javaClass.methods
                 .first { it.name == "setCurrentController" && it.parameterCount == 2 }
@@ -566,16 +571,16 @@ internal object ModGates {
 
     private fun inWorld(): Boolean {
         //? if > 1.8.9 {
-        return net.minecraft.client.Minecraft.getInstance().level != null
+        return Minecraft.getInstance().level != null
         //?} else
         //return false
     }
 
     private fun rebuildChunks() {
         //? if >= 26.2 {
-        net.minecraft.client.Minecraft.getInstance().levelExtractor.allChanged()
+        Minecraft.getInstance().levelExtractor.allChanged()
         //?} elif > 1.8.9 {
-        /*net.minecraft.client.Minecraft.getInstance().levelRenderer.allChanged()
+        /*Minecraft.getInstance().levelRenderer.allChanged()
         *///?}
     }
 

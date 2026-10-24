@@ -7,6 +7,7 @@ import kotlin.collections.listOf
 plugins {
     java
     id("me.modmuss50.mod-publish-plugin")
+    id("oneconfig-lint")
 }
 
 repositories {

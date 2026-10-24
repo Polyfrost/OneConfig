@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import net.minecraft.text.Text;
 import net.ornithemc.osl.text.impl.Locale;
 import org.jspecify.annotations.Nullable;
 
@@ -63,7 +64,7 @@ public final class MutableComponent implements Component {
     }
 
     @Override
-    public MutableComponent append(final net.minecraft.text.Text text) {
+    public MutableComponent append(final Text text) {
         if (text instanceof Component component) {
             return this.append(component);
         }
@@ -116,12 +117,12 @@ public final class MutableComponent implements Component {
     }
 
     @Override
-    public Iterator<net.minecraft.text.Text> iterator() {
+    public Iterator<Text> iterator() {
         return Iterators.concat(
-                Iterators.singletonIterator((net.minecraft.text.Text) this),
+                Iterators.singletonIterator((Text) this),
                 Iterators.concat(Iterators.transform(
-                        (Iterator<net.minecraft.text.Text>) (Iterator<?>) this.siblings.iterator(),
-                        net.minecraft.text.Text::iterator
+                        (Iterator<Text>) (Iterator<?>) this.siblings.iterator(),
+                        Text::iterator
                 ))
         );
     }
