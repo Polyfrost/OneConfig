@@ -286,7 +286,7 @@ object ComposeUiHarness_Test {
     }
 
     private fun shot() {
-        //? if >= 26.1 {
+        //? if >= 26.2 {
         Screenshot.grab(Minecraft.getInstance(), false)
         //?} else if >= 1.21.10
         //Screenshot.grab(Minecraft.getInstance().gameDirectory, Minecraft.getInstance().mainRenderTarget) {}
