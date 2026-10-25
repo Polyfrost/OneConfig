@@ -22,6 +22,9 @@ import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.renderpearl.api.textures.GpuTextureView
 import com.mojang.renderpearl.api.textures.FilterMode
 import com.mojang.blaze3d.vertex.VertexConsumer
+import com.mojang.renderpearl.api.buffers.GpuBuffer
+import com.mojang.renderpearl.api.commands.RenderPass
+import java.util.IdentityHashMap
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.navigation.ScreenRectangle
@@ -479,7 +482,7 @@ internal object KeptMeshes {
     private const val RELEASE_FRAMES = 10
     private var frame = 0
     private val alive = ArrayList<BlazeRenderer.Mesh>()
-    private val byDraw = java.util.IdentityHashMap<Any, ArrayList<BlazeRenderer.Mesh>>()
+    private val byDraw = IdentityHashMap<Any, ArrayList<BlazeRenderer.Mesh>>()
 
     private val snippet = RenderPipelinesAccessor.`oneconfig$getGuiTexturedSnippet`()
     private val straight = RenderPipeline.builder(snippet).withLocation("pipeline/oneconfig_gui_kept").build()
@@ -515,7 +518,7 @@ internal object KeptMeshes {
     }
 
     fun capture(mesh: BlazeRenderer.Mesh, ptr: Long, len: Int) {
-        mesh.gpu = RenderSystem.getDevice().createBuffer({ "OneConfig kept GUI mesh" }, com.mojang.renderpearl.api.buffers.GpuBuffer.USAGE_VERTEX, MemoryUtil.memByteBuffer(ptr, len))
+        mesh.gpu = RenderSystem.getDevice().createBuffer({ "OneConfig kept GUI mesh" }, GpuBuffer.USAGE_VERTEX, MemoryUtil.memByteBuffer(ptr, len))
         mesh.lastDrawn = frame
         alive.add(mesh)
     }
@@ -550,7 +553,7 @@ internal object KeptMeshes {
     *///?}
 
     @JvmStatic
-    fun execute(draw: Any, pass: com.mojang.renderpearl.api.commands.RenderPass): Boolean {
+    fun execute(draw: Any, pass: RenderPass): Boolean {
         val meshes = byDraw[draw] ?: return false
         val first = meshes[0]
         val scissor = first.scissorArea()
@@ -573,7 +576,7 @@ internal object KeptMeshes {
         val indices = RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS)
         pass.setIndexBuffer(indices.getBuffer(meshes.maxOf { it.vertexCount } / 4 * 6), indices.type())
         for (m in meshes) {
-            val gpu = m.gpu as com.mojang.renderpearl.api.buffers.GpuBuffer
+            val gpu = m.gpu as GpuBuffer
             //? if >= 26.2 {
             pass.setVertexBuffer(0, gpu.slice())
             pass.drawIndexed(m.vertexCount / 4 * 6, 1, 0, 0, 0)
@@ -590,7 +593,7 @@ internal object KeptMeshes {
         byDraw.clear()
         frame++
         alive.removeIf { m ->
-            (frame - m.lastDrawn > RELEASE_FRAMES).also { if (it) { (m.gpu as com.mojang.renderpearl.api.buffers.GpuBuffer).close(); m.gpu = null } }
+            (frame - m.lastDrawn > RELEASE_FRAMES).also { if (it) { (m.gpu as GpuBuffer).close(); m.gpu = null } }
         }
     }
 }
@@ -665,7 +668,7 @@ internal object GlyphAtlas {
 
     private class Entry(val image: NativeImage, val ref: AbstractTextureRef, var uploaded: Int)
 
-    private val entries = java.util.IdentityHashMap<PolyGlyphPage.Page, Entry>()
+    private val entries = IdentityHashMap<PolyGlyphPage.Page, Entry>()
 
     private fun entry(page: PolyGlyphPage.Page) = entries.getOrPut(page) {
         val image = NativeImage(SIZE, SIZE, true)
@@ -689,7 +692,7 @@ internal object GlyphAtlas {
 internal object BitmapTextures {
     private class Entry(val ref: AbstractTextureRef, var lastUsed: Long)
 
-    private val cache = java.util.IdentityHashMap<ImageBitmap, Entry>()
+    private val cache = IdentityHashMap<ImageBitmap, Entry>()
     private var frame = 0L
 
     fun get(bitmap: ImageBitmap): AbstractTextureRef {

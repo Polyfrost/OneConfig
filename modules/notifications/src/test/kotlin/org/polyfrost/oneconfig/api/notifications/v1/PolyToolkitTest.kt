@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.api.notifications.v1
 
+import androidx.compose.runtime.mutableStateOf
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -24,6 +25,7 @@ import org.polyfrost.compose.layout.PolyArrangement
 import org.polyfrost.compose.layout.PolyLayoutEngine
 import org.polyfrost.compose.node.PolyNode
 import org.polyfrost.compose.node.TextNode
+import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.runtime.PolyComposeClock
 import org.polyfrost.compose.runtime.PolyComposeRuntime
@@ -32,6 +34,7 @@ import org.polyfrost.compose.ui.Modifier
 import org.polyfrost.compose.ui.focus.FocusRequester
 import org.polyfrost.compose.ui.focus.onFocusChanged
 import org.polyfrost.compose.ui.focus.focusRequester
+import org.polyfrost.compose.ui.graphics.lerp
 import org.polyfrost.compose.ui.input.key.KeyEvent
 import org.polyfrost.compose.ui.input.key.KeyEventType
 import org.polyfrost.compose.ui.input.key.onKeyDown
@@ -123,7 +126,7 @@ class PolyToolkitTest {
 
     @Test
     fun colourAnimationMixesInOklab() {
-        val mid = org.polyfrost.compose.ui.graphics.lerp(org.polyfrost.compose.render.PolyColor(0xFF000000.toInt()), org.polyfrost.compose.render.PolyColor(-1), 0.5f)
+        val mid = lerp(PolyColor(0xFF000000.toInt()), PolyColor(-1), 0.5f)
         assertTrue(mid.red in 95..104, "red ${mid.red}")
         assertEquals(mid.red, mid.blue)
     }
@@ -238,7 +241,7 @@ class PolyToolkitTest {
     fun layoutIfChangedSkipsOnlyUnchangedTrees() {
         val clock = PolyComposeClock()
         val runtime = PolyComposeRuntime(clock)
-        val w = androidx.compose.runtime.mutableStateOf(10f)
+        val w = mutableStateOf(10f)
         runtime.setContent { Box(Modifier.size(w.value.dp, 10.dp)) }
         assertTrue(runtime.layoutIfChanged(100f, 100f))
         assertFalse(runtime.layoutIfChanged(100f, 100f))

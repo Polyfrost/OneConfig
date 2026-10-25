@@ -1,17 +1,24 @@
 package org.polyfrost.oneconfig.api.notifications.v1
 
+import kotlin.math.abs
+import kotlin.math.hypot
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.polyfrost.compose.foundation.background
 import org.polyfrost.compose.foundation.layout.size
+import org.polyfrost.compose.node.PolyNode
 import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.PolyGlyphPage
 import org.polyfrost.compose.render.PolyRenderer
 import org.polyfrost.compose.render.PolyTessellator
+import org.polyfrost.compose.render.RenderContext
+import org.polyfrost.compose.ui.Modifier
 import org.polyfrost.compose.ui.draw.alpha
 import org.polyfrost.compose.ui.draw.drawWithContent
 import org.polyfrost.compose.ui.graphics.Brush
+import org.polyfrost.compose.ui.graphics.FilterQuality
 import org.polyfrost.compose.ui.graphics.ImageBitmap
 import org.polyfrost.compose.ui.graphics.shadow.Shadow
 import org.polyfrost.compose.ui.unit.DpOffset
@@ -123,7 +130,7 @@ class PolyTessellatorTest {
         assertTrue(corner.colors.size > draw(0f, 0f, 0f, 20f, 20f).colors.size, "corner rect not cut")
         for (i in corner.colors.indices) {
             val dx = 20f - corner.verts[i * 4]; val dy = 20f - corner.verts[i * 4 + 1]
-            if (dx > 0f && dy > 0f && corner.colors[i] ushr 24 != 0) assertTrue(kotlin.math.hypot(dx, dy) <= 20.6f, "vertex past the corner")
+            if (dx > 0f && dy > 0f && corner.colors[i] ushr 24 != 0) assertTrue(hypot(dx, dy) <= 20.6f, "vertex past the corner")
         }
     }
 
@@ -160,7 +167,7 @@ class PolyTessellatorTest {
             val x = b.verts[i * 4]; val y = b.verts[i * 4 + 1]
             assertTrue(x in 4.4f..10.6f && y in 4.4f..10.6f, "vertex ($x, $y) outside the intersection")
             val dx = x - 6f; val dy = y - 6f
-            if (dx > 0f && dy > 0f && b.colors[i] ushr 24 != 0) assertTrue(kotlin.math.hypot(dx, dy) <= 4.6f, "($x, $y) past the outer corner")
+            if (dx > 0f && dy > 0f && b.colors[i] ushr 24 != 0) assertTrue(hypot(dx, dy) <= 4.6f, "($x, $y) past the outer corner")
         }
     }
 
@@ -176,7 +183,7 @@ class PolyTessellatorTest {
         try {
             val text = String(IntArray(300) { 0x4E00 + it }, 0, 300)
             val r = Recorder()
-            r.text(text, 0f, 64f, -1, org.polyfrost.compose.render.PolyFont("cjk", 16f))
+            r.text(text, 0f, 64f, -1, PolyFont("cjk", 16f))
             val batches = r.done()
             assertEquals(300, batches.sumOf { it.colors.size / 4 })
             val pages = batches.map { it.texture }.distinct()
@@ -282,7 +289,7 @@ class PolyTessellatorTest {
             val i = IntArray(3) { q * 4 + tri[it] }
             val x = FloatArray(3) { b.verts[i[it] * 4] }; val y = FloatArray(3) { b.verts[i[it] * 4 + 1] }
             val d = (y[1] - y[2]) * (x[0] - x[2]) + (x[2] - x[1]) * (y[0] - y[2])
-            if (kotlin.math.abs(d) < 1e-6f) continue
+            if (abs(d) < 1e-6f) continue
             val l0 = ((y[1] - y[2]) * (px - x[2]) + (x[2] - x[1]) * (py - y[2])) / d
             val l1 = ((y[2] - y[0]) * (px - x[2]) + (x[0] - x[2]) * (py - y[2])) / d
             val l2 = 1f - l0 - l1
@@ -338,7 +345,7 @@ class PolyTessellatorTest {
     fun nearestImagesBatchApart() {
         val bmp = ImageBitmap(4, 4, ByteArray(64) { -1 })
         val b = Recorder().run {
-            image(bmp, 0f, 0f, 8f, 8f, org.polyfrost.compose.ui.graphics.FilterQuality.None)
+            image(bmp, 0f, 0f, 8f, 8f, FilterQuality.None)
             image(bmp, 8f, 0f, 8f, 8f)
             done()
         }
@@ -348,15 +355,15 @@ class PolyTessellatorTest {
 
     @Test
     fun drawWithContentDrawsOverChildren() {
-        val node = org.polyfrost.compose.node.PolyNode()
-        org.polyfrost.compose.ui.Modifier.drawWithContent { drawContent(); ctx.rect(x, y, width, 1f, PolyColor(0xFF0000FF.toInt())) }.applyTo(node.style)
+        val node = PolyNode()
+        Modifier.drawWithContent { drawContent(); ctx.rect(x, y, width, 1f, PolyColor(0xFF0000FF.toInt())) }.applyTo(node.style)
         node.width = 10f; node.height = 10f
-        val child = org.polyfrost.compose.node.PolyNode()
-        org.polyfrost.compose.ui.Modifier.background(PolyColor(0xFFFF0000.toInt())).applyTo(child.style)
+        val child = PolyNode()
+        Modifier.background(PolyColor(0xFFFF0000.toInt())).applyTo(child.style)
         child.width = 10f; child.height = 10f
         child.parent = node
         node.children += child
-        val b = Recorder().also { node.renderFaded(org.polyfrost.compose.render.RenderContext(it)) }.done().single()
+        val b = Recorder().also { node.renderFaded(RenderContext(it)) }.done().single()
         assertEquals(0xFFFF0000.toInt(), b.colors.first())
         assertEquals(0xFF0000FF.toInt(), b.colors.last { it ushr 24 == 0xFF })
     }

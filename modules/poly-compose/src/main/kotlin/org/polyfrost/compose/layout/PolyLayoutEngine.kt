@@ -1,6 +1,7 @@
 package org.polyfrost.compose.layout
 
 import org.polyfrost.compose.node.PolyNode
+import org.polyfrost.compose.node.RootNode
 import org.polyfrost.compose.ui.Alignment
 import kotlin.math.max
 import kotlin.math.min
@@ -18,7 +19,7 @@ object PolyLayoutEngine {
 
     fun layout(node: PolyNode, parentWidth: Float, parentHeight: Float, pixelSnap: Float) {
         this.pixelSnap = pixelSnap
-        density = (node as? org.polyfrost.compose.node.RootNode)?.density ?: 1f
+        density = (node as? RootNode)?.density ?: 1f
         try {
             measure(node, parentWidth, parentHeight)
             arrange(node)

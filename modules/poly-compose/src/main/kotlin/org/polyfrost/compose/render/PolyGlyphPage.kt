@@ -1,5 +1,6 @@
 package org.polyfrost.compose.render
 
+import java.util.WeakHashMap
 import org.polyfrost.compose.ui.graphics.ImageBitmap
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -141,7 +142,7 @@ object PolyGlyphPage {
     private const val BITMAP_MAX = 256
     private const val BITMAP_PAGES = 4
 
-    private val bitmaps = java.util.WeakHashMap<ImageBitmap, Glyph>()
+    private val bitmaps = WeakHashMap<ImageBitmap, Glyph>()
     private var placedSince = 0L
     private var placed = 0
 

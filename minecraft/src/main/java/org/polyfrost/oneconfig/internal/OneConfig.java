@@ -76,6 +76,8 @@ import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProfiles;
 import org.polyfrost.oneconfig.internal.ui.keybind.ProfileKeybinds;
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindProvider;
 import org.polyfrost.oneconfig.internal.ui.navigation.BuiltinPages;
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.CreditsGraph;
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.KeybindsGraph;
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus;
 import org.polyfrost.oneconfig.internal.ui.sound.ExternalSounds;
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry;
@@ -91,6 +93,10 @@ import org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat;
 //? if fabric {
 import org.polyfrost.oneconfig.internal.compat.ModMenuShimLoader;
 //?}
+
+//? if < 1.21.11 {
+/*import kotlin.Unit;
+*///?}
 
 //? if wwaypoints_compat {
 import org.polyfrost.oneconfig.internal.compat.WWaypointsCompat;
@@ -129,13 +135,13 @@ public class OneConfig
                 )
                 .then(CommandManager.literal("credits")
                         .executes((ctx) -> {
-                            Platform.screen().display(OneConfigUIScreen.forRoute(org.polyfrost.oneconfig.internal.ui.navigation.graph.CreditsGraph.INSTANCE));
+                            Platform.screen().display(OneConfigUIScreen.forRoute(CreditsGraph.INSTANCE));
                             return Command.SINGLE_SUCCESS;
                         })
                 )
                 .then(CommandManager.literal("keybinds")
                         .executes((ctx) -> {
-                            Platform.screen().display(OneConfigUIScreen.forRoute(org.polyfrost.oneconfig.internal.ui.navigation.graph.KeybindsGraph.INSTANCE));
+                            Platform.screen().display(OneConfigUIScreen.forRoute(KeybindsGraph.INSTANCE));
                             return Command.SINGLE_SUCCESS;
                         })
                 )
@@ -249,7 +255,7 @@ public class OneConfig
         /*if (HudManager.INSTANCE.beginFrame(sw, sh, ItemCatalog.INSTANCE::renderHudIcons, false)) {
             GlHost.INSTANCE.drawHudGl(ctx -> {
                 HudManager.INSTANCE.render(ctx, sw, sh);
-                return kotlin.Unit.INSTANCE;
+                return Unit.INSTANCE;
             });
         }
         *///?}

@@ -1,6 +1,10 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
 import org.polyfrost.compose.render.FontManager
+import org.polyfrost.compose.render.PolyFont
+import org.polyfrost.compose.render.PolyGlyphPage
+//? if >= 1.21.11
+import org.polyfrost.compose.ui.graphics.ImageBitmap
 
 object McFontService {
     fun init() {
@@ -25,9 +29,9 @@ object McFontService {
 
     @JvmStatic
     fun installEngines() {
-        org.polyfrost.compose.render.PolyFont.engine = StbFonts
-        org.polyfrost.compose.render.PolyGlyphPage.rasterizer = StbFonts
+        PolyFont.engine = StbFonts
+        PolyGlyphPage.rasterizer = StbFonts
         //? if >= 1.21.11
-        org.polyfrost.compose.ui.graphics.ImageBitmap.decoder = BitmapTextures.decoder
+        ImageBitmap.decoder = BitmapTextures.decoder
     }
 }

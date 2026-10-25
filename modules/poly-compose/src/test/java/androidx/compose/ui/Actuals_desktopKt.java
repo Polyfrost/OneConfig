@@ -1,7 +1,10 @@
 package androidx.compose.ui;
 
+import kotlin.coroutines.CoroutineContext;
+import kotlinx.coroutines.Dispatchers;
+
 public final class Actuals_desktopKt {
-    public static kotlin.coroutines.CoroutineContext getPostDelayedDispatcher() {
-        return kotlinx.coroutines.Dispatchers.getUnconfined();
+    public static CoroutineContext getPostDelayedDispatcher() {
+        return Dispatchers.getUnconfined();
     }
 }

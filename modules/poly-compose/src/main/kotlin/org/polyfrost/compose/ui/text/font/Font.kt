@@ -1,5 +1,8 @@
 package org.polyfrost.compose.ui.text.font
 
+import kotlin.math.abs
+import org.polyfrost.compose.render.FontManager
+
 @JvmInline
 value class FontWeight(val weight: Int) : Comparable<FontWeight> {
     override fun compareTo(other: FontWeight) = weight.compareTo(other.weight)
@@ -20,10 +23,10 @@ value class FontWeight(val weight: Int) : Comparable<FontWeight> {
 data class Font(val name: String, val weight: FontWeight = FontWeight.Normal)
 
 class FontFamily(val fonts: List<Font>) {
-    fun resolve(weight: FontWeight): String = fonts.minBy { kotlin.math.abs(it.weight.weight - weight.weight) }.name
+    fun resolve(weight: FontWeight): String = fonts.minBy { abs(it.weight.weight - weight.weight) }.name
 
     companion object {
-        val Default = FontFamily(Font(org.polyfrost.compose.render.FontManager.DEFAULT_KEY))
+        val Default = FontFamily(Font(FontManager.DEFAULT_KEY))
     }
 }
 

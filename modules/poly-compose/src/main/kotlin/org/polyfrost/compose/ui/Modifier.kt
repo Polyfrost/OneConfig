@@ -5,6 +5,8 @@ import org.polyfrost.compose.layout.PolyLayoutStyle
 import org.polyfrost.compose.layout.PolyPositionMode
 import org.polyfrost.compose.layout.PolySize
 import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.ui.graphics.RectangleShape
+import org.polyfrost.compose.ui.graphics.Shape
 
 open class Modifier internal constructor(internal val block: PolyLayoutStyle.() -> Unit) {
     infix fun then(other: Modifier): Modifier = if (other === Companion) this else if (this === Companion) other else Modifier { block(); other.block(this) }
@@ -74,7 +76,7 @@ fun Modifier.element(block: PolyLayoutStyle.() -> Unit) = then(Modifier { innerS
 
 fun Modifier.layoutElement(block: PolyLayoutStyle.() -> Unit) = then(Modifier(block))
 
-internal fun PolyLayoutStyle.applyShape(shape: org.polyfrost.compose.ui.graphics.Shape) {
-    if (shape === org.polyfrost.compose.ui.graphics.RectangleShape) return
+internal fun PolyLayoutStyle.applyShape(shape: Shape) {
+    if (shape === RectangleShape) return
     if (shape.percent >= 0f) radiusPercent = shape.percent else { radius = shape.radius; radiusPercent = -1f }
 }
