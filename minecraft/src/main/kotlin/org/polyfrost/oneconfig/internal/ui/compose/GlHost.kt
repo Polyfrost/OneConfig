@@ -90,10 +90,16 @@ object GlHost {
     }
 
     @JvmField
+    //? if = 1.21.1 {
+    /*val vanillaPipeline = isVulkanModInstalled
+    *///?} else
+    val vanillaPipeline = false
+
+    @JvmField
     //? if >= 1.21.11 {
     val legacyGl = false
     //?} else
-    //val legacyGl = !isVulkanModInstalled
+    //val legacyGl = vanillaPipeline || !isVulkanModInstalled
 
     fun unavailableReason(): String? {
         //? if >= 1.21.11 {
@@ -108,6 +114,7 @@ object GlHost {
     private val gl = StoredGLState(330)
 
     private var hudTarget: RenderTarget? = null
+    private var hudFrame: GlRenderer? = null
 
     //? >= 1.21.5 {
     private val HUD_TEXTURE_LOC = Identifier.fromNamespaceAndPath("oneconfig", "hud_skia")
@@ -218,6 +225,15 @@ object GlHost {
 
     //? if > 1.8.9 {
     fun blitHud(guiGraphics: GuiGraphicsExtractor) {
+        //? if = 1.21.1 {
+        /*if (vanillaPipeline) {
+            val frame = hudFrame ?: return
+            guiGraphics.flush()
+            runCatching { frame.drawVanilla(Platform.screen().viewportWidth(), Platform.screen().viewportHeight(), topDown = false) }
+                .onFailure { LOG.warn("GlHost.blitHud() error", it) }
+            return
+        }
+        *///?}
         val rt = hudTarget ?: return
         val w = rt.width
         val h = rt.height
@@ -366,6 +382,17 @@ object GlHost {
         val w = Platform.screen().viewportWidth()
         val h = Platform.screen().viewportHeight()
         if (w <= 0 || h <= 0 || Platform.screen().guiWidth() <= 0) return null
+        //? if = 1.21.1 {
+        /*if (vanillaPipeline) return try {
+            (cached ?: GlRenderer().also { draw(RenderContext(it)) }).also {
+                client.mainRenderTarget.bindWrite(true)
+                it.drawVanilla(w, h, topDown = false)
+            }
+        } catch (e: Throwable) {
+            LOG.warn("GlHost.drawGl() error", e)
+            null
+        }
+        *///?}
         gl.capture()
         try {
             val renderer = cached ?: GlRenderer().also { draw(RenderContext(it)) }
@@ -421,6 +448,14 @@ object GlHost {
     }
 
     fun drawHudGl(draw: (RenderContext) -> Unit) {
+        //? if = 1.21.1 {
+        /*if (vanillaPipeline) {
+            hudFrame = runCatching { GlRenderer().also { draw(RenderContext(it)) } }
+                .onFailure { LOG.warn("GlHost.drawHudGl() error", it) }
+                .getOrNull()
+            return
+        }
+        *///?}
         val rt = resolveHudTarget() ?: return
         val fbo = RenderTargetFbo.getFboId(rt)
         if (fbo <= 0) return
@@ -522,6 +557,9 @@ object GlHost {
     }
 
     fun recreateSurface(width: Int, height: Int) {
-        if (width > 0 && height > 0) destroyHudTarget()
+        if (width > 0 && height > 0) {
+            destroyHudTarget()
+            hudFrame = null
+        }
     }
 }

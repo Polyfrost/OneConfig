@@ -18,8 +18,21 @@ import org.polyfrost.oneconfig.internal.ui.TextureRenderer
 import org.slf4j.LoggerFactory
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.nio.IntBuffer
 import java.util.IdentityHashMap
 import kotlin.math.roundToInt
+
+//? if = 1.21.1 {
+/*import com.mojang.blaze3d.platform.GlStateManager
+import com.mojang.blaze3d.systems.RenderSystem
+import com.mojang.blaze3d.vertex.BufferUploader
+import com.mojang.blaze3d.vertex.DefaultVertexFormat
+import com.mojang.blaze3d.vertex.Tesselator
+import com.mojang.blaze3d.vertex.VertexFormat
+import com.mojang.blaze3d.vertex.VertexSorting
+import net.minecraft.client.renderer.GameRenderer
+import org.joml.Matrix4f
+*///?}
 
 class GlRenderer private constructor(private val inLive: Boolean) : PolyTessellator(), TextureRenderer {
     constructor() : this(false)
@@ -60,17 +73,78 @@ class GlRenderer private constructor(private val inLive: Boolean) : PolyTessella
             GL11.glClearColor(0f, 0f, 0f, 0f)
             GL11.glClear(GL11.GL_COLOR_BUFFER_BIT)
         }
-        val segments = lives.map { l ->
-            val r = GlRenderer(true)
-            r.state = l.state.copy()
-            l.draw(r)
-            r.flush()
-            GlProgram.Segment(l.at, r.batches)
-        }
+        val segments = segments()
         if (batches.isNotEmpty() || segments.isNotEmpty()) GlProgram.draw(batches, w, h, topDown, segments, kept)
         GlTextures.endFrame()
     }
+
+    //? if = 1.21.1 {
+    /*fun drawVanilla(w: Int, h: Int, topDown: Boolean) {
+        flush()
+        val segments = segments()
+        if (batches.isNotEmpty() || segments.isNotEmpty()) VanillaProgram.draw(batches, w, h, topDown, segments)
+        GlTextures.endFrame()
+    }
+    *///?}
+
+    private fun segments() = lives.map { l ->
+        val r = GlRenderer(true)
+        r.state = l.state.copy()
+        l.draw(r)
+        r.flush()
+        GlProgram.Segment(l.at, r.batches)
+    }
 }
+
+//? if = 1.21.1 {
+/*internal object VanillaProgram {
+    fun draw(batches: List<GlProgram.Batch>, w: Int, h: Int, topDown: Boolean, live: List<GlProgram.Segment>) {
+        RenderSystem.backupProjectionMatrix()
+        val bottom = if (topDown) 0f else h.toFloat()
+        RenderSystem.setProjectionMatrix(Matrix4f().setOrtho(0f, w.toFloat(), bottom, h - bottom, -1f, 1f), VertexSorting.ORTHOGRAPHIC_Z)
+        val modelView = RenderSystem.getModelViewStack()
+        modelView.pushMatrix()
+        modelView.identity()
+        RenderSystem.applyModelViewMatrix()
+        RenderSystem.disableCull()
+        RenderSystem.disableDepthTest()
+        RenderSystem.disableScissor()
+        RenderSystem.colorMask(true, true, true, true)
+        RenderSystem.enableBlend()
+        RenderSystem.setShaderColor(1f, 1f, 1f, 1f)
+        RenderSystem.setShader(GameRenderer::getPositionTexColorShader)
+        try {
+            var seg = 0
+            for (i in 0..batches.size) {
+                while (seg < live.size && live[seg].at == i) live[seg++].batches.forEach(::drawBatch)
+                if (i == batches.size) break
+                drawBatch(batches[i])
+            }
+        } finally {
+            RenderSystem.defaultBlendFunc()
+            RenderSystem.disableBlend()
+            RenderSystem.enableDepthTest()
+            RenderSystem.enableCull()
+            modelView.popMatrix()
+            RenderSystem.applyModelViewMatrix()
+            RenderSystem.restoreProjectionMatrix()
+        }
+    }
+
+    private fun drawBatch(b: GlProgram.Batch) {
+        if (b.colors.isEmpty()) return
+        val src = if (b.premultiplied) GlStateManager.SourceFactor.ONE else GlStateManager.SourceFactor.SRC_ALPHA
+        RenderSystem.blendFuncSeparate(src, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA)
+        RenderSystem.setShaderTexture(0, GlTextures.id(b.texture))
+        val buf = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR)
+        for (i in b.colors.indices) {
+            val o = i * 4
+            buf.addVertex(b.verts[o], b.verts[o + 1], 0f).setUv(b.verts[o + 2], b.verts[o + 3]).setColor(b.colors[i])
+        }
+        BufferUploader.drawWithShader(buf.buildOrThrow())
+    }
+}
+*///?}
 
 internal object GlProgram {
     class Batch(val texture: Any, val premultiplied: Boolean, val nearest: Boolean, val verts: FloatArray, val colors: IntArray)
@@ -282,11 +356,11 @@ internal object GlTextures {
         val tex = pages.getOrPut(page) { intArrayOf(newTexture(), 0) }
         if (tex[1] != page.version) {
             tex[1] = page.version
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, tex[0])
+            bind(tex[0])
             val px = BufferUtils.createIntBuffer(page.pixels.size).put(page.pixels)
             px.flip()
             unpackDefaults()
-            GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, PolyGlyphPage.SIZE, PolyGlyphPage.SIZE, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, px)
+            texImage(PolyGlyphPage.SIZE, PolyGlyphPage.SIZE, px)
         }
         return tex[0]
     }
@@ -296,25 +370,61 @@ internal object GlTextures {
         val px = BufferUtils.createByteBuffer(bitmap.pixels.size).put(bitmap.pixels)
         px.flip()
         unpackDefaults()
-        GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, bitmap.width, bitmap.height, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, px)
+        texImage(bitmap.width, bitmap.height, px.asIntBuffer())
         return id
     }
 
     private fun unpackDefaults() {
-        GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 4)
-        GL11.glPixelStorei(GL11.GL_UNPACK_ROW_LENGTH, 0)
-        GL11.glPixelStorei(GL11.GL_UNPACK_SKIP_PIXELS, 0)
-        GL11.glPixelStorei(GL11.GL_UNPACK_SKIP_ROWS, 0)
+        pixelStore(GL11.GL_UNPACK_ALIGNMENT, 4)
+        pixelStore(GL11.GL_UNPACK_ROW_LENGTH, 0)
+        pixelStore(GL11.GL_UNPACK_SKIP_PIXELS, 0)
+        pixelStore(GL11.GL_UNPACK_SKIP_ROWS, 0)
     }
 
     private fun newTexture(): Int {
-        val id = GL11.glGenTextures()
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, id)
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR)
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR)
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE)
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE)
+        val id = genTexture()
+        bind(id)
+        texParameter(GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR)
+        texParameter(GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR)
+        texParameter(GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE)
+        texParameter(GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE)
         return id
+    }
+
+    private fun genTexture(): Int {
+        //? if = 1.21.1
+        //if (GlHost.vanillaPipeline) return GlStateManager._genTexture()
+        return GL11.glGenTextures()
+    }
+
+    private fun bind(id: Int) {
+        //? if = 1.21.1
+        //if (GlHost.vanillaPipeline) return GlStateManager._bindTexture(id)
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, id)
+    }
+
+    private fun texParameter(name: Int, value: Int) {
+        //? if = 1.21.1
+        //if (GlHost.vanillaPipeline) return GlStateManager._texParameter(GL11.GL_TEXTURE_2D, name, value)
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, name, value)
+    }
+
+    private fun pixelStore(name: Int, value: Int) {
+        //? if = 1.21.1
+        //if (GlHost.vanillaPipeline) return GlStateManager._pixelStore(name, value)
+        GL11.glPixelStorei(name, value)
+    }
+
+    private fun texImage(w: Int, h: Int, px: IntBuffer) {
+        //? if = 1.21.1
+        //if (GlHost.vanillaPipeline) return GlStateManager._texImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, w, h, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, px)
+        GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, w, h, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, px)
+    }
+
+    private fun deleteTexture(id: Int) {
+        //? if = 1.21.1
+        //if (GlHost.vanillaPipeline) return GlStateManager._deleteTexture(id)
+        GL11.glDeleteTextures(id)
     }
 
     fun endFrame() {
@@ -323,7 +433,7 @@ internal object GlTextures {
         while (it.hasNext()) {
             val t = it.next()
             if (frame - t.lastUsed > 600) {
-                if (t.id != 0) GL11.glDeleteTextures(t.id)
+                if (t.id != 0) deleteTexture(t.id)
                 it.remove()
             }
         }

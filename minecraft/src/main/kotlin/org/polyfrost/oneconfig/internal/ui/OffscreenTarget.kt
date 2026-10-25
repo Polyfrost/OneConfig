@@ -5,10 +5,17 @@ import org.slf4j.LoggerFactory
 
 //? if >= 26.2 {
 import com.mojang.renderpearl.api.GpuFormat
-import com.mojang.renderpearl.backend.vulkan.VulkanDevice
 import org.joml.Vector4f
+//?}
+
+//? if >= 26.1 {
+import org.polyfrost.oneconfig.internal.mixin.blaze3d.GlDeviceAccessor
 import org.polyfrost.oneconfig.internal.mixin.blaze3d.GpuDeviceAccessor
 //?}
+
+//? if >= 1.21.5 && < 26.1 {
+/*import com.mojang.renderpearl.backend.opengl.GlDevice
+*///?}
 
 //? if >= 1.21.5 {
 import com.mojang.blaze3d.systems.RenderSystem
@@ -124,9 +131,11 @@ class OffscreenTarget {
 
 object GpuBackend {
     val isVulkan: Boolean by lazy {
-        //? if >= 26.2 {
-        (RenderSystem.getDevice() as GpuDeviceAccessor).`oneconfig$getBackend`() is VulkanDevice
-        //?} else
+        //? if >= 26.1 {
+        (RenderSystem.getDevice() as GpuDeviceAccessor).`oneconfig$getBackend`() !is GlDeviceAccessor
+        //?} else if >= 1.21.5 {
+        /*RenderSystem.getDevice() !is GlDevice
+        *///?} else
         //false
     }
 }
