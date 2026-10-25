@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.isSpecified
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyFont
 import java.text.BreakIterator
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 import kotlin.math.min
@@ -176,10 +177,10 @@ internal class PolyIntrinsics(
 }
 
 private object Advances {
-    private val cache = HashMap<PolyFont, HashMap<Int, Float>>()
+    private val cache = ConcurrentHashMap<PolyFont, ConcurrentHashMap<Int, Float>>()
 
     fun of(font: PolyFont, cp: Int): Float =
-        cache.getOrPut(font) { HashMap() }.getOrPut(cp) { font.measureTextWidth(String(Character.toChars(cp))) }
+        cache.getOrPut(font) { ConcurrentHashMap() }.getOrPut(cp) { font.measureTextWidth(String(Character.toChars(cp))) }
 }
 
 internal class Line(val start: Int, val end: Int, val visibleEnd: Int, val top: Float, val bottom: Float, val baseline: Float, val left: Float, val width: Float, val ellipsis: Boolean)
@@ -197,8 +198,8 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
         didExceedMaxLines = breaks.size > limit
         val kept = breaks.take(limit)
         val lh = intr.lineHeightPx
-        val natural = intr.runs.maxOf { it.metrics.spacing }
         val ascent = -intr.runs.minOf { it.metrics.ascent }
+        val content = ascent + intr.runs.maxOf { it.metrics.descent }
         val boxW = if (maxWidth.isFinite()) maxWidth else kept.maxOfOrNull { intr.width(it.first, it.third) } ?: 0f
         lines = kept.mapIndexed { i, (s, e, ve) ->
             val ellipsize = didExceedMaxLines && i == kept.lastIndex && overflow == TextOverflow.Ellipsis
@@ -210,7 +211,7 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
                 TextAlign.End, TextAlign.Right -> boxW - w
                 else -> 0f
             }
-            Line(s, e, vEnd, top, top + lh, top + (lh - natural) / 2f + ascent, max(0f, left), w, ellipsize)
+            Line(s, e, vEnd, top, top + lh, top + (lh - content) / 2f + ascent, max(0f, left), w, ellipsize)
         }
         width = if (maxWidth.isFinite()) maxWidth else lines.maxOfOrNull { it.width } ?: 0f
         height = lines.lastOrNull()?.bottom ?: lh

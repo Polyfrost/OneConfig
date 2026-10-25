@@ -1,6 +1,7 @@
 package org.polyfrost.compose.render
 
 import java.util.WeakHashMap
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
@@ -18,6 +19,8 @@ object PolyGlyphPage {
         fun advance(glyph: Int): Float
 
         fun raster(glyph: Int, pixelSize: Float): Raster?
+
+        fun raster(glyph: Int, pixelSize: Float, shiftX: Float): Raster? = raster(glyph, pixelSize)
     }
 
     class Raster(val offX: Int, val offY: Int, val w: Int, val h: Int, val coverage: ByteArray)
@@ -106,9 +109,42 @@ object PolyGlyphPage {
         return outlineAtlases.getOrPut(Triple(face, bucket, if (round) q else -q)) { HashMap() }
     }
 
-    fun glyph(atlas: HashMap<Int, Glyph?>, face: Face, bucket: Int, id: Int, outlinePx: Float = 0f, round: Boolean = false): Glyph? = atlas.getOrPut(id) {
-        val r = face.raster(id, bucket / 4f) ?: return@getOrPut null
-        if (outlinePx <= 0f) place(r) else place(dilate(r, max(1, (outlinePx * 4f).roundToInt()) / 4f, round))
+    const val SUBPIXELS = 4
+
+    private data class Prekey(val face: Face, val bucket: Int, val slot: Int)
+
+    private val prerastered = ConcurrentHashMap<Prekey, Raster>()
+
+    @JvmStatic
+    var recorder: ((face: Face, bucket: Int, id: Int, phase: Int) -> Unit)? = null
+
+    private fun raster(face: Face, bucket: Int, id: Int, phase: Int): Raster? =
+        if (phase == 0) face.raster(id, bucket / 4f) else face.raster(id, bucket / 4f, phase / SUBPIXELS.toFloat())
+
+    @Volatile
+    private var prerasterDropped = false
+
+    @JvmStatic
+    fun dropPrerastered(): Int {
+        prerasterDropped = true
+        val n = prerastered.size
+        prerastered.clear()
+        return n
+    }
+
+    @JvmStatic
+    fun prerasterize(face: Face, bucket: Int, id: Int, phase: Int) {
+        if (prerasterDropped) return
+        val key = Prekey(face, bucket, id * SUBPIXELS + phase)
+        if (prerastered.containsKey(key)) return
+        prerastered.putIfAbsent(key, raster(face, bucket, id, phase) ?: return)
+        if (prerasterDropped) prerastered.remove(key)
+    }
+
+    fun glyph(atlas: HashMap<Int, Glyph?>, face: Face, bucket: Int, id: Int, outlinePx: Float = 0f, round: Boolean = false, phase: Int = 0): Glyph? = atlas.getOrPut(id * SUBPIXELS + phase) {
+        if (outlinePx > 0f) return@getOrPut place(dilate(raster(face, bucket, id, phase) ?: return@getOrPut null, max(1, (outlinePx * 4f).roundToInt()) / 4f, round))
+        recorder?.invoke(face, bucket, id, phase)
+        place(prerastered.remove(Prekey(face, bucket, id * SUBPIXELS + phase)) ?: raster(face, bucket, id, phase) ?: return@getOrPut null)
     }
 
     private fun dilate(r: Raster, radius: Float, round: Boolean): Raster {

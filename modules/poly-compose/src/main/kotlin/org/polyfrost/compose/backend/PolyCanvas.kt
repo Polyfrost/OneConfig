@@ -25,6 +25,7 @@ import kotlin.math.min
 import org.polyfrost.compose.render.FilterQuality as PolyFilterQuality
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.render.PolyFade
 import org.polyfrost.compose.render.PolyPath
 import org.polyfrost.compose.render.PolyRenderer
 import org.polyfrost.compose.render.PolyShadow
@@ -53,6 +54,12 @@ private fun recolored(bitmap: PolyBitmap, matrix: ColorMatrix): PolyBitmap = syn
         }
         PolyBitmap(bitmap.width, bitmap.height, out)
     }
+}
+
+private fun Paint.fadeMask(): PolyFade? = (shader?.platformShader as? GradientShader)?.fade(alpha)
+
+private class MaskOp(val fade: PolyFade) : (PolyCanvas) -> Unit {
+    override fun invoke(c: PolyCanvas) = c.renderer.restore()
 }
 
 fun DrawScope.drawPoly(block: (RenderContext) -> Unit) = drawIntoCanvas { c ->
@@ -152,7 +159,7 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
     }
 
     private fun shape(x: Float, y: Float, w: Float, h: Float, radius: Float, paint: PolyPaint) {
-        if (w <= 0f || h <= 0f) return
+        if (w <= 0f || h <= 0f || paint.blendMode == BlendMode.DstIn) return
         if (paint.blur > 0f) {
             r.shadow(x, y, w, h, radius, PolyShadow(PolyColor(paint.argb()), paint.blur, 0f, 0f, 0f))
             return
@@ -173,6 +180,13 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
             is GradientShader -> {
                 if (paint.alpha < 1f) r.saveLayerAlpha(paint.alpha) else r.save()
                 r.rectGradient(x, y, w, h, s.brushFor(x, y, w, h), radius)
+                r.restore()
+            }
+            is MaskedShader -> {
+                if (paint.alpha < 1f) r.saveLayerAlpha(paint.alpha) else r.save()
+                r.saveLayerFade(s.mask)
+                r.rectGradient(x, y, w, h, s.color.brushFor(x, y, w, h), radius)
+                r.restore()
                 r.restore()
             }
             is ImageShader -> image(s.image, 0f, 0f, s.image.width.toFloat(), s.image.height.toFloat(), x, y, w, h, paint)
@@ -230,7 +244,10 @@ class RecordingCanvas : PolyDrawCanvas {
 
     override fun polyOp(op: (PolyCanvas) -> Unit) { ops += op }
 
-    fun replay(canvas: PolyCanvas) { for (op in ops) op(canvas) }
+    fun replay(canvas: PolyCanvas) {
+        for (i in ops.indices.reversed()) (ops[i] as? MaskOp)?.let { canvas.renderer.saveLayerFade(it.fade) }
+        for (op in ops) op(canvas)
+    }
 
     private fun Paint.snap() = (this as PolyPaint).copy()
 
@@ -245,7 +262,11 @@ class RecordingCanvas : PolyDrawCanvas {
     override fun clipRect(left: Float, top: Float, right: Float, bottom: Float, clipOp: ClipOp) = polyOp { it.clipRect(left, top, right, bottom, clipOp) }
     override fun clipPath(path: Path, clipOp: ClipOp) { val p = path.copyPath(); polyOp { it.clipPath(p, clipOp) } }
     override fun drawLine(p1: Offset, p2: Offset, paint: Paint) { val p = paint.snap(); polyOp { it.drawLine(p1, p2, p) } }
-    override fun drawRect(left: Float, top: Float, right: Float, bottom: Float, paint: Paint) { val p = paint.snap(); polyOp { it.drawRect(left, top, right, bottom, p) } }
+    override fun drawRect(left: Float, top: Float, right: Float, bottom: Float, paint: Paint) {
+        if (paint.blendMode == BlendMode.DstIn) { paint.fadeMask()?.let { ops += MaskOp(it) }; return }
+        val p = paint.snap()
+        polyOp { it.drawRect(left, top, right, bottom, p) }
+    }
     override fun drawRoundRect(left: Float, top: Float, right: Float, bottom: Float, radiusX: Float, radiusY: Float, paint: Paint) { val p = paint.snap(); polyOp { it.drawRoundRect(left, top, right, bottom, radiusX, radiusY, p) } }
     override fun drawOval(left: Float, top: Float, right: Float, bottom: Float, paint: Paint) { val p = paint.snap(); polyOp { it.drawOval(left, top, right, bottom, p) } }
     override fun drawCircle(center: Offset, radius: Float, paint: Paint) { val p = paint.snap(); polyOp { it.drawCircle(center, radius, p) } }

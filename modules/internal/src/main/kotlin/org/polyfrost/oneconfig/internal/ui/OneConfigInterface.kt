@@ -64,11 +64,11 @@ fun OneConfigInterface(
     onCloseRequest: () -> Unit = {},
     onCloseReady: ((requestClose: () -> Unit) -> Unit)? = null,
     onOpenReady: ((requestOpen: () -> Unit) -> Unit)? = null,
+    shell: ShellController = ShellController.shared,
     shellBackdrop: DrawScope.(Offset) -> Unit = {}
 ) {
     ThemeRegistry.init()
 
-    val shell = ShellController.shared
     val navController = rememberNavController()
     DisposableEffect(navController) {
         shell.navigation.attach(navController)

@@ -1,5 +1,6 @@
 package org.polyfrost.compose.render
 
+import java.util.Collections
 import kotlin.math.acos
 import kotlin.math.atan2
 import kotlin.math.tan
@@ -18,10 +19,13 @@ import kotlin.math.sqrt
 abstract class PolyTessellator : PolyRenderer {
     protected class State(
         @JvmField var sx: Float, @JvmField var sy: Float, @JvmField var tx: Float, @JvmField var ty: Float,
-        @JvmField var alpha: Float, @JvmField var clip: FloatArray?, @JvmField var rclip: RClip?,
+        @JvmField var alpha: Float, @JvmField var clip: FloatArray?, @JvmField var rclip: RClip?, @JvmField var mask: Mask? = null,
+        @JvmField var glyphScale: Float = 1f,
     ) {
-        fun copy() = State(sx, sy, tx, ty, alpha, clip, rclip)
+        fun copy() = State(sx, sy, tx, ty, alpha, clip, rclip, mask, glyphScale)
     }
+
+    protected class Mask(val fade: PolyFade, val parent: Mask?)
 
     protected class RClip(val edge: FloatArray, val inner: FloatArray, val outer: FloatArray, val parent: RClip?, val safe: FloatArray, val box: FloatArray) {
         val invLen = FloatArray(edge.size / 2) { e ->
@@ -47,6 +51,8 @@ abstract class PolyTessellator : PolyRenderer {
     protected abstract fun submit(texture: Any, premultiplied: Boolean, nearest: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray)
 
     protected abstract fun bitmapTexture(bitmap: PolyBitmap): Any
+
+    protected open val cpuOnly: Boolean get() = false
 
     override fun rect(x: Float, y: Float, w: Float, h: Float, color: Int, radius: Float) {
         if (w <= 0f || h <= 0f) return
@@ -105,6 +111,7 @@ abstract class PolyTessellator : PolyRenderer {
             tex = boxRaster(gradient, w / h)
             uv = { fx, fy, out -> out[0] = ((fx - s.tx) / s.sx - x) / w; out[1] = ((fy - s.ty) / s.sy - y) / h }
         }
+        if (cpuOnly) return
         val g = PolyGlyphPage.bitmap(tex)
         begin(g?.page ?: bitmapTexture(tex), false)
         val pageUv: (Float, Float, FloatArray) -> Unit = if (g == null) uv else { fx, fy, out -> uv(fx, fy, out); out[0] = g.u(out[0]); out[1] = g.v(out[1]) }
@@ -218,26 +225,49 @@ abstract class PolyTessellator : PolyRenderer {
         fillPolygonPx(out, o / 2, c, convex = false)
     }
 
-    override fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont) = glyphs(text, x, y, color, font, 0f, false)
+    override fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont) = glyphs(text, x, y, color, font, 0f, false, true)
 
     override fun textOutline(text: String, x: Float, y: Float, color: Int, font: PolyFont, width: Float) =
-        glyphs(text, x, y, color, font, width * scaleAvg(), true)
+        glyphs(text, x, y, color, font, width * scaleAvg(), true, true)
 
-    private fun glyphs(text: String, x: Float, y: Float, color: Int, font: PolyFont, outlinePx: Float, round: Boolean) {
+    private fun glyphs(text: String, x: Float, y: Float, color: Int, font: PolyFont, outlinePx: Float, round: Boolean, subpixel: Boolean) {
         val face = PolyGlyphPage.rasterizer?.face(font.name) ?: return
         val c = mulAlpha(color, state.alpha)
         if (c ushr 24 == 0) return
-        val bucket = (font.size * scaleAvg() * 4f).roundToInt()
-        val atlas = PolyGlyphPage.atlas(face, bucket, outlinePx, round)
+        val k = state.glyphScale
+        val outline = outlinePx / k
+        val bucket = (font.size * scaleAvg() / k * 4f).roundToInt()
+        val atlas = if (cpuOnly) null else PolyGlyphPage.atlas(face, bucket, outline, round)
+        fun glyph(id: Int, phase: Int): PolyGlyphPage.Glyph? {
+            if (atlas != null) return PolyGlyphPage.glyph(atlas, face, bucket, id, outline, round, phase)
+            if (outline <= 0f) PolyGlyphPage.prerasterize(face, bucket, id, phase)
+            return null
+        }
         var penX = x
         var i = 0
         while (i < text.length) {
             val cp = text.codePointAt(i)
             i += Character.charCount(cp)
             val id = face.glyph(cp)
-            val g = PolyGlyphPage.glyph(atlas, face, bucket, id, outlinePx, round)
+            val sx = penX * state.sx + state.tx
+            if (k != 1f) {
+                val phase = if (subpixel) ((sx - floor(sx)) * PolyGlyphPage.SUBPIXELS).toInt() else 0
+                val g = glyph(id, phase)
+                if (g != null) {
+                    val px = sx + (g.offX - phase.toFloat() / PolyGlyphPage.SUBPIXELS) * k
+                    val py = y * state.sy + state.ty + g.offY * k
+                    begin(g.page, false)
+                    quadPx(px, py, px + g.w * k, py + g.h * k, g.u0, g.v0, g.u1, g.v1, c)
+                }
+                penX += face.advance(id) * font.size
+                continue
+            }
+            var base = if (subpixel) floor(sx).toInt() else sx.roundToInt()
+            var phase = if (subpixel) ((sx - base) * PolyGlyphPage.SUBPIXELS).roundToInt() else 0
+            if (phase == PolyGlyphPage.SUBPIXELS) { base++; phase = 0 }
+            val g = glyph(id, phase)
             if (g != null) {
-                val px = (penX * state.sx + state.tx).roundToInt() + g.offX
+                val px = base + g.offX
                 val py = (y * state.sy + state.ty).roundToInt() + g.offY
                 begin(g.page, false)
                 quadPx(px.toFloat(), py.toFloat(), (px + g.w).toFloat(), (py + g.h).toFloat(), g.u0, g.v0, g.u1, g.v1, c)
@@ -247,6 +277,7 @@ abstract class PolyTessellator : PolyRenderer {
     }
 
     override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) {
+        if (cpuOnly) return
         text.lines().forEachIndexed { index, line ->
             val top = y + index * 9f * scale
             if (shadow) mcLine(line, x + scale, top + scale, color, scale, true)
@@ -255,6 +286,7 @@ abstract class PolyTessellator : PolyRenderer {
     }
 
     override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float) {
+        if (cpuOnly) return
         val c = mulAlpha(outlineColor, state.alpha)
         val rects = if (c ushr 24 == 0) null else PolyGlyphPage.rasterizer?.let { r -> mcOutlines.getOrPut(text) { mcOutline(r, text) } }
         if (rects != null && rects.isNotEmpty()) {
@@ -298,12 +330,12 @@ abstract class PolyTessellator : PolyRenderer {
             val s = String(Character.toChars(cp))
             pen += if (main != null && main.glyph(cp) != 0) {
                 val font = PolyFont(if (bold) "minecraft-bold" else "minecraft", 10f * scale)
-                text(s, pen, baseline, drawn, font)
+                glyphs(s, pen, baseline, drawn, font, 0f, false, false)
                 main.advance(main.glyph(cp)) * font.size
             } else {
                 val font = PolyFont("unifont", 8f * scale)
                 val uni = PolyGlyphPage.rasterizer?.face("unifont") ?: continue
-                text(s, pen, baseline, drawn, font)
+                glyphs(s, pen, baseline, drawn, font, 0f, false, false)
                 uni.advance(uni.glyph(cp)) * font.size
             }
         }
@@ -311,7 +343,7 @@ abstract class PolyTessellator : PolyRenderer {
 
     override fun image(bitmap: PolyBitmap, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, tint: Int, filterQuality: FilterQuality) {
         val c = mulAlpha(tint, state.alpha)
-        if (c ushr 24 == 0) return
+        if (c ushr 24 == 0 || cpuOnly) return
         val g = PolyGlyphPage.bitmap(bitmap)
         begin(g?.page ?: bitmapTexture(bitmap), false, filterQuality == FilterQuality.None)
         val x0 = x * state.sx + state.tx
@@ -355,10 +387,12 @@ abstract class PolyTessellator : PolyRenderer {
 
     open fun stateKey(): Any {
         val s = state
-        val out = arrayListOf(s.sx, s.sy, s.tx, s.ty, s.alpha)
+        val out = arrayListOf(s.sx, s.sy, s.tx, s.ty, s.alpha, s.glyphScale)
         s.clip?.forEach(out::add) ?: out.add(-1f)
         var c = s.rclip
         while (c != null) { c.box.forEach(out::add); c = c.parent }
+        var m = s.mask
+        while (m != null) { out.add(if (m.fade.vertical) 1f else 0f); m.fade.stops.forEach(out::add); m.fade.alphas.forEach(out::add); m = m.parent }
         return out
     }
 
@@ -380,6 +414,16 @@ abstract class PolyTessellator : PolyRenderer {
         state.alpha *= alpha
     }
 
+    override fun saveLayerFade(fade: PolyFade) {
+        save()
+        val s = if (fade.vertical) state.sy else state.sx
+        val t = if (fade.vertical) state.ty else state.tx
+        val stops = FloatArray(fade.stops.size) { fade.stops[it] * s + t }
+        val px = if (s >= 0f) PolyFade(fade.vertical, stops, fade.alphas)
+        else PolyFade(fade.vertical, stops.reversedArray(), fade.alphas.reversedArray())
+        state.mask = Mask(px, state.mask)
+    }
+
     override fun translate(dx: Float, dy: Float) {
         state.tx += dx * state.sx
         state.ty += dy * state.sy
@@ -388,6 +432,11 @@ abstract class PolyTessellator : PolyRenderer {
     override fun scale(sx: Float, sy: Float) {
         state.sx *= sx
         state.sy *= sy
+    }
+
+    override fun animatedScale(sx: Float, sy: Float) {
+        scale(sx, sy)
+        state.glyphScale *= (sx + sy) / 2f
     }
 
     override fun clipRect(x: Float, y: Float, w: Float, h: Float) {
@@ -655,9 +704,12 @@ abstract class PolyTessellator : PolyRenderer {
     }
 
     private fun offsetPolygon(p: FloatArray, n: Int, dir: Float, inner: FloatArray, outer: FloatArray) {
+        fun same(a: Int, b: Int) = abs(p[a * 2] - p[b * 2]) < 1e-4f && abs(p[a * 2 + 1] - p[b * 2 + 1]) < 1e-4f
         for (i in 0 until n) {
-            val prev = (i + n - 1) % n
-            val next = (i + 1) % n
+            var prev = (i + n - 1) % n
+            var next = (i + 1) % n
+            for (s in 2 until n) { if (!same(prev, i)) break; prev = (i + n - s) % n }
+            for (s in 2 until n) { if (!same(next, i)) break; next = (i + s) % n }
             var e0x = p[i * 2] - p[prev * 2]; var e0y = p[i * 2 + 1] - p[prev * 2 + 1]
             var e1x = p[next * 2] - p[i * 2]; var e1y = p[next * 2 + 1] - p[i * 2 + 1]
             val l0 = hypot(e0x, e0y).takeIf { it > 1e-4f } ?: 1f
@@ -828,7 +880,9 @@ abstract class PolyTessellator : PolyRenderer {
         }
         var rclip = state.rclip
         while (rclip != null && quadInside(rclip)) rclip = rclip.parent
-        if (crosses == 0 && rclip == null) {
+        var mask = state.mask
+        while (mask != null && maskOpaque(mask.fade)) mask = mask.parent
+        if (crosses == 0 && rclip == null && mask == null) {
             for (i in 0 until 4) emit(qx[i], qy[i], qu[i], qv[i], qc[i])
         } else {
             val quad = Poly()
@@ -836,8 +890,35 @@ abstract class PolyTessellator : PolyRenderer {
             var polys = listOf(quad)
             if (crosses != 0) polys = boxCut(quad, box!!, crosses)
             if (rclip != null && polys.isNotEmpty()) polys = clipQuad(polys, rclip)
+            while (mask != null) {
+                val m = mask.fade
+                polys = polys.flatMap { faded(it, m) }
+                mask = mask.parent
+            }
             for (p in polys) emitFan(p)
         }
+    }
+
+    private fun maskOpaque(fade: PolyFade): Boolean {
+        val pos = if (fade.vertical) qy else qx
+        val span = fade.span(pos[0])
+        return fade.opaque(span) && (1 until 4).all { fade.span(pos[it]) == span }
+    }
+
+    private fun faded(p: Poly, fade: PolyFade): List<Poly> {
+        val out = ArrayList<Poly>()
+        var rest = p
+        for (stop in fade.stops) {
+            if (rest.size < 3) break
+            val before = Poly()
+            rest = splitAxis(rest, fade.vertical, stop, before)
+            if (before.size >= 3) out.add(before)
+        }
+        if (rest.size >= 3) out.add(rest)
+        for (piece in out) for (i in 0 until piece.size) {
+            piece.c[i] = coverColor(piece.c[i], fade.alphaAt(if (fade.vertical) piece.y[i] else piece.x[i]), batchPremul)
+        }
+        return out
     }
 
     private fun clearOutside(box: FloatArray): Boolean {
@@ -1034,9 +1115,9 @@ abstract class PolyTessellator : PolyRenderer {
     private class ShadowMask(val bitmap: PolyBitmap, val slice: Float, val extent: Float, val width: Float)
 
     companion object {
-        private fun <K, V> lru(max: Int) = object : LinkedHashMap<K, V>(16, 0.75f, true) {
+        private fun <K, V> lru(max: Int): MutableMap<K, V> = Collections.synchronizedMap(object : LinkedHashMap<K, V>(16, 0.75f, true) {
             override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, V>?) = size > max
-        }
+        })
 
         private val ramps = lru<Pair<List<PolyColor>, List<Float>?>, PolyBitmap>(64)
         private val boxRasters = lru<Pair<PolyGradient, Int>, PolyBitmap>(32)

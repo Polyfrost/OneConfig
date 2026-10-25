@@ -36,6 +36,7 @@ import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
+import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 import org.polyfrost.compose.backend.PolyCanvas
@@ -260,6 +261,7 @@ abstract class ComposeScreen(
     }
 
     private fun createScene(): ComposeScene {
+        OneConfigUIScreen.stopWarmUp()
         val failure = AtomicReference<Throwable?>()
         val failureHandler = CoroutineExceptionHandler { _, t -> failure.compareAndSet(null, t) }
         val recomposer = FrameRecomposer(RenderThreadDispatcher + failureHandler) { sceneDirty = true }
@@ -306,11 +308,6 @@ abstract class ComposeScreen(
     private var cachedSurfaceScale = -1f
 
     protected val client get() = Minecraft.getInstance()
-    //? if !sdl {
-    /*private val contentScaleX = FloatArray(1)
-    private val contentScaleY = FloatArray(1)
-    *///?}
-
     override fun init() {
         val hadScene = sceneOrNull != null
         val scene = ensureScene()
@@ -937,17 +934,6 @@ abstract class ComposeScreen(
         return changed
     }
 
-    private fun sceneDensity(): Float {
-        val pixelRatio = Platform.screen().pixelRatio().takeIf { it > 0f } ?: 1f
-        //? if sdl {
-        val contentScale = SDL_GetWindowDisplayScale(Platform.compatibility().windowHandle()).coerceAtLeast(1f)
-        //?} else {
-        /*GLFW.glfwGetWindowContentScale(Platform.compatibility().windowHandle(), contentScaleX, contentScaleY)
-        val contentScale = maxOf(contentScaleX[0], contentScaleY[0]).coerceAtLeast(1f)
-        *///?}
-        return (contentScale / pixelRatio).coerceAtLeast(1f)
-    }
-
     private fun surfaceScale(): Float {
         cachedSurfaceScale.takeIf { it > 0f }?.let { return it }
         val screenW = Platform.screen().windowWidth()
@@ -977,6 +963,19 @@ abstract class ComposeScreen(
 
         const val MAX_SCENE_REBUILDS = 3
     }
+}
+
+internal fun sceneDensity(): Float {
+    val pixelRatio = Platform.screen().pixelRatio().takeIf { it > 0f } ?: 1f
+    //? if sdl {
+    val contentScale = SDL_GetWindowDisplayScale(Platform.compatibility().windowHandle()).coerceAtLeast(1f)
+    //?} else {
+    /*val contentScaleX = FloatArray(1)
+    val contentScaleY = FloatArray(1)
+    GLFW.glfwGetWindowContentScale(Platform.compatibility().windowHandle(), contentScaleX, contentScaleY)
+    val contentScale = maxOf(contentScaleX[0], contentScaleY[0]).coerceAtLeast(1f)
+    *///?}
+    return (contentScale / pixelRatio).coerceAtLeast(1f)
 }
 
 internal object RenderThreadDispatcher : CoroutineDispatcher() {

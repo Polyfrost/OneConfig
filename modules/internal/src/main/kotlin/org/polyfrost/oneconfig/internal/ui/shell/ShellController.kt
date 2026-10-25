@@ -23,7 +23,7 @@ import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 
 private val LOGGER = LogManager.getLogger("OneConfig/UI")
 
-class ShellController {
+class ShellController(val warming: Boolean = false) {
     val session = ShellSession()
     val search = ShellSearch()
     val appearance = ShellAppearance()

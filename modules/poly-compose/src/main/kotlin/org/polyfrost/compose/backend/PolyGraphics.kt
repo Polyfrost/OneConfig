@@ -45,6 +45,7 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.render.PolyFade
 import org.polyfrost.compose.render.PolyGradient
 
 object PolyGraphics : PlatformGraphics {
@@ -73,7 +74,11 @@ object PolyGraphics : PlatformGraphics {
         Shader(GradientShader(PolyGradient.Points(listOf(polyColor(colors.first())), null, 0f, 0f, 1f, 0f), null, 0f))
 
     override fun createImageShader(image: ImageBitmap, tileModeX: TileMode, tileModeY: TileMode): Shader = Shader(ImageShader(image))
-    override fun createCompositeShader(destination: Shader, source: Shader, blendMode: BlendMode): Shader = source
+    override fun createCompositeShader(destination: Shader, source: Shader, blendMode: BlendMode): Shader {
+        val color = destination.platformShader as? GradientShader
+        val mask = (source.platformShader as? GradientShader)?.fade(1f)
+        return if (blendMode == BlendMode.DstIn && color != null && mask != null) Shader(MaskedShader(color, mask)) else source
+    }
     override fun transformShader(shader: Shader, matrix: Matrix): Shader = shader
 
     override fun createBlurRenderEffect(renderEffect: RenderEffect?, radiusX: Float, radiusY: Float, edgeTreatment: TileMode): PlatformRenderEffect = NoEffect
@@ -104,6 +109,19 @@ internal class GradientShader(val brush: PolyGradient, val center: Offset?, val 
     }
 }
 
+internal fun GradientShader.fade(alpha: Float): PolyFade? {
+    val g = brush as? PolyGradient.Points ?: return null
+    val vertical = g.x0 == g.x1
+    if (!vertical && g.y0 != g.y1) return null
+    val a = if (vertical) g.y0 else g.x0
+    val b = if (vertical) g.y1 else g.x1
+    val n = g.colors.size
+    val stops = FloatArray(n) { a + (b - a) * (g.stops?.get(it) ?: if (n == 1) 0f else it / (n - 1f)) }
+    val alphas = FloatArray(n) { g.colors[it].alpha / 255f * alpha }
+    return if (b < a) PolyFade(vertical, stops.reversedArray(), alphas.reversedArray()) else PolyFade(vertical, stops, alphas)
+}
+
+internal class MaskedShader(val color: GradientShader, val mask: PolyFade) : PlatformShader
 internal class ImageShader(val image: ImageBitmap) : PlatformShader
 internal class BlurFilter(val radius: Float) : PlatformBlurFilter()
 internal class TintFilter(val color: Color, val blendMode: BlendMode) : PlatformColorFilter()

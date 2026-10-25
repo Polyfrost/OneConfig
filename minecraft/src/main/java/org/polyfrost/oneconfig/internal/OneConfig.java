@@ -437,6 +437,7 @@ public class OneConfig
         registerCommands();
         registerEventHandlers();
         MainMenuFpsSampler.init();
+        ClassPreloader.init();
         //? fabric
         ModMenuShimLoader.enable();
         KaleidoCompat.enable();

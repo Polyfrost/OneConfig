@@ -41,11 +41,37 @@ interface PolyRenderer {
     fun restore()
 
     fun saveLayerAlpha(alpha: Float)
+    fun saveLayerFade(fade: PolyFade) = save()
 
     fun translate(dx: Float, dy: Float)
     fun scale(sx: Float, sy: Float)
+    fun animatedScale(sx: Float, sy: Float) = scale(sx, sy)
     fun clipRect(x: Float, y: Float, w: Float, h: Float)
     fun clipRRect(x: Float, y: Float, w: Float, h: Float, radius: Float)
+}
+
+class PolyFade(val vertical: Boolean, val stops: FloatArray, val alphas: FloatArray) {
+    init { require(stops.size == alphas.size && stops.isNotEmpty()) }
+
+    fun alphaAt(pos: Float): Float {
+        if (pos <= stops[0]) return alphas[0]
+        for (i in 1 until stops.size) if (pos < stops[i]) {
+            val t = (pos - stops[i - 1]) / (stops[i] - stops[i - 1])
+            return alphas[i - 1] + (alphas[i] - alphas[i - 1]) * t
+        }
+        return alphas.last()
+    }
+
+    fun span(pos: Float): Int {
+        for (i in stops.indices) if (pos < stops[i]) return i
+        return stops.size
+    }
+
+    fun opaque(i: Int) = when (i) {
+        0 -> alphas[0] >= 1f
+        stops.size -> alphas.last() >= 1f
+        else -> alphas[i - 1] >= 1f && alphas[i] >= 1f
+    }
 }
 
 interface CapturingRenderer {

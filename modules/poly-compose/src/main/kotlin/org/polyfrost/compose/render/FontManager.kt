@@ -1,8 +1,10 @@
 package org.polyfrost.compose.render
 
+import java.util.concurrent.ConcurrentHashMap
+
 object FontManager {
-    private val fontData = HashMap<String, ByteArray>()
-    private val pixelFonts = HashSet<String>()
+    private val fontData = ConcurrentHashMap<String, ByteArray>()
+    private val pixelFonts = ConcurrentHashMap.newKeySet<String>()
 
     const val DEFAULT_KEY = "__default__"
 

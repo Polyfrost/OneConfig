@@ -44,6 +44,25 @@ class PolyTessellatorTest {
         assertTrue(round[0] in 100..200)
     }
 
+    @Test
+    fun fadeMaskFadesVertexAlpha() {
+        val r = Recorder()
+        r.saveLayerFade(PolyFade(true, floatArrayOf(10f, 20f), floatArrayOf(1f, 0f)))
+        r.rect(0f, 0f, 10f, 30f, -1, 0f)
+        r.restore()
+        val b = r.done().single()
+        val ys = HashSet<Float>()
+        for (i in b.colors.indices) {
+            val x = b.verts[i * 4]
+            val y = b.verts[i * 4 + 1]
+            if (x < 0f || x > 10f || y < 0f || y > 30f) continue
+            ys += y
+            val expected = (255f * (1f - ((y - 10f) / 10f).coerceIn(0f, 1f))).roundToInt()
+            assertTrue(abs((b.colors[i] ushr 24) - expected) <= 1, "alpha at y=$y")
+        }
+        assertTrue(10f in ys && 20f in ys)
+    }
+
     private fun assertWinding(b: Batch) {
         for (q in 0 until b.colors.size / 4) {
             var a = 0f
@@ -78,6 +97,34 @@ class PolyTessellatorTest {
         assertWinding(round)
         val r = 9.5f
         assertEquals(99f * 49f - (4f - Math.PI.toFloat()) * r * r, round.solidArea(), 99f * 49f * 0.005f)
+    }
+
+    @Test
+    fun circleFillNeverOverlapsItself() {
+        val b = Recorder().run { rect(0f, 0f, 38f, 38f, 0x80FFFFFF.toInt(), 19f); done().single() }
+        fun side(ax: Float, ay: Float, bx: Float, by: Float, px: Float, py: Float) = (bx - ax) * (py - ay) - (by - ay) * (px - ax)
+        fun inTri(i: Int, j: Int, k: Int, px: Float, py: Float): Boolean {
+            val v = b.verts
+            val d0 = side(v[i * 4], v[i * 4 + 1], v[j * 4], v[j * 4 + 1], px, py)
+            val d1 = side(v[j * 4], v[j * 4 + 1], v[k * 4], v[k * 4 + 1], px, py)
+            val d2 = side(v[k * 4], v[k * 4 + 1], v[i * 4], v[i * 4 + 1], px, py)
+            return (d0 > 0f && d1 > 0f && d2 > 0f) || (d0 < 0f && d1 < 0f && d2 < 0f)
+        }
+        var y = 0.13f
+        while (y < 38f) {
+            var x = 0.29f
+            while (x < 38f) {
+                var hits = 0
+                for (q in 0 until b.colors.size / 4) {
+                    val o = q * 4
+                    if (inTri(o, o + 1, o + 2, x, y)) hits++
+                    if (inTri(o + 2, o + 3, o, x, y)) hits++
+                }
+                assertTrue(hits <= 1, "($x, $y) covered $hits times")
+                x += 0.5f
+            }
+            y += 0.5f
+        }
     }
 
     @Test

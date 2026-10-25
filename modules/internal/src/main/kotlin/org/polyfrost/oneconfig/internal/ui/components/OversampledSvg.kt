@@ -28,6 +28,7 @@ package org.polyfrost.oneconfig.internal.ui.components
 
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendModeColorFilter
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
@@ -78,7 +79,7 @@ class OversampledSvgPainter(
     private var alpha = 1f
     private var colorFilter: ColorFilter? = null
     private var cached: ImageBitmap? = null
-    private var cachedKey = -1
+    private var cachedKey = ""
 
     override fun applyAlpha(alpha: Float): Boolean {
         this.alpha = alpha
@@ -93,13 +94,15 @@ class OversampledSvgPainter(
     override fun DrawScope.onDraw() {
         if (size.width <= 0f || size.height <= 0f) return
         val px = max(1, ceil(max(size.width, size.height) * max(1f, oversample)).toInt())
+        val mask = colorFilter is BlendModeColorFilter
+        val key = "$px@$mask"
         var img = cached
-        if (img == null || cachedKey != px) {
+        if (img == null || cachedKey != key) {
             val shared = cacheKey
-            img = if (shared == null) rasterize(px)
-            else svgRasters.getOrPut("$shared@$px") { Raster(rasterize(px)) }.image
+            img = if (shared == null) rasterize(px, mask)
+            else svgRasters.getOrPut("$shared@$key") { Raster(rasterize(px, mask)) }.image
             cached = img
-            cachedKey = px
+            cachedKey = key
         }
         img ?: return
         drawImage(
@@ -113,5 +116,6 @@ class OversampledSvgPainter(
         )
     }
 
-    private fun rasterize(px: Int): ImageBitmap? = SvgMask.rasterize(svg, px)?.asComposeImageBitmap()
+    private fun rasterize(px: Int, mask: Boolean): ImageBitmap? =
+        SvgMask.rasterize(svg, px, if (mask) -1 else null)?.asComposeImageBitmap()
 }

@@ -21,6 +21,7 @@ import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession;
 import org.polyfrost.oneconfig.internal.ui.shell.ShellController;
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState;
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds;
+import org.polyfrost.oneconfig.internal.ui.themes.ProviderKt;
 
 public class OneConfigConfig extends Config {
     private static final Keys KEYS = Platform.compatibility().keys();
@@ -296,6 +297,35 @@ public class OneConfigConfig extends Config {
         descriptionTranslation = true
     )
     public static boolean pauseGame = false;
+
+    @Slider(
+        title = "oneconfig.preferences.ui_scale.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.gui",
+        subcategoryTranslation = true,
+        min = 50f,
+        max = 200f,
+        step = 5f,
+        description = "oneconfig.preferences.ui_scale.description",
+        descriptionTranslation = true
+    )
+    public static float uiScale = 100f;
+
+    @Dropdown(
+        title = "oneconfig.preferences.pixel_grid.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.gui",
+        subcategoryTranslation = true,
+        options = {
+            "oneconfig.preferences.pixel_grid.auto",
+            "oneconfig.preferences.pixel_grid.always",
+            "oneconfig.preferences.pixel_grid.never"
+        },
+        optionsTranslation = true,
+        description = "oneconfig.preferences.pixel_grid.description",
+        descriptionTranslation = true
+    )
+    public static int pixelGrid = 0;
 
     @Dropdown(
         title = "oneconfig.preferences.reduced_res_filter.title",
@@ -705,6 +735,18 @@ public class OneConfigConfig extends Config {
         addCallback(
             "glowOpacity", (java.lang.Number v) -> {
                 ShellController.getShared().getAppearance().update(flipTopOptionOrder, pageOpacity, sidebarOpacity, v.floatValue());
+                return false;
+            });
+        ProviderKt.setUiScalePercent(uiScale);
+        ProviderKt.setPixelGridMode(pixelGrid);
+        addCallback(
+            "uiScale", (java.lang.Number v) -> {
+                ProviderKt.setUiScalePercent(v.floatValue());
+                return false;
+            });
+        addCallback(
+            "pixelGrid", (java.lang.Number v) -> {
+                ProviderKt.setPixelGridMode(v.intValue());
                 return false;
             });
         addCallback(

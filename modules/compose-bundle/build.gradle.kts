@@ -44,7 +44,7 @@ private fun createProcessTask(): TaskProvider<NestableJarGenerationTask> {
         description = ""
         from(shade)
         outputDirectory.set(project.layout.buildDirectory.dir(name))
-        uncompressNestedJars.set(false)
+        uncompressNestedJars.set(true)
     }
 }
 

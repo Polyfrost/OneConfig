@@ -511,7 +511,7 @@ fun ModCard(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                val preview = mod.preview
+                val preview = if (LocalShell.current.warming) null else mod.preview
                 val icon = remember(mod.icon) { mod.icon?.takeIf(::canRenderIcon) }
                 if (preview != null) {
                     preview(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp))

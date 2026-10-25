@@ -63,6 +63,9 @@ class PolyGraphicsLayer : PlatformGraphicsLayer {
     }
 
     private var version = 0
+    private var animating = false
+    private var lastScaleX = 1f
+    private var lastScaleY = 1f
     private var cache: LayerCache? = null
 
     private class LayerCache(val version: Int, val props: List<Any?>, val key: Any, val segs: List<Any>)
@@ -82,6 +85,9 @@ class PolyGraphicsLayer : PlatformGraphicsLayer {
     }
 
     private fun drawNow(c: PolyCanvas) {
+        animating = (scaleX != 1f || scaleY != 1f) && (scaleX != lastScaleX || scaleY != lastScaleY)
+        lastScaleX = scaleX
+        lastScaleY = scaleY
         val cr = c.renderer as? CapturingRenderer
         if (cr == null) return drawLive(c)
         val parent = capturing.lastOrNull()
@@ -127,7 +133,7 @@ class PolyGraphicsLayer : PlatformGraphicsLayer {
         cache = LayerCache(version, props, key, cap.segs)
     }
 
-    private fun props(): List<Any?> = listOf(alpha, scaleX, scaleY, translationX, translationY, left, top, size, outline, clip, shadowElevation, spotShadowColor, pivotOffset)
+    private fun props(): List<Any?> = listOf(alpha, scaleX, scaleY, animating, translationX, translationY, left, top, size, outline, clip, shadowElevation, spotShadowColor, pivotOffset)
 
     private fun drawLive(c: PolyCanvas) {
         if (alpha <= 0f) return
@@ -137,7 +143,7 @@ class PolyGraphicsLayer : PlatformGraphicsLayer {
         if (scaleX != 1f || scaleY != 1f) {
             val p = if (pivotOffset.isUnspecified) Offset(size.width / 2f, size.height / 2f) else pivotOffset
             r.translate(p.x, p.y)
-            r.scale(scaleX, scaleY)
+            if (animating) r.animatedScale(scaleX, scaleY) else r.scale(scaleX, scaleY)
             r.translate(-p.x, -p.y)
         }
         val o = outline
