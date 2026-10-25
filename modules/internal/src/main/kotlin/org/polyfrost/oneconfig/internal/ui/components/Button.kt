@@ -23,6 +23,7 @@ fun IconButton(
     foreground: Color = LocalTheme.current.textColor.copy(0.7f),
     hoveredForeground: Color = LocalTheme.current.textColor,
     enabled: Boolean = true,
+    /** Outlines the button on hover; off by default so small inline icons (field clear buttons) stay bare */
     hoverBorder: Boolean = false,
     onClick: () -> Unit,
 ) {
@@ -46,6 +47,7 @@ fun IconButton(
         iconName,
         color = iconColor,
         modifier = Modifier.onClick(interactionSource, enabled, onClick).then(modifier)
+            // inset the glyph so the outline doesn't hug it; size bordered buttons 8dp larger to keep the icon size
             .then(
                 if (hoverBorder) Modifier.border(1.dp, borderColor, LocalTheme.current.buttonShape).padding(4.dp)
                 else Modifier

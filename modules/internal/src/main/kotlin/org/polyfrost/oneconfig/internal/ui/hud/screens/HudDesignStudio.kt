@@ -149,6 +149,7 @@ object HudEditorViewport {
     var screenHeight by mutableStateOf(0)
         private set
 
+    // observable mirror of HudManager.guiScreenWidth/Height
     private var guiWidth by mutableStateOf(0f)
     private var guiHeight by mutableStateOf(0f)
 
@@ -614,6 +615,12 @@ private fun hitTestHudActionBar(
     gapPx: Float,
 ): Boolean = hudActionBarLayout(hud, mcToScreen, iconPx, gapPx)?.contains(screenX, screenY) == true
 
+/**
+ * The bar plus the thin corridor between it and the HUD box
+ *
+ * At small GUI scales the gap the cursor crosses to reach the icons is usually owned by a neighbouring
+ * HUD and without claiming it the hover flips mid-travel
+ */
 private fun hitTestHudActionBarZone(
     hud: Hud,
     screenX: Float,
@@ -635,12 +642,18 @@ private fun hitTestHudActionBarZone(
     when {
         bar.y >= hudBottom -> { top = hudBottom; bottom = bar.y }
         bar.y + bar.height <= hudTop -> { top = bar.y + bar.height; bottom = hudTop }
+        // bar overlaps the box so there is no corridor to claim
         else -> return false
     }
     if (screenY < top || screenY > bottom) return false
     return screenX >= minOf(hudLeft, bar.x) && screenX <= maxOf(hudRight, bar.x + bar.width)
 }
 
+/**
+ * The HUD box unioned with its action bar
+ *
+ * The bar sits outside the box with a gap in between so hover has to survive the whole span
+ */
 private fun hitTestHudWithActionBar(
     hud: Hud,
     screenX: Float,
@@ -1450,6 +1463,7 @@ fun HudDesignStudio(visible: Boolean = true) {
         panelOffset += Offset(dx, dy)
     }
 
+    /** Recomputes the marquee selection from [marqueeStart]..[marqueeCurrent] */
     fun updateMarqueeSelection() {
         val start = marqueeStart ?: return
         val cur = marqueeCurrent ?: return
@@ -1471,11 +1485,14 @@ fun HudDesignStudio(visible: Boolean = true) {
             if (event.changes.any { it.isConsumed }) return@safePointerEvent
             val pos = event.changes.firstOrNull()?.position ?: return@safePointerEvent
             if (inChrome(pos.x, pos.y)) return@safePointerEvent
+            // while picking an anchor a left click takes the point under the cursor or cancels and a
+            // right click drops the anchor
             if (anchorPickSources.isNotEmpty()) {
                 val sources = anchorPickSources
                 val secondary = event.buttons.isSecondaryPressed
                 val mcToScreen = Platform.screen().mcToScreenScale()
                 event.changes.forEach { it.consume() }
+                // first click picks the point on the HUD being anchored and second the point it hangs off
                 val self = anchorPickSelf
                 if (!secondary && self == null) {
                     val pickedSelf = hitTestSelfAnchorPoint(sources[0], pos.x, pos.y, mcToScreen)
@@ -1502,6 +1519,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                     anchorPickSources = emptyList()
                     anchorPickSelf = null
                     hoveredAnchor = null
+                    // swallows the release that follows so it cannot fall through to selection
                     pressWasSecondary = true
                 }
                 if (secondary || picked != null) UiSounds.play(UiSoundEvent.CLICK)
@@ -1564,6 +1582,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                     return@safePointerEvent
                 }
             }
+            // clicks inside the bar belong to its buttons so never select or drag the HUD behind it
             if (hoveredHud?.let { hitTestHudActionBar(it, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx) } == true) {
                 Snapshot.withMutableSnapshot { pasteMenuOffset = null }
                 return@safePointerEvent
@@ -1637,6 +1656,8 @@ fun HudDesignStudio(visible: Boolean = true) {
                     if ((pos - press.origin).getDistance() <= DRAG_SLOP_PX) return@safePointerEvent
                     UiSounds.play(UiSoundEvent.HUD_DRAG_START)
                     val movable = selectedHuds.filterTo(LinkedHashSet()) { !it.locked }
+                    // grabbing an unselected HUD drags the whole fused shape while grabbing an already selected
+                    // one pulls it back out of that shape
                     val detach = press.wasSelected
                     val dragSet = if (detach) {
                         movable
@@ -1751,6 +1772,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                     if (event.changes.none { it.pressed }) {
                         lockedPressHud = null
                     } else if ((pos - lockedPressOrigin).getDistance() > DRAG_SLOP_PX) {
+                        // no toast because the canvas hint already says the same thing under the pointer
                         lockedPressHud = null
                     }
                 }
@@ -1761,6 +1783,8 @@ fun HudDesignStudio(visible: Boolean = true) {
                 val hit = topHudAt(pos.x, pos.y)
                 val mcToScreen = Platform.screen().mcToScreenScale()
                 val hovered = hoveredHud
+                // over the bar or on the way to it the hover must stick even over another HUD or the
+                // icons swap out from under the cursor
                 val overActionBar = hovered?.let { hh ->
                     hitTestHudActionBarZone(hh, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx)
                 } == true
@@ -1827,6 +1851,7 @@ fun HudDesignStudio(visible: Boolean = true) {
             }
             if (wasDragging) wasDraggedHud?.onEditorDragEnd()
             if (!wasDragging || wasDraggedHud == null) {
+                // skip releases of presses that were already handled
                 if (event.changes.any { it.isConsumed } || pressWasSecondary) return@safePointerEvent
                 val pos = event.changes.firstOrNull()?.position ?: return@safePointerEvent
                 if (inChrome(pos.x, pos.y)) return@safePointerEvent
@@ -1845,6 +1870,8 @@ fun HudDesignStudio(visible: Boolean = true) {
             } else {
                 UiSounds.play(UiSoundEvent.HUD_DRAG_END)
                 Snapshot.withMutableSnapshot {
+                    // a shape dragged as a whole leaves only the grabbed HUD selected so grabbing it again
+                    // pulls that one out instead of moving the shape a second time
                     if (wasCluster) selectedHuds = setOf(wasDraggedHud)
                     else if (wasDraggedGroup.isNotEmpty()) selectedHuds = wasDraggedGroup
                     closeLibrary()
@@ -1881,6 +1908,8 @@ fun HudDesignStudio(visible: Boolean = true) {
     val theme = LocalTheme.current
     val selectionCornerRadius = theme.buttonShape.cornerRadiusOrNull() ?: Radii.SM
 
+    // the library and return chip stay on screen while a HUD is selected but dimmed so the settings
+    // panel reads as the focus
     val sideChromeAlpha by animateFloatAsState(
         targetValue = if (selectedHuds.isNotEmpty()) SIDE_CHROME_DIM_ALPHA else 1f,
         animationSpec = tween(150),
@@ -1942,6 +1971,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                 }
                 if (keyEvent.key == Key.Escape && anchorPickSources.isNotEmpty()) {
                     Snapshot.withMutableSnapshot {
+                        // step back to picking the point on the HUD before dropping the pick entirely
                         if (anchorPickSelf != null) anchorPickSelf = null else anchorPickSources = emptyList()
                         hoveredAnchor = null
                     }
@@ -1982,6 +2012,7 @@ fun HudDesignStudio(visible: Boolean = true) {
             modifier = Modifier
                 .fillMaxSize()
                 .drawWithContent {
+                    // read in the draw scope so the cached outlines redraw on viewport changes
                     HudEditorViewport.observe()
                     drawContent()
                     val mcToScreen = Platform.screen().mcToScreenScale()
@@ -2008,10 +2039,13 @@ fun HudDesignStudio(visible: Boolean = true) {
                         val isSelected = hud in selectedHuds
                         val isPrimary = hud === primaryHud()
                         val isHovered = hud === hoveredHud
+                        // every HUD carried by the drag reads as being dragged so a fused shape shows the
+                        // whole shape moving
                         val isBeingDragged = isDragging && (hud === draggedHud || hud in draggedGroup)
                         val singleSelection = selectedHuds.size == 1
 
                         if (hud.locked) {
+                            // no selection handles because a locked HUD can be neither moved nor resized
                             if (isSelected || isHovered) {
                                 drawRect(
                                     color = lockedHudBoxColor,
@@ -2060,6 +2094,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                             )
                         }
                     }
+                    // hovering an anchored HUD traces the link back to the point it hangs off
                     hoveredHud?.let { hovered ->
                         val parent = hovered.effectiveAnchorParent
                         val from = if (parent == null) null else anchorPointOf(hovered, hovered.effectiveSelfAnchorPoint)
@@ -2081,6 +2116,8 @@ fun HudDesignStudio(visible: Boolean = true) {
                         val hotAnchor = hoveredAnchor
                         val self = anchorPickSelf
                         val source = anchorPickSources[0]
+                        // step one shows the points on the HUD being anchored and step two keeps its chosen
+                        // point on screen so it is clear what gets pinned where
                         if (self == null || anchorPickSources.size == 1) {
                             val b = hudBounds(source)
                             if (b != null) {
@@ -2158,6 +2195,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                 }
         )
 
+        // hover-only or the bar would show for every locked HUD at once and linger over a selected HUD
         val actionBarTarget = hoveredHud
         if (actionBarTarget != null) {
             key(actionBarTarget) {
@@ -2195,6 +2233,7 @@ fun HudDesignStudio(visible: Boolean = true) {
         if (hintText != null) lastHint = hintText
         var hintSize by remember { mutableStateOf(IntSize.Zero) }
         var hintSlot by remember { mutableStateOf(Offset.Zero) }
+        // no slide the first time round when the hint has nowhere to slide from
         val hintPlaced = hintSlot != Offset.Zero
         val hintMargin = with(densityObj) { 16.dp.toPx() }
         // the action bar floats above the hovered HUD so keep that strip clear as well
@@ -2442,6 +2481,8 @@ fun HudDesignStudio(visible: Boolean = true) {
             onAnchor = { _ ->
                 Snapshot.withMutableSnapshot {
                     anchorPickSources = contextMenuTargets
+                    // one HUD chooses which of its own points is pinned while a multi-selection has no
+                    // single box to pick on so each keeps its growth anchor
                     anchorPickSelf = if (contextMenuTargets.size == 1) null else HudAnchor.Auto
                     hoveredAnchor = null
                     hoveredHud = null
@@ -2797,6 +2838,8 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                             notifyHudLocked()
                         }
                     }
+                    // locked HUDs are hoverable so their lock toggle stays reachable but they never steal
+                    // the hover from an unlocked HUD
                     val hit = if (overShell(pos.x, pos.y)) null else topHudAt(pos.x, pos.y)
                     val hovered = hoveredHud
                     val mcToScreen = Platform.screen().mcToScreenScale()
@@ -2822,6 +2865,8 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                 endDrag()
             }
             .drawWithContent {
+                // HUD contents go under the children because the action bar is a child of this Box and
+                // drawing it first would put it behind every HUD painted here
                 HudEditorViewport.observe()
                 val mcToScreen = Platform.screen().mcToScreenScale()
                 drawHudContents(mcToScreen)
@@ -2892,6 +2937,8 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
             val mcToScreen = Platform.screen().mcToScreenScale()
             val bounds = hudBounds(actionBarTarget)
             val layout = hudActionBarLayout(actionBarTarget, mcToScreen, actionIconPx, actionBarGapPx)
+            // HudDragLayer is composed outside OneConfigInterface's Theme scope so provide one for the
+            // icons since IconButton reads LocalTheme
             if (bounds != null && bounds.width > 0f && bounds.height > 0f && layout != null) Theme {
                 HudActionBar(
                     hud = actionBarTarget,
@@ -3023,6 +3070,7 @@ private fun DesignStudioPanel(
                                 .padding(end = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(22.dp)
                         ) {
+                            // like the main config screen, a search spans every category rather than only the open one
                             categories.forEach {
                                 if (query.isNotEmpty() || it == category) when (it) {
                                     StudioCategory.Designer -> Designer(selectedHud, query)
@@ -3193,6 +3241,7 @@ private fun packHudLibraryRows(huds: List<Hud>, sizes: Map<Hud, IntSize>, availa
 @Composable
 private fun rememberHudLibraryLayout(sections: List<HudLibrarySection>, maxCardWidth: Dp): HudLibraryLayout {
     val density = LocalDensity.current
+    // Create preview state up front for packing, only visible cards are composed
     val previews = HashMap<Hud, HudPreviewState>()
     for (section in sections) {
         for (hud in section.huds) {
@@ -3201,6 +3250,7 @@ private fun rememberHudLibraryLayout(sections: List<HudLibrarySection>, maxCardW
     }
     val textMeasurer = rememberTextMeasurer()
     val labelStyle = TextStyle(fontSize = HUD_LABEL_FONT_SIZE, fontFamily = LocalTheme.current.typography.family)
+    // Preview dimensions can arrive after composition, repack only when sizes or layout inputs change
     return remember(sections, previews, maxCardWidth, density, textMeasurer, labelStyle) {
         derivedStateOf {
             val sizes = HashMap<Hud, IntSize>()
@@ -3548,6 +3598,7 @@ private fun LegacyHudPreviewCard(
                 }
             }
             .safePointerEvent(PointerEventType.Release) { event ->
+                // ignore the fake release Compose sends when a press is interrupted, such as by alt-tabbing
                 if (!dragStarted && pressPos != null && event.changes.none { it.isConsumed }) {
                     onCardClick(hud)
                 }
@@ -3630,6 +3681,7 @@ private fun ComposeHudPreviewCard(
                 }
             }
             .safePointerEvent(PointerEventType.Release) { event ->
+                // ignore the fake release Compose sends when a press is interrupted, such as by alt-tabbing
                 if (!dragStarted && pressPos != null && event.changes.none { it.isConsumed }) {
                     onCardClick(hud)
                 }
@@ -3705,6 +3757,7 @@ private fun SearchBar(
     val interactionSource = rememberInteractionSource()
     val isFocused by interactionSource.collectIsFocusedAsState()
     val focusRequester = remember { FocusRequester() }
+    // holds the selection alongside the caller's text so a focus request can select the query
     var field by remember { mutableStateOf(TextFieldValue(value)) }
     val current = field.copy(text = value)
 

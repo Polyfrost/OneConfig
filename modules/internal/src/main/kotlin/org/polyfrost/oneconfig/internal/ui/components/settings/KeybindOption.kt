@@ -235,6 +235,8 @@ fun KeybindOption(data: KeybindOptionData) {
                                 return@onKeyEvent true
                             }
                         }
+                        // ComposeScreen carries the raw platform key code in the event's codePoint which avoids a
+                        // lossy AWT round-trip
                         // a code <= 0 is an unknown key or a character event and would match nothing or everything
                         val keyCode = event.utf16CodePoint
                         if (keyCode <= 0) return@onKeyEvent true

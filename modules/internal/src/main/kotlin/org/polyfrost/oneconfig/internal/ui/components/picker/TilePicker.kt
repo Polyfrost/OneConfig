@@ -107,6 +107,7 @@ fun PickerLabel(
     }
 }
 
+/** A square cell with selection border tick badge and tooltip where a `null` [onClick] is decorative */
 @Composable
 fun <T : PickerEntry> PickerTile(
     entry: T,
@@ -187,6 +188,7 @@ fun PickerTooltip(
     )
 }
 
+/** Adaptive grid of [PickerTile]s where [selected] and [enabled] are queried per entry so selection rules stay with the caller */
 @Composable
 fun <T : PickerEntry> TileGrid(
     entries: List<T>,
@@ -296,6 +298,16 @@ fun PickerSearchField(
     )
 }
 
+/**
+ * Header search field and result grid making up the whole tile selector for any HUD or screen
+ *
+ * The [modifier] supplies the chrome, minus [gutter] side padding, so it fits a dropdown a HUD editor panel
+ * or a full screen
+ *
+ * [selected] and [onToggle] leave the selection with the caller
+ *
+ * [maxEntries] of `0` or less is unlimited and `1` is radio-style
+ */
 @Composable
 fun <T : PickerEntry> TilePicker(
     entries: List<T>,

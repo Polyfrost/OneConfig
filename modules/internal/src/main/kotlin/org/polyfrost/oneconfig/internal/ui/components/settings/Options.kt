@@ -111,6 +111,7 @@ fun Option(prop: Property<*>) {
 @Composable
 fun BooleanOption(data: BooleanOptionData) {
     var checked by remember(data.prop) { mutableStateOf(data.boolProp.shown() == true) }
+    // the same option can be flipped from elsewhere on screen, a mod's card for its master switch for one
     DisposableEffect(data.prop) {
         val listener = Predicate<Boolean> { value -> checked = value == true; false }
         data.boolProp.addCallback(listener)
@@ -184,6 +185,9 @@ fun OptionContextMenu(
         properties = PopupProperties(focusable = true),
     ) {
         Column(
+            // intrinsic width keeps the menu content-sized while rows fillMaxWidth so hover backgrounds
+            // span the whole menu instead of each row's own text width
+            //TODO: fix this always moving right
             modifier = Modifier
                 .width(IntrinsicSize.Max)
                 .shellTransition()

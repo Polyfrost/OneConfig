@@ -104,6 +104,9 @@ private object IconResource {
     }
 }
 
+/**
+ * Returns the cached raster icon for [key], or null while it is being decoded on a background thread
+ */
 @Composable
 private fun rememberAsyncRasterIcon(key: String, lastModified: Long, read: () -> ByteArray?): RasterIcon? {
     return produceState(IconBitmapCache.peek(key, lastModified), key, lastModified) {
@@ -158,6 +161,8 @@ fun Icon(
     val theme = LocalTheme.current
     val resolvedColor = if (color == Color.Unspecified) theme.textColor else color
 
+    // absolute paths load from disk rather than the classpath so distinct mods cannot collide on a
+    // shared resource name
     val file = if (iconName.contains('/') || iconName.contains('.')) {
         File(iconName).takeIf { it.isAbsolute && it.isFile }
     } else null
@@ -194,6 +199,7 @@ fun Icon(
                     modifier = imageModifier
                 )
             } else {
+                // keeps the icon's space reserved while it decodes in the background
                 Box(imageModifier)
             }
             return
@@ -217,6 +223,7 @@ fun Icon(
         rememberSvgResourcePainter(path) ?: return
     } else {
         rememberIconRasterPainter(path) ?: run {
+            // keeps the icon's space reserved while it decodes in the background
             Box(clippedResourceModifier)
             return
         }

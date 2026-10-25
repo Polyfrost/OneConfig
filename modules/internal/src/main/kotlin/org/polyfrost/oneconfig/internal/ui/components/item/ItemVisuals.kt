@@ -41,6 +41,11 @@ fun rememberItemCatalog(key: Any? = Unit): List<ItemDescriptor> = remember(key) 
         }
 }
 
+/**
+ * The icon for [id] showing [placeholder] until the catalog resolves it or if the item is unknown
+ *
+ * [framed] adds the theme chip background
+ */
 @Composable
 fun ItemIcon(
     id: String,

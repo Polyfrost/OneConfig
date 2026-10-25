@@ -139,6 +139,14 @@ private class PlatformImpl : PlatformContext by PlatformContext.Empty() {
     }
 }
 
+/**
+ * A single scene's platform context, sharing [ComposeSceneContextImpl] except for text input
+ *
+ * Text input stays on only while a field is focused and [isShowing] is true, so a hidden retained scene
+ * keeps its focus without leaving input on for other screens
+ *
+ * Client thread only
+ */
 @OptIn(InternalComposeUiApi::class, ExperimentalComposeUiApi::class)
 internal class SceneContext(
     private val isShowing: () -> Boolean,
@@ -159,6 +167,7 @@ internal class SceneContext(
         }
     }
 
+    /** Starts or stops text input to match this scene's sessions and whether its screen is showing, only ever stopping input it started */
     fun sync() {
         val wanted = !closed && sessions > 0 && isShowing()
         if (wanted == inputActive) return

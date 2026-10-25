@@ -10,6 +10,7 @@ object KeybindUtils {
     val actionModifier: Byte
         get() = if (DesktopHelper.isMac) KeyModifiers.META else KeyModifiers.CTRL
 
+    /** Whether the platform action modifier is currently pressed */
     fun isActionModifierPressed(modifiers: PointerKeyboardModifiers): Boolean =
         if (DesktopHelper.isMac) modifiers.isMetaPressed else modifiers.isCtrlPressed
 }

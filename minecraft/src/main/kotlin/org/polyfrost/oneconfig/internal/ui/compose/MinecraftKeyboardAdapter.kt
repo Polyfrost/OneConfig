@@ -11,6 +11,8 @@ import org.lwjgl.sdl.SDLKeycode.*
 internal object MinecraftKeyboardAdapter {
     private val keys get() = Platform.compatibility().keys()
 
+    // AWT collapses left/right modifiers to one key code so the side is preserved via key location
+    // and Compose can still tell left shift from right shift
     fun keyLocation(bindingKey: Int): Int  = when (bindingKey) {
         InputConstants.KEY_RSHIFT, InputConstants.KEY_RCONTROL, InputConstants.KEY_RALT, keys.keyRightSuper -> KeyEvent.KEY_LOCATION_RIGHT
         InputConstants.KEY_LSHIFT, InputConstants.KEY_LCONTROL, InputConstants.KEY_LALT, keys.keyLeftSuper -> KeyEvent.KEY_LOCATION_LEFT

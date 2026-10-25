@@ -14,11 +14,16 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Velocity
 
+/** keeps scroll input inside the child list. */
 @Composable
 internal fun Modifier.containVerticalScroll(scrollState: ScrollState): Modifier {
     return containVerticalScroll { scrollState.maxValue > 0 }
 }
 
+/**
+ * catches wheel input at the list edges.
+ * keep this before the scroll modifier so the list handles it first.
+ */
 @Composable
 internal fun Modifier.containVerticalScroll(isScrollable: () -> Boolean): Modifier {
     val currentIsScrollable = rememberUpdatedState(isScrollable)

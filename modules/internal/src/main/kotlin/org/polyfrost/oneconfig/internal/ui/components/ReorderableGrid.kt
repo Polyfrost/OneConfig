@@ -66,6 +66,24 @@ private val SettleSpec = spring<Offset>(
     visibilityThreshold = Offset(0.5f, 0.5f),
 )
 
+/**
+ * Drag-to-reorder support for a [androidx.compose.foundation.lazy.grid.LazyVerticalGrid]
+ *
+ * The grid re-lays out around the dragged item as the pointer moves so [onMove] must mutate the backing
+ * list immediately and [onDrop] fires once with the item's final index when the gesture ends
+ *
+ * The caller draws the dragged item above the grid, see [reorderOverlay], as a grid item cannot pass above the
+ * ones after it
+ *
+ * Gestures are read by [reorderContainer] on the box around the grid, since grid items can leave composition mid drag
+ *
+ * [dragBounds] gives the slots an item may be dropped into, or null for any, and an item outside its own bounds
+ * cannot be dragged
+ *
+ * [onClick] fires for an item clicked while it is still settling, as [reorderContainer] catches that press
+ *
+ * [horizontalPadding] is the grid's horizontal content padding, which [LazyGridItemInfo.offset] does not include
+ */
 class GridReorderState internal constructor(
     private val gridState: LazyGridState,
     private val scope: CoroutineScope,
@@ -88,9 +106,11 @@ class GridReorderState internal constructor(
 
     private var draggingIndex by mutableIntStateOf(-1)
 
+    /** Where the dragged item sat when the gesture started in viewport coordinates */
     private var initialOffset by mutableStateOf(Offset.Zero)
     private var dragDelta by mutableStateOf(Offset.Zero)
 
+    /** How far the settling item still is from its slot */
     private val settleOffset = Animatable(Offset.Zero, Offset.VectorConverter)
     private var settling by mutableStateOf(false)
 
@@ -103,9 +123,19 @@ class GridReorderState internal constructor(
     internal var containerCoordinates: LayoutCoordinates? = null
     internal val itemCoordinates = mutableMapOf<Any, LayoutCoordinates>()
 
+    /**
+     * Overlay position in the coordinate space of the box wrapping the grid
+     *
+     * A settling item is placed relative to its slot so it moves with the grid as it scrolls
+     */
     val overlayOffset: Offset
         get() = if (settling) trackSlot() + settleOffset.value else initialOffset + dragDelta
 
+    /**
+     * Where the overlay item's slot is now
+     *
+     * While out of view it follows the middle visible item, which is unlikely to scroll away in one frame
+     */
     private fun trackSlot(): Offset {
         val items = gridState.layoutInfo.visibleItemsInfo
         val own = items.firstOrNull { it.key == overlayKey }
@@ -140,6 +170,7 @@ class GridReorderState internal constructor(
         return info.key.takeIf { bounds == null || info.index in bounds }
     }
 
+    /** Lifts the item with [key] into the overlay, from where it is if still settling */
     internal fun onDragStart(key: Any): Boolean {
         val info = gridState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == key } ?: return false
         val from = if (settling && overlayKey == key) overlayOffset else drawnBounds(info).topLeft
@@ -164,6 +195,7 @@ class GridReorderState internal constructor(
         val key = draggingKey ?: return
         settleOnHoveredItem()
         val index = draggingIndex
+        // the grid only moves the item to its new slot next frame, so measure from that slot
         val fromSlot = overlayOffset - (infoAt(index)?.slot() ?: trackSlot())
         stop()
         onDrop(index)
@@ -176,6 +208,7 @@ class GridReorderState internal constructor(
         }
     }
 
+    /** Ends the drag without dropping, for when the backing list is replaced and the index no longer applies */
     internal fun cancel() {
         if (draggingKey == null) return
         stop()
@@ -190,6 +223,15 @@ class GridReorderState internal constructor(
         dragDelta = Offset.Zero
     }
 
+    /**
+     * Swaps the dragged item into the slot it now covers most
+     *
+     * Comparing against how much of its own slot it still covers adds hysteresis so a card hovering a
+     * boundary does not flip back and forth and the gaps between cards are not dead zones
+     *
+     * Once it covers none of the slots [dragBounds] allows it moves to the nearest one, or to any visible one if
+     * its own slot scrolled out of view
+     */
     private fun settleOnHoveredItem() {
         if (draggingKey == null) return
         val info = infoAt(draggingIndex)
@@ -212,6 +254,7 @@ class GridReorderState internal constructor(
             best = allowed.minByOrNull(::distance)?.takeIf { distance(it) < ownDistance }
         }
         val target = best ?: return
+        // override scroll to stay in place instead of following the first visible item
         val first = gridState.firstVisibleItemIndex
         if (first in minOf(draggingIndex, target.index)..maxOf(draggingIndex, target.index)) {
             gridState.requestScrollToItem(first, gridState.firstVisibleItemScrollOffset)
@@ -245,6 +288,7 @@ class GridReorderState internal constructor(
             val (zone, rampDistance, maxSpeed) = with(density()) {
                 Triple(AutoScrollZone.toPx(), AutoScrollRamp.toPx(), AutoScrollMaxSpeed.toPx())
             }
+            // an item picked up inside the zone should only scroll when further dragged towards the edge
             val intoTop = minOf(layout.viewportStartOffset + zone, initialOffset.y) - top
             val intoBottom = bottom - maxOf(layout.viewportEndOffset - zone, initialOffset.y + overlaySize.height)
             val depth = when {
@@ -253,6 +297,7 @@ class GridReorderState internal constructor(
                 else -> 0f
             }
             val ramp = (depth / rampDistance).coerceIn(-1f, 1f)
+            // raw delta so a wheel scroll mid drag cannot interrupt this loop
             if (depth != 0f) gridState.dispatchRawDelta(ramp * abs(ramp) * maxSpeed * seconds)
         }
     }
@@ -292,6 +337,14 @@ fun rememberGridReorderState(
     }
 }
 
+/**
+ * Reads drags for the grid's items, applied to the box wrapping the grid with the grid at its origin
+ *
+ * A drag starts once the primary button moves past touch slop or scrolls so items can still be clicked, but an item
+ * still settling is caught on press since it would move out from under the pointer first
+ *
+ * Events are read before the grid so it does not scroll along with the drag, but wheel scrolling still reaches it
+ */
 fun Modifier.reorderContainer(state: GridReorderState): Modifier = pointerInput(state) {
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
@@ -333,6 +386,7 @@ fun Modifier.reorderContainer(state: GridReorderState): Modifier = pointerInput(
     }
 }.onPlaced { state.containerCoordinates = it }
 
+/** The next change of the pointer while still held, consumed if [consume] unless it is a wheel scroll */
 private suspend fun AwaitPointerEventScope.awaitPressedChange(id: PointerId, consume: Boolean): PointerInputChange? {
     val event = awaitPointerEvent(PointerEventPass.Initial)
     val change = event.changes.firstOrNull { it.id == id } ?: return null
@@ -340,10 +394,16 @@ private suspend fun AwaitPointerEventScope.awaitPressedChange(id: PointerId, con
     return change.takeIf { it.pressed }
 }
 
+/** Hides the item while the overlay draws it in its place, [key] must be the key it was declared with */
 fun Modifier.reorderableItem(state: GridReorderState, key: Any): Modifier = this
     .onPlaced { state.itemCoordinates[key] = it }
     .graphicsLayer { alpha = if (state.overlayKey == key) 0f else 1f }
 
+/**
+ * Positions and sizes the overlay copy of the dragged item
+ *
+ * Apply to the same content the grid would have drawn placed in a box that wraps the grid
+ */
 @Composable
 fun Modifier.reorderOverlay(state: GridReorderState): Modifier {
     val density = LocalDensity.current

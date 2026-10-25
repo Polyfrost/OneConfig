@@ -33,8 +33,14 @@ object Radii {
     val LG = 20.dp
 }
 
+// large reference size so dp-based corners resolve independently of layout size
 private val REF_SIZE = Size(1_000_000f, 1_000_000f)
 
+/**
+ * Returns the radius of this shape in [Dp] or `null` if it is not a fixed-radius rounded rectangle
+ *
+ * Percent-based corners such as `CircleShape` resolve to huge values at [REF_SIZE]
+ */
 @Composable
 fun Shape.cornerRadiusOrNull(): Dp? {
     if (this !is CornerBasedShape) return null

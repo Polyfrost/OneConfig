@@ -66,6 +66,14 @@ fun Modifier.leftBorder(
     )
 }
 
+/**
+ * Draws a [color]-to-transparent scrim at the top and bottom edge of a scroll viewport to show more
+ * content is available in that direction
+ *
+ * Each edge fades in only when the content can scroll that way
+ *
+ * Place on the same node that owns the [verticalScroll] modifier and after it
+ */
 @Composable
 fun Modifier.fadingEdges(
     scrollState: ScrollState,

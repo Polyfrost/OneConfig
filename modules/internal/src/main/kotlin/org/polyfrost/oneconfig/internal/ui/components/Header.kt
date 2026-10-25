@@ -78,6 +78,8 @@ fun Header(modifier: Modifier = Modifier) {
     val backStackEntry by LocalShellNavController.current.currentBackStackEntryAsState()
     val title = remember(backStackEntry, ConfigRegistry.revision) { backStackEntry.headerTitle() }
     val openOriginalScreen = title?.openOriginalScreen
+    // historyRevision reads snapshot state so this recomposes and re-queries the stacks whenever the
+    // (plain ArrayDeque) history changes; the stacks stay the single source of truth.
     controller.historyRevision
     val canGoBack = controller.canGoBack()
     val canGoForward = controller.canGoForward()
@@ -121,6 +123,15 @@ fun Header(modifier: Modifier = Modifier) {
                         }
                     }
                 }
+                // Separate animation keeps the button composed exactly once per frame while still giving
+                // it the same fade as the title. Sharing the title's AnimatedContent duplicated the
+                // button per transition target, and the outgoing copy had no byline or tooltip (both
+                // gated on the current title) so it briefly showed against the bare title.
+                //
+                // AnimatedVisibility rather than AnimatedContent: the header Row vertically centers its
+                // children, so animating AnimatedContent's measured size re-centers it and drags the
+                // button around. AnimatedVisibility only fades and keeps the content's natural size for
+                // the whole transition, so the Row never has to re-center it.
                 var lastAction by remember { mutableStateOf<Runnable?>(null) }
                 LaunchedEffect(openOriginalScreen) {
                     if (openOriginalScreen != null) lastAction = openOriginalScreen
@@ -132,6 +143,8 @@ fun Header(modifier: Modifier = Modifier) {
                 ) {
                     // one Row so the spacer and the button share a single measured node and keep their
                     // horizontal order
+                    // prefer the live action so switching between two mods never shows the previous
+                    // mod's runnable for the frame before the effect updates lastAction
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         (openOriginalScreen ?: lastAction)?.let {
                             Spacer(Modifier.size(8.dp))
@@ -152,6 +165,10 @@ fun Header(modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * The header title and its extra info, resolved purely from the entry currently on top of the back
+ * stack.
+ */
 private data class HeaderTitle(
     val text: String,
     val authors: String? = null,
@@ -317,6 +334,7 @@ fun GlobalSearchBar() {
             if (isFocused) focusManager.clearFocus()
         } else {
             if (request == SearchFocus.SelectAll) {
+                // a kept query is selected so typing starts a new search while leaving it alone keeps it
                 searchText = searchText.copy(selection = TextRange(0, searchText.text.length))
             }
             if (!isFocused) {

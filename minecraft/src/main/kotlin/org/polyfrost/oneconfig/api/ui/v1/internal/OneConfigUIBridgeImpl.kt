@@ -19,6 +19,7 @@ class OneConfigUIBridgeImpl : OneConfigUIBridge {
             OneConfigUIScreen.openLastSession()
             return
         }
+        // isReady stays true after the menu closes so the screen check is what tells open from closed
         val navigation = ShellController.shared.navigation
         if (navigation.isReady && Platform.screen().current<Any?>() is OneConfigUIScreen) {
             try {

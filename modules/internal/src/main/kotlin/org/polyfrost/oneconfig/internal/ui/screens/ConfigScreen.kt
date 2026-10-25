@@ -109,6 +109,9 @@ import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.util.LayoutRef
 
+/**
+ * @param locked shows every option but [lockExempt] dimmed and out of reach, for a mod that is switched off
+ */
 @Composable
 fun ConfigScreen(
     tree: Tree,

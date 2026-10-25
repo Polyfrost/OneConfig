@@ -12,8 +12,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 
+/**
+ * The first visible item of a scrollable page and how far it is scrolled past
+ *
+ * [token] records what the page was showing when the anchor was taken such as a search query and the
+ * anchor only remounts when the token matches
+ */
 data class ScrollAnchor(val index: Int, val offset: Int, val token: Any? = null)
 
+/**
+ * A [LazyListState] that outlives the Compose scene
+ *
+ * Displaying another screen over the OneConfig UI disposes the scene and rebuilds it on the way back which
+ * loses everything held in composition
+ *
+ * Changing [resetToken] scrolls back to the top of the page
+ */
 @Composable
 fun rememberRestorableLazyListState(
     key: String,
@@ -24,6 +38,7 @@ fun rememberRestorableLazyListState(
     val anchor = remember(key) { scroll.anchor(key)?.takeIf { it.token == resetToken } }
     val state = rememberLazyListState(anchor?.index ?: 0, anchor?.offset ?: 0)
     ScrollToTopOnChange(state, contentToken, initial = resetToken)
+    // the effect outlives token changes so read the latest one
     val currentToken by rememberUpdatedState(resetToken)
     LaunchedEffect(state, key) {
         snapshotFlow { ScrollAnchor(state.firstVisibleItemIndex, state.firstVisibleItemScrollOffset) }
@@ -32,6 +47,7 @@ fun rememberRestorableLazyListState(
     return state
 }
 
+/** Jumps [state] back to the top whenever [key] changes */
 @Composable
 fun ScrollToTopOnChange(state: LazyListState, key: Any?, initial: Any? = key) {
     val previous = remember(state) { LastKey(initial) }
@@ -43,6 +59,7 @@ fun ScrollToTopOnChange(state: LazyListState, key: Any?, initial: Any? = key) {
 
 private class LastKey(var value: Any?)
 
+/** [rememberRestorableLazyListState] for a grid */
 @Composable
 fun rememberRestorableLazyGridState(key: String): LazyGridState {
     val scroll = LocalShell.current.scroll

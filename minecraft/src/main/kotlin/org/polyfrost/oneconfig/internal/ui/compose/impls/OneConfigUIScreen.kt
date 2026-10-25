@@ -82,6 +82,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
             it.resumeNext = false
         }
 
+        /** For returning from a HUD editor opened from the OneConfig menu */
         @JvmStatic
         fun resume(): OneConfigUIScreen = shared().also {
             it.initialRoute = null
@@ -90,6 +91,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
         private const val OPEN_ANIMATION_MS = 250L
 
+        /** Serialized so two closes in quick succession cannot write the same files at once */
         private val SAVE_EXECUTOR = Executors.newSingleThreadExecutor { r ->
             Thread(r, "OneConfig-ConfigSave").apply { isDaemon = true }
         }
@@ -108,10 +110,12 @@ class OneConfigUIScreen @JvmOverloads constructor(
             }
         }
 
+        /** [restored] marks a route that puts the user back where they were rather than opening a fixed page */
         private data class OpeningRoute(val route: Any, val restored: Boolean = false)
 
         private fun resolveOpeningRoute(): OpeningRoute {
             val route = shell.navigation.lastRoute
+            // "Reopen HUD editor" is off by default so the editor is never restored as a page
             if (route == null || !OneConfigConfig.remembersPageClosedAt(shell.session.lastClosedAt) ||
                 (route === HudEditorRoute && !OneConfigConfig.restoreHudEditor)) return OpeningRoute(ModsGraph)
             return OpeningRoute(route, restored = true)
@@ -143,6 +147,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
     private fun cancelClose(): Boolean {
         if (!closeRequested) return false
 
+        // Resume the opening blur animation from current blur intensity
         val now = System.currentTimeMillis()
         val blurProgress = if (closeAnimationMs <= 0L) 0f
             else 1f - easeOutExpo((now - closeRequestedAt).toFloat() / closeAnimationMs)
@@ -155,8 +160,10 @@ class OneConfigUIScreen @JvmOverloads constructor(
         return true
     }
 
+    /** The page this screen is showing which survives the scene being disposed and rebuilt */
     private var route: Any? by mutableStateOf(null)
 
+    /** True when [route] is a page being put back rather than a page being opened */
     private var restoring by mutableStateOf(false)
 
     private var resumeNext = false
@@ -256,6 +263,10 @@ class OneConfigUIScreen @JvmOverloads constructor(
         requestOpenCallback?.invoke()
     }
 
+    /**
+     * A scene that failed mid-frame is thrown away and rebuilt while the menu stays open so the
+     * rebuild is treated as coming back from another screen which stops the GUI hanging
+     */
     override fun onSceneRebuilding() {
         shell.navigation.lastRoute?.takeIf { it !== HudEditorRoute }?.let { route = it }
         restoring = true
@@ -268,6 +279,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         shell.layout.updateShellBounds(null)
         shell.session.stop()
         UiSounds.releaseAmbience()
+        // writing every registered tree hitches and Minecraft only re-grabs the cursor once this returns
         scheduleSave()
         super.removed()
     }
@@ -301,8 +313,10 @@ class OneConfigUIScreen @JvmOverloads constructor(
         return false
     }
 
+    /** Mouse side buttons navigate the page history like a browser */
     override fun handleMouseClicked(button: Int): Boolean {
         if (KeybindRecordingBus.isRecording) return false
+        // Only side and extra mouse buttons can trigger the OneConfig keybind
         //~ if < 1.21.11 && > 1.8.9 'InputConstants.MOUSE_BUTTON_4' -> 'GLFW.GLFW_MOUSE_BUTTON_4'
         if (button >= InputConstants.MOUSE_BUTTON_4 &&
             KeybindManager.isTriggeredByMouse(OneConfigConfig.oneConfigKeybind, button)
@@ -335,6 +349,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
     //?} else
     //override fun render(mouseX: Int, mouseY: Int, tickDelta: Float) {
+        // tcdcommons-based screens like Better Statistics Screen render their parent by hand each frame
+        // and that would queue a fullscreen blur which smears over the popup so bail unless we are current
         if (Platform.screen().current<Any?>() !== this) return
         if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= closeAnimationMs) {
             markClosed()
@@ -364,6 +380,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         return if (progress >= 1f) 1f else 1f - 2f.pow(-10f * progress)
     }
 
+    /** Holds a reference to the close-animation trigger from Compose */
     private var requestCloseCallback: (() -> Unit)? = null
     private var requestOpenCallback: (() -> Unit)? = null
 

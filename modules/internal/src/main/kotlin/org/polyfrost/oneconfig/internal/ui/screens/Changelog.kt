@@ -230,6 +230,8 @@ private fun MdBlocks(node: Node, styles: MdStyles, modifier: Modifier = Modifier
 @Composable
 fun Changelog() {
     val localSearchQuery = pageSearchQuery().trim()
+    // back/forward re-navigate rather than pop so nav-host saved state is gone on return; keep the
+    // position in the shell's scroll memory like the other list pages
     val lazyListState = rememberRestorableLazyListState("changelog", localSearchQuery)
     val visibleSections = remember(localSearchQuery) {
         changelogs.sections.mapIndexed { index, section -> index to section }

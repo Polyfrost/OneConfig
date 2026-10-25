@@ -108,6 +108,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
 
     override fun removed() {
         if (!returningToOneConfig) {
+            // off by default so closing the editor leaves the last config page as the route to come back to
             if (OneConfigConfig.restoreHudEditor) ShellController.shared.navigation.recordLastRoute(HudEditorRoute)
             ShellController.shared.session.markClosed(System.currentTimeMillis())
         }
@@ -148,6 +149,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
 
     override fun handleMouseClicked(button: Int): Boolean {
         if (KeybindRecordingBus.isRecording) return false
+        // Only side and extra mouse buttons can trigger the OneConfig keybind
         //~ if < 1.21.11 && > 1.8.9 'InputConstants.MOUSE_BUTTON_4' -> 'GLFW.GLFW_MOUSE_BUTTON_4'
         if (button >= InputConstants.MOUSE_BUTTON_4 &&
             KeybindManager.isTriggeredByMouse(OneConfigConfig.oneConfigKeybind, button)
@@ -162,6 +164,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
     //?} else
     //override fun render(mouseX: Int, mouseY: Int, tickDelta: Float) {
+        // a screen drawn over this one may render it as its parent so skip that pass or it closes the screen above us
         if (Platform.screen().current<Any?>() !== this) return
         if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= closeAnimationMs) {
             //? if < 1.21.8 && > 1.8.9
@@ -189,6 +192,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
     @Composable
     override fun compose() {
         DisposableEffect(Unit) {
+            // a failed scene is disposed and rebuilt while the screen stays open, which is not a close
             onDispose {
                 if (Platform.screen().current<Any?>() !== this@HudEditorUIScreen) {
                     HudManager.onEditorScreenRemoved()

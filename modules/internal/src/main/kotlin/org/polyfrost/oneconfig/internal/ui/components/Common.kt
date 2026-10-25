@@ -33,6 +33,14 @@ fun Modifier.onClick(interactionSource: MutableInteractionSource, enabled: Boole
     }
 )
 
+/**
+ * Swallows press and release events before children see them so anything below cannot be clicked, dragged
+ * or focused
+ *
+ * Hover move and scroll events are left alone so tooltips and page scrolling keep working
+ *
+ * @param keyboard also keeps focus and every key but tab and escape out
+ */
 fun Modifier.blockInteraction(blocked: Boolean = true, keyboard: Boolean = false): Modifier =
     if (!blocked) this else (
         if (keyboard) focusProperties { canFocus = false }.onPreviewKeyEvent { it.key != Key.Tab && it.key != Key.Escape }

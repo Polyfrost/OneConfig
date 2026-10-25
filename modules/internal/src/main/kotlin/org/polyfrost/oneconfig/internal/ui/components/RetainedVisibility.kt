@@ -92,6 +92,7 @@ private class AlignmentOffsetPositionProvider(
     }
 }
 
+/** [Popup] whose content can use [shellTransition] to follow the shell's open/close animation */
 @Composable
 fun ShellPopup(
     popupPositionProvider: PopupPositionProvider,

@@ -9,6 +9,7 @@ object HudEditorRoute
 enum class SearchFocus {
     SelectAll,
 
+    /** Focuses the search field and leaves its text and cursor alone */
     Focus,
     Unfocus,
 }

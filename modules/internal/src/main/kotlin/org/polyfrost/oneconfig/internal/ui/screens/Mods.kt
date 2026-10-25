@@ -232,6 +232,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
     val navigation = LocalShell.current.navigation
     val density = LocalDensity.current
     val windowSize = LocalWindowInfo.current.containerSize
+    // Only enable placement animations after the grid has been laid out for the current size
     var animateItems by remember(windowSize, density) { mutableStateOf(false) }
     val reorderState = rememberGridReorderState(
         gridState = gridState,
@@ -245,10 +246,14 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
         ?.let { key -> entries.indexOfFirst { it.key == key } }
         ?.takeIf { it >= 0 }
         ?.let { index -> modFavoriteAt(entries, index, ModFavorites::isFavorite) }
+    // the dragged card's index no longer applies once the list is rebuilt
     DisposableEffect(entries) {
         onDispose { reorderState.cancel() }
     }
 
+    // The overlay card is drawn as a sibling of the grid, but the page pane that wraps the nav host
+    // clips its content, so it would be cut off at the pane edge. Drop that clip for as long as an
+    // overlay card exists (dragging and the settle-back animation) so it can be seen in full.
     val overlayActive = reorderState.overlayKey != null
     val layout = LocalShell.current.layout
     DisposableEffect(overlayActive) {
@@ -256,6 +261,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
         onDispose { if (overlayActive) layout.markModDragging(false) }
     }
 
+    // override scroll to stay in place instead of following the first visible item
     DisposableEffect(favoriteRevision) {
         gridState.requestScrollToItem(gridState.firstVisibleItemIndex, gridState.firstVisibleItemScrollOffset)
         onDispose { }
@@ -267,7 +273,9 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
         PageGutter,
         modifier = Modifier
             .weight(1f)
+            // see overlayActive above: the overlay card has to be able to leave the grid while it exists
             .then(if (overlayActive) Modifier else Modifier.clipToBounds())
+            // cards can't take focus, so clear it on press to unfocus the search field
             .pointerInput(focusManager) {
                 awaitEachGesture {
                     awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
@@ -446,6 +454,10 @@ private val ModCardToggleUnavailable = Color(0xFF4F505B)
 // the accent is darkened towards this for the ring, which for the default accent gives the ring of the design
 private val ModCardToggleRingShade = Color(0xFF181600)
 
+/**
+ * [hoverHint] faintly shows an empty star on hover, and a card that is not [interactive] lets clicks and scrolling
+ * pass through
+ */
 @Composable
 fun ModCard(
     mod: ConfigData,
@@ -483,6 +495,7 @@ fun ModCard(
             }, theme.modCardShape)
             .then(
                 if (interactive) {
+                    // cards never take focus, otherwise they slide in from off screen when scrolled back into view
                     Modifier
                         .focusProperties { canFocus = false }
                         .onClick(interactionSource) { openModCard(mod, navigation) }
@@ -620,6 +633,7 @@ fun ModCard(
                     val ringEnd = if (toggle != null) lerp(AccentEnd, ModCardToggleRingShade, 0.42f) else ringStart
                     val ring = lerp(ringStart, ringEnd, 0.5f)
                     val dot = ModCardToggleUnavailable
+                    // drawn around one centre, since laying the dot out inside the ring lands it on a pixel boundary off-centre
                     Box(
                         Modifier.fillMaxSize().drawWithCache {
                             val glowRadius = (ModCardToggleRing / 2 + ModCardToggleGlow).toPx()

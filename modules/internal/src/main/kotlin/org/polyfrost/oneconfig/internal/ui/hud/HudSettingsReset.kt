@@ -190,6 +190,7 @@ private fun resetTreeDefaults(hud: Hud, tree: Tree) {
     }
 }
 
+/** Wraps a HUD settings control so right-click offers "Reset to default" for [optionId] */
 @Composable
 fun HudSettingTarget(
     hud: Hud,
@@ -259,6 +260,12 @@ fun HudSettingsContent(hud: Hud, content: @Composable () -> Unit) {
 
 private val DeleteMenuColor = Color(0xFFE5484D)
 
+/**
+ * Right-click menu on a HUD element in the design studio canvas
+ *
+ * Mirrors the hover action bar so the buttons stay reachable when HUDs are packed too tightly for the bar
+ * to be aimed at
+ */
 @Composable
 fun HudCanvasResetMenu(
     hud: Hud?,
@@ -311,6 +318,7 @@ fun HudCanvasResetMenu(
         properties = PopupProperties(focusable = !preview, dismissOnClickOutside = !preview),
     ) {
         Column(
+            // without this the separator's fillMaxWidth stretches the menu out to the whole screen
             modifier = Modifier
                 .onSizeChanged(onMeasured)
                 .blockInteraction(preview)
@@ -458,6 +466,7 @@ private fun HudMenuDivider() {
 private fun keybindHint(keybind: OneConfigKeybind?): String? =
     keybind?.takeIf { it.isBound }?.displayName()
 
+/** Context popup shown on empty canvas space when there is a HUD in the clipboard */
 @Composable
 fun HudCanvasPasteMenu(
     expanded: Boolean,

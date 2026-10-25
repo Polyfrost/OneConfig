@@ -261,6 +261,7 @@ public class OneConfig
         *///?}
     }
 
+    /** Submits the legacy HUDs (when not captured offscreen) and the Skia HUD blit into the vanilla HUD */
     //~ if = 1.8.9 '(GuiGraphicsExtractor graphics)' -> '()'
     public static void submitHud(GuiGraphicsExtractor graphics) {
         //~ if = 1.8.9 '(graphics)' -> '()'

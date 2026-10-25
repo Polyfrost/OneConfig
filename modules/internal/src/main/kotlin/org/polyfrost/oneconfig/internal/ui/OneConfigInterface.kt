@@ -58,6 +58,7 @@ fun OneConfigInterface(
     windowWidth: Float,
     windowHeight: Float,
     initialRoute: Any = ModsGraph,
+    /** Set when [initialRoute] is a page the user was already on which is put back without a transition and keeps its search */
     restoring: Boolean = false,
     openRevision: Int = 0,
     onCloseRequest: () -> Unit = {},
@@ -82,7 +83,11 @@ fun OneConfigInterface(
         try {
             if (!alreadyThere) {
                 shell.transitions.beginOpening()
+                // an initial navigation fires a page transition gated by "Show opening page animation" unless
+                // the page is only being put back which should look like it was never left
                 val animateOpening = !restoring && OneConfigConfig.showOpeningPageAnimation
+                // the NavHost only sets its graph once the Shell is composed so wait for it or navigate()
+                // crashes with "must call setGraph() before getGraph()"
                 if (animateOpening) {
                     var attempts = 0
                     while (attempts++ < 600) {

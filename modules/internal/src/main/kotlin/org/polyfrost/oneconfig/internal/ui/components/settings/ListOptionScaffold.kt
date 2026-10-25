@@ -118,6 +118,7 @@ internal class ListEntriesState<T>(initial: List<T>, private val onCommit: (List
     }
 }
 
+/** Per-row state handed to the row content so it can match the row's hover and focus styling */
 internal class ListRowContext(
     val contentColor: Color,
     val fieldInteraction: MutableInteractionSource,

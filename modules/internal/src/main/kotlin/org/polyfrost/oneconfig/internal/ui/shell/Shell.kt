@@ -121,16 +121,23 @@ fun Shell(
                 Header(Modifier.padding(horizontal = PageGutter))
                 Box(
                     modifier = Modifier.weight(1f).fillMaxSize()
+                        // a dragged mod card is drawn in an overlay that must be able to leave the page
+                        // area; keep the clip otherwise so page content cannot overflow the pane
                         .then(if (shell.layout.modDragging) Modifier else Modifier.clipToBounds())
                         .alpha(if (shell.transitions.awaitingInitialRoute) 0f else 1f)
                 ) {
                     if (isSearching) {
                         SearchResultsScreen(searchQuery)
                     } else {
+                        // the first transition after the menu opens follows "Show opening page animation"
+                        // and later ones follow "Show Page Animations"
                         val transitions = shell.transitions
 
                         fun pageMs() = (OneConfigConfig.pageAnimationDuration * 1000f).toInt().coerceAtLeast(1)
 
+                        // Arrow-back routes through navigate() on purpose (this NavHost version never
+                        // plays its pop transitions from a resting state), so the shared enter/exit
+                        // transition mirrors the old pop direction while lastNavWasBack is set.
                         fun enterSlide() =
                             if (transitions.lastNavWasBack) slideInHorizontally(tween(pageMs())) { -it / 5 }
                             else slideInHorizontally(tween(pageMs())) { it / 5 }

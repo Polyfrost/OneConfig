@@ -14,6 +14,12 @@ import androidx.compose.ui.unit.dp
 
 private const val THEME_ANIM_MS = 350
 
+/**
+ * Animates every interpolatable property of [target] such as colors and corner radii so a theme switch
+ * transitions smoothly
+ *
+ * Fonts branding boolean flags and circle shapes switch instantly
+ */
 @Composable
 fun animateTheme(target: UITheme): UITheme {
     val spec = tween<Float>(THEME_ANIM_MS)
@@ -66,6 +72,11 @@ fun animateTheme(target: UITheme): UITheme {
     ).withControlTrackColor(controlTrackColor)
 }
 
+/**
+ * Animates the corner radius of a [RoundedCornerShape]-style target
+ *
+ * Shapes without a fixed radius such as `CircleShape` are left untouched so circles stay circular
+ */
 @Composable
 private fun animateCornerShape(target: Shape, spec: AnimationSpec<Float>): Shape {
     val targetRadius = target.cornerRadiusOrNull() ?: return target

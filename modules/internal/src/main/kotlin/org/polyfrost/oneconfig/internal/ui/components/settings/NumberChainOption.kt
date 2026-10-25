@@ -63,6 +63,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val ChainShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
 
+/** Compose's default text cursor thickness */
 private val CaretWidth = 2.dp
 
 /** One slot in the chain where [id] is stable across reorders so equal values stay distinct rows */

@@ -85,6 +85,8 @@ fun SimpleDropdownMenu(
 
     if (expandedStates.currentState || expandedStates.targetState) {
         val density = LocalDensity.current
+        // the stock DropdownMenuPositionProvider cuts off long menus on large screens
+        // see https://github.com/JetBrains/compose-jb/issues/1388
         val pinnedAnchor = remember { mutableStateOf<IntRect?>(null) }
         val dropdownPositionProvider = remember(offset, density) { DropdownPositionProvider(offset, density) }
         val popupPositionProvider = if (!pinAnchor) dropdownPositionProvider else PinnedAnchorPositionProvider(dropdownPositionProvider, pinnedAnchor)

@@ -153,6 +153,7 @@ fun NumberSpinner(
                 fontFamily = theme.typography.family,
             ),
             cursorBrush = SolidColor(theme.textColor),
+            // the field itself stays in the tree while the formatted text covers it so clicking it still focuses it for editing
             decorationBox = { innerTextField ->
                 Box {
                     Box(Modifier.alpha(if (formatted == null) 1f else 0f)) { innerTextField() }

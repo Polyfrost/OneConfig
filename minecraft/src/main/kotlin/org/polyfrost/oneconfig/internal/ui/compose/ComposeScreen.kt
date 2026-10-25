@@ -149,6 +149,7 @@ abstract class ComposeScreen(
 
     private var sceneContextOrNull: SceneContext? = null
 
+    /** Whether this screen is open. Retained scenes stay alive after it closes */
     private var showing = false
 
     private var scenePoisoned = false
@@ -207,6 +208,14 @@ abstract class ComposeScreen(
         )
     }
 
+    /**
+     * Called when a failed scene has been discarded and the screen is about to be rebuilt from scratch
+     *
+     * Everything the old composition held is gone so state the screen wants back must be stored where
+     * the fresh composition will read it
+     *
+     * Runs before the new scene is given its content
+     */
     protected open fun onSceneRebuilding() {}
 
     private fun ensureScene(): ComposeScene? {
@@ -517,6 +526,7 @@ abstract class ComposeScreen(
             withScene { it.invalidatePositionInWindow() }
         }
 
+        // Recompose and lay out before rendering so icons revealed by scrolling or filtering draw on the same frame.
         val nanos = frameNanos()
         withScene { scene ->
             recomposerOrNull?.performFrame(nanos)
@@ -659,7 +669,12 @@ abstract class ComposeScreen(
 
     private var wasFocused = true
 
+    /**
+     * Compose never receives a release that happens after this screen closes or the window loses focus, so buttons are
+     * treated as held forever blocking all other mouse input
+     */
     private fun releaseHeldButtons() {
+        // cancel first so these releases only clear the held mouse buttons instead of clicking
         withScene { it.cancelPointerInput() }
         sendMouseButtonEvent(PointerEventType.Release, InputConstants.MOUSE_BUTTON_LEFT)
         sendMouseButtonEvent(PointerEventType.Release, InputConstants.MOUSE_BUTTON_RIGHT)
@@ -671,6 +686,7 @@ abstract class ComposeScreen(
             InputConstants.MOUSE_BUTTON_LEFT -> PointerButton.Primary
             InputConstants.MOUSE_BUTTON_RIGHT -> PointerButton.Secondary
             InputConstants.MOUSE_BUTTON_MIDDLE -> PointerButton.Tertiary
+            // side buttons are handled before this, and Compose ignores other clicks while one is held
             else -> return
         }
         withScene { it.sendPointerEvent(type, button = pointerButton, position = pointerPosition()) }
@@ -803,6 +819,8 @@ abstract class ComposeScreen(
             androidx.compose.ui.input.key.KeyEvent(
                 key = Key(awtCode, eventLocation),
                 type = KeyEventType.KeyDown,
+                // carry the raw keybind code so consumers like KeybindOption can recover it losslessly
+                // as the AWT round-trip in the Key collapses unmapped keys to VK_UNDEFINED
                 codePoint = bindingKey,
                 isCtrlPressed = modifiers.ctrlDown(),
                 isShiftPressed = modifiers.shiftDown(),
