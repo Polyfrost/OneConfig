@@ -155,7 +155,15 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
             return
         }
         if (paint.style == PaintingStyle.Stroke) {
-            r.rectStroke(x, y, w, h, paint.argb(), paint.strokeWidth.coerceAtLeast(1f), radius)
+            val sw = paint.strokeWidth.coerceAtLeast(1f)
+            val g = (paint.shader?.platformShader as? GradientShader)?.brushFor(x, y, w, h)
+            if (g == null) {
+                r.rectStroke(x, y, w, h, paint.argb(), sw, radius)
+            } else {
+                if (paint.alpha < 1f) r.saveLayerAlpha(paint.alpha) else r.save()
+                r.rectStrokeGradient(x, y, w, h, g, sw, radius)
+                r.restore()
+            }
             return
         }
         when (val s = paint.shader?.platformShader) {

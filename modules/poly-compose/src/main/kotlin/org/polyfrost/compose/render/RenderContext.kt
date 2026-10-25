@@ -27,7 +27,7 @@ class RenderContext(val renderer: PolyRenderer) {
 
     fun rectStrokeGradient(x: Float, y: Float, w: Float, h: Float, top: PolyColor, bottom: PolyColor, strokeWidth: Float, radius: Float = 0f) {
         if (top.alpha == 0 && bottom.alpha == 0) return
-        renderer.rectStrokeGradient(x, y, w, h, top.argb, bottom.argb, strokeWidth, radius)
+        renderer.rectStrokeGradient(x, y, w, h, PolyGradient.vertical(top, bottom), strokeWidth, radius)
     }
 
     fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: PolyColor, strokeWidth: Float = 1f) {

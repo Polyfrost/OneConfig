@@ -42,7 +42,7 @@ class ComposeBackendTest {
         override fun rectGradient(x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, radius: Float) = log("gradient ${x + tx},${y + ty} ${w}x$h")
         override fun shadow(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: PolyShadow) = log("shadow ${x + tx},${y + ty} ${w}x$h r=$radius blur=${shadow.blur}")
         override fun rectStroke(x: Float, y: Float, w: Float, h: Float, color: Int, strokeWidth: Float, radius: Float) = log("stroke")
-        override fun rectStrokeGradient(x: Float, y: Float, w: Float, h: Float, top: Int, bottom: Int, strokeWidth: Float, radius: Float) = log("strokeGradient")
+        override fun rectStrokeGradient(x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, strokeWidth: Float, radius: Float) = log("strokeGradient")
         override fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Int, strokeWidth: Float) = log("line")
         override fun fillPath(path: PolyPath, color: Int) = log("path #${Integer.toHexString(color)}")
         override fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont) = log("text '$text' ${x + tx},${y + ty}")

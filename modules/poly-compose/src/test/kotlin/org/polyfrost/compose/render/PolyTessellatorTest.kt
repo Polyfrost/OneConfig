@@ -211,6 +211,22 @@ class PolyTessellatorTest {
     }
 
     @Test
+    fun strokeGradientFollowsGradientDirectionUnderTransform() {
+        val r = Recorder()
+        r.translate(30f, 5f)
+        r.scale(2f, 2f)
+        r.rectStrokeGradient(0f, 0f, 100f, 10f, PolyGradient.horizontal(0xFFFF0000.toInt(), 0xFF0000FF.toInt()), 1f, 0f)
+        val b = r.done().single()
+        val solid = b.colors.indices.filter { b.colors[it] ushr 24 == 255 }
+        val lo = solid.minBy { b.verts[it * 4] }
+        val hi = solid.maxBy { b.verts[it * 4] }
+        fun red(c: Int) = (c shr 16) and 0xFF
+        fun blue(c: Int) = c and 0xFF
+        assertTrue(red(b.colors[lo]) > 240 && blue(b.colors[lo]) < 15, "left %08x".format(b.colors[lo]))
+        assertTrue(blue(b.colors[hi]) > 240 && red(b.colors[hi]) < 15, "right %08x".format(b.colors[hi]))
+    }
+
+    @Test
     fun shadowIsNineSlicesOfABlurredMask() {
         val r = Recorder()
         r.shadow(10f, 10f, 40f, 60f, 4f, PolyShadow(PolyColor(0x80000000.toInt()), 6f, 0f, 0f, 0f))

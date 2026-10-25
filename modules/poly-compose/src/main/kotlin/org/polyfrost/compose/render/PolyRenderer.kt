@@ -10,7 +10,7 @@ interface PolyRenderer {
     fun shadow(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: PolyShadow)
     fun rectStroke(x: Float, y: Float, w: Float, h: Float, color: Int, strokeWidth: Float, radius: Float)
 
-    fun rectStrokeGradient(x: Float, y: Float, w: Float, h: Float, top: Int, bottom: Int, strokeWidth: Float, radius: Float)
+    fun rectStrokeGradient(x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, strokeWidth: Float, radius: Float)
     fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Int, strokeWidth: Float)
     fun fillPath(path: PolyPath, color: Int)
 

@@ -114,13 +114,12 @@ abstract class PolyTessellator : PolyRenderer {
     override fun rectStroke(x: Float, y: Float, w: Float, h: Float, color: Int, strokeWidth: Float, radius: Float) =
         stroke(x, y, w, h, color, strokeWidth, radius, null)
 
-    override fun rectStrokeGradient(x: Float, y: Float, w: Float, h: Float, top: Int, bottom: Int, strokeWidth: Float, radius: Float) {
-        val y0 = y * state.sy + state.ty
-        val y1 = (y + h) * state.sy + state.ty
-        stroke(x, y, w, h, top, strokeWidth, radius) { py -> PolyGradient.lerpArgb(top, bottom, ((py - y0) / (y1 - y0)).coerceIn(0f, 1f)) }
+    override fun rectStrokeGradient(x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, strokeWidth: Float, radius: Float) {
+        val sx = state.sx; val sy = state.sy; val tx = state.tx; val ty = state.ty
+        stroke(x, y, w, h, gradient.sample(0f), strokeWidth, radius) { px, py -> gradient.colorAt((px - tx) / sx, (py - ty) / sy, x, y, w, h) }
     }
 
-    private fun stroke(x: Float, y: Float, w: Float, h: Float, color: Int, strokeWidth: Float, radius: Float, shade: ((Float) -> Int)?) {
+    private fun stroke(x: Float, y: Float, w: Float, h: Float, color: Int, strokeWidth: Float, radius: Float, shade: ((Float, Float) -> Int)?) {
         if (w <= 0f || h <= 0f || strokeWidth <= 0f) return
         val swPx = strokeWidth * scaleAvg()
         val alphaMul = if (swPx < 1f) swPx else 1f
@@ -129,7 +128,7 @@ abstract class PolyTessellator : PolyRenderer {
         val outer = rrectPoints(x - half, y - half, w + half * 2f, h + half * 2f, if (radius > 0f) radius + half else 0f, segs)
         val inner = rrectPoints(x + half, y + half, w - half * 2f, h - half * 2f, max(0f, radius - half), segs)
         unclipped(x - half, y - half, w + half * 2f, h + half * 2f, if (radius > 0f) radius + half else 0f) {
-            strokeRing(outer, inner, outer.size / 2, mulAlpha(color, alphaMul), shade?.let { f -> { py: Float -> mulAlpha(f(py), alphaMul) } }, band = half * 2f * scaleAvg() > 1.001f)
+            strokeRing(outer, inner, outer.size / 2, mulAlpha(color, alphaMul), shade?.let { f -> { px: Float, py: Float -> mulAlpha(f(px, py), alphaMul) } }, band = half * 2f * scaleAvg() > 1.001f)
         }
     }
 
@@ -622,7 +621,7 @@ abstract class PolyTessellator : PolyRenderer {
         return out
     }
 
-    private fun strokeRing(outerPts: FloatArray, innerPts: FloatArray, n: Int, color: Int, shade: ((Float) -> Int)? = null, band: Boolean = true) {
+    private fun strokeRing(outerPts: FloatArray, innerPts: FloatArray, n: Int, color: Int, shade: ((Float, Float) -> Int)? = null, band: Boolean = true) {
         val c = mulAlpha(color, state.alpha)
         if ((shade == null && c ushr 24 == 0) || n < 3) return
         val dir = if (signedArea(outerPts, n) > 0f) 1f else -1f
@@ -632,7 +631,7 @@ abstract class PolyTessellator : PolyRenderer {
         offsetPolygon(innerPts, n, -dir, iIn, iOut)
         begin(whitePage(), false)
         val w = PolyGlyphPage.WHITE_UV
-        fun at(p: FloatArray, i: Int) = if (shade == null) c else mulAlpha(shade(p[i * 2 + 1]), state.alpha)
+        fun at(p: FloatArray, i: Int) = if (shade == null) c else mulAlpha(shade(p[i * 2], p[i * 2 + 1]), state.alpha)
         fun clear(p: FloatArray, i: Int) = at(p, i) and 0x00FFFFFF
         fun q(a: FloatArray, ca: (FloatArray, Int) -> Int, b: FloatArray, cb: (FloatArray, Int) -> Int, i: Int, j: Int) = quadVerts(
             a[i * 2], a[i * 2 + 1], w, w, at(a, i), b[i * 2], b[i * 2 + 1], w, w, cb(b, i),
