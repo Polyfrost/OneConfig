@@ -1058,7 +1058,7 @@ public abstract interface class org/polyfrost/compose/render/PolyRenderer {
 	public abstract fun rect (FFFFIF)V
 	public abstract fun rectGradient (FFFFLorg/polyfrost/compose/render/PolyGradient;F)V
 	public abstract fun rectStroke (FFFFIFF)V
-	public abstract fun rectStrokeGradient (FFFFIIFF)V
+	public abstract fun rectStrokeGradient (FFFFLorg/polyfrost/compose/render/PolyGradient;FF)V
 	public abstract fun rectWithHole (FFFFFFFFFI)V
 	public abstract fun restore ()V
 	public abstract fun save ()V
@@ -1130,7 +1130,7 @@ public abstract class org/polyfrost/compose/render/PolyTessellator : org/polyfro
 	public fun rect (FFFFIF)V
 	public fun rectGradient (FFFFLorg/polyfrost/compose/render/PolyGradient;F)V
 	public fun rectStroke (FFFFIFF)V
-	public fun rectStrokeGradient (FFFFIIFF)V
+	public fun rectStrokeGradient (FFFFLorg/polyfrost/compose/render/PolyGradient;FF)V
 	public fun rectWithHole (FFFFFFFFFI)V
 	public fun restore ()V
 	public final fun restoreState (Ljava/lang/Object;)V
